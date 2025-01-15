@@ -46,12 +46,6 @@ func NewSubprovider(opts ...option) *Subprovider {
 	return inst
 }
 
-func withClient(c botman.BotMan) option {
-	return func(p *Subprovider) {
-		p.client = c
-	}
-}
-
 // Client returns the BotMan interface
 func (p *Subprovider) Client(meta meta.Meta) botman.BotMan {
 	if p.client != nil {

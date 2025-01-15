@@ -189,7 +189,7 @@ func resourcePolicyActivationUpdate(ctx context.Context, rd *schema.ResourceData
 
 	isAlreadyActive, id, err := strategy.isReactivationNotNeeded(ctx, policyID, version, rd.HasChange("version"))
 	if err != nil {
-		if restoreDiags := diag.FromErr(tf.RestoreOldValues(rd, []string{"version", "associated_properties"})); restoreDiags != nil && len(restoreDiags) > 0 {
+		if restoreDiags := diag.FromErr(tf.RestoreOldValues(rd, []string{"version", "associated_properties"})); len(restoreDiags) > 0 {
 			return append(restoreDiags, diag.FromErr(err)...)
 		}
 		return diag.FromErr(err)

@@ -707,14 +707,14 @@ func TestResourceUpdate(t *testing.T) {
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
-							Config: testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestResourceStream/update_resource/create_stream_%s.tf", createStreamFilenameSuffix)),
+							Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/update_resource/create_stream_%s.tf", createStreamFilenameSuffix),
 							Check: resource.ComposeTestCheckFunc(
 								commonChecks,
 								resource.TestCheckResourceAttr("akamai_datastream.s", "active", strconv.FormatBool(test.CreateStreamActive)),
 							),
 						},
 						{
-							Config: testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestResourceStream/update_resource/update_stream_%s.tf", updateStreamFilenameSuffix)),
+							Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/update_resource/update_stream_%s.tf", updateStreamFilenameSuffix),
 							Check: resource.ComposeTestCheckFunc(
 								commonChecks,
 								resource.TestCheckResourceAttr("akamai_datastream.s", "active", strconv.FormatBool(test.UpdateStreamActive)),
@@ -894,7 +894,7 @@ func TestEmailIDs(t *testing.T) {
 
 	createStreamRequestFactory := func(emailIDs []string) datastream.CreateStreamRequest {
 		streamConfigurationWithEmailIDs := streamConfiguration
-		if emailIDs != nil && len(emailIDs) != 0 {
+		if len(emailIDs) > 0 {
 			streamConfigurationWithEmailIDs.NotificationEmails = emailIDs
 		}
 		return datastream.CreateStreamRequest{
@@ -1002,7 +1002,7 @@ func TestEmailIDs(t *testing.T) {
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
-							Config: testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestResourceStream/email_ids/%s", test.Filename)),
+							Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/email_ids/%s", test.Filename),
 							Check:  resource.ComposeTestCheckFunc(test.TestChecks...),
 						},
 					},
@@ -1246,9 +1246,7 @@ func TestCustomHeaders(t *testing.T) {
 
 	createStreamRequestFactory := func(connector datastream.AbstractConnector) datastream.CreateStreamRequest {
 		streamConfigurationWithConnector := streamConfiguration
-		streamConfigurationWithConnector.Destination = datastream.AbstractConnector(
-			connector,
-		)
+		streamConfigurationWithConnector.Destination = connector
 		return datastream.CreateStreamRequest{
 			StreamConfiguration: streamConfigurationWithConnector,
 			Activate:            false,
@@ -1259,10 +1257,8 @@ func TestCustomHeaders(t *testing.T) {
 		return &datastream.DetailedStreamVersion{
 			StreamStatus:          datastream.StreamStatusInactive,
 			DeliveryConfiguration: streamConfiguration.DeliveryConfiguration,
-			Destination: datastream.Destination(
-				connector,
-			),
-			ContractID: streamConfiguration.ContractID,
+			Destination:           connector,
+			ContractID:            streamConfiguration.ContractID,
 			DatasetFields: []datastream.DataSetField{
 				{
 					DatasetFieldID:          1001,
@@ -1505,7 +1501,7 @@ func TestCustomHeaders(t *testing.T) {
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
-							Config: testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestResourceStream/custom_headers/%s", test.Filename)),
+							Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/custom_headers/%s", test.Filename),
 							Check:  resource.ComposeTestCheckFunc(test.TestChecks...),
 						},
 					},
@@ -1546,9 +1542,7 @@ func TestMTLS(t *testing.T) {
 
 	createStreamRequestFactory := func(connector datastream.AbstractConnector) datastream.CreateStreamRequest {
 		streamConfigurationWithConnector := streamConfiguration
-		streamConfigurationWithConnector.Destination = datastream.AbstractConnector(
-			connector,
-		)
+		streamConfigurationWithConnector.Destination = connector
 		return datastream.CreateStreamRequest{
 			StreamConfiguration: streamConfigurationWithConnector,
 			Activate:            false,
@@ -1559,10 +1553,8 @@ func TestMTLS(t *testing.T) {
 		return &datastream.DetailedStreamVersion{
 			StreamStatus:          datastream.StreamStatusInactive,
 			DeliveryConfiguration: streamConfiguration.DeliveryConfiguration,
-			Destination: datastream.Destination(
-				connector,
-			),
-			ContractID: streamConfiguration.ContractID,
+			Destination:           connector,
+			ContractID:            streamConfiguration.ContractID,
 			DatasetFields: []datastream.DataSetField{
 				{
 					DatasetFieldID:          1001,
@@ -1734,7 +1726,7 @@ func TestMTLS(t *testing.T) {
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
-							Config: testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestResourceStream/mtls/%s", test.Filename)),
+							Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/mtls/%s", test.Filename),
 							Check:  resource.ComposeTestCheckFunc(test.TestChecks...),
 						},
 					},
@@ -2083,9 +2075,7 @@ func TestConnectors(t *testing.T) {
 
 	createStreamRequestFactory := func(connector datastream.AbstractConnector) datastream.CreateStreamRequest {
 		streamConfigurationWithConnector := streamConfiguration
-		streamConfigurationWithConnector.Destination = datastream.AbstractConnector(
-			connector,
-		)
+		streamConfigurationWithConnector.Destination = connector
 		return datastream.CreateStreamRequest{
 			StreamConfiguration: streamConfigurationWithConnector,
 			Activate:            false,
@@ -2096,10 +2086,8 @@ func TestConnectors(t *testing.T) {
 		return &datastream.DetailedStreamVersion{
 			StreamStatus:          datastream.StreamStatusInactive,
 			DeliveryConfiguration: streamConfiguration.DeliveryConfiguration,
-			Destination: datastream.Destination(
-				connector,
-			),
-			ContractID: streamConfiguration.ContractID,
+			Destination:           connector,
+			ContractID:            streamConfiguration.ContractID,
 			DatasetFields: []datastream.DataSetField{
 				{
 					DatasetFieldID:          1001,
@@ -2207,7 +2195,7 @@ func TestConnectors(t *testing.T) {
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
-							Config: testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestResourceStream/connectors/%s", test.Filename)),
+							Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/connectors/%s", test.Filename),
 							Check:  resource.ComposeTestCheckFunc(test.TestChecks...),
 						},
 					},

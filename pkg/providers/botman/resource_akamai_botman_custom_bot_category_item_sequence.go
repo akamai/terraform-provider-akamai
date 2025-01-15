@@ -72,9 +72,7 @@ func resourceCustomBotCategoryItemSequenceUpsert(ctx context.Context, d *schema.
 		return configID, diag.FromErr(err)
 	}
 	var stringSequence []string
-	for _, val := range sequence {
-		stringSequence = append(stringSequence, val)
-	}
+	stringSequence = append(stringSequence, sequence...)
 
 	request := botman.UpdateCustomBotCategoryItemSequenceRequest{
 		ConfigID:   configID,

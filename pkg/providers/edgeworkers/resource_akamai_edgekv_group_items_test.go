@@ -159,7 +159,7 @@ func TestCreateEdgeKVGroupItems(t *testing.T) {
 		},
 		"create with no group items - error": {
 			configPath: "testdata/TestResourceEdgeKVGroupItems/create/empty_items.tf",
-			withError:  regexp.MustCompile("Error: map must contain at least 1 element\\(s\\), but has 0"),
+			withError:  regexp.MustCompile(`Error: map must contain at least 1 element\(s\), but has 0`),
 		},
 		"no namespace_name - error": {
 			configPath: "testdata/TestResourceEdgeKVGroupItems/create/no_namespace.tf",
@@ -827,7 +827,7 @@ func TestUpdateEdgeKVGroupItems(t *testing.T) {
 			configPathForUpdate: "testdata/TestResourceEdgeKVGroupItems/update/remove_2_items.tf",
 			planOnly:            true,
 			expectNonEmptyPlan:  true,
-			errorForUpdate:      regexp.MustCompile("Error: map must contain at least 1 element\\(s\\), but has 0"),
+			errorForUpdate:      regexp.MustCompile(`Error: map must contain at least 1 element\(s\), but has 0`),
 		},
 	}
 

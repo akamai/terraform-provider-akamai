@@ -136,7 +136,7 @@ func getXRateLimitBackoff(resp *http.Response, logger akalog.Interface) (time.Du
 }
 
 func overrideBackoff(baseBackoff retryablehttp.Backoff, logger akalog.Interface) retryablehttp.Backoff {
-	return func(min, max time.Duration, attemptNum int, resp *http.Response) time.Duration {
+	return func(minT, maxT time.Duration, attemptNum int, resp *http.Response) time.Duration {
 		if resp != nil {
 			if resp.StatusCode == http.StatusTooManyRequests {
 				if wait, ok := getXRateLimitBackoff(resp, logger); ok {
@@ -144,7 +144,7 @@ func overrideBackoff(baseBackoff retryablehttp.Backoff, logger akalog.Interface)
 				}
 			}
 		}
-		return baseBackoff(min, max, attemptNum, resp)
+		return baseBackoff(minT, maxT, attemptNum, resp)
 	}
 }
 

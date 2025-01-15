@@ -43,12 +43,6 @@ func NewSubprovider(opts ...option) *Subprovider {
 	return inst
 }
 
-func withClient(c cps.CPS) option {
-	return func(p *Subprovider) {
-		p.client = c
-	}
-}
-
 // Client returns the CPS interface
 func (p *Subprovider) Client(meta meta.Meta) cps.CPS {
 	if p.client != nil {

@@ -41,12 +41,6 @@ func NewSubprovider(opts ...option) *Subprovider {
 	return inst
 }
 
-func withClient(c dns.DNS) option {
-	return func(p *Subprovider) {
-		p.client = c
-	}
-}
-
 // Client returns the DNS interface
 func (p *Subprovider) Client(meta meta.Meta) dns.DNS {
 	if p.client != nil {

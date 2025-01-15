@@ -70,9 +70,7 @@ func dataPropertyMultipleGroupsRead(ctx context.Context, d *schema.ResourceData,
 	grpList := make([]map[string]interface{}, 0, len(groups.Groups.Items))
 	for _, g := range groups.Groups.Items {
 		contractIDs := make([]string, 0, len(g.ContractIDs))
-		for _, contractID := range g.ContractIDs {
-			contractIDs = append(contractIDs, contractID)
-		}
+		contractIDs = append(contractIDs, g.ContractIDs...)
 		grpList = append(grpList, map[string]interface{}{
 			"group_id":        g.GroupID,
 			"group_name":      g.GroupName,

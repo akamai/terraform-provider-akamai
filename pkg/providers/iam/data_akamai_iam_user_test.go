@@ -454,7 +454,7 @@ func checkUserAttrs(data testDataForUser) resource.TestCheckFunc {
 		checksFuncs = append(checksFuncs, resource.TestCheckResourceAttr(name, fmt.Sprintf("auth_grants.%d.role_id", i), strconv.FormatInt(authGrant.roleID, 10)))
 		checksFuncs = append(checksFuncs, resource.TestCheckResourceAttr(name, fmt.Sprintf("auth_grants.%d.role_name", i), authGrant.roleName))
 		checksFuncs = append(checksFuncs, resource.TestCheckResourceAttr(name, fmt.Sprintf("auth_grants.%d.role_description", i), authGrant.roleDescription))
-		if authGrant.subgroup != nil && len(authGrant.subgroup) > 0 {
+		if len(authGrant.subgroup) > 0 {
 			checksFuncs = append(checksFuncs, generateAggregateTestCheckFuncsForMaxAuthGrantSubGroups(i, 2, maxSupportedGroupNesting))
 		}
 	}
@@ -509,6 +509,7 @@ func generateMaxDepthSubGroupsAPIResponse(depth int) []iam.AuthGrant {
 	return subgroups
 }
 
+// nolint:revive
 func generateAggregateTestCheckFuncsForMaxAuthGrantSubGroups(authGrantElement, min, max int) resource.TestCheckFunc {
 	var testCases []resource.TestCheckFunc
 	path := "sub_groups.0"

@@ -42,12 +42,6 @@ func NewSubprovider(opts ...option) *Subprovider {
 	return inst
 }
 
-func withClient(c datastream.DS) option {
-	return func(p *Subprovider) {
-		p.client = c
-	}
-}
-
 // Client returns the DS interface
 func (p *Subprovider) Client(meta meta.Meta) datastream.DS {
 	if p.client != nil {

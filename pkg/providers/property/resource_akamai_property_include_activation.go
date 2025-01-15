@@ -702,9 +702,7 @@ func waitForActivationCreation(ctx context.Context, client papi.PAPI, includeID,
 			return nil, err
 		}
 
-		select {
-		case <-time.After(getActivationInterval):
-			// wait some time and check again
+		if <-time.After(getActivationInterval); true {
 			continue
 		}
 	}

@@ -990,24 +990,6 @@ func getPolicyInputV2(policyInput imaging.PolicyInputImage) imaging.PolicyInputI
 	return policyInputV2
 }
 
-func getPolicyOutputOrderV2(policyOutput imaging.PolicyOutputImage) imaging.PolicyOutputImage {
-	var policyOutputV2 = policyOutput
-	policyOutputV2.Transformations = []imaging.TransformationType{
-		&imaging.Blur{
-			Sigma:          &imaging.NumberVariableInline{Value: ptr.To(5.0)},
-			Transformation: imaging.BlurTransformationBlur,
-		},
-		&imaging.MaxColors{
-			Colors: &imaging.IntegerVariableInline{
-				Value: ptr.To(4),
-			},
-			Transformation: imaging.MaxColorsTransformationMaxColors,
-		},
-	}
-	policyOutputV2.Version = 2
-	return policyOutputV2
-}
-
 func TestDiffSuppressPolicy(t *testing.T) {
 	basePath := "testdata/TestResPolicyImage/diff_suppress"
 	tests := map[string]struct {

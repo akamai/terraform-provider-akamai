@@ -42,12 +42,6 @@ func NewSubprovider(opts ...option) *Subprovider {
 	return inst
 }
 
-func withClient(c edgeworkers.Edgeworkers) option {
-	return func(p *Subprovider) {
-		p.client = c
-	}
-}
-
 // Client returns the edgeworkers interface
 func (p *Subprovider) Client(meta meta.Meta) edgeworkers.Edgeworkers {
 	if p.client != nil {

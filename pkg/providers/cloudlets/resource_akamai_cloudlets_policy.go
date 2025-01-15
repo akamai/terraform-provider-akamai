@@ -138,7 +138,7 @@ func cloudletCodeValidation(_ context.Context, diff *schema.ResourceDiff, _ inte
 	if isShared {
 		possibleValues := []string{"AP", "AS", "CD", "ER", "FR", "IG"}
 		for _, code := range possibleValues {
-			if strings.ToLower(providedCode) == strings.ToLower(code) {
+			if strings.EqualFold(providedCode, code) {
 				return nil
 			}
 		}
@@ -147,7 +147,7 @@ func cloudletCodeValidation(_ context.Context, diff *schema.ResourceDiff, _ inte
 
 	possibleValues := []string{"ALB", "AP", "AS", "CD", "ER", "FR", "IG", "VP"}
 	for _, code := range possibleValues {
-		if strings.ToLower(providedCode) == strings.ToLower(code) {
+		if strings.EqualFold(providedCode, code) {
 			return nil
 		}
 	}

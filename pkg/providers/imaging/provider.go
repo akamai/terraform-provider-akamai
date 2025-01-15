@@ -42,12 +42,6 @@ func NewSubprovider(opts ...option) *Subprovider {
 	return inst
 }
 
-func withClient(i imaging.Imaging) option {
-	return func(p *Subprovider) {
-		p.client = i
-	}
-}
-
 // Client returns the Imaging interface
 func (p *Subprovider) Client(meta meta.Meta) imaging.Imaging {
 	if p.client != nil {

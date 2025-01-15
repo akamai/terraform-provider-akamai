@@ -1609,14 +1609,14 @@ func mockCreateProperty(client *gtm.Mock, property *gtm.Property, resp *gtm.Crea
 	).Return(resp, err).Once()
 }
 
-func mockGetProperty(client *gtm.Mock, propertyName string, property *gtm.GetPropertyResponse, error error, times int) {
+func mockGetProperty(client *gtm.Mock, propertyName string, property *gtm.GetPropertyResponse, err error, times int) {
 	client.On("GetProperty",
 		testutils.MockContext,
 		gtm.GetPropertyRequest{
 			DomainName:   testDomainName,
 			PropertyName: propertyName,
 		},
-	).Return(property, error).Times(times)
+	).Return(property, err).Times(times)
 }
 
 func mockUpdateProperty(client *gtm.Mock, updatedProperty *gtm.Property) {

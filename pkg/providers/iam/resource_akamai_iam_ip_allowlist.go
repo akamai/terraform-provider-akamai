@@ -112,7 +112,7 @@ func (r *ipAllowlistResource) disableIPAllowlist(ctx context.Context) diag.Diagn
 		diags.AddError("cannot fetch IP Allowlist status", err.Error())
 		return diags
 	}
-	if status.Enabled != false {
+	if status.Enabled {
 		err = client.DisableIPAllowlist(ctx)
 		if err != nil {
 			diags.AddError("disable IP allowlist fail", err.Error())

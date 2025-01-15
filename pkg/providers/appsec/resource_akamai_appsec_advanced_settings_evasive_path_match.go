@@ -248,7 +248,7 @@ func resourceAdvancedSettingsEvasivePathMatchDelete(ctx context.Context, d *sche
 
 	removeAdvancedSettingsEvasivePathMatch.EnablePathMatch = false
 
-	_, err := client.RemoveAdvancedSettingsEvasivePathMatch(ctx, removeAdvancedSettingsEvasivePathMatch)
+	_, err := client.RemoveAdvancedSettingsEvasivePathMatch(ctx, removeAdvancedSettingsEvasivePathMatch) //nolint:staticcheck
 	if err != nil {
 		logger.Errorf("calling 'removeAdvancedSettingsEvasivePathMatch': %s", err.Error())
 		return diag.FromErr(err)

@@ -487,7 +487,7 @@ func TestResGTMDomainImport(t *testing.T) {
 					Steps: []resource.TestStep{
 						{
 							ImportStateCheck: tc.stateCheck,
-							ImportStateId:    fmt.Sprintf("%s", tc.domainName),
+							ImportStateId:    tc.domainName,
 							ImportState:      true,
 							ResourceName:     "akamai_gtm_domain.test",
 							Config:           testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/import_basic.tf"),

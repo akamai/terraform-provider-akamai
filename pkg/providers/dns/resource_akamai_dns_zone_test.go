@@ -47,7 +47,7 @@ func TestResDNSZone(t *testing.T) {
 		},
 	}
 	recordSetsResp := &dns.GetRecordSetsResponse{
-		RecordSets: make([]dns.RecordSet, 2, 2),
+		RecordSets: make([]dns.RecordSet, 2),
 	}
 
 	t.Run("when group is not provided and there is no group for the user ", func(t *testing.T) {

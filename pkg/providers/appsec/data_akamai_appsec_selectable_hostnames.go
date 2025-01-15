@@ -120,11 +120,11 @@ func dataSourceSelectableHostnamesRead(ctx context.Context, d *schema.ResourceDa
 	flagsetstg = "UNSET"
 	flagsetprod = "UNSET"
 
-	activeinstaging, ok := d.GetOkExists("active_in_staging")
+	activeinstaging, ok := d.GetOkExists("active_in_staging") //nolint:staticcheck
 	if ok {
 		flagsetstg = "SET"
 	}
-	activeinproduction, ok := d.GetOkExists("active_in_production")
+	activeinproduction, ok := d.GetOkExists("active_in_production") //nolint:staticcheck
 	if ok {
 		flagsetprod = "SET"
 	}

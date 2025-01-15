@@ -28,25 +28,3 @@ func useClient(client dns.DNS, f func()) {
 
 	f()
 }
-
-type data struct {
-	data map[string]interface{}
-}
-
-func (d *data) Get(key string) interface{} {
-	if value, ok := d.data[key]; ok {
-		return value
-	}
-	return nil
-}
-
-func (d *data) GetOk(key string) (interface{}, bool) {
-	if value, ok := d.data[key]; ok {
-		return value, true
-	}
-	return nil, false
-}
-
-func (d *data) List() []interface{} {
-	return []interface{}{d.data}
-}

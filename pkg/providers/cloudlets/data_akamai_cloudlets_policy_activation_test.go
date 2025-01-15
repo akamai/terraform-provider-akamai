@@ -88,12 +88,6 @@ func TestNonSharedPolicyActivationDataSource(t *testing.T) {
 				properties:  []string{"prp_0", "prp_1"},
 			},
 			init: func(m2 *cloudlets.Mock, data testDataForNonSharedPolicyActivation) {
-				activations := make([]cloudlets.PolicyActivation, len(data.properties))
-				for _, p := range data.properties {
-					activations = append(activations, cloudlets.PolicyActivation{APIVersion: "1.0", Network: data.network, PolicyInfo: cloudlets.PolicyInfo{
-						PolicyID: data.policyID, Version: data.version, Status: cloudlets.PolicyActivationStatusInactive,
-					}, PropertyInfo: cloudlets.PropertyInfo{Name: p}})
-				}
 				mockGetPolicyV2(m2, data, nil, 3)
 				expectListPolicyActivations(m2, data.policyID, data.version, data.network, data.properties, cloudlets.PolicyActivationStatusActive, "", 1, nil).Times(3)
 			},
@@ -144,7 +138,7 @@ func TestNonSharedPolicyActivationDataSource(t *testing.T) {
 					IsUnitTest:               true,
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{{
-						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestDataCloudletsPolicyActivation/%s", test.config)),
+						Config:      testutils.LoadFixtureString(t, "testdata/TestDataCloudletsPolicyActivation/%s", test.config),
 						Check:       test.check,
 						ExpectError: test.expectError,
 					}},
@@ -427,7 +421,6 @@ func mockGetPolicyV2WithError(m *cloudlets.Mock, policyID int64, err error, time
 	m.On("GetPolicy", testutils.MockContext, cloudlets.GetPolicyRequest{
 		PolicyID: policyID,
 	}).Return(nil, err).Times(times)
-	return
 }
 
 func mockGetPolicyV2(m *cloudlets.Mock, data testDataForNonSharedPolicyActivation, err error, times int) {

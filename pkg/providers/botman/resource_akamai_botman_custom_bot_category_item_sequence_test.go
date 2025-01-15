@@ -80,10 +80,10 @@ func TestResourceCustomBotCategoryItemSequence(t *testing.T) {
 		mockedBotmanClient := &botman.Mock{}
 		createCategoryIDs := botman.UUIDSequence{Sequence: []string{"fake3f89-e179-4892-89cf-d5e623ba9dc7", "fake85df-e399-43e8-bb0f-c0d980a88e4f", "fake09b8-4fd5-430e-a061-1c61df1d2ac2"}}
 		updateCategoryIDs := botman.UUIDSequence{Sequence: []string{createCategoryIDs.Sequence[1], createCategoryIDs.Sequence[0], createCategoryIDs.Sequence[2]}}
-		createResponse := botman.UpdateCustomBotCategoryItemSequenceResponse{Sequence: createCategoryIDs.Sequence}
-		readResponse := botman.GetCustomBotCategoryItemSequenceResponse{Sequence: createCategoryIDs.Sequence}
-		updateResponse := botman.UpdateCustomBotCategoryItemSequenceResponse{Sequence: updateCategoryIDs.Sequence}
-		readResponse2 := botman.GetCustomBotCategoryItemSequenceResponse{Sequence: updateCategoryIDs.Sequence}
+		createResponse := botman.UpdateCustomBotCategoryItemSequenceResponse(createCategoryIDs)
+		readResponse := botman.GetCustomBotCategoryItemSequenceResponse(createCategoryIDs)
+		updateResponse := botman.UpdateCustomBotCategoryItemSequenceResponse(updateCategoryIDs)
+		readResponse2 := botman.GetCustomBotCategoryItemSequenceResponse(updateCategoryIDs)
 		mockedBotmanClient.On("UpdateCustomBotCategoryItemSequence",
 			testutils.MockContext,
 			botman.UpdateCustomBotCategoryItemSequenceRequest{

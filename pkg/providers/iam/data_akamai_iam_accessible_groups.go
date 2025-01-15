@@ -213,7 +213,7 @@ func (a *accessibleGroupsDataSource) convertAccessibleSubgroups(subgroups []iam.
 				return nil, diags
 			}
 			newSubgroup.SubGroups = newSubgroups
-		} else if subgroup.SubGroups != nil && len(subgroup.SubGroups) > 0 { //	We already processed the last level (remainingNesting = 1). If it still has subgroups, we cannot handle it
+		} else if len(subgroup.SubGroups) > 0 { //	We already processed the last level (remainingNesting = 1). If it still has subgroups, we cannot handle it
 			return nil, diag.Diagnostics{diag.NewErrorDiagnostic("unsupported subgroup depth",
 				fmt.Sprintf("Subgroup %d contains more subgroups and exceed total supported limit of nesting %d.", subgroup.GroupID, maxSupportedGroupNesting))}
 		}

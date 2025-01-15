@@ -163,7 +163,7 @@ func (r *RulesSchemaReader) getCustomOverride(key string) (*papi.RuleCustomOverr
 	return customOverride, nil
 }
 
-func (r *RulesSchemaReader) getMapOfSlice(key string) (map[string][]any, error) {
+func (r *RulesSchemaReader) getMapOfSlice(key string) (map[string][]any, error) { //nolint:unused
 	rawVal, ok := r.data.GetOk(key)
 	if !ok || rawVal == nil {
 		return nil, &NotFoundError{key}
@@ -297,7 +297,7 @@ func (r *RulesSchemaReader) findRuleItem(itemsMap map[string]any) (RuleItem, err
 	return ruleItems[0], nil
 }
 
-func (r *RulesSchemaReader) behaviorsBaseKey() string {
+func (r *RulesSchemaReader) behaviorsBaseKey() string { //nolint:unused
 	return fmt.Sprintf("%s.0.behaviors.0", r.ruleFormatKey)
 }
 
@@ -305,7 +305,7 @@ func (r *RulesSchemaReader) behaviorsKey() string {
 	return fmt.Sprintf("%s.0.behavior", r.ruleFormatKey)
 }
 
-func (r *RulesSchemaReader) criteriaBaseKey() string {
+func (r *RulesSchemaReader) criteriaBaseKey() string { //nolint:unused
 	return fmt.Sprintf("%s.0.criteria.0", r.ruleFormatKey)
 }
 

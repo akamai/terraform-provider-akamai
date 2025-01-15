@@ -367,23 +367,17 @@ var certTypes = map[string]int{
 }
 
 // Suppress check for fields that have dot suffix in tfstate
-func dnsRecordFieldDotSuffixSuppress(_, old, new string, _ *schema.ResourceData) bool {
-	oldValStr := strings.TrimRight(old, ".")
-	newValStr := strings.TrimRight(new, ".")
-	if oldValStr == newValStr {
-		return true
-	}
-	return false
+func dnsRecordFieldDotSuffixSuppress(_, o, n string, _ *schema.ResourceData) bool {
+	oldValStr := strings.TrimRight(o, ".")
+	newValStr := strings.TrimRight(n, ".")
+	return oldValStr == newValStr
 }
 
 // Suppress check for fields that are quoted in tfstate
-func dnsRecordFieldTrimQuoteSuppress(_, old, new string, _ *schema.ResourceData) bool {
-	oldValStr := strings.Trim(old, "\\\"")
-	newValStr := strings.Trim(new, "\"")
-	if oldValStr == newValStr {
-		return true
-	}
-	return false
+func dnsRecordFieldTrimQuoteSuppress(_, o, n string, _ *schema.ResourceData) bool {
+	oldValStr := strings.Trim(o, "\\\"")
+	newValStr := strings.Trim(n, "\"")
+	return oldValStr == newValStr
 }
 
 // Suppress check for type_value. Mnemonic config comes back as numeric
@@ -421,7 +415,7 @@ func dnsRecordTypeValueSuppress(_, _, _ string, d *schema.ResourceData) bool {
 	return false
 }
 
-// DiffSuppresFunc to handle quoted TXT Rdata strings possibly containing escaped quotes
+// DiffSuppressFunc to handle quoted TXT Rdata strings possibly containing escaped quotes
 func dnsRecordTargetSuppress(key, oldTarget, newTarget string, d *schema.ResourceData) bool {
 	logger := log.Get("[Akamai DNS]", "dnsRecordTargetSuppress")
 
@@ -466,7 +460,7 @@ func dnsRecordTargetSuppress(key, oldTarget, newTarget string, d *schema.Resourc
 	return diffQuotedDNSRecord(oldStrList, newStrList, oldTarget, newTarget, recordType, logger)
 }
 
-func diffQuotedDNSRecord(oldTargetList []string, newTargetList []string, old string, new string, recordType string, logger akalog.Interface) bool {
+func diffQuotedDNSRecord(oldTargetList []string, newTargetList []string, o string, n string, recordType string, logger akalog.Interface) bool {
 	const (
 		singleQuote    = `"`
 		backslashQuote = `\"`
@@ -478,19 +472,19 @@ func diffQuotedDNSRecord(oldTargetList []string, newTargetList []string, old str
 	logger.Debugf("diffQuotedDNSRecord Suppress. recodtype: %v", recordType)
 	logger.Debugf("diffQuotedDNSRecord Suppress. oldTargetList: [%v]", oldTargetList)
 	logger.Debugf("diffQuotedDNSRecord Suppress. newTargetList: [%v]", newTargetList)
-	logger.Debugf("diffQuotedDNSRecord Suppress. old: [%v]", old)
-	logger.Debugf("diffQuotedDNSRecord Suppress. new: [%v]", new)
+	logger.Debugf("diffQuotedDNSRecord Suppress. old: [%v]", o)
+	logger.Debugf("diffQuotedDNSRecord Suppress. new: [%v]", n)
 
 	var compList []string
 	var baseVal string
 	var compTrim bool
-	if old == "" {
-		baseVal = new
+	if o == "" {
+		baseVal = n
 		compTrim = true
 		baseVal = strings.Trim(baseVal, singleQuote)
 		compList = oldTargetList
 	} else {
-		baseVal = old
+		baseVal = o
 		baseVal = strings.Trim(baseVal, backslashQuote)
 		baseVal = strings.ReplaceAll(baseVal, backslashQuote, singleQuote)
 		compList = newTargetList
@@ -969,7 +963,7 @@ func resourceDNSRecordUpdate(ctx context.Context, d *schema.ResourceData, m inte
 	log.Debugf("UPDATE SHA sum for recordupdate [%s]", sha1hash)
 	// First try to get the zone from the API
 	log.Debugf("UPDATE Searching for records [%s]", zone)
-	rdata := make([]string, 0, 0)
+	rdata := make([]string, 0)
 	recordset, e := inst.Client(meta).GetRecord(ctx, dns.GetRecordRequest{
 		Zone:       zone,
 		Name:       host,
@@ -1172,9 +1166,7 @@ func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 		}
 		// could be either short or long notation
 		newrdata := make([]string, 0, len(record.Target))
-		for _, rcontent := range record.Target {
-			newrdata = append(newrdata, rcontent)
-		}
+		newrdata = append(newrdata, record.Target...)
 		if err := d.Set("target", newrdata); err != nil {
 			return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 		}
@@ -1600,14 +1592,14 @@ func newRecordCreate(ctx context.Context, meta meta.Meta, d *schema.ResourceData
 			Name:       host,
 			RecordType: recordType,
 		})
-		rdata := make([]string, 0, 0)
+		rdata := make([]string, 0)
 		if e != nil {
 			logger.Debugf("MX Get Error Type: %T", e)
 			logger.Debugf("BIND MX Error: %v", e)
 			apiError, ok := e.(*dns.Error)
 			if !ok || apiError.StatusCode != http.StatusNotFound {
 				// failure other than not found
-				return dns.RecordBody{}, fmt.Errorf(e.Error())
+				return dns.RecordBody{}, fmt.Errorf("%s", e.Error())
 			}
 			logger.Debug("Searching for existing MX records no prexisting targets found")
 		} else {
@@ -1752,7 +1744,7 @@ func newRecordCreate(ctx context.Context, meta meta.Meta, d *schema.ResourceData
 				if (r >= len(rdataTarget)) || (rdataTarget[r] == targHost) {
 					break
 				}
-				ntpri, _ := rdataTargetMap[rdataTarget[r]]
+				ntpri := rdataTargetMap[rdataTarget[r]]
 				records = append(records, strconv.Itoa(ntpri)+" "+rdataTarget[r])
 				delete(rdataTargetMap, rdataTarget[r])
 				r++
@@ -1774,7 +1766,7 @@ func newRecordCreate(ctx context.Context, meta meta.Meta, d *schema.ResourceData
 			if r >= len(rdataTarget) {
 				break
 			}
-			ntpri, _ := rdataTargetMap[rdataTarget[r]]
+			ntpri := rdataTargetMap[rdataTarget[r]]
 			logger.Debugf("Appending target %v pri %v", rdataTarget[r], ntpri)
 			records = append(records, strconv.Itoa(ntpri)+" "+rdataTarget[r])
 			r++
@@ -2850,7 +2842,7 @@ func checkSoaRecord(d *schema.ResourceData) error {
 	return nil
 }
 
-func checkAkamaiTlcRecord(*schema.ResourceData) error {
+func checkAkamaiTlcRecord(_ *schema.ResourceData) error {
 	return fmt.Errorf("AKAMAITLC is a READ ONLY record")
 }
 

@@ -540,9 +540,9 @@ func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m 
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	// Static properties cannot have traffic_targets. Non Static properties must
+	// Static properties cannot have traffic_targets. Non-static properties must
 	traffTargList, err := tf.GetInterfaceArrayValue("traffic_target", d)
-	if strings.ToUpper(propertyType) == "STATIC" && err == nil && (traffTargList != nil && len(traffTargList) > 0) {
+	if strings.ToUpper(propertyType) == "STATIC" && err == nil && (len(traffTargList) > 0) {
 		logger.Errorf("Property %s create error. Static property cannot have traffic targets", propertyName)
 		return diag.Errorf("property create error. Static property cannot have traffic targets")
 	}
@@ -773,7 +773,7 @@ func resourceGTMv1PropertyImport(d *schema.ResourceData, m interface{}) ([]*sche
 	}
 	populateTerraformPropertyState(d, prop, m)
 
-	// use same Id as passed in
+	// use same id as passed in
 	logger.Infof("Property [%s] [%s] Imported", d.Id(), d.Get("name"))
 	return []*schema.ResourceData{d}, nil
 }
@@ -1103,7 +1103,7 @@ func populateTerraformPropertyState(d *schema.ResourceData, prop *gtm.GetPropert
 		"cname":                       prop.CName,
 		"comments":                    prop.Comments,
 	} {
-		// walk thru all state elements
+		// walk through all state elements
 		if stateKey == "dynamic_ttl" && stateValue == 0 {
 			// ttl value is not set; null -> 0
 			continue
@@ -1646,16 +1646,16 @@ func certificatesEqual(oldCertificates any, newLivenessTest any) bool {
 }
 
 // serversEqual checks whether provided sets of ip addresses contain the same entries
-func serversEqual(old, new interface{}) bool {
+func serversEqual(o, n interface{}) bool {
 	logger := log.Get("Akamai GTM", "serversEqual")
 
-	oldServers, ok := old.(*schema.Set)
+	oldServers, ok := o.(*schema.Set)
 	if !ok {
 		logger.Warnf("wrong type conversion: expected *schema.Set, got %T", oldServers)
 		return false
 	}
 
-	newServers, ok := new.(*schema.Set)
+	newServers, ok := n.(*schema.Set)
 	if !ok {
 		logger.Warnf("wrong type conversion: expected *schema.Set, got %T", newServers)
 		return false

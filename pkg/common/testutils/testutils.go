@@ -53,7 +53,7 @@ func TFTestTeardown() error {
 // be skipped unless the TEST_TODO environment variable is set to a non-empty value.
 func TODO(t *testing.T, message string) {
 	t.Helper()
-	t.Log(fmt.Sprintf("TODO: %s (%s)", message, t.Name()))
+	t.Logf("TODO: %s (%s)", message, t.Name())
 
 	if os.Getenv("TEST_TODO") == "" {
 		t.Skip("TODO: Set TEST_TODO=1 in env to run this test")

@@ -50,7 +50,7 @@ func useIam(iamCli iam.IAM, f func()) {
 
 // suppressLogging prevents logging output during the given func unless TEST_LOGGING env var is not empty. Use this
 // to keep log messages from polluting test output. Not thread-safe.
-func suppressLogging(t *testing.T, f func()) {
+func suppressLogging(t *testing.T, f func()) { //nolint:unused
 	t.Helper()
 
 	if os.Getenv("TEST_LOGGING") == "" {

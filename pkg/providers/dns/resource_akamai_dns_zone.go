@@ -243,7 +243,7 @@ func resourceDNSv2ZoneCreate(ctx context.Context, d *schema.ResourceData, m inte
 	}
 	// First try to get the zone from the API
 	logger.Debugf("Searching for zone [%s]", hostname)
-	zone, e := inst.Client(meta).GetZone(ctx, dns.GetZoneRequest{
+	_, e := inst.Client(meta).GetZone(ctx, dns.GetZoneRequest{
 		Zone: hostname,
 	})
 
@@ -306,7 +306,7 @@ func resourceDNSv2ZoneCreate(ctx context.Context, d *schema.ResourceData, m inte
 			})
 		}
 	}
-	zone, e = inst.Client(meta).GetZone(ctx, dns.GetZoneRequest{
+	zone, e := inst.Client(meta).GetZone(ctx, dns.GetZoneRequest{
 		Zone: hostname,
 	})
 	if e != nil {
@@ -372,7 +372,7 @@ func resourceDNSv2ZoneRead(ctx context.Context, d *schema.ResourceData, m interf
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	if strings.ToUpper(zone.Type) != strings.ToUpper(zoneType) {
+	if !strings.EqualFold(zone.Type, zoneType) {
 		return diag.Errorf("zone type has changed from %s to %s", zoneType, zone.Type)
 	}
 	if strings.ToUpper(zone.Type) == "PRIMARY" {

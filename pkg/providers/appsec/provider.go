@@ -42,12 +42,6 @@ func NewSubprovider(opts ...option) *Subprovider {
 	return inst
 }
 
-func withClient(c appsec.APPSEC) option {
-	return func(p *Subprovider) {
-		p.client = c
-	}
-}
-
 // Client returns the APPSEC interface
 func (p *Subprovider) Client(meta meta.Meta) appsec.APPSEC {
 	if p.client != nil {

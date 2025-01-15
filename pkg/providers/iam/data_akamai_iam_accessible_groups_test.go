@@ -62,6 +62,7 @@ func TestAccessibleGroups(t *testing.T) {
 		}
 	}
 
+	// nolint:revive
 	generateIntermediateChecksForGeneratedSubGroup := func(min, max int) resource.TestCheckFunc {
 		var testCases []resource.TestCheckFunc
 

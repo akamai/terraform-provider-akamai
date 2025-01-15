@@ -43,12 +43,6 @@ func NewSubprovider(opts ...option) *Subprovider {
 	return inst
 }
 
-func withClient(c networklists.NetworkList) option {
-	return func(p *Subprovider) {
-		p.client = c
-	}
-}
-
 // Client returns the NetworkList interface
 func (p *Subprovider) Client(meta meta.Meta) networklists.NetworkList {
 	if p.client != nil {

@@ -1031,7 +1031,7 @@ func TestAccessKeyResource(t *testing.T) {
 				},
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResAccessKey/changed_secret.tf"),
-					ExpectError: regexp.MustCompile("\\s*cannot update cloud access secret without update of cloud access key id,\\s*expect update of secret after import with no API calls"),
+					ExpectError: regexp.MustCompile(`\s*cannot update cloud access secret without update of cloud access key id,\s*expect update of secret after import with no API calls`),
 				},
 			},
 		},
@@ -2564,7 +2564,7 @@ func checkImport() resource.ImportStateCheckFunc {
 
 		if len(invalidValues) != 0 {
 
-			return fmt.Errorf(strings.Join(invalidValues, "\n"))
+			return fmt.Errorf("%s", strings.Join(invalidValues, "\n"))
 		}
 
 		return nil
@@ -2610,7 +2610,7 @@ func checkImportSingleCredential() resource.ImportStateCheckFunc {
 
 		if len(invalidValues) != 0 {
 
-			return fmt.Errorf(strings.Join(invalidValues, "\n"))
+			return fmt.Errorf("%s", strings.Join(invalidValues, "\n"))
 		}
 
 		return nil

@@ -782,12 +782,6 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 				// 1 - for policy_activation_version1.tf
 				expectFullActivation(m, policyID, v1, properties, staging, 1)
 				// 2 - for policy_activation_update_version2.tf
-				activations := make([]cloudlets.PolicyActivation, len(properties))
-				for _, p := range properties {
-					activations = append(activations, cloudlets.PolicyActivation{APIVersion: "1.0", Network: staging, PolicyInfo: cloudlets.PolicyInfo{
-						PolicyID: policyID, Version: v2, Status: cloudlets.PolicyActivationStatusInactive,
-					}, PropertyInfo: cloudlets.PropertyInfo{Name: p}})
-				}
 				// update
 				// poll until active -> waitForPolicyActivation()
 				expectListPolicyActivations(m, policyID, v2, staging, []string{"prp_0", "prp_1"}, active, "", 1, nil).Once()
@@ -1976,14 +1970,14 @@ func expectActivateV3PolicyVersion(m *v3.Mock, policyID, version, activationID i
 	}, err)
 }
 
-func expectWaitForV3Activation(m *v3.Mock, policyID, activationID int64, activations []v3.ActivationStatus, error error) {
-	if error != nil {
+func expectWaitForV3Activation(m *v3.Mock, policyID, activationID int64, activations []v3.ActivationStatus, err error) {
+	if err != nil {
 		m.On("GetPolicyActivation",
 			testutils.MockContext,
 			v3.GetPolicyActivationRequest{
 				PolicyID:     policyID,
 				ActivationID: activationID,
-			}).Return(nil, error).Once()
+			}).Return(nil, err).Once()
 		return
 	}
 	for idx := range activations {
