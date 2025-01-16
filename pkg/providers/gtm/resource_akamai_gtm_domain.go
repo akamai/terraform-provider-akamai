@@ -924,7 +924,7 @@ func waitForCompletion(ctx context.Context, domain string, m interface{}) (bool,
 			return true, nil
 		case "DENIED":
 			logger.Debugf("WAIT: Return DENIED")
-			return false, fmt.Errorf(propStat.Message)
+			return false, errors.New(propStat.Message)
 		case "PENDING":
 			if sleepTimeout <= 0 {
 				logger.Debugf("WAIT: Return TIMED OUT")

@@ -2,6 +2,7 @@ package cloudlets
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cloudlets"
@@ -151,7 +152,7 @@ func (strategy *v2ActivationStrategy) getPolicyActivation(ctx context.Context, p
 
 	ap, d := types.SetValueFrom(ctx, types.StringType, associatedProperties)
 	if d.HasError() {
-		return nil, fmt.Errorf(d.Errors()[0].Summary())
+		return nil, errors.New(d.Errors()[0].Summary())
 	}
 	data := policyActivationDataSourceModel{
 		PolicyID:             types.Int64Value(policyID),

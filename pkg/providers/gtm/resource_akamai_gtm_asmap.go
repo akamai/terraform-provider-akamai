@@ -118,7 +118,7 @@ func validateDefaultDC(ctx context.Context, meta meta.Meta, ddcField []interface
 		}
 		// ddc doesn't exist
 		if ddc["datacenter_id"].(int) != gtm.MapDefaultDC {
-			return fmt.Errorf(fmt.Sprintf("Default Datacenter %d does not exist", ddc["datacenter_id"].(int)))
+			return fmt.Errorf("Default Datacenter %d does not exist", ddc["datacenter_id"].(int))
 		}
 		_, err := Client(meta).CreateMapsDefaultDatacenter(ctx, domain) // create if not already.
 		if err != nil {

@@ -2,6 +2,7 @@ package edgeworkers
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"os"
 	"regexp"
@@ -71,7 +72,7 @@ var (
 		edgeWorkerGetReq := edgeworkers.GetEdgeWorkerIDRequest{
 			EdgeWorkerID: 1,
 		}
-		client.On("GetEdgeWorkerID", testutils.MockContext, edgeWorkerGetReq).Return(nil, fmt.Errorf(errorMessage)).Once()
+		client.On("GetEdgeWorkerID", testutils.MockContext, edgeWorkerGetReq).Return(nil, errors.New(errorMessage)).Once()
 	}
 
 	expectListEdgeWorkerVersionsError = func(client *edgeworkers.Mock, errorMessage string) {
@@ -79,7 +80,7 @@ var (
 			EdgeWorkerID: 1,
 		}
 		client.On("GetEdgeWorkerID", testutils.MockContext, edgeWorkerGetReq).Return(nil, nil).Once()
-		client.On("ListEdgeWorkerVersions", testutils.MockContext, edgeworkers.ListEdgeWorkerVersionsRequest{EdgeWorkerID: 1}).Return(nil, fmt.Errorf(errorMessage)).Once()
+		client.On("ListEdgeWorkerVersions", testutils.MockContext, edgeworkers.ListEdgeWorkerVersionsRequest{EdgeWorkerID: 1}).Return(nil, errors.New(errorMessage)).Once()
 	}
 
 	expectReadEdgeWorkerNoVersions = func(client *edgeworkers.Mock, data testDataForEdgeWorker, timesToRun int) {

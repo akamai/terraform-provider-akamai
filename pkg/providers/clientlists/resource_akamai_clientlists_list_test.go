@@ -1,6 +1,7 @@
 package clientlists
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -142,12 +143,12 @@ func TestResourceClientList(t *testing.T) {
 		}
 
 		expectAPIErrorWithUpdateList = func(client *clientlists.Mock, req clientlists.UpdateClientListRequest) {
-			err := fmt.Errorf(updateAPIError)
+			err := errors.New(updateAPIError)
 			client.On("UpdateClientList", testutils.MockContext, req).Return(nil, err).Once()
 		}
 
 		expectAPIErrorWithGetList = func(client *clientlists.Mock, req clientlists.GetClientListRequest) {
-			err := fmt.Errorf(getAPIError)
+			err := errors.New(getAPIError)
 			client.On("GetClientList", testutils.MockContext, req).Return(nil, err).Once()
 		}
 

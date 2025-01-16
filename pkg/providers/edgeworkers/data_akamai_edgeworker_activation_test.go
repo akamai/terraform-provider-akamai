@@ -1,6 +1,7 @@
 package edgeworkers
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -54,7 +55,7 @@ var (
 			EdgeWorkerID: 1,
 		}
 		listActivationsRes := edgeworkers.ListActivationsResponse{}
-		client.On("ListActivations", testutils.MockContext, listActivationsReq).Return(&listActivationsRes, fmt.Errorf(errorMessage)).Times(1)
+		client.On("ListActivations", testutils.MockContext, listActivationsReq).Return(&listActivationsRes, errors.New(errorMessage)).Times(1)
 	}
 
 	oneActivationData = testDataForEdgeWorkersActivation{

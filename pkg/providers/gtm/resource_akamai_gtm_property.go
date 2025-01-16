@@ -569,7 +569,7 @@ func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m 
 
 	if cStatus.Status.PropagationStatus == "DENIED" {
 		logger.Errorf(cStatus.Status.Message)
-		return diag.FromErr(fmt.Errorf(cStatus.Status.Message))
+		return diag.FromErr(errors.New(cStatus.Status.Message))
 	}
 
 	waitOnComplete, err := tf.GetBoolValue("wait_on_complete", d)
@@ -717,7 +717,7 @@ func resourceGTMv1PropertyUpdate(ctx context.Context, d *schema.ResourceData, m 
 	logger.Debugf("Property update status: %v", uStat)
 	if uStat.Status.PropagationStatus == "DENIED" {
 		logger.Debugf(uStat.Status.Message)
-		return diag.FromErr(fmt.Errorf(uStat.Status.Message))
+		return diag.FromErr(errors.New(uStat.Status.Message))
 	}
 
 	waitOnComplete, err := tf.GetBoolValue("wait_on_complete", d)
@@ -815,7 +815,7 @@ func resourceGTMv1PropertyDelete(ctx context.Context, d *schema.ResourceData, m 
 	logger.Debugf("Property delete status: %v", uStat)
 	if uStat.Status.PropagationStatus == "DENIED" {
 		logger.Errorf(uStat.Status.Message)
-		return diag.FromErr(fmt.Errorf(uStat.Status.Message))
+		return diag.FromErr(errors.New(uStat.Status.Message))
 	}
 
 	waitOnComplete, err := tf.GetBoolValue("wait_on_complete", d)

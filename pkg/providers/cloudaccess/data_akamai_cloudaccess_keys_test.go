@@ -132,7 +132,7 @@ func expectFullListAccessKeys(t *testing.T, client *cloudaccess.Mock, data testD
 	for _, key := range data.keys {
 		dateTime, err := date.Parse(key.createdTime)
 		if err != nil {
-			t.Fatalf(err.Error())
+			t.Fatal(err.Error())
 		}
 		listAccessKeysRes.AccessKeys = append(listAccessKeysRes.AccessKeys, cloudaccess.AccessKeyResponse{
 			AccessKeyUID:         key.accessKeyUID,

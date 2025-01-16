@@ -645,7 +645,7 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 			updatedFields = append(updatedFields, "'auto_acknowledge_rule_warnings'")
 		}
 		if len(updatedFields) > 0 {
-			return diag.Errorf("Cannot update " + strings.Join(updatedFields, ", ") + " field(s) while property version is ACTIVE. Deactivate the current version to update, or create a new property version activation.")
+			return diag.Errorf("Cannot update %s field(s) while property version is ACTIVE. Deactivate the current version to update, or create a new property version activation.", strings.Join(updatedFields, ", "))
 		}
 	}
 

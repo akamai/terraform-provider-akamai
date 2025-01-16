@@ -537,7 +537,7 @@ func discoverPolicyExecutionStrategy(ctx context.Context, meta meta.Meta, policy
 		errMessage += fmt.Sprintf("could not list V3 policies: %s", errV3)
 	}
 	if errMessage != "" {
-		return nil, 0, fmt.Errorf(errMessage)
+		return nil, 0, errors.New(errMessage)
 	}
 
 	return nil, 0, fmt.Errorf("policy '%s' does not exist", policyName)

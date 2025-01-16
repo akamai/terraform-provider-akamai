@@ -27,11 +27,11 @@ func TestDataKey(t *testing.T) {
 
 	stringDate1, err := date.Parse("2021-02-24T09:09:52.782555Z")
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 	stringDate2, err := date.Parse("2021-02-26T09:09:15.428314Z")
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 	testData := []cloudaccess.AccessKeyResponse{
 		{

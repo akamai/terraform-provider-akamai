@@ -1,6 +1,7 @@
 package cps
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"testing"
@@ -73,7 +74,7 @@ var (
 		getEnrollmentReq := cps.GetEnrollmentRequest{
 			EnrollmentID: data.EnrollmentID,
 		}
-		client.On("GetEnrollment", testutils.MockContext, getEnrollmentReq).Return(nil, fmt.Errorf(errorMessage)).Once()
+		client.On("GetEnrollment", testutils.MockContext, getEnrollmentReq).Return(nil, errors.New(errorMessage)).Once()
 	}
 
 	expectReadDVEnrollment = func(client *cps.Mock, data testDataForCPSCSR) {
@@ -103,7 +104,7 @@ var (
 
 		client.On("GetEnrollment", testutils.MockContext, getEnrollmentReq).Return(&getEnrollmentRes, nil).Once()
 		client.On("GetChangeStatus", testutils.MockContext, getChangeStatusReq).Return(getChangeStatusRes, nil).Once()
-		client.On("GetChangeThirdPartyCSR", testutils.MockContext, getChangeThirdPartyCSRReq).Return(nil, fmt.Errorf(errorMessage)).Once()
+		client.On("GetChangeThirdPartyCSR", testutils.MockContext, getChangeThirdPartyCSRReq).Return(nil, errors.New(errorMessage)).Once()
 	}
 
 	expectReadCPSCSRNoPendingChanges = func(client *cps.Mock, data testDataForCPSCSR, timesToRun int) {

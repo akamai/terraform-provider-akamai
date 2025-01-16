@@ -2564,7 +2564,7 @@ func checkImport() resource.ImportStateCheckFunc {
 
 		if len(invalidValues) != 0 {
 
-			return fmt.Errorf("%s", strings.Join(invalidValues, "\n"))
+			return fmt.Errorf("found invalid values: %s", strings.Join(invalidValues, "\n"))
 		}
 
 		return nil
@@ -2610,7 +2610,7 @@ func checkImportSingleCredential() resource.ImportStateCheckFunc {
 
 		if len(invalidValues) != 0 {
 
-			return fmt.Errorf("%s", strings.Join(invalidValues, "\n"))
+			return fmt.Errorf("found invalid values: %s", strings.Join(invalidValues, "\n"))
 		}
 
 		return nil

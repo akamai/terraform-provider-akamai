@@ -393,8 +393,8 @@ func checkImportCIDRBlock(data commonDataForResource) resource.ImportStateCheckF
 			}
 		}
 
-		if len(invalidValues) != 0 {
-			return fmt.Errorf(strings.Join(invalidValues, "\n"))
+		if len(invalidValues) > 0 {
+			return fmt.Errorf("found invalid values: %s", strings.Join(invalidValues, "\n"))
 		}
 		return nil
 	}

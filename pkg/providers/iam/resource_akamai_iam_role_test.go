@@ -1,6 +1,7 @@
 package iam
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -78,7 +79,7 @@ func TestResourceIAMRole(t *testing.T) {
 				},
 			}
 
-			err := fmt.Errorf(updateAPIError)
+			err := errors.New(updateAPIError)
 
 			client.On("UpdateRole", testutils.MockContext, roleUpdateReq).Return(nil, err).Once()
 		}
@@ -103,7 +104,7 @@ func TestResourceIAMRole(t *testing.T) {
 				ID:           roleID,
 				GrantedRoles: true,
 			}
-			err := fmt.Errorf(readAPIError)
+			err := errors.New(readAPIError)
 
 			client.On("GetRole", testutils.MockContext, roleGetReq).Return(nil, err).Once()
 		}

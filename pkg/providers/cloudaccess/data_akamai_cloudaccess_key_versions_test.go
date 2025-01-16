@@ -18,7 +18,7 @@ func TestDataKeyVersions(t *testing.T) {
 	dateString := "2021-02-26T09:09:15.428314Z"
 	dateTime, err := date.Parse(dateString)
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 	accessKeyUID := int64(56512)
 

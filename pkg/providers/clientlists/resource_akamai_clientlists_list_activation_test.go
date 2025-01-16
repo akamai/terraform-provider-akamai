@@ -1,6 +1,7 @@
 package clientlists
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -95,7 +96,7 @@ func TestClientListActivationResource(t *testing.T) {
 		}
 
 		expectAPIErrorWithCreateActivation = func(client *clientlists.Mock, req clientlists.CreateActivationRequest) {
-			err := fmt.Errorf(createActivationAPIError)
+			err := errors.New(createActivationAPIError)
 			client.On("CreateActivation", testutils.MockContext, req).Return(nil, err).Once()
 		}
 

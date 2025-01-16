@@ -126,7 +126,7 @@ func assertAttributeFor(state *terraform.InstanceState, key string, data checkDa
 		return fmt.Errorf("attribute %q was present and has a value: %q, but shouldn't be", key, data.value)
 	}
 	if !data.isMissing && !exists {
-		return fmt.Errorf(fmt.Sprintf("attribute %q was not present, but should have a value: %q", key, data.value))
+		return fmt.Errorf("attribute %q was not present, but should have a value: %q", key, data.value)
 	}
 	if !data.isMissing && (data.value != valueInState) {
 		return fmt.Errorf("attribute %q has incorrect value %q, but should have %q", key, valueInState, data.value)

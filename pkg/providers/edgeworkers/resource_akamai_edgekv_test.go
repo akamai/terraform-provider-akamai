@@ -71,7 +71,7 @@ func Test_populateEKV(t *testing.T) {
 					},
 				}).Return(nil, errors.New(anError)).Once()
 			},
-			withError: fmt.Errorf(anError),
+			withError: errors.New(anError),
 		},
 		"max attempts not reached": {
 			network: staging,
