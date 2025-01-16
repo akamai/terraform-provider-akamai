@@ -30,9 +30,12 @@ var (
 var _ subprovider.Subprovider = &Subprovider{}
 
 // NewSubprovider returns a new DNS subprovider
-func NewSubprovider() *Subprovider {
+func NewSubprovider(opts ...option) *Subprovider {
 	once.Do(func() {
 		inst = &Subprovider{}
+		for _, opt := range opts {
+			opt(inst)
+		}
 	})
 
 	return inst

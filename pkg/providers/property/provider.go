@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"sync"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/hapi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/iam"
@@ -20,6 +21,14 @@ import (
 type (
 	// Subprovider gathers property resources and data sources
 	Subprovider struct{}
+
+	option func(p *Subprovider)
+)
+
+var (
+	once sync.Once
+
+	inst *Subprovider
 )
 
 var (
@@ -33,8 +42,16 @@ var (
 )
 
 // NewSubprovider returns a new property subprovider
-func NewSubprovider() *Subprovider {
-	return &Subprovider{}
+func NewSubprovider(opts ...option) *Subprovider {
+	once.Do(func() {
+		inst = &Subprovider{}
+
+		for _, opt := range opts {
+			opt(inst)
+		}
+	})
+
+	return inst
 }
 
 // Client returns the PAPI interface
