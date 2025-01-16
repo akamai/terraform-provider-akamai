@@ -238,7 +238,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
 						Check: checkAttributes(loadBalancerAttributes{
 							originID:      "test_origin",
 							version:       "1",
@@ -247,7 +247,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 						}),
 					},
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_update.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/alb_update.tf", testDir),
 						Check: checkAttributes(loadBalancerAttributes{
 							originID:      "test_origin",
 							version:       "2",
@@ -278,7 +278,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
 						Check: checkAttributes(loadBalancerAttributes{
 							originID:      "test_origin",
 							version:       "1",
@@ -287,7 +287,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 						}),
 					},
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_update.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/alb_update.tf", testDir),
 						Check: checkAttributes(loadBalancerAttributes{
 							originID:      "test_origin",
 							version:       "1",
@@ -318,7 +318,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
 						Check: checkAttributes(loadBalancerAttributes{
 							originID:      "test_origin",
 							version:       "1",
@@ -327,7 +327,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 						}),
 					},
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_update.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/alb_update.tf", testDir),
 						Check: checkAttributes(loadBalancerAttributes{
 							originID:      "test_origin",
 							version:       "1",
@@ -358,7 +358,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
 						Check: checkAttributes(loadBalancerAttributes{
 							originID:      "test_origin",
 							version:       "1",
@@ -367,7 +367,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 						}),
 					},
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_update.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/alb_update.tf", testDir),
 						Check: checkAttributes(loadBalancerAttributes{
 							originID:      "test_origin",
 							version:       "1",
@@ -405,7 +405,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
 						Check: checkAttributes(loadBalancerAttributes{
 							originID:      "test_origin",
 							version:       "1",
@@ -414,7 +414,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 						}),
 					},
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_update.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/alb_update.tf", testDir),
 						Check: checkAttributes(loadBalancerAttributes{
 							originID:      "test_origin",
 							version:       "1",
@@ -450,7 +450,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
+						Config:      testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
 						ExpectError: regexp.MustCompile("creating origin"),
 					},
 				},
@@ -516,7 +516,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
+						Config:      testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
 						ExpectError: regexp.MustCompile("creating version"),
 					},
 				},
@@ -542,7 +542,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
 						Check: checkAttributes(loadBalancerAttributes{
 							originID:      "test_origin",
 							version:       "1",
@@ -551,7 +551,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 						}),
 					},
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_update.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/alb_update.tf", testDir),
 						Check: checkAttributes(loadBalancerAttributes{
 							originID:      "test_origin",
 							version:       "2",
@@ -583,7 +583,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
 						Check: checkAttributes(loadBalancerAttributes{
 							originID:          "test_origin",
 							version:           "1",
@@ -593,7 +593,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 						}),
 					},
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_update.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/alb_update.tf", testDir),
 						Check: checkAttributes(loadBalancerAttributes{
 							originID:          "test_origin",
 							version:           "2",
@@ -629,7 +629,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
+						Config:      testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
 						ExpectError: regexp.MustCompile("fetching version"),
 					},
 				},
@@ -653,7 +653,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
 					},
 					{
 						ImportState:       true,
@@ -682,7 +682,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
 					},
 					{
 						ImportState:   true,
@@ -709,7 +709,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
 					},
 					{
 						ImportState: true,
@@ -740,7 +740,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
 					},
 					{
 						ImportState:   true,
@@ -774,7 +774,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
 						ExpectError: regexp.MustCompile("'liveness_hosts' field should be omitted for GTM hostname: \"test-hostname\". " +
 							"Liveness tests for this host can be configured in DNS traffic management"),
 					},
@@ -808,10 +808,10 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
 					},
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_update.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/alb_update.tf", testDir),
 						ExpectError: regexp.MustCompile("'liveness_hosts' field should be omitted for GTM hostname: \"test-hostname\". " +
 							"Liveness tests for this host can be configured in DNS traffic management"),
 					},
@@ -830,7 +830,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/alb_create.tf", testDir)),
+						Config:      testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
 						ExpectError: regexp.MustCompile("the total data center percentage must be 100%: total=10.012%"),
 					},
 				},

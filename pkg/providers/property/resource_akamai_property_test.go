@@ -1073,11 +1073,11 @@ func TestPropertyLifecycle(t *testing.T) {
 						ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 						Steps: []resource.TestStep{
 							{
-								Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/Lifecycle/%s/step0.tf", test.configDir),
+								Config: testutils.LoadFixtureStringf(t, "testdata/TestResProperty/Lifecycle/%s/step0.tf", test.configDir),
 								Check:  test.checksForCreate,
 							},
 							{
-								Config:           testutils.LoadFixtureString(t, "testdata/TestResProperty/Lifecycle/%s/step1.tf", test.configDir),
+								Config:           testutils.LoadFixtureStringf(t, "testdata/TestResProperty/Lifecycle/%s/step1.tf", test.configDir),
 								Check:            test.checksForUpdate,
 								ConfigPlanChecks: test.configPlanChecks,
 								ExpectError:      test.updateError,
@@ -1118,7 +1118,7 @@ func TestPropertyLifecycle(t *testing.T) {
 		}
 		// create
 		mockResourcePropertyFullCreate(mp)
-		// mock rules in the format that API returns to test custom diff functionality on rules (notice `"cpCodeLimits": nil`, which was not present in the request.
+		// mock rules in the format that API returns to test custom diff functionality on rules (notice `"cpCodeLimits": nil`), which was not present in the request.
 		mp.ruleTree.rules = papi.Rules{Behaviors: []papi.RuleBehavior{
 			{
 				Name: "cpCode",
@@ -1762,7 +1762,7 @@ func TestPropertyErrors(t *testing.T) {
 				// First call to remove is not successful because property is active
 				err := fmt.Errorf(`cannot remove active property "prp_4"`)
 				p.mockRemoveProperty(err)
-				// Second call will be successful (TF test case requires last state to be empty or it's a failed test)
+				// Second call will be successful (TF test case requires last state to be empty, or it's a failed test)
 				p.mockRemoveProperty()
 			},
 			steps: []resource.TestStep{
@@ -2173,7 +2173,7 @@ func TestSchemaConfiguration(t *testing.T) {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{{
-					Config:      testutils.LoadFixtureString(t, "testdata/TestResProperty/ConfigError/%s.tf", fixtureName),
+					Config:      testutils.LoadFixtureStringf(t, "testdata/TestResProperty/ConfigError/%s.tf", fixtureName),
 					ExpectError: regexp.MustCompile(rx),
 				}},
 			})
@@ -2296,32 +2296,32 @@ func TestPropertyResource_VersionNotesLifecycle(t *testing.T) {
 			ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 			Steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, path.Join(testdataDir, "01_with_notes_and_comments.tf")),
+					Config: testutils.LoadFixtureStringf(t, "%s/01_with_notes_and_comments.tf", testdataDir),
 					Check: checker.
 						CheckEqual("version_notes", "lifecycleTest").
-						CheckEqual("rules", testutils.LoadFixtureString(t, path.Join(testdataDir, "01_expected_rules.json"))).
+						CheckEqual("rules", testutils.LoadFixtureStringf(t, "%s/01_expected_rules.json", testdataDir)).
 						Build(),
 				},
 				{
-					Config:   testutils.LoadFixtureString(t, path.Join(testdataDir, "02_update_notes_no_diff.tf")),
+					Config:   testutils.LoadFixtureStringf(t, "%s/02_update_notes_no_diff.tf", testdataDir),
 					PlanOnly: true,
 				},
 				{
-					Config: testutils.LoadFixtureString(t, path.Join(testdataDir, "03_update_notes_and_rules.tf")),
+					Config: testutils.LoadFixtureStringf(t, "%s/03_update_notes_and_rules.tf", testdataDir),
 					Check: checker.
 						CheckEqual("version_notes", "updatedNotes2").
-						CheckEqual("rules", testutils.LoadFixtureString(t, path.Join(testdataDir, "03_expected_rules.json"))).
+						CheckEqual("rules", testutils.LoadFixtureStringf(t, "%s/03_expected_rules.json", testdataDir)).
 						Build(),
 				},
 				{
-					Config: testutils.LoadFixtureString(t, path.Join(testdataDir, "04_05_remove_notes_update_comments.tf")),
+					Config: testutils.LoadFixtureStringf(t, "%s/04_05_remove_notes_update_comments.tf", testdataDir),
 					Check: checker.
 						CheckEqual("version_notes", "Rules_04").
-						CheckEqual("rules", testutils.LoadFixtureString(t, path.Join(testdataDir, "04_expected_rules.json"))).
+						CheckEqual("rules", testutils.LoadFixtureStringf(t, "%s/04_expected_rules.json", testdataDir)).
 						Build(),
 				},
 				{
-					Config:   testutils.LoadFixtureString(t, path.Join(testdataDir, "04_05_remove_notes_update_comments.tf")),
+					Config:   testutils.LoadFixtureStringf(t, "%s/04_05_remove_notes_update_comments.tf", testdataDir),
 					PlanOnly: true,
 				},
 			},

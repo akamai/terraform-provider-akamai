@@ -44,7 +44,7 @@ func TestDataTimezones(t *testing.T) {
 				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, "testdata/%s/timezones.tf", workDir),
+						Config: testutils.LoadFixtureStringf(t, "testdata/%s/timezones.tf", workDir),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttrSet(resourceName, "id"),
 							resource.TestCheckResourceAttr(resourceName, "timezones.#", "3"),
@@ -80,7 +80,7 @@ func TestDataTimezones(t *testing.T) {
 				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
-						Config:      testutils.LoadFixtureString(t, "testdata/%s/timezones.tf", workDir),
+						Config:      testutils.LoadFixtureStringf(t, "testdata/%s/timezones.tf", workDir),
 						ExpectError: regexp.MustCompile("supported timezones: timezones could not be fetched"),
 					},
 				},

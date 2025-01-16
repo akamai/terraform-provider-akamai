@@ -133,7 +133,7 @@ func TestGroupDataSource(t *testing.T) {
 					IsUnitTest:               true,
 					Steps: []resource.TestStep{
 						{
-							Config:      testutils.LoadFixtureString(t, "testdata/TestDataGroup/%s", tc.givenTF),
+							Config:      testutils.LoadFixtureStringf(t, "testdata/TestDataGroup/%s", tc.givenTF),
 							Check:       tc.expectedChecks,
 							ExpectError: tc.expectedError,
 						},

@@ -606,7 +606,7 @@ func TestConvertToTemplate(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			expected := testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", templatesOut, test.expectedFile))
+			expected := testutils.LoadFixtureStringf(t, "%s/%s", templatesOut, test.expectedFile)
 			assert.Equal(t, expected, res)
 		})
 	}
@@ -638,7 +638,7 @@ func TestStringToTemplate(t *testing.T) {
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			givenString := testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", templates, test.givenFile))
+			givenString := testutils.LoadFixtureStringf(t, "%s/%s", templates, test.givenFile)
 			res, err := stringToTemplate(givenString, test.varMaps, "main")
 			fmt.Println(res)
 			if test.withError != nil {
@@ -646,7 +646,7 @@ func TestStringToTemplate(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			expected := testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", templatesOut, test.expectedFile))
+			expected := testutils.LoadFixtureStringf(t, "%s/%s", templatesOut, test.expectedFile)
 			assert.Equal(t, expected, res)
 		})
 	}

@@ -137,7 +137,7 @@ func TestResourceIAMRole(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/role_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/role_create.tf", testDir),
 						Check: checkAttributes(roleAttributes{
 							name:         "role name",
 							description:  "role description",
@@ -166,7 +166,7 @@ func TestResourceIAMRole(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/role_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/role_create.tf", testDir),
 						Check: checkAttributes(roleAttributes{
 							name:         "role name",
 							description:  "role description",
@@ -174,7 +174,7 @@ func TestResourceIAMRole(t *testing.T) {
 						}),
 					},
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/role_update.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/role_update.tf", testDir),
 						Check: checkAttributes(roleAttributes{
 							name:         "role name update",
 							description:  "role description update",
@@ -200,7 +200,7 @@ func TestResourceIAMRole(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/role_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/role_create.tf", testDir),
 						Check: checkAttributes(roleAttributes{
 							name:         "role name",
 							description:  "role description",
@@ -208,7 +208,7 @@ func TestResourceIAMRole(t *testing.T) {
 						}),
 					},
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/role_with_reordered_granted_roles.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/role_with_reordered_granted_roles.tf", testDir),
 						Check: checkAttributes(roleAttributes{
 							name:         "role name",
 							description:  "role description",
@@ -237,7 +237,7 @@ func TestResourceIAMRole(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/role_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/role_create.tf", testDir),
 						Check: checkAttributes(roleAttributes{
 							name:         "role name",
 							description:  "role description",
@@ -245,7 +245,7 @@ func TestResourceIAMRole(t *testing.T) {
 						}),
 					},
 					{
-						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/role_update.tf", testDir)),
+						Config:      testutils.LoadFixtureStringf(t, "%s/role_update.tf", testDir),
 						ExpectError: regexp.MustCompile(updateAPIError),
 					},
 				},
@@ -270,7 +270,7 @@ func TestResourceIAMRole(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/role_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/role_create.tf", testDir),
 						Check: checkAttributes(roleAttributes{
 							name:         "role name",
 							description:  "role description",
@@ -278,7 +278,7 @@ func TestResourceIAMRole(t *testing.T) {
 						}),
 					},
 					{
-						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/role_update.tf", testDir)),
+						Config:      testutils.LoadFixtureStringf(t, "%s/role_update.tf", testDir),
 						ExpectError: regexp.MustCompile(readAPIError),
 					},
 				},
@@ -300,7 +300,7 @@ func TestResourceIAMRole(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/role_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/role_create.tf", testDir),
 					},
 					{
 						ImportState:       true,

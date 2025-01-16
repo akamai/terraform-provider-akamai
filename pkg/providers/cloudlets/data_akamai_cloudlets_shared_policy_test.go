@@ -263,7 +263,7 @@ func TestSharedPolicyDataSource(t *testing.T) {
 					IsUnitTest:               true,
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{{
-						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestDataCloudletsSharedPolicy/%s", test.config)),
+						Config:      testutils.LoadFixtureStringf(t, "testdata/TestDataCloudletsSharedPolicy/%s", test.config),
 						Check:       checkAttrsForSharedPolicy(test.data),
 						ExpectError: test.expectError,
 					}},

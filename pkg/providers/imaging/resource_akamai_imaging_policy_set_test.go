@@ -96,7 +96,7 @@ func TestResourceImagingPolicySet(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, "%s/lifecycle/create.tf", testDir),
+					Config: testutils.LoadFixtureStringf(t, "%s/lifecycle/create.tf", testDir),
 					Check: resource.ComposeTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "id", "testID"),
 						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "name", "test_policy_set"),
@@ -128,7 +128,7 @@ func TestResourceImagingPolicySet(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, "%s/suppress_contract_prefix/create.tf", testDir),
+					Config: testutils.LoadFixtureStringf(t, "%s/suppress_contract_prefix/create.tf", testDir),
 					Check: resource.ComposeTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "id", "testID"),
 						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "name", "test_policy_set"),
@@ -148,7 +148,7 @@ func TestResourceImagingPolicySet(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, "%s/lifecycle/create.tf", testDir),
+					Config:      testutils.LoadFixtureStringf(t, "%s/lifecycle/create.tf", testDir),
 					ExpectError: regexp.MustCompile(anError.Error()),
 				},
 			},
@@ -174,7 +174,7 @@ func TestResourceImagingPolicySet(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, "%s/lifecycle/create.tf", testDir),
+					Config:      testutils.LoadFixtureStringf(t, "%s/lifecycle/create.tf", testDir),
 					ExpectError: regexp.MustCompile(anError.Error()),
 				},
 			},
@@ -207,7 +207,7 @@ func TestResourceImagingPolicySet(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, "%s/lifecycle/create.tf", testDir),
+					Config: testutils.LoadFixtureStringf(t, "%s/lifecycle/create.tf", testDir),
 					Check: resource.ComposeTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "id", "testID"),
 						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "name", "test_policy_set"),
@@ -217,7 +217,7 @@ func TestResourceImagingPolicySet(t *testing.T) {
 					),
 				},
 				{
-					Config: testutils.LoadFixtureString(t, "%s/lifecycle/update_region_us.tf", testDir),
+					Config: testutils.LoadFixtureStringf(t, "%s/lifecycle/update_region_us.tf", testDir),
 					Check: resource.ComposeTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "id", "testID"),
 						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "name", "test_policy_set"),
@@ -253,7 +253,7 @@ func TestResourceImagingPolicySet(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, "%s/suppress_contract_prefix/create.tf", testDir),
+					Config: testutils.LoadFixtureStringf(t, "%s/suppress_contract_prefix/create.tf", testDir),
 					Check: resource.ComposeTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "id", "testID"),
 						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "name", "test_policy_set"),
@@ -263,7 +263,7 @@ func TestResourceImagingPolicySet(t *testing.T) {
 					),
 				},
 				{
-					Config: testutils.LoadFixtureString(t, "%s/suppress_contract_prefix/update.tf", testDir),
+					Config: testutils.LoadFixtureStringf(t, "%s/suppress_contract_prefix/update.tf", testDir),
 					Check: resource.ComposeTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "id", "testID"),
 						resource.TestCheckResourceAttr("akamai_imaging_policy_set.test_image_set", "name", "test_policy_set"),
@@ -294,7 +294,7 @@ func TestResourceImagingPolicySet(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, "%s/lifecycle/create.tf", testDir),
+					Config: testutils.LoadFixtureStringf(t, "%s/lifecycle/create.tf", testDir),
 				},
 				{
 					ImportState:       true,
@@ -324,7 +324,7 @@ func TestResourceImagingPolicySet(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, "%s/lifecycle/create.tf", testDir),
+					Config: testutils.LoadFixtureStringf(t, "%s/lifecycle/create.tf", testDir),
 				},
 				{
 					ImportState:       true,

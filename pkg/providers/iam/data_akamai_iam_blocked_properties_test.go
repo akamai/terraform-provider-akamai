@@ -109,7 +109,7 @@ func TestBlockedPropertiesDataSource(t *testing.T) {
 					IsUnitTest:               true,
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{{
-						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestDataBlockedProperties/%s", tc.givenTF)),
+						Config:      testutils.LoadFixtureStringf(t, "testdata/TestDataBlockedProperties/%s", tc.givenTF),
 						Check:       tc.expectedCheck,
 						ExpectError: tc.expectError,
 					}},

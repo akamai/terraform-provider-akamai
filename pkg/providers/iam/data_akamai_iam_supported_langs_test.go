@@ -22,7 +22,7 @@ func TestDataSupportedLangs(t *testing.T) {
 				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, "testdata/%s/step0.tf", t.Name()),
+						Config: testutils.LoadFixtureStringf(t, "testdata/%s/step0.tf", t.Name()),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttrSet("data.akamai_iam_supported_langs.test", "id"),
 							resource.TestCheckResourceAttr("data.akamai_iam_supported_langs.test", "languages.#", "3"),
@@ -48,7 +48,7 @@ func TestDataSupportedLangs(t *testing.T) {
 				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
-						Config:      testutils.LoadFixtureString(t, "testdata/%s/step0.tf", t.Name()),
+						Config:      testutils.LoadFixtureStringf(t, "testdata/%s/step0.tf", t.Name()),
 						ExpectError: regexp.MustCompile(`Could not set supported languages in state`),
 					},
 				},

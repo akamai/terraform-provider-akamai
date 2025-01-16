@@ -441,7 +441,7 @@ func TestDataProperty(t *testing.T) {
 					IsUnitTest:               true,
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{{
-						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestDataProperty/%s", test.givenTF)),
+						Config:      testutils.LoadFixtureStringf(t, "testdata/TestDataProperty/%s", test.givenTF),
 						Check:       resource.ComposeAggregateTestCheckFunc(checkFuncs...),
 						ExpectError: test.withError,
 					},

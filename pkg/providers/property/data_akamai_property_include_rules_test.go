@@ -100,22 +100,22 @@ func TestDataPropertyIncludeRules(t *testing.T) {
 			init: func(t *testing.T, m *papi.Mock, testData testDataPropertyIncludeRules) {
 				expectReadPropertyRulesInclude(t, m, testData, 3, true, false, "rules_with_errors.json")
 			},
-			mockData:   propertyIncludeRulesWithRuleErrors(testDataIncludeRules(t), testutils.LoadFixtureString(t, "%s/property-snippets/rule_errors.json", workdir)),
+			mockData:   propertyIncludeRulesWithRuleErrors(testDataIncludeRules(t), testutils.LoadFixtureStringf(t, "%s/property-snippets/rule_errors.json", workdir)),
 			configPath: "./testdata/TestDSPropertyIncludeRules/property_include_rules.tf",
 		},
 		"happy path include rules with rules warnings": {
 			init: func(t *testing.T, m *papi.Mock, testData testDataPropertyIncludeRules) {
 				expectReadPropertyRulesInclude(t, m, testData, 3, false, true, "rules_with_warnings.json")
 			},
-			mockData:   propertyIncludeRulesWithRuleWarnings(testDataIncludeRules(t), testutils.LoadFixtureString(t, "%s/property-snippets/rule_warnings.json", workdir)),
+			mockData:   propertyIncludeRulesWithRuleWarnings(testDataIncludeRules(t), testutils.LoadFixtureStringf(t, "%s/property-snippets/rule_warnings.json", workdir)),
 			configPath: "./testdata/TestDSPropertyIncludeRules/property_include_rules.tf",
 		},
 		"happy path include rules with rules warnings and errors": {
 			init: func(t *testing.T, m *papi.Mock, testData testDataPropertyIncludeRules) {
 				expectReadPropertyRulesInclude(t, m, testData, 3, true, true, "rules_with_errors_and_warnings.json")
 			},
-			mockData: propertyIncludeRulesWithRuleWarningsAndErrors(testDataIncludeRules(t), testutils.LoadFixtureString(t, "%s/property-snippets/rule_warnings.json", workdir),
-				testutils.LoadFixtureString(t, "%s/property-snippets/rule_errors.json", workdir)),
+			mockData: propertyIncludeRulesWithRuleWarningsAndErrors(testDataIncludeRules(t), testutils.LoadFixtureStringf(t, "%s/property-snippets/rule_warnings.json", workdir),
+				testutils.LoadFixtureStringf(t, "%s/property-snippets/rule_errors.json", workdir)),
 			configPath: "./testdata/TestDSPropertyIncludeRules/property_include_rules.tf",
 		},
 		"happy path include rules": {
@@ -145,7 +145,7 @@ func TestDataPropertyIncludeRules(t *testing.T) {
 			init: func(_ *testing.T, m *papi.Mock, testData testDataPropertyIncludeRules) {
 				expectGetIncludeRuleTreeError(m, testData)
 			},
-			mockData:   propertyIncludeRulesWithRuleErrors(testDataIncludeRules(t), testutils.LoadFixtureString(t, "%s/property-snippets/rule_errors.json", workdir)),
+			mockData:   propertyIncludeRulesWithRuleErrors(testDataIncludeRules(t), testutils.LoadFixtureStringf(t, "%s/property-snippets/rule_errors.json", workdir)),
 			configPath: "./testdata/TestDSPropertyIncludeRules/property_include_rules_api_error.tf",
 			error:      regexp.MustCompile("GetIncludeRuleTree response error"),
 		},
@@ -213,6 +213,6 @@ func testDataIncludeRules(t *testing.T) testDataPropertyIncludeRules {
 		RuleFormat:  "v2022-06-28",
 		Name:        "TestIncludeName",
 		IncludeType: "MICROSERVICES",
-		Rules:       testutils.LoadFixtureString(t, "%s/property-snippets/rules_without_errors.json", workdir),
+		Rules:       testutils.LoadFixtureStringf(t, "%s/property-snippets/rules_without_errors.json", workdir),
 	}
 }

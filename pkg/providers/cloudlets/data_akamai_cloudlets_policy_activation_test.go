@@ -1,7 +1,6 @@
 package cloudlets
 
 import (
-	"fmt"
 	"net/http"
 	"regexp"
 	"testing"
@@ -138,7 +137,7 @@ func TestNonSharedPolicyActivationDataSource(t *testing.T) {
 					IsUnitTest:               true,
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestDataCloudletsPolicyActivation/%s", test.config),
+						Config:      testutils.LoadFixtureStringf(t, "testdata/TestDataCloudletsPolicyActivation/%s", test.config),
 						Check:       test.check,
 						ExpectError: test.expectError,
 					}},
@@ -405,7 +404,7 @@ func TestSharedPolicyActivationDataSource(t *testing.T) {
 					IsUnitTest:               true,
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{{
-						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestDataCloudletsPolicyActivation/%s", test.config)),
+						Config:      testutils.LoadFixtureStringf(t, "testdata/TestDataCloudletsPolicyActivation/%s", test.config),
 						Check:       test.check,
 						ExpectError: test.expectError,
 					}},

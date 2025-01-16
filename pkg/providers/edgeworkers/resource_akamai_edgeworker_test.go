@@ -3,7 +3,6 @@ package edgeworkers
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"io/fs"
 	"net/http"
 	"net/http/httptest"
@@ -387,7 +386,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworker_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/edgeworker_create.tf", testDir),
 						Check: checkAttributes(edgeWorkerAttributes{
 							name:            "example",
 							groupID:         "12345",
@@ -419,7 +418,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworker_create_with_timeout.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/edgeworker_create_with_timeout.tf", testDir),
 						Check: checkAttributes(edgeWorkerAttributes{
 							name:            "example",
 							groupID:         "12345",
@@ -466,7 +465,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworker_no_bundle.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/edgeworker_no_bundle.tf", testDir),
 						Check: checkAttributes(edgeWorkerAttributes{
 							name:            "example",
 							groupID:         "12345",
@@ -502,7 +501,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworker_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/edgeworker_create.tf", testDir),
 						Check: checkAttributes(edgeWorkerAttributes{
 							name:            "example",
 							groupID:         "12345",
@@ -513,7 +512,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 						}),
 					},
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworker_update_local_bundle.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/edgeworker_update_local_bundle.tf", testDir),
 						Check: checkAttributes(edgeWorkerAttributes{
 							name:            "example",
 							groupID:         "12345",
@@ -573,7 +572,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						PreConfig: prepareTempBundleLink(bundlePathForCreate, tempBundlePath),
-						Config:    testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworker_temp_bundle.tf", testDir)),
+						Config:    testutils.LoadFixtureStringf(t, "%s/edgeworker_temp_bundle.tf", testDir),
 						Check: checkAttributes(edgeWorkerAttributes{
 							name:            "example",
 							groupID:         "12345",
@@ -585,7 +584,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 					},
 					{
 						PreConfig: prepareTempBundleLink(bundlePathForUpdate, tempBundlePath),
-						Config:    testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworker_temp_bundle.tf", testDir)),
+						Config:    testutils.LoadFixtureStringf(t, "%s/edgeworker_temp_bundle.tf", testDir),
 						Check: checkAttributes(edgeWorkerAttributes{
 							name:            "example",
 							groupID:         "12345",
@@ -621,7 +620,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworker_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/edgeworker_create.tf", testDir),
 						Check: checkAttributes(edgeWorkerAttributes{
 							name:            "example",
 							groupID:         "12345",
@@ -632,7 +631,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 						}),
 					},
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworker_update_group_id.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/edgeworker_update_group_id.tf", testDir),
 						Check: checkAttributes(edgeWorkerAttributes{
 							name:            "example",
 							groupID:         "12346",
@@ -664,7 +663,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworker_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/edgeworker_create.tf", testDir),
 						Check: checkAttributes(edgeWorkerAttributes{
 							name:            "example",
 							groupID:         "12345",
@@ -675,7 +674,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 						}),
 					},
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworker_update_group_id_prefix.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/edgeworker_update_group_id_prefix.tf", testDir),
 						Check: checkAttributes(edgeWorkerAttributes{
 							name:            "example",
 							groupID:         "12345",
@@ -711,7 +710,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworker_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/edgeworker_create.tf", testDir),
 						Check: checkAttributes(edgeWorkerAttributes{
 							name:            "example",
 							groupID:         "12345",
@@ -722,7 +721,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 						}),
 					},
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworker_update_name.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/edgeworker_update_name.tf", testDir),
 						Check: checkAttributes(edgeWorkerAttributes{
 							name:            "example update",
 							groupID:         "12345",
@@ -795,7 +794,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworker_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/edgeworker_create.tf", testDir),
 						Check: checkAttributes(edgeWorkerAttributes{
 							name:            "example",
 							groupID:         "12345",
@@ -859,7 +858,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworker_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/edgeworker_create.tf", testDir),
 						Check: checkAttributes(edgeWorkerAttributes{
 							name:            "example",
 							groupID:         "12345",
@@ -892,7 +891,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworker_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/edgeworker_create.tf", testDir),
 					},
 					{
 						ImportState:             true,

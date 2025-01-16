@@ -24,7 +24,7 @@ func TestDataStates(t *testing.T) {
 				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, "testdata/%s/step0.tf", t.Name()),
+						Config: testutils.LoadFixtureStringf(t, "testdata/%s/step0.tf", t.Name()),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttrSet("data.akamai_iam_states.test", "id"),
 							resource.TestCheckResourceAttr("data.akamai_iam_states.test", "states.#", "3"),
@@ -52,7 +52,7 @@ func TestDataStates(t *testing.T) {
 				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
-						Config:      testutils.LoadFixtureString(t, "testdata/%s/step0.tf", t.Name()),
+						Config:      testutils.LoadFixtureStringf(t, "testdata/%s/step0.tf", t.Name()),
 						ExpectError: regexp.MustCompile(`Could not get states`),
 					},
 				},

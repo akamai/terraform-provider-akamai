@@ -167,7 +167,7 @@ func TestDataGTMGeoMaps(t *testing.T) {
 					IsUnitTest:               true,
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{{
-						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestDataGtmGeomaps/%s", test.givenTF)),
+						Config:      testutils.LoadFixtureStringf(t, "testdata/TestDataGtmGeomaps/%s", test.givenTF),
 						Check:       resource.ComposeAggregateTestCheckFunc(checkFuncs...),
 						ExpectError: test.expectError,
 					}},

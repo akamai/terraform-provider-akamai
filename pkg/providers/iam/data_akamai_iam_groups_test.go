@@ -41,7 +41,7 @@ func TestDataGroups(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, "testdata/%s/step0.tf", t.Name()),
+						Config: testutils.LoadFixtureStringf(t, "testdata/%s/step0.tf", t.Name()),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "id", "akamai_iam_groups"),
 
@@ -92,7 +92,7 @@ func TestDataGroups(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config:      testutils.LoadFixtureString(t, "testdata/%s/step0.tf", t.Name()),
+						Config:      testutils.LoadFixtureStringf(t, "testdata/%s/step0.tf", t.Name()),
 						ExpectError: regexp.MustCompile(`failed to list groups`),
 					},
 				},

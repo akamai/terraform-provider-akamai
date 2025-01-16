@@ -707,14 +707,14 @@ func TestResourceUpdate(t *testing.T) {
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
-							Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/update_resource/create_stream_%s.tf", createStreamFilenameSuffix),
+							Config: testutils.LoadFixtureStringf(t, "testdata/TestResourceStream/update_resource/create_stream_%s.tf", createStreamFilenameSuffix),
 							Check: resource.ComposeTestCheckFunc(
 								commonChecks,
 								resource.TestCheckResourceAttr("akamai_datastream.s", "active", strconv.FormatBool(test.CreateStreamActive)),
 							),
 						},
 						{
-							Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/update_resource/update_stream_%s.tf", updateStreamFilenameSuffix),
+							Config: testutils.LoadFixtureStringf(t, "testdata/TestResourceStream/update_resource/update_stream_%s.tf", updateStreamFilenameSuffix),
 							Check: resource.ComposeTestCheckFunc(
 								commonChecks,
 								resource.TestCheckResourceAttr("akamai_datastream.s", "active", strconv.FormatBool(test.UpdateStreamActive)),
@@ -1002,7 +1002,7 @@ func TestEmailIDs(t *testing.T) {
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
-							Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/email_ids/%s", test.Filename),
+							Config: testutils.LoadFixtureStringf(t, "testdata/TestResourceStream/email_ids/%s", test.Filename),
 							Check:  resource.ComposeTestCheckFunc(test.TestChecks...),
 						},
 					},
@@ -1501,7 +1501,7 @@ func TestCustomHeaders(t *testing.T) {
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
-							Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/custom_headers/%s", test.Filename),
+							Config: testutils.LoadFixtureStringf(t, "testdata/TestResourceStream/custom_headers/%s", test.Filename),
 							Check:  resource.ComposeTestCheckFunc(test.TestChecks...),
 						},
 					},
@@ -1726,7 +1726,7 @@ func TestMTLS(t *testing.T) {
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
-							Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/mtls/%s", test.Filename),
+							Config: testutils.LoadFixtureStringf(t, "testdata/TestResourceStream/mtls/%s", test.Filename),
 							Check:  resource.ComposeTestCheckFunc(test.TestChecks...),
 						},
 					},
@@ -2195,7 +2195,7 @@ func TestConnectors(t *testing.T) {
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
-							Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/connectors/%s", test.Filename),
+							Config: testutils.LoadFixtureStringf(t, "testdata/TestResourceStream/connectors/%s", test.Filename),
 							Check:  resource.ComposeTestCheckFunc(test.TestChecks...),
 						},
 					},

@@ -22,7 +22,7 @@ func TestDataContactTypes(t *testing.T) {
 				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, "testdata/%s/step0.tf", t.Name()),
+						Config: testutils.LoadFixtureStringf(t, "testdata/%s/step0.tf", t.Name()),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttrSet("data.akamai_iam_contact_types.test", "id"),
 							resource.TestCheckResourceAttr("data.akamai_iam_contact_types.test", "contact_types.#", "3"),
@@ -49,7 +49,7 @@ func TestDataContactTypes(t *testing.T) {
 				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
-						Config:      testutils.LoadFixtureString(t, "testdata/%v/step0.tf", t.Name()),
+						Config:      testutils.LoadFixtureStringf(t, "testdata/%v/step0.tf", t.Name()),
 						ExpectError: regexp.MustCompile(`failed to get supported contact types`),
 					},
 				},

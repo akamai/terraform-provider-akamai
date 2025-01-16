@@ -82,7 +82,7 @@ func TestAccountSwitchKeys(t *testing.T) {
 					IsUnitTest:               true,
 					Steps: []resource.TestStep{
 						{
-							Config:      testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestDataAccountSwitchKeys/%s", tc.givenTF)),
+							Config:      testutils.LoadFixtureStringf(t, "testdata/TestDataAccountSwitchKeys/%s", tc.givenTF),
 							Check:       checkAccountSwitchKeysAttrs(),
 							ExpectError: tc.error,
 						},
