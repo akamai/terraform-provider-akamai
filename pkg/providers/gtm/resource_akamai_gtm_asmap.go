@@ -687,16 +687,16 @@ func assignmentDiffSuppress(_, _, _ string, d *schema.ResourceData) bool {
 }
 
 // asNumbersEqual checks whether the as_numbers are equal
-func asNumbersEqual(old, new interface{}) bool {
+func asNumbersEqual(o, n interface{}) bool {
 	logger := log.Get("Akamai GTM", "asNumbersEqual")
 
-	oldVal, ok := old.(*schema.Set)
+	oldVal, ok := o.(*schema.Set)
 	if !ok {
 		logger.Warnf("wrong type conversion: expected *schema.Set, got %T", oldVal)
 		return false
 	}
 
-	newVal, ok := new.(*schema.Set)
+	newVal, ok := n.(*schema.Set)
 	if !ok {
 		logger.Warnf("wrong type conversion: expected *schema.Set, got %T", newVal)
 		return false

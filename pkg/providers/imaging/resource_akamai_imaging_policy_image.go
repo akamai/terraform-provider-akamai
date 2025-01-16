@@ -413,24 +413,24 @@ func resourcePolicyImageImport(ctx context.Context, d *schema.ResourceData, m in
 	return []*schema.ResourceData{d}, nil
 }
 
-func diffSuppressPolicyImage(_, old, new string, _ *schema.ResourceData) bool {
-	return equalPolicyImage(old, new)
+func diffSuppressPolicyImage(_, o, n string, _ *schema.ResourceData) bool {
+	return equalPolicyImage(o, n)
 }
 
-func equalPolicyImage(old, new string) bool {
+func equalPolicyImage(o, n string) bool {
 	logger := log.Get("Imaging", "equalPolicyImage")
-	if old == new {
+	if o == n {
 		return true
 	}
 	var oldPolicy, newPolicy imaging.PolicyInputImage
-	if old == "" || new == "" {
-		return old == new
+	if o == "" || n == "" {
+		return o == n
 	}
-	if err := json.Unmarshal([]byte(old), &oldPolicy); err != nil {
+	if err := json.Unmarshal([]byte(o), &oldPolicy); err != nil {
 		logger.Errorf("Unable to unmarshal 'old' JSON policy: %s", err)
 		return false
 	}
-	if err := json.Unmarshal([]byte(new), &newPolicy); err != nil {
+	if err := json.Unmarshal([]byte(n), &newPolicy); err != nil {
 		logger.Errorf("Unable to unmarshal 'new' JSON policy: %s", err)
 		return false
 	}

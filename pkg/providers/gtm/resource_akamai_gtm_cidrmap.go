@@ -593,16 +593,16 @@ func createCIDRMapStruct(cidr *gtm.GetCIDRMapResponse) *gtm.CIDRMap {
 }
 
 // blocksEqual checks whether blocks are equal
-func blocksEqual(old, new interface{}) bool {
+func blocksEqual(o, n interface{}) bool {
 	logger := log.Get("Akamai GTM", "blocksEqual")
 
-	oldBlocks, ok := old.(*schema.Set)
+	oldBlocks, ok := o.(*schema.Set)
 	if !ok {
 		logger.Warnf("wrong type conversion: expected *schema.Set, got %T", oldBlocks)
 		return false
 	}
 
-	newBlocks, ok := new.(*schema.Set)
+	newBlocks, ok := n.(*schema.Set)
 	if !ok {
 		logger.Warnf("wrong type conversion: expected *schema.Set, got %T", newBlocks)
 		return false

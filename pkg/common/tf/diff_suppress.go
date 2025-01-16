@@ -21,9 +21,9 @@ func DiffSuppressAny(fncs ...schema.SchemaDiffSuppressFunc) schema.SchemaDiffSup
 
 // FieldPrefixSuppress returns schema.SchemaDiffSuppressFunc which verifies whether values are equal disregarding given prefix
 func FieldPrefixSuppress(prefix string) schema.SchemaDiffSuppressFunc {
-	return func(_, old, new string, _ *schema.ResourceData) bool {
-		trimPrefixFromOld := strings.TrimPrefix(old, prefix)
-		trimPrefixFromNew := strings.TrimPrefix(new, prefix)
+	return func(_, o, n string, _ *schema.ResourceData) bool {
+		trimPrefixFromOld := strings.TrimPrefix(o, prefix)
+		trimPrefixFromNew := strings.TrimPrefix(n, prefix)
 
 		return trimPrefixFromOld == trimPrefixFromNew
 	}

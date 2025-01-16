@@ -631,16 +631,16 @@ func createGeoMapStruct(geo *gtm.GetGeoMapResponse) *gtm.GeoMap {
 }
 
 // countriesEqual checks whether countries are equal
-func countriesEqual(old, new interface{}) bool {
+func countriesEqual(o, n interface{}) bool {
 	logger := log.Get("Akamai GTM", "countriesEqual")
 
-	oldCountries, ok := old.(*schema.Set)
+	oldCountries, ok := o.(*schema.Set)
 	if !ok {
 		logger.Warnf("wrong type conversion: expected *schema.Set, got %T", oldCountries)
 		return false
 	}
 
-	newCountries, ok := new.(*schema.Set)
+	newCountries, ok := n.(*schema.Set)
 	if !ok {
 		logger.Warnf("wrong type conversion: expected *schema.Set, got %T", newCountries)
 		return false

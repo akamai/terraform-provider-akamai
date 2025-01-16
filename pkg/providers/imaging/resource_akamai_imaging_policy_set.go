@@ -271,6 +271,6 @@ func filterRemainingPolicies(listPoliciesResponse *imaging.ListPoliciesResponse)
 	return remainingPolicies
 }
 
-func diffSuppressPolicySetContract(_, old, new string, _ *schema.ResourceData) bool {
-	return strings.TrimPrefix(old, "ctr_") == strings.TrimPrefix(new, "ctr_")
+func diffSuppressPolicySetContract(_, o, n string, _ *schema.ResourceData) bool {
+	return strings.TrimPrefix(o, "ctr_") == strings.TrimPrefix(n, "ctr_")
 }

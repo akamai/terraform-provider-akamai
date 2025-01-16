@@ -402,7 +402,6 @@ func TestDataCPSCSR(t *testing.T) {
 			error:      nil,
 		},
 		"enrollment_id not provided": {
-			mockData:   testDataForCPSCSR{},
 			configPath: "testdata/TestDataCPSCSR/no_enrollment_id.tf",
 			error:      regexp.MustCompile("Missing required argument"),
 		},
@@ -435,7 +434,9 @@ func TestDataCPSCSR(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &cps.Mock{}
-			test.init(client, test.mockData)
+			if test.init != nil {
+				test.init(client, test.mockData)
+			}
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),

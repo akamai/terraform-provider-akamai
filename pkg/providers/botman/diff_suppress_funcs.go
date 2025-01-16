@@ -8,13 +8,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func suppressEquivalentJSONDiffsGeneric(_, old, new string, _ *schema.ResourceData) bool {
+func suppressEquivalentJSONDiffsGeneric(_, o, n string, _ *schema.ResourceData) bool {
 	var ob, nb bytes.Buffer
-	if err := json.Compact(&ob, []byte(old)); err != nil {
+	if err := json.Compact(&ob, []byte(o)); err != nil {
 		return false
 	}
 
-	if err := json.Compact(&nb, []byte(new)); err != nil {
+	if err := json.Compact(&nb, []byte(n)); err != nil {
 		return false
 	}
 

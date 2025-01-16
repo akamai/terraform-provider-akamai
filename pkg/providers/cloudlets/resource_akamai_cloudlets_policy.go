@@ -430,32 +430,32 @@ func resourcePolicyImport(ctx context.Context, d *schema.ResourceData, m interfa
 	return []*schema.ResourceData{d}, nil
 }
 
-func diffSuppressGroupID(_, old, new string, _ *schema.ResourceData) bool {
-	return strings.TrimPrefix(old, "grp_") == strings.TrimPrefix(new, "grp_")
+func diffSuppressGroupID(_, o, n string, _ *schema.ResourceData) bool {
+	return strings.TrimPrefix(o, "grp_") == strings.TrimPrefix(n, "grp_")
 }
 
-func diffSuppressMatchRuleFormat(_, old, new string, _ *schema.ResourceData) bool {
-	return old == new || new == "" && cloudlets.MatchRuleFormat(old) == cloudlets.MatchRuleFormat10
+func diffSuppressMatchRuleFormat(_, o, n string, _ *schema.ResourceData) bool {
+	return o == n || n == "" && cloudlets.MatchRuleFormat(o) == cloudlets.MatchRuleFormat10
 }
 
-func diffSuppressMatchRules(_, old, new string, _ *schema.ResourceData) bool {
-	return diffMatchRules(old, new)
+func diffSuppressMatchRules(_, o, n string, _ *schema.ResourceData) bool {
+	return diffMatchRules(o, n)
 }
 
-func diffMatchRules(old, new string) bool {
+func diffMatchRules(o, n string) bool {
 	logger := log.Get("Cloudlets", "diffMatchRules")
-	if old == new {
+	if o == n {
 		return true
 	}
 	var oldRules, newRules []map[string]interface{}
-	if old == "" || new == "" {
-		return old == new
+	if o == "" || n == "" {
+		return o == n
 	}
-	if err := json.Unmarshal([]byte(old), &oldRules); err != nil {
+	if err := json.Unmarshal([]byte(o), &oldRules); err != nil {
 		logger.Errorf("Unable to unmarshal 'old' JSON rules: %s", err)
 		return false
 	}
-	if err := json.Unmarshal([]byte(new), &newRules); err != nil {
+	if err := json.Unmarshal([]byte(n), &newRules); err != nil {
 		logger.Errorf("Unable to unmarshal 'new' JSON rules: %s", err)
 		return false
 	}
