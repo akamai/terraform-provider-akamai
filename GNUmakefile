@@ -29,7 +29,7 @@ $(BIN)/%: | $(BIN) ; $(info $(M) Installing $(PACKAGE)...)
 GOIMPORTS = $(BIN)/goimports
 $(BIN)/goimports: PACKAGE=golang.org/x/tools/cmd/goimports@v0.24.0
 
-GOLANGCI_LINT_VERSION = v1.58.1
+GOLANGCI_LINT_VERSION = v1.63.4
 GOLANGCILINT = $(BIN)/golangci-lint
 $(BIN)/golangci-lint: ; $(info $(M) Installing golangci-lint...) @
 	$Q curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(BIN) $(GOLANGCI_LINT_VERSION)
