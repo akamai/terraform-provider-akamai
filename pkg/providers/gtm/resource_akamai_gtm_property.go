@@ -1178,8 +1178,8 @@ func populateTerraformTrafficTargetState(d *schema.ResourceData, prop *gtm.GetPr
 	for _, ttMap := range ttStateList {
 		tt := ttMap.(map[string]interface{})
 		objIndex := tt["datacenter_id"].(int)
-		ttObject := objectInventory[objIndex]
-		if &ttObject == nil {
+		ttObject, ok := objectInventory[objIndex]
+		if !ok {
 			logger.Warnf("Property TrafficTarget %d NOT FOUND in returned GTM Object", tt["datacenter_id"])
 			continue
 		}
@@ -1260,8 +1260,8 @@ func populateTerraformStaticRRSetState(d *schema.ResourceData, prop *gtm.GetProp
 	for _, rrMap := range rrStateList {
 		rr := rrMap.(map[string]interface{})
 		objIndex := rr["type"].(string)
-		rrObject := objectInventory[objIndex]
-		if &rrObject == nil {
+		rrObject, ok := objectInventory[objIndex]
+		if !ok {
 			logger.Warnf("Property StaticRRSet %s NOT FOUND in returned GTM Object", rr["type"])
 			continue
 		}
@@ -1374,8 +1374,8 @@ func populateTerraformLivenessTestState(d *schema.ResourceData, prop *gtm.GetPro
 	for _, ltMap := range ltStateList {
 		lt := ltMap.(map[string]interface{})
 		objIndex := lt["name"].(string)
-		ltObject := objectInventory[objIndex]
-		if &ltObject == nil {
+		ltObject, ok := objectInventory[objIndex]
+		if !ok {
 			logger.Warnf("Property LivenessTest  %s NOT FOUND in returned GTM Object", lt["name"])
 			continue
 		}

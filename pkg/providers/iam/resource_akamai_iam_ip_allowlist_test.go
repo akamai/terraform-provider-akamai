@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/iam"
@@ -253,6 +254,9 @@ func checkImportEnabledIPAllowlistForSpecificUser() resource.ImportStateCheckFun
 			if state[field] != expectedVal {
 				invalidValues = append(invalidValues, fmt.Sprintf("field: %s, got: %s, expected: %s ", field, state[field], expectedVal))
 			}
+		}
+		if len(invalidValues) > 0 {
+			return fmt.Errorf("found invalid values: %s", strings.Join(invalidValues, ","))
 		}
 		return nil
 	}

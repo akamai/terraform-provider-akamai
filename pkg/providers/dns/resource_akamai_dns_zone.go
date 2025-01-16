@@ -341,16 +341,13 @@ func resourceDNSv2ZoneRead(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.FromErr(err)
 	}
 	masterlist := masterSet.List()
-	masters := make([]string, 0, len(masterlist))
 	if len(masterlist) > 0 {
 		for _, master := range masterlist {
-			masterStr, ok := master.(string)
+			_, ok := master.(string)
 			if !ok {
 				return diag.Errorf("'master' is of invalid type; should be 'string'")
 			}
-			masters = append(masters, masterStr)
 		}
-
 	}
 	// find the zone first
 	logger.Debugf("Searching for zone [%s]", hostname)

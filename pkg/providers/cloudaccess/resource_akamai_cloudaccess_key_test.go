@@ -52,7 +52,7 @@ type (
 
 	commonDataForResource struct {
 		accessKeyData []commonDataForAccessKey
-		propertyData  *commonDataForProperty
+		propertyData  commonDataForProperty
 	}
 )
 
@@ -144,7 +144,7 @@ var (
 
 	resourceMock = commonDataForResource{
 		accessKeyData: []commonDataForAccessKey{accessKeyMock, secondKeyMock, onlyCredBMock, emptySecretMock},
-		propertyData:  &propertyMock,
+		propertyData:  propertyMock,
 	}
 
 	firstAccessKeyVersion  = int64(1)
@@ -2179,13 +2179,8 @@ func mockLookupsProperties(client *cloudaccess.Mock, testData commonDataForAcces
 	}}, nil)
 }
 
-func mockLookupsPropertiesNoProperties(client *cloudaccess.Mock, testData *commonDataForProperty, version int64) *mock.Call {
-	var lookupPropertiesRes cloudaccess.LookupPropertiesResponse
-	if testData != nil {
-		lookupPropertiesRes = cloudaccess.LookupPropertiesResponse{Properties: []cloudaccess.Property{}}
-	} else {
-		lookupPropertiesRes = cloudaccess.LookupPropertiesResponse{Properties: []cloudaccess.Property{}}
-	}
+func mockLookupsPropertiesNoProperties(client *cloudaccess.Mock, testData commonDataForProperty, version int64) *mock.Call {
+	lookupPropertiesRes := cloudaccess.LookupPropertiesResponse{Properties: []cloudaccess.Property{}}
 	return client.On("LookupProperties", testutils.MockContext, cloudaccess.LookupPropertiesRequest{
 		AccessKeyUID: testData.accessKeyUID,
 		Version:      version,

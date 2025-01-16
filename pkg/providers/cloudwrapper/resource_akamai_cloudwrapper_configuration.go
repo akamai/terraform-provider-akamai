@@ -452,7 +452,7 @@ func (r *ConfigurationResource) waitForDelete(ctx context.Context, id int64) dia
 		}
 
 		select {
-		case <-time.Tick(r.pollInterval):
+		case <-time.After(r.pollInterval):
 			continue
 		case <-ctx.Done():
 			diags.AddError("Deletion Terminated",

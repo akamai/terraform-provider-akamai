@@ -542,8 +542,8 @@ func populateTerraformGeoAssignmentsState(d *schema.ResourceData, geo *gtm.GetGe
 	for _, aMap := range aStateList {
 		a := aMap.(map[string]interface{})
 		objIndex := a["datacenter_id"].(int)
-		aObject := objectInventory[objIndex]
-		if &aObject == nil {
+		aObject, ok := objectInventory[objIndex]
+		if !ok {
 			logger.Warnf("Geo Assignment %d NOT FOUND in returned GTM Object", a["datacenter_id"])
 			continue
 		}

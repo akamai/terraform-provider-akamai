@@ -679,8 +679,8 @@ func populateTerraformResourceInstancesState(d *schema.ResourceData, rsrc *gtm.G
 	for _, riMap := range riStateList {
 		ri := riMap.(map[string]interface{})
 		objIndex := ri["datacenter_id"].(int)
-		riObject := riObjectInventory[objIndex]
-		if &riObject == nil {
+		riObject, ok := riObjectInventory[objIndex]
+		if !ok {
 			logger.Warnf("Resource_instance %d NOT FOUND in returned GTM Object", ri["datacenter_id"])
 			continue
 		}

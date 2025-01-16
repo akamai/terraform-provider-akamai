@@ -770,7 +770,7 @@ func (r *KeyResource) waitForDelete(ctx context.Context, accessKeyUID int64) dia
 		}
 
 		select {
-		case <-time.Tick(pollingInterval):
+		case <-time.After(pollingInterval):
 			continue
 		case <-ctx.Done():
 			diags.AddError("deletion terminated",
@@ -806,7 +806,7 @@ func (r *KeyResource) waitForVersionDelete(ctx context.Context, accessKeyUID int
 		}
 
 		select {
-		case <-time.Tick(pollingInterval):
+		case <-time.After(pollingInterval):
 			continue
 		case <-ctx.Done():
 			diags.AddError("deletion terminated",
