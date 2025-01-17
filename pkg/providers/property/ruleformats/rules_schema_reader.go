@@ -163,29 +163,6 @@ func (r *RulesSchemaReader) getCustomOverride(key string) (*papi.RuleCustomOverr
 	return customOverride, nil
 }
 
-func (r *RulesSchemaReader) getMapOfSlice(key string) (map[string][]any, error) { //nolint:unused
-	rawVal, ok := r.data.GetOk(key)
-	if !ok || rawVal == nil {
-		return nil, &NotFoundError{key}
-	}
-
-	mapVal, ok := rawVal.(map[string]any)
-	if !ok {
-		return nil, &TypeAssertionError{"map[string]any", typeof(rawVal), key}
-	}
-
-	mapUnpacked := make(map[string][]any, len(mapVal))
-	for name, val := range mapVal {
-		behaviorsSlice, ok := val.([]any)
-		if !ok {
-			return nil, &TypeAssertionError{"any", typeof(val), key}
-		}
-		mapUnpacked[name] = behaviorsSlice
-	}
-
-	return mapUnpacked, nil
-}
-
 func (r *RulesSchemaReader) getRuleItems(key string) ([]RuleItem, error) {
 	rawVal, ok := r.data.GetOk(key)
 	if !ok || rawVal == nil {
@@ -297,16 +274,8 @@ func (r *RulesSchemaReader) findRuleItem(itemsMap map[string]any) (RuleItem, err
 	return ruleItems[0], nil
 }
 
-func (r *RulesSchemaReader) behaviorsBaseKey() string { //nolint:unused
-	return fmt.Sprintf("%s.0.behaviors.0", r.ruleFormatKey)
-}
-
 func (r *RulesSchemaReader) behaviorsKey() string {
 	return fmt.Sprintf("%s.0.behavior", r.ruleFormatKey)
-}
-
-func (r *RulesSchemaReader) criteriaBaseKey() string { //nolint:unused
-	return fmt.Sprintf("%s.0.criteria.0", r.ruleFormatKey)
 }
 
 func (r *RulesSchemaReader) criteriaKey() string {

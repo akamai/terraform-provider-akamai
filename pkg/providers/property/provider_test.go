@@ -1,7 +1,6 @@
 package property
 
 import (
-	"os"
 	"sync"
 	"testing"
 
@@ -9,7 +8,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/iam"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
-	"github.com/hashicorp/go-hclog"
 )
 
 func TestMain(m *testing.M) {
@@ -44,20 +42,6 @@ func useIam(iamCli iam.IAM, f func()) {
 	defer func() {
 		iamClient = origIam
 	}()
-
-	f()
-}
-
-// suppressLogging prevents logging output during the given func unless TEST_LOGGING env var is not empty. Use this
-// to keep log messages from polluting test output. Not thread-safe.
-func suppressLogging(t *testing.T, f func()) { //nolint:unused
-	t.Helper()
-
-	if os.Getenv("TEST_LOGGING") == "" {
-		orig := hclog.SetDefault(hclog.NewNullLogger())
-		defer func() { hclog.SetDefault(orig) }()
-		t.Log("Logging is suppressed. Set TEST_LOGGING=1 in env to see logged messages during test")
-	}
 
 	f()
 }

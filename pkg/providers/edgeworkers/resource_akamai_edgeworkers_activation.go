@@ -105,12 +105,6 @@ const (
 	activationStatusInProgress = "IN_PROGRESS"
 )
 
-//nolint:unused
-const (
-	errorCodeVersionIsBeingDeactivated = "EW1031"
-	errorCodeVersionAlreadyDeactivated = "EW1032"
-)
-
 var validEdgeworkerActivationNetworks = []string{stagingNetwork, productionNetwork}
 
 var (
