@@ -137,7 +137,7 @@ func TestResGTMGeoMap(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmGeomap/create_basic.tf"),
-						ExpectError: regexp.MustCompile("geoMap Create failed"),
+						ExpectError: regexp.MustCompile("geoMap create error"),
 					},
 				},
 			})

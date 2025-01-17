@@ -304,7 +304,7 @@ func TestResGTMDomain(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/create_basic.tf"),
-						ExpectError: regexp.MustCompile("Domain Create failed"),
+						ExpectError: regexp.MustCompile("Domain create error"),
 					},
 				},
 			})

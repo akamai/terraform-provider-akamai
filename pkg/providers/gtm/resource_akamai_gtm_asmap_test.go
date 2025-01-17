@@ -196,7 +196,7 @@ func TestResGTMASMap(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmAsmap/create_basic.tf"),
-						ExpectError: regexp.MustCompile("asMap Create failed"),
+						ExpectError: regexp.MustCompile("asMap create error"),
 					},
 				},
 			})

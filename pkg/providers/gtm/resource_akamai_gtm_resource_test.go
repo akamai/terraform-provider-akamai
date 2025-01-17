@@ -132,7 +132,7 @@ func TestResGTMResource(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmResource/create_basic.tf"),
-						ExpectError: regexp.MustCompile("Resource Create failed"),
+						ExpectError: regexp.MustCompile("Resource create error"),
 					},
 				},
 			})

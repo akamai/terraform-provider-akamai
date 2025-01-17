@@ -179,7 +179,7 @@ func TestResGTMDatacenter(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmDatacenter/create_basic.tf"),
-						ExpectError: regexp.MustCompile("Datacenter Create failed"),
+						ExpectError: regexp.MustCompile("Datacenter create error"),
 					},
 				},
 			})

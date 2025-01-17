@@ -144,7 +144,7 @@ func (d *cidrMapDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		MapName:    data.Name.ValueString(),
 	})
 	if err != nil {
-		resp.Diagnostics.AddError("fetching GTM CIDRmap failed: ", err.Error())
+		resp.Diagnostics.AddError("fetching GTM CIDRMap failed: ", err.Error())
 		return
 	}
 

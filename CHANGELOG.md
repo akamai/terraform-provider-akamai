@@ -141,6 +141,10 @@
   * Fixed improper diff in `akamai_property` resource when no value was given in the child for
     the field `criteria_must_satisfy`, which the API sets to `all` by default.
 
+* GTM
+  * Unified error messages.
+
+
 
 
 

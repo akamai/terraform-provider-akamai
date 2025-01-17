@@ -237,10 +237,10 @@ func resourceGTMv1DomainCreate(ctx context.Context, d *schema.ResourceData, m in
 		DomainName: dname,
 	})
 	if err != nil && !errors.Is(err, gtm.ErrNotFound) {
-		logger.Errorf("Domain Read error: %s", err.Error())
+		logger.Errorf("Domain read error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "Domain Read error",
+			Summary:  "Domain read error",
 			Detail:   err.Error(),
 		})
 	}
@@ -262,10 +262,10 @@ func resourceGTMv1DomainCreate(ctx context.Context, d *schema.ResourceData, m in
 	logger.Debugf("Domain: [%v]", newDom)
 	queryArgs, err := GetQueryArgs(d)
 	if err != nil {
-		logger.Errorf("Domain Create failed: %s", err.Error())
+		logger.Errorf("Domain create error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "Domain Create failed",
+			Summary:  "Domain create error",
 			Detail:   err.Error(),
 		})
 	}
@@ -276,19 +276,19 @@ func resourceGTMv1DomainCreate(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		// Errored. Let's see if special hack
 		if !HashiAcc {
-			logger.Errorf("Domain Create failed: %s", err.Error())
+			logger.Errorf("Domain create error: %s", err.Error())
 			return append(diags, diag.Diagnostic{
 				Severity: diag.Error,
-				Summary:  "Domain Create failed",
+				Summary:  "Domain create error",
 				Detail:   err.Error(),
 			})
 		}
 		apiError, ok := err.(*gtm.Error)
 		if !ok && apiError.StatusCode != http.StatusBadRequest {
-			logger.Errorf("Domain Create failed: %s", err.Error())
+			logger.Errorf("Domain create error: %s", err.Error())
 			return append(diags, diag.Diagnostic{
 				Severity: diag.Error,
-				Summary:  "Domain Create failed",
+				Summary:  "Domain create error",
 				Detail:   err.Error(),
 			})
 		}
@@ -296,10 +296,10 @@ func resourceGTMv1DomainCreate(ctx context.Context, d *schema.ResourceData, m in
 			// Already exists
 			logger.Warnf("Domain %s already exists. Ignoring error (Hashicorp).", dname)
 		} else {
-			logger.Errorf("Error creating Domain [%s]", err.Error())
+			logger.Errorf("Domain create error: %s", err.Error())
 			return append(diags, diag.Diagnostic{
 				Severity: diag.Error,
-				Summary:  "Domain Create failed",
+				Summary:  "Domain create error",
 				Detail:   err.Error(),
 			})
 		}
@@ -321,15 +321,15 @@ func resourceGTMv1DomainCreate(ctx context.Context, d *schema.ResourceData, m in
 		if waitOnComplete {
 			done, err := waitForCompletion(ctx, dname, m)
 			if done {
-				logger.Infof("Domain Create completed")
+				logger.Infof("Domain create completed")
 			} else {
 				if err == nil {
-					logger.Infof("Domain Create pending")
+					logger.Infof("Domain create pending")
 				} else {
-					logger.Errorf("Domain Create failed [%s]", err.Error())
+					logger.Errorf("Domain create error: %s", err.Error())
 					return append(diags, diag.Diagnostic{
 						Severity: diag.Error,
-						Summary:  "Domain Create failed",
+						Summary:  "Domain create error",
 						Detail:   err.Error(),
 					})
 				}
@@ -364,10 +364,10 @@ func resourceGTMv1DomainRead(ctx context.Context, d *schema.ResourceData, m inte
 		return nil
 	}
 	if err != nil {
-		logger.Errorf("Domain Read error: %s", err.Error())
+		logger.Errorf("Domain read error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "Domain Read error",
+			Summary:  "Domain read error",
 			Detail:   err.Error(),
 		})
 	}
@@ -393,10 +393,10 @@ func resourceGTMv1DomainUpdate(ctx context.Context, d *schema.ResourceData, m in
 		DomainName: d.Id(),
 	})
 	if err != nil {
-		logger.Errorf("Domain Update failed: %s", err.Error())
+		logger.Errorf("Domain read error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "Update Domain read failed",
+			Summary:  "Domain read error",
 			Detail:   err.Error(),
 		})
 	}
@@ -407,13 +407,12 @@ func resourceGTMv1DomainUpdate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 	logger.Debugf("Updating Domain PROPOSED: %v", newDom)
-	//existDom := populateNewDomainObject(d)
 	args, err := GetQueryArgs(d)
 	if err != nil {
-		logger.Errorf("Domain Update failed: %s", err.Error())
+		logger.Errorf("Domain update error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "Domain Update error",
+			Summary:  "Domain update error",
 			Detail:   err.Error(),
 		})
 	}
@@ -423,10 +422,10 @@ func resourceGTMv1DomainUpdate(ctx context.Context, d *schema.ResourceData, m in
 		QueryArgs: args,
 	})
 	if err != nil {
-		logger.Errorf("Domain Update failed: %s", err.Error())
+		logger.Errorf("Domain update error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "Domain Update error",
+			Summary:  "Domain update error",
 			Detail:   err.Error(),
 		})
 	}
@@ -447,15 +446,15 @@ func resourceGTMv1DomainUpdate(ctx context.Context, d *schema.ResourceData, m in
 	if waitOnComplete {
 		done, err := waitForCompletion(ctx, d.Id(), m)
 		if done {
-			logger.Infof("Domain Update completed")
+			logger.Infof("Domain update completed")
 		} else {
 			if err == nil {
-				logger.Infof("Domain Update pending")
+				logger.Infof("Domain update pending")
 			} else {
-				logger.Errorf("Domain Update failed [%s]", err.Error())
+				logger.Errorf("Domain update error: %s", err.Error())
 				return append(diags, diag.Diagnostic{
 					Severity: diag.Error,
-					Summary:  "domain Update failed",
+					Summary:  "domain update error",
 					Detail:   err.Error(),
 				})
 			}
@@ -484,7 +483,7 @@ func resourceGTMv1DomainDelete(ctx context.Context, d *schema.ResourceData, m in
 		DomainName: d.Id(),
 	})
 	if err != nil {
-		logger.Errorf("Domain Delete failed: %s", err.Error())
+		logger.Errorf("Domain delete error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
 			Summary:  fmt.Sprintf("Invalid domain ID: %s", d.Id()),
@@ -498,29 +497,29 @@ func resourceGTMv1DomainDelete(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		// Errored. Let's see if special hack
 		if !HashiAcc {
-			logger.Errorf("Error Domain Delete: %s", err.Error())
+			logger.Errorf("Domain delete error: %s", err.Error())
 			return append(diags, diag.Diagnostic{
 				Severity: diag.Error,
-				Summary:  "Domain Delete error",
+				Summary:  "Domain delete error",
 				Detail:   err.Error(),
 			})
 		}
 		apiError, ok := err.(*gtm.Error)
 		if !ok && apiError.StatusCode != http.StatusMethodNotAllowed {
-			logger.Errorf("Error Domain Delete: %s", err.Error())
+			logger.Errorf("Domain delete error: %s", err.Error())
 			return append(diags, diag.Diagnostic{
 				Severity: diag.Error,
-				Summary:  "Domain Delete error",
+				Summary:  "Domain delete error",
 				Detail:   err.Error(),
 			})
 		}
 		if strings.Contains(apiError.Detail, "Bad Request") && strings.Contains(apiError.Detail, "DELETE method is not supported") {
 			logger.Warnf(": Domain %s delete failed.  Ignoring error (Hashicorp).", d.Id())
 		} else {
-			logger.Errorf("Error Domain Delete: %s", err.Error())
+			logger.Errorf("Domain delete error: %s", err.Error())
 			return append(diags, diag.Diagnostic{
 				Severity: diag.Error,
-				Summary:  "Domain Delete error",
+				Summary:  "Domain delete error",
 				Detail:   err.Error(),
 			})
 		}
@@ -542,15 +541,15 @@ func resourceGTMv1DomainDelete(ctx context.Context, d *schema.ResourceData, m in
 		if waitOnComplete {
 			done, err := waitForCompletion(ctx, d.Id(), m)
 			if done {
-				logger.Infof("Domain Delete completed")
+				logger.Infof("Domain delete completed")
 			} else {
 				if err == nil {
-					logger.Infof("Domain Delete pending")
+					logger.Infof("Domain delete pending")
 				} else {
-					logger.Errorf("Domain Delete failed [%s]", err.Error())
+					logger.Errorf("Domain delete error: %s", err.Error())
 					return append(diags, diag.Diagnostic{
 						Severity: diag.Error,
-						Summary:  "Domain Delete failed",
+						Summary:  "Domain delete error",
 						Detail:   err.Error(),
 					})
 				}

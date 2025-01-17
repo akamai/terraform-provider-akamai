@@ -152,7 +152,7 @@ func (d *resourcesDataSource) Read(ctx context.Context, request datasource.ReadR
 		DomainName: data.Domain.ValueString(),
 	})
 	if err != nil {
-		response.Diagnostics.AddError("fetching GTM resources failed:", err.Error())
+		response.Diagnostics.AddError("fetching GTM resources failed: ", err.Error())
 		return
 	}
 

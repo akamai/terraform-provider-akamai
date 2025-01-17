@@ -527,13 +527,13 @@ func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m 
 		DomainName:   domain,
 	})
 	if err != nil && !errors.Is(err, gtm.ErrNotFound) {
-		logger.Errorf("Property Read failed: GetProperty error: %s", err.Error())
-		return diag.Errorf("property Read failed: GetProperty error: %s", err.Error())
+		logger.Errorf("Property read error: %s", err.Error())
+		return diag.Errorf("property read error: %s", err.Error())
 	}
 	if prop != nil {
 		propertyMapAlreadyExists := fmt.Sprintf(propertyAlreadyExistsError, domain, propertyName)
 		logger.Errorf(propertyMapAlreadyExists)
-		return diag.Errorf("property already exists: GetProperty error: %s", propertyMapAlreadyExists)
+		return diag.Errorf("property already exists: %s", propertyMapAlreadyExists)
 	}
 
 	propertyType, err := tf.GetStringValue("type", d)
@@ -543,12 +543,12 @@ func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m 
 	// Static properties cannot have traffic_targets. Non Static properties must
 	traffTargList, err := tf.GetInterfaceArrayValue("traffic_target", d)
 	if strings.ToUpper(propertyType) == "STATIC" && err == nil && (traffTargList != nil && len(traffTargList) > 0) {
-		logger.Errorf("Property %s Create failed. Static property cannot have traffic targets", propertyName)
-		return diag.Errorf("property Create failed. Static property cannot have traffic targets")
+		logger.Errorf("Property %s create error. Static property cannot have traffic targets", propertyName)
+		return diag.Errorf("property create error. Static property cannot have traffic targets")
 	}
 	if strings.ToUpper(propertyType) != "STATIC" && (err != nil || (traffTargList == nil || len(traffTargList) < 1)) {
-		logger.Errorf("Property %s Create failed. Property must have one or more traffic targets", propertyName)
-		return diag.Errorf("property Create failed. Property must have one or more traffic targets")
+		logger.Errorf("Property %s create error. Property must have one or more traffic targets", propertyName)
+		return diag.Errorf("property create error. Property must have one or more traffic targets")
 	}
 
 	logger.Infof("Creating property [%s] in domain [%s]", propertyName, domain)
@@ -562,10 +562,10 @@ func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m 
 		DomainName: domain,
 	})
 	if err != nil {
-		logger.Errorf("Property Create failed: CreateProperty error: %s", err.Error())
-		return diag.Errorf("property Create failed: CreateProperty error: %s", err.Error())
+		logger.Errorf("Property create error: %s", err.Error())
+		return diag.Errorf("property create error: %s", err.Error())
 	}
-	logger.Debugf("Property Create status: %v", cStatus.Status)
+	logger.Debugf("Property create status: %v", cStatus.Status)
 
 	if cStatus.Status.PropagationStatus == "DENIED" {
 		logger.Errorf(cStatus.Status.Message)
@@ -580,13 +580,13 @@ func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m 
 	if waitOnComplete {
 		done, err := waitForCompletion(ctx, domain, m)
 		if done {
-			logger.Infof("Property Create completed")
+			logger.Infof("Property create completed")
 		} else {
 			if err == nil {
-				logger.Infof("Property Create pending")
+				logger.Infof("Property create pending")
 			} else {
-				logger.Errorf("Property Create failed [%s]", err.Error())
-				return diag.Errorf("property Create failed [%s]", err.Error())
+				logger.Errorf("Property create error: %s", err.Error())
+				return diag.Errorf("property create error: %s", err.Error())
 			}
 		}
 	}
@@ -613,11 +613,11 @@ func createPropertyWithRetry(ctx context.Context, meta meta.Meta, logger akalog.
 			return cStatus, nil
 		}
 
-		logger.Errorf("Property Create failed: CreateProperty error: %s", err.Error())
+		logger.Errorf("Property create error: %s", err.Error())
 
 		// If the error is not "no datacenter is assigned to map target (all others)", return immediately
 		if !errors.Is(err, gtm.ErrNoDatacenterAssignedToMap) {
-			return nil, fmt.Errorf("property Create failed: error: %s", err)
+			return nil, err
 		}
 
 		select {
@@ -666,8 +666,8 @@ func resourceGTMv1PropertyRead(ctx context.Context, d *schema.ResourceData, m in
 		return nil
 	}
 	if err != nil {
-		logger.Errorf("Property Read failed: GetProperty error: %s", err.Error())
-		return diag.Errorf("property Read failed: GetProperty error: %s", err.Error())
+		logger.Errorf("Property read error: %s", err.Error())
+		return diag.Errorf("property read error: %s", err.Error())
 	}
 	populateTerraformPropertyState(d, prop, m)
 	logger.Debugf("READ %v", prop)
@@ -696,8 +696,8 @@ func resourceGTMv1PropertyUpdate(ctx context.Context, d *schema.ResourceData, m 
 		DomainName:   domain,
 	})
 	if err != nil {
-		logger.Errorf("Property Update failed: GetProperty error: %s", err.Error())
-		return diag.Errorf("property Update failed: GetProperty error: %s", err.Error())
+		logger.Errorf("Property read error: %s", err.Error())
+		return diag.Errorf("property read error: %s", err.Error())
 	}
 	newProp := createPropertyStruct(existProp)
 	logger.Debugf("Updating Property BEFORE: %v", existProp)
@@ -711,10 +711,10 @@ func resourceGTMv1PropertyUpdate(ctx context.Context, d *schema.ResourceData, m 
 		DomainName: domain,
 	})
 	if err != nil {
-		logger.Errorf("Property Update failed: UpdateProperty error: %s", err.Error())
-		return diag.Errorf("property Update failed: UpdateProperty error: %s", err.Error())
+		logger.Errorf("Property update error: %s", err.Error())
+		return diag.Errorf("property update error: %s", err.Error())
 	}
-	logger.Debugf("Property Update  status: %v", uStat)
+	logger.Debugf("Property update status: %v", uStat)
 	if uStat.Status.PropagationStatus == "DENIED" {
 		logger.Debugf(uStat.Status.Message)
 		return diag.FromErr(fmt.Errorf(uStat.Status.Message))
@@ -728,13 +728,13 @@ func resourceGTMv1PropertyUpdate(ctx context.Context, d *schema.ResourceData, m 
 	if waitOnComplete {
 		done, err := waitForCompletion(ctx, domain, m)
 		if done {
-			logger.Infof("Property Update completed")
+			logger.Infof("Property update completed")
 		} else {
 			if err == nil {
-				logger.Infof("Property Update pending")
+				logger.Infof("Property update pending")
 			} else {
-				logger.Errorf("Property Update failed [%s]", err.Error())
-				return diag.Errorf("property Update failed [%s]", err.Error())
+				logger.Errorf("Property update error: %s", err.Error())
+				return diag.Errorf("property update error: %s", err.Error())
 			}
 		}
 	}
@@ -799,8 +799,8 @@ func resourceGTMv1PropertyDelete(ctx context.Context, d *schema.ResourceData, m 
 		DomainName:   domain,
 	})
 	if err != nil {
-		logger.Errorf("Property Delete failed: GetProperty error: %s", err.Error())
-		return diag.Errorf("property Delete failed: GetProperty error: %s", err.Error())
+		logger.Errorf("Property read error: %s", err.Error())
+		return diag.Errorf("property read error: %s", err.Error())
 	}
 	newProp := createPropertyStruct(existProp)
 	logger.Debugf("Deleting Property: %v", newProp)
@@ -809,10 +809,10 @@ func resourceGTMv1PropertyDelete(ctx context.Context, d *schema.ResourceData, m 
 		DomainName:   domain,
 	})
 	if err != nil {
-		logger.Errorf("Property Delete failed: DeleteProperty error: %s", err.Error())
-		return diag.Errorf("property Delete failed: DeleteProperty error: %s", err.Error())
+		logger.Errorf("Property delete error: %s", err.Error())
+		return diag.Errorf("property delete error: %s", err.Error())
 	}
-	logger.Debugf("Property Delete status: %v", uStat)
+	logger.Debugf("Property delete status: %v", uStat)
 	if uStat.Status.PropagationStatus == "DENIED" {
 		logger.Errorf(uStat.Status.Message)
 		return diag.FromErr(fmt.Errorf(uStat.Status.Message))
@@ -826,13 +826,13 @@ func resourceGTMv1PropertyDelete(ctx context.Context, d *schema.ResourceData, m 
 	if waitOnComplete {
 		done, err := waitForCompletion(ctx, domain, m)
 		if done {
-			logger.Infof("Property Delete completed")
+			logger.Infof("Property delete completed")
 		} else {
 			if err == nil {
-				logger.Infof("Property Delete pending")
+				logger.Infof("Property delete pending")
 			} else {
-				logger.Errorf("Property Delete failed [%s]", err.Error())
-				return diag.Errorf("property Delete failed [%s]", err.Error())
+				logger.Errorf("Property delete error: %s", err.Error())
+				return diag.Errorf("property delete error: %s", err.Error())
 			}
 		}
 	}

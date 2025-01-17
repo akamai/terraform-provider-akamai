@@ -192,7 +192,7 @@ func TestResGTMCIDRMap(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmCidrmap/create_basic.tf"),
-						ExpectError: regexp.MustCompile("cidrMap Create failed"),
+						ExpectError: regexp.MustCompile("cidrMap create error"),
 					},
 				},
 			})

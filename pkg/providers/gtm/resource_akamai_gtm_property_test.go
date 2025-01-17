@@ -201,7 +201,7 @@ func TestResGTMProperty(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/create_basic.tf"),
-					ExpectError: regexp.MustCompile("property Create failed"),
+					ExpectError: regexp.MustCompile("property create error"),
 				},
 			},
 		},
@@ -270,7 +270,7 @@ func TestResGTMProperty(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/create_basic.tf"),
-					ExpectError: regexp.MustCompile("CreateProperty error: property Create failed: error: API error"),
+					ExpectError: regexp.MustCompile("property create error: API error"),
 				},
 			},
 		},
@@ -292,7 +292,7 @@ func TestResGTMProperty(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/create_basic.tf"),
-					ExpectError: regexp.MustCompile("CreateProperty error: property Create failed: error: context canceled"),
+					ExpectError: regexp.MustCompile("property create error: context canceled"),
 				},
 			},
 		},

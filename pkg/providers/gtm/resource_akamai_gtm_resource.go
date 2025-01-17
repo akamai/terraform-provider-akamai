@@ -144,10 +144,10 @@ func resourceGTMv1ResourceCreate(ctx context.Context, d *schema.ResourceData, m 
 		DomainName:   domain,
 	})
 	if err != nil && !errors.Is(err, gtm.ErrNotFound) {
-		logger.Errorf("Resource Read failed: %s", err.Error())
+		logger.Errorf("Resource read error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "Resource Read error",
+			Summary:  "Resource read error",
 			Detail:   err.Error(),
 		})
 	}
@@ -172,14 +172,14 @@ func resourceGTMv1ResourceCreate(ctx context.Context, d *schema.ResourceData, m 
 		DomainName: domain,
 	})
 	if err != nil {
-		logger.Errorf("Resource Create failed: %s", err.Error())
+		logger.Errorf("Resource create error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "Resource Create failed",
+			Summary:  "Resource create error",
 			Detail:   err.Error(),
 		})
 	}
-	logger.Debugf("Resource Create status: %v", cStatus.Status)
+	logger.Debugf("Resource create status: %v", cStatus.Status)
 	if cStatus.Status.PropagationStatus == "DENIED" {
 		logger.Errorf(cStatus.Status.Message)
 		return append(diags, diag.Diagnostic{
@@ -196,15 +196,15 @@ func resourceGTMv1ResourceCreate(ctx context.Context, d *schema.ResourceData, m 
 	if waitOnComplete {
 		done, err := waitForCompletion(ctx, domain, m)
 		if done {
-			logger.Infof("Resource Create completed")
+			logger.Infof("Resource create completed")
 		} else {
 			if err == nil {
-				logger.Infof("Resource Create pending")
+				logger.Infof("Resource create pending")
 			} else {
-				logger.Errorf("Resource Create failed [%s]", err.Error())
+				logger.Errorf("Resource create error: %s", err.Error())
 				return append(diags, diag.Diagnostic{
 					Severity: diag.Error,
-					Summary:  "Resource Create failed",
+					Summary:  "Resource create error",
 					Detail:   err.Error(),
 				})
 			}
@@ -234,7 +234,7 @@ func resourceGTMv1ResourceRead(ctx context.Context, d *schema.ResourceData, m in
 	// retrieve the property and domain
 	domain, resource, err := parseResourceStringID(d.Id())
 	if err != nil {
-		logger.Errorf("Invalid resource Resource ID")
+		logger.Errorf("Invalid resource ID")
 		return diag.FromErr(err)
 	}
 	rsrc, err := Client(meta).GetResource(ctx, gtm.GetResourceRequest{
@@ -246,17 +246,17 @@ func resourceGTMv1ResourceRead(ctx context.Context, d *schema.ResourceData, m in
 		return nil
 	}
 	if err != nil {
-		logger.Errorf("Resource Read failed: %s", err.Error())
+		logger.Errorf("Resource read error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "Resource Read error",
+			Summary:  "Resource read error",
 			Detail:   err.Error(),
 		})
 	}
 	if err = populateTerraformResourceState(d, rsrc, m); err != nil {
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "Resource Read populate state",
+			Summary:  "Resource read populate state",
 			Detail:   err.Error(),
 		})
 	}
@@ -288,10 +288,10 @@ func resourceGTMv1ResourceUpdate(ctx context.Context, d *schema.ResourceData, m 
 		DomainName:   domain,
 	})
 	if err != nil {
-		logger.Errorf("Resource Update failed: %s", err.Error())
+		logger.Errorf("Resource read error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "Update Resource Read error",
+			Summary:  "Resource read error",
 			Detail:   err.Error(),
 		})
 	}
@@ -306,14 +306,14 @@ func resourceGTMv1ResourceUpdate(ctx context.Context, d *schema.ResourceData, m 
 		DomainName: domain,
 	})
 	if err != nil {
-		logger.Errorf("Resource Update failed: %s", err.Error())
+		logger.Errorf("Resource update error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "Resource Update error",
+			Summary:  "Resource update error",
 			Detail:   err.Error(),
 		})
 	}
-	logger.Debugf("Resource Update status: %v", uStat)
+	logger.Debugf("Resource update status: %v", uStat)
 	if uStat.Status.PropagationStatus == "DENIED" {
 		logger.Errorf(uStat.Status.Message)
 		return append(diags, diag.Diagnostic{
@@ -335,10 +335,10 @@ func resourceGTMv1ResourceUpdate(ctx context.Context, d *schema.ResourceData, m 
 			if err == nil {
 				logger.Infof("Resource update pending")
 			} else {
-				logger.Errorf("Resource update failed [%s]", err.Error())
+				logger.Errorf("Resource update error: %s", err.Error())
 				return append(diags, diag.Diagnostic{
 					Severity: diag.Error,
-					Summary:  "Resource Update failed",
+					Summary:  "Resource update error",
 					Detail:   err.Error(),
 				})
 			}
@@ -416,10 +416,10 @@ func resourceGTMv1ResourceDelete(ctx context.Context, d *schema.ResourceData, m 
 		DomainName:   domain,
 	})
 	if err != nil {
-		logger.Errorf("Resource Delete Read failed: %s", err.Error())
+		logger.Errorf("Resource read error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "Delete Resource Read error",
+			Summary:  "Resource read error",
 			Detail:   err.Error(),
 		})
 	}
@@ -430,14 +430,14 @@ func resourceGTMv1ResourceDelete(ctx context.Context, d *schema.ResourceData, m 
 		DomainName:   domain,
 	})
 	if err != nil {
-		logger.Errorf("Resource Delete failed: %s", err.Error())
+		logger.Errorf("Resource delete error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "Delete Resource error",
+			Summary:  "Resource delete error",
 			Detail:   err.Error(),
 		})
 	}
-	logger.Debugf("Resource Delete status: %v", uStat)
+	logger.Debugf("Resource delete status: %v", uStat)
 	if uStat.Status.PropagationStatus == "DENIED" {
 		logger.Errorf(uStat.Status.Message)
 		return append(diags, diag.Diagnostic{
@@ -454,15 +454,15 @@ func resourceGTMv1ResourceDelete(ctx context.Context, d *schema.ResourceData, m 
 	if waitOnComplete {
 		done, err := waitForCompletion(ctx, domain, m)
 		if done {
-			logger.Infof("Resource Delete completed")
+			logger.Infof("Resource delete completed")
 		} else {
 			if err == nil {
-				logger.Infof("Resource Delete pending")
+				logger.Infof("Resource delete pending")
 			} else {
-				logger.Errorf("Resource Delete failed [%s]", err.Error())
+				logger.Errorf("Resource delete error: %s", err.Error())
 				return append(diags, diag.Diagnostic{
 					Severity: diag.Error,
-					Summary:  "Resource Delete failed",
+					Summary:  "Resource delete error",
 					Detail:   err.Error(),
 				})
 			}
