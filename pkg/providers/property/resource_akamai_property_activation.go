@@ -635,6 +635,20 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
+	if versionStatus == papi.VersionStatusActive {
+		var updatedFields []string
+
+		if d.HasChange("contact") {
+			updatedFields = append(updatedFields, "'contact'")
+		}
+		if d.HasChange("auto_acknowledge_rule_warnings") {
+			updatedFields = append(updatedFields, "'auto_acknowledge_rule_warnings'")
+		}
+		if len(updatedFields) > 0 {
+			return diag.Errorf("Cannot update " + strings.Join(updatedFields, ", ") + " field(s) while property version is ACTIVE. Deactivate the current version to update, or create a new property version activation.")
+		}
+	}
+
 	if propertyActivation == nil || versionStatus == papi.VersionStatusDeactivated {
 		notifySet, err := tf.GetSetValue("contact", d)
 		if err != nil {
