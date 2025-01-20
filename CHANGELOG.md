@@ -4,8 +4,28 @@
 
 #### BREAKING CHANGES:
 
+* Cloudlets
+  * Removed the `id` attributes from the following data sources:
+    * `data_akamai_cloudlets_policy_activation` 
+    * `data_akamai_cloudlets_shared_policy` 
 
+* Cloud Wrapper
+  * Removed the `id` attributes from the following data sources:
+    * `data_akamai_cloudwrapper_capacities`
+    * `data_akamai_cloudwrapper_configurations`
+    * `data_akamai_cloudwrapper_location`
+    * `data_akamai_cloudwrapper_locations`
+    * `data_akamai_cloudwrapper_properties`
 
+* GTM
+  * Removed the `id` attributes from the following data sources:
+    * `data_akamai_gtm_asmap`
+    * `data_akamai_gtm_cidrmap`
+    * `data_akamai_gtm_domains`
+    * `data_akamai_gtm_geomap`
+    * `data_akamai_gtm_geomaps`
+    * `data_akamai_gtm_resources`
+    
 * Logging
   * Changed logger from apex to new interface
     * By default `slog` with custom handler is used.

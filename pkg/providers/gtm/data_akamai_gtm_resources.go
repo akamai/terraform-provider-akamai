@@ -19,7 +19,6 @@ var (
 
 // resourcesDataSourceModel describes the data source data model for GTM resources data source.
 type resourcesDataSourceModel struct {
-	ID        types.String     `tfsdk:"id"`
 	Domain    types.String     `tfsdk:"domain"`
 	Resources []domainResource `tfsdk:"resources"`
 }
@@ -124,11 +123,6 @@ func (d *resourcesDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "GTM Resources data source",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				MarkdownDescription: "Identifier of the data source.",
-				DeprecationMessage:  "Required by the terraform plugin testing framework, always set to `akamai_gtm_resources`.",
-				Computed:            true,
-			},
 			"domain": schema.StringAttribute{
 				Required:            true,
 				MarkdownDescription: "GTM domain name.",
@@ -156,7 +150,6 @@ func (d *resourcesDataSource) Read(ctx context.Context, request datasource.ReadR
 		return
 	}
 
-	data.ID = types.StringValue("akamai_gtm_resources")
 	data.Resources = getResources(resources)
 
 	response.Diagnostics.Append(response.State.Set(ctx, &data)...)

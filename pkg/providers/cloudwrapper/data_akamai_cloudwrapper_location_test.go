@@ -126,7 +126,6 @@ func checkCloudWrapperLocationAttrs() resource.TestCheckFunc {
 
 	checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_cloudwrapper_location.test", "traffic_type_id", "3"))
 	checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_cloudwrapper_location.test", "location_id", "cw-s-usw"))
-	checkFuncs = append(checkFuncs, resource.TestCheckResourceAttrSet("data.akamai_cloudwrapper_location.test", "id"))
 
 	return resource.ComposeAggregateTestCheckFunc(checkFuncs...)
 }

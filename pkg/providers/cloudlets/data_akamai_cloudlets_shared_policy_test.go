@@ -15,7 +15,6 @@ import (
 )
 
 type testDataForSharedPolicy struct {
-	id                 string
 	policyID           int64
 	version            int64
 	versionDescription *string
@@ -40,7 +39,6 @@ func TestSharedPolicyDataSource(t *testing.T) {
 		"success with version attribute - no activations": {
 			config: "with_version.tf",
 			data: testDataForSharedPolicy{
-				id:                 "akamai_cloudlets_shared_policy",
 				policyID:           1,
 				version:            2,
 				versionDescription: ptr.To("version 2 description"),
@@ -93,7 +91,6 @@ func TestSharedPolicyDataSource(t *testing.T) {
 		"success with no version attribute - no activations and no match rules and warnings": {
 			config: "no_version.tf",
 			data: testDataForSharedPolicy{
-				id:           "akamai_cloudlets_shared_policy",
 				policyID:     1,
 				version:      2,
 				groupID:      12,
@@ -110,7 +107,6 @@ func TestSharedPolicyDataSource(t *testing.T) {
 		"success with no version attribute - no shared policy versions": {
 			config: "no_version.tf",
 			data: testDataForSharedPolicy{
-				id:           "akamai_cloudlets_shared_policy",
 				policyID:     1,
 				version:      0,
 				groupID:      12,
@@ -126,7 +122,6 @@ func TestSharedPolicyDataSource(t *testing.T) {
 		"success with version attribute - all activations": {
 			config: "with_version.tf",
 			data: testDataForSharedPolicy{
-				id:           "akamai_cloudlets_shared_policy",
 				policyID:     1,
 				version:      2,
 				groupID:      12,
@@ -217,7 +212,6 @@ func TestSharedPolicyDataSource(t *testing.T) {
 		"expect error on ListPolicyVersions": {
 			config: "no_version.tf",
 			data: testDataForSharedPolicy{
-				id:           "akamai_cloudlets_shared_policy",
 				policyID:     1,
 				version:      2,
 				groupID:      12,
@@ -305,7 +299,6 @@ func checkAttrsForSharedPolicy(data testDataForSharedPolicy) resource.TestCheckF
 
 	checkFuncs = append(checkFuncs,
 		resource.TestCheckResourceAttr("data.akamai_cloudlets_shared_policy.test", "name", data.name),
-		resource.TestCheckResourceAttr("data.akamai_cloudlets_shared_policy.test", "id", data.id),
 		resource.TestCheckResourceAttr("data.akamai_cloudlets_shared_policy.test", "group_id", strconv.FormatInt(data.groupID, 10)),
 		resource.TestCheckResourceAttr("data.akamai_cloudlets_shared_policy.test", "description", data.description),
 	)

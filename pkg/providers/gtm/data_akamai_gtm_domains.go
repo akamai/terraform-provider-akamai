@@ -99,8 +99,7 @@ type domainsDataSource struct {
 
 type (
 	domainsDataSourceModel struct {
-		ID      types.String `tfsdk:"id"`
-		Domains []domain     `tfsdk:"domains"`
+		Domains []domain `tfsdk:"domains"`
 	}
 
 	domain struct {
@@ -123,14 +122,7 @@ type (
 func (d *domainsDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, response *datasource.SchemaResponse) {
 	response.Schema = schema.Schema{
 		MarkdownDescription: "List of domains under given contract.",
-		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				Description:        "Identifier of the data source.",
-				DeprecationMessage: "Required by the terraform plugin testing framework, always set to `akamai_gtm_domains`.",
-				Computed:           true,
-			},
-		},
-		Blocks: domainsBlock,
+		Blocks:              domainsBlock,
 	}
 }
 
@@ -171,7 +163,6 @@ func (d *domainsDataSource) Read(ctx context.Context, request datasource.ReadReq
 	}
 
 	data.Domains = getDomains(domains)
-	data.ID = types.StringValue("akamai_gtm_domains")
 	response.Diagnostics.Append(response.State.Set(ctx, &data)...)
 }
 

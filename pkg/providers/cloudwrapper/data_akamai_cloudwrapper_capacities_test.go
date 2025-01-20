@@ -145,7 +145,6 @@ func checkDataCloudWrapperCapacityAttrs(contractIDs []string, capacities []cloud
 		)
 	}
 
-	checkFuncs = append(checkFuncs, resource.TestCheckResourceAttrSet(name, "id"))
 	return resource.ComposeAggregateTestCheckFunc(checkFuncs...)
 }
 

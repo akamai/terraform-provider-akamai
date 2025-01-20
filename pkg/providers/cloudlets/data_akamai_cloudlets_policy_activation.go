@@ -18,7 +18,6 @@ import (
 )
 
 type policyActivationDataSourceModel struct {
-	ID                   types.String `tfsdk:"id"`
 	PolicyID             types.Int64  `tfsdk:"policy_id"`
 	Network              types.String `tfsdk:"network"`
 	Version              types.Int64  `tfsdk:"version"`
@@ -70,11 +69,6 @@ func (d *policyActivationDataSource) Schema(_ context.Context, _ datasource.Sche
 	resp.Schema = schema.Schema{
 		Description: "Cloudlets Policy Activation",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				Computed:           true,
-				DeprecationMessage: "Required by the terraform plugin testing framework.",
-				Description:        "ID of the data source.",
-			},
 			"policy_id": schema.Int64Attribute{
 				Required:    true,
 				Description: "Identifies the policy.",
@@ -128,7 +122,6 @@ func (d *policyActivationDataSource) Read(ctx context.Context, req datasource.Re
 		return
 	}
 	data = *dat
-	data.ID = types.StringValue(fmt.Sprintf("%s:%s", data.PolicyID, data.Network))
 	resp.Diagnostics.Append(resp.State.Set(ctx, data)...)
 }
 

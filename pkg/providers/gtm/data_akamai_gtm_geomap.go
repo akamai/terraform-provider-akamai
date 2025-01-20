@@ -18,7 +18,6 @@ type geoMapDataSource struct {
 }
 
 type geoMapDataSourceModel struct {
-	ID                types.String              `tfsdk:"id"`
 	Domain            types.String              `tfsdk:"domain"`
 	Name              types.String              `tfsdk:"map_name"`
 	DefaultDatacenter *defaultDatacenter        `tfsdk:"default_datacenter"`
@@ -57,11 +56,6 @@ func (d *geoMapDataSource) Schema(_ context.Context, _ datasource.SchemaRequest,
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "GTM Geographic map data source.",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				MarkdownDescription: "Identifier of the data source.",
-				DeprecationMessage:  "Required by the terraform plugin testing framework, always set to `gtm_geomap`.",
-				Computed:            true,
-			},
 			"domain": schema.StringAttribute{
 				Required:    true,
 				Description: "GTM domain name.",
@@ -163,7 +157,6 @@ func (m *geoMapDataSourceModel) setAttributes(ctx context.Context, geoMap *gtm.G
 	if diags.HasError() {
 		return diags
 	}
-	m.ID = types.StringValue("gtm_geomap")
 
 	return nil
 }

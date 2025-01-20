@@ -14,7 +14,6 @@ import (
 )
 
 type testDataForNonSharedPolicyActivation struct {
-	id          string
 	policyID    int64
 	version     int64
 	groupID     int64
@@ -26,7 +25,6 @@ type testDataForNonSharedPolicyActivation struct {
 }
 
 type testDataForSharedPolicyActivation struct {
-	id           string
 	policyID     int64
 	version      int64
 	groupID      int64
@@ -59,7 +57,6 @@ func TestNonSharedPolicyActivationDataSource(t *testing.T) {
 		"policy without activation": {
 			config: "activation.tf",
 			data: testDataForNonSharedPolicyActivation{
-				id:          "akamai_cloudlets_shared_policy",
 				policyID:    1,
 				version:     2,
 				groupID:     12,
@@ -77,7 +74,6 @@ func TestNonSharedPolicyActivationDataSource(t *testing.T) {
 		"policy with activation": {
 			config: "activation.tf",
 			data: testDataForNonSharedPolicyActivation{
-				id:          "akamai_cloudlets_shared_policy",
 				policyID:    1,
 				version:     2,
 				groupID:     12,
@@ -169,7 +165,6 @@ func TestSharedPolicyActivationDataSource(t *testing.T) {
 		"no shared policy activation": {
 			config: "activation.tf",
 			data: testDataForSharedPolicyActivation{
-				id:           "akamai_cloudlets_shared_policy",
 				policyID:     1,
 				version:      0,
 				groupID:      12,
@@ -186,7 +181,6 @@ func TestSharedPolicyActivationDataSource(t *testing.T) {
 		"no shared policy": {
 			config: "activation.tf",
 			data: testDataForSharedPolicyActivation{
-				id:           "akamai_cloudlets_shared_policy",
 				policyID:     1,
 				version:      0,
 				groupID:      12,
@@ -203,7 +197,6 @@ func TestSharedPolicyActivationDataSource(t *testing.T) {
 		"shared policy activation on staging": {
 			config: "activation.tf",
 			data: testDataForSharedPolicyActivation{
-				//id:           "akamai_cloudlets_shared_policy",
 				policyID:     1,
 				version:      2,
 				groupID:      12,

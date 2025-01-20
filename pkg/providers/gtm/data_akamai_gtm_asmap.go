@@ -24,7 +24,6 @@ func NewGTMASMapDataSource() datasource.DataSource {
 }
 
 type asMapDataSourceModel struct {
-	ID                types.String       `tfsdk:"id"`
 	Domain            types.String       `tfsdk:"domain"`
 	Name              types.String       `tfsdk:"map_name"`
 	DefaultDatacenter *defaultDatacenter `tfsdk:"default_datacenter"`
@@ -116,11 +115,6 @@ func (d *asMapDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, 
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "GTM AS map data source.",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				Computed:            true,
-				DeprecationMessage:  "Required by the terraform plugin testing framework, always set to `gtm_asmap`.",
-				MarkdownDescription: "Identifier of the data source.",
-			},
 			"domain": schema.StringAttribute{
 				Required:    true,
 				Description: "A descriptive label for the AS map.",
@@ -165,7 +159,6 @@ func (m *asMapDataSourceModel) setAttributes(asMap *gtm.GetASMapResponse) {
 	m.DefaultDatacenter = newDefaultDatacenter(*asMap.DefaultDatacenter)
 	m.setAssignments(asMap.Assignments)
 	m.Links = getLinks(asMap.Links)
-	m.ID = types.StringValue("gtm_asmap")
 }
 
 func (m *asMapDataSourceModel) setAssignments(assignments []gtm.ASAssignment) {

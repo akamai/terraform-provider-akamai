@@ -114,7 +114,6 @@ func checkCloudWrapperConfiguration(data testDataForCWConfiguration, idx int) re
 	var checkFuncs []resource.TestCheckFunc
 
 	dsName := "data.akamai_cloudwrapper_configurations.test"
-	checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr(dsName, "id", "akamai_cloudwrapper_configurations"))
 	checkFuncs = append(checkFuncs, checkConfiguration(data, dsName, "configurations."+strconv.Itoa(idx)+"."))
 
 	return resource.ComposeAggregateTestCheckFunc(checkFuncs...)

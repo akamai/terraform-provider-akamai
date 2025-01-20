@@ -15,7 +15,6 @@ import (
 )
 
 type sharedPolicyModel struct {
-	ID                 types.String     `tfsdk:"id"`
 	PolicyID           types.Int64      `tfsdk:"policy_id"`
 	Version            types.Int64      `tfsdk:"version"`
 	VersionDescription types.String     `tfsdk:"version_description"`
@@ -151,11 +150,6 @@ func (d *sharedPolicyDataSource) Schema(_ context.Context, _ datasource.SchemaRe
 	resp.Schema = schema.Schema{
 		Description: "Cloudlets Shared Policy",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				Computed:           true,
-				DeprecationMessage: "Required by the terraform plugin testing framework, always set to `akamai_cloudlets_shared_policy`.",
-				Description:        "ID of the data source.",
-			},
 			"policy_id": schema.Int64Attribute{
 				Required:    true,
 				Description: "An integer ID that is associated with a policy.",
@@ -287,7 +281,6 @@ func (d *sharedPolicyDataSource) Read(ctx context.Context, req datasource.ReadRe
 func (m *sharedPolicyModel) setPolicyData(policy *v3.Policy) {
 	m.CloudletType = types.StringValue(string(policy.CloudletType))
 	m.Name = types.StringValue(policy.Name)
-	m.ID = types.StringValue("akamai_cloudlets_shared_policy")
 	m.GroupID = types.Int64Value(policy.GroupID)
 	if policy.Description != nil {
 		m.Description = types.StringValue(*policy.Description)

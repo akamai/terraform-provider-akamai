@@ -145,8 +145,6 @@ func checkCloudWrapperPropertiesAttrs(data testDataForCWProperties) resource.Tes
 		checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_cloudwrapper_properties.test", fmt.Sprintf("properties.%d.contract_id", i), prp.ContractID))
 		checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_cloudwrapper_properties.test", fmt.Sprintf("properties.%d.group_id", i), strconv.FormatInt(prp.GroupID, 10)))
 	}
-	checkFuncs = append(checkFuncs, resource.TestCheckResourceAttrSet("data.akamai_cloudwrapper_properties.test", "id"))
-
 	return resource.ComposeAggregateTestCheckFunc(checkFuncs...)
 }
 
