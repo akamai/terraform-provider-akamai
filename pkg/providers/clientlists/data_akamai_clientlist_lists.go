@@ -16,7 +16,7 @@ import (
 
 func dataSourceClientLists() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataSourceClientListRead,
+		ReadContext: dataSourceClientListsRead,
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:     schema.TypeString,
