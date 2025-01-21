@@ -32,7 +32,7 @@ func TestResGTMASMap(t *testing.T) {
 
 		mockGetDomainStatus(client, 2)
 
-		mockUpdateASMap(client)
+		mockUpdateASMap(client, &gtm.UpdateASMapResponse{Status: getDefaultResponseStatus()}, nil)
 
 		mockGetASMap(client, getASMapUpdateResponse(), nil, 3)
 
@@ -55,6 +55,56 @@ func TestResGTMASMap(t *testing.T) {
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr(resourceName, "name", "tfexample_as_1"),
 						),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("update asmap failed", func(t *testing.T) {
+		client := &gtm.Mock{}
+
+		mockGetASMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+
+		mockGetDatacenter(client, datacenterID5400, getDefaultDatacenter(), nil, 1)
+
+		mockCreateASMap(client, getASMapForTestsForCreate(), &gtm.CreateASMapResponse{
+			Resource: getASMapForTestsForCreateResponse(),
+			Status:   getDefaultResponseStatus(),
+		}, nil)
+
+		mockGetASMap(client, getASMapForTestsForCreateResponse(), nil, 4)
+
+		mockGetDomainStatus(client, 1)
+
+		mockUpdateASMap(client, nil, &gtm.Error{
+			Type:       "internal_error",
+			Title:      "Internal Server Error",
+			Detail:     "Error updating asmap",
+			StatusCode: http.StatusInternalServerError,
+		})
+
+		mockGetASMap(client, getASMapForTestsForCreateResponse(), nil, 1)
+
+		mockDeleteASMap(client)
+
+		resourceName := "akamai_gtm_asmap.tfexample_as_1"
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmAsmap/create_basic.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(resourceName, "name", "tfexample_as_1"),
+						),
+					},
+					{
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmAsmap/update_basic.tf"),
+						ExpectError: regexp.MustCompile("API error"),
 					},
 				},
 			})
@@ -366,16 +416,14 @@ func mockGetASMap(m *gtm.Mock, asMap *gtm.ASMap, err error, times int) *mock.Cal
 	}).Return(resp, err).Times(times)
 }
 
-func mockUpdateASMap(client *gtm.Mock) *mock.Call {
+func mockUpdateASMap(client *gtm.Mock, resp *gtm.UpdateASMapResponse, err error) *mock.Call {
 	return client.On("UpdateASMap",
 		testutils.MockContext,
 		gtm.UpdateASMapRequest{
 			ASMap:      getASMapUpdate(),
 			DomainName: testDomainName,
 		},
-	).Return(&gtm.UpdateASMapResponse{
-		Status: getDefaultResponseStatus(),
-	}, nil).Once()
+	).Return(resp, err).Once()
 }
 
 func mockCreateASMap(client *gtm.Mock, asMap *gtm.ASMap, resp *gtm.CreateASMapResponse, err error) *mock.Call {

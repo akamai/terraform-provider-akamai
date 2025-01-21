@@ -38,7 +38,7 @@ func TestResGTMProperty(t *testing.T) {
 				// read
 				mockGetProperty(m, testPropertyName, getBasicProperty(), nil, 4)
 				// update
-				mockUpdateProperty(m, getPropertyForUpdate())
+				mockUpdateProperty(m, getPropertyForUpdate(), &gtm.UpdatePropertyResponse{Status: getDefaultResponseStatus()}, nil)
 				// read
 				mockGetDomainStatus(m, 2)
 				mockGetProperty(m, testPropertyName, getPropertyForUpdate(), nil, 3)
@@ -75,6 +75,51 @@ func TestResGTMProperty(t *testing.T) {
 						resource.TestCheckResourceAttr(propertyResourceName, "traffic_target.0.precedence", "0"),
 						resource.TestCheckResourceAttr(propertyResourceName, "id", "gtm_terra_testdomain.akadns.net:tfexample_prop_1"),
 					),
+				},
+			},
+		},
+		"update property failed": {
+			property: getBasicProperty(),
+			init: func(m *gtm.Mock) {
+				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+				mockCreateProperty(m, getBasicProperty(), &gtm.CreatePropertyResponse{
+					Resource: getBasicProperty(),
+					Status:   getPendingResponseStatus(),
+				}, nil)
+				// read
+				mockGetProperty(m, testPropertyName, getBasicProperty(), nil, 4)
+				// update
+				mockUpdateProperty(m, getPropertyForUpdate(), nil, &gtm.Error{
+					Type:       "internal_error",
+					Title:      "Internal Server Error",
+					Detail:     "Error updating property",
+					StatusCode: http.StatusInternalServerError,
+				})
+				// read
+				mockGetDomainStatus(m, 1)
+				mockGetProperty(m, testPropertyName, getBasicProperty(), nil, 1)
+				// delete
+				mockDeleteProperty(m, testPropertyName)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/create_basic.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(propertyResourceName, "name", "tfexample_prop_1"),
+						resource.TestCheckResourceAttr(propertyResourceName, "type", "weighted-round-robin"),
+						resource.TestCheckResourceAttr(propertyResourceName, "weighted_hash_bits_for_ipv4", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "weighted_hash_bits_for_ipv6", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.http_method", ""),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.http_request_body", ""),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.alternate_ca_certificates.#", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.pre_2023_security_posture", "false"),
+						resource.TestCheckResourceAttr(propertyResourceName, "traffic_target.0.precedence", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "id", "gtm_terra_testdomain.akadns.net:tfexample_prop_1"),
+					),
+				},
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/update_basic.tf"),
+					ExpectError: regexp.MustCompile("API error"),
 				},
 			},
 		},
@@ -1343,16 +1388,14 @@ func mockGetProperty(client *gtm.Mock, propertyName string, property *gtm.Proper
 	).Return(resp, err).Times(times)
 }
 
-func mockUpdateProperty(client *gtm.Mock, updatedProperty *gtm.Property) {
+func mockUpdateProperty(client *gtm.Mock, updatedProperty *gtm.Property, resp *gtm.UpdatePropertyResponse, err error) {
 	client.On("UpdateProperty",
 		testutils.MockContext,
 		gtm.UpdatePropertyRequest{
 			Property:   updatedProperty,
 			DomainName: testDomainName,
 		},
-	).Return(&gtm.UpdatePropertyResponse{
-		Status: getDefaultResponseStatus(),
-	}, nil).Once()
+	).Return(resp, err).Once()
 }
 
 func mockGetDomainStatus(client *gtm.Mock, times int) {

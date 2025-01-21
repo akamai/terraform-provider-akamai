@@ -34,7 +34,7 @@ func TestResGTMDatacenter(t *testing.T) {
 
 		mockGetDomainStatus(client, 2)
 
-		mockUpdateDatacenter(client)
+		mockUpdateDatacenter(client, &gtm.UpdateDatacenterResponse{Status: getDefaultResponseStatus()}, nil)
 
 		mockGetDatacenter(client, datacenterID3132, getTestDatacenterUpdate(), nil, 3)
 
@@ -59,6 +59,53 @@ func TestResGTMDatacenter(t *testing.T) {
 							resource.TestCheckResourceAttr(resourceName, "nickname", "tfexample_dc_1"),
 							resource.TestCheckResourceAttr(resourceName, "continent", "NA"),
 						),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("update datacenter failed", func(t *testing.T) {
+		client := &gtm.Mock{}
+
+		mockCreateDatacenter(client, &gtm.CreateDatacenterResponse{
+			Resource: getTestDatacenterResp(),
+			Status:   getPendingResponseStatus(),
+		}, nil)
+
+		mockGetDatacenter(client, datacenterID3132, getTestDatacenterResp(), nil, 4)
+
+		mockGetDomainStatus(client, 1)
+
+		mockUpdateDatacenter(client, nil, &gtm.Error{
+			Type:       "internal_error",
+			Title:      "Internal Server Error",
+			Detail:     "Error updating datacenter",
+			StatusCode: http.StatusInternalServerError,
+		})
+
+		mockGetDatacenter(client, datacenterID3132, getTestDatacenterResp(), nil, 1)
+
+		mockDeleteDatacenter(client)
+
+		resourceName := "akamai_gtm_datacenter.tfexample_dc_1"
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDatacenter/create_basic.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(resourceName, "nickname", "tfexample_dc_1"),
+							resource.TestCheckResourceAttr(resourceName, "continent", "EU"),
+						),
+					},
+					{
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmDatacenter/update_basic.tf"),
+						ExpectError: regexp.MustCompile("API error"),
 					},
 				},
 			})
@@ -249,16 +296,14 @@ func mockGetDatacenter(m *gtm.Mock, datacenterID int, resp *gtm.Datacenter, err 
 	}).Return(resp, err).Times(times)
 }
 
-func mockUpdateDatacenter(client *gtm.Mock) *mock.Call {
+func mockUpdateDatacenter(client *gtm.Mock, resp *gtm.UpdateDatacenterResponse, err error) *mock.Call {
 	return client.On("UpdateDatacenter",
 		testutils.MockContext,
 		gtm.UpdateDatacenterRequest{
 			Datacenter: getTestDatacenterUpdate(),
 			DomainName: testDomainName,
 		},
-	).Return(&gtm.UpdateDatacenterResponse{
-		Status: getDefaultResponseStatus(),
-	}, nil).Once()
+	).Return(resp, err).Once()
 }
 
 func mockCreateDatacenter(client *gtm.Mock, resp *gtm.CreateDatacenterResponse, err error) *mock.Call {

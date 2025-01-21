@@ -34,7 +34,7 @@ func TestResGTMResource(t *testing.T) {
 		// Update
 		mockGetResource(client, getUpdatedResource(), nil, 1)
 
-		mockUpdateResource(client)
+		mockUpdateResource(client, &gtm.UpdateResourceResponse{Status: getDefaultResponseStatus()}, nil)
 
 		mockGetDomainStatus(client, 1)
 
@@ -63,6 +63,60 @@ func TestResGTMResource(t *testing.T) {
 							resource.TestCheckResourceAttr(resourceName, "name", "tfexample_resource_1"),
 							resource.TestCheckResourceAttr(resourceName, "aggregation_type", "latest"),
 						),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("update resource failed", func(t *testing.T) {
+		client := &gtm.Mock{}
+
+		// Create
+		mockGetResource(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+
+		mockCreateResource(client, getDefaultResource(), &gtm.CreateResourceResponse{
+			Resource: getDefaultResource(),
+			Status:   getDefaultResponseStatus(),
+		}, nil)
+
+		// Read after create + refresh
+		mockGetResource(client, getDefaultResource(), nil, 3)
+
+		// Update
+		mockGetResource(client, getUpdatedResource(), nil, 1)
+
+		mockUpdateResource(client, nil, &gtm.Error{
+			Type:       "internal_error",
+			Title:      "Internal Server Error",
+			Detail:     "Error updating resource",
+			StatusCode: http.StatusInternalServerError,
+		})
+
+		// Read after create + refresh
+		mockGetResource(client, getDefaultResource(), nil, 1)
+
+		mockDeleteResource(client)
+		mockGetDomainStatus(client, 1)
+
+		resourceName := "akamai_gtm_resource.tfexample_resource_1"
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmResource/create_basic.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(resourceName, "name", "tfexample_resource_1"),
+							resource.TestCheckResourceAttr(resourceName, "aggregation_type", "latest"),
+						),
+					},
+					{
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmResource/update_basic.tf"),
+						ExpectError: regexp.MustCompile("API error"),
 					},
 				},
 			})
@@ -184,16 +238,14 @@ func TestResGTMResource(t *testing.T) {
 	})
 }
 
-func mockUpdateResource(client *gtm.Mock) *mock.Call {
+func mockUpdateResource(client *gtm.Mock, resp *gtm.UpdateResourceResponse, err error) *mock.Call {
 	return client.On("UpdateResource",
 		testutils.MockContext,
 		gtm.UpdateResourceRequest{
 			Resource:   getUpdatedResource(),
 			DomainName: testDomainName,
 		},
-	).Return(&gtm.UpdateResourceResponse{
-		Status: getDefaultResponseStatus(),
-	}, nil).Once()
+	).Return(resp, err).Once()
 }
 
 func mockCreateResource(client *gtm.Mock, resource *gtm.Resource, resp *gtm.CreateResourceResponse, err error) *mock.Call {

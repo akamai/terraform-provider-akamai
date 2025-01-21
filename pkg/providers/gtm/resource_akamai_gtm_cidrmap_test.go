@@ -34,7 +34,7 @@ func TestResGTMCIDRMap(t *testing.T) {
 
 		mockGetDomainStatus(client, 2)
 
-		mockUpdateCIDRMap(client)
+		mockUpdateCIDRMap(client, &gtm.UpdateCIDRMapResponse{Status: getDefaultResponseStatus()}, nil)
 
 		mockGetCIDRMap(client, getCIDRMapUpdated(), nil, 3)
 
@@ -57,6 +57,56 @@ func TestResGTMCIDRMap(t *testing.T) {
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr(resourceName, "name", "tfexample_cidrmap_1"),
 						),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("update CIDRMap failed", func(t *testing.T) {
+		client := &gtm.Mock{}
+
+		mockGetCIDRMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+
+		mockCreateCIDRMap(client, getCIDRMap(), &gtm.CreateCIDRMapResponse{
+			Resource: getCIDRMap(),
+			Status:   getDefaultResponseStatus(),
+		}, nil)
+
+		mockGetCIDRMap(client, getCIDRMap(), nil, 4)
+
+		mockGetDatacenter(client, datacenterID5400, &dc, nil, 1)
+
+		mockGetDomainStatus(client, 1)
+
+		mockUpdateCIDRMap(client, nil, &gtm.Error{
+			Type:       "internal_error",
+			Title:      "Internal Server Error",
+			Detail:     "Error updating resource",
+			StatusCode: http.StatusInternalServerError,
+		})
+
+		mockGetCIDRMap(client, getCIDRMap(), nil, 1)
+
+		mockDeleteCIDRMap(client)
+
+		resourceName := "akamai_gtm_cidrmap.tfexample_cidrmap_1"
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmCidrmap/create_basic.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(resourceName, "name", "tfexample_cidrmap_1"),
+						),
+					},
+					{
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmCidrmap/update_basic.tf"),
+						ExpectError: regexp.MustCompile("API error"),
 					},
 				},
 			})
@@ -366,14 +416,14 @@ func mockGetCIDRMap(m *gtm.Mock, cidrMap *gtm.CIDRMap, err error, times int) *mo
 	}).Return(resp, err).Times(times)
 }
 
-func mockUpdateCIDRMap(client *gtm.Mock) *mock.Call {
+func mockUpdateCIDRMap(client *gtm.Mock, resp *gtm.UpdateCIDRMapResponse, err error) *mock.Call {
 	return client.On("UpdateCIDRMap",
 		testutils.MockContext,
 		gtm.UpdateCIDRMapRequest{
 			CIDR:       getCIDRMapUpdated(),
 			DomainName: testDomainName,
 		},
-	).Return(&gtm.UpdateCIDRMapResponse{Status: getDefaultResponseStatus()}, nil).Once()
+	).Return(resp, err).Once()
 }
 
 func mockCreateCIDRMap(client *gtm.Mock, cidrMap *gtm.CIDRMap, resp *gtm.CreateCIDRMapResponse, err error) *mock.Call {

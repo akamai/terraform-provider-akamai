@@ -33,7 +33,7 @@ func TestResGTMDomain(t *testing.T) {
 
 		mockGetDomainStatus(client, 3)
 
-		mockUpdateDomain(client)
+		mockUpdateDomain(client, &gtm.UpdateDomainResponse{Status: getDefaultResponseStatus()}, nil)
 
 		mockGetDomain(client, getTestUpdateDomain(), nil, 3)
 
@@ -62,6 +62,56 @@ func TestResGTMDomain(t *testing.T) {
 							resource.TestCheckResourceAttr(resourceName, "sign_and_serve", "false"),
 							resource.TestCheckNoResourceAttr(resourceName, "sign_and_serve_algorithm"),
 						),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("update domain failed", func(t *testing.T) {
+		client := &gtm.Mock{}
+
+		mockGetDomain(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+
+		mockCreateDomain(client, getTestDomain(), &gtm.CreateDomainResponse{
+			Resource: getReturnedTestDomain(),
+			Status:   getDefaultResponseStatus(),
+		}, nil)
+
+		mockGetDomain(client, getReturnedTestDomain(), nil, 4)
+
+		mockGetDomainStatus(client, 2)
+
+		mockUpdateDomain(client, nil, &gtm.Error{
+			Type:       "internal_error",
+			Title:      "Internal Server Error",
+			Detail:     "Error updating domain",
+			StatusCode: http.StatusInternalServerError,
+		})
+
+		mockGetDomain(client, getReturnedTestDomain(), nil, 1)
+
+		mockDeleteDomain(client)
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/create_basic.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(resourceName, "name", "gtm_terra_testdomain.akadns.net"),
+							resource.TestCheckResourceAttr(resourceName, "type", "weighted"),
+							resource.TestCheckResourceAttr(resourceName, "load_imbalance_percentage", "10"),
+							resource.TestCheckResourceAttr(resourceName, "sign_and_serve", "false"),
+							resource.TestCheckNoResourceAttr(resourceName, "sign_and_serve_algorithm"),
+						),
+					},
+					{
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/update_basic.tf"),
+						ExpectError: regexp.MustCompile("API error"),
 					},
 				},
 			})
@@ -409,7 +459,7 @@ func getDomainOrderClient() *gtm.Mock {
 	return client
 }
 
-func mockUpdateDomain(client *gtm.Mock) *mock.Call {
+func mockUpdateDomain(client *gtm.Mock, resp *gtm.UpdateDomainResponse, err error) *mock.Call {
 	return client.On("UpdateDomain",
 		testutils.MockContext,
 		gtm.UpdateDomainRequest{
@@ -419,7 +469,7 @@ func mockUpdateDomain(client *gtm.Mock) *mock.Call {
 				GroupID:    "123ABC",
 			},
 		},
-	).Return(&gtm.UpdateDomainResponse{Status: getDefaultResponseStatus()}, nil).Once()
+	).Return(resp, err).Once()
 }
 
 func mockCreateDomain(client *gtm.Mock, domain *gtm.Domain, resp *gtm.CreateDomainResponse, err error) {

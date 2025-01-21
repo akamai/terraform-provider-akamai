@@ -30,7 +30,7 @@ func TestResGTMGeoMap(t *testing.T) {
 
 		mockGetDatacenter(client, datacenterID5400, getTestDatacenterResp(), nil, 1)
 
-		mockUpdateGeoMap(client, getDefaultUpdatedGeomap())
+		mockUpdateGeoMap(client, getDefaultUpdatedGeomap(), &gtm.UpdateGeoMapResponse{Status: getDefaultResponseStatus()}, nil)
 
 		mockGetDomainStatus(client, 1)
 
@@ -57,6 +57,56 @@ func TestResGTMGeoMap(t *testing.T) {
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr(resourceName, "name", "tfexample_geomap_1"),
 						),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("update geomap failed", func(t *testing.T) {
+		client := &gtm.Mock{}
+
+		mockGetGeoMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+
+		mockCreateGeoMap(client, getDefaultGeomap(), &gtm.CreateGeoMapResponse{
+			Resource: getDefaultGeomap(),
+			Status:   getDefaultResponseStatus(),
+		}, nil)
+
+		mockGetGeoMap(client, getDefaultGeomap(), nil, 4)
+
+		mockGetDatacenter(client, datacenterID5400, getTestDatacenterResp(), nil, 1)
+
+		mockUpdateGeoMap(client, getDefaultUpdatedGeomap(), nil, &gtm.Error{
+			Type:       "internal_error",
+			Title:      "Internal Server Error",
+			Detail:     "Error updating geomap",
+			StatusCode: http.StatusInternalServerError,
+		})
+
+		mockGetGeoMap(client, getDefaultGeomap(), nil, 1)
+
+		mockDeleteGeoMap(client)
+
+		mockGetDomainStatus(client, 1)
+
+		resourceName := "akamai_gtm_geomap.tfexample_geomap_1"
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmGeomap/create_basic.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(resourceName, "name", "tfexample_geomap_1"),
+						),
+					},
+					{
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmGeomap/update_basic.tf"),
+						ExpectError: regexp.MustCompile("API error"),
 					},
 				},
 			})
@@ -370,16 +420,14 @@ func mockCreateGeoMap(client *gtm.Mock, reqGeomap *gtm.GeoMap, response *gtm.Cre
 	}).Return(response, err).Once()
 }
 
-func mockUpdateGeoMap(client *gtm.Mock, updateGeoMap *gtm.GeoMap) *mock.Call {
+func mockUpdateGeoMap(client *gtm.Mock, updateGeoMap *gtm.GeoMap, resp *gtm.UpdateGeoMapResponse, err error) *mock.Call {
 	return client.On("UpdateGeoMap",
 		testutils.MockContext,
 		gtm.UpdateGeoMapRequest{
 			GeoMap:     updateGeoMap,
 			DomainName: testDomainName,
 		},
-	).Return(&gtm.UpdateGeoMapResponse{
-		Status: getDefaultResponseStatus(),
-	}, nil).Once()
+	).Return(resp, err).Once()
 }
 
 func mockDeleteGeoMap(client *gtm.Mock) *mock.Call {
