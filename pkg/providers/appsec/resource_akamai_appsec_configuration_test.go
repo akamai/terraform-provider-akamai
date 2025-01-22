@@ -33,7 +33,7 @@ func TestAkamaiConfiguration_res_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		getSelectedHostnamesResponse := appsec.GetSelectedHostnamesResponse{}
-		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResSelectedHostname/SelectedHostname.json"), &getSelectedHostnamesResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/SelectedHostname.json"), &getSelectedHostnamesResponse)
 		require.NoError(t, err)
 
 		client.On("GetSelectedHostnames",
@@ -101,7 +101,7 @@ func TestAkamaiConfiguration_res_error_updating_configuration(t *testing.T) {
 		require.NoError(t, err)
 
 		hns := appsec.GetSelectedHostnamesResponse{}
-		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResSelectedHostname/SelectedHostname.json"), &hns)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/SelectedHostname.json"), &hns)
 		require.NoError(t, err)
 
 		client.On("GetSelectedHostnames",

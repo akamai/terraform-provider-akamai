@@ -5,5 +5,5 @@
     "name": "Akamai Tools",
     "productionVersion": 6,
     "stagingVersion": 6,    
-    "targetProduct": "WAP"
+    "targetProduct": "AAP"
 }

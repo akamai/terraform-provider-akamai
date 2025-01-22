@@ -85,12 +85,6 @@ func resourceGTMv1Property() *schema.Resource {
 				Type:     schema.TypeBool,
 				Optional: true,
 			},
-			"static_ttl": {
-				// Deprecated. Leaving for backward config compatibility.
-				Type:             schema.TypeInt,
-				Optional:         true,
-				ValidateDiagFunc: validateTTL,
-			},
 			"static_rr_set": {
 				Type:     schema.TypeList,
 				Optional: true,
@@ -211,11 +205,6 @@ func resourceGTMv1Property() *schema.Resource {
 								Type: schema.TypeString,
 							},
 							Optional: true,
-						},
-						"name": {
-							Type:       schema.TypeString,
-							Optional:   true,
-							Deprecated: "The attribute `name` has been deprecated. Any reads or writes on this attribute are ignored",
 						},
 						"handout_cname": {
 							Type:     schema.TypeString,
@@ -477,21 +466,13 @@ func customDiffGTMProperty(_ context.Context, d *schema.ResourceDiff, m interfac
 	return nil
 }
 
-// validateTTL is a SchemaValidateDiagFunc to validate dynamic_ttl and static_ttl.
+// validateTTL is a SchemaValidateDiagFunc to validate dynamic_ttl.
 func validateTTL(v interface{}, path cty.Path) diag.Diagnostics {
 	schemaFieldName, err := tf.GetSchemaFieldNameFromPath(path)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	if schemaFieldName == "static_ttl" {
-		return diag.Diagnostics{
-			diag.Diagnostic{
-				Severity: diag.Warning,
-				Summary:  "static_ttl is deprecated and will be ignored. Use static_rr_sets to apply static ttls to records",
-			},
-		}
-	}
 	value, ok := v.(int)
 	if !ok {
 		return diag.Errorf("%s validation failed to read field attribute", schemaFieldName)

@@ -46,15 +46,34 @@
 
 
 
+* APPSEC
+  * Removed deprecated data sources:
+    * `akamai_appsec_selected_hostnames`
+    * `akamai_appsec_wap_selected_hostnames`
+  * Removed deprecated resources:
+    * `akamai_appsec_selected_hostnames`
+    * `akamai_appsec_wap_selected_hostnames`
 
+* BOTMAN
+  * Removed the deprecated `akamai_botman_challenge_interception_rules` data source and resource.
 
+* CPS
+  * Removed the deprecated `unacknowledged_warnings` attribute from the `akamai_cps_upload_certificate` resource.
 
+* DNS
+  * Removed the deprecated `active` attribute from the `akamai_dns_record` resource.
 
+* Edgeworkers
+  * Removed the deprecated `initial_data` attribute from the `akamai_edgekv` resource.
 
+* GTM
+  * Removed the `static_ttl` attribute from the `akamai_gtm_property` resource.
+  * Removed the `name` attribute from the `static_rr_set` attribute in the `akamai_gtm_property` resource.
 
+* PAPI
+  * Removed the `product_id` and `rule_format` attributes from the `akamai_properties` data source.
 
-
-
+#### DEPRECATIONS:
 
 
 
@@ -64,13 +83,13 @@
 #### FEATURES/ENHANCEMENTS:
 
 
-* Migrated to go `1.22`.
+* Migrated to Go `1.22`.
 * Improved code by resolving issues reported by linter.
 * Updated vulnerable dependencies
 
 
 
-* Added CPS configuration examples. ([I#467](https://github.com/akamai/terraform-provider-akamai/issues/467))
+* Added CPS configuration examples ([I#467](https://github.com/akamai/terraform-provider-akamai/issues/467)).
 
 
  
@@ -84,7 +103,7 @@
 
 
 
- * Modified build scripts to use Go `1.22.9`. ([I#578](https://github.com/akamai/terraform-provider-akamai/issues/578))
+ * Modified build scripts to use Go `1.22.9` ([I#578](https://github.com/akamai/terraform-provider-akamai/issues/578)).
 
 
 
@@ -95,9 +114,9 @@
 
 
 * PAPI
-  * Added support for moving PAPI property between groups (`akamai_property` and `akamai_property_bootstrap`)
+  * Added support for moving a PAPI property between groups (`akamai_property` and `akamai_property_bootstrap`)
     by updating the `group_id` field. Currently, properties that have never been activated are not supported.
-  * Added `asset_id` schema field to `akamai_property_bootstrap`.
+  * Added the `asset_id` schema field to the `akamai_property_bootstrap` resource.
 
 
 
@@ -112,8 +131,8 @@
 
 
 * PAPI
-    * Fixed improper resolution of `include_id` attribute in `include_activation` resource in the case of referencing to the
-      `include` resource and replacement of both resources.
+    * Fixed an improper resolution of the `include_id` attribute in the `include_activation` resource when referencing to the
+      `include` resource and replacing both resources.
 
 
 
@@ -122,17 +141,17 @@
 
 
 * PAPI
-  * Relaxed validation rules for fields `transition_key` and `key` for behaviors `segmented_content_protection` and `verify_token_authorization` to accept key of any size.
+  * Relaxed validation rules for the `transition_key` and `key` fields in the `segmented_content_protection` and `verify_token_authorization` behaviors to accept a key of any size.
 
 
 
 
 * Cloud Access
-  * Populated `access_key_uid` in the `akamai_cloudaccess_key` resource from state, if value was known on plan level for update.
+  * Populated the `access_key_uid` in the `akamai_cloudaccess_key` resource from the state file, if a value is known at a plan level for an update operation.
 
 * GTM
-  * Fixed issue in `akamai_gtm_property` resource that update could send incorrect values to the server
-    * Also fixed incorrect logging in the same case
+  * Fixed an issue in the `akamai_gtm_property` resource that an update operation could send incorrect values to the server.
+    * Also, fixed incorrect logging in the same case.
 
 
 
@@ -145,7 +164,7 @@
 
 
 * GTM
-  * Added drift handling for resources deleted outside of Terraform: ([I#577](https://github.com/akamai/terraform-provider-akamai/issues/577))
+  * Added drift handling for resources deleted outside of Terraform ([I#577](https://github.com/akamai/terraform-provider-akamai/issues/577)):
     * `akamai_gtm_asmap`
     * `akamai_gtm_cidrmap`
     * `akamai_gtm_datacenter`
@@ -160,8 +179,8 @@
 
 
 * PAPI
-  * Fixed improper diff in `akamai_property` resource when no value was given in the child for
-    the field `criteria_must_satisfy`, which the API sets to `all` by default.
+  * Fixed improper diff in the `akamai_property` resource when no value was given in the child for
+    the `criteria_must_satisfy` field, which the API sets to `all` by default.
 
 * GTM
   * Unified error messages.
@@ -177,7 +196,7 @@
 #### FEATURES/ENHANCEMENTS:
 
 * Global
-  * Updated various dependencies
+  * Updated various dependencies.
 
 ## 6.6.0 (Nov 21, 2024)
 
@@ -199,7 +218,7 @@
   * Added the new `outbound_zone_transfer` field to the `akamai_dns_zone` resource.
   
 * Edgeworkers
-  * Stopped sending an EdgeKV initialization request in the `akamai_edgekv` resource when EdgeKV is already initialized. ([I#589](https://github.com/akamai/terraform-provider-akamai/issues/589))
+  * Stopped sending an EdgeKV initialization request in the `akamai_edgekv` resource when EdgeKV is already initialized ([I#589](https://github.com/akamai/terraform-provider-akamai/issues/589)).
 
 * PAPI
   * Added support for the new rule format `v2024-10-21`.

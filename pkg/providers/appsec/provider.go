@@ -98,7 +98,6 @@ func (p *Subprovider) SDKResources() map[string]*schema.Resource {
 		"akamai_appsec_security_policy":                          resourceSecurityPolicy(),
 		"akamai_appsec_security_policy_default_protections":      resourceSecurityPolicyDefaultProtections(),
 		"akamai_appsec_security_policy_rename":                   resourceSecurityPolicyRename(),
-		"akamai_appsec_selected_hostnames":                       resourceSelectedHostname(),
 		"akamai_appsec_siem_settings":                            resourceSiemSettings(),
 		"akamai_appsec_slow_post":                                resourceSlowPostProtectionSetting(),
 		"akamai_appsec_slowpost_protection":                      resourceSlowPostProtection(),
@@ -106,7 +105,6 @@ func (p *Subprovider) SDKResources() map[string]*schema.Resource {
 		"akamai_appsec_version_notes":                            resourceVersionNotes(),
 		"akamai_appsec_waf_mode":                                 resourceWAFMode(),
 		"akamai_appsec_waf_protection":                           resourceWAFProtection(),
-		"akamai_appsec_wap_selected_hostnames":                   resourceWAPSelectedHostnames(),
 	}
 }
 
@@ -158,7 +156,6 @@ func (p *Subprovider) SDKDataSources() map[string]*schema.Resource {
 		"akamai_appsec_security_policy":                          dataSourceSecurityPolicy(),
 		"akamai_appsec_security_policy_protections":              dataSourcePolicyProtections(),
 		"akamai_appsec_selectable_hostnames":                     dataSourceSelectableHostnames(),
-		"akamai_appsec_selected_hostnames":                       dataSourceSelectedHostnames(),
 		"akamai_appsec_siem_definitions":                         dataSourceSiemDefinitions(),
 		"akamai_appsec_siem_settings":                            dataSourceSiemSettings(),
 		"akamai_appsec_slow_post":                                dataSourceSlowPostProtectionSettings(),
@@ -166,7 +163,6 @@ func (p *Subprovider) SDKDataSources() map[string]*schema.Resource {
 		"akamai_appsec_tuning_recommendations":                   dataSourceTuningRecommendations(),
 		"akamai_appsec_version_notes":                            dataSourceVersionNotes(),
 		"akamai_appsec_waf_mode":                                 dataSourceWAFMode(),
-		"akamai_appsec_wap_selected_hostnames":                   dataSourceWAPSelectedHostnames(),
 	}
 }
 

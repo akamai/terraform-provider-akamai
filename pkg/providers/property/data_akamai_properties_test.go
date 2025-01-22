@@ -13,7 +13,7 @@ func TestDataProperties(t *testing.T) {
 	t.Run("list properties", func(t *testing.T) {
 		client := &papi.Mock{}
 		props := papi.PropertiesItems{Items: buildPapiProperties()}
-		properties := decodePropertyItems(props.Items, "", "")
+		properties := decodePropertyItems(props.Items)
 
 		client.On("GetProperties",
 			testutils.MockContext,
@@ -36,7 +36,7 @@ func TestDataProperties(t *testing.T) {
 	t.Run("list properties without group prefix", func(t *testing.T) {
 		client := &papi.Mock{}
 		props := papi.PropertiesItems{Items: buildPapiProperties()}
-		properties := decodePropertyItems(props.Items, "", "")
+		properties := decodePropertyItems(props.Items)
 
 		client.On("GetProperties",
 			testutils.MockContext,
@@ -59,7 +59,7 @@ func TestDataProperties(t *testing.T) {
 	t.Run("list properties without contract prefix", func(t *testing.T) {
 		client := &papi.Mock{}
 		props := papi.PropertiesItems{Items: buildPapiProperties()}
-		properties := decodePropertyItems(props.Items, "", "")
+		properties := decodePropertyItems(props.Items)
 
 		client.On("GetProperties",
 			testutils.MockContext,
@@ -118,7 +118,7 @@ func buildAggregatedTest(properties []map[string]interface{}, id, groupID, contr
 	return resource.ComposeAggregateTestCheckFunc(testVar...)
 }
 
-func decodePropertyItems(items []*papi.Property, ruleFormat, productID string) []map[string]interface{} {
+func decodePropertyItems(items []*papi.Property) []map[string]interface{} {
 	properties := make([]map[string]interface{}, 0)
 	for _, item := range items {
 		prop := map[string]interface{}{
@@ -126,11 +126,9 @@ func decodePropertyItems(items []*papi.Property, ruleFormat, productID string) [
 			"group_id":           item.GroupID,
 			"latest_version":     item.LatestVersion,
 			"note":               item.Note,
-			"product_id":         productID,
 			"production_version": decodeVersion(item.ProductionVersion),
 			"property_id":        item.PropertyID,
 			"property_name":      item.PropertyName,
-			"rule_format":        ruleFormat,
 			"staging_version":    decodeVersion(item.StagingVersion),
 		}
 		properties = append(properties, prop)

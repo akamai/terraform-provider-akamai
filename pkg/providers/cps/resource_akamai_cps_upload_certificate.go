@@ -90,12 +90,6 @@ func resourceCPSUploadCertificate() *schema.Resource {
 				Default:     false,
 				Description: "Whether to wait for certificate to be deployed",
 			},
-			"unacknowledged_warnings": {
-				Type:        schema.TypeBool,
-				Computed:    true,
-				Description: "Used to distinguish whether there are unacknowledged warnings for a certificate",
-				Deprecated:  "Field 'unacknowledged_warnings' has been deprecated",
-			},
 			"timeouts": {
 				Type:        schema.TypeList,
 				Optional:    true,

@@ -26,7 +26,7 @@ func TestAkamaiConfiguration_data_basic(t *testing.T) {
 		).Return(&getConfigurationsResponse, nil)
 
 		getSelectedHostnamesResponse := appsec.GetSelectedHostnamesResponse{}
-		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestDSSelectedHostnames/SelectedHostnames.json"), &getSelectedHostnamesResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestDSConfiguration/SelectedHostnames.json"), &getSelectedHostnamesResponse)
 		require.NoError(t, err)
 
 		client.On("GetSelectedHostnames",
@@ -67,7 +67,7 @@ func TestAkamaiConfiguration_data_hostnames(t *testing.T) {
 		).Return(&getConfigurationsResponse, nil)
 
 		getSelectedHostnamesResponse := appsec.GetSelectedHostnamesResponse{}
-		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestDSSelectedHostnames/SelectedHostnames.json"), &getSelectedHostnamesResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestDSConfiguration/SelectedHostnames.json"), &getSelectedHostnamesResponse)
 		require.NoError(t, err)
 
 		expectedOutputText := "\n+------------------------------------------------------------------------------------------------------+\n| Configurations                                                                                       |\n+-----------+--------------+----------------+---------------------------+------------------------------+\n| CONFIG_ID | NAME         | LATEST_VERSION | VERSION_ACTIVE_IN_STAGING | VERSION_ACTIVE_IN_PRODUCTION |\n+-----------+--------------+----------------+---------------------------+------------------------------+\n| 43253     | Akamai Tools | 15             | 0                         | 0                            |\n+-----------+--------------+----------------+---------------------------+------------------------------+\n"
