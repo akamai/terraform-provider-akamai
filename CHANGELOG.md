@@ -34,9 +34,12 @@
   * Added a new resource:
     * resource_akamai_appsec_advanced_settings_ase_penalty_box
 
-
-
-
+* [IMPORTANT] API Definitions
+  * Added new resource:
+    * `akamai_apidefinitions_api` - create, read, update, delete and import API configuration
+    * `akamai_apidefinitions_activation` - activate and import API configuration activation
+  * Added new data source:
+    * `akamai_apidefinitions_openapi` - maps OpenAPI/Swagger file to API configuration
 
 
   * Appsec

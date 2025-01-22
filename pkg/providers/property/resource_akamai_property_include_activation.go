@@ -13,6 +13,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/papi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/date"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/id"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/str"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/tf"
@@ -537,7 +538,7 @@ func createNewActivation(ctx context.Context, client papi.PAPI, activationResour
 
 		select {
 		case <-time.After(createActivationRetry):
-			createActivationRetry = capDuration(createActivationRetry*2, 5*time.Minute)
+			createActivationRetry = date.CapDuration(createActivationRetry*2, 5*time.Minute)
 			continue
 
 		case <-ctx.Done():
@@ -600,7 +601,7 @@ func createNewDeactivation(ctx context.Context, client papi.PAPI, activationReso
 
 		select {
 		case <-time.After(createActivationRetry):
-			createActivationRetry = capDuration(createActivationRetry*2, 5*time.Minute)
+			createActivationRetry = date.CapDuration(createActivationRetry*2, 5*time.Minute)
 			continue
 
 		case <-ctx.Done():
@@ -743,7 +744,7 @@ func waitForActivationCondition(ctx context.Context,
 		}
 
 		select {
-		case <-time.After(capDuration(activationPollInterval, ActivationPollMinimum)):
+		case <-time.After(date.CapDuration(activationPollInterval, ActivationPollMinimum)):
 			continue
 		case <-ctx.Done():
 			return nil, diag.FromErr(terminateProcess(ctx, string(actStatus)))

@@ -7,7 +7,7 @@ require (
 	github.com/allegro/bigcache/v2 v2.2.5
 	github.com/dlclark/regexp2 v1.11.4
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
-	github.com/go-test/deep v1.1.0
+	github.com/go-test/deep v1.1.1
 	github.com/google/go-cmp v0.6.0
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/go-cleanhttp v0.5.2
@@ -27,6 +27,7 @@ require (
 	github.com/spf13/cast v1.7.0
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/exp v0.0.0-20241204233417-43b7b7cde48d
+	github.com/wk8/go-ordered-map/v2 v2.1.8
 	golang.org/x/net v0.38.0
 	golang.org/x/sync v0.14.0
 )
@@ -36,6 +37,8 @@ require (
 	github.com/agext/levenshtein v1.2.3 // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
+	github.com/bahlo/generic-list-go v0.2.0 // indirect
+	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/benbjohnson/clock v1.3.5 // indirect
 	github.com/cloudflare/circl v1.6.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -56,6 +59,7 @@ require (
 	github.com/hashicorp/terraform-registry-address v0.2.3 // indirect
 	github.com/hashicorp/terraform-svchost v0.1.1 // indirect
 	github.com/hashicorp/yamux v0.1.2 // indirect
+	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect

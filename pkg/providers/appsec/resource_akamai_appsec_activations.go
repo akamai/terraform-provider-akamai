@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/date"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/id"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
@@ -475,7 +476,7 @@ func createActivation(ctx context.Context, client appsec.APPSEC, request appsec.
 
 		select {
 		case <-time.After(createActivationRetry):
-			createActivationRetry = capDuration(createActivationRetry*2, 5*time.Minute)
+			createActivationRetry = date.CapDuration(createActivationRetry*2, 5*time.Minute)
 			continue
 
 		case <-ctx.Done():
@@ -527,11 +528,4 @@ func isCreateActivationErrorRetryable(err error) bool {
 		return false
 	}
 	return true
-}
-
-func capDuration(t time.Duration, tMax time.Duration) time.Duration {
-	if t > tMax {
-		return tMax
-	}
-	return t
 }

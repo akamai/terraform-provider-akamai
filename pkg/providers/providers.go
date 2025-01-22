@@ -3,6 +3,7 @@ package providers
 
 import (
 	// This is where providers are imported, so they can register themselves
+	_ "github.com/akamai/terraform-provider-akamai/v8/pkg/providers/apidefinitions"
 	_ "github.com/akamai/terraform-provider-akamai/v8/pkg/providers/appsec"
 	_ "github.com/akamai/terraform-provider-akamai/v8/pkg/providers/botman"
 	_ "github.com/akamai/terraform-provider-akamai/v8/pkg/providers/clientlists"

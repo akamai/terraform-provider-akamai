@@ -1,0 +1,220 @@
+{
+  "id": 1,
+  "name": "Pet Store",
+  "hostnames": [
+    "*.www.ipqa.com"
+  ],
+  "contractId": "1",
+  "groupId": 1,
+  "tags": [
+    "Tag 2",
+    "Tag 1"
+  ],
+  "basePath": "/api",
+  "description": "desc",
+  "matchPathSegmentParameter": true,
+  "matchCaseSensitive": true,
+  "enableApiGateway": true,
+  "graphQl": true,
+  "recordVersion": 0,
+  "securitySchemes": {
+    "apiKey": {
+      "in": "header",
+      "name": "Authorization"
+    }
+  },
+  "constraints": {
+    "enforceOnRequest": true,
+    "enforceOnResponse": true,
+    "requestBody": {
+      "consumeType": [
+        "json",
+        "xml",
+        "urlencoded"
+      ],
+      "maxContentLength": 1024,
+      "maxNestingDepth": 10,
+      "properties": {
+        "maxStringLength": 100,
+        "maxIntegerValue": 10000,
+        "maxCount": 100,
+        "maxNameLength": 100
+      }
+    },
+    "bypassOn": {
+      "undefinedMethods": [
+        "GET"
+      ],
+      "undefinedParameters": [
+        "REQUEST_COOKIE"
+      ]
+    }
+  },
+  "versioning": {
+    "in": "HEADER",
+    "name": "APIKEY",
+    "value": "1"
+  },
+  "resources": {
+    "/pets": {
+      "name": "pets",
+      "description": "Pets",
+      "get": {
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "How many items ?",
+            "type": "integer",
+            "required": true,
+            "minimum": 10,
+            "maximum": 100
+          }
+        ],
+        "responses": {
+          "headers": [
+            {
+              "name": "Content-Type",
+              "in": "header",
+              "description": "What is your content type ? ",
+              "type": "string",
+              "required": true,
+              "minLength": 10,
+              "maxLength": 100
+            }
+          ],
+          "contents": [
+            {
+              "statusCodes": [
+                200,
+                400
+              ],
+              "json": {
+                "name": "application/json",
+                "type": "object",
+                "required": false,
+                "maxBodySize": "12KB",
+                "properties": [
+                  {
+                    "name": "id",
+                    "type": "integer",
+                    "required": false
+                  },
+                  {
+                    "name": "name",
+                    "type": "string",
+                    "required": false,
+                    "minLength": 1,
+                    "maxLength": 100
+                  },
+                  {
+                    "name": "tags",
+                    "type": "array",
+                    "required": false,
+                    "minItems": 1,
+                    "maxItems": 5,
+                    "items": {
+                      "type": "string",
+                      "required": false,
+                      "minLength": 1
+                    }
+                  },
+                  {
+                    "name": "toys",
+                    "type": "array",
+                    "required": false,
+                    "minItems": 1,
+                    "maxItems": 5,
+                    "items": {
+                      "type": "object",
+                      "required": false,
+                      "properties": [
+                        {
+                          "name": "toyId",
+                          "type": "integer",
+                          "required": false,
+                          "minimum": 1
+                        },
+                        {
+                          "name": "toyName",
+                          "type": "string",
+                          "required": false,
+                          "minLength": 1
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "bypassOn": {
+          "undefinedParameters": [
+            "REQUEST_COOKIE"
+          ]
+        }
+      },
+      "post": {
+        "requestBody": {
+          "json": {
+            "name": "application/json",
+            "type": "object",
+            "required": false,
+            "properties": [
+              {
+                "name": "id",
+                "type": "integer",
+                "required": false
+              },
+              {
+                "name": "name",
+                "type": "string",
+                "required": false,
+                "minLength": 1,
+                "maxLength": 100
+              },
+              {
+                "name": "tags",
+                "type": "array",
+                "required": false,
+                "minItems": 1,
+                "maxItems": 5,
+                "items": {
+                  "type": "string",
+                  "required": false,
+                  "minLength": 1
+                }
+              },
+              {
+                "name": "toys",
+                "type": "array",
+                "required": false,
+                "minItems": 1,
+                "maxItems": 5,
+                "items": {
+                  "type": "object",
+                  "required": false,
+                  "properties": [
+                    {
+                      "name": "toyId",
+                      "type": "integer",
+                      "required": false,
+                      "minimum": 1
+                    },
+                    {
+                      "name": "toyName",
+                      "type": "string",
+                      "required": false,
+                      "minLength": 1
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

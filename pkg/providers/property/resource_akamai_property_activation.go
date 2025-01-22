@@ -1041,7 +1041,7 @@ func createActivation(ctx context.Context, client papi.PAPI, request papi.Create
 
 		select {
 		case <-time.After(createActivationRetry):
-			createActivationRetry = capDuration(createActivationRetry*2, 5*time.Minute)
+			createActivationRetry = date.CapDuration(createActivationRetry*2, 5*time.Minute)
 			continue
 
 		case <-ctx.Done():
@@ -1053,13 +1053,6 @@ func createActivation(ctx context.Context, client papi.PAPI, request papi.Create
 			return "", diag.FromErr(fmt.Errorf("activation context terminated: %w", ctx.Err()))
 		}
 	}
-}
-
-func capDuration(t time.Duration, tMax time.Duration) time.Duration {
-	if t > tMax {
-		return tMax
-	}
-	return t
 }
 
 func isCreateActivationErrorRetryable(err error) bool {
