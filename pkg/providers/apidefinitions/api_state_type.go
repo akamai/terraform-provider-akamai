@@ -115,19 +115,86 @@ func (v apiStateValue) StringSemanticEquals(ctx context.Context, valuable basety
 	return true, nil
 }
 
+<<<<<<< HEAD
 func checkSemanticEquality(before v0.APIAttributes, after v0.APIAttributes) []string {
+=======
+func checkSemanticEquality(before v0.RegisterAPIRequest, after v0.RegisterAPIRequest) []string {
+	if before.EnableAPIGateway == nil && after.EnableAPIGateway != nil && *after.EnableAPIGateway == false {
+		after.EnableAPIGateway = nil
+	}
+	if before.GraphQL == nil && after.GraphQL != nil && *after.GraphQL == false {
+		after.GraphQL = nil
+	}
+	if before.MatchPathSegmentParameter == nil && after.MatchPathSegmentParameter != nil && *after.MatchPathSegmentParameter == false {
+		after.MatchPathSegmentParameter = nil
+	}
+	if before.MatchCaseSensitive == nil && after.MatchCaseSensitive != nil && *after.MatchCaseSensitive == false {
+		after.MatchCaseSensitive = nil
+	}
+
+>>>>>>> 298d84c3 (SECKSD-27443 API Definitions Sub Provider)
 	if before.BasePath != nil && *before.BasePath == "" && after.BasePath == nil {
 		after.BasePath = ptr.To("")
 	}
 
+<<<<<<< HEAD
 	sortConsumeTypes(before)
 	sortConsumeTypes(after)
+=======
+	sortCollections(before)
+	sortCollections(after)
+>>>>>>> 298d84c3 (SECKSD-27443 API Definitions Sub Provider)
 
 	return deep.Equal(before, after)
 }
 
+<<<<<<< HEAD
 func sortConsumeTypes(state v0.APIAttributes) {
+=======
+func sortCollections(state v0.RegisterAPIRequest) {
+	sortConsumeTypes(state)
+	sortBypassOn(state)
+}
+
+func sortConsumeTypes(state v0.RegisterAPIRequest) {
+>>>>>>> 298d84c3 (SECKSD-27443 API Definitions Sub Provider)
 	if state.Constraints != nil && state.Constraints.RequestBody != nil && state.Constraints.RequestBody.ConsumeType != nil {
 		slices.Sort(state.Constraints.RequestBody.ConsumeType)
 	}
 }
+<<<<<<< HEAD
+=======
+
+func sortBypassOn(state v0.RegisterAPIRequest) {
+	if state.Constraints != nil && state.Constraints.BypassOn != nil {
+		if state.Constraints.BypassOn.UndefinedMethods != nil {
+			slices.Sort(state.Constraints.BypassOn.UndefinedMethods)
+		}
+
+		if state.Constraints.BypassOn.UndefinedParameters != nil {
+			slices.Sort(state.Constraints.BypassOn.UndefinedParameters)
+		}
+	}
+
+	if state.Resources != nil {
+		for pair := state.Resources.Oldest(); pair != nil; pair = pair.Next() {
+			resource := pair.Value
+			sortMethodBypassOn(resource.Get)
+			sortMethodBypassOn(resource.Post)
+			sortMethodBypassOn(resource.Put)
+			sortMethodBypassOn(resource.Delete)
+			sortMethodBypassOn(resource.Options)
+			sortMethodBypassOn(resource.Head)
+			sortMethodBypassOn(resource.Patch)
+		}
+
+	}
+}
+
+func sortMethodBypassOn(method *v0.Method) {
+	if method == nil || method.BypassOn == nil || method.BypassOn.UndefinedParameters == nil {
+		return
+	}
+	slices.Sort(method.BypassOn.UndefinedParameters)
+}
+>>>>>>> 298d84c3 (SECKSD-27443 API Definitions Sub Provider)
