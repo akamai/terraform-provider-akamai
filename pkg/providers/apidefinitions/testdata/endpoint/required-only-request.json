@@ -1,8 +1,0 @@
-{
-  "name": "Pet Store",
-  "contractId": "Contract-1",
-  "groupId": 1,
-  "hosts": [
-    "akamai.com"
-  ]
-}

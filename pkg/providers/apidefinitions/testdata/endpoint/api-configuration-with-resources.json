@@ -1,11 +1,8 @@
 {
-  "id": 1,
   "name": "Pet Store",
   "hostnames": [
-    "*.www.ipqa.com"
+    "akamai.com"
   ],
-  "contractId": "1",
-  "groupId": 1,
   "tags": [
     "Tag 2",
     "Tag 1"
@@ -16,7 +13,6 @@
   "matchCaseSensitive": true,
   "enableApiGateway": true,
   "graphQl": true,
-  "recordVersion": 0,
   "securitySchemes": {
     "apiKey": {
       "in": "header",

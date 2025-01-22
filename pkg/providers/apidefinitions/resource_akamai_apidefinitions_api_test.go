@@ -43,27 +43,31 @@ func TestAPIResource(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: endpointResourceConfig("required-only-request.json"),
+					Config: endpointResourceConfig("api-configuration-required-only.json"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_apidefinitions_api.e1", "id", "1"),
+						resource.TestCheckResourceAttr("akamai_apidefinitions_api.e1", "latest_version", "1"),
+						resource.TestCheckResourceAttr("akamai_apidefinitions_api.e1", "api", readJSON("api-configuration-required-only.json")),
 					),
 				},
 			},
 		},
 		"create endpoint - with resources": {
 			init: func(m *apidefinitions.Mock, mV0 *v0.Mock) {
-				mockRegisterAPI(mV0, "with-resources.json")
-				mockReadActiveAPIResource(m, mV0, "with-resources.json", 1)
+				mockRegisterAPI(mV0, "with-resources-response.json")
+				mockReadActiveAPIResource(m, mV0, "with-resources-response.json", 1)
 				mockDeleteEndpoint(m)
 			},
 			mockData: data{
-				response: "with-resources.json",
+				response: "with-resources-response.json",
 			},
 			steps: []resource.TestStep{
 				{
-					Config: endpointResourceConfig("with-resources.json"),
+					Config: endpointResourceConfig("api-configuration-with-resources.json"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_apidefinitions_api.e1", "id", "1"),
+						resource.TestCheckResourceAttr("akamai_apidefinitions_api.e1", "latest_version", "1"),
+						resource.TestCheckResourceAttr("akamai_apidefinitions_api.e1", "api", readJSON("api-configuration-with-resources.json")),
 					),
 				},
 			},
@@ -77,7 +81,7 @@ func TestAPIResource(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      endpointResourceConfig("required-only-request.json"),
+					Config:      endpointResourceConfig("api-configuration-required-only.json"),
 					ExpectError: regexp.MustCompile("Create API Failed"),
 				},
 			},
@@ -86,25 +90,25 @@ func TestAPIResource(t *testing.T) {
 			init: func(m *apidefinitions.Mock, mV0 *v0.Mock) {
 				mockRegisterAPI(mV0, "required-only-response.json")
 				mockReadActiveAPIResource(m, mV0, "required-only-response.json", 2)
-				mockUpdateAPIVersion(m, mV0, "with-resources.json", false)
-				mockReadActiveAPIResource(m, mV0, "with-resources.json", 1)
+				mockUpdateAPIVersion(m, mV0, "with-resources-response.json", false)
+				mockReadActiveAPIResource(m, mV0, "with-resources-response.json", 1)
 				mockDeleteEndpoint(m)
 			},
 			steps: []resource.TestStep{
 				{
-					Config: endpointResourceConfig("required-only-request.json"),
+					Config: endpointResourceConfig("api-configuration-required-only.json"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_apidefinitions_api.e1", "id", "1"),
 						resource.TestCheckResourceAttr("akamai_apidefinitions_api.e1", "latest_version", "1"),
-						resource.TestCheckResourceAttr("akamai_apidefinitions_api.e1", "api", readJSON("required-only-request.json")),
+						resource.TestCheckResourceAttr("akamai_apidefinitions_api.e1", "api", readJSON("api-configuration-required-only.json")),
 					),
 				},
 				{
-					Config: endpointResourceConfig("with-resources.json"),
+					Config: endpointResourceConfig("api-configuration-with-resources.json"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_apidefinitions_api.e1", "id", "1"),
 						resource.TestCheckResourceAttr("akamai_apidefinitions_api.e1", "latest_version", "1"),
-						resource.TestCheckResourceAttr("akamai_apidefinitions_api.e1", "api", readJSON("with-resources.json")),
+						resource.TestCheckResourceAttr("akamai_apidefinitions_api.e1", "api", readJSON("api-configuration-with-resources.json")),
 					),
 				},
 			},
@@ -113,25 +117,25 @@ func TestAPIResource(t *testing.T) {
 			init: func(m *apidefinitions.Mock, mV0 *v0.Mock) {
 				mockRegisterAPI(mV0, "required-only-response.json")
 				mockReadAPIResource(m, mV0, "required-only-response.json", 2)
-				mockUpdateAPIVersion(m, mV0, "with-resources.json", true)
-				mockReadAPIResource(m, mV0, "with-resources.json", 1)
+				mockUpdateAPIVersion(m, mV0, "with-resources-response.json", true)
+				mockReadAPIResource(m, mV0, "with-resources-response.json", 1)
 				mockDeleteEndpoint(m)
 			},
 			steps: []resource.TestStep{
 				{
-					Config: endpointResourceConfig("required-only-request.json"),
+					Config: endpointResourceConfig("api-configuration-required-only.json"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_apidefinitions_api.e1", "id", "1"),
 						resource.TestCheckResourceAttr("akamai_apidefinitions_api.e1", "latest_version", "1"),
-						resource.TestCheckResourceAttr("akamai_apidefinitions_api.e1", "api", readJSON("required-only-request.json")),
+						resource.TestCheckResourceAttr("akamai_apidefinitions_api.e1", "api", readJSON("api-configuration-required-only.json")),
 					),
 				},
 				{
-					Config: endpointResourceConfig("with-resources.json"),
+					Config: endpointResourceConfig("api-configuration-with-resources.json"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_apidefinitions_api.e1", "id", "1"),
 						resource.TestCheckResourceAttr("akamai_apidefinitions_api.e1", "latest_version", "2"),
-						resource.TestCheckResourceAttr("akamai_apidefinitions_api.e1", "api", readJSON("with-resources.json")),
+						resource.TestCheckResourceAttr("akamai_apidefinitions_api.e1", "api", readJSON("api-configuration-with-resources.json")),
 					),
 				},
 			},
@@ -145,15 +149,15 @@ func TestAPIResource(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: endpointResourceConfig("required-only-request.json"),
+					Config: endpointResourceConfig("api-configuration-required-only.json"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_apidefinitions_api.e1", "id", "1"),
 						resource.TestCheckResourceAttr("akamai_apidefinitions_api.e1", "latest_version", "1"),
-						resource.TestCheckResourceAttr("akamai_apidefinitions_api.e1", "api", readJSON("required-only-request.json")),
+						resource.TestCheckResourceAttr("akamai_apidefinitions_api.e1", "api", readJSON("api-configuration-required-only.json")),
 					),
 				},
 				{
-					Config:      endpointResourceConfig("with-resources.json"),
+					Config:      endpointResourceConfig("api-configuration-with-resources.json"),
 					ExpectError: regexp.MustCompile("Update API Failed"),
 				},
 			},
@@ -169,7 +173,7 @@ func TestAPIResource(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: endpointResourceConfig("required-only-request.json"),
+					Config: endpointResourceConfig("api-configuration-required-only.json"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_apidefinitions_api.e1", "id", "1"),
 					),
@@ -194,7 +198,7 @@ func TestAPIResource(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: endpointResourceConfig("required-only-request.json"),
+					Config: endpointResourceConfig("api-configuration-required-only.json"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_apidefinitions_api.e1", "id", "1"),
 					),
@@ -217,6 +221,14 @@ func TestAPIResource(t *testing.T) {
 				},
 			},
 		},
+		"check schema - unexpected fields": {
+			steps: []resource.TestStep{
+				{
+					Config:      endpointResourceConfig("api-configuration-with-unexpected-fields.json"),
+					ExpectError: regexp.MustCompile("Error: Invalid JSON provided"),
+				},
+			},
+		},
 		"import - ok": {
 			init: func(m *apidefinitions.Mock, mV0 *v0.Mock) {
 				mockImportState(m, mV0)
@@ -225,7 +237,7 @@ func TestAPIResource(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:        endpointResourceConfig("required-only-request.json"),
+					Config:        endpointResourceConfig("api-configuration-required-only.json"),
 					ImportState:   true,
 					ImportStateId: "1:1",
 					ResourceName:  "akamai_apidefinitions_api.e1",
@@ -244,7 +256,7 @@ func TestAPIResource(t *testing.T) {
 		"import - invalid id format": {
 			steps: []resource.TestStep{
 				{
-					Config:             endpointResourceConfig("required-only-request.json"),
+					Config:             endpointResourceConfig("api-configuration-required-only.json"),
 					ImportState:        true,
 					ImportStateId:      "12345",
 					ResourceName:       "akamai_apidefinitions_api.e1",
@@ -256,7 +268,7 @@ func TestAPIResource(t *testing.T) {
 		"import - invalid id value": {
 			steps: []resource.TestStep{
 				{
-					Config:             endpointResourceConfig("required-only-request.json"),
+					Config:             endpointResourceConfig("api-configuration-required-only.json"),
 					ImportState:        true,
 					ImportStateId:      "abc:123",
 					ResourceName:       "akamai_apidefinitions_api.e1",
@@ -268,7 +280,7 @@ func TestAPIResource(t *testing.T) {
 		"import - invalid version value": {
 			steps: []resource.TestStep{
 				{
-					Config:             endpointResourceConfig("required-only-request.json"),
+					Config:             endpointResourceConfig("api-configuration-required-only.json"),
 					ImportState:        true,
 					ImportStateId:      "12345:abc",
 					ResourceName:       "akamai_apidefinitions_api.e1",

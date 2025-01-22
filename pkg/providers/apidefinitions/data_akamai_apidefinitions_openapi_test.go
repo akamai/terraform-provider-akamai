@@ -27,7 +27,7 @@ func TestOpenAPIDataSource(t *testing.T) {
 				{
 					Config: datasourceConfig(),
 					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("data.akamai_apidefinitions_openapi.o1", "api", toStateJSON("with-resources.json")),
+						resource.TestCheckResourceAttr("data.akamai_apidefinitions_openapi.o1", "api", toStateJSON("with-resources-response.json")),
 					),
 				},
 			},
@@ -71,7 +71,7 @@ func TestOpenAPIDataSource(t *testing.T) {
 }
 
 func mockFromOpenAPIFile(client *v0.Mock, times int) {
-	response, _ := deserialize(readJSON("with-resources.json"))
+	response, _ := deserialize(readJSON("api-configuration-with-resources.json"))
 	client.On("FromOpenAPIFile", mock.Anything, mock.Anything, mock.Anything).
 		Return(&v0.FromOpenAPIFileResponse{
 			API:      *response,
