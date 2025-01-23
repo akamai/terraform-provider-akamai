@@ -20,7 +20,7 @@
             "allTraffic": false,
             "averageThreshold": 5,
             "burstThreshold": 10,
-            "clientIdentifier": "ip",
+            "clientIdentifiers": ["ip"],
             "createDate": "2020-10-29T04:00:22Z",
             "description": "AFW Test Extensions",
             "fileExtensions": {
