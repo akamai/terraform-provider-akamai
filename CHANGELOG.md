@@ -59,8 +59,6 @@
 
 * CPS
   * Removed the deprecated `unacknowledged_warnings` attribute from the `akamai_cps_upload_certificate` resource.
-* Appsec
-  * Renamed `clientIdentifier` field to `clientIdentifiers` and changed field from `string` to `[]string` in resource `akamai_appsec_rate_policy`.
 
 * DNS
   * Removed the deprecated `active` attribute from the `akamai_dns_record` resource.

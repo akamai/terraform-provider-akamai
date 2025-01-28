@@ -18,7 +18,7 @@
     "allTraffic": false,
     "averageThreshold": 5,
     "burstThreshold": 10,
-    "clientIdentifiers": ["ip"],
+    "clientIdentifier": "ip",
     "description": "AFW Test Extensions",
     "fileExtensions": {
         "positiveMatch": false,
