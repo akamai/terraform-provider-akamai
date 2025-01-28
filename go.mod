@@ -3,7 +3,7 @@ module github.com/akamai/terraform-provider-akamai/v6
 go 1.22
 
 require (
-	github.com/akamai/AkamaiOPEN-edgegrid-golang/v9 v9.1.0
+	github.com/akamai/AkamaiOPEN-edgegrid-golang/v10 v10.0.0
 	github.com/allegro/bigcache/v2 v2.2.5
 	github.com/dlclark/regexp2 v1.11.4
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
@@ -88,4 +88,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-// replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v9 => ../AkamaiOPEN-edgegrid-golang
+// replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v10 => ../AkamaiOPEN-edgegrid-golang

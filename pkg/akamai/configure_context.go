@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/edgegrid"
-	akalog "github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/log"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/edgegrid"
+	akalog "github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/log"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/cache"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/log"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"

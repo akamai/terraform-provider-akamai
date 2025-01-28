@@ -8,7 +8,7 @@ import (
 	"log/slog"
 	"os"
 
-	akalog "github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/log"
+	akalog "github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/log"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/akamai"
 	_ "github.com/akamai/terraform-provider-akamai/v6/pkg/providers" // Load the providers
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/providers/registry"

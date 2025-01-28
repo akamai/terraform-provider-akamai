@@ -7,7 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/dns"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/dns"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/date"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
