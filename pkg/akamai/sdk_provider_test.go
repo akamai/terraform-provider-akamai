@@ -6,12 +6,12 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/edgegrid"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/cache"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/cache"
 
 	// Load the providers
-	_ "github.com/akamai/terraform-provider-akamai/v6/pkg/providers"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/providers/registry"
+	_ "github.com/akamai/terraform-provider-akamai/v7/pkg/providers"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/providers/registry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/stretchr/testify/assert"
