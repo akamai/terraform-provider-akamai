@@ -72,6 +72,7 @@
 
 * PAPI
   * Removed the `product_id` and `rule_format` attributes from the `akamai_properties` data source.
+  * Removed the `enabled` field from `gov_cloud` behaviour defined inside the `rules_v2024_10_21` in the `akamai_property_rules_builder` datasource 
 
 #### DEPRECATIONS:
 
@@ -105,7 +106,8 @@
 
 
 
-
+* PAPI
+  * Added support for the new rule format `v2025-01-13`. List of changes can be found [here](https://techdocs.akamai.com/terraform/docs/rule-format-changes#v2025-01-13).
 
 
 
@@ -128,6 +130,9 @@
 * PAPI
   * Added validation to raise an error when updating `contact` and `auto_acknowledge_rule_warnings` fields on active property versions in `akamai_property_activation` resource.
 
+
+* PAPI
+  * Added the `gov_cloud_title` field to `gov_cloud` behaviour defined inside the `rules_v2024_10_21` in the `akamai_property_rules_builder` datasource
 
 #### BUG FIXES:
 

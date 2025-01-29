@@ -7,16 +7,16 @@ import (
 
 func init() {
 	schemasRegistry.register(RuleFormat{
-		version:          "rules_v2024_10_21",
-		behaviorsSchemas: getBehaviorsSchemaV20241021(),
-		criteriaSchemas:  getCriteriaSchemaV20241021(),
+		version:          "rules_v2025_01_13",
+		behaviorsSchemas: getBehaviorsSchemaV20250113(),
+		criteriaSchemas:  getCriteriaSchemaV20250113(),
 		typeMappings:     map[string]interface{}{"adScalerCircuitBreaker.returnErrorResponseCodeBased.408": 408, "adScalerCircuitBreaker.returnErrorResponseCodeBased.500": 500, "adScalerCircuitBreaker.returnErrorResponseCodeBased.502": 502, "adScalerCircuitBreaker.returnErrorResponseCodeBased.504": 504},
 		nameMappings:     map[string]string{"allowFcmParentOverride": "allowFCMParentOverride", "allowHttpsCacheKeySharing": "allowHTTPSCacheKeySharing", "allowHttpsDowngrade": "allowHTTPSDowngrade", "allowHttpsUpgrade": "allowHTTPSUpgrade", "c": "C", "canBeCa": "canBeCA", "cn": "CN", "conditionalHttpStatus": "conditionalHTTPStatus", "contentCharacteristicsAmd": "contentCharacteristicsAMD", "contentCharacteristicsDd": "contentCharacteristicsDD", "dcpAuthHmacTransformation": "dcpAuthHMACTransformation", "detectSmartDnsProxy": "detectSmartDNSProxy", "detectSmartDnsProxyAction": "detectSmartDNSProxyAction", "detectSmartDnsProxyRedirecturl": "detectSmartDNSProxyRedirecturl", "enableCmcdSegmentPrefetch": "enableCMCDSegmentPrefetch", "enableEs256": "enableES256", "enableIpAvoidance": "enableIPAvoidance", "enableIpProtection": "enableIPProtection", "enableIpRedirectOnDeny": "enableIPRedirectOnDeny", "enableRs256": "enableRS256", "enableTokenInUri": "enableTokenInURI", "g2OToken": "g2oToken", "g2Oheader": "g2oheader", "i18NCharset": "i18nCharset", "i18NStatus": "i18nStatus", "isCertificateSniOnly": "isCertificateSNIOnly", "issuerRdns": "issuerRDNs", "logEdgeIp": "logEdgeIP", "o": "O", "originSettings": "origin_settings", "ou": "OU", "overrideIpAddresses": "overrideIPAddresses", "segmentDurationDash": "segmentDurationDASH", "segmentDurationDashCustom": "segmentDurationDASHCustom", "segmentDurationHds": "segmentDurationHDS", "segmentDurationHdsCustom": "segmentDurationHDSCustom", "segmentDurationHls": "segmentDurationHLS", "segmentDurationHlsCustom": "segmentDurationHLSCustom", "segmentSizeDash": "segmentSizeDASH", "segmentSizeHds": "segmentSizeHDS", "segmentSizeHls": "segmentSizeHLS", "sf3COriginHost": "sf3cOriginHost", "sf3COriginHostHeader": "sf3cOriginHostHeader", "smartDnsProxy": "smartDNSProxy", "standardTlsMigration": "standardTLSMigration", "standardTlsMigrationOverride": "standardTLSMigrationOverride", "subjectCn": "subjectCN", "subjectRdns": "subjectRDNs", "titleAicMobile": "title_aic_mobile", "titleAicNonmobile": "title_aic_nonmobile", "tokenAuthDashTitle": "tokenAuthDASHTitle", "tokenAuthHlsTitle": "tokenAuthHLSTitle"},
 		shouldFlatten:    []string{"apiPrioritization.cloudletPolicy", "apiPrioritization.throttledCpCode", "apiPrioritization.throttledCpCode.cpCodeLimits", "apiPrioritization.netStorage", "applicationLoadBalancer.cloudletPolicy", "applicationLoadBalancer.allDownNetStorage", "audienceSegmentation.cloudletPolicy", "cpCode.value", "cpCode.value.cpCodeLimits", "edgeRedirector.cloudletPolicy", "failAction.netStorageHostname", "failAction.cpCode", "failAction.cpCode.cpCodeLimits", "firstPartyMarketing.cloudletPolicy", "firstPartyMarketingPlus.cloudletPolicy", "forwardRewrite.cloudletPolicy", "imageAndVideoManager.cpCodeOriginal", "imageAndVideoManager.cpCodeOriginal.cpCodeLimits", "imageAndVideoManager.cpCodeTransformed", "imageAndVideoManager.cpCodeTransformed.cpCodeLimits", "imageManager.cpCodeOriginal", "imageManager.cpCodeOriginal.cpCodeLimits", "imageManager.cpCodeTransformed", "imageManager.cpCodeTransformed.cpCodeLimits", "imageManagerVideo.cpCodeOriginal", "imageManagerVideo.cpCodeOriginal.cpCodeLimits", "imageManagerVideo.cpCodeTransformed", "imageManagerVideo.cpCodeTransformed.cpCodeLimits", "origin.netStorage", "origin.customCertificateAuthorities.subjectRDNs", "origin.customCertificateAuthorities.issuerRDNs", "origin.customCertificates.subjectRDNs", "origin.customCertificates.issuerRDNs", "phasedRelease.cloudletPolicy", "requestControl.cloudletPolicy", "requestControl.netStorage", "siteShield.ssmap", "visitorPrioritization.cloudletPolicy", "visitorPrioritization.waitingRoomCpCode", "visitorPrioritization.waitingRoomCpCode.cpCodeLimits", "visitorPrioritization.waitingRoomNetStorage", "webApplicationFirewall.firewallConfiguration", "matchCpCode.value", "matchCpCode.value.cpCodeLimits"},
 	})
 }
 
-func getBehaviorsSchemaV20241021() map[string]*schema.Schema {
+func getBehaviorsSchemaV20250113() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"ad_scaler_circuit_breaker": {
 			Optional:    true,
@@ -7999,15 +7999,15 @@ func getBehaviorsSchemaV20241021() map[string]*schema.Schema {
 						Description:      "Specify the level of response to slow origin connections.",
 						Type:             schema.TypeString,
 					},
-					"origin_unresponsive_blacklist_origin_ip": {
+					"origin_unresponsive_blocklist_origin_ip": {
 						Optional:    true,
-						Description: "Enabling this blacklists the origin's IP address.",
+						Description: "",
 						Type:        schema.TypeBool,
 					},
-					"origin_unresponsive_blacklist_window": {
+					"origin_unresponsive_blocklist_window": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"TEN_S", "THIRTY_S"}, false)),
 						Optional:         true,
-						Description:      "This sets the delay before blacklisting an IP address.",
+						Description:      "",
 						Type:             schema.TypeString,
 					},
 					"origin_unresponsive_recovery": {
@@ -8091,15 +8091,15 @@ func getBehaviorsSchemaV20241021() map[string]*schema.Schema {
 							Type: schema.TypeString,
 						},
 					},
-					"origin_unavailable_blacklist_origin_ip": {
+					"origin_unavailable_blocklist_origin_ip": {
 						Optional:    true,
-						Description: "Enabling this blacklists the origin's IP address.",
+						Description: "",
 						Type:        schema.TypeBool,
 					},
-					"origin_unavailable_blacklist_window": {
+					"origin_unavailable_blocklist_window": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"TEN_S", "THIRTY_S"}, false)),
 						Optional:         true,
-						Description:      "This sets the delay before blacklisting an IP address.",
+						Description:      "",
 						Type:             schema.TypeString,
 					},
 					"origin_unavailable_recovery": {
@@ -8183,15 +8183,15 @@ func getBehaviorsSchemaV20241021() map[string]*schema.Schema {
 							Type: schema.TypeString,
 						},
 					},
-					"object_unavailable_blacklist_origin_ip": {
+					"object_unavailable_blocklist_origin_ip": {
 						Optional:    true,
-						Description: "Enabling this blacklists the origin's IP address.",
+						Description: "",
 						Type:        schema.TypeBool,
 					},
-					"object_unavailable_blacklist_window": {
+					"object_unavailable_blocklist_window": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"TEN_S", "THIRTY_S"}, false)),
 						Optional:         true,
-						Description:      "This sets the delay before blacklisting an IP address.",
+						Description:      "",
 						Type:             schema.TypeString,
 					},
 					"object_unavailable_recovery": {
@@ -9468,6 +9468,21 @@ func getBehaviorsSchemaV20241021() map[string]*schema.Schema {
 						Optional:         true,
 						Description:      "",
 						Type:             schema.TypeString,
+					},
+					"sort_query_params": {
+						Optional:    true,
+						Description: "",
+						Type:        schema.TypeBool,
+					},
+					"encode_query_params": {
+						Optional:    true,
+						Description: "",
+						Type:        schema.TypeBool,
+					},
+					"encode_equals": {
+						Optional:    true,
+						Description: "",
+						Type:        schema.TypeBool,
 					},
 					"origin_location_title": {
 						Optional:    true,
@@ -14313,7 +14328,7 @@ func getBehaviorsSchemaV20241021() map[string]*schema.Schema {
 	}
 }
 
-func getCriteriaSchemaV20241021() map[string]*schema.Schema {
+func getCriteriaSchemaV20250113() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"advanced_im_match": {
 			Optional:    true,
