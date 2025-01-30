@@ -49,6 +49,7 @@ func TestDataProperty(t *testing.T) {
 							ProductionVersion: ptr.To(1),
 							PropertyID:        "prp_123",
 							StagingVersion:    ptr.To(1),
+							PropertyType:      ptr.To(""),
 						},
 					}},
 				}, nil)
@@ -100,6 +101,7 @@ func TestDataProperty(t *testing.T) {
 				"property_id":        "prp_123",
 				"rule_format":        "latest",
 				"staging_version":    "1",
+				"property_type":      "",
 			},
 		},
 		"valid rules, with version provided": {
@@ -133,6 +135,7 @@ func TestDataProperty(t *testing.T) {
 							ProductionVersion: ptr.To(2),
 							PropertyID:        "prp_123",
 							StagingVersion:    ptr.To(3),
+							PropertyType:      ptr.To(""),
 						},
 					}},
 				}, nil)
@@ -184,6 +187,93 @@ func TestDataProperty(t *testing.T) {
 				"property_id":        "prp_123",
 				"rule_format":        "latest",
 				"staging_version":    "3",
+				"property_type":      "",
+			},
+		},
+		"valid rules, hostname bucket support enabled": {
+			givenTF: "no_version.tf",
+			init: func(m *papi.Mock) {
+				m.On("SearchProperties", testutils.MockContext, papi.SearchRequest{
+					Key:   papi.SearchKeyPropertyName,
+					Value: "property_name",
+				}).Return(&papi.SearchResponse{
+					Versions: papi.SearchItems{
+						Items: []papi.SearchItem{
+							{
+								ContractID: "ctr_1",
+								GroupID:    "grp_1",
+								PropertyID: "prp_123",
+							},
+						},
+					},
+				}, nil)
+				m.On("GetProperty", testutils.MockContext, papi.GetPropertyRequest{
+					ContractID: "ctr_1",
+					GroupID:    "grp_1",
+					PropertyID: "prp_123",
+				}).Return(&papi.GetPropertyResponse{
+					Properties: papi.PropertiesItems{Items: []*papi.Property{
+						{
+							AssetID:           "aid_555",
+							ContractID:        "ctr_1",
+							GroupID:           "grp_1",
+							LatestVersion:     1,
+							ProductionVersion: ptr.To(1),
+							PropertyID:        "prp_123",
+							StagingVersion:    ptr.To(1),
+							PropertyType:      ptr.To("HOSTNAME_BUCKET"),
+						},
+					}},
+				}, nil)
+				m.On("GetRuleTree", testutils.MockContext, papi.GetRuleTreeRequest{
+					PropertyID:      "prp_123",
+					PropertyVersion: 1,
+					ContractID:      "ctr_1",
+					GroupID:         "grp_1",
+				}).Return(&papi.GetRuleTreeResponse{
+					Response: papi.Response{
+						ContractID: "ctr_1",
+						GroupID:    "grp_1",
+					},
+					PropertyID:      "prp_123",
+					PropertyVersion: 1,
+					Rules: papi.Rules{
+						Behaviors: []papi.RuleBehavior{
+							{
+								Name: "beh 1",
+							},
+						},
+						Name:                "rule 1",
+						CriteriaMustSatisfy: "all",
+					},
+				}, nil)
+				m.On("GetPropertyVersion", testutils.MockContext, papi.GetPropertyVersionRequest{
+					PropertyID:      "prp_123",
+					PropertyVersion: 1,
+					ContractID:      "ctr_1",
+					GroupID:         "grp_1",
+				}).Return(&papi.GetPropertyVersionsResponse{
+					Version: papi.PropertyVersionGetItem{
+						Note:       "note",
+						ProductID:  "prd_1",
+						RuleFormat: "latest",
+					},
+				}, nil)
+			},
+			expectedAttributes: map[string]string{
+				"asset_id":           "aid_555",
+				"name":               "property_name",
+				"rules":              compactJSON(testutils.LoadFixtureBytes(t, "testdata/TestDataProperty/no_version_rules.json")),
+				"contract_id":        "ctr_1",
+				"group_id":           "grp_1",
+				"latest_version":     "1",
+				"note":               "note",
+				"product_id":         "prd_1",
+				"production_version": "1",
+				"property_id":        "prp_123",
+				"rule_format":        "latest",
+				"staging_version":    "1",
+				"property_type":      "HOSTNAME_BUCKET",
 			},
 		},
 		"valid rules, no version provided, no staging & production version returned": {
@@ -215,6 +305,7 @@ func TestDataProperty(t *testing.T) {
 							GroupID:       "grp_1",
 							LatestVersion: 1,
 							PropertyID:    "prp_123",
+							PropertyType:  ptr.To(""),
 						},
 					}},
 				}, nil)
@@ -266,6 +357,7 @@ func TestDataProperty(t *testing.T) {
 				"property_id":        "prp_123",
 				"rule_format":        "latest",
 				"staging_version":    "0",
+				"property_type":      "",
 			},
 		},
 		"error searching for property": {

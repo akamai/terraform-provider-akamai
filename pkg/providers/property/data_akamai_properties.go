@@ -65,6 +65,11 @@ func dataSourceProperties() *schema.Resource {
 							Type:     schema.TypeInt,
 							Computed: true,
 						},
+						"property_type": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Specifies the type of the property.",
+						},
 					},
 				},
 			},
@@ -128,6 +133,11 @@ func sliceResponseProperties(propertiesResponse *papi.GetPropertiesResponse) ([]
 			"property_id":        item.PropertyID,
 			"property_name":      item.PropertyName,
 			"staging_version":    decodeVersion(item.StagingVersion),
+		}
+		if item.PropertyType != nil {
+			property["property_type"] = *item.PropertyType
+		} else {
+			property["property_type"] = ""
 		}
 		properties = append(properties, property)
 	}

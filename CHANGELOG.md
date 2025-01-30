@@ -176,7 +176,19 @@
   * Added support for moving a PAPI property between groups (the `akamai_property` and `akamai_property_bootstrap` resources)
     by updating the `group_id` field. Currently, properties that have never been activated are not supported.
   * Added the `asset_id` schema field to the `akamai_property_bootstrap` resource.
-  * Added validation to raise an error when updating the `contact` and `auto_acknowledge_rule_warnings` fields on active property versions in the `akamai_property_activation` resource.
+  * Added validation to raise an error when updating the `contact` and `auto_acknowledge_rule_warnings` fields on active property versions in the`akamai_property_activation` resource.
+
+
+
+
+
+
+* PAPI
+  * Added the `property_type` schema field to the `akamai_property` and `akamai_properties` data sources.
+
+
+
+
 #### BUG FIXES:
 
 * Cloud Access
