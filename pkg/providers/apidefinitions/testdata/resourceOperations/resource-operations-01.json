@@ -1,0 +1,13 @@
+{
+  "resourceOperationsMap": {
+    "/index.php*": {
+      "testPurpose": {
+        "resourcePath": "/resources/123",
+        "method": "POST",
+        "operationName": "testpurpose",
+        "operationPurpose": "LOGIN"
+      }
+    }
+  }
+
+}

@@ -50,6 +50,7 @@ func (p *SubProvider) FrameworkResources() []func() resource.Resource {
 	return []func() resource.Resource{
 		NewAPIResource,
 		NewActivationResource,
+		NewApiResourceOperationResource,
 	}
 }
 
