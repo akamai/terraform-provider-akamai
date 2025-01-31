@@ -3,16 +3,17 @@ package apidefinitions
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
-	"github.com/hashicorp/terraform-plugin-testing/terraform"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"os"
 	"regexp"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/apidefinitions"
 	v0 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/apidefinitions/v0"
+	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
@@ -80,7 +81,7 @@ func TestAPIResourceOperations(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: deleteApiResourceOperationsConfig(),
+					Config: deleteAPIResourceOperationsConfig(),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_apidefinitions_resource_operations.e3", "endpoint_id", "1"),
 						resource.TestCheckResourceAttr("akamai_apidefinitions_resource_operations.e3", "resource_operations", readJSONFile("resource-operations-delete.json")),
@@ -261,11 +262,24 @@ func readJSONFile(file string) string {
 	// unmarshal the input json file to struct
 	err := json.Unmarshal([]byte(data), &response)
 
+	if err != nil {
+		return ""
+	}
+
 	// marshal the struct to json string
 	jsonString, err := json.Marshal(response)
 
+	if err != nil {
+		return ""
+	}
+
 	// normalize the json string response
 	jsonFiole, err := normalizeJSON(string(jsonString))
+
+	if err != nil {
+		return ""
+	}
+
 	if err != nil {
 		return ""
 	}
@@ -303,7 +317,7 @@ resource "akamai_apidefinitions_resource_operations" "e1" {
 `)
 }
 
-func deleteApiResourceOperationsConfig() string {
+func deleteAPIResourceOperationsConfig() string {
 	return providerConfig + fmt.Sprintf(`
 resource "akamai_apidefinitions_resource_operations" "e3" {
   endpoint_id = 1
@@ -312,6 +326,7 @@ resource "akamai_apidefinitions_resource_operations" "e3" {
  })
 }
 `)
+
 }
 
 func apiResourceOperationsCfgWithAllFields() string {

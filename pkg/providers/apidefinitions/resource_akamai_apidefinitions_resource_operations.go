@@ -4,6 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
+	"strings"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/apidefinitions"
 	v0 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/apidefinitions/v0"
 	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
@@ -13,8 +16,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"strconv"
-	"strings"
 )
 
 type apiResourceOperation struct{}
@@ -24,7 +25,8 @@ type apiResourceOperationModel struct {
 	ResourceOperations types.String `tfsdk:"resource_operations"`
 }
 
-func NewApiResourceOperationResource() resource.Resource {
+// NewAPIResourceOperationResource returns new api resource operations
+func NewAPIResourceOperationResource() resource.Resource {
 	return &apiResourceOperation{}
 }
 
@@ -144,14 +146,14 @@ func (r *apiResourceOperation) create(ctx context.Context, data *apiResourceOper
 	}
 
 	// Normalize JSON before storing in Terraform state
-	normalizedJson, err := normalizeJSON(string(jsonBytes))
+	normalizeJSON, err := normalizeJSON(string(jsonBytes))
 	if err != nil {
 		diags.AddError("Error normalizing JSON", err.Error())
 		return diags
 	}
 
 	data.APIEndpointID = types.Int64Value(data.APIEndpointID.ValueInt64())
-	data.ResourceOperations = types.StringValue(normalizedJson)
+	data.ResourceOperations = types.StringValue(normalizeJSON)
 	return diags
 }
 
@@ -208,13 +210,13 @@ func (r *apiResourceOperation) read(ctx context.Context, data *apiResourceOperat
 	}
 
 	//  Normalize JSON before storing state
-	normalizedJson, err := normalizeJSON(string(jsonBody))
+	normalizeJSON, err := normalizeJSON(string(jsonBody))
 	if err != nil {
 		diags.AddError("Error normalizing JSON", err.Error())
 		return diags
 	}
 
-	data.ResourceOperations = types.StringValue(normalizedJson)
+	data.ResourceOperations = types.StringValue(normalizeJSON)
 	data.APIEndpointID = types.Int64Value(data.APIEndpointID.ValueInt64())
 
 	return diags
@@ -332,14 +334,14 @@ func (r *apiResourceOperation) ImportState(ctx context.Context, req resource.Imp
 	}
 
 	//  Normalize JSON before storing state
-	normalizedJson, err := normalizeJSON(string(jsonBody))
+	normalizeJSON, err := normalizeJSON(string(jsonBody))
 	if err != nil {
 		resp.Diagnostics.AddError("Error normalizing JSON", err.Error())
 		return
 	}
 
 	data := apiResourceOperationModel{}
-	data.ResourceOperations = types.StringValue(normalizedJson)
+	data.ResourceOperations = types.StringValue(normalizeJSON)
 	data.APIEndpointID = types.Int64Value(endpointID)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, data)...)
