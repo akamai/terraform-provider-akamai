@@ -3,6 +3,7 @@ package apidefinitions
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"regexp"
 	"testing"
@@ -11,10 +12,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/apidefinitions"
-	v0 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/apidefinitions/v0"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/apidefinitions"
+	v0 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/apidefinitions/v0"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
@@ -121,7 +122,7 @@ func TestAPIResourceOperations(t *testing.T) {
 				mockListEndpointVersions(m, 5)
 				mockUpdateResourceOperation(mV0, "resource-operations-02.json", 1)
 				mockGetResourceOperation(mV0, "resource-operations-02.json", 2)
-				mockUpdateResourceOperationFail(mV0)
+				mockUpdateResourceOperationFail(mV0, 1)
 				mockGetResourceOperation(mV0, "resource-operations-03.json", 1)
 				mockDeleteResourceOperation(mV0, 1)
 			},
@@ -228,15 +229,23 @@ func mockUpdateResourceOperation(clientV0 *v0.Mock, file string, times int) {
 		Return(ptr.To(v0.UpdateResourceOperationResponse(*response)), nil).Times(times)
 }
 
-func mockUpdateResourceOperationFail(clientV0 *v0.Mock) {
+func mockUpdateResourceOperationFail(clientV0 *v0.Mock, times int) {
 	clientV0.On("UpdateResourceOperation", mock.Anything, mock.Anything).
-		Return(nil, &badRequestError)
+		Return(nil, &badRequestErrorResOperations).Times(times)
 }
+
 func mockGetResourceOperation(clientV0 *v0.Mock, file string, times int) {
-	data, _ := os.ReadFile("testdata/resourceOperations/" + file)
+	data, err := os.ReadFile("testdata/resourceOperations/" + file)
+
+	if err != nil {
+		log.Printf("Warning: Could not read file %s: %v", file, err)
+		return // or handle it appropriately
+	}
+
 	response := v0.GetResourceOperationResponse{}
 
-	err := json.Unmarshal([]byte(data), &response)
+	err = json.Unmarshal([]byte(data), &response)
+
 	if err != nil {
 		return
 	}
@@ -246,7 +255,7 @@ func mockGetResourceOperation(clientV0 *v0.Mock, file string, times int) {
 
 func mockDeleteResourceOperation(clientV0 *v0.Mock, times int) {
 	response := v0.DeleteResourceOperationResponse{
-		APIEndpointID: 1,
+		APIID:         1,
 		VersionNumber: 2,
 		Status:        200,
 		Detail:        "Api resource operations for Endpoint is Deleted",
@@ -256,11 +265,16 @@ func mockDeleteResourceOperation(clientV0 *v0.Mock, times int) {
 }
 
 func readJSONFile(file string) string {
-	data, _ := os.ReadFile("testdata/resourceOperations/" + file)
+	data, err := os.ReadFile("testdata/resourceOperations/" + file)
+
+	if err != nil {
+		log.Printf("Warning: Could not read file %s: %v", file, err)
+		return ""
+	}
 
 	response := v0.GetResourceOperationResponse{}
 	// unmarshal the input json file to struct
-	err := json.Unmarshal([]byte(data), &response)
+	err = json.Unmarshal([]byte(data), &response)
 
 	if err != nil {
 		return ""
@@ -274,7 +288,7 @@ func readJSONFile(file string) string {
 	}
 
 	// normalize the json string response
-	jsonFiole, err := normalizeJSON(string(jsonString))
+	jsonFile, err := normalizeJSON(string(jsonString))
 
 	if err != nil {
 		return ""
@@ -284,7 +298,7 @@ func readJSONFile(file string) string {
 		return ""
 	}
 
-	return jsonFiole
+	return jsonFile
 }
 
 func deserializeAPIRequest(body string) (*v0.UpdateResourceOperationResponse, error) {
@@ -297,6 +311,7 @@ func deserializeAPIRequest(body string) (*v0.UpdateResourceOperationResponse, er
 
 	return &endpoint, nil
 }
+
 func apiResourceOperationsConfig() string {
 	return providerConfig + fmt.Sprintf(`
 resource "akamai_apidefinitions_resource_operations" "e1" {
@@ -305,9 +320,7 @@ resource "akamai_apidefinitions_resource_operations" "e1" {
   "resourceOperationsMap": {
     "/index.php*": {
       "testPurpose": {
-        "resourcePath": "/resources/123",
         "method": "POST",
-        "operationName": "testpurpose",
         "operationPurpose": "LOGIN"
       }
     }
@@ -337,8 +350,6 @@ resource "akamai_apidefinitions_resource_operations" "e2" {
   "resourceOperationsMap": {
     "/index.php*": {
       "onlineshop": {
-        "resourcePath": "/index.php*",
-        "operationName": "onlineshop",
         "operationPurpose": "LOGIN",
         "method": "POST",
         "operationParameter": {
@@ -365,8 +376,6 @@ resource "akamai_apidefinitions_resource_operations" "e2" {
         ]
       },
       "onlineshop-get": {
-        "resourcePath": "/index.php*",
-        "operationName": "onlineshop-get",
         "operationPurpose": "SEARCH",
         "method": "GET",
         "successConditions": [
@@ -386,14 +395,10 @@ resource "akamai_apidefinitions_resource_operations" "e2" {
     },
     "/login": {
       "purposeLoginGET": {
-        "resourcePath": "/login",
-        "operationName": "purposeLoginGET",
         "operationPurpose": "ACCOUNT_VERIFICATION",
         "method": "GET"
       },
       "purposeLoginPOST": {
-        "resourcePath": "/login",
-        "operationName": "purposeLoginPOST",
         "operationPurpose": "ACCOUNT_VERIFICATION",
         "method": "POST"
       }
@@ -412,8 +417,6 @@ resource "akamai_apidefinitions_resource_operations" "e2" {
   "resourceOperationsMap": {
     "/index.php*": {
       "onlineshop": {
-        "resourcePath": "/index.php*",
-        "operationName": "onlineshop",
         "operationPurpose": "ACCOUNT_CREATION",
         "method": "POST",
         "operationParameter": {
@@ -440,8 +443,6 @@ resource "akamai_apidefinitions_resource_operations" "e2" {
         ]
       },
       "onlineshop-get": {
-        "resourcePath": "/index.php*",
-        "operationName": "onlineshop-get",
         "operationPurpose": "SEARCH",
         "method": "GET",
         "successConditions": [
@@ -461,14 +462,10 @@ resource "akamai_apidefinitions_resource_operations" "e2" {
     },
     "/login": {
       "purposeLoginGET": {
-        "resourcePath": "/login",
-        "operationName": "purposeLoginGET",
         "operationPurpose": "ACCOUNT_VERIFICATION",
         "method": "GET"
       },
       "purposeLoginPOST": {
-        "resourcePath": "/login",
-        "operationName": "purposeLoginPOST",
         "operationPurpose": "ACCOUNT_VERIFICATION",
         "method": "POST"
       }
@@ -477,4 +474,37 @@ resource "akamai_apidefinitions_resource_operations" "e2" {
 })
 }
 `)
+}
+
+var badRequestErrorResOperations = v0.Error{
+	Type:     "/api-definitions/error-types/invalid-input-error",
+	Title:    "Invalid input error",
+	Detail:   "The request you submitted is invalid. Modify the request and try again.",
+	Instance: "id_001",
+	Status:   400,
+	Severity: ptr.To("ERROR"),
+	Errors: []v0.Error{
+		{
+			Type:     "/api-definitions/error-types/resource-path-operation-check",
+			Title:    "resource-path-operation-check.title",
+			Detail:   "resource-path-operation-check.detail",
+			Severity: ptr.To("ERROR"),
+			Field:    ptr.To("put.dto.resourceOperationsMap[/base].<map value>[test login].operationParameter"),
+			RejectedValue: map[string]interface{}{
+				"method":           "POST",
+				"operationPurpose": "LOGIN",
+			},
+		},
+		{
+			Type:     "/api-definitions/error-types/resource-path-operation-check",
+			Title:    "resource-path-operation-check.title",
+			Detail:   "resource-path-operation-check.detail",
+			Severity: ptr.To("ERROR"),
+			Field:    ptr.To("put.dto.resourceOperationsMap[/base].<map value>[test login].operationParameter.username"),
+			RejectedValue: map[string]interface{}{
+				"method":           "POST",
+				"operationPurpose": "LOGIN",
+			},
+		},
+	},
 }

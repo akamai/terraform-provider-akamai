@@ -7,10 +7,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/apidefinitions"
-	v0 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/apidefinitions/v0"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/apidefinitions"
+	v0 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/apidefinitions/v0"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -102,7 +102,6 @@ func (r *apiResourceOperation) create(ctx context.Context, data *apiResourceOper
 	result, err := client.ListEndpointVersions(ctx, apidefinitions.ListEndpointVersionsRequest{
 		APIEndpointID: data.APIEndpointID.ValueInt64(),
 	})
-
 	if err != nil {
 		diags.AddError("Reading Resource Operations Failed", err.Error())
 		return diags
@@ -116,17 +115,16 @@ func (r *apiResourceOperation) create(ctx context.Context, data *apiResourceOper
 	}
 
 	// Convert stored JSON string into Go struct
-	var requestBody = v0.UpdateResourceOperationResponse{}
+	var requestBody = v0.ResourceOperationsRequestBody{}
 
 	err = json.Unmarshal([]byte(data.ResourceOperations.ValueString()), &requestBody)
-
 	if err != nil {
 		diags.AddError("Create Resource Operations Failed, Unable to deserialize state", err.Error())
 		return diags
 	}
 	// Prepare request
 	var resourceOperationRequest = v0.UpdateResourceOperationRequest{
-		APIEndpointID: data.APIEndpointID.ValueInt64(),
+		APIID:         data.APIEndpointID.ValueInt64(),
 		VersionNumber: latestVersion,
 		Body:          requestBody,
 	}
@@ -139,7 +137,6 @@ func (r *apiResourceOperation) create(ctx context.Context, data *apiResourceOper
 	}
 
 	jsonBytes, err := json.Marshal(resp)
-
 	if err != nil {
 		diags.AddError("Error reading the response", err.Error())
 		return diags
@@ -193,17 +190,15 @@ func (r *apiResourceOperation) read(ctx context.Context, data *apiResourceOperat
 		}
 	}
 	resourceOperation, err := clientV0.GetResourceOperation(ctx, v0.GetResourceOperationRequest{
-		APIEndpointID: data.APIEndpointID.ValueInt64(),
-		VersionNumber: latestVersion, //looked up above in ListEndpointVersions
+		APIID:         data.APIEndpointID.ValueInt64(),
+		VersionNumber: latestVersion,
 	})
-
 	if err != nil {
 		diags.AddError("Unable to read Resource Operations", err.Error())
 		return diags
 	}
 
 	jsonBody, err := json.Marshal(resourceOperation)
-
 	if err != nil {
 		diags.AddError("Error marshalling resource operation JSON", err.Error())
 		return diags
@@ -272,7 +267,7 @@ func (r *apiResourceOperation) Delete(ctx context.Context, req resource.DeleteRe
 	}
 
 	var deleteResourceOperationRequest = v0.DeleteResourceOperationRequest{
-		APIEndpointID: data.APIEndpointID.ValueInt64(),
+		APIID:         data.APIEndpointID.ValueInt64(),
 		VersionNumber: latestVersion,
 	}
 
@@ -284,7 +279,6 @@ func (r *apiResourceOperation) Delete(ctx context.Context, req resource.DeleteRe
 	}
 
 	jsonBody, err := json.Marshal(deleteResponse)
-
 	if err != nil {
 		resp.Diagnostics.AddError("Unable to parse Deletion of API Resource Operations response", err.Error())
 		return
@@ -317,7 +311,7 @@ func (r *apiResourceOperation) ImportState(ctx context.Context, req resource.Imp
 	}
 
 	resourceOperation, err := clientV0.GetResourceOperation(ctx, v0.GetResourceOperationRequest{
-		APIEndpointID: endpointID,
+		APIID:         endpointID,
 		VersionNumber: versionNumber,
 	})
 
@@ -352,8 +346,8 @@ func serializeWithIndent(version v0.RegisterAPIRequest) (*string, error) {
 	if err != nil {
 		return nil, err
 	}
-	return ptr.To(string(jsonBody)), nil
 
+	return ptr.To(string(jsonBody)), nil
 }
 
 // Function to normalize JSON for Terraform state

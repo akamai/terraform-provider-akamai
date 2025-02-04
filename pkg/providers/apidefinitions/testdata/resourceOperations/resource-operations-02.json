@@ -2,8 +2,6 @@
   "resourceOperationsMap": {
     "/index.php*": {
       "onlineshop": {
-        "resourcePath": "/index.php*",
-        "operationName": "onlineshop",
         "operationPurpose": "LOGIN",
         "method": "POST",
         "operationParameter": {
@@ -30,8 +28,6 @@
         ]
       },
       "onlineshop-get": {
-        "resourcePath": "/index.php*",
-        "operationName": "onlineshop-get",
         "operationPurpose": "SEARCH",
         "method": "GET",
         "successConditions": [
@@ -51,14 +47,10 @@
     },
     "/login": {
       "purposeLoginGET": {
-        "resourcePath": "/login",
-        "operationName": "purposeLoginGET",
         "operationPurpose": "ACCOUNT_VERIFICATION",
         "method": "GET"
       },
       "purposeLoginPOST": {
-        "resourcePath": "/login",
-        "operationName": "purposeLoginPOST",
         "operationPurpose": "ACCOUNT_VERIFICATION",
         "method": "POST"
       }

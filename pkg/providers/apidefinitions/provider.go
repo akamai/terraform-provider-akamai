@@ -48,8 +48,8 @@ func (p *SubProvider) SDKResources() map[string]*schema.Resource {
 // FrameworkResources returns the apidefinitions resources implemented using terraform-plugin-framework
 func (p *SubProvider) FrameworkResources() []func() resource.Resource {
 	return []func() resource.Resource{
-		NewAPIResource,
 		NewActivationResource,
+		NewAPIResource,
 		NewAPIResourceOperationResource,
 	}
 }
