@@ -8,9 +8,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/id"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -102,7 +103,7 @@ func resourceAdvancedSettingsPragmaHeaderRead(ctx context.Context, d *schema.Res
 
 	getAdvancedSettingsPragma := appsec.GetAdvancedSettingsPragmaRequest{}
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
-		iDParts, err := splitID(d.Id(), 2, "configID:policyID")
+		iDParts, err := id.Split(d.Id(), 2, "configID:policyID")
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -171,7 +172,7 @@ func resourceAdvancedSettingsPragmaHeaderDelete(ctx context.Context, d *schema.R
 	}
 
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
-		iDParts, err := splitID(d.Id(), 2, "configID:policyID")
+		iDParts, err := id.Split(d.Id(), 2, "configID:policyID")
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -219,7 +220,7 @@ func resourceAdvancedSettingsPragmaHeaderUpdate(ctx context.Context, d *schema.R
 
 	updateAdvancedSettingsPragma := appsec.UpdateAdvancedSettingsPragmaRequest{}
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
-		iDParts, err := splitID(d.Id(), 2, "configID:policyID")
+		iDParts, err := id.Split(d.Id(), 2, "configID:policyID")
 		if err != nil {
 			return diag.FromErr(err)
 		}

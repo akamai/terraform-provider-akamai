@@ -8,15 +8,13 @@ import (
 	"testing"
 	"time"
 
-	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cloudlets/v3"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/cloudlets/v3"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 type testDataForSharedPolicy struct {
-	id                 string
 	policyID           int64
 	version            int64
 	versionDescription *string
@@ -41,7 +39,6 @@ func TestSharedPolicyDataSource(t *testing.T) {
 		"success with version attribute - no activations": {
 			config: "with_version.tf",
 			data: testDataForSharedPolicy{
-				id:                 "akamai_cloudlets_shared_policy",
 				policyID:           1,
 				version:            2,
 				versionDescription: ptr.To("version 2 description"),
@@ -94,7 +91,6 @@ func TestSharedPolicyDataSource(t *testing.T) {
 		"success with no version attribute - no activations and no match rules and warnings": {
 			config: "no_version.tf",
 			data: testDataForSharedPolicy{
-				id:           "akamai_cloudlets_shared_policy",
 				policyID:     1,
 				version:      2,
 				groupID:      12,
@@ -111,7 +107,6 @@ func TestSharedPolicyDataSource(t *testing.T) {
 		"success with no version attribute - no shared policy versions": {
 			config: "no_version.tf",
 			data: testDataForSharedPolicy{
-				id:           "akamai_cloudlets_shared_policy",
 				policyID:     1,
 				version:      0,
 				groupID:      12,
@@ -127,7 +122,6 @@ func TestSharedPolicyDataSource(t *testing.T) {
 		"success with version attribute - all activations": {
 			config: "with_version.tf",
 			data: testDataForSharedPolicy{
-				id:           "akamai_cloudlets_shared_policy",
 				policyID:     1,
 				version:      2,
 				groupID:      12,
@@ -218,7 +212,6 @@ func TestSharedPolicyDataSource(t *testing.T) {
 		"expect error on ListPolicyVersions": {
 			config: "no_version.tf",
 			data: testDataForSharedPolicy{
-				id:           "akamai_cloudlets_shared_policy",
 				policyID:     1,
 				version:      2,
 				groupID:      12,
@@ -228,7 +221,7 @@ func TestSharedPolicyDataSource(t *testing.T) {
 			},
 			init: func(m *v3.Mock, data testDataForSharedPolicy) {
 				mockGetPolicy(m, data, 1)
-				m.On("ListPolicyVersions", mock.Anything, v3.ListPolicyVersionsRequest{
+				m.On("ListPolicyVersions", testutils.MockContext, v3.ListPolicyVersionsRequest{
 					PolicyID: data.policyID,
 				}).Return(nil, fmt.Errorf("API error")).Once()
 			},
@@ -240,7 +233,7 @@ func TestSharedPolicyDataSource(t *testing.T) {
 				policyID: 1,
 			},
 			init: func(m *v3.Mock, data testDataForSharedPolicy) {
-				m.On("GetPolicy", mock.Anything, v3.GetPolicyRequest{
+				m.On("GetPolicy", testutils.MockContext, v3.GetPolicyRequest{
 					PolicyID: data.policyID,
 				}).Return(nil, fmt.Errorf("%s: %w: %s", v3.ErrGetPolicy, v3.ErrPolicyNotFound, "oops")).Once()
 			},
@@ -249,7 +242,6 @@ func TestSharedPolicyDataSource(t *testing.T) {
 		"expect error - missing required attribute": {
 			config:      "no_policy_id.tf",
 			data:        testDataForSharedPolicy{},
-			init:        func(m *v3.Mock, data testDataForSharedPolicy) {},
 			expectError: regexp.MustCompile(`The argument "policy_id" is required, but no definition was found.`),
 		},
 	}
@@ -265,7 +257,7 @@ func TestSharedPolicyDataSource(t *testing.T) {
 					IsUnitTest:               true,
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{{
-						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestDataCloudletsSharedPolicy/%s", test.config)),
+						Config:      testutils.LoadFixtureStringf(t, "testdata/TestDataCloudletsSharedPolicy/%s", test.config),
 						Check:       checkAttrsForSharedPolicy(test.data),
 						ExpectError: test.expectError,
 					}},
@@ -307,7 +299,6 @@ func checkAttrsForSharedPolicy(data testDataForSharedPolicy) resource.TestCheckF
 
 	checkFuncs = append(checkFuncs,
 		resource.TestCheckResourceAttr("data.akamai_cloudlets_shared_policy.test", "name", data.name),
-		resource.TestCheckResourceAttr("data.akamai_cloudlets_shared_policy.test", "id", data.id),
 		resource.TestCheckResourceAttr("data.akamai_cloudlets_shared_policy.test", "group_id", strconv.FormatInt(data.groupID, 10)),
 		resource.TestCheckResourceAttr("data.akamai_cloudlets_shared_policy.test", "description", data.description),
 	)
@@ -342,7 +333,7 @@ func checkActivationAttributesForSharedPolicy(actNetwork, actInfo string, actDat
 }
 
 func mockGetPolicy(m *v3.Mock, data testDataForSharedPolicy, times int) {
-	m.On("GetPolicy", mock.Anything, v3.GetPolicyRequest{
+	m.On("GetPolicy", testutils.MockContext, v3.GetPolicyRequest{
 		PolicyID: data.policyID,
 	}).Return(&v3.Policy{
 		CloudletType:       data.cloudletType,
@@ -355,7 +346,7 @@ func mockGetPolicy(m *v3.Mock, data testDataForSharedPolicy, times int) {
 }
 
 func mockGetPolicyVersion(m *v3.Mock, data testDataForSharedPolicy, times int) {
-	m.On("GetPolicyVersion", mock.Anything, v3.GetPolicyVersionRequest{
+	m.On("GetPolicyVersion", testutils.MockContext, v3.GetPolicyVersionRequest{
 		PolicyID:      data.policyID,
 		PolicyVersion: data.version,
 	}).Return(&v3.PolicyVersion{
@@ -387,13 +378,13 @@ func createPolicyVersions(policyID int64, numberOfVersions, pageNumber int) *v3.
 
 func mockListPolicyVersions(m *v3.Mock, data testDataForSharedPolicy, numberOfActivations, times int) {
 	if data.version == 0 {
-		m.On("ListPolicyVersions", mock.Anything, v3.ListPolicyVersionsRequest{
+		m.On("ListPolicyVersions", testutils.MockContext, v3.ListPolicyVersionsRequest{
 			PolicyID: data.policyID,
 		}).Return(&v3.ListPolicyVersions{
 			PolicyVersions: []v3.ListPolicyVersionsItem{},
 		}, nil).Times(times)
 	} else {
-		m.On("ListPolicyVersions", mock.Anything, v3.ListPolicyVersionsRequest{
+		m.On("ListPolicyVersions", testutils.MockContext, v3.ListPolicyVersionsRequest{
 			PolicyID: data.policyID,
 		}).Return(createPolicyVersions(data.policyID, numberOfActivations, 0), nil).Times(times)
 	}

@@ -4,8 +4,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/dns"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/dns"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 )
 
 func TestMain(m *testing.M) {
@@ -27,26 +27,4 @@ func useClient(client dns.DNS, f func()) {
 	}()
 
 	f()
-}
-
-type data struct {
-	data map[string]interface{}
-}
-
-func (d *data) Get(key string) interface{} {
-	if value, ok := d.data[key]; ok {
-		return value
-	}
-	return nil
-}
-
-func (d *data) GetOk(key string) (interface{}, bool) {
-	if value, ok := d.data[key]; ok {
-		return value, true
-	}
-	return nil, false
-}
-
-func (d *data) List() []interface{} {
-	return []interface{}{d.data}
 }

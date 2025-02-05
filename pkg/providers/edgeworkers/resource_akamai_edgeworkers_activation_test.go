@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/edgeworkers"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/edgeworkers"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -46,7 +46,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_version_test_stag.tf", workdir)),
+					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_stag.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
@@ -82,7 +82,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_version_test_with_timeout.tf", workdir)),
+					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_with_timeout.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
@@ -141,7 +141,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_version_test_stag.tf", workdir)),
+					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_stag.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "8"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
@@ -179,7 +179,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_version_test_stag.tf", workdir)),
+					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_stag.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
@@ -221,7 +221,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_version_test_stag.tf", workdir)),
+					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_stag.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
@@ -261,7 +261,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_version_test_stag.tf", workdir)),
+					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_stag.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
@@ -306,7 +306,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_version_test_stag.tf", workdir)),
+					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_stag.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
@@ -315,7 +315,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 					),
 				},
 				{
-					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_version_test_prod.tf", workdir)),
+					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_prod.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "2"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
@@ -361,7 +361,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_version_test_stag.tf", workdir)),
+					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_stag.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
@@ -370,7 +370,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 					),
 				},
 				{
-					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_version_test1_stag.tf", workdir)),
+					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test1_stag.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "2"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test1"),
@@ -424,7 +424,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_version_test_stag.tf", workdir)),
+					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_stag.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
@@ -433,7 +433,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 					),
 				},
 				{
-					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_version_test1_stag.tf", workdir)),
+					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test1_stag.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "3"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test1"),
@@ -475,7 +475,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_version_test_stag.tf", workdir)),
+					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_stag.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
@@ -484,7 +484,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 					),
 				},
 				{
-					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_version_test1_stag.tf", workdir)),
+					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test1_stag.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "2"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test1"),
@@ -533,7 +533,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_version_test_stag.tf", workdir)),
+					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_stag.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
@@ -542,7 +542,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 					),
 				},
 				{
-					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_version_test_prod.tf", workdir)),
+					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_prod.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "2"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
@@ -596,7 +596,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_version_test_stag.tf", workdir)),
+					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_stag.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "edgeworker_id", "1234"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
@@ -605,7 +605,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 					),
 				},
 				{
-					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_different_edgeworker_id.tf", workdir)),
+					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_different_edgeworker_id.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "edgeworker_id", "4321"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
@@ -642,7 +642,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_version_test1_stag.tf", workdir)),
+					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test1_stag.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test1"),
@@ -651,7 +651,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 					),
 				},
 				{
-					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_note_update_no_activation.tf", workdir)),
+					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_note_update_no_activation.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test1"),
@@ -697,7 +697,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_version_test1_stag.tf", workdir)),
+					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test1_stag.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test1"),
@@ -706,7 +706,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 					),
 				},
 				{
-					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_note_update.tf", workdir)),
+					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_note_update.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "2"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test1"),
@@ -742,7 +742,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_version_test_stag.tf", workdir)),
+					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_stag.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
@@ -783,7 +783,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_version_test_stag.tf", workdir)),
+					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_stag.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
@@ -822,7 +822,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_version_test_stag.tf", workdir)),
+					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_stag.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
@@ -862,7 +862,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_version_test_stag.tf", workdir)),
+					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_stag.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
@@ -895,7 +895,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_import.tf", workdir)),
+					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_import.tf", workdir),
 				},
 				{
 					ImportState:       true,
@@ -929,7 +929,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_note_update_no_activation.tf", workdir)),
+					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_note_update_no_activation.tf", workdir),
 				},
 				{
 					ImportState:       true,
@@ -940,18 +940,17 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 		},
 		"error on create - missing required arguments": {
-			init: func(m *edgeworkers.Mock) {},
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_missing_required_args.tf", workdir)),
+					Config:      testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_missing_required_args.tf", workdir),
 					ExpectError: regexp.MustCompile("argument \"version\" is required"),
 				},
 				{
-					Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_missing_required_args.tf", workdir)),
+					Config:      testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_missing_required_args.tf", workdir),
 					ExpectError: regexp.MustCompile("argument \"edgeworker_id\" is required"),
 				},
 				{
-					Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_missing_required_args.tf", workdir)),
+					Config:      testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_missing_required_args.tf", workdir),
 					ExpectError: regexp.MustCompile("argument \"edgeworker_id\" is required"),
 				},
 			},
@@ -967,7 +966,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_version_test_stag.tf", workdir)),
+					Config:      testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_stag.tf", workdir),
 					ExpectError: regexp.MustCompile(`version 'test' is not valid for edgeworker with id=1234`),
 				},
 			},
@@ -983,7 +982,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_version_test_stag.tf", workdir)),
+					Config:      testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_stag.tf", workdir),
 					ExpectError: regexp.MustCompile("edgeworker activation: oops"),
 				},
 			},
@@ -1002,7 +1001,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_version_test_stag.tf", workdir)),
+					Config:      testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_stag.tf", workdir),
 					ExpectError: regexp.MustCompile("edgeworker activation: oops"),
 				},
 			},
@@ -1014,7 +1013,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_version_test_stag.tf", workdir)),
+					Config:      testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_stag.tf", workdir),
 					ExpectError: regexp.MustCompile("edgeworker activation: oops"),
 				},
 			},
@@ -1031,7 +1030,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_version_test_stag.tf", workdir)),
+					Config:      testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_stag.tf", workdir),
 					ExpectError: regexp.MustCompile("edgeworker activation: oops"),
 				},
 			},
@@ -1057,7 +1056,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_version_test_stag.tf", workdir)),
+					Config:      testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_stag.tf", workdir),
 					ExpectError: regexp.MustCompile("edgeworker activation: oops"),
 				},
 			},
@@ -1083,7 +1082,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_version_test_stag.tf", workdir)),
+					Config:      testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_stag.tf", workdir),
 					ExpectError: regexp.MustCompile("edgeworker activation: edgeworker activation failure"),
 				},
 			},
@@ -1113,7 +1112,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_version_test_stag.tf", workdir)),
+					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_stag.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
@@ -1122,7 +1121,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 					),
 				},
 				{
-					Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_version_test1_stag.tf", workdir)),
+					Config:      testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test1_stag.tf", workdir),
 					ExpectError: regexp.MustCompile(`version 'test1' is not valid for edgeworker with id=1234`),
 				},
 			},
@@ -1152,7 +1151,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_version_test_stag.tf", workdir)),
+					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_stag.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
@@ -1161,7 +1160,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 					),
 				},
 				{
-					Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_different_edgeworker_id.tf", workdir)),
+					Config:      testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_different_edgeworker_id.tf", workdir),
 					ExpectError: regexp.MustCompile("edgeworker activation: edgeworker with id=4321 was not found"),
 				},
 			},
@@ -1199,7 +1198,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_version_test_stag.tf", workdir)),
+					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_stag.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
@@ -1208,7 +1207,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 					),
 				},
 				{
-					Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_version_test1_stag.tf", workdir)),
+					Config:      testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test1_stag.tf", workdir),
 					ExpectError: regexp.MustCompile("edgeworker activation read: no version active on network 'STAGING' for edgeworker with id=1234"),
 				},
 			},
@@ -1248,7 +1247,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_version_test_stag.tf", workdir)),
+					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_stag.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
 						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
@@ -1257,7 +1256,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 					),
 				},
 				{
-					Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_version_test1_stag.tf", workdir)),
+					Config:      testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test1_stag.tf", workdir),
 					ExpectError: regexp.MustCompile(`edgeworker activation: oops`),
 				},
 			},
@@ -1269,7 +1268,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_version_test_stag.tf", workdir)),
+					Config:      testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_stag.tf", workdir),
 					ExpectError: regexp.MustCompile(`edgeworker activation: oops`),
 				},
 			},
@@ -1298,7 +1297,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_import.tf", workdir)),
+					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_import.tf", workdir),
 				},
 				{
 					ImportState:   true,
@@ -1331,7 +1330,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/edgeworkers_activation_import.tf", workdir)),
+					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_import.tf", workdir),
 				},
 				{
 					ImportState:   true,
@@ -1353,7 +1352,9 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			if !test.omitDefaultMock {
 				expectListEdgeWorkersID(client, nil, edgeworkerID)
 			}
-			test.init(client)
+			if test.init != nil {
+				test.init(client)
+			}
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
@@ -1376,10 +1377,10 @@ func expectActivateVersion(m *edgeworkers.Mock, edgeworkerID, activationID int, 
 		},
 	}
 	if e != nil {
-		return m.On("ActivateVersion", mock.Anything, req).Return(nil, e)
+		return m.On("ActivateVersion", testutils.MockContext, req).Return(nil, e)
 	}
 
-	return m.On("ActivateVersion", mock.Anything, req).Return(createStubActivation(edgeworkerID, activationID, net, version, activationStatusPresubmit, "", note), nil)
+	return m.On("ActivateVersion", testutils.MockContext, req).Return(createStubActivation(edgeworkerID, activationID, net, version, activationStatusPresubmit, "", note), nil)
 }
 
 func expectGetActivation(m *edgeworkers.Mock, edgeworkerID, activationID int, net edgeworkers.ActivationNetwork, version, status string, e error) *mock.Call {
@@ -1388,10 +1389,10 @@ func expectGetActivation(m *edgeworkers.Mock, edgeworkerID, activationID int, ne
 		ActivationID: activationID,
 	}
 	if e != nil {
-		return m.On("GetActivation", mock.Anything, req).Return(nil, e)
+		return m.On("GetActivation", testutils.MockContext, req).Return(nil, e)
 	}
 
-	return m.On("GetActivation", mock.Anything, req).Return(createStubActivation(edgeworkerID, activationID, net, version, status, "", ""), nil)
+	return m.On("GetActivation", testutils.MockContext, req).Return(createStubActivation(edgeworkerID, activationID, net, version, status, "", ""), nil)
 }
 
 func expectListActivations(m *edgeworkers.Mock, edgeworkerID int, version string, activations []edgeworkers.Activation, e error) *mock.Call {
@@ -1400,10 +1401,10 @@ func expectListActivations(m *edgeworkers.Mock, edgeworkerID int, version string
 		Version:      version,
 	}
 	if e != nil {
-		return m.On("ListActivations", mock.Anything, req).Return(nil, e)
+		return m.On("ListActivations", testutils.MockContext, req).Return(nil, e)
 	}
 
-	return m.On("ListActivations", mock.Anything, req).Return(&edgeworkers.ListActivationsResponse{
+	return m.On("ListActivations", testutils.MockContext, req).Return(&edgeworkers.ListActivationsResponse{
 		Activations: activations,
 	}, nil)
 }
@@ -1414,10 +1415,10 @@ func expectListDeactivations(m *edgeworkers.Mock, edgeworkerID int, version stri
 		Version:      version,
 	}
 	if e != nil {
-		return m.On("ListDeactivations", mock.Anything, req).Return(nil, e)
+		return m.On("ListDeactivations", testutils.MockContext, req).Return(nil, e)
 	}
 
-	return m.On("ListDeactivations", mock.Anything, req).Return(&edgeworkers.ListDeactivationsResponse{
+	return m.On("ListDeactivations", testutils.MockContext, req).Return(&edgeworkers.ListDeactivationsResponse{
 		Deactivations: deactivations,
 	}, nil)
 }
@@ -1432,10 +1433,10 @@ func expectDeactivateVersion(m *edgeworkers.Mock, edgeworkerID, deactivationID i
 		},
 	}
 	if e != nil {
-		return m.On("DeactivateVersion", mock.Anything, req).Return(nil, e)
+		return m.On("DeactivateVersion", testutils.MockContext, req).Return(nil, e)
 	}
 
-	return m.On("DeactivateVersion", mock.Anything, req).Return(createStubDeactivation(edgeworkerID, deactivationID, net, version, activationStatusPresubmit, ""), nil)
+	return m.On("DeactivateVersion", testutils.MockContext, req).Return(createStubDeactivation(edgeworkerID, deactivationID, net, version, activationStatusPresubmit, ""), nil)
 }
 
 func expectGetDeactivation(m *edgeworkers.Mock, edgeworkerID, deactivationID int, net edgeworkers.ActivationNetwork, version, status string, e error) *mock.Call {
@@ -1444,10 +1445,10 @@ func expectGetDeactivation(m *edgeworkers.Mock, edgeworkerID, deactivationID int
 		DeactivationID: deactivationID,
 	}
 	if e != nil {
-		return m.On("GetDeactivation", mock.Anything, req).Return(nil, e)
+		return m.On("GetDeactivation", testutils.MockContext, req).Return(nil, e)
 	}
 
-	return m.On("GetDeactivation", mock.Anything, req).Return(createStubDeactivation(edgeworkerID, deactivationID, net, version, status, ""), nil)
+	return m.On("GetDeactivation", testutils.MockContext, req).Return(createStubDeactivation(edgeworkerID, deactivationID, net, version, status, ""), nil)
 }
 
 func expectListEdgeWorkerVersions(m *edgeworkers.Mock, edgeworkerID int, versions []edgeworkers.EdgeWorkerVersion, e error) *mock.Call {
@@ -1455,16 +1456,16 @@ func expectListEdgeWorkerVersions(m *edgeworkers.Mock, edgeworkerID int, version
 		EdgeWorkerID: edgeworkerID,
 	}
 	if e != nil {
-		return m.On("ListEdgeWorkerVersions", mock.Anything, req).Return(nil, e)
+		return m.On("ListEdgeWorkerVersions", testutils.MockContext, req).Return(nil, e)
 	}
 
-	return m.On("ListEdgeWorkerVersions", mock.Anything, req).Return(&edgeworkers.ListEdgeWorkerVersionsResponse{
+	return m.On("ListEdgeWorkerVersions", testutils.MockContext, req).Return(&edgeworkers.ListEdgeWorkerVersionsResponse{
 		EdgeWorkerVersions: versions,
 	}, nil)
 }
 
 func expectListEdgeWorkersID(m *edgeworkers.Mock, e error, ewIDs ...int) *mock.Call {
-	call := m.On("ListEdgeWorkersID", mock.Anything, edgeworkers.ListEdgeWorkersIDRequest{})
+	call := m.On("ListEdgeWorkersID", testutils.MockContext, edgeworkers.ListEdgeWorkersIDRequest{})
 	if e != nil {
 		return call.Return(nil, e)
 	}

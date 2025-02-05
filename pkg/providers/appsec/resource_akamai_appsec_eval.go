@@ -6,9 +6,10 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/id"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -139,7 +140,7 @@ func resourceEvalRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	logger := meta.Log("APPSEC", "resourceEvalRead")
 	logger.Debugf(" in resourceEvalRead")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
+	iDParts, err := id.Split(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -193,7 +194,7 @@ func resourceEvalUpdate(ctx context.Context, d *schema.ResourceData, m interface
 	logger := meta.Log("APPSEC", "resourceEvalUpdate")
 	logger.Debugf(" in resourceEvalUpdate")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
+	iDParts, err := id.Split(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -238,7 +239,7 @@ func resourceEvalDelete(ctx context.Context, d *schema.ResourceData, m interface
 	logger := meta.Log("APPSEC", "resourceEvalDelete")
 	logger.Debugf(" in resourceEvalDelete")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
+	iDParts, err := id.Split(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}

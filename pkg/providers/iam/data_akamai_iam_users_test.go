@@ -6,11 +6,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/iam"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 var (
@@ -97,21 +96,21 @@ var (
 func TestDataUsers(t *testing.T) {
 	tests := map[string]struct {
 		configPath    string
-		init          func(*testing.T, *iam.Mock, []iam.UserListItem, *int64)
+		init          func(*iam.Mock, []iam.UserListItem, *int64)
 		mockData      []iam.UserListItem
 		groupID       *int64
 		expectedError *regexp.Regexp
 	}{
 		"happy path": {
 			configPath: "testdata/TestDataUsers/default.tf",
-			init: func(t *testing.T, m *iam.Mock, mockData []iam.UserListItem, groupID *int64) {
+			init: func(m *iam.Mock, mockData []iam.UserListItem, groupID *int64) {
 				expectListUsers(m, mockData, groupID, 3)
 			},
 			mockData: basicTestDataForUsers,
 		},
 		"happy path - no users": {
 			configPath: "testdata/TestDataUsers/default.tf",
-			init: func(t *testing.T, m *iam.Mock, mockData []iam.UserListItem, groupID *int64) {
+			init: func(m *iam.Mock, mockData []iam.UserListItem, groupID *int64) {
 				expectListUsers(m, mockData, groupID, 3)
 			},
 			mockData: []iam.UserListItem{},
@@ -119,16 +118,16 @@ func TestDataUsers(t *testing.T) {
 		"happy path - groupID search": {
 			groupID:    ptr.To(int64(12345)),
 			configPath: "testdata/TestDataUsers/groupIDSearch.tf",
-			init: func(t *testing.T, m *iam.Mock, mockData []iam.UserListItem, groupID *int64) {
+			init: func(m *iam.Mock, mockData []iam.UserListItem, groupID *int64) {
 				expectListUsers(m, mockData, groupID, 3)
 			},
 			mockData: basicTestDataForUsers,
 		},
 		"error - list user fails": {
 			configPath: "testdata/TestDataUsers/default.tf",
-			init: func(t *testing.T, m *iam.Mock, mockData []iam.UserListItem, groupID *int64) {
+			init: func(m *iam.Mock, _ []iam.UserListItem, groupID *int64) {
 				listUsersReq := iam.ListUsersRequest{GroupID: groupID, AuthGrants: true, Actions: true}
-				m.On("ListUsers", mock.Anything, listUsersReq).Return(nil, errors.New("test error"))
+				m.On("ListUsers", testutils.MockContext, listUsersReq).Return(nil, errors.New("test error"))
 			},
 			expectedError: regexp.MustCompile("test error"),
 			mockData:      basicTestDataForUsers,
@@ -139,7 +138,7 @@ func TestDataUsers(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			client := &iam.Mock{}
 			if tc.init != nil {
-				tc.init(t, client, tc.mockData, tc.groupID)
+				tc.init(client, tc.mockData, tc.groupID)
 			}
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
@@ -261,5 +260,5 @@ func expectListUsers(client *iam.Mock, mockData []iam.UserListItem, groupID *int
 		Actions:    true,
 	}
 
-	client.On("ListUsers", mock.Anything, listUsersReq).Return(mockData, nil).Times(timesToRun)
+	client.On("ListUsers", testutils.MockContext, listUsersReq).Return(mockData, nil).Times(timesToRun)
 }

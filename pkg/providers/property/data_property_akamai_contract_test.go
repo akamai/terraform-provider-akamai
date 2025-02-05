@@ -4,26 +4,25 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func Test_DSReadContract(t *testing.T) {
 	tests := map[string]struct {
-		init       func(*testing.T, *papi.Mock, testDataForPAPIGroups)
+		init       func(*papi.Mock, testDataForPAPIGroups)
 		mockData   testDataForPAPIGroups
 		configPath string
 		error      *regexp.Regexp
 	}{
 		"read contract with group name and group ID conflict": {
-			init:       func(t *testing.T, m *papi.Mock, testData testDataForPAPIGroups) {},
 			configPath: "testdata/TestDSContractRequired/ds_contract_with_group_name_and_group.tf",
 			error:      regexp.MustCompile("only one of `group_id,group_name` can be specified"),
 		},
 		"read contract with group id provided": {
-			init: func(t *testing.T, m *papi.Mock, testData testDataForPAPIGroups) {
-				expectGetGroups(m, testData, 5)
+			init: func(m *papi.Mock, testData testDataForPAPIGroups) {
+				expectGetGroups(m, testData, 3)
 			},
 			mockData: testDataForPAPIGroups{
 				accountID:   "",
@@ -49,8 +48,8 @@ func Test_DSReadContract(t *testing.T) {
 			error:      nil,
 		},
 		"read contract with group id without prefix": {
-			init: func(t *testing.T, m *papi.Mock, testData testDataForPAPIGroups) {
-				expectGetGroups(m, testData, 5)
+			init: func(m *papi.Mock, testData testDataForPAPIGroups) {
+				expectGetGroups(m, testData, 3)
 			},
 			mockData: testDataForPAPIGroups{
 				accountID:   "act_1-1TJZFB",
@@ -76,8 +75,8 @@ func Test_DSReadContract(t *testing.T) {
 			error:      nil,
 		},
 		"read contract with group name": {
-			init: func(t *testing.T, m *papi.Mock, testData testDataForPAPIGroups) {
-				expectGetGroups(m, testData, 5)
+			init: func(m *papi.Mock, testData testDataForPAPIGroups) {
+				expectGetGroups(m, testData, 3)
 			},
 			mockData: testDataForPAPIGroups{
 				accountID:   "act_1-1TJZFB",
@@ -103,8 +102,8 @@ func Test_DSReadContract(t *testing.T) {
 			error:      nil,
 		},
 		"multiple groups with the same name - expect an error": {
-			init: func(t *testing.T, m *papi.Mock, testData testDataForPAPIGroups) {
-				expectGetGroups(m, testData, 5)
+			init: func(m *papi.Mock, testData testDataForPAPIGroups) {
+				expectGetGroups(m, testData, 1)
 			},
 			mockData: testDataForPAPIGroups{
 				accountID:   "act_1-1TJZFB",
@@ -130,8 +129,8 @@ func Test_DSReadContract(t *testing.T) {
 			error:      regexp.MustCompile("there is more than 1 group with the same name. Based on provided data, it is impossible to determine which one should be returned. Please use group_id attribute"),
 		},
 		"multiple groups with the same name, distinguished by group_id": {
-			init: func(t *testing.T, m *papi.Mock, testData testDataForPAPIGroups) {
-				expectGetGroups(m, testData, 5)
+			init: func(m *papi.Mock, testData testDataForPAPIGroups) {
+				expectGetGroups(m, testData, 3)
 			},
 			mockData: testDataForPAPIGroups{
 				accountID:   "act_1-1TJZFB",
@@ -157,8 +156,8 @@ func Test_DSReadContract(t *testing.T) {
 			error:      nil,
 		},
 		"group with multiple contracts - expect error": {
-			init: func(t *testing.T, m *papi.Mock, testData testDataForPAPIGroups) {
-				expectGetGroups(m, testData, 5)
+			init: func(m *papi.Mock, testData testDataForPAPIGroups) {
+				expectGetGroups(m, testData, 1)
 			},
 			mockData: testDataForPAPIGroups{
 				accountID:   "act_1-1TJZFB",
@@ -188,7 +187,9 @@ func Test_DSReadContract(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &papi.Mock{}
-			test.init(t, client, test.mockData)
+			if test.init != nil {
+				test.init(client, test.mockData)
+			}
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),

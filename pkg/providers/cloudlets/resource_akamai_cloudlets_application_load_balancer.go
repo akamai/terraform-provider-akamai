@@ -8,10 +8,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cloudlets"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/cloudlets"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	ozzo "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/hashicorp/go-cty/cty"
@@ -91,7 +91,7 @@ func resourceCloudletsApplicationLoadBalancer() *schema.Resource {
 							Type:        schema.TypeString,
 							Required:    true,
 							Description: "The country in which the data center is located",
-							ValidateDiagFunc: func(i interface{}, path cty.Path) diag.Diagnostics {
+							ValidateDiagFunc: func(i interface{}, _ cty.Path) diag.Diagnostics {
 								if err := ozzo.Validate(strings.ToUpper(i.(string)), is.CountryCode2); err != nil {
 									return diag.FromErr(err)
 								}

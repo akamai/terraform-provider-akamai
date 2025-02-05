@@ -6,14 +6,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cps"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/cps"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/jinzhu/copier"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -89,7 +88,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
-			mock.Anything,
+			testutils.MockContext,
 			cps.CreateEnrollmentRequest{
 				EnrollmentRequestBody: enrollmentReqBody,
 				ContractID:            "1",
@@ -107,11 +106,11 @@ func TestResourceDVEnrollment(t *testing.T) {
 				ChangeType: "new-certificate",
 			},
 		}
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Once()
 
 		// first verification loop, invalid status
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -123,7 +122,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// second verification loop, valid status, empty allowed input array
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -135,7 +134,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// final verification loop
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -146,10 +145,10 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Times(3)
 
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -160,7 +159,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}, nil).Times(3)
 
-		client.On("GetChangeLetsEncryptChallenges", mock.Anything, cps.GetChangeRequest{
+		client.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.DVArray{DV: []cps.DV{
@@ -196,7 +195,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		enrollmentUpdateReqBody := createEnrollmentReqBodyFromEnrollment(enrollmentUpdate)
 		allowCancel := true
 		client.On("UpdateEnrollment",
-			mock.Anything,
+			testutils.MockContext,
 			cps.UpdateEnrollmentRequest{
 				EnrollmentRequestBody:     enrollmentUpdateReqBody,
 				EnrollmentID:              1,
@@ -215,10 +214,10 @@ func TestResourceDVEnrollment(t *testing.T) {
 				ChangeType: "new-certificate",
 			},
 		}
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentUpdate, nil).Times(3)
 
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -229,7 +228,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -239,7 +238,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 				Status: coodinateDomainValidation,
 			},
 		}, nil).Twice()
-		client.On("GetChangeLetsEncryptChallenges", mock.Anything, cps.GetChangeRequest{
+		client.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.DVArray{DV: []cps.DV{
@@ -270,7 +269,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}}, nil).Twice()
 
-		client.On("RemoveEnrollment", mock.Anything, cps.RemoveEnrollmentRequest{
+		client.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
 			EnrollmentID:              1,
 			AllowCancelPendingChanges: &allowCancel,
 		}).Return(&cps.RemoveEnrollmentResponse{
@@ -386,7 +385,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
-			mock.Anything,
+			testutils.MockContext,
 			cps.CreateEnrollmentRequest{
 				EnrollmentRequestBody: enrollmentReqBody,
 				ContractID:            "1",
@@ -404,11 +403,11 @@ func TestResourceDVEnrollment(t *testing.T) {
 				ChangeType: "new-certificate",
 			},
 		}
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Once()
 
 		// first verification loop, invalid status
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -420,7 +419,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// second verification loop, valid status, empty allowed input array
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -432,7 +431,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// final verification loop, everything in place
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -443,10 +442,10 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Times(3)
 
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -457,7 +456,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}, nil).Times(3)
 
-		client.On("GetChangeLetsEncryptChallenges", mock.Anything, cps.GetChangeRequest{
+		client.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.DVArray{DV: []cps.DV{
@@ -493,7 +492,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		enrollmentUpdateReqBody := createEnrollmentReqBodyFromEnrollment(enrollmentUpdate)
 		allowCancel := true
 		client.On("UpdateEnrollment",
-			mock.Anything,
+			testutils.MockContext,
 			cps.UpdateEnrollmentRequest{
 				EnrollmentRequestBody:     enrollmentUpdateReqBody,
 				EnrollmentID:              1,
@@ -512,10 +511,10 @@ func TestResourceDVEnrollment(t *testing.T) {
 				ChangeType: "new-certificate",
 			},
 		}
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentUpdate, nil).Times(3)
 
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -526,7 +525,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -536,7 +535,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 				Status: waitReviewCertWarning,
 			},
 		}, nil).Twice()
-		client.On("GetChangeLetsEncryptChallenges", mock.Anything, cps.GetChangeRequest{
+		client.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.DVArray{DV: []cps.DV{
@@ -551,7 +550,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}}, nil).Twice()
 
-		client.On("RemoveEnrollment", mock.Anything, cps.RemoveEnrollmentRequest{
+		client.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
 			EnrollmentID:              1,
 			AllowCancelPendingChanges: &allowCancel,
 		}).Return(&cps.RemoveEnrollmentResponse{
@@ -664,7 +663,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
-			mock.Anything,
+			testutils.MockContext,
 			cps.CreateEnrollmentRequest{
 				EnrollmentRequestBody: enrollmentReqBody,
 				ContractID:            "1",
@@ -685,11 +684,11 @@ func TestResourceDVEnrollment(t *testing.T) {
 		var enrollmentGet cps.GetEnrollmentResponse
 		require.NoError(t, copier.CopyWithOption(&enrollmentGet, enrollment, copier.Option{DeepCopy: true}))
 		enrollmentGet.CSR.SANS = []string{enrollment.CSR.CN}
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentGet, nil).Once()
 
 		// first verification loop, invalid status
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -701,7 +700,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// second verification loop, valid status, empty allowed input array
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -713,7 +712,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// final verification loop
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -724,10 +723,10 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentGet, nil).Times(2)
 
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -738,7 +737,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}, nil).Times(2)
 
-		client.On("GetChangeLetsEncryptChallenges", mock.Anything, cps.GetChangeRequest{
+		client.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.DVArray{DV: []cps.DV{
@@ -754,7 +753,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 
 		allowCancel := true
 
-		client.On("RemoveEnrollment", mock.Anything, cps.RemoveEnrollmentRequest{
+		client.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
 			EnrollmentID:              1,
 			AllowCancelPendingChanges: &allowCancel,
 		}).Return(&cps.RemoveEnrollmentResponse{
@@ -851,7 +850,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
-			mock.Anything,
+			testutils.MockContext,
 			cps.CreateEnrollmentRequest{
 				EnrollmentRequestBody: enrollmentReqBody,
 				ContractID:            "1",
@@ -876,7 +875,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		enrollmentUpdateReqBody := createEnrollmentReqBodyFromEnrollment(enrollmentUpdate)
 
 		client.On("UpdateEnrollment",
-			mock.Anything,
+			testutils.MockContext,
 			cps.UpdateEnrollmentRequest{
 				EnrollmentID:              1,
 				EnrollmentRequestBody:     enrollmentUpdateReqBody,
@@ -898,11 +897,11 @@ func TestResourceDVEnrollment(t *testing.T) {
 		var enrollmentGet cps.GetEnrollmentResponse
 		require.NoError(t, copier.CopyWithOption(&enrollmentGet, enrollmentUpdate, copier.Option{DeepCopy: true}))
 		enrollmentGet.CSR.SANS = []string{enrollmentUpdate.CSR.CN}
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentGet, nil).Once()
 
 		// first verification loop, invalid status
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     3,
 		}).Return(&cps.Change{
@@ -914,7 +913,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// second verification loop, valid status, empty allowed input array
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     3,
 		}).Return(&cps.Change{
@@ -926,7 +925,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// final verification loop
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     3,
 		}).Return(&cps.Change{
@@ -937,10 +936,10 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentGet, nil).Times(2)
 
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     3,
 		}).Return(&cps.Change{
@@ -951,7 +950,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}, nil).Times(2)
 
-		client.On("GetChangeLetsEncryptChallenges", mock.Anything, cps.GetChangeRequest{
+		client.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
 			EnrollmentID: 1,
 			ChangeID:     3,
 		}).Return(&cps.DVArray{DV: []cps.DV{
@@ -967,7 +966,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 
 		allowCancel := true
 
-		client.On("RemoveEnrollment", mock.Anything, cps.RemoveEnrollmentRequest{
+		client.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
 			EnrollmentID:              1,
 			AllowCancelPendingChanges: &allowCancel,
 		}).Return(&cps.RemoveEnrollmentResponse{
@@ -1065,7 +1064,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
-			mock.Anything,
+			testutils.MockContext,
 			cps.CreateEnrollmentRequest{
 				EnrollmentRequestBody: enrollmentReqBody,
 				ContractID:            "1",
@@ -1083,11 +1082,11 @@ func TestResourceDVEnrollment(t *testing.T) {
 				ChangeType: "new-certificate",
 			},
 		}
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Once()
 
 		// first verification loop, invalid status
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1099,7 +1098,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// second verification loop, valid status, empty allowed input array
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1111,7 +1110,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// final verification loop
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1122,10 +1121,10 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Times(4)
 
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1136,7 +1135,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}, nil).Times(4)
 
-		client.On("GetChangeLetsEncryptChallenges", mock.Anything, cps.GetChangeRequest{
+		client.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.DVArray{DV: []cps.DV{
@@ -1159,7 +1158,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}}, nil).Times(4)
 
 		allowCancel := true
-		client.On("RemoveEnrollment", mock.Anything, cps.RemoveEnrollmentRequest{
+		client.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
 			EnrollmentID:              1,
 			AllowCancelPendingChanges: &allowCancel,
 		}).Return(&cps.RemoveEnrollmentResponse{
@@ -1271,7 +1270,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
-			mock.Anything,
+			testutils.MockContext,
 			cps.CreateEnrollmentRequest{
 				EnrollmentRequestBody: enrollmentReqBody,
 				ContractID:            "1",
@@ -1289,10 +1288,10 @@ func TestResourceDVEnrollment(t *testing.T) {
 				ChangeType: "new-certificate",
 			},
 		}
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Once()
 
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1303,10 +1302,10 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Times(2)
 
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1318,7 +1317,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}, nil).Times(2)
 
 		allowCancel := true
-		client.On("RemoveEnrollment", mock.Anything, cps.RemoveEnrollmentRequest{
+		client.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
 			EnrollmentID:              1,
 			AllowCancelPendingChanges: &allowCancel,
 		}).Return(&cps.RemoveEnrollmentResponse{
@@ -1408,7 +1407,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
-			mock.Anything,
+			testutils.MockContext,
 			cps.CreateEnrollmentRequest{
 				EnrollmentRequestBody: enrollmentReqBody,
 				ContractID:            "1",
@@ -1426,10 +1425,10 @@ func TestResourceDVEnrollment(t *testing.T) {
 				ChangeType: "new-certificate",
 			},
 		}
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Once()
 
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1440,10 +1439,10 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Times(3)
 
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1454,7 +1453,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}, nil).Times(3)
 
-		client.On("GetChangeLetsEncryptChallenges", mock.Anything, cps.GetChangeRequest{
+		client.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.DVArray{DV: []cps.DV{
@@ -1476,10 +1475,10 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}}, nil).Times(3)
 
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Times(3)
 
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1490,7 +1489,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1500,7 +1499,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 				Status: coodinateDomainValidation,
 			},
 		}, nil).Twice()
-		client.On("GetChangeLetsEncryptChallenges", mock.Anything, cps.GetChangeRequest{
+		client.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.DVArray{DV: []cps.DV{
@@ -1532,7 +1531,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}}, nil).Twice()
 
 		allowCancel := true
-		client.On("RemoveEnrollment", mock.Anything, cps.RemoveEnrollmentRequest{
+		client.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
 			EnrollmentID:              1,
 			AllowCancelPendingChanges: &allowCancel,
 		}).Return(&cps.RemoveEnrollmentResponse{
@@ -1630,7 +1629,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
-			mock.Anything,
+			testutils.MockContext,
 			cps.CreateEnrollmentRequest{
 				EnrollmentRequestBody: enrollmentReqBody,
 				ContractID:            "1",
@@ -1648,10 +1647,10 @@ func TestResourceDVEnrollment(t *testing.T) {
 				ChangeType: "new-certificate",
 			},
 		}
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Once()
 
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1662,17 +1661,17 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}, nil).Twice()
 
-		client.On("GetChangePreVerificationWarnings", mock.Anything, cps.GetChangeRequest{
+		client.On("GetChangePreVerificationWarnings", testutils.MockContext, cps.GetChangeRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.PreVerificationWarnings{Warnings: "some warning"}, nil).Once()
-		client.On("AcknowledgePreVerificationWarnings", mock.Anything, cps.AcknowledgementRequest{
+		client.On("AcknowledgePreVerificationWarnings", testutils.MockContext, cps.AcknowledgementRequest{
 			EnrollmentID:    1,
 			ChangeID:        2,
 			Acknowledgement: cps.Acknowledgement{Acknowledgement: "acknowledge"},
 		}).Return(nil).Once()
 
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1682,7 +1681,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1693,10 +1692,10 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Twice()
 
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1707,7 +1706,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}, nil).Twice()
 
-		client.On("GetChangeLetsEncryptChallenges", mock.Anything, cps.GetChangeRequest{
+		client.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.DVArray{DV: []cps.DV{
@@ -1722,7 +1721,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}}, nil).Twice()
 
 		allowCancel := true
-		client.On("RemoveEnrollment", mock.Anything, cps.RemoveEnrollmentRequest{
+		client.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
 			EnrollmentID:              1,
 			AllowCancelPendingChanges: &allowCancel,
 		}).Return(&cps.RemoveEnrollmentResponse{
@@ -1818,7 +1817,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
-			mock.Anything,
+			testutils.MockContext,
 			cps.CreateEnrollmentRequest{
 				EnrollmentRequestBody: enrollmentReqBody,
 				ContractID:            "1",
@@ -1840,11 +1839,11 @@ func TestResourceDVEnrollment(t *testing.T) {
 		var enrollmentGet cps.GetEnrollmentResponse
 		require.NoError(t, copier.CopyWithOption(&enrollmentGet, enrollment, copier.Option{DeepCopy: true}))
 		enrollmentGet.CSR.SANS = []string{enrollment.CSR.CN}
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentGet, nil).Once()
 
 		// first verification loop, invalid status
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1856,7 +1855,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// second verification loop, valid status, empty allowed input array
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1868,7 +1867,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// final verification loop
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1879,10 +1878,10 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentGet, nil).Times(2)
 
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1893,7 +1892,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}, nil).Times(2)
 
-		client.On("GetChangeLetsEncryptChallenges", mock.Anything, cps.GetChangeRequest{
+		client.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.DVArray{DV: []cps.DV{
@@ -1909,7 +1908,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 
 		allowCancel := true
 
-		client.On("RemoveEnrollment", mock.Anything, cps.RemoveEnrollmentRequest{
+		client.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
 			EnrollmentID:              1,
 			AllowCancelPendingChanges: &allowCancel,
 		}).Return(&cps.RemoveEnrollmentResponse{
@@ -2008,7 +2007,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
-			mock.Anything,
+			testutils.MockContext,
 			cps.CreateEnrollmentRequest{
 				EnrollmentRequestBody: enrollmentReqBody,
 				ContractID:            "1",
@@ -2026,10 +2025,10 @@ func TestResourceDVEnrollment(t *testing.T) {
 				ChangeType: "new-certificate",
 			},
 		}
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Once()
 
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -2040,13 +2039,13 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}, nil).Twice()
 
-		client.On("GetChangePreVerificationWarnings", mock.Anything, cps.GetChangeRequest{
+		client.On("GetChangePreVerificationWarnings", testutils.MockContext, cps.GetChangeRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.PreVerificationWarnings{Warnings: "some warning"}, nil).Once()
 
 		allowCancel := true
-		client.On("RemoveEnrollment", mock.Anything, cps.RemoveEnrollmentRequest{
+		client.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
 			EnrollmentID:              1,
 			AllowCancelPendingChanges: &allowCancel,
 		}).Return(&cps.RemoveEnrollmentResponse{
@@ -2130,7 +2129,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
-			mock.Anything,
+			testutils.MockContext,
 			cps.CreateEnrollmentRequest{
 				EnrollmentRequestBody: enrollmentReqBody,
 				ContractID:            "1",
@@ -2218,7 +2217,7 @@ func TestResourceDVEnrollmentImport(t *testing.T) {
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
-			mock.Anything,
+			testutils.MockContext,
 			cps.CreateEnrollmentRequest{
 				EnrollmentRequestBody: enrollmentReqBody,
 				ContractID:            "1",
@@ -2236,10 +2235,10 @@ func TestResourceDVEnrollmentImport(t *testing.T) {
 				ChangeType: "new-certificate",
 			},
 		}
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Once()
 
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -2250,10 +2249,10 @@ func TestResourceDVEnrollmentImport(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Times(4)
 
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -2264,7 +2263,7 @@ func TestResourceDVEnrollmentImport(t *testing.T) {
 			},
 		}, nil).Times(3)
 
-		client.On("GetChangeLetsEncryptChallenges", mock.Anything, cps.GetChangeRequest{
+		client.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.DVArray{DV: []cps.DV{
@@ -2286,7 +2285,7 @@ func TestResourceDVEnrollmentImport(t *testing.T) {
 			},
 		}}, nil).Times(3)
 		allowCancel := true
-		client.On("RemoveEnrollment", mock.Anything, cps.RemoveEnrollmentRequest{
+		client.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
 			EnrollmentID:              1,
 			AllowCancelPendingChanges: &allowCancel,
 		}).Return(&cps.RemoveEnrollmentResponse{
@@ -2328,7 +2327,7 @@ func TestResourceDVEnrollmentImport(t *testing.T) {
 			ValidationType: "third-party",
 		}
 
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Times(1)
 
 		useClient(client, func() {

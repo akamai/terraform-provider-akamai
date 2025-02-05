@@ -6,8 +6,8 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/dns"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/dns"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -47,14 +47,14 @@ func TestResDNSZone(t *testing.T) {
 		},
 	}
 	recordSetsResp := &dns.GetRecordSetsResponse{
-		RecordSets: make([]dns.RecordSet, 2, 2),
+		RecordSets: make([]dns.RecordSet, 2),
 	}
 
 	t.Run("when group is not provided and there is no group for the user ", func(t *testing.T) {
 		client := &dns.Mock{}
 
 		client.On("ListGroups",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("dns.ListGroupRequest"),
 		).Return(&dns.ListGroupResponse{}, nil)
 
@@ -99,36 +99,36 @@ func TestResDNSZone(t *testing.T) {
 		}
 
 		client.On("ListGroups",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("dns.ListGroupRequest"),
 		).Return(groupListResponse, nil)
 
 		getCall := client.On("GetZone",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("dns.GetZoneRequest"),
 		).Return(nil, &dns.Error{
 			StatusCode: http.StatusNotFound,
 		})
 
 		client.On("CreateZone",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("dns.CreateZoneRequest"),
-		).Return(nil).Run(func(args mock.Arguments) {
+		).Return(nil).Run(func(_ mock.Arguments) {
 			getCall.ReturnArguments = mock.Arguments{zone, nil}
 		})
 
 		client.On("SaveChangeList",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("dns.SaveChangeListRequest"),
 		).Return(nil)
 
 		client.On("SubmitChangeList",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("dns.SubmitChangeListRequest"),
 		).Return(nil)
 
 		client.On("GetRecordSets",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("dns.GetRecordSetsRequest"),
 		).Return(recordSetsResp, nil)
 
@@ -187,7 +187,7 @@ func TestResDNSZone(t *testing.T) {
 		}
 
 		client.On("ListGroups",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("dns.ListGroupRequest"),
 		).Return(groupListResponse, nil)
 
@@ -218,38 +218,38 @@ func TestResDNSZone(t *testing.T) {
 		client := &dns.Mock{}
 
 		getCall := client.On("GetZone",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("dns.GetZoneRequest"),
 		).Return(nil, &dns.Error{
 			StatusCode: http.StatusNotFound,
 		})
 
 		client.On("CreateZone",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("dns.CreateZoneRequest"),
-		).Return(nil).Run(func(args mock.Arguments) {
+		).Return(nil).Run(func(_ mock.Arguments) {
 			getCall.ReturnArguments = mock.Arguments{zone, nil}
 		})
 
 		client.On("UpdateZone",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("dns.UpdateZoneRequest"),
-		).Return(nil).Run(func(args mock.Arguments) {
+		).Return(nil).Run(func(_ mock.Arguments) {
 			zone.Comment = "This is an updated test primary zone"
 		})
 
 		client.On("SaveChangeList",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("dns.SaveChangeListRequest"),
 		).Return(nil)
 
 		client.On("SubmitChangeList",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("dns.SubmitChangeListRequest"),
 		).Return(nil)
 
 		client.On("GetRecordSets",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("dns.GetRecordSetsRequest"),
 		).Return(recordSetsResp, nil)
 
@@ -292,14 +292,14 @@ func TestResDNSZone(t *testing.T) {
 		client := &dns.Mock{}
 
 		getCall := client.On("GetZone",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("dns.GetZoneRequest"),
 		).Return(nil, &dns.Error{
 			StatusCode: http.StatusNotFound,
 		}).Once()
 
 		client.On("CreateZone",
-			mock.Anything,
+			testutils.MockContext,
 			dns.CreateZoneRequest{
 				CreateZone: &dns.ZoneCreate{
 					Zone:         "secondaryexampleterraform.io",
@@ -329,24 +329,24 @@ func TestResDNSZone(t *testing.T) {
 				},
 				ClearConn: []bool{true},
 			},
-		).Return(nil).Run(func(args mock.Arguments) {
+		).Return(nil).Run(func(_ mock.Arguments) {
 			getCall.ReturnArguments = mock.Arguments{secondaryZone, nil}
 		})
 
 		client.On("GetZone",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("dns.GetZoneRequest"),
 		).Return(secondaryZone, nil).Times(4)
 
 		client.On("UpdateZone",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("dns.UpdateZoneRequest"),
-		).Return(nil).Run(func(args mock.Arguments) {
+		).Return(nil).Run(func(_ mock.Arguments) {
 			secondaryZone.Comment = "This is an updated test secondary zone"
 		})
 
 		client.On("GetZone",
-			mock.Anything,
+			testutils.MockContext,
 			mock.AnythingOfType("dns.GetZoneRequest"),
 		).Return(secondaryZone, nil).Times(3)
 

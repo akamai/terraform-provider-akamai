@@ -10,12 +10,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/papi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/str"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
-	"github.com/apex/log"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/log"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/str"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
@@ -131,7 +131,7 @@ func resourceProperty() *schema.Resource {
 						"cname_from": {
 							Type:     schema.TypeString,
 							Required: true,
-							ValidateDiagFunc: func(i interface{}, path cty.Path) diag.Diagnostics {
+							ValidateDiagFunc: func(i interface{}, _ cty.Path) diag.Diagnostics {
 								if len(i.(string)) == 0 {
 									return diag.Errorf("'cname_from' cannot be empty when hostnames block is defined - See new hostnames schema")
 								}
@@ -141,7 +141,7 @@ func resourceProperty() *schema.Resource {
 						"cname_to": {
 							Type:     schema.TypeString,
 							Required: true,
-							ValidateDiagFunc: func(i interface{}, path cty.Path) diag.Diagnostics {
+							ValidateDiagFunc: func(i interface{}, _ cty.Path) diag.Diagnostics {
 								if len(i.(string)) == 0 {
 									return diag.Errorf("'cname_to' cannot be empty when hostnames block is defined - See new hostnames schema")
 								}
@@ -151,7 +151,7 @@ func resourceProperty() *schema.Resource {
 						"cert_provisioning_type": {
 							Type:     schema.TypeString,
 							Required: true,
-							ValidateDiagFunc: func(i interface{}, path cty.Path) diag.Diagnostics {
+							ValidateDiagFunc: func(i interface{}, _ cty.Path) diag.Diagnostics {
 								if len(i.(string)) == 0 {
 									return diag.Errorf("'cert_provisioning_type' cannot be empty when hostnames block is defined - See new hostnames schema")
 								}
@@ -634,7 +634,7 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 
 	rulesJSON, err := json.Marshal(rules)
 	if err != nil {
-		logger.WithError(err).Error("could not render rules as JSON")
+		logger.Error("could not render rules as JSON", "error", err)
 		return diag.Errorf("received rules that could not be rendered to JSON: %s", err)
 	}
 
@@ -671,7 +671,6 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 	diags := diag.Diagnostics{}
 
 	immutable := []string{
-		"group_id",
 		"contract_id",
 		"product_id",
 		"property_id",
@@ -679,7 +678,7 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 	for _, attr := range immutable {
 		if d.HasChange(attr) {
 			err := fmt.Errorf(`property attribute %q cannot be changed after creation (immutable)`, attr)
-			logger.WithError(err).Error("could not update property")
+			logger.Error("could not update property", "error", err)
 			diags = append(diags, diag.FromErr(err)...)
 		}
 	}
@@ -689,9 +688,9 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 	}
 
 	// We only update if these attributes change.
-	if !d.HasChanges("hostnames", "rules", "rule_format") {
+	if !d.HasChanges("group_id", "hostnames", "rules", "rule_format") {
 		logger.Debug(
-			"No changes to hostnames, rules, or rule_format (no update required)")
+			"No changes to group_id, hostnames, rules, or rule_format (no update required)")
 		return nil
 	}
 
@@ -714,6 +713,7 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 		LatestVersion:     d.Get("latest_version").(int),
 		StagingVersion:    stagingVersion,
 		ProductionVersion: productionVersion,
+		AssetID:           d.Get("asset_id").(string),
 	}
 
 	propertyID := d.Id()
@@ -721,29 +721,23 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 	oldGID, _ := d.GetChange("group_id")
 	oldGroupID := oldGID.(string)
 
-	// We want to change group id first: if the user loses access to the property as a result of
-	// group change, we want it to be visible immediately as an error during the same update.
-	//
-	// This way we will avoid the following scenario:
-	// 1. User changes the group and something else, e.g. hostnames and gets a success,
-	//    although they don't belong to the new group,
-	// 2. User changes hostnames again (not the group) and only then gets a (hard to understand)
-	//    error.
 	groupsDiffer, err := areGroupIDsDifferent(oldGroupID, property.GroupID)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	if groupsDiffer {
+		hlp := helper{client, IAMClient(meta.Must(m))}
 		key := papiKey{
 			propertyID: property.PropertyID,
 			groupID:    oldGroupID,
 			contractID: property.ContractID,
 		}
-
-		err := updateGroupID(ctx, client, IAMClient(meta.Must(m)), key, property.GroupID)
-
+		err := hlp.moveProperty(ctx, key, property.AssetID, property.GroupID)
 		if err != nil {
-			return diag.FromErr(err)
+			// We need to set it, otherwise the config will be set into state
+			// (including the newly proposed group ID).
+			d.Partial(true)
+			return diag.FromErr(fmt.Errorf("error moving property: %w", err))
 		}
 
 		if !d.HasChanges("hostnames", "rules", "rule_format") {
@@ -987,16 +981,16 @@ func createProperty(ctx context.Context, client papi.PAPI, propertyName, groupID
 		},
 	}
 
-	logger := log.FromContext(ctx).WithFields(logFields(req))
+	logger := log.FromContext(ctx).With("request", logFields(req))
 	logger.Debug("creating property")
 
 	res, err := client.CreateProperty(ctx, req)
 	if err == nil {
-		logger.WithFields(logFields(*res)).Info("property created")
+		logger.Info("property created", logFields(*res))
 		return res.PropertyID, nil
 	}
 
-	logger.WithError(err).Error("could not create property")
+	logger.Error("could not create property", "error", err)
 
 	var targetErr *papi.Error
 	if errors.As(err, &targetErr) && targetErr.StatusCode == http.StatusNotFound {
@@ -1041,12 +1035,12 @@ func removeProperty(ctx context.Context, client papi.PAPI, propertyID, groupID, 
 		ContractID: contractID,
 	}
 
-	logger := log.FromContext(ctx).WithFields(logFields(req))
+	logger := log.FromContext(ctx).With("request", logFields(req))
 	logger.Debug("removing property")
 
 	_, err := client.RemoveProperty(ctx, req)
 	if err != nil {
-		logger.WithError(err).Error("could not remove property")
+		logger.Error("could not remove property", "error", err)
 		return err
 	}
 
@@ -1061,19 +1055,19 @@ func fetchLatestProperty(ctx context.Context, client papi.PAPI, propertyID, grou
 		ContractID: contractID,
 		GroupID:    groupID,
 	}
-	logger := log.FromContext(ctx).WithFields(logFields(req))
+	logger := log.FromContext(ctx).With("request", logFields(req))
 	logger.Debug("fetching property")
 	res, err := client.GetProperty(ctx, req)
 	if err != nil {
-		logger.WithError(err).Error("could not read property")
+		logger.Error("could not read property", "error", err)
 		return nil, err
 	}
 
-	logger = logger.WithFields(logFields(*res))
+	logger = logger.With("response", logFields(*res))
 
 	if res.Property == nil {
 		err := fmt.Errorf("PAPI::GetProperty() response did not contain a property")
-		logger.WithError(err).Error("could not look up property")
+		logger.Error("could not look up property", "error", err)
 		return nil, err
 	}
 
@@ -1088,11 +1082,11 @@ func fetchProperty(ctx context.Context, client papi.PAPI, propertyID, groupID, c
 		ContractID: contractID,
 		GroupID:    groupID,
 	}
-	logger := log.FromContext(ctx).WithFields(logFields(req))
+	logger := log.FromContext(ctx).With("request", logFields(req))
 	logger.Debugf("fetching property versions")
 	res, err := client.GetPropertyVersions(ctx, req)
 	if err != nil {
-		logger.WithError(err).Error("could not read property versions")
+		logger.Error("could not read property versions", "error", err)
 		return nil, 0, err
 	}
 
@@ -1224,15 +1218,15 @@ func fetchPropertyVersion(ctx context.Context, client papi.PAPI, propertyID, gro
 		GroupID:         groupID,
 		PropertyVersion: propertyVersion,
 	}
-	logger := log.FromContext(ctx).WithFields(logFields(req))
+	logger := log.FromContext(ctx).With("request", logFields(req))
 	logger.Debug("fetching property version")
 
 	res, err := client.GetPropertyVersion(ctx, req)
 	if err != nil {
-		logger.WithError(err).Error("could not read property version")
+		logger.Error("could not read property version", "error", err)
 		return nil, err
 	}
-	logger = logger.WithFields(logFields(*res))
+	logger = logger.With("response", logFields(*res))
 	logger.Debug("property version fetched")
 	return res, err
 }
@@ -1247,16 +1241,16 @@ func fetchPropertyVersionHostnames(ctx context.Context, client papi.PAPI, proper
 		IncludeCertStatus: true,
 	}
 
-	logger := log.FromContext(ctx).WithFields(logFields(req))
+	logger := log.FromContext(ctx).With("request", logFields(req))
 
 	logger.Debug("fetching property hostnames")
 	res, err := client.GetPropertyVersionHostnames(ctx, req)
 	if err != nil {
-		logger.WithError(err).Error("could not fetch property hostnames")
+		logger.Error("could not fetch property hostnames", "error", err)
 		return nil, err
 	}
 
-	logger.WithFields(logFields(*res)).Debug("fetched property hostnames")
+	logger.Debug("fetched property hostnames", logFields(*res))
 	return res.Hostnames.Items, nil
 }
 
@@ -1270,16 +1264,16 @@ func fetchPropertyVersionRules(ctx context.Context, client papi.PAPI, property p
 		ValidateMode:    papi.RuleValidateModeFull,
 	}
 
-	logger := log.FromContext(ctx).WithFields(logFields(req))
+	logger := log.FromContext(ctx).With("request", logFields(req))
 
 	logger.Debug("fetching property rules")
 	res, err := client.GetRuleTree(ctx, req)
 	if err != nil {
-		logger.WithError(err).Error("could not fetch property rules")
+		logger.Error("could not fetch property rules", "error", err)
 		return
 	}
 
-	logger.WithFields(logFields(*res)).Debug("fetched property rules")
+	logger.Debug("fetched property rules", logFields(*res))
 	rules = papi.RulesUpdate{
 		Rules:    res.Rules,
 		Comments: res.Comments,
@@ -1336,11 +1330,11 @@ func updatePropertyRules(ctx context.Context, client papi.PAPI, property papi.Pr
 	logger.Debug("updating property rules")
 	res, err := client.UpdateRuleTree(ctx, req)
 	if err != nil {
-		logger.WithError(err).Error("could not update property rules")
+		logger.Error("could not update property rules", "error", err)
 		return err
 	}
 
-	logger.WithFields(logFields(*res)).Info("updated property rules")
+	logger.Info("updated property rules", logFields(*res))
 	return nil
 }
 
@@ -1355,16 +1349,16 @@ func createPropertyVersion(ctx context.Context, client papi.PAPI, property papi.
 		},
 	}
 
-	logger := log.FromContext(ctx).WithFields(logFields(req))
+	logger := log.FromContext(ctx).With("request", logFields(req))
 
 	logger.Debug(fmt.Sprintf("creating new property version from previous version %d", version))
 	res, err := client.CreatePropertyVersion(ctx, req)
 	if err != nil {
-		logger.WithError(err).Error("could not create new property version")
+		logger.Error("could not create new property version", "error", err)
 		return
 	}
 
-	logger.WithFields(logFields(*res)).Info("property version created")
+	logger.Info("property version created", logFields(*res))
 	newVersion = res.PropertyVersion
 	return
 }
@@ -1382,7 +1376,7 @@ func updatePropertyHostnames(ctx context.Context, client papi.PAPI, property pap
 		Hostnames:       hostnames,
 	}
 
-	logger := log.FromContext(ctx).WithFields(logFields(req))
+	logger := log.FromContext(ctx).With("request", logFields(req))
 
 	logger.Debug("updating property hostnames")
 	res, err := client.UpdatePropertyVersionHostnames(ctx, req)
@@ -1403,11 +1397,11 @@ func updatePropertyHostnames(ctx context.Context, client papi.PAPI, property pap
 				err = fmt.Errorf("%s: not possible to use cert_provisioning_type = 'DEFAULT' as the limit for DEFAULT certificates has been reached", papi.ErrUpdatePropertyVersionHostnames)
 			}
 		}
-		logger.WithError(err).Error("could not modify the hostnames for a property version")
+		logger.Error("could not modify the hostnames for a property version", "error", err)
 		return err
 	}
 
-	logger.WithFields(logFields(*res)).Info("property hostnames updated")
+	logger.Info("property hostnames updated", logFields(*res))
 	return nil
 }
 

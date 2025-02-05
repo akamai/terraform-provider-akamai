@@ -8,10 +8,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cloudaccess"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/cloudaccess"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
@@ -51,7 +52,7 @@ type (
 
 	commonDataForResource struct {
 		accessKeyData []commonDataForAccessKey
-		propertyData  *commonDataForProperty
+		propertyData  commonDataForProperty
 	}
 )
 
@@ -143,7 +144,7 @@ var (
 
 	resourceMock = commonDataForResource{
 		accessKeyData: []commonDataForAccessKey{accessKeyMock, secondKeyMock, onlyCredBMock, emptySecretMock},
-		propertyData:  &propertyMock,
+		propertyData:  propertyMock,
 	}
 
 	firstAccessKeyVersion  = int64(1)
@@ -163,13 +164,13 @@ func TestAccessKeyResource(t *testing.T) {
 	activationTimeout = 20 * time.Millisecond
 	tests := map[string]struct {
 		configPath string
-		init       func(*testing.T, *cloudaccess.Mock, commonDataForResource)
+		init       func(*cloudaccess.Mock, commonDataForResource)
 		mockData   commonDataForResource
 		steps      []resource.TestStep
 		error      *regexp.Regexp
 	}{
 		"create access key one version": {
-			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+			init: func(m *cloudaccess.Mock, resourceData commonDataForResource) {
 				mockCreationAccessKeyWith1Version(m, resourceData)
 				mockReadAccessKeyWith1Version(m, resourceData)
 				mockDeletionAccessKeyWith1Version(m, resourceData)
@@ -197,7 +198,7 @@ func TestAccessKeyResource(t *testing.T) {
 			},
 		},
 		"create access key two versions": {
-			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+			init: func(m *cloudaccess.Mock, resourceData commonDataForResource) {
 				mockCreationAccessKeyWith2Versions(m, resourceData)
 				mockReadAccessKey(m, resourceData, twoElementsVersionList)
 				mockDeletionAccessKeyWith2Versions(m, resourceData)
@@ -230,7 +231,7 @@ func TestAccessKeyResource(t *testing.T) {
 			},
 		},
 		"create access key only credentialsB": {
-			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+			init: func(m *cloudaccess.Mock, resourceData commonDataForResource) {
 				//creation
 				mockCreationAccessKeyUsingCredB(m, resourceData)
 				//read
@@ -239,7 +240,7 @@ func TestAccessKeyResource(t *testing.T) {
 				//delete
 				mockListAccessKeyVersionsOnly1Version(m, resourceData.accessKeyData[2]).Once()
 				mockLookupsPropertiesNoProperties(m, resourceData.propertyData, firstAccessKeyVersion).Once()
-				m.On("DeleteAccessKeyVersion", mock.Anything, cloudaccess.DeleteAccessKeyVersionRequest{AccessKeyUID: resourceData.accessKeyData[2].accessKeyUID, Version: firstAccessKeyVersion}).
+				m.On("DeleteAccessKeyVersion", testutils.MockContext, cloudaccess.DeleteAccessKeyVersionRequest{AccessKeyUID: resourceData.accessKeyData[2].accessKeyUID, Version: firstAccessKeyVersion}).
 					Return(&cloudaccess.DeleteAccessKeyVersionResponse{
 						AccessKeyUID:     resourceData.accessKeyData[2].accessKeyUID,
 						CloudAccessKeyID: ptr.To(resourceData.accessKeyData[2].credentialsB.cloudAccessKeyID),
@@ -249,7 +250,7 @@ func TestAccessKeyResource(t *testing.T) {
 						Version:          firstAccessKeyVersion,
 						VersionGUID:      "asde-efdr-reded",
 					}, nil).Once()
-				m.On("GetAccessKeyVersion", mock.Anything, cloudaccess.GetAccessKeyVersionRequest{AccessKeyUID: resourceData.accessKeyData[0].accessKeyUID, Version: 1}).
+				m.On("GetAccessKeyVersion", testutils.MockContext, cloudaccess.GetAccessKeyVersionRequest{AccessKeyUID: resourceData.accessKeyData[0].accessKeyUID, Version: 1}).
 					Return(&cloudaccess.GetAccessKeyVersionResponse{
 						AccessKeyUID:     resourceData.accessKeyData[2].accessKeyUID,
 						CloudAccessKeyID: ptr.To(resourceData.accessKeyData[2].credentialsB.cloudAccessKeyID),
@@ -286,7 +287,7 @@ func TestAccessKeyResource(t *testing.T) {
 			},
 		},
 		"delete access key version only credentialsB": {
-			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+			init: func(m *cloudaccess.Mock, resourceData commonDataForResource) {
 				//create
 				mockCreationAccessKeyUsingCredB(m, resourceData)
 				//read
@@ -296,7 +297,7 @@ func TestAccessKeyResource(t *testing.T) {
 				//delete 1 version (credB)
 				mockListAccessKeyVersionsOnly1Version(m, resourceData.accessKeyData[2]).Once()
 				mockLookupsPropertiesNoProperties(m, resourceData.propertyData, firstAccessKeyVersion).Once()
-				m.On("DeleteAccessKeyVersion", mock.Anything, cloudaccess.DeleteAccessKeyVersionRequest{AccessKeyUID: resourceData.accessKeyData[2].accessKeyUID, Version: firstAccessKeyVersion}).
+				m.On("DeleteAccessKeyVersion", testutils.MockContext, cloudaccess.DeleteAccessKeyVersionRequest{AccessKeyUID: resourceData.accessKeyData[2].accessKeyUID, Version: firstAccessKeyVersion}).
 					Return(&cloudaccess.DeleteAccessKeyVersionResponse{
 						AccessKeyUID:     resourceData.accessKeyData[2].accessKeyUID,
 						CloudAccessKeyID: ptr.To(resourceData.accessKeyData[2].credentialsB.cloudAccessKeyID),
@@ -306,7 +307,7 @@ func TestAccessKeyResource(t *testing.T) {
 						Version:          firstAccessKeyVersion,
 						VersionGUID:      "asde-efdr-reded",
 					}, nil).Once()
-				m.On("GetAccessKeyVersion", mock.Anything, cloudaccess.GetAccessKeyVersionRequest{AccessKeyUID: resourceData.accessKeyData[0].accessKeyUID, Version: firstAccessKeyVersion}).
+				m.On("GetAccessKeyVersion", testutils.MockContext, cloudaccess.GetAccessKeyVersionRequest{AccessKeyUID: resourceData.accessKeyData[0].accessKeyUID, Version: firstAccessKeyVersion}).
 					Return(&cloudaccess.GetAccessKeyVersionResponse{
 						AccessKeyUID:     resourceData.accessKeyData[2].accessKeyUID,
 						CloudAccessKeyID: ptr.To(resourceData.accessKeyData[2].credentialsB.cloudAccessKeyID),
@@ -362,31 +363,12 @@ func TestAccessKeyResource(t *testing.T) {
 			},
 		},
 		"basic name update": {
-			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+			init: func(m *cloudaccess.Mock, resourceData commonDataForResource) {
 				mockCreationAccessKeyWith1Version(m, resourceData)
 				mockReadAccessKeyWith1Version(m, resourceData)
 				mockReadAccessKeyWith1Version(m, resourceData)
 				mockUpdateAccessKey(m, resourceData.accessKeyData[0], "updated_key_name").Once()
-				m.On("GetAccessKey", mock.Anything, cloudaccess.AccessKeyRequest{AccessKeyUID: resourceData.accessKeyData[0].accessKeyUID}).
-					Return(&cloudaccess.GetAccessKeyResponse{
-						AccessKeyName:        "updated_key_name",
-						AccessKeyUID:         resourceData.accessKeyData[0].accessKeyUID,
-						AuthenticationMethod: resourceData.accessKeyData[0].authenticationMethod,
-						NetworkConfiguration: &cloudaccess.SecureNetwork{
-							SecurityNetwork: cloudaccess.NetworkType(resourceData.accessKeyData[0].networkConfig.securityNetwork),
-							AdditionalCDN:   ptr.To(cloudaccess.CDNType(resourceData.accessKeyData[0].networkConfig.additionalCDN)),
-						},
-						LatestVersion: firstAccessKeyVersion,
-						Groups: []cloudaccess.Group{
-							{
-								GroupID:     resourceData.accessKeyData[0].groupID,
-								GroupName:   ptr.To("random group name"),
-								ContractIDs: []string{resourceData.accessKeyData[0].contractID},
-							},
-						},
-						CreatedBy:   "dev-user",
-						CreatedTime: time.Date(2024, 1, 10, 11, 9, 10, 67708, time.UTC),
-					}, nil).Once()
+				mockGetAccessKeyWithSpecificNameAndVersion(m, resourceData.accessKeyData[0], "updated_key_name", firstAccessKeyVersion).Once()
 				mockListAccessKeyVersionsOnly1Version(m, resourceData.accessKeyData[0]).Twice()
 				mockListAccessKeyVersionsOnly1Version(m, resourceData.accessKeyData[0]).Twice()
 				mockDeletionAccessKeyWith1Version(m, resourceData)
@@ -432,7 +414,7 @@ func TestAccessKeyResource(t *testing.T) {
 			},
 		},
 		"single-credentials rotation": {
-			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+			init: func(m *cloudaccess.Mock, resourceData commonDataForResource) {
 				mockCreationAccessKeyWith2Versions(m, resourceData)
 				mockReadAccessKey(m, resourceData, twoElementsVersionList)
 				mockReadAccessKey(m, resourceData, twoElementsVersionList)
@@ -443,13 +425,13 @@ func TestAccessKeyResource(t *testing.T) {
 				mockGetAccessKeyVersion(m, resourceData.accessKeyData[0], cloudaccess.PendingDeletion, firstAccessKeyVersion).Once()
 				mockListAccessKeyVersions(m, resourceData.accessKeyData[0], oneElementVersionList).Once()
 				//create new version (no.3)
-				m.On("CreateAccessKeyVersion", mock.Anything, cloudaccess.CreateAccessKeyVersionRequest{
+				m.On("CreateAccessKeyVersion", testutils.MockContext, cloudaccess.CreateAccessKeyVersionRequest{
 					AccessKeyUID: resourceData.accessKeyData[0].accessKeyUID,
 					Body: cloudaccess.CreateAccessKeyVersionRequestBody{
 						CloudAccessKeyID:     "test_key_id_3",
 						CloudSecretAccessKey: "test_secret_3",
 					}}).Return(&cloudaccess.CreateAccessKeyVersionResponse{RequestID: 321321, RetryAfter: 1000}, nil).Once()
-				m.On("GetAccessKeyVersionStatus", mock.Anything, cloudaccess.GetAccessKeyVersionStatusRequest{RequestID: 321321}).
+				m.On("GetAccessKeyVersionStatus", testutils.MockContext, cloudaccess.GetAccessKeyVersionStatusRequest{RequestID: 321321}).
 					Return(&cloudaccess.GetAccessKeyVersionStatusResponse{
 						AccessKeyVersion: &cloudaccess.KeyVersion{
 							AccessKeyUID: resourceData.accessKeyData[0].accessKeyUID,
@@ -463,7 +445,7 @@ func TestAccessKeyResource(t *testing.T) {
 
 				//read
 				mockGetAccessKey(m, resourceData.accessKeyData[0]).Once()
-				m.On("ListAccessKeyVersions", mock.Anything, cloudaccess.ListAccessKeyVersionsRequest{
+				m.On("ListAccessKeyVersions", testutils.MockContext, cloudaccess.ListAccessKeyVersionsRequest{
 					AccessKeyUID: resourceData.accessKeyData[0].accessKeyUID,
 				}).Return(&cloudaccess.ListAccessKeyVersionsResponse{AccessKeyVersions: []cloudaccess.AccessKeyVersion{
 					{
@@ -487,7 +469,7 @@ func TestAccessKeyResource(t *testing.T) {
 				},
 				}, nil).Once()
 				//Delete both credentials ( with version no.3 and no.2)
-				m.On("ListAccessKeyVersions", mock.Anything, cloudaccess.ListAccessKeyVersionsRequest{
+				m.On("ListAccessKeyVersions", testutils.MockContext, cloudaccess.ListAccessKeyVersionsRequest{
 					AccessKeyUID: resourceData.accessKeyData[0].accessKeyUID,
 				}).Return(&cloudaccess.ListAccessKeyVersionsResponse{AccessKeyVersions: []cloudaccess.AccessKeyVersion{
 					{
@@ -514,7 +496,7 @@ func TestAccessKeyResource(t *testing.T) {
 				mockLookupsPropertiesNoProperties(m, resourceData.propertyData, secondAccessKeyVersion).Once()
 				mockDeleteAccessKeyVersion(m, resourceData.accessKeyData[0], thirdAccessKeyVersion).Once()
 				mockGetAccessKeyVersion(m, resourceData.accessKeyData[0], cloudaccess.PendingDeletion, thirdAccessKeyVersion).Once()
-				m.On("ListAccessKeyVersions", mock.Anything, cloudaccess.ListAccessKeyVersionsRequest{
+				m.On("ListAccessKeyVersions", testutils.MockContext, cloudaccess.ListAccessKeyVersionsRequest{
 					AccessKeyUID: resourceData.accessKeyData[0].accessKeyUID,
 				}).Return(&cloudaccess.ListAccessKeyVersionsResponse{AccessKeyVersions: []cloudaccess.AccessKeyVersion{
 					{
@@ -597,7 +579,7 @@ func TestAccessKeyResource(t *testing.T) {
 			},
 		},
 		"cross-credentials rotation of access key": {
-			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+			init: func(m *cloudaccess.Mock, resourceData commonDataForResource) {
 				mockCreationAccessKeyWith2Versions(m, resourceData)
 				mockReadAccessKey(m, resourceData, twoElementsVersionList)
 				mockReadAccessKey(m, resourceData, twoElementsVersionList)
@@ -610,13 +592,13 @@ func TestAccessKeyResource(t *testing.T) {
 				mockListAccessKeyVersionsOnly1Version(m, resourceData.accessKeyData[0]).Once()
 
 				//create new version (no.3)
-				m.On("CreateAccessKeyVersion", mock.Anything, cloudaccess.CreateAccessKeyVersionRequest{
+				m.On("CreateAccessKeyVersion", testutils.MockContext, cloudaccess.CreateAccessKeyVersionRequest{
 					AccessKeyUID: resourceData.accessKeyData[0].accessKeyUID,
 					Body: cloudaccess.CreateAccessKeyVersionRequestBody{
 						CloudAccessKeyID:     "test_key_id_3",
 						CloudSecretAccessKey: "test_secret_3",
 					}}).Return(&cloudaccess.CreateAccessKeyVersionResponse{RequestID: 321321, RetryAfter: 1000}, nil).Once()
-				m.On("GetAccessKeyVersionStatus", mock.Anything, cloudaccess.GetAccessKeyVersionStatusRequest{RequestID: 321321}).
+				m.On("GetAccessKeyVersionStatus", testutils.MockContext, cloudaccess.GetAccessKeyVersionStatusRequest{RequestID: 321321}).
 					Return(&cloudaccess.GetAccessKeyVersionStatusResponse{
 						AccessKeyVersion: &cloudaccess.KeyVersion{
 							AccessKeyUID: resourceData.accessKeyData[0].accessKeyUID,
@@ -629,27 +611,8 @@ func TestAccessKeyResource(t *testing.T) {
 				mockGetAccessKeyVersion(m, resourceData.accessKeyData[0], cloudaccess.Active, thirdAccessKeyVersion).Once()
 
 				//read
-				m.On("GetAccessKey", mock.Anything, cloudaccess.AccessKeyRequest{AccessKeyUID: resourceData.accessKeyData[0].accessKeyUID}).
-					Return(&cloudaccess.GetAccessKeyResponse{
-						AccessKeyName:        resourceData.accessKeyData[0].accessKeyName,
-						AccessKeyUID:         resourceData.accessKeyData[0].accessKeyUID,
-						AuthenticationMethod: resourceData.accessKeyData[0].authenticationMethod,
-						NetworkConfiguration: &cloudaccess.SecureNetwork{
-							SecurityNetwork: cloudaccess.NetworkType(resourceData.accessKeyData[0].networkConfig.securityNetwork),
-							AdditionalCDN:   ptr.To(cloudaccess.CDNType(resourceData.accessKeyData[0].networkConfig.additionalCDN)),
-						},
-						LatestVersion: thirdAccessKeyVersion,
-						Groups: []cloudaccess.Group{
-							{
-								GroupID:     resourceData.accessKeyData[0].groupID,
-								GroupName:   ptr.To("random group name"),
-								ContractIDs: []string{resourceData.accessKeyData[0].contractID},
-							},
-						},
-						CreatedBy:   "dev-user",
-						CreatedTime: time.Date(2024, 1, 10, 11, 9, 10, 67708, time.UTC),
-					}, nil)
-				m.On("ListAccessKeyVersions", mock.Anything, cloudaccess.ListAccessKeyVersionsRequest{
+				mockGetAccessKeyWithSpecificNameAndVersion(m, resourceData.accessKeyData[0], resourceData.accessKeyData[0].accessKeyName, thirdAccessKeyVersion).Once()
+				m.On("ListAccessKeyVersions", testutils.MockContext, cloudaccess.ListAccessKeyVersionsRequest{
 					AccessKeyUID: resourceData.accessKeyData[0].accessKeyUID,
 				}).Return(&cloudaccess.ListAccessKeyVersionsResponse{AccessKeyVersions: []cloudaccess.AccessKeyVersion{
 					{
@@ -673,7 +636,7 @@ func TestAccessKeyResource(t *testing.T) {
 				},
 				}, nil).Once()
 				//Delete both credentials ( with version no.3 and no.1)
-				m.On("ListAccessKeyVersions", mock.Anything, cloudaccess.ListAccessKeyVersionsRequest{
+				m.On("ListAccessKeyVersions", testutils.MockContext, cloudaccess.ListAccessKeyVersionsRequest{
 					AccessKeyUID: resourceData.accessKeyData[0].accessKeyUID,
 				}).Return(&cloudaccess.ListAccessKeyVersionsResponse{AccessKeyVersions: []cloudaccess.AccessKeyVersion{
 					{
@@ -699,7 +662,7 @@ func TestAccessKeyResource(t *testing.T) {
 				mockLookupsPropertiesNoProperties(m, resourceData.propertyData, thirdAccessKeyVersion).Once()
 				mockDeleteAccessKeyVersion(m, resourceData.accessKeyData[0], thirdAccessKeyVersion).Once()
 				mockGetAccessKeyVersion(m, resourceData.accessKeyData[0], cloudaccess.PendingDeletion, thirdAccessKeyVersion).Once()
-				m.On("ListAccessKeyVersions", mock.Anything, cloudaccess.ListAccessKeyVersionsRequest{
+				m.On("ListAccessKeyVersions", testutils.MockContext, cloudaccess.ListAccessKeyVersionsRequest{
 					AccessKeyUID: resourceData.accessKeyData[0].accessKeyUID,
 				}).Return(&cloudaccess.ListAccessKeyVersionsResponse{AccessKeyVersions: []cloudaccess.AccessKeyVersion{
 					{
@@ -783,7 +746,7 @@ func TestAccessKeyResource(t *testing.T) {
 			},
 		},
 		"change primary flag": {
-			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+			init: func(m *cloudaccess.Mock, resourceData commonDataForResource) {
 				mockCreationAccessKeyWith2Versions(m, resourceData)
 				mockReadAccessKey(m, resourceData, twoElementsVersionList)
 				mockReadAccessKey(m, resourceData, twoElementsVersionList)
@@ -843,7 +806,7 @@ func TestAccessKeyResource(t *testing.T) {
 			},
 		},
 		"delete one version of access key": {
-			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+			init: func(m *cloudaccess.Mock, resourceData commonDataForResource) {
 				mockCreationAccessKeyWith2Versions(m, resourceData)
 				mockReadAccessKey(m, resourceData, twoElementsVersionList)
 				mockReadAccessKey(m, resourceData, twoElementsVersionList)
@@ -912,7 +875,7 @@ func TestAccessKeyResource(t *testing.T) {
 			},
 		},
 		"delete two versions of access key": {
-			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+			init: func(m *cloudaccess.Mock, resourceData commonDataForResource) {
 				mockCreationAccessKeyWith2Versions(m, resourceData)
 				mockReadAccessKey(m, resourceData, twoElementsVersionList)
 				mockReadAccessKey(m, resourceData, twoElementsVersionList)
@@ -977,7 +940,7 @@ func TestAccessKeyResource(t *testing.T) {
 			},
 		},
 		"change order of credentials": {
-			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+			init: func(m *cloudaccess.Mock, resourceData commonDataForResource) {
 				mockCreationAccessKeyWith2Versions(m, resourceData)
 				mockReadAccessKey(m, resourceData, twoElementsVersionList)
 				mockReadAccessKey(m, resourceData, twoElementsVersionList)
@@ -1035,7 +998,7 @@ func TestAccessKeyResource(t *testing.T) {
 			},
 		},
 		"change secret block": {
-			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+			init: func(m *cloudaccess.Mock, resourceData commonDataForResource) {
 				mockCreationAccessKeyWith2Versions(m, resourceData)
 				mockReadAccessKey(m, resourceData, twoElementsVersionList)
 				mockReadAccessKey(m, resourceData, twoElementsVersionList)
@@ -1068,12 +1031,12 @@ func TestAccessKeyResource(t *testing.T) {
 				},
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResAccessKey/changed_secret.tf"),
-					ExpectError: regexp.MustCompile("\\s*cannot update cloud access secret without update of cloud access key id,\\s*expect update of secret after import with no API calls"),
+					ExpectError: regexp.MustCompile(`\s*cannot update cloud access secret without update of cloud access key id,\s*expect update of secret after import with no API calls`),
 				},
 			},
 		},
 		"change secret block after import": {
-			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+			init: func(m *cloudaccess.Mock, resourceData commonDataForResource) {
 
 				mockGetAccessKeyVersion(m, resourceData.accessKeyData[0], cloudaccess.Active, firstAccessKeyVersion).Once()
 
@@ -1133,7 +1096,7 @@ func TestAccessKeyResource(t *testing.T) {
 			},
 		},
 		"detect drift - one version deleted in ui": {
-			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+			init: func(m *cloudaccess.Mock, resourceData commonDataForResource) {
 				//step 1 creation of access key with two versions
 				mockCreationAccessKeyWith2Versions(m, resourceData)
 				//step 2 both versions available on server
@@ -1200,7 +1163,7 @@ func TestAccessKeyResource(t *testing.T) {
 			},
 		},
 		"detect drift - one version added in ui": {
-			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+			init: func(m *cloudaccess.Mock, resourceData commonDataForResource) {
 				//step 1 creation of access key with one version
 				mockCreationAccessKeyWith1Version(m, resourceData)
 				//step 2 one version available on server
@@ -1259,7 +1222,7 @@ func TestAccessKeyResource(t *testing.T) {
 			},
 		},
 		"detect drift - whole key deleted in ui": {
-			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+			init: func(m *cloudaccess.Mock, resourceData commonDataForResource) {
 				//step 1 creation of access key with two versions
 				mockCreationAccessKeyWith2Versions(m, resourceData)
 				//step 2 both versions available on server
@@ -1324,7 +1287,7 @@ func TestAccessKeyResource(t *testing.T) {
 			},
 		},
 		"check whether access key secret sensitive": {
-			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+			init: func(m *cloudaccess.Mock, resourceData commonDataForResource) {
 				mockCreationAccessKeyWith1Version(m, resourceData)
 				mockReadAccessKeyWith1Version(m, resourceData)
 				mockDeletionAccessKeyWith1Version(m, resourceData)
@@ -1351,6 +1314,50 @@ func TestAccessKeyResource(t *testing.T) {
 					ConfigPlanChecks: resource.ConfigPlanChecks{
 						PreApply: []plancheck.PlanCheck{
 							plancheck.ExpectSensitiveValue("akamai_cloudaccess_key.test", tfjsonpath.New("credentials_a").AtMapKey("cloud_secret_access_key")),
+						},
+					},
+				},
+			},
+		},
+		"check whether access_key_uid is known on plan level during update": {
+			init: func(m *cloudaccess.Mock, resourceData commonDataForResource) {
+				mockCreationAccessKeyWith1Version(m, resourceData)
+				mockReadAccessKeyWith1Version(m, resourceData)
+				mockReadAccessKeyWith1Version(m, resourceData)
+				mockUpdateAccessKey(m, resourceData.accessKeyData[0], "updated_key_name").Once()
+				mockGetAccessKeyWithSpecificNameAndVersion(m, resourceData.accessKeyData[0], "updated_key_name", firstAccessKeyVersion).Once()
+				mockListAccessKeyVersionsOnly1Version(m, resourceData.accessKeyData[0]).Twice()
+				mockListAccessKeyVersionsOnly1Version(m, resourceData.accessKeyData[0]).Twice()
+				mockDeletionAccessKeyWith1Version(m, resourceData)
+			},
+			mockData: resourceMock,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "AWS4_HMAC_SHA256"),
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "asde-efdr-reded"),
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_access_key_id", "test_key_id"),
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_secret_access_key", "test_secret"),
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.primary_key", "true"),
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version_guid", "asde-efdr-reded"),
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.additional_cdn", "CHINA_CDN"),
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
+					),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/updated_name.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
+					),
+					ConfigPlanChecks: resource.ConfigPlanChecks{
+						PreApply: []plancheck.PlanCheck{
+							plancheck.ExpectKnownValue("akamai_cloudaccess_key.test", tfjsonpath.New("access_key_uid"), knownvalue.Int64Exact(12345)),
 						},
 					},
 				},
@@ -1419,10 +1426,10 @@ func TestAccessKeyResource(t *testing.T) {
 			},
 		},
 		"non-unique cloud access key id in import": {
-			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+			init: func(m *cloudaccess.Mock, resourceData commonDataForResource) {
 				mockGetAccessKey(m, resourceData.accessKeyData[0]).Once()
 
-				m.On("ListAccessKeyVersions", mock.Anything, cloudaccess.ListAccessKeyVersionsRequest{
+				m.On("ListAccessKeyVersions", testutils.MockContext, cloudaccess.ListAccessKeyVersionsRequest{
 					AccessKeyUID: resourceData.accessKeyData[0].accessKeyUID,
 				}).Return(&cloudaccess.ListAccessKeyVersionsResponse{AccessKeyVersions: []cloudaccess.AccessKeyVersion{
 					{
@@ -1462,7 +1469,7 @@ func TestAccessKeyResource(t *testing.T) {
 			},
 		},
 		"timeout on creation": {
-			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+			init: func(m *cloudaccess.Mock, resourceData commonDataForResource) {
 				mockCreateAccessKey(m, resourceData.accessKeyData[0]).Once()
 				mockGetAccessKeyStatus(m, 12345, resourceData.accessKeyData[0]).Once()
 				//artificial sleep to trigger 20 ms timeout
@@ -1478,7 +1485,7 @@ func TestAccessKeyResource(t *testing.T) {
 			},
 		},
 		"timeout on one version deletion": {
-			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+			init: func(m *cloudaccess.Mock, resourceData commonDataForResource) {
 				mockCreationAccessKeyWith2Versions(m, resourceData)
 				mockReadAccessKey(m, resourceData, twoElementsVersionList)
 				mockReadAccessKey(m, resourceData, twoElementsVersionList)
@@ -1537,7 +1544,7 @@ func TestAccessKeyResource(t *testing.T) {
 			},
 		},
 		"fail of deletion - version assigned to property": {
-			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+			init: func(m *cloudaccess.Mock, resourceData commonDataForResource) {
 				mockCreationAccessKeyWith2Versions(m, resourceData)
 				mockReadAccessKey(m, resourceData, twoElementsVersionList)
 				mockReadAccessKey(m, resourceData, twoElementsVersionList)
@@ -1596,12 +1603,12 @@ func TestAccessKeyResource(t *testing.T) {
 			},
 		},
 		"fail on creation - tainted resource": {
-			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+			init: func(m *cloudaccess.Mock, resourceData commonDataForResource) {
 				mockCreateAccessKey(m, resourceData.accessKeyData[0]).Once()
 				mockGetAccessKeyStatus(m, 12345, resourceData.accessKeyData[0]).Once()
 				mockGetAccessKeyVersion(m, resourceData.accessKeyData[0], cloudaccess.Active, firstAccessKeyVersion).Once()
 				// fail and taint resource
-				m.On("CreateAccessKeyVersion", mock.Anything, cloudaccess.CreateAccessKeyVersionRequest{
+				m.On("CreateAccessKeyVersion", testutils.MockContext, cloudaccess.CreateAccessKeyVersionRequest{
 					AccessKeyUID: resourceData.accessKeyData[0].accessKeyUID,
 					Body: cloudaccess.CreateAccessKeyVersionRequestBody{
 						CloudAccessKeyID:     resourceData.accessKeyData[0].credentialsB.cloudAccessKeyID,
@@ -1650,10 +1657,10 @@ func TestAccessKeyResource(t *testing.T) {
 			},
 		},
 		"fail on creation key - processing status failed": {
-			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+			init: func(m *cloudaccess.Mock, resourceData commonDataForResource) {
 				mockCreateAccessKey(m, resourceData.accessKeyData[0]).Once()
 				// access key creation fail
-				m.On("GetAccessKeyStatus", mock.Anything, cloudaccess.GetAccessKeyStatusRequest{RequestID: 12345}).
+				m.On("GetAccessKeyStatus", testutils.MockContext, cloudaccess.GetAccessKeyStatusRequest{RequestID: 12345}).
 					Return(&cloudaccess.GetAccessKeyStatusResponse{
 						AccessKey: &cloudaccess.KeyLink{
 							AccessKeyUID: resourceData.accessKeyData[0].accessKeyUID,
@@ -1687,13 +1694,13 @@ func TestAccessKeyResource(t *testing.T) {
 			},
 		},
 		"fail on creation key version - processing status failed": {
-			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+			init: func(m *cloudaccess.Mock, resourceData commonDataForResource) {
 				mockCreateAccessKey(m, resourceData.accessKeyData[0]).Once()
 				mockGetAccessKeyStatus(m, 12345, resourceData.accessKeyData[0]).Once()
 				mockGetAccessKeyVersion(m, resourceData.accessKeyData[0], cloudaccess.Active, firstAccessKeyVersion).Once()
 				mockCreateAccessKeyVersion(m, resourceData.accessKeyData[0]).Once()
 				// access key version creation fail
-				m.On("GetAccessKeyVersionStatus", mock.Anything, cloudaccess.GetAccessKeyVersionStatusRequest{RequestID: 124}).
+				m.On("GetAccessKeyVersionStatus", testutils.MockContext, cloudaccess.GetAccessKeyVersionStatusRequest{RequestID: 124}).
 					Return(&cloudaccess.GetAccessKeyVersionStatusResponse{
 						AccessKeyVersion: &cloudaccess.KeyVersion{
 							AccessKeyUID: resourceData.accessKeyData[0].accessKeyUID,
@@ -1744,7 +1751,7 @@ func TestAccessKeyResource(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			client := &cloudaccess.Mock{}
 			if test.init != nil {
-				test.init(t, client, test.mockData)
+				test.init(client, test.mockData)
 			}
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
@@ -1757,7 +1764,6 @@ func TestAccessKeyResource(t *testing.T) {
 		})
 	}
 }
-
 func mockDeletionAccessKeyWith2Versions(m *cloudaccess.Mock, resourceData commonDataForResource) {
 	mockListAccessKeyVersions(m, resourceData.accessKeyData[0], twoElementsVersionList).Once()
 	mockLookupsPropertiesNoProperties(m, resourceData.propertyData, firstAccessKeyVersion).Once()
@@ -1812,7 +1818,7 @@ func mockCreationAccessKeyWith1Version(m *cloudaccess.Mock, resourceData commonD
 func mockCreationAccessKeyUsingCredB(m *cloudaccess.Mock, resourceData commonDataForResource) {
 	mockCreateAccessKeyUsingCredB(m, resourceData.accessKeyData[2]).Once()
 	mockGetAccessKeyStatus(m, 12345, resourceData.accessKeyData[2]).Once()
-	m.On("GetAccessKeyVersion", mock.Anything, cloudaccess.GetAccessKeyVersionRequest{AccessKeyUID: resourceData.accessKeyData[2].accessKeyUID, Version: firstAccessKeyVersion}).
+	m.On("GetAccessKeyVersion", testutils.MockContext, cloudaccess.GetAccessKeyVersionRequest{AccessKeyUID: resourceData.accessKeyData[2].accessKeyUID, Version: firstAccessKeyVersion}).
 		Return(&cloudaccess.GetAccessKeyVersionResponse{
 			AccessKeyUID:     resourceData.accessKeyData[2].accessKeyUID,
 			CloudAccessKeyID: ptr.To(resourceData.accessKeyData[2].credentialsB.cloudAccessKeyID),
@@ -1825,7 +1831,7 @@ func mockCreationAccessKeyUsingCredB(m *cloudaccess.Mock, resourceData commonDat
 }
 
 func mockGetAccessKey(client *cloudaccess.Mock, testData commonDataForAccessKey) *mock.Call {
-	return client.On("GetAccessKey", mock.Anything, cloudaccess.AccessKeyRequest{AccessKeyUID: testData.accessKeyUID}).
+	return client.On("GetAccessKey", testutils.MockContext, cloudaccess.AccessKeyRequest{AccessKeyUID: testData.accessKeyUID}).
 		Return(&cloudaccess.GetAccessKeyResponse{
 			AccessKeyName:        testData.accessKeyName,
 			AccessKeyUID:         testData.accessKeyUID,
@@ -1846,14 +1852,36 @@ func mockGetAccessKey(client *cloudaccess.Mock, testData commonDataForAccessKey)
 			CreatedTime: time.Date(2024, 1, 10, 11, 9, 10, 67708, time.UTC),
 		}, nil)
 }
+func mockGetAccessKeyWithSpecificNameAndVersion(m *cloudaccess.Mock, testData commonDataForAccessKey, name string, version int64) *mock.Call {
+	return m.On("GetAccessKey", testutils.MockContext, cloudaccess.AccessKeyRequest{AccessKeyUID: testData.accessKeyUID}).
+		Return(&cloudaccess.GetAccessKeyResponse{
+			AccessKeyName:        name,
+			AccessKeyUID:         testData.accessKeyUID,
+			AuthenticationMethod: testData.authenticationMethod,
+			NetworkConfiguration: &cloudaccess.SecureNetwork{
+				SecurityNetwork: cloudaccess.NetworkType(testData.networkConfig.securityNetwork),
+				AdditionalCDN:   ptr.To(cloudaccess.CDNType(testData.networkConfig.additionalCDN)),
+			},
+			LatestVersion: version,
+			Groups: []cloudaccess.Group{
+				{
+					GroupID:     testData.groupID,
+					GroupName:   ptr.To("random group name"),
+					ContractIDs: []string{testData.contractID},
+				},
+			},
+			CreatedBy:   "dev-user",
+			CreatedTime: time.Date(2024, 1, 10, 11, 9, 10, 67708, time.UTC),
+		}, nil)
+}
 
 func mockGetAccessKeyNotFound(client *cloudaccess.Mock, testData commonDataForAccessKey) *mock.Call {
-	return client.On("GetAccessKey", mock.Anything, cloudaccess.AccessKeyRequest{AccessKeyUID: testData.accessKeyUID}).
+	return client.On("GetAccessKey", testutils.MockContext, cloudaccess.AccessKeyRequest{AccessKeyUID: testData.accessKeyUID}).
 		Return(nil, cloudaccess.ErrAccessKeyNotFound)
 }
 
 func mockGetAccessKeyStatus(client *cloudaccess.Mock, requestID int64, testData commonDataForAccessKey) *mock.Call {
-	return client.On("GetAccessKeyStatus", mock.Anything, cloudaccess.GetAccessKeyStatusRequest{RequestID: requestID}).
+	return client.On("GetAccessKeyStatus", testutils.MockContext, cloudaccess.GetAccessKeyStatusRequest{RequestID: requestID}).
 		Return(&cloudaccess.GetAccessKeyStatusResponse{
 			AccessKey: &cloudaccess.KeyLink{
 				AccessKeyUID: testData.accessKeyUID,
@@ -1880,7 +1908,7 @@ func mockGetAccessKeyStatus(client *cloudaccess.Mock, requestID int64, testData 
 }
 
 func mockCreateAccessKey(client *cloudaccess.Mock, testData commonDataForAccessKey) *mock.Call {
-	return client.On("CreateAccessKey", mock.Anything, cloudaccess.CreateAccessKeyRequest{
+	return client.On("CreateAccessKey", testutils.MockContext, cloudaccess.CreateAccessKeyRequest{
 		AccessKeyName:        testData.accessKeyName,
 		AuthenticationMethod: testData.authenticationMethod,
 		ContractID:           testData.contractID,
@@ -1897,7 +1925,7 @@ func mockCreateAccessKey(client *cloudaccess.Mock, testData commonDataForAccessK
 }
 
 func mockCreateAccessKeyUsingCredB(client *cloudaccess.Mock, testData commonDataForAccessKey) *mock.Call {
-	return client.On("CreateAccessKey", mock.Anything, cloudaccess.CreateAccessKeyRequest{
+	return client.On("CreateAccessKey", testutils.MockContext, cloudaccess.CreateAccessKeyRequest{
 		AccessKeyName:        testData.accessKeyName,
 		AuthenticationMethod: testData.authenticationMethod,
 		ContractID:           testData.contractID,
@@ -1914,7 +1942,7 @@ func mockCreateAccessKeyUsingCredB(client *cloudaccess.Mock, testData commonData
 }
 
 func mockUpdateAccessKey(client *cloudaccess.Mock, testData commonDataForAccessKey, updatedName string) *mock.Call {
-	return client.On("UpdateAccessKey", mock.Anything, cloudaccess.UpdateAccessKeyRequest{
+	return client.On("UpdateAccessKey", testutils.MockContext, cloudaccess.UpdateAccessKeyRequest{
 		AccessKeyName: updatedName,
 	}, cloudaccess.AccessKeyRequest{AccessKeyUID: testData.accessKeyUID},
 	).Return(&cloudaccess.UpdateAccessKeyResponse{
@@ -1924,7 +1952,7 @@ func mockUpdateAccessKey(client *cloudaccess.Mock, testData commonDataForAccessK
 }
 
 func mockDeleteAccessKey(client *cloudaccess.Mock, testData commonDataForAccessKey) *mock.Call {
-	return client.On("DeleteAccessKey", mock.Anything, cloudaccess.AccessKeyRequest{
+	return client.On("DeleteAccessKey", testutils.MockContext, cloudaccess.AccessKeyRequest{
 		AccessKeyUID: testData.accessKeyUID,
 	},
 	).Return(nil)
@@ -1998,7 +2026,7 @@ func mockListAccessKeys(client *cloudaccess.Mock, testData []commonDataForAccess
 			},
 		}
 	}
-	return client.On("ListAccessKeys", mock.Anything, cloudaccess.ListAccessKeysRequest{}).
+	return client.On("ListAccessKeys", testutils.MockContext, cloudaccess.ListAccessKeysRequest{}).
 		Return(&listResponse, nil)
 }
 
@@ -2016,7 +2044,7 @@ func mockGetAccessKeyVersion(client *cloudaccess.Mock, testData commonDataForAcc
 		cloudAccessKeyID = "test_key_id_3"
 		versionGUID = "ffff_eeee-ffffddd"
 	}
-	return client.On("GetAccessKeyVersion", mock.Anything, cloudaccess.GetAccessKeyVersionRequest{AccessKeyUID: testData.accessKeyUID, Version: version}).
+	return client.On("GetAccessKeyVersion", testutils.MockContext, cloudaccess.GetAccessKeyVersionRequest{AccessKeyUID: testData.accessKeyUID, Version: version}).
 		Return(&cloudaccess.GetAccessKeyVersionResponse{
 			AccessKeyUID:     testData.accessKeyUID,
 			CloudAccessKeyID: ptr.To(cloudAccessKeyID),
@@ -2038,7 +2066,7 @@ func mockDeleteAccessKeyVersion(client *cloudaccess.Mock, testData commonDataFor
 		cloudAccessKeyID = testData.credentialsB.cloudAccessKeyID
 		versionGUID = "asdd-ads-dasdas"
 	}
-	return client.On("DeleteAccessKeyVersion", mock.Anything, cloudaccess.DeleteAccessKeyVersionRequest{AccessKeyUID: testData.accessKeyUID, Version: version}).
+	return client.On("DeleteAccessKeyVersion", testutils.MockContext, cloudaccess.DeleteAccessKeyVersionRequest{AccessKeyUID: testData.accessKeyUID, Version: version}).
 		Return(&cloudaccess.DeleteAccessKeyVersionResponse{
 			AccessKeyUID:     testData.accessKeyUID,
 			CloudAccessKeyID: ptr.To(cloudAccessKeyID),
@@ -2051,7 +2079,7 @@ func mockDeleteAccessKeyVersion(client *cloudaccess.Mock, testData commonDataFor
 }
 
 func mockGetAccessKeyVersionStatus(client *cloudaccess.Mock, testData commonDataForAccessKey, requestID int64, version int64) *mock.Call {
-	return client.On("GetAccessKeyVersionStatus", mock.Anything, cloudaccess.GetAccessKeyVersionStatusRequest{RequestID: requestID}).
+	return client.On("GetAccessKeyVersionStatus", testutils.MockContext, cloudaccess.GetAccessKeyVersionStatusRequest{RequestID: requestID}).
 		Return(&cloudaccess.GetAccessKeyVersionStatusResponse{
 			AccessKeyVersion: &cloudaccess.KeyVersion{
 				AccessKeyUID: testData.accessKeyUID,
@@ -2064,7 +2092,7 @@ func mockGetAccessKeyVersionStatus(client *cloudaccess.Mock, testData commonData
 }
 
 func mockCreateAccessKeyVersion(client *cloudaccess.Mock, testData commonDataForAccessKey) *mock.Call {
-	return client.On("CreateAccessKeyVersion", mock.Anything, cloudaccess.CreateAccessKeyVersionRequest{
+	return client.On("CreateAccessKeyVersion", testutils.MockContext, cloudaccess.CreateAccessKeyVersionRequest{
 		AccessKeyUID: testData.accessKeyUID,
 		Body: cloudaccess.CreateAccessKeyVersionRequestBody{
 			CloudAccessKeyID:     testData.credentialsB.cloudAccessKeyID,
@@ -2113,7 +2141,7 @@ func mockListAccessKeyVersions(client *cloudaccess.Mock, testData commonDataForA
 	if size == emptyVersionList {
 		listAccessKeyVersionResp = cloudaccess.ListAccessKeyVersionsResponse{AccessKeyVersions: []cloudaccess.AccessKeyVersion{}}
 	}
-	return client.On("ListAccessKeyVersions", mock.Anything, cloudaccess.ListAccessKeyVersionsRequest{
+	return client.On("ListAccessKeyVersions", testutils.MockContext, cloudaccess.ListAccessKeyVersionsRequest{
 		AccessKeyUID: testData.accessKeyUID,
 	}).Return(&listAccessKeyVersionResp, nil)
 }
@@ -2131,13 +2159,13 @@ func mockListAccessKeyVersionsOnly1Version(client *cloudaccess.Mock, testData co
 		},
 	},
 	}
-	return client.On("ListAccessKeyVersions", mock.Anything, cloudaccess.ListAccessKeyVersionsRequest{
+	return client.On("ListAccessKeyVersions", testutils.MockContext, cloudaccess.ListAccessKeyVersionsRequest{
 		AccessKeyUID: testData.accessKeyUID,
 	}).Return(&listAccessKeyVersionResp, nil)
 }
 
 func mockLookupsProperties(client *cloudaccess.Mock, testData commonDataForAccessKey, version int64) *mock.Call {
-	return client.On("LookupProperties", mock.Anything, cloudaccess.LookupPropertiesRequest{
+	return client.On("LookupProperties", testutils.MockContext, cloudaccess.LookupPropertiesRequest{
 		AccessKeyUID: testData.accessKeyUID,
 		Version:      version,
 	}).Return(&cloudaccess.LookupPropertiesResponse{Properties: []cloudaccess.Property{
@@ -2151,14 +2179,9 @@ func mockLookupsProperties(client *cloudaccess.Mock, testData commonDataForAcces
 	}}, nil)
 }
 
-func mockLookupsPropertiesNoProperties(client *cloudaccess.Mock, testData *commonDataForProperty, version int64) *mock.Call {
-	var lookupPropertiesRes cloudaccess.LookupPropertiesResponse
-	if testData != nil {
-		lookupPropertiesRes = cloudaccess.LookupPropertiesResponse{Properties: []cloudaccess.Property{}}
-	} else {
-		lookupPropertiesRes = cloudaccess.LookupPropertiesResponse{Properties: []cloudaccess.Property{}}
-	}
-	return client.On("LookupProperties", mock.Anything, cloudaccess.LookupPropertiesRequest{
+func mockLookupsPropertiesNoProperties(client *cloudaccess.Mock, testData commonDataForProperty, version int64) *mock.Call {
+	lookupPropertiesRes := cloudaccess.LookupPropertiesResponse{Properties: []cloudaccess.Property{}}
+	return client.On("LookupProperties", testutils.MockContext, cloudaccess.LookupPropertiesRequest{
 		AccessKeyUID: testData.accessKeyUID,
 		Version:      version,
 	}).Return(&lookupPropertiesRes, nil)
@@ -2171,12 +2194,12 @@ func TestAccessKeyResource_ImportState(t *testing.T) {
 	updateTimeout = 20 * time.Minute
 	activationTimeout = 20 * time.Millisecond
 	tests := map[string]struct {
-		init     func(*testing.T, *cloudaccess.Mock, commonDataForResource)
+		init     func(*cloudaccess.Mock, commonDataForResource)
 		steps    []resource.TestStep
 		mockData commonDataForResource
 	}{
 		"Happy path - 2 credentials": {
-			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+			init: func(m *cloudaccess.Mock, resourceData commonDataForResource) {
 				// step 1 - create
 				mockCreationAccessKeyWith2Versions(m, resourceData)
 				mockReadAccessKey(m, resourceData, twoElementsVersionList)
@@ -2209,7 +2232,7 @@ func TestAccessKeyResource_ImportState(t *testing.T) {
 			mockData: resourceMock,
 		},
 		"Happy path - 1 credential": {
-			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+			init: func(m *cloudaccess.Mock, resourceData commonDataForResource) {
 				// step 1 - create
 
 				mockCreationAccessKeyWith1Version(m, resourceData)
@@ -2243,13 +2266,13 @@ func TestAccessKeyResource_ImportState(t *testing.T) {
 			mockData: resourceMock,
 		},
 		"error - cannot find access key": {
-			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+			init: func(m *cloudaccess.Mock, resourceData commonDataForResource) {
 				// step 1 - create
 				mockCreationAccessKeyWith1Version(m, resourceData)
 				mockReadAccessKeyWith1Version(m, resourceData)
 
 				// step 2 import
-				m.On("GetAccessKey", mock.Anything, cloudaccess.AccessKeyRequest{AccessKeyUID: 000000}).Return(nil, errors.New("oops")).Times(1)
+				m.On("GetAccessKey", testutils.MockContext, cloudaccess.AccessKeyRequest{AccessKeyUID: 000000}).Return(nil, errors.New("oops")).Times(1)
 
 				mockDeletionAccessKeyWith1Version(m, resourceData)
 
@@ -2275,7 +2298,7 @@ func TestAccessKeyResource_ImportState(t *testing.T) {
 			mockData: resourceMock,
 		},
 		"error - incorrect access key": {
-			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+			init: func(m *cloudaccess.Mock, resourceData commonDataForResource) {
 				// step 1 - create
 				mockCreationAccessKeyWith1Version(m, resourceData)
 				mockReadAccessKeyWith1Version(m, resourceData)
@@ -2306,7 +2329,7 @@ func TestAccessKeyResource_ImportState(t *testing.T) {
 			mockData: resourceMock,
 		},
 		"error - reading access key list failed": {
-			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+			init: func(m *cloudaccess.Mock, resourceData commonDataForResource) {
 				// step 1 - create
 
 				mockCreationAccessKeyWith1Version(m, resourceData)
@@ -2314,7 +2337,7 @@ func TestAccessKeyResource_ImportState(t *testing.T) {
 
 				// step 2 import
 				mockGetAccessKey(m, resourceData.accessKeyData[0]).Once()
-				m.On("ListAccessKeyVersions", mock.Anything, cloudaccess.ListAccessKeyVersionsRequest{AccessKeyUID: resourceData.propertyData.accessKeyUID}).Return(nil, errors.New("oops")).Times(1)
+				m.On("ListAccessKeyVersions", testutils.MockContext, cloudaccess.ListAccessKeyVersionsRequest{AccessKeyUID: resourceData.propertyData.accessKeyUID}).Return(nil, errors.New("oops")).Times(1)
 
 				mockDeletionAccessKeyWith1Version(m, resourceData)
 
@@ -2340,7 +2363,7 @@ func TestAccessKeyResource_ImportState(t *testing.T) {
 			mockData: resourceMock,
 		},
 		"error - cannot find access key - Incorrect groupID": {
-			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+			init: func(m *cloudaccess.Mock, resourceData commonDataForResource) {
 				// step 1 - create
 				mockCreationAccessKeyWith1Version(m, resourceData)
 				mockReadAccessKeyWith1Version(m, resourceData)
@@ -2368,7 +2391,7 @@ func TestAccessKeyResource_ImportState(t *testing.T) {
 			mockData: resourceMock,
 		},
 		"error - cannot find access key - Incomplete Access Key Identifier": {
-			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+			init: func(m *cloudaccess.Mock, resourceData commonDataForResource) {
 				// step 1 - create
 				mockCreationAccessKeyWith1Version(m, resourceData)
 				mockReadAccessKeyWith1Version(m, resourceData)
@@ -2396,7 +2419,7 @@ func TestAccessKeyResource_ImportState(t *testing.T) {
 			mockData: resourceMock,
 		},
 		"error - cannot find access key given groupID and missing contractID": {
-			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+			init: func(m *cloudaccess.Mock, resourceData commonDataForResource) {
 				// step 1 - create
 				mockCreationAccessKeyWith1Version(m, resourceData)
 				mockReadAccessKeyWith1Version(m, resourceData)
@@ -2424,7 +2447,7 @@ func TestAccessKeyResource_ImportState(t *testing.T) {
 			mockData: resourceMock,
 		},
 		"error - cannot find access key given contractID and missing groupID": {
-			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+			init: func(m *cloudaccess.Mock, resourceData commonDataForResource) {
 				// step 1 - create
 				mockCreationAccessKeyWith1Version(m, resourceData)
 				mockReadAccessKeyWith1Version(m, resourceData)
@@ -2452,7 +2475,7 @@ func TestAccessKeyResource_ImportState(t *testing.T) {
 			mockData: resourceMock,
 		},
 		"error - reading access key failed - Invalid groupID and contractID combination": {
-			init: func(t *testing.T, m *cloudaccess.Mock, resourceData commonDataForResource) {
+			init: func(m *cloudaccess.Mock, resourceData commonDataForResource) {
 				// step 1 - create
 
 				mockCreationAccessKeyWith1Version(m, resourceData)
@@ -2487,7 +2510,7 @@ func TestAccessKeyResource_ImportState(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			client := &cloudaccess.Mock{}
 			if test.init != nil {
-				test.init(t, client, test.mockData)
+				test.init(client, test.mockData)
 			}
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
@@ -2541,7 +2564,7 @@ func checkImport() resource.ImportStateCheckFunc {
 
 		if len(invalidValues) != 0 {
 
-			return fmt.Errorf(strings.Join(invalidValues, "\n"))
+			return fmt.Errorf("found invalid values: %s", strings.Join(invalidValues, "\n"))
 		}
 
 		return nil
@@ -2587,7 +2610,7 @@ func checkImportSingleCredential() resource.ImportStateCheckFunc {
 
 		if len(invalidValues) != 0 {
 
-			return fmt.Errorf(strings.Join(invalidValues, "\n"))
+			return fmt.Errorf("found invalid values: %s", strings.Join(invalidValues, "\n"))
 		}
 
 		return nil

@@ -4,8 +4,8 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/datastream"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/datastream"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -89,7 +89,7 @@ func TestDataSourceDatasetFieldsRead(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &datastream.Mock{}
-			client.On("GetDatasetFields", mock.Anything, mock.Anything).Return(test.getDatasetFieldsReturn, test.edgegridError)
+			client.On("GetDatasetFields", testutils.MockContext, mock.Anything).Return(test.getDatasetFieldsReturn, test.edgegridError)
 			useClient(client, func() {
 				if test.withError == nil {
 					resource.UnitTest(t, resource.TestCase{

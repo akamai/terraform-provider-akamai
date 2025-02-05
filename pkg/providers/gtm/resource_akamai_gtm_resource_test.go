@@ -1,65 +1,50 @@
 package gtm
 
 import (
+	"fmt"
 	"net/http"
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/gtm"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/gtm"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/test"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
+
+const testResourceName = "tfexample_resource_1"
 
 func TestResGTMResource(t *testing.T) {
 
 	t.Run("create resource", func(t *testing.T) {
 		client := &gtm.Mock{}
 
-		getCall := client.On("GetResource",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("gtm.GetResourceRequest"),
-		).Return(nil, &gtm.Error{
-			StatusCode: http.StatusNotFound,
-		}).Twice()
+		// Create
+		mockGetResource(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
 
-		resp := rsrc
-		client.On("CreateResource",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("gtm.CreateResourceRequest"),
-		).Return(&gtm.CreateResourceResponse{
-			Resource: rsrcCreate.Resource,
-			Status:   rsrcCreate.Status,
-		}, nil).Run(func(args mock.Arguments) {
-			getCall.ReturnArguments = mock.Arguments{&resp, nil}
-		})
+		mockCreateResource(client, getDefaultResource(), &gtm.CreateResourceResponse{
+			Resource: getDefaultResource(),
+			Status:   getDefaultResponseStatus(),
+		}, nil)
 
-		client.On("GetResource",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("gtm.GetResourceRequest"),
-		).Return(&resp, nil).Times(3)
+		// Read after create + refresh
+		mockGetResource(client, getDefaultResource(), nil, 3)
 
-		client.On("GetDomainStatus",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("gtm.GetDomainStatusRequest"),
-		).Return(getDomainStatusResponseStatus, nil)
+		// Update
+		mockGetResource(client, getUpdatedResource(), nil, 1)
 
-		client.On("UpdateResource",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("gtm.UpdateResourceRequest"),
-		).Return(updateResourceResponseStatus, nil)
+		mockUpdateResource(client, &gtm.UpdateResourceResponse{Status: getDefaultResponseStatus()}, nil)
 
-		client.On("GetResource",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("gtm.GetResourceRequest"),
-		).Return(&rsrcUpdate, nil).Times(3)
+		mockGetDomainStatus(client, 1)
 
-		client.On("DeleteResource",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("gtm.DeleteResourceRequest"),
-		).Return(deleteResourceResponseStatus, nil)
+		// Read after create + refresh
+		mockGetResource(client, getUpdatedResource(), nil, 3)
 
-		dataSourceName := "akamai_gtm_resource.tfexample_resource_1"
+		mockDeleteResource(client)
+		mockGetDomainStatus(client, 1)
+
+		resourceName := "akamai_gtm_resource.tfexample_resource_1"
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -68,16 +53,115 @@ func TestResGTMResource(t *testing.T) {
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmResource/create_basic.tf"),
 						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(dataSourceName, "name", "tfexample_resource_1"),
-							resource.TestCheckResourceAttr(dataSourceName, "aggregation_type", "latest"),
+							resource.TestCheckResourceAttr(resourceName, "name", "tfexample_resource_1"),
+							resource.TestCheckResourceAttr(resourceName, "aggregation_type", "latest"),
 						),
 					},
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmResource/update_basic.tf"),
 						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(dataSourceName, "name", "tfexample_resource_1"),
-							resource.TestCheckResourceAttr(dataSourceName, "aggregation_type", "latest"),
+							resource.TestCheckResourceAttr(resourceName, "name", "tfexample_resource_1"),
+							resource.TestCheckResourceAttr(resourceName, "aggregation_type", "latest"),
 						),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("update resource failed", func(t *testing.T) {
+		client := &gtm.Mock{}
+
+		// Create
+		mockGetResource(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+
+		mockCreateResource(client, getDefaultResource(), &gtm.CreateResourceResponse{
+			Resource: getDefaultResource(),
+			Status:   getDefaultResponseStatus(),
+		}, nil)
+
+		// Read after create + refresh
+		mockGetResource(client, getDefaultResource(), nil, 3)
+
+		// Update
+		mockGetResource(client, getUpdatedResource(), nil, 1)
+
+		mockUpdateResource(client, nil, &gtm.Error{
+			Type:       "internal_error",
+			Title:      "Internal Server Error",
+			Detail:     "Error updating resource",
+			StatusCode: http.StatusInternalServerError,
+		})
+
+		// Read after create + refresh
+		mockGetResource(client, getDefaultResource(), nil, 1)
+
+		mockDeleteResource(client)
+		mockGetDomainStatus(client, 1)
+
+		resourceName := "akamai_gtm_resource.tfexample_resource_1"
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmResource/create_basic.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(resourceName, "name", "tfexample_resource_1"),
+							resource.TestCheckResourceAttr(resourceName, "aggregation_type", "latest"),
+						),
+					},
+					{
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmResource/update_basic.tf"),
+						ExpectError: regexp.MustCompile("API error"),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("create resource, remove outside of terraform, expect non-empty plan", func(t *testing.T) {
+		client := &gtm.Mock{}
+
+		mockGetResource(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+
+		mockCreateResource(client, getDefaultResource(), &gtm.CreateResourceResponse{
+			Resource: getDefaultResource(),
+			Status:   getDefaultResponseStatus(),
+		}, nil)
+
+		mockGetResource(client, getDefaultResource(), nil, 2)
+
+		// Mock that the resource was deleted outside terraform
+		mockGetResource(client, nil, gtm.ErrNotFound, 1)
+
+		// For terraform test framework, we need to mock GetResource as it would actually exist before deletion
+		mockGetResource(client, getDefaultResource(), nil, 1)
+
+		mockDeleteResource(client)
+
+		resourceName := "akamai_gtm_resource.tfexample_resource_1"
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmResource/create_basic.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(resourceName, "name", "tfexample_resource_1"),
+							resource.TestCheckResourceAttr(resourceName, "aggregation_type", "latest"),
+						),
+					},
+					{
+						Config:             testutils.LoadFixtureString(t, "testdata/TestResGtmResource/create_basic.tf"),
+						ExpectNonEmptyPlan: true,
+						PlanOnly:           true,
 					},
 				},
 			})
@@ -89,19 +173,9 @@ func TestResGTMResource(t *testing.T) {
 	t.Run("create resource failed", func(t *testing.T) {
 		client := &gtm.Mock{}
 
-		client.On("GetResource",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("gtm.GetResourceRequest"),
-		).Return(nil, &gtm.Error{
-			StatusCode: http.StatusNotFound,
-		}).Once()
+		mockGetResource(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
 
-		client.On("CreateResource",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("gtm.CreateResourceRequest"),
-		).Return(nil, &gtm.Error{
-			StatusCode: http.StatusBadRequest,
-		})
+		mockCreateResource(client, getDefaultResource(), nil, &gtm.Error{StatusCode: http.StatusBadRequest})
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -109,7 +183,7 @@ func TestResGTMResource(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmResource/create_basic.tf"),
-						ExpectError: regexp.MustCompile("Resource Create failed"),
+						ExpectError: regexp.MustCompile("Resource create error"),
 					},
 				},
 			})
@@ -121,10 +195,7 @@ func TestResGTMResource(t *testing.T) {
 	t.Run("create resource failed - resource already exists", func(t *testing.T) {
 		client := &gtm.Mock{}
 
-		client.On("GetResource",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("gtm.GetResourceRequest"),
-		).Return(&rsrc, nil).Once()
+		mockGetResource(client, getDefaultResource(), nil, 1)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -144,20 +215,12 @@ func TestResGTMResource(t *testing.T) {
 	t.Run("create resource denied", func(t *testing.T) {
 		client := &gtm.Mock{}
 
-		client.On("GetResource",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("gtm.GetResourceRequest"),
-		).Return(nil, &gtm.Error{
-			StatusCode: http.StatusNotFound,
-		}).Once()
+		mockGetResource(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
 
-		dr := gtm.CreateResourceResponse{}
-		dr.Resource = rsrcCreate.Resource
-		dr.Status = &deniedResponseStatus
-		client.On("CreateResource",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("gtm.CreateResourceRequest"),
-		).Return(&dr, nil)
+		mockCreateResource(client, getDefaultResource(), &gtm.CreateResourceResponse{
+			Resource: getDefaultResource(),
+			Status:   getDeniedResponseStatus(),
+		}, nil)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -175,67 +238,127 @@ func TestResGTMResource(t *testing.T) {
 	})
 }
 
+func mockUpdateResource(client *gtm.Mock, resp *gtm.UpdateResourceResponse, err error) *mock.Call {
+	return client.On("UpdateResource",
+		testutils.MockContext,
+		gtm.UpdateResourceRequest{
+			Resource:   getUpdatedResource(),
+			DomainName: testDomainName,
+		},
+	).Return(resp, err).Once()
+}
+
+func mockCreateResource(client *gtm.Mock, resource *gtm.Resource, resp *gtm.CreateResourceResponse, err error) *mock.Call {
+	return client.On("CreateResource",
+		testutils.MockContext,
+		gtm.CreateResourceRequest{
+			Resource:   resource,
+			DomainName: testDomainName,
+		},
+	).Return(resp, err).Once()
+}
+
+func mockGetResource(client *gtm.Mock, resource *gtm.Resource, err error, times int) *mock.Call {
+	var resp *gtm.GetResourceResponse
+	if resource != nil {
+		r := gtm.GetResourceResponse(*resource)
+		resp = &r
+	}
+	return client.On("GetResource",
+		testutils.MockContext,
+		gtm.GetResourceRequest{
+			ResourceName: testResourceName,
+			DomainName:   testDomainName,
+		},
+	).Return(resp, err).Times(times)
+}
+
+func getDefaultResource() *gtm.Resource {
+	return &gtm.Resource{
+		Type: "XML load object via HTTP",
+		ResourceInstances: []gtm.ResourceInstance{
+			{
+				DatacenterID:         datacenterID3131,
+				UseDefaultLoadObject: false,
+				LoadObject: gtm.LoadObject{
+					LoadObject:     "/test1",
+					LoadServers:    []string{"1.2.3.4"},
+					LoadObjectPort: 80,
+				},
+			},
+		},
+		AggregationType: "latest",
+		Name:            testResourceName,
+	}
+}
+
+func getUpdatedResource() *gtm.Resource {
+	return &gtm.Resource{
+		Type: "XML load object via HTTP",
+		ResourceInstances: []gtm.ResourceInstance{
+			{
+				DatacenterID:         datacenterID3132,
+				UseDefaultLoadObject: false,
+				LoadObject: gtm.LoadObject{
+					LoadObject:     "/test2",
+					LoadServers:    []string{"1.2.3.5"},
+					LoadObjectPort: 80,
+				},
+			},
+		},
+		AggregationType: "latest",
+		Name:            testResourceName,
+	}
+}
+
 func TestGTMResourceOrder(t *testing.T) {
 	tests := map[string]struct {
-		client        *gtm.Mock
-		pathForCreate string
 		pathForUpdate string
 		nonEmptyPlan  bool
 		planOnly      bool
 	}{
 		"reordered `load_servers` - no diff": {
-			client:        getGTMResourceMocks(),
-			pathForCreate: "testdata/TestResGtmResource/order/create.tf",
 			pathForUpdate: "testdata/TestResGtmResource/order/load_servers/reorder.tf",
 			nonEmptyPlan:  false,
 			planOnly:      true,
 		},
 		"reordered `resource_instance` - no diff": {
-			client:        getGTMResourceMocks(),
-			pathForCreate: "testdata/TestResGtmResource/order/create.tf",
 			pathForUpdate: "testdata/TestResGtmResource/order/resource_instance/reorder.tf",
 			nonEmptyPlan:  false,
 			planOnly:      true,
 		},
 		"reordered `resource_instance` and `load_servers` - no diff": {
-			client:        getGTMResourceMocks(),
-			pathForCreate: "testdata/TestResGtmResource/order/create.tf",
 			pathForUpdate: "testdata/TestResGtmResource/order/reorder_resource_instance_load_servers.tf",
 			nonEmptyPlan:  false,
 			planOnly:      true,
 		},
 		"change `name` attribute - diff only for `name`": {
-			client:        getGTMResourceMocks(),
-			pathForCreate: "testdata/TestResGtmResource/order/create.tf",
 			pathForUpdate: "testdata/TestResGtmResource/order/update_name.tf",
-			nonEmptyPlan:  true, // change to false to see diff
+			nonEmptyPlan:  true,
 			planOnly:      true,
 		},
 		"reorder and change in `load_servers` - diff only for `load_servers`": {
-			client:        getGTMResourceMocks(),
-			pathForCreate: "testdata/TestResGtmResource/order/create.tf",
 			pathForUpdate: "testdata/TestResGtmResource/order/load_servers/reorder_and_update.tf",
-			nonEmptyPlan:  true, // change to false to see diff
+			nonEmptyPlan:  true,
 			planOnly:      true,
 		},
 		"reorder resource_instance and change in `load_servers` - messy diff": {
-			client:        getGTMResourceMocks(),
-			pathForCreate: "testdata/TestResGtmResource/order/create.tf",
 			pathForUpdate: "testdata/TestResGtmResource/order/resource_instance/reorder_and_update_load_servers.tf",
-			nonEmptyPlan:  true, // change to false to see diff
+			nonEmptyPlan:  true,
 			planOnly:      true,
 		},
 	}
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			useClient(test.client, func() {
+			testClient := getGTMResourceMocks()
+			useClient(testClient, func() {
 				resource.UnitTest(t, resource.TestCase{
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					IsUnitTest:               true,
 					Steps: []resource.TestStep{
 						{
-							Config: testutils.LoadFixtureString(t, test.pathForCreate),
+							Config: testutils.LoadFixtureString(t, "testdata/TestResGtmResource/order/create.tf"),
 						},
 						{
 							Config:             testutils.LoadFixtureString(t, test.pathForUpdate),
@@ -245,7 +368,92 @@ func TestGTMResourceOrder(t *testing.T) {
 					},
 				})
 			})
-			test.client.AssertExpectations(t)
+			testClient.AssertExpectations(t)
+		})
+	}
+}
+
+func TestResGTMResourceImport(t *testing.T) {
+	tests := map[string]struct {
+		domainName   string
+		resourceName string
+		init         func(*gtm.Mock)
+		expectError  *regexp.Regexp
+		stateCheck   resource.ImportStateCheckFunc
+	}{
+		"happy path - import": {
+			domainName:   testDomainName,
+			resourceName: testResourceName,
+			init: func(m *gtm.Mock) {
+				// Read
+				mockGetResource(m, getImportedResource(), nil, 2)
+			},
+			stateCheck: test.NewImportChecker().
+				CheckEqual("domain", "gtm_terra_testdomain.akadns.net").
+				CheckEqual("name", "tfexample_resource_1").
+				CheckEqual("type", "XML load object via HTTP").
+				CheckEqual("host_header", "test host").
+				CheckEqual("least_squares_decay", "1").
+				CheckEqual("description", "test description").
+				CheckEqual("leader_string", "test string").
+				CheckEqual("constrained_property", "test property").
+				CheckEqual("aggregation_type", "latest").
+				CheckEqual("load_imbalance_percentage", "1").
+				CheckEqual("upper_bound", "5").
+				CheckEqual("max_u_multiplicative_increment", "10").
+				CheckEqual("decay_rate", "1").
+				CheckEqual("resource_instance.0.datacenter_id", "3131").
+				CheckEqual("resource_instance.0.use_default_load_object", "false").
+				CheckEqual("resource_instance.0.load_object", "/test1").
+				CheckEqual("resource_instance.0.load_object_port", "80").
+				CheckEqual("resource_instance.0.load_servers.0", "1.2.3.4").
+				CheckEqual("resource_instance.0.load_servers.1", "1.2.3.5").
+				CheckEqual("resource_instance.0.load_servers.2", "1.2.3.6").
+				CheckEqual("wait_on_complete", "true").Build(),
+		},
+		"expect error - no domain name, invalid import ID": {
+			domainName:   "",
+			resourceName: testResourceName,
+			expectError:  regexp.MustCompile(`Error: invalid resource ID: :tfexample_resource_1`),
+		},
+		"expect error - no map name, invalid import ID": {
+			domainName:   testDomainName,
+			resourceName: "",
+			expectError:  regexp.MustCompile(`Error: invalid resource ID: gtm_terra_testdomain.akadns.net:`),
+		},
+		"expect error - read": {
+			domainName:   testDomainName,
+			resourceName: testResourceName,
+			init: func(m *gtm.Mock) {
+				// Read - error
+				mockGetResource(m, nil, fmt.Errorf("get failed"), 1)
+			},
+			expectError: regexp.MustCompile(`get failed`),
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			client := &gtm.Mock{}
+			if tc.init != nil {
+				tc.init(client)
+			}
+			useClient(client, func() {
+				resource.UnitTest(t, resource.TestCase{
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+					Steps: []resource.TestStep{
+						{
+							ImportStateCheck: tc.stateCheck,
+							ImportStateId:    fmt.Sprintf("%s:%s", tc.domainName, tc.resourceName),
+							ImportState:      true,
+							ResourceName:     "akamai_gtm_resource.test",
+							Config:           testutils.LoadFixtureString(t, "testdata/TestResGtmResource/import_basic.tf"),
+							ExpectError:      tc.expectError,
+						},
+					},
+				})
+			})
+			client.AssertExpectations(t)
 		})
 	}
 }
@@ -254,41 +462,96 @@ func TestGTMResourceOrder(t *testing.T) {
 func getGTMResourceMocks() *gtm.Mock {
 	client := &gtm.Mock{}
 
-	mockGetResource := client.On("GetResource",
-		mock.Anything, // ctx is irrelevant for this test
-		mock.AnythingOfType("gtm.GetResourceRequest"),
-	).Return(nil, &gtm.Error{
-		StatusCode: http.StatusNotFound,
-	})
+	mockGetResource(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
 
-	resp := resourceForOrderTests
-	client.On("CreateResource",
-		mock.Anything, // ctx is irrelevant for this test
-		mock.AnythingOfType("gtm.CreateResourceRequest"),
-	).Return(&gtm.CreateResourceResponse{
-		Resource: rsrcCreate.Resource,
-		Status:   rsrcCreate.Status,
-	}, nil).Run(func(args mock.Arguments) {
-		mockGetResource.ReturnArguments = mock.Arguments{&resp, nil}
-	})
+	mockCreateResource(client, getCreatedResource(), &gtm.CreateResourceResponse{
+		Resource: getCreatedResourceResp(),
+		Status:   getDefaultResponseStatus(),
+	}, nil)
 
-	client.On("DeleteResource",
-		mock.Anything, // ctx is irrelevant for this test
-		mock.AnythingOfType("gtm.DeleteResourceRequest"),
-	).Return(deleteResourceResponseStatus, nil)
+	mockGetResource(client, getCreatedResourceResp(), nil, 4)
+
+	mockDeleteResource(client)
 
 	return client
 }
 
-var (
-	// resourceForOrderTests is a gtm.Resource structure used in testing the order of resource_instance
-	resourceForOrderTests = gtm.GetResourceResponse{
-		Name:            "tfexample_resource_1",
+func getImportedResource() *gtm.Resource {
+	return &gtm.Resource{
+		Type:                "XML load object via HTTP",
+		HostHeader:          "test host",
+		LeastSquaresDecay:   1,
+		Description:         "test description",
+		LeaderString:        "test string",
+		ConstrainedProperty: "test property",
+		ResourceInstances: []gtm.ResourceInstance{
+			{
+				DatacenterID:         datacenterID3131,
+				UseDefaultLoadObject: false,
+				LoadObject: gtm.LoadObject{
+					LoadObject:     "/test1",
+					LoadServers:    []string{"1.2.3.4", "1.2.3.5", "1.2.3.6"},
+					LoadObjectPort: 80,
+				},
+			},
+		},
+		AggregationType:             "latest",
+		LoadImbalancePercentage:     1,
+		UpperBound:                  5,
+		Name:                        testResourceName,
+		MaxUMultiplicativeIncrement: 10,
+		DecayRate:                   1,
+	}
+}
+
+func mockDeleteResource(client *gtm.Mock) *mock.Call {
+	return client.On("DeleteResource",
+		testutils.MockContext,
+		gtm.DeleteResourceRequest{
+			ResourceName: testResourceName,
+			DomainName:   testDomainName,
+		},
+	).Return(&gtm.DeleteResourceResponse{
+		Status: getDefaultResponseStatus(),
+	}, nil).Once()
+}
+
+func getCreatedResource() *gtm.Resource {
+	return &gtm.Resource{
+		Type: "XML load object via HTTP",
+		ResourceInstances: []gtm.ResourceInstance{
+			{
+				DatacenterID:         datacenterID3131,
+				UseDefaultLoadObject: false,
+				LoadObject: gtm.LoadObject{
+					LoadObject:     "/test1",
+					LoadServers:    []string{"1.2.3.5", "1.2.3.4", "1.2.3.6"},
+					LoadObjectPort: 80,
+				},
+			},
+			{
+				DatacenterID:         datacenterID3132,
+				UseDefaultLoadObject: false,
+				LoadObject: gtm.LoadObject{
+					LoadObject:     "/test2",
+					LoadServers:    []string{"1.2.3.7", "1.2.3.10", "1.2.3.9", "1.2.3.8"},
+					LoadObjectPort: 80,
+				},
+			},
+		},
+		AggregationType: "latest",
+		Name:            testResourceName,
+	}
+}
+
+func getCreatedResourceResp() *gtm.Resource {
+	return &gtm.Resource{
+		Name:            testResourceName,
 		AggregationType: "latest",
 		Type:            "XML load object via HTTP",
 		ResourceInstances: []gtm.ResourceInstance{
 			{
-				DatacenterID:         3131,
+				DatacenterID:         datacenterID3131,
 				UseDefaultLoadObject: false,
 				LoadObject: gtm.LoadObject{
 					LoadObject:     "/test1",
@@ -297,7 +560,7 @@ var (
 				},
 			},
 			{
-				DatacenterID:         3132,
+				DatacenterID:         datacenterID3132,
 				UseDefaultLoadObject: false,
 				LoadObject: gtm.LoadObject{
 					LoadObject:     "/test2",
@@ -307,141 +570,4 @@ var (
 			},
 		},
 	}
-
-	rsrcCreateForOrder = gtm.CreateResourceResponse{
-		Resource: &gtm.Resource{
-			Name:            "tfexample_resource_1",
-			AggregationType: "latest",
-			Type:            "XML load object via HTTP",
-			ResourceInstances: []gtm.ResourceInstance{
-				{
-					DatacenterID:         3131,
-					UseDefaultLoadObject: false,
-					LoadObject: gtm.LoadObject{
-						LoadObject:     "/test1",
-						LoadServers:    []string{"1.2.3.4", "1.2.3.5", "1.2.3.6"},
-						LoadObjectPort: 80,
-					},
-				},
-				{
-					DatacenterID:         3132,
-					UseDefaultLoadObject: false,
-					LoadObject: gtm.LoadObject{
-						LoadObject:     "/test2",
-						LoadServers:    []string{"1.2.3.7", "1.2.3.8", "1.2.3.9", "1.2.3.10"},
-						LoadObjectPort: 80,
-					},
-				},
-			},
-		},
-		Status: &gtm.ResponseStatus{
-			ChangeID: "40e36abd-bfb2-4635-9fca-62175cf17007",
-			Links: []gtm.Link{
-				{
-					Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/status/current",
-					Rel:  "self",
-				},
-			},
-			Message:               "Current configuration has been propagated to all GTM nameservers",
-			PassingValidation:     true,
-			PropagationStatus:     "COMPLETE",
-			PropagationStatusDate: "2019-04-25T14:54:00.000+00:00",
-		},
-	}
-
-	rsrcCreate = gtm.CreateResourceResponse{
-		Resource: &gtm.Resource{
-			Name:            "tfexample_resource_1",
-			AggregationType: "latest",
-			Type:            "XML load object via HTTP",
-			ResourceInstances: []gtm.ResourceInstance{
-				{
-					DatacenterID:         3131,
-					UseDefaultLoadObject: false,
-					LoadObject: gtm.LoadObject{
-						LoadObject:     "/test1",
-						LoadServers:    []string{"1.2.3.4"},
-						LoadObjectPort: 80,
-					},
-				},
-			},
-		},
-		Status: &gtm.ResponseStatus{
-			ChangeID: "40e36abd-bfb2-4635-9fca-62175cf17007",
-			Links: []gtm.Link{
-				{
-					Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/status/current",
-					Rel:  "self",
-				},
-			},
-			Message:               "Current configuration has been propagated to all GTM nameservers",
-			PassingValidation:     true,
-			PropagationStatus:     "COMPLETE",
-			PropagationStatusDate: "2019-04-25T14:54:00.000+00:00",
-		},
-	}
-
-	rsrc = gtm.GetResourceResponse{
-		Name:            "tfexample_resource_1",
-		AggregationType: "latest",
-		Type:            "XML load object via HTTP",
-		ResourceInstances: []gtm.ResourceInstance{
-			{
-				DatacenterID:         3131,
-				UseDefaultLoadObject: false,
-				LoadObject: gtm.LoadObject{
-					LoadObject:     "/test1",
-					LoadServers:    []string{"1.2.3.4"},
-					LoadObjectPort: 80,
-				},
-			},
-		},
-	}
-
-	rsrcUpdate = gtm.GetResourceResponse{
-		Name:            "tfexample_resource_1",
-		AggregationType: "latest",
-		Type:            "XML load object via HTTP",
-		ResourceInstances: []gtm.ResourceInstance{
-			{
-				DatacenterID: 3132,
-				LoadObject: gtm.LoadObject{
-					LoadObject:     "/test2",
-					LoadServers:    []string{"1.2.3.5"},
-					LoadObjectPort: 80,
-				},
-			},
-		},
-	}
-
-	updateResourceResponseStatus = &gtm.UpdateResourceResponse{
-		Status: &gtm.ResponseStatus{
-			ChangeID: "40e36abd-bfb2-4635-9fca-62175cf17007",
-			Links: []gtm.Link{
-				{
-					Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/status/current",
-					Rel:  "self",
-				},
-			},
-			Message:               "Current configuration has been propagated to all GTM nameservers",
-			PassingValidation:     true,
-			PropagationStatus:     "COMPLETE",
-			PropagationStatusDate: "2019-04-25T14:54:00.000+00:00",
-		},
-	}
-	deleteResourceResponseStatus = &gtm.DeleteResourceResponse{
-		Status: &gtm.ResponseStatus{
-			ChangeID: "40e36abd-bfb2-4635-9fca-62175cf17007",
-			Links: []gtm.Link{
-				{
-					Href: "https://akab-ymtebc45gco3ypzj-apz4yxpek55y7fyv.luna.akamaiapis.net/config-gtm/v1/domains/gtmdomtest.akadns.net/status/current",
-					Rel:  "self",
-				},
-			},
-			Message:               "Current configuration has been propagated to all GTM nameservers",
-			PassingValidation:     true,
-			PropagationStatus:     "COMPLETE",
-			PropagationStatusDate: "2019-04-25T14:54:00.000+00:00",
-		},
-	}
-)
+}

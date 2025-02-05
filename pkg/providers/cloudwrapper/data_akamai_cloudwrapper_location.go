@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cloudwrapper"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/cloudwrapper"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -25,7 +25,6 @@ type (
 	}
 
 	locationDataSourceModel struct {
-		ID            types.String `tfsdk:"id"`
 		LocationName  types.String `tfsdk:"location_name"`
 		TrafficType   types.String `tfsdk:"traffic_type"`
 		TrafficTypeID types.Int64  `tfsdk:"traffic_type_id"`
@@ -73,11 +72,6 @@ func (d *locationDataSource) Schema(_ context.Context, _ datasource.SchemaReques
 	resp.Schema = schema.Schema{
 		Description: "CloudWrapper location",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				Computed:           true,
-				DeprecationMessage: "Required by the terraform plugin testing framework, always set to `akamai_cloudwrapper_location`",
-				Description:        "ID of the data source.",
-			},
 			"location_name": schema.StringAttribute{
 				Required:    true,
 				Description: "Name of the location.",
@@ -121,7 +115,6 @@ func (d *locationDataSource) Read(ctx context.Context, req datasource.ReadReques
 			if trafficType, ok := getMatchingTrafficType(loc.TrafficTypes, data.TrafficType.ValueString()); ok {
 				data.LocationID = types.StringValue(trafficType.MapName)
 				data.TrafficTypeID = types.Int64Value(int64(trafficType.TrafficTypeID))
-				data.ID = types.StringValue("akamai_cloudwrapper_location")
 				resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 				return
 			}

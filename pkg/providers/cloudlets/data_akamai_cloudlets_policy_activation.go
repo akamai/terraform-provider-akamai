@@ -2,13 +2,14 @@ package cloudlets
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cloudlets"
-	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cloudlets/v3"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/cloudlets"
+	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/cloudlets/v3"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -17,7 +18,6 @@ import (
 )
 
 type policyActivationDataSourceModel struct {
-	ID                   types.String `tfsdk:"id"`
 	PolicyID             types.Int64  `tfsdk:"policy_id"`
 	Network              types.String `tfsdk:"network"`
 	Version              types.Int64  `tfsdk:"version"`
@@ -69,11 +69,6 @@ func (d *policyActivationDataSource) Schema(_ context.Context, _ datasource.Sche
 	resp.Schema = schema.Schema{
 		Description: "Cloudlets Policy Activation",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				Computed:           true,
-				DeprecationMessage: "Required by the terraform plugin testing framework.",
-				Description:        "ID of the data source.",
-			},
 			"policy_id": schema.Int64Attribute{
 				Required:    true,
 				Description: "Identifies the policy.",
@@ -127,7 +122,6 @@ func (d *policyActivationDataSource) Read(ctx context.Context, req datasource.Re
 		return
 	}
 	data = *dat
-	data.ID = types.StringValue(fmt.Sprintf("%s:%s", data.PolicyID, data.Network))
 	resp.Diagnostics.Append(resp.State.Set(ctx, data)...)
 }
 
@@ -151,7 +145,7 @@ func (strategy *v2ActivationStrategy) getPolicyActivation(ctx context.Context, p
 
 	ap, d := types.SetValueFrom(ctx, types.StringType, associatedProperties)
 	if d.HasError() {
-		return nil, fmt.Errorf(d.Errors()[0].Summary())
+		return nil, errors.New(d.Errors()[0].Summary())
 	}
 	data := policyActivationDataSourceModel{
 		PolicyID:             types.Int64Value(policyID),

@@ -8,15 +8,15 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/iam"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
 
 func TestAccessibleGroups(t *testing.T) {
 	mockPositiveCase := func(client *iam.Mock, returnedGroups iam.ListAccessibleGroupsResponse, times int) *mock.Call {
-		return client.On("ListAccessibleGroups", mock.Anything, iam.ListAccessibleGroupsRequest{UserName: "user1"}).Return(returnedGroups, nil).Times(times)
+		return client.On("ListAccessibleGroups", testutils.MockContext, iam.ListAccessibleGroupsRequest{UserName: "user1"}).Return(returnedGroups, nil).Times(times)
 	}
 
 	generateCheckForGroup := func(path, groupID, groupName, isBlocked, roleDescription, roleID, roleName, subGroupsNumber string) resource.TestCheckFunc {
@@ -62,6 +62,7 @@ func TestAccessibleGroups(t *testing.T) {
 		}
 	}
 
+	// nolint:revive
 	generateIntermediateChecksForGeneratedSubGroup := func(min, max int) resource.TestCheckFunc {
 		var testCases []resource.TestCheckFunc
 
@@ -179,13 +180,12 @@ func TestAccessibleGroups(t *testing.T) {
 		},
 		"error - api failed": {
 			init: func(client *iam.Mock) {
-				client.On("ListAccessibleGroups", mock.Anything, iam.ListAccessibleGroupsRequest{UserName: "user1"}).Return(nil, errors.New("api failed")).Times(1)
+				client.On("ListAccessibleGroups", testutils.MockContext, iam.ListAccessibleGroupsRequest{UserName: "user1"}).Return(nil, errors.New("api failed")).Times(1)
 			},
 			config:        "testdata/TestDataAccessibleGroups/basic.tf",
 			expectedError: regexp.MustCompile("api failed"),
 		},
 		"error - missing username": {
-			init:          func(client *iam.Mock) {},
 			config:        "testdata/TestDataAccessibleGroups/no-username.tf",
 			expectedError: regexp.MustCompile("Missing required argument"),
 		},
@@ -194,7 +194,9 @@ func TestAccessibleGroups(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &iam.Mock{}
-			tc.init(client)
+			if tc.init != nil {
+				tc.init(client)
+			}
 
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{

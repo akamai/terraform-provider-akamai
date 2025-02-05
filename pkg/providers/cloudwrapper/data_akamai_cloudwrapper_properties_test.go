@@ -6,22 +6,21 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cloudwrapper"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/cloudwrapper"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestDataProperty(t *testing.T) {
 	tests := map[string]struct {
 		configPath string
-		init       func(*testing.T, *cloudwrapper.Mock, testDataForCWProperties)
+		init       func(*cloudwrapper.Mock, testDataForCWProperties)
 		mockData   testDataForCWProperties
 		error      *regexp.Regexp
 	}{
 		"happy path - one property, unused-true": {
 			configPath: "testdata/TestDataProperties/default_unused_true.tf",
-			init: func(_ *testing.T, m *cloudwrapper.Mock, testData testDataForCWProperties) {
+			init: func(m *cloudwrapper.Mock, testData testDataForCWProperties) {
 				expectListProperties(m, testData, 3)
 			},
 			mockData: testDataForCWProperties{
@@ -39,7 +38,7 @@ func TestDataProperty(t *testing.T) {
 		},
 		"happy path - two properties, unused-false, contract_ids supplied": {
 			configPath: "testdata/TestDataProperties/default_unused_false.tf",
-			init: func(t *testing.T, m *cloudwrapper.Mock, testData testDataForCWProperties) {
+			init: func(m *cloudwrapper.Mock, testData testDataForCWProperties) {
 				expectListProperties(m, testData, 3)
 			},
 			mockData: testDataForCWProperties{
@@ -64,7 +63,7 @@ func TestDataProperty(t *testing.T) {
 		},
 		"happy path - no optional attributes": {
 			configPath: "testdata/TestDataProperties/no_attributes.tf",
-			init: func(_ *testing.T, m *cloudwrapper.Mock, testData testDataForCWProperties) {
+			init: func(m *cloudwrapper.Mock, testData testDataForCWProperties) {
 				expectListProperties(m, testData, 3)
 			},
 			mockData: testDataForCWProperties{
@@ -81,7 +80,7 @@ func TestDataProperty(t *testing.T) {
 		},
 		"happy path - empty properties list": {
 			configPath: "testdata/TestDataProperties/default_unused_false.tf",
-			init: func(_ *testing.T, m *cloudwrapper.Mock, testData testDataForCWProperties) {
+			init: func(m *cloudwrapper.Mock, testData testDataForCWProperties) {
 				expectListProperties(m, testData, 3)
 			},
 			mockData: testDataForCWProperties{
@@ -91,7 +90,7 @@ func TestDataProperty(t *testing.T) {
 		},
 		"error listing properties": {
 			configPath: "testdata/TestDataProperties/default_unused_false.tf",
-			init: func(t *testing.T, m *cloudwrapper.Mock, testData testDataForCWProperties) {
+			init: func(m *cloudwrapper.Mock, testData testDataForCWProperties) {
 				expectListPropertiesWithError(m, testData, 1)
 			},
 			mockData: testDataForCWProperties{
@@ -104,7 +103,7 @@ func TestDataProperty(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			client := &cloudwrapper.Mock{}
 			if test.init != nil {
-				test.init(t, client, test.mockData)
+				test.init(client, test.mockData)
 			}
 
 			resource.UnitTest(t, resource.TestCase{
@@ -146,8 +145,6 @@ func checkCloudWrapperPropertiesAttrs(data testDataForCWProperties) resource.Tes
 		checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_cloudwrapper_properties.test", fmt.Sprintf("properties.%d.contract_id", i), prp.ContractID))
 		checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_cloudwrapper_properties.test", fmt.Sprintf("properties.%d.group_id", i), strconv.FormatInt(prp.GroupID, 10)))
 	}
-	checkFuncs = append(checkFuncs, resource.TestCheckResourceAttrSet("data.akamai_cloudwrapper_properties.test", "id"))
-
 	return resource.ComposeAggregateTestCheckFunc(checkFuncs...)
 }
 
@@ -159,7 +156,7 @@ func expectListProperties(client *cloudwrapper.Mock, data testDataForCWPropertie
 	listPropertiesRes := cloudwrapper.ListPropertiesResponse{
 		Properties: data.properties,
 	}
-	client.On("ListProperties", mock.Anything, listPropertiesReq).Return(&listPropertiesRes, nil).Times(timesToRun)
+	client.On("ListProperties", testutils.MockContext, listPropertiesReq).Return(&listPropertiesRes, nil).Times(timesToRun)
 }
 
 func expectListPropertiesWithError(client *cloudwrapper.Mock, data testDataForCWProperties, timesToRun int) {
@@ -167,5 +164,5 @@ func expectListPropertiesWithError(client *cloudwrapper.Mock, data testDataForCW
 		Unused:      data.unused,
 		ContractIDs: data.contractIDs,
 	}
-	client.On("ListProperties", mock.Anything, listPropertiesReq).Return(nil, fmt.Errorf("list properties failed")).Times(timesToRun)
+	client.On("ListProperties", testutils.MockContext, listPropertiesReq).Return(nil, fmt.Errorf("list properties failed")).Times(timesToRun)
 }

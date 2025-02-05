@@ -5,10 +5,13 @@ import (
 	"context"
 	"flag"
 	"log"
+	"log/slog"
+	"os"
 
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/akamai"
-	_ "github.com/akamai/terraform-provider-akamai/v6/pkg/providers" // Load the providers
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/providers/registry"
+	akalog "github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/log"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/akamai"
+	_ "github.com/akamai/terraform-provider-akamai/v7/pkg/providers" // Load the providers
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/providers/registry"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
@@ -20,11 +23,16 @@ func main() {
 	var debugMode bool
 	flag.BoolVar(&debugMode, "debug", false, "set to true to run the provider with support for debuggers like delve")
 	flag.Parse()
+	if debugMode {
+		debugHandler := akalog.NewSlogHandler(os.Stderr, &slog.HandlerOptions{
+			Level: slog.LevelDebug,
+		})
+		akalog.SetLogger(akalog.NewSlogAdapter(debugHandler))
+	}
 
 	// We set this to trace because logs are passed via grpc to the terraform server
 	// Anything lower and we risk losing those values to the ether
 	hclog.Default().SetLevel(hclog.Trace)
-
 	sdkProviderV6, err := akamai.NewProtoV6SDKProvider(registry.Subproviders())
 	if err != nil {
 		log.Fatal(err)

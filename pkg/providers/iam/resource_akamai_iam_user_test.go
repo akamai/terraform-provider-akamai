@@ -4,14 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/iam"
-	"github.com/akamai/terraform-provider-akamai/v6/internal/test"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v7/internal/test"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -201,7 +202,7 @@ func TestResourceUser(t *testing.T) {
 	checkDefaultUserNotificationsAttributes := func(user iam.User) resource.TestCheckFunc {
 		return resource.ComposeAggregateTestCheckFunc(
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.#", "1"),
-			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.new_user_notification", "true"),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.new_user_notification", strconv.FormatBool(user.Notifications.EnableEmail)),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.password_expiry", "true"),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.proactive.#", "0"),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.upgrade.#", "0"),
@@ -216,7 +217,9 @@ func TestResourceUser(t *testing.T) {
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.new_user_notification", "true"),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.password_expiry", "true"),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.proactive.#", "1"),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.proactive.0", user.Notifications.Options.Proactive[0]),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.upgrade.#", "1"),
+			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.upgrade.0", user.Notifications.Options.Upgrade[0]),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.api_client_credential_expiry_notification", "true"),
 			resource.TestCheckResourceAttr("akamai_iam_user.test", "user_notifications.0.enable_email_notifications", "true"))
 	}
@@ -423,7 +426,6 @@ func TestResourceUser(t *testing.T) {
 			},
 		},
 		"basic - custom notification - password_expiry field missing": {
-			init: func(m *iam.Mock) {},
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic_notification_password_expiry_field_missing.tf"),
@@ -432,7 +434,6 @@ func TestResourceUser(t *testing.T) {
 			},
 		},
 		"basic - custom notification - multiple user_notification blocks": {
-			init: func(m *iam.Mock) {},
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic_notification_multiple_notification_blocks.tf"),
@@ -441,7 +442,6 @@ func TestResourceUser(t *testing.T) {
 			},
 		},
 		"basic - custom notification - enable_email_notifications missing": {
-			init: func(m *iam.Mock) {},
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic_notification_enable_email_notifications_field_missing.tf"),
@@ -500,7 +500,6 @@ func TestResourceUser(t *testing.T) {
 			},
 		},
 		"basic invalid phone": {
-			init: func(m *iam.Mock) {},
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_basic_invalid_phone.tf"),
@@ -521,7 +520,6 @@ func TestResourceUser(t *testing.T) {
 			},
 		},
 		"enable_tfa and enable_mfa set to true - error": {
-			init: func(m *iam.Mock) {},
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/create_with_invalid_auth_method.tf"),
@@ -774,7 +772,6 @@ func TestResourceUser(t *testing.T) {
 			},
 		},
 		"auth_grants_json should not panic when supplied interpolated string with unknown value": {
-			init: func(m *iam.Mock) {},
 			steps: []resource.TestStep{
 				{
 					Config:             testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/auth_grants_interpolated.tf"),
@@ -807,7 +804,6 @@ func TestResourceUser(t *testing.T) {
 			},
 		},
 		"error creating user: invalid auth grants": {
-			init: func(m *iam.Mock) {},
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceUserLifecycle/invalid_auth_grants.tf"),
@@ -943,7 +939,9 @@ func TestResourceUser(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &iam.Mock{}
-			tc.init(client)
+			if tc.init != nil {
+				tc.init(client)
+			}
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
@@ -958,7 +956,7 @@ func TestResourceUser(t *testing.T) {
 
 // create
 func expectResourceIAMUserCreatePhase(m *iam.Mock, request iam.CreateUserRequest, response iam.User, lock bool, setPassword bool, creationError, lockError error, setPasswordError error) {
-	onCreation := m.On("CreateUser", mock.Anything, iam.CreateUserRequest{
+	onCreation := m.On("CreateUser", testutils.MockContext, iam.CreateUserRequest{
 		UserBasicInfo: request.UserBasicInfo,
 		AuthGrants:    request.AuthGrants,
 		SendEmail:     true,
@@ -987,18 +985,18 @@ func expectResourceIAMUserCreatePhase(m *iam.Mock, request iam.CreateUserRequest
 
 func expectToggleLock(m *iam.Mock, identityID string, lock bool, err error) *mock.Call {
 	if lock {
-		return m.On("LockUser", mock.Anything, iam.LockUserRequest{IdentityID: identityID}).Return(err)
+		return m.On("LockUser", testutils.MockContext, iam.LockUserRequest{IdentityID: identityID}).Return(err)
 	}
-	return m.On("UnlockUser", mock.Anything, iam.UnlockUserRequest{IdentityID: identityID}).Return(err)
+	return m.On("UnlockUser", testutils.MockContext, iam.UnlockUserRequest{IdentityID: identityID}).Return(err)
 }
 
 func expectPassword(m *iam.Mock, identityID string, password string, err error) *mock.Call {
-	return m.On("SetUserPassword", mock.Anything, iam.SetUserPasswordRequest{IdentityID: identityID, NewPassword: password}).Return(err)
+	return m.On("SetUserPassword", testutils.MockContext, iam.SetUserPasswordRequest{IdentityID: identityID, NewPassword: password}).Return(err)
 }
 
 // read
 func expectResourceIAMUserReadPhase(m *iam.Mock, user iam.User, anError error) *mock.Call {
-	on := m.On("GetUser", mock.Anything, iam.GetUserRequest{
+	on := m.On("GetUser", testutils.MockContext, iam.GetUserRequest{
 		IdentityID:    user.IdentityID,
 		AuthGrants:    true,
 		Notifications: true,
@@ -1011,7 +1009,7 @@ func expectResourceIAMUserReadPhase(m *iam.Mock, user iam.User, anError error) *
 
 // update user info
 func expectResourceIAMUserInfoUpdatePhase(m *iam.Mock, id string, basicUserInfo iam.UserBasicInfo, anError error) *mock.Call {
-	on := m.On("UpdateUserInfo", mock.Anything, iam.UpdateUserInfoRequest{
+	on := m.On("UpdateUserInfo", testutils.MockContext, iam.UpdateUserInfoRequest{
 		IdentityID: id,
 		User:       basicUserInfo,
 	})
@@ -1022,7 +1020,7 @@ func expectResourceIAMUserInfoUpdatePhase(m *iam.Mock, id string, basicUserInfo 
 }
 
 func expectResourceIAMUserUpdateInfoAndPasswordPhase(m *iam.Mock, id string, basicUserInfo iam.UserBasicInfo, password string, anError error) *mock.Call {
-	on := m.On("UpdateUserInfo", mock.Anything, iam.UpdateUserInfoRequest{
+	on := m.On("UpdateUserInfo", testutils.MockContext, iam.UpdateUserInfoRequest{
 		IdentityID: id,
 		User:       basicUserInfo,
 	})
@@ -1037,7 +1035,7 @@ func expectResourceIAMUserUpdateInfoAndPasswordPhase(m *iam.Mock, id string, bas
 
 // update auth grants
 func expectResourceIAMUserAuthGrantsUpdatePhase(m *iam.Mock, id string, authGrantsReqest []iam.AuthGrantRequest, authGrants []iam.AuthGrant, anError error) *mock.Call {
-	on := m.On("UpdateUserAuthGrants", mock.Anything, iam.UpdateUserAuthGrantsRequest{
+	on := m.On("UpdateUserAuthGrants", testutils.MockContext, iam.UpdateUserAuthGrantsRequest{
 		IdentityID: id,
 		AuthGrants: authGrantsReqest,
 	})
@@ -1049,7 +1047,7 @@ func expectResourceIAMUserAuthGrantsUpdatePhase(m *iam.Mock, id string, authGran
 
 // delete
 func expectResourceIAMUserDeletePhase(m *iam.Mock, user iam.User, anError error) *mock.Call {
-	on := m.On("RemoveUser", mock.Anything, iam.RemoveUserRequest{IdentityID: user.IdentityID})
+	on := m.On("RemoveUser", testutils.MockContext, iam.RemoveUserRequest{IdentityID: user.IdentityID})
 	if anError != nil {
 		return on.Return(anError).Once()
 	}

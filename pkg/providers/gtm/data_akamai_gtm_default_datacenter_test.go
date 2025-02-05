@@ -3,8 +3,8 @@ package gtm
 import (
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/gtm"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/gtm"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -17,10 +17,7 @@ func TestAccDataSourceGTMDefaultDatacenter_basic(t *testing.T) {
 			DatacenterID: 1000,
 		}
 
-		client.On("CreateMapsDefaultDatacenter",
-			mock.Anything, // ctx is irrelevant for this test
-			mock.AnythingOfType("string"),
-		).Return(&dc, nil)
+		mockCreateMapsDefaultDatacenter(client, &dc, 3)
 
 		dataSourceName := "data.akamai_gtm_default_datacenter.test"
 
@@ -40,4 +37,11 @@ func TestAccDataSourceGTMDefaultDatacenter_basic(t *testing.T) {
 
 		client.AssertExpectations(t)
 	})
+}
+
+func mockCreateMapsDefaultDatacenter(client *gtm.Mock, dc *gtm.Datacenter, times int) *mock.Call {
+	return client.On("CreateMapsDefaultDatacenter",
+		testutils.MockContext,
+		"testdomain.net",
+	).Return(dc, nil).Times(times)
 }

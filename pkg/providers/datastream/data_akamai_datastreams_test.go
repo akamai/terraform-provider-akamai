@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/datastream"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/datastream"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -62,12 +62,12 @@ var (
 
 func TestDataDatastreams(t *testing.T) {
 	tests := map[string]struct {
-		init  func(*testing.T, *datastream.Mock)
+		init  func(*datastream.Mock)
 		steps []resource.TestStep
 	}{
 		"list streams": {
-			init: func(t *testing.T, m *datastream.Mock) {
-				m.On("ListStreams", mock.Anything, mock.Anything).
+			init: func(m *datastream.Mock) {
+				m.On("ListStreams", testutils.MockContext, mock.Anything).
 					Return(streamList, nil)
 			},
 			steps: []resource.TestStep{
@@ -78,8 +78,8 @@ func TestDataDatastreams(t *testing.T) {
 			},
 		},
 		"list streams with specified group id": {
-			init: func(t *testing.T, m *datastream.Mock) {
-				m.On("ListStreams", mock.Anything, datastream.ListStreamsRequest{
+			init: func(m *datastream.Mock) {
+				m.On("ListStreams", testutils.MockContext, datastream.ListStreamsRequest{
 					GroupID: ptr.To(1234),
 				}).Return(streamListForSpecificGroup, nil)
 			},
@@ -91,8 +91,8 @@ func TestDataDatastreams(t *testing.T) {
 			},
 		},
 		"list streams with specified group id using grp prefix": {
-			init: func(t *testing.T, m *datastream.Mock) {
-				m.On("ListStreams", mock.Anything, datastream.ListStreamsRequest{
+			init: func(m *datastream.Mock) {
+				m.On("ListStreams", testutils.MockContext, datastream.ListStreamsRequest{
 					GroupID: ptr.To(1234),
 				}).Return(streamListForSpecificGroup, nil)
 			},
@@ -104,7 +104,6 @@ func TestDataDatastreams(t *testing.T) {
 			},
 		},
 		"list streams with specified group id using invalid prefix": {
-			init: func(t *testing.T, m *datastream.Mock) {},
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestDataDatastreams/list_streams_with_groupid_with_invalid_prefix.tf"),
@@ -113,8 +112,8 @@ func TestDataDatastreams(t *testing.T) {
 			},
 		},
 		"list streams - empty list": {
-			init: func(t *testing.T, m *datastream.Mock) {
-				m.On("ListStreams", mock.Anything, datastream.ListStreamsRequest{}).
+			init: func(m *datastream.Mock) {
+				m.On("ListStreams", testutils.MockContext, datastream.ListStreamsRequest{}).
 					Return([]datastream.StreamDetails{}, nil)
 			},
 			steps: []resource.TestStep{
@@ -125,8 +124,8 @@ func TestDataDatastreams(t *testing.T) {
 			},
 		},
 		"could not fetch stream list": {
-			init: func(t *testing.T, m *datastream.Mock) {
-				m.On("ListStreams", mock.Anything, mock.Anything).
+			init: func(m *datastream.Mock) {
+				m.On("ListStreams", testutils.MockContext, mock.Anything).
 					Return(nil, fmt.Errorf("failed to get stream list")).Once()
 			},
 			steps: []resource.TestStep{
@@ -141,7 +140,9 @@ func TestDataDatastreams(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &datastream.Mock{}
-			test.init(t, client)
+			if test.init != nil {
+				test.init(client)
+			}
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cloudwrapper"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/collections"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/cloudwrapper"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/collections"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -17,7 +17,6 @@ import (
 )
 
 type capacitiesDataSourceModel struct {
-	ID          types.String            `tfsdk:"id"`
 	ContractIDs types.List              `tfsdk:"contract_ids"`
 	Capacities  []locationCapacityModel `tfsdk:"capacities"`
 }
@@ -127,11 +126,6 @@ func (d *capacitiesDataSource) Schema(_ context.Context, _ datasource.SchemaRequ
 	resp.Schema = schema.Schema{
 		Description: "CloudWrapper capacities",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				Computed:           true,
-				DeprecationMessage: "Required by the terraform plugin testing framework, always set to `akamai_cloudwrapper_capacities`.",
-				Description:        "ID of the data source.",
-			},
 			"contract_ids": schema.ListAttribute{
 				ElementType: types.StringType,
 				Optional:    true,
@@ -209,6 +203,5 @@ func (d *capacitiesDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		data.Capacities = append(data.Capacities, newLocationCapacityModel(capacity))
 	}
 
-	data.ID = types.StringValue(d.name())
 	resp.Diagnostics.Append(resp.State.Set(ctx, data)...)
 }

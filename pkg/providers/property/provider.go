@@ -5,13 +5,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"sync"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/hapi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/iam"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/str"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/subprovider"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/hapi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/str"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/subprovider"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -20,6 +21,14 @@ import (
 type (
 	// Subprovider gathers property resources and data sources
 	Subprovider struct{}
+
+	option func(p *Subprovider)
+)
+
+var (
+	once sync.Once
+
+	inst *Subprovider
 )
 
 var (
@@ -33,8 +42,16 @@ var (
 )
 
 // NewSubprovider returns a new property subprovider
-func NewSubprovider() *Subprovider {
-	return &Subprovider{}
+func NewSubprovider(opts ...option) *Subprovider {
+	once.Do(func() {
+		inst = &Subprovider{}
+
+		for _, opt := range opts {
+			opt(inst)
+		}
+	})
+
+	return inst
 }
 
 // Client returns the PAPI interface

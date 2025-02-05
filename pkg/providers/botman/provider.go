@@ -4,10 +4,10 @@ package botman
 import (
 	"sync"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/providers/appsec"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/subprovider"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/providers/appsec"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/subprovider"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -46,12 +46,6 @@ func NewSubprovider(opts ...option) *Subprovider {
 	return inst
 }
 
-func withClient(c botman.BotMan) option {
-	return func(p *Subprovider) {
-		p.client = c
-	}
-}
-
 // Client returns the BotMan interface
 func (p *Subprovider) Client(meta meta.Meta) botman.BotMan {
 	if p.client != nil {
@@ -70,7 +64,6 @@ func (p *Subprovider) SDKResources() map[string]*schema.Resource {
 		"akamai_botman_bot_management_settings":                      resourceBotManagementSettings(),
 		"akamai_botman_challenge_action":                             resourceChallengeAction(),
 		"akamai_botman_challenge_injection_rules":                    resourceChallengeInjectionRules(),
-		"akamai_botman_challenge_interception_rules":                 resourceChallengeInterceptionRules(),
 		"akamai_botman_client_side_security":                         resourceClientSideSecurity(),
 		"akamai_botman_conditional_action":                           resourceConditionalAction(),
 		"akamai_botman_content_protection_javascript_injection_rule": resourceContentProtectionJavaScriptInjectionRule(),
@@ -108,7 +101,6 @@ func (p *Subprovider) SDKDataSources() map[string]*schema.Resource {
 		"akamai_botman_bot_management_settings":                      dataSourceBotManagementSettings(),
 		"akamai_botman_challenge_action":                             dataSourceChallengeAction(),
 		"akamai_botman_challenge_injection_rules":                    dataSourceChallengeInjectionRules(),
-		"akamai_botman_challenge_interception_rules":                 dataSourceChallengeInterceptionRules(),
 		"akamai_botman_client_side_security":                         dataSourceClientSideSecurity(),
 		"akamai_botman_conditional_action":                           dataSourceConditionalAction(),
 		"akamai_botman_content_protection_javascript_injection_rule": dataSourceContentProtectionJavaScriptInjectionRule(),

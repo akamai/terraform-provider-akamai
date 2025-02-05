@@ -4,10 +4,9 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/networklists"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/networklists"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -28,18 +27,18 @@ func TestAccAkamaiNetworkListSubscription_res_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetNetworkListSubscription",
-			mock.Anything,
-			networklists.GetNetworkListSubscriptionRequest{Recipients: []string{"test@email.com"}, UniqueIds: []string{"79536_MARTINNETWORKLIST"}},
+			testutils.MockContext,
+			networklists.GetNetworkListSubscriptionRequest{Recipients: []string{"test@email.com"}, UniqueIDs: []string{"79536_MARTINNETWORKLIST"}},
 		).Return(&cr, nil)
 
 		client.On("UpdateNetworkListSubscription",
-			mock.Anything,
-			networklists.UpdateNetworkListSubscriptionRequest{Recipients: []string{"test@email.com"}, UniqueIds: []string{"79536_MARTINNETWORKLIST"}},
+			testutils.MockContext,
+			networklists.UpdateNetworkListSubscriptionRequest{Recipients: []string{"test@email.com"}, UniqueIDs: []string{"79536_MARTINNETWORKLIST"}},
 		).Return(&cu, nil)
 
 		client.On("RemoveNetworkListSubscription",
-			mock.Anything,
-			networklists.RemoveNetworkListSubscriptionRequest{Recipients: []string{"test@email.com"}, UniqueIds: []string{"79536_MARTINNETWORKLIST"}},
+			testutils.MockContext,
+			networklists.RemoveNetworkListSubscriptionRequest{Recipients: []string{"test@email.com"}, UniqueIDs: []string{"79536_MARTINNETWORKLIST"}},
 		).Return(&cd, nil)
 
 		useClient(client, func() {

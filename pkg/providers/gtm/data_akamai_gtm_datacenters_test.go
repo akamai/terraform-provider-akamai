@@ -6,53 +6,49 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/gtm"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/gtm"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
 
 func TestDataGTMDatacenters(t *testing.T) {
 	tests := map[string]struct {
-		init       func(*testing.T, *gtm.Mock, testDataForGTMDatacenters)
-		mockData   testDataForGTMDatacenters
+		init       func(*gtm.Mock, []gtm.Datacenter)
+		mockData   []gtm.Datacenter
 		configPath string
 		error      *regexp.Regexp
 	}{
 		"happy path - three datacenters": {
-			init: func(t *testing.T, m *gtm.Mock, data testDataForGTMDatacenters) {
-				mockListDatacenters(t, m, data, 3)
+			init: func(m *gtm.Mock, datacenters []gtm.Datacenter) {
+				mockListDatacenters(m, datacenters, nil, 3)
 			},
-			mockData:   testGTMDatacenters,
+			mockData:   getTestGTMDatacenters(),
 			configPath: "testdata/TestDataGTMDatacenters/default.tf",
 		},
 		"happy path - one datacenter": {
-			init: func(t *testing.T, m *gtm.Mock, data testDataForGTMDatacenters) {
-				mockListDatacenters(t, m, data, 3)
+			init: func(m *gtm.Mock, datacenters []gtm.Datacenter) {
+				mockListDatacenters(m, datacenters, nil, 3)
 			},
-			mockData:   testGTMSingleDatacenter,
+			mockData:   getSingleTestDatacenters(),
 			configPath: "testdata/TestDataGTMDatacenters/default.tf",
 		},
 		"happy path - no datacenters": {
-			init: func(t *testing.T, m *gtm.Mock, data testDataForGTMDatacenters) {
-				mockListDatacenters(t, m, data, 3)
+			init: func(m *gtm.Mock, datacenters []gtm.Datacenter) {
+				mockListDatacenters(m, datacenters, nil, 3)
 			},
-			mockData:   testGTMEmptyDatacenters,
+			mockData:   getEmptyTestDatacenters(),
 			configPath: "testdata/TestDataGTMDatacenters/default.tf",
 		},
 		"error - ListDatacenters fail": {
-			init: func(t *testing.T, m *gtm.Mock, data testDataForGTMDatacenters) {
-				m.On("ListDatacenters", mock.Anything, gtm.ListDatacentersRequest{
-					DomainName: data.domain,
-				}).Return(
-					nil, fmt.Errorf("ListDatacenters error")).Once()
+			init: func(m *gtm.Mock, _ []gtm.Datacenter) {
+				mockListDatacenters(m, nil, fmt.Errorf("ListDatacenters error"), 1)
 			},
-			mockData:   testGTMDatacenters,
+			mockData:   getTestGTMDatacenters(),
 			configPath: "testdata/TestDataGTMDatacenters/default.tf",
 			error:      regexp.MustCompile("ListDatacenters error"),
 		},
 		"error - no domain attribute": {
-			init:       func(_ *testing.T, _ *gtm.Mock, _ testDataForGTMDatacenters) {},
 			configPath: "testdata/TestDataGTMDatacenters/no_domain.tf",
 			error:      regexp.MustCompile(`The argument "domain" is required, but no definition was found.`),
 		},
@@ -61,7 +57,9 @@ func TestDataGTMDatacenters(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &gtm.Mock{}
-			test.init(t, client, test.mockData)
+			if test.init != nil {
+				test.init(client, test.mockData)
+			}
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
@@ -80,42 +78,50 @@ func TestDataGTMDatacenters(t *testing.T) {
 	}
 }
 
-func checkAttrsForGTMDatacenters(data testDataForGTMDatacenters) resource.TestCheckFunc {
-	var checkFuncs []resource.TestCheckFunc
-	checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_gtm_datacenters.test", "id", data.domain))
-	checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_gtm_datacenters.test", "datacenters.#", strconv.Itoa(len(data.datacenters))))
+func checkAttrsForGTMDatacenters(datacenters []gtm.Datacenter) resource.TestCheckFunc {
+	const datasourceName = "data.akamai_gtm_datacenters.test"
+	checkFuncs := []resource.TestCheckFunc{
+		resource.TestCheckResourceAttr(datasourceName, "id", testDomainName),
+		resource.TestCheckResourceAttr(datasourceName, "datacenters.#", strconv.Itoa(len(datacenters))),
+	}
 
-	for i, dc := range data.datacenters {
-		checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_gtm_datacenters.test", fmt.Sprintf("datacenters.%d.nickname", i), dc.nickname))
-		checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_gtm_datacenters.test", fmt.Sprintf("datacenters.%d.datacenter_id", i), strconv.Itoa(dc.datacenterID)))
-		checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_gtm_datacenters.test", fmt.Sprintf("datacenters.%d.score_penalty", i), strconv.Itoa(dc.scorePenalty)))
-		checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_gtm_datacenters.test", fmt.Sprintf("datacenters.%d.city", i), dc.city))
-		checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_gtm_datacenters.test", fmt.Sprintf("datacenters.%d.state_or_province", i), dc.stateOrProvince))
-		checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_gtm_datacenters.test", fmt.Sprintf("datacenters.%d.country", i), dc.country))
-		checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_gtm_datacenters.test", fmt.Sprintf("datacenters.%d.latitude", i), strconv.FormatFloat(dc.latitude, 'f', -1, 64)))
-		checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_gtm_datacenters.test", fmt.Sprintf("datacenters.%d.longitude", i), strconv.FormatFloat(dc.longitude, 'f', -1, 64)))
-		checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_gtm_datacenters.test", fmt.Sprintf("datacenters.%d.clone_of", i), strconv.Itoa(dc.cloneOf)))
-		checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_gtm_datacenters.test", fmt.Sprintf("datacenters.%d.virtual", i), strconv.FormatBool(dc.virtual)))
-		checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_gtm_datacenters.test", fmt.Sprintf("datacenters.%d.clone_of", i), strconv.Itoa(dc.cloneOf)))
-		checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_gtm_datacenters.test", fmt.Sprintf("datacenters.%d.continent", i), dc.continent))
-		checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_gtm_datacenters.test", fmt.Sprintf("datacenters.%d.servermonitor_pool", i), dc.serverMonitorPool))
-		checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_gtm_datacenters.test", fmt.Sprintf("datacenters.%d.cloud_server_targeting", i), strconv.FormatBool(dc.cloudServerTargeting)))
-		checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_gtm_datacenters.test", fmt.Sprintf("datacenters.%d.cloud_server_host_header_override", i), strconv.FormatBool(dc.cloudServerHostHeaderOverride)))
+	for i, dc := range datacenters {
+		checkFuncs = append(checkFuncs, []resource.TestCheckFunc{
+			resource.TestCheckResourceAttr(datasourceName, fmt.Sprintf("datacenters.%d.nickname", i), dc.Nickname),
+			resource.TestCheckResourceAttr(datasourceName, fmt.Sprintf("datacenters.%d.datacenter_id", i), strconv.Itoa(dc.DatacenterID)),
+			resource.TestCheckResourceAttr(datasourceName, fmt.Sprintf("datacenters.%d.score_penalty", i), strconv.Itoa(dc.ScorePenalty)),
+			resource.TestCheckResourceAttr(datasourceName, fmt.Sprintf("datacenters.%d.city", i), dc.City),
+			resource.TestCheckResourceAttr(datasourceName, fmt.Sprintf("datacenters.%d.state_or_province", i), dc.StateOrProvince),
+			resource.TestCheckResourceAttr(datasourceName, fmt.Sprintf("datacenters.%d.country", i), dc.Country),
+			resource.TestCheckResourceAttr(datasourceName, fmt.Sprintf("datacenters.%d.latitude", i), strconv.FormatFloat(dc.Latitude, 'f', -1, 64)),
+			resource.TestCheckResourceAttr(datasourceName, fmt.Sprintf("datacenters.%d.longitude", i), strconv.FormatFloat(dc.Longitude, 'f', -1, 64)),
+			resource.TestCheckResourceAttr(datasourceName, fmt.Sprintf("datacenters.%d.clone_of", i), strconv.Itoa(dc.CloneOf)),
+			resource.TestCheckResourceAttr(datasourceName, fmt.Sprintf("datacenters.%d.virtual", i), strconv.FormatBool(dc.Virtual)),
+			resource.TestCheckResourceAttr(datasourceName, fmt.Sprintf("datacenters.%d.continent", i), dc.Continent),
+			resource.TestCheckResourceAttr(datasourceName, fmt.Sprintf("datacenters.%d.servermonitor_pool", i), dc.ServermonitorPool),
+			resource.TestCheckResourceAttr(datasourceName, fmt.Sprintf("datacenters.%d.cloud_server_targeting", i), strconv.FormatBool(dc.CloudServerTargeting)),
+			resource.TestCheckResourceAttr(datasourceName, fmt.Sprintf("datacenters.%d.cloud_server_host_header_override", i), strconv.FormatBool(dc.CloudServerHostHeaderOverride)),
+		}...)
 
-		if dc.defaultLoadObject != nil {
-			checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_gtm_datacenters.test", fmt.Sprintf("datacenters.%d.default_load_object.0.load_servers.#", i), strconv.Itoa(len(dc.defaultLoadObject.LoadServers))))
-			checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_gtm_datacenters.test", fmt.Sprintf("datacenters.%d.default_load_object.0.load_object", i), dc.defaultLoadObject.LoadObject))
-			checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_gtm_datacenters.test", fmt.Sprintf("datacenters.%d.default_load_object.0.load_object_port", i), strconv.Itoa(dc.defaultLoadObject.LoadObjectPort)))
-			for j, server := range dc.defaultLoadObject.LoadServers {
-				checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_gtm_datacenters.test", fmt.Sprintf("datacenters.%d.default_load_object.0.load_servers.%d", i, j), server))
+		if dc.DefaultLoadObject != nil {
+			checkFuncs = append(checkFuncs, []resource.TestCheckFunc{
+				resource.TestCheckResourceAttr(datasourceName, fmt.Sprintf("datacenters.%d.default_load_object.0.load_servers.#", i), strconv.Itoa(len(dc.DefaultLoadObject.LoadServers))),
+				resource.TestCheckResourceAttr(datasourceName, fmt.Sprintf("datacenters.%d.default_load_object.0.load_object", i), dc.DefaultLoadObject.LoadObject),
+				resource.TestCheckResourceAttr(datasourceName, fmt.Sprintf("datacenters.%d.default_load_object.0.load_object_port", i), strconv.Itoa(dc.DefaultLoadObject.LoadObjectPort)),
+			}...)
+
+			for j, server := range dc.DefaultLoadObject.LoadServers {
+				checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr(datasourceName, fmt.Sprintf("datacenters.%d.default_load_object.0.load_servers.%d", i, j), server))
 			}
 		}
 
-		if dc.links != nil {
-			checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_gtm_datacenters.test", fmt.Sprintf("datacenters.%d.links.#", i), strconv.Itoa(len(dc.links))))
-			for j, link := range dc.links {
-				checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_gtm_datacenters.test", fmt.Sprintf("datacenters.%d.links.%d.rel", i, j), link.Rel))
-				checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_gtm_datacenters.test", fmt.Sprintf("datacenters.%d.links.%d.href", i, j), link.Href))
+		if dc.Links != nil {
+			checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr(datasourceName, fmt.Sprintf("datacenters.%d.links.#", i), strconv.Itoa(len(dc.Links))))
+			for j, link := range dc.Links {
+				checkFuncs = append(checkFuncs, []resource.TestCheckFunc{
+					resource.TestCheckResourceAttr(datasourceName, fmt.Sprintf("datacenters.%d.links.%d.rel", i, j), link.Rel),
+					resource.TestCheckResourceAttr(datasourceName, fmt.Sprintf("datacenters.%d.links.%d.href", i, j), link.Href),
+				}...)
 			}
 		}
 	}
@@ -123,59 +129,24 @@ func checkAttrsForGTMDatacenters(data testDataForGTMDatacenters) resource.TestCh
 	return resource.ComposeAggregateTestCheckFunc(checkFuncs...)
 }
 
-type testDataForGTMDatacenters struct {
-	domain      string
-	datacenters []testDataForGTMDatacenter
+func mockListDatacenters(client *gtm.Mock, dcs []gtm.Datacenter, err error, times int) *mock.Call {
+	return client.On("ListDatacenters", testutils.MockContext, gtm.ListDatacentersRequest{
+		DomainName: testDomainName,
+	}).Return(dcs, err).Times(times)
 }
 
-var (
-	testGTMDatacenters = testDataForGTMDatacenters{
-		domain: "test.domain.com",
-		datacenters: []testDataForGTMDatacenter{
-			testGTMDatacenter,
-			testGTMDatacenterMinimal,
-			testGTMDatacenterNoLoadServers,
-		},
+func getTestGTMDatacenters() []gtm.Datacenter {
+	return []gtm.Datacenter{
+		*getTestDatacenter(),
+		*getMinimalTestDatacenter(),
+		*getNoLoadServersDatacenter(),
 	}
+}
 
-	testGTMSingleDatacenter = testDataForGTMDatacenters{
-		domain:      "test.domain.com",
-		datacenters: []testDataForGTMDatacenter{testGTMDatacenter},
-	}
+func getSingleTestDatacenters() []gtm.Datacenter {
+	return []gtm.Datacenter{*getTestDatacenter()}
+}
 
-	testGTMEmptyDatacenters = testDataForGTMDatacenters{
-		domain:      "test.domain.com",
-		datacenters: []testDataForGTMDatacenter{},
-	}
-
-	// mockListDatacenters mocks ListDatacenters call with provided data
-	mockListDatacenters = func(t *testing.T, client *gtm.Mock, data testDataForGTMDatacenters, timesToRun int) {
-		var dcs []gtm.Datacenter
-
-		for _, data := range data.datacenters {
-			dc := gtm.Datacenter{
-				City:                          data.city,
-				CloneOf:                       data.cloneOf,
-				CloudServerHostHeaderOverride: data.cloudServerHostHeaderOverride,
-				CloudServerTargeting:          data.cloudServerTargeting,
-				Continent:                     data.continent,
-				Country:                       data.country,
-				DefaultLoadObject:             data.defaultLoadObject,
-				Latitude:                      data.latitude,
-				Links:                         data.links,
-				Longitude:                     data.longitude,
-				Nickname:                      data.nickname,
-				DatacenterID:                  data.datacenterID,
-				ScorePenalty:                  data.scorePenalty,
-				ServermonitorPool:             data.serverMonitorPool,
-				StateOrProvince:               data.stateOrProvince,
-				Virtual:                       data.virtual,
-			}
-			dcs = append(dcs, dc)
-		}
-
-		client.On("ListDatacenters", mock.Anything, gtm.ListDatacentersRequest{
-			DomainName: data.domain,
-		}).Return(dcs, nil).Times(timesToRun)
-	}
-)
+func getEmptyTestDatacenters() []gtm.Datacenter {
+	return []gtm.Datacenter{}
+}

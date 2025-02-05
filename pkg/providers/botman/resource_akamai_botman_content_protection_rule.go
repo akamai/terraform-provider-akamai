@@ -6,9 +6,10 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/id"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -107,7 +108,7 @@ func ContentProtectionRuleRead(ctx context.Context, d *schema.ResourceData, m in
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceContentProtectionRuleRead")
 
-	idParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:contentProtectionRuleID")
+	idParts, err := id.Split(d.Id(), 3, "configID:securityPolicyID:contentProtectionRuleID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -180,7 +181,7 @@ func resourceContentProtectionRuleUpdate(ctx context.Context, d *schema.Resource
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceContentProtectionRuleUpdateAction")
 
-	idParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:contentProtectionRuleID")
+	idParts, err := id.Split(d.Id(), 3, "configID:securityPolicyID:contentProtectionRuleID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -225,7 +226,7 @@ func resourceContentProtectionRuleDelete(ctx context.Context, d *schema.Resource
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceContentProtectionRuleDeleteAction")
 
-	idParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:contentProtectionRuleID")
+	idParts, err := id.Split(d.Id(), 3, "configID:securityPolicyID:contentProtectionRuleID")
 	if err != nil {
 		return diag.FromErr(err)
 	}

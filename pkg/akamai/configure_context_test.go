@@ -12,11 +12,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/edgegrid"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/papi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v6/internal/test"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/retryablehttp"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/edgegrid"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v7/internal/test"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/retryablehttp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -123,7 +123,7 @@ func newRequest(t *testing.T, method, url string) *http.Request {
 }
 
 func TestOverrideRetryPolicy(t *testing.T) {
-	basePolicy := func(ctx context.Context, resp *http.Response, err error) (bool, error) {
+	basePolicy := func(_ context.Context, _ *http.Response, _ error) (bool, error) {
 		return false, errors.New("base policy: dummy, not implemented")
 	}
 	policy := overrideRetryPolicy(basePolicy)
@@ -238,7 +238,7 @@ func stat429ResponseWaiting(wait time.Duration) *http.Response {
 
 func Test_overrideBackoff(t *testing.T) {
 	baseWait := time.Duration(24) * time.Hour
-	baseBackoff := func(min, max time.Duration, attemptNum int, resp *http.Response) time.Duration {
+	baseBackoff := func(_, _ time.Duration, _ int, _ *http.Response) time.Duration {
 		return baseWait
 	}
 	backoff := overrideBackoff(baseBackoff, nil)
@@ -298,6 +298,7 @@ func mockSession(t *testing.T, mockServer *httptest.Server) session.Session {
 	config := edgegrid.Config{Host: serverURL.Host}
 
 	meta, err := configureContext(contextConfig{
+		userAgent:      "terraform-provider-akamai",
 		edgegridConfig: &config,
 		ctx:            context.Background(),
 	})

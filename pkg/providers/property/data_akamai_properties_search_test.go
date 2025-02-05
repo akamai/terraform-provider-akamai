@@ -4,10 +4,9 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestDSPropertiesSearch(t *testing.T) {
@@ -48,7 +47,7 @@ func TestDSPropertiesSearch(t *testing.T) {
 		}}
 
 		client.On("SearchProperties",
-			mock.Anything, // ctx is irrelevant for this test
+			testutils.MockContext,
 			papi.SearchRequest{Key: "hostname", Value: "www.example.com"},
 		).Return(&papi.SearchResponse{Versions: search}, nil)
 
@@ -89,7 +88,7 @@ func TestDSPropertiesSearch(t *testing.T) {
 		client := &papi.Mock{}
 
 		client.On("SearchProperties",
-			mock.Anything,
+			testutils.MockContext,
 			papi.SearchRequest{Key: "hostname", Value: "www.example.com"},
 		).Return(nil, papi.ErrSearchProperties)
 

@@ -5,10 +5,10 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cloudaccess"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/date"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/cloudaccess"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/date"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -18,20 +18,20 @@ func TestDataKey(t *testing.T) {
 		listLocationsRes := cloudaccess.ListAccessKeysResponse{
 			AccessKeys: data,
 		}
-		client.On("ListAccessKeys", mock.Anything, mock.Anything).Return(&listLocationsRes, nil).Times(timesToRun)
+		client.On("ListAccessKeys", testutils.MockContext, mock.Anything).Return(&listLocationsRes, nil).Times(timesToRun)
 	}
 
 	expectListAccessKeysWithError := func(client *cloudaccess.Mock, timesToRun int) {
-		client.On("ListAccessKeys", mock.Anything, mock.Anything).Return(nil, fmt.Errorf("list keys failed")).Times(timesToRun)
+		client.On("ListAccessKeys", testutils.MockContext, mock.Anything).Return(nil, fmt.Errorf("list keys failed")).Times(timesToRun)
 	}
 
 	stringDate1, err := date.Parse("2021-02-24T09:09:52.782555Z")
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 	stringDate2, err := date.Parse("2021-02-26T09:09:15.428314Z")
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 	testData := []cloudaccess.AccessKeyResponse{
 		{
@@ -101,7 +101,7 @@ func TestDataKey(t *testing.T) {
 		},
 		"error listing keys": {
 			configPath: "testdata/TestDataKey/default.tf",
-			init: func(_ *testing.T, m *cloudaccess.Mock, testData []cloudaccess.AccessKeyResponse) {
+			init: func(_ *testing.T, m *cloudaccess.Mock, _ []cloudaccess.AccessKeyResponse) {
 				expectListAccessKeysWithError(m, 1)
 			},
 			error: regexp.MustCompile("list keys failed"),

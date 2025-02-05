@@ -8,11 +8,10 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
 type testDataPropertyIncludeRules struct {
@@ -74,10 +73,10 @@ var (
 			getIncludeRuleTreeResponse.Warnings = ruleResp.Warnings
 		}
 
-		client.On("GetIncludeRuleTree", mock.Anything, getIncludeRuleTreeRequest).Return(&getIncludeRuleTreeResponse, nil).Times(timesToRun)
+		client.On("GetIncludeRuleTree", testutils.MockContext, getIncludeRuleTreeRequest).Return(&getIncludeRuleTreeResponse, nil).Times(timesToRun)
 	}
 
-	expectGetIncludeRuleTreeError = func(t *testing.T, client *papi.Mock, data testDataPropertyIncludeRules) {
+	expectGetIncludeRuleTreeError = func(client *papi.Mock, data testDataPropertyIncludeRules) {
 		getIncludeRuleTreeRequest := papi.GetIncludeRuleTreeRequest{
 			ContractID:     data.ContractID,
 			GroupID:        data.GroupID,
@@ -85,7 +84,7 @@ var (
 			IncludeID:      data.IncludeID,
 			ValidateRules:  true,
 		}
-		client.On("GetIncludeRuleTree", mock.Anything, getIncludeRuleTreeRequest).Return(nil,
+		client.On("GetIncludeRuleTree", testutils.MockContext, getIncludeRuleTreeRequest).Return(nil,
 			errors.New("GetIncludeRuleTree response error"))
 	}
 )
@@ -101,22 +100,22 @@ func TestDataPropertyIncludeRules(t *testing.T) {
 			init: func(t *testing.T, m *papi.Mock, testData testDataPropertyIncludeRules) {
 				expectReadPropertyRulesInclude(t, m, testData, 3, true, false, "rules_with_errors.json")
 			},
-			mockData:   propertyIncludeRulesWithRuleErrors(testDataIncludeRules(t), testutils.LoadFixtureString(t, "%s/property-snippets/rule_errors.json", workdir)),
+			mockData:   propertyIncludeRulesWithRuleErrors(testDataIncludeRules(t), testutils.LoadFixtureStringf(t, "%s/property-snippets/rule_errors.json", workdir)),
 			configPath: "./testdata/TestDSPropertyIncludeRules/property_include_rules.tf",
 		},
 		"happy path include rules with rules warnings": {
 			init: func(t *testing.T, m *papi.Mock, testData testDataPropertyIncludeRules) {
 				expectReadPropertyRulesInclude(t, m, testData, 3, false, true, "rules_with_warnings.json")
 			},
-			mockData:   propertyIncludeRulesWithRuleWarnings(testDataIncludeRules(t), testutils.LoadFixtureString(t, "%s/property-snippets/rule_warnings.json", workdir)),
+			mockData:   propertyIncludeRulesWithRuleWarnings(testDataIncludeRules(t), testutils.LoadFixtureStringf(t, "%s/property-snippets/rule_warnings.json", workdir)),
 			configPath: "./testdata/TestDSPropertyIncludeRules/property_include_rules.tf",
 		},
 		"happy path include rules with rules warnings and errors": {
 			init: func(t *testing.T, m *papi.Mock, testData testDataPropertyIncludeRules) {
 				expectReadPropertyRulesInclude(t, m, testData, 3, true, true, "rules_with_errors_and_warnings.json")
 			},
-			mockData: propertyIncludeRulesWithRuleWarningsAndErrors(testDataIncludeRules(t), testutils.LoadFixtureString(t, "%s/property-snippets/rule_warnings.json", workdir),
-				testutils.LoadFixtureString(t, "%s/property-snippets/rule_errors.json", workdir)),
+			mockData: propertyIncludeRulesWithRuleWarningsAndErrors(testDataIncludeRules(t), testutils.LoadFixtureStringf(t, "%s/property-snippets/rule_warnings.json", workdir),
+				testutils.LoadFixtureStringf(t, "%s/property-snippets/rule_errors.json", workdir)),
 			configPath: "./testdata/TestDSPropertyIncludeRules/property_include_rules.tf",
 		},
 		"happy path include rules": {
@@ -127,30 +126,26 @@ func TestDataPropertyIncludeRules(t *testing.T) {
 			configPath: "./testdata/TestDSPropertyIncludeRules/property_include_rules.tf",
 		},
 		"groupID not provided": {
-			init:       func(_ *testing.T, m *papi.Mock, testData testDataPropertyIncludeRules) {},
 			configPath: "./testdata/TestDSPropertyIncludeRules/property_include_rules_no_group_id.tf",
 			error:      regexp.MustCompile("Missing required argument"),
 		},
 		"contractID not provided": {
-			init:       func(t *testing.T, m *papi.Mock, testData testDataPropertyIncludeRules) {},
 			configPath: "./testdata/TestDSPropertyIncludeRules/property_include_rules_no_contract_id.tf",
 			error:      regexp.MustCompile("Missing required argument"),
 		},
 		"includeID not provided": {
-			init:       func(t *testing.T, m *papi.Mock, testData testDataPropertyIncludeRules) {},
 			configPath: "./testdata/TestDSPropertyIncludeRules/property_include_rules_no_include_id.tf",
 			error:      regexp.MustCompile("Missing required argument"),
 		},
 		"version not provided": {
-			init:       func(t *testing.T, m *papi.Mock, testData testDataPropertyIncludeRules) {},
 			configPath: "./testdata/TestDSPropertyIncludeRules/property_include_rules_no_version.tf",
 			error:      regexp.MustCompile("Missing required argument"),
 		},
 		"GetIncludeRuleTree response error": {
-			init: func(t *testing.T, m *papi.Mock, testData testDataPropertyIncludeRules) {
-				expectGetIncludeRuleTreeError(t, m, testData)
+			init: func(_ *testing.T, m *papi.Mock, testData testDataPropertyIncludeRules) {
+				expectGetIncludeRuleTreeError(m, testData)
 			},
-			mockData:   propertyIncludeRulesWithRuleErrors(testDataIncludeRules(t), testutils.LoadFixtureString(t, "%s/property-snippets/rule_errors.json", workdir)),
+			mockData:   propertyIncludeRulesWithRuleErrors(testDataIncludeRules(t), testutils.LoadFixtureStringf(t, "%s/property-snippets/rule_errors.json", workdir)),
 			configPath: "./testdata/TestDSPropertyIncludeRules/property_include_rules_api_error.tf",
 			error:      regexp.MustCompile("GetIncludeRuleTree response error"),
 		},
@@ -159,7 +154,9 @@ func TestDataPropertyIncludeRules(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &papi.Mock{}
-			test.init(t, client, test.mockData)
+			if test.init != nil {
+				test.init(t, client, test.mockData)
+			}
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
@@ -216,6 +213,6 @@ func testDataIncludeRules(t *testing.T) testDataPropertyIncludeRules {
 		RuleFormat:  "v2022-06-28",
 		Name:        "TestIncludeName",
 		IncludeType: "MICROSERVICES",
-		Rules:       testutils.LoadFixtureString(t, "%s/property-snippets/rules_without_errors.json", workdir),
+		Rules:       testutils.LoadFixtureStringf(t, "%s/property-snippets/rules_without_errors.json", workdir),
 	}
 }

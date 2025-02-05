@@ -6,11 +6,10 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cps"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/providers/cps/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/cps"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/providers/cps/tools"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 const contractID = "testing"
@@ -39,7 +38,7 @@ func TestDataEnrollments(t *testing.T) {
 		"happy path": {
 			enrollments: *enrollmentsList,
 			init: func(_ *testing.T, m *cps.Mock) {
-				m.On("ListEnrollments", mock.Anything, cps.ListEnrollmentsRequest{
+				m.On("ListEnrollments", testutils.MockContext, cps.ListEnrollmentsRequest{
 					ContractID: contractID,
 				}).Return(enrollmentsList, nil).Times(3)
 			},
@@ -53,7 +52,7 @@ func TestDataEnrollments(t *testing.T) {
 		"could not fetch list of enrollments": {
 			enrollments: *enrollmentsList,
 			init: func(_ *testing.T, m *cps.Mock) {
-				m.On("ListEnrollments", mock.Anything, cps.ListEnrollmentsRequest{
+				m.On("ListEnrollments", testutils.MockContext, cps.ListEnrollmentsRequest{
 					ContractID: contractID,
 				}).Return(nil, fmt.Errorf("could not get list of enrollments")).Once()
 			},
@@ -67,7 +66,7 @@ func TestDataEnrollments(t *testing.T) {
 		"different change type enrollments": {
 			enrollments: *enrollmentsThirdPartyList,
 			init: func(_ *testing.T, m *cps.Mock) {
-				m.On("ListEnrollments", mock.Anything, cps.ListEnrollmentsRequest{
+				m.On("ListEnrollments", testutils.MockContext, cps.ListEnrollmentsRequest{
 					ContractID: contractID,
 				}).Return(enrollmentsThirdPartyList, nil).Times(3)
 
@@ -82,7 +81,7 @@ func TestDataEnrollments(t *testing.T) {
 		"no enrollments for given contract": {
 			enrollments: cps.ListEnrollmentsResponse{},
 			init: func(_ *testing.T, m *cps.Mock) {
-				m.On("ListEnrollments", mock.Anything, cps.ListEnrollmentsRequest{
+				m.On("ListEnrollments", testutils.MockContext, cps.ListEnrollmentsRequest{
 					ContractID: contractID,
 				}).Return(emptyEnrollmentList, nil).Times(6)
 			},

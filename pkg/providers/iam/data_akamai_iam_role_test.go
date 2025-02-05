@@ -6,10 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/iam"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestRoleDataSource(t *testing.T) {
@@ -26,7 +25,7 @@ func TestRoleDataSource(t *testing.T) {
 		"happy path - role is returned": {
 			givenTF: "valid.tf",
 			init: func(m *iam.Mock) {
-				m.On("GetRole", mock.Anything, iam.GetRoleRequest{
+				m.On("GetRole", testutils.MockContext, iam.GetRoleRequest{
 					ID:           12345,
 					Actions:      true,
 					GrantedRoles: true,
@@ -63,7 +62,7 @@ func TestRoleDataSource(t *testing.T) {
 		"happy path - role is returned, without dates": {
 			givenTF: "valid.tf",
 			init: func(m *iam.Mock) {
-				m.On("GetRole", mock.Anything, iam.GetRoleRequest{
+				m.On("GetRole", testutils.MockContext, iam.GetRoleRequest{
 					ID:           12345,
 					Actions:      true,
 					GrantedRoles: true,
@@ -98,7 +97,7 @@ func TestRoleDataSource(t *testing.T) {
 		"error response from API": {
 			givenTF: "valid.tf",
 			init: func(m *iam.Mock) {
-				m.On("GetRole", mock.Anything, iam.GetRoleRequest{
+				m.On("GetRole", testutils.MockContext, iam.GetRoleRequest{
 					ID:           12345,
 					Actions:      true,
 					GrantedRoles: true,
@@ -132,7 +131,7 @@ func TestRoleDataSource(t *testing.T) {
 					IsUnitTest:               true,
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{{
-						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestDataRole/%s", tc.givenTF)),
+						Config:      testutils.LoadFixtureStringf(t, "testdata/TestDataRole/%s", tc.givenTF),
 						Check:       resource.ComposeAggregateTestCheckFunc(checkFuncs...),
 						ExpectError: tc.expectError,
 					}},

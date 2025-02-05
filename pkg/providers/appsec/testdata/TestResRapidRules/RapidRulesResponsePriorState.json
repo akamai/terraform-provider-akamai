@@ -1,0 +1,49 @@
+{
+  "policyRules": [
+    {
+      "action": "alert",
+      "conditionException": {},
+      "id": 3000998,
+      "lock": false,
+      "riskScoreGroups": [
+        "PLATFORM"
+      ],
+      "title": "Citrix Virtual Apps and Desktops (XEN) Unauthenticated RCE (CVE-2024-8068 and CVE-2024-8069) Attack Detected",
+      "version": 3
+    },
+    {
+      "action": "alert",
+      "conditionException": {
+        "exception": {
+          "specificHeaderCookieParamXmlOrJsonNames": [
+            {
+              "names": [
+                "Auth"
+              ],
+              "selector": "REQUEST_HEADERS",
+              "wildcard": false
+            }
+          ]
+        }
+      },
+      "id": 3000214,
+      "lock": false,
+      "riskScoreGroups": [
+        "XSS"
+      ],
+      "title": "Cross-site Scripting (XSS) Attack - Document Write",
+      "version": 3
+    },
+    {
+      "action": "alert",
+      "conditionException": {},
+      "id": 999999,
+      "lock": false,
+      "riskScoreGroups": [
+        "XSS"
+      ],
+      "title": "Cross-site Scripting (XSS) Attack - Dummy test rule",
+      "version": 3
+    }
+  ]
+}

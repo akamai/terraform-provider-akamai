@@ -6,21 +6,15 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"sync"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/cache"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
-	akameta "github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/id"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
+	akameta "github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-)
-
-var (
-	// getWAFModeMutex enforces single-thread access to the GetWAFMode call
-	getWAFModeMutex sync.Mutex
 )
 
 // appsec v1
@@ -132,63 +126,13 @@ func resourceRuleCreate(ctx context.Context, d *schema.ResourceData, m interface
 	return resourceRuleRead(ctx, d, m)
 }
 
-func getWAFMode(ctx context.Context, m interface{}, configID int, version int, policyID string) (string, error) {
-	meta := akameta.Must(m)
-	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "getWAFMode")
-
-	cacheKey := fmt.Sprintf("%s:%d:%d:%s", "getWAFMode", configID, version, policyID)
-	getWAFModeResponse := &appsec.GetWAFModeResponse{}
-	if err := cache.Get(cache.BucketName(SubproviderName), cacheKey, getWAFModeResponse); err == nil {
-		logger.Debugf("returning wafMode %s for config/version/policy %d/%d/%s",
-			getWAFModeResponse.Mode, configID, version, policyID)
-		return getWAFModeResponse.Mode, nil
-	}
-
-	logger.Debugf("requesting getWAFMode mutex lock")
-	getWAFModeMutex.Lock()
-	defer func() {
-		logger.Debugf("releasing getWAFMode mutex lock")
-		getWAFModeMutex.Unlock()
-	}()
-
-	err := cache.Get(cache.BucketName(SubproviderName), cacheKey, getWAFModeResponse)
-	if err == nil {
-		logger.Debugf("returning wafMode %s for config/version/policy %d/%d/%s",
-			getWAFModeResponse.Mode, configID, version, policyID)
-		return getWAFModeResponse.Mode, nil
-	}
-	// Any error response other than 'not found' or 'cache disabled' is a problem.
-	if !errors.Is(err, cache.ErrEntryNotFound) && !errors.Is(err, cache.ErrDisabled) {
-		logger.Errorf("error reading from cache: %s", err.Error())
-		return "", err
-	}
-
-	getWAFModeRequest := appsec.GetWAFModeRequest{
-		ConfigID: configID,
-		Version:  version,
-		PolicyID: policyID,
-	}
-	wafMode, err := client.GetWAFMode(ctx, getWAFModeRequest)
-	if err != nil {
-		logger.Errorf("calling 'GetWAFMode': %s", err.Error())
-		return "", err
-	}
-	if err := cache.Set(cache.BucketName(SubproviderName), cacheKey, wafMode); err != nil {
-		if !errors.Is(err, cache.ErrDisabled) {
-			logger.Errorf("error caching WAFMode: %s", err.Error())
-		}
-	}
-	return wafMode.Mode, nil
-}
-
 func resourceRuleRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akameta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("APPSEC", "resourceRuleRead")
 	logger.Debugf("in resourceRuleRead")
 
-	iDParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:ruleID")
+	iDParts, err := id.Split(d.Id(), 3, "configID:securityPolicyID:ruleID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -252,7 +196,7 @@ func resourceRuleUpdate(ctx context.Context, d *schema.ResourceData, m interface
 	logger := meta.Log("APPSEC", "resourceRuleUpdate")
 	logger.Debugf("in resourceRuleUpdate")
 
-	iDParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:ruleID")
+	iDParts, err := id.Split(d.Id(), 3, "configID:securityPolicyID:ruleID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -308,7 +252,7 @@ func resourceRuleDelete(ctx context.Context, d *schema.ResourceData, m interface
 	logger := meta.Log("APPSEC", "resourceRuleDelete")
 	logger.Debugf("in resourceRuleDelete")
 
-	iDParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:ruleID")
+	iDParts, err := id.Split(d.Id(), 3, "configID:securityPolicyID:ruleID")
 	if err != nil {
 		return diag.FromErr(err)
 	}

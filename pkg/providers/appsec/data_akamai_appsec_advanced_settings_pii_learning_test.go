@@ -7,10 +7,9 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -31,7 +30,7 @@ func TestAkamaiAdvancedSettingsPIILearning_data_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
@@ -44,7 +43,7 @@ func TestAkamaiAdvancedSettingsPIILearning_data_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetAdvancedSettingsPIILearning",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetAdvancedSettingsPIILearningRequest{
 				ConfigVersion: appsec.ConfigVersion{
 					ConfigID: 43253,
@@ -84,7 +83,7 @@ func TestAkamaiAdvancedSettingsPIILearning_data_missing_parameter(t *testing.T) 
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
@@ -97,7 +96,7 @@ func TestAkamaiAdvancedSettingsPIILearning_data_missing_parameter(t *testing.T) 
 		require.NoError(t, err)
 
 		client.On("GetAdvancedSettingsPIILearning",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetAdvancedSettingsPIILearningRequest{
 				ConfigVersion: appsec.ConfigVersion{
 					ConfigID: 43253,

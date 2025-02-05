@@ -1,0 +1,70 @@
+[
+  {
+    "action": "deny_custom_858380",
+    "id": 3000998,
+    "lock": false
+  },
+  {
+    "action": "alert",
+    "conditionException": {
+      "advancedExceptions": {
+        "specificHeaderCookieOrParamNameValue": [
+          {
+            "namesValues": [
+              {
+                "names": [
+                  "user"
+                ],
+                "values": [
+                  "admin",
+                  "root",
+                  "nimda"
+                ]
+              }
+            ],
+            "selector": "ARGS",
+            "valueWildcard": true,
+            "wildcard": true
+          }
+        ],
+        "specificHeaderCookieParamXmlOrJsonNames": [
+          {
+            "names": [
+              "adress"
+            ],
+            "selector": "ARGS_NAMES",
+            "wildcard": true
+          },
+          {
+            "names": [
+              "accept"
+            ],
+            "selector": "ARGS",
+            "wildcard": true
+          }
+        ]
+      }
+    },
+    "id": 999999,
+    "lock": false
+  },
+  {
+    "action": "deny",
+    "conditionException": {
+      "exception": {
+        "specificHeaderCookieParamXmlOrJsonNames": [
+          {
+            "names": [
+              "Auth"
+            ],
+            "selector": "REQUEST_HEADERS",
+            "wildcard": false
+          }
+        ]
+      }
+    },
+    "id": 3000214,
+    "lock": true
+  }
+]
+

@@ -5,10 +5,9 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/iam"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestDataStates(t *testing.T) {
@@ -17,7 +16,7 @@ func TestDataStates(t *testing.T) {
 		client.Test(testutils.TattleT{T: t})
 
 		req := iam.ListStatesRequest{Country: "test country"}
-		client.On("ListStates", mock.Anything, req).Return([]string{"first", "second", "third"}, nil)
+		client.On("ListStates", testutils.MockContext, req).Return([]string{"first", "second", "third"}, nil)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -25,7 +24,7 @@ func TestDataStates(t *testing.T) {
 				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, "testdata/%s/step0.tf", t.Name()),
+						Config: testutils.LoadFixtureStringf(t, "testdata/%s/step0.tf", t.Name()),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttrSet("data.akamai_iam_states.test", "id"),
 							resource.TestCheckResourceAttr("data.akamai_iam_states.test", "states.#", "3"),
@@ -45,7 +44,7 @@ func TestDataStates(t *testing.T) {
 		client.Test(testutils.TattleT{T: t})
 
 		req := iam.ListStatesRequest{Country: "test country"}
-		client.On("ListStates", mock.Anything, req).Return([]string{}, errors.New("Could not get states"))
+		client.On("ListStates", testutils.MockContext, req).Return([]string{}, errors.New("Could not get states"))
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -53,7 +52,7 @@ func TestDataStates(t *testing.T) {
 				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
-						Config:      testutils.LoadFixtureString(t, "testdata/%s/step0.tf", t.Name()),
+						Config:      testutils.LoadFixtureStringf(t, "testdata/%s/step0.tf", t.Name()),
 						ExpectError: regexp.MustCompile(`Could not get states`),
 					},
 				},

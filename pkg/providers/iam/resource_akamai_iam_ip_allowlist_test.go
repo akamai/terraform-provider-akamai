@@ -4,10 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"strings"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/iam"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/stretchr/testify/mock"
@@ -17,12 +18,12 @@ func TestIPAllowlistResource(t *testing.T) {
 	t.Parallel()
 	tests := map[string]struct {
 		configPath string
-		init       func(*testing.T, *iam.Mock)
+		init       func(*iam.Mock)
 		steps      []resource.TestStep
 		error      *regexp.Regexp
 	}{
 		"create - enable": {
-			init: func(t *testing.T, m *iam.Mock) {
+			init: func(m *iam.Mock) {
 				// step 1 create
 				mockReadIPAllowlistStatus(m, false)
 				mockEnableIPAllowlist(m)
@@ -40,7 +41,7 @@ func TestIPAllowlistResource(t *testing.T) {
 			},
 		},
 		"create - disable": {
-			init: func(t *testing.T, m *iam.Mock) {
+			init: func(m *iam.Mock) {
 				// step 1 create
 				mockReadIPAllowlistStatus(m, true)
 				mockDisableIPAllowlist(m)
@@ -57,7 +58,7 @@ func TestIPAllowlistResource(t *testing.T) {
 			},
 		},
 		"create - already enabled on server": {
-			init: func(t *testing.T, m *iam.Mock) {
+			init: func(m *iam.Mock) {
 				// step 1 create - ip allowlist already enabled on server
 				mockReadIPAllowlistStatus(m, true)
 				// step 2 read
@@ -74,7 +75,7 @@ func TestIPAllowlistResource(t *testing.T) {
 			},
 		},
 		"create - already disabled on server": {
-			init: func(t *testing.T, m *iam.Mock) {
+			init: func(m *iam.Mock) {
 				// step 1 create - ip allowlist already disabled on server
 				mockReadIPAllowlistStatus(m, false)
 				// step 2 read
@@ -90,7 +91,7 @@ func TestIPAllowlistResource(t *testing.T) {
 			},
 		},
 		"update - enable": {
-			init: func(t *testing.T, m *iam.Mock) {
+			init: func(m *iam.Mock) {
 				// step 1 create
 				mockReadIPAllowlistStatus(m, true)
 				mockDisableIPAllowlist(m)
@@ -119,7 +120,7 @@ func TestIPAllowlistResource(t *testing.T) {
 			},
 		},
 		"update - disable": {
-			init: func(t *testing.T, m *iam.Mock) {
+			init: func(m *iam.Mock) {
 				// step 1 create
 				mockReadIPAllowlistStatus(m, false)
 				mockEnableIPAllowlist(m)
@@ -147,7 +148,7 @@ func TestIPAllowlistResource(t *testing.T) {
 			},
 		},
 		"error - enable error ip not on allowlist": {
-			init: func(t *testing.T, m *iam.Mock) {
+			init: func(m *iam.Mock) {
 				// step 1 create - error
 				mockReadIPAllowlistStatus(m, false)
 				mockEnableIPAllowlistError(m)
@@ -160,7 +161,7 @@ func TestIPAllowlistResource(t *testing.T) {
 			},
 		},
 		"error - disable error IP not on allowlist": {
-			init: func(t *testing.T, m *iam.Mock) {
+			init: func(m *iam.Mock) {
 				// step 1 create - error
 				mockReadIPAllowlistStatus(m, true)
 				mockDisableIPAllowlistError(m)
@@ -177,7 +178,7 @@ func TestIPAllowlistResource(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			client := &iam.Mock{}
 			if tc.init != nil {
-				tc.init(t, client)
+				tc.init(client)
 			}
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
@@ -195,13 +196,13 @@ func TestImportIPAllowlistResource(t *testing.T) {
 	tests := map[string]struct {
 		importID   string
 		configPath string
-		init       func(*testing.T, *iam.Mock)
+		init       func(*iam.Mock)
 		mockData   []commonDataForResource
 		stateCheck func(s []*terraform.InstanceState) error
 	}{
 		"import": {
 			importID: " ",
-			init: func(t *testing.T, m *iam.Mock) {
+			init: func(m *iam.Mock) {
 				// Import
 				mockReadIPAllowlistStatus(m, true).Twice()
 			},
@@ -211,7 +212,7 @@ func TestImportIPAllowlistResource(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &iam.Mock{}
-			test.init(t, client)
+			test.init(client)
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
@@ -254,28 +255,31 @@ func checkImportEnabledIPAllowlistForSpecificUser() resource.ImportStateCheckFun
 				invalidValues = append(invalidValues, fmt.Sprintf("field: %s, got: %s, expected: %s ", field, state[field], expectedVal))
 			}
 		}
+		if len(invalidValues) > 0 {
+			return fmt.Errorf("found invalid values: %s", strings.Join(invalidValues, ","))
+		}
 		return nil
 	}
 }
 
 func mockEnableIPAllowlist(m *iam.Mock) *mock.Call {
-	return m.On("EnableIPAllowlist", mock.Anything).Return(nil).Once()
+	return m.On("EnableIPAllowlist", testutils.MockContext).Return(nil).Once()
 }
 
 func mockEnableIPAllowlistError(m *iam.Mock) *mock.Call {
-	return m.On("EnableIPAllowlist", mock.Anything).Return(iam.ErrEnableIPAllowlist).Once()
+	return m.On("EnableIPAllowlist", testutils.MockContext).Return(iam.ErrEnableIPAllowlist).Once()
 }
 
 func mockDisableIPAllowlist(m *iam.Mock) *mock.Call {
-	return m.On("DisableIPAllowlist", mock.Anything).Return(nil).Once()
+	return m.On("DisableIPAllowlist", testutils.MockContext).Return(nil).Once()
 }
 func mockDisableIPAllowlistError(m *iam.Mock) *mock.Call {
-	return m.On("DisableIPAllowlist", mock.Anything).Return(iam.ErrDisableIPAllowlist).Once()
+	return m.On("DisableIPAllowlist", testutils.MockContext).Return(iam.ErrDisableIPAllowlist).Once()
 }
 
 func mockReadIPAllowlistStatus(m *iam.Mock, enabled bool) *mock.Call {
 	if enabled {
-		return m.On("GetIPAllowlistStatus", mock.Anything).Return(&iam.GetIPAllowlistStatusResponse{Enabled: true}, nil).Once()
+		return m.On("GetIPAllowlistStatus", testutils.MockContext).Return(&iam.GetIPAllowlistStatusResponse{Enabled: true}, nil).Once()
 	}
-	return m.On("GetIPAllowlistStatus", mock.Anything).Return(&iam.GetIPAllowlistStatusResponse{Enabled: false}, nil).Once()
+	return m.On("GetIPAllowlistStatus", testutils.MockContext).Return(&iam.GetIPAllowlistStatusResponse{Enabled: false}, nil).Once()
 }

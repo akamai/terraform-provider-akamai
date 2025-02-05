@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/gtm"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/gtm"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -17,7 +17,6 @@ type geoMapsDataSource struct {
 }
 
 type geoMapsDataSourceModel struct {
-	ID      types.String    `tfsdk:"id"`
 	Domain  types.String    `tfsdk:"domain"`
 	GeoMaps []geographicMap `tfsdk:"geo_maps"`
 }
@@ -53,11 +52,6 @@ func (d *geoMapsDataSource) Schema(_ context.Context, _ datasource.SchemaRequest
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "GTM Geographic maps data source.",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				MarkdownDescription: "Identifier of the data source.",
-				DeprecationMessage:  "Required by the terraform plugin testing framework, always set to `gtm_geomaps`.",
-				Computed:            true,
-			},
 			"domain": schema.StringAttribute{
 				Required:    true,
 				Description: "GTM domain name.",
@@ -149,7 +143,6 @@ func (d *geoMapsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		return
 	}
 
-	data.ID = types.StringValue("gtm_geomaps")
 	geographicMaps, diags := getGeographicMaps(ctx, geoMaps)
 
 	if diags.HasError() {

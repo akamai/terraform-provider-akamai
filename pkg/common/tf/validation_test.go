@@ -7,7 +7,7 @@ import (
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/tj/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestIsBlank(t *testing.T) {
@@ -46,13 +46,13 @@ func TestAggregateValidations(t *testing.T) {
 	}{
 		"some functions return errors": {
 			funcs: []schema.SchemaValidateDiagFunc{
-				func(i interface{}, path cty.Path) diag.Diagnostics {
+				func(_ interface{}, _ cty.Path) diag.Diagnostics {
 					return diag.Errorf("1")
 				},
-				func(i interface{}, path cty.Path) diag.Diagnostics {
+				func(_ interface{}, _ cty.Path) diag.Diagnostics {
 					return nil
 				},
-				func(i interface{}, path cty.Path) diag.Diagnostics {
+				func(_ interface{}, _ cty.Path) diag.Diagnostics {
 					return diag.Diagnostics{diag.Diagnostic{Summary: "1"}, diag.Diagnostic{Summary: "2"}}
 				},
 			},
@@ -60,7 +60,7 @@ func TestAggregateValidations(t *testing.T) {
 		},
 		"no errors": {
 			funcs: []schema.SchemaValidateDiagFunc{
-				func(i interface{}, path cty.Path) diag.Diagnostics {
+				func(_ interface{}, _ cty.Path) diag.Diagnostics {
 					return nil
 				},
 			},

@@ -4,9 +4,9 @@ package appsec
 import (
 	"sync"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/subprovider"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/subprovider"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -40,12 +40,6 @@ func NewSubprovider(opts ...option) *Subprovider {
 	})
 
 	return inst
-}
-
-func withClient(c appsec.APPSEC) option {
-	return func(p *Subprovider) {
-		p.client = c
-	}
 }
 
 // Client returns the APPSEC interface
@@ -104,7 +98,6 @@ func (p *Subprovider) SDKResources() map[string]*schema.Resource {
 		"akamai_appsec_security_policy":                          resourceSecurityPolicy(),
 		"akamai_appsec_security_policy_default_protections":      resourceSecurityPolicyDefaultProtections(),
 		"akamai_appsec_security_policy_rename":                   resourceSecurityPolicyRename(),
-		"akamai_appsec_selected_hostnames":                       resourceSelectedHostname(),
 		"akamai_appsec_siem_settings":                            resourceSiemSettings(),
 		"akamai_appsec_slow_post":                                resourceSlowPostProtectionSetting(),
 		"akamai_appsec_slowpost_protection":                      resourceSlowPostProtection(),
@@ -112,7 +105,6 @@ func (p *Subprovider) SDKResources() map[string]*schema.Resource {
 		"akamai_appsec_version_notes":                            resourceVersionNotes(),
 		"akamai_appsec_waf_mode":                                 resourceWAFMode(),
 		"akamai_appsec_waf_protection":                           resourceWAFProtection(),
-		"akamai_appsec_wap_selected_hostnames":                   resourceWAPSelectedHostnames(),
 	}
 }
 
@@ -164,7 +156,6 @@ func (p *Subprovider) SDKDataSources() map[string]*schema.Resource {
 		"akamai_appsec_security_policy":                          dataSourceSecurityPolicy(),
 		"akamai_appsec_security_policy_protections":              dataSourcePolicyProtections(),
 		"akamai_appsec_selectable_hostnames":                     dataSourceSelectableHostnames(),
-		"akamai_appsec_selected_hostnames":                       dataSourceSelectedHostnames(),
 		"akamai_appsec_siem_definitions":                         dataSourceSiemDefinitions(),
 		"akamai_appsec_siem_settings":                            dataSourceSiemSettings(),
 		"akamai_appsec_slow_post":                                dataSourceSlowPostProtectionSettings(),
@@ -172,16 +163,19 @@ func (p *Subprovider) SDKDataSources() map[string]*schema.Resource {
 		"akamai_appsec_tuning_recommendations":                   dataSourceTuningRecommendations(),
 		"akamai_appsec_version_notes":                            dataSourceVersionNotes(),
 		"akamai_appsec_waf_mode":                                 dataSourceWAFMode(),
-		"akamai_appsec_wap_selected_hostnames":                   dataSourceWAPSelectedHostnames(),
 	}
 }
 
 // FrameworkResources returns the appsec resources implemented using terraform-plugin-framework
 func (p *Subprovider) FrameworkResources() []func() resource.Resource {
-	return []func() resource.Resource{}
+	return []func() resource.Resource{
+		NewRapidRulesResource,
+	}
 }
 
 // FrameworkDataSources returns the appsec data sources implemented using terraform-plugin-framework
 func (p *Subprovider) FrameworkDataSources() []func() datasource.DataSource {
-	return []func() datasource.DataSource{}
+	return []func() datasource.DataSource{
+		NewRapidRulesDataSource,
+	}
 }

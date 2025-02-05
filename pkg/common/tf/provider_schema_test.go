@@ -83,7 +83,6 @@ func TestGetStringValue(t *testing.T) {
 		},
 		"empty key passed": {
 			key:       "",
-			init:      func(m *mocked) {},
 			withError: ErrEmptyKey,
 		},
 		"value is of invalid type": {
@@ -97,7 +96,9 @@ func TestGetStringValue(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			m := &mocked{}
-			test.init(m)
+			if test.init != nil {
+				test.init(m)
+			}
 			res, err := GetStringValue(test.key, m)
 			m.AssertExpectations(t)
 			if test.withError != nil {
@@ -133,7 +134,6 @@ func TestGetIntValue(t *testing.T) {
 		},
 		"empty key passed": {
 			key:       "",
-			init:      func(m *mocked) {},
 			withError: ErrEmptyKey,
 		},
 		"value is of invalid type": {
@@ -147,7 +147,9 @@ func TestGetIntValue(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			m := &mocked{}
-			test.init(m)
+			if test.init != nil {
+				test.init(m)
+			}
 			res, err := GetIntValue(test.key, m)
 			m.AssertExpectations(t)
 			if test.withError != nil {
@@ -182,7 +184,6 @@ func TestGetBoolValue(t *testing.T) {
 		},
 		"empty key passed": {
 			key:       "",
-			init:      func(m *mocked) {},
 			withError: ErrEmptyKey,
 		},
 		"value is of invalid type": {
@@ -196,7 +197,9 @@ func TestGetBoolValue(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			m := &mocked{}
-			test.init(m)
+			if test.init != nil {
+				test.init(m)
+			}
 			res, err := GetBoolValue(test.key, m)
 			m.AssertExpectations(t)
 			if test.withError != nil {
@@ -231,7 +234,6 @@ func TestGetSetValue(t *testing.T) {
 		},
 		"empty key passed": {
 			key:       "",
-			init:      func(m *mocked) {},
 			withError: ErrEmptyKey,
 		},
 		"value is of invalid type": {
@@ -245,7 +247,9 @@ func TestGetSetValue(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			m := &mocked{}
-			test.init(m)
+			if test.init != nil {
+				test.init(m)
+			}
 			res, err := GetSetValue(test.key, m)
 			m.AssertExpectations(t)
 			if test.withError != nil {
@@ -280,7 +284,6 @@ func TestGetInterfaceArrayValue(t *testing.T) {
 		},
 		"empty key passed": {
 			key:       "",
-			init:      func(m *mocked) {},
 			withError: ErrEmptyKey,
 		},
 		"value is of invalid type": {
@@ -295,7 +298,9 @@ func TestGetInterfaceArrayValue(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			m := &mocked{}
-			test.init(m)
+			if test.init != nil {
+				test.init(m)
+			}
 			res, err := GetInterfaceArrayValue(test.key, m)
 			m.AssertExpectations(t)
 			if test.withError != nil {
@@ -330,7 +335,6 @@ func TestGetFloat64Value(t *testing.T) {
 		},
 		"empty key passed": {
 			key:       "",
-			init:      func(m *mocked) {},
 			withError: ErrEmptyKey,
 		},
 		"value is of invalid type": {
@@ -345,7 +349,9 @@ func TestGetFloat64Value(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			m := &mocked{}
-			test.init(m)
+			if test.init != nil {
+				test.init(m)
+			}
 			res, err := GetFloat64Value(test.key, m)
 			m.AssertExpectations(t)
 			if test.withError != nil {
@@ -380,7 +386,6 @@ func TestGetFloat32Value(t *testing.T) {
 		},
 		"empty key passed": {
 			key:       "",
-			init:      func(m *mocked) {},
 			withError: ErrEmptyKey,
 		},
 		"value is of invalid type": {
@@ -395,7 +400,9 @@ func TestGetFloat32Value(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			m := &mocked{}
-			test.init(m)
+			if test.init != nil {
+				test.init(m)
+			}
 			res, err := GetFloat32Value(test.key, m)
 			m.AssertExpectations(t)
 			if test.withError != nil {
@@ -430,7 +437,6 @@ func TestGetListValue(t *testing.T) {
 		},
 		"empty key passed": {
 			key:       "",
-			init:      func(m *mocked) {},
 			withError: ErrEmptyKey,
 		},
 		"value is of invalid type": {
@@ -444,7 +450,9 @@ func TestGetListValue(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			m := &mocked{}
-			test.init(m)
+			if test.init != nil {
+				test.init(m)
+			}
 			res, err := GetListValue(test.key, m)
 			m.AssertExpectations(t)
 			if test.withError != nil {

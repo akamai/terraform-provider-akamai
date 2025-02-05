@@ -6,9 +6,9 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -120,11 +120,11 @@ func dataSourceSelectableHostnamesRead(ctx context.Context, d *schema.ResourceDa
 	flagsetstg = "UNSET"
 	flagsetprod = "UNSET"
 
-	activeinstaging, ok := d.GetOkExists("active_in_staging")
+	activeinstaging, ok := d.GetOkExists("active_in_staging") //nolint:staticcheck
 	if ok {
 		flagsetstg = "SET"
 	}
-	activeinproduction, ok := d.GetOkExists("active_in_production")
+	activeinproduction, ok := d.GetOkExists("active_in_production") //nolint:staticcheck
 	if ok {
 		flagsetprod = "SET"
 	}

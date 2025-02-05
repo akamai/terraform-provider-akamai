@@ -4,11 +4,11 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cps"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
-	cpstools "github.com/akamai/terraform-provider-akamai/v6/pkg/providers/cps/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/cps"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
+	cpstools "github.com/akamai/terraform-provider-akamai/v7/pkg/providers/cps/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -346,7 +346,7 @@ func dataCPSEnrollmentRead(ctx context.Context, d *schema.ResourceData, m interf
 	req := cps.GetEnrollmentRequest{EnrollmentID: enrollmentID}
 	enrollment, err := client.GetEnrollment(ctx, req)
 	if err != nil {
-		logger.WithError(err).Error("could not get an enrollment")
+		logger.Error("could not get an enrollment", "error", err)
 		return diag.FromErr(err)
 	}
 

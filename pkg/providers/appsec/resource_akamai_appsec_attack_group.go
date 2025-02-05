@@ -7,9 +7,10 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/id"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -127,7 +128,7 @@ func resourceAttackGroupRead(ctx context.Context, d *schema.ResourceData, m inte
 	logger := meta.Log("APPSEC", "resourceAttackGroupRead")
 	logger.Debugf(" in resourceAttackGroupRead")
 
-	iDParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:group")
+	iDParts, err := id.Split(d.Id(), 3, "configID:securityPolicyID:group")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -187,7 +188,7 @@ func resourceAttackGroupUpdate(ctx context.Context, d *schema.ResourceData, m in
 	logger := meta.Log("APPSEC", "resourceAttackGroupUpdate")
 	logger.Debugf(" in resourceAttackGroupUpdate")
 
-	iDParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:group")
+	iDParts, err := id.Split(d.Id(), 3, "configID:securityPolicyID:group")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -241,7 +242,7 @@ func resourceAttackGroupDelete(ctx context.Context, d *schema.ResourceData, m in
 	logger := meta.Log("APPSEC", "resourceAttackGroupDelete")
 	logger.Debugf(" in resourceAttackGroupDelete")
 
-	iDParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:group")
+	iDParts, err := id.Split(d.Id(), 3, "configID:securityPolicyID:group")
 	if err != nil {
 		return diag.FromErr(err)
 	}

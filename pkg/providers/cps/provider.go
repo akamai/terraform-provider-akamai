@@ -8,9 +8,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cps"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/subprovider"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/cps"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/subprovider"
 )
 
 type (
@@ -41,12 +41,6 @@ func NewSubprovider(opts ...option) *Subprovider {
 	})
 
 	return inst
-}
-
-func withClient(c cps.CPS) option {
-	return func(p *Subprovider) {
-		p.client = c
-	}
 }
 
 // Client returns the CPS interface

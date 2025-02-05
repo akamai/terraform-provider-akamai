@@ -222,9 +222,7 @@ func upgradeAkamaiPropertyRuleStateV0(_ context.Context, rawState map[string]int
 		"rules",
 	}
 	for _, attr := range removed {
-		if _, ok := rawState[attr]; ok {
-			delete(rawState, attr)
-		}
+		delete(rawState, attr)
 	}
 
 	// json field is now changed to rules, so updating json field as rules.

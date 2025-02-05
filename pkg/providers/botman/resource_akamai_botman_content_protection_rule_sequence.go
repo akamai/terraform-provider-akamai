@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/id"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -72,9 +73,7 @@ func resourceContentProtectionRuleSequenceUpsert(ctx context.Context, d *schema.
 		return configID, diag.FromErr(err)
 	}
 	var stringSequence []string
-	for _, val := range sequence {
-		stringSequence = append(stringSequence, val)
-	}
+	stringSequence = append(stringSequence, sequence...)
 
 	request := botman.UpdateContentProtectionRuleSequenceRequest{
 		ConfigID:                      configID,
@@ -117,7 +116,7 @@ func resourceContentProtectionRuleSequenceRead(ctx context.Context, d *schema.Re
 	client := inst.Client(meta)
 	logger := meta.Log("botman", "resourceContentProtectionRuleSequenceRead")
 
-	idParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
+	idParts, err := id.Split(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}

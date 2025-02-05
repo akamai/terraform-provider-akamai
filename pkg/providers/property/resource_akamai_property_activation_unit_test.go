@@ -7,9 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/date"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/date"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -51,13 +52,12 @@ func TestResolveVersion(t *testing.T) {
 			network:           papi.ActivationNetworkStaging,
 			versionData:       3,
 			versionDataExists: true,
-			init:              func(m *papi.Mock) {},
 		},
 		"version not present but fetched from API": {
 			propertyID: "prp_id",
 			network:    papi.ActivationNetworkStaging,
 			init: func(m *papi.Mock) {
-				m.On("GetLatestVersion", mock.Anything, papi.GetLatestVersionRequest{
+				m.On("GetLatestVersion", testutils.MockContext, papi.GetLatestVersionRequest{
 					PropertyID:  "prp_id",
 					ActivatedOn: fmt.Sprintf("%v", papi.ActivationNetworkStaging),
 				}).Return(
@@ -72,7 +72,7 @@ func TestResolveVersion(t *testing.T) {
 			propertyID: "prp_id",
 			network:    papi.ActivationNetworkProduction,
 			init: func(m *papi.Mock) {
-				m.On("GetLatestVersion", mock.Anything, papi.GetLatestVersionRequest{
+				m.On("GetLatestVersion", testutils.MockContext, papi.GetLatestVersionRequest{
 					PropertyID:  "prp_id",
 					ActivatedOn: fmt.Sprintf("%v", papi.ActivationNetworkProduction),
 				}).Return(nil, tf.ErrNotFound).Once()
@@ -119,7 +119,7 @@ func TestLookupActivation(t *testing.T) {
 	}{
 		"ok": {
 			init: func(m *papi.Mock) {
-				m.On("GetActivations", mock.Anything, mock.Anything).Return(
+				m.On("GetActivations", testutils.MockContext, mock.Anything).Return(
 					&papi.GetActivationsResponse{
 						Response: papi.Response{
 							AccountID:  "act_1234",
@@ -200,7 +200,7 @@ func TestLookupActivation(t *testing.T) {
 		},
 		"ok, but no activations": {
 			init: func(m *papi.Mock) {
-				m.On("GetActivations", mock.Anything, mock.Anything).Return(
+				m.On("GetActivations", testutils.MockContext, mock.Anything).Return(
 					&papi.GetActivationsResponse{
 						Response: papi.Response{
 							AccountID:  "act_1234",
@@ -230,7 +230,7 @@ func TestLookupActivation(t *testing.T) {
 		},
 		"date parse error": {
 			init: func(m *papi.Mock) {
-				m.On("GetActivations", mock.Anything, mock.Anything).Return(
+				m.On("GetActivations", testutils.MockContext, mock.Anything).Return(
 					&papi.GetActivationsResponse{
 						Response: papi.Response{
 							AccountID:  "act_1234",
@@ -321,7 +321,7 @@ func TestCreateActivation(t *testing.T) {
 	t.Run("create 201 no get", func(t *testing.T) {
 		m := &papi.Mock{}
 
-		m.On("CreateActivation", mock.Anything, createReq).Return(&papi.CreateActivationResponse{
+		m.On("CreateActivation", testutils.MockContext, createReq).Return(&papi.CreateActivationResponse{
 			ActivationID: "atv_123",
 		}, nil)
 
@@ -335,8 +335,8 @@ func TestCreateActivation(t *testing.T) {
 	t.Run("create 500 get ok pending", func(t *testing.T) {
 		m := &papi.Mock{}
 
-		m.On("CreateActivation", mock.Anything, createReq).Return(nil, error(&papi.Error{StatusCode: 500})).Once()
-		m.On("GetActivations", mock.Anything, papi.GetActivationsRequest{
+		m.On("CreateActivation", testutils.MockContext, createReq).Return(nil, error(&papi.Error{StatusCode: 500})).Once()
+		m.On("GetActivations", testutils.MockContext, papi.GetActivationsRequest{
 			PropertyID: propID,
 		}).Return(&papi.GetActivationsResponse{
 			Activations: papi.ActivationsItems{
@@ -363,7 +363,7 @@ func TestCreateActivation(t *testing.T) {
 	t.Run("create 400 nonretryable", func(t *testing.T) {
 		m := &papi.Mock{}
 
-		m.On("CreateActivation", mock.Anything, createReq).Return(nil, error(&papi.Error{StatusCode: 400})).Once()
+		m.On("CreateActivation", testutils.MockContext, createReq).Return(nil, error(&papi.Error{StatusCode: 400})).Once()
 
 		ctx := context.Background()
 		actID, diagErr := createActivation(ctx, m, createReq)
@@ -374,8 +374,8 @@ func TestCreateActivation(t *testing.T) {
 	t.Run("create 500 retry on empty get", func(t *testing.T) {
 		m := &papi.Mock{}
 
-		m.On("CreateActivation", mock.Anything, createReq).Return(nil, error(&papi.Error{StatusCode: 500})).Once()
-		m.On("GetActivations", mock.Anything, papi.GetActivationsRequest{
+		m.On("CreateActivation", testutils.MockContext, createReq).Return(nil, error(&papi.Error{StatusCode: 500})).Once()
+		m.On("GetActivations", testutils.MockContext, papi.GetActivationsRequest{
 			PropertyID: propID,
 		}).Return(&papi.GetActivationsResponse{
 			Activations: papi.ActivationsItems{
@@ -383,8 +383,8 @@ func TestCreateActivation(t *testing.T) {
 			},
 		}, nil).Once()
 
-		m.On("CreateActivation", mock.Anything, createReq).Return(nil, error(&papi.Error{StatusCode: 500})).Once()
-		m.On("GetActivations", mock.Anything, papi.GetActivationsRequest{
+		m.On("CreateActivation", testutils.MockContext, createReq).Return(nil, error(&papi.Error{StatusCode: 500})).Once()
+		m.On("GetActivations", testutils.MockContext, papi.GetActivationsRequest{
 			PropertyID: propID,
 		}).Return(&papi.GetActivationsResponse{
 			Activations: papi.ActivationsItems{
@@ -410,8 +410,8 @@ func TestCreateActivation(t *testing.T) {
 	t.Run("create 500 retry 3 times before ok", func(t *testing.T) {
 		m := &papi.Mock{}
 
-		m.On("CreateActivation", mock.Anything, createReq).Return(nil, error(&papi.Error{StatusCode: 500})).Times(3)
-		m.On("GetActivations", mock.Anything, papi.GetActivationsRequest{
+		m.On("CreateActivation", testutils.MockContext, createReq).Return(nil, error(&papi.Error{StatusCode: 500})).Times(3)
+		m.On("GetActivations", testutils.MockContext, papi.GetActivationsRequest{
 			PropertyID: propID,
 		}).Return(&papi.GetActivationsResponse{
 			Activations: papi.ActivationsItems{
@@ -429,8 +429,8 @@ func TestCreateActivation(t *testing.T) {
 			},
 		}, nil).Times(3)
 
-		m.On("CreateActivation", mock.Anything, createReq).Return(nil, error(&papi.Error{StatusCode: 500})).Once()
-		m.On("GetActivations", mock.Anything, papi.GetActivationsRequest{
+		m.On("CreateActivation", testutils.MockContext, createReq).Return(nil, error(&papi.Error{StatusCode: 500})).Once()
+		m.On("GetActivations", testutils.MockContext, papi.GetActivationsRequest{
 			PropertyID: propID,
 		}).Return(&papi.GetActivationsResponse{
 			Activations: papi.ActivationsItems{
@@ -466,9 +466,9 @@ func TestCreateActivation(t *testing.T) {
 	t.Run("create 422 get valid", func(t *testing.T) {
 		m := &papi.Mock{}
 
-		m.On("CreateActivation", mock.Anything, createReq).Return(nil, error(&papi.Error{StatusCode: 422})).Once()
+		m.On("CreateActivation", testutils.MockContext, createReq).Return(nil, error(&papi.Error{StatusCode: 422})).Once()
 
-		m.On("GetActivations", mock.Anything, papi.GetActivationsRequest{
+		m.On("GetActivations", testutils.MockContext, papi.GetActivationsRequest{
 			PropertyID: propID,
 		}).Return(&papi.GetActivationsResponse{
 			Activations: papi.ActivationsItems{
@@ -494,9 +494,9 @@ func TestCreateActivation(t *testing.T) {
 	t.Run("create 409 get valid", func(t *testing.T) {
 		m := &papi.Mock{}
 
-		m.On("CreateActivation", mock.Anything, createReq).Return(nil, error(&papi.Error{StatusCode: 409})).Once()
+		m.On("CreateActivation", testutils.MockContext, createReq).Return(nil, error(&papi.Error{StatusCode: 409})).Once()
 
-		m.On("GetActivations", mock.Anything, papi.GetActivationsRequest{
+		m.On("GetActivations", testutils.MockContext, papi.GetActivationsRequest{
 			PropertyID: propID,
 		}).Return(&papi.GetActivationsResponse{
 			Activations: papi.ActivationsItems{
@@ -524,7 +524,7 @@ func TestCreateActivation(t *testing.T) {
 
 		expectedError := fmt.Errorf("some err: %w", error(&papi.Error{StatusCode: 400}))
 
-		m.On("CreateActivation", mock.Anything, createReq).Return(nil, expectedError).Once()
+		m.On("CreateActivation", testutils.MockContext, createReq).Return(nil, expectedError).Once()
 
 		ctx := context.Background()
 		actID, diagErr := createActivation(ctx, m, createReq)
@@ -535,8 +535,8 @@ func TestCreateActivation(t *testing.T) {
 	t.Run("create 500 retry on unexpected version", func(t *testing.T) {
 		m := &papi.Mock{}
 
-		m.On("CreateActivation", mock.Anything, createReq).Return(nil, error(&papi.Error{StatusCode: 500})).Once()
-		m.On("GetActivations", mock.Anything, papi.GetActivationsRequest{
+		m.On("CreateActivation", testutils.MockContext, createReq).Return(nil, error(&papi.Error{StatusCode: 500})).Once()
+		m.On("GetActivations", testutils.MockContext, papi.GetActivationsRequest{
 			PropertyID: propID,
 		}).Return(&papi.GetActivationsResponse{
 			Activations: papi.ActivationsItems{
@@ -554,8 +554,8 @@ func TestCreateActivation(t *testing.T) {
 			},
 		}, nil).Once()
 
-		m.On("CreateActivation", mock.Anything, createReq).Return(nil, error(&papi.Error{StatusCode: 500})).Once()
-		m.On("GetActivations", mock.Anything, papi.GetActivationsRequest{
+		m.On("CreateActivation", testutils.MockContext, createReq).Return(nil, error(&papi.Error{StatusCode: 500})).Once()
+		m.On("GetActivations", testutils.MockContext, papi.GetActivationsRequest{
 			PropertyID: propID,
 		}).Return(&papi.GetActivationsResponse{
 			Activations: papi.ActivationsItems{
@@ -590,9 +590,9 @@ func TestCreateActivation(t *testing.T) {
 	t.Run("create 500 retry on failed status", func(t *testing.T) {
 		m := &papi.Mock{}
 
-		m.On("CreateActivation", mock.Anything, createReq).Return(nil, error(&papi.Error{StatusCode: 500})).Once()
+		m.On("CreateActivation", testutils.MockContext, createReq).Return(nil, error(&papi.Error{StatusCode: 500})).Once()
 
-		m.On("GetActivations", mock.Anything, papi.GetActivationsRequest{
+		m.On("GetActivations", testutils.MockContext, papi.GetActivationsRequest{
 			PropertyID: propID,
 		}).Return(&papi.GetActivationsResponse{
 			Activations: papi.ActivationsItems{
@@ -610,9 +610,9 @@ func TestCreateActivation(t *testing.T) {
 			},
 		}, nil).Once()
 
-		m.On("CreateActivation", mock.Anything, createReq).Return(nil, error(&papi.Error{StatusCode: 500})).Once()
+		m.On("CreateActivation", testutils.MockContext, createReq).Return(nil, error(&papi.Error{StatusCode: 500})).Once()
 
-		m.On("GetActivations", mock.Anything, papi.GetActivationsRequest{
+		m.On("GetActivations", testutils.MockContext, papi.GetActivationsRequest{
 			PropertyID: propID,
 		}).Return(&papi.GetActivationsResponse{
 			Activations: papi.ActivationsItems{
@@ -648,8 +648,8 @@ func TestCreateActivation(t *testing.T) {
 	t.Run("create 500 retry on network missmatch", func(t *testing.T) {
 		m := &papi.Mock{}
 
-		m.On("CreateActivation", mock.Anything, createReq).Return(nil, error(&papi.Error{StatusCode: 500})).Once()
-		m.On("GetActivations", mock.Anything, papi.GetActivationsRequest{
+		m.On("CreateActivation", testutils.MockContext, createReq).Return(nil, error(&papi.Error{StatusCode: 500})).Once()
+		m.On("GetActivations", testutils.MockContext, papi.GetActivationsRequest{
 			PropertyID: propID,
 		}).Return(&papi.GetActivationsResponse{
 			Activations: papi.ActivationsItems{
@@ -667,8 +667,8 @@ func TestCreateActivation(t *testing.T) {
 			},
 		}, nil).Once()
 
-		m.On("CreateActivation", mock.Anything, createReq).Return(nil, error(&papi.Error{StatusCode: 500})).Once()
-		m.On("GetActivations", mock.Anything, papi.GetActivationsRequest{
+		m.On("CreateActivation", testutils.MockContext, createReq).Return(nil, error(&papi.Error{StatusCode: 500})).Once()
+		m.On("GetActivations", testutils.MockContext, papi.GetActivationsRequest{
 			PropertyID: propID,
 		}).Return(&papi.GetActivationsResponse{
 			Activations: papi.ActivationsItems{
@@ -703,8 +703,8 @@ func TestCreateActivation(t *testing.T) {
 	t.Run("create 500 retry on type missmatch", func(t *testing.T) {
 		m := &papi.Mock{}
 
-		m.On("CreateActivation", mock.Anything, createReq).Return(nil, error(&papi.Error{StatusCode: 500})).Once()
-		m.On("GetActivations", mock.Anything, papi.GetActivationsRequest{
+		m.On("CreateActivation", testutils.MockContext, createReq).Return(nil, error(&papi.Error{StatusCode: 500})).Once()
+		m.On("GetActivations", testutils.MockContext, papi.GetActivationsRequest{
 			PropertyID: propID,
 		}).Return(&papi.GetActivationsResponse{
 			Activations: papi.ActivationsItems{
@@ -722,8 +722,8 @@ func TestCreateActivation(t *testing.T) {
 			},
 		}, nil).Once()
 
-		m.On("CreateActivation", mock.Anything, createReq).Return(nil, error(&papi.Error{StatusCode: 500})).Once()
-		m.On("GetActivations", mock.Anything, papi.GetActivationsRequest{
+		m.On("CreateActivation", testutils.MockContext, createReq).Return(nil, error(&papi.Error{StatusCode: 500})).Once()
+		m.On("GetActivations", testutils.MockContext, papi.GetActivationsRequest{
 			PropertyID: propID,
 		}).Return(&papi.GetActivationsResponse{
 			Activations: papi.ActivationsItems{
@@ -759,8 +759,8 @@ func TestCreateActivation(t *testing.T) {
 	t.Run("expect list is sorted and network is filtered", func(t *testing.T) {
 		m := &papi.Mock{}
 
-		m.On("CreateActivation", mock.Anything, createReq).Return(nil, error(&papi.Error{StatusCode: 500})).Once()
-		m.On("GetActivations", mock.Anything, papi.GetActivationsRequest{
+		m.On("CreateActivation", testutils.MockContext, createReq).Return(nil, error(&papi.Error{StatusCode: 500})).Once()
+		m.On("GetActivations", testutils.MockContext, papi.GetActivationsRequest{
 			PropertyID: propID,
 		}).Return(&papi.GetActivationsResponse{
 			Activations: papi.ActivationsItems{
@@ -799,8 +799,8 @@ func TestCreateActivation(t *testing.T) {
 			},
 		}, nil).Once()
 
-		m.On("CreateActivation", mock.Anything, createReq).Return(nil, error(&papi.Error{StatusCode: 500})).Once()
-		m.On("GetActivations", mock.Anything, papi.GetActivationsRequest{
+		m.On("CreateActivation", testutils.MockContext, createReq).Return(nil, error(&papi.Error{StatusCode: 500})).Once()
+		m.On("GetActivations", testutils.MockContext, papi.GetActivationsRequest{
 			PropertyID: propID,
 		}).Return(&papi.GetActivationsResponse{
 			Activations: papi.ActivationsItems{

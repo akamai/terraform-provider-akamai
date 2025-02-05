@@ -8,17 +8,16 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestDataPropertyIncludes(t *testing.T) {
 	tests := map[string]struct {
 		attrs      attributes
-		init       func(*testing.T, *papi.Mock, attributes)
+		init       func(*papi.Mock, attributes)
 		configPath string
 		error      *regexp.Regexp
 	}{
@@ -28,11 +27,10 @@ func TestDataPropertyIncludes(t *testing.T) {
 				groupID:        groupForTests,
 				includeType:    "",
 				parentProperty: nil,
-				includesNumber: 10,
 				includes:       createIncludes(10, contractForTests, groupForTests, false, false),
 			},
-			init: func(_ *testing.T, m *papi.Mock, attrs attributes) {
-				mockListIncludes(m, attrs.contractID, attrs.groupID, attrs.includes, attrs.includesNumber, 3)
+			init: func(m *papi.Mock, attrs attributes) {
+				mockListIncludes(m, attrs.contractID, attrs.groupID, attrs.includes, 3)
 			},
 			configPath: "testdata/TestDataPropertyIncludes/without_parent_property/list_includes_no_filters.tf",
 		},
@@ -42,11 +40,10 @@ func TestDataPropertyIncludes(t *testing.T) {
 				groupID:        groupForTests,
 				includeType:    string(papi.IncludeTypeMicroServices),
 				parentProperty: nil,
-				includesNumber: 10,
 				includes:       createIncludes(10, contractForTests, groupForTests, false, false),
 			},
-			init: func(_ *testing.T, m *papi.Mock, attrs attributes) {
-				mockListIncludes(m, attrs.contractID, attrs.groupID, attrs.includes, attrs.includesNumber, 3)
+			init: func(m *papi.Mock, attrs attributes) {
+				mockListIncludes(m, attrs.contractID, attrs.groupID, attrs.includes, 3)
 			},
 			configPath: "testdata/TestDataPropertyIncludes/without_parent_property/list_includes_type_microservices.tf",
 		},
@@ -56,11 +53,10 @@ func TestDataPropertyIncludes(t *testing.T) {
 				groupID:        groupForTests,
 				includeType:    string(papi.IncludeTypeCommonSettings),
 				parentProperty: nil,
-				includesNumber: 10,
 				includes:       createIncludes(10, contractForTests, groupForTests, false, false),
 			},
-			init: func(_ *testing.T, m *papi.Mock, attrs attributes) {
-				mockListIncludes(m, attrs.contractID, attrs.groupID, attrs.includes, attrs.includesNumber, 3)
+			init: func(m *papi.Mock, attrs attributes) {
+				mockListIncludes(m, attrs.contractID, attrs.groupID, attrs.includes, 3)
 			},
 			configPath: "testdata/TestDataPropertyIncludes/without_parent_property/list_includes_type_common_settings.tf",
 		},
@@ -70,11 +66,10 @@ func TestDataPropertyIncludes(t *testing.T) {
 				groupID:        groupForTests,
 				includeType:    "",
 				parentProperty: nil,
-				includesNumber: 0,
 				includes:       nil,
 			},
-			init: func(_ *testing.T, m *papi.Mock, attrs attributes) {
-				mockListIncludes(m, attrs.contractID, attrs.groupID, attrs.includes, attrs.includesNumber, 3)
+			init: func(m *papi.Mock, attrs attributes) {
+				mockListIncludes(m, attrs.contractID, attrs.groupID, attrs.includes, 3)
 			},
 			configPath: "testdata/TestDataPropertyIncludes/without_parent_property/list_includes_no_filters.tf",
 		},
@@ -84,11 +79,10 @@ func TestDataPropertyIncludes(t *testing.T) {
 				groupID:        groupForTests,
 				includeType:    "",
 				parentProperty: nil,
-				includesNumber: 1,
-				includes:       createIncludes(3, contractForTests, groupForTests, true, true),
+				includes:       createIncludes(1, contractForTests, groupForTests, true, true),
 			},
-			init: func(_ *testing.T, m *papi.Mock, attrs attributes) {
-				mockListIncludes(m, attrs.contractID, attrs.groupID, attrs.includes, attrs.includesNumber, 3)
+			init: func(m *papi.Mock, attrs attributes) {
+				mockListIncludes(m, attrs.contractID, attrs.groupID, attrs.includes, 3)
 			},
 			configPath: "testdata/TestDataPropertyIncludes/without_parent_property/list_includes_no_filters.tf",
 		},
@@ -101,12 +95,11 @@ func TestDataPropertyIncludes(t *testing.T) {
 					id:      "property_id_123",
 					version: 2,
 				},
-				includesNumber:   2,
 				externalIncludes: createExternalIncludeData(2),
 				includes:         createIncludes(2, contractForTests, groupForTests, false, false),
 			},
-			init: func(_ *testing.T, m *papi.Mock, attrs attributes) {
-				mockListAvailableIncludes(m, attrs.contractID, attrs.groupID, attrs.parentProperty.id, attrs.parentProperty.version, attrs.includesNumber, 3)
+			init: func(m *papi.Mock, attrs attributes) {
+				mockListAvailableIncludes(m, attrs.contractID, attrs.groupID, attrs.parentProperty.id, attrs.parentProperty.version, len(attrs.includes), 3)
 				for i, include := range attrs.externalIncludes {
 					mockGetInclude(m, attrs.contractID, attrs.groupID, include.IncludeID, 3, attrs.includes[i])
 				}
@@ -122,12 +115,11 @@ func TestDataPropertyIncludes(t *testing.T) {
 					id:      "property_id_123",
 					version: 10,
 				},
-				includesNumber:   15,
 				externalIncludes: createExternalIncludeData(15),
 				includes:         createIncludes(15, contractForTests, groupForTests, false, false),
 			},
-			init: func(_ *testing.T, m *papi.Mock, attrs attributes) {
-				mockListAvailableIncludes(m, attrs.contractID, attrs.groupID, attrs.parentProperty.id, attrs.parentProperty.version, attrs.includesNumber, 3)
+			init: func(m *papi.Mock, attrs attributes) {
+				mockListAvailableIncludes(m, attrs.contractID, attrs.groupID, attrs.parentProperty.id, attrs.parentProperty.version, len(attrs.includes), 3)
 				for i, include := range attrs.externalIncludes {
 					mockGetInclude(m, attrs.contractID, attrs.groupID, include.IncludeID, 3, attrs.includes[i])
 				}
@@ -143,12 +135,11 @@ func TestDataPropertyIncludes(t *testing.T) {
 					id:      "property_id_123",
 					version: 47,
 				},
-				includesNumber:   30,
 				externalIncludes: createExternalIncludeData(30),
 				includes:         createIncludes(30, contractForTests, groupForTests, false, false),
 			},
-			init: func(_ *testing.T, m *papi.Mock, attrs attributes) {
-				mockListAvailableIncludes(m, attrs.contractID, attrs.groupID, attrs.parentProperty.id, attrs.parentProperty.version, attrs.includesNumber, 3)
+			init: func(m *papi.Mock, attrs attributes) {
+				mockListAvailableIncludes(m, attrs.contractID, attrs.groupID, attrs.parentProperty.id, attrs.parentProperty.version, len(attrs.includes), 3)
 				for i, include := range attrs.externalIncludes {
 					mockGetInclude(m, attrs.contractID, attrs.groupID, include.IncludeID, 3, attrs.includes[i])
 				}
@@ -164,12 +155,11 @@ func TestDataPropertyIncludes(t *testing.T) {
 					id:      "property_id_123",
 					version: 2,
 				},
-				includesNumber:   0,
 				externalIncludes: createExternalIncludeData(0),
 				includes:         createIncludes(0, contractForTests, groupForTests, false, false),
 			},
-			init: func(t *testing.T, m *papi.Mock, attrs attributes) {
-				mockListAvailableIncludes(m, attrs.contractID, attrs.groupID, attrs.parentProperty.id, attrs.parentProperty.version, attrs.includesNumber, 3)
+			init: func(m *papi.Mock, attrs attributes) {
+				mockListAvailableIncludes(m, attrs.contractID, attrs.groupID, attrs.parentProperty.id, attrs.parentProperty.version, len(attrs.includes), 3)
 				for i, include := range attrs.externalIncludes {
 					mockGetInclude(m, attrs.contractID, attrs.groupID, include.IncludeID, 5, attrs.includes[i])
 				}
@@ -185,12 +175,11 @@ func TestDataPropertyIncludes(t *testing.T) {
 					id:      "property_id_123",
 					version: 10,
 				},
-				includesNumber:   15,
 				externalIncludes: createExternalIncludeData(15),
 				includes:         createIncludes(15, contractForTests, groupForTests, false, true),
 			},
-			init: func(_ *testing.T, m *papi.Mock, attrs attributes) {
-				mockListAvailableIncludes(m, attrs.contractID, attrs.groupID, attrs.parentProperty.id, attrs.parentProperty.version, attrs.includesNumber, 3)
+			init: func(m *papi.Mock, attrs attributes) {
+				mockListAvailableIncludes(m, attrs.contractID, attrs.groupID, attrs.parentProperty.id, attrs.parentProperty.version, len(attrs.includes), 3)
 				for i, include := range attrs.externalIncludes {
 					mockGetInclude(m, attrs.contractID, attrs.groupID, include.IncludeID, 3, attrs.includes[i])
 				}
@@ -203,11 +192,10 @@ func TestDataPropertyIncludes(t *testing.T) {
 				groupID:        groupForTests,
 				includeType:    "",
 				parentProperty: nil,
-				includesNumber: 0,
 				includes:       nil,
 			},
-			init: func(t *testing.T, m *papi.Mock, attrs attributes) {
-				m.On("ListIncludes", mock.Anything, papi.ListIncludesRequest{
+			init: func(m *papi.Mock, attrs attributes) {
+				m.On("ListIncludes", testutils.MockContext, papi.ListIncludesRequest{
 					ContractID: attrs.contractID,
 					GroupID:    attrs.groupID,
 				}).Return(nil, fmt.Errorf("fetching includes failed")).Once()
@@ -225,8 +213,8 @@ func TestDataPropertyIncludes(t *testing.T) {
 					version: 2,
 				},
 			},
-			init: func(t *testing.T, m *papi.Mock, attrs attributes) {
-				m.On("ListAvailableIncludes", mock.Anything, papi.ListAvailableIncludesRequest{
+			init: func(m *papi.Mock, attrs attributes) {
+				m.On("ListAvailableIncludes", testutils.MockContext, papi.ListAvailableIncludesRequest{
 					PropertyID:      attrs.parentProperty.id,
 					PropertyVersion: attrs.parentProperty.version,
 					ContractID:      attrs.contractID,
@@ -245,12 +233,11 @@ func TestDataPropertyIncludes(t *testing.T) {
 					id:      "property_id_123",
 					version: 2,
 				},
-				includesNumber: 8,
-				includes:       createIncludes(8, contractForTests, groupForTests, false, false),
+				includes: createIncludes(8, contractForTests, groupForTests, false, false),
 			},
-			init: func(t *testing.T, m *papi.Mock, attrs attributes) {
-				mockListAvailableIncludes(m, attrs.contractID, attrs.groupID, attrs.parentProperty.id, attrs.parentProperty.version, attrs.includesNumber, 1)
-				m.On("GetInclude", mock.Anything, papi.GetIncludeRequest{
+			init: func(m *papi.Mock, attrs attributes) {
+				mockListAvailableIncludes(m, attrs.contractID, attrs.groupID, attrs.parentProperty.id, attrs.parentProperty.version, len(attrs.includes), 1)
+				m.On("GetInclude", testutils.MockContext, papi.GetIncludeRequest{
 					ContractID: attrs.contractID,
 					GroupID:    attrs.groupID,
 					IncludeID:  attrs.includes[0].IncludeID,
@@ -260,32 +247,22 @@ func TestDataPropertyIncludes(t *testing.T) {
 			error:      regexp.MustCompile("Error: sendListIncludesRequest error: could not get an include with ID: 0, could not get include"),
 		},
 		"missing required argument - contractID": {
-			attrs:      attributes{},
-			init:       func(t *testing.T, m *papi.Mock, a attributes) {},
 			configPath: "testdata/TestDataPropertyIncludes/no_contract_id.tf",
 			error:      regexp.MustCompile("Error: Missing required argument"),
 		},
 		"missing required argument - groupID": {
-			attrs:      attributes{},
-			init:       func(t *testing.T, m *papi.Mock, a attributes) {},
 			configPath: "testdata/TestDataPropertyIncludes/no_group_id.tf",
 			error:      regexp.MustCompile("Error: Missing required argument"),
 		},
 		"missing required argument - property ID": {
-			attrs:      attributes{},
-			init:       func(t *testing.T, m *papi.Mock, a attributes) {},
 			configPath: "testdata/TestDataPropertyIncludes/no_property_id.tf",
 			error:      regexp.MustCompile("Error: Missing required argument"),
 		},
 		"missing required argument - property version": {
-			attrs:      attributes{},
-			init:       func(t *testing.T, m *papi.Mock, a attributes) {},
 			configPath: "testdata/TestDataPropertyIncludes/no_property_version.tf",
 			error:      regexp.MustCompile("Error: Missing required argument"),
 		},
 		"invalid include type": {
-			attrs:      attributes{},
-			init:       func(t *testing.T, m *papi.Mock, a attributes) {},
 			configPath: "testdata/TestDataPropertyIncludes/invalid_include_type.tf",
 			error:      regexp.MustCompile(`Error: expected type to be one of \['MICROSERVICES', 'COMMON_SETTINGS'], got WRONG TYPE`),
 		},
@@ -294,7 +271,9 @@ func TestDataPropertyIncludes(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &papi.Mock{}
-			test.init(t, client, test.attrs)
+			if test.init != nil {
+				test.init(client, test.attrs)
+			}
 			useClient(client, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
@@ -316,7 +295,6 @@ type attributes struct {
 	groupID          string
 	includeType      string
 	parentProperty   *parentPropertyAttr
-	includesNumber   int
 	externalIncludes []papi.ExternalIncludeData
 	includes         []papi.Include
 }
@@ -325,7 +303,7 @@ var (
 	contractForTests = "contract_123"
 	groupForTests    = "group_321"
 
-	// checkPropertyIncludesAttrs creates resource.TestCheckFunc that checks the data source' attributes
+	// checkPropertyIncludesAttrs creates resource.TestCheckFunc that checks the data source attributes
 	checkPropertyIncludesAttrs = func(attrs attributes) resource.TestCheckFunc {
 		var testCheckFuncs []resource.TestCheckFunc
 		testCheckFuncs = append(testCheckFuncs, resource.TestCheckResourceAttr("data.akamai_property_includes.test", "id", createDataSourceIDForTests(attrs)))
@@ -362,8 +340,8 @@ var (
 		}
 
 		var productionVersion *int
-		if !nilStagVer {
-			productionVersion = ptr.To(10)
+		if !nilProdVer {
+			productionVersion = ptr.To(11)
 		}
 
 		for i := 0; i < includesNumber; i++ {
@@ -407,8 +385,8 @@ var (
 	}
 
 	// mockListIncludes mocks ListIncludes call with provided parameters
-	mockListIncludes = func(m *papi.Mock, contractID, groupID string, includes []papi.Include, includesNumber, timesToRun int) {
-		m.On("ListIncludes", mock.Anything, papi.ListIncludesRequest{
+	mockListIncludes = func(m *papi.Mock, contractID, groupID string, includes []papi.Include, timesToRun int) {
+		m.On("ListIncludes", testutils.MockContext, papi.ListIncludesRequest{
 			ContractID: contractID,
 			GroupID:    groupID,
 		}).Return(&papi.ListIncludesResponse{
@@ -420,7 +398,7 @@ var (
 
 	// mockListAvailableIncludes mocks ListAvailableIncludes call with provided parameters
 	mockListAvailableIncludes = func(m *papi.Mock, contractID, groupID, propertyID string, propertyVersion, includesNumber, timesToRun int) {
-		m.On("ListAvailableIncludes", mock.Anything, papi.ListAvailableIncludesRequest{
+		m.On("ListAvailableIncludes", testutils.MockContext, papi.ListAvailableIncludesRequest{
 			ContractID:      contractID,
 			GroupID:         groupID,
 			PropertyID:      propertyID,
@@ -431,7 +409,7 @@ var (
 
 	// mockGetInclude mocks GetInclude call with provided parameters
 	mockGetInclude = func(m *papi.Mock, contractID, groupID, includeID string, timesToRun int, include papi.Include) {
-		m.On("GetInclude", mock.Anything, papi.GetIncludeRequest{
+		m.On("GetInclude", testutils.MockContext, papi.GetIncludeRequest{
 			ContractID: contractID,
 			GroupID:    groupID,
 			IncludeID:  includeID,

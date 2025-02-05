@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cloudwrapper"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/cloudwrapper"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -23,7 +23,6 @@ type (
 	}
 
 	locationsDataSourceModel struct {
-		ID        types.String    `tfsdk:"id"`
 		Locations []locationModel `tfsdk:"locations"`
 	}
 
@@ -80,13 +79,6 @@ func (d *locationsDataSource) Configure(_ context.Context, req datasource.Config
 func (d *locationsDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: "CloudWrapper locations",
-		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				Computed:           true,
-				DeprecationMessage: "Required by the terraform plugin testing framework, always set to `akamai_cloudwrapper_locations`",
-				Description:        "ID of the data source.",
-			},
-		},
 		Blocks: map[string]schema.Block{
 			"locations": schema.ListNestedBlock{
 				Description: "List of the locations.",
@@ -167,6 +159,5 @@ func (d *locationsDataSource) Read(ctx context.Context, req datasource.ReadReque
 		}
 		data.Locations = append(data.Locations, location)
 	}
-	data.ID = types.StringValue("akamai_cloudwrapper_locations")
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

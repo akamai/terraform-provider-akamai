@@ -5,11 +5,10 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestDataPropertyInclude(t *testing.T) {
@@ -23,7 +22,7 @@ func TestDataPropertyInclude(t *testing.T) {
 		"happy path - both staging and production versions are returned": {
 			givenTF: "valid.tf",
 			init: func(m *papi.Mock) {
-				m.On("GetInclude", mock.Anything, papi.GetIncludeRequest{
+				m.On("GetInclude", testutils.MockContext, papi.GetIncludeRequest{
 					ContractID: "ctr_1",
 					GroupID:    "grp_1",
 					IncludeID:  "inc_1",
@@ -63,7 +62,7 @@ func TestDataPropertyInclude(t *testing.T) {
 		"happy path - missing production version and staging version": {
 			givenTF: "valid.tf",
 			init: func(m *papi.Mock) {
-				m.On("GetInclude", mock.Anything, papi.GetIncludeRequest{
+				m.On("GetInclude", testutils.MockContext, papi.GetIncludeRequest{
 					ContractID: "ctr_1",
 					GroupID:    "grp_1",
 					IncludeID:  "inc_1",
@@ -104,7 +103,7 @@ func TestDataPropertyInclude(t *testing.T) {
 		"error response from api": {
 			givenTF: "valid.tf",
 			init: func(m *papi.Mock) {
-				m.On("GetInclude", mock.Anything, papi.GetIncludeRequest{
+				m.On("GetInclude", testutils.MockContext, papi.GetIncludeRequest{
 					ContractID: "ctr_1",
 					GroupID:    "grp_1",
 					IncludeID:  "inc_1",
@@ -143,7 +142,7 @@ func TestDataPropertyInclude(t *testing.T) {
 					IsUnitTest:               true,
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{{
-						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestDataPropertyInclude/%s", test.givenTF)),
+						Config:      testutils.LoadFixtureStringf(t, "testdata/TestDataPropertyInclude/%s", test.givenTF),
 						Check:       resource.ComposeAggregateTestCheckFunc(checkFuncs...),
 						ExpectError: test.expectError,
 					}},

@@ -6,9 +6,10 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/id"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -98,7 +99,7 @@ func resourceIPGeoProtectionRead(ctx context.Context, d *schema.ResourceData, m 
 	logger := meta.Log("APPSEC", "resourceIPGeoProtectionRead")
 	logger.Debugf("in resourceIPGeoProtectionRead")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
+	iDParts, err := id.Split(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -152,7 +153,7 @@ func resourceIPGeoProtectionUpdate(ctx context.Context, d *schema.ResourceData, 
 	logger := meta.Log("APPSEC", "resourceIPGeoProtectionUpdate")
 	logger.Debugf("in resourceIPGeoProtectionUpdate")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
+	iDParts, err := id.Split(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -190,7 +191,7 @@ func resourceIPGeoProtectionDelete(ctx context.Context, d *schema.ResourceData, 
 	logger := meta.Log("APPSEC", "resourceIPGeoProtectionDelete")
 	logger.Debugf("in resourceIPGeoProtectionDelete")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:securityPolicyID")
+	iDParts, err := id.Split(d.Id(), 2, "configID:securityPolicyID")
 	if err != nil {
 		return diag.FromErr(err)
 	}

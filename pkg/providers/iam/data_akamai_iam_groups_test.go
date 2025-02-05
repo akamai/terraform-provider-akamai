@@ -5,13 +5,12 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/iam"
-	"github.com/akamai/terraform-provider-akamai/v6/internal/test"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v7/internal/test"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestDataGroups(t *testing.T) {
@@ -34,7 +33,7 @@ func TestDataGroups(t *testing.T) {
 			group2 := makeGroup(t, "test group 2", 102, 100, []iam.Group{group3, group5}, nil)
 			res := []iam.Group{group1, group2, group3}
 
-			client.On("ListGroups", mock.Anything, req).Return(res, nil)
+			client.On("ListGroups", testutils.MockContext, req).Return(res, nil)
 		}
 
 		useClient(client, func() {
@@ -42,7 +41,7 @@ func TestDataGroups(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, "testdata/%s/step0.tf", t.Name()),
+						Config: testutils.LoadFixtureStringf(t, "testdata/%s/step0.tf", t.Name()),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "id", "akamai_iam_groups"),
 
@@ -85,7 +84,7 @@ func TestDataGroups(t *testing.T) {
 		{
 			req := iam.ListGroupsRequest{}
 
-			client.On("ListGroups", mock.Anything, req).Return(nil, errors.New("failed to list groups"))
+			client.On("ListGroups", testutils.MockContext, req).Return(nil, errors.New("failed to list groups"))
 		}
 
 		useClient(client, func() {
@@ -93,7 +92,7 @@ func TestDataGroups(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config:      testutils.LoadFixtureString(t, "testdata/%s/step0.tf", t.Name()),
+						Config:      testutils.LoadFixtureStringf(t, "testdata/%s/step0.tf", t.Name()),
 						ExpectError: regexp.MustCompile(`failed to list groups`),
 					},
 				},

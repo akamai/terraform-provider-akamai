@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -203,7 +203,7 @@ func resourceSiemSettingsCreate(ctx context.Context, d *schema.ResourceData, m i
 		Version:              version,
 		EnableSiem:           enableSiem,
 		EnableForAllPolicies: enableForAllPolicies,
-		FirewallPolicyIds:    spIDs,
+		FirewallPolicyIDs:    spIDs,
 		SiemDefinitionID:     siemID,
 		Exceptions:           exceptions,
 	}
@@ -262,7 +262,7 @@ func resourceSiemSettingsRead(ctx context.Context, d *schema.ResourceData, m int
 	if err := d.Set("enable_for_all_policies", siemsettings.EnableForAllPolicies); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
-	if err := d.Set("security_policy_ids", siemsettings.FirewallPolicyIds); err != nil {
+	if err := d.Set("security_policy_ids", siemsettings.FirewallPolicyIDs); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("enable_botman_siem", siemsettings.EnabledBotmanSiemEvents); err != nil {
@@ -325,7 +325,7 @@ func resourceSiemSettingsUpdate(ctx context.Context, d *schema.ResourceData, m i
 		Version:              version,
 		EnableSiem:           enableSiem,
 		EnableForAllPolicies: enableForAllPolicies,
-		FirewallPolicyIds:    spIDs,
+		FirewallPolicyIDs:    spIDs,
 		SiemDefinitionID:     siemID,
 		Exceptions:           exceptions,
 	}

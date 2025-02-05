@@ -6,14 +6,14 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/str"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/logger"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/str"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/log"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 )
 
 func getGroup(ctx context.Context, client papi.PAPI, groupID string) (*papi.Group, error) {
-	log := logger.FromContext(ctx)
+	log := log.FromContext(ctx)
 	log.Debugf("Fetching groups")
 
 	res, err := client.GetGroups(ctx)
@@ -39,7 +39,7 @@ func getGroup(ctx context.Context, client papi.PAPI, groupID string) (*papi.Grou
 }
 
 func getContract(ctx context.Context, client papi.PAPI, contractID string) (*papi.Contract, error) {
-	log := logger.FromContext(ctx)
+	log := log.FromContext(ctx)
 	log.Debugf("Fetching contract")
 
 	res, err := client.GetContracts(ctx)
@@ -68,7 +68,7 @@ func getProduct(ctx context.Context, client papi.PAPI, productID, contractID str
 		return nil, ErrNoContractProvided
 	}
 
-	log := logger.FromContext(ctx)
+	log := log.FromContext(ctx)
 	log.Debugf("Fetching product")
 
 	res, err := client.GetProducts(ctx, papi.GetProductsRequest{ContractID: contractID})

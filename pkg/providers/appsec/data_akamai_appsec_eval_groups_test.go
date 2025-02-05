@@ -6,10 +6,9 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -22,12 +21,12 @@ func TestAkamaiEvalGroups_data_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetEvalGroups",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetAttackGroupsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Group: "SQL"},
 		).Return(nil, fmt.Errorf("GetEvalGroups failed"))
 
 		client.On("GetConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&configs, nil)
 
@@ -60,12 +59,12 @@ func TestAkamaiEvalGroups_data_error_retrieving_eval_groups(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetEvalGroups",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetAttackGroupsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Group: "SQL"},
 		).Return(nil, fmt.Errorf("GetEvalGroups failed"))
 
 		client.On("GetConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&configs, nil)
 

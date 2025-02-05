@@ -4,10 +4,9 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/edgeworkers"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/edgeworkers"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestEdgeKVGroups(t *testing.T) {
@@ -15,7 +14,7 @@ func TestEdgeKVGroups(t *testing.T) {
 	client.Test(testutils.TattleT{T: t})
 
 	t.Run("happy path", func(t *testing.T) {
-		client.On("ListGroupsWithinNamespace", mock.Anything, edgeworkers.ListGroupsWithinNamespaceRequest{
+		client.On("ListGroupsWithinNamespace", testutils.MockContext, edgeworkers.ListGroupsWithinNamespaceRequest{
 			Network:     "staging",
 			NamespaceID: "test_namespace"}).
 			Return([]string{"TestImportGroup", "TestGroup1", "TestGroup2", "TestGroup3", "TestGroup4"}, nil).Times(3)

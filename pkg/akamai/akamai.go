@@ -1,18 +1,17 @@
-// Package akamai allows to initialize and set up Akamai Provider
+// Package akamai allows to initialize and set up Akamai Provider.
 package akamai
 
 import (
 	"fmt"
 
-	"github.com/akamai/terraform-provider-akamai/v6/version"
+	"github.com/akamai/terraform-provider-akamai/v7/version"
 )
 
 const (
-	// ProviderRegistryPath is the path for the provider in the terraform registry
+	// ProviderRegistryPath is the path for the provider in the terraform registry.
 	ProviderRegistryPath = "registry.terraform.io/akamai/akamai"
 
-	// ProviderName is the legacy name of the provider
-	// Deprecated: terrform now uses registry paths, the shortest of which would be akamai/akamai"
+	// ProviderName is the legacy name of the provider.
 	ProviderName = "terraform-provider-akamai"
 )
 

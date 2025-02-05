@@ -7,11 +7,10 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cloudaccess"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/cloudaccess"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 type (
@@ -31,13 +30,13 @@ type (
 func TestDataKeyProperties(t *testing.T) {
 	tests := map[string]struct {
 		configPath string
-		init       func(*testing.T, *cloudaccess.Mock, testDataForKeyProperties)
+		init       func(*cloudaccess.Mock, testDataForKeyProperties)
 		mockData   testDataForKeyProperties
 		error      *regexp.Regexp
 	}{
 		"happy path - multiple versions with multiple properties": {
 			configPath: "testdata/TestDataKeyProperties/default.tf",
-			init: func(_ *testing.T, m *cloudaccess.Mock, testData testDataForKeyProperties) {
+			init: func(m *cloudaccess.Mock, testData testDataForKeyProperties) {
 				expectListAccessKeys(m, 3)
 				expectListAccessKeyVersions(m, testData, 3)
 				expectLookupProperties(m, testData, 3)
@@ -72,7 +71,7 @@ func TestDataKeyProperties(t *testing.T) {
 		},
 		"happy path - version with no active properties - nothing in state": {
 			configPath: "testdata/TestDataKeyProperties/default.tf",
-			init: func(_ *testing.T, m *cloudaccess.Mock, testData testDataForKeyProperties) {
+			init: func(m *cloudaccess.Mock, testData testDataForKeyProperties) {
 				expectListAccessKeys(m, 3)
 				expectListAccessKeyVersions(m, testData, 3)
 				expectLookupProperties(m, testData, 3)
@@ -93,29 +92,28 @@ func TestDataKeyProperties(t *testing.T) {
 		},
 		"invalid configuration - missing access key name": {
 			configPath: "testdata/TestDataKeyProperties/invalid.tf",
-			init:       func(t *testing.T, _ *cloudaccess.Mock, _ testDataForKeyProperties) {},
 			error:      regexp.MustCompile(`The argument "access_key_name" is required, but no definition was found.`),
 		},
 		"no match on access key name - expect an error": {
 			configPath: "testdata/TestDataKeyProperties/no-match.tf",
-			init: func(t *testing.T, m *cloudaccess.Mock, testData testDataForKeyProperties) {
+			init: func(m *cloudaccess.Mock, _ testDataForKeyProperties) {
 				expectListAccessKeys(m, 1)
 			},
 			error: regexp.MustCompile(`access key with name: 'no-match' does not exist`),
 		},
 		"expect error on list access keys": {
 			configPath: "testdata/TestDataKeyProperties/default.tf",
-			init: func(t *testing.T, m *cloudaccess.Mock, testData testDataForKeyProperties) {
-				m.On("ListAccessKeys", mock.Anything, cloudaccess.ListAccessKeysRequest{}).
+			init: func(m *cloudaccess.Mock, _ testDataForKeyProperties) {
+				m.On("ListAccessKeys", testutils.MockContext, cloudaccess.ListAccessKeysRequest{}).
 					Return(nil, fmt.Errorf("API error")).Once()
 			},
 			error: regexp.MustCompile(`API error`),
 		},
 		"expect error on list access key versions": {
 			configPath: "testdata/TestDataKeyProperties/default.tf",
-			init: func(t *testing.T, m *cloudaccess.Mock, testData testDataForKeyProperties) {
+			init: func(m *cloudaccess.Mock, _ testDataForKeyProperties) {
 				expectListAccessKeys(m, 1)
-				m.On("ListAccessKeyVersions", mock.Anything, cloudaccess.ListAccessKeyVersionsRequest{
+				m.On("ListAccessKeyVersions", testutils.MockContext, cloudaccess.ListAccessKeyVersionsRequest{
 					AccessKeyUID: 1,
 				}).Return(nil, fmt.Errorf("API error")).Once()
 			},
@@ -136,10 +134,10 @@ func TestDataKeyProperties(t *testing.T) {
 					},
 				},
 			},
-			init: func(t *testing.T, m *cloudaccess.Mock, testData testDataForKeyProperties) {
+			init: func(m *cloudaccess.Mock, testData testDataForKeyProperties) {
 				expectListAccessKeys(m, 1)
 				expectListAccessKeyVersions(m, testData, 1)
-				m.On("LookupProperties", mock.Anything, cloudaccess.LookupPropertiesRequest{
+				m.On("LookupProperties", testutils.MockContext, cloudaccess.LookupPropertiesRequest{
 					AccessKeyUID: 1,
 					Version:      1,
 				}).Return(nil, fmt.Errorf("API error")).Once()
@@ -151,7 +149,7 @@ func TestDataKeyProperties(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			client := &cloudaccess.Mock{}
 			if test.init != nil {
-				test.init(t, client, test.mockData)
+				test.init(client, test.mockData)
 			}
 
 			useClient(client, func() {
@@ -231,7 +229,7 @@ func expectListAccessKeys(client *cloudaccess.Mock, timesToRun int) {
 		},
 	}
 
-	client.On("ListAccessKeys", mock.Anything, listAccessKeysReq).Return(&listAccessKeysRes, nil).Times(timesToRun)
+	client.On("ListAccessKeys", testutils.MockContext, listAccessKeysReq).Return(&listAccessKeysRes, nil).Times(timesToRun)
 }
 
 func expectListAccessKeyVersions(client *cloudaccess.Mock, data testDataForKeyProperties, timesToRun int) {
@@ -251,7 +249,7 @@ func expectListAccessKeyVersions(client *cloudaccess.Mock, data testDataForKeyPr
 		return listKeyPropertiesRes.AccessKeyVersions[i].Version < listKeyPropertiesRes.AccessKeyVersions[j].Version
 	})
 
-	client.On("ListAccessKeyVersions", mock.Anything, listKeyPropertiesReq).Return(&listKeyPropertiesRes, nil).Times(timesToRun)
+	client.On("ListAccessKeyVersions", testutils.MockContext, listKeyPropertiesReq).Return(&listKeyPropertiesRes, nil).Times(timesToRun)
 }
 
 func expectLookupProperties(client *cloudaccess.Mock, data testDataForKeyProperties, timesToRun int) {
@@ -280,6 +278,6 @@ func expectLookupProperties(client *cloudaccess.Mock, data testDataForKeyPropert
 				StagingVersion:    prp.stagingVersion,
 			})
 		}
-		client.On("LookupProperties", mock.Anything, lookupPropertiesReq).Return(&lookupPropertiesRes, nil).Times(timesToRun)
+		client.On("LookupProperties", testutils.MockContext, lookupPropertiesReq).Return(&lookupPropertiesRes, nil).Times(timesToRun)
 	}
 }

@@ -3,10 +3,9 @@ package botman
 import (
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestResourceBotManagementSettings(t *testing.T) {
@@ -16,7 +15,7 @@ func TestResourceBotManagementSettings(t *testing.T) {
 		createResponse := map[string]interface{}{"testKey": "testValue3"}
 		createRequest := testutils.LoadFixtureBytes(t, "testdata/JsonPayload/create.json")
 		mockedBotmanClient.On("UpdateBotManagementSetting",
-			mock.Anything,
+			testutils.MockContext,
 			botman.UpdateBotManagementSettingRequest{
 				ConfigID:         43253,
 				Version:          15,
@@ -26,7 +25,7 @@ func TestResourceBotManagementSettings(t *testing.T) {
 		).Return(createResponse, nil).Once()
 
 		mockedBotmanClient.On("GetBotManagementSetting",
-			mock.Anything,
+			testutils.MockContext,
 			botman.GetBotManagementSettingRequest{
 				ConfigID:         43253,
 				Version:          15,
@@ -38,7 +37,7 @@ func TestResourceBotManagementSettings(t *testing.T) {
 		updateResponse := map[string]interface{}{"testKey": "updated_testValue3"}
 		updateRequest := testutils.LoadFixtureBytes(t, "testdata/JsonPayload/update.json")
 		mockedBotmanClient.On("UpdateBotManagementSetting",
-			mock.Anything,
+			testutils.MockContext,
 			botman.UpdateBotManagementSettingRequest{
 				ConfigID:         43253,
 				Version:          15,
@@ -48,7 +47,7 @@ func TestResourceBotManagementSettings(t *testing.T) {
 		).Return(updateResponse, nil).Once()
 
 		mockedBotmanClient.On("GetBotManagementSetting",
-			mock.Anything,
+			testutils.MockContext,
 			botman.GetBotManagementSettingRequest{
 				ConfigID:         43253,
 				Version:          15,

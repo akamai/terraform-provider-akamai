@@ -1,15 +1,15 @@
 package clientlists
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/clientlists"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/clientlists"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestResourceClientList(t *testing.T) {
@@ -41,7 +41,7 @@ func TestResourceClientList(t *testing.T) {
 			return result
 		}
 
-		expectCreateList = func(t *testing.T, client *clientlists.Mock, req clientlists.CreateClientListRequest) *clientlists.CreateClientListResponse {
+		expectCreateList = func(client *clientlists.Mock, req clientlists.CreateClientListRequest) *clientlists.CreateClientListResponse {
 
 			createResponse := clientlists.CreateClientListResponse{
 				ListContent: clientlists.ListContent{
@@ -59,11 +59,11 @@ func TestResourceClientList(t *testing.T) {
 				Items:      mapItemsPayloadToContent(req.Items),
 			}
 
-			client.On("CreateClientList", mock.Anything, req).Return(&createResponse, nil).Once()
+			client.On("CreateClientList", testutils.MockContext, req).Return(&createResponse, nil).Once()
 			return &createResponse
 		}
 
-		expectUpdateList = func(t *testing.T, client *clientlists.Mock, listType clientlists.ClientListType, itemsCount int64, req clientlists.UpdateClientListRequest) *clientlists.UpdateClientListResponse {
+		expectUpdateList = func(client *clientlists.Mock, listType clientlists.ClientListType, itemsCount int64, req clientlists.UpdateClientListRequest) *clientlists.UpdateClientListResponse {
 
 			updateResponse := clientlists.UpdateClientListResponse{
 				ListContent: clientlists.ListContent{
@@ -77,11 +77,11 @@ func TestResourceClientList(t *testing.T) {
 				},
 			}
 
-			client.On("UpdateClientList", mock.Anything, req).Return(&updateResponse, nil).Once()
+			client.On("UpdateClientList", testutils.MockContext, req).Return(&updateResponse, nil).Once()
 			return &updateResponse
 		}
 
-		expectUpdateListItems = func(_ *testing.T, client *clientlists.Mock, req clientlists.UpdateClientListItemsRequest) *clientlists.UpdateClientListItemsResponse {
+		expectUpdateListItems = func(client *clientlists.Mock, req clientlists.UpdateClientListItemsRequest) *clientlists.UpdateClientListItemsResponse {
 			appended := make([]clientlists.ListItemContent, 0, len(req.Append))
 			for _, v := range req.Append {
 				appended = append(appended, clientlists.ListItemContent{
@@ -116,11 +116,11 @@ func TestResourceClientList(t *testing.T) {
 				Deleted:  deleted,
 			}
 
-			client.On("UpdateClientListItems", mock.Anything, req).Return(&updateResponse, nil).Once()
+			client.On("UpdateClientListItems", testutils.MockContext, req).Return(&updateResponse, nil).Once()
 			return &updateResponse
 		}
 
-		expectReadList = func(_ *testing.T, client *clientlists.Mock, list clientlists.ListContent, items []clientlists.ListItemContent, callTimes int) {
+		expectReadList = func(client *clientlists.Mock, list clientlists.ListContent, items []clientlists.ListItemContent, callTimes int) {
 			clientListGetReq := clientlists.GetClientListRequest{
 				ListID:       list.ListID,
 				IncludeItems: true,
@@ -132,24 +132,24 @@ func TestResourceClientList(t *testing.T) {
 				ContractID:  "12_ABC",
 				GroupID:     12,
 			}
-			client.On("GetClientList", mock.Anything, clientListGetReq).Return(&clientList, nil).Times(callTimes)
+			client.On("GetClientList", testutils.MockContext, clientListGetReq).Return(&clientList, nil).Times(callTimes)
 		}
 
-		expectDeleteList = func(_ *testing.T, client *clientlists.Mock, list clientlists.ListContent) {
+		expectDeleteList = func(client *clientlists.Mock, list clientlists.ListContent) {
 			clientListDeleteReq := clientlists.DeleteClientListRequest{
 				ListID: list.ListID,
 			}
-			client.On("DeleteClientList", mock.Anything, clientListDeleteReq).Return(nil).Once()
+			client.On("DeleteClientList", testutils.MockContext, clientListDeleteReq).Return(nil).Once()
 		}
 
-		expectAPIErrorWithUpdateList = func(_ *testing.T, client *clientlists.Mock, req clientlists.UpdateClientListRequest) {
-			err := fmt.Errorf(updateAPIError)
-			client.On("UpdateClientList", mock.Anything, req).Return(nil, err).Once()
+		expectAPIErrorWithUpdateList = func(client *clientlists.Mock, req clientlists.UpdateClientListRequest) {
+			err := errors.New(updateAPIError)
+			client.On("UpdateClientList", testutils.MockContext, req).Return(nil, err).Once()
 		}
 
-		expectAPIErrorWithGetList = func(_ *testing.T, client *clientlists.Mock, req clientlists.GetClientListRequest) {
-			err := fmt.Errorf(getAPIError)
-			client.On("GetClientList", mock.Anything, req).Return(nil, err).Once()
+		expectAPIErrorWithGetList = func(client *clientlists.Mock, req clientlists.GetClientListRequest) {
+			err := errors.New(getAPIError)
+			client.On("GetClientList", testutils.MockContext, req).Return(nil, err).Once()
 		}
 
 		checkAttributes = func(attrs listAttributes) resource.TestCheckFunc {
@@ -173,7 +173,7 @@ func TestResourceClientList(t *testing.T) {
 
 	t.Run("Create a new client list", func(t *testing.T) {
 		client := new(clientlists.Mock)
-		clientList := expectCreateList(t, client, clientlists.CreateClientListRequest{
+		clientList := expectCreateList(client, clientlists.CreateClientListRequest{
 			Name:       "List Name",
 			Notes:      "List Notes",
 			Tags:       []string{"a", "b"},
@@ -182,8 +182,8 @@ func TestResourceClientList(t *testing.T) {
 			GroupID:    12,
 			Items:      []clientlists.ListItemPayload{},
 		})
-		expectReadList(t, client, clientList.ListContent, []clientlists.ListItemContent{}, 2)
-		expectDeleteList(t, client, clientList.ListContent)
+		expectReadList(client, clientList.ListContent, []clientlists.ListItemContent{}, 2)
+		expectDeleteList(client, clientList.ListContent)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -212,7 +212,7 @@ func TestResourceClientList(t *testing.T) {
 
 	t.Run("Update client list", func(t *testing.T) {
 		client := new(clientlists.Mock)
-		clientList := expectCreateList(t, client, clientlists.CreateClientListRequest{
+		clientList := expectCreateList(client, clientlists.CreateClientListRequest{
 			Name:       "List Name",
 			Notes:      "List Notes",
 			Tags:       []string{"a", "b"},
@@ -221,8 +221,8 @@ func TestResourceClientList(t *testing.T) {
 			GroupID:    12,
 			Items:      []clientlists.ListItemPayload{},
 		})
-		expectReadList(t, client, clientList.ListContent, []clientlists.ListItemContent{}, 3)
-		updateResponse := expectUpdateList(t, client, clientlists.ASN, 0, clientlists.UpdateClientListRequest{
+		expectReadList(client, clientList.ListContent, []clientlists.ListItemContent{}, 3)
+		updateResponse := expectUpdateList(client, clientlists.ASN, 0, clientlists.UpdateClientListRequest{
 			UpdateClientList: clientlists.UpdateClientList{
 				Name:  "List Name Updated",
 				Notes: "List Notes Updated",
@@ -230,8 +230,8 @@ func TestResourceClientList(t *testing.T) {
 			},
 			ListID: clientList.ListID,
 		})
-		expectReadList(t, client, updateResponse.ListContent, []clientlists.ListItemContent{}, 2)
-		expectDeleteList(t, client, clientList.ListContent)
+		expectReadList(client, updateResponse.ListContent, []clientlists.ListItemContent{}, 2)
+		expectDeleteList(client, clientList.ListContent)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -273,7 +273,7 @@ func TestResourceClientList(t *testing.T) {
 
 	t.Run("Update client list not expected when empty tags list removed", func(t *testing.T) {
 		client := new(clientlists.Mock)
-		clientList := expectCreateList(t, client, clientlists.CreateClientListRequest{
+		clientList := expectCreateList(client, clientlists.CreateClientListRequest{
 			Name:       "List Name",
 			Notes:      "List Notes",
 			Tags:       []string{},
@@ -282,8 +282,8 @@ func TestResourceClientList(t *testing.T) {
 			GroupID:    12,
 			Items:      []clientlists.ListItemPayload{},
 		})
-		expectReadList(t, client, clientList.ListContent, []clientlists.ListItemContent{}, 4)
-		expectDeleteList(t, client, clientList.ListContent)
+		expectReadList(client, clientList.ListContent, []clientlists.ListItemContent{}, 4)
+		expectDeleteList(client, clientList.ListContent)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -324,7 +324,7 @@ func TestResourceClientList(t *testing.T) {
 
 	t.Run("Get client list returns an API error", func(t *testing.T) {
 		client := new(clientlists.Mock)
-		clientList := expectCreateList(t, client, clientlists.CreateClientListRequest{
+		clientList := expectCreateList(client, clientlists.CreateClientListRequest{
 			Name:       "List Name",
 			Notes:      "List Notes",
 			Tags:       []string{"a", "b"},
@@ -334,11 +334,11 @@ func TestResourceClientList(t *testing.T) {
 			Items:      []clientlists.ListItemPayload{},
 		})
 
-		expectAPIErrorWithGetList(t, client, clientlists.GetClientListRequest{
+		expectAPIErrorWithGetList(client, clientlists.GetClientListRequest{
 			ListID:       clientList.ListID,
 			IncludeItems: true,
 		})
-		expectDeleteList(t, client, clientList.ListContent)
+		expectDeleteList(client, clientList.ListContent)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -356,7 +356,7 @@ func TestResourceClientList(t *testing.T) {
 
 	t.Run("Update client list returns an API error", func(t *testing.T) {
 		client := new(clientlists.Mock)
-		clientList := expectCreateList(t, client, clientlists.CreateClientListRequest{
+		clientList := expectCreateList(client, clientlists.CreateClientListRequest{
 			Name:       "List Name",
 			Notes:      "List Notes",
 			Tags:       []string{"a", "b"},
@@ -365,9 +365,9 @@ func TestResourceClientList(t *testing.T) {
 			GroupID:    12,
 			Items:      []clientlists.ListItemPayload{},
 		})
-		expectReadList(t, client, clientList.ListContent, []clientlists.ListItemContent{}, 3)
+		expectReadList(client, clientList.ListContent, []clientlists.ListItemContent{}, 3)
 
-		expectAPIErrorWithUpdateList(t, client, clientlists.UpdateClientListRequest{
+		expectAPIErrorWithUpdateList(client, clientlists.UpdateClientListRequest{
 			UpdateClientList: clientlists.UpdateClientList{
 				Name:  "List Name Updated",
 				Notes: "List Notes Updated",
@@ -375,7 +375,7 @@ func TestResourceClientList(t *testing.T) {
 			},
 			ListID: clientList.ListID,
 		})
-		expectDeleteList(t, client, clientList.ListContent)
+		expectDeleteList(client, clientList.ListContent)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -424,7 +424,7 @@ func TestResourceClientList(t *testing.T) {
 				Tags:        []string{"item12Tag1", "item12Tag2"},
 			})
 
-		clientList := expectCreateList(t, client, clientlists.CreateClientListRequest{
+		clientList := expectCreateList(client, clientlists.CreateClientListRequest{
 			Name:       "List Name",
 			Notes:      "List Notes",
 			Tags:       []string{"a", "b"},
@@ -433,8 +433,8 @@ func TestResourceClientList(t *testing.T) {
 			GroupID:    12,
 			Items:      items,
 		})
-		expectReadList(t, client, clientList.ListContent, mapItemsPayloadToContent(items), 2)
-		expectDeleteList(t, client, clientList.ListContent)
+		expectReadList(client, clientList.ListContent, mapItemsPayloadToContent(items), 2)
+		expectDeleteList(client, clientList.ListContent)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -496,7 +496,7 @@ func TestResourceClientList(t *testing.T) {
 				Tags:        []string{"1234Tag"},
 			})
 
-		clientList := expectCreateList(t, client, clientlists.CreateClientListRequest{
+		clientList := expectCreateList(client, clientlists.CreateClientListRequest{
 			Name:       "List Name",
 			Notes:      "List Notes",
 			Tags:       []string{"a", "b"},
@@ -505,8 +505,8 @@ func TestResourceClientList(t *testing.T) {
 			GroupID:    12,
 			Items:      items,
 		})
-		expectReadList(t, client, clientList.ListContent, mapItemsPayloadToContent(items), 4)
-		updateResponse := expectUpdateList(t, client, clientlists.ASN, 3, clientlists.UpdateClientListRequest{
+		expectReadList(client, clientList.ListContent, mapItemsPayloadToContent(items), 4)
+		updateResponse := expectUpdateList(client, clientlists.ASN, 3, clientlists.UpdateClientListRequest{
 			UpdateClientList: clientlists.UpdateClientList{
 				Name:  "List Name Updated",
 				Notes: "List Notes Updated",
@@ -514,7 +514,7 @@ func TestResourceClientList(t *testing.T) {
 			},
 			ListID: clientList.ListID,
 		})
-		expectUpdateListItems(t, client, clientlists.UpdateClientListItemsRequest{
+		expectUpdateListItems(client, clientlists.UpdateClientListItemsRequest{
 			ListID: clientList.ListID,
 			UpdateClientListItems: clientlists.UpdateClientListItems{
 				Append: []clientlists.ListItemPayload{
@@ -538,8 +538,8 @@ func TestResourceClientList(t *testing.T) {
 				},
 			},
 		})
-		expectReadList(t, client, updateResponse.ListContent, mapItemsPayloadToContent(updatedItems), 2)
-		expectDeleteList(t, client, clientList.ListContent)
+		expectReadList(client, updateResponse.ListContent, mapItemsPayloadToContent(updatedItems), 2)
+		expectDeleteList(client, clientList.ListContent)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -616,7 +616,7 @@ func TestResourceClientList(t *testing.T) {
 				Tags:        []string{"1234Tag"},
 			})
 
-		clientList := expectCreateList(t, client, clientlists.CreateClientListRequest{
+		clientList := expectCreateList(client, clientlists.CreateClientListRequest{
 			Name:       "List Name",
 			Notes:      "List Notes",
 			Tags:       []string{"a", "b"},
@@ -625,8 +625,8 @@ func TestResourceClientList(t *testing.T) {
 			GroupID:    12,
 			Items:      items,
 		})
-		expectReadList(t, client, clientList.ListContent, mapItemsPayloadToContent(items), 4)
-		expectUpdateListItems(t, client, clientlists.UpdateClientListItemsRequest{
+		expectReadList(client, clientList.ListContent, mapItemsPayloadToContent(items), 4)
+		expectUpdateListItems(client, clientlists.UpdateClientListItemsRequest{
 			ListID: clientList.ListID,
 			UpdateClientListItems: clientlists.UpdateClientListItems{
 				Append: []clientlists.ListItemPayload{
@@ -650,8 +650,8 @@ func TestResourceClientList(t *testing.T) {
 				},
 			},
 		})
-		expectReadList(t, client, clientList.ListContent, mapItemsPayloadToContent(updatedItems), 2)
-		expectDeleteList(t, client, clientList.ListContent)
+		expectReadList(client, clientList.ListContent, mapItemsPayloadToContent(updatedItems), 2)
+		expectDeleteList(client, clientList.ListContent)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -703,7 +703,7 @@ func TestResourceClientList(t *testing.T) {
 			})
 		updatedItems := []clientlists.ListItemPayload{}
 
-		clientList := expectCreateList(t, client, clientlists.CreateClientListRequest{
+		clientList := expectCreateList(client, clientlists.CreateClientListRequest{
 			Name:       "List Name",
 			Notes:      "List Notes",
 			Tags:       []string{"a", "b"},
@@ -712,8 +712,8 @@ func TestResourceClientList(t *testing.T) {
 			GroupID:    12,
 			Items:      items,
 		})
-		expectReadList(t, client, clientList.ListContent, mapItemsPayloadToContent(items), 4)
-		expectUpdateListItems(t, client, clientlists.UpdateClientListItemsRequest{
+		expectReadList(client, clientList.ListContent, mapItemsPayloadToContent(items), 4)
+		expectUpdateListItems(client, clientlists.UpdateClientListItemsRequest{
 			ListID: clientList.ListID,
 			UpdateClientListItems: clientlists.UpdateClientListItems{
 				Append: []clientlists.ListItemPayload{},
@@ -725,8 +725,8 @@ func TestResourceClientList(t *testing.T) {
 		updatedClientList := clientList.ListContent
 		updatedClientList.Version = 2
 
-		expectReadList(t, client, updatedClientList, mapItemsPayloadToContent(updatedItems), 2)
-		expectDeleteList(t, client, clientList.ListContent)
+		expectReadList(client, updatedClientList, mapItemsPayloadToContent(updatedItems), 2)
+		expectDeleteList(client, clientList.ListContent)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -763,7 +763,7 @@ func TestResourceClientList(t *testing.T) {
 				Value: "1",
 			})
 
-		clientList := expectCreateList(t, client, clientlists.CreateClientListRequest{
+		clientList := expectCreateList(client, clientlists.CreateClientListRequest{
 			Name:       "List Name",
 			Notes:      "List Notes",
 			Tags:       []string{"a", "b"},
@@ -772,8 +772,8 @@ func TestResourceClientList(t *testing.T) {
 			GroupID:    12,
 			Items:      items,
 		})
-		expectReadList(t, client, clientList.ListContent, mapItemsPayloadToContent(items), 4)
-		expectUpdateListItems(t, client, clientlists.UpdateClientListItemsRequest{
+		expectReadList(client, clientList.ListContent, mapItemsPayloadToContent(items), 4)
+		expectUpdateListItems(client, clientlists.UpdateClientListItemsRequest{
 			ListID: clientList.ListID,
 			UpdateClientListItems: clientlists.UpdateClientListItems{
 				Append: []clientlists.ListItemPayload{},
@@ -786,8 +786,8 @@ func TestResourceClientList(t *testing.T) {
 				Delete: []clientlists.ListItemPayload{},
 			},
 		})
-		expectReadList(t, client, clientList.ListContent, mapItemsPayloadToContent(updatedItems), 2)
-		expectDeleteList(t, client, clientList.ListContent)
+		expectReadList(client, clientList.ListContent, mapItemsPayloadToContent(updatedItems), 2)
+		expectDeleteList(client, clientList.ListContent)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -831,7 +831,7 @@ func TestResourceClientList(t *testing.T) {
 	t.Run("Import clientlist resource", func(t *testing.T) {
 		client := new(clientlists.Mock)
 
-		clientList := expectCreateList(t, client, clientlists.CreateClientListRequest{
+		clientList := expectCreateList(client, clientlists.CreateClientListRequest{
 			Name:       "List Name",
 			Notes:      "List Notes",
 			Tags:       []string{"a", "b"},
@@ -840,8 +840,8 @@ func TestResourceClientList(t *testing.T) {
 			GroupID:    12,
 			Items:      []clientlists.ListItemPayload{},
 		})
-		expectReadList(t, client, clientList.ListContent, []clientlists.ListItemContent{}, 3)
-		expectDeleteList(t, client, clientList.ListContent)
+		expectReadList(client, clientList.ListContent, []clientlists.ListItemContent{}, 3)
+		expectDeleteList(client, clientList.ListContent)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{

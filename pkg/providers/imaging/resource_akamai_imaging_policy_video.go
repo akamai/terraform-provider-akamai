@@ -10,11 +10,11 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/imaging"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/logger"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/imaging"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/log"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -382,24 +382,24 @@ func resourcePolicyVideoImport(ctx context.Context, d *schema.ResourceData, m in
 	return []*schema.ResourceData{d}, nil
 }
 
-func diffSuppressPolicyVideo(_, old, new string, _ *schema.ResourceData) bool {
-	return equalPolicyVideo(old, new)
+func diffSuppressPolicyVideo(_, o, n string, _ *schema.ResourceData) bool {
+	return equalPolicyVideo(o, n)
 }
 
-func equalPolicyVideo(old, new string) bool {
-	logger := logger.Get("Imaging", "equalPolicyVideo")
-	if old == new {
+func equalPolicyVideo(o, n string) bool {
+	logger := log.Get("Imaging", "equalPolicyVideo")
+	if o == n {
 		return true
 	}
 	var oldPolicy, newPolicy imaging.PolicyInputVideo
-	if old == "" || new == "" {
-		return old == new
+	if o == "" || n == "" {
+		return o == n
 	}
-	if err := json.Unmarshal([]byte(old), &oldPolicy); err != nil {
+	if err := json.Unmarshal([]byte(o), &oldPolicy); err != nil {
 		logger.Errorf("Unable to unmarshal 'old' JSON policy: %s", err)
 		return false
 	}
-	if err := json.Unmarshal([]byte(new), &newPolicy); err != nil {
+	if err := json.Unmarshal([]byte(n), &newPolicy); err != nil {
 		logger.Errorf("Unable to unmarshal 'new' JSON policy: %s", err)
 		return false
 	}

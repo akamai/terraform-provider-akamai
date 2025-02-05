@@ -5,10 +5,9 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cloudwrapper"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/cloudwrapper"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestDataLocation(t *testing.T) {
@@ -16,11 +15,11 @@ func TestDataLocation(t *testing.T) {
 		listLocationsRes := cloudwrapper.ListLocationResponse{
 			Locations: data.locations,
 		}
-		client.On("ListLocations", mock.Anything).Return(&listLocationsRes, nil).Times(timesToRun)
+		client.On("ListLocations", testutils.MockContext).Return(&listLocationsRes, nil).Times(timesToRun)
 	}
 
 	expectListLocationsWithError := func(client *cloudwrapper.Mock, timesToRun int) {
-		client.On("ListLocations", mock.Anything).Return(nil, fmt.Errorf("list locations failed")).Times(timesToRun)
+		client.On("ListLocations", testutils.MockContext).Return(nil, fmt.Errorf("list locations failed")).Times(timesToRun)
 	}
 
 	location := testDataForCWLocation{
@@ -63,20 +62,20 @@ func TestDataLocation(t *testing.T) {
 	}
 	tests := map[string]struct {
 		configPath string
-		init       func(*testing.T, *cloudwrapper.Mock, testDataForCWLocation)
+		init       func(*cloudwrapper.Mock, testDataForCWLocation)
 		mockData   testDataForCWLocation
 		error      *regexp.Regexp
 	}{
 		"happy path": {
 			configPath: "testdata/TestDataLocation/location.tf",
-			init: func(t *testing.T, m *cloudwrapper.Mock, testData testDataForCWLocation) {
+			init: func(m *cloudwrapper.Mock, testData testDataForCWLocation) {
 				expectListLocations(m, testData, 3)
 			},
 			mockData: location,
 		},
 		"no location": {
 			configPath: "testdata/TestDataLocation/no_location.tf",
-			init: func(t *testing.T, m *cloudwrapper.Mock, testData testDataForCWLocation) {
+			init: func(m *cloudwrapper.Mock, testData testDataForCWLocation) {
 				expectListLocations(m, testData, 1)
 			},
 			mockData: location,
@@ -88,7 +87,7 @@ func TestDataLocation(t *testing.T) {
 		},
 		"error listing locations": {
 			configPath: "testdata/TestDataLocation/location.tf",
-			init: func(t *testing.T, m *cloudwrapper.Mock, testData testDataForCWLocation) {
+			init: func(m *cloudwrapper.Mock, _ testDataForCWLocation) {
 				expectListLocationsWithError(m, 1)
 			},
 			error: regexp.MustCompile("list locations failed"),
@@ -98,7 +97,7 @@ func TestDataLocation(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			client := &cloudwrapper.Mock{}
 			if test.init != nil {
-				test.init(t, client, test.mockData)
+				test.init(client, test.mockData)
 			}
 
 			resource.UnitTest(t, resource.TestCase{
@@ -127,7 +126,6 @@ func checkCloudWrapperLocationAttrs() resource.TestCheckFunc {
 
 	checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_cloudwrapper_location.test", "traffic_type_id", "3"))
 	checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_cloudwrapper_location.test", "location_id", "cw-s-usw"))
-	checkFuncs = append(checkFuncs, resource.TestCheckResourceAttrSet("data.akamai_cloudwrapper_location.test", "id"))
 
 	return resource.ComposeAggregateTestCheckFunc(checkFuncs...)
 }

@@ -3,10 +3,9 @@ package botman
 import (
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestDataAkamaiBotCategory(t *testing.T) {
@@ -33,7 +32,7 @@ func TestDataAkamaiBotCategory(t *testing.T) {
 	]
 }`
 		mockedBotmanClient.On("GetAkamaiBotCategoryList",
-			mock.Anything,
+			testutils.MockContext,
 			botman.GetAkamaiBotCategoryListRequest{},
 		).Return(&response, nil)
 		useClient(mockedBotmanClient, func() {
@@ -67,7 +66,7 @@ func TestDataAkamaiBotCategory(t *testing.T) {
 	]
 }`
 		mockedBotmanClient.On("GetAkamaiBotCategoryList",
-			mock.Anything,
+			testutils.MockContext,
 			botman.GetAkamaiBotCategoryListRequest{CategoryName: "Test name 3"},
 		).Return(&response, nil)
 		useClient(mockedBotmanClient, func() {

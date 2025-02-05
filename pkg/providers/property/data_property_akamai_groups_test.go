@@ -4,8 +4,8 @@ import (
 	"log"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
@@ -20,7 +20,7 @@ func TestDataSourceMultipleGroups_basic(t *testing.T) {
 			"parent_group_id": "grp_parent",
 			"contractIds":     contractIDs,
 		}}
-		client.On("GetGroups", AnyCTX).Return(&papi.GetGroupsResponse{
+		client.On("GetGroups", testutils.MockContext).Return(&papi.GetGroupsResponse{
 			AccountID: "act_1-1TJZFB", AccountName: "example.com",
 			Groups: papi.GroupItems{Items: []*papi.Group{{
 				GroupID:       groups[0]["group_id"].(string),
@@ -59,7 +59,7 @@ func TestGroup_ContractNotFoundInState(t *testing.T) {
 			"parent_group_id": "grp_parent",
 			"contractIds":     contractIDs,
 		}}
-		client.On("GetGroups", AnyCTX).Return(&papi.GetGroupsResponse{
+		client.On("GetGroups", testutils.MockContext).Return(&papi.GetGroupsResponse{
 			AccountID: "act_1-1TJZFB", AccountName: "example.com",
 			Groups: papi.GroupItems{Items: []*papi.Group{{
 				GroupID:       groups[0]["group_id"].(string),

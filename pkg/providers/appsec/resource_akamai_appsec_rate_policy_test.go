@@ -4,10 +4,9 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -19,7 +18,7 @@ func TestAkamaiRatePolicy_res_basic(t *testing.T) {
 		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &configResponse)
 		require.NoError(t, err)
 		client.On("GetConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&configResponse, nil)
 
@@ -28,7 +27,7 @@ func TestAkamaiRatePolicy_res_basic(t *testing.T) {
 		require.NoError(t, err)
 		createRatePolicyJSON := testutils.LoadFixtureBytes(t, "testdata/TestResRatePolicy/CreateRatePolicy.json")
 		client.On("CreateRatePolicy",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.CreateRatePolicyRequest{ConfigID: 43253, ConfigVersion: 7, JsonPayloadRaw: createRatePolicyJSON},
 		).Return(&createResponse, nil)
 
@@ -36,15 +35,15 @@ func TestAkamaiRatePolicy_res_basic(t *testing.T) {
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResRatePolicy/RatePolicy.json"), &getResponse)
 		require.NoError(t, err)
 		client.On("GetRatePolicy",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetRatePolicyRequest{ConfigID: 43253, ConfigVersion: 7, RatePolicyID: 134644},
 		).Return(&getResponse, nil).Once()
 		client.On("GetRatePolicy",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetRatePolicyRequest{ConfigID: 43253, ConfigVersion: 7, RatePolicyID: 134644},
 		).Return(&getResponse, nil).Once()
 		client.On("GetRatePolicy",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetRatePolicyRequest{ConfigID: 43253, ConfigVersion: 7, RatePolicyID: 134644},
 		).Return(&getResponse, nil).Once()
 
@@ -53,7 +52,7 @@ func TestAkamaiRatePolicy_res_basic(t *testing.T) {
 		require.NoError(t, err)
 		updateRatePolicyJSON := testutils.LoadFixtureBytes(t, "testdata/TestResRatePolicy/UpdateRatePolicy.json")
 		client.On("UpdateRatePolicy",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.UpdateRatePolicyRequest{RatePolicyID: 134644, ConfigID: 43253, ConfigVersion: 7, JsonPayloadRaw: updateRatePolicyJSON},
 		).Return(&updateResponse, nil)
 
@@ -61,7 +60,7 @@ func TestAkamaiRatePolicy_res_basic(t *testing.T) {
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResRatePolicy/RatePolicyUpdated.json"), &getResponseAfterUpdate)
 		require.NoError(t, err)
 		client.On("GetRatePolicy",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetRatePolicyRequest{ConfigID: 43253, ConfigVersion: 7, RatePolicyID: 134644},
 		).Return(&getResponseAfterUpdate, nil).Twice()
 
@@ -69,7 +68,7 @@ func TestAkamaiRatePolicy_res_basic(t *testing.T) {
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResRatePolicy/RatePolicyEmpty.json"), &removeResponse)
 		require.NoError(t, err)
 		client.On("RemoveRatePolicy",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.RemoveRatePolicyRequest{ConfigID: 43253, ConfigVersion: 7, RatePolicyID: 134644},
 		).Return(&removeResponse, nil)
 
@@ -102,7 +101,7 @@ func TestAkamaiRatePolicy_res_basic(t *testing.T) {
 		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &configResponse)
 		require.NoError(t, err)
 		client.On("GetConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&configResponse, nil)
 
@@ -111,7 +110,7 @@ func TestAkamaiRatePolicy_res_basic(t *testing.T) {
 		require.NoError(t, err)
 		createRatePolicyJSON := testutils.LoadFixtureBytes(t, "testdata/TestResRatePolicy/suppress/CreateRatePolicy.json")
 		client.On("CreateRatePolicy",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.CreateRatePolicyRequest{ConfigID: 43253, ConfigVersion: 7, JsonPayloadRaw: createRatePolicyJSON},
 		).Return(&createResponse, nil)
 
@@ -119,7 +118,7 @@ func TestAkamaiRatePolicy_res_basic(t *testing.T) {
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResRatePolicy/suppress/RatePolicyResponse.json"), &getResponse)
 		require.NoError(t, err)
 		client.On("GetRatePolicy",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetRatePolicyRequest{ConfigID: 43253, ConfigVersion: 7, RatePolicyID: 134644},
 		).Return(&getResponse, nil).Times(3)
 
@@ -128,7 +127,7 @@ func TestAkamaiRatePolicy_res_basic(t *testing.T) {
 		require.NoError(t, err)
 		updateRatePolicyJSON := testutils.LoadFixtureBytes(t, "testdata/TestResRatePolicy/suppress/UpdateRatePolicy.json")
 		client.On("UpdateRatePolicy",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.UpdateRatePolicyRequest{RatePolicyID: 134644, ConfigID: 43253, ConfigVersion: 7, JsonPayloadRaw: updateRatePolicyJSON},
 		).Return(&updateResponse, nil)
 
@@ -136,7 +135,7 @@ func TestAkamaiRatePolicy_res_basic(t *testing.T) {
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResRatePolicy/suppress/RatePolicyUpdated.json"), &getResponseAfterUpdate)
 		require.NoError(t, err)
 		client.On("GetRatePolicy",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetRatePolicyRequest{ConfigID: 43253, ConfigVersion: 7, RatePolicyID: 134644},
 		).Return(&getResponseAfterUpdate, nil).Twice()
 
@@ -144,7 +143,7 @@ func TestAkamaiRatePolicy_res_basic(t *testing.T) {
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResRatePolicy/suppress/RatePolicyEmpty.json"), &removeResponse)
 		require.NoError(t, err)
 		client.On("RemoveRatePolicy",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.RemoveRatePolicyRequest{ConfigID: 43253, ConfigVersion: 7, RatePolicyID: 134644},
 		).Return(&removeResponse, nil)
 

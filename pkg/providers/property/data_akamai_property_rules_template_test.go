@@ -6,12 +6,12 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/tj/assert"
 )
 
 func TestDataAkamaiPropertyRulesRead(t *testing.T) {
@@ -606,7 +606,7 @@ func TestConvertToTemplate(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			expected := testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", templatesOut, test.expectedFile))
+			expected := testutils.LoadFixtureStringf(t, "%s/%s", templatesOut, test.expectedFile)
 			assert.Equal(t, expected, res)
 		})
 	}
@@ -638,7 +638,7 @@ func TestStringToTemplate(t *testing.T) {
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			givenString := testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", templates, test.givenFile))
+			givenString := testutils.LoadFixtureStringf(t, "%s/%s", templates, test.givenFile)
 			res, err := stringToTemplate(givenString, test.varMaps, "main")
 			fmt.Println(res)
 			if test.withError != nil {
@@ -646,7 +646,7 @@ func TestStringToTemplate(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			expected := testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", templatesOut, test.expectedFile))
+			expected := testutils.LoadFixtureStringf(t, "%s/%s", templatesOut, test.expectedFile)
 			assert.Equal(t, expected, res)
 		})
 	}

@@ -3,6 +3,6 @@ provider "akamai" {
 }
 
 data "akamai_gtm_resource" "my_gtm_resource" {
-  domain        = "test.domain.net"
-  resource_name = "resource1"
+  domain        = "gtm_terra_testdomain.akadns.net"
+  resource_name = "tfexample_resource_1"
 }

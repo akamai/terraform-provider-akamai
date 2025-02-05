@@ -10,15 +10,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cloudlets"
-	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cloudlets/v3"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/str"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/timeouts"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/logger"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/cloudlets"
+	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/cloudlets/v3"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/str"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/timeouts"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/log"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -138,7 +138,7 @@ func cloudletCodeValidation(_ context.Context, diff *schema.ResourceDiff, _ inte
 	if isShared {
 		possibleValues := []string{"AP", "AS", "CD", "ER", "FR", "IG"}
 		for _, code := range possibleValues {
-			if strings.ToLower(providedCode) == strings.ToLower(code) {
+			if strings.EqualFold(providedCode, code) {
 				return nil
 			}
 		}
@@ -147,7 +147,7 @@ func cloudletCodeValidation(_ context.Context, diff *schema.ResourceDiff, _ inte
 
 	possibleValues := []string{"ALB", "AP", "AS", "CD", "ER", "FR", "IG", "VP"}
 	for _, code := range possibleValues {
-		if strings.ToLower(providedCode) == strings.ToLower(code) {
+		if strings.EqualFold(providedCode, code) {
 			return nil
 		}
 	}
@@ -430,32 +430,32 @@ func resourcePolicyImport(ctx context.Context, d *schema.ResourceData, m interfa
 	return []*schema.ResourceData{d}, nil
 }
 
-func diffSuppressGroupID(_, old, new string, _ *schema.ResourceData) bool {
-	return strings.TrimPrefix(old, "grp_") == strings.TrimPrefix(new, "grp_")
+func diffSuppressGroupID(_, o, n string, _ *schema.ResourceData) bool {
+	return strings.TrimPrefix(o, "grp_") == strings.TrimPrefix(n, "grp_")
 }
 
-func diffSuppressMatchRuleFormat(_, old, new string, _ *schema.ResourceData) bool {
-	return old == new || new == "" && cloudlets.MatchRuleFormat(old) == cloudlets.MatchRuleFormat10
+func diffSuppressMatchRuleFormat(_, o, n string, _ *schema.ResourceData) bool {
+	return o == n || n == "" && cloudlets.MatchRuleFormat(o) == cloudlets.MatchRuleFormat10
 }
 
-func diffSuppressMatchRules(_, old, new string, _ *schema.ResourceData) bool {
-	return diffMatchRules(old, new)
+func diffSuppressMatchRules(_, o, n string, _ *schema.ResourceData) bool {
+	return diffMatchRules(o, n)
 }
 
-func diffMatchRules(old, new string) bool {
-	logger := logger.Get("Cloudlets", "diffMatchRules")
-	if old == new {
+func diffMatchRules(o, n string) bool {
+	logger := log.Get("Cloudlets", "diffMatchRules")
+	if o == n {
 		return true
 	}
 	var oldRules, newRules []map[string]interface{}
-	if old == "" || new == "" {
-		return old == new
+	if o == "" || n == "" {
+		return o == n
 	}
-	if err := json.Unmarshal([]byte(old), &oldRules); err != nil {
+	if err := json.Unmarshal([]byte(o), &oldRules); err != nil {
 		logger.Errorf("Unable to unmarshal 'old' JSON rules: %s", err)
 		return false
 	}
-	if err := json.Unmarshal([]byte(new), &newRules); err != nil {
+	if err := json.Unmarshal([]byte(n), &newRules); err != nil {
 		logger.Errorf("Unable to unmarshal 'new' JSON rules: %s", err)
 		return false
 	}
@@ -537,7 +537,7 @@ func discoverPolicyExecutionStrategy(ctx context.Context, meta meta.Meta, policy
 		errMessage += fmt.Sprintf("could not list V3 policies: %s", errV3)
 	}
 	if errMessage != "" {
-		return nil, 0, fmt.Errorf(errMessage)
+		return nil, 0, errors.New(errMessage)
 	}
 
 	return nil, 0, fmt.Errorf("policy '%s' does not exist", policyName)

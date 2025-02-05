@@ -5,16 +5,15 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cloudlets"
-	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cloudlets/v3"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/cloudlets"
+	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/cloudlets/v3"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/jinzhu/copier"
-	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/tj/assert"
 	"golang.org/x/exp/slices"
 )
 
@@ -27,7 +26,7 @@ func TestResourcePolicyV2(t *testing.T) {
 	}
 
 	var (
-		expectCreatePolicy = func(_ *testing.T, client *cloudlets.Mock, policyID int64, policyName string, matchRules cloudlets.MatchRules, description string) (*cloudlets.Policy, *cloudlets.PolicyVersion) {
+		expectCreatePolicy = func(client *cloudlets.Mock, policyID int64, policyName string, matchRules cloudlets.MatchRules, description string) (*cloudlets.Policy, *cloudlets.PolicyVersion) {
 			policy := &cloudlets.Policy{
 				PolicyID:     policyID,
 				GroupID:      123,
@@ -51,7 +50,7 @@ func TestResourcePolicyV2(t *testing.T) {
 					},
 				},
 			}
-			client.On("CreatePolicy", mock.Anything, cloudlets.CreatePolicyRequest{
+			client.On("CreatePolicy", testutils.MockContext, cloudlets.CreatePolicyRequest{
 				Name:       policyName,
 				CloudletID: 0,
 				GroupID:    123,
@@ -60,7 +59,7 @@ func TestResourcePolicyV2(t *testing.T) {
 				return policy, version
 			}
 			if matchRules != nil {
-				client.On("UpdatePolicyVersion", mock.Anything, cloudlets.UpdatePolicyVersionRequest{
+				client.On("UpdatePolicyVersion", testutils.MockContext, cloudlets.UpdatePolicyVersionRequest{
 					UpdatePolicyVersion: cloudlets.UpdatePolicyVersion{
 						Description: description,
 						MatchRules:  matchRules,
@@ -69,7 +68,7 @@ func TestResourcePolicyV2(t *testing.T) {
 					Version:  1,
 				}).Return(version, nil).Once()
 			} else {
-				client.On("UpdatePolicyVersion", mock.Anything, cloudlets.UpdatePolicyVersionRequest{
+				client.On("UpdatePolicyVersion", testutils.MockContext, cloudlets.UpdatePolicyVersionRequest{
 					UpdatePolicyVersion: cloudlets.UpdatePolicyVersion{
 						Description: description,
 						MatchRules:  make(cloudlets.MatchRules, 0),
@@ -82,42 +81,42 @@ func TestResourcePolicyV2(t *testing.T) {
 			return policy, version
 		}
 
-		expectListPolicyVersions = func(t *testing.T, client *cloudlets.Mock, policyId int64, versions []cloudlets.PolicyVersion, times int) {
-			client.On("ListPolicyVersions", mock.Anything, cloudlets.ListPolicyVersionsRequest{
+		expectListPolicyVersions = func(client *cloudlets.Mock, policyId int64, versions []cloudlets.PolicyVersion, times int) {
+			client.On("ListPolicyVersions", testutils.MockContext, cloudlets.ListPolicyVersionsRequest{
 				PolicyID: policyId,
 				Offset:   0,
 				PageSize: ptr.To(1000),
 			}).Return(versions, nil).Times(times)
 		}
 
-		expectReadPolicy = func(t *testing.T, client *cloudlets.Mock, policy *cloudlets.Policy, versions []cloudlets.PolicyVersion, times int) {
-			expectListPolicyVersions(t, client, policy.PolicyID, versions, times)
+		expectReadPolicy = func(client *cloudlets.Mock, policy *cloudlets.Policy, versions []cloudlets.PolicyVersion, times int) {
+			expectListPolicyVersions(client, policy.PolicyID, versions, times)
 			var latestVersion cloudlets.PolicyVersion
 			for _, version := range versions {
 				if latestVersion.Version < version.Version {
 					latestVersion = version
 				}
 			}
-			client.On("GetPolicy", mock.Anything, cloudlets.GetPolicyRequest{PolicyID: policy.PolicyID}).Return(policy, nil).Times(times)
-			if versions != nil && len(versions) > 0 {
+			client.On("GetPolicy", testutils.MockContext, cloudlets.GetPolicyRequest{PolicyID: policy.PolicyID}).Return(policy, nil).Times(times)
+			if len(versions) > 0 {
 				var versionWithoutWarnings cloudlets.PolicyVersion
 				err := copier.CopyWithOption(&versionWithoutWarnings, latestVersion, copier.Option{DeepCopy: true})
 				require.NoError(t, err)
 				versionWithoutWarnings.Warnings = []cloudlets.Warning{}
 				versionWithoutWarnings.MatchRules = latestVersion.MatchRules
-				client.On("GetPolicyVersion", mock.Anything, cloudlets.GetPolicyVersionRequest{
+				client.On("GetPolicyVersion", testutils.MockContext, cloudlets.GetPolicyVersionRequest{
 					PolicyID: policy.PolicyID,
 					Version:  latestVersion.Version,
 				}).Return(&versionWithoutWarnings, nil).Times(times)
 			}
 		}
 
-		expectUpdatePolicy = func(t *testing.T, client *cloudlets.Mock, policy *cloudlets.Policy, updatedName string) *cloudlets.Policy {
+		expectUpdatePolicy = func(client *cloudlets.Mock, policy *cloudlets.Policy, updatedName string) *cloudlets.Policy {
 			var policyUpdate cloudlets.Policy
 			err := copier.CopyWithOption(&policyUpdate, policy, copier.Option{DeepCopy: true})
 			require.NoError(t, err)
 			policyUpdate.Name = updatedName
-			client.On("UpdatePolicy", mock.Anything, cloudlets.UpdatePolicyRequest{
+			client.On("UpdatePolicy", testutils.MockContext, cloudlets.UpdatePolicyRequest{
 				UpdatePolicy: cloudlets.UpdatePolicy{
 					Name:    updatedName,
 					GroupID: 123,
@@ -127,12 +126,12 @@ func TestResourcePolicyV2(t *testing.T) {
 			return &policyUpdate
 		}
 
-		expectCreatePolicyVersion = func(t *testing.T, client *cloudlets.Mock, policyID int64, version *cloudlets.PolicyVersion, newMatchRules cloudlets.MatchRules) *cloudlets.PolicyVersion {
+		expectCreatePolicyVersion = func(client *cloudlets.Mock, policyID int64, version *cloudlets.PolicyVersion, newMatchRules cloudlets.MatchRules) *cloudlets.PolicyVersion {
 			var activatedVersion cloudlets.PolicyVersion
 			err := copier.CopyWithOption(&activatedVersion, version, copier.Option{DeepCopy: true})
 			require.NoError(t, err)
 			activatedVersion.Activations = []cloudlets.PolicyActivation{{Network: "PROD"}}
-			client.On("GetPolicyVersion", mock.Anything, cloudlets.GetPolicyVersionRequest{
+			client.On("GetPolicyVersion", testutils.MockContext, cloudlets.GetPolicyVersionRequest{
 				PolicyID:  policyID,
 				Version:   version.Version,
 				OmitRules: true,
@@ -142,7 +141,7 @@ func TestResourcePolicyV2(t *testing.T) {
 			require.NoError(t, err)
 			versionUpdate.MatchRules = newMatchRules
 			versionUpdate.Version = version.Version + 1
-			client.On("CreatePolicyVersion", mock.Anything, cloudlets.CreatePolicyVersionRequest{
+			client.On("CreatePolicyVersion", testutils.MockContext, cloudlets.CreatePolicyVersionRequest{
 				CreatePolicyVersion: cloudlets.CreatePolicyVersion{
 					MatchRuleFormat: "1.0",
 					Description:     "test policy description",
@@ -153,8 +152,8 @@ func TestResourcePolicyV2(t *testing.T) {
 			return &versionUpdate
 		}
 
-		expectUpdatePolicyVersion = func(t *testing.T, client *cloudlets.Mock, policyID int64, version *cloudlets.PolicyVersion, newMatchRules cloudlets.MatchRules) *cloudlets.PolicyVersion {
-			client.On("GetPolicyVersion", mock.Anything, cloudlets.GetPolicyVersionRequest{
+		expectUpdatePolicyVersion = func(client *cloudlets.Mock, policyID int64, version *cloudlets.PolicyVersion, newMatchRules cloudlets.MatchRules) *cloudlets.PolicyVersion {
+			client.On("GetPolicyVersion", testutils.MockContext, cloudlets.GetPolicyVersionRequest{
 				PolicyID:  policyID,
 				Version:   version.Version,
 				OmitRules: true,
@@ -163,7 +162,7 @@ func TestResourcePolicyV2(t *testing.T) {
 			err := copier.CopyWithOption(&versionUpdate, version, copier.Option{DeepCopy: true})
 			require.NoError(t, err)
 			versionUpdate.MatchRules = newMatchRules
-			client.On("UpdatePolicyVersion", mock.Anything, cloudlets.UpdatePolicyVersionRequest{
+			client.On("UpdatePolicyVersion", testutils.MockContext, cloudlets.UpdatePolicyVersionRequest{
 				UpdatePolicyVersion: cloudlets.UpdatePolicyVersion{
 					MatchRuleFormat: "1.0",
 					Description:     "test policy description",
@@ -175,14 +174,14 @@ func TestResourcePolicyV2(t *testing.T) {
 			return &versionUpdate
 		}
 
-		expectRemovePolicy = func(_ *testing.T, client *cloudlets.Mock, policyID int64, numVersions, numDeleteRetries int) {
+		expectRemovePolicy = func(client *cloudlets.Mock, policyID int64, numVersions, numDeleteRetries int) {
 			var versionList []cloudlets.PolicyVersion
 			for i := 1; i <= numVersions; i++ {
 				versionList = slices.Insert(versionList, 0, cloudlets.PolicyVersion{PolicyID: policyID, Version: int64(i)})
 			}
-			expectListPolicyVersions(t, client, policyID, versionList, 1)
+			expectListPolicyVersions(client, policyID, versionList, 1)
 			for _, ver := range versionList {
-				client.On("DeletePolicyVersion", mock.Anything, cloudlets.DeletePolicyVersionRequest{
+				client.On("DeletePolicyVersion", testutils.MockContext, cloudlets.DeletePolicyVersionRequest{
 					PolicyID: ver.PolicyID,
 					Version:  ver.Version,
 				}).Return(nil).Once()
@@ -190,13 +189,13 @@ func TestResourcePolicyV2(t *testing.T) {
 
 			pendingError := &cloudlets.Error{Detail: "Unable to delete policy because an activation for this policy is still pending"}
 			if numDeleteRetries != 0 {
-				client.On("RemovePolicy", mock.Anything, cloudlets.RemovePolicyRequest{PolicyID: policyID}).Return(pendingError).Times(numDeleteRetries)
+				client.On("RemovePolicy", testutils.MockContext, cloudlets.RemovePolicyRequest{PolicyID: policyID}).Return(pendingError).Times(numDeleteRetries)
 			}
-			client.On("RemovePolicy", mock.Anything, cloudlets.RemovePolicyRequest{PolicyID: policyID}).Return(nil).Once()
+			client.On("RemovePolicy", testutils.MockContext, cloudlets.RemovePolicyRequest{PolicyID: policyID}).Return(nil).Once()
 		}
 
-		expectImportPolicy = func(_ *testing.T, client *cloudlets.Mock, policyID int64, policyName string) {
-			client.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{PageSize: ptr.To(1000), Offset: 0}).Return([]cloudlets.Policy{
+		expectImportPolicy = func(client *cloudlets.Mock, policyID int64, policyName string) {
+			client.On("ListPolicies", testutils.MockContext, cloudlets.ListPoliciesRequest{PageSize: ptr.To(1000), Offset: 0}).Return([]cloudlets.Policy{
 				{
 					PolicyID: policyID, Name: policyName,
 				},
@@ -266,21 +265,21 @@ func TestResourcePolicyV2(t *testing.T) {
 				UseIncomingSchemeAndHost: true,
 			},
 		}
-		policy, version := expectCreatePolicy(t, client, 2, "test_policy", matchRules, "test policy description")
+		policy, version := expectCreatePolicy(client, 2, "test_policy", matchRules, "test policy description")
 		policyVersions := []cloudlets.PolicyVersion{*version}
-		expectReadPolicy(t, client, policy, policyVersions, 3)
-		policy = expectUpdatePolicy(t, client, policy, "test_policy_updated")
-		version = expectCreatePolicyVersion(t, client, policy.PolicyID, version, matchRules[:1])
+		expectReadPolicy(client, policy, policyVersions, 3)
+		policy = expectUpdatePolicy(client, policy, "test_policy_updated")
+		version = expectCreatePolicyVersion(client, policy.PolicyID, version, matchRules[:1])
 		policyVersions = slices.Insert(policyVersions, 0, *version)
-		expectReadPolicy(t, client, policy, policyVersions, 2)
-		expectRemovePolicy(t, client, policy.PolicyID, 2, 0)
+		expectReadPolicy(client, policy, policyVersions, 2)
+		expectRemovePolicy(client, policy.PolicyID, 2, 0)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							name:           "test_policy",
 							version:        "1",
@@ -289,7 +288,7 @@ func TestResourcePolicyV2(t *testing.T) {
 						}),
 					},
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_update.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_update.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							name:           "test_policy_updated",
 							version:        "2",
@@ -334,9 +333,9 @@ func TestResourcePolicyV2(t *testing.T) {
 				UseIncomingSchemeAndHost: true,
 			},
 		}
-		policy, version := expectCreatePolicy(t, client, 2, "test_policy", matchRules, "test policy description")
+		policy, version := expectCreatePolicy(client, 2, "test_policy", matchRules, "test policy description")
 		policyVersions := []cloudlets.PolicyVersion{*version}
-		expectReadPolicy(t, client, policy, policyVersions, 1)
+		expectReadPolicy(client, policy, policyVersions, 1)
 		// new version which causes drift
 		versionWithDrift := &cloudlets.PolicyVersion{
 			Location:        "/version/2",
@@ -355,15 +354,15 @@ func TestResourcePolicyV2(t *testing.T) {
 			},
 		}
 		policyVersions = slices.Insert(policyVersions, 0, *versionWithDrift)
-		expectReadPolicy(t, client, policy, policyVersions, 1)
-		expectRemovePolicy(t, client, policy.PolicyID, 2, 0)
+		expectReadPolicy(client, policy, policyVersions, 1)
+		expectRemovePolicy(client, policy.PolicyID, 2, 0)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							name:           "test_policy",
 							version:        "1",
@@ -409,16 +408,16 @@ func TestResourcePolicyV2(t *testing.T) {
 				UseIncomingSchemeAndHost: true,
 			},
 		}
-		policy, version := expectCreatePolicy(t, client, 2, "test_policy", matchRules, "test policy description")
-		expectReadPolicy(t, client, policy, []cloudlets.PolicyVersion{*version}, 2)
-		expectRemovePolicy(t, client, policy.PolicyID, 1, 1)
+		policy, version := expectCreatePolicy(client, 2, "test_policy", matchRules, "test policy description")
+		expectReadPolicy(client, policy, []cloudlets.PolicyVersion{*version}, 2)
+		expectRemovePolicy(client, policy.PolicyID, 1, 1)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							name:           "test_policy",
 							version:        "1",
@@ -463,20 +462,20 @@ func TestResourcePolicyV2(t *testing.T) {
 				UseIncomingSchemeAndHost: true,
 			},
 		}
-		policy, version := expectCreatePolicy(t, client, 2, "test_policy", matchRules, "test policy description")
+		policy, version := expectCreatePolicy(client, 2, "test_policy", matchRules, "test policy description")
 		policyVersions := []cloudlets.PolicyVersion{*version}
-		expectReadPolicy(t, client, policy, policyVersions, 3)
-		policy = expectUpdatePolicy(t, client, policy, "test_policy_updated")
-		version = expectUpdatePolicyVersion(t, client, policy.PolicyID, version, matchRules[:1])
-		expectReadPolicy(t, client, policy, []cloudlets.PolicyVersion{*version}, 2)
-		expectRemovePolicy(t, client, policy.PolicyID, 1, 0)
+		expectReadPolicy(client, policy, policyVersions, 3)
+		policy = expectUpdatePolicy(client, policy, "test_policy_updated")
+		version = expectUpdatePolicyVersion(client, policy.PolicyID, version, matchRules[:1])
+		expectReadPolicy(client, policy, []cloudlets.PolicyVersion{*version}, 2)
+		expectRemovePolicy(client, policy.PolicyID, 1, 0)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							name:           "test_policy",
 							version:        "1",
@@ -485,7 +484,7 @@ func TestResourcePolicyV2(t *testing.T) {
 						}),
 					},
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_update.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_update.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							name:           "test_policy_updated",
 							version:        "1",
@@ -530,20 +529,20 @@ func TestResourcePolicyV2(t *testing.T) {
 				UseIncomingSchemeAndHost: true,
 			},
 		}
-		policy, version := expectCreatePolicy(t, client, 2, "test_policy", matchRules, "test policy description")
+		policy, version := expectCreatePolicy(client, 2, "test_policy", matchRules, "test policy description")
 		policyVersions := []cloudlets.PolicyVersion{*version}
-		expectReadPolicy(t, client, policy, policyVersions, 3)
-		policy = expectUpdatePolicy(t, client, policy, "test_policy_updated")
+		expectReadPolicy(client, policy, policyVersions, 3)
+		policy = expectUpdatePolicy(client, policy, "test_policy_updated")
 		policyVersions = slices.Insert(policyVersions, 0, *version)
-		expectReadPolicy(t, client, policy, policyVersions, 2)
-		expectRemovePolicy(t, client, policy.PolicyID, 1, 0)
+		expectReadPolicy(client, policy, policyVersions, 2)
+		expectRemovePolicy(client, policy.PolicyID, 1, 0)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							name:           "test_policy",
 							version:        "1",
@@ -552,7 +551,7 @@ func TestResourcePolicyV2(t *testing.T) {
 						}),
 					},
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_update.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_update.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							name:           "test_policy_updated",
 							version:        "1",
@@ -597,20 +596,20 @@ func TestResourcePolicyV2(t *testing.T) {
 				UseIncomingSchemeAndHost: true,
 			},
 		}
-		policy, version := expectCreatePolicy(t, client, 2, "test_policy", matchRules, "test policy description")
+		policy, version := expectCreatePolicy(client, 2, "test_policy", matchRules, "test policy description")
 		policyVersions := []cloudlets.PolicyVersion{*version}
-		expectReadPolicy(t, client, policy, policyVersions, 3)
-		version = expectUpdatePolicyVersion(t, client, policy.PolicyID, version, matchRules[:1])
+		expectReadPolicy(client, policy, policyVersions, 3)
+		version = expectUpdatePolicyVersion(client, policy.PolicyID, version, matchRules[:1])
 		policyVersions = []cloudlets.PolicyVersion{*version}
-		expectReadPolicy(t, client, policy, policyVersions, 2)
-		expectRemovePolicy(t, client, policy.PolicyID, 1, 0)
+		expectReadPolicy(client, policy, policyVersions, 2)
+		expectRemovePolicy(client, policy.PolicyID, 1, 0)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							name:           "test_policy",
 							version:        "1",
@@ -619,7 +618,7 @@ func TestResourcePolicyV2(t *testing.T) {
 						}),
 					},
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_update.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_update.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							name:           "test_policy",
 							version:        "1",
@@ -664,14 +663,14 @@ func TestResourcePolicyV2(t *testing.T) {
 				UseIncomingSchemeAndHost: true,
 			},
 		}
-		policy, version := expectCreatePolicy(t, client, 2, "test_policy", matchRules, "test policy description")
+		policy, version := expectCreatePolicy(client, 2, "test_policy", matchRules, "test policy description")
 		policyVersions := []cloudlets.PolicyVersion{*version}
-		expectReadPolicy(t, client, policy, policyVersions, 3)
-		version = expectUpdatePolicyVersion(t, client, policy.PolicyID, version, matchRules[:1])
+		expectReadPolicy(client, policy, policyVersions, 3)
+		version = expectUpdatePolicyVersion(client, policy.PolicyID, version, matchRules[:1])
 		// update existing version in slice by deleting old policyVersions and defining new one
 		policyVersions = []cloudlets.PolicyVersion{*version}
-		expectReadPolicy(t, client, policy, policyVersions, 4)
-		expectRemovePolicy(t, client, policy.PolicyID, 1, 0)
+		expectReadPolicy(client, policy, policyVersions, 4)
+		expectRemovePolicy(client, policy.PolicyID, 1, 0)
 
 		warningsJSON, err := warningsToJSON(version.Warnings)
 		require.NoError(t, err)
@@ -686,15 +685,15 @@ func TestResourcePolicyV2(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 						Check:  checkWarnings,
 					},
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_update.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_update.tf", testDir),
 						Check:  checkWarnings,
 					},
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_update.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_update.tf", testDir),
 						Check:  checkWarnings,
 					},
 				},
@@ -734,21 +733,21 @@ func TestResourcePolicyV2(t *testing.T) {
 				UseIncomingSchemeAndHost: true,
 			},
 		}
-		policy, version := expectCreatePolicy(t, client, 2, "test_policy", matchRules, "test policy description")
+		policy, version := expectCreatePolicy(client, 2, "test_policy", matchRules, "test policy description")
 		policyVersions := []cloudlets.PolicyVersion{*version}
-		expectReadPolicy(t, client, policy, policyVersions, 3)
-		version = expectUpdatePolicyVersion(t, client, policy.PolicyID, version, cloudlets.MatchRules{})
+		expectReadPolicy(client, policy, policyVersions, 3)
+		version = expectUpdatePolicyVersion(client, policy.PolicyID, version, cloudlets.MatchRules{})
 		// update existing version in slice by deleting old policyVersions and defining new one
 		policyVersions = []cloudlets.PolicyVersion{*version}
-		expectReadPolicy(t, client, policy, policyVersions, 2)
-		expectRemovePolicy(t, client, policy.PolicyID, 1, 0)
+		expectReadPolicy(client, policy, policyVersions, 2)
+		expectRemovePolicy(client, policy.PolicyID, 1, 0)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							name:           "test_policy",
 							version:        "1",
@@ -757,7 +756,7 @@ func TestResourcePolicyV2(t *testing.T) {
 						}),
 					},
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_update.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_update.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							name:           "test_policy",
 							version:        "1",
@@ -775,16 +774,16 @@ func TestResourcePolicyV2(t *testing.T) {
 		testDir := "testdata/TestResPolicy/create_no_match_rules_no_description"
 
 		client := new(cloudlets.Mock)
-		policy, version := expectCreatePolicy(t, client, 2, "test_policy", nil, "")
+		policy, version := expectCreatePolicy(client, 2, "test_policy", nil, "")
 		policyVersions := []cloudlets.PolicyVersion{*version}
-		expectReadPolicy(t, client, policy, policyVersions, 2)
-		expectRemovePolicy(t, client, 2, 1, 0)
+		expectReadPolicy(client, policy, policyVersions, 2)
+		expectRemovePolicy(client, 2, 1, 0)
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							name:           "test_policy",
 							version:        "1",
@@ -802,16 +801,16 @@ func TestResourcePolicyV2(t *testing.T) {
 		testDir := "testdata/TestResPolicy/create_no_match_rules"
 
 		client := new(cloudlets.Mock)
-		policy, version := expectCreatePolicy(t, client, 2, "test_policy", nil, "test policy description")
+		policy, version := expectCreatePolicy(client, 2, "test_policy", nil, "test policy description")
 		policyVersions := []cloudlets.PolicyVersion{*version}
-		expectReadPolicy(t, client, policy, policyVersions, 2)
-		expectRemovePolicy(t, client, 2, 1, 0)
+		expectReadPolicy(client, policy, policyVersions, 2)
+		expectRemovePolicy(client, 2, 1, 0)
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							name:           "test_policy",
 							version:        "1",
@@ -841,16 +840,16 @@ func TestResourcePolicyV2(t *testing.T) {
 		}
 
 		client := new(cloudlets.Mock)
-		policy, version := expectCreatePolicy(t, client, 2, "test_policy", matchRules, "test policy description")
+		policy, version := expectCreatePolicy(client, 2, "test_policy", matchRules, "test policy description")
 		policyVersions := []cloudlets.PolicyVersion{*version}
-		expectReadPolicy(t, client, policy, policyVersions, 2)
-		expectRemovePolicy(t, client, 2, 1, 0)
+		expectReadPolicy(client, policy, policyVersions, 2)
+		expectRemovePolicy(client, 2, 1, 0)
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							name:           "test_policy",
 							version:        "1",
@@ -869,7 +868,7 @@ func TestResourcePolicyV2(t *testing.T) {
 		testDir := "testdata/TestResPolicy/lifecycle"
 
 		client := new(cloudlets.Mock)
-		client.On("CreatePolicy", mock.Anything, cloudlets.CreatePolicyRequest{
+		client.On("CreatePolicy", testutils.MockContext, cloudlets.CreatePolicyRequest{
 			Name:       "test_policy",
 			CloudletID: 0,
 			GroupID:    123,
@@ -880,7 +879,7 @@ func TestResourcePolicyV2(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config:      testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 						ExpectError: regexp.MustCompile("oops"),
 					},
 				},
@@ -928,12 +927,12 @@ func TestResourcePolicyV2(t *testing.T) {
 		}
 
 		expectErrorCreatingVersion := func(client *cloudlets.Mock) {
-			client.On("CreatePolicy", mock.Anything, cloudlets.CreatePolicyRequest{
+			client.On("CreatePolicy", testutils.MockContext, cloudlets.CreatePolicyRequest{
 				Name:       "test_policy",
 				CloudletID: 0,
 				GroupID:    123,
 			}).Return(policy, nil)
-			client.On("UpdatePolicyVersion", mock.Anything, cloudlets.UpdatePolicyVersionRequest{
+			client.On("UpdatePolicyVersion", testutils.MockContext, cloudlets.UpdatePolicyVersionRequest{
 				UpdatePolicyVersion: cloudlets.UpdatePolicyVersion{
 					Description: "test policy description",
 					MatchRules:  matchRules,
@@ -950,11 +949,11 @@ func TestResourcePolicyV2(t *testing.T) {
 			{
 				Expectations: func(client *cloudlets.Mock) {
 					expectErrorCreatingVersion(client)
-					expectReadPolicy(t, client, policy, []cloudlets.PolicyVersion{{
+					expectReadPolicy(client, policy, []cloudlets.PolicyVersion{{
 						PolicyID: 2,
 						Version:  1,
 					}}, 1)
-					expectRemovePolicy(t, client, 2, 1, 0)
+					expectRemovePolicy(client, 2, 1, 0)
 
 				},
 				ExpectedError: regexp.MustCompile("UpdatePolicyVersionError"),
@@ -962,12 +961,12 @@ func TestResourcePolicyV2(t *testing.T) {
 			{
 				Expectations: func(client *cloudlets.Mock) {
 					expectErrorCreatingVersion(client)
-					expectListPolicyVersions(t, client, policy.PolicyID, []cloudlets.PolicyVersion{{
+					expectListPolicyVersions(client, policy.PolicyID, []cloudlets.PolicyVersion{{
 						PolicyID: 2,
 						Version:  1,
 					}}, 1)
-					client.On("GetPolicy", mock.Anything, cloudlets.GetPolicyRequest{PolicyID: policy.PolicyID}).Return(nil, fmt.Errorf("GetPolicyError"))
-					expectRemovePolicy(t, client, 2, 1, 0)
+					client.On("GetPolicy", testutils.MockContext, cloudlets.GetPolicyRequest{PolicyID: policy.PolicyID}).Return(nil, fmt.Errorf("GetPolicyError"))
+					expectRemovePolicy(client, 2, 1, 0)
 				},
 				ExpectedError: regexp.MustCompile("(?s)GetPolicyError.*UpdatePolicyVersionError"),
 			},
@@ -981,7 +980,7 @@ func TestResourcePolicyV2(t *testing.T) {
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
-							Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+							Config:      testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 							ExpectError: testCases[i].ExpectedError,
 						},
 					},
@@ -995,17 +994,17 @@ func TestResourcePolicyV2(t *testing.T) {
 		testDir := "testdata/TestResPolicy/create_no_match_rules"
 
 		client := new(cloudlets.Mock)
-		policy, version := expectCreatePolicy(t, client, 2, "test_policy", nil, "test policy description")
+		policy, version := expectCreatePolicy(client, 2, "test_policy", nil, "test policy description")
 		policyVersions := []cloudlets.PolicyVersion{*version}
-		expectListPolicyVersions(t, client, policy.PolicyID, policyVersions, 1)
-		client.On("GetPolicy", mock.Anything, cloudlets.GetPolicyRequest{PolicyID: policy.PolicyID}).Return(nil, fmt.Errorf("oops"))
-		expectRemovePolicy(t, client, 2, 1, 0)
+		expectListPolicyVersions(client, policy.PolicyID, policyVersions, 1)
+		client.On("GetPolicy", testutils.MockContext, cloudlets.GetPolicyRequest{PolicyID: policy.PolicyID}).Return(nil, fmt.Errorf("oops"))
+		expectRemovePolicy(client, 2, 1, 0)
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config:      testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 						ExpectError: regexp.MustCompile("oops"),
 					},
 				},
@@ -1018,21 +1017,21 @@ func TestResourcePolicyV2(t *testing.T) {
 		testDir := "testdata/TestResPolicy/create_no_match_rules"
 
 		client := new(cloudlets.Mock)
-		policy, version := expectCreatePolicy(t, client, 2, "test_policy", nil, "test policy description")
+		policy, version := expectCreatePolicy(client, 2, "test_policy", nil, "test policy description")
 		policyVersions := []cloudlets.PolicyVersion{*version}
-		expectListPolicyVersions(t, client, policy.PolicyID, policyVersions, 1)
-		client.On("GetPolicy", mock.Anything, cloudlets.GetPolicyRequest{PolicyID: policy.PolicyID}).Return(policy, nil)
-		client.On("GetPolicyVersion", mock.Anything, cloudlets.GetPolicyVersionRequest{
+		expectListPolicyVersions(client, policy.PolicyID, policyVersions, 1)
+		client.On("GetPolicy", testutils.MockContext, cloudlets.GetPolicyRequest{PolicyID: policy.PolicyID}).Return(policy, nil)
+		client.On("GetPolicyVersion", testutils.MockContext, cloudlets.GetPolicyVersionRequest{
 			PolicyID: policy.PolicyID,
 			Version:  version.Version,
 		}).Return(nil, fmt.Errorf("oops"))
-		expectRemovePolicy(t, client, 2, 1, 0)
+		expectRemovePolicy(client, 2, 1, 0)
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config:      testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 						ExpectError: regexp.MustCompile("oops"),
 					},
 				},
@@ -1072,27 +1071,27 @@ func TestResourcePolicyV2(t *testing.T) {
 				UseIncomingSchemeAndHost: true,
 			},
 		}
-		policy, version := expectCreatePolicy(t, client, 2, "test_policy", matchRules, "test policy description")
+		policy, version := expectCreatePolicy(client, 2, "test_policy", matchRules, "test policy description")
 		policyVersions := []cloudlets.PolicyVersion{*version}
-		expectReadPolicy(t, client, policy, policyVersions, 3)
-		client.On("UpdatePolicy", mock.Anything, cloudlets.UpdatePolicyRequest{
+		expectReadPolicy(client, policy, policyVersions, 3)
+		client.On("UpdatePolicy", testutils.MockContext, cloudlets.UpdatePolicyRequest{
 			UpdatePolicy: cloudlets.UpdatePolicy{
 				Name:    "test_policy_updated",
 				GroupID: 123,
 			},
 			PolicyID: policy.PolicyID,
 		}).Return(nil, fmt.Errorf("oops")).Once()
-		expectRemovePolicy(t, client, policy.PolicyID, 1, 0)
+		expectRemovePolicy(client, policy.PolicyID, 1, 0)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 					},
 					{
-						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_update.tf", testDir)),
+						Config:      testutils.LoadFixtureStringf(t, "%s/policy_update.tf", testDir),
 						ExpectError: regexp.MustCompile("oops"),
 					},
 				},
@@ -1133,14 +1132,14 @@ func TestResourcePolicyV2(t *testing.T) {
 		}
 
 		expectErrorUpdatingVersion := func(client *cloudlets.Mock, expectReadPolicyTimes int) (policy *cloudlets.Policy) {
-			policy, version := expectCreatePolicy(t, client, 2, "test_policy", matchRules, "test policy description")
-			expectReadPolicy(t, client, policy, []cloudlets.PolicyVersion{*version}, expectReadPolicyTimes)
-			client.On("GetPolicyVersion", mock.Anything, cloudlets.GetPolicyVersionRequest{
+			policy, version := expectCreatePolicy(client, 2, "test_policy", matchRules, "test policy description")
+			expectReadPolicy(client, policy, []cloudlets.PolicyVersion{*version}, expectReadPolicyTimes)
+			client.On("GetPolicyVersion", testutils.MockContext, cloudlets.GetPolicyVersionRequest{
 				PolicyID:  policy.PolicyID,
 				Version:   version.Version,
 				OmitRules: true,
 			}).Return(version, nil).Once()
-			client.On("UpdatePolicyVersion", mock.Anything, cloudlets.UpdatePolicyVersionRequest{
+			client.On("UpdatePolicyVersion", testutils.MockContext, cloudlets.UpdatePolicyVersionRequest{
 				UpdatePolicyVersion: cloudlets.UpdatePolicyVersion{
 					Description:     "test policy description",
 					MatchRuleFormat: "1.0",
@@ -1149,7 +1148,7 @@ func TestResourcePolicyV2(t *testing.T) {
 				PolicyID: policy.PolicyID,
 				Version:  version.Version,
 			}).Return(nil, fmt.Errorf("UpdatePolicyVersionError")).Once()
-			expectRemovePolicy(t, client, policy.PolicyID, 1, 0)
+			expectRemovePolicy(client, policy.PolicyID, 1, 0)
 			return
 		}
 
@@ -1166,8 +1165,8 @@ func TestResourcePolicyV2(t *testing.T) {
 			{
 				Expectations: func(client *cloudlets.Mock) {
 					policy := expectErrorUpdatingVersion(client, 3)
-					client.On("GetPolicy", mock.Anything, cloudlets.GetPolicyRequest{PolicyID: policy.PolicyID}).Return(nil, fmt.Errorf("GetPolicyError"))
-					client.On("ListPolicyVersions", mock.Anything, cloudlets.ListPolicyVersionsRequest{PolicyID: policy.PolicyID,
+					client.On("GetPolicy", testutils.MockContext, cloudlets.GetPolicyRequest{PolicyID: policy.PolicyID}).Return(nil, fmt.Errorf("GetPolicyError"))
+					client.On("ListPolicyVersions", testutils.MockContext, cloudlets.ListPolicyVersionsRequest{PolicyID: policy.PolicyID,
 						Offset:   0,
 						PageSize: ptr.To(1000),
 					}).Return([]cloudlets.PolicyVersion{{
@@ -1188,10 +1187,10 @@ func TestResourcePolicyV2(t *testing.T) {
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
-							Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+							Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 						},
 						{
-							Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_update.tf", testDir)),
+							Config:      testutils.LoadFixtureStringf(t, "%s/policy_update.tf", testDir),
 							ExpectError: testCases[i].ExpectedError,
 						},
 					},
@@ -1210,7 +1209,7 @@ func TestResourcePolicyV2(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config:      testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 						ExpectError: regexp.MustCompile("invalid group_id provided"),
 					},
 				},
@@ -1251,18 +1250,18 @@ func TestResourcePolicyV2(t *testing.T) {
 			},
 		}
 
-		policy, version := expectCreatePolicy(t, client, 2, "test_policy", matchRules, "test policy description")
+		policy, version := expectCreatePolicy(client, 2, "test_policy", matchRules, "test policy description")
 		policyVersions := []cloudlets.PolicyVersion{*version}
-		expectReadPolicy(t, client, policy, policyVersions, 3)
-		expectImportPolicy(t, client, 2, "test_policy")
-		expectRemovePolicy(t, client, 2, 1, 0)
+		expectReadPolicy(client, policy, policyVersions, 3)
+		expectImportPolicy(client, 2, "test_policy")
+		expectRemovePolicy(client, 2, 1, 0)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 					},
 					{
 						ImportState:             true,
@@ -1310,17 +1309,17 @@ func TestResourcePolicyV2(t *testing.T) {
 			},
 		}
 
-		policy, version := expectCreatePolicy(t, client, policyID, "test_policy", matchRules, "test policy description")
+		policy, version := expectCreatePolicy(client, policyID, "test_policy", matchRules, "test policy description")
 		policyVersions := []cloudlets.PolicyVersion{*version}
-		expectReadPolicy(t, client, policy, policyVersions, 3)
+		expectReadPolicy(client, policy, policyVersions, 3)
 		// custom import mocks
 		// mock that 1000 policies are returned, desired not found
-		client.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{
+		client.On("ListPolicies", testutils.MockContext, cloudlets.ListPoliciesRequest{
 			PageSize: ptr.To(1000),
 			Offset:   0,
 		}).Return(make([]cloudlets.Policy, 1000), nil).Once()
 		// mock that desired policy is on the next page
-		client.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{
+		client.On("ListPolicies", testutils.MockContext, cloudlets.ListPoliciesRequest{
 			PageSize: ptr.To(1000),
 			Offset:   1,
 		}).Return([]cloudlets.Policy{
@@ -1329,14 +1328,14 @@ func TestResourcePolicyV2(t *testing.T) {
 				Name:     "test_policy",
 			},
 		}, nil).Once()
-		expectRemovePolicy(t, client, 2, 1, 0)
+		expectRemovePolicy(client, 2, 1, 0)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 					},
 					{
 						ImportState:             true,
@@ -1356,25 +1355,25 @@ func TestResourcePolicyV2(t *testing.T) {
 		clientV2 := new(cloudlets.Mock)
 		clientV3 := new(v3.Mock)
 
-		policy, version := expectCreatePolicy(t, clientV2, 2, "test_policy", nil, "test policy description")
+		policy, version := expectCreatePolicy(clientV2, 2, "test_policy", nil, "test policy description")
 		policyVersions := []cloudlets.PolicyVersion{*version}
-		expectReadPolicy(t, clientV2, policy, policyVersions, 2)
-		clientV2.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{PageSize: ptr.To(1000), Offset: 0}).
+		expectReadPolicy(clientV2, policy, policyVersions, 2)
+		clientV2.On("ListPolicies", testutils.MockContext, cloudlets.ListPoliciesRequest{PageSize: ptr.To(1000), Offset: 0}).
 			Return([]cloudlets.Policy{}, nil).Once()
-		clientV3.On("ListPolicies", mock.Anything, v3.ListPoliciesRequest{
+		clientV3.On("ListPolicies", testutils.MockContext, v3.ListPoliciesRequest{
 			Page: 0,
 			Size: 1000,
 		}).Return(&v3.ListPoliciesResponse{
 			Content: []v3.Policy{},
 		}, nil).Once()
-		expectRemovePolicy(t, clientV2, 2, 1, 0)
+		expectRemovePolicy(clientV2, 2, 1, 0)
 
 		useClientV2AndV3(clientV2, clientV3, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 					},
 					{
 						ImportState:   true,
@@ -1393,19 +1392,19 @@ func TestResourcePolicyV2(t *testing.T) {
 		testDir := "testdata/TestResPolicy/import_no_version"
 		client := new(cloudlets.Mock)
 
-		policy, _ := expectCreatePolicy(t, client, 2, "test_policy", nil, "")
-		expectReadPolicy(t, client, policy, nil, 2)
-		expectImportPolicy(t, client, 2, "test_policy")
+		policy, _ := expectCreatePolicy(client, 2, "test_policy", nil, "")
+		expectReadPolicy(client, policy, nil, 2)
+		expectImportPolicy(client, 2, "test_policy")
 		//read after import
-		expectReadPolicy(t, client, policy, nil, 1)
-		expectRemovePolicy(t, client, 2, 1, 0)
+		expectReadPolicy(client, policy, nil, 1)
+		expectRemovePolicy(client, 2, 1, 0)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 					},
 					{
 						ImportState:   true,
@@ -1428,21 +1427,21 @@ func TestResourcePolicyV2(t *testing.T) {
 		testDir := "testdata/TestResPolicy/import_no_match_rules"
 		client := new(cloudlets.Mock)
 
-		policy, version := expectCreatePolicy(t, client, 2, "test_policy", nil, "test policy description")
+		policy, version := expectCreatePolicy(client, 2, "test_policy", nil, "test policy description")
 		policyVersions := []cloudlets.PolicyVersion{*version}
-		expectReadPolicy(t, client, policy, policyVersions, 2)
-		expectRemovePolicy(t, client, 2, 1, 0)
+		expectReadPolicy(client, policy, policyVersions, 2)
+		expectRemovePolicy(client, 2, 1, 0)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 					},
 					{
 						ImportState: true,
-						ImportStateIdFunc: func(state *terraform.State) (string, error) {
+						ImportStateIdFunc: func(_ *terraform.State) (string, error) {
 							return "", nil
 						},
 						ResourceName: "akamai_cloudlets_policy.policy",
@@ -1465,7 +1464,7 @@ func TestResourcePolicyV3(t *testing.T) {
 	}
 
 	var (
-		expectCreatePolicy = func(_ *testing.T, client *v3.Mock, policyID int64, groupID int64, matchRules v3.MatchRules, description string) (*v3.Policy, *v3.PolicyVersion) {
+		expectCreatePolicy = func(client *v3.Mock, policyID int64, groupID int64, matchRules v3.MatchRules, description string) (*v3.Policy, *v3.PolicyVersion) {
 			policy := &v3.Policy{
 				ID:           policyID,
 				GroupID:      groupID,
@@ -1486,7 +1485,7 @@ func TestResourcePolicyV3(t *testing.T) {
 					},
 				},
 			}
-			client.On("CreatePolicy", mock.Anything, v3.CreatePolicyRequest{
+			client.On("CreatePolicy", testutils.MockContext, v3.CreatePolicyRequest{
 				Name:         "test_policy",
 				CloudletType: v3.CloudletTypeER,
 				GroupID:      groupID,
@@ -1495,7 +1494,7 @@ func TestResourcePolicyV3(t *testing.T) {
 				return policy, nil
 			}
 			if matchRules != nil {
-				client.On("CreatePolicyVersion", mock.Anything, v3.CreatePolicyVersionRequest{
+				client.On("CreatePolicyVersion", testutils.MockContext, v3.CreatePolicyVersionRequest{
 					PolicyID: policyID,
 					CreatePolicyVersion: v3.CreatePolicyVersion{
 						MatchRules:  matchRules,
@@ -1503,7 +1502,7 @@ func TestResourcePolicyV3(t *testing.T) {
 					},
 				}).Return(version, nil).Once()
 			} else {
-				client.On("CreatePolicyVersion", mock.Anything, v3.CreatePolicyVersionRequest{
+				client.On("CreatePolicyVersion", testutils.MockContext, v3.CreatePolicyVersionRequest{
 					PolicyID: policyID,
 					CreatePolicyVersion: v3.CreatePolicyVersion{
 						MatchRules:  make(v3.MatchRules, 0),
@@ -1515,42 +1514,42 @@ func TestResourcePolicyV3(t *testing.T) {
 			return policy, version
 		}
 
-		expectListPolicyVersions = func(t *testing.T, client *v3.Mock, policyId int64, versions v3.ListPolicyVersions, times int) {
-			client.On("ListPolicyVersions", mock.Anything, v3.ListPolicyVersionsRequest{
+		expectListPolicyVersions = func(client *v3.Mock, policyId int64, versions v3.ListPolicyVersions, times int) {
+			client.On("ListPolicyVersions", testutils.MockContext, v3.ListPolicyVersionsRequest{
 				PolicyID: policyId,
 				Page:     0,
 				Size:     1000,
 			}).Return(&versions, nil).Times(times)
 		}
 
-		expectReadPolicy = func(t *testing.T, client *v3.Mock, policy *v3.Policy, version *v3.PolicyVersion, times int) {
+		expectReadPolicy = func(client *v3.Mock, policy *v3.Policy, version *v3.PolicyVersion, times int) {
 			if version != nil {
 				var versions v3.ListPolicyVersions
 				versions.PolicyVersions = slices.Insert(versions.PolicyVersions, 0, v3.ListPolicyVersionsItem{PolicyVersion: version.PolicyVersion, PolicyID: policy.ID})
-				expectListPolicyVersions(t, client, policy.ID, versions, times)
+				expectListPolicyVersions(client, policy.ID, versions, times)
 			} else {
-				expectListPolicyVersions(t, client, policy.ID, v3.ListPolicyVersions{PolicyVersions: make([]v3.ListPolicyVersionsItem, 0)}, times)
+				expectListPolicyVersions(client, policy.ID, v3.ListPolicyVersions{PolicyVersions: make([]v3.ListPolicyVersionsItem, 0)}, times)
 			}
-			client.On("GetPolicy", mock.Anything, v3.GetPolicyRequest{PolicyID: policy.ID}).Return(policy, nil).Times(times)
+			client.On("GetPolicy", testutils.MockContext, v3.GetPolicyRequest{PolicyID: policy.ID}).Return(policy, nil).Times(times)
 			if version != nil {
 				var versionWithoutWarnings v3.PolicyVersion
 				err := copier.CopyWithOption(&versionWithoutWarnings, version, copier.Option{DeepCopy: true})
 				require.NoError(t, err)
 				versionWithoutWarnings.MatchRulesWarnings = []v3.MatchRulesWarning{}
 				versionWithoutWarnings.MatchRules = version.MatchRules
-				client.On("GetPolicyVersion", mock.Anything, v3.GetPolicyVersionRequest{
+				client.On("GetPolicyVersion", testutils.MockContext, v3.GetPolicyVersionRequest{
 					PolicyID:      policy.ID,
 					PolicyVersion: version.PolicyVersion,
 				}).Return(&versionWithoutWarnings, nil).Times(times)
 			}
 		}
 
-		expectUpdatePolicy = func(t *testing.T, client *v3.Mock, policy *v3.Policy, updatedGroup int64) *v3.Policy {
+		expectUpdatePolicy = func(client *v3.Mock, policy *v3.Policy, updatedGroup int64) *v3.Policy {
 			var policyUpdate v3.Policy
 			err := copier.CopyWithOption(&policyUpdate, policy, copier.Option{DeepCopy: true})
 			require.NoError(t, err)
 			policyUpdate.GroupID = updatedGroup
-			client.On("UpdatePolicy", mock.Anything, v3.UpdatePolicyRequest{
+			client.On("UpdatePolicy", testutils.MockContext, v3.UpdatePolicyRequest{
 				Body: v3.UpdatePolicyRequestBody{
 					GroupID: updatedGroup,
 				},
@@ -1559,13 +1558,13 @@ func TestResourcePolicyV3(t *testing.T) {
 			return &policyUpdate
 		}
 
-		expectCreatePolicyVersion = func(t *testing.T, client *v3.Mock, policyID int64, version *v3.PolicyVersion, newMatchRules v3.MatchRules) *v3.PolicyVersion {
+		expectCreatePolicyVersion = func(client *v3.Mock, policyID int64, version *v3.PolicyVersion, newMatchRules v3.MatchRules) *v3.PolicyVersion {
 			var activatedVersion v3.PolicyVersion
 			err := copier.CopyWithOption(&activatedVersion, version, copier.Option{DeepCopy: true})
 			require.NoError(t, err)
 			activatedVersion.Immutable = true
 
-			client.On("GetPolicyVersion", mock.Anything, v3.GetPolicyVersionRequest{
+			client.On("GetPolicyVersion", testutils.MockContext, v3.GetPolicyVersionRequest{
 				PolicyID:      policyID,
 				PolicyVersion: version.PolicyVersion,
 			}).Return(&activatedVersion, nil).Once()
@@ -1577,7 +1576,7 @@ func TestResourcePolicyV3(t *testing.T) {
 			versionUpdate.PolicyVersion = version.PolicyVersion + 1
 			versionUpdate.Immutable = false
 
-			client.On("CreatePolicyVersion", mock.Anything, v3.CreatePolicyVersionRequest{
+			client.On("CreatePolicyVersion", testutils.MockContext, v3.CreatePolicyVersionRequest{
 				CreatePolicyVersion: v3.CreatePolicyVersion{
 					Description: ptr.To("test policy description"),
 					MatchRules:  newMatchRules,
@@ -1587,8 +1586,8 @@ func TestResourcePolicyV3(t *testing.T) {
 			return &versionUpdate
 		}
 
-		expectUpdatePolicyVersion = func(t *testing.T, client *v3.Mock, policyID int64, version *v3.PolicyVersion, newMatchRules v3.MatchRules) *v3.PolicyVersion {
-			client.On("GetPolicyVersion", mock.Anything, v3.GetPolicyVersionRequest{
+		expectUpdatePolicyVersion = func(client *v3.Mock, policyID int64, version *v3.PolicyVersion, newMatchRules v3.MatchRules) *v3.PolicyVersion {
+			client.On("GetPolicyVersion", testutils.MockContext, v3.GetPolicyVersionRequest{
 				PolicyID:      policyID,
 				PolicyVersion: version.PolicyVersion,
 			}).Return(version, nil).Once()
@@ -1597,7 +1596,7 @@ func TestResourcePolicyV3(t *testing.T) {
 			err := copier.CopyWithOption(&versionUpdate, version, copier.Option{DeepCopy: true})
 			require.NoError(t, err)
 			versionUpdate.MatchRules = newMatchRules
-			client.On("UpdatePolicyVersion", mock.Anything, v3.UpdatePolicyVersionRequest{
+			client.On("UpdatePolicyVersion", testutils.MockContext, v3.UpdatePolicyVersionRequest{
 				UpdatePolicyVersion: v3.UpdatePolicyVersion{
 					Description: ptr.To("test policy description"),
 					MatchRules:  newMatchRules,
@@ -1608,28 +1607,28 @@ func TestResourcePolicyV3(t *testing.T) {
 			return &versionUpdate
 		}
 
-		expectRemovePolicy = func(_ *testing.T, client *v3.Mock, policyID int64) {
-			client.On("GetPolicy", mock.Anything, v3.GetPolicyRequest{
+		expectRemovePolicy = func(client *v3.Mock, policyID int64) {
+			client.On("GetPolicy", testutils.MockContext, v3.GetPolicyRequest{
 				PolicyID: policyID,
 			}).Return(&v3.Policy{
 				CurrentActivations: v3.CurrentActivations{Production: v3.ActivationInfo{}, Staging: v3.ActivationInfo{}},
 				ID:                 policyID,
 			}, nil).Once()
 
-			client.On("DeletePolicy", mock.Anything, v3.DeletePolicyRequest{PolicyID: policyID}).Return(nil).Once()
+			client.On("DeletePolicy", testutils.MockContext, v3.DeletePolicyRequest{PolicyID: policyID}).Return(nil).Once()
 		}
 
-		expectImportPolicy = func(_ *testing.T, clientV3 *v3.Mock, clientV2 *cloudlets.Mock, policyID int64, policyName string) {
+		expectImportPolicy = func(clientV3 *v3.Mock, clientV2 *cloudlets.Mock, policyID int64, policyName string) {
 			listPoliciesV2Resp := []cloudlets.Policy{
 				{
 					Name: "other-name",
 				},
 			}
-			clientV2.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{
+			clientV2.On("ListPolicies", testutils.MockContext, cloudlets.ListPoliciesRequest{
 				PageSize: ptr.To(1000),
 				Offset:   0,
 			}).Return(listPoliciesV2Resp, nil).Once()
-			clientV3.On("ListPolicies", mock.Anything, v3.ListPoliciesRequest{
+			clientV3.On("ListPolicies", testutils.MockContext, v3.ListPoliciesRequest{
 				Size: 1000, Page: 0,
 			}).Return(&v3.ListPoliciesResponse{
 				Content: []v3.Policy{
@@ -1711,19 +1710,19 @@ func TestResourcePolicyV3(t *testing.T) {
 				UseIncomingSchemeAndHost: true,
 			},
 		}
-		policy, version := expectCreatePolicy(t, client, 2, 123, matchRules, "test policy description")
-		expectReadPolicy(t, client, policy, version, 3)
-		policy = expectUpdatePolicy(t, client, policy, 321)
-		version = expectCreatePolicyVersion(t, client, policy.ID, version, matchRules[:1])
-		expectReadPolicy(t, client, policy, version, 2)
-		expectRemovePolicy(t, client, policy.ID)
+		policy, version := expectCreatePolicy(client, 2, 123, matchRules, "test policy description")
+		expectReadPolicy(client, policy, version, 3)
+		policy = expectUpdatePolicy(client, policy, 321)
+		version = expectCreatePolicyVersion(client, policy.ID, version, matchRules[:1])
+		expectReadPolicy(client, policy, version, 2)
+		expectRemovePolicy(client, policy.ID)
 
 		useClientV3(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							groupID:        123,
 							version:        "1",
@@ -1732,7 +1731,7 @@ func TestResourcePolicyV3(t *testing.T) {
 						}),
 					},
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_update.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_update.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							groupID:        321,
 							version:        "2",
@@ -1777,8 +1776,8 @@ func TestResourcePolicyV3(t *testing.T) {
 				UseIncomingSchemeAndHost: true,
 			},
 		}
-		policy, version := expectCreatePolicy(t, client, 2, 123, matchRules, "test policy description")
-		expectReadPolicy(t, client, policy, version, 1)
+		policy, version := expectCreatePolicy(client, 2, 123, matchRules, "test policy description")
+		expectReadPolicy(client, policy, version, 1)
 		version = &v3.PolicyVersion{
 			PolicyID:      2,
 			PolicyVersion: 2,
@@ -1793,15 +1792,15 @@ func TestResourcePolicyV3(t *testing.T) {
 				},
 			},
 		}
-		expectReadPolicy(t, client, policy, version, 1)
-		expectRemovePolicy(t, client, policy.ID)
+		expectReadPolicy(client, policy, version, 1)
+		expectRemovePolicy(client, policy.ID)
 
 		useClientV3(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							groupID:        123,
 							version:        "1",
@@ -1847,10 +1846,10 @@ func TestResourcePolicyV3(t *testing.T) {
 				UseIncomingSchemeAndHost: true,
 			},
 		}
-		policy, version := expectCreatePolicy(t, client, 2, 123, matchRules, "test policy description")
-		expectReadPolicy(t, client, policy, version, 2)
+		policy, version := expectCreatePolicy(client, 2, 123, matchRules, "test policy description")
+		expectReadPolicy(client, policy, version, 2)
 
-		client.On("GetPolicy", mock.Anything, v3.GetPolicyRequest{
+		client.On("GetPolicy", testutils.MockContext, v3.GetPolicyRequest{
 			PolicyID: policy.ID,
 		}).Return(&v3.Policy{
 			CurrentActivations: v3.CurrentActivations{Production: v3.ActivationInfo{}, Staging: v3.ActivationInfo{
@@ -1873,7 +1872,7 @@ func TestResourcePolicyV3(t *testing.T) {
 			GroupID: 123,
 		}, nil).Once()
 
-		client.On("DeactivatePolicy", mock.Anything, v3.DeactivatePolicyRequest{
+		client.On("DeactivatePolicy", testutils.MockContext, v3.DeactivatePolicyRequest{
 			PolicyID:      policy.ID,
 			Network:       v3.StagingNetwork,
 			PolicyVersion: version.PolicyVersion,
@@ -1883,7 +1882,7 @@ func TestResourcePolicyV3(t *testing.T) {
 			Status:        v3.ActivationStatusInProgress,
 		}, nil).Once()
 
-		client.On("GetPolicy", mock.Anything, v3.GetPolicyRequest{PolicyID: policy.ID}).Return(&v3.Policy{
+		client.On("GetPolicy", testutils.MockContext, v3.GetPolicyRequest{PolicyID: policy.ID}).Return(&v3.Policy{
 			CurrentActivations: v3.CurrentActivations{Production: v3.ActivationInfo{}, Staging: v3.ActivationInfo{
 				Effective: &v3.PolicyActivation{
 					Network:       v3.StagingNetwork,
@@ -1904,14 +1903,14 @@ func TestResourcePolicyV3(t *testing.T) {
 			GroupID: 123,
 		}, nil).Once()
 
-		client.On("DeletePolicy", mock.Anything, v3.DeletePolicyRequest{PolicyID: policy.ID}).Return(nil).Once()
+		client.On("DeletePolicy", testutils.MockContext, v3.DeletePolicyRequest{PolicyID: policy.ID}).Return(nil).Once()
 
 		useClientV3(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							groupID:        123,
 							version:        "1",
@@ -1956,10 +1955,10 @@ func TestResourcePolicyV3(t *testing.T) {
 				UseIncomingSchemeAndHost: true,
 			},
 		}
-		policy, version := expectCreatePolicy(t, client, 2, 123, matchRules, "test policy description")
-		expectReadPolicy(t, client, policy, version, 2)
+		policy, version := expectCreatePolicy(client, 2, 123, matchRules, "test policy description")
+		expectReadPolicy(client, policy, version, 2)
 
-		client.On("GetPolicy", mock.Anything, v3.GetPolicyRequest{
+		client.On("GetPolicy", testutils.MockContext, v3.GetPolicyRequest{
 			PolicyID: policy.ID,
 		}).Return(&v3.Policy{
 			CurrentActivations: v3.CurrentActivations{Production: v3.ActivationInfo{}, Staging: v3.ActivationInfo{
@@ -1982,7 +1981,7 @@ func TestResourcePolicyV3(t *testing.T) {
 			GroupID: 123,
 		}, nil).Once()
 
-		client.On("GetPolicy", mock.Anything, v3.GetPolicyRequest{
+		client.On("GetPolicy", testutils.MockContext, v3.GetPolicyRequest{
 			PolicyID: policy.ID,
 		}).Return(&v3.Policy{
 			CurrentActivations: v3.CurrentActivations{Production: v3.ActivationInfo{}, Staging: v3.ActivationInfo{
@@ -2005,14 +2004,14 @@ func TestResourcePolicyV3(t *testing.T) {
 			GroupID: 123,
 		}, nil).Once()
 
-		client.On("DeletePolicy", mock.Anything, v3.DeletePolicyRequest{PolicyID: policy.ID}).Return(nil).Once()
+		client.On("DeletePolicy", testutils.MockContext, v3.DeletePolicyRequest{PolicyID: policy.ID}).Return(nil).Once()
 
 		useClientV3(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							groupID:        123,
 							version:        "1",
@@ -2057,19 +2056,19 @@ func TestResourcePolicyV3(t *testing.T) {
 				UseIncomingSchemeAndHost: true,
 			},
 		}
-		policy, version := expectCreatePolicy(t, client, 2, 123, matchRules, "test policy description")
-		expectReadPolicy(t, client, policy, version, 3)
-		policy = expectUpdatePolicy(t, client, policy, 321)
-		version = expectUpdatePolicyVersion(t, client, policy.ID, version, matchRules[:1])
-		expectReadPolicy(t, client, policy, version, 2)
-		expectRemovePolicy(t, client, policy.ID)
+		policy, version := expectCreatePolicy(client, 2, 123, matchRules, "test policy description")
+		expectReadPolicy(client, policy, version, 3)
+		policy = expectUpdatePolicy(client, policy, 321)
+		version = expectUpdatePolicyVersion(client, policy.ID, version, matchRules[:1])
+		expectReadPolicy(client, policy, version, 2)
+		expectRemovePolicy(client, policy.ID)
 
 		useClientV3(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							groupID:        123,
 							version:        "1",
@@ -2078,7 +2077,7 @@ func TestResourcePolicyV3(t *testing.T) {
 						}),
 					},
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_update.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_update.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							groupID:        321,
 							version:        "1",
@@ -2123,18 +2122,18 @@ func TestResourcePolicyV3(t *testing.T) {
 				UseIncomingSchemeAndHost: true,
 			},
 		}
-		policy, version := expectCreatePolicy(t, client, 2, 123, matchRules, "test policy description")
-		expectReadPolicy(t, client, policy, version, 3)
-		policy = expectUpdatePolicy(t, client, policy, 321)
-		expectReadPolicy(t, client, policy, version, 2)
-		expectRemovePolicy(t, client, policy.ID)
+		policy, version := expectCreatePolicy(client, 2, 123, matchRules, "test policy description")
+		expectReadPolicy(client, policy, version, 3)
+		policy = expectUpdatePolicy(client, policy, 321)
+		expectReadPolicy(client, policy, version, 2)
+		expectRemovePolicy(client, policy.ID)
 
 		useClientV3(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							groupID:        123,
 							version:        "1",
@@ -2143,7 +2142,7 @@ func TestResourcePolicyV3(t *testing.T) {
 						}),
 					},
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_update.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_update.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							groupID:        321,
 							version:        "1",
@@ -2188,18 +2187,18 @@ func TestResourcePolicyV3(t *testing.T) {
 				UseIncomingSchemeAndHost: true,
 			},
 		}
-		policy, version := expectCreatePolicy(t, client, 2, 123, matchRules, "test policy description")
-		expectReadPolicy(t, client, policy, version, 3)
-		version = expectUpdatePolicyVersion(t, client, policy.ID, version, matchRules[:1])
-		expectReadPolicy(t, client, policy, version, 2)
-		expectRemovePolicy(t, client, policy.ID)
+		policy, version := expectCreatePolicy(client, 2, 123, matchRules, "test policy description")
+		expectReadPolicy(client, policy, version, 3)
+		version = expectUpdatePolicyVersion(client, policy.ID, version, matchRules[:1])
+		expectReadPolicy(client, policy, version, 2)
+		expectRemovePolicy(client, policy.ID)
 
 		useClientV3(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							groupID:        123,
 							version:        "1",
@@ -2208,7 +2207,7 @@ func TestResourcePolicyV3(t *testing.T) {
 						}),
 					},
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_update.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_update.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							groupID:        123,
 							version:        "1",
@@ -2253,11 +2252,11 @@ func TestResourcePolicyV3(t *testing.T) {
 				UseIncomingSchemeAndHost: true,
 			},
 		}
-		policy, version := expectCreatePolicy(t, client, 2, 123, matchRules, "test policy description")
-		expectReadPolicy(t, client, policy, version, 3)
-		version = expectUpdatePolicyVersion(t, client, policy.ID, version, matchRules[:1])
-		expectReadPolicy(t, client, policy, version, 4)
-		expectRemovePolicy(t, client, policy.ID)
+		policy, version := expectCreatePolicy(client, 2, 123, matchRules, "test policy description")
+		expectReadPolicy(client, policy, version, 3)
+		version = expectUpdatePolicyVersion(client, policy.ID, version, matchRules[:1])
+		expectReadPolicy(client, policy, version, 4)
+		expectRemovePolicy(client, policy.ID)
 
 		warningsJSON, err := warningsToJSON(version.MatchRulesWarnings)
 		require.NoError(t, err)
@@ -2272,15 +2271,15 @@ func TestResourcePolicyV3(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 						Check:  checkWarnings,
 					},
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_update.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_update.tf", testDir),
 						Check:  checkWarnings,
 					},
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_update.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_update.tf", testDir),
 						Check:  checkWarnings,
 					},
 				},
@@ -2320,18 +2319,18 @@ func TestResourcePolicyV3(t *testing.T) {
 				UseIncomingSchemeAndHost: true,
 			},
 		}
-		policy, version := expectCreatePolicy(t, client, 2, 123, matchRules, "test policy description")
-		expectReadPolicy(t, client, policy, version, 3)
-		version = expectUpdatePolicyVersion(t, client, policy.ID, version, v3.MatchRules{})
-		expectReadPolicy(t, client, policy, version, 2)
-		expectRemovePolicy(t, client, policy.ID)
+		policy, version := expectCreatePolicy(client, 2, 123, matchRules, "test policy description")
+		expectReadPolicy(client, policy, version, 3)
+		version = expectUpdatePolicyVersion(client, policy.ID, version, v3.MatchRules{})
+		expectReadPolicy(client, policy, version, 2)
+		expectRemovePolicy(client, policy.ID)
 
 		useClientV3(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							groupID:        123,
 							version:        "1",
@@ -2340,7 +2339,7 @@ func TestResourcePolicyV3(t *testing.T) {
 						}),
 					},
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_update.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_update.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							groupID:        123,
 							version:        "1",
@@ -2358,15 +2357,15 @@ func TestResourcePolicyV3(t *testing.T) {
 		testDir := "testdata/TestResPolicyV3/create_no_match_rules_no_description"
 
 		client := new(v3.Mock)
-		policy, version := expectCreatePolicy(t, client, 2, 123, nil, "")
-		expectReadPolicy(t, client, policy, version, 2)
-		expectRemovePolicy(t, client, 2)
+		policy, version := expectCreatePolicy(client, 2, 123, nil, "")
+		expectReadPolicy(client, policy, version, 2)
+		expectRemovePolicy(client, 2)
 		useClientV3(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							groupID:        123,
 							version:        "",
@@ -2384,29 +2383,29 @@ func TestResourcePolicyV3(t *testing.T) {
 		testDir := "testdata/TestResPolicyV3/lifecycle_no_version"
 
 		client := new(v3.Mock)
-		policy, version := expectCreatePolicy(t, client, 2, 123, nil, "")
-		expectReadPolicy(t, client, policy, version, 3)
+		policy, version := expectCreatePolicy(client, 2, 123, nil, "")
+		expectReadPolicy(client, policy, version, 3)
 
 		version = &v3.PolicyVersion{
 			Description:   ptr.To("test policy description"),
 			PolicyID:      2,
 			PolicyVersion: 1,
 		}
-		client.On("CreatePolicyVersion", mock.Anything, v3.CreatePolicyVersionRequest{
+		client.On("CreatePolicyVersion", testutils.MockContext, v3.CreatePolicyVersionRequest{
 			CreatePolicyVersion: v3.CreatePolicyVersion{
 				Description: ptr.To("test policy description"),
 				MatchRules:  make(v3.MatchRules, 0),
 			},
 			PolicyID: 2,
 		}).Return(version, nil).Once()
-		expectReadPolicy(t, client, policy, version, 2)
-		expectRemovePolicy(t, client, 2)
+		expectReadPolicy(client, policy, version, 2)
+		expectRemovePolicy(client, 2)
 		useClientV3(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							groupID:        123,
 							version:        "",
@@ -2415,7 +2414,7 @@ func TestResourcePolicyV3(t *testing.T) {
 						}),
 					},
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_update.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_update.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							groupID:        123,
 							version:        "1",
@@ -2433,15 +2432,15 @@ func TestResourcePolicyV3(t *testing.T) {
 		testDir := "testdata/TestResPolicyV3/create_no_match_rules"
 
 		client := new(v3.Mock)
-		policy, version := expectCreatePolicy(t, client, 2, 123, nil, "test policy description")
-		expectReadPolicy(t, client, policy, version, 2)
-		expectRemovePolicy(t, client, 2)
+		policy, version := expectCreatePolicy(client, 2, 123, nil, "test policy description")
+		expectReadPolicy(client, policy, version, 2)
+		expectRemovePolicy(client, 2)
 		useClientV3(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							groupID:        123,
 							version:        "1",
@@ -2471,15 +2470,15 @@ func TestResourcePolicyV3(t *testing.T) {
 		}
 
 		client := new(v3.Mock)
-		policy, version := expectCreatePolicy(t, client, 2, 123, matchRules, "test policy description")
-		expectReadPolicy(t, client, policy, version, 2)
-		expectRemovePolicy(t, client, 2)
+		policy, version := expectCreatePolicy(client, 2, 123, matchRules, "test policy description")
+		expectReadPolicy(client, policy, version, 2)
+		expectRemovePolicy(client, 2)
 		useClientV3(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							groupID:        123,
 							version:        "1",
@@ -2498,7 +2497,7 @@ func TestResourcePolicyV3(t *testing.T) {
 		testDir := "testdata/TestResPolicyV3/lifecycle"
 
 		client := new(v3.Mock)
-		client.On("CreatePolicy", mock.Anything, v3.CreatePolicyRequest{
+		client.On("CreatePolicy", testutils.MockContext, v3.CreatePolicyRequest{
 			Name:         "test_policy",
 			CloudletType: v3.CloudletTypeER,
 			GroupID:      123,
@@ -2509,7 +2508,7 @@ func TestResourcePolicyV3(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config:      testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 						ExpectError: regexp.MustCompile("oops"),
 					},
 				},
@@ -2557,12 +2556,12 @@ func TestResourcePolicyV3(t *testing.T) {
 		}
 
 		expectErrorCreatingVersion := func(client *v3.Mock) {
-			client.On("CreatePolicy", mock.Anything, v3.CreatePolicyRequest{
+			client.On("CreatePolicy", testutils.MockContext, v3.CreatePolicyRequest{
 				Name:         "test_policy",
 				CloudletType: v3.CloudletTypeER,
 				GroupID:      123,
 			}).Return(policy, nil)
-			client.On("CreatePolicyVersion", mock.Anything, v3.CreatePolicyVersionRequest{
+			client.On("CreatePolicyVersion", testutils.MockContext, v3.CreatePolicyVersionRequest{
 				CreatePolicyVersion: v3.CreatePolicyVersion{
 					Description: ptr.To("test policy description"),
 					MatchRules:  matchRules,
@@ -2578,23 +2577,23 @@ func TestResourcePolicyV3(t *testing.T) {
 			{
 				Expectations: func(client *v3.Mock) {
 					expectErrorCreatingVersion(client)
-					expectReadPolicy(t, client, policy, &v3.PolicyVersion{
+					expectReadPolicy(client, policy, &v3.PolicyVersion{
 						PolicyID:      2,
 						PolicyVersion: 1,
 					}, 1)
-					expectRemovePolicy(t, client, 2)
+					expectRemovePolicy(client, 2)
 				},
 				ExpectedError: regexp.MustCompile("CreatePolicyVersionError"),
 			},
 			{
 				Expectations: func(client *v3.Mock) {
 					expectErrorCreatingVersion(client)
-					expectListPolicyVersions(t, client, policy.ID, v3.ListPolicyVersions{
+					expectListPolicyVersions(client, policy.ID, v3.ListPolicyVersions{
 						PolicyVersions: []v3.ListPolicyVersionsItem{
 							{PolicyVersion: 1, PolicyID: policy.ID},
 						}}, 1)
-					client.On("GetPolicy", mock.Anything, v3.GetPolicyRequest{PolicyID: policy.ID}).Return(nil, fmt.Errorf("GetPolicyError")).Once()
-					expectRemovePolicy(t, client, 2)
+					client.On("GetPolicy", testutils.MockContext, v3.GetPolicyRequest{PolicyID: policy.ID}).Return(nil, fmt.Errorf("GetPolicyError")).Once()
+					expectRemovePolicy(client, 2)
 				},
 				ExpectedError: regexp.MustCompile("(?s)GetPolicyError.*CreatePolicyVersionError"),
 			},
@@ -2608,7 +2607,7 @@ func TestResourcePolicyV3(t *testing.T) {
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
-							Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+							Config:      testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 							ExpectError: testCases[i].ExpectedError,
 						},
 					},
@@ -2622,19 +2621,19 @@ func TestResourcePolicyV3(t *testing.T) {
 		testDir := "testdata/TestResPolicyV3/create_no_match_rules"
 
 		client := new(v3.Mock)
-		policy, version := expectCreatePolicy(t, client, 2, 123, nil, "test policy description")
-		expectListPolicyVersions(t, client, policy.ID, v3.ListPolicyVersions{
+		policy, version := expectCreatePolicy(client, 2, 123, nil, "test policy description")
+		expectListPolicyVersions(client, policy.ID, v3.ListPolicyVersions{
 			PolicyVersions: []v3.ListPolicyVersionsItem{
 				{PolicyVersion: version.PolicyVersion, PolicyID: policy.ID},
 			}}, 1)
-		client.On("GetPolicy", mock.Anything, v3.GetPolicyRequest{PolicyID: policy.ID}).Return(nil, fmt.Errorf("oops")).Once()
-		expectRemovePolicy(t, client, 2)
+		client.On("GetPolicy", testutils.MockContext, v3.GetPolicyRequest{PolicyID: policy.ID}).Return(nil, fmt.Errorf("oops")).Once()
+		expectRemovePolicy(client, 2)
 		useClientV3(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config:      testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 						ExpectError: regexp.MustCompile("oops"),
 					},
 				},
@@ -2647,23 +2646,23 @@ func TestResourcePolicyV3(t *testing.T) {
 		testDir := "testdata/TestResPolicyV3/create_no_match_rules"
 
 		client := new(v3.Mock)
-		policy, version := expectCreatePolicy(t, client, 2, 123, nil, "test policy description")
-		expectListPolicyVersions(t, client, policy.ID, v3.ListPolicyVersions{
+		policy, version := expectCreatePolicy(client, 2, 123, nil, "test policy description")
+		expectListPolicyVersions(client, policy.ID, v3.ListPolicyVersions{
 			PolicyVersions: []v3.ListPolicyVersionsItem{
 				{PolicyVersion: version.PolicyVersion, PolicyID: policy.ID},
 			}}, 1)
-		client.On("GetPolicy", mock.Anything, v3.GetPolicyRequest{PolicyID: policy.ID}).Return(policy, nil).Once()
-		client.On("GetPolicyVersion", mock.Anything, v3.GetPolicyVersionRequest{
+		client.On("GetPolicy", testutils.MockContext, v3.GetPolicyRequest{PolicyID: policy.ID}).Return(policy, nil).Once()
+		client.On("GetPolicyVersion", testutils.MockContext, v3.GetPolicyVersionRequest{
 			PolicyID:      policy.ID,
 			PolicyVersion: version.PolicyVersion,
 		}).Return(nil, fmt.Errorf("oops")).Once()
-		expectRemovePolicy(t, client, 2)
+		expectRemovePolicy(client, 2)
 		useClientV3(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config:      testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 						ExpectError: regexp.MustCompile("oops"),
 					},
 				},
@@ -2703,25 +2702,25 @@ func TestResourcePolicyV3(t *testing.T) {
 				UseIncomingSchemeAndHost: true,
 			},
 		}
-		policy, version := expectCreatePolicy(t, client, 2, 123, matchRules, "test policy description")
-		expectReadPolicy(t, client, policy, version, 3)
-		client.On("UpdatePolicy", mock.Anything, v3.UpdatePolicyRequest{
+		policy, version := expectCreatePolicy(client, 2, 123, matchRules, "test policy description")
+		expectReadPolicy(client, policy, version, 3)
+		client.On("UpdatePolicy", testutils.MockContext, v3.UpdatePolicyRequest{
 			Body: v3.UpdatePolicyRequestBody{
 				GroupID: 321,
 			},
 			PolicyID: policy.ID,
 		}).Return(nil, fmt.Errorf("oops")).Once()
-		expectRemovePolicy(t, client, policy.ID)
+		expectRemovePolicy(client, policy.ID)
 
 		useClientV3(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 					},
 					{
-						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_update.tf", testDir)),
+						Config:      testutils.LoadFixtureStringf(t, "%s/policy_update.tf", testDir),
 						ExpectError: regexp.MustCompile("oops"),
 					},
 				},
@@ -2762,13 +2761,13 @@ func TestResourcePolicyV3(t *testing.T) {
 		}
 
 		expectErrorUpdatingVersion := func(client *v3.Mock, expectReadPolicyTimes int) (policy *v3.Policy) {
-			policy, version := expectCreatePolicy(t, client, 2, 123, matchRules, "test policy description")
-			expectReadPolicy(t, client, policy, version, expectReadPolicyTimes)
-			client.On("GetPolicyVersion", mock.Anything, v3.GetPolicyVersionRequest{
+			policy, version := expectCreatePolicy(client, 2, 123, matchRules, "test policy description")
+			expectReadPolicy(client, policy, version, expectReadPolicyTimes)
+			client.On("GetPolicyVersion", testutils.MockContext, v3.GetPolicyVersionRequest{
 				PolicyID:      policy.ID,
 				PolicyVersion: version.PolicyVersion,
 			}).Return(version, nil).Once()
-			client.On("UpdatePolicyVersion", mock.Anything, v3.UpdatePolicyVersionRequest{
+			client.On("UpdatePolicyVersion", testutils.MockContext, v3.UpdatePolicyVersionRequest{
 				UpdatePolicyVersion: v3.UpdatePolicyVersion{
 					Description: ptr.To("test policy description"),
 					MatchRules:  matchRules[:1],
@@ -2786,19 +2785,19 @@ func TestResourcePolicyV3(t *testing.T) {
 			{
 				Expectations: func(client *v3.Mock) {
 					policy := expectErrorUpdatingVersion(client, 4)
-					expectRemovePolicy(t, client, policy.ID)
+					expectRemovePolicy(client, policy.ID)
 				},
 				ExpectedError: regexp.MustCompile("UpdatePolicyVersionError"),
 			},
 			{
 				Expectations: func(client *v3.Mock) {
 					policy := expectErrorUpdatingVersion(client, 3)
-					expectListPolicyVersions(t, client, policy.ID, v3.ListPolicyVersions{
+					expectListPolicyVersions(client, policy.ID, v3.ListPolicyVersions{
 						PolicyVersions: []v3.ListPolicyVersionsItem{
 							{PolicyVersion: 1, PolicyID: policy.ID},
 						}}, 1)
-					client.On("GetPolicy", mock.Anything, v3.GetPolicyRequest{PolicyID: policy.ID}).Return(nil, fmt.Errorf("GetPolicyError")).Once()
-					expectRemovePolicy(t, client, policy.ID)
+					client.On("GetPolicy", testutils.MockContext, v3.GetPolicyRequest{PolicyID: policy.ID}).Return(nil, fmt.Errorf("GetPolicyError")).Once()
+					expectRemovePolicy(client, policy.ID)
 				},
 				ExpectedError: regexp.MustCompile("(?s)GetPolicyError.*UpdatePolicyVersionError"),
 			},
@@ -2812,10 +2811,10 @@ func TestResourcePolicyV3(t *testing.T) {
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
-							Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+							Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 						},
 						{
-							Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_update.tf", testDir)),
+							Config:      testutils.LoadFixtureStringf(t, "%s/policy_update.tf", testDir),
 							ExpectError: testCases[i].ExpectedError,
 						},
 					},
@@ -2830,17 +2829,17 @@ func TestResourcePolicyV3(t *testing.T) {
 		clientV2 := new(cloudlets.Mock)
 		clientV3 := new(v3.Mock)
 
-		policy, version := expectCreatePolicy(t, clientV3, 2, 123, nil, "test policy description")
-		expectReadPolicy(t, clientV3, policy, version, 3)
-		expectImportPolicy(t, clientV3, clientV2, policy.ID, "test_policy")
-		expectRemovePolicy(t, clientV3, policy.ID)
+		policy, version := expectCreatePolicy(clientV3, 2, 123, nil, "test policy description")
+		expectReadPolicy(clientV3, policy, version, 3)
+		expectImportPolicy(clientV3, clientV2, policy.ID, "test_policy")
+		expectRemovePolicy(clientV3, policy.ID)
 
 		useClientV2AndV3(clientV2, clientV3, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/create_no_match_rules/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/create_no_match_rules/policy_create.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							groupID:     123,
 							version:     "1",
@@ -2866,17 +2865,17 @@ func TestResourcePolicyV3(t *testing.T) {
 		clientV2 := new(cloudlets.Mock)
 		clientV3 := new(v3.Mock)
 
-		policy, version := expectCreatePolicy(t, clientV3, 2, 123, nil, "")
-		expectReadPolicy(t, clientV3, policy, version, 3)
-		expectImportPolicy(t, clientV3, clientV2, policy.ID, "test_policy")
-		expectRemovePolicy(t, clientV3, policy.ID)
+		policy, version := expectCreatePolicy(clientV3, 2, 123, nil, "")
+		expectReadPolicy(clientV3, policy, version, 3)
+		expectImportPolicy(clientV3, clientV2, policy.ID, "test_policy")
+		expectRemovePolicy(clientV3, policy.ID)
 
 		useClientV2AndV3(clientV2, clientV3, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/create_no_match_rules_no_description/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/create_no_match_rules_no_description/policy_create.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							groupID:     123,
 							version:     "",
@@ -2902,25 +2901,25 @@ func TestResourcePolicyV3(t *testing.T) {
 		clientV2 := new(cloudlets.Mock)
 		clientV3 := new(v3.Mock)
 
-		policy, version := expectCreatePolicy(t, clientV3, 2, 123, nil, "test policy description")
-		expectReadPolicy(t, clientV3, policy, version, 2)
-		clientV2.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{
+		policy, version := expectCreatePolicy(clientV3, 2, 123, nil, "test policy description")
+		expectReadPolicy(clientV3, policy, version, 2)
+		clientV2.On("ListPolicies", testutils.MockContext, cloudlets.ListPoliciesRequest{
 			PageSize: ptr.To(1000),
 			Offset:   0,
 		}).Return([]cloudlets.Policy{}, nil).Once()
-		clientV3.On("ListPolicies", mock.Anything, v3.ListPoliciesRequest{
+		clientV3.On("ListPolicies", testutils.MockContext, v3.ListPoliciesRequest{
 			Size: 1000, Page: 0,
 		}).Return(&v3.ListPoliciesResponse{
 			Content: []v3.Policy{},
 		}, nil).Once()
-		expectRemovePolicy(t, clientV3, policy.ID)
+		expectRemovePolicy(clientV3, policy.ID)
 
 		useClientV2AndV3(clientV2, clientV3, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/create_no_match_rules/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/create_no_match_rules/policy_create.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							groupID:     123,
 							version:     "1",
@@ -2947,13 +2946,13 @@ func TestResourcePolicyV3(t *testing.T) {
 		clientV2 := new(cloudlets.Mock)
 		clientV3 := new(v3.Mock)
 
-		policy, version := expectCreatePolicy(t, clientV3, 2, 123, nil, "test policy description")
-		expectReadPolicy(t, clientV3, policy, version, 3)
-		clientV2.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{
+		policy, version := expectCreatePolicy(clientV3, 2, 123, nil, "test policy description")
+		expectReadPolicy(clientV3, policy, version, 3)
+		clientV2.On("ListPolicies", testutils.MockContext, cloudlets.ListPoliciesRequest{
 			PageSize: ptr.To(1000),
 			Offset:   0,
 		}).Return(nil, fmt.Errorf("v2 api error")).Once()
-		clientV3.On("ListPolicies", mock.Anything, v3.ListPoliciesRequest{
+		clientV3.On("ListPolicies", testutils.MockContext, v3.ListPoliciesRequest{
 			Size: 1000, Page: 0,
 		}).Return(&v3.ListPoliciesResponse{
 			Content: []v3.Policy{
@@ -2962,14 +2961,14 @@ func TestResourcePolicyV3(t *testing.T) {
 				},
 			},
 		}, nil).Once()
-		expectRemovePolicy(t, clientV3, policy.ID)
+		expectRemovePolicy(clientV3, policy.ID)
 
 		useClientV2AndV3(clientV2, clientV3, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/create_no_match_rules/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/create_no_match_rules/policy_create.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							groupID:     123,
 							version:     "1",
@@ -2995,23 +2994,23 @@ func TestResourcePolicyV3(t *testing.T) {
 		clientV2 := new(cloudlets.Mock)
 		clientV3 := new(v3.Mock)
 
-		policy, version := expectCreatePolicy(t, clientV3, 2, 123, nil, "test policy description")
-		expectReadPolicy(t, clientV3, policy, version, 2)
-		clientV2.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{
+		policy, version := expectCreatePolicy(clientV3, 2, 123, nil, "test policy description")
+		expectReadPolicy(clientV3, policy, version, 2)
+		clientV2.On("ListPolicies", testutils.MockContext, cloudlets.ListPoliciesRequest{
 			PageSize: ptr.To(1000),
 			Offset:   0,
 		}).Return(nil, fmt.Errorf("v2 api error")).Once()
-		clientV3.On("ListPolicies", mock.Anything, v3.ListPoliciesRequest{
+		clientV3.On("ListPolicies", testutils.MockContext, v3.ListPoliciesRequest{
 			Size: 1000, Page: 0,
 		}).Return(nil, fmt.Errorf("v3 api error")).Once()
-		expectRemovePolicy(t, clientV3, policy.ID)
+		expectRemovePolicy(clientV3, policy.ID)
 
 		useClientV2AndV3(clientV2, clientV3, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/create_no_match_rules/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/create_no_match_rules/policy_create.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							groupID:     123,
 							version:     "1",
@@ -3039,20 +3038,20 @@ func TestResourcePolicyV3(t *testing.T) {
 		clientV3 := new(v3.Mock)
 		policyID := int64(2)
 
-		policy, version := expectCreatePolicy(t, clientV3, policyID, 123, nil, "test policy description")
-		expectReadPolicy(t, clientV3, policy, version, 3)
+		policy, version := expectCreatePolicy(clientV3, policyID, 123, nil, "test policy description")
+		expectReadPolicy(clientV3, policy, version, 3)
 		// custom import mocks
 		listPoliciesV2Resp := []cloudlets.Policy{
 			{
 				Name: "other-name",
 			},
 		}
-		clientV2.On("ListPolicies", mock.Anything, cloudlets.ListPoliciesRequest{
+		clientV2.On("ListPolicies", testutils.MockContext, cloudlets.ListPoliciesRequest{
 			PageSize: ptr.To(1000),
 			Offset:   0,
 		}).Return(listPoliciesV2Resp, nil).Once()
 		// mock that 1000 policies are returned, desired one not found
-		clientV3.On("ListPolicies", mock.Anything, v3.ListPoliciesRequest{
+		clientV3.On("ListPolicies", testutils.MockContext, v3.ListPoliciesRequest{
 			Size: 1000, Page: 0,
 		}).Return(&v3.ListPoliciesResponse{
 			Content: make([]v3.Policy, 1000),
@@ -3064,7 +3063,7 @@ func TestResourcePolicyV3(t *testing.T) {
 			},
 		}, nil).Once()
 		// mock that desired policy is on the next page
-		clientV3.On("ListPolicies", mock.Anything, v3.ListPoliciesRequest{
+		clientV3.On("ListPolicies", testutils.MockContext, v3.ListPoliciesRequest{
 			Size: 1000, Page: 1,
 		}).Return(&v3.ListPoliciesResponse{
 			Content: []v3.Policy{
@@ -3080,14 +3079,14 @@ func TestResourcePolicyV3(t *testing.T) {
 				TotalPages:    2,
 			},
 		}, nil).Once()
-		expectRemovePolicy(t, clientV3, policy.ID)
+		expectRemovePolicy(clientV3, policy.ID)
 
 		useClientV2AndV3(clientV2, clientV3, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/create_no_match_rules/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/create_no_match_rules/policy_create.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							groupID:     123,
 							version:     "1",
@@ -3144,8 +3143,8 @@ func TestDiffSuppressMatchRules(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			oldJSON := testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", basePath, test.oldPath))
-			newJSON := testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", basePath, test.newPath))
+			oldJSON := testutils.LoadFixtureStringf(t, "%s/%s", basePath, test.oldPath)
+			newJSON := testutils.LoadFixtureStringf(t, "%s/%s", basePath, test.newPath)
 			res := diffSuppressMatchRules("", oldJSON, newJSON, nil)
 			assert.Equal(t, test.expected, res)
 		})

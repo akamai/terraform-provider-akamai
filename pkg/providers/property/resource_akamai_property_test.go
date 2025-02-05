@@ -7,15 +7,14 @@ import (
 	"net/http"
 	"path"
 	"regexp"
-	"slices"
 	"strings"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/iam"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/test"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/test"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -184,15 +183,15 @@ func TestPropertyLifecycle(t *testing.T) {
 	// grouped tests that always have 2 steps and the config file names are always "step0.tf" and "step1.tf". For different tests,
 	// add them as separate cases at the end of this function.
 	tests := map[string]struct {
-		init             func(*testing.T, *mockProperty)
-		steps            []resource.TestStep
+		init             func(*mockProperty)
 		checksForCreate  resource.TestCheckFunc
 		checksForUpdate  resource.TestCheckFunc
 		configPlanChecks resource.ConfigPlanChecks
 		configDir        string
+		updateError      *regexp.Regexp
 	}{
 		"Lifecycle: property is destroyed and recreated when name is changed": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithDefaultRules
 				// create
@@ -222,7 +221,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				CheckEqual("hostnames.0.cname_to", "to2.test.domain").Build(),
 		},
 		"Lifecycle: create with propertyID (bootstrap)": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithDefaultRules
 				// create (without creation of property, as it was created with bootstrap resource)
@@ -247,7 +246,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				Build(),
 		},
 		"Lifecycle: latest version is deactivated in staging (normal)": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithDefaultRules
 				p.createFromVersion = 1
@@ -295,7 +294,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				Build(),
 		},
 		"Lifecycle: latest version is deactivated in production (normal)": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithDefaultRules
 				p.createFromVersion = 1
@@ -342,7 +341,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				Build(),
 		},
 		"Lifecycle: latest version is not active (normal)": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithDefaultRules
 				mockLatestVersionNotActive(p)
@@ -354,7 +353,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				Build(),
 		},
 		"Lifecycle: latest version is active in staging (normal)": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithDefaultRules
 				p.createFromVersion = 1
@@ -371,7 +370,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				Build(),
 		},
 		"Lifecycle: latest version is active in production (normal)": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithDefaultRules
 				p.createFromVersion = 1
@@ -387,7 +386,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				Build(),
 		},
 		"Lifecycle: latest version is not active (contract_id without prefix)": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithDefaultRules
 				mockLatestVersionNotActive(p)
@@ -399,7 +398,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				Build(),
 		},
 		"Lifecycle: latest version active in staging (contract_id without prefix)": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithDefaultRules
 				p.createFromVersion = 1
@@ -415,7 +414,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				Build(),
 		},
 		"Lifecycle: latest version active in production (contract_id without prefix)": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithDefaultRules
 				p.createFromVersion = 1
@@ -431,7 +430,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				Build(),
 		},
 		"Lifecycle: latest version is not active (group_id without prefix)": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithDefaultRules
 				mockLatestVersionNotActive(p)
@@ -443,7 +442,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				Build(),
 		},
 		"Lifecycle: latest version is active in staging (group_id without prefix)": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithDefaultRules
 				p.createFromVersion = 1
@@ -459,7 +458,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				Build(),
 		},
 		"Lifecycle: latest version is active in production (group_id without prefix)": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithDefaultRules
 				p.createFromVersion = 1
@@ -475,7 +474,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				Build(),
 		},
 		"Lifecycle: latest version is not active (product_id without prefix)": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithDefaultRules
 				p.createFromVersion = 1
@@ -489,7 +488,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				Build(),
 		},
 		"Lifecycle: latest version is active in staging (product_id without prefix)": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithDefaultRules
 				p.createFromVersion = 1
@@ -505,7 +504,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				Build(),
 		},
 		"Lifecycle: latest version is active in production (product_id without prefix)": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithDefaultRules
 				p.createFromVersion = 1
@@ -521,7 +520,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				Build(),
 		},
 		"Lifecycle: no diff": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicData
 				p.ruleTree = mockRuleTreeData{
@@ -559,7 +558,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				There is an additional field "options":{} in expected attributes, because with UpdateRuleTree(ctx, req) function
 				this field added automatically into response, even if it does not exist in rules.
 			*/
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicData
 				p.ruleTree = mockRuleTreeData{
@@ -609,7 +608,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				Build(),
 		},
 		"Lifecycle: no diff for hostnames (hostnames)": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicData
 				p.ruleTree = mockRuleTreeData{
@@ -662,7 +661,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				Build(),
 		},
 		"Lifecycle: rules with variables": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicData
 				p.ruleTree = mockRuleTreeData{
@@ -789,7 +788,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				Build(),
 		},
 		"Lifecycle: Verify staging_version and production_version known at plan": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithDefaultRules
 				// create
@@ -821,35 +820,7 @@ func TestPropertyLifecycle(t *testing.T) {
 			},
 		},
 		"Lifecycle: update group id - in place": {
-			init: func(t *testing.T, p *mockProperty) {
-				// set initial data
-				p.mockPropertyData = basicDataWithDefaultRules
-				p.moveGroup = moveGroup{
-					sourceGroupID:      2,
-					destinationGroupID: 222,
-				}
-				// create
-				mockResourcePropertyCreateWithVersionHostnames(p)
-				// read x2
-				mockResourcePropertyRead(p, 2)
-				// read x1 before read
-				mockResourcePropertyRead(p)
-				// update - moving the property
-				p.mockMoveProperty()
-				p.groupID = "grp_222"
-				// read x1
-				mockResourcePropertyRead(p)
-				// delete
-				p.mockRemoveProperty()
-			},
-			configDir:       "groupIDUpdate",
-			checksForCreate: defaultChecker.Build(),
-			checksForUpdate: defaultChecker.
-				CheckEqual("group_id", "grp_222").
-				Build(),
-		},
-		"Lifecycle: update group id and hostnames - in place": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithDefaultRules
 				p.moveGroup = moveGroup{
@@ -863,8 +834,37 @@ func TestPropertyLifecycle(t *testing.T) {
 				// read x1 before update
 				mockResourcePropertyRead(p)
 				// update - moving the property
-				// readout for obtaining assetID
+				p.mockMoveProperty()
+				p.groupID = "grp_222"
 				p.mockGetProperty()
+				// read from update
+				mockResourcePropertyRead(p)
+				// read before delete
+				mockResourcePropertyRead(p)
+				// delete
+				p.mockRemoveProperty()
+			},
+			configDir:       "groupIDUpdate",
+			checksForCreate: defaultChecker.Build(),
+			checksForUpdate: defaultChecker.
+				CheckEqual("group_id", "grp_222").
+				Build(),
+		},
+		"Lifecycle: update group id and hostnames - in place": {
+			init: func(p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicDataWithDefaultRules
+				p.moveGroup = moveGroup{
+					sourceGroupID:      2,
+					destinationGroupID: 222,
+				}
+				// create
+				mockResourcePropertyCreateWithVersionHostnames(p)
+				// read x2
+				mockResourcePropertyRead(p, 2)
+				// read x1 before update
+				mockResourcePropertyRead(p)
+				// update - moving the property
 				p.mockMoveProperty()
 				p.groupID = "grp_222"
 				// waiting for new groupID
@@ -896,7 +896,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				Build(),
 		},
 		"Lifecycle: update group id and name - recreate": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithDefaultRules
 				p.moveGroup = moveGroup{
@@ -927,44 +927,167 @@ func TestPropertyLifecycle(t *testing.T) {
 				CheckEqual("name", "dummy_name2").
 				Build(),
 		},
+		"Lifecycle: update group id: forwarding property read API error": {
+			init: func(p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicDataWithDefaultRules
+				p.moveGroup = moveGroup{
+					sourceGroupID:      2,
+					destinationGroupID: 222,
+				}
+				// create
+				mockResourcePropertyCreateWithVersionHostnames(p)
+				// read x2
+				mockResourcePropertyRead(p, 2)
+				// read x1 before update
+				mockResourcePropertyRead(p)
+
+				// Error checking if the property is already in the dst group
+				p.groupID = "grp_222"
+				req := p.getPropertyRequest()
+				err := errors.New("read err")
+				p.papiMock.On("GetProperty", testutils.MockContext, req).Return(nil, err).Once()
+
+				p.groupID = "grp_2"
+				p.mockRemoveProperty()
+			},
+			configDir:       "groupIDUpdate",
+			checksForCreate: defaultChecker.Build(),
+			updateError: regexp.MustCompile(
+				"error moving property: error checking if property in group: unexpected http error for {prp_4 grp_222 ctr_1}: read err"),
+		},
+		"Lifecycle: update group id: no API call to move if property already in desired group": {
+			init: func(p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicDataWithDefaultRules
+				p.moveGroup = moveGroup{
+					sourceGroupID:      2,
+					destinationGroupID: 222,
+				}
+				// create
+				mockResourcePropertyCreateWithVersionHostnames(p)
+				// read x2
+				mockResourcePropertyRead(p, 2)
+				// read x1 before update
+				mockResourcePropertyRead(p)
+
+				// update - moving the property
+				// yes, property is in the desired group, exiting early from moveProperty
+				p.groupID = "grp_222"
+				p.mockGetProperty()
+				// read from update
+				mockResourcePropertyRead(p)
+				// read before delete
+				mockResourcePropertyRead(p)
+				// delete
+				p.mockRemoveProperty()
+			},
+			configDir:       "groupIDUpdate",
+			checksForCreate: defaultChecker.Build(),
+			checksForUpdate: defaultChecker.
+				CheckEqual("group_id", "grp_222").
+				Build(),
+		},
+		"Lifecycle: update group id: moving properties with no past activations is not supported": {
+			init: func(p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicDataWithDefaultRules
+				p.moveGroup = moveGroup{
+					sourceGroupID:      2,
+					destinationGroupID: 222,
+				}
+				// create
+				mockResourcePropertyCreateWithVersionHostnames(p)
+				// read x2
+				mockResourcePropertyRead(p, 2)
+				// read x1 before update
+				mockResourcePropertyRead(p)
+
+				// Checking if the property is already in the dst group
+				p.groupID = "grp_222"
+				getReq := p.getPropertyRequest()
+				p.papiMock.On("GetProperty", testutils.MockContext, getReq).
+					Return(nil, &papi.Error{StatusCode: http.StatusForbidden}).
+					Once()
+
+				p.groupID = "grp_2"
+				p.mockGetActivationsCompleteRequest()
+
+				// delete
+				p.mockRemoveProperty()
+			},
+			configDir:       "groupIDUpdate",
+			checksForCreate: defaultChecker.Build(),
+			updateError: regexp.MustCompile("error moving property: " +
+				"moving properties that have never been activated is not supported " +
+				`\(property id: prp_4, contract id: ctr_1, group id grp_2\)`),
+		},
+		"Lifecycle: update group id: forwards API error from waiting for group id change": {
+			init: func(p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicDataWithDefaultRules
+				p.moveGroup = moveGroup{
+					sourceGroupID:      2,
+					destinationGroupID: 222,
+				}
+				// create
+				mockResourcePropertyCreateWithVersionHostnames(p)
+				// read x2
+				mockResourcePropertyRead(p, 2)
+				// read x1 before update
+				mockResourcePropertyRead(p)
+				// update - moving the property
+				p.mockMoveProperty()
+
+				// Waiting for group id change
+				p.groupID = "grp_222"
+				getReq := p.getPropertyRequest()
+				p.papiMock.On("GetProperty", testutils.MockContext, getReq).
+					Return(nil, errors.New("read err")).
+					Once()
+
+				// delete
+				p.groupID = "grp_2"
+				p.mockRemoveProperty()
+			},
+			configDir:       "groupIDUpdate",
+			checksForCreate: defaultChecker.Build(),
+			updateError: regexp.MustCompile(
+				"error moving property: error waiting for group id change: unexpected http error for {prp_4 grp_222 ctr_1}: read err"),
+		},
 	}
 
 	for name, test := range tests {
-		// TODO: Once DXE-4176 is done, un-skip those tests
-		testsToSkip := []string{"Lifecycle: update group id - in place", "Lifecycle: update group id and hostnames - in place", "Lifecycle: update group id and name - recreate"}
 		t.Run(name, func(t *testing.T) {
-			if slices.Contains(testsToSkip, name) {
-				t.Skip()
-			} else {
-				papiMock := &papi.Mock{}
-				iamMock := &iam.Mock{}
-				mp := mockProperty{
-					papiMock: papiMock,
-					iamMock:  iamMock,
-				}
-				test.init(t, &mp)
+			papiMock := &papi.Mock{}
+			iamMock := &iam.Mock{}
+			mp := mockProperty{
+				papiMock: papiMock,
+				iamMock:  iamMock,
+			}
+			test.init(&mp)
 
-				useClient(papiMock, nil, func() {
-					useIam(iamMock, func() {
-						resource.UnitTest(t, resource.TestCase{
-							ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-							Steps: []resource.TestStep{
-								{
-									Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/Lifecycle/%s/step0.tf", test.configDir),
-									Check:  test.checksForCreate,
-								},
-								{
-									Config:           testutils.LoadFixtureString(t, "testdata/TestResProperty/Lifecycle/%s/step1.tf", test.configDir),
-									Check:            test.checksForUpdate,
-									ConfigPlanChecks: test.configPlanChecks,
-								},
+			useClient(papiMock, nil, func() {
+				useIam(iamMock, func() {
+					resource.UnitTest(t, resource.TestCase{
+						ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+						Steps: []resource.TestStep{
+							{
+								Config: testutils.LoadFixtureStringf(t, "testdata/TestResProperty/Lifecycle/%s/step0.tf", test.configDir),
+								Check:  test.checksForCreate,
 							},
-						})
+							{
+								Config:           testutils.LoadFixtureStringf(t, "testdata/TestResProperty/Lifecycle/%s/step1.tf", test.configDir),
+								Check:            test.checksForUpdate,
+								ConfigPlanChecks: test.configPlanChecks,
+								ExpectError:      test.updateError,
+							},
+						},
 					})
 				})
+			})
 
-				papiMock.AssertExpectations(t)
-			}
+			papiMock.AssertExpectations(t)
 		})
 	}
 
@@ -995,7 +1118,7 @@ func TestPropertyLifecycle(t *testing.T) {
 		}
 		// create
 		mockResourcePropertyFullCreate(mp)
-		// mock rules in the format that API returns to test custom diff functionality on rules (notice `"cpCodeLimits": nil`, which was not present in the request.
+		// mock rules in the format that API returns to test custom diff functionality on rules (notice `"cpCodeLimits": nil`), which was not present in the request.
 		mp.ruleTree.rules = papi.Rules{Behaviors: []papi.RuleBehavior{
 			{
 				Name: "cpCode",
@@ -1104,6 +1227,96 @@ func TestPropertyLifecycle(t *testing.T) {
 			})
 		})
 	})
+
+	t.Run("Lifecycle: no diff for CriteriaMustSatisfy", func(t *testing.T) {
+		// set initial data
+		papiMock := &papi.Mock{}
+		mp := &mockProperty{
+			papiMock:         papiMock,
+			mockPropertyData: basicData,
+		}
+		mp.ruleTree = mockRuleTreeData{
+			rules: papi.Rules{
+				Children: []papi.Rules{
+					{
+						Name: "Default CORS Policy",
+					},
+				},
+			},
+		}
+		// create
+		mp.mockCreateProperty()
+		mp.mockUpdatePropertyVersionHostnames()
+
+		rulesUpdate := papi.RulesUpdate{
+			Rules:    mp.ruleTree.rules,
+			Comments: mp.ruleTree.comments,
+		}
+		req := papi.UpdateRulesRequest{
+			PropertyID:      mp.propertyID,
+			PropertyVersion: mp.latestVersion,
+			ContractID:      mp.contractID,
+			GroupID:         mp.groupID,
+			Rules:           rulesUpdate,
+			ValidateRules:   true,
+		}
+
+		// default child setting of the CriteriaMustSatisfy field to the value "all" by API if it is not provided
+		defaultAPIResp := papi.Rules{
+			AdvancedOverride: mp.ruleTree.rules.AdvancedOverride,
+			Behaviors:        mp.ruleTree.rules.Behaviors,
+			Children: []papi.Rules{
+				{
+					Name:                mp.ruleTree.rules.Children[0].Name,
+					CriteriaMustSatisfy: papi.RuleCriteriaMustSatisfyAll,
+				},
+			},
+			Comments:            mp.ruleTree.rules.Comments,
+			Criteria:            mp.ruleTree.rules.Criteria,
+			CriteriaLocked:      mp.ruleTree.rules.CriteriaLocked,
+			CustomOverride:      mp.ruleTree.rules.CustomOverride,
+			Name:                mp.ruleTree.rules.Name,
+			Options:             mp.ruleTree.rules.Options,
+			UUID:                mp.ruleTree.rules.UUID,
+			TemplateUuid:        mp.ruleTree.rules.TemplateUuid,
+			TemplateLink:        mp.ruleTree.rules.TemplateLink,
+			Variables:           mp.ruleTree.rules.Variables,
+			CriteriaMustSatisfy: mp.ruleTree.rules.CriteriaMustSatisfy,
+		}
+		resp := papi.UpdateRulesResponse{
+			PropertyID:      mp.propertyID,
+			ContractID:      mp.contractID,
+			GroupID:         mp.groupID,
+			PropertyVersion: mp.latestVersion,
+			RuleFormat:      mp.ruleTree.ruleFormat,
+			Rules:           defaultAPIResp,
+			Errors:          mp.ruleTree.ruleErrors,
+			Warnings:        mp.ruleTree.ruleWarnings,
+		}
+		mp.papiMock.On("UpdateRuleTree", testutils.MockContext, req).Return(&resp, nil).Once()
+
+		// state update after rule tree update
+		mp.ruleTree.rules = defaultAPIResp
+
+		// read x2
+		mockResourcePropertyRead(mp, 2)
+		// delete
+		mp.mockRemoveProperty()
+
+		useClient(papiMock, nil, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/Lifecycle/criteriaMustSatisfyNoDiff/step0.tf"),
+						Check: defaultChecker.
+							CheckEqual("rules", `{"rules":{"children":[{"name":"Default CORS Policy","options":{},"criteriaMustSatisfy":"all"}],"name":"","options":{}}}`).
+							Build(),
+					},
+				},
+			})
+		})
+	})
 }
 
 // TestPropertyImports tests import functionality of property resource
@@ -1187,13 +1400,13 @@ func TestPropertyImport(t *testing.T) {
 	tests := map[string]struct {
 		importID   string
 		config     string
-		init       func(*testing.T, *mockProperty)
+		init       func(*mockProperty)
 		stateCheck func(s []*terraform.InstanceState) error
 	}{
 		"Importable: property_id with ds": {
 			importID: "prp_4",
 			config:   "testdata/TestResProperty/Importable/importable_with_property_rules_builder.tf",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithoutGroupAndContract
 				p.ruleTree = mockRuleTreeData{
@@ -1213,7 +1426,7 @@ func TestPropertyImport(t *testing.T) {
 		"Importable: property_id with property-bootstrap": {
 			importID: "prp_4,property-bootstrap",
 			config:   "testdata/TestResProperty/Importable/importable-with-bootstrap.tf",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithoutGroupAndContract
 				mockPropertyImportKnownVersion(p)
@@ -1222,7 +1435,7 @@ func TestPropertyImport(t *testing.T) {
 		},
 		"Importable: property_id": {
 			importID: "prp_4",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithoutGroupAndContract
 				mockPropertyImportKnownVersion(p)
@@ -1231,7 +1444,7 @@ func TestPropertyImport(t *testing.T) {
 		},
 		"Importable: property_id and ver_# version": {
 			importID: "prp_4,ver_1",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithoutGroupAndContract
 				mockPropertyImportUnknownVersion(p)
@@ -1240,7 +1453,7 @@ func TestPropertyImport(t *testing.T) {
 		},
 		"Importable: property_id and # version": {
 			importID: "prp_4,1",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithoutGroupAndContract
 				mockPropertyImportUnknownVersion(p)
@@ -1249,7 +1462,7 @@ func TestPropertyImport(t *testing.T) {
 		},
 		"Importable: property_id and latest": {
 			importID: "prp_4,latest",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithoutGroupAndContract
 				mockPropertyImportKnownVersion(p)
@@ -1258,7 +1471,7 @@ func TestPropertyImport(t *testing.T) {
 		},
 		"Importable: property_id and network": {
 			importID: "prp_4,staging",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithoutGroupAndContract
 				mockPropertyImportUnknownVersion(p)
@@ -1267,7 +1480,7 @@ func TestPropertyImport(t *testing.T) {
 		},
 		"Importable: un-prefixed property_id": {
 			importID: "4",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithoutGroupAndContract
 				mockPropertyImportKnownVersion(p)
@@ -1276,7 +1489,7 @@ func TestPropertyImport(t *testing.T) {
 		},
 		"Importable: un-prefixed property_id and # version": {
 			importID: "4,1",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithoutGroupAndContract
 				mockPropertyImportUnknownVersion(p)
@@ -1285,7 +1498,7 @@ func TestPropertyImport(t *testing.T) {
 		},
 		"Importable: un-prefixed property_id and ver_# version": {
 			importID: "4,ver_1",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithoutGroupAndContract
 				mockPropertyImportUnknownVersion(p)
@@ -1294,7 +1507,7 @@ func TestPropertyImport(t *testing.T) {
 		},
 		"Importable: un-prefixed property_id and network": {
 			importID: "4,s",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicDataWithoutGroupAndContract
 				mockPropertyImportUnknownVersion(p)
@@ -1303,7 +1516,7 @@ func TestPropertyImport(t *testing.T) {
 		},
 		"Importable: property_id and contract_id and group_id": {
 			importID: "prp_4,ctr_1,grp_2",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicData
 				// read
@@ -1313,7 +1526,7 @@ func TestPropertyImport(t *testing.T) {
 		},
 		"Importable: property_id, contract_id, group_id and empty version": {
 			importID: "prp_4,ctr_1,grp_2,",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicData
 				mockResourcePropertyRead(p)
@@ -1322,7 +1535,7 @@ func TestPropertyImport(t *testing.T) {
 		},
 		"Importable: property_id, contract_id, group_id and latest": {
 			importID: "prp_4,ctr_1,grp_2,latest",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicData
 				// read
@@ -1332,7 +1545,7 @@ func TestPropertyImport(t *testing.T) {
 		},
 		"Importable: property_id, contract_id, group_id and ver_# version": {
 			importID: "prp_4,ctr_1,grp_2,ver_1",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicData
 				mockPropertyImportKnownVersionAfterImport(p)
@@ -1341,7 +1554,7 @@ func TestPropertyImport(t *testing.T) {
 		},
 		"Importable: property_id, contract_id, group_id and # version": {
 			importID: "prp_4,ctr_1,grp_2,1",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicData
 				mockPropertyImportKnownVersionAfterImport(p)
@@ -1350,7 +1563,7 @@ func TestPropertyImport(t *testing.T) {
 		},
 		"Importable: property_id, contract_id, group_id and network": {
 			importID: "prp_4,ctr_1,grp_2,staging",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicData
 				mockPropertyImportUnknownVersion(p)
@@ -1359,7 +1572,7 @@ func TestPropertyImport(t *testing.T) {
 		},
 		"Importable: un-prefixed property_id and contract_id and group_id": {
 			importID: "4,1,2",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicData
 				// read
@@ -1369,7 +1582,7 @@ func TestPropertyImport(t *testing.T) {
 		},
 		"Importable: un-prefixed property_id and contract_id, group_id and # version": {
 			importID: "4,1,2,1",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicData
 				mockPropertyImportKnownVersionAfterImport(p)
@@ -1378,7 +1591,7 @@ func TestPropertyImport(t *testing.T) {
 		},
 		"Importable: un-prefixed property_id and contract_id, group_id and ver_# version": {
 			importID: "4,1,2,ver_1",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicData
 				mockPropertyImportKnownVersionAfterImport(p)
@@ -1387,7 +1600,7 @@ func TestPropertyImport(t *testing.T) {
 		},
 		"Importable: un-prefixed property_id and contract_id, group_id and latest": {
 			importID: "4,1,2,latest",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicData
 				// read
@@ -1397,7 +1610,7 @@ func TestPropertyImport(t *testing.T) {
 		},
 		"Importable: un-prefixed property_id and contract_id, group_id and network": {
 			importID: "4,1,2,staging",
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicData
 				mockPropertyImportUnknownVersion(p)
@@ -1412,7 +1625,7 @@ func TestPropertyImport(t *testing.T) {
 			mp := mockProperty{
 				papiMock: papiMock,
 			}
-			test.init(t, &mp)
+			test.init(&mp)
 
 			// use default config file if custom is not specified
 			if test.config == "" {
@@ -1495,11 +1708,11 @@ func TestPropertyErrors(t *testing.T) {
 	}
 
 	tests := map[string]struct {
-		init  func(*testing.T, *mockProperty)
+		init  func(*mockProperty)
 		steps []resource.TestStep
 	}{
 		"error when the given group is not found": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicData
 				err := &papi.Error{
@@ -1520,7 +1733,7 @@ func TestPropertyErrors(t *testing.T) {
 			},
 		},
 		"error when creating property with non-unique name": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicData
 				err := fmt.Errorf("given property name is not unique")
@@ -1534,7 +1747,7 @@ func TestPropertyErrors(t *testing.T) {
 			},
 		},
 		"error when deleting active property": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicData
 				p.versions = inactiveVersions
@@ -1549,7 +1762,7 @@ func TestPropertyErrors(t *testing.T) {
 				// First call to remove is not successful because property is active
 				err := fmt.Errorf(`cannot remove active property "prp_4"`)
 				p.mockRemoveProperty(err)
-				// Second call will be successful (TF test case requires last state to be empty or it's a failed test)
+				// Second call will be successful (TF test case requires last state to be empty, or it's a failed test)
 				p.mockRemoveProperty()
 			},
 			steps: []resource.TestStep{
@@ -1564,7 +1777,7 @@ func TestPropertyErrors(t *testing.T) {
 			},
 		},
 		"error validations when updating property with rules tree": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicData
 				p.ruleTree = mockRuleTreeData{
@@ -1598,7 +1811,7 @@ func TestPropertyErrors(t *testing.T) {
 			},
 		},
 		"validation warning when creating property with rules tree": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicData
 				p.versions = inactiveVersions
@@ -1653,7 +1866,7 @@ func TestPropertyErrors(t *testing.T) {
 			},
 		},
 		"validation - when updating a property hostnames to empty it should return error": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicData
 				p.hostnames = papi.HostnameResponseItems{
@@ -1697,7 +1910,7 @@ func TestPropertyErrors(t *testing.T) {
 			},
 		},
 		"validation - when updating a property hostnames with cert_provisioning_type = 'DEFAULT' with secure-by-default enabled but remaining default certs == 0 it should return error": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicData
 				p.hostnames = papi.HostnameResponseItems{
@@ -1729,7 +1942,7 @@ func TestPropertyErrors(t *testing.T) {
 			},
 		},
 		"validation - when updating a property hostnames with cert_provisioning_type = 'DEFAULT' not having enabled secure-by-default it should return error": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = basicData
 				p.hostnames = papi.HostnameResponseItems{
@@ -1761,7 +1974,7 @@ func TestPropertyErrors(t *testing.T) {
 			},
 		},
 		"400 from UpdatePropertyVersionHostnames - incorrect/invalid edge hostname": {
-			init: func(t *testing.T, p *mockProperty) {
+			init: func(p *mockProperty) {
 				// set initial data
 				p.mockPropertyData = mockPropertyData{
 					propertyName:  "dxe-2406-issue-example",
@@ -1829,19 +2042,17 @@ func TestPropertyErrors(t *testing.T) {
 							},
 						},
 					},
-					createActivation: papi.Activation{
+					activationForCreate: papi.Activation{
 						ActivationID:    "act_123",
 						ActivationType:  papi.ActivationTypeActivate,
 						Network:         papi.ActivationNetworkStaging,
 						Status:          papi.ActivationStatusActive,
 						NotifyEmails:    []string{"dummy-user@akamai.com"},
 						PropertyVersion: 1,
+						SubmitDate:      "2020-10-28T15:04:05Z",
 					},
 					groups: papi.GroupItems{
 						Items: []*papi.Group{},
-					},
-					activations: papi.ActivationsItems{
-						Items: []*papi.Activation{},
 					},
 				}
 				// akamai_property - create
@@ -1852,22 +2063,6 @@ func TestPropertyErrors(t *testing.T) {
 				p.mockGetRuleTreeActivation().Once() // GetRuleTree request in activation resources is different from GetRuleTree in property resource
 				p.mockGetActivations()               // no activation
 				p.mockCreateActivation()
-				// modify mock data to reflect newly created activation
-				p.activations = papi.ActivationsItems{
-					Items: []*papi.Activation{
-						{
-							ActivationID:    p.createActivation.ActivationID,
-							ActivationType:  papi.ActivationTypeActivate,
-							GroupID:         p.groupID,
-							PropertyName:    p.propertyName,
-							PropertyID:      p.propertyID,
-							PropertyVersion: p.createActivation.PropertyVersion,
-							Network:         papi.ActivationNetworkStaging,
-							Status:          papi.ActivationStatusActive,
-							NotifyEmails:    p.createActivation.NotifyEmails,
-						},
-					},
-				}
 				p.mockGetActivation()
 
 				activatedVersion := papi.PropertyVersionItems{
@@ -1927,35 +2122,7 @@ func TestPropertyErrors(t *testing.T) {
 
 				// terraform clean up - terraform test framework attempts to run destroy plan, if an error is returned on second step
 
-				// activation and property deletion
-				// update current activations of given property
-				p.activations = papi.ActivationsItems{
-					Items: []*papi.Activation{
-						{
-							ActivationID:    "act_123",
-							PropertyID:      "prp_4",
-							PropertyVersion: 1,
-							Network:         papi.ActivationNetworkStaging,
-							Status:          papi.ActivationStatusActive,
-							ActivationType:  papi.ActivationTypeActivate,
-							SubmitDate:      "2020-10-28T15:04:05Z",
-							NotifyEmails:    []string{"dummy-user@akamai.com"},
-						},
-					},
-				}
-				p.mockGetActivations()
-				// mock deactivate type activation for delete activation resource
-				p.createActivation = papi.Activation{
-					ActivationID:    "act_123",
-					ActivationType:  papi.ActivationTypeDeactivate,
-					Network:         papi.ActivationNetworkStaging,
-					Status:          papi.ActivationStatusActive,
-					NotifyEmails:    []string{"dummy-user@akamai.com"},
-					PropertyVersion: 1,
-				}
-				// akamai_property_activation - delete
-				p.mockCreateActivation()
-				p.mockGetActivation()
+				p.mockResourceActivationDelete()
 				// akamai_property - delete
 				p.mockRemoveProperty()
 			},
@@ -1983,7 +2150,7 @@ func TestPropertyErrors(t *testing.T) {
 			mp := mockProperty{
 				papiMock: papiMock,
 			}
-			test.init(t, &mp)
+			test.init(&mp)
 
 			useClient(papiMock, nil, func() {
 				resource.UnitTest(t, resource.TestCase{
@@ -1999,89 +2166,27 @@ func TestPropertyErrors(t *testing.T) {
 
 // TestSchemaConfiguration tests errors when invalid HCL configuration is provided
 func TestSchemaConfiguration(t *testing.T) {
-	assertConfigError := func(t *testing.T, flaw, rx string) func(t *testing.T) {
+	assertConfigError := func(flaw, rx string) func(t *testing.T) {
 		fixtureName := strings.ReplaceAll(flaw, " ", "_")
 
 		return func(t *testing.T) {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{{
-					Config:      testutils.LoadFixtureString(t, "testdata/TestResProperty/ConfigError/%s.tf", fixtureName),
+					Config:      testutils.LoadFixtureStringf(t, "testdata/TestResProperty/ConfigError/%s.tf", fixtureName),
 					ExpectError: regexp.MustCompile(rx),
 				}},
 			})
 		}
 	}
 
-	t.Run("Schema Configuration Error: name not given", assertConfigError(t, "name not given", `"name" is required`))
-	t.Run("Schema Configuration Error: contract_id not given", assertConfigError(t, "contract_id not given", `Missing required argument`))
-	t.Run("Schema Configuration Error: group_id not given", assertConfigError(t, "group_id not given", `Missing required argument`))
-	t.Run("Schema Configuration Error: product_id not given", assertConfigError(t, "product_id not given", `Missing required argument`))
-	t.Run("Schema Configuration Error: invalid json rules", assertConfigError(t, "invalid json rules", `rules are not valid JSON`))
-	t.Run("Schema Configuration Error: invalid name given", assertConfigError(t, "invalid name given", `a name must only contain letters, numbers, and these characters: . _ -`))
-	t.Run("Schema Configuration Error: name given too long", assertConfigError(t, "name given too long", `a name must be longer than 0 characters and shorter than 86 characters`))
-}
-
-// TODO: remove this test after moving property is enabled again, see DXE-4176
-func TestGroupIDUpdateError(t *testing.T) {
-	baseData := mockPropertyData{
-		propertyName:  "dummy_name",
-		groupID:       "grp_1",
-		contractID:    "ctr_2",
-		productID:     "prd_3",
-		propertyID:    "prp_12345",
-		latestVersion: 1,
-		assetID:       "aid_55555",
-		hostnames: papi.HostnameResponseItems{
-			Items: []papi.Hostname{
-				{
-					CnameType:            "EDGE_HOSTNAME",
-					EdgeHostnameID:       "",
-					CnameFrom:            "from.test.domain",
-					CnameTo:              "to.test.domain",
-					CertProvisioningType: "DEFAULT",
-					CertStatus:           papi.CertStatusItem{},
-				},
-			},
-		},
-	}
-
-	papiMock := &papi.Mock{}
-	mp := mockProperty{
-		papiMock:         papiMock,
-		mockPropertyData: baseData,
-	}
-	mockResourcePropertyCreateWithVersionHostnames(&mp)
-	// read x2
-	mockResourcePropertyRead(&mp, 2)
-	// read x1 before update
-	mockResourcePropertyRead(&mp)
-	// delete
-	mp.mockRemoveProperty().Once()
-
-	useClient(papiMock, nil, func() {
-		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-			Steps: []resource.TestStep{
-				{
-					Config: testutils.LoadFixtureString(t, "testdata/TestGroupIDUpdate/base.tf"),
-					Check: test.NewStateChecker("akamai_property.test").
-						CheckEqual("name", "dummy_name").
-						CheckEqual("group_id", "grp_1").
-						CheckEqual("hostnames.0.cname_from", "from.test.domain").
-						CheckEqual("contract_id", "ctr_2").
-						CheckEqual("product_id", "prd_3").
-						CheckEqual("hostnames.0.cname_to", "to.test.domain").
-						CheckEqual("hostnames.0.cert_provisioning_type", "DEFAULT").
-						Build(),
-				},
-				{
-					Config:      testutils.LoadFixtureString(t, "testdata/TestGroupIDUpdate/update_group_id.tf"),
-					ExpectError: regexp.MustCompile(`property attribute "group_id" cannot be changed after creation \(immutable\)`),
-				},
-			},
-		})
-	})
+	t.Run("Schema Configuration Error: name not given", assertConfigError("name not given", `"name" is required`))
+	t.Run("Schema Configuration Error: contract_id not given", assertConfigError("contract_id not given", `Missing required argument`))
+	t.Run("Schema Configuration Error: group_id not given", assertConfigError("group_id not given", `Missing required argument`))
+	t.Run("Schema Configuration Error: product_id not given", assertConfigError("product_id not given", `Missing required argument`))
+	t.Run("Schema Configuration Error: invalid json rules", assertConfigError("invalid json rules", `rules are not valid JSON`))
+	t.Run("Schema Configuration Error: invalid name given", assertConfigError("invalid name given", `a name must only contain letters, numbers, and these characters: . _ -`))
+	t.Run("Schema Configuration Error: name given too long", assertConfigError("name given too long", `a name must be longer than 0 characters and shorter than 86 characters`))
 }
 
 func TestPropertyResource_VersionNotesLifecycle(t *testing.T) {
@@ -2191,32 +2296,32 @@ func TestPropertyResource_VersionNotesLifecycle(t *testing.T) {
 			ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 			Steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, path.Join(testdataDir, "01_with_notes_and_comments.tf")),
+					Config: testutils.LoadFixtureStringf(t, "%s/01_with_notes_and_comments.tf", testdataDir),
 					Check: checker.
 						CheckEqual("version_notes", "lifecycleTest").
-						CheckEqual("rules", testutils.LoadFixtureString(t, path.Join(testdataDir, "01_expected_rules.json"))).
+						CheckEqual("rules", testutils.LoadFixtureStringf(t, "%s/01_expected_rules.json", testdataDir)).
 						Build(),
 				},
 				{
-					Config:   testutils.LoadFixtureString(t, path.Join(testdataDir, "02_update_notes_no_diff.tf")),
+					Config:   testutils.LoadFixtureStringf(t, "%s/02_update_notes_no_diff.tf", testdataDir),
 					PlanOnly: true,
 				},
 				{
-					Config: testutils.LoadFixtureString(t, path.Join(testdataDir, "03_update_notes_and_rules.tf")),
+					Config: testutils.LoadFixtureStringf(t, "%s/03_update_notes_and_rules.tf", testdataDir),
 					Check: checker.
 						CheckEqual("version_notes", "updatedNotes2").
-						CheckEqual("rules", testutils.LoadFixtureString(t, path.Join(testdataDir, "03_expected_rules.json"))).
+						CheckEqual("rules", testutils.LoadFixtureStringf(t, "%s/03_expected_rules.json", testdataDir)).
 						Build(),
 				},
 				{
-					Config: testutils.LoadFixtureString(t, path.Join(testdataDir, "04_05_remove_notes_update_comments.tf")),
+					Config: testutils.LoadFixtureStringf(t, "%s/04_05_remove_notes_update_comments.tf", testdataDir),
 					Check: checker.
 						CheckEqual("version_notes", "Rules_04").
-						CheckEqual("rules", testutils.LoadFixtureString(t, path.Join(testdataDir, "04_expected_rules.json"))).
+						CheckEqual("rules", testutils.LoadFixtureStringf(t, "%s/04_expected_rules.json", testdataDir)).
 						Build(),
 				},
 				{
-					Config:   testutils.LoadFixtureString(t, path.Join(testdataDir, "04_05_remove_notes_update_comments.tf")),
+					Config:   testutils.LoadFixtureStringf(t, "%s/04_05_remove_notes_update_comments.tf", testdataDir),
 					PlanOnly: true,
 				},
 			},

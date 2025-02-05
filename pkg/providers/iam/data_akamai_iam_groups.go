@@ -4,10 +4,10 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/iam"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/date"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/date"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -82,14 +82,14 @@ func dataIAMGroupsRead(ctx context.Context, d *schema.ResourceData, m interface{
 	logger.Debug("Fetching groups")
 	res, err := client.ListGroups(ctx, iam.ListGroupsRequest{})
 	if err != nil {
-		logger.WithError(err).Error("Could not get groups")
+		logger.Error("Could not get groups", "error", err)
 		return diag.FromErr(err)
 	}
 
 	groups := groupsToState(res)
 
 	if err := d.Set("groups", groups); err != nil {
-		logger.WithError(err).Error("Could not set groups in state")
+		logger.Error("Could not set groups in state", "error", err)
 		return diag.FromErr(err)
 	}
 

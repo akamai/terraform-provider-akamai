@@ -3,5 +3,5 @@ provider "akamai" {
 }
 
 data "akamai_gtm_domain" "domain" {
-  name = "test.cli.devexp-terraform.akadns.net"
+  name = "gtm_terra_testdomain.akadns.net"
 }

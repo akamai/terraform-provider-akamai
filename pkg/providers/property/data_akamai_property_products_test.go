@@ -5,10 +5,9 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestVerifyProductsDataSourceSchema(t *testing.T) {
@@ -28,7 +27,7 @@ func TestOutputProductsDataSource(t *testing.T) {
 
 	t.Run("akamai_property_products - input OK - output OK", func(t *testing.T) {
 		client := &papi.Mock{}
-		client.On("GetProducts", AnyCTX, mock.Anything).Return(&papi.GetProductsResponse{
+		client.On("GetProducts", testutils.MockContext, testutils.MockContext).Return(&papi.GetProductsResponse{
 			AccountID:  "act_anyAccount",
 			ContractID: "ctr_AnyContract",
 			Products: papi.ProductsItems{

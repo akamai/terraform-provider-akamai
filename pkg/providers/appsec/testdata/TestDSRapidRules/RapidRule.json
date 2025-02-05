@@ -1,0 +1,27 @@
+{
+  "policyRules": [
+    {
+      "action": "alert",
+      "conditionException": {
+        "exception": {
+          "specificHeaderCookieParamXmlOrJsonNames": [
+            {
+              "names": [
+                "*"
+              ],
+              "selector": "ARGS_NAMES",
+              "wildcard": true
+            }
+          ]
+        }
+      },
+      "id": 999997,
+      "lock": false,
+      "riskScoreGroups": [
+        "XSS"
+      ],
+      "title": "Cross-site Scripting (XSS) Attack - Dummy test rule",
+      "version": 2
+    }
+  ]
+}

@@ -5,11 +5,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/gtm"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/logger"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/gtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/log"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -108,10 +108,10 @@ func resourceGTMv1GeoMapCreate(ctx context.Context, d *schema.ResourceData, m in
 		DomainName: domain,
 	})
 	if err != nil && !errors.Is(err, gtm.ErrNotFound) {
-		logger.Errorf("geoMap Read error: %s", err.Error())
+		logger.Errorf("geoMap read error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "geoMap Read error",
+			Summary:  "geoMap read error",
 			Detail:   err.Error(),
 		})
 	}
@@ -143,10 +143,10 @@ func resourceGTMv1GeoMapCreate(ctx context.Context, d *schema.ResourceData, m in
 
 	newGeo, err := populateNewGeoMapObject(d, m)
 	if err != nil {
-		logger.Errorf("geoMap populate failed: %s", err.Error())
+		logger.Errorf("geoMap populate error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "geoMap populate failed",
+			Summary:  "geoMap populate error",
 			Detail:   err.Error(),
 		})
 	}
@@ -156,14 +156,14 @@ func resourceGTMv1GeoMapCreate(ctx context.Context, d *schema.ResourceData, m in
 		DomainName: domain,
 	})
 	if err != nil {
-		logger.Errorf("geoMap Create failed: %s", err.Error())
+		logger.Errorf("geoMap create error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "geoMap Create failed",
+			Summary:  "geoMap create error",
 			Detail:   err.Error(),
 		})
 	}
-	logger.Debugf("geoMap Create status: %v", cStatus.Status)
+	logger.Debugf("geoMap create status: %v", cStatus.Status)
 	if cStatus.Status.PropagationStatus == "DENIED" {
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -179,15 +179,15 @@ func resourceGTMv1GeoMapCreate(ctx context.Context, d *schema.ResourceData, m in
 	if waitOnComplete {
 		done, err := waitForCompletion(ctx, domain, m)
 		if done {
-			logger.Infof("geoMap Create completed")
+			logger.Infof("geoMap create completed")
 		} else {
 			if err == nil {
-				logger.Infof("geoMap Create pending")
+				logger.Infof("geoMap create pending")
 			} else {
-				logger.Errorf("geoMap Create failed [%s]", err.Error())
+				logger.Errorf("geoMap create error: %s", err.Error())
 				return append(diags, diag.Diagnostic{
 					Severity: diag.Error,
-					Summary:  "geoMap Create failed",
+					Summary:  "geoMap create error",
 					Detail:   err.Error(),
 				})
 			}
@@ -223,18 +223,22 @@ func resourceGTMv1GeoMapRead(ctx context.Context, d *schema.ResourceData, m inte
 		MapName:    geoMap,
 		DomainName: domain,
 	})
+	if errors.Is(err, gtm.ErrNotFound) {
+		d.SetId("")
+		return nil
+	}
 	if err != nil {
-		logger.Errorf("geoMap Read error: %s", err.Error())
+		logger.Errorf("geoMap read error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "geoMap Read error",
+			Summary:  "geoMap read error",
 			Detail:   err.Error(),
 		})
 	}
 	if err = populateTerraformGeoMapState(d, geo, m); err != nil {
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "geoMap Read populate state error",
+			Summary:  "geoMap read populate state error",
 			Detail:   err.Error(),
 		})
 	}
@@ -265,10 +269,10 @@ func resourceGTMv1GeoMapUpdate(ctx context.Context, d *schema.ResourceData, m in
 		DomainName: domain,
 	})
 	if err != nil {
-		logger.Errorf("geoMap Update failed: %s", err.Error())
+		logger.Errorf("geoMap read error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "geoMap Update Read error",
+			Summary:  "geoMap read error",
 			Detail:   err.Error(),
 		})
 	}
@@ -281,14 +285,14 @@ func resourceGTMv1GeoMapUpdate(ctx context.Context, d *schema.ResourceData, m in
 		DomainName: domain,
 	})
 	if err != nil {
-		logger.Errorf("geoMap Update failed: %s", err.Error())
+		logger.Errorf("geoMap update error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "geoMap Update error",
+			Summary:  "geoMap update error",
 			Detail:   err.Error(),
 		})
 	}
-	logger.Debugf("geoMap Update  status: %v", uStat)
+	logger.Debugf("geoMap update status: %v", uStat)
 	if uStat.Status.PropagationStatus == "DENIED" {
 		logger.Errorf(uStat.Status.Message)
 		return append(diags, diag.Diagnostic{
@@ -305,15 +309,15 @@ func resourceGTMv1GeoMapUpdate(ctx context.Context, d *schema.ResourceData, m in
 	if waitOnComplete {
 		done, err := waitForCompletion(ctx, domain, m)
 		if done {
-			logger.Infof("geoMap Update completed")
+			logger.Infof("geoMap update completed")
 		} else {
 			if err == nil {
-				logger.Infof("geoMap Update pending")
+				logger.Infof("geoMap update pending")
 			} else {
-				logger.Errorf("geoMap Update failed [%s]", err.Error())
+				logger.Errorf("geoMap update error: %s", err.Error())
 				return append(diags, diag.Diagnostic{
 					Severity: diag.Error,
-					Summary:  "geoMap Update failed",
+					Summary:  "geoMap update error",
 					Detail:   err.Error(),
 				})
 			}
@@ -388,10 +392,10 @@ func resourceGTMv1GeoMapDelete(ctx context.Context, d *schema.ResourceData, m in
 		DomainName: domain,
 	})
 	if err != nil {
-		logger.Errorf("geoMap Delete failed: %s", err.Error())
+		logger.Errorf("geoMap read error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "geoMap Delete Read error",
+			Summary:  "geoMap read error",
 			Detail:   err.Error(),
 		})
 	}
@@ -402,14 +406,14 @@ func resourceGTMv1GeoMapDelete(ctx context.Context, d *schema.ResourceData, m in
 		DomainName: domain,
 	})
 	if err != nil {
-		logger.Errorf("geoMap Delete failed: %s", err.Error())
+		logger.Errorf("geoMap delete error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "geoMap Delete error",
+			Summary:  "geoMap delete error",
 			Detail:   err.Error(),
 		})
 	}
-	logger.Debugf("geoMap Delete status: %v", uStat)
+	logger.Debugf("geoMap delete status: %v", uStat)
 	if uStat.Status.PropagationStatus == "DENIED" {
 		logger.Errorf(uStat.Status.Message)
 		return append(diags, diag.Diagnostic{
@@ -426,15 +430,15 @@ func resourceGTMv1GeoMapDelete(ctx context.Context, d *schema.ResourceData, m in
 	if waitOnComplete {
 		done, err := waitForCompletion(ctx, domain, m)
 		if done {
-			logger.Infof("geoMap Delete completed")
+			logger.Infof("geoMap delete completed")
 		} else {
 			if err == nil {
-				logger.Infof("geoMap Delete pending")
+				logger.Infof("geoMap delete pending")
 			} else {
-				logger.Errorf("geoMap Delete failed [%s]", err.Error())
+				logger.Errorf("geoMap delete error: %s", err.Error())
 				return append(diags, diag.Diagnostic{
 					Severity: diag.Error,
-					Summary:  "geoMap Delete failed",
+					Summary:  "geoMap delete error",
 					Detail:   err.Error(),
 				})
 			}
@@ -538,8 +542,8 @@ func populateTerraformGeoAssignmentsState(d *schema.ResourceData, geo *gtm.GetGe
 	for _, aMap := range aStateList {
 		a := aMap.(map[string]interface{})
 		objIndex := a["datacenter_id"].(int)
-		aObject := objectInventory[objIndex]
-		if &aObject == nil {
+		aObject, ok := objectInventory[objIndex]
+		if !ok {
 			logger.Warnf("Geo Assignment %d NOT FOUND in returned GTM Object", a["datacenter_id"])
 			continue
 		}
@@ -627,16 +631,16 @@ func createGeoMapStruct(geo *gtm.GetGeoMapResponse) *gtm.GeoMap {
 }
 
 // countriesEqual checks whether countries are equal
-func countriesEqual(old, new interface{}) bool {
-	logger := logger.Get("Akamai GTM", "countriesEqual")
+func countriesEqual(o, n interface{}) bool {
+	logger := log.Get("Akamai GTM", "countriesEqual")
 
-	oldCountries, ok := old.(*schema.Set)
+	oldCountries, ok := o.(*schema.Set)
 	if !ok {
 		logger.Warnf("wrong type conversion: expected *schema.Set, got %T", oldCountries)
 		return false
 	}
 
-	newCountries, ok := new.(*schema.Set)
+	newCountries, ok := n.(*schema.Set)
 	if !ok {
 		logger.Warnf("wrong type conversion: expected *schema.Set, got %T", newCountries)
 		return false

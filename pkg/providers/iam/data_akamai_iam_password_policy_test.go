@@ -5,10 +5,9 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/iam"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestPasswordPolicy(t *testing.T) {
@@ -24,11 +23,11 @@ func TestPasswordPolicy(t *testing.T) {
 			PwClass:         "aka90",
 			RotateFrequency: 90,
 		}
-		client.On("GetPasswordPolicy", mock.Anything).Return(&passwordPolicyResponse, nil).Times(timesToRun)
+		client.On("GetPasswordPolicy", testutils.MockContext).Return(&passwordPolicyResponse, nil).Times(timesToRun)
 	}
 
 	expectGetPasswordPolicyWithError := func(client *iam.Mock, timesToRun int) {
-		client.On("GetPasswordPolicy", mock.Anything).Return(nil, fmt.Errorf("get password policy failed")).Times(timesToRun)
+		client.On("GetPasswordPolicy", testutils.MockContext).Return(nil, fmt.Errorf("get password policy failed")).Times(timesToRun)
 	}
 
 	tests := map[string]struct {

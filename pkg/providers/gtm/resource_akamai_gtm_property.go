@@ -9,13 +9,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/gtm"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/logger"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
-	"github.com/apex/log"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/gtm"
+	akalog "github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/log"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/log"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -84,12 +84,6 @@ func resourceGTMv1Property() *schema.Resource {
 			"balance_by_download_score": {
 				Type:     schema.TypeBool,
 				Optional: true,
-			},
-			"static_ttl": {
-				// Deprecated. Leaving for backward config compatibility.
-				Type:             schema.TypeInt,
-				Optional:         true,
-				ValidateDiagFunc: validateTTL,
 			},
 			"static_rr_set": {
 				Type:     schema.TypeList,
@@ -211,11 +205,6 @@ func resourceGTMv1Property() *schema.Resource {
 								Type: schema.TypeString,
 							},
 							Optional: true,
-						},
-						"name": {
-							Type:       schema.TypeString,
-							Optional:   true,
-							Deprecated: "The attribute `name` has been deprecated. Any reads or writes on this attribute are ignored",
 						},
 						"handout_cname": {
 							Type:     schema.TypeString,
@@ -477,21 +466,13 @@ func customDiffGTMProperty(_ context.Context, d *schema.ResourceDiff, m interfac
 	return nil
 }
 
-// validateTTL is a SchemaValidateDiagFunc to validate dynamic_ttl and static_ttl.
+// validateTTL is a SchemaValidateDiagFunc to validate dynamic_ttl.
 func validateTTL(v interface{}, path cty.Path) diag.Diagnostics {
 	schemaFieldName, err := tf.GetSchemaFieldNameFromPath(path)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	if schemaFieldName == "static_ttl" {
-		return diag.Diagnostics{
-			diag.Diagnostic{
-				Severity: diag.Warning,
-				Summary:  "static_ttl is deprecated and will be ignored. Use static_rr_sets to apply static ttls to records",
-			},
-		}
-	}
 	value, ok := v.(int)
 	if !ok {
 		return diag.Errorf("%s validation failed to read field attribute", schemaFieldName)
@@ -527,28 +508,28 @@ func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m 
 		DomainName:   domain,
 	})
 	if err != nil && !errors.Is(err, gtm.ErrNotFound) {
-		logger.Errorf("Property Read failed: GetProperty error: %s", err.Error())
-		return diag.Errorf("property Read failed: GetProperty error: %s", err.Error())
+		logger.Errorf("Property read error: %s", err.Error())
+		return diag.Errorf("property read error: %s", err.Error())
 	}
 	if prop != nil {
 		propertyMapAlreadyExists := fmt.Sprintf(propertyAlreadyExistsError, domain, propertyName)
 		logger.Errorf(propertyMapAlreadyExists)
-		return diag.Errorf("property already exists: GetProperty error: %s", propertyMapAlreadyExists)
+		return diag.Errorf("property already exists: %s", propertyMapAlreadyExists)
 	}
 
 	propertyType, err := tf.GetStringValue("type", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	// Static properties cannot have traffic_targets. Non Static properties must
+	// Static properties cannot have traffic_targets. Non-static properties must
 	traffTargList, err := tf.GetInterfaceArrayValue("traffic_target", d)
-	if strings.ToUpper(propertyType) == "STATIC" && err == nil && (traffTargList != nil && len(traffTargList) > 0) {
-		logger.Errorf("Property %s Create failed. Static property cannot have traffic targets", propertyName)
-		return diag.Errorf("property Create failed. Static property cannot have traffic targets")
+	if strings.ToUpper(propertyType) == "STATIC" && err == nil && (len(traffTargList) > 0) {
+		logger.Errorf("Property %s create error. Static property cannot have traffic targets", propertyName)
+		return diag.Errorf("property create error. Static property cannot have traffic targets")
 	}
 	if strings.ToUpper(propertyType) != "STATIC" && (err != nil || (traffTargList == nil || len(traffTargList) < 1)) {
-		logger.Errorf("Property %s Create failed. Property must have one or more traffic targets", propertyName)
-		return diag.Errorf("property Create failed. Property must have one or more traffic targets")
+		logger.Errorf("Property %s create error. Property must have one or more traffic targets", propertyName)
+		return diag.Errorf("property create error. Property must have one or more traffic targets")
 	}
 
 	logger.Infof("Creating property [%s] in domain [%s]", propertyName, domain)
@@ -562,14 +543,14 @@ func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m 
 		DomainName: domain,
 	})
 	if err != nil {
-		logger.Errorf("Property Create failed: CreateProperty error: %s", err.Error())
-		return diag.Errorf("property Create failed: CreateProperty error: %s", err.Error())
+		logger.Errorf("Property create error: %s", err.Error())
+		return diag.Errorf("property create error: %s", err.Error())
 	}
-	logger.Debugf("Property Create status: %v", cStatus.Status)
+	logger.Debugf("Property create status: %v", cStatus.Status)
 
 	if cStatus.Status.PropagationStatus == "DENIED" {
 		logger.Errorf(cStatus.Status.Message)
-		return diag.FromErr(fmt.Errorf(cStatus.Status.Message))
+		return diag.FromErr(errors.New(cStatus.Status.Message))
 	}
 
 	waitOnComplete, err := tf.GetBoolValue("wait_on_complete", d)
@@ -580,13 +561,13 @@ func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m 
 	if waitOnComplete {
 		done, err := waitForCompletion(ctx, domain, m)
 		if done {
-			logger.Infof("Property Create completed")
+			logger.Infof("Property create completed")
 		} else {
 			if err == nil {
-				logger.Infof("Property Create pending")
+				logger.Infof("Property create pending")
 			} else {
-				logger.Errorf("Property Create failed [%s]", err.Error())
-				return diag.Errorf("property Create failed [%s]", err.Error())
+				logger.Errorf("Property create error: %s", err.Error())
+				return diag.Errorf("property create error: %s", err.Error())
 			}
 		}
 	}
@@ -599,7 +580,7 @@ func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m 
 
 }
 
-func createPropertyWithRetry(ctx context.Context, meta meta.Meta, logger log.Interface, createPropertyRequest gtm.CreatePropertyRequest) (*gtm.CreatePropertyResponse, error) {
+func createPropertyWithRetry(ctx context.Context, meta meta.Meta, logger akalog.Interface, createPropertyRequest gtm.CreatePropertyRequest) (*gtm.CreatePropertyResponse, error) {
 	// Initial backoff interval
 	retryInterval := time.Second * 10
 	// Maximum retry interval
@@ -613,11 +594,11 @@ func createPropertyWithRetry(ctx context.Context, meta meta.Meta, logger log.Int
 			return cStatus, nil
 		}
 
-		logger.Errorf("Property Create failed: CreateProperty error: %s", err.Error())
+		logger.Errorf("Property create error: %s", err.Error())
 
 		// If the error is not "no datacenter is assigned to map target (all others)", return immediately
 		if !errors.Is(err, gtm.ErrNoDatacenterAssignedToMap) {
-			return nil, fmt.Errorf("property Create failed: error: %s", err)
+			return nil, err
 		}
 
 		select {
@@ -666,8 +647,8 @@ func resourceGTMv1PropertyRead(ctx context.Context, d *schema.ResourceData, m in
 		return nil
 	}
 	if err != nil {
-		logger.Errorf("Property Read failed: GetProperty error: %s", err.Error())
-		return diag.Errorf("property Read failed: GetProperty error: %s", err.Error())
+		logger.Errorf("Property read error: %s", err.Error())
+		return diag.Errorf("property read error: %s", err.Error())
 	}
 	populateTerraformPropertyState(d, prop, m)
 	logger.Debugf("READ %v", prop)
@@ -696,8 +677,8 @@ func resourceGTMv1PropertyUpdate(ctx context.Context, d *schema.ResourceData, m 
 		DomainName:   domain,
 	})
 	if err != nil {
-		logger.Errorf("Property Update failed: GetProperty error: %s", err.Error())
-		return diag.Errorf("property Update failed: GetProperty error: %s", err.Error())
+		logger.Errorf("Property read error: %s", err.Error())
+		return diag.Errorf("property read error: %s", err.Error())
 	}
 	newProp := createPropertyStruct(existProp)
 	logger.Debugf("Updating Property BEFORE: %v", existProp)
@@ -705,19 +686,19 @@ func resourceGTMv1PropertyUpdate(ctx context.Context, d *schema.ResourceData, m 
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	logger.Debugf("Updating Property PROPOSED: %v", existProp)
+	logger.Debugf("Updating Property PROPOSED: %v", newProp)
 	uStat, err := Client(meta).UpdateProperty(ctx, gtm.UpdatePropertyRequest{
 		Property:   newProp,
 		DomainName: domain,
 	})
 	if err != nil {
-		logger.Errorf("Property Update failed: UpdateProperty error: %s", err.Error())
-		return diag.Errorf("property Update failed: UpdateProperty error: %s", err.Error())
+		logger.Errorf("Property update error: %s", err.Error())
+		return diag.Errorf("property update error: %s", err.Error())
 	}
-	logger.Debugf("Property Update  status: %v", uStat)
+	logger.Debugf("Property update status: %v", uStat)
 	if uStat.Status.PropagationStatus == "DENIED" {
 		logger.Debugf(uStat.Status.Message)
-		return diag.FromErr(fmt.Errorf(uStat.Status.Message))
+		return diag.FromErr(errors.New(uStat.Status.Message))
 	}
 
 	waitOnComplete, err := tf.GetBoolValue("wait_on_complete", d)
@@ -728,13 +709,13 @@ func resourceGTMv1PropertyUpdate(ctx context.Context, d *schema.ResourceData, m 
 	if waitOnComplete {
 		done, err := waitForCompletion(ctx, domain, m)
 		if done {
-			logger.Infof("Property Update completed")
+			logger.Infof("Property update completed")
 		} else {
 			if err == nil {
-				logger.Infof("Property Update pending")
+				logger.Infof("Property update pending")
 			} else {
-				logger.Errorf("Property Update failed [%s]", err.Error())
-				return diag.Errorf("property Update failed [%s]", err.Error())
+				logger.Errorf("Property update error: %s", err.Error())
+				return diag.Errorf("property update error: %s", err.Error())
 			}
 		}
 	}
@@ -773,7 +754,7 @@ func resourceGTMv1PropertyImport(d *schema.ResourceData, m interface{}) ([]*sche
 	}
 	populateTerraformPropertyState(d, prop, m)
 
-	// use same Id as passed in
+	// use same id as passed in
 	logger.Infof("Property [%s] [%s] Imported", d.Id(), d.Get("name"))
 	return []*schema.ResourceData{d}, nil
 }
@@ -799,8 +780,8 @@ func resourceGTMv1PropertyDelete(ctx context.Context, d *schema.ResourceData, m 
 		DomainName:   domain,
 	})
 	if err != nil {
-		logger.Errorf("Property Delete failed: GetProperty error: %s", err.Error())
-		return diag.Errorf("property Delete failed: GetProperty error: %s", err.Error())
+		logger.Errorf("Property read error: %s", err.Error())
+		return diag.Errorf("property read error: %s", err.Error())
 	}
 	newProp := createPropertyStruct(existProp)
 	logger.Debugf("Deleting Property: %v", newProp)
@@ -809,13 +790,13 @@ func resourceGTMv1PropertyDelete(ctx context.Context, d *schema.ResourceData, m 
 		DomainName:   domain,
 	})
 	if err != nil {
-		logger.Errorf("Property Delete failed: DeleteProperty error: %s", err.Error())
-		return diag.Errorf("property Delete failed: DeleteProperty error: %s", err.Error())
+		logger.Errorf("Property delete error: %s", err.Error())
+		return diag.Errorf("property delete error: %s", err.Error())
 	}
-	logger.Debugf("Property Delete status: %v", uStat)
+	logger.Debugf("Property delete status: %v", uStat)
 	if uStat.Status.PropagationStatus == "DENIED" {
 		logger.Errorf(uStat.Status.Message)
-		return diag.FromErr(fmt.Errorf(uStat.Status.Message))
+		return diag.FromErr(errors.New(uStat.Status.Message))
 	}
 
 	waitOnComplete, err := tf.GetBoolValue("wait_on_complete", d)
@@ -826,13 +807,13 @@ func resourceGTMv1PropertyDelete(ctx context.Context, d *schema.ResourceData, m 
 	if waitOnComplete {
 		done, err := waitForCompletion(ctx, domain, m)
 		if done {
-			logger.Infof("Property Delete completed")
+			logger.Infof("Property delete completed")
 		} else {
 			if err == nil {
-				logger.Infof("Property Delete pending")
+				logger.Infof("Property delete pending")
 			} else {
-				logger.Errorf("Property Delete failed [%s]", err.Error())
-				return diag.Errorf("property Delete failed [%s]", err.Error())
+				logger.Errorf("Property delete error: %s", err.Error())
+				return diag.Errorf("property delete error: %s", err.Error())
 			}
 		}
 	}
@@ -1103,7 +1084,7 @@ func populateTerraformPropertyState(d *schema.ResourceData, prop *gtm.GetPropert
 		"cname":                       prop.CName,
 		"comments":                    prop.Comments,
 	} {
-		// walk thru all state elements
+		// walk through all state elements
 		if stateKey == "dynamic_ttl" && stateValue == 0 {
 			// ttl value is not set; null -> 0
 			continue
@@ -1178,8 +1159,8 @@ func populateTerraformTrafficTargetState(d *schema.ResourceData, prop *gtm.GetPr
 	for _, ttMap := range ttStateList {
 		tt := ttMap.(map[string]interface{})
 		objIndex := tt["datacenter_id"].(int)
-		ttObject := objectInventory[objIndex]
-		if &ttObject == nil {
+		ttObject, ok := objectInventory[objIndex]
+		if !ok {
 			logger.Warnf("Property TrafficTarget %d NOT FOUND in returned GTM Object", tt["datacenter_id"])
 			continue
 		}
@@ -1260,8 +1241,8 @@ func populateTerraformStaticRRSetState(d *schema.ResourceData, prop *gtm.GetProp
 	for _, rrMap := range rrStateList {
 		rr := rrMap.(map[string]interface{})
 		objIndex := rr["type"].(string)
-		rrObject := objectInventory[objIndex]
-		if &rrObject == nil {
+		rrObject, ok := objectInventory[objIndex]
+		if !ok {
 			logger.Warnf("Property StaticRRSet %s NOT FOUND in returned GTM Object", rr["type"])
 			continue
 		}
@@ -1374,8 +1355,8 @@ func populateTerraformLivenessTestState(d *schema.ResourceData, prop *gtm.GetPro
 	for _, ltMap := range ltStateList {
 		lt := ltMap.(map[string]interface{})
 		objIndex := lt["name"].(string)
-		ltObject := objectInventory[objIndex]
-		if &ltObject == nil {
+		ltObject, ok := objectInventory[objIndex]
+		if !ok {
 			logger.Warnf("Property LivenessTest  %s NOT FOUND in returned GTM Object", lt["name"])
 			continue
 		}
@@ -1523,7 +1504,7 @@ func reconcileTerraformLists(terraList []interface{}, newList []interface{}, m i
 }
 
 func trafficTargetDiffSuppress(_, _, _ string, d *schema.ResourceData) bool {
-	logger := logger.Get("Akamai GTM", "trafficTargetDiffSuppress")
+	logger := log.Get("Akamai GTM", "trafficTargetDiffSuppress")
 	oldTarget, newTarget := d.GetChange("traffic_target")
 
 	oldTrafficTarget, ok := oldTarget.([]interface{})
@@ -1572,42 +1553,8 @@ func trafficTargetDiffSuppress(_, _, _ string, d *schema.ResourceData) bool {
 // createPropertyStruct converts response from GetPropertyResponse into Property
 func createPropertyStruct(prop *gtm.GetPropertyResponse) *gtm.Property {
 	if prop != nil {
-		return &gtm.Property{
-			Name:                      prop.CName,
-			Type:                      prop.Type,
-			IPv6:                      prop.IPv6,
-			ScoreAggregationType:      prop.ScoreAggregationType,
-			StickinessBonusPercentage: prop.StickinessBonusPercentage,
-			StickinessBonusConstant:   prop.StickinessBonusConstant,
-			HealthThreshold:           prop.HealthThreshold,
-			UseComputedTargets:        prop.UseComputedTargets,
-			BackupIP:                  prop.BackupIP,
-			BalanceByDownloadScore:    prop.BalanceByDownloadScore,
-			StaticTTL:                 prop.StaticTTL,
-			StaticRRSets:              prop.StaticRRSets,
-			LastModified:              prop.LastModified,
-			UnreachableThreshold:      prop.UnreachableThreshold,
-			MinLiveFraction:           prop.MinLiveFraction,
-			HealthMultiplier:          prop.HealthMultiplier,
-			DynamicTTL:                prop.DynamicTTL,
-			MaxUnreachablePenalty:     prop.MaxUnreachablePenalty,
-			MapName:                   prop.Name,
-			HandoutLimit:              prop.HandoutLimit,
-			HandoutMode:               prop.HandoutMode,
-			FailoverDelay:             prop.FailoverDelay,
-			BackupCName:               prop.BackupIP,
-			FailbackDelay:             prop.FailbackDelay,
-			LoadImbalancePercentage:   prop.LoadImbalancePercentage,
-			HealthMax:                 prop.HealthMax,
-			GhostDemandReporting:      prop.GhostDemandReporting,
-			Comments:                  prop.Comments,
-			CName:                     prop.CName,
-			WeightedHashBitsForIPv4:   prop.WeightedHashBitsForIPv4,
-			WeightedHashBitsForIPv6:   prop.WeightedHashBitsForIPv6,
-			TrafficTargets:            prop.TrafficTargets,
-			Links:                     prop.Links,
-			LivenessTests:             prop.LivenessTests,
-		}
+		p := gtm.Property(*prop)
+		return &p
 	}
 	return nil
 }
@@ -1680,16 +1627,16 @@ func certificatesEqual(oldCertificates any, newLivenessTest any) bool {
 }
 
 // serversEqual checks whether provided sets of ip addresses contain the same entries
-func serversEqual(old, new interface{}) bool {
-	logger := logger.Get("Akamai GTM", "serversEqual")
+func serversEqual(o, n interface{}) bool {
+	logger := log.Get("Akamai GTM", "serversEqual")
 
-	oldServers, ok := old.(*schema.Set)
+	oldServers, ok := o.(*schema.Set)
 	if !ok {
 		logger.Warnf("wrong type conversion: expected *schema.Set, got %T", oldServers)
 		return false
 	}
 
-	newServers, ok := new.(*schema.Set)
+	newServers, ok := n.(*schema.Set)
 	if !ok {
 		logger.Warnf("wrong type conversion: expected *schema.Set, got %T", newServers)
 		return false

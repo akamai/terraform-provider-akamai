@@ -4,9 +4,9 @@ package dns
 import (
 	"sync"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/dns"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/subprovider"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/dns"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/subprovider"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -30,18 +30,15 @@ var (
 var _ subprovider.Subprovider = &Subprovider{}
 
 // NewSubprovider returns a new DNS subprovider
-func NewSubprovider() *Subprovider {
+func NewSubprovider(opts ...option) *Subprovider {
 	once.Do(func() {
 		inst = &Subprovider{}
+		for _, opt := range opts {
+			opt(inst)
+		}
 	})
 
 	return inst
-}
-
-func withClient(c dns.DNS) option {
-	return func(p *Subprovider) {
-		p.client = c
-	}
 }
 
 // Client returns the DNS interface

@@ -3,10 +3,9 @@ package iam
 import (
 	"context"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/iam"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
-	"github.com/apex/log"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -58,12 +57,12 @@ func dataIAMTimezonesRead(ctx context.Context, d *schema.ResourceData, m interfa
 
 	res, err := client.SupportedTimezones(ctx)
 	if err != nil {
-		logger.WithError(err).Error("could not get time zones")
+		logger.Error("could not get time zones", "error", err)
 		return diag.FromErr(err)
 	}
 
 	if err := d.Set("timezones", timezonesToState(res)); err != nil {
-		log.WithError(err).Error("could not set time zones in state")
+		logger.Error("could not set time zones in state", "error", err)
 		return diag.FromErr(err)
 	}
 

@@ -1,22 +1,19 @@
 package cloudlets
 
 import (
-	"fmt"
 	"net/http"
 	"regexp"
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cloudlets"
-	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cloudlets/v3"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/cloudlets"
+	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/cloudlets/v3"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 type testDataForNonSharedPolicyActivation struct {
-	id          string
 	policyID    int64
 	version     int64
 	groupID     int64
@@ -28,7 +25,6 @@ type testDataForNonSharedPolicyActivation struct {
 }
 
 type testDataForSharedPolicyActivation struct {
-	id           string
 	policyID     int64
 	version      int64
 	groupID      int64
@@ -61,7 +57,6 @@ func TestNonSharedPolicyActivationDataSource(t *testing.T) {
 		"policy without activation": {
 			config: "activation.tf",
 			data: testDataForNonSharedPolicyActivation{
-				id:          "akamai_cloudlets_shared_policy",
 				policyID:    1,
 				version:     2,
 				groupID:     12,
@@ -79,7 +74,6 @@ func TestNonSharedPolicyActivationDataSource(t *testing.T) {
 		"policy with activation": {
 			config: "activation.tf",
 			data: testDataForNonSharedPolicyActivation{
-				id:          "akamai_cloudlets_shared_policy",
 				policyID:    1,
 				version:     2,
 				groupID:     12,
@@ -89,12 +83,6 @@ func TestNonSharedPolicyActivationDataSource(t *testing.T) {
 				properties:  []string{"prp_0", "prp_1"},
 			},
 			init: func(m2 *cloudlets.Mock, data testDataForNonSharedPolicyActivation) {
-				activations := make([]cloudlets.PolicyActivation, len(data.properties))
-				for _, p := range data.properties {
-					activations = append(activations, cloudlets.PolicyActivation{APIVersion: "1.0", Network: data.network, PolicyInfo: cloudlets.PolicyInfo{
-						PolicyID: data.policyID, Version: data.version, Status: cloudlets.PolicyActivationStatusInactive,
-					}, PropertyInfo: cloudlets.PropertyInfo{Name: p}})
-				}
 				mockGetPolicyV2(m2, data, nil, 3)
 				expectListPolicyActivations(m2, data.policyID, data.version, data.network, data.properties, cloudlets.PolicyActivationStatusActive, "", 1, nil).Times(3)
 			},
@@ -145,7 +133,7 @@ func TestNonSharedPolicyActivationDataSource(t *testing.T) {
 					IsUnitTest:               true,
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{{
-						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestDataCloudletsPolicyActivation/%s", test.config)),
+						Config:      testutils.LoadFixtureStringf(t, "testdata/TestDataCloudletsPolicyActivation/%s", test.config),
 						Check:       test.check,
 						ExpectError: test.expectError,
 					}},
@@ -177,7 +165,6 @@ func TestSharedPolicyActivationDataSource(t *testing.T) {
 		"no shared policy activation": {
 			config: "activation.tf",
 			data: testDataForSharedPolicyActivation{
-				id:           "akamai_cloudlets_shared_policy",
 				policyID:     1,
 				version:      0,
 				groupID:      12,
@@ -194,7 +181,6 @@ func TestSharedPolicyActivationDataSource(t *testing.T) {
 		"no shared policy": {
 			config: "activation.tf",
 			data: testDataForSharedPolicyActivation{
-				id:           "akamai_cloudlets_shared_policy",
 				policyID:     1,
 				version:      0,
 				groupID:      12,
@@ -211,7 +197,6 @@ func TestSharedPolicyActivationDataSource(t *testing.T) {
 		"shared policy activation on staging": {
 			config: "activation.tf",
 			data: testDataForSharedPolicyActivation{
-				//id:           "akamai_cloudlets_shared_policy",
 				policyID:     1,
 				version:      2,
 				groupID:      12,
@@ -412,7 +397,7 @@ func TestSharedPolicyActivationDataSource(t *testing.T) {
 					IsUnitTest:               true,
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{{
-						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestDataCloudletsPolicyActivation/%s", test.config)),
+						Config:      testutils.LoadFixtureStringf(t, "testdata/TestDataCloudletsPolicyActivation/%s", test.config),
 						Check:       test.check,
 						ExpectError: test.expectError,
 					}},
@@ -425,20 +410,19 @@ func TestSharedPolicyActivationDataSource(t *testing.T) {
 }
 
 func mockGetPolicyV2WithError(m *cloudlets.Mock, policyID int64, err error, times int) {
-	m.On("GetPolicy", mock.Anything, cloudlets.GetPolicyRequest{
+	m.On("GetPolicy", testutils.MockContext, cloudlets.GetPolicyRequest{
 		PolicyID: policyID,
 	}).Return(nil, err).Times(times)
-	return
 }
 
 func mockGetPolicyV2(m *cloudlets.Mock, data testDataForNonSharedPolicyActivation, err error, times int) {
 	if err != nil {
-		m.On("GetPolicy", mock.Anything, cloudlets.GetPolicyRequest{
+		m.On("GetPolicy", testutils.MockContext, cloudlets.GetPolicyRequest{
 			PolicyID: data.policyID,
 		}).Return(nil, err).Times(times)
 		return
 	}
-	m.On("GetPolicy", mock.Anything, cloudlets.GetPolicyRequest{
+	m.On("GetPolicy", testutils.MockContext, cloudlets.GetPolicyRequest{
 		PolicyID: data.policyID,
 	}).Return(&cloudlets.Policy{
 		Description: data.description,
@@ -449,7 +433,7 @@ func mockGetPolicyV2(m *cloudlets.Mock, data testDataForNonSharedPolicyActivatio
 }
 
 func mockGetPolicyV3(m *v3.Mock, data testDataForSharedPolicyActivation, times int) {
-	m.On("GetPolicy", mock.Anything, v3.GetPolicyRequest{
+	m.On("GetPolicy", testutils.MockContext, v3.GetPolicyRequest{
 		PolicyID: data.policyID,
 	}).Return(&v3.Policy{
 		CloudletType:       data.cloudletType,
@@ -462,7 +446,7 @@ func mockGetPolicyV3(m *v3.Mock, data testDataForSharedPolicyActivation, times i
 }
 
 func mockGetPolicyV3WithError(m *v3.Mock, policyID int64, err error, times int) {
-	m.On("GetPolicy", mock.Anything, v3.GetPolicyRequest{
+	m.On("GetPolicy", testutils.MockContext, v3.GetPolicyRequest{
 		PolicyID: policyID,
 	}).Return(nil, err).Times(times)
 }

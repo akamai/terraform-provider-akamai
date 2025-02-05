@@ -3,10 +3,9 @@ package botman
 import (
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestResourceRecategorizedAkamaiDefinedBot(t *testing.T) {
@@ -15,7 +14,7 @@ func TestResourceRecategorizedAkamaiDefinedBot(t *testing.T) {
 		mockedBotmanClient := &botman.Mock{}
 		createResponse := botman.RecategorizedAkamaiDefinedBotResponse{BotID: "cc9c3f89-e179-4892-89cf-d5e623ba9dc7", CategoryID: "87fb601b-4d30-4e0d-a74f-dc77e2b1bb74"}
 		mockedBotmanClient.On("CreateRecategorizedAkamaiDefinedBot",
-			mock.Anything,
+			testutils.MockContext,
 			botman.CreateRecategorizedAkamaiDefinedBotRequest{
 				ConfigID:   43253,
 				Version:    15,
@@ -25,7 +24,7 @@ func TestResourceRecategorizedAkamaiDefinedBot(t *testing.T) {
 		).Return(&createResponse, nil).Once()
 
 		mockedBotmanClient.On("GetRecategorizedAkamaiDefinedBot",
-			mock.Anything,
+			testutils.MockContext,
 			botman.GetRecategorizedAkamaiDefinedBotRequest{
 				ConfigID: 43253,
 				Version:  15,
@@ -35,7 +34,7 @@ func TestResourceRecategorizedAkamaiDefinedBot(t *testing.T) {
 
 		updateResponse := botman.RecategorizedAkamaiDefinedBotResponse{BotID: "cc9c3f89-e179-4892-89cf-d5e623ba9dc7", CategoryID: "c43b638c-8f9a-4ea3-b1bd-3c82c96fefbf"}
 		mockedBotmanClient.On("UpdateRecategorizedAkamaiDefinedBot",
-			mock.Anything,
+			testutils.MockContext,
 			botman.UpdateRecategorizedAkamaiDefinedBotRequest{
 				ConfigID:   43253,
 				Version:    15,
@@ -45,7 +44,7 @@ func TestResourceRecategorizedAkamaiDefinedBot(t *testing.T) {
 		).Return(&updateResponse, nil).Once()
 
 		mockedBotmanClient.On("GetRecategorizedAkamaiDefinedBot",
-			mock.Anything,
+			testutils.MockContext,
 			botman.GetRecategorizedAkamaiDefinedBotRequest{
 				ConfigID: 43253,
 				Version:  15,
@@ -54,7 +53,7 @@ func TestResourceRecategorizedAkamaiDefinedBot(t *testing.T) {
 		).Return(&updateResponse, nil).Times(2)
 
 		mockedBotmanClient.On("RemoveRecategorizedAkamaiDefinedBot",
-			mock.Anything,
+			testutils.MockContext,
 			botman.RemoveRecategorizedAkamaiDefinedBotRequest{
 				ConfigID: 43253,
 				Version:  15,

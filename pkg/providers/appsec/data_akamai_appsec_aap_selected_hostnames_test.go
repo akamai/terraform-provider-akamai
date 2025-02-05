@@ -6,10 +6,9 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -18,20 +17,20 @@ func TestAkamaiAAPSelectedHostnames_data_basic(t *testing.T) {
 		client := &appsec.Mock{}
 
 		config := appsec.GetConfigurationResponse{}
-		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfigurationWAP.json"), &config)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfigurationAAP.json"), &config)
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
 		getWAPSelectedHostnamesResponse := appsec.GetWAPSelectedHostnamesResponse{}
-		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestDSWAPSelectedHostnames/WAPSelectedHostnames.json"), &getWAPSelectedHostnamesResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestDSAAPSelectedHostnames/AAPSelectedHostnames.json"), &getWAPSelectedHostnamesResponse)
 		require.NoError(t, err)
 
 		client.On("GetWAPSelectedHostnames",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetWAPSelectedHostnamesRequest{ConfigID: 43253, Version: 7, SecurityPolicyID: "AAAA_81230"},
 		).Return(&getWAPSelectedHostnamesResponse, nil)
 
@@ -41,9 +40,9 @@ func TestAkamaiAAPSelectedHostnames_data_basic(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestDSWAPSelectedHostnames/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestDSAAPSelectedHostnames/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("data.akamai_appsec_wap_selected_hostnames.test", "id", "43253:AAAA_81230"),
+							resource.TestCheckResourceAttr("data.akamai_appsec_aap_selected_hostnames.test", "id", "43253:AAAA_81230"),
 						),
 					},
 				},
@@ -57,20 +56,20 @@ func TestAkamaiAAPSelectedHostnames_data_basic(t *testing.T) {
 		client := &appsec.Mock{}
 
 		config := appsec.GetConfigurationResponse{}
-		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfigurationWAP.json"), &config)
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfigurationAAP.json"), &config)
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
 		getWAPSelectedHostnamesResponse := appsec.GetWAPSelectedHostnamesResponse{}
-		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestDSWAPSelectedHostnames/WAPSelectedHostnames.json"), &getWAPSelectedHostnamesResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestDSAAPSelectedHostnames/AAPSelectedHostnames.json"), &getWAPSelectedHostnamesResponse)
 		require.NoError(t, err)
 
 		client.On("GetWAPSelectedHostnames",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetWAPSelectedHostnamesRequest{ConfigID: 43253, Version: 7, SecurityPolicyID: "AAAA_81230"},
 		).Return(nil, fmt.Errorf("GetWAPSelectedHostnames failed"))
 
@@ -80,9 +79,9 @@ func TestAkamaiAAPSelectedHostnames_data_basic(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestDSWAPSelectedHostnames/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestDSAAPSelectedHostnames/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("data.akamai_appsec_wap_selected_hostnames.test", "id", "43253:AAAA_81230"),
+							resource.TestCheckResourceAttr("data.akamai_appsec_aap_selected_hostnames.test", "id", "43253:AAAA_81230"),
 						),
 						ExpectError: regexp.MustCompile(`GetWAPSelectedHostnames failed`),
 					},
@@ -101,12 +100,12 @@ func TestAkamaiAAPSelectedHostnames_data_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
 		getSelectedHostnamesResponse := appsec.GetSelectedHostnamesResponse{}
-		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestDSSelectedHostnames/SelectedHostnames.json"), &getSelectedHostnamesResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestDSAAPSelectedHostnames/AAPSelectedHostnames.json"), &getSelectedHostnamesResponse)
 		require.NoError(t, err)
 
 		getMatchTargetsResponse := appsec.GetMatchTargetsResponse{}
@@ -114,12 +113,12 @@ func TestAkamaiAAPSelectedHostnames_data_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetSelectedHostnames",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetSelectedHostnamesRequest{ConfigID: 43253, Version: 7},
 		).Return(&getSelectedHostnamesResponse, nil)
 
 		client.On("GetMatchTargets",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetMatchTargetsRequest{ConfigID: 43253, ConfigVersion: 7},
 		).Return(&getMatchTargetsResponse, nil)
 
@@ -129,9 +128,9 @@ func TestAkamaiAAPSelectedHostnames_data_basic(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestDSWAPSelectedHostnames/match_by_id.tf"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestDSAAPSelectedHostnames/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("data.akamai_appsec_wap_selected_hostnames.test", "id", "43253:AAAA_81230"),
+							resource.TestCheckResourceAttr("data.akamai_appsec_aap_selected_hostnames.test", "id", "43253:AAAA_81230"),
 						),
 					},
 				},

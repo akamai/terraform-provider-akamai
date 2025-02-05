@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/cache"
-	akameta "github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
-	"github.com/apex/log"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/botman"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/log"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/cache"
+	akameta "github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 )
 
 var (
@@ -277,7 +277,7 @@ func getAkamaiBotCategoryList(ctx context.Context, request botman.GetAkamaiBotCa
 	client := inst.Client(meta)
 	logger := meta.Log("BotMan", "getAkamaiBotCategory")
 
-	cacheKey := fmt.Sprintf("%s", "getAkamaiBotCategory")
+	cacheKey := "getAkamaiBotCategory"
 	akamaiBotCategoryList := &botman.GetAkamaiBotCategoryListResponse{}
 	err := cache.Get(cache.BucketName(SubproviderName), cacheKey, akamaiBotCategoryList)
 	// if cache is disabled make a direct all to GetAkamaiBotCategoryList
@@ -339,7 +339,7 @@ func getAkamaiDefinedBotList(ctx context.Context, request botman.GetAkamaiDefine
 	client := inst.Client(meta)
 	logger := meta.Log("BotMan", "getAkamaiDefinedBot")
 
-	cacheKey := fmt.Sprintf("%s", "getAkamaiDefinedBot")
+	cacheKey := "getAkamaiDefinedBot"
 	akamaiDefinedBotList := &botman.GetAkamaiDefinedBotListResponse{}
 	err := cache.Get(cache.BucketName(SubproviderName), cacheKey, akamaiDefinedBotList)
 	// if cache is disabled make a direct all to GetAkamaiDefinedBotList
@@ -400,7 +400,7 @@ func getBotDetectionList(ctx context.Context, request botman.GetBotDetectionList
 	client := inst.Client(meta)
 	logger := meta.Log("BotMan", "getBotDetection")
 
-	cacheKey := fmt.Sprintf("%s", "getBotDetection")
+	cacheKey := "getBotDetection"
 	botDetectionList := &botman.GetBotDetectionListResponse{}
 	err := cache.Get(cache.BucketName(SubproviderName), cacheKey, botDetectionList)
 	// if cache is disabled make a direct all to GetBotDetectionList

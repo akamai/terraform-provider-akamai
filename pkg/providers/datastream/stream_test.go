@@ -3,12 +3,11 @@ package datastream
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
-	"github.com/tj/assert"
-
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/datastream"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/datastream"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func newSet(items ...interface{}) *schema.Set {
@@ -262,9 +261,9 @@ func TestGetPropertiesList(t *testing.T) {
 	result, err := GetPropertiesList(properties)
 	require.NoError(t, err)
 
-	propertyIds := make([]int, len(result))
+	propertyIDs := make([]int, len(result))
 	for i := 0; i < len(result); i++ {
-		propertyIds[i] = result[i].PropertyID
+		propertyIDs[i] = result[i].PropertyID
 	}
-	assert.Equal(t, []int{1, 2, 3, 4, 5}, propertyIds)
+	assert.Equal(t, []int{1, 2, 3, 4, 5}, propertyIDs)
 }

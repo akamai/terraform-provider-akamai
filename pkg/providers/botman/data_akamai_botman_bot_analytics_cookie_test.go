@@ -3,10 +3,9 @@ package botman
 import (
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestDataBotAnalyticsCookie(t *testing.T) {
@@ -16,7 +15,7 @@ func TestDataBotAnalyticsCookie(t *testing.T) {
 		response := map[string]interface{}{"testKey": "testValue3"}
 		expectedJSON := `{"testKey":"testValue3"}`
 		mockedBotmanClient.On("GetBotAnalyticsCookie",
-			mock.Anything,
+			testutils.MockContext,
 			botman.GetBotAnalyticsCookieRequest{ConfigID: 43253, Version: 15},
 		).Return(response, nil)
 

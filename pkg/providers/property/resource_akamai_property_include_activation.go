@@ -11,13 +11,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/papi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/str"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/timeouts"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/logger"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/id"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/str"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/timeouts"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/log"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -132,7 +133,7 @@ func resourcePropertyIncludeActivation() *schema.Resource {
 }
 
 func readTimeoutFromEnvOrDefault(name string, timeout time.Duration) *time.Duration {
-	logger := logger.Get("readTimeoutFromEnvOrDefault")
+	logger := log.Get("readTimeoutFromEnvOrDefault")
 
 	value := os.Getenv(name)
 	if value != "" {
@@ -257,6 +258,15 @@ func resourcePropertyIncludeActivationDelete(ctx context.Context, d *schema.Reso
 		return diag.FromErr(err)
 	}
 
+	// Instead of the `include_id` attribute of the `include_activation` resource, the function uses now the `id` attribute
+	// of this resource which is made up of `contractID:groupID:includeID:network`. This eliminates the possibility of
+	// getting an "undefined" value in case of resource replacement.
+	idParts, err := id.Split(d.Id(), 4, "contractID:groupID:includeID:network")
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	activationResourceData.includeID = idParts[2]
+
 	logger.Debug("waiting for pending (de)activations")
 	if diagErr := waitUntilNoPendingActivationInNetwork(ctx, client, activationResourceData); diagErr != nil {
 		return diagErr
@@ -309,7 +319,7 @@ func resourcePropertyIncludeActivationImport(_ context.Context, d *schema.Resour
 }
 
 func resourcePropertyIncludeActivationUpsert(ctx context.Context, d *schema.ResourceData, client papi.PAPI) diag.Diagnostics {
-	logger := logger.Get("resourcePropertyIncludeActivationUpsert")
+	logger := log.Get("resourcePropertyIncludeActivationUpsert")
 
 	activationResourceData := propertyIncludeActivationData{}
 	if err := activationResourceData.populateFromResource(d); err != nil {
@@ -484,7 +494,7 @@ func isLatestActiveExpectedActivated(ctx context.Context, client papi.PAPI, acti
 }
 
 func createNewActivation(ctx context.Context, client papi.PAPI, activationResourceData propertyIncludeActivationData) diag.Diagnostics {
-	logger := logger.Get("createNewActivation")
+	logger := log.Get("createNewActivation")
 
 	logger.Debug("preparing activation request")
 	activateIncludeRequest := papi.ActivateIncludeRequest{
@@ -549,7 +559,7 @@ func createNewActivation(ctx context.Context, client papi.PAPI, activationResour
 }
 
 func createNewDeactivation(ctx context.Context, client papi.PAPI, activationResourceData propertyIncludeActivationData) diag.Diagnostics {
-	logger := logger.Get("createNewDeactivation")
+	logger := log.Get("createNewDeactivation")
 
 	deactivateIncludeRequest := papi.DeactivateIncludeRequest{
 		IncludeID:              activationResourceData.includeID,
@@ -692,9 +702,7 @@ func waitForActivationCreation(ctx context.Context, client papi.PAPI, includeID,
 			return nil, err
 		}
 
-		select {
-		case <-time.After(getActivationInterval):
-			// wait some time and check again
+		if <-time.After(getActivationInterval); true {
 			continue
 		}
 	}

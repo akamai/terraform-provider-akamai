@@ -5,11 +5,11 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/papi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/str"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/str"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -135,11 +135,11 @@ func dataPropertyHostnamesRead(ctx context.Context, d *schema.ResourceData, m in
 	log.Debug("fetching property hostnames")
 	hostnamesResponse, err := client.GetPropertyVersionHostnames(ctx, hostNamesReq)
 	if err != nil {
-		log.WithError(err).Error("could not fetch property hostnames")
+		log.Error("could not fetch property hostnames", "error", err)
 		return diag.FromErr(err)
 	}
 
-	log.WithFields(logFields(*hostnamesResponse)).Debug("fetched property hostnames")
+	log.Debug("fetched property hostnames", logFields(*hostnamesResponse))
 
 	// setting concatenated id to uniquely identify data
 	d.SetId(propertyID + strconv.Itoa(version))

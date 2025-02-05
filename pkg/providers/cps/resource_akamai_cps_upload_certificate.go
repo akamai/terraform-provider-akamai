@@ -9,13 +9,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cps"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/timeouts"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
-	toolsCPS "github.com/akamai/terraform-provider-akamai/v6/pkg/providers/cps/tools"
-	"github.com/apex/log"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/cps"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/log"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/timeouts"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
+	cpstools "github.com/akamai/terraform-provider-akamai/v7/pkg/providers/cps/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -90,34 +90,6 @@ func resourceCPSUploadCertificate() *schema.Resource {
 				Default:     false,
 				Description: "Whether to wait for certificate to be deployed",
 			},
-			"unacknowledged_warnings": {
-				Type:                  schema.TypeBool,
-				ConfigMode:            0,
-				Required:              false,
-				Optional:              false,
-				Computed:              true,
-				ForceNew:              false,
-				DiffSuppressFunc:      nil,
-				DiffSuppressOnRefresh: false,
-				Default:               nil,
-				DefaultFunc:           nil,
-				Description:           "Used to distinguish whether there are unacknowledged warnings for a certificate",
-				InputDefault:          "",
-				StateFunc:             nil,
-				Elem:                  nil,
-				MaxItems:              0,
-				MinItems:              0,
-				Set:                   nil,
-				ComputedWhen:          nil,
-				ConflictsWith:         nil,
-				ExactlyOneOf:          nil,
-				AtLeastOneOf:          nil,
-				RequiredWith:          nil,
-				Deprecated:            "Field 'unacknowledged_warnings' has been deprecated",
-				ValidateFunc:          nil,
-				ValidateDiagFunc:      nil,
-				Sensitive:             false,
-			},
 			"timeouts": {
 				Type:        schema.TypeList,
 				Optional:    true,
@@ -151,7 +123,7 @@ type attributes struct {
 var (
 	defaultTimeout = time.Hour * 2
 
-	trimWhitespaces = func(k, oldValue, newValue string, d *schema.ResourceData) bool {
+	trimWhitespaces = func(_, oldValue, newValue string, _ *schema.ResourceData) bool {
 		return strings.TrimSpace(oldValue) == strings.TrimSpace(newValue)
 	}
 )
@@ -186,8 +158,8 @@ func resourceCPSUploadCertificateRead(ctx context.Context, d *schema.ResourceDat
 		return diag.Errorf("could not get an enrollment: %s", err)
 	}
 
-	changeID, err := toolsCPS.GetChangeIDFromPendingChanges(enrollment.PendingChanges)
-	if err != nil && !errors.Is(err, toolsCPS.ErrNoPendingChanges) {
+	changeID, err := cpstools.GetChangeIDFromPendingChanges(enrollment.PendingChanges)
+	if err != nil && !errors.Is(err, cpstools.ErrNoPendingChanges) {
 		return diag.Errorf("could not get changeID of an enrollment: %s", err)
 	}
 
@@ -266,7 +238,7 @@ func resourceCPSUploadCertificateUpdate(ctx context.Context, d *schema.ResourceD
 			return nil
 		}
 
-		changeID, err := toolsCPS.GetChangeIDFromPendingChanges(enrollment.PendingChanges)
+		changeID, err := cpstools.GetChangeIDFromPendingChanges(enrollment.PendingChanges)
 		if err != nil {
 			return diag.Errorf("could not get changeID: %s", err)
 		}
@@ -309,7 +281,7 @@ func resourceCPSUploadCertificateUpdate(ctx context.Context, d *schema.ResourceD
 	}
 
 	if len(enrollment.PendingChanges) != 0 {
-		changeID, err := toolsCPS.GetChangeIDFromPendingChanges(enrollment.PendingChanges)
+		changeID, err := cpstools.GetChangeIDFromPendingChanges(enrollment.PendingChanges)
 		if err != nil {
 			return diag.Errorf("could not get changeID: %s", err)
 		}
@@ -351,10 +323,10 @@ func upsertUploadCertificate(ctx context.Context, d *schema.ResourceData, m inte
 	if err != nil {
 		return diag.Errorf("could not get an enrollment: %s", err)
 	}
-	changeID, err := toolsCPS.GetChangeIDFromPendingChanges(enrollment.PendingChanges)
+	changeID, err := cpstools.GetChangeIDFromPendingChanges(enrollment.PendingChanges)
 	if err != nil {
 		return diag.Errorf("could not get change ID: %s", err)
-	} else if err != nil && errors.Is(err, toolsCPS.ErrNoPendingChanges) {
+	} else if err != nil && errors.Is(err, cpstools.ErrNoPendingChanges) {
 		return diag.Errorf("provided enrollment has no pending changes")
 	}
 

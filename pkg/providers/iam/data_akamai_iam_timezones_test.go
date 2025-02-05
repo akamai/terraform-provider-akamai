@@ -5,10 +5,9 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/iam"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestDataTimezones(t *testing.T) {
@@ -17,7 +16,7 @@ func TestDataTimezones(t *testing.T) {
 		client := &iam.Mock{}
 		client.Test(testutils.TattleT{T: t})
 
-		client.On("SupportedTimezones", mock.Anything).Return([]iam.Timezone{
+		client.On("SupportedTimezones", testutils.MockContext).Return([]iam.Timezone{
 			{
 				Timezone:    "Asia/Kolkata",
 				Description: "Asia/Kolkata",
@@ -45,7 +44,7 @@ func TestDataTimezones(t *testing.T) {
 				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, "testdata/%s/timezones.tf", workDir),
+						Config: testutils.LoadFixtureStringf(t, "testdata/%s/timezones.tf", workDir),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttrSet(resourceName, "id"),
 							resource.TestCheckResourceAttr(resourceName, "timezones.#", "3"),
@@ -73,7 +72,7 @@ func TestDataTimezones(t *testing.T) {
 	t.Run("fail path", func(t *testing.T) {
 		client := &iam.Mock{}
 		client.Test(testutils.TattleT{T: t})
-		client.On("SupportedTimezones", mock.Anything).Return([]iam.Timezone{}, fmt.Errorf("supported timezones: timezones could not be fetched"))
+		client.On("SupportedTimezones", testutils.MockContext).Return([]iam.Timezone{}, fmt.Errorf("supported timezones: timezones could not be fetched"))
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -81,7 +80,7 @@ func TestDataTimezones(t *testing.T) {
 				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
-						Config:      testutils.LoadFixtureString(t, "testdata/%s/timezones.tf", workDir),
+						Config:      testutils.LoadFixtureStringf(t, "testdata/%s/timezones.tf", workDir),
 						ExpectError: regexp.MustCompile("supported timezones: timezones could not be fetched"),
 					},
 				},

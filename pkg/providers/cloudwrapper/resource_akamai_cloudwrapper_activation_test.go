@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cloudwrapper"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/cloudwrapper"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -208,11 +208,11 @@ func TestActivation(t *testing.T) {
 }
 
 func mockActivateConfig(client *cloudwrapper.Mock, configIDs []int, err error) *mock.Call {
-	return client.On("ActivateConfiguration", mock.Anything, cloudwrapper.ActivateConfigurationRequest{ConfigurationIDs: configIDs}).Return(err)
+	return client.On("ActivateConfiguration", testutils.MockContext, cloudwrapper.ActivateConfigurationRequest{ConfigurationIDs: configIDs}).Return(err)
 }
 
 func mockGetConfiguration(client *cloudwrapper.Mock, configID int, returnStatus cloudwrapper.StatusType, locationComment string) *mock.Call {
-	return client.On("GetConfiguration", mock.Anything, cloudwrapper.GetConfigurationRequest{ConfigID: int64(configID)}).
+	return client.On("GetConfiguration", testutils.MockContext, cloudwrapper.GetConfigurationRequest{ConfigID: int64(configID)}).
 		Return(&cloudwrapper.Configuration{
 			Comments:   "some comment",
 			ConfigName: "testconfig",

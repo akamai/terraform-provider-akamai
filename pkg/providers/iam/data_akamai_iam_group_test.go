@@ -6,16 +6,16 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/iam"
-	"github.com/akamai/terraform-provider-akamai/v6/internal/test"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v7/internal/test"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
 
 func TestGroupDataSource(t *testing.T) {
 	mockGetGroup := func(client *iam.Mock, group *iam.Group, times int) *mock.Call {
-		return client.On("GetGroup", mock.Anything, iam.GetGroupRequest{
+		return client.On("GetGroup", testutils.MockContext, iam.GetGroupRequest{
 			GroupID: 123,
 			Actions: true,
 		}).Return(group, nil).Times(times)
@@ -106,7 +106,7 @@ func TestGroupDataSource(t *testing.T) {
 		},
 		"api failed": {
 			init: func(client *iam.Mock) {
-				client.On("GetGroup", mock.Anything, iam.GetGroupRequest{
+				client.On("GetGroup", testutils.MockContext, iam.GetGroupRequest{
 					GroupID: 123,
 					Actions: true,
 				}).Return(nil, errors.New("api failed")).Once()
@@ -115,7 +115,6 @@ func TestGroupDataSource(t *testing.T) {
 			givenTF:       "valid.tf",
 		},
 		"missing group_id": {
-			init:          func(client *iam.Mock) {},
 			expectedError: regexp.MustCompile("The argument \"group_id\" is required, but no definition was found."),
 			givenTF:       "missing_group_id.tf",
 		},
@@ -124,7 +123,9 @@ func TestGroupDataSource(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &iam.Mock{}
-			tc.init(client)
+			if tc.init != nil {
+				tc.init(client)
+			}
 
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
@@ -132,7 +133,7 @@ func TestGroupDataSource(t *testing.T) {
 					IsUnitTest:               true,
 					Steps: []resource.TestStep{
 						{
-							Config:      testutils.LoadFixtureString(t, "testdata/TestDataGroup/%s", tc.givenTF),
+							Config:      testutils.LoadFixtureStringf(t, "testdata/TestDataGroup/%s", tc.givenTF),
 							Check:       tc.expectedChecks,
 							ExpectError: tc.expectedError,
 						},

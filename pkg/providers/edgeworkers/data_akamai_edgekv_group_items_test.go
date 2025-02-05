@@ -4,8 +4,8 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/edgeworkers"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/edgeworkers"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -21,7 +21,7 @@ func TestEdgeKVGroupItems(t *testing.T) {
 	}
 
 	t.Run("happy path", func(t *testing.T) {
-		client.On("ListItems", mock.Anything, edgeworkers.ListItemsRequest{
+		client.On("ListItems", testutils.MockContext, edgeworkers.ListItemsRequest{
 			ItemsRequestParams: edgeworkers.ItemsRequestParams{
 				Network:     "staging",
 				NamespaceID: "test_namespace",
@@ -127,7 +127,7 @@ func TestEdgeKVGroupItems(t *testing.T) {
 
 func mockGetItemReq(client *edgeworkers.Mock, itemID string, itemValue edgeworkers.Item) *mock.Call {
 
-	return client.On("GetItem", mock.Anything, edgeworkers.GetItemRequest{
+	return client.On("GetItem", testutils.MockContext, edgeworkers.GetItemRequest{
 		ItemID: itemID,
 		ItemsRequestParams: edgeworkers.ItemsRequestParams{
 			Network:     "staging",

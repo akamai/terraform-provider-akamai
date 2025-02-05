@@ -4,10 +4,9 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/networklists"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/networklists"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -24,12 +23,12 @@ func TestAccAkamaiNetworkListDescription_res_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetNetworkListDescription",
-			mock.Anything,
+			testutils.MockContext,
 			networklists.GetNetworkListDescriptionRequest{UniqueID: "2275_VOYAGERCALLCENTERWHITELI", Name: ""},
 		).Return(&cr, nil)
 
 		client.On("UpdateNetworkListDescription",
-			mock.Anything,
+			testutils.MockContext,
 			networklists.UpdateNetworkListDescriptionRequest{UniqueID: "2275_VOYAGERCALLCENTERWHITELI", Name: "Voyager Call Center Whitelist", Description: "Notes about this network list"},
 		).Return(&cu, nil)
 

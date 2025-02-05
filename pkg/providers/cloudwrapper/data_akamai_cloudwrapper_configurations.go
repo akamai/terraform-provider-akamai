@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cloudwrapper"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/cloudwrapper"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -23,7 +23,6 @@ type (
 	}
 
 	configurationsDataSourceModel struct {
-		ID             types.String                   `tfsdk:"id"`
 		Configurations []configurationDataSourceModel `tfsdk:"configurations"`
 	}
 )
@@ -68,13 +67,6 @@ func (d *configurationsDataSource) Configure(_ context.Context, req datasource.C
 func (d *configurationsDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: "CloudWrapper configurations",
-		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				Computed:           true,
-				DeprecationMessage: "Required by the terraform plugin testing framework, always set to `akamai_cloudwrapper_configurations`.",
-				Description:        "ID of the data source.",
-			},
-		},
 		Blocks: map[string]schema.Block{
 			"configurations": schema.ListNestedBlock{
 				Description: "List of the configurations on the contract.",
@@ -164,8 +156,6 @@ func (d *configurationsDataSource) Read(ctx context.Context, req datasource.Read
 		cfgModel.ID = types.Int64Value(cfg.ConfigID)
 		data.Configurations = append(data.Configurations, cfgModel)
 	}
-
-	data.ID = types.StringValue("akamai_cloudwrapper_configurations")
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

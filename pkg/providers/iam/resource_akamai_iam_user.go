@@ -9,11 +9,11 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/iam"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/date"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/date"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/hashicorp/go-cty/cty"
@@ -258,7 +258,7 @@ func resourceIAMUserCreate(ctx context.Context, d *schema.ResourceData, m interf
 	var authGrants []iam.AuthGrantRequest
 	if len(authGrantsJSON) > 0 {
 		if err := json.Unmarshal(authGrantsJSON, &authGrants); err != nil {
-			logger.WithError(err).Errorf("auth_grants is not valid")
+			logger.Error("auth_grants is not valid", "error", err)
 			return diag.Errorf("auth_grants is not valid: %s", err)
 		}
 	}
@@ -312,13 +312,13 @@ func resourceIAMUserCreate(ctx context.Context, d *schema.ResourceData, m interf
 
 	user, err := client.CreateUser(ctx, userRequest)
 	if err != nil {
-		logger.WithError(err).Errorf("failed to create user")
+		logger.Error("failed to create user", "error", err)
 		return diag.Errorf("failed to create user: %s\n%s", err, resourceIAMUserErrorAdvice(err))
 	}
 
 	err = manageUserPassword(ctx, d, client, user.IdentityID)
 	if err != nil {
-		logger.WithError(err).Errorf("failed to set user password")
+		logger.Errorf("failed to set user password", "error", err)
 		return diag.Errorf("failed to set user password: %s", err)
 	}
 
@@ -420,7 +420,7 @@ func resourceIAMUserRead(ctx context.Context, d *schema.ResourceData, m interfac
 
 	user, err := client.GetUser(ctx, req)
 	if err != nil {
-		logger.WithError(err).Errorf("failed to fetch user")
+		logger.Error("failed to fetch user", "error", err)
 		return diag.Errorf("failed to fetch user: %s", err)
 	}
 
@@ -433,7 +433,7 @@ func resourceIAMUserRead(ctx context.Context, d *schema.ResourceData, m interfac
 	if len(user.AuthGrants) > 0 {
 		authGrantsJSON, err = json.Marshal(user.AuthGrants)
 		if err != nil {
-			logger.WithError(err).Error("could not marshal AuthGrants")
+			logger.Error("could not marshal AuthGrants", "error", err)
 			return diag.Errorf("could not marshal AuthGrants: %s", err)
 		}
 	}
@@ -479,7 +479,7 @@ func resourceIAMUserRead(ctx context.Context, d *schema.ResourceData, m interfac
 		"user_notifications":     userNotifications,
 	})
 	if err != nil {
-		logger.WithError(err).Error("could not save attributes to state")
+		logger.Error("could not save attributes to state", "error", err)
 		return diag.Errorf("could not save attributes to state: %s", err)
 	}
 
@@ -497,7 +497,7 @@ func resourceIAMUserUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	if d.HasChange("email") {
 		d.Partial(true)
 		err := fmt.Errorf("cannot change email address")
-		logger.WithError(err).Errorf("failed to update user")
+		logger.Error("failed to update user", "error", err)
 		return diag.Errorf("failed to update user: %s", err)
 	}
 
@@ -562,7 +562,7 @@ func resourceIAMUserUpdate(ctx context.Context, d *schema.ResourceData, m interf
 		}
 		if _, err := client.UpdateUserInfo(ctx, req); err != nil {
 			d.Partial(true)
-			logger.WithError(err).Errorf("failed to update user")
+			logger.Error("failed to update user", "error", err)
 			return diag.Errorf("failed to update user: %s\n%s", err, resourceIAMUserErrorAdvice(err))
 		}
 
@@ -577,7 +577,7 @@ func resourceIAMUserUpdate(ctx context.Context, d *schema.ResourceData, m interf
 		if len(authGrantsJSON) > 0 {
 			if err := json.Unmarshal(authGrantsJSON, &authGrants); err != nil {
 				d.Partial(true)
-				logger.WithError(err).Errorf("auth_grants is not valid")
+				logger.Error("auth_grants is not valid", "error", err)
 				return diag.Errorf("auth_grants is not valid: %s", err)
 			}
 		}
@@ -588,7 +588,7 @@ func resourceIAMUserUpdate(ctx context.Context, d *schema.ResourceData, m interf
 		}
 		if _, err := client.UpdateUserAuthGrants(ctx, req); err != nil {
 			d.Partial(true)
-			logger.WithError(err).Errorf("failed to update user AuthGrants")
+			logger.Error("failed to update user AuthGrants", "error", err)
 			return diag.Errorf("failed to update user AuthGrants: %s", err)
 		}
 
@@ -614,7 +614,7 @@ func resourceIAMUserUpdate(ctx context.Context, d *schema.ResourceData, m interf
 
 		if _, err := client.UpdateUserNotifications(ctx, req); err != nil {
 			d.Partial(true)
-			logger.WithError(err).Errorf("failed to update user notifications")
+			logger.Error("failed to update user notifications", "error", err)
 			return diag.Errorf("failed to update user notifications: %s", err)
 		}
 		needRead = true
@@ -624,7 +624,7 @@ func resourceIAMUserUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	if d.HasChange("password") {
 		err = manageUserPassword(ctx, d, client, d.Id())
 		if err != nil {
-			logger.WithError(err).Errorf("failed to set user password")
+			logger.Error("failed to set user password", "error", err)
 			return diag.Errorf("failed to set user password: %s", err)
 		}
 		needRead = true
@@ -665,7 +665,7 @@ func resourceIAMUserDelete(ctx context.Context, d *schema.ResourceData, m interf
 	logger.Debug("Deleting User")
 
 	if err := client.RemoveUser(ctx, iam.RemoveUserRequest{IdentityID: d.Id()}); err != nil {
-		logger.WithError(err).Error("could not remove user")
+		logger.Error("could not remove user", "error", err)
 		return diag.Errorf("could not remove user: %s", err)
 	}
 

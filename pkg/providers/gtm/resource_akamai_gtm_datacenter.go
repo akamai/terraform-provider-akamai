@@ -8,10 +8,10 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/gtm"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/gtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -192,14 +192,14 @@ func resourceGTMv1DatacenterCreate(ctx context.Context, d *schema.ResourceData, 
 		Datacenter: newDC,
 	})
 	if err != nil {
-		logger.Errorf("Datacenter Create failed: %s", err.Error())
+		logger.Errorf("Datacenter create error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "Datacenter Create failed",
+			Summary:  "Datacenter create error",
 			Detail:   err.Error(),
 		})
 	}
-	logger.Debugf("Datacenter Create status: %v", cStatus.Status)
+	logger.Debugf("Datacenter create status: %v", cStatus.Status)
 	if cStatus.Status.PropagationStatus == "DENIED" {
 		logger.Errorf(cStatus.Status.Message)
 		return append(diags, diag.Diagnostic{
@@ -215,15 +215,15 @@ func resourceGTMv1DatacenterCreate(ctx context.Context, d *schema.ResourceData, 
 	if waitOnComplete {
 		done, err := waitForCompletion(ctx, domain, m)
 		if done {
-			logger.Infof("Datacenter Create completed")
+			logger.Infof("Datacenter create completed")
 		} else {
 			if err == nil {
-				logger.Infof("Datacenter Create pending")
+				logger.Infof("Datacenter create pending")
 			} else {
-				logger.Errorf("Datacenter Create failed [%s]", err.Error())
+				logger.Errorf("Datacenter create error: %s", err.Error())
 				return append(diags, diag.Diagnostic{
 					Severity: diag.Error,
-					Summary:  "Datacenter Create failed",
+					Summary:  "Datacenter create error",
 					Detail:   err.Error(),
 				})
 			}
@@ -265,11 +265,15 @@ func resourceGTMv1DatacenterRead(ctx context.Context, d *schema.ResourceData, m 
 		DatacenterID: dcID,
 		DomainName:   domain,
 	})
+	if errors.Is(err, gtm.ErrNotFound) {
+		d.SetId("")
+		return nil
+	}
 	if err != nil {
-		logger.Errorf("Datacenter Read failed: %s", err.Error())
+		logger.Errorf("Datacenter read error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "Datacenter Read error",
+			Summary:  "Datacenter read error",
 			Detail:   err.Error(),
 		})
 	}
@@ -306,10 +310,10 @@ func resourceGTMv1DatacenterUpdate(ctx context.Context, d *schema.ResourceData, 
 		DomainName:   domain,
 	})
 	if err != nil {
-		logger.Errorf("Datacenter Update failed: %s", err.Error())
+		logger.Errorf("Datacenter read error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "Datacenter Update Read error",
+			Summary:  "Datacenter read error",
 			Detail:   err.Error(),
 		})
 	}
@@ -323,14 +327,14 @@ func resourceGTMv1DatacenterUpdate(ctx context.Context, d *schema.ResourceData, 
 		DomainName: domain,
 	})
 	if err != nil {
-		logger.Errorf("Datacenter Update failed: %s", err.Error())
+		logger.Errorf("Datacenter update error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "Datacenter Update error",
+			Summary:  "Datacenter update error",
 			Detail:   err.Error(),
 		})
 	}
-	logger.Debugf("Datacenter Update status: %v", uStat)
+	logger.Debugf("Datacenter update status: %v", uStat)
 	if uStat.Status.PropagationStatus == "DENIED" {
 		logger.Errorf(uStat.Status.Message)
 
@@ -344,13 +348,13 @@ func resourceGTMv1DatacenterUpdate(ctx context.Context, d *schema.ResourceData, 
 	if waitOnComplete {
 		done, err := waitForCompletion(ctx, domain, m)
 		if done {
-			logger.Infof("Datacenter Update completed")
+			logger.Infof("Datacenter update completed")
 		} else {
 			if err == nil {
-				logger.Infof("Datacenter Update pending")
+				logger.Infof("Datacenter update pending")
 			} else {
-				logger.Errorf("Datacenter Update failed [%s]", err.Error())
-				return diag.FromErr(fmt.Errorf("Datacenter Update failed [%s]", err.Error()))
+				logger.Errorf("Datacenter update error: %s", err.Error())
+				return diag.FromErr(fmt.Errorf("Datacenter update error: %s", err.Error()))
 			}
 		}
 	}
@@ -421,10 +425,10 @@ func resourceGTMv1DatacenterDelete(ctx context.Context, d *schema.ResourceData, 
 		DomainName:   domain,
 	})
 	if err != nil {
-		logger.Errorf("DatacenterDelete failed: %s", err.Error())
+		logger.Errorf("Datacenter delete error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "Datacenter Delete error",
+			Summary:  "Datacenter delete error",
 			Detail:   err.Error(),
 		})
 	}
@@ -434,14 +438,14 @@ func resourceGTMv1DatacenterDelete(ctx context.Context, d *schema.ResourceData, 
 		DomainName:   domain,
 	})
 	if err != nil {
-		logger.Errorf("Datacenter Delete failed: %s", err.Error())
+		logger.Errorf("Datacenter delete error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "Datacenter Delete error",
+			Summary:  "Datacenter delete error",
 			Detail:   err.Error(),
 		})
 	}
-	logger.Debugf("Datacenter Delete status: %v", uStat)
+	logger.Debugf("Datacenter delete status: %v", uStat)
 	if uStat.Status.PropagationStatus == "DENIED" {
 		logger.Errorf(uStat.Status.Message)
 		return append(diags, diag.Diagnostic{
@@ -458,15 +462,15 @@ func resourceGTMv1DatacenterDelete(ctx context.Context, d *schema.ResourceData, 
 	if waitOnComplete {
 		done, err := waitForCompletion(ctx, domain, m)
 		if done {
-			logger.Infof("Datacenter Delete completed")
+			logger.Infof("Datacenter delete completed")
 		} else {
 			if err == nil {
-				logger.Infof("Datacenter Delete pending")
+				logger.Infof("Datacenter delete pending")
 			} else {
-				logger.Errorf("Datacenter Delete failed [%s]", err.Error())
+				logger.Errorf("Datacenter delete error: %s", err.Error())
 				return append(diags, diag.Diagnostic{
 					Severity: diag.Error,
-					Summary:  "Datacenter Delete error",
+					Summary:  "Datacenter delete error",
 					Detail:   err.Error(),
 				})
 			}

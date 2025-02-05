@@ -3,6 +3,6 @@ provider "akamai" {
 }
 
 data "akamai_gtm_asmap" "my_gtm_asmap" {
-  domain   = "test.domain.net"
-  map_name = "map1"
+  domain   = "gtm_terra_testdomain.akadns.net"
+  map_name = "tfexample_as_1"
 }

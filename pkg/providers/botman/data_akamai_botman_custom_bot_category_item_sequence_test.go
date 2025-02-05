@@ -5,10 +5,9 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestDataCustomBotCategoryItemSequenceError(t *testing.T) {
@@ -16,7 +15,7 @@ func TestDataCustomBotCategoryItemSequenceError(t *testing.T) {
 
 		mockedBotmanClient := &botman.Mock{}
 		mockedBotmanClient.On("GetCustomBotCategoryItemSequence",
-			mock.Anything,
+			testutils.MockContext,
 			botman.GetCustomBotCategoryItemSequenceRequest{
 				ConfigID:   43253,
 				Version:    15,
@@ -80,7 +79,7 @@ func TestDataCustomBotCategoryItemSequence(t *testing.T) {
 			Sequence: []string{"fake3f89-e179-4892-89cf-d5e623ba9dc7", "fake85df-e399-43e8-bb0f-c0d980a88e4f", "fake09b8-4fd5-430e-a061-1c61df1d2ac2"},
 		}
 		mockedBotmanClient.On("GetCustomBotCategoryItemSequence",
-			mock.Anything,
+			testutils.MockContext,
 			botman.GetCustomBotCategoryItemSequenceRequest{ConfigID: 43253, Version: 15, CategoryID: "fakecv20-eddb-4421-93d9-90954e509d5f"},
 		).Return(&response, nil)
 

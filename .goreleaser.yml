@@ -1,9 +1,10 @@
 # Visit https://goreleaser.com for documentation on how to customize this
 # behavior.
+version: 2
 before:
   hooks:
     # this is just an example and not a requirement for provider building/publishing
-    - go mod tidy -compat=1.21.12
+    - go mod tidy -compat=1.22.9
 builds:
 - env:
     # goreleaser does not work with CGO, it could also complicate
@@ -15,7 +16,7 @@ builds:
     - -trimpath
     - -tags=all
   ldflags:
-    - -s -w -X github.com/akamai/terraform-provider-akamai/v6/version.ProviderVersion={{.Version}}
+    - -s -w -X github.com/akamai/terraform-provider-akamai/v7/version.ProviderVersion={{.Version}}
   goos:
     - windows
     - linux
@@ -54,7 +55,7 @@ signs:
       - "--detach-sign"
       - "${artifact}"
 changelog:
-  skip: true
+  disable: true
 release:
   # Visit your project's GitHub Releases page to publish this release.
   draft: true

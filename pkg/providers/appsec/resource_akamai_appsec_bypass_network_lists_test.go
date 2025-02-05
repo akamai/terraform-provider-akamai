@@ -4,10 +4,9 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -20,7 +19,7 @@ func TestAkamaiBypassNetworkLists_res_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
@@ -37,17 +36,17 @@ func TestAkamaiBypassNetworkLists_res_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetWAPBypassNetworkLists",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetWAPBypassNetworkListsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
 		).Return(&getWAPBypassNetworkListsResponse, nil)
 
 		client.On("UpdateWAPBypassNetworkLists",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.UpdateWAPBypassNetworkListsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", NetworkLists: []string{"1304427_AAXXBBLIST", "888518_ACDDCKERS"}},
 		).Return(&updateWAPBypassNetworkListsResponse, nil)
 
 		client.On("RemoveWAPBypassNetworkLists",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.RemoveWAPBypassNetworkListsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", NetworkLists: []string{}},
 		).Return(&removeWAPBypassNetworkListsResponse, nil)
 

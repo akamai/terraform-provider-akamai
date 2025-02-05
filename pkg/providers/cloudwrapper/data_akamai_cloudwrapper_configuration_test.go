@@ -6,11 +6,10 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cloudwrapper"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/cloudwrapper"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 var (
@@ -128,27 +127,27 @@ func TestConfigurationDataSource(t *testing.T) {
 
 	tests := map[string]struct {
 		configPath string
-		init       func(*testing.T, *cloudwrapper.Mock, testDataForCWConfiguration)
+		init       func(*cloudwrapper.Mock, testDataForCWConfiguration)
 		mockData   testDataForCWConfiguration
 		error      *regexp.Regexp
 	}{
 		"happy path - minimal data returned": {
 			configPath: "testdata/TestDataConfiguration/default.tf",
-			init: func(_ *testing.T, m *cloudwrapper.Mock, testData testDataForCWConfiguration) {
+			init: func(m *cloudwrapper.Mock, testData testDataForCWConfiguration) {
 				expectGetConfiguration(m, testData, 3)
 			},
 			mockData: minimalConfiguration,
 		},
 		"happy path - all fields": {
 			configPath: "testdata/TestDataConfiguration/default.tf",
-			init: func(_ *testing.T, m *cloudwrapper.Mock, testData testDataForCWConfiguration) {
+			init: func(m *cloudwrapper.Mock, testData testDataForCWConfiguration) {
 				expectGetConfiguration(m, testData, 3)
 			},
 			mockData: configuration,
 		},
 		"error getting configuration": {
 			configPath: "testdata/TestDataConfiguration/default.tf",
-			init: func(t *testing.T, m *cloudwrapper.Mock, testData testDataForCWConfiguration) {
+			init: func(m *cloudwrapper.Mock, testData testDataForCWConfiguration) {
 				expectGetConfigurationWithError(m, testData, 1)
 			},
 			mockData: testDataForCWConfiguration{
@@ -168,7 +167,7 @@ func TestConfigurationDataSource(t *testing.T) {
 
 			client := &cloudwrapper.Mock{}
 			if test.init != nil {
-				test.init(t, client, test.mockData)
+				test.init(client, test.mockData)
 			}
 
 			resource.UnitTest(t, resource.TestCase{
@@ -327,7 +326,7 @@ func expectGetConfiguration(client *cloudwrapper.Mock, data testDataForCWConfigu
 		ConfigID: data.ID,
 	}
 	getConfigurationRes := getConfiguration(data)
-	client.On("GetConfiguration", mock.Anything, getConfigurationReq).Return(&getConfigurationRes, nil).Times(timesToRun)
+	client.On("GetConfiguration", testutils.MockContext, getConfigurationReq).Return(&getConfigurationRes, nil).Times(timesToRun)
 }
 
 func getConfiguration(data testDataForCWConfiguration) cloudwrapper.Configuration {
@@ -354,5 +353,5 @@ func expectGetConfigurationWithError(client *cloudwrapper.Mock, data testDataFor
 	getConfigurationReq := cloudwrapper.GetConfigurationRequest{
 		ConfigID: data.ID,
 	}
-	client.On("GetConfiguration", mock.Anything, getConfigurationReq).Return(nil, fmt.Errorf("get configuration failed")).Times(timesToRun)
+	client.On("GetConfiguration", testutils.MockContext, getConfigurationReq).Return(nil, fmt.Errorf("get configuration failed")).Times(timesToRun)
 }

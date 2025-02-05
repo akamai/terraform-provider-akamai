@@ -6,11 +6,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/papi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/str"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/str"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 )
 
 func dataSourceProperties() *schema.Resource {
@@ -49,11 +49,6 @@ func dataSourceProperties() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
-						"product_id": {
-							Type:       schema.TypeString,
-							Computed:   true,
-							Deprecated: "This field is deprecated. Please use `akamai_property` to get this data",
-						},
 						"production_version": {
 							Type:     schema.TypeInt,
 							Computed: true,
@@ -65,11 +60,6 @@ func dataSourceProperties() *schema.Resource {
 						"property_name": {
 							Type:     schema.TypeString,
 							Computed: true,
-						},
-						"rule_format": {
-							Type:       schema.TypeString,
-							Computed:   true,
-							Deprecated: "This field is deprecated. Please use `akamai_property` to get this data",
 						},
 						"staging_version": {
 							Type:     schema.TypeInt,
@@ -134,11 +124,9 @@ func sliceResponseProperties(propertiesResponse *papi.GetPropertiesResponse) ([]
 			"group_id":           item.GroupID,
 			"latest_version":     item.LatestVersion,
 			"note":               item.Note,
-			"product_id":         nil,
 			"production_version": decodeVersion(item.ProductionVersion),
 			"property_id":        item.PropertyID,
 			"property_name":      item.PropertyName,
-			"rule_format":        nil,
 			"staging_version":    decodeVersion(item.StagingVersion),
 		}
 		properties = append(properties, property)

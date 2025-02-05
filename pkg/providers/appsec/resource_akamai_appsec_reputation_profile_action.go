@@ -6,9 +6,10 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/id"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -107,7 +108,7 @@ func resourceReputationProfileActionRead(ctx context.Context, d *schema.Resource
 	logger := meta.Log("APPSEC", "resourceReputationProfileActionRead")
 	logger.Debugf("in resourceReputationProfileActionRead")
 
-	iDParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:reputationProfileID")
+	iDParts, err := id.Split(d.Id(), 3, "configID:securityPolicyID:reputationProfileID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -161,7 +162,7 @@ func resourceReputationProfileActionUpdate(ctx context.Context, d *schema.Resour
 	logger := meta.Log("APPSEC", "resourceReputationProfileActionUpdate")
 	logger.Debugf("in resourceReputationProfileActionUpdate")
 
-	iDParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:reputationProfileID")
+	iDParts, err := id.Split(d.Id(), 3, "configID:securityPolicyID:reputationProfileID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -206,7 +207,7 @@ func resourceReputationProfileActionDelete(ctx context.Context, d *schema.Resour
 	logger := meta.Log("APPSEC", "resourceReputationProfileActionDelete")
 	logger.Debugf("in resourceReputationProfileActionDelete")
 
-	iDParts, err := splitID(d.Id(), 3, "configID:securityPolicyID:reputationProfileID")
+	iDParts, err := id.Split(d.Id(), 3, "configID:securityPolicyID:reputationProfileID")
 	if err != nil {
 		return diag.FromErr(err)
 	}

@@ -4,10 +4,10 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/iam"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/date"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/date"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -80,12 +80,12 @@ func dataIAMRolesRead(ctx context.Context, d *schema.ResourceData, m interface{}
 
 	res, err := client.ListRoles(ctx, iam.ListRolesRequest{})
 	if err != nil {
-		logger.WithError(err).Error("Could not get roles")
+		logger.Error("Could not get roles", "error", err)
 		return diag.FromErr(err)
 	}
 
 	if err := d.Set("roles", rolesToState(res)); err != nil {
-		logger.WithError(err).Error("Could not set roles in state")
+		logger.Error("Could not set roles in state", "error", err)
 		return diag.FromErr(err)
 	}
 

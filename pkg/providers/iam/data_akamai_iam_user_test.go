@@ -8,12 +8,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/iam"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/date"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/date"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 type (
@@ -194,28 +193,28 @@ var (
 func TestDataUser(t *testing.T) {
 	tests := map[string]struct {
 		configPath string
-		init       func(*testing.T, *iam.Mock, testDataForUser)
+		init       func(*iam.Mock, testDataForUser)
 		mockData   testDataForUser
 		error      *regexp.Regexp
 	}{
 		"happy path": {
 			configPath: "testdata/TestDataUser/default.tf",
-			init: func(t *testing.T, m *iam.Mock, testData testDataForUser) {
-				expectGetUser(t, m, testData, 3)
+			init: func(m *iam.Mock, testData testDataForUser) {
+				expectGetUser(m, testData, 3)
 			},
 			mockData: basicUserTestData,
 		},
 		"happy path - max amount of sub groups": {
 			configPath: "testdata/TestDataUser/default.tf",
-			init: func(t *testing.T, m *iam.Mock, testData testDataForUser) {
-				expectGetUserMaxAuthGranSubGroups(t, m, testData, 3, maxSupportedGroupNesting)
+			init: func(m *iam.Mock, testData testDataForUser) {
+				expectGetUserMaxAuthGranSubGroups(m, testData, 3, maxSupportedGroupNesting)
 			},
 			mockData: basicUserTestDataMaxGroups,
 		},
 		"error - max amount of sub groups + 1": {
 			configPath: "testdata/TestDataUser/default.tf",
-			init: func(t *testing.T, m *iam.Mock, testData testDataForUser) {
-				expectGetUserMaxAuthGranSubGroups(t, m, testData, 1, maxSupportedGroupNesting+1)
+			init: func(m *iam.Mock, testData testDataForUser) {
+				expectGetUserMaxAuthGranSubGroups(m, testData, 1, maxSupportedGroupNesting+1)
 			},
 			error:    regexp.MustCompile("unsupported subgroup depth"),
 			mockData: basicUserTestDataMaxGroups,
@@ -227,9 +226,9 @@ func TestDataUser(t *testing.T) {
 		},
 		"error - GetUser call failed": {
 			configPath: "testdata/TestDataUser/default.tf",
-			init: func(t *testing.T, m *iam.Mock, user testDataForUser) {
+			init: func(m *iam.Mock, user testDataForUser) {
 				getUserReq := iam.GetUserRequest{IdentityID: user.uiIdentityID, Actions: true, AuthGrants: true, Notifications: true}
-				m.On("GetUser", mock.Anything, getUserReq).Return(nil, errors.New("test error"))
+				m.On("GetUser", testutils.MockContext, getUserReq).Return(nil, errors.New("test error"))
 			},
 			error:    regexp.MustCompile("test error"),
 			mockData: basicUserTestData,
@@ -240,7 +239,7 @@ func TestDataUser(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			client := &iam.Mock{}
 			if test.init != nil {
-				test.init(t, client, test.mockData)
+				test.init(client, test.mockData)
 			}
 
 			useClient(client, func() {
@@ -261,7 +260,7 @@ func TestDataUser(t *testing.T) {
 	}
 }
 
-func expectGetUser(_ *testing.T, client *iam.Mock, data testDataForUser, times int) {
+func expectGetUser(client *iam.Mock, data testDataForUser, times int) {
 	getUserReq := iam.GetUserRequest{
 		IdentityID:    data.uiIdentityID,
 		Actions:       true,
@@ -332,10 +331,10 @@ func expectGetUser(_ *testing.T, client *iam.Mock, data testDataForUser, times i
 	}
 	usr.AuthGrants = userAuthGrantList
 
-	client.On("GetUser", mock.Anything, getUserReq).Return(&usr, nil).Times(times)
+	client.On("GetUser", testutils.MockContext, getUserReq).Return(&usr, nil).Times(times)
 }
 
-func expectGetUserMaxAuthGranSubGroups(_ *testing.T, client *iam.Mock, data testDataForUser, times, subGroupsDepth int) {
+func expectGetUserMaxAuthGranSubGroups(client *iam.Mock, data testDataForUser, times, subGroupsDepth int) {
 	getUserReq := iam.GetUserRequest{
 		IdentityID:    data.uiIdentityID,
 		Actions:       true,
@@ -407,7 +406,7 @@ func expectGetUserMaxAuthGranSubGroups(_ *testing.T, client *iam.Mock, data test
 	}
 	usr.AuthGrants = userAuthGrantList
 
-	client.On("GetUser", mock.Anything, getUserReq).Return(&usr, nil).Times(times)
+	client.On("GetUser", testutils.MockContext, getUserReq).Return(&usr, nil).Times(times)
 }
 
 func checkUserAttrs(data testDataForUser) resource.TestCheckFunc {
@@ -455,7 +454,7 @@ func checkUserAttrs(data testDataForUser) resource.TestCheckFunc {
 		checksFuncs = append(checksFuncs, resource.TestCheckResourceAttr(name, fmt.Sprintf("auth_grants.%d.role_id", i), strconv.FormatInt(authGrant.roleID, 10)))
 		checksFuncs = append(checksFuncs, resource.TestCheckResourceAttr(name, fmt.Sprintf("auth_grants.%d.role_name", i), authGrant.roleName))
 		checksFuncs = append(checksFuncs, resource.TestCheckResourceAttr(name, fmt.Sprintf("auth_grants.%d.role_description", i), authGrant.roleDescription))
-		if authGrant.subgroup != nil && len(authGrant.subgroup) > 0 {
+		if len(authGrant.subgroup) > 0 {
 			checksFuncs = append(checksFuncs, generateAggregateTestCheckFuncsForMaxAuthGrantSubGroups(i, 2, maxSupportedGroupNesting))
 		}
 	}
@@ -510,6 +509,7 @@ func generateMaxDepthSubGroupsAPIResponse(depth int) []iam.AuthGrant {
 	return subgroups
 }
 
+// nolint:revive
 func generateAggregateTestCheckFuncsForMaxAuthGrantSubGroups(authGrantElement, min, max int) resource.TestCheckFunc {
 	var testCases []resource.TestCheckFunc
 	path := "sub_groups.0"

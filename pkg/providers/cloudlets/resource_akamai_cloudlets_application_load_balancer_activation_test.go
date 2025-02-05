@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cloudlets"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/cloudlets"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -531,7 +531,7 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Once()
 				// import
 				expectListLoadBalancerActivations(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Times(2)
-				expectListLoadBalancerActivationsEmpty(m, "org_1", 1, "STAGING", cloudlets.LoadBalancerActivationStatusActive, nil).Times(1)
+				expectListLoadBalancerActivationsEmpty(m, "org_1", nil).Times(1)
 			},
 			steps: []resource.TestStep{
 				{
@@ -578,13 +578,13 @@ var (
 		if err != nil {
 			return m.On(
 				"ListLoadBalancerActivations",
-				mock.Anything,
+				testutils.MockContext,
 				cloudlets.ListLoadBalancerActivationsRequest{OriginID: originID},
 			).Return(nil, err)
 		}
 		return m.On(
 			"ListLoadBalancerActivations",
-			mock.Anything,
+			testutils.MockContext,
 			cloudlets.ListLoadBalancerActivationsRequest{OriginID: originID},
 		).Return(
 			[]cloudlets.LoadBalancerActivation{
@@ -597,17 +597,17 @@ var (
 			}, nil)
 	}
 
-	expectListLoadBalancerActivationsEmpty = func(m *cloudlets.Mock, originID string, version int64, network cloudlets.LoadBalancerActivationNetwork, status cloudlets.LoadBalancerActivationStatus, err error) *mock.Call {
+	expectListLoadBalancerActivationsEmpty = func(m *cloudlets.Mock, originID string, err error) *mock.Call {
 		if err != nil {
 			return m.On(
 				"ListLoadBalancerActivations",
-				mock.Anything,
+				testutils.MockContext,
 				cloudlets.ListLoadBalancerActivationsRequest{OriginID: originID},
 			).Return(nil, err)
 		}
 		return m.On(
 			"ListLoadBalancerActivations",
-			mock.Anything,
+			testutils.MockContext,
 			cloudlets.ListLoadBalancerActivationsRequest{OriginID: originID},
 		).Return(
 			[]cloudlets.LoadBalancerActivation{}, nil)
@@ -617,13 +617,13 @@ var (
 		if err != nil {
 			return m.On(
 				"ListLoadBalancerActivations",
-				mock.Anything,
+				testutils.MockContext,
 				cloudlets.ListLoadBalancerActivationsRequest{OriginID: originID},
 			).Return(nil, err)
 		}
 		return m.On(
 			"ListLoadBalancerActivations",
-			mock.Anything,
+			testutils.MockContext,
 			cloudlets.ListLoadBalancerActivationsRequest{OriginID: originID},
 		).Return(activations, nil)
 	}
@@ -632,7 +632,7 @@ var (
 		if err != nil {
 			return m.On(
 				"ActivateLoadBalancerVersion",
-				mock.Anything,
+				testutils.MockContext,
 				cloudlets.ActivateLoadBalancerVersionRequest{
 					OriginID: originID,
 					Async:    true,
@@ -646,7 +646,7 @@ var (
 		}
 		return m.On(
 			"ActivateLoadBalancerVersion",
-			mock.Anything,
+			testutils.MockContext,
 			cloudlets.ActivateLoadBalancerVersionRequest{
 				OriginID: originID,
 				Async:    true,

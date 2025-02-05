@@ -9,13 +9,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cps"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
-	cpstools "github.com/akamai/terraform-provider-akamai/v6/pkg/providers/cps/tools"
-	"github.com/apex/log"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/cps"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/log"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
+	cpstools "github.com/akamai/terraform-provider-akamai/v7/pkg/providers/cps/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -259,9 +259,7 @@ var (
 func createAttrs(en *cps.Enrollment, enID int) map[string]interface{} {
 
 	sans := make([]string, 0)
-	for _, san := range en.CSR.SANS {
-		sans = append(sans, san)
-	}
+	sans = append(sans, en.CSR.SANS...)
 
 	return map[string]interface{}{
 		"common_name":                       en.CSR.CN,
@@ -477,9 +475,9 @@ func waitForVerification(ctx context.Context, logger log.Interface, client cps.C
 					return err
 				}
 			}
-			log.Debugf("Change status: %s", status.StatusInfo.Status)
+			logger.Debugf("Change status: %s", status.StatusInfo.Status)
 			if status.StatusInfo != nil && status.StatusInfo.Error != nil && status.StatusInfo.Error.Description != "" {
-				return fmt.Errorf(status.StatusInfo.Error.Description)
+				return fmt.Errorf("%s", status.StatusInfo.Error.Description)
 			}
 		case <-ctx.Done():
 			return fmt.Errorf("change status context terminated: %w", ctx.Err())
@@ -589,7 +587,7 @@ func divideWarnings(warnings string, knownWarnings map[string]string) []string {
 }
 
 func convertWarningsToRegexp(warningMap map[string]string) (map[string]string, error) {
-	result := make(map[string]string, 0)
+	result := make(map[string]string)
 	re := regexp.MustCompile("(<.+?>)")
 	for key, description := range warningMap {
 		// escape some characters which have special meaning for regexp

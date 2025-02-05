@@ -7,12 +7,11 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/imaging"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/imaging"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestResourcePolicyVideo(t *testing.T) {
@@ -90,7 +89,7 @@ func TestResourcePolicyVideo(t *testing.T) {
 				Description:        fmt.Sprintf("Policy %s updated.", policyID),
 				ID:                 policyID,
 			}
-			client.On("UpsertPolicy", mock.Anything, imaging.UpsertPolicyRequest{
+			client.On("UpsertPolicy", testutils.MockContext, imaging.UpsertPolicyRequest{
 				PolicyID:    policyID,
 				Network:     network,
 				ContractID:  contractID,
@@ -100,7 +99,7 @@ func TestResourcePolicyVideo(t *testing.T) {
 		}
 
 		expectUpsertPolicyFailure = func(client *imaging.Mock, policyID, policySetID, contractID string, network imaging.PolicyNetwork, policy imaging.PolicyInput) {
-			client.On("UpsertPolicy", mock.Anything, imaging.UpsertPolicyRequest{
+			client.On("UpsertPolicy", testutils.MockContext, imaging.UpsertPolicyRequest{
 				PolicyID:    policyID,
 				Network:     network,
 				ContractID:  contractID,
@@ -110,7 +109,7 @@ func TestResourcePolicyVideo(t *testing.T) {
 		}
 
 		expectReadPolicy = func(client *imaging.Mock, policyID, contractID, policySetID string, network imaging.PolicyNetwork, policyOutput imaging.PolicyOutput, times int) {
-			client.On("GetPolicy", mock.Anything, imaging.GetPolicyRequest{
+			client.On("GetPolicy", testutils.MockContext, imaging.GetPolicyRequest{
 				PolicyID:    policyID,
 				Network:     network,
 				ContractID:  contractID,
@@ -120,7 +119,7 @@ func TestResourcePolicyVideo(t *testing.T) {
 
 		expectDeletePolicy = func(client *imaging.Mock, policyID, contractID, policySetID string, network imaging.PolicyNetwork) {
 			response := imaging.PolicyResponse{}
-			client.On("DeletePolicy", mock.Anything, imaging.DeletePolicyRequest{
+			client.On("DeletePolicy", testutils.MockContext, imaging.DeletePolicyRequest{
 				PolicyID:    policyID,
 				Network:     network,
 				ContractID:  contractID,
@@ -129,7 +128,7 @@ func TestResourcePolicyVideo(t *testing.T) {
 		}
 
 		expectUpsertPolicyWithError = func(client *imaging.Mock, policyID, contractID, policySetID string, network imaging.PolicyNetwork, policy imaging.PolicyInput, err error) {
-			client.On("UpsertPolicy", mock.Anything, imaging.UpsertPolicyRequest{
+			client.On("UpsertPolicy", testutils.MockContext, imaging.UpsertPolicyRequest{
 				PolicyID:    policyID,
 				Network:     network,
 				ContractID:  contractID,
@@ -187,7 +186,7 @@ func TestResourcePolicyVideo(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							version:              "1",
 							policyID:             "test_policy",
@@ -220,7 +219,7 @@ func TestResourcePolicyVideo(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							version:              "1",
 							policyID:             "test_policy",
@@ -230,7 +229,7 @@ func TestResourcePolicyVideo(t *testing.T) {
 						}),
 					},
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_update.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_update.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							version:              "1",
 							policyID:             "test_policy",
@@ -271,7 +270,7 @@ func TestResourcePolicyVideo(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							version:              "1",
 							policyID:             "test_policy",
@@ -281,7 +280,7 @@ func TestResourcePolicyVideo(t *testing.T) {
 						}),
 					},
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_update.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_update.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							version:              "2",
 							policyID:             "test_policy",
@@ -320,7 +319,7 @@ func TestResourcePolicyVideo(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							version:              "1",
 							policyID:             "test_policy",
@@ -330,7 +329,7 @@ func TestResourcePolicyVideo(t *testing.T) {
 						}),
 					},
 					{
-						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_update.tf", testDir)),
+						Config:      testutils.LoadFixtureStringf(t, "%s/policy_update.tf", testDir),
 						ExpectError: regexp.MustCompile(`Error: API error: Conflict \(409\)`),
 						Check: checkPolicyAttributes(policyAttributes{
 							version:              "1",
@@ -370,7 +369,7 @@ func TestResourcePolicyVideo(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							version:              "1",
 							policyID:             "test_policy",
@@ -380,7 +379,7 @@ func TestResourcePolicyVideo(t *testing.T) {
 						}),
 					},
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_update.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_update.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							version:              "1",
 							policyID:             "test_policy",
@@ -419,7 +418,7 @@ func TestResourcePolicyVideo(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							version:              "1",
 							policyID:             "test_policy",
@@ -429,7 +428,7 @@ func TestResourcePolicyVideo(t *testing.T) {
 						}),
 					},
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_update.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_update.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							version:              "1",
 							policyID:             "test_policy",
@@ -439,7 +438,7 @@ func TestResourcePolicyVideo(t *testing.T) {
 						}),
 					},
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_update_staging.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_update_staging.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							version:              "2",
 							policyID:             "test_policy",
@@ -471,7 +470,7 @@ func TestResourcePolicyVideo(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							version:              "1",
 							policyID:             ".auto",
@@ -481,7 +480,7 @@ func TestResourcePolicyVideo(t *testing.T) {
 						}),
 					},
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_update.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_update.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							version:              "1",
 							policyID:             ".auto",
@@ -514,10 +513,10 @@ func TestResourcePolicyVideo(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 					},
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_update.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_update.tf", testDir),
 					},
 					{
 						ImportState:       true,
@@ -548,7 +547,7 @@ func TestResourcePolicyVideo(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/default.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/default.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							version:              "1",
 							policyID:             "test_policy",
@@ -558,7 +557,7 @@ func TestResourcePolicyVideo(t *testing.T) {
 						}),
 					},
 					{
-						Config:             testutils.LoadFixtureString(t, fmt.Sprintf("%s/diff_order.tf", testDir)),
+						Config:             testutils.LoadFixtureStringf(t, "%s/diff_order.tf", testDir),
 						ExpectNonEmptyPlan: false,
 					},
 				},
@@ -583,7 +582,7 @@ func TestResourcePolicyVideo(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 					},
 					{
 						ImportState:       true,
@@ -602,7 +601,7 @@ func TestResourcePolicyVideo(t *testing.T) {
 		client := new(imaging.Mock)
 		expectUpsertPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyInput)
 		expectReadPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyOutput, 3)
-		client.On("GetPolicy", mock.Anything, imaging.GetPolicyRequest{
+		client.On("GetPolicy", testutils.MockContext, imaging.GetPolicyRequest{
 			PolicyID:    "test_policy",
 			Network:     imaging.PolicyNetworkProduction,
 			ContractID:  "test_contract",
@@ -618,7 +617,7 @@ func TestResourcePolicyVideo(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 					},
 					{
 						ImportState:       true,
@@ -640,7 +639,7 @@ func TestResourcePolicyVideo(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config:      testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 						ExpectError: regexp.MustCompile("\"json\" contains an invalid JSON: invalid character '6' looking for beginning of object key string"),
 					},
 				},
@@ -663,7 +662,7 @@ func TestResourcePolicyVideo(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 						Check: checkPolicyAttributes(policyAttributes{
 							version:              "1",
 							policyID:             "test_policy",
@@ -696,7 +695,7 @@ func TestResourcePolicyVideo(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config:      testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 						ExpectError: regexp.MustCompile("\"detail\": \"Unable to parse element 'output' in JSON.\","),
 					},
 				},
@@ -719,7 +718,7 @@ func TestResourcePolicyVideo(t *testing.T) {
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
-						Config: testutils.LoadFixtureString(t, fmt.Sprintf("%s/policy_create.tf", testDir)),
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 					},
 					{
 						ImportState:       true,
@@ -791,8 +790,8 @@ func TestDiffSuppressPolicyVideo(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			oldJSON := testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", basePath, test.oldPath))
-			newJSON := testutils.LoadFixtureString(t, fmt.Sprintf("%s/%s", basePath, test.newPath))
+			oldJSON := testutils.LoadFixtureStringf(t, "%s/%s", basePath, test.oldPath)
+			newJSON := testutils.LoadFixtureStringf(t, "%s/%s", basePath, test.newPath)
 			res := diffSuppressPolicyVideo("", oldJSON, newJSON, nil)
 			assert.Equal(t, test.expected, res)
 		})

@@ -3,10 +3,9 @@ package botman
 import (
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestDataRecategorizedAkamaiDefinedBot(t *testing.T) {
@@ -33,7 +32,7 @@ func TestDataRecategorizedAkamaiDefinedBot(t *testing.T) {
 	]
 }`
 		mockedBotmanClient.On("GetRecategorizedAkamaiDefinedBotList",
-			mock.Anything,
+			testutils.MockContext,
 			botman.GetRecategorizedAkamaiDefinedBotListRequest{ConfigID: 43253, Version: 15},
 		).Return(&response, nil)
 
@@ -69,7 +68,7 @@ func TestDataRecategorizedAkamaiDefinedBot(t *testing.T) {
 	]
 }`
 		mockedBotmanClient.On("GetRecategorizedAkamaiDefinedBotList",
-			mock.Anything,
+			testutils.MockContext,
 			botman.GetRecategorizedAkamaiDefinedBotListRequest{ConfigID: 43253, Version: 15, BotID: "cc9c3f89-e179-4892-89cf-d5e623ba9dc7"},
 		).Return(&response, nil)
 

@@ -6,10 +6,10 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/iam"
-	"github.com/akamai/terraform-provider-akamai/v6/internal/test"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v7/internal/test"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -17,7 +17,7 @@ import (
 func TestUsersAffectedByMovingGroup(t *testing.T) {
 
 	mockListAffectedUsers := func(client *iam.Mock, userType string, users []iam.GroupUser) *mock.Call {
-		return client.On("ListAffectedUsers", mock.Anything, iam.ListAffectedUsersRequest{SourceGroupID: 123, DestinationGroupID: 321, UserType: userType}).
+		return client.On("ListAffectedUsers", testutils.MockContext, iam.ListAffectedUsersRequest{SourceGroupID: 123, DestinationGroupID: 321, UserType: userType}).
 			Return(users, nil).Times(3)
 	}
 
@@ -115,23 +115,20 @@ func TestUsersAffectedByMovingGroup(t *testing.T) {
 			),
 		},
 		"validation - missing source": {
-			init:          func(client *iam.Mock) {},
 			config:        "testdata/TestDataUsersAffected/missing-source.tf",
 			expectedError: regexp.MustCompile("Missing required argument(.|\n)*The argument \"source_group_id\" is required, but no definition was found."),
 		},
 		"validation - missing destination": {
-			init:          func(client *iam.Mock) {},
 			config:        "testdata/TestDataUsersAffected/missing-destination.tf",
 			expectedError: regexp.MustCompile("Missing required argument(.|\n)*The argument \"destination_group_id\" is required, but no definition was found."),
 		},
 		"validation - incorrect user_type": {
-			init:          func(client *iam.Mock) {},
 			config:        "testdata/TestDataUsersAffected/incorrect-usertype.tf",
 			expectedError: regexp.MustCompile("Invalid Attribute Value Match(.|\n)*Attribute user_type value must be one of: \\[\"lostAccess\" \"gainAccess\" \"\"]"),
 		},
 		"api failed": {
 			init: func(client *iam.Mock) {
-				client.On("ListAffectedUsers", mock.Anything, iam.ListAffectedUsersRequest{SourceGroupID: 123, DestinationGroupID: 321, UserType: ""}).
+				client.On("ListAffectedUsers", testutils.MockContext, iam.ListAffectedUsersRequest{SourceGroupID: 123, DestinationGroupID: 321, UserType: ""}).
 					Return(nil, errors.New("api failed")).Once()
 			},
 			config:        "testdata/TestDataUsersAffected/basic.tf",
@@ -142,8 +139,9 @@ func TestUsersAffectedByMovingGroup(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &iam.Mock{}
-			tc.init(client)
-
+			if tc.init != nil {
+				tc.init(client)
+			}
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),

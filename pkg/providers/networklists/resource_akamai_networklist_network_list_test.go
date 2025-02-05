@@ -5,10 +5,9 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/networklists"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/networklists"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -41,32 +40,32 @@ func TestAccAkamaiNetworkList_res_basic(t *testing.T) {
 	require.NoError(t, err)
 
 	client.On("CreateNetworkList",
-		mock.Anything,
+		testutils.MockContext,
 		networklists.CreateNetworkListRequest{Name: "Voyager Call Center Whitelist", Type: "IP", Description: "Notes about this network list", List: []string{"10.1.8.23", "10.3.5.67"}},
 	).Return(&createResponse, nil)
 
 	client.On("GetNetworkLists",
-		mock.Anything,
+		testutils.MockContext,
 		networklists.GetNetworkListsRequest{Name: "Voyager Call Center Whitelist", Type: "IP"},
 	).Return(&crl, nil)
 
 	client.On("GetNetworkList",
-		mock.Anything,
+		testutils.MockContext,
 		networklists.GetNetworkListRequest{UniqueID: "2275_VOYAGERCALLCENTERWHITELI"},
 	).Return(&getResponse, nil).Times(3)
 
 	client.On("UpdateNetworkList",
-		mock.Anything,
+		testutils.MockContext,
 		networklists.UpdateNetworkListRequest{Name: "Voyager Call Center Whitelist", Type: "IP", Description: "New notes about this network list", SyncPoint: 0, List: []string{"10.1.8.23", "10.3.5.67"}, UniqueID: "2275_VOYAGERCALLCENTERWHITELI", ContractID: "C-1FRYVV3", GroupID: 64867},
 	).Return(&updateResponse, nil)
 
 	client.On("GetNetworkList",
-		mock.Anything,
+		testutils.MockContext,
 		networklists.GetNetworkListRequest{UniqueID: "2275_VOYAGERCALLCENTERWHITELI"},
 	).Return(&getResponseAfterUpdate, nil).Times(3)
 
 	client.On("RemoveNetworkList",
-		mock.Anything,
+		testutils.MockContext,
 		networklists.RemoveNetworkListRequest{UniqueID: "2275_VOYAGERCALLCENTERWHITELI"},
 	).Return(&cd, nil)
 
@@ -128,22 +127,22 @@ func TestAccAkamaiNetworkListConfigChanged(t *testing.T) {
 	require.NoError(t, err)
 
 	client.On("CreateNetworkList",
-		mock.Anything,
+		testutils.MockContext,
 		networklists.CreateNetworkListRequest{Name: "Voyager Call Center Whitelist", Type: "IP", Description: "Notes about this network list", List: []string{"10.1.8.23", "10.3.5.67"}},
 	).Return(&createResponse, nil)
 
 	client.On("GetNetworkLists",
-		mock.Anything,
+		testutils.MockContext,
 		networklists.GetNetworkListsRequest{Name: "Voyager Call Center Whitelist", Type: "IP"},
 	).Return(&crl, nil)
 
 	client.On("GetNetworkList",
-		mock.Anything,
+		testutils.MockContext,
 		networklists.GetNetworkListRequest{UniqueID: "2275_VOYAGERCALLCENTERWHITELI"},
 	).Return(&getResponse, nil).Times(4)
 
 	client.On("RemoveNetworkList",
-		mock.Anything,
+		testutils.MockContext,
 		networklists.RemoveNetworkListRequest{UniqueID: "2275_VOYAGERCALLCENTERWHITELI"},
 	).Return(&cd, nil)
 

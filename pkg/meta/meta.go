@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/logger"
-	"github.com/apex/log"
+	akalog "github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/log"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/log"
 	"github.com/hashicorp/go-hclog"
 )
 
@@ -17,7 +17,7 @@ type (
 	// Meta is the akamai meta object interface
 	Meta interface {
 		// Log constructs an hclog sublogger and returns the log.Interface
-		Log(args ...interface{}) log.Interface
+		Log(args ...interface{}) akalog.Interface
 
 		// OperationID returns the operation id
 		OperationID() string
@@ -65,8 +65,8 @@ func Must(m any) Meta {
 }
 
 // Log creates a logger for the provider from the meta
-func (m *OperationMeta) Log(args ...interface{}) log.Interface {
-	return logger.FromHCLog(m.log.With(args...))
+func (m *OperationMeta) Log(args ...interface{}) akalog.Interface {
+	return log.FromHCLog(m.log.With(args...))
 }
 
 // OperationID returns the operation id from the meta

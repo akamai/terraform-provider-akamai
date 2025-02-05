@@ -10,14 +10,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/apex/log"
-
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cloudlets"
-	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cloudlets/v3"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/timeouts"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/cloudlets"
+	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/cloudlets/v3"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/log"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/timeouts"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -190,7 +189,7 @@ func resourcePolicyActivationUpdate(ctx context.Context, rd *schema.ResourceData
 
 	isAlreadyActive, id, err := strategy.isReactivationNotNeeded(ctx, policyID, version, rd.HasChange("version"))
 	if err != nil {
-		if restoreDiags := diag.FromErr(tf.RestoreOldValues(rd, []string{"version", "associated_properties"})); restoreDiags != nil && len(restoreDiags) > 0 {
+		if restoreDiags := diag.FromErr(tf.RestoreOldValues(rd, []string{"version", "associated_properties"})); len(restoreDiags) > 0 {
 			return append(restoreDiags, diag.FromErr(err)...)
 		}
 		return diag.FromErr(err)

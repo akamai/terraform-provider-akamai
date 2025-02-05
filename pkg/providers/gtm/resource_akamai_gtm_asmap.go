@@ -7,11 +7,11 @@ import (
 	"net/http"
 	"sort"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/gtm"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/logger"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/gtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/log"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -118,7 +118,7 @@ func validateDefaultDC(ctx context.Context, meta meta.Meta, ddcField []interface
 		}
 		// ddc doesn't exist
 		if ddc["datacenter_id"].(int) != gtm.MapDefaultDC {
-			return fmt.Errorf(fmt.Sprintf("Default Datacenter %d does not exist", ddc["datacenter_id"].(int)))
+			return fmt.Errorf("Default Datacenter %d does not exist", ddc["datacenter_id"].(int))
 		}
 		_, err := Client(meta).CreateMapsDefaultDatacenter(ctx, domain) // create if not already.
 		if err != nil {
@@ -156,10 +156,10 @@ func resourceGTMv1ASMapCreate(ctx context.Context, d *schema.ResourceData, m int
 		DomainName: domain,
 	})
 	if err != nil && !errors.Is(err, gtm.ErrNotFound) {
-		logger.Errorf("asMap Read error: %s", err.Error())
+		logger.Errorf("asMap read error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "asMap Read error",
+			Summary:  "asMap read error",
 			Detail:   err.Error(),
 		})
 	}
@@ -204,13 +204,14 @@ func resourceGTMv1ASMapCreate(ctx context.Context, d *schema.ResourceData, m int
 		DomainName: domain,
 	})
 	if err != nil {
+		logger.Errorf("asMap create error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "asMap Create failed",
+			Summary:  "asMap create error",
 			Detail:   err.Error(),
 		})
 	}
-	logger.Debugf("asMap Create status: %v", cStatus.Status)
+	logger.Debugf("asMap create status: %v", cStatus.Status)
 	if cStatus.Status.PropagationStatus == "DENIED" {
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -224,15 +225,15 @@ func resourceGTMv1ASMapCreate(ctx context.Context, d *schema.ResourceData, m int
 	if waitOnComplete {
 		done, err := waitForCompletion(ctx, domain, m)
 		if done {
-			logger.Infof("asMap Create completed")
+			logger.Infof("asMap create completed")
 		} else {
 			if err == nil {
-				logger.Infof("asMap Create pending")
+				logger.Infof("asMap create pending")
 			} else {
-				logger.Errorf("asMap Create failed [%s]", err.Error())
+				logger.Errorf("asMap create error: %s", err.Error())
 				return append(diags, diag.Diagnostic{
 					Severity: diag.Error,
-					Summary:  "asMap Create failed",
+					Summary:  "asMap create error",
 					Detail:   err.Error(),
 				})
 			}
@@ -267,14 +268,19 @@ func resourceGTMv1ASMapRead(ctx context.Context, d *schema.ResourceData, m inter
 		ASMapName:  asMap,
 		DomainName: domain,
 	})
+	if errors.Is(err, gtm.ErrNotFound) {
+		d.SetId("")
+		return nil
+	}
 	if err != nil {
-		logger.Errorf("asMap Read error: %s", err.Error())
+		logger.Errorf("asMap read error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "asMap Read error",
+			Summary:  "asMap read error",
 			Detail:   err.Error(),
 		})
 	}
+
 	populateTerraformASMapState(d, as, m)
 	logger.Debugf("READ %v", as)
 	return nil
@@ -303,10 +309,10 @@ func resourceGTMv1ASMapUpdate(ctx context.Context, d *schema.ResourceData, m int
 		DomainName: domain,
 	})
 	if err != nil {
-		logger.Errorf("asMap Update read error: %s", err.Error())
+		logger.Errorf("asMap read error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "asMap Update Read error",
+			Summary:  "asMap read error",
 			Detail:   err.Error(),
 		})
 	}
@@ -319,14 +325,14 @@ func resourceGTMv1ASMapUpdate(ctx context.Context, d *schema.ResourceData, m int
 		DomainName: domain,
 	})
 	if err != nil {
-		logger.Errorf("asMap pdate: %s", err.Error())
+		logger.Errorf("asMap update error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "asMap Update error",
+			Summary:  "asMap update error",
 			Detail:   err.Error(),
 		})
 	}
-	logger.Debugf("asMap Update status: %v", uStat)
+	logger.Debugf("asMap update status: %v", uStat)
 	if uStat.Status.PropagationStatus == "DENIED" {
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -341,15 +347,15 @@ func resourceGTMv1ASMapUpdate(ctx context.Context, d *schema.ResourceData, m int
 	if waitOnComplete {
 		done, err := waitForCompletion(ctx, domain, m)
 		if done {
-			logger.Infof("ASmap Update completed")
+			logger.Infof("asMap update completed")
 		} else {
 			if err == nil {
-				logger.Infof("ASmap Update pending")
+				logger.Infof("asMap update pending")
 			} else {
-				logger.Errorf("ASmap Update failed [%s]", err.Error())
+				logger.Errorf("asMap update error: %s", err.Error())
 				return append(diags, diag.Diagnostic{
 					Severity: diag.Error,
-					Summary:  "asMap Update failed",
+					Summary:  "asMap update error",
 					Detail:   err.Error(),
 				})
 			}
@@ -408,7 +414,7 @@ func resourceGTMv1ASMapDelete(ctx context.Context, d *schema.ResourceData, m int
 	// Get existing asMap
 	domain, asMap, err := parseResourceStringID(d.Id())
 	if err != nil {
-		logger.Errorf("[ERROR] ASMap Delete: %s", err.Error())
+		logger.Errorf("asMap delete error: %s", err.Error())
 		return diag.FromErr(err)
 	}
 	existAs, err := Client(meta).GetASMap(ctx, gtm.GetASMapRequest{
@@ -416,7 +422,7 @@ func resourceGTMv1ASMapDelete(ctx context.Context, d *schema.ResourceData, m int
 		DomainName: domain,
 	})
 	if err != nil {
-		logger.Errorf("ASMap Delete: %s", err.Error())
+		logger.Errorf("asMap doesn't exist: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
 			Summary:  "asMap doesn't exist",
@@ -424,20 +430,20 @@ func resourceGTMv1ASMapDelete(ctx context.Context, d *schema.ResourceData, m int
 		})
 	}
 	newAs := createASMapStruct(existAs)
-	logger.Debugf("Deleting ASmap: %v", newAs)
+	logger.Debugf("Deleting asMap: %v", newAs)
 	uStat, err := Client(meta).DeleteASMap(ctx, gtm.DeleteASMapRequest{
 		ASMapName:  asMap,
 		DomainName: domain,
 	})
 	if err != nil {
-		logger.Errorf("ASMap Delete: %s", err.Error())
+		logger.Errorf("asMap delete error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "asMap Delete failed",
+			Summary:  "asMap delete error",
 			Detail:   err.Error(),
 		})
 	}
-	logger.Debugf("asMap Delete status: %v", uStat)
+	logger.Debugf("asMap delete status: %v", uStat)
 	if uStat.Status.PropagationStatus == "DENIED" {
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -452,15 +458,15 @@ func resourceGTMv1ASMapDelete(ctx context.Context, d *schema.ResourceData, m int
 	if waitOnComplete {
 		done, err := waitForCompletion(ctx, domain, m)
 		if done {
-			logger.Infof("asMap Delete completed")
+			logger.Infof("asMap delete completed")
 		} else {
 			if err == nil {
-				logger.Infof("asMap Delete pending")
+				logger.Infof("asMap delete pending")
 			} else {
-				logger.Errorf("asMap Delete failed [%s]", err.Error())
+				logger.Errorf("asMap delete error: %s", err.Error())
 				return append(diags, diag.Diagnostic{
 					Severity: diag.Error,
-					Summary:  "asMap Delete failed",
+					Summary:  "asMap delete error",
 					Detail:   err.Error(),
 				})
 			}
@@ -607,7 +613,7 @@ func populateTerraformASDefaultDCState(d *schema.ResourceData, as *gtm.GetASMapR
 
 // assignmentDiffSuppress is a diff suppress function used in gtm_asmap, gtm_cidrmap and gtm_geomap resources
 func assignmentDiffSuppress(_, _, _ string, d *schema.ResourceData) bool {
-	logger := logger.Get("Akamai GTM", "assignmentDiffSuppress")
+	logger := log.Get("Akamai GTM", "assignmentDiffSuppress")
 	oldVal, newVal := d.GetChange("assignment")
 
 	oldList, ok := oldVal.([]interface{})
@@ -681,16 +687,16 @@ func assignmentDiffSuppress(_, _, _ string, d *schema.ResourceData) bool {
 }
 
 // asNumbersEqual checks whether the as_numbers are equal
-func asNumbersEqual(old, new interface{}) bool {
-	logger := logger.Get("Akamai GTM", "asNumbersEqual")
+func asNumbersEqual(o, n interface{}) bool {
+	logger := log.Get("Akamai GTM", "asNumbersEqual")
 
-	oldVal, ok := old.(*schema.Set)
+	oldVal, ok := o.(*schema.Set)
 	if !ok {
 		logger.Warnf("wrong type conversion: expected *schema.Set, got %T", oldVal)
 		return false
 	}
 
-	newVal, ok := new.(*schema.Set)
+	newVal, ok := n.(*schema.Set)
 	if !ok {
 		logger.Warnf("wrong type conversion: expected *schema.Set, got %T", newVal)
 		return false

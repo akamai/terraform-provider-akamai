@@ -1,11 +1,14 @@
 package property
 
 import (
+	"fmt"
+	"net/http"
 	"strconv"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/iam"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -16,24 +19,47 @@ type mockProperty struct {
 }
 
 type mockPropertyData struct {
-	propertyName      string
-	groupID           string
-	contractID        string
-	productID         string
-	propertyID        string
-	assetID           string
-	latestVersion     int
-	createFromVersion int
-	newVersionID      int
-	ruleTree          mockRuleTreeData
-	versions          papi.PropertyVersionItems
-	hostnames         papi.HostnameResponseItems
-	responseErrors    []*papi.Error
-	responseWarnings  []*papi.Error
-	activations       papi.ActivationsItems
-	createActivation  papi.Activation
-	groups            papi.GroupItems
-	moveGroup         moveGroup
+	propertyName        string
+	groupID             string
+	contractID          string
+	productID           string
+	propertyID          string
+	assetID             string
+	latestVersion       int
+	createFromVersion   int
+	newVersionID        int
+	ruleTree            mockRuleTreeData
+	versions            papi.PropertyVersionItems
+	hostnames           papi.HostnameResponseItems
+	responseErrors      []*papi.Error
+	responseWarnings    []*papi.Error
+	activations         papi.ActivationsItems
+	activationForCreate papi.Activation
+	deleteActivationID  string
+	groups              papi.GroupItems
+	moveGroup           moveGroup
+}
+
+func (d *mockPropertyData) getPropertyRequest() papi.GetPropertyRequest {
+	return papi.GetPropertyRequest{
+		PropertyID: d.propertyID,
+		ContractID: d.contractID,
+		GroupID:    d.groupID,
+	}
+}
+
+func (d *mockPropertyData) getPropertyResponse() papi.GetPropertyResponse {
+	return papi.GetPropertyResponse{
+		Property: &papi.Property{
+			AssetID:       d.assetID,
+			ContractID:    d.contractID,
+			GroupID:       d.groupID,
+			LatestVersion: d.latestVersion,
+			// although optional in PAPI documentation, ProductID is not being set by PAPI in the response
+			PropertyID:   d.propertyID,
+			PropertyName: d.propertyName,
+		},
+	}
 }
 
 type moveGroup struct {
@@ -61,12 +87,12 @@ func (p *mockProperty) mockCreateProperty(err ...error) *mock.Call {
 	}
 
 	if err != nil {
-		return p.papiMock.On("CreateProperty", AnyCTX, req).Return(nil, err[0]).Once()
+		return p.papiMock.On("CreateProperty", testutils.MockContext, req).Return(nil, err[0]).Once()
 	}
 
 	resp := papi.CreatePropertyResponse{PropertyID: p.propertyID}
 
-	return p.papiMock.On("CreateProperty", AnyCTX, req).Return(&resp, nil).Once()
+	return p.papiMock.On("CreateProperty", testutils.MockContext, req).Return(&resp, nil).Once()
 }
 
 func (p *mockProperty) mockGetGroups() *mock.Call {
@@ -74,7 +100,7 @@ func (p *mockProperty) mockGetGroups() *mock.Call {
 		Groups: p.groups,
 	}
 
-	return p.papiMock.On("GetGroups", AnyCTX).Return(resp, nil).Once()
+	return p.papiMock.On("GetGroups", testutils.MockContext).Return(resp, nil).Once()
 }
 
 func (p *mockProperty) mockUpdateRuleTree(err ...error) *mock.Call {
@@ -93,7 +119,7 @@ func (p *mockProperty) mockUpdateRuleTree(err ...error) *mock.Call {
 	}
 
 	if err != nil {
-		return p.papiMock.On("UpdateRuleTree", AnyCTX, req).Return(nil, err[0]).Once()
+		return p.papiMock.On("UpdateRuleTree", testutils.MockContext, req).Return(nil, err[0]).Once()
 	}
 
 	resp := papi.UpdateRulesResponse{
@@ -107,7 +133,7 @@ func (p *mockProperty) mockUpdateRuleTree(err ...error) *mock.Call {
 		Warnings:        p.ruleTree.ruleWarnings,
 	}
 
-	return p.papiMock.On("UpdateRuleTree", AnyCTX, req).Return(&resp, nil).Once()
+	return p.papiMock.On("UpdateRuleTree", testutils.MockContext, req).Return(&resp, nil).Once()
 }
 
 func (p *mockProperty) mockUpdatePropertyVersionHostnames(err ...error) *mock.Call {
@@ -129,7 +155,7 @@ func (p *mockProperty) mockUpdatePropertyVersionHostnames(err ...error) *mock.Ca
 	}
 
 	if err != nil {
-		return p.papiMock.On("UpdatePropertyVersionHostnames", AnyCTX, req).Return(&papi.UpdatePropertyVersionHostnamesResponse{}, err[0]).Once()
+		return p.papiMock.On("UpdatePropertyVersionHostnames", testutils.MockContext, req).Return(&papi.UpdatePropertyVersionHostnamesResponse{}, err[0]).Once()
 	}
 
 	resp := papi.UpdatePropertyVersionHostnamesResponse{
@@ -140,26 +166,12 @@ func (p *mockProperty) mockUpdatePropertyVersionHostnames(err ...error) *mock.Ca
 		Hostnames:       p.hostnames,
 	}
 
-	return p.papiMock.On("UpdatePropertyVersionHostnames", AnyCTX, req).Return(&resp, nil).Once()
+	return p.papiMock.On("UpdatePropertyVersionHostnames", testutils.MockContext, req).Return(&resp, nil).Once()
 }
 
 func (p *mockProperty) mockGetProperty() *mock.Call {
-	req := papi.GetPropertyRequest{
-		PropertyID: p.propertyID,
-		ContractID: p.contractID,
-		GroupID:    p.groupID,
-	}
-	resp := papi.GetPropertyResponse{
-		Property: &papi.Property{
-			AssetID:       p.assetID,
-			ContractID:    p.contractID,
-			GroupID:       p.groupID,
-			LatestVersion: p.latestVersion,
-			// although optional in PAPI documentation, ProductID is not being set by PAPI in the response
-			PropertyID:   p.propertyID,
-			PropertyName: p.propertyName,
-		},
-	}
+	req := p.getPropertyRequest()
+	resp := p.getPropertyResponse()
 
 	if len(p.versions.Items) > 0 && p.versions.Items[0].StagingStatus == papi.VersionStatusActive {
 		resp.Property.StagingVersion = &p.versions.Items[0].PropertyVersion
@@ -169,7 +181,7 @@ func (p *mockProperty) mockGetProperty() *mock.Call {
 		resp.Property.ProductionVersion = &p.versions.Items[0].PropertyVersion
 	}
 
-	return p.papiMock.On("GetProperty", AnyCTX, req).Return(&resp, nil).Once()
+	return p.papiMock.On("GetProperty", testutils.MockContext, req).Return(&resp, nil).Once()
 }
 
 func (p *mockProperty) mockGetPropertyVersionHostnames() *mock.Call {
@@ -189,7 +201,7 @@ func (p *mockProperty) mockGetPropertyVersionHostnames() *mock.Call {
 		Hostnames:       p.hostnames,
 	}
 
-	return p.papiMock.On("GetPropertyVersionHostnames", AnyCTX, req).Return(&resp, nil).Once()
+	return p.papiMock.On("GetPropertyVersionHostnames", testutils.MockContext, req).Return(&resp, nil).Once()
 }
 
 func (p *mockProperty) mockGetPropertyVersions() *mock.Call {
@@ -207,7 +219,7 @@ func (p *mockProperty) mockGetPropertyVersions() *mock.Call {
 		Versions:     p.versions,
 	}
 
-	return p.papiMock.On("GetPropertyVersions", AnyCTX, req).Return(resp, nil).Once()
+	return p.papiMock.On("GetPropertyVersions", testutils.MockContext, req).Return(resp, nil).Once()
 }
 
 func (p *mockProperty) mockGetRuleTree() *mock.Call {
@@ -232,7 +244,7 @@ func (p *mockProperty) mockGetRuleTree() *mock.Call {
 		Comments:        p.ruleTree.comments,
 	}
 
-	return p.papiMock.On("GetRuleTree", AnyCTX, req).Return(&resp, nil).Once()
+	return p.papiMock.On("GetRuleTree", testutils.MockContext, req).Return(&resp, nil).Once()
 }
 
 // mockGetRuleTreeActivation mocks the GetRuleTree call executed from property_activation resource. It differs with request
@@ -256,7 +268,7 @@ func (p *mockProperty) mockGetRuleTreeActivation() *mock.Call {
 		Comments:        p.ruleTree.comments,
 	}
 
-	return p.papiMock.On("GetRuleTree", AnyCTX, req).Return(&resp, nil).Once()
+	return p.papiMock.On("GetRuleTree", testutils.MockContext, req).Return(&resp, nil).Once()
 }
 
 func (p *mockProperty) mockGetPropertyVersion() *mock.Call {
@@ -283,7 +295,7 @@ func (p *mockProperty) mockGetPropertyVersion() *mock.Call {
 		ContractID: p.contractID,
 		Version:    ver,
 	}
-	return p.papiMock.On("GetPropertyVersion", AnyCTX, req).Return(resp, nil).Once()
+	return p.papiMock.On("GetPropertyVersion", testutils.MockContext, req).Return(resp, nil).Once()
 }
 
 func (p *mockProperty) mockRemoveProperty(err ...error) *mock.Call {
@@ -295,13 +307,38 @@ func (p *mockProperty) mockRemoveProperty(err ...error) *mock.Call {
 	resp := papi.RemovePropertyResponse{}
 
 	if err != nil {
-		return p.papiMock.On("RemoveProperty", AnyCTX, req).Return(nil, err[0]).Once()
+		return p.papiMock.On("RemoveProperty", testutils.MockContext, req).Return(nil, err[0]).Once()
 	}
 
-	return p.papiMock.On("RemoveProperty", AnyCTX, req).Return(&resp, nil).Once()
+	return p.papiMock.On("RemoveProperty", testutils.MockContext, req).Return(&resp, nil).Once()
 }
 
 func (p *mockProperty) mockMoveProperty() {
+
+	// Checking if the property is already in the dst group
+	getReq := p.getPropertyRequest()
+	getReq.GroupID = "grp_" + fmt.Sprintf("%d", p.moveGroup.destinationGroupID)
+	p.papiMock.On("GetProperty", testutils.MockContext, getReq).
+		Return(nil, &papi.Error{StatusCode: http.StatusForbidden}).
+		Once()
+
+	activationsReq := papi.GetActivationsRequest{
+		PropertyID: p.propertyID,
+		ContractID: p.contractID,
+		GroupID:    p.groupID,
+	}
+	var act1 = &papi.Activation{
+		ActivationID: "dummy_activation_id",
+	}
+	var activationsRes = &papi.GetActivationsResponse{
+		Activations: papi.ActivationsItems{
+			Items: []*papi.Activation{
+				act1,
+			},
+		},
+	}
+	p.papiMock.On("GetActivations", testutils.MockContext, activationsReq).Return(activationsRes, nil)
+
 	prpID := strings.TrimPrefix(p.assetID, "aid_")
 	intPropertyID, err := strconv.ParseInt(prpID, 10, 64)
 	// shouldn't happen, unless wrong format of propertyID is provided
@@ -316,7 +353,7 @@ func (p *mockProperty) mockMoveProperty() {
 		},
 	}
 
-	p.iamMock.On("MoveProperty", AnyCTX, req).Return(nil).Once()
+	p.iamMock.On("MoveProperty", testutils.MockContext, req).Return(nil).Once()
 }
 
 func (p *mockProperty) mockGetActivations() *mock.Call {
@@ -326,36 +363,93 @@ func (p *mockProperty) mockGetActivations() *mock.Call {
 	resp := papi.GetActivationsResponse{
 		Activations: p.activations,
 	}
-	return p.papiMock.On("GetActivations", mock.Anything, req).Return(&resp, nil).Once()
+	return p.papiMock.On("GetActivations", testutils.MockContext, req).Return(&resp, nil).Once()
+}
+
+func (p *mockProperty) mockGetActivationsCompleteRequest(err ...error) *mock.Call {
+	req := papi.GetActivationsRequest{
+		PropertyID: p.propertyID,
+		ContractID: p.contractID,
+		GroupID:    p.groupID,
+	}
+	if err != nil {
+		return p.papiMock.On("GetActivations", testutils.MockContext, req).Return(nil, err[0]).Once()
+	}
+	resp := papi.GetActivationsResponse{
+		Activations: p.activations,
+	}
+	return p.papiMock.On("GetActivations", testutils.MockContext, req).Return(&resp, nil).Once()
 }
 
 func (p *mockProperty) mockCreateActivation() *mock.Call {
+	activation := papi.Activation{
+		ActivationType:  p.activationForCreate.ActivationType,
+		Network:         p.activationForCreate.Network,
+		NotifyEmails:    p.activationForCreate.NotifyEmails,
+		PropertyVersion: p.activationForCreate.PropertyVersion,
+	}
 	req := papi.CreateActivationRequest{
 		PropertyID: p.propertyID,
-		Activation: papi.Activation{
-			ActivationType:  p.createActivation.ActivationType,
-			Network:         p.createActivation.Network,
-			NotifyEmails:    p.createActivation.NotifyEmails,
-			PropertyVersion: p.createActivation.PropertyVersion,
-		},
+		Activation: activation,
 	}
 	resp := papi.CreateActivationResponse{
-		ActivationID: p.createActivation.ActivationID,
+		ActivationID: p.activationForCreate.ActivationID,
 	}
 
-	return p.papiMock.On("CreateActivation", mock.Anything, req).Return(&resp, nil).Once()
+	activation.ActivationID = p.activationForCreate.ActivationID
+	activation.GroupID = p.groupID
+	activation.PropertyName = p.propertyName
+	activation.PropertyID = p.propertyID
+	activation.Status = p.activationForCreate.Status
+	activation.SubmitDate = p.activationForCreate.SubmitDate
+
+	// modify mock data to reflect newly created activation
+	p.activations.Items = append(p.activations.Items, &activation)
+
+	return p.papiMock.On("CreateActivation", testutils.MockContext, req).Return(&resp, nil).Once()
+}
+
+func (p *mockProperty) mockResourceActivationDelete() {
+	p.mockGetActivations()
+
+	activation := papi.Activation{
+		ActivationType:  papi.ActivationTypeDeactivate,
+		Network:         p.activationForCreate.Network,
+		NotifyEmails:    p.activationForCreate.NotifyEmails,
+		PropertyVersion: p.activationForCreate.PropertyVersion,
+	}
+	req := papi.CreateActivationRequest{
+		PropertyID: p.propertyID,
+		Activation: activation,
+	}
+	resp := papi.CreateActivationResponse{
+		ActivationID: p.deleteActivationID,
+	}
+
+	activation.ActivationID = p.deleteActivationID
+	activation.GroupID = p.groupID
+	activation.PropertyName = p.propertyName
+	activation.PropertyID = p.propertyID
+	activation.Status = papi.ActivationStatusActive
+
+	// modify mock data to reflect newly created activation
+	p.activations.Items = append(p.activations.Items, &activation)
+
+	p.papiMock.On("CreateActivation", testutils.MockContext, req).Return(&resp, nil).Once()
+	p.mockGetActivation()
 }
 
 func (p *mockProperty) mockGetActivation() *mock.Call {
+	activation := p.activations.Items[len(p.activations.Items)-1]
 	req := papi.GetActivationRequest{
 		PropertyID:   p.propertyID,
-		ActivationID: p.createActivation.ActivationID,
+		ActivationID: activation.ActivationID,
 	}
 	resp := papi.GetActivationResponse{
-		Activation: &p.createActivation,
+		Activation: activation,
 	}
 
-	return p.papiMock.On("GetActivation", mock.Anything, req).Return(&resp, nil).Once()
+	return p.papiMock.On("GetActivation", testutils.MockContext, req).Return(&resp, nil).Once()
 }
 
 func (p *mockProperty) mockCreatePropertyVersion() *mock.Call {
@@ -370,7 +464,7 @@ func (p *mockProperty) mockCreatePropertyVersion() *mock.Call {
 
 	resp := papi.CreatePropertyVersionResponse{PropertyVersion: p.newVersionID}
 
-	return p.papiMock.On("CreatePropertyVersion", AnyCTX, req).Return(&resp, nil).Once()
+	return p.papiMock.On("CreatePropertyVersion", testutils.MockContext, req).Return(&resp, nil).Once()
 }
 
 // mockResourcePropertyCreateWithVersionHostnames represents the creation workflow where the property and hostnames are created

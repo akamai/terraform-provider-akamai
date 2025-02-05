@@ -3,5 +3,5 @@ provider "akamai" {
 }
 
 data "akamai_gtm_asmap" "my_gtm_asmap" {
-  map_name = "map1"
+  map_name = "tfexample_as_1"
 }

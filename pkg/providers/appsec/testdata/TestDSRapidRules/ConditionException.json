@@ -1,0 +1,13 @@
+{
+  "exception": {
+    "specificHeaderCookieParamXmlOrJsonNames": [
+      {
+        "names": [
+          "*"
+        ],
+        "selector": "ARGS_NAMES",
+        "wildcard": true
+      }
+    ]
+  }
+}

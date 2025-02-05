@@ -1,0 +1,19 @@
+[
+  {
+    "action": "deny",
+    "lock": false,
+    "conditionException": {
+      "exception": {
+        "specificHeaderCookieParamXmlOrJsonNames": [
+          {
+            "names": [
+              "Auth"
+            ],
+            "selector": "REQUEST_HEADERS",
+            "wildcard": false
+          }
+        ]
+      }
+    }
+  }
+]

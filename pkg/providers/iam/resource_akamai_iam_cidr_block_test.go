@@ -8,10 +8,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/iam"
-	"github.com/akamai/terraform-provider-akamai/v6/internal/test"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v7/internal/test"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/stretchr/testify/mock"
@@ -86,14 +86,14 @@ func TestCIDRBlockResource(t *testing.T) {
 	t.Parallel()
 	tests := map[string]struct {
 		configPath string
-		init       func(*testing.T, *iam.Mock, commonDataForResource, commonDataForResource)
+		init       func(*iam.Mock, commonDataForResource, commonDataForResource)
 		createData commonDataForResource
 		updateData commonDataForResource
 		steps      []resource.TestStep
 		error      *regexp.Regexp
 	}{
 		"happy path - create with comment": {
-			init: func(t *testing.T, m *iam.Mock, createData, _ commonDataForResource) {
+			init: func(m *iam.Mock, createData, _ commonDataForResource) {
 				// Create
 				mockCreateCIDRBlock(t, m, createData)
 				// Read
@@ -121,7 +121,7 @@ func TestCIDRBlockResource(t *testing.T) {
 			},
 		},
 		"happy path - create without comment": {
-			init: func(t *testing.T, m *iam.Mock, createData, _ commonDataForResource) {
+			init: func(m *iam.Mock, createData, _ commonDataForResource) {
 				// Create
 				mockCreateCIDRBlock(t, m, createData)
 				// Read
@@ -149,7 +149,7 @@ func TestCIDRBlockResource(t *testing.T) {
 			},
 		},
 		"happy path - update all fields": {
-			init: func(t *testing.T, m *iam.Mock, createData, updateData commonDataForResource) {
+			init: func(m *iam.Mock, createData, updateData commonDataForResource) {
 				// Create
 				mockCreateCIDRBlock(t, m, createData)
 				mockGetCIDRBlock(t, m, createData)
@@ -214,8 +214,8 @@ func TestCIDRBlockResource(t *testing.T) {
 			},
 		},
 		"expect error - create": {
-			init: func(t *testing.T, m *iam.Mock, createData, _ commonDataForResource) {
-				m.On("CreateCIDRBlock", mock.Anything, iam.CreateCIDRBlockRequest{
+			init: func(m *iam.Mock, createData, _ commonDataForResource) {
+				m.On("CreateCIDRBlock", testutils.MockContext, iam.CreateCIDRBlockRequest{
 					CIDRBlock: createData.cidrBlock,
 					Comments:  createData.comments,
 					Enabled:   createData.enabled,
@@ -230,14 +230,14 @@ func TestCIDRBlockResource(t *testing.T) {
 			},
 		},
 		"expect error - delete": {
-			init: func(t *testing.T, m *iam.Mock, createData, _ commonDataForResource) {
+			init: func(m *iam.Mock, createData, _ commonDataForResource) {
 				// Create
 				mockCreateCIDRBlock(t, m, createData)
 				// Read
 				mockGetCIDRBlock(t, m, createData).Twice()
 				mockGetCIDRBlock(t, m, createData)
 				// Delete - error
-				m.On("DeleteCIDRBlock", mock.Anything, iam.DeleteCIDRBlockRequest{
+				m.On("DeleteCIDRBlock", testutils.MockContext, iam.DeleteCIDRBlockRequest{
 					CIDRBlockID: createData.cidrBlockID,
 				}).Return(iam.ErrDeleteCIDRBlock).Once()
 				// Delete - destroy
@@ -274,7 +274,7 @@ func TestCIDRBlockResource(t *testing.T) {
 			t.Parallel()
 			client := &iam.Mock{}
 			if tc.init != nil {
-				tc.init(t, client, tc.createData, tc.updateData)
+				tc.init(client, tc.createData, tc.updateData)
 			}
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
@@ -291,14 +291,14 @@ func TestCIDRBlockResource(t *testing.T) {
 func TestImportCIDRBlockResource(t *testing.T) {
 	tests := map[string]struct {
 		importID    string
-		init        func(*testing.T, *iam.Mock, commonDataForResource)
+		init        func(*iam.Mock, commonDataForResource)
 		mockData    commonDataForResource
 		expectError *regexp.Regexp
 	}{
 		"happy path - import with comments": {
 			importID: "1111",
 			mockData: testCIDR,
-			init: func(t *testing.T, m *iam.Mock, data commonDataForResource) {
+			init: func(m *iam.Mock, data commonDataForResource) {
 				// Read
 				mockGetCIDRBlock(t, m, data)
 			},
@@ -306,20 +306,19 @@ func TestImportCIDRBlockResource(t *testing.T) {
 		"happy path - import without comments": {
 			importID: "1111",
 			mockData: testCIDRNoComments,
-			init: func(t *testing.T, m *iam.Mock, data commonDataForResource) {
+			init: func(m *iam.Mock, data commonDataForResource) {
 				// Read
 				mockGetCIDRBlock(t, m, data)
 			},
 		},
 		"expect error - wrong import ID": {
 			importID:    "wrong format",
-			init:        func(_ *testing.T, _ *iam.Mock, _ commonDataForResource) {},
 			expectError: regexp.MustCompile(`Error: could not convert import ID to int`),
 		},
 		"expect error - read": {
 			importID: "1111",
-			init: func(t *testing.T, m *iam.Mock, data commonDataForResource) {
-				m.On("GetCIDRBlock", mock.Anything, iam.GetCIDRBlockRequest{
+			init: func(m *iam.Mock, data commonDataForResource) {
+				m.On("GetCIDRBlock", testutils.MockContext, iam.GetCIDRBlockRequest{
 					CIDRBlockID: data.cidrBlockID,
 					Actions:     true,
 				}).Return(nil, fmt.Errorf("get failed")).Once()
@@ -332,7 +331,9 @@ func TestImportCIDRBlockResource(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &iam.Mock{}
-			tc.init(t, client, tc.mockData)
+			if tc.init != nil {
+				tc.init(client, tc.mockData)
+			}
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
@@ -392,8 +393,8 @@ func checkImportCIDRBlock(data commonDataForResource) resource.ImportStateCheckF
 			}
 		}
 
-		if len(invalidValues) != 0 {
-			return fmt.Errorf(strings.Join(invalidValues, "\n"))
+		if len(invalidValues) > 0 {
+			return fmt.Errorf("found invalid values: %s", strings.Join(invalidValues, "\n"))
 		}
 		return nil
 	}
@@ -409,7 +410,7 @@ func mockCreateCIDRBlock(t *testing.T, m *iam.Mock, testData commonDataForResour
 		}
 	}
 
-	return m.On("CreateCIDRBlock", mock.Anything, iam.CreateCIDRBlockRequest{
+	return m.On("CreateCIDRBlock", testutils.MockContext, iam.CreateCIDRBlockRequest{
 		CIDRBlock: testData.cidrBlock,
 		Comments:  testData.comments,
 		Enabled:   testData.enabled,
@@ -436,7 +437,7 @@ func mockGetCIDRBlock(t *testing.T, m *iam.Mock, testData commonDataForResource)
 		}
 	}
 
-	return m.On("GetCIDRBlock", mock.Anything, iam.GetCIDRBlockRequest{
+	return m.On("GetCIDRBlock", testutils.MockContext, iam.GetCIDRBlockRequest{
 		CIDRBlockID: testData.cidrBlockID,
 		Actions:     true,
 	}).Return(&iam.GetCIDRBlockResponse{
@@ -453,7 +454,7 @@ func mockGetCIDRBlock(t *testing.T, m *iam.Mock, testData commonDataForResource)
 }
 
 func mockDeleteCIDRBlock(m *iam.Mock, testData commonDataForResource) *mock.Call {
-	return m.On("DeleteCIDRBlock", mock.Anything, iam.DeleteCIDRBlockRequest{
+	return m.On("DeleteCIDRBlock", testutils.MockContext, iam.DeleteCIDRBlockRequest{
 		CIDRBlockID: testData.cidrBlockID,
 	}).Return(nil).Once()
 }
@@ -468,7 +469,7 @@ func mockUpdateCIDRBlock(t *testing.T, m *iam.Mock, testData commonDataForResour
 		}
 	}
 
-	return m.On("UpdateCIDRBlock", mock.Anything, iam.UpdateCIDRBlockRequest{
+	return m.On("UpdateCIDRBlock", testutils.MockContext, iam.UpdateCIDRBlockRequest{
 		CIDRBlockID: testData.cidrBlockID,
 		Body: iam.UpdateCIDRBlockRequestBody{
 			CIDRBlock: testData.cidrBlock,

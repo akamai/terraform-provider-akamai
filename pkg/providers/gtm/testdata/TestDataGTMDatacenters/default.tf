@@ -3,5 +3,5 @@ provider "akamai" {
 }
 
 data "akamai_gtm_datacenters" "test" {
-  domain = "test.domain.com"
+  domain = "gtm_terra_testdomain.akadns.net"
 }

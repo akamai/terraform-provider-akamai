@@ -1,158 +1,20 @@
 package edgeworkers
 
 import (
-	"context"
-	"errors"
 	"fmt"
-	"net/http"
 	"regexp"
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/edgeworkers"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/edgeworkers"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
-
-func Test_populateEKV(t *testing.T) {
-	upsertWindow = time.Millisecond
-	maxUpsertAttempts = 1
-	namespaceName, staging, ekvGroup := "DevExpTest", edgeworkers.ItemStagingNetwork, "greetings"
-	anError, nsCreationError := "an error", "The requested namespace does not exist or namespace type is not configured for 12345"
-	success := ptr.To("Item was upserted in KV store with database 123456, namespace DevExpTest, group greetings, and key FR.")
-	tests := map[string]struct {
-		data      []interface{}
-		network   edgeworkers.ItemNetwork
-		init      func(*edgeworkers.Mock)
-		withError error
-	}{
-		"no insert": {
-			init: func(m *edgeworkers.Mock) {},
-		},
-		"one upsert": {
-			network: staging,
-			data: []interface{}{
-				map[string]interface{}{
-					"key":   "FR",
-					"value": "bonjour",
-					"group": ekvGroup,
-				},
-			},
-			init: func(m *edgeworkers.Mock) {
-				m.On("UpsertItem", mock.Anything, edgeworkers.UpsertItemRequest{
-					ItemID:   "FR",
-					ItemData: "bonjour",
-					ItemsRequestParams: edgeworkers.ItemsRequestParams{
-						NamespaceID: namespaceName,
-						Network:     staging,
-						GroupID:     ekvGroup,
-					},
-				}).Return(success, nil).Once()
-			},
-		},
-		"server error on upsert": {
-			network: staging,
-			data: []interface{}{
-				map[string]interface{}{
-					"key":   "FR",
-					"value": "bonjour",
-					"group": ekvGroup,
-				},
-			},
-			init: func(m *edgeworkers.Mock) {
-				m.On("UpsertItem", mock.Anything, edgeworkers.UpsertItemRequest{
-					ItemID:   "FR",
-					ItemData: "bonjour",
-					ItemsRequestParams: edgeworkers.ItemsRequestParams{
-						NamespaceID: namespaceName,
-						Network:     staging,
-						GroupID:     ekvGroup,
-					},
-				}).Return(nil, errors.New(anError)).Once()
-			},
-			withError: fmt.Errorf(anError),
-		},
-		"max attempts not reached": {
-			network: staging,
-			data: []interface{}{
-				map[string]interface{}{
-					"key":   "FR",
-					"value": "bonjour",
-					"group": ekvGroup,
-				},
-			},
-			init: func(m *edgeworkers.Mock) {
-				maxUpsertAttempts = 2
-				m.On("UpsertItem", mock.Anything, edgeworkers.UpsertItemRequest{
-					ItemID:   "FR",
-					ItemData: "bonjour",
-					ItemsRequestParams: edgeworkers.ItemsRequestParams{
-						NamespaceID: namespaceName,
-						Network:     staging,
-						GroupID:     ekvGroup,
-					},
-				}).Return(nil, errors.New(nsCreationError)).Once()
-				m.On("UpsertItem", mock.Anything, edgeworkers.UpsertItemRequest{
-					ItemID:   "FR",
-					ItemData: "bonjour",
-					ItemsRequestParams: edgeworkers.ItemsRequestParams{
-						NamespaceID: namespaceName,
-						Network:     staging,
-						GroupID:     ekvGroup,
-					},
-				}).Return(success, nil).Once()
-			},
-		},
-		"max attempts reached": {
-			network: staging,
-			data: []interface{}{
-				map[string]interface{}{
-					"key":   "FR",
-					"value": "bonjour",
-					"group": ekvGroup,
-				},
-			},
-			init: func(m *edgeworkers.Mock) {
-				maxUpsertAttempts = 1
-				m.On("UpsertItem", mock.Anything, edgeworkers.UpsertItemRequest{
-					ItemID:   "FR",
-					ItemData: "bonjour",
-					ItemsRequestParams: edgeworkers.ItemsRequestParams{
-						NamespaceID: namespaceName,
-						Network:     staging,
-						GroupID:     ekvGroup,
-					},
-				}).Return(nil, errors.New(nsCreationError)).Once()
-			},
-			withError: fmt.Errorf("The requested namespace does not exist or namespace type is not configured for 12345"),
-		},
-	}
-	for name, test := range tests {
-		t.Run(name, func(t *testing.T) {
-			client := &edgeworkers.Mock{}
-			test.init(client)
-			err := populateEKV(context.Background(), client, test.data, &edgeworkers.Namespace{Name: namespaceName}, staging)
-			client.AssertExpectations(t)
-			if test.withError != nil {
-				require.Error(t, err)
-				require.Equal(t, err.Error(), test.withError.Error())
-				return
-			}
-			require.NoError(t, err)
-		})
-	}
-}
 
 func TestResourceEdgeKV(t *testing.T) {
 	initWindow = time.Duration(1) * time.Millisecond
-
-	ewUpsertBadRequestError := edgeworkers.Error{
-		Status: http.StatusBadRequest,
-		Detail: "The requested namespace does not exist or namespace type is not configured for 1193952 and teststaging.",
-	}
 
 	basicData := edgeKVmockData{
 		network:   "staging",
@@ -208,79 +70,12 @@ func TestResourceEdgeKV(t *testing.T) {
 				},
 			},
 		},
-		"with some data to upsert": {
-			init: func(m *edgeworkers.Mock) {
-				data := basicData
-				data.items = []mockItem{
-					{
-						key:   "es",
-						value: "hola",
-						group: "greetings",
-					},
-				}
-				// create
-				mockEdgeKVCreate(m, data)
-				// read
-				mockEdgeKVRead(m, data).Times(2)
-			},
-			steps: []resource.TestStep{
-				{
-					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/ekv_with_data.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", "DevExpTest:staging"),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", "DevExpTest"),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "network", "staging"),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", fmt.Sprintf("%d", 1234)),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", fmt.Sprintf("%d", 86401)),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "initial_data.#", fmt.Sprintf("%d", 1)),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "initial_data.0.key", "es"),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "initial_data.0.value", "hola"),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "initial_data.0.group", "greetings"),
-					),
-				},
-			},
-		},
-		"data upsert error": {
-			init: func(m *edgeworkers.Mock) {
-				data := basicData
-				data.items = []mockItem{
-					{
-						key:   "es",
-						value: "hola",
-						group: "greetings",
-					},
-				}
-				upsertWindow = 1
-				maxUpsertAttempts = 2
-				// create
-				mockGetEdgeKVInitializationStatus(m, "UNINITIALIZED")
-				mockInitializeEdgeKV(m)
-				mockGetEdgeKVInitializationStatus(m, "INITIALIZED")
-				mockCreateEdgeKVNamespace(m, data)
-				// mock upserting an item twice, so we reach the limit of max attempts = 2 configured for this test and return an error
-				m.On("UpsertItem", mock.Anything, edgeworkers.UpsertItemRequest{
-					ItemID:   data.items[0].key,
-					ItemData: edgeworkers.Item(data.items[0].value),
-					ItemsRequestParams: edgeworkers.ItemsRequestParams{
-						Network:     edgeworkers.ItemNetwork(data.network),
-						NamespaceID: data.name,
-						GroupID:     data.items[0].group,
-					},
-				}).Return(nil, fmt.Errorf("%s: %v", edgeworkers.ErrUpsertItem, ewUpsertBadRequestError)).Twice()
-			},
-			steps: []resource.TestStep{
-				{
-					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/ekv_with_data.tf"),
-					ExpectError: regexp.MustCompile("The requested namespace does not exist"),
-				},
-			},
-		},
 		"error in namespace initialization": {
 			init: func(m *edgeworkers.Mock) {
 				// create
 				mockGetEdgeKVInitializationStatus(m, "UNINITIALIZED")
 				// expect an error on InitializeEdgeKV
-				m.On("InitializeEdgeKV", mock.Anything).Return(nil, fmt.Errorf("error on initialization edgeKV")).Once()
+				m.On("InitializeEdgeKV", testutils.MockContext).Return(nil, fmt.Errorf("error on initialization edgeKV")).Once()
 			},
 			steps: []resource.TestStep{
 				{
@@ -345,7 +140,7 @@ func TestResourceEdgeKV(t *testing.T) {
 				mockInitializeEdgeKV(m)
 				mockGetEdgeKVInitializationStatus(m, "INITIALIZED")
 				// expect error on creating EdgeKV namespace
-				m.On("CreateEdgeKVNamespace", mock.Anything, edgeworkers.CreateEdgeKVNamespaceRequest{
+				m.On("CreateEdgeKVNamespace", testutils.MockContext, edgeworkers.CreateEdgeKVNamespaceRequest{
 					Network: basicData.network,
 					Namespace: edgeworkers.Namespace{
 						Name:        basicData.name,
@@ -367,7 +162,7 @@ func TestResourceEdgeKV(t *testing.T) {
 				// create
 				mockEdgeKVCreate(m, basicData)
 				// read - expect error on GetEdgeKVNamespace
-				m.On("GetEdgeKVNamespace", mock.Anything, edgeworkers.GetEdgeKVNamespaceRequest{
+				m.On("GetEdgeKVNamespace", testutils.MockContext, edgeworkers.GetEdgeKVNamespaceRequest{
 					Network: basicData.network,
 					Name:    basicData.name,
 				}).Return(nil, fmt.Errorf("error reading edgekv namespace")).Once()
@@ -483,32 +278,6 @@ func TestResourceEdgeKV(t *testing.T) {
 				},
 			},
 		},
-		"basic diff initial_data upsert attempt -> error": {
-			init: func(m *edgeworkers.Mock) {
-				// create
-				mockEdgeKVCreate(m, basicData)
-				// read
-				mockEdgeKVRead(m, basicData).Times(2)
-				// read before update
-				mockEdgeKVRead(m, basicData)
-			},
-			steps: []resource.TestStep{
-				{
-					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", "DevExpTest:staging"),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", "DevExpTest"),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "network", "staging"),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", fmt.Sprintf("%d", 1234)),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", fmt.Sprintf("%d", 86401)),
-					),
-				},
-				{
-					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/update_data.tf"),
-					ExpectError: regexp.MustCompile("the field \"initial_data\" cannot be updated after resource creation"),
-				},
-			},
-		},
 		"test import": {
 			init: func(m *edgeworkers.Mock) {
 				// 1st step: create
@@ -594,7 +363,7 @@ func mockEdgeKVCreate(m *edgeworkers.Mock, data edgeKVmockData) {
 }
 
 func mockEdgeKVRead(m *edgeworkers.Mock, data edgeKVmockData) *mock.Call {
-	return m.On("GetEdgeKVNamespace", mock.Anything, edgeworkers.GetEdgeKVNamespaceRequest{
+	return m.On("GetEdgeKVNamespace", testutils.MockContext, edgeworkers.GetEdgeKVNamespaceRequest{
 		Network: data.network,
 		Name:    data.name,
 	}).Return(&edgeworkers.Namespace{
@@ -605,7 +374,7 @@ func mockEdgeKVRead(m *edgeworkers.Mock, data edgeKVmockData) *mock.Call {
 }
 
 func mockGetEdgeKVInitializationStatus(m *edgeworkers.Mock, status string) {
-	m.On("GetEdgeKVInitializationStatus", mock.Anything).Return(&edgeworkers.EdgeKVInitializationStatus{
+	m.On("GetEdgeKVInitializationStatus", testutils.MockContext).Return(&edgeworkers.EdgeKVInitializationStatus{
 		AccountStatus:    status,
 		CPCode:           "123456",
 		ProductionStatus: status,
@@ -614,7 +383,7 @@ func mockGetEdgeKVInitializationStatus(m *edgeworkers.Mock, status string) {
 }
 
 func mockInitializeEdgeKV(m *edgeworkers.Mock) {
-	m.On("InitializeEdgeKV", mock.Anything).Return(&edgeworkers.EdgeKVInitializationStatus{}, nil).Once()
+	m.On("InitializeEdgeKV", testutils.MockContext).Return(&edgeworkers.EdgeKVInitializationStatus{}, nil).Once()
 }
 
 func mockCreateEdgeKVNamespace(m *edgeworkers.Mock, data edgeKVmockData) {
@@ -625,7 +394,7 @@ func mockCreateEdgeKVNamespace(m *edgeworkers.Mock, data edgeKVmockData) {
 		GroupID:     data.groupID,
 	}
 
-	m.On("CreateEdgeKVNamespace", mock.Anything, edgeworkers.CreateEdgeKVNamespaceRequest{
+	m.On("CreateEdgeKVNamespace", testutils.MockContext, edgeworkers.CreateEdgeKVNamespaceRequest{
 		Network:   data.network,
 		Namespace: namespace,
 	}).Return(&namespace, nil).Once()
@@ -633,7 +402,7 @@ func mockCreateEdgeKVNamespace(m *edgeworkers.Mock, data edgeKVmockData) {
 
 func mockUpsertItems(m *edgeworkers.Mock, data edgeKVmockData) {
 	for _, item := range data.items {
-		m.On("UpsertItem", mock.Anything, edgeworkers.UpsertItemRequest{
+		m.On("UpsertItem", testutils.MockContext, edgeworkers.UpsertItemRequest{
 			ItemID:   item.key,
 			ItemData: edgeworkers.Item(item.value),
 			ItemsRequestParams: edgeworkers.ItemsRequestParams{
@@ -646,7 +415,7 @@ func mockUpsertItems(m *edgeworkers.Mock, data edgeKVmockData) {
 }
 
 func mockUpdateEdgeKVNamespace(m *edgeworkers.Mock, data edgeKVmockData) {
-	m.On("UpdateEdgeKVNamespace", mock.Anything, edgeworkers.UpdateEdgeKVNamespaceRequest{
+	m.On("UpdateEdgeKVNamespace", testutils.MockContext, edgeworkers.UpdateEdgeKVNamespaceRequest{
 		Network: data.network,
 		UpdateNamespace: edgeworkers.UpdateNamespace{
 			Name:      data.name,

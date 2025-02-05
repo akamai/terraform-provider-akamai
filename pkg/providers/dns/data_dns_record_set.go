@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/dns"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
-	"github.com/apex/log"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/dns"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/log"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -64,12 +64,11 @@ func dataSourceDNSRecordSetRead(ctx context.Context, d *schema.ResourceData, m i
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
-	logger.WithFields(log.Fields{
+	logger.Debug("Start Searching for records", log.Fields{
 		"zone":       zone,
 		"host":       host,
-		"recordtype": recordType,
-	}).Debug("Start Searching for records")
+		"recordtype": recordType})
+
 	// Warning or Errors can be collected in a slice type
 	var diags diag.Diagnostics
 	rdata, err := inst.Client(meta).GetRdata(ctx, dns.GetRdataRequest{
@@ -84,7 +83,7 @@ func dataSourceDNSRecordSetRead(ctx context.Context, d *schema.ResourceData, m i
 			Detail:   err.Error(),
 		})
 	}
-	logger.WithField("rdata", rdata).Debug("Recordset found.")
+	logger.Debug("Recordset found.", "rdata", rdata)
 	if recordType != RRTypeTxt {
 		sort.Strings(rdata)
 	}

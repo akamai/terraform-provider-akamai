@@ -8,10 +8,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/hash"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/hash"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 )
 
 func dataSourcePropertyMultipleGroups() *schema.Resource {
@@ -70,9 +70,7 @@ func dataPropertyMultipleGroupsRead(ctx context.Context, d *schema.ResourceData,
 	grpList := make([]map[string]interface{}, 0, len(groups.Groups.Items))
 	for _, g := range groups.Groups.Items {
 		contractIDs := make([]string, 0, len(g.ContractIDs))
-		for _, contractID := range g.ContractIDs {
-			contractIDs = append(contractIDs, contractID)
-		}
+		contractIDs = append(contractIDs, g.ContractIDs...)
 		grpList = append(grpList, map[string]interface{}{
 			"group_id":        g.GroupID,
 			"group_name":      g.GroupName,

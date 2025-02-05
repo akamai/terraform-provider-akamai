@@ -1,0 +1,9 @@
+{
+    "fileType": "RBAC",
+    "id": 43253,
+    "latestVersion": 7,
+    "name": "Akamai Tools",
+    "productionVersion": 6,
+    "stagingVersion": 6,    
+    "targetProduct": "AAP"
+}

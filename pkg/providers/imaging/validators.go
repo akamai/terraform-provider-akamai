@@ -9,7 +9,7 @@ import (
 )
 
 func stringAsIntBetween(lowerLimitRaw, upperLimitRaw interface{}) schema.SchemaValidateDiagFunc {
-	return func(i interface{}, path cty.Path) diag.Diagnostics {
+	return func(i interface{}, _ cty.Path) diag.Diagnostics {
 		value, err := strconv.Atoi(i.(string))
 		if err != nil {
 			return diag.Errorf("incorrect attribute value type: expect int")
@@ -33,7 +33,7 @@ func stringAsIntBetween(lowerLimitRaw, upperLimitRaw interface{}) schema.SchemaV
 }
 
 func validateIsTypeFloat() schema.SchemaValidateDiagFunc {
-	return func(i interface{}, path cty.Path) diag.Diagnostics {
+	return func(i interface{}, _ cty.Path) diag.Diagnostics {
 		if _, err := strconv.ParseFloat(i.(string), 64); err != nil {
 			return diag.Errorf("incorrect attribute value type: expect float64")
 		}
@@ -42,7 +42,7 @@ func validateIsTypeFloat() schema.SchemaValidateDiagFunc {
 }
 
 func validateIsTypeInt() schema.SchemaValidateDiagFunc {
-	return func(i interface{}, path cty.Path) diag.Diagnostics {
+	return func(i interface{}, _ cty.Path) diag.Diagnostics {
 		_, err := strconv.Atoi(i.(string))
 		if err != nil {
 			return diag.Errorf("incorrect attribute value type: expect int")
@@ -52,7 +52,7 @@ func validateIsTypeInt() schema.SchemaValidateDiagFunc {
 }
 
 func validateIsTypeBool() schema.SchemaValidateDiagFunc {
-	return func(i interface{}, path cty.Path) diag.Diagnostics {
+	return func(i interface{}, _ cty.Path) diag.Diagnostics {
 		value := i.(string)
 		if value != "false" && value != "true" {
 			return diag.Errorf("incorrect attribute value type: expect boolean")

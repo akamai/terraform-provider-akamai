@@ -5,11 +5,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/gtm"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/logger"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/gtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/log"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -107,10 +107,10 @@ func resourceGTMv1CIDRMapCreate(ctx context.Context, d *schema.ResourceData, m i
 		MapName:    name,
 	})
 	if err != nil && !errors.Is(err, gtm.ErrNotFound) {
-		logger.Errorf("cidrMap Read error: %s", err.Error())
+		logger.Errorf("cidrMap read error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "cidrMap Read error",
+			Summary:  "cidrMap read error",
 			Detail:   err.Error(),
 		})
 	}
@@ -141,20 +141,20 @@ func resourceGTMv1CIDRMapCreate(ctx context.Context, d *schema.ResourceData, m i
 	}
 
 	newCidr := populateNewCIDRMapObject(meta, d, m)
-	logger.Debugf("Proposed New CidrMap: [%v]", newCidr)
+	logger.Debugf("Proposed New cidrMap: [%v]", newCidr)
 	cStatus, err := Client(meta).CreateCIDRMap(ctx, gtm.CreateCIDRMapRequest{
 		CIDR:       newCidr,
 		DomainName: domain,
 	})
 	if err != nil {
-		logger.Errorf("cidrMap Create failed: %s", err.Error())
+		logger.Errorf("cidrMap create error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "cidrMap Create failed",
+			Summary:  "cidrMap create error",
 			Detail:   err.Error(),
 		})
 	}
-	logger.Debugf("cidrMap Create status: %v", cStatus.Status)
+	logger.Debugf("cidrMap create status: %v", cStatus.Status)
 	if cStatus.Status.PropagationStatus == "DENIED" {
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -168,15 +168,15 @@ func resourceGTMv1CIDRMapCreate(ctx context.Context, d *schema.ResourceData, m i
 	if waitOnComplete {
 		done, err := waitForCompletion(ctx, domain, m)
 		if done {
-			logger.Infof("cidrMap Create completed")
+			logger.Infof("cidrMap create completed")
 		} else {
 			if err == nil {
-				logger.Infof("cidrMap Create pending")
+				logger.Infof("cidrMap create pending")
 			} else {
-				logger.Errorf("cidrMap Create failed [%s]", err.Error())
+				logger.Errorf("cidrMap create error: %s", err.Error())
 				return append(diags, diag.Diagnostic{
 					Severity: diag.Error,
-					Summary:  "cidrMap Create failed",
+					Summary:  "cidrMap create error",
 					Detail:   err.Error(),
 				})
 			}
@@ -212,11 +212,15 @@ func resourceGTMv1CIDRMapRead(ctx context.Context, d *schema.ResourceData, m int
 		DomainName: domain,
 		MapName:    cidrMap,
 	})
+	if errors.Is(err, gtm.ErrNotFound) {
+		d.SetId("")
+		return nil
+	}
 	if err != nil {
-		logger.Errorf("cidrMap Read error: %s", err.Error())
+		logger.Errorf("cidrMap read error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "cidrMap Read error",
+			Summary:  "cidrMap read error",
 			Detail:   err.Error(),
 		})
 	}
@@ -248,10 +252,10 @@ func resourceGTMv1CIDRMapUpdate(ctx context.Context, d *schema.ResourceData, m i
 		MapName:    cidrMap,
 	})
 	if err != nil {
-		logger.Errorf("cidrMap Update read failed: %s", err.Error())
+		logger.Errorf("cidrMap read error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "cidrMap Update Read error",
+			Summary:  "cidrMap read error",
 			Detail:   err.Error(),
 		})
 	}
@@ -264,14 +268,14 @@ func resourceGTMv1CIDRMapUpdate(ctx context.Context, d *schema.ResourceData, m i
 		DomainName: domain,
 	})
 	if err != nil {
-		logger.Errorf("cidrMap Update failed: %s", err.Error())
+		logger.Errorf("cidrMap update error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "cidrMap Update error",
+			Summary:  "cidrMap update error",
 			Detail:   err.Error(),
 		})
 	}
-	logger.Debugf("CidrMap Update  status: %v", uStat)
+	logger.Debugf("cidrMap update status: %v", uStat)
 	if uStat.Status.PropagationStatus == "DENIED" {
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -285,15 +289,15 @@ func resourceGTMv1CIDRMapUpdate(ctx context.Context, d *schema.ResourceData, m i
 	if waitOnComplete {
 		done, err := waitForCompletion(ctx, domain, m)
 		if done {
-			logger.Infof("cidrMap Update completed")
+			logger.Infof("cidrMap update completed")
 		} else {
 			if err == nil {
-				logger.Infof("cidrMap Update pending")
+				logger.Infof("cidrMap update pending")
 			} else {
-				logger.Errorf("cidrMap Update failed [%s]", err.Error())
+				logger.Errorf("cidrMap update error: %s", err.Error())
 				return append(diags, diag.Diagnostic{
 					Severity: diag.Error,
-					Summary:  "cidrMap Update failed",
+					Summary:  "cidrMap update error",
 					Detail:   err.Error(),
 				})
 			}
@@ -361,7 +365,7 @@ func resourceGTMv1CIDRMapDelete(ctx context.Context, d *schema.ResourceData, m i
 		MapName:    cidrMap,
 	})
 	if err != nil {
-		logger.Errorf("CidrMapDelete cidrMap doesn't exist: %s", err.Error())
+		logger.Errorf("cidrMap doesn't exist: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
 			Summary:  "cidrMap doesn't exist",
@@ -375,14 +379,14 @@ func resourceGTMv1CIDRMapDelete(ctx context.Context, d *schema.ResourceData, m i
 		DomainName: domain,
 	})
 	if err != nil {
-		logger.Errorf("cidrMap Delete failed: %s", err.Error())
+		logger.Errorf("cidrMap delete error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "cidrMap Delete failed",
+			Summary:  "cidrMap delete error",
 			Detail:   err.Error(),
 		})
 	}
-	logger.Debugf("cidrMap Delete status: %v", uStat)
+	logger.Debugf("cidrMap delete status: %v", uStat)
 	if uStat.Status.PropagationStatus == "DENIED" {
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -396,15 +400,15 @@ func resourceGTMv1CIDRMapDelete(ctx context.Context, d *schema.ResourceData, m i
 	if waitOnComplete {
 		done, err := waitForCompletion(ctx, domain, m)
 		if done {
-			logger.Infof("CidrMap Delete completed")
+			logger.Infof("cidrMap delete completed")
 		} else {
 			if err == nil {
-				logger.Infof("cidrMap Delete pending")
+				logger.Infof("cidrMap delete pending")
 			} else {
-				logger.Errorf("cidrMap Delete failed [%s]", err.Error())
+				logger.Errorf("cidrMap delete error: %s", err.Error())
 				return append(diags, diag.Diagnostic{
 					Severity: diag.Error,
-					Summary:  "cidrMap Delete failed",
+					Summary:  "cidrMap delete error",
 					Detail:   err.Error(),
 				})
 			}
@@ -505,8 +509,8 @@ func populateTerraformCIDRAssignmentsState(d *schema.ResourceData, cidr *gtm.Get
 	for _, aMap := range aStateList {
 		a := aMap.(map[string]interface{})
 		objIndex := a["datacenter_id"].(int)
-		aObject := objectInventory[objIndex]
-		if &aObject == nil {
+		aObject, ok := objectInventory[objIndex]
+		if !ok {
 			logger.Warnf("Cidr Assignment %d NOT FOUND in returned GTM Object", a["datacenter_id"])
 			continue
 		}
@@ -589,16 +593,16 @@ func createCIDRMapStruct(cidr *gtm.GetCIDRMapResponse) *gtm.CIDRMap {
 }
 
 // blocksEqual checks whether blocks are equal
-func blocksEqual(old, new interface{}) bool {
-	logger := logger.Get("Akamai GTM", "blocksEqual")
+func blocksEqual(o, n interface{}) bool {
+	logger := log.Get("Akamai GTM", "blocksEqual")
 
-	oldBlocks, ok := old.(*schema.Set)
+	oldBlocks, ok := o.(*schema.Set)
 	if !ok {
 		logger.Warnf("wrong type conversion: expected *schema.Set, got %T", oldBlocks)
 		return false
 	}
 
-	newBlocks, ok := new.(*schema.Set)
+	newBlocks, ok := n.(*schema.Set)
 	if !ok {
 		logger.Warnf("wrong type conversion: expected *schema.Set, got %T", newBlocks)
 		return false

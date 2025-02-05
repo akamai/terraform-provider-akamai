@@ -10,16 +10,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cloudaccess"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/framework/modifiers"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/cloudaccess"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/framework/modifiers"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -262,6 +263,9 @@ func (r *KeyResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp
 			"access_key_uid": schema.Int64Attribute{
 				Computed:    true,
 				Description: "The unique identifier Akamai assigns to an access key.",
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.UseStateForUnknown(),
+				},
 			},
 			"timeouts": timeouts.Attributes(ctx, timeouts.Opts{
 				Delete:            true,
@@ -766,7 +770,7 @@ func (r *KeyResource) waitForDelete(ctx context.Context, accessKeyUID int64) dia
 		}
 
 		select {
-		case <-time.Tick(pollingInterval):
+		case <-time.After(pollingInterval):
 			continue
 		case <-ctx.Done():
 			diags.AddError("deletion terminated",
@@ -802,7 +806,7 @@ func (r *KeyResource) waitForVersionDelete(ctx context.Context, accessKeyUID int
 		}
 
 		select {
-		case <-time.Tick(pollingInterval):
+		case <-time.After(pollingInterval):
 			continue
 		case <-ctx.Done():
 			diags.AddError("deletion terminated",

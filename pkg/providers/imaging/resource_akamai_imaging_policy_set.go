@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/imaging"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/imaging"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -271,6 +271,6 @@ func filterRemainingPolicies(listPoliciesResponse *imaging.ListPoliciesResponse)
 	return remainingPolicies
 }
 
-func diffSuppressPolicySetContract(_, old, new string, _ *schema.ResourceData) bool {
-	return strings.TrimPrefix(old, "ctr_") == strings.TrimPrefix(new, "ctr_")
+func diffSuppressPolicySetContract(_, o, n string, _ *schema.ResourceData) bool {
+	return strings.TrimPrefix(o, "ctr_") == strings.TrimPrefix(n, "ctr_")
 }

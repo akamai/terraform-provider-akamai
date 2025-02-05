@@ -10,14 +10,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/papi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/date"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/str"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/timeouts"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
-	"github.com/apex/log"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/log"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/date"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/str"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/timeouts"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -633,6 +633,20 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 	versionStatus, err := resolveVersionStatus(ctx, client, propertyID, version, network)
 	if err != nil {
 		return diag.FromErr(err)
+	}
+
+	if versionStatus == papi.VersionStatusActive {
+		var updatedFields []string
+
+		if d.HasChange("contact") {
+			updatedFields = append(updatedFields, "'contact'")
+		}
+		if d.HasChange("auto_acknowledge_rule_warnings") {
+			updatedFields = append(updatedFields, "'auto_acknowledge_rule_warnings'")
+		}
+		if len(updatedFields) > 0 {
+			return diag.Errorf("Cannot update %s field(s) while property version is ACTIVE. Deactivate the current version to update, or create a new property version activation.", strings.Join(updatedFields, ", "))
+		}
 	}
 
 	if propertyActivation == nil || versionStatus == papi.VersionStatusDeactivated {

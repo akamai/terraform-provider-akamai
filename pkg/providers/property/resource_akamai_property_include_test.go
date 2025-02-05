@@ -8,9 +8,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/hapi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/hapi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -182,7 +182,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 	expectCreate := func(m *papi.Mock, testData *testData) testutils.MockCalls {
 		testData.latestVersion++
 
-		createIncludeCall := m.On("CreateInclude", mock.Anything, papi.CreateIncludeRequest{
+		createIncludeCall := m.On("CreateInclude", testutils.MockContext, papi.CreateIncludeRequest{
 			GroupID:     testData.groupID,
 			ContractID:  testData.contractID,
 			ProductID:   testData.productID,
@@ -196,14 +196,14 @@ func TestResourcePropertyInclude(t *testing.T) {
 			return testutils.MockCalls{createIncludeCall}
 		}
 
-		updateIncludeRuleTreeCall := m.On("UpdateIncludeRuleTree", mock.Anything,
+		updateIncludeRuleTreeCall := m.On("UpdateIncludeRuleTree", testutils.MockContext,
 			newUpdateIncludeRuleTreeReq(testData)).Return(&papi.UpdateIncludeRuleTreeResponse{}, nil) // Return argument is ignored
 
 		return testutils.MockCalls{createIncludeCall, updateIncludeRuleTreeCall}
 	}
 
 	expectGetIncludeRuleTree := func(m *papi.Mock, testData *testData) *mock.Call {
-		call := m.On("GetIncludeRuleTree", mock.Anything, papi.GetIncludeRuleTreeRequest{
+		call := m.On("GetIncludeRuleTree", testutils.MockContext, papi.GetIncludeRuleTreeRequest{
 			ContractID:     testData.contractID,
 			GroupID:        testData.groupID,
 			IncludeID:      testData.includeID,
@@ -214,7 +214,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 	}
 
 	expectRead := func(m *papi.Mock, testData *testData) testutils.MockCalls {
-		getIncludeCall := m.On("GetInclude", mock.Anything, papi.GetIncludeRequest{
+		getIncludeCall := m.On("GetInclude", testutils.MockContext, papi.GetIncludeRequest{
 			ContractID: testData.contractID,
 			GroupID:    testData.groupID,
 			IncludeID:  includeID,
@@ -222,7 +222,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 
 		getIncludeRuleTreeCall := expectGetIncludeRuleTree(m, testData)
 
-		getIncludeVersionCall := m.On("GetIncludeVersion", mock.Anything, papi.GetIncludeVersionRequest{
+		getIncludeVersionCall := m.On("GetIncludeVersion", testutils.MockContext, papi.GetIncludeVersionRequest{
 			IncludeID:  includeID,
 			Version:    testData.latestVersion,
 			ContractID: testData.contractID,
@@ -236,7 +236,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 	}
 
 	expectUpdate := func(m *papi.Mock, testData *testData) testutils.MockCalls {
-		getIncludeVersionCall := m.On("GetIncludeVersion", mock.Anything, papi.GetIncludeVersionRequest{
+		getIncludeVersionCall := m.On("GetIncludeVersion", testutils.MockContext, papi.GetIncludeVersionRequest{
 			Version:    testData.latestVersion,
 			GroupID:    testData.groupID,
 			IncludeID:  testData.includeID,
@@ -249,7 +249,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 			version := testData.latestVersion
 			testData.latestVersion++
 
-			createIncludeVersionCall := m.On("CreateIncludeVersion", mock.Anything, papi.CreateIncludeVersionRequest{
+			createIncludeVersionCall := m.On("CreateIncludeVersion", testutils.MockContext, papi.CreateIncludeVersionRequest{
 				IncludeID: includeID,
 				IncludeVersionRequest: papi.IncludeVersionRequest{
 					CreateFromVersion: version,
@@ -259,20 +259,20 @@ func TestResourcePropertyInclude(t *testing.T) {
 			calls = append(calls, createIncludeVersionCall)
 		}
 
-		updateIncludeRuleTreeCall := m.On("UpdateIncludeRuleTree", mock.Anything,
+		updateIncludeRuleTreeCall := m.On("UpdateIncludeRuleTree", testutils.MockContext,
 			newUpdateIncludeRuleTreeReq(testData)).Return(&papi.UpdateIncludeRuleTreeResponse{}, nil)
 
 		return append(calls, updateIncludeRuleTreeCall)
 	}
 
 	expectDelete := func(m *papi.Mock, testData *testData) testutils.MockCalls {
-		getIncludeCall := m.On("GetInclude", mock.Anything, papi.GetIncludeRequest{
+		getIncludeCall := m.On("GetInclude", testutils.MockContext, papi.GetIncludeRequest{
 			ContractID: testData.contractID,
 			GroupID:    testData.groupID,
 			IncludeID:  includeID,
 		}).Return(newGetIncludeResp(testData), nil)
 
-		deleteCall := m.On("DeleteInclude", mock.Anything, papi.DeleteIncludeRequest{
+		deleteCall := m.On("DeleteInclude", testutils.MockContext, papi.DeleteIncludeRequest{
 			GroupID:    testData.groupID,
 			IncludeID:  testData.includeID,
 			ContractID: testData.contractID,
@@ -324,7 +324,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, "%s/property_include_no_rules.tf", workdir),
+					Config: testutils.LoadFixtureStringf(t, "%s/property_include_no_rules.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_property_include.test", "asset_id", "aid_555"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
@@ -336,7 +336,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_property_include.test", "latest_version", "1"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "staging_version", ""),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "production_version", ""),
-						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", testutils.LoadFixtureString(t, "%s/expected/default_rules.json", workdir)),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", testutils.LoadFixtureStringf(t, "%s/expected/default_rules.json", workdir)),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_errors", ""),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_warnings", ""),
 					),
@@ -363,7 +363,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, "%s/property_include.tf", workdir),
+					Config: testutils.LoadFixtureStringf(t, "%s/property_include.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_property_include.test", "asset_id", "aid_555"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
@@ -375,7 +375,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_property_include.test", "latest_version", "1"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "staging_version", ""),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "production_version", ""),
-						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", testutils.LoadFixtureString(t, "%s/expected/simple_rules.json", workdir)),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", testutils.LoadFixtureStringf(t, "%s/expected/simple_rules.json", workdir)),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_errors", ""),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_warnings", ""),
 					),
@@ -402,7 +402,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, "%s/property_include_with_comment.tf", workdir),
+					Config: testutils.LoadFixtureStringf(t, "%s/property_include_with_comment.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_property_include.test", "asset_id", "aid_555"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
@@ -414,7 +414,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_property_include.test", "latest_version", "1"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "staging_version", ""),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "production_version", ""),
-						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", testutils.LoadFixtureString(t, "%s/expected/simple_rules_with_comment.json", workdir)),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", testutils.LoadFixtureStringf(t, "%s/expected/simple_rules_with_comment.json", workdir)),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_errors", ""),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_warnings", ""),
 					),
@@ -442,7 +442,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, "%s/property_include.tf", workdir),
+					Config: testutils.LoadFixtureStringf(t, "%s/property_include.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_property_include.test", "asset_id", "aid_555"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
@@ -454,8 +454,8 @@ func TestResourcePropertyInclude(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_property_include.test", "latest_version", "1"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "staging_version", ""),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "production_version", ""),
-						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", testutils.LoadFixtureString(t, "%s/expected/simple_rules.json", workdir)),
-						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_errors", testutils.LoadFixtureString(t, "%s/expected/simple_rules_errors.json", workdir)),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", testutils.LoadFixtureStringf(t, "%s/expected/simple_rules.json", workdir)),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_errors", testutils.LoadFixtureStringf(t, "%s/expected/simple_rules_errors.json", workdir)),
 					),
 				},
 			},
@@ -481,7 +481,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, "%s/property_include.tf", workdir),
+					Config: testutils.LoadFixtureStringf(t, "%s/property_include.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_property_include.test", "asset_id", "aid_555"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
@@ -493,8 +493,8 @@ func TestResourcePropertyInclude(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_property_include.test", "latest_version", "1"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "staging_version", ""),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "production_version", ""),
-						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", testutils.LoadFixtureString(t, "%s/expected/simple_rules.json", workdir)),
-						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_warnings", testutils.LoadFixtureString(t, "%s/expected/simple_rules_warnings.json", workdir)),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", testutils.LoadFixtureStringf(t, "%s/expected/simple_rules.json", workdir)),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_warnings", testutils.LoadFixtureStringf(t, "%s/expected/simple_rules_warnings.json", workdir)),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_errors", ""),
 					),
 				},
@@ -521,7 +521,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, "%s/property_include.tf", workdir),
+					Config: testutils.LoadFixtureStringf(t, "%s/property_include.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_property_include.test", "asset_id", "aid_555"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
@@ -533,9 +533,9 @@ func TestResourcePropertyInclude(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_property_include.test", "latest_version", "1"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "staging_version", ""),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "production_version", ""),
-						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", testutils.LoadFixtureString(t, "%s/expected/simple_rules.json", workdir)),
-						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_errors", testutils.LoadFixtureString(t, "%s/expected/simple_rules_errors.json", workdir)),
-						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_warnings", testutils.LoadFixtureString(t, "%s/expected/simple_rules_warnings.json", workdir)),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", testutils.LoadFixtureStringf(t, "%s/expected/simple_rules.json", workdir)),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_errors", testutils.LoadFixtureStringf(t, "%s/expected/simple_rules_errors.json", workdir)),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_warnings", testutils.LoadFixtureStringf(t, "%s/expected/simple_rules_warnings.json", workdir)),
 					),
 				},
 			},
@@ -566,7 +566,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, "%s/property_include.tf", workdir),
+					Config: testutils.LoadFixtureStringf(t, "%s/property_include.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_property_include.test", "asset_id", "aid_555"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
@@ -578,13 +578,13 @@ func TestResourcePropertyInclude(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_property_include.test", "latest_version", "1"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "staging_version", ""),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "production_version", ""),
-						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", testutils.LoadFixtureString(t, "%s/expected/simple_rules.json", workdir)),
-						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_warnings", testutils.LoadFixtureString(t, "%s/expected/simple_rules_warnings.json", workdir)),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", testutils.LoadFixtureStringf(t, "%s/expected/simple_rules.json", workdir)),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_warnings", testutils.LoadFixtureStringf(t, "%s/expected/simple_rules_warnings.json", workdir)),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_errors", ""),
 					),
 				},
 				{
-					Config: testutils.LoadFixtureString(t, "%s/property_include.tf", workdir),
+					Config: testutils.LoadFixtureStringf(t, "%s/property_include.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_property_include.test", "asset_id", "aid_555"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
@@ -596,7 +596,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_property_include.test", "latest_version", "1"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "staging_version", ""),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "production_version", ""),
-						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", testutils.LoadFixtureString(t, "%s/expected/simple_rules.json", workdir)),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", testutils.LoadFixtureStringf(t, "%s/expected/simple_rules.json", workdir)),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_warnings", ""),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_errors", ""),
 					),
@@ -629,7 +629,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, "%s/property_include.tf", workdir),
+					Config: testutils.LoadFixtureStringf(t, "%s/property_include.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_property_include.test", "asset_id", "aid_555"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
@@ -641,13 +641,13 @@ func TestResourcePropertyInclude(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_property_include.test", "latest_version", "1"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "staging_version", ""),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "production_version", ""),
-						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", testutils.LoadFixtureString(t, "%s/expected/simple_rules.json", workdir)),
-						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_errors", testutils.LoadFixtureString(t, "%s/expected/simple_rules_errors.json", workdir)),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", testutils.LoadFixtureStringf(t, "%s/expected/simple_rules.json", workdir)),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_errors", testutils.LoadFixtureStringf(t, "%s/expected/simple_rules_errors.json", workdir)),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_warnings", ""),
 					),
 				},
 				{
-					Config: testutils.LoadFixtureString(t, "%s/property_include.tf", workdir),
+					Config: testutils.LoadFixtureStringf(t, "%s/property_include.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_property_include.test", "asset_id", "aid_555"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
@@ -659,7 +659,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_property_include.test", "latest_version", "1"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "staging_version", ""),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "production_version", ""),
-						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", testutils.LoadFixtureString(t, "%s/expected/simple_rules.json", workdir)),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", testutils.LoadFixtureStringf(t, "%s/expected/simple_rules.json", workdir)),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_errors", ""),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_warnings", ""),
 					),
@@ -694,7 +694,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, "%s/property_include_no_rules.tf", workdir),
+					Config: testutils.LoadFixtureStringf(t, "%s/property_include_no_rules.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_property_include.test", "asset_id", "aid_555"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
@@ -706,13 +706,13 @@ func TestResourcePropertyInclude(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_property_include.test", "latest_version", "1"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "staging_version", ""),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "production_version", ""),
-						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", testutils.LoadFixtureString(t, "%s/expected/default_rules.json", workdir)),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", testutils.LoadFixtureStringf(t, "%s/expected/default_rules.json", workdir)),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_errors", ""),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_warnings", ""),
 					),
 				},
 				{
-					Config: testutils.LoadFixtureString(t, "%s/property_include.tf", workdir),
+					Config: testutils.LoadFixtureStringf(t, "%s/property_include.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_property_include.test", "asset_id", "aid_555"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
@@ -724,7 +724,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_property_include.test", "latest_version", "1"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "staging_version", ""),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "production_version", ""),
-						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", testutils.LoadFixtureString(t, "%s/expected/simple_rules.json", workdir)),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", testutils.LoadFixtureStringf(t, "%s/expected/simple_rules.json", workdir)),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_errors", ""),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_warnings", ""),
 					),
@@ -764,7 +764,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, "%s/property_include_no_rules.tf", workdir),
+					Config: testutils.LoadFixtureStringf(t, "%s/property_include_no_rules.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_property_include.test", "asset_id", "aid_555"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
@@ -776,13 +776,13 @@ func TestResourcePropertyInclude(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_property_include.test", "latest_version", "1"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "staging_version", ""),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "production_version", ""),
-						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", testutils.LoadFixtureString(t, "%s/expected/default_rules.json", workdir)),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", testutils.LoadFixtureStringf(t, "%s/expected/default_rules.json", workdir)),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_errors", ""),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_warnings", ""),
 					),
 				},
 				{
-					Config: testutils.LoadFixtureString(t, "%s/property_include.tf", workdir),
+					Config: testutils.LoadFixtureStringf(t, "%s/property_include.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_property_include.test", "asset_id", "aid_555"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "group_id", "grp_123"),
@@ -794,7 +794,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_property_include.test", "latest_version", "2"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "staging_version", "1"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "production_version", ""),
-						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", testutils.LoadFixtureString(t, "%s/expected/simple_rules.json", workdir)),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", testutils.LoadFixtureStringf(t, "%s/expected/simple_rules.json", workdir)),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_errors", ""),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_warnings", ""),
 					),
@@ -848,22 +848,22 @@ func TestResourcePropertyInclude(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, "%s/property_include_with_ds_create.tf", workdir),
+					Config: testutils.LoadFixtureStringf(t, "%s/property_include_with_ds_create.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_property_include.test", "latest_version", "1"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "staging_version", ""),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "production_version", ""),
-						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", testutils.LoadFixtureString(t, "%s/expected/default_rules.json", workdir)),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", testutils.LoadFixtureStringf(t, "%s/expected/default_rules.json", workdir)),
 						resource.TestCheckResourceAttrPair("akamai_property_include.test", "latest_version", "data.akamai_property_include_rules.rules", "version"),
 					),
 				},
 				{
-					Config: testutils.LoadFixtureString(t, "%s/property_include_with_ds_update.tf", workdir),
+					Config: testutils.LoadFixtureStringf(t, "%s/property_include_with_ds_update.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_property_include.test", "latest_version", "2"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "staging_version", "1"),
 						resource.TestCheckResourceAttr("akamai_property_include.test", "production_version", ""),
-						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", testutils.LoadFixtureString(t, "%s/expected/simple_rules.json", workdir)),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", testutils.LoadFixtureStringf(t, "%s/expected/simple_rules.json", workdir)),
 						resource.TestCheckResourceAttrPair("akamai_property_include.test", "latest_version", "data.akamai_property_include_rules.rules", "version"),
 					),
 				},
@@ -896,13 +896,13 @@ func TestResourcePropertyInclude(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, "%s/property_include_no_rules.tf", workdir),
+					Config: testutils.LoadFixtureStringf(t, "%s/property_include_no_rules.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_property_include.test", "name", "test_include"),
 					),
 				},
 				{
-					Config: testutils.LoadFixtureString(t, "%s/property_include.tf", workdir),
+					Config: testutils.LoadFixtureStringf(t, "%s/property_include.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_property_include.test", "rule_format", "v2022-06-28"),
 					),
@@ -934,10 +934,10 @@ func TestResourcePropertyInclude(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, "%s/property_include_null_cpcode.tf", workdir),
+					Config: testutils.LoadFixtureStringf(t, "%s/property_include_null_cpcode.tf", workdir),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_property_include.test", "name", "test_include"),
-						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", testutils.LoadFixtureString(t, "%s/expected/rules_cpcode_null.json", workdir)),
+						resource.TestCheckResourceAttr("akamai_property_include.test", "rules", testutils.LoadFixtureStringf(t, "%s/expected/rules_cpcode_null.json", workdir)),
 					),
 				},
 			},
@@ -961,7 +961,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, "%s/property_include_import.tf", workdir),
+					Config: testutils.LoadFixtureStringf(t, "%s/property_include_import.tf", workdir),
 				},
 				{
 					ImportState:       true,
@@ -990,7 +990,7 @@ func TestResourcePropertyInclude(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, "%s/property_include_import.tf", workdir),
+					Config: testutils.LoadFixtureStringf(t, "%s/property_include_import.tf", workdir),
 				},
 				{
 					ImportState:   true,
@@ -1003,43 +1003,43 @@ func TestResourcePropertyInclude(t *testing.T) {
 		"validation errors": {
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, "%s/validation_required_errors.tf", workdir),
+					Config:      testutils.LoadFixtureStringf(t, "%s/validation_required_errors.tf", workdir),
 					ExpectError: regexp.MustCompile(`The argument "name" is required, but no definition was found`),
 				},
 				{
-					Config:      testutils.LoadFixtureString(t, "%s/validation_required_errors.tf", workdir),
+					Config:      testutils.LoadFixtureStringf(t, "%s/validation_required_errors.tf", workdir),
 					ExpectError: regexp.MustCompile(`The argument "group_id" is required, but no definition was found`),
 				},
 				{
-					Config:      testutils.LoadFixtureString(t, "%s/validation_required_errors.tf", workdir),
+					Config:      testutils.LoadFixtureStringf(t, "%s/validation_required_errors.tf", workdir),
 					ExpectError: regexp.MustCompile(`The argument "contract_id" is required, but no definition was found`),
 				},
 				{
-					Config:      testutils.LoadFixtureString(t, "%s/validation_required_errors.tf", workdir),
+					Config:      testutils.LoadFixtureStringf(t, "%s/validation_required_errors.tf", workdir),
 					ExpectError: regexp.MustCompile(`The argument "type" is required, but no definition was found`),
 				},
 				{
-					Config:      testutils.LoadFixtureString(t, "%s/custom_validation_errors.tf", workdir),
+					Config:      testutils.LoadFixtureStringf(t, "%s/custom_validation_errors.tf", workdir),
 					ExpectError: regexp.MustCompile(`Error: expected type to be one of \["MICROSERVICES" "COMMON_SETTINGS"]`),
 				},
 				{
-					Config:      testutils.LoadFixtureString(t, "%s/custom_validation_errors.tf", workdir),
+					Config:      testutils.LoadFixtureStringf(t, "%s/custom_validation_errors.tf", workdir),
 					ExpectError: regexp.MustCompile(`Error: "rule_format" must be of the form vYYYY-MM-DD \(with a leading "v"\)`),
 				},
 				{
-					Config:      testutils.LoadFixtureString(t, "%s/custom_validation_errors.tf", workdir),
+					Config:      testutils.LoadFixtureStringf(t, "%s/custom_validation_errors.tf", workdir),
 					ExpectError: regexp.MustCompile(`Error: "rules" contains an invalid JSON`),
 				},
 				{
-					Config:      testutils.LoadFixtureString(t, "%s/product_id_error.tf", workdir),
+					Config:      testutils.LoadFixtureStringf(t, "%s/product_id_error.tf", workdir),
 					ExpectError: regexp.MustCompile(`The argument "product_id" is required during create, but no definition was found`),
 				},
 				{
-					Config:      testutils.LoadFixtureString(t, "%s/rule_format_latest.tf", workdir),
+					Config:      testutils.LoadFixtureStringf(t, "%s/rule_format_latest.tf", workdir),
 					ExpectError: regexp.MustCompile(`"rule_format" 'latest' is not valid, must be of the form vYYYY-MM-DD`),
 				},
 				{
-					Config:      testutils.LoadFixtureString(t, "%s/rule_format_blank.tf", workdir),
+					Config:      testutils.LoadFixtureStringf(t, "%s/rule_format_blank.tf", workdir),
 					ExpectError: regexp.MustCompile(`provided value cannot be blank`),
 				},
 			},

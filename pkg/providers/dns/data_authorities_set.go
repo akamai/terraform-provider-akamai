@@ -6,10 +6,10 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/dns"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/dns"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -48,7 +48,7 @@ func dataSourceAuthoritiesSetRead(ctx context.Context, d *schema.ResourceData, m
 	// Warning or Errors can be collected in a slice type
 	var diags diag.Diagnostics
 
-	logger.WithField("contractid", contractID).Debug("Start Searching for authority records")
+	logger.Debug("Start Searching for authority records", "contractid", contractID)
 
 	ns, err := inst.Client(meta).GetNameServerRecordList(ctx, dns.GetNameServerRecordListRequest{
 		ContractIDs: contractID,
@@ -60,7 +60,7 @@ func dataSourceAuthoritiesSetRead(ctx context.Context, d *schema.ResourceData, m
 			Detail:   err.Error(),
 		})
 	}
-	logger.WithField("records", ns).Debug("Searching for records")
+	logger.Debug("Searching for records", "records", ns)
 
 	sort.Strings(ns)
 	if err := d.Set("authorities", ns); err != nil {

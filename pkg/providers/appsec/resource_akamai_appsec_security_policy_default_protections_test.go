@@ -6,10 +6,9 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -42,32 +41,32 @@ func TestAkamaiSecurityPolicyDefaultProtections_res_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
 		client.On("GetSecurityPolicy",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetSecurityPolicyRequest{ConfigID: 43253, Version: 7, PolicyID: "PLEB_114049"},
 		).Return(&getSecurityPolicyResponse, nil).Times(3)
 
 		client.On("GetSecurityPolicy",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetSecurityPolicyRequest{ConfigID: 43253, Version: 7, PolicyID: "PLEB_114049"},
 		).Return(&getSecurityPolicyAfterUpdateResponse, nil).Twice()
 
 		client.On("UpdateSecurityPolicy",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.UpdateSecurityPolicyRequest{ConfigID: 43253, Version: 7, PolicyID: "PLEB_114049", PolicyName: "PLEB Cloned Test for Launchpad 15 New"},
 		).Return(&updateSecurityPolicyResponse, nil)
 
 		client.On("CreateSecurityPolicyWithDefaultProtections",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.CreateSecurityPolicyWithDefaultProtectionsRequest{ConfigVersion: appsec.ConfigVersion{ConfigID: 43253, Version: 7}, PolicyName: "PLEB Cloned Test for Launchpad 15", PolicyPrefix: "PLEB"},
 		).Return(&createSecurityPolicyResponse, nil)
 
 		client.On("RemoveSecurityPolicy",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.RemoveSecurityPolicyRequest{ConfigID: 43253, Version: 7, PolicyID: "PLEB_114049"},
 		).Return(&removeSecurityPolicyResponse, nil)
 
@@ -106,12 +105,12 @@ func TestAkamaiSecurityPolicyDefaultProtections_res_failure_creating_policy(t *t
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
 		client.On("CreateSecurityPolicyWithDefaultProtections",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.CreateSecurityPolicyWithDefaultProtectionsRequest{ConfigVersion: appsec.ConfigVersion{ConfigID: 43253, Version: 7}, PolicyName: "PLEB Cloned Test for Launchpad 15", PolicyPrefix: "PLEB"},
 		).Return(nil, fmt.Errorf("create security policy request failed: policy name already in use"))
 

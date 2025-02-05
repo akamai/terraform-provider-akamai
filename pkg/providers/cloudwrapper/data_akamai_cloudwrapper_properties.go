@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cloudwrapper"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/cloudwrapper"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -23,7 +23,6 @@ type (
 	}
 
 	propertiesDataSourceModel struct {
-		ID          types.String    `tfsdk:"id"`
 		ContractIDs types.List      `tfsdk:"contract_ids"`
 		Unused      types.Bool      `tfsdk:"unused"`
 		Properties  []propertyModel `tfsdk:"properties"`
@@ -78,11 +77,6 @@ func (d *propertiesDataSource) Schema(_ context.Context, _ datasource.SchemaRequ
 	resp.Schema = schema.Schema{
 		Description: "CloudWrapper properties",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				Computed:           true,
-				DeprecationMessage: "Required by the terraform plugin testing framework, always set to `akamai_cloudwrapper_properties`",
-				Description:        "ID of the data source.",
-			},
 			"contract_ids": schema.ListAttribute{
 				ElementType: types.StringType,
 				Optional:    true,
@@ -157,8 +151,6 @@ func (d *propertiesDataSource) Read(ctx context.Context, req datasource.ReadRequ
 			GroupID:      types.Int64Value(prp.GroupID),
 		})
 	}
-
-	data.ID = types.StringValue("akamai_cloudwrapper_properties")
 
 	if resp.Diagnostics.Append(resp.State.Set(ctx, &data)...); resp.Diagnostics.HasError() {
 		return

@@ -3,5 +3,5 @@ provider "akamai" {
 }
 
 data "akamai_gtm_geomap" "testmap" {
-  map_name = "mapTest"
+  map_name = "tfexample_geomap_1"
 }

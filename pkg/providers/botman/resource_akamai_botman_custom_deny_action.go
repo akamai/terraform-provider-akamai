@@ -6,10 +6,11 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/str"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/id"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/str"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
@@ -92,7 +93,7 @@ func resourceCustomDenyActionRead(ctx context.Context, d *schema.ResourceData, m
 	logger := meta.Log("botman", "resourceCustomDenyActionRead")
 	logger.Debugf("in resourceCustomDenyActionRead")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:actionID")
+	iDParts, err := id.Split(d.Id(), 2, "configID:actionID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -147,7 +148,7 @@ func resourceCustomDenyActionUpdate(ctx context.Context, d *schema.ResourceData,
 	logger := meta.Log("botman", "resourceCustomDenyActionUpdate")
 	logger.Debugf("in resourceCustomDenyActionUpdate")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:actionID")
+	iDParts, err := id.Split(d.Id(), 2, "configID:actionID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -191,7 +192,7 @@ func resourceCustomDenyActionDelete(ctx context.Context, d *schema.ResourceData,
 	logger := meta.Log("botman", "resourceCustomDenyActionDelete")
 	logger.Debugf("in resourceCustomDenyActionDelete")
 
-	iDParts, err := splitID(d.Id(), 2, "configID:actionID")
+	iDParts, err := id.Split(d.Id(), 2, "configID:actionID")
 	if err != nil {
 		return diag.FromErr(err)
 	}

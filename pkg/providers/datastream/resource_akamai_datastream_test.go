@@ -8,12 +8,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/datastream"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/datastream"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/tj/assert"
 )
 
 const (
@@ -313,11 +313,11 @@ func TestResourceStream(t *testing.T) {
 			StreamID: streamID,
 		}
 
-		client.On("CreateStream", mock.Anything, createStreamRequest).
+		client.On("CreateStream", testutils.MockContext, createStreamRequest).
 			Return(updateStreamResponse, nil)
 
 		// for waitForStreamStatusChange
-		client.On("GetStream", mock.Anything, getStreamRequest).
+		client.On("GetStream", testutils.MockContext, getStreamRequest).
 			Return(getStreamResponseStreamActivating, nil).
 			Times(3)
 
@@ -325,31 +325,31 @@ func TestResourceStream(t *testing.T) {
 		// second for complete CreateStream
 		// third for reading resource state
 		// fourth for reading stream status in UpdateStream
-		client.On("GetStream", mock.Anything, getStreamRequest).
+		client.On("GetStream", testutils.MockContext, getStreamRequest).
 			Return(getStreamResponseActivated, nil).
 			Times(4)
 
-		client.On("UpdateStream", mock.Anything, updateStreamRequest).
+		client.On("UpdateStream", testutils.MockContext, updateStreamRequest).
 			Return(updateStreamResponse, nil).
 			Once()
 
 		// for waitForStreamStatusChange
-		client.On("GetStream", mock.Anything, getStreamRequest).
+		client.On("GetStream", testutils.MockContext, getStreamRequest).
 			Return(getStreamResponseStreamActivatedAfterUpdate, nil).
 			Times(3)
 
 		// first for finishing waitForStreamStatusChange in UpdateStream
 		// second for reading resource state after UpdateStream
 		// third for reading stream status in DeleteStream
-		client.On("GetStream", mock.Anything, getStreamRequest).
+		client.On("GetStream", testutils.MockContext, getStreamRequest).
 			Return(getStreamResponseStreamActivatedAfterUpdate, nil).
 			Times(3)
 
-		client.On("DeleteStream", mock.Anything, datastream.DeleteStreamRequest{
+		client.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
 			StreamID: streamID,
 		}).Return(' ', nil).Once()
 
-		client.On("DeactivateStream", mock.Anything, datastream.DeactivateStreamRequest{
+		client.On("DeactivateStream", testutils.MockContext, datastream.DeactivateStreamRequest{
 			StreamID: 12321,
 		}).Return(&datastream.DetailedStreamVersion{
 			StreamID:      streamID,
@@ -357,12 +357,12 @@ func TestResourceStream(t *testing.T) {
 		}, nil).Once()
 
 		// for waitForStreamStatusChange
-		client.On("GetStream", mock.Anything, getStreamRequest).
+		client.On("GetStream", testutils.MockContext, getStreamRequest).
 			Return(getStreamResponseDeactivating, nil).
 			Times(3)
 
 		// for finishing waitForStreamStatusChange
-		client.On("GetStream", mock.Anything, getStreamRequest).
+		client.On("GetStream", testutils.MockContext, getStreamRequest).
 			Return(getStreamResponseDeactivated, nil).
 			Once()
 
@@ -623,7 +623,7 @@ func TestResourceUpdate(t *testing.T) {
 
 	configureMock := func(m *datastream.Mock, statuses ...mockConfig) {
 		for _, statusConfig := range statuses {
-			m.On("GetStream", mock.Anything, mock.Anything).
+			m.On("GetStream", testutils.MockContext, mock.Anything).
 				Return(responseFactory(statusConfig.status), nil).
 				Times(statusConfig.repeats)
 		}
@@ -632,7 +632,7 @@ func TestResourceUpdate(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			m := &datastream.Mock{}
-			m.On("CreateStream", mock.Anything, createStreamRequestFactory(test.CreateStreamActive)).
+			m.On("CreateStream", testutils.MockContext, createStreamRequestFactory(test.CreateStreamActive)).
 				Return(updateStreamResponse, nil).
 				Once()
 
@@ -662,7 +662,7 @@ func TestResourceUpdate(t *testing.T) {
 						{status: datastream.StreamStatusActivated, repeats: 3},
 					}...)
 				} else {
-					m.On("ActivateStream", mock.Anything, mock.Anything).
+					m.On("ActivateStream", testutils.MockContext, mock.Anything).
 						Return(&datastream.DetailedStreamVersion{
 							StreamVersion: updateStreamResponse.StreamVersion,
 						}, nil).
@@ -686,7 +686,7 @@ func TestResourceUpdate(t *testing.T) {
 			}
 
 			// DeleteStream method will deactivate the stream
-			m.On("DeactivateStream", mock.Anything, mock.Anything).
+			m.On("DeactivateStream", testutils.MockContext, mock.Anything).
 				Return(&datastream.DetailedStreamVersion{
 					StreamVersion: updateStreamResponse.StreamVersion,
 				}, nil).
@@ -698,7 +698,7 @@ func TestResourceUpdate(t *testing.T) {
 				{status: datastream.StreamStatusDeactivated, repeats: 1},
 			}...)
 
-			m.On("DeleteStream", mock.Anything, mock.Anything).
+			m.On("DeleteStream", testutils.MockContext, mock.Anything).
 				Return(' ', nil).
 				Once()
 
@@ -707,14 +707,14 @@ func TestResourceUpdate(t *testing.T) {
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
-							Config: testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestResourceStream/update_resource/create_stream_%s.tf", createStreamFilenameSuffix)),
+							Config: testutils.LoadFixtureStringf(t, "testdata/TestResourceStream/update_resource/create_stream_%s.tf", createStreamFilenameSuffix),
 							Check: resource.ComposeTestCheckFunc(
 								commonChecks,
 								resource.TestCheckResourceAttr("akamai_datastream.s", "active", strconv.FormatBool(test.CreateStreamActive)),
 							),
 						},
 						{
-							Config: testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestResourceStream/update_resource/update_stream_%s.tf", updateStreamFilenameSuffix)),
+							Config: testutils.LoadFixtureStringf(t, "testdata/TestResourceStream/update_resource/update_stream_%s.tf", updateStreamFilenameSuffix),
 							Check: resource.ComposeTestCheckFunc(
 								commonChecks,
 								resource.TestCheckResourceAttr("akamai_datastream.s", "active", strconv.FormatBool(test.UpdateStreamActive)),
@@ -742,7 +742,7 @@ func TestResourceStreamErrors(t *testing.T) {
 		"internal server error": {
 			tfFile: "testdata/TestResourceStream/errors/internal_server_error/internal_server_error.tf",
 			init: func(m *datastream.Mock) {
-				m.On("CreateStream", mock.Anything, mock.Anything).
+				m.On("CreateStream", testutils.MockContext, mock.Anything).
 					Return(nil, fmt.Errorf("%w: request failed: %s", datastream.ErrCreateStream, errors.New("500")))
 			},
 			withError: regexp.MustCompile(datastream.ErrCreateStream.Error()),
@@ -750,7 +750,7 @@ func TestResourceStreamErrors(t *testing.T) {
 		"stream with this name already exists": {
 			tfFile: "testdata/TestResourceStream/errors/stream_name_not_unique/stream_name_not_unique.tf",
 			init: func(m *datastream.Mock) {
-				m.On("CreateStream", mock.Anything, mock.Anything).
+				m.On("CreateStream", testutils.MockContext, mock.Anything).
 					Return(nil, fmt.Errorf("%s: %w", datastream.ErrCreateStream, &datastream.Error{
 						Type:       "bad-request",
 						Title:      "Bad Request",
@@ -894,7 +894,7 @@ func TestEmailIDs(t *testing.T) {
 
 	createStreamRequestFactory := func(emailIDs []string) datastream.CreateStreamRequest {
 		streamConfigurationWithEmailIDs := streamConfiguration
-		if emailIDs != nil && len(emailIDs) != 0 {
+		if len(emailIDs) > 0 {
 			streamConfigurationWithEmailIDs.NotificationEmails = emailIDs
 		}
 		return datastream.CreateStreamRequest{
@@ -986,14 +986,14 @@ func TestEmailIDs(t *testing.T) {
 			client := &datastream.Mock{}
 
 			createStreamRequest := createStreamRequestFactory(test.EmailIDs)
-			client.On("CreateStream", mock.Anything, createStreamRequest).
+			client.On("CreateStream", testutils.MockContext, createStreamRequest).
 				Return(updateStreamResponse, nil)
 
 			getStreamResponse := responseFactory(test.EmailIDs)
-			client.On("GetStream", mock.Anything, getStreamRequest).
+			client.On("GetStream", testutils.MockContext, getStreamRequest).
 				Return(getStreamResponse, nil)
 
-			client.On("DeleteStream", mock.Anything, datastream.DeleteStreamRequest{
+			client.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
 				StreamID: streamID,
 			}).Return(' ', nil)
 
@@ -1002,7 +1002,7 @@ func TestEmailIDs(t *testing.T) {
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
-							Config: testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestResourceStream/email_ids/%s", test.Filename)),
+							Config: testutils.LoadFixtureStringf(t, "testdata/TestResourceStream/email_ids/%s", test.Filename),
 							Check:  resource.ComposeTestCheckFunc(test.TestChecks...),
 						},
 					},
@@ -1018,86 +1018,86 @@ func TestEmailIDs(t *testing.T) {
 func TestDatasetIDsDiff(t *testing.T) {
 	tests := map[string]struct {
 		preConfig             string
-		fileDatasetIdsOrder   []datastream.DatasetFieldID
-		serverDatasetIdsOrder []int
+		fileDatasetIDsOrder   []datastream.DatasetFieldID
+		serverDatasetIDsOrder []int
 		format                datastream.FormatType
 		expectNonEmptyPlan    bool
 	}{
 		"no order mixed in json config": {
 			preConfig: "testdata/TestResourceStream/dataset_ids_diff/json_config.tf",
-			fileDatasetIdsOrder: []datastream.DatasetFieldID{
+			fileDatasetIDsOrder: []datastream.DatasetFieldID{
 				{
 					DatasetFieldID: 1001,
 				}, {
 					DatasetFieldID: 1002,
 				},
 			},
-			serverDatasetIdsOrder: []int{1002, 1001},
+			serverDatasetIDsOrder: []int{1002, 1001},
 			format:                datastream.FormatTypeJson,
 			expectNonEmptyPlan:    false,
 		},
 		"id change in json config": {
 			preConfig: "testdata/TestResourceStream/dataset_ids_diff/json_config.tf",
-			fileDatasetIdsOrder: []datastream.DatasetFieldID{
+			fileDatasetIDsOrder: []datastream.DatasetFieldID{
 				{
 					DatasetFieldID: 1001,
 				}, {
 					DatasetFieldID: 1002,
 				},
 			},
-			serverDatasetIdsOrder: []int{1002, 1003},
+			serverDatasetIDsOrder: []int{1002, 1003},
 			format:                datastream.FormatTypeJson,
 			expectNonEmptyPlan:    true,
 		},
 		"duplicates in server side json config": {
 			preConfig: "testdata/TestResourceStream/dataset_ids_diff/json_config.tf",
-			fileDatasetIdsOrder: []datastream.DatasetFieldID{
+			fileDatasetIDsOrder: []datastream.DatasetFieldID{
 				{
 					DatasetFieldID: 1001,
 				}, {
 					DatasetFieldID: 1002,
 				},
 			},
-			serverDatasetIdsOrder: []int{1002, 1002},
+			serverDatasetIDsOrder: []int{1002, 1002},
 			format:                datastream.FormatTypeJson,
 			expectNonEmptyPlan:    true,
 		},
 		"duplicates in incoming json config": {
 			preConfig: "testdata/TestResourceStream/dataset_ids_diff/json_config_duplicates.tf",
-			fileDatasetIdsOrder: []datastream.DatasetFieldID{
+			fileDatasetIDsOrder: []datastream.DatasetFieldID{
 				{
 					DatasetFieldID: 1002,
 				}, {
 					DatasetFieldID: 1002,
 				},
 			},
-			serverDatasetIdsOrder: []int{1001, 1002},
+			serverDatasetIDsOrder: []int{1001, 1002},
 			format:                datastream.FormatTypeJson,
 			expectNonEmptyPlan:    true,
 		},
 		"no order mixed in structured config": {
 			preConfig: "testdata/TestResourceStream/dataset_ids_diff/structured_config.tf",
-			fileDatasetIdsOrder: []datastream.DatasetFieldID{
+			fileDatasetIDsOrder: []datastream.DatasetFieldID{
 				{
 					DatasetFieldID: 1001,
 				}, {
 					DatasetFieldID: 1002,
 				},
 			},
-			serverDatasetIdsOrder: []int{1002, 1001},
+			serverDatasetIDsOrder: []int{1002, 1001},
 			format:                datastream.FormatTypeStructured,
 			expectNonEmptyPlan:    true,
 		},
 		"id change in structured config": {
 			preConfig: "testdata/TestResourceStream/dataset_ids_diff/structured_config.tf",
-			fileDatasetIdsOrder: []datastream.DatasetFieldID{
+			fileDatasetIDsOrder: []datastream.DatasetFieldID{
 				{
 					DatasetFieldID: 1001,
 				}, {
 					DatasetFieldID: 1002,
 				},
 			},
-			serverDatasetIdsOrder: []int{1002, 1003},
+			serverDatasetIDsOrder: []int{1002, 1003},
 			format:                datastream.FormatTypeStructured,
 			expectNonEmptyPlan:    true,
 		},
@@ -1122,7 +1122,7 @@ func TestDatasetIDsDiff(t *testing.T) {
 				},
 			),
 			ContractID:    "test_contract",
-			DatasetFields: test.fileDatasetIdsOrder,
+			DatasetFields: test.fileDatasetIDsOrder,
 			GroupID:       1337,
 			Properties: []datastream.PropertyID{
 				{
@@ -1162,10 +1162,10 @@ func TestDatasetIDsDiff(t *testing.T) {
 			ContractID: streamConfiguration.ContractID,
 			DatasetFields: []datastream.DataSetField{
 				{
-					DatasetFieldID: test.serverDatasetIdsOrder[0],
+					DatasetFieldID: test.serverDatasetIDsOrder[0],
 				},
 				{
-					DatasetFieldID: test.serverDatasetIdsOrder[1],
+					DatasetFieldID: test.serverDatasetIDsOrder[1],
 				},
 			},
 			GroupID: streamConfiguration.GroupID,
@@ -1187,13 +1187,13 @@ func TestDatasetIDsDiff(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			client := &datastream.Mock{}
 
-			client.On("CreateStream", mock.Anything, createStreamRequest).
+			client.On("CreateStream", testutils.MockContext, createStreamRequest).
 				Return(createStreamResponse, nil)
 
-			client.On("GetStream", mock.Anything, getStreamRequest).
+			client.On("GetStream", testutils.MockContext, getStreamRequest).
 				Return(getStreamResponse, nil).Times(3)
 
-			client.On("DeleteStream", mock.Anything, deleteStreamRequest).
+			client.On("DeleteStream", testutils.MockContext, deleteStreamRequest).
 				Return(' ', nil)
 
 			useClient(client, func() {
@@ -1205,8 +1205,8 @@ func TestDatasetIDsDiff(t *testing.T) {
 							ExpectNonEmptyPlan: test.expectNonEmptyPlan,
 							Check: resource.ComposeTestCheckFunc(
 								resource.TestCheckResourceAttr("akamai_datastream.splunk_stream", "dataset_fields.#", "2"),
-								resource.TestCheckResourceAttr("akamai_datastream.splunk_stream", "dataset_fields.0", strconv.Itoa(test.serverDatasetIdsOrder[0])),
-								resource.TestCheckResourceAttr("akamai_datastream.splunk_stream", "dataset_fields.1", strconv.Itoa(test.serverDatasetIdsOrder[1])),
+								resource.TestCheckResourceAttr("akamai_datastream.splunk_stream", "dataset_fields.0", strconv.Itoa(test.serverDatasetIDsOrder[0])),
+								resource.TestCheckResourceAttr("akamai_datastream.splunk_stream", "dataset_fields.1", strconv.Itoa(test.serverDatasetIDsOrder[1])),
 							),
 						},
 					},
@@ -1246,9 +1246,7 @@ func TestCustomHeaders(t *testing.T) {
 
 	createStreamRequestFactory := func(connector datastream.AbstractConnector) datastream.CreateStreamRequest {
 		streamConfigurationWithConnector := streamConfiguration
-		streamConfigurationWithConnector.Destination = datastream.AbstractConnector(
-			connector,
-		)
+		streamConfigurationWithConnector.Destination = connector
 		return datastream.CreateStreamRequest{
 			StreamConfiguration: streamConfigurationWithConnector,
 			Activate:            false,
@@ -1259,10 +1257,8 @@ func TestCustomHeaders(t *testing.T) {
 		return &datastream.DetailedStreamVersion{
 			StreamStatus:          datastream.StreamStatusInactive,
 			DeliveryConfiguration: streamConfiguration.DeliveryConfiguration,
-			Destination: datastream.Destination(
-				connector,
-			),
-			ContractID: streamConfiguration.ContractID,
+			Destination:           connector,
+			ContractID:            streamConfiguration.ContractID,
 			DatasetFields: []datastream.DataSetField{
 				{
 					DatasetFieldID:          1001,
@@ -1489,14 +1485,14 @@ func TestCustomHeaders(t *testing.T) {
 			client := &datastream.Mock{}
 
 			createStreamRequest := createStreamRequestFactory(test.Connector)
-			client.On("CreateStream", mock.Anything, createStreamRequest).
+			client.On("CreateStream", testutils.MockContext, createStreamRequest).
 				Return(updateStreamResponse, nil)
 
 			getStreamResponse := responseFactory(test.Response)
-			client.On("GetStream", mock.Anything, getStreamRequest).
+			client.On("GetStream", testutils.MockContext, getStreamRequest).
 				Return(getStreamResponse, nil)
 
-			client.On("DeleteStream", mock.Anything, datastream.DeleteStreamRequest{
+			client.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
 				StreamID: streamID,
 			}).Return(' ', nil)
 
@@ -1505,7 +1501,7 @@ func TestCustomHeaders(t *testing.T) {
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
-							Config: testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestResourceStream/custom_headers/%s", test.Filename)),
+							Config: testutils.LoadFixtureStringf(t, "testdata/TestResourceStream/custom_headers/%s", test.Filename),
 							Check:  resource.ComposeTestCheckFunc(test.TestChecks...),
 						},
 					},
@@ -1546,9 +1542,7 @@ func TestMTLS(t *testing.T) {
 
 	createStreamRequestFactory := func(connector datastream.AbstractConnector) datastream.CreateStreamRequest {
 		streamConfigurationWithConnector := streamConfiguration
-		streamConfigurationWithConnector.Destination = datastream.AbstractConnector(
-			connector,
-		)
+		streamConfigurationWithConnector.Destination = connector
 		return datastream.CreateStreamRequest{
 			StreamConfiguration: streamConfigurationWithConnector,
 			Activate:            false,
@@ -1559,10 +1553,8 @@ func TestMTLS(t *testing.T) {
 		return &datastream.DetailedStreamVersion{
 			StreamStatus:          datastream.StreamStatusInactive,
 			DeliveryConfiguration: streamConfiguration.DeliveryConfiguration,
-			Destination: datastream.Destination(
-				connector,
-			),
-			ContractID: streamConfiguration.ContractID,
+			Destination:           connector,
+			ContractID:            streamConfiguration.ContractID,
 			DatasetFields: []datastream.DataSetField{
 				{
 					DatasetFieldID:          1001,
@@ -1718,14 +1710,14 @@ func TestMTLS(t *testing.T) {
 			client := &datastream.Mock{}
 
 			createStreamRequest := createStreamRequestFactory(test.Connector)
-			client.On("CreateStream", mock.Anything, createStreamRequest).
+			client.On("CreateStream", testutils.MockContext, createStreamRequest).
 				Return(updateStreamResponse, nil)
 
 			getStreamResponse := responseFactory(test.Response)
-			client.On("GetStream", mock.Anything, getStreamRequest).
+			client.On("GetStream", testutils.MockContext, getStreamRequest).
 				Return(getStreamResponse, nil)
 
-			client.On("DeleteStream", mock.Anything, datastream.DeleteStreamRequest{
+			client.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
 				StreamID: streamID,
 			}).Return(' ', nil)
 
@@ -1734,7 +1726,7 @@ func TestMTLS(t *testing.T) {
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
-							Config: testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestResourceStream/mtls/%s", test.Filename)),
+							Config: testutils.LoadFixtureStringf(t, "testdata/TestResourceStream/mtls/%s", test.Filename),
 							Check:  resource.ComposeTestCheckFunc(test.TestChecks...),
 						},
 					},
@@ -1838,14 +1830,14 @@ func TestUrlSuppressor(t *testing.T) {
 	}{
 		"idempotent when endpoint is stripped by api": {
 			Init: func(m *datastream.Mock) {
-				m.On("CreateStream", mock.Anything, createStreamRequestFactory(&datastream.SumoLogicConnector{
+				m.On("CreateStream", testutils.MockContext, createStreamRequestFactory(&datastream.SumoLogicConnector{
 					CollectorCode: "collector_code",
 					CompressLogs:  true,
 					DisplayName:   "display_name",
 					Endpoint:      "endpoint/?/?",
 				})).Return(updateStreamResponse, nil)
 
-				m.On("GetStream", mock.Anything, mock.Anything).
+				m.On("GetStream", testutils.MockContext, mock.Anything).
 					Return(responseFactory(datastream.Destination{
 						DestinationType: datastream.DestinationTypeSumoLogic,
 						CompressLogs:    true,
@@ -1870,14 +1862,14 @@ func TestUrlSuppressor(t *testing.T) {
 		},
 		"update endpoint field": {
 			Init: func(m *datastream.Mock) {
-				m.On("CreateStream", mock.Anything, createStreamRequestFactory(&datastream.SumoLogicConnector{
+				m.On("CreateStream", testutils.MockContext, createStreamRequestFactory(&datastream.SumoLogicConnector{
 					CollectorCode: "collector_code",
 					CompressLogs:  true,
 					DisplayName:   "display_name",
 					Endpoint:      "endpoint",
 				})).Return(updateStreamResponse, nil)
 
-				m.On("GetStream", mock.Anything, mock.Anything).
+				m.On("GetStream", testutils.MockContext, mock.Anything).
 					Return(responseFactory(datastream.Destination{
 						DestinationType: datastream.DestinationTypeSumoLogic,
 						CompressLogs:    true,
@@ -1885,14 +1877,14 @@ func TestUrlSuppressor(t *testing.T) {
 						Endpoint:        "endpoint",
 					}), nil).Times(3)
 
-				m.On("UpdateStream", mock.Anything, updateStreamRequestFactory(&datastream.SumoLogicConnector{
+				m.On("UpdateStream", testutils.MockContext, updateStreamRequestFactory(&datastream.SumoLogicConnector{
 					CollectorCode: "collector_code",
 					CompressLogs:  true,
 					DisplayName:   "display_name",
 					Endpoint:      "endpoint_updated",
 				})).Return(updateStreamResponse, nil)
 
-				m.On("GetStream", mock.Anything, mock.Anything).
+				m.On("GetStream", testutils.MockContext, mock.Anything).
 					Return(responseFactory(datastream.Destination{
 						DestinationType: datastream.DestinationTypeSumoLogic,
 						CompressLogs:    true,
@@ -1921,14 +1913,14 @@ func TestUrlSuppressor(t *testing.T) {
 		},
 		"adding new fields": {
 			Init: func(m *datastream.Mock) {
-				m.On("CreateStream", mock.Anything, createStreamRequestFactory(&datastream.SumoLogicConnector{
+				m.On("CreateStream", testutils.MockContext, createStreamRequestFactory(&datastream.SumoLogicConnector{
 					CollectorCode: "collector_code",
 					CompressLogs:  true,
 					DisplayName:   "display_name",
 					Endpoint:      "endpoint",
 				})).Return(updateStreamResponse, nil)
 
-				m.On("GetStream", mock.Anything, mock.Anything).
+				m.On("GetStream", testutils.MockContext, mock.Anything).
 					Return(responseFactory(datastream.Destination{
 						DestinationType: datastream.DestinationTypeSumoLogic,
 						CompressLogs:    true,
@@ -1936,7 +1928,7 @@ func TestUrlSuppressor(t *testing.T) {
 						Endpoint:        "endpoint",
 					}), nil).Times(3)
 
-				m.On("UpdateStream", mock.Anything, updateStreamRequestFactory(&datastream.SumoLogicConnector{
+				m.On("UpdateStream", testutils.MockContext, updateStreamRequestFactory(&datastream.SumoLogicConnector{
 					CollectorCode:     "collector_code",
 					CompressLogs:      true,
 					DisplayName:       "display_name",
@@ -1945,7 +1937,7 @@ func TestUrlSuppressor(t *testing.T) {
 					CustomHeaderValue: "custom_header_value",
 				})).Return(updateStreamResponse, nil)
 
-				m.On("GetStream", mock.Anything, mock.Anything).
+				m.On("GetStream", testutils.MockContext, mock.Anything).
 					Return(responseFactory(datastream.Destination{
 						DestinationType:   datastream.DestinationTypeSumoLogic,
 						CompressLogs:      true,
@@ -1982,14 +1974,14 @@ func TestUrlSuppressor(t *testing.T) {
 		},
 		"change connector": {
 			Init: func(m *datastream.Mock) {
-				m.On("CreateStream", mock.Anything, createStreamRequestFactory(&datastream.SumoLogicConnector{
+				m.On("CreateStream", testutils.MockContext, createStreamRequestFactory(&datastream.SumoLogicConnector{
 					CollectorCode: "collector_code",
 					CompressLogs:  true,
 					DisplayName:   "display_name",
 					Endpoint:      "endpoint",
 				})).Return(updateStreamResponse, nil)
 
-				m.On("GetStream", mock.Anything, mock.Anything).
+				m.On("GetStream", testutils.MockContext, mock.Anything).
 					Return(responseFactory(datastream.Destination{
 						DestinationType: datastream.DestinationTypeSumoLogic,
 						CompressLogs:    true,
@@ -1997,13 +1989,13 @@ func TestUrlSuppressor(t *testing.T) {
 						Endpoint:        "endpoint",
 					}), nil).Times(3)
 
-				m.On("UpdateStream", mock.Anything, updateStreamRequestFactory(&datastream.DatadogConnector{
+				m.On("UpdateStream", testutils.MockContext, updateStreamRequestFactory(&datastream.DatadogConnector{
 					AuthToken:   "auth_token",
 					DisplayName: "display_name",
 					Endpoint:    "endpoint",
 				})).Return(updateStreamResponse, nil)
 
-				m.On("GetStream", mock.Anything, mock.Anything).
+				m.On("GetStream", testutils.MockContext, mock.Anything).
 					Return(responseFactory(datastream.Destination{
 						DestinationType: datastream.DestinationTypeDataDog,
 						DisplayName:     "display_name",
@@ -2040,7 +2032,7 @@ func TestUrlSuppressor(t *testing.T) {
 			m := &datastream.Mock{}
 			test.Init(m)
 
-			m.On("DeleteStream", mock.Anything, datastream.DeleteStreamRequest{
+			m.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
 				StreamID: streamID,
 			}).Return(' ', nil)
 
@@ -2083,9 +2075,7 @@ func TestConnectors(t *testing.T) {
 
 	createStreamRequestFactory := func(connector datastream.AbstractConnector) datastream.CreateStreamRequest {
 		streamConfigurationWithConnector := streamConfiguration
-		streamConfigurationWithConnector.Destination = datastream.AbstractConnector(
-			connector,
-		)
+		streamConfigurationWithConnector.Destination = connector
 		return datastream.CreateStreamRequest{
 			StreamConfiguration: streamConfigurationWithConnector,
 			Activate:            false,
@@ -2096,10 +2086,8 @@ func TestConnectors(t *testing.T) {
 		return &datastream.DetailedStreamVersion{
 			StreamStatus:          datastream.StreamStatusInactive,
 			DeliveryConfiguration: streamConfiguration.DeliveryConfiguration,
-			Destination: datastream.Destination(
-				connector,
-			),
-			ContractID: streamConfiguration.ContractID,
+			Destination:           connector,
+			ContractID:            streamConfiguration.ContractID,
 			DatasetFields: []datastream.DataSetField{
 				{
 					DatasetFieldID:          1001,
@@ -2194,20 +2182,20 @@ func TestConnectors(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			client := &datastream.Mock{}
 
-			client.On("CreateStream", mock.Anything, createStreamRequestFactory(test.Connector)).
+			client.On("CreateStream", testutils.MockContext, createStreamRequestFactory(test.Connector)).
 				Return(updateStreamResponse, nil)
 
-			client.On("GetStream", mock.Anything, getStreamRequest).
+			client.On("GetStream", testutils.MockContext, getStreamRequest).
 				Return(responseFactory(test.Response), nil)
 
-			client.On("DeleteStream", mock.Anything, mock.Anything).Return(' ', nil)
+			client.On("DeleteStream", testutils.MockContext, mock.Anything).Return(' ', nil)
 
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{
 						{
-							Config: testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestResourceStream/connectors/%s", test.Filename)),
+							Config: testutils.LoadFixtureStringf(t, "testdata/TestResourceStream/connectors/%s", test.Filename),
 							Check:  resource.ComposeTestCheckFunc(test.TestChecks...),
 						},
 					},

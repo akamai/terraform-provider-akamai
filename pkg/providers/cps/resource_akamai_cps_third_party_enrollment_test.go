@@ -6,14 +6,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cps"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/cps"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/jinzhu/copier"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestResourceThirdPartyEnrollment(t *testing.T) {
@@ -24,7 +23,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
-			mock.Anything,
+			testutils.MockContext,
 			cps.CreateEnrollmentRequest{
 				EnrollmentRequestBody: enrollmentReqBody,
 				ContractID:            "1",
@@ -42,11 +41,11 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 				ChangeType: "new-certificate",
 			},
 		}
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Once()
 
 		// first verification loop, invalid status
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -58,7 +57,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// second verification loop, valid status, empty allowed input array
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -70,7 +69,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// final verification loop
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -81,7 +80,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Times(3)
 
 		enrollmentUpdate := newEnrollment(
@@ -100,7 +99,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		enrollmentUpdateReqBody := createEnrollmentReqBodyFromEnrollment(enrollmentUpdate)
 		allowCancel := true
 		client.On("UpdateEnrollment",
-			mock.Anything,
+			testutils.MockContext,
 			cps.UpdateEnrollmentRequest{
 				EnrollmentRequestBody:     enrollmentUpdateReqBody,
 				EnrollmentID:              1,
@@ -116,10 +115,10 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			WithBase(&enrollmentUpdate),
 			WithPendingChangeID(2),
 		)
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentGet, nil).Times(3)
 
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -130,7 +129,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("RemoveEnrollment", mock.Anything, cps.RemoveEnrollmentRequest{
+		client.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
 			EnrollmentID:              1,
 			AllowCancelPendingChanges: &allowCancel,
 		}).Return(&cps.RemoveEnrollmentResponse{
@@ -171,7 +170,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
-			mock.Anything,
+			testutils.MockContext,
 			cps.CreateEnrollmentRequest{
 				EnrollmentRequestBody: enrollmentReqBody,
 				ContractID:            "1",
@@ -189,11 +188,11 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 				ChangeType: "new-certificate",
 			},
 		}
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Once()
 
 		// first verification loop, invalid status
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -205,7 +204,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// second verification loop, valid status, empty allowed input array
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -217,7 +216,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// final verification loop, everything in place
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -228,7 +227,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Times(3)
 
 		enrollmentUpdate := newEnrollment(
@@ -247,7 +246,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		enrollmentUpdateReqBody := createEnrollmentReqBodyFromEnrollment(enrollmentUpdate)
 		allowCancel := true
 		client.On("UpdateEnrollment",
-			mock.Anything,
+			testutils.MockContext,
 			cps.UpdateEnrollmentRequest{
 				EnrollmentRequestBody:     enrollmentUpdateReqBody,
 				EnrollmentID:              1,
@@ -263,10 +262,10 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			WithBase(&enrollmentUpdate),
 			WithPendingChangeID(2),
 		)
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentGet, nil).Times(3)
 
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -277,7 +276,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("RemoveEnrollment", mock.Anything, cps.RemoveEnrollmentRequest{
+		client.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
 			EnrollmentID:              1,
 			AllowCancelPendingChanges: &allowCancel,
 		}).Return(&cps.RemoveEnrollmentResponse{
@@ -321,7 +320,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
-			mock.Anything,
+			testutils.MockContext,
 			cps.CreateEnrollmentRequest{
 				EnrollmentRequestBody: enrollmentReqBody,
 				ContractID:            "1",
@@ -334,11 +333,11 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 
 		enrollmentGet := newEnrollment(WithBase(&enrollment), WithPendingChangeID(2))
 
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentGet, nil).Once()
 
 		// first verification loop, invalid status
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -350,7 +349,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// second verification loop, valid status, empty allowed input array
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -362,7 +361,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// final verification loop
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -373,7 +372,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentGet, nil).Times(3)
 
 		enrollmentUpdate := newEnrollment(
@@ -384,7 +383,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		enrollmentUpdateReqBody := createEnrollmentReqBodyFromEnrollment(enrollmentUpdate)
 		allowCancel := true
 		client.On("UpdateEnrollment",
-			mock.Anything,
+			testutils.MockContext,
 			cps.UpdateEnrollmentRequest{
 				EnrollmentRequestBody:     enrollmentUpdateReqBody,
 				EnrollmentID:              1,
@@ -398,10 +397,10 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 
 		enrollmentGetUpdate := newEnrollment(WithBase(&enrollmentUpdate), WithPendingChangeID(2))
 
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentGetUpdate, nil).Times(3)
 
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -412,7 +411,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("RemoveEnrollment", mock.Anything, cps.RemoveEnrollmentRequest{
+		client.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
 			EnrollmentID:              1,
 			AllowCancelPendingChanges: &allowCancel,
 		}).Return(&cps.RemoveEnrollmentResponse{
@@ -451,7 +450,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
-			mock.Anything,
+			testutils.MockContext,
 			cps.CreateEnrollmentRequest{
 				EnrollmentRequestBody: enrollmentReqBody,
 				ContractID:            "1",
@@ -464,11 +463,11 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 
 		enrollmentGet := newEnrollment(WithEmptySans, WithPendingChangeID(2))
 
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentGet, nil).Once()
 
 		// first verification loop, invalid status
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -480,7 +479,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// second verification loop, valid status, empty allowed input array
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -492,7 +491,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// final verification loop
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -503,12 +502,12 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentGet, nil).Times(2)
 
 		allowCancel := true
 
-		client.On("RemoveEnrollment", mock.Anything, cps.RemoveEnrollmentRequest{
+		client.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
 			EnrollmentID:              1,
 			AllowCancelPendingChanges: &allowCancel,
 		}).Return(&cps.RemoveEnrollmentResponse{
@@ -538,7 +537,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
-			mock.Anything,
+			testutils.MockContext,
 			cps.CreateEnrollmentRequest{
 				EnrollmentRequestBody: enrollmentReqBody,
 				ContractID:            "1",
@@ -564,7 +563,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		enrollmentUpdateReqBody := createEnrollmentReqBodyFromEnrollment(enrollmentUpdate)
 
 		client.On("UpdateEnrollment",
-			mock.Anything,
+			testutils.MockContext,
 			cps.UpdateEnrollmentRequest{
 				EnrollmentID:              1,
 				EnrollmentRequestBody:     enrollmentUpdateReqBody,
@@ -580,11 +579,11 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			WithBase(&enrollmentUpdate),
 			WithPendingChangeID(3),
 		)
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentGet, nil).Once()
 
 		// first verification loop, invalid status
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     3,
 		}).Return(&cps.Change{
@@ -596,7 +595,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// second verification loop, valid status, empty allowed input array
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     3,
 		}).Return(&cps.Change{
@@ -608,7 +607,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// final verification loop
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     3,
 		}).Return(&cps.Change{
@@ -619,12 +618,12 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentGet, nil).Times(2)
 
 		allowCancel := true
 
-		client.On("RemoveEnrollment", mock.Anything, cps.RemoveEnrollmentRequest{
+		client.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
 			EnrollmentID:              1,
 			AllowCancelPendingChanges: &allowCancel,
 		}).Return(&cps.RemoveEnrollmentResponse{
@@ -659,7 +658,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
-			mock.Anything,
+			testutils.MockContext,
 			cps.CreateEnrollmentRequest{
 				EnrollmentRequestBody: enrollmentReqBody,
 				ContractID:            "1",
@@ -672,11 +671,11 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 
 		enrollmentGet := newEnrollment(WithBase(&enrollment), WithPendingChangeID(2))
 
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentGet, nil).Once()
 
 		// first verification loop, invalid status
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -688,7 +687,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// second verification loop, valid status, empty allowed input array
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -700,7 +699,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// final verification loop
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -711,11 +710,11 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentGet, nil).Times(4)
 
 		allowCancel := true
-		client.On("RemoveEnrollment", mock.Anything, cps.RemoveEnrollmentRequest{
+		client.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
 			EnrollmentID:              1,
 			AllowCancelPendingChanges: &allowCancel,
 		}).Return(&cps.RemoveEnrollmentResponse{
@@ -755,7 +754,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
-			mock.Anything,
+			testutils.MockContext,
 			cps.CreateEnrollmentRequest{
 				EnrollmentRequestBody: enrollmentReqBody,
 				ContractID:            "1",
@@ -772,11 +771,11 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			WithSans(commonName, "san.test.akamai.com"),
 		)
 
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentGet, nil).Once()
 
 		// first verification loop, invalid status
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -788,7 +787,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// second verification loop, valid status, empty allowed input array
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -800,7 +799,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// final verification loop
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -811,11 +810,11 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentGet, nil).Times(4)
 
 		allowCancel := true
-		client.On("RemoveEnrollment", mock.Anything, cps.RemoveEnrollmentRequest{
+		client.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
 			EnrollmentID:              1,
 			AllowCancelPendingChanges: &allowCancel,
 		}).Return(&cps.RemoveEnrollmentResponse{
@@ -851,7 +850,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
-			mock.Anything,
+			testutils.MockContext,
 			cps.CreateEnrollmentRequest{
 				EnrollmentRequestBody: enrollmentReqBody,
 				ContractID:            "1",
@@ -864,10 +863,10 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 
 		enrollmentGet := newEnrollment(WithBase(&enrollment), WithPendingChangeID(2))
 
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentGet, nil).Once()
 
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -878,11 +877,11 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentGet, nil).Times(2)
 
 		allowCancel := true
-		client.On("RemoveEnrollment", mock.Anything, cps.RemoveEnrollmentRequest{
+		client.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
 			EnrollmentID:              1,
 			AllowCancelPendingChanges: &allowCancel,
 		}).Return(&cps.RemoveEnrollmentResponse{
@@ -924,7 +923,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
-			mock.Anything,
+			testutils.MockContext,
 			cps.CreateEnrollmentRequest{
 				EnrollmentRequestBody: enrollmentReqBody,
 				ContractID:            "1",
@@ -942,10 +941,10 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 				ChangeType: "new-certificate",
 			},
 		}
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Once()
 
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -956,13 +955,13 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Times(3)
 
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Times(3)
 
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -974,7 +973,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		allowCancel := true
-		client.On("RemoveEnrollment", mock.Anything, cps.RemoveEnrollmentRequest{
+		client.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
 			EnrollmentID:              1,
 			AllowCancelPendingChanges: &allowCancel,
 		}).Return(&cps.RemoveEnrollmentResponse{
@@ -1023,7 +1022,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
-			mock.Anything,
+			testutils.MockContext,
 			cps.CreateEnrollmentRequest{
 				EnrollmentRequestBody: enrollmentReqBody,
 				ContractID:            "1",
@@ -1035,10 +1034,10 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		enrollmentGet := newEnrollment(WithBase(&enrollment), WithPendingChangeID(2))
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentGet, nil).Once()
 
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1049,18 +1048,18 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			},
 		}, nil).Twice()
 
-		client.On("GetChangePreVerificationWarnings", mock.Anything, cps.GetChangeRequest{
+		client.On("GetChangePreVerificationWarnings", testutils.MockContext, cps.GetChangeRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.PreVerificationWarnings{Warnings: "some warning"}, nil).Once()
 
-		client.On("AcknowledgePreVerificationWarnings", mock.Anything, cps.AcknowledgementRequest{
+		client.On("AcknowledgePreVerificationWarnings", testutils.MockContext, cps.AcknowledgementRequest{
 			EnrollmentID:    1,
 			ChangeID:        2,
 			Acknowledgement: cps.Acknowledgement{Acknowledgement: "acknowledge"},
 		}).Return(nil).Once()
 
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1070,7 +1069,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1081,11 +1080,11 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentGet, nil).Twice()
 
 		allowCancel := true
-		client.On("RemoveEnrollment", mock.Anything, cps.RemoveEnrollmentRequest{
+		client.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
 			EnrollmentID:              1,
 			AllowCancelPendingChanges: &allowCancel,
 		}).Return(&cps.RemoveEnrollmentResponse{
@@ -1115,7 +1114,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
-			mock.Anything,
+			testutils.MockContext,
 			cps.CreateEnrollmentRequest{
 				EnrollmentRequestBody: enrollmentReqBody,
 				ContractID:            "1",
@@ -1129,11 +1128,11 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 
 		enrollmentGet := newEnrollment(WithBase(&enrollment), WithPendingChangeID(2))
 
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentGet, nil).Once()
 
 		// first verification loop, invalid status
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1145,7 +1144,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// second verification loop, valid status, empty allowed input array
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1157,7 +1156,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// final verification loop
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1168,12 +1167,12 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentGet, nil).Times(2)
 
 		allowCancel := true
 
-		client.On("RemoveEnrollment", mock.Anything, cps.RemoveEnrollmentRequest{
+		client.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
 			EnrollmentID:              1,
 			AllowCancelPendingChanges: &allowCancel,
 		}).Return(&cps.RemoveEnrollmentResponse{
@@ -1217,7 +1216,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
-			mock.Anything,
+			testutils.MockContext,
 			cps.CreateEnrollmentRequest{
 				EnrollmentRequestBody: enrollmentReqBody,
 				ContractID:            "1",
@@ -1229,10 +1228,10 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		enrollmentGet := newEnrollment(WithBase(&enrollment), WithPendingChangeID(2))
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentGet, nil).Once()
 
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1243,13 +1242,13 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			},
 		}, nil).Twice()
 
-		client.On("GetChangePreVerificationWarnings", mock.Anything, cps.GetChangeRequest{
+		client.On("GetChangePreVerificationWarnings", testutils.MockContext, cps.GetChangeRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.PreVerificationWarnings{Warnings: "some warning"}, nil).Once()
 
 		allowCancel := true
-		client.On("RemoveEnrollment", mock.Anything, cps.RemoveEnrollmentRequest{
+		client.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
 			EnrollmentID:              1,
 			AllowCancelPendingChanges: &allowCancel,
 		}).Return(&cps.RemoveEnrollmentResponse{
@@ -1290,7 +1289,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
-			mock.Anything,
+			testutils.MockContext,
 			cps.CreateEnrollmentRequest{
 				EnrollmentRequestBody: enrollmentReqBody,
 				ContractID:            "1",
@@ -1331,7 +1330,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
-			mock.Anything,
+			testutils.MockContext,
 			cps.CreateEnrollmentRequest{
 				EnrollmentRequestBody: enrollmentReqBody,
 				ContractID:            "1",
@@ -1343,10 +1342,10 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		enrollmentGet := newEnrollment(WithBase(&enrollment), WithPendingChangeID(2))
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentGet, nil).Once()
 
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1357,18 +1356,18 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			},
 		}, nil).Twice()
 
-		client.On("GetChangePreVerificationWarnings", mock.Anything, cps.GetChangeRequest{
+		client.On("GetChangePreVerificationWarnings", testutils.MockContext, cps.GetChangeRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.PreVerificationWarnings{Warnings: "The key for 'RSA' certificate has expired. You need to create and submit a new certificate.\nThe 'ECDSA' certificate is set to expire in [2] years, [3] months. The certificate has a validity period of greater than 397 days. This certificate will not be accepted by all major browsers for SSL/TLS connections. Please work with your Certificate Authority to reissue the certificate with an acceptable lifetime.\nThe trust chain is empty and the end-entity certificate may have been signed by a non-standard root certificate."}, nil).Once()
 
-		client.On("AcknowledgePreVerificationWarnings", mock.Anything, cps.AcknowledgementRequest{
+		client.On("AcknowledgePreVerificationWarnings", testutils.MockContext, cps.AcknowledgementRequest{
 			EnrollmentID:    1,
 			ChangeID:        2,
 			Acknowledgement: cps.Acknowledgement{Acknowledgement: "acknowledge"},
 		}).Return(nil).Once()
 
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1378,7 +1377,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1389,11 +1388,11 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentGet, nil).Twice()
 
 		allowCancel := true
-		client.On("RemoveEnrollment", mock.Anything, cps.RemoveEnrollmentRequest{
+		client.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
 			EnrollmentID:              1,
 			AllowCancelPendingChanges: &allowCancel,
 		}).Return(&cps.RemoveEnrollmentResponse{
@@ -1436,7 +1435,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
-			mock.Anything,
+			testutils.MockContext,
 			cps.CreateEnrollmentRequest{
 				EnrollmentRequestBody: enrollmentReqBody,
 				ContractID:            "1",
@@ -1448,10 +1447,10 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		enrollmentGet := newEnrollment(WithBase(&enrollment), WithPendingChangeID(2))
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentGet, nil).Once()
 
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1462,13 +1461,13 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			},
 		}, nil).Twice()
 
-		client.On("GetChangePreVerificationWarnings", mock.Anything, cps.GetChangeRequest{
+		client.On("GetChangePreVerificationWarnings", testutils.MockContext, cps.GetChangeRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.PreVerificationWarnings{Warnings: "The key for 'RSA' certificate has expired. You need to create and submit a new certificate.\nError parsing expected trust chains.\nThe trust chain is empty and the end-entity certificate may have been signed by a non-standard root certificate."}, nil).Once()
 
 		allowCancel := true
-		client.On("RemoveEnrollment", mock.Anything, cps.RemoveEnrollmentRequest{
+		client.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
 			EnrollmentID:              1,
 			AllowCancelPendingChanges: &allowCancel,
 		}).Return(&cps.RemoveEnrollmentResponse{
@@ -1509,7 +1508,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
-			mock.Anything,
+			testutils.MockContext,
 			cps.CreateEnrollmentRequest{
 				EnrollmentRequestBody: enrollmentReqBody,
 				ContractID:            "1",
@@ -1527,10 +1526,10 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 				ChangeType: "new-certificate",
 			},
 		}
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Once()
 
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1541,13 +1540,13 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			},
 		}, nil).Twice()
 
-		client.On("GetChangePreVerificationWarnings", mock.Anything, cps.GetChangeRequest{
+		client.On("GetChangePreVerificationWarnings", testutils.MockContext, cps.GetChangeRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.PreVerificationWarnings{Warnings: "The key for 'RSA' certificate has expired. You need to create and submit a new certificate.\nThis is unknown warning.\nThe trust chain is empty and the end-entity certificate may have been signed by a non-standard root certificate."}, nil).Once()
 
 		allowCancel := true
-		client.On("RemoveEnrollment", mock.Anything, cps.RemoveEnrollmentRequest{
+		client.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
 			EnrollmentID:              1,
 			AllowCancelPendingChanges: &allowCancel,
 		}).Return(&cps.RemoveEnrollmentResponse{
@@ -1590,7 +1589,7 @@ func TestResourceThirdPartyEnrollmentImport(t *testing.T) {
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
-			mock.Anything,
+			testutils.MockContext,
 			cps.CreateEnrollmentRequest{
 				EnrollmentRequestBody: enrollmentReqBody,
 				ContractID:            "1",
@@ -1602,10 +1601,10 @@ func TestResourceThirdPartyEnrollmentImport(t *testing.T) {
 		}, nil).Once()
 
 		enrollmentGet := newEnrollment(WithBase(&enrollment), WithPendingChangeID(2))
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentGet, nil).Once()
 
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1616,10 +1615,10 @@ func TestResourceThirdPartyEnrollmentImport(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentGet, nil).Times(4)
 
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1631,7 +1630,7 @@ func TestResourceThirdPartyEnrollmentImport(t *testing.T) {
 		}, nil).Times(3)
 
 		allowCancel := true
-		client.On("RemoveEnrollment", mock.Anything, cps.RemoveEnrollmentRequest{
+		client.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
 			EnrollmentID:              1,
 			AllowCancelPendingChanges: &allowCancel,
 		}).Return(&cps.RemoveEnrollmentResponse{
@@ -1674,7 +1673,7 @@ func TestResourceThirdPartyEnrollmentImport(t *testing.T) {
 			ValidationType: "dv",
 		}
 
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Times(1)
 
 		useClient(client, func() {
@@ -1702,7 +1701,7 @@ func TestSuppressingSignatureAlgorithm(t *testing.T) {
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.On("CreateEnrollment",
-			mock.Anything,
+			testutils.MockContext,
 			cps.CreateEnrollmentRequest{
 				EnrollmentRequestBody: enrollmentReqBody,
 				ContractID:            "1",
@@ -1716,10 +1715,10 @@ func TestSuppressingSignatureAlgorithm(t *testing.T) {
 		enrollmentGet := newEnrollment(WithBase(&enrollment), WithPendingChangeID(2))
 		enrollmentGet.SignatureAlgorithm = ""
 
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentGet, nil).Once()
 
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1730,7 +1729,7 @@ func TestSuppressingSignatureAlgorithm(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentGet, nil).Times(3)
 
 		enrollmentUpdate := newEnrollment(WithBase(&enrollment),
@@ -1747,7 +1746,7 @@ func TestSuppressingSignatureAlgorithm(t *testing.T) {
 		enrollmentUpdateReqBody := createEnrollmentReqBodyFromEnrollment(enrollmentUpdate)
 		allowCancel := true
 		client.On("UpdateEnrollment",
-			mock.Anything,
+			testutils.MockContext,
 			cps.UpdateEnrollmentRequest{
 				EnrollmentRequestBody:     enrollmentUpdateReqBody,
 				EnrollmentID:              1,
@@ -1762,10 +1761,10 @@ func TestSuppressingSignatureAlgorithm(t *testing.T) {
 		enrollmentUpdateGet := newEnrollment(WithBase(&enrollmentUpdate), WithPendingChangeID(2))
 		enrollmentUpdateGet.SignatureAlgorithm = ""
 
-		client.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentUpdateGet, nil).Times(3)
 
-		client.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1776,7 +1775,7 @@ func TestSuppressingSignatureAlgorithm(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("RemoveEnrollment", mock.Anything, cps.RemoveEnrollmentRequest{
+		client.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
 			EnrollmentID:              1,
 			AllowCancelPendingChanges: &allowCancel,
 		}).Return(&cps.RemoveEnrollmentResponse{

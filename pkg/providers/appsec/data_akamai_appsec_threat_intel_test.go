@@ -6,10 +6,9 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -22,7 +21,7 @@ func TestAkamaiThreatIntel_data_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
@@ -31,7 +30,7 @@ func TestAkamaiThreatIntel_data_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetThreatIntel",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetThreatIntelRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
 		).Return(&getThreatIntelResponse, nil)
 
@@ -64,7 +63,7 @@ func TestAkamaiThreatIntel_data_error_retrieving_threat_intel(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
@@ -73,7 +72,7 @@ func TestAkamaiThreatIntel_data_error_retrieving_threat_intel(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetThreatIntel",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetThreatIntelRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
 		).Return(nil, fmt.Errorf("GetThreatIntel failed"))
 

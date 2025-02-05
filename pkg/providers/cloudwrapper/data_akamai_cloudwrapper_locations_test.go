@@ -5,10 +5,9 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cloudwrapper"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/cloudwrapper"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestDataLocations(t *testing.T) {
@@ -16,11 +15,11 @@ func TestDataLocations(t *testing.T) {
 		listLocationsRes := cloudwrapper.ListLocationResponse{
 			Locations: data.locations,
 		}
-		client.On("ListLocations", mock.Anything).Return(&listLocationsRes, nil).Times(timesToRun)
+		client.On("ListLocations", testutils.MockContext).Return(&listLocationsRes, nil).Times(timesToRun)
 	}
 
 	expectListLocationsWithError := func(client *cloudwrapper.Mock, timesToRun int) {
-		client.On("ListLocations", mock.Anything).Return(nil, fmt.Errorf("list locations failed")).Times(timesToRun)
+		client.On("ListLocations", testutils.MockContext).Return(nil, fmt.Errorf("list locations failed")).Times(timesToRun)
 	}
 
 	location := testDataForCWLocations{
@@ -118,7 +117,6 @@ func checkCloudWrapperLocationsAttrs() resource.TestCheckFunc {
 	checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_cloudwrapper_locations.test", "locations.1.traffic_types.#", "2"))
 	checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_cloudwrapper_locations.test", "locations.1.traffic_types.0.traffic_type_id", "3"))
 	checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_cloudwrapper_locations.test", "locations.1.traffic_types.0.location_id", "cw-s-usw"))
-	checkFuncs = append(checkFuncs, resource.TestCheckResourceAttrSet("data.akamai_cloudwrapper_locations.test", "id"))
 
 	return resource.ComposeAggregateTestCheckFunc(checkFuncs...)
 }

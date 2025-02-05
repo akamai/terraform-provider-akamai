@@ -3,9 +3,9 @@ package iam
 import (
 	"context"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/iam"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -41,7 +41,7 @@ func dataIAMStatesRead(ctx context.Context, d *schema.ResourceData, m interface{
 	country := d.Get("country").(string)
 	res, err := client.ListStates(ctx, iam.ListStatesRequest{Country: country})
 	if err != nil {
-		logger.WithError(err).Error("Could not get states")
+		logger.Error("Could not get states", "error", err)
 		return diag.FromErr(err)
 	}
 
@@ -51,7 +51,7 @@ func dataIAMStatesRead(ctx context.Context, d *schema.ResourceData, m interface{
 	}
 
 	if err := d.Set("states", states); err != nil {
-		logger.WithError(err).Error("Could not set states in the state")
+		logger.Error("Could not set states in the state", "error", err)
 		return diag.FromErr(err)
 	}
 

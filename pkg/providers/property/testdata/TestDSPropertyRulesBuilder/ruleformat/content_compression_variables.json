@@ -1,0 +1,109 @@
+{
+  "_ruleFormat_": "rules_v2023_01_05",
+  "rules": {
+    "behaviors": [
+      {
+        "name": "cpCode",
+        "options": {
+          "value": {
+            "cpCodeLimits": {
+              "currentCapacity": -143,
+              "limit": 100,
+              "limitType": "global"
+            },
+            "createdDate": 1678276597000,
+            "description": "papi.declarativ.test.ipqa",
+            "id": 1048126,
+            "name": "papi.declarativ.test.ipqa",
+            "products": [
+              "Fresca"
+            ]
+          }
+        }
+      },
+      {
+        "name": "cacheTag",
+        "options": {
+          "tag": "nonprod-gol-static-{{builtin.AK_FILENAME}}-fixedstring{{user.PMUSER_FOO}}"
+        }
+      },
+      {
+        "name": "segmentedContentProtection",
+        "options": {
+          "acl": false,
+          "dashMediaEncryption": false,
+          "dataPayload": false,
+          "enableTokenInURI": false,
+          "enabled": true,
+          "fieldCarryOver": "",
+          "headerForSalt": [
+            "User-Agent",
+            "X-Playback-Session-Id",
+            "Origin"
+          ],
+          "hlsMediaEncryption": false,
+          "ip": false,
+          "key": "1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f",
+          "mediaEncryptionTitle": "",
+          "salt": "",
+          "sessionId": true,
+          "tokenAuthHLSTitle": "",
+          "tokenAuthenticationTitle": "",
+          "transitionKey": "2",
+          "useAdvanced": true
+        }
+      },
+      {
+        "name": "verifyTokenAuthorization",
+        "options": {
+          "algorithm": "SHA256",
+          "escapeHmacInputs": true,
+          "failureResponse": true,
+          "ignoreQueryString": false,
+          "key": "2",
+          "location": "COOKIE",
+          "locationId": "__token__",
+          "salt": "",
+          "transitionKey": "3",
+          "useAdvanced": true
+        }
+      }
+    ],
+    "criteria": [
+      {
+        "name": "contentType",
+        "options": {
+          "matchCaseSensitive": false,
+          "matchOperator": "IS_ONE_OF",
+          "matchWildcard": true,
+          "values": [
+            "text/*",
+            "application/javascript",
+            "application/x-javascript",
+            "application/x-javascript*",
+            "application/json",
+            "application/x-json",
+            "application/*+json",
+            "application/*+xml",
+            "application/text",
+            "application/vnd.microsoft.icon",
+            "application/vnd-ms-fontobject",
+            "application/x-font-ttf",
+            "application/x-font-opentype",
+            "application/x-font-truetype",
+            "application/xmlfont/eot",
+            "application/xml",
+            "font/opentype",
+            "font/otf",
+            "font/eot",
+            "image/svg+xml",
+            "image/vnd.microsoft.icon"
+          ]
+        }
+      }
+    ],
+    "name": "Content Compression",
+    "options": {},
+    "criteriaMustSatisfy": "all"
+  }
+}

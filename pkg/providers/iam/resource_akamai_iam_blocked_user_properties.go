@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/iam"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/id"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -71,7 +71,7 @@ func resourceIAMBlockedUserPropertiesCreate(ctx context.Context, d *schema.Resou
 
 	existingBlockedProperties, err := client.ListBlockedProperties(ctx, listRequest)
 	if err != nil {
-		logger.WithError(err).Errorf("failed to fetch blocked user properties")
+		logger.Error("failed to fetch blocked user properties", "error", err)
 		return diag.Errorf("failed to fetch blocked user properties: %s", err)
 	}
 	if len(existingBlockedProperties) > 0 {
@@ -92,7 +92,7 @@ func resourceIAMBlockedUserPropertiesCreate(ctx context.Context, d *schema.Resou
 
 	_, err = client.UpdateBlockedProperties(ctx, request)
 	if err != nil {
-		logger.WithError(err).Errorf("failed to create blocked user properties")
+		logger.Error("failed to create blocked user properties", "error", err)
 		return diag.Errorf("failed to create blocked user properties: %s", err)
 	}
 
@@ -108,7 +108,7 @@ func resourceIAMBlockedUserPropertiesRead(ctx context.Context, d *schema.Resourc
 
 	logger.Debug("Reading blocked user properties")
 
-	idParts, err := splitID(d.Id(), 2, "identityID:groupID")
+	idParts, err := id.Split(d.Id(), 2, "identityID:groupID")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -126,7 +126,7 @@ func resourceIAMBlockedUserPropertiesRead(ctx context.Context, d *schema.Resourc
 
 	blockedProperties, err := client.ListBlockedProperties(ctx, request)
 	if err != nil {
-		logger.WithError(err).Errorf("failed to fetch blocked user properties")
+		logger.Error("failed to fetch blocked user properties", "error", err)
 		return diag.Errorf("failed to fetch blocked user properties: %s", err)
 	}
 
@@ -172,7 +172,7 @@ func resourceIAMBlockedUserPropertiesUpdate(ctx context.Context, d *schema.Resou
 
 	_, err = client.UpdateBlockedProperties(ctx, request)
 	if err != nil {
-		logger.WithError(err).Errorf("failed to update blocked user properties")
+		logger.Error("failed to update blocked user properties", "error", err)
 		return diag.Errorf("failed to update blocked user properties: %s", err)
 	}
 
@@ -203,12 +203,4 @@ func resourceIAMBlockedUserPropertiesImport(ctx context.Context, d *schema.Resou
 	}
 
 	return schema.ImportStatePassthroughContext(ctx, d, m)
-}
-
-func splitID(id string, expectedNum int, example string) ([]string, error) {
-	parts := strings.Split(id, ":")
-	if len(parts) != expectedNum {
-		return nil, fmt.Errorf("id '%s' is incorrectly formatted: should be of form '%s'", id, example)
-	}
-	return parts, nil
 }

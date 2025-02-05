@@ -3,6 +3,6 @@ provider "akamai" {
 }
 
 data "akamai_gtm_geomap" "testmap" {
-  domain   = "test.geomap.domain.net"
-  map_name = "mapTest"
+  domain   = "gtm_terra_testdomain.akadns.net"
+  map_name = "tfexample_geomap_1"
 }

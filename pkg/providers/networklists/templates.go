@@ -73,7 +73,7 @@ func RenderTemplates(ots map[string]*OutputTemplate, key string, str interface{}
 				return res
 			},
 
-			"replace": func(old, new, src string) string { return strings.Replace(src, old, new, -1) },
+			"replace": func(o, n, src string) string { return strings.Replace(src, o, n, -1) },
 		}
 	)
 

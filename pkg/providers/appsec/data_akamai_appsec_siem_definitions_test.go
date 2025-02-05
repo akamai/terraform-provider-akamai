@@ -4,10 +4,9 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -20,7 +19,7 @@ func TestAkamaiSiemDefinitions_data_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetSiemDefinitions",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetSiemDefinitionsRequest{ID: 0, SiemDefinitionName: "SIEM Version 01"},
 		).Return(&getSiemDefinitionsResponse, nil)
 

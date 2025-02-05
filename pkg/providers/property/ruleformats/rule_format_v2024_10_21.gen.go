@@ -4331,7 +4331,7 @@ func getBehaviorsSchemaV20241021() map[string]*schema.Schema {
 		"early_data": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Use this behavior to enable sending early data during the TLS 1.3 handshake between requests from your client and Akamai edge servers. This is currently only available for TCP connections. This behavior cannot be used in includes.",
+			Description: "Use this behavior to enable sending early data during the TLS 1.3 handshake between requests from your client and Akamai edge servers. This is available for QUIC connections and Transmission Control Protocol (TCP). This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -6150,7 +6150,7 @@ func getBehaviorsSchemaV20241021() map[string]*schema.Schema {
 		"gov_cloud": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior can be used in includes.",
+			Description: "This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -6170,10 +6170,10 @@ func getBehaviorsSchemaV20241021() map[string]*schema.Schema {
 						Description: "This option is for internal usage only.",
 						Type:        schema.TypeString,
 					},
-					"enabled": {
+					"gov_cloud_title": {
 						Optional:    true,
-						Description: "",
-						Type:        schema.TypeBool,
+						Description: "This field is only intended for export compatibility purposes, and modifying it will not impact your use of the behavior.",
+						Type:        schema.TypeString,
 					},
 				},
 			},
@@ -11957,7 +11957,7 @@ func getBehaviorsSchemaV20241021() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"key": {
-						ValidateDiagFunc: validateRegexOrVariable("^(0x)?[0-9a-fA-F]{32}$"),
+						ValidateDiagFunc: validateRegexOrVariable("^(0x)?[0-9a-fA-F]+$"),
 						Optional:         true,
 						Description:      "Specifies the encryption key to use as a shared secret to validate tokens.",
 						Type:             schema.TypeString,
@@ -11968,7 +11968,7 @@ func getBehaviorsSchemaV20241021() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"transition_key": {
-						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^(0x)?[0-9a-fA-F]{32}$")),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^(0x)?[0-9a-fA-F]+$")),
 						Optional:         true,
 						Description:      "An alternate encryption key to match along with the `key` field, allowing you to rotate keys with no down time.",
 						Type:             schema.TypeString,
@@ -13510,13 +13510,13 @@ func getBehaviorsSchemaV20241021() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"key": {
-						ValidateDiagFunc: validateRegexOrVariable("^(0x)?[0-9a-fA-F]{64}$"),
+						ValidateDiagFunc: validateRegexOrVariable("^(0x)?[0-9a-fA-F]+$"),
 						Optional:         true,
 						Description:      "The shared secret used to validate tokens, which needs to match the key used in the token generation code.",
 						Type:             schema.TypeString,
 					},
 					"transition_key": {
-						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^(0x)?[0-9a-fA-F]{64}$")),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^(0x)?[0-9a-fA-F]+$")),
 						Optional:         true,
 						Description:      "Specifies a transition key as a hex value.",
 						Type:             schema.TypeString,

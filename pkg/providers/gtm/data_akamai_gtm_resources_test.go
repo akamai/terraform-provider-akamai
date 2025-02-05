@@ -5,8 +5,8 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/gtm"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/gtm"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -22,10 +22,7 @@ func TestDataGTMResources(t *testing.T) {
 		"happy path - GTM data resources should be returned": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("ListResources", mock.Anything,
-					gtm.ListResourcesRequest{
-						DomainName: "test.domain.net",
-					}).Return([]gtm.Resource{
+				mockListResources(m, []gtm.Resource{
 					{
 						Type:                        "XML load object via HTTP",
 						LeastSquaresDecay:           0,
@@ -43,7 +40,7 @@ func TestDataGTMResources(t *testing.T) {
 						},
 						},
 						ResourceInstances: []gtm.ResourceInstance{{
-							DatacenterID:         3131,
+							DatacenterID:         datacenterID3131,
 							UseDefaultLoadObject: false,
 							LoadObject: gtm.LoadObject{
 								LoadObject:     "/test1",
@@ -70,7 +67,7 @@ func TestDataGTMResources(t *testing.T) {
 						},
 						},
 						ResourceInstances: []gtm.ResourceInstance{{
-							DatacenterID:         3132,
+							DatacenterID:         datacenterID3132,
 							UseDefaultLoadObject: false,
 							LoadObject: gtm.LoadObject{
 								LoadObject:     "/test2",
@@ -80,7 +77,7 @@ func TestDataGTMResources(t *testing.T) {
 						},
 						},
 					},
-				}, nil)
+				}, nil, 3)
 			},
 			expectedAttributes: map[string]string{
 				"resources.0.aggregation_type":                   "latest1",
@@ -98,10 +95,7 @@ func TestDataGTMResources(t *testing.T) {
 		"error response from api": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("ListResources", mock.Anything, gtm.ListResourcesRequest{
-					DomainName: "test.domain.net",
-				}).Return(
-					nil, fmt.Errorf("oops"))
+				mockListResources(m, nil, fmt.Errorf("oops"), 1)
 			},
 			expectError: regexp.MustCompile("oops"),
 		},
@@ -114,11 +108,12 @@ func TestDataGTMResources(t *testing.T) {
 				test.init(client)
 			}
 			var checkFuncs []resource.TestCheckFunc
+			const datasourceName = "data.akamai_gtm_resources.my_gtm_resources"
 			for k, v := range test.expectedAttributes {
-				checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_gtm_resources.my_gtm_resources", k, v))
+				checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr(datasourceName, k, v))
 			}
 			for _, v := range test.expectedMissingAttributes {
-				checkFuncs = append(checkFuncs, resource.TestCheckNoResourceAttr("data.akamai_gtm_resources.my_gtm_resources", v))
+				checkFuncs = append(checkFuncs, resource.TestCheckNoResourceAttr(datasourceName, v))
 			}
 
 			useClient(client, func() {
@@ -126,7 +121,7 @@ func TestDataGTMResources(t *testing.T) {
 					IsUnitTest:               true,
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{{
-						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestDataGTMResources/%s", test.givenTF)),
+						Config:      testutils.LoadFixtureStringf(t, "testdata/TestDataGTMResources/%s", test.givenTF),
 						Check:       resource.ComposeAggregateTestCheckFunc(checkFuncs...),
 						ExpectError: test.expectError,
 					}},
@@ -136,4 +131,11 @@ func TestDataGTMResources(t *testing.T) {
 			client.AssertExpectations(t)
 		})
 	}
+}
+
+func mockListResources(client *gtm.Mock, resp []gtm.Resource, err error, times int) *mock.Call {
+	return client.On("ListResources", testutils.MockContext,
+		gtm.ListResourcesRequest{
+			DomainName: testDomainName,
+		}).Return(resp, err).Times(times)
 }

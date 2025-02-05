@@ -6,12 +6,11 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cloudaccess"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/date"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/cloudaccess"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/date"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 type (
@@ -34,13 +33,13 @@ type (
 func TestDataKeys(t *testing.T) {
 	tests := map[string]struct {
 		configPath string
-		init       func(*testing.T, *cloudaccess.Mock, testDataForKeys)
+		init       func(*cloudaccess.Mock, testDataForKeys)
 		mockData   testDataForKeys
 		error      *regexp.Regexp
 	}{
 		"happy path - multiple keys with various contents": {
 			configPath: "testdata/TestDataKeys/default.tf",
-			init: func(t *testing.T, m *cloudaccess.Mock, testData testDataForKeys) {
+			init: func(m *cloudaccess.Mock, testData testDataForKeys) {
 				expectFullListAccessKeys(t, m, testData, 3)
 			},
 			mockData: testDataForKeys{
@@ -88,14 +87,14 @@ func TestDataKeys(t *testing.T) {
 		},
 		"happy path - no keys": {
 			configPath: "testdata/TestDataKeys/default.tf",
-			init: func(t *testing.T, m *cloudaccess.Mock, testData testDataForKeys) {
+			init: func(m *cloudaccess.Mock, testData testDataForKeys) {
 				expectFullListAccessKeys(t, m, testData, 3)
 			},
 		},
 		"expect error on list access keys": {
 			configPath: "testdata/TestDataKeys/default.tf",
-			init: func(_ *testing.T, m *cloudaccess.Mock, _ testDataForKeys) {
-				m.On("ListAccessKeys", mock.Anything, cloudaccess.ListAccessKeysRequest{}).
+			init: func(m *cloudaccess.Mock, _ testDataForKeys) {
+				m.On("ListAccessKeys", testutils.MockContext, cloudaccess.ListAccessKeysRequest{}).
 					Return(nil, fmt.Errorf("API error")).Once()
 			},
 			error: regexp.MustCompile(`API error`),
@@ -105,7 +104,7 @@ func TestDataKeys(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			client := &cloudaccess.Mock{}
 			if test.init != nil {
-				test.init(t, client, test.mockData)
+				test.init(client, test.mockData)
 			}
 
 			useClient(client, func() {
@@ -133,7 +132,7 @@ func expectFullListAccessKeys(t *testing.T, client *cloudaccess.Mock, data testD
 	for _, key := range data.keys {
 		dateTime, err := date.Parse(key.createdTime)
 		if err != nil {
-			t.Fatalf(err.Error())
+			t.Fatal(err.Error())
 		}
 		listAccessKeysRes.AccessKeys = append(listAccessKeysRes.AccessKeys, cloudaccess.AccessKeyResponse{
 			AccessKeyUID:         key.accessKeyUID,
@@ -147,7 +146,7 @@ func expectFullListAccessKeys(t *testing.T, client *cloudaccess.Mock, data testD
 		})
 	}
 
-	client.On("ListAccessKeys", mock.Anything, listAccessKeysReq).Return(&listAccessKeysRes, nil).Times(timesToRun)
+	client.On("ListAccessKeys", testutils.MockContext, listAccessKeysReq).Return(&listAccessKeysRes, nil).Times(timesToRun)
 }
 
 func checkKeysAttrs(data testDataForKeys) resource.TestCheckFunc {

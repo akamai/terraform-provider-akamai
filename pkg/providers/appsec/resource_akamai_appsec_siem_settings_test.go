@@ -5,11 +5,10 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -34,23 +33,23 @@ func TestAkamaiSiemSettings_res_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
 		client.On("GetSiemSettings",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetSiemSettingsRequest{ConfigID: 43253, Version: 7},
 		).Return(&getSiemSettingsResponse, nil)
 
 		client.On("UpdateSiemSettings",
-			mock.Anything,
-			appsec.UpdateSiemSettingsRequest{ConfigID: 43253, Version: 7, EnableForAllPolicies: false, EnableSiem: true, EnabledBotmanSiemEvents: ptr.To(true), SiemDefinitionID: 1, FirewallPolicyIds: []string{"12345"}, Exceptions: []appsec.Exception{}},
+			testutils.MockContext,
+			appsec.UpdateSiemSettingsRequest{ConfigID: 43253, Version: 7, EnableForAllPolicies: false, EnableSiem: true, EnabledBotmanSiemEvents: ptr.To(true), SiemDefinitionID: 1, FirewallPolicyIDs: []string{"12345"}, Exceptions: []appsec.Exception{}},
 		).Return(&updateSiemSettingsResponse, nil)
 
 		client.On("RemoveSiemSettings",
-			mock.Anything,
-			appsec.RemoveSiemSettingsRequest{ConfigID: 43253, Version: 7, EnableForAllPolicies: false, FirewallPolicyIds: []string(nil)},
+			testutils.MockContext,
+			appsec.RemoveSiemSettingsRequest{ConfigID: 43253, Version: 7, EnableForAllPolicies: false, FirewallPolicyIDs: []string(nil)},
 		).Return(&removeSiemSettingsResponse, nil)
 
 		useClient(client, func() {
@@ -91,18 +90,18 @@ func TestAkamaiSiemSettings_res_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
 		client.On("GetSiemSettings",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetSiemSettingsRequest{ConfigID: 43253, Version: 7},
 		).Return(&getSiemSettingsResponse, nil)
 
 		client.On("UpdateSiemSettings",
-			mock.Anything,
-			appsec.UpdateSiemSettingsRequest{ConfigID: 43253, Version: 7, EnableForAllPolicies: false, EnableSiem: true, SiemDefinitionID: 1, FirewallPolicyIds: []string{"12345"},
+			testutils.MockContext,
+			appsec.UpdateSiemSettingsRequest{ConfigID: 43253, Version: 7, EnableForAllPolicies: false, EnableSiem: true, SiemDefinitionID: 1, FirewallPolicyIDs: []string{"12345"},
 				Exceptions: []appsec.Exception{
 					{
 						Protection:  "rate",
@@ -112,8 +111,8 @@ func TestAkamaiSiemSettings_res_basic(t *testing.T) {
 		).Return(&updateSiemSettingsResponse, nil)
 
 		client.On("RemoveSiemSettings",
-			mock.Anything,
-			appsec.RemoveSiemSettingsRequest{ConfigID: 43253, Version: 7, EnableForAllPolicies: false, EnableSiem: false, FirewallPolicyIds: []string(nil)},
+			testutils.MockContext,
+			appsec.RemoveSiemSettingsRequest{ConfigID: 43253, Version: 7, EnableForAllPolicies: false, EnableSiem: false, FirewallPolicyIDs: []string(nil)},
 		).Return(&removeSiemSettingsResponse, nil)
 
 		useClient(client, func() {
@@ -184,18 +183,18 @@ func TestAkamaiSiemSettings_res_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil).Times(8)
 
 		client.On("GetSiemSettings",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetSiemSettingsRequest{ConfigID: 43253, Version: 7},
 		).Return(&getSiemSettingsResponse, nil).Times(2)
 
 		client.On("UpdateSiemSettings",
-			mock.Anything,
-			appsec.UpdateSiemSettingsRequest{ConfigID: 43253, Version: 7, EnableForAllPolicies: false, EnableSiem: true, SiemDefinitionID: 1, FirewallPolicyIds: []string{"12345"},
+			testutils.MockContext,
+			appsec.UpdateSiemSettingsRequest{ConfigID: 43253, Version: 7, EnableForAllPolicies: false, EnableSiem: true, SiemDefinitionID: 1, FirewallPolicyIDs: []string{"12345"},
 				Exceptions: []appsec.Exception{
 					{
 						Protection:  "rate",
@@ -205,23 +204,23 @@ func TestAkamaiSiemSettings_res_basic(t *testing.T) {
 		).Return(&updateSiemSettingsResponse, nil).Times(1)
 
 		client.On("GetSiemSettings",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetSiemSettingsRequest{ConfigID: 43253, Version: 7},
 		).Return(&getSiemSettingsResponse, nil).Times(1)
 
 		client.On("UpdateSiemSettings",
-			mock.Anything,
-			appsec.UpdateSiemSettingsRequest{ConfigID: 43253, Version: 7, EnableForAllPolicies: false, EnableSiem: true, EnabledBotmanSiemEvents: ptr.To(true), SiemDefinitionID: 1, FirewallPolicyIds: []string{"12345"}, Exceptions: []appsec.Exception{}},
+			testutils.MockContext,
+			appsec.UpdateSiemSettingsRequest{ConfigID: 43253, Version: 7, EnableForAllPolicies: false, EnableSiem: true, EnabledBotmanSiemEvents: ptr.To(true), SiemDefinitionID: 1, FirewallPolicyIDs: []string{"12345"}, Exceptions: []appsec.Exception{}},
 		).Return(&updateSiemSettingsResponseNoExceptions, nil).Times(1)
 
 		client.On("GetSiemSettings",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetSiemSettingsRequest{ConfigID: 43253, Version: 7},
 		).Return(&getSiemSettingsResponseNoExceptions, nil).Times(2)
 
 		client.On("RemoveSiemSettings",
-			mock.Anything,
-			appsec.RemoveSiemSettingsRequest{ConfigID: 43253, Version: 7, EnableForAllPolicies: false, EnableSiem: false, FirewallPolicyIds: []string(nil)},
+			testutils.MockContext,
+			appsec.RemoveSiemSettingsRequest{ConfigID: 43253, Version: 7, EnableForAllPolicies: false, EnableSiem: false, FirewallPolicyIDs: []string(nil)},
 		).Return(&removeSiemSettingsResponse, nil)
 
 		useClient(client, func() {
@@ -256,7 +255,7 @@ func TestAkamaiSiemSettings_res_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		client.On("GetConfiguration",
-			mock.Anything,
+			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 

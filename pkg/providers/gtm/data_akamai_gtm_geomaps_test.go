@@ -5,17 +5,13 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/gtm"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/gtm"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
 
 func TestDataGTMGeoMaps(t *testing.T) {
-	listGeoMapsRequest := gtm.ListGeoMapsRequest{
-		DomainName: "test.geomaps.domain.net"}
-	anyContext := mock.AnythingOfType("*context.valueCtx")
-
 	tests := map[string]struct {
 		givenTF            string
 		init               func(mock *gtm.Mock)
@@ -25,66 +21,64 @@ func TestDataGTMGeoMaps(t *testing.T) {
 		"happy path": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("ListGeoMaps", anyContext, listGeoMapsRequest).Return(
-					[]gtm.GeoMap{
-						{
-							Name: "TestName1",
-							DefaultDatacenter: &gtm.DatacenterBase{
-								Nickname:     "TestNickname1",
-								DatacenterID: 1,
+				mockListGeoMaps(m, []gtm.GeoMap{
+					{
+						Name: "TestName1",
+						DefaultDatacenter: &gtm.DatacenterBase{
+							Nickname:     "TestNickname1",
+							DatacenterID: 1,
+						},
+						Assignments: []gtm.GeoAssignment{{
+							DatacenterBase: gtm.DatacenterBase{
+								Nickname:     "TestNicknameAssignments1",
+								DatacenterID: 2,
 							},
-							Assignments: []gtm.GeoAssignment{{
+							Countries: []string{
+								"PL",
+								"US",
+							},
+						}},
+						Links: []gtm.Link{{
+							Rel:  "TestRel1",
+							Href: "TestHref1",
+						}},
+					},
+					{
+						Name: "TestName2",
+						DefaultDatacenter: &gtm.DatacenterBase{
+							Nickname:     "TestNickname2",
+							DatacenterID: 3,
+						},
+						Assignments: []gtm.GeoAssignment{
+							{
 								DatacenterBase: gtm.DatacenterBase{
-									Nickname:     "TestNicknameAssignments1",
-									DatacenterID: 2,
+									Nickname:     "TestNicknameAssignments2",
+									DatacenterID: 4,
 								},
 								Countries: []string{
-									"PL",
-									"US",
+									"AR",
+									"CA",
+									"IS",
 								},
-							}},
-							Links: []gtm.Link{{
-								Rel:  "TestRel1",
-								Href: "TestHref1",
-							}},
-						},
-						{
-							Name: "TestName2",
-							DefaultDatacenter: &gtm.DatacenterBase{
-								Nickname:     "TestNickname2",
-								DatacenterID: 3,
 							},
-							Assignments: []gtm.GeoAssignment{
-								{
-									DatacenterBase: gtm.DatacenterBase{
-										Nickname:     "TestNicknameAssignments2",
-										DatacenterID: 4,
-									},
-									Countries: []string{
-										"AR",
-										"CA",
-										"IS",
-									},
+							{
+								DatacenterBase: gtm.DatacenterBase{
+									Nickname:     "TestNicknameAssignments3",
+									DatacenterID: 5,
 								},
-								{
-									DatacenterBase: gtm.DatacenterBase{
-										Nickname:     "TestNicknameAssignments3",
-										DatacenterID: 5,
-									},
-									Countries: []string{
-										"IT",
-									},
-								}},
-							Links: []gtm.Link{{
-								Rel:  "TestRel2",
-								Href: "TestHref2",
+								Countries: []string{
+									"IT",
+								},
 							}},
-						},
-					}, nil)
-
+						Links: []gtm.Link{{
+							Rel:  "TestRel2",
+							Href: "TestHref2",
+						}},
+					},
+				}, nil, 3)
 			},
 			expectedAttributes: map[string]string{
-				"domain":                                 "test.geomaps.domain.net",
+				"domain":                                 "gtm_terra_testdomain.akadns.net",
 				"geo_maps.0.name":                        "TestName1",
 				"geo_maps.1.name":                        "TestName2",
 				"geo_maps.0.default_datacenter.nickname": "TestNickname1",
@@ -117,30 +111,28 @@ func TestDataGTMGeoMaps(t *testing.T) {
 		"error response from api": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("ListGeoMaps", anyContext, listGeoMapsRequest).Return(
-					nil, fmt.Errorf("API error"))
+				mockListGeoMaps(m, nil, fmt.Errorf("API error"), 1)
 			},
 			expectError: regexp.MustCompile("API error"),
 		},
 		"no assignments": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				m.On("ListGeoMaps", anyContext, listGeoMapsRequest).Return(
-					[]gtm.GeoMap{{
-						Name: "TestName",
-						DefaultDatacenter: &gtm.DatacenterBase{
-							Nickname:     "TestNickname",
-							DatacenterID: 1,
-						},
-						Assignments: []gtm.GeoAssignment{},
-						Links: []gtm.Link{{
-							Rel:  "TestRel",
-							Href: "TestHref",
-						}},
-					}}, nil)
+				mockListGeoMaps(m, []gtm.GeoMap{{
+					Name: "TestName",
+					DefaultDatacenter: &gtm.DatacenterBase{
+						Nickname:     "TestNickname",
+						DatacenterID: 1,
+					},
+					Assignments: []gtm.GeoAssignment{},
+					Links: []gtm.Link{{
+						Rel:  "TestRel",
+						Href: "TestHref",
+					}},
+				}}, nil, 3)
 			},
 			expectedAttributes: map[string]string{
-				"domain":          "test.geomaps.domain.net",
+				"domain":          "gtm_terra_testdomain.akadns.net",
 				"geo_maps.0.name": "TestName",
 				"geo_maps.0.default_datacenter.datacenter_id": "1",
 				"geo_maps.0.default_datacenter.nickname":      "TestNickname",
@@ -167,7 +159,7 @@ func TestDataGTMGeoMaps(t *testing.T) {
 					IsUnitTest:               true,
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					Steps: []resource.TestStep{{
-						Config:      testutils.LoadFixtureString(t, fmt.Sprintf("testdata/TestDataGtmGeomaps/%s", test.givenTF)),
+						Config:      testutils.LoadFixtureStringf(t, "testdata/TestDataGtmGeomaps/%s", test.givenTF),
 						Check:       resource.ComposeAggregateTestCheckFunc(checkFuncs...),
 						ExpectError: test.expectError,
 					}},
@@ -177,4 +169,10 @@ func TestDataGTMGeoMaps(t *testing.T) {
 			client.AssertExpectations(t)
 		})
 	}
+}
+
+func mockListGeoMaps(client *gtm.Mock, resp []gtm.GeoMap, err error, times int) *mock.Call {
+	return client.On("ListGeoMaps",
+		testutils.MockContext, gtm.ListGeoMapsRequest{DomainName: testDomainName},
+	).Return(resp, err).Times(times)
 }

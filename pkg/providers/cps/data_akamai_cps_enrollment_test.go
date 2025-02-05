@@ -6,11 +6,10 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/cps"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/cps"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 const (
@@ -349,7 +348,7 @@ func TestDataEnrollment(t *testing.T) {
 			enrollment:   enrollmentDV1,
 			enrollmentID: enrollment1ID,
 			init: func(_ *testing.T, m *cps.Mock) {
-				m.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{
+				m.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{
 					EnrollmentID: enrollment1ID,
 				}).Return(enrollmentDV1, nil).Times(3)
 			},
@@ -364,19 +363,19 @@ func TestDataEnrollment(t *testing.T) {
 			enrollment:   enrollmentDV2,
 			enrollmentID: enrollment2ID,
 			init: func(_ *testing.T, m *cps.Mock) {
-				m.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{
+				m.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{
 					EnrollmentID: enrollment2ID,
 				}).Return(enrollmentDV2, nil).Times(3)
 
 				dvArray := mockDVArray()
 				change := mockLetsEncryptChallenges()
 
-				m.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+				m.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 					ChangeID:     changeID,
 					EnrollmentID: enrollment2ID,
 				}).Return(change, nil).Times(3)
 
-				m.On("GetChangeLetsEncryptChallenges", mock.Anything, cps.GetChangeRequest{
+				m.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
 					ChangeID:     changeID,
 					EnrollmentID: enrollment2ID,
 				}).Return(dvArray, nil).Times(3)
@@ -392,7 +391,7 @@ func TestDataEnrollment(t *testing.T) {
 			enrollment:   enrollmentDV1,
 			enrollmentID: enrollment1ID,
 			init: func(_ *testing.T, m *cps.Mock) {
-				m.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{
+				m.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{
 					EnrollmentID: enrollment1ID,
 				}).Return(nil, fmt.Errorf("could not get an enrollment")).Once()
 			},
@@ -407,11 +406,11 @@ func TestDataEnrollment(t *testing.T) {
 			enrollment:   enrollmentDV2,
 			enrollmentID: enrollment2ID,
 			init: func(_ *testing.T, m *cps.Mock) {
-				m.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{
+				m.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{
 					EnrollmentID: enrollment2ID,
 				}).Return(enrollmentDV2, nil).Once()
 
-				m.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+				m.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 					ChangeID:     changeID,
 					EnrollmentID: enrollment2ID,
 				}).Return(nil, fmt.Errorf("could not get a change status")).Once()
@@ -427,18 +426,18 @@ func TestDataEnrollment(t *testing.T) {
 			enrollment:   enrollmentDV2,
 			enrollmentID: enrollment2ID,
 			init: func(_ *testing.T, m *cps.Mock) {
-				m.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{
+				m.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{
 					EnrollmentID: enrollment2ID,
 				}).Return(enrollmentDV2, nil).Once()
 
 				change := mockLetsEncryptChallenges()
 
-				m.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+				m.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 					ChangeID:     changeID,
 					EnrollmentID: enrollment2ID,
 				}).Return(change, nil).Once()
 
-				m.On("GetChangeLetsEncryptChallenges", mock.Anything, cps.GetChangeRequest{
+				m.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
 					ChangeID:     changeID,
 					EnrollmentID: enrollment2ID,
 				}).Return(nil, fmt.Errorf("could not get LetsEncrypt challenges")).Once()
@@ -454,13 +453,13 @@ func TestDataEnrollment(t *testing.T) {
 			enrollment:   enrollmentThirdParty,
 			enrollmentID: enrollment3ID,
 			init: func(_ *testing.T, m *cps.Mock) {
-				m.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{
+				m.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{
 					EnrollmentID: enrollment3ID,
 				}).Return(enrollmentThirdParty, nil).Times(3)
 
 				change := mockThirdPartyCSRChallenges()
 
-				m.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+				m.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 					ChangeID:     changeID,
 					EnrollmentID: enrollment3ID,
 				}).Return(change, nil).Times(3)
@@ -477,13 +476,13 @@ func TestDataEnrollment(t *testing.T) {
 			enrollment:   enrollmentEV,
 			enrollmentID: enrollment4ID,
 			init: func(_ *testing.T, m *cps.Mock) {
-				m.On("GetEnrollment", mock.Anything, cps.GetEnrollmentRequest{
+				m.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{
 					EnrollmentID: enrollment4ID,
 				}).Return(enrollmentEV, nil).Times(3)
 
 				change := mockEVChallenges()
 
-				m.On("GetChangeStatus", mock.Anything, cps.GetChangeStatusRequest{
+				m.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 					ChangeID:     changeID,
 					EnrollmentID: enrollment4ID,
 				}).Return(change, nil).Times(3)

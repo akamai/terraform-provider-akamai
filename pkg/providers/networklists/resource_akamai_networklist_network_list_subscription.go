@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/networklists"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/hash"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/networklists"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/hash"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -62,9 +62,9 @@ func resourceNetworkListSubscriptionRead(ctx context.Context, d *schema.Resource
 		IDs = append(IDs, h.(string))
 	}
 
-	getNetworkListSubscription.UniqueIds = IDs
+	getNetworkListSubscription.UniqueIDs = IDs
 
-	extractStringUID := strings.Join(getNetworkListSubscription.UniqueIds, " ")
+	extractStringUID := strings.Join(getNetworkListSubscription.UniqueIDs, " ")
 	recSHAUID := hash.GetSHAString(extractStringUID)
 
 	_, err := client.GetNetworkListSubscription(ctx, getNetworkListSubscription)
@@ -99,7 +99,7 @@ func resourceNetworkListSubscriptionDelete(ctx context.Context, d *schema.Resour
 		IDs = append(IDs, h.(string))
 	}
 
-	removeNetworkListSubscription.UniqueIds = IDs
+	removeNetworkListSubscription.UniqueIDs = IDs
 	_, errd := client.RemoveNetworkListSubscription(ctx, removeNetworkListSubscription)
 	if errd != nil {
 		logger.Errorf("calling 'updateNetworkListSubscription': %s", errd.Error())
@@ -133,9 +133,9 @@ func resourceNetworkListSubscriptionUpdate(ctx context.Context, d *schema.Resour
 		IDs = append(IDs, h.(string))
 	}
 
-	updateNetworkListSubscription.UniqueIds = IDs
+	updateNetworkListSubscription.UniqueIDs = IDs
 
-	extractStringUID := strings.Join(updateNetworkListSubscription.UniqueIds, " ")
+	extractStringUID := strings.Join(updateNetworkListSubscription.UniqueIDs, " ")
 	recSHAUID := hash.GetSHAString(extractStringUID)
 
 	_, err := client.UpdateNetworkListSubscription(ctx, updateNetworkListSubscription)

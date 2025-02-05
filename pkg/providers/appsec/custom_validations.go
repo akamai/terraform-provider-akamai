@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
@@ -94,14 +94,6 @@ func validateActionAndConditionException(action, conditionexception string) erro
 		return fmt.Errorf("action cannot be 'none' if non-empty condition/exception is supplied")
 	}
 	return nil
-}
-
-func splitID(id string, expectedNum int, example string) ([]string, error) {
-	parts := strings.Split(id, ":")
-	if len(parts) != expectedNum {
-		return nil, fmt.Errorf("ID '%s' incorrectly formatted: should be of form '%s'", id, example)
-	}
-	return parts, nil
 }
 
 func validateEmptyElementsInList(v interface{}, path cty.Path) diag.Diagnostics {

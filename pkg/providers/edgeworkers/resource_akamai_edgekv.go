@@ -7,11 +7,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/edgeworkers"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/edgeworkers"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -19,9 +19,7 @@ import (
 )
 
 var (
-	maxUpsertAttempts = 3
-	upsertWindow      = time.Duration(10) * time.Second
-	initWindow        = time.Duration(10) * time.Second
+	initWindow = time.Duration(10) * time.Second
 )
 
 func resourceEdgeKV() *schema.Resource {
@@ -58,7 +56,7 @@ func resourceEdgeKV() *schema.Resource {
 					displayGroupIDWarning(),
 				),
 				// In the current API release, the value of group_id does not matter, so we suppress all but the first diff
-				DiffSuppressFunc: func(_, old, _ string, d *schema.ResourceData) bool {
+				DiffSuppressFunc: func(_, old, _ string, _ *schema.ResourceData) bool {
 					return old != ""
 				},
 				ForceNew: true,
@@ -77,29 +75,6 @@ func resourceEdgeKV() *schema.Resource {
 				Optional:    true,
 				Description: "Storage location for data",
 				ForceNew:    true,
-			},
-			"initial_data": {
-				Type:        schema.TypeList,
-				Optional:    true,
-				Deprecated:  "The attribute 'initial_data' has been deprecated. To manage edgeKV items use 'akamai_edgekv_group_items' resource instead.",
-				Description: "List of pairs to initialize the namespace. Just meaningful for creation, updates will be ignored.",
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"key": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"value": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"group": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Default:  "default",
-						},
-					},
-				},
 			},
 		},
 	}
@@ -193,17 +168,6 @@ func resourceEdgeKVCreate(ctx context.Context, rd *schema.ResourceData, m interf
 		return diag.FromErr(err)
 	}
 
-	data, err := tf.GetListValue("initial_data", rd)
-	if err != nil && !errors.Is(err, tf.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-
-	logger.Debugf("Writing initial set of data for the namespace '%s'", namespace.Name)
-	if err := populateEKV(ctx, client, data, namespace, edgeworkers.ItemNetwork(network)); err != nil {
-		return diag.FromErr(err)
-	}
-	logger.Debugf("Written %d items to namespace '%s'", len(data), namespace.Name)
-
 	rd.SetId(fmt.Sprintf("%s:%s", namespace.Name, network))
 
 	return resourceEdgeKVRead(ctx, rd, m)
@@ -262,17 +226,7 @@ func resourceEdgeKVUpdate(ctx context.Context, rd *schema.ResourceData, m interf
 	client := inst.Client(meta)
 	logger.Debug("Updating EdgeKV namespace configuration")
 
-	if rd.HasChanges("initial_data") {
-		err := diag.Errorf("the field \"initial_data\" cannot be updated after resource creation")
-		if diagnostics := diag.FromErr(tf.RestoreOldValues(rd, []string{"initial_data"})); diagnostics != nil {
-			diagnostics = append(diagnostics, err[0])
-			return diagnostics
-		}
-		return err
-	}
-
 	// at this point, just retention_in_seconds may be updated
-
 	retention64, err := tf.GetInt64Value("retention_in_seconds", tf.NewRawConfig(rd))
 	if err != nil {
 		return diag.FromErr(err)
@@ -321,52 +275,8 @@ func resourceEdgeKVDelete(_ context.Context, rd *schema.ResourceData, m interfac
 	return nil
 }
 
-func populateEKV(ctx context.Context, client edgeworkers.Edgeworkers, data []interface{}, namespace *edgeworkers.Namespace, network edgeworkers.ItemNetwork) error {
-	if len(data) == 0 {
-		return nil
-	}
-
-	for i, rawItem := range data {
-		item := rawItem.(map[string]interface{})
-		upsertItemRequest := edgeworkers.UpsertItemRequest{
-			ItemID:   getStringValue(item, "key"),
-			ItemData: edgeworkers.Item(getStringValue(item, "value")),
-			ItemsRequestParams: edgeworkers.ItemsRequestParams{
-				NamespaceID: namespace.Name,
-				Network:     network,
-				GroupID:     getStringValue(item, "group"),
-			},
-		}
-		for attempts := 0; attempts < maxUpsertAttempts; attempts++ {
-			if i == 0 {
-				time.Sleep(upsertWindow)
-			}
-			_, err := client.UpsertItem(ctx, upsertItemRequest)
-			if err != nil {
-				if strings.Contains(err.Error(), "The requested namespace does not exist or namespace type is not configured for") {
-					// there might be some delay on namespace creation
-					if maxUpsertAttempts > attempts+1 {
-						continue
-					}
-				}
-				return err
-			}
-			break
-		}
-	}
-
-	return nil
-}
-
-func getStringValue(itemMap map[string]interface{}, name string) string {
-	if value, ok := itemMap[name]; ok {
-		return value.(string)
-	}
-	return ""
-}
-
 func displayGroupIDWarning() schema.SchemaValidateDiagFunc {
-	return func(i interface{}, path cty.Path) diag.Diagnostics {
+	return func(_ interface{}, path cty.Path) diag.Diagnostics {
 		return diag.Diagnostics{
 			diag.Diagnostic{
 				Severity:      diag.Warning,

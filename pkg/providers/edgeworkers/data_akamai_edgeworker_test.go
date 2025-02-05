@@ -2,6 +2,7 @@ package edgeworkers
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"os"
 	"regexp"
@@ -9,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/edgeworkers"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/edgeworkers"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -58,28 +59,28 @@ var (
 			Warnings: data.Warnings,
 		}
 
-		client.On("GetEdgeWorkerID", mock.Anything, edgeWorkerGetReq).Return(&edgeWorkerGetRes, nil).Times(timesToRun)
-		client.On("ListEdgeWorkerVersions", mock.Anything, edgeWorkerListVersionsReq).Return(&edgeWorkerListVersionsRes, nil).Times(timesToRun)
+		client.On("GetEdgeWorkerID", testutils.MockContext, edgeWorkerGetReq).Return(&edgeWorkerGetRes, nil).Times(timesToRun)
+		client.On("ListEdgeWorkerVersions", testutils.MockContext, edgeWorkerListVersionsReq).Return(&edgeWorkerListVersionsRes, nil).Times(timesToRun)
 		for i := 0; i < timesToRun; i++ {
 			edgeWorkerGerVersionContentRes := edgeworkers.Bundle{Reader: bytes.NewReader(bytesArray)}
-			client.On("GetEdgeWorkerVersionContent", mock.Anything, edgeWorkerGetVersionContentReq).Return(&edgeWorkerGerVersionContentRes, nil).Once()
+			client.On("GetEdgeWorkerVersionContent", testutils.MockContext, edgeWorkerGetVersionContentReq).Return(&edgeWorkerGerVersionContentRes, nil).Once()
 		}
-		client.On("ValidateBundle", mock.Anything, mock.Anything).Return(&edgeWorkerValidateBundleRes, nil).Times(timesToRun)
+		client.On("ValidateBundle", testutils.MockContext, mock.Anything).Return(&edgeWorkerValidateBundleRes, nil).Times(timesToRun)
 	}
 
 	expectGetEdgeWorkerError = func(client *edgeworkers.Mock, errorMessage string) {
 		edgeWorkerGetReq := edgeworkers.GetEdgeWorkerIDRequest{
 			EdgeWorkerID: 1,
 		}
-		client.On("GetEdgeWorkerID", mock.Anything, edgeWorkerGetReq).Return(nil, fmt.Errorf(errorMessage)).Once()
+		client.On("GetEdgeWorkerID", testutils.MockContext, edgeWorkerGetReq).Return(nil, errors.New(errorMessage)).Once()
 	}
 
 	expectListEdgeWorkerVersionsError = func(client *edgeworkers.Mock, errorMessage string) {
 		edgeWorkerGetReq := edgeworkers.GetEdgeWorkerIDRequest{
 			EdgeWorkerID: 1,
 		}
-		client.On("GetEdgeWorkerID", mock.Anything, edgeWorkerGetReq).Return(nil, nil).Once()
-		client.On("ListEdgeWorkerVersions", mock.Anything, edgeworkers.ListEdgeWorkerVersionsRequest{EdgeWorkerID: 1}).Return(nil, fmt.Errorf(errorMessage)).Once()
+		client.On("GetEdgeWorkerID", testutils.MockContext, edgeWorkerGetReq).Return(nil, nil).Once()
+		client.On("ListEdgeWorkerVersions", testutils.MockContext, edgeworkers.ListEdgeWorkerVersionsRequest{EdgeWorkerID: 1}).Return(nil, errors.New(errorMessage)).Once()
 	}
 
 	expectReadEdgeWorkerNoVersions = func(client *edgeworkers.Mock, data testDataForEdgeWorker, timesToRun int) {
@@ -100,8 +101,8 @@ var (
 			EdgeWorkerVersions: edgeWorkerVersions,
 		}
 
-		client.On("GetEdgeWorkerID", mock.Anything, edgeWorkerGetReq).Return(&edgeWorkerGetRes, nil).Times(timesToRun)
-		client.On("ListEdgeWorkerVersions", mock.Anything, edgeWorkerListVersionsReq).Return(&edgeWorkerListVersionsRes, nil).Times(timesToRun)
+		client.On("GetEdgeWorkerID", testutils.MockContext, edgeWorkerGetReq).Return(&edgeWorkerGetRes, nil).Times(timesToRun)
+		client.On("ListEdgeWorkerVersions", testutils.MockContext, edgeWorkerListVersionsReq).Return(&edgeWorkerListVersionsRes, nil).Times(timesToRun)
 	}
 
 	oneVersionData = testDataForEdgeWorker{
@@ -290,7 +291,7 @@ func TestDataEdgeWorkersEdgeWorker(t *testing.T) {
 			error:      nil,
 		},
 		"no versions": {
-			init: func(_ *testing.T, m *edgeworkers.Mock, testData testDataForEdgeWorker) {
+			init: func(_ *testing.T, m *edgeworkers.Mock, _ testDataForEdgeWorker) {
 				expectReadEdgeWorkerNoVersions(m, noVersionsData, 3)
 			},
 			mockData:   noVersionsData,
@@ -298,7 +299,7 @@ func TestDataEdgeWorkersEdgeWorker(t *testing.T) {
 			error:      nil,
 		},
 		"could not get an edgeworker_id": {
-			init: func(_ *testing.T, m *edgeworkers.Mock, testData testDataForEdgeWorker) {
+			init: func(_ *testing.T, m *edgeworkers.Mock, _ testDataForEdgeWorker) {
 				expectGetEdgeWorkerError(m, "could not get an edgeworker")
 			},
 			mockData:   oneVersionData,
@@ -306,7 +307,7 @@ func TestDataEdgeWorkersEdgeWorker(t *testing.T) {
 			error:      regexp.MustCompile("could not get an edgeworker"),
 		},
 		"could not list versions": {
-			init: func(_ *testing.T, m *edgeworkers.Mock, testData testDataForEdgeWorker) {
+			init: func(_ *testing.T, m *edgeworkers.Mock, _ testDataForEdgeWorker) {
 				expectListEdgeWorkerVersionsError(m, "could not list edgeworker versions")
 			},
 			mockData:   oneVersionData,
@@ -314,7 +315,6 @@ func TestDataEdgeWorkersEdgeWorker(t *testing.T) {
 			error:      regexp.MustCompile("could not list edgeworker versions"),
 		},
 		"edgeworker_id not provided": {
-			init:       func(_ *testing.T, m *edgeworkers.Mock, worker testDataForEdgeWorker) {},
 			mockData:   testDataForEdgeWorker{},
 			configPath: "testdata/TestDataEdgeWorkersEdgeWorker/edgeworker_no_edgeworker_id.tf",
 			error:      regexp.MustCompile("Missing required argument"),
@@ -324,7 +324,9 @@ func TestDataEdgeWorkersEdgeWorker(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &edgeworkers.Mock{}
-			test.init(t, client, test.mockData)
+			if test.init != nil {
+				test.init(t, client, test.mockData)
+			}
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),

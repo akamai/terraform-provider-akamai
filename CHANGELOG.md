@@ -1,11 +1,115 @@
 # RELEASE NOTES
 
+## 7.0.0 (Feb 5, 2025)
+
+#### BREAKING CHANGES:
+
+* APPSEC
+  * Removed deprecated data sources:
+    * `akamai_appsec_selected_hostnames`
+    * `akamai_appsec_wap_selected_hostnames`
+  * Removed deprecated resources:
+    * `akamai_appsec_selected_hostnames`
+    * `akamai_appsec_wap_selected_hostnames`
+
+* BOTMAN
+  * Removed the deprecated `akamai_botman_challenge_interception_rules` data source and resource.
+
+* Cloudlets
+  * Removed the `id` attributes from the following data sources:
+    * `data_akamai_cloudlets_policy_activation` 
+    * `data_akamai_cloudlets_shared_policy` 
+
+* Cloud Wrapper
+  * Removed the `id` attributes from the following data sources:
+    * `data_akamai_cloudwrapper_capacities`
+    * `data_akamai_cloudwrapper_configurations`
+    * `data_akamai_cloudwrapper_location`
+    * `data_akamai_cloudwrapper_locations`
+    * `data_akamai_cloudwrapper_properties`
+
+* CPS
+  * Removed the deprecated `unacknowledged_warnings` attribute from the `akamai_cps_upload_certificate` resource.
+
+* DNS
+  * Removed the deprecated `active` attribute from the `akamai_dns_record` resource.
+
+* Edgeworkers
+  * Removed the deprecated `initial_data` attribute from the `akamai_edgekv` resource.
+
+* GTM
+  * Removed the `static_ttl` attribute from the `akamai_gtm_property` resource.
+  * Removed the `name` attribute from the `static_rr_set` attribute in the `akamai_gtm_property` resource.
+  * Removed the `id` attributes from the following data sources:
+    * `data_akamai_gtm_asmap`
+    * `data_akamai_gtm_cidrmap`
+    * `data_akamai_gtm_domains`
+    * `data_akamai_gtm_geomap`
+    * `data_akamai_gtm_geomaps`
+    * `data_akamai_gtm_resources`
+    
+* Logging
+  * Changed the logger from `apex` to a new interface.
+    * By default, `slog` with a custom handler is used.
+  * The log output structure has changed slightly.
+    * The time format has been adjusted, the logger will use a 24-hour clock with milliseconds instead of the 12-hour clock used previously.
+
+* PAPI
+  * Removed the `product_id` and `rule_format` attributes from the `akamai_properties` data source.
+  * Removed the `enabled` field from the `gov_cloud` behaviour defined inside the `rules_v2024_10_21` in the `akamai_property_rules_builder` datasource. 
+
+#### FEATURES/ENHANCEMENTS:
+
+* General
+  * Migrated to Go `1.22`.
+  * Modified build scripts to use Go `1.22.9` ([I#578](https://github.com/akamai/terraform-provider-akamai/issues/578)).
+  * Improved code by resolving issues reported by the linter.
+  * Updated vulnerable dependencies.
+
+* APPSEC
+  * Added a new data source:
+    * `data_akamai_appsec_rapid_rules` - reads the rapid rules accessible for a security policy.
+  * Added a new resource:
+    * `resource_akamai_appsec_rapid_rules` - manages rapid rules assigned to a security policy.
+
+* CPS
+  * Added CPS configuration examples ([I#467](https://github.com/akamai/terraform-provider-akamai/issues/467)).
+
+* PAPI
+  * Added support for the new rule format `v2025-01-13`. List of changes can be found [here](https://techdocs.akamai.com/terraform/docs/rule-format-changes#v2025-01-13).
+  * Added the `gov_cloud_title` field to the `gov_cloud` behaviour defined inside the `rules_v2024_10_21` of the `akamai_property_rules_builder` datasource.
+  * Added support for moving a PAPI property between groups (the `akamai_property` and `akamai_property_bootstrap` resources)
+    by updating the `group_id` field. Currently, properties that have never been activated are not supported.
+  * Added the `asset_id` schema field to the `akamai_property_bootstrap` resource.
+  * Added validation to raise an error when updating the `contact` and `auto_acknowledge_rule_warnings` fields on active property versions in the `akamai_property_activation` resource.
+#### BUG FIXES:
+
+* Cloud Access
+  * Populated the `access_key_uid` in the `akamai_cloudaccess_key` resource from the state file if a value is known at a plan level for an update operation.
+
+* GTM
+  * Fixed an issue in the `akamai_gtm_property` resource that an update operation could send incorrect values to the server.
+    * Also, fixed incorrect logging in the same case.
+  * Unified error messages.
+  * Added drift handling for resources deleted outside of Terraform ([I#577](https://github.com/akamai/terraform-provider-akamai/issues/577)):
+    * `akamai_gtm_asmap`
+    * `akamai_gtm_cidrmap`
+    * `akamai_gtm_datacenter`
+    * `akamai_gtm_domain`
+    * `akamai_gtm_geomap`
+    * `akamai_gtm_resource`
+
+* PAPI
+  * Fixed an improper resolution of the `include_id` attribute in the `include_activation` resource when referencing to the `include` resource and replacing both resources.
+  * Relaxed validation rules for the `transition_key` and `key` fields in the `segmented_content_protection` and `verify_token_authorization` behaviors to accept a key of any size.
+  * Fixed improper diff in the `akamai_property` resource when no value was given in the child for the `criteria_must_satisfy` field, which the API sets to `all` by default.
+
 ## 6.6.1 (Dec 20, 2024)
 
 #### FEATURES/ENHANCEMENTS:
 
 * Global
-  * Updated various dependencies
+  * Updated various dependencies.
 
 ## 6.6.0 (Nov 21, 2024)
 
@@ -14,7 +118,7 @@
 * Appsec
   * Fixed a problem with the missing `security_policy_id` during update if a resource was imported previously. 
   * Added the `akamai_appsec_aap_selected_hostnames` resource and data source.
-  * Modified the `enable_botman_siem` field from `Required` to the `Optional` parameter in the `akamai_appsec_siem_settings` resource.
+  * Modified the `enable_botman_siem` field from `Required` to the `Optional` parameter in the`akamai_appsec_siem_settings` resource.
 
 * Cloud Access
   * Added functionality to import the `akamai_cloudaccess_key` resource for specified group and contract IDs.
@@ -27,10 +131,11 @@
   * Added the new `outbound_zone_transfer` field to the `akamai_dns_zone` resource.
   
 * Edgeworkers
-  * Stopped sending an EdgeKV initialization request in the `akamai_edgekv` resource when EdgeKV is already initialized. ([I#589](https://github.com/akamai/terraform-provider-akamai/issues/589))
+  * Stopped sending an EdgeKV initialization request in the `akamai_edgekv` resource when EdgeKV is already initialized ([I#589](https://github.com/akamai/terraform-provider-akamai/issues/589)).
 
 * PAPI
   * Added support for the new rule format `v2024-10-21`.
+
 
 #### BUG FIXES:
 

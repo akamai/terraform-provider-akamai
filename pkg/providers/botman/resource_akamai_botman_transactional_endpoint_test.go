@@ -4,10 +4,9 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestResourceTransactionalEndpoint(t *testing.T) {
@@ -17,7 +16,7 @@ func TestResourceTransactionalEndpoint(t *testing.T) {
 		createResponse := map[string]interface{}{"operationId": "cc9c3f89-e179-4892-89cf-d5e623ba9dc7", "testKey": "testValue3"}
 		createRequest := `{"operationId":"cc9c3f89-e179-4892-89cf-d5e623ba9dc7","testKey":"testValue3"}`
 		mockedBotmanClient.On("CreateTransactionalEndpoint",
-			mock.Anything,
+			testutils.MockContext,
 			botman.CreateTransactionalEndpointRequest{
 				ConfigID:         43253,
 				Version:          15,
@@ -27,7 +26,7 @@ func TestResourceTransactionalEndpoint(t *testing.T) {
 		).Return(createResponse, nil).Once()
 
 		mockedBotmanClient.On("GetTransactionalEndpoint",
-			mock.Anything,
+			testutils.MockContext,
 			botman.GetTransactionalEndpointRequest{
 				ConfigID:         43253,
 				Version:          15,
@@ -40,7 +39,7 @@ func TestResourceTransactionalEndpoint(t *testing.T) {
 		updateResponse := map[string]interface{}{"operationId": "cc9c3f89-e179-4892-89cf-d5e623ba9dc7", "testKey": "updated_testValue3"}
 		updateRequest := `{"operationId":"cc9c3f89-e179-4892-89cf-d5e623ba9dc7","testKey":"updated_testValue3"}`
 		mockedBotmanClient.On("UpdateTransactionalEndpoint",
-			mock.Anything,
+			testutils.MockContext,
 			botman.UpdateTransactionalEndpointRequest{
 				ConfigID:         43253,
 				Version:          15,
@@ -51,7 +50,7 @@ func TestResourceTransactionalEndpoint(t *testing.T) {
 		).Return(updateResponse, nil).Once()
 
 		mockedBotmanClient.On("GetTransactionalEndpoint",
-			mock.Anything,
+			testutils.MockContext,
 			botman.GetTransactionalEndpointRequest{
 				ConfigID:         43253,
 				Version:          15,
@@ -62,7 +61,7 @@ func TestResourceTransactionalEndpoint(t *testing.T) {
 		expectedUpdateJSON := `{"testKey":"updated_testValue3"}`
 
 		mockedBotmanClient.On("RemoveTransactionalEndpoint",
-			mock.Anything,
+			testutils.MockContext,
 			botman.RemoveTransactionalEndpointRequest{
 				ConfigID:         43253,
 				Version:          15,

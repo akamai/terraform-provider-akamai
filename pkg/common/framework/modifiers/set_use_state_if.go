@@ -3,7 +3,7 @@ package modifiers
 import (
 	"context"
 
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/framework/replacer"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/framework/replacer"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
