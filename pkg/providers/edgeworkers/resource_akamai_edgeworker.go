@@ -400,7 +400,6 @@ func checkEdgeWorkerActivations(ctx context.Context, client edgeworkers.Edgework
 func deactivateEdgeWorkerVersions(ctx context.Context, client edgeworkers.Edgeworkers, activations []*edgeworkers.Activation) error {
 	g, ctxGroup := errgroup.WithContext(ctx)
 	for _, act := range activations {
-		act := act
 		g.Go(func() error {
 			return deactivateEdgeWorkerVersion(ctxGroup, client, act.EdgeWorkerID, act.Network, act.Version)
 		})

@@ -101,7 +101,6 @@ func TestBootstrapResourceCreate(t *testing.T) {
 	}
 
 	for name, test := range tests {
-		name, test := name, test
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			m := &papi.Mock{}
@@ -237,7 +236,6 @@ func TestBootstrapResourceUpdate(t *testing.T) {
 	}
 
 	for name, test := range tests {
-		name, test := name, test
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
@@ -340,7 +338,6 @@ func TestBootstrapResourceImport(t *testing.T) {
 	}
 
 	for name, test := range tests {
-		name, test := name, test
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
