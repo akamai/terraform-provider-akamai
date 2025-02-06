@@ -21,28 +21,28 @@ func TestDataGTMDatacenters(t *testing.T) {
 	}{
 		"happy path - three datacenters": {
 			init: func(m *gtm.Mock, datacenters []gtm.Datacenter) {
-				mockListDatacenters(m, datacenters, nil, 3)
+				mockListDatacenters(m, datacenters, nil, testutils.ThreeTimes)
 			},
 			mockData:   getTestGTMDatacenters(),
 			configPath: "testdata/TestDataGTMDatacenters/default.tf",
 		},
 		"happy path - one datacenter": {
 			init: func(m *gtm.Mock, datacenters []gtm.Datacenter) {
-				mockListDatacenters(m, datacenters, nil, 3)
+				mockListDatacenters(m, datacenters, nil, testutils.ThreeTimes)
 			},
 			mockData:   getSingleTestDatacenters(),
 			configPath: "testdata/TestDataGTMDatacenters/default.tf",
 		},
 		"happy path - no datacenters": {
 			init: func(m *gtm.Mock, datacenters []gtm.Datacenter) {
-				mockListDatacenters(m, datacenters, nil, 3)
+				mockListDatacenters(m, datacenters, nil, testutils.ThreeTimes)
 			},
 			mockData:   getEmptyTestDatacenters(),
 			configPath: "testdata/TestDataGTMDatacenters/default.tf",
 		},
 		"error - ListDatacenters fail": {
 			init: func(m *gtm.Mock, _ []gtm.Datacenter) {
-				mockListDatacenters(m, nil, fmt.Errorf("ListDatacenters error"), 1)
+				mockListDatacenters(m, nil, fmt.Errorf("ListDatacenters error"), testutils.Once)
 			},
 			mockData:   getTestGTMDatacenters(),
 			configPath: "testdata/TestDataGTMDatacenters/default.tf",

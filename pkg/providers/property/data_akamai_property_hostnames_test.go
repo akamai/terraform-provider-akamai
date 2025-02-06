@@ -7,13 +7,19 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestDataPropertyHostnames(t *testing.T) {
 	t.Run("list hostnames", func(t *testing.T) {
 		client := &papi.Mock{}
+
+		mockGetPropertyWithPropertyType(client, nil).Times(3)
+
 		hostnames := papi.HostnameResponseItems{Items: buildPropertyHostnames()}
 		hostnameItems := flattenHostnames(hostnames.Items)
 
@@ -28,7 +34,7 @@ func TestDataPropertyHostnames(t *testing.T) {
 			Version: papi.PropertyVersionGetItem{
 				PropertyVersion: 1,
 			},
-		}, nil)
+		}, nil).Times(3)
 		client.On("GetPropertyVersionHostnames", testutils.MockContext, papi.GetPropertyVersionHostnamesRequest{
 			PropertyID:        "prp_test",
 			PropertyVersion:   1,
@@ -44,7 +50,7 @@ func TestDataPropertyHostnames(t *testing.T) {
 			PropertyVersion: 1,
 			Etag:            "etag",
 			Hostnames:       hostnames,
-		}, nil)
+		}, nil).Times(3)
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -58,9 +64,116 @@ func TestDataPropertyHostnames(t *testing.T) {
 
 		client.AssertExpectations(t)
 	})
+	t.Run("list hostnames of type HOSTNAME_BUCKET", func(t *testing.T) {
+		client := &papi.Mock{}
+
+		mockGetPropertyWithPropertyType(client, ptr.To("HOSTNAME_BUCKET")).Times(3)
+
+		mockListActivePropertyHostnames(client, 0, &papi.ListActivePropertyHostnamesResponse{
+			ContractID: "ctr_test",
+			GroupID:    "grp_test",
+			PropertyID: "prp_test",
+			AccountID:  "act_test",
+			Hostnames: papi.HostnamesResponseItems{
+				Items: buildHostnameItems(12),
+			},
+		}, nil).Times(3)
+
+		useClient(client, nil, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataPropertyHostnames/property_hostnames.tf"),
+					Check: test.NewStateChecker("data.akamai_property_hostnames.akaprophosts").
+						CheckEqual("id", "prp_test").
+						CheckEqual("group_id", "grp_test").
+						CheckEqual("contract_id", "ctr_test").
+						CheckEqual("property_id", "prp_test").
+						CheckMissing("version").
+						CheckEqual("hostname_bucket.#", "12").
+						CheckEqual("hostname_bucket.0.cname_from", "cnamef0").
+						CheckEqual("hostname_bucket.0.cname_type", "EDGE_HOSTNAME").
+						CheckEqual("hostname_bucket.0.staging_edge_hostname_id", "ehn0").
+						CheckEqual("hostname_bucket.0.staging_cert_type", "DEFAULT").
+						CheckEqual("hostname_bucket.0.staging_cname_to", "cnamet0").
+						CheckEqual("hostname_bucket.0.production_edge_hostname_id", "ehn0").
+						CheckEqual("hostname_bucket.0.production_cert_type", "DEFAULT").
+						CheckEqual("hostname_bucket.0.production_cname_to", "cnamet0").
+						CheckEqual("hostname_bucket.0.cert_status.0.hostname", "cnamef0").
+						CheckEqual("hostname_bucket.0.cert_status.0.target", "cnamet0").
+						CheckEqual("hostname_bucket.0.cert_status.0.staging_status", "PENDING").
+						CheckEqual("hostname_bucket.0.cert_status.0.production_status", "PENDING").
+						Build(),
+				}},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("list hostnames of type HOSTNAME_BUCKET with results on several pages", func(t *testing.T) {
+		client := &papi.Mock{}
+
+		mockGetPropertyWithPropertyType(client, ptr.To("HOSTNAME_BUCKET")).Times(3)
+
+		hostnames := buildHostnameItems(listActivePropertyHostnamesResultsPerPage + 3)
+
+		mockListActivePropertyHostnames(client, 0, &papi.ListActivePropertyHostnamesResponse{
+			ContractID: "ctr_test",
+			GroupID:    "grp_test",
+			PropertyID: "prp_test",
+			AccountID:  "act_test",
+			Hostnames: papi.HostnamesResponseItems{
+				Items: hostnames[:listActivePropertyHostnamesResultsPerPage],
+			},
+		}, nil).Times(3)
+		mockListActivePropertyHostnames(client, listActivePropertyHostnamesResultsPerPage, &papi.ListActivePropertyHostnamesResponse{
+			ContractID: "ctr_test",
+			GroupID:    "grp_test",
+			PropertyID: "prp_test",
+			AccountID:  "act_test",
+			Hostnames: papi.HostnamesResponseItems{
+				Items: hostnames[listActivePropertyHostnamesResultsPerPage:],
+			},
+		}, nil).Times(3)
+
+		useClient(client, nil, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataPropertyHostnames/property_hostnames.tf"),
+					Check: test.NewStateChecker("data.akamai_property_hostnames.akaprophosts").
+						CheckEqual("id", "prp_test").
+						CheckEqual("group_id", "grp_test").
+						CheckEqual("contract_id", "ctr_test").
+						CheckEqual("property_id", "prp_test").
+						CheckMissing("version").
+						CheckEqual("hostname_bucket.#", "53").
+						CheckEqual("hostname_bucket.0.cname_from", "cnamef0").
+						CheckEqual("hostname_bucket.0.cname_type", "EDGE_HOSTNAME").
+						CheckEqual("hostname_bucket.0.staging_edge_hostname_id", "ehn0").
+						CheckEqual("hostname_bucket.0.staging_cert_type", "DEFAULT").
+						CheckEqual("hostname_bucket.0.staging_cname_to", "cnamet0").
+						CheckEqual("hostname_bucket.0.production_edge_hostname_id", "ehn0").
+						CheckEqual("hostname_bucket.0.production_cert_type", "DEFAULT").
+						CheckEqual("hostname_bucket.0.production_cname_to", "cnamet0").
+						CheckEqual("hostname_bucket.0.cert_status.0.hostname", "cnamef0").
+						CheckEqual("hostname_bucket.0.cert_status.0.target", "cnamet0").
+						CheckEqual("hostname_bucket.0.cert_status.0.staging_status", "PENDING").
+						CheckEqual("hostname_bucket.0.cert_status.0.production_status", "PENDING").
+						Build(),
+				}},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
 
 	t.Run("list hostnames without group prefix", func(t *testing.T) {
 		client := &papi.Mock{}
+
+		mockGetPropertyWithPropertyType(client, nil).Times(3)
+
 		hostnames := papi.HostnameResponseItems{Items: buildPropertyHostnames()}
 		hostnameItems := flattenHostnames(hostnames.Items)
 
@@ -75,7 +188,7 @@ func TestDataPropertyHostnames(t *testing.T) {
 			Version: papi.PropertyVersionGetItem{
 				PropertyVersion: 1,
 			},
-		}, nil)
+		}, nil).Times(3)
 		client.On("GetPropertyVersionHostnames", testutils.MockContext, papi.GetPropertyVersionHostnamesRequest{
 			PropertyID:        "prp_test",
 			PropertyVersion:   1,
@@ -91,7 +204,7 @@ func TestDataPropertyHostnames(t *testing.T) {
 			PropertyVersion: 1,
 			Etag:            "etag",
 			Hostnames:       hostnames,
-		}, nil)
+		}, nil).Times(3)
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -108,6 +221,9 @@ func TestDataPropertyHostnames(t *testing.T) {
 
 	t.Run("list hostnames without contract prefix", func(t *testing.T) {
 		client := &papi.Mock{}
+
+		mockGetPropertyWithPropertyType(client, nil).Times(3)
+
 		hostnames := papi.HostnameResponseItems{Items: buildPropertyHostnames()}
 		hostnameItems := flattenHostnames(hostnames.Items)
 
@@ -122,7 +238,7 @@ func TestDataPropertyHostnames(t *testing.T) {
 			Version: papi.PropertyVersionGetItem{
 				PropertyVersion: 1,
 			},
-		}, nil)
+		}, nil).Times(3)
 		client.On("GetPropertyVersionHostnames", testutils.MockContext, papi.GetPropertyVersionHostnamesRequest{
 			PropertyID:        "prp_test",
 			PropertyVersion:   1,
@@ -138,7 +254,7 @@ func TestDataPropertyHostnames(t *testing.T) {
 			PropertyVersion: 1,
 			Etag:            "etag",
 			Hostnames:       hostnames,
-		}, nil)
+		}, nil).Times(3)
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -155,6 +271,9 @@ func TestDataPropertyHostnames(t *testing.T) {
 
 	t.Run("list hostnames without property prefix", func(t *testing.T) {
 		client := &papi.Mock{}
+
+		mockGetPropertyWithPropertyType(client, nil).Times(3)
+
 		hostnames := papi.HostnameResponseItems{Items: buildPropertyHostnames()}
 		hostnameItems := flattenHostnames(hostnames.Items)
 
@@ -169,7 +288,7 @@ func TestDataPropertyHostnames(t *testing.T) {
 			Version: papi.PropertyVersionGetItem{
 				PropertyVersion: 1,
 			},
-		}, nil)
+		}, nil).Times(3)
 		client.On("GetPropertyVersionHostnames", testutils.MockContext, papi.GetPropertyVersionHostnamesRequest{
 			PropertyID:        "prp_test",
 			PropertyVersion:   1,
@@ -185,7 +304,7 @@ func TestDataPropertyHostnames(t *testing.T) {
 			PropertyVersion: 1,
 			Etag:            "etag",
 			Hostnames:       hostnames,
-		}, nil)
+		}, nil).Times(3)
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -202,6 +321,9 @@ func TestDataPropertyHostnames(t *testing.T) {
 
 	t.Run("specify property version to fetch", func(t *testing.T) {
 		client := &papi.Mock{}
+
+		mockGetPropertyWithPropertyType(client, nil).Times(3)
+
 		hostnames := papi.HostnameResponseItems{Items: buildPropertyHostnames()}
 		hostnameItems := flattenHostnames(hostnames.Items)
 
@@ -216,7 +338,7 @@ func TestDataPropertyHostnames(t *testing.T) {
 			Version: papi.PropertyVersionGetItem{
 				PropertyVersion: 5,
 			},
-		}, nil)
+		}, nil).Times(3)
 		client.On("GetPropertyVersionHostnames", testutils.MockContext, papi.GetPropertyVersionHostnamesRequest{
 			PropertyID:        "prp_test",
 			PropertyVersion:   5,
@@ -232,7 +354,7 @@ func TestDataPropertyHostnames(t *testing.T) {
 			PropertyVersion: 5,
 			Etag:            "etag",
 			Hostnames:       hostnames,
-		}, nil)
+		}, nil).Times(3)
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -250,12 +372,14 @@ func TestDataPropertyHostnames(t *testing.T) {
 	t.Run("specify property version to fetch with error", func(t *testing.T) {
 		client := &papi.Mock{}
 
+		mockGetPropertyWithPropertyType(client, nil).Once()
+
 		client.On("GetPropertyVersion", testutils.MockContext, papi.GetPropertyVersionRequest{
 			ContractID:      "ctr_test",
 			GroupID:         "grp_test",
 			PropertyID:      "prp_test",
 			PropertyVersion: 5,
-		}).Return(nil, fmt.Errorf("error fetching property version"))
+		}).Return(nil, fmt.Errorf("error fetching property version")).Once()
 
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -269,6 +393,37 @@ func TestDataPropertyHostnames(t *testing.T) {
 
 		client.AssertExpectations(t)
 	})
+
+	t.Run("list hostnames of type HOSTNAME_BUCKET fails", func(t *testing.T) {
+		client := &papi.Mock{}
+
+		mockGetPropertyWithPropertyType(client, ptr.To("HOSTNAME_BUCKET")).Once()
+
+		mockListActivePropertyHostnames(client, 0, nil, fmt.Errorf("error fetching list hostnames")).Once()
+
+		useClient(client, nil, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDataPropertyHostnames/property_hostnames.tf"),
+					ExpectError: regexp.MustCompile(`error fetching list hostnames`),
+				}},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+}
+
+func mockListActivePropertyHostnames(client *papi.Mock, offset int, resp *papi.ListActivePropertyHostnamesResponse, err error) *mock.Call {
+	return client.On("ListActivePropertyHostnames", testutils.MockContext, papi.ListActivePropertyHostnamesRequest{
+		ContractID:        "ctr_test",
+		GroupID:           "grp_test",
+		PropertyID:        "prp_test",
+		IncludeCertStatus: true,
+		Limit:             50,
+		Offset:            offset,
+	}).Return(resp, err)
 }
 
 func buildPropertyHostnames() []papi.Hostname {
@@ -294,6 +449,31 @@ func buildPropertyHostnames() []papi.Hostname {
 				},
 			},
 		}
+	}
+	return hostnames
+}
+
+func buildHostnameItems(itemsNo int) []papi.HostnameItem {
+	hostnames := make([]papi.HostnameItem, 0, itemsNo)
+	for i := range itemsNo {
+		hostnames = append(hostnames, papi.HostnameItem{
+			CertStatus: &papi.CertStatusItem{
+				ValidationCname: papi.ValidationCname{
+					Hostname: fmt.Sprintf("cnamef%v", i),
+					Target:   fmt.Sprintf("cnamet%v", i),
+				},
+				Staging:    []papi.StatusItem{{Status: "PENDING"}},
+				Production: []papi.StatusItem{{Status: "PENDING"}},
+			},
+			CnameFrom:                fmt.Sprintf("cnamef%v", i),
+			CnameType:                papi.HostnameCnameTypeEdgeHostname,
+			ProductionCertType:       papi.CertTypeDefault,
+			ProductionCnameTo:        fmt.Sprintf("cnamet%v", i),
+			ProductionEdgeHostnameId: fmt.Sprintf("ehn%v", i),
+			StagingCertType:          papi.CertTypeDefault,
+			StagingCnameTo:           fmt.Sprintf("cnamet%v", i),
+			StagingEdgeHostnameId:    fmt.Sprintf("ehn%v", i),
+		})
 	}
 	return hostnames
 }
@@ -325,4 +505,20 @@ func buildAggregatedHostnamesTest(hostnames []map[string]interface{}, id, groupI
 		}
 	}
 	return resource.ComposeAggregateTestCheckFunc(testVar...)
+}
+
+func mockGetPropertyWithPropertyType(client *papi.Mock, propertyType *string) *mock.Call {
+	return client.On("GetProperty", testutils.MockContext, papi.GetPropertyRequest{
+		ContractID: "ctr_test",
+		GroupID:    "grp_test",
+		PropertyID: "prp_test",
+	}).Return(&papi.GetPropertyResponse{
+		Property: &papi.Property{
+			AccountID:    "act_test",
+			ContractID:   "ctr_test",
+			GroupID:      "grp_test",
+			PropertyID:   "prp_test",
+			PropertyType: propertyType,
+		},
+	}, nil)
 }

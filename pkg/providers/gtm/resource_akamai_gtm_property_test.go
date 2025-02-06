@@ -30,18 +30,18 @@ func TestResGTMProperty(t *testing.T) {
 		"create property": {
 			property: getBasicProperty(),
 			init: func(m *gtm.Mock) {
-				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 				mockCreateProperty(m, getBasicProperty(), &gtm.CreatePropertyResponse{
 					Resource: getBasicProperty(),
 					Status:   getPendingResponseStatus(),
 				}, nil)
 				// read
-				mockGetProperty(m, testPropertyName, getBasicProperty(), nil, 4)
+				mockGetProperty(m, testPropertyName, getBasicProperty(), nil, testutils.FourTimes)
 				// update
 				mockUpdateProperty(m, getPropertyForUpdate(), &gtm.UpdatePropertyResponse{Status: getDefaultResponseStatus()}, nil)
 				// read
-				mockGetDomainStatus(m, 2)
-				mockGetProperty(m, testPropertyName, getPropertyForUpdate(), nil, 3)
+				mockGetDomainStatus(m, testutils.Twice)
+				mockGetProperty(m, testPropertyName, getPropertyForUpdate(), nil, testutils.ThreeTimes)
 				// delete
 				mockDeleteProperty(m, testPropertyName)
 			},
@@ -81,13 +81,13 @@ func TestResGTMProperty(t *testing.T) {
 		"update property failed": {
 			property: getBasicProperty(),
 			init: func(m *gtm.Mock) {
-				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 				mockCreateProperty(m, getBasicProperty(), &gtm.CreatePropertyResponse{
 					Resource: getBasicProperty(),
 					Status:   getPendingResponseStatus(),
 				}, nil)
 				// read
-				mockGetProperty(m, testPropertyName, getBasicProperty(), nil, 4)
+				mockGetProperty(m, testPropertyName, getBasicProperty(), nil, testutils.FourTimes)
 				// update
 				mockUpdateProperty(m, getPropertyForUpdate(), nil, &gtm.Error{
 					Type:       "internal_error",
@@ -96,8 +96,8 @@ func TestResGTMProperty(t *testing.T) {
 					StatusCode: http.StatusInternalServerError,
 				})
 				// read
-				mockGetDomainStatus(m, 1)
-				mockGetProperty(m, testPropertyName, getBasicProperty(), nil, 1)
+				mockGetDomainStatus(m, testutils.Once)
+				mockGetProperty(m, testPropertyName, getBasicProperty(), nil, testutils.Once)
 				// delete
 				mockDeleteProperty(m, testPropertyName)
 			},
@@ -256,19 +256,19 @@ func TestResGTMProperty(t *testing.T) {
 		"create property, remove outside of terraform, expect non-empty plan": {
 			property: getBasicProperty(),
 			init: func(m *gtm.Mock) {
-				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 				mockCreateProperty(m, getBasicProperty(), &gtm.CreatePropertyResponse{
 					Resource: getBasicProperty(),
 					Status:   getPendingResponseStatus(),
 				}, nil)
 				// read
-				mockGetProperty(m, testPropertyName, getBasicProperty(), nil, 2)
+				mockGetProperty(m, testPropertyName, getBasicProperty(), nil, testutils.Twice)
 
 				// Mock that the property was deleted outside terraform
-				mockGetProperty(m, testPropertyName, nil, gtm.ErrNotFound, 1)
+				mockGetProperty(m, testPropertyName, nil, gtm.ErrNotFound, testutils.Once)
 
 				// For terraform test framework, we need to mock GetProperty as it would actually exist before deletion
-				mockGetProperty(m, testPropertyName, getBasicProperty(), nil, 1)
+				mockGetProperty(m, testPropertyName, getBasicProperty(), nil, testutils.Once)
 				// delete
 				mockDeleteProperty(m, testPropertyName)
 			},
@@ -298,13 +298,13 @@ func TestResGTMProperty(t *testing.T) {
 		"create property with additional liveness test fields": {
 			property: getBasicPropertyWithLivenessTests(),
 			init: func(m *gtm.Mock) {
-				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 				mockCreateProperty(m, getBasicPropertyWithLivenessTests(), &gtm.CreatePropertyResponse{
 					Resource: getBasicPropertyWithLivenessTests(),
 					Status:   getPendingResponseStatus(),
 				}, nil)
 				// read
-				mockGetProperty(m, testPropertyName, getBasicPropertyWithLivenessTests(), nil, 3)
+				mockGetProperty(m, testPropertyName, getBasicPropertyWithLivenessTests(), nil, testutils.ThreeTimes)
 				// delete
 				mockDeleteProperty(m, testPropertyName)
 			},
@@ -329,7 +329,7 @@ func TestResGTMProperty(t *testing.T) {
 		"create property failed": {
 			property: getBasicProperty(),
 			init: func(m *gtm.Mock) {
-				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 				// bad request status code returned
 				mockCreateProperty(m, getBasicProperty(), nil, &gtm.Error{StatusCode: http.StatusBadRequest})
 			},
@@ -343,7 +343,7 @@ func TestResGTMProperty(t *testing.T) {
 		"create property failed - property already exists": {
 			property: getBasicProperty(),
 			init: func(m *gtm.Mock) {
-				mockGetProperty(m, testPropertyName, getBasicProperty(), nil, 1)
+				mockGetProperty(m, testPropertyName, getBasicProperty(), nil, testutils.Once)
 			},
 			steps: []resource.TestStep{
 				{
@@ -355,7 +355,7 @@ func TestResGTMProperty(t *testing.T) {
 		"create property with retry on Property Validation Failure - no datacenter is assigned to map target": {
 			property: getBasicProperty(),
 			init: func(m *gtm.Mock) {
-				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 				// Simulate a retry scenario
 				mockCreateProperty(m, getBasicProperty(), nil, &gtm.Error{
 					Type:       "https://problems.luna.akamaiapis.net/config-gtm/v1/propertyValidationError",
@@ -369,7 +369,7 @@ func TestResGTMProperty(t *testing.T) {
 					Resource: getBasicProperty(),
 					Status:   getPendingResponseStatus(),
 				}, nil)
-				mockGetProperty(m, testPropertyName, getBasicProperty(), nil, 3)
+				mockGetProperty(m, testPropertyName, getBasicProperty(), nil, testutils.ThreeTimes)
 				mockDeleteProperty(m, testPropertyName)
 			},
 			steps: []resource.TestStep{
@@ -393,7 +393,7 @@ func TestResGTMProperty(t *testing.T) {
 		"create property with retry on Property Validation Failure - other errors": {
 			property: getBasicProperty(),
 			init: func(m *gtm.Mock) {
-				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 				// Simulate a retry scenario
 				mockCreateProperty(m, getBasicProperty(), nil, &gtm.Error{
 					Type:       "https://problems.luna.akamaiapis.net/config-gtm/v1/propertyValidationError",
@@ -412,7 +412,7 @@ func TestResGTMProperty(t *testing.T) {
 		"create property with retry - context canceled": {
 			property: getBasicProperty(),
 			init: func(m *gtm.Mock) {
-				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 				// Simulate a retry scenario
 				mockCreateProperty(m, getBasicProperty(), nil, &gtm.Error{
 					Type:       "https://problems.luna.akamaiapis.net/config-gtm/v1/propertyValidationError",
@@ -434,7 +434,7 @@ func TestResGTMProperty(t *testing.T) {
 		"create property denied": {
 			property: nil,
 			init: func(m *gtm.Mock) {
-				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 				// create
 				// denied response status returned
 				mockCreateProperty(m, getBasicProperty(), &gtm.CreatePropertyResponse{
@@ -452,24 +452,24 @@ func TestResGTMProperty(t *testing.T) {
 		"create property and update name - force new": {
 			property: getBasicProperty(),
 			init: func(m *gtm.Mock) {
-				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 				// create 1st property
 				mockCreateProperty(m, getBasicProperty(), &gtm.CreatePropertyResponse{
 					Resource: getBasicProperty(),
 					Status:   getPendingResponseStatus(),
 				}, nil)
 				// read
-				mockGetProperty(m, testPropertyName, getBasicProperty(), nil, 4)
+				mockGetProperty(m, testPropertyName, getBasicProperty(), nil, testutils.FourTimes)
 				// force new -> delete 1st property and recreate 2nd with updated name
 
 				mockDeleteProperty(m, testPropertyName)
-				mockGetProperty(m, testUpdatedPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+				mockGetProperty(m, testUpdatedPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 				mockCreateProperty(m, getPropertyWithUpdatedName(), &gtm.CreatePropertyResponse{
 					Resource: getPropertyWithUpdatedName(),
 					Status:   getPendingResponseStatus(),
 				}, nil)
 				// read
-				mockGetProperty(m, testUpdatedPropertyName, getPropertyWithUpdatedName(), nil, 3)
+				mockGetProperty(m, testUpdatedPropertyName, getPropertyWithUpdatedName(), nil, testutils.ThreeTimes)
 				// delete
 				mockDeleteProperty(m, testUpdatedPropertyName)
 			},
@@ -560,14 +560,14 @@ func TestResGTMProperty(t *testing.T) {
 		"test_object_protocol different than HTTP, HTTPS or FTP": {
 			property: getBasicProperty(),
 			init: func(m *gtm.Mock) {
-				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 				// create property with test_object_protocol in first liveness test different from HTTP, HTTPS, FTP
 				mockCreateProperty(m, getPropertyWithTestObjectProtocol(), &gtm.CreatePropertyResponse{
 					Resource: getPropertyWithTestObjectProtocol(),
 					Status:   getPendingResponseStatus(),
 				}, nil)
 				// read
-				mockGetProperty(m, testPropertyName, getPropertyWithTestObjectProtocol(), nil, 3)
+				mockGetProperty(m, testPropertyName, getPropertyWithTestObjectProtocol(), nil, testutils.ThreeTimes)
 				// delete
 				mockDeleteProperty(m, testPropertyName)
 			},
@@ -610,13 +610,13 @@ func TestResGTMProperty(t *testing.T) {
 		"create property with 'ranked-failover' type and allow single empty precedence value": {
 			property: getRankedFailoverPropertyWithPrecedence(),
 			init: func(m *gtm.Mock) {
-				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 				mockCreateProperty(m, getRankedFailoverPropertyWithPrecedence(), &gtm.CreatePropertyResponse{
 					Resource: getRankedFailoverPropertyWithPrecedence(),
 					Status:   getPendingResponseStatus(),
 				}, nil)
 				// read
-				mockGetProperty(m, testPropertyName, getRankedFailoverPropertyWithPrecedence(), nil, 3)
+				mockGetProperty(m, testPropertyName, getRankedFailoverPropertyWithPrecedence(), nil, testutils.ThreeTimes)
 				// delete
 				mockDeleteProperty(m, testPropertyName)
 			},
@@ -641,13 +641,13 @@ func TestResGTMProperty(t *testing.T) {
 		"create property with 'ranked-failover' type and 0 set as precedence value": {
 			property: getRankedFailoverPropertyWithPrecedence(),
 			init: func(m *gtm.Mock) {
-				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 				mockCreateProperty(m, getRankedFailoverPropertyWithPrecedence(), &gtm.CreatePropertyResponse{
 					Resource: getRankedFailoverPropertyWithPrecedence(),
 					Status:   getPendingResponseStatus(),
 				}, nil)
 				// read
-				mockGetProperty(m, testPropertyName, getRankedFailoverPropertyWithPrecedence(), nil, 3)
+				mockGetProperty(m, testPropertyName, getRankedFailoverPropertyWithPrecedence(), nil, testutils.ThreeTimes)
 				// delete
 				mockDeleteProperty(m, testPropertyName)
 			},
@@ -1065,7 +1065,7 @@ func TestResGTMPropertyImport(t *testing.T) {
 			mapName:    "tfexample_prop_1",
 			init: func(m *gtm.Mock) {
 				// Read
-				mockGetProperty(m, testPropertyName, getImportedProperty(), nil, 2)
+				mockGetProperty(m, testPropertyName, getImportedProperty(), nil, testutils.Twice)
 			},
 			stateCheck: test.NewImportChecker().
 				CheckEqual("domain", "gtm_terra_testdomain.akadns.net").
@@ -1132,7 +1132,7 @@ func TestResGTMPropertyImport(t *testing.T) {
 			mapName:    "tfexample_prop_1",
 			init: func(m *gtm.Mock) {
 				// Read - error
-				mockGetProperty(m, testPropertyName, nil, fmt.Errorf("get failed"), 1)
+				mockGetProperty(m, testPropertyName, nil, fmt.Errorf("get failed"), testutils.Once)
 			},
 			expectError: regexp.MustCompile(`get failed`),
 		},
@@ -1759,14 +1759,14 @@ func getLivenessTestCaCertificatesProperty() gtm.Property {
 func mockPropertyFlow(gtmProperty gtm.Property) *gtm.Mock {
 	client := new(gtm.Mock)
 	// read
-	mockGetProperty(client, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+	mockGetProperty(client, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 	// create
 	mockCreateProperty(client, &gtmProperty, &gtm.CreatePropertyResponse{
 		Resource: &gtmProperty,
 		Status:   getPendingResponseStatus(),
 	}, nil)
 
-	mockGetProperty(client, testPropertyName, &gtmProperty, nil, 4)
+	mockGetProperty(client, testPropertyName, &gtmProperty, nil, testutils.FourTimes)
 
 	// delete
 	mockDeleteProperty(client, testPropertyName)

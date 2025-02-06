@@ -20,28 +20,28 @@ func TestDataGTMDatacenter(t *testing.T) {
 	}{
 		"happy path - all fields populated": {
 			init: func(m *gtm.Mock, datacenter *gtm.Datacenter) {
-				mockGetDatacenter(m, datacenter.DatacenterID, datacenter, nil, 3)
+				mockGetDatacenter(m, datacenter.DatacenterID, datacenter, nil, testutils.ThreeTimes)
 			},
 			mockData:   getTestGTMDatacenter(),
 			configPath: "testdata/TestDataGTMDatacenter/default.tf",
 		},
 		"happy path - minimal fields": {
 			init: func(m *gtm.Mock, datacenter *gtm.Datacenter) {
-				mockGetDatacenter(m, datacenter.DatacenterID, datacenter, nil, 3)
+				mockGetDatacenter(m, datacenter.DatacenterID, datacenter, nil, testutils.ThreeTimes)
 			},
 			mockData:   getMinimalTestDatacenter(),
 			configPath: "testdata/TestDataGTMDatacenter/default.tf",
 		},
 		"happy path - no load_servers in default_load_object": {
 			init: func(m *gtm.Mock, datacenter *gtm.Datacenter) {
-				mockGetDatacenter(m, datacenter.DatacenterID, datacenter, nil, 3)
+				mockGetDatacenter(m, datacenter.DatacenterID, datacenter, nil, testutils.ThreeTimes)
 			},
 			mockData:   getNoLoadServersDatacenter(),
 			configPath: "testdata/TestDataGTMDatacenter/default.tf",
 		},
 		"error - GetDatacenter fail": {
 			init: func(m *gtm.Mock, datacenter *gtm.Datacenter) {
-				mockGetDatacenter(m, datacenter.DatacenterID, nil, fmt.Errorf("GetDatacenter error"), 1)
+				mockGetDatacenter(m, datacenter.DatacenterID, nil, fmt.Errorf("GetDatacenter error"), testutils.Once)
 			},
 			mockData:   getTestGTMDatacenter(),
 			configPath: "testdata/TestDataGTMDatacenter/default.tf",

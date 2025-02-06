@@ -22,20 +22,20 @@ func TestResGTMDomain(t *testing.T) {
 	t.Run("create domain", func(t *testing.T) {
 		client := &gtm.Mock{}
 
-		mockGetDomain(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+		mockGetDomain(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
 		mockCreateDomain(client, getTestDomain(), &gtm.CreateDomainResponse{
 			Resource: getReturnedTestDomain(),
 			Status:   getDefaultResponseStatus(),
 		}, nil)
 
-		mockGetDomain(client, getReturnedTestDomain(), nil, 4)
+		mockGetDomain(client, getReturnedTestDomain(), nil, testutils.FourTimes)
 
-		mockGetDomainStatus(client, 3)
+		mockGetDomainStatus(client, testutils.ThreeTimes)
 
 		mockUpdateDomain(client, &gtm.UpdateDomainResponse{Status: getDefaultResponseStatus()}, nil)
 
-		mockGetDomain(client, getTestUpdateDomain(), nil, 3)
+		mockGetDomain(client, getTestUpdateDomain(), nil, testutils.ThreeTimes)
 
 		mockDeleteDomain(client)
 
@@ -73,16 +73,16 @@ func TestResGTMDomain(t *testing.T) {
 	t.Run("update domain failed", func(t *testing.T) {
 		client := &gtm.Mock{}
 
-		mockGetDomain(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+		mockGetDomain(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
 		mockCreateDomain(client, getTestDomain(), &gtm.CreateDomainResponse{
 			Resource: getReturnedTestDomain(),
 			Status:   getDefaultResponseStatus(),
 		}, nil)
 
-		mockGetDomain(client, getReturnedTestDomain(), nil, 4)
+		mockGetDomain(client, getReturnedTestDomain(), nil, testutils.FourTimes)
 
-		mockGetDomainStatus(client, 2)
+		mockGetDomainStatus(client, testutils.Twice)
 
 		mockUpdateDomain(client, nil, &gtm.Error{
 			Type:       "internal_error",
@@ -91,7 +91,7 @@ func TestResGTMDomain(t *testing.T) {
 			StatusCode: http.StatusInternalServerError,
 		})
 
-		mockGetDomain(client, getReturnedTestDomain(), nil, 1)
+		mockGetDomain(client, getReturnedTestDomain(), nil, testutils.Once)
 
 		mockDeleteDomain(client)
 
@@ -123,22 +123,22 @@ func TestResGTMDomain(t *testing.T) {
 	t.Run("create domain, remove outside of terraform, expect non-empty plan", func(t *testing.T) {
 		client := &gtm.Mock{}
 
-		mockGetDomain(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+		mockGetDomain(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
 		mockCreateDomain(client, getTestDomain(), &gtm.CreateDomainResponse{
 			Resource: getReturnedTestDomain(),
 			Status:   getDefaultResponseStatus(),
 		}, nil)
 
-		mockGetDomain(client, getReturnedTestDomain(), nil, 2)
+		mockGetDomain(client, getReturnedTestDomain(), nil, testutils.Twice)
 
-		mockGetDomainStatus(client, 2)
+		mockGetDomainStatus(client, testutils.Twice)
 
 		// Mock that the domain was deleted outside terraform
-		mockGetDomain(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+		mockGetDomain(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
 		// For terraform test framework, we need to mock GetDomain as it would actually exist before deletion
-		mockGetDomain(client, getReturnedTestDomain(), nil, 1)
+		mockGetDomain(client, getReturnedTestDomain(), nil, testutils.Once)
 
 		mockDeleteDomain(client)
 
@@ -171,16 +171,16 @@ func TestResGTMDomain(t *testing.T) {
 	t.Run("create domain with sign and serve", func(t *testing.T) {
 		client := &gtm.Mock{}
 
-		mockGetDomain(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+		mockGetDomain(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
 		mockCreateDomain(client, getTestDomainWithSignAndServe(), &gtm.CreateDomainResponse{
 			Resource: getTestDomainWithSignAndServe(),
 			Status:   getDefaultResponseStatus(),
 		}, nil)
 
-		mockGetDomain(client, getTestDomainWithSignAndServe(), nil, 3)
+		mockGetDomain(client, getTestDomainWithSignAndServe(), nil, testutils.ThreeTimes)
 
-		mockGetDomainStatus(client, 2)
+		mockGetDomainStatus(client, testutils.Twice)
 
 		mockDeleteDomain(client)
 
@@ -208,16 +208,16 @@ func TestResGTMDomain(t *testing.T) {
 	t.Run("create, update domain name - error", func(t *testing.T) {
 		client := &gtm.Mock{}
 
-		mockGetDomain(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+		mockGetDomain(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
 		mockCreateDomain(client, getTestDomain(), &gtm.CreateDomainResponse{
 			Resource: getReturnedTestDomain(),
 			Status:   getDefaultResponseStatus(),
 		}, nil)
 
-		mockGetDomain(client, getReturnedTestDomain(), nil, 5)
+		mockGetDomain(client, getReturnedTestDomain(), nil, testutils.FiveTimes)
 
-		mockGetDomainStatus(client, 2)
+		mockGetDomainStatus(client, testutils.Twice)
 
 		mockDeleteDomain(client)
 
@@ -249,7 +249,7 @@ func TestResGTMDomain(t *testing.T) {
 	t.Run("create domain failed", func(t *testing.T) {
 		client := &gtm.Mock{}
 
-		mockGetDomain(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+		mockGetDomain(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
 		mockCreateDomain(client, getTestDomain(), nil, &gtm.Error{StatusCode: http.StatusBadRequest})
 
@@ -271,7 +271,7 @@ func TestResGTMDomain(t *testing.T) {
 	t.Run("create domain failed - domain already exists", func(t *testing.T) {
 		client := &gtm.Mock{}
 
-		mockGetDomain(client, getReturnedTestDomain(), nil, 1)
+		mockGetDomain(client, getReturnedTestDomain(), nil, testutils.Once)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -291,7 +291,7 @@ func TestResGTMDomain(t *testing.T) {
 	t.Run("create domain denied", func(t *testing.T) {
 		client := &gtm.Mock{}
 
-		mockGetDomain(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+		mockGetDomain(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
 		mockCreateDomain(client, getTestDomain(), &gtm.CreateDomainResponse{
 			Resource: getReturnedTestDomain(),
@@ -367,7 +367,7 @@ func TestResGTMDomainImport(t *testing.T) {
 			domainName: testDomainName,
 			init: func(m *gtm.Mock) {
 				// Read
-				mockGetDomain(m, getImportedDomain(), nil, 1)
+				mockGetDomain(m, getImportedDomain(), nil, testutils.Once)
 			},
 			stateCheck: test.NewImportChecker().
 				CheckEqual("name", "gtm_terra_testdomain.akadns.net").
@@ -409,7 +409,7 @@ func TestResGTMDomainImport(t *testing.T) {
 			domainName: testDomainName,
 			init: func(m *gtm.Mock) {
 				// Read - error
-				mockGetDomain(m, nil, fmt.Errorf("get failed"), 1)
+				mockGetDomain(m, nil, fmt.Errorf("get failed"), testutils.Once)
 			},
 			expectError: regexp.MustCompile(`get failed`),
 		},
@@ -443,16 +443,16 @@ func TestResGTMDomainImport(t *testing.T) {
 func getDomainOrderClient() *gtm.Mock {
 	client := &gtm.Mock{}
 
-	mockGetDomain(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+	mockGetDomain(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
 	mockCreateDomain(client, getTestDomainWithNotifications(), &gtm.CreateDomainResponse{
 		Resource: getTestDomainWithNotifications(),
 		Status:   getDefaultResponseStatus(),
 	}, nil)
 
-	mockGetDomain(client, getTestDomainWithNotifications(), nil, 4)
+	mockGetDomain(client, getTestDomainWithNotifications(), nil, testutils.FourTimes)
 
-	mockGetDomainStatus(client, 2)
+	mockGetDomainStatus(client, testutils.Twice)
 
 	mockDeleteDomain(client)
 

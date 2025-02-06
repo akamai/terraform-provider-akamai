@@ -40,7 +40,7 @@ func TestDataGTMGeoMap(t *testing.T) {
 						Rel:  "TestRel",
 						Href: "TestHref",
 					}},
-				}, nil, 3)
+				}, nil, testutils.ThreeTimes)
 			},
 			expectedAttributes: map[string]string{
 				"domain":                           "gtm_terra_testdomain.akadns.net",
@@ -67,7 +67,7 @@ func TestDataGTMGeoMap(t *testing.T) {
 		"error response from api": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				mockGetGeoMap(m, nil, fmt.Errorf("API error"), 1)
+				mockGetGeoMap(m, nil, fmt.Errorf("API error"), testutils.Once)
 			},
 			expectError: regexp.MustCompile("API error"),
 		},
@@ -85,7 +85,7 @@ func TestDataGTMGeoMap(t *testing.T) {
 						Rel:  "TestRel",
 						Href: "TestHref",
 					}},
-				}, nil, 3)
+				}, nil, testutils.ThreeTimes)
 			},
 			expectedAttributes: map[string]string{
 				"domain":                           "gtm_terra_testdomain.akadns.net",

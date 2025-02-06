@@ -189,6 +189,12 @@
 
 
 
+
+* PAPI
+  * Added the `hostname_bucket` field into the `akamai_property_hostnames` datasource to hold information related to hostnames for hostname bucket property. 
+
+
+
 #### BUG FIXES:
 
 * Cloud Access

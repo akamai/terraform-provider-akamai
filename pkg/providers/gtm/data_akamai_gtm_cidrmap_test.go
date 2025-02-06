@@ -40,7 +40,7 @@ func TestDataGTMCIDRmap(t *testing.T) {
 						Rel:  "TestRel",
 						Href: "TestHref",
 					}},
-				}, nil, 3)
+				}, nil, testutils.ThreeTimes)
 			},
 			expectedAttributes: map[string]string{
 				"domain":                           "gtm_terra_testdomain.akadns.net",
@@ -67,7 +67,7 @@ func TestDataGTMCIDRmap(t *testing.T) {
 		"error response from api": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				mockGetCIDRMap(m, nil, fmt.Errorf("error"), 1)
+				mockGetCIDRMap(m, nil, fmt.Errorf("error"), testutils.Once)
 			},
 			expectError: regexp.MustCompile("error"),
 		},
@@ -85,7 +85,7 @@ func TestDataGTMCIDRmap(t *testing.T) {
 						Rel:  "TestRel",
 						Href: "TestHref",
 					}},
-				}, nil, 3)
+				}, nil, testutils.ThreeTimes)
 			},
 			expectedAttributes: map[string]string{
 				"domain":                           "gtm_terra_testdomain.akadns.net",

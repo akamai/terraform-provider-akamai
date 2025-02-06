@@ -71,7 +71,7 @@ func TestDataGTMDomains(t *testing.T) {
 						},
 						},
 					},
-				}, nil, 3)
+				}, nil, testutils.ThreeTimes)
 			},
 			expectedAttributes: map[string]string{
 				"domains.0.name":           "test3.terraformtesting.net",
@@ -85,13 +85,13 @@ func TestDataGTMDomains(t *testing.T) {
 		"no domains found": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				mockListDomains(m, []gtm.DomainItem{}, nil, 3)
+				mockListDomains(m, []gtm.DomainItem{}, nil, testutils.ThreeTimes)
 			},
 		},
 		"error response from api": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				mockListDomains(m, nil, fmt.Errorf("oops"), 1)
+				mockListDomains(m, nil, fmt.Errorf("oops"), testutils.Once)
 			},
 			expectError: regexp.MustCompile("oops"),
 		},

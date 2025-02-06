@@ -131,27 +131,52 @@ var complianceRecordSchema = &schema.Resource{
 func flattenHostnames(Hostnames []papi.Hostname) []map[string]interface{} {
 	var res []map[string]interface{}
 	for _, hn := range Hostnames {
-		var c []map[string]interface{}
 		m := map[string]interface{}{}
 		m["cname_from"] = hn.CnameFrom
 		m["cname_to"] = hn.CnameTo
 		m["cert_provisioning_type"] = hn.CertProvisioningType
 		m["edge_hostname_id"] = hn.EdgeHostnameID
 		m["cname_type"] = hn.CnameType
-		certs := map[string]interface{}{}
-		certs["hostname"] = hn.CertStatus.ValidationCname.Hostname
-		certs["target"] = hn.CertStatus.ValidationCname.Target
-		if len(hn.CertStatus.Staging) > 0 {
-			certs["staging_status"] = hn.CertStatus.Staging[0].Status
-		}
-		if len(hn.CertStatus.Production) > 0 {
-			certs["production_status"] = hn.CertStatus.Production[0].Status
-		}
-		c = append(c, certs)
-		m["cert_status"] = c
+		m["cert_status"] = []map[string]any{flattenCertType(&hn.CertStatus)}
 		res = append(res, m)
 	}
 	return res
+}
+
+func flattenBucketHostnames(hostnames []papi.HostnameItem) []map[string]any {
+	var result []map[string]any
+	for _, hostname := range hostnames {
+		result = append(result, map[string]any{
+			"cname_from":                  hostname.CnameFrom,
+			"cname_type":                  hostname.CnameType,
+			"staging_edge_hostname_id":    hostname.StagingEdgeHostnameId,
+			"staging_cert_type":           hostname.StagingCertType,
+			"staging_cname_to":            hostname.StagingCnameTo,
+			"production_edge_hostname_id": hostname.ProductionEdgeHostnameId,
+			"production_cert_type":        hostname.ProductionCertType,
+			"production_cname_to":         hostname.ProductionCnameTo,
+			"cert_status":                 []map[string]any{flattenCertType(hostname.CertStatus)},
+		})
+	}
+	return result
+}
+
+func flattenCertType(certStatus *papi.CertStatusItem) map[string]any {
+	if certStatus == nil {
+		return nil
+	}
+
+	certs := map[string]any{
+		"hostname": certStatus.ValidationCname.Hostname,
+		"target":   certStatus.ValidationCname.Target,
+	}
+	if len(certStatus.Staging) > 0 {
+		certs["staging_status"] = certStatus.Staging[0].Status
+	}
+	if len(certStatus.Production) > 0 {
+		certs["production_status"] = certStatus.Production[0].Status
+	}
+	return certs
 }
 
 func papiErrorsToList(errors []*papi.Error) []map[string]interface{} {
