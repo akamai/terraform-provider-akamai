@@ -9,7 +9,7 @@
     However, the namespace will not be removed if there are any items in it: in such case, an error
     will be returned.
 
-
+#### DEPRECATIONS:
 
 
 
@@ -48,9 +48,9 @@
 * GTM
   * Enabled domain deletion support for the `akamai_gtm_domain` resource, allowing users to submit requests to remove GTM domains.
 
-
-
-
+* IAM
+  * Added new data source:
+    * `akamai_iam_api_clients`
 
 
 
