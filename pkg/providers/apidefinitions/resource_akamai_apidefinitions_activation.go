@@ -6,11 +6,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/apidefinitions"
-	v0 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/apidefinitions/v0"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/framework/modifiers"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/tf/validators"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/apidefinitions"
+	v0 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/apidefinitions/v0"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/framework/modifiers"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf/validators"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -361,7 +361,7 @@ func (r *activationResource) handleActivation(ctx context.Context, state *activa
 			return diags
 		}
 
-		if len(alertsBySeverity[apidefinitions.SeverityWarning]) > 0 && state.AutoAckWarnings.ValueBool() == false {
+		if len(alertsBySeverity[apidefinitions.SeverityWarning]) > 0 && !state.AutoAckWarnings.ValueBool() {
 			warnings := formatAlerts(alertsBySeverity[apidefinitions.SeverityWarning])
 			diags.AddError("Unable to proceed due to Activation Warnings, set auto_acknowledge_warnings to acknowledge warnings and proceed", warnings)
 			return diags
@@ -395,10 +395,7 @@ func formatAlerts(alerts []apidefinitions.VerifyVersionAlert) string {
 
 func (m *activationResourceModel) isStaging() bool {
 	network := apidefinitions.NetworkType(m.Network.ValueString())
-	if network == apidefinitions.ActivationNetworkStaging {
-		return true
-	}
-	return false
+	return network == apidefinitions.ActivationNetworkStaging
 }
 
 func (m *activationResourceModel) populateFrom(resp apidefinitions.EndpointDetail) diag.Diagnostics {

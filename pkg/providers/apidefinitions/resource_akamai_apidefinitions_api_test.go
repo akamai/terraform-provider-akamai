@@ -10,10 +10,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/apidefinitions"
-	v0 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/apidefinitions/v0"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/apidefinitions"
+	v0 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/apidefinitions/v0"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -27,13 +27,13 @@ func TestAPIResource(t *testing.T) {
 
 	var tests = map[string]struct {
 		configPath string
-		init       func(*testing.T, *apidefinitions.Mock, *v0.Mock, data)
+		init       func(*apidefinitions.Mock, *v0.Mock)
 		mockData   data
 		steps      []resource.TestStep
 		error      *regexp.Regexp
 	}{
 		"create endpoint - required only": {
-			init: func(t *testing.T, m *apidefinitions.Mock, mV0 *v0.Mock, resourceData data) {
+			init: func(m *apidefinitions.Mock, mV0 *v0.Mock) {
 				mockRegisterAPI(mV0, "required-only-response.json")
 				mockReadAPIResource(m, mV0, "required-only-response.json", 1)
 				mockDeleteEndpoint(m)
@@ -51,7 +51,7 @@ func TestAPIResource(t *testing.T) {
 			},
 		},
 		"create endpoint - with resources": {
-			init: func(t *testing.T, m *apidefinitions.Mock, mV0 *v0.Mock, resourceData data) {
+			init: func(m *apidefinitions.Mock, mV0 *v0.Mock) {
 				mockRegisterAPI(mV0, "with-resources.json")
 				mockReadActiveAPIResource(m, mV0, "with-resources.json", 1)
 				mockDeleteEndpoint(m)
@@ -69,7 +69,7 @@ func TestAPIResource(t *testing.T) {
 			},
 		},
 		"create endpoint - 400 Bad Request": {
-			init: func(t *testing.T, m *apidefinitions.Mock, mV0 *v0.Mock, resourceData data) {
+			init: func(_ *apidefinitions.Mock, mV0 *v0.Mock) {
 				mockRegisterAPIFail(mV0)
 			},
 			mockData: data{
@@ -83,7 +83,7 @@ func TestAPIResource(t *testing.T) {
 			},
 		},
 		"update endpoint": {
-			init: func(t *testing.T, m *apidefinitions.Mock, mV0 *v0.Mock, resourceData data) {
+			init: func(m *apidefinitions.Mock, mV0 *v0.Mock) {
 				mockRegisterAPI(mV0, "required-only-response.json")
 				mockReadActiveAPIResource(m, mV0, "required-only-response.json", 2)
 				mockUpdateAPIVersion(m, mV0, "with-resources.json", false)
@@ -110,7 +110,7 @@ func TestAPIResource(t *testing.T) {
 			},
 		},
 		"update endpoint - version is locked": {
-			init: func(t *testing.T, m *apidefinitions.Mock, mV0 *v0.Mock, resourceData data) {
+			init: func(m *apidefinitions.Mock, mV0 *v0.Mock) {
 				mockRegisterAPI(mV0, "required-only-response.json")
 				mockReadAPIResource(m, mV0, "required-only-response.json", 2)
 				mockUpdateAPIVersion(m, mV0, "with-resources.json", true)
@@ -137,7 +137,7 @@ func TestAPIResource(t *testing.T) {
 			},
 		},
 		"update endpoint - 400 Bad Request": {
-			init: func(t *testing.T, m *apidefinitions.Mock, mV0 *v0.Mock, resourceData data) {
+			init: func(m *apidefinitions.Mock, mV0 *v0.Mock) {
 				mockRegisterAPI(mV0, "required-only-response.json")
 				mockReadActiveAPIResource(m, mV0, "required-only-response.json", 2)
 				mockUpdateAPIVersionFail(m, mV0)
@@ -159,7 +159,7 @@ func TestAPIResource(t *testing.T) {
 			},
 		},
 		"refresh endpoint - update staging and production version": {
-			init: func(t *testing.T, m *apidefinitions.Mock, mV0 *v0.Mock, resourceData data) {
+			init: func(m *apidefinitions.Mock, mV0 *v0.Mock) {
 				mockRegisterAPI(mV0, "required-only-response.json")
 				mockReadActiveAPIResource(m, mV0, "required-only-response.json", 3)
 				mockDestroyActiveAPIResource(m, 2)
@@ -184,7 +184,7 @@ func TestAPIResource(t *testing.T) {
 			},
 		},
 		"delete endpoint - previously activated": {
-			init: func(t *testing.T, m *apidefinitions.Mock, mV0 *v0.Mock, resourceData data) {
+			init: func(m *apidefinitions.Mock, mV0 *v0.Mock) {
 				mockRegisterAPI(mV0, "required-only-response.json")
 				mockReadActiveAPIResource(m, mV0, "required-only-response.json", 1)
 				mockDestroyActiveAPIResource(m, 2)
@@ -210,7 +210,7 @@ func TestAPIResource(t *testing.T) {
 			},
 		},
 		"import - ok": {
-			init: func(t *testing.T, m *apidefinitions.Mock, mV0 *v0.Mock, resourceData data) {
+			init: func(m *apidefinitions.Mock, mV0 *v0.Mock) {
 				mockImportState(m, mV0)
 				mockReadActiveAPIResource(m, mV0, "required-only-response.json", 1)
 				mockDestroyActiveAPIResource(m, 2)
@@ -273,7 +273,7 @@ func TestAPIResource(t *testing.T) {
 			client := &apidefinitions.Mock{}
 			clientV0 := &v0.Mock{}
 			if test.init != nil {
-				test.init(t, client, clientV0, test.mockData)
+				test.init(client, clientV0)
 			}
 			useClient(client, clientV0, func() {
 				resource.UnitTest(t, resource.TestCase{

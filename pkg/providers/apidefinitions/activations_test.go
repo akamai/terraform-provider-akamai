@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/apidefinitions"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/apidefinitions"
 	"github.com/stretchr/testify/assert"
 )
 

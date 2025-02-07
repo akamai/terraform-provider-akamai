@@ -27,7 +27,6 @@ require (
 	github.com/spf13/cast v1.7.0
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/exp v0.0.0-20241204233417-43b7b7cde48d
-	github.com/wk8/go-ordered-map/v2 v2.1.8
 	golang.org/x/net v0.38.0
 	golang.org/x/sync v0.14.0
 )
@@ -38,8 +37,8 @@ require (
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
-	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/benbjohnson/clock v1.3.5 // indirect
+	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/cloudflare/circl v1.6.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fatih/color v1.18.0 // indirect

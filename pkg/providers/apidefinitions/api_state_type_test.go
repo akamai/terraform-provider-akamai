@@ -5,8 +5,8 @@ import (
 
 	orderedmap "github.com/wk8/go-ordered-map/v2"
 
-	v0 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/apidefinitions/v0"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
+	v0 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/apidefinitions/v0"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
 	"github.com/stretchr/testify/assert"
 )
 

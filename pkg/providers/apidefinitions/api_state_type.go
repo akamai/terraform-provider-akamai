@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	v0 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/apidefinitions/v0"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
+	v0 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/apidefinitions/v0"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
 	"github.com/go-test/deep"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -116,16 +116,16 @@ func (v apiStateValue) StringSemanticEquals(ctx context.Context, valuable basety
 }
 
 func checkSemanticEquality(before v0.RegisterAPIRequest, after v0.RegisterAPIRequest) []string {
-	if before.EnableAPIGateway == nil && after.EnableAPIGateway != nil && *after.EnableAPIGateway == false {
+	if before.EnableAPIGateway == nil && after.EnableAPIGateway != nil && !*after.EnableAPIGateway {
 		after.EnableAPIGateway = nil
 	}
-	if before.GraphQL == nil && after.GraphQL != nil && *after.GraphQL == false {
+	if before.GraphQL == nil && after.GraphQL != nil && !*after.GraphQL {
 		after.GraphQL = nil
 	}
-	if before.MatchPathSegmentParameter == nil && after.MatchPathSegmentParameter != nil && *after.MatchPathSegmentParameter == false {
+	if before.MatchPathSegmentParameter == nil && after.MatchPathSegmentParameter != nil && !*after.MatchPathSegmentParameter {
 		after.MatchPathSegmentParameter = nil
 	}
-	if before.MatchCaseSensitive == nil && after.MatchCaseSensitive != nil && *after.MatchCaseSensitive == false {
+	if before.MatchCaseSensitive == nil && after.MatchCaseSensitive != nil && !*after.MatchCaseSensitive {
 		after.MatchCaseSensitive = nil
 	}
 

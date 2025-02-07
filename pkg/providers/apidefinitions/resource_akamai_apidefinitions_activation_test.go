@@ -8,11 +8,11 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	v0 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/apidefinitions/v0"
+	v0 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/apidefinitions/v0"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/apidefinitions"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/apidefinitions"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/stretchr/testify/mock"
@@ -24,13 +24,13 @@ func TestActivationResource(t *testing.T) {
 
 	var tests = map[string]struct {
 		configPath   string
-		init         func(*testing.T, *apidefinitions.Mock)
+		init         func(*apidefinitions.Mock)
 		checkDestroy func(*terraform.State) error
 		steps        []resource.TestStep
 		error        *regexp.Regexp
 	}{
 		"activation - on staging": {
-			init: func(t *testing.T, m *apidefinitions.Mock) {
+			init: func(m *apidefinitions.Mock) {
 				mockGetEndpointWithStagingActivationStatus(m, nil, nil, 1)
 				mockVerifyVersion(m, []apidefinitions.VerifyVersionAlert{})
 				mockActivateVersion(m)
@@ -50,7 +50,7 @@ func TestActivationResource(t *testing.T) {
 			},
 		},
 		"activation - on both networks": {
-			init: func(t *testing.T, m *apidefinitions.Mock) {
+			init: func(m *apidefinitions.Mock) {
 				mockGetEndpointWithActivationStatus(m, nil, nil, 1)
 				mockVerifyVersion(m, []apidefinitions.VerifyVersionAlert{})
 				mockActivateVersion(m)
@@ -71,7 +71,7 @@ func TestActivationResource(t *testing.T) {
 			},
 		},
 		"activation - version is already active": {
-			init: func(t *testing.T, m *apidefinitions.Mock) {
+			init: func(m *apidefinitions.Mock) {
 				mockGetEndpointWithActivationStatus(m, ptr.To(int64(1)), ptr.To(apidefinitions.ActivationStatusActive), 4)
 				mockDeactivateVersion(m, 1)
 				mockGetEndpointWithActivationStatus(m, ptr.To(int64(1)), ptr.To(apidefinitions.ActivationStatusDeactivated), 1)
@@ -86,7 +86,7 @@ func TestActivationResource(t *testing.T) {
 			},
 		},
 		"activation - failed": {
-			init: func(t *testing.T, m *apidefinitions.Mock) {
+			init: func(m *apidefinitions.Mock) {
 				mockGetEndpointWithStagingActivationStatus(m, nil, nil, 1)
 				mockVerifyVersion(m, []apidefinitions.VerifyVersionAlert{})
 				mockActivateVersion(m)
@@ -101,7 +101,7 @@ func TestActivationResource(t *testing.T) {
 			},
 		},
 		"activation - errors during verify": {
-			init: func(t *testing.T, m *apidefinitions.Mock) {
+			init: func(m *apidefinitions.Mock) {
 				mockGetEndpointWithStagingActivationStatus(m, nil, nil, 1)
 				mockVerifyVersion(m, []apidefinitions.VerifyVersionAlert{{Severity: apidefinitions.SeverityError, Detail: "You shall not pass"}})
 			},
@@ -113,7 +113,7 @@ func TestActivationResource(t *testing.T) {
 			},
 		},
 		"activation - warnings during verify": {
-			init: func(t *testing.T, m *apidefinitions.Mock) {
+			init: func(m *apidefinitions.Mock) {
 				mockGetEndpointWithStagingActivationStatus(m, nil, nil, 1)
 				mockVerifyVersion(m, []apidefinitions.VerifyVersionAlert{{Severity: apidefinitions.SeverityWarning, Detail: "You shall not pass"}})
 			},
@@ -125,7 +125,7 @@ func TestActivationResource(t *testing.T) {
 			},
 		},
 		"activation - auto ack warnings": {
-			init: func(t *testing.T, m *apidefinitions.Mock) {
+			init: func(m *apidefinitions.Mock) {
 				mockGetEndpointWithStagingActivationStatus(m, nil, nil, 1)
 				mockVerifyVersion(m, []apidefinitions.VerifyVersionAlert{{Severity: apidefinitions.SeverityWarning, Detail: "You shall not pass"}})
 				mockActivateVersion(m)
@@ -165,7 +165,7 @@ func TestActivationResource(t *testing.T) {
 			},
 		},
 		"import - ok": {
-			init: func(t *testing.T, m *apidefinitions.Mock) {
+			init: func(m *apidefinitions.Mock) {
 				mockGetEndpointWithStagingActivationStatus(m, ptr.To(int64(1)), ptr.To(apidefinitions.ActivationStatusActive), 3)
 				mockDeactivateVersion(m, 1)
 				mockGetEndpointWithStagingActivationStatus(m, ptr.To(int64(1)), ptr.To(apidefinitions.ActivationStatusPending), 1)
@@ -190,7 +190,7 @@ func TestActivationResource(t *testing.T) {
 			},
 		},
 		"import - not active": {
-			init: func(t *testing.T, m *apidefinitions.Mock) {
+			init: func(m *apidefinitions.Mock) {
 				mockGetEndpointWithStagingActivationStatus(m, nil, nil, 1)
 			},
 			steps: []resource.TestStep{
@@ -235,7 +235,7 @@ func TestActivationResource(t *testing.T) {
 			client := &apidefinitions.Mock{}
 			clientV0 := &v0.Mock{}
 			if test.init != nil {
-				test.init(t, client)
+				test.init(client)
 			}
 			useClient(client, clientV0, func() {
 				resource.UnitTest(t, resource.TestCase{
@@ -335,11 +335,11 @@ resource "akamai_apidefinitions_activation" "a1" {
 }
 
 func activationImportConfig() string {
-	return providerConfig + fmt.Sprintf(`
+	return providerConfig + `
 resource "akamai_apidefinitions_activation" "import_test" {
   api_id      = 1
   version     = 1
   network     = "STAGING"
 }
-`)
+`
 }

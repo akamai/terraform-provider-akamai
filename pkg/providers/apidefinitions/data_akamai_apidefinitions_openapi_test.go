@@ -4,8 +4,8 @@ import (
 	"regexp"
 	"testing"
 
-	v0 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/apidefinitions/v0"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/testutils"
+	v0 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/apidefinitions/v0"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -15,12 +15,12 @@ func TestOpenAPIDataSource(t *testing.T) {
 
 	var tests = map[string]struct {
 		configPath string
-		init       func(*testing.T, *v0.Mock)
+		init       func(*v0.Mock)
 		steps      []resource.TestStep
 		error      *regexp.Regexp
 	}{
 		"200 - ok": {
-			init: func(t *testing.T, m *v0.Mock) {
+			init: func(m *v0.Mock) {
 				mockFromOpenAPIFile(m, 3)
 			},
 			steps: []resource.TestStep{
@@ -33,7 +33,7 @@ func TestOpenAPIDataSource(t *testing.T) {
 			},
 		},
 		"500 - error": {
-			init: func(t *testing.T, m *v0.Mock) {
+			init: func(m *v0.Mock) {
 				mockFromOpenAPIFileFail(m)
 			},
 			steps: []resource.TestStep{
@@ -56,7 +56,7 @@ func TestOpenAPIDataSource(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			client := &v0.Mock{}
 			if test.init != nil {
-				test.init(t, client)
+				test.init(client)
 			}
 			useClient(nil, client, func() {
 				resource.UnitTest(t, resource.TestCase{

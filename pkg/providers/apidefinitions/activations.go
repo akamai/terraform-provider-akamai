@@ -7,10 +7,10 @@ import (
 	"slices"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v9/pkg/apidefinitions"
-	"github.com/akamai/terraform-provider-akamai/v6/pkg/common/date"
-	"github.com/apex/log"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/apidefinitions"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/date"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
 var (
@@ -23,7 +23,7 @@ func startActivation(ctx context.Context, activationRequest apidefinitions.Activ
 	activationRetry := activationRetry
 
 	for {
-		log.Debug("starting activation")
+		tflog.Debug(ctx, "starting activation")
 		_, err := client.ActivateVersion(ctx, activationRequest)
 
 		if err == nil {
@@ -34,7 +34,7 @@ func startActivation(ctx context.Context, activationRequest apidefinitions.Activ
 			return fmt.Errorf("activation failed: %s", err)
 		}
 
-		log.Debug("retrying activation")
+		tflog.Debug(ctx, "retrying activation")
 
 		select {
 		case <-time.After(activationRetry):
@@ -52,7 +52,7 @@ func startDeactivation(ctx context.Context, deactivationRequest apidefinitions.D
 	deactivationRetry := activationRetry
 
 	for {
-		log.Debug("starting deactivation")
+		tflog.Debug(ctx, "starting deactivation")
 		_, err := client.DeactivateVersion(ctx, deactivationRequest)
 
 		if err == nil {
@@ -63,7 +63,7 @@ func startDeactivation(ctx context.Context, deactivationRequest apidefinitions.D
 			return fmt.Errorf("deactivation failed: %s", err)
 		}
 
-		log.Debug("retrying deactivation")
+		tflog.Debug(ctx, "retrying deactivation")
 
 		select {
 		case <-time.After(deactivationRetry):
