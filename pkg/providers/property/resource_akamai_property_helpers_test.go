@@ -8,6 +8,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/iam"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/stretchr/testify/mock"
 )
@@ -31,6 +32,7 @@ type mockPropertyData struct {
 	ruleTree            mockRuleTreeData
 	versions            papi.PropertyVersionItems
 	hostnames           papi.HostnameResponseItems
+	useHostnameBucket   bool
 	responseErrors      []*papi.Error
 	responseWarnings    []*papi.Error
 	activations         papi.ActivationsItems
@@ -49,6 +51,10 @@ func (d *mockPropertyData) getPropertyRequest() papi.GetPropertyRequest {
 }
 
 func (d *mockPropertyData) getPropertyResponse() papi.GetPropertyResponse {
+	var propertyType *string
+	if d.useHostnameBucket {
+		propertyType = ptr.To("HOSTNAME_BUCKET")
+	}
 	return papi.GetPropertyResponse{
 		Property: &papi.Property{
 			AssetID:       d.assetID,
@@ -58,6 +64,7 @@ func (d *mockPropertyData) getPropertyResponse() papi.GetPropertyResponse {
 			// although optional in PAPI documentation, ProductID is not being set by PAPI in the response
 			PropertyID:   d.propertyID,
 			PropertyName: d.propertyName,
+			PropertyType: propertyType,
 		},
 	}
 }
@@ -80,9 +87,10 @@ func (p *mockProperty) mockCreateProperty(err ...error) *mock.Call {
 		GroupID:    p.groupID,
 		ContractID: p.contractID,
 		Property: papi.PropertyCreate{
-			ProductID:    p.productID,
-			PropertyName: p.propertyName,
-			RuleFormat:   p.ruleTree.ruleFormat,
+			ProductID:         p.productID,
+			PropertyName:      p.propertyName,
+			RuleFormat:        p.ruleTree.ruleFormat,
+			UseHostnameBucket: p.useHostnameBucket,
 		},
 	}
 

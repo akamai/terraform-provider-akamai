@@ -28,6 +28,10 @@
 
 
 * PAPI
+  * Added the `use_hostname_bucket` attribute to the `akamai_property` resource
+    which allows to add or remove property hostnames without incrementing property versions.
+
+* PAPI
   * Added datasource `akamai_property_hostname_activations` to retrieve property hostname activations.
 
 
@@ -194,6 +198,7 @@
 
 * PAPI
   * Added the `hostname_bucket` field into the `akamai_property_hostnames` datasource to hold information related to hostnames for hostname bucket property. 
+
 
 
 

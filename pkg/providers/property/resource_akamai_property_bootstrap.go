@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -34,12 +35,13 @@ type BootstrapResource struct {
 
 // BootstrapResourceModel is a model for akamai_property_bootstrap resource
 type BootstrapResourceModel struct {
-	ID         types.String `tfsdk:"id"`
-	Name       types.String `tfsdk:"name"`
-	AssetID    types.String `tfsdk:"asset_id"`
-	GroupID    types.String `tfsdk:"group_id"`
-	ContractID types.String `tfsdk:"contract_id"`
-	ProductID  types.String `tfsdk:"product_id"`
+	ID                types.String `tfsdk:"id"`
+	Name              types.String `tfsdk:"name"`
+	AssetID           types.String `tfsdk:"asset_id"`
+	GroupID           types.String `tfsdk:"group_id"`
+	ContractID        types.String `tfsdk:"contract_id"`
+	ProductID         types.String `tfsdk:"product_id"`
+	UseHostnameBucket types.Bool   `tfsdk:"use_hostname_bucket"`
 }
 
 // NewBootstrapResource returns new property bootstrap resource
@@ -89,6 +91,16 @@ func (r *BootstrapResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 				PlanModifiers: []planmodifier.String{
 					modifiers.StringUseStateIf(modifiers.EqualUpToPrefixFunc("prd_")),
 					modifiers.PreventStringUpdate(),
+				},
+			},
+			"use_hostname_bucket": schema.BoolAttribute{
+				Optional: true,
+				Computed: true,
+				Default:  booldefault.StaticBool(false),
+				Description: "Specifies whether hostname bucket is used with this property. " +
+					"It allows you to add or remove property hostnames without incrementing property versions.",
+				PlanModifiers: []planmodifier.Bool{
+					modifiers.PreventBoolUpdate(),
 				},
 			},
 			"id": schema.StringAttribute{
@@ -145,7 +157,16 @@ func (r *BootstrapResource) Create(ctx context.Context, req resource.CreateReque
 	productID := str.AddPrefix(data.ProductID.ValueString(), "prd_")
 
 	client := Client(r.meta)
-	propertyID, err := createProperty(ctx, client, data.Name.ValueString(), groupID, contractID, productID, "")
+	propertyID, err := createProperty(ctx, client, papi.CreatePropertyRequest{
+		ContractID: contractID,
+		GroupID:    groupID,
+		Property: papi.PropertyCreate{
+			ProductID:         productID,
+			PropertyName:      data.Name.ValueString(),
+			RuleFormat:        "",
+			UseHostnameBucket: data.UseHostnameBucket.ValueBool(),
+		},
+	})
 	if err != nil {
 		err = interpretCreatePropertyErrorFramework(ctx, err, client, groupID, contractID, productID)
 		if err != nil {
@@ -220,6 +241,8 @@ func (r *BootstrapResource) Read(ctx context.Context, req resource.ReadRequest, 
 	// Protection against drift: if group id was changed from outside terraform,
 	// store its current value
 	data.GroupID = types.StringValue(prop.GroupID)
+	useHostnameBucket := prop.PropertyType != nil && *prop.PropertyType == "HOSTNAME_BUCKET"
+	data.UseHostnameBucket = types.BoolValue(useHostnameBucket)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 

@@ -58,6 +58,7 @@ func resourceProperty() *schema.Resource {
 			hostNamesCustomDiff,
 			propertyRulesCustomDiff,
 			setPropertyVersionsComputed,
+			ensureHostnamesSingleDefinition,
 		),
 		Importer: &schema.ResourceImporter{
 			StateContext: resourcePropertyImport,
@@ -175,6 +176,12 @@ func resourceProperty() *schema.Resource {
 						},
 					},
 				},
+			},
+			"use_hostname_bucket": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Description: "Specifies whether hostname bucket is used with this property. " +
+					"It allows you to add or remove property hostnames without incrementing property versions.",
 			},
 			"latest_version": {
 				Type:        schema.TypeInt,
@@ -432,6 +439,19 @@ func setPropertyVersionsComputed(_ context.Context, rd *schema.ResourceDiff, _ i
 	return nil
 }
 
+func ensureHostnamesSingleDefinition(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
+	useHostnameBucket := d.Get("use_hostname_bucket").(bool)
+	h := d.Get("hostnames")
+	hostnames, ok := h.(*schema.Set)
+	if !ok {
+		return fmt.Errorf("cannot parse hostnames state properly %v", h)
+	}
+	if useHostnameBucket && hostnames.Len() > 0 {
+		return fmt.Errorf("hostnames should be empty for use_hostname_bucket enabled")
+	}
+	return nil
+}
+
 func propertyVersionNotesDiffSuppress(_, _, _ string, rd *schema.ResourceData) bool {
 	rawData := tf.NewRawConfig(rd)
 	if ok, err := canTriggerNewPropertyVersion(rd, rawData); ok || err != nil {
@@ -475,8 +495,21 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 
 	ruleFormat := d.Get("rule_format").(string)
 
+	useHostnameBucket, err := tf.GetBoolValue("use_hostname_bucket", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	if propertyID == "" {
-		propertyID, err = createProperty(ctx, client, propertyName, groupID, contractID, productID, ruleFormat)
+		propertyID, err = createProperty(ctx, client, papi.CreatePropertyRequest{
+			ContractID: contractID,
+			GroupID:    groupID,
+			Property: papi.PropertyCreate{
+				ProductID:         productID,
+				PropertyName:      propertyName,
+				RuleFormat:        ruleFormat,
+				UseHostnameBucket: useHostnameBucket,
+			},
+		})
 		if err != nil {
 			return interpretCreatePropertyError(ctx, err, client, groupID, contractID, productID)
 		}
@@ -502,7 +535,10 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 
 	hostnameVal, err := tf.GetSetValue("hostnames", d)
 	if err != nil {
-		logger.Warnf("hostnames not set in ResourceData: %s", err.Error())
+		useHostnameBucket := d.Get("use_hostname_bucket").(bool)
+		if !useHostnameBucket {
+			logger.Warnf("hostnames not set in ResourceData: %s", err.Error())
+		}
 	} else {
 		hostnames := mapToHostnames(hostnameVal.List())
 		if len(hostnames) > 0 {
@@ -592,11 +628,14 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 		productionVersion = *property.ProductionVersion
 	}
 
-	hostnames, err := fetchPropertyVersionHostnames(ctx, client, *property, v)
-	if err != nil {
-		return diag.FromErr(err)
+	useHostnameBucket := property.PropertyType != nil && *property.PropertyType == "HOSTNAME_BUCKET"
+	var hostnames []papi.Hostname
+	if !useHostnameBucket {
+		hostnames, err = fetchPropertyVersionHostnames(ctx, client, *property, v)
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("error reading property: %w", err))
+		}
 	}
-
 	rules, ruleFormat, ruleErrors, ruleWarnings, err := fetchPropertyVersionRules(ctx, client, *property, v)
 	if err != nil {
 		return diag.FromErr(err)
@@ -639,19 +678,20 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 
 	attrs := map[string]interface{}{
-		"asset_id":           property.AssetID,
-		"name":               property.PropertyName,
-		"group_id":           property.GroupID,
-		"contract_id":        property.ContractID,
-		"latest_version":     property.LatestVersion,
-		"staging_version":    stagingVersion,
-		"production_version": productionVersion,
-		"hostnames":          flattenHostnames(hostnames),
-		"rules":              string(rulesJSON),
-		"rule_format":        ruleFormat,
-		"rule_errors":        papiErrorsToList(ruleErrors),
-		"read_version":       readVersionID,
-		"version_notes":      res.Version.Note,
+		"asset_id":            property.AssetID,
+		"name":                property.PropertyName,
+		"group_id":            property.GroupID,
+		"contract_id":         property.ContractID,
+		"latest_version":      property.LatestVersion,
+		"staging_version":     stagingVersion,
+		"production_version":  productionVersion,
+		"hostnames":           flattenHostnames(hostnames),
+		"use_hostname_bucket": useHostnameBucket,
+		"rules":               string(rulesJSON),
+		"rule_format":         ruleFormat,
+		"rule_errors":         papiErrorsToList(ruleErrors),
+		"read_version":        readVersionID,
+		"version_notes":       res.Version.Note,
 	}
 	if res.Version.ProductID != "" {
 		attrs["product_id"] = res.Version.ProductID
@@ -674,6 +714,7 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 		"contract_id",
 		"product_id",
 		"property_id",
+		"use_hostname_bucket",
 	}
 	for _, attr := range immutable {
 		if d.HasChange(attr) {
@@ -970,17 +1011,7 @@ func parseVersionNumber(version string) (int, error) {
 	return versionNumber, err
 }
 
-func createProperty(ctx context.Context, client papi.PAPI, propertyName, groupID, contractID, productID, ruleFormat string) (string, error) {
-	req := papi.CreatePropertyRequest{
-		ContractID: contractID,
-		GroupID:    groupID,
-		Property: papi.PropertyCreate{
-			ProductID:    productID,
-			PropertyName: propertyName,
-			RuleFormat:   ruleFormat,
-		},
-	}
-
+func createProperty(ctx context.Context, client papi.PAPI, req papi.CreatePropertyRequest) (string, error) {
 	logger := log.FromContext(ctx).With("request", logFields(req))
 	logger.Debug("creating property")
 

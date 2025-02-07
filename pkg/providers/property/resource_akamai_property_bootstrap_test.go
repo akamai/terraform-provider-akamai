@@ -35,7 +35,8 @@ func TestBootstrapResourceCreate(t *testing.T) {
 		CheckEqual("contract_id", "ctr_2").
 		CheckEqual("product_id", "prd_3").
 		CheckEqual("name", "property_name").
-		CheckEqual("asset_id", "aid_55555")
+		CheckEqual("asset_id", "aid_55555").
+		CheckEqual("use_hostname_bucket", "false")
 
 	tests := map[string]struct {
 		init  func(*mockProperty)
@@ -68,6 +69,22 @@ func TestBootstrapResourceCreate(t *testing.T) {
 						CheckEqual("group_id", "1").
 						CheckEqual("contract_id", "2").
 						CheckEqual("product_id", "3").
+						Build(),
+				},
+			},
+		},
+		"create with hostname bucket": {
+			init: func(p *mockProperty) {
+				p.useHostnameBucket = true
+				p.mockCreateProperty()
+				p.mockGetProperty().Twice()
+				p.mockRemoveProperty()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResPropertyBootstrap/create_with_hostname_bucket.tf"),
+					Check: baseChecker.
+						CheckEqual("use_hostname_bucket", "true").
 						Build(),
 				},
 			},
@@ -134,7 +151,8 @@ func TestBootstrapResourceUpdate(t *testing.T) {
 		CheckEqual("contract_id", "ctr_2").
 		CheckEqual("product_id", "prd_3").
 		CheckEqual("name", "property_name").
-		CheckEqual("asset_id", "aid_55555")
+		CheckEqual("asset_id", "aid_55555").
+		CheckEqual("use_hostname_bucket", "false")
 
 	tests := map[string]struct {
 		configPathForCreate string
@@ -142,6 +160,7 @@ func TestBootstrapResourceUpdate(t *testing.T) {
 		init                func(*mockProperty)
 		errorForCreate      *regexp.Regexp
 		errorForUpdate      *regexp.Regexp
+		baseChecks          resource.TestCheckFunc
 		updateChecks        resource.TestCheckFunc
 	}{
 		"create and remove prefixes - no diff": {
@@ -233,6 +252,30 @@ func TestBootstrapResourceUpdate(t *testing.T) {
 			},
 			errorForUpdate: regexp.MustCompile("updating field `product_id` is not possible"),
 		},
+		"create and update use_hostname_bucket - error": {
+			configPathForCreate: "testdata/TestResPropertyBootstrap/create.tf",
+			configPathForUpdate: "testdata/TestResPropertyBootstrap/create_with_hostname_bucket.tf",
+			init: func(p *mockProperty) {
+				p.mockCreateProperty()
+				p.mockGetProperty().Times(3)
+				p.mockRemoveProperty()
+			},
+			errorForUpdate: regexp.MustCompile("updating field `use_hostname_bucket` is not possible"),
+		},
+		"create with use_hostname_bucket and try to clear - error": {
+			configPathForCreate: "testdata/TestResPropertyBootstrap/create_with_hostname_bucket.tf",
+			configPathForUpdate: "testdata/TestResPropertyBootstrap/create.tf",
+			init: func(p *mockProperty) {
+				p.useHostnameBucket = true
+				p.mockCreateProperty()
+				p.mockGetProperty().Times(3)
+				p.mockRemoveProperty()
+			},
+			baseChecks: baseChecker.
+				CheckEqual("use_hostname_bucket", "true").
+				Build(),
+			errorForUpdate: regexp.MustCompile("updating field `use_hostname_bucket` is not possible"),
+		},
 	}
 
 	for name, test := range tests {
@@ -253,13 +296,17 @@ func TestBootstrapResourceUpdate(t *testing.T) {
 
 			useClient(papiMock, nil, func() {
 				useIam(iamMock, func() {
+					baseChecks := baseChecker.Build()
+					if test.baseChecks != nil {
+						baseChecks = test.baseChecks
+					}
 					resource.UnitTest(t, resource.TestCase{
 						ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 						IsUnitTest:               true,
 						Steps: []resource.TestStep{
 							{
 								Config:      testutils.LoadFixtureString(t, test.configPathForCreate),
-								Check:       baseChecker.Build(),
+								Check:       baseChecks,
 								ExpectError: test.errorForCreate,
 							},
 							{
@@ -293,7 +340,8 @@ func TestBootstrapResourceImport(t *testing.T) {
 		CheckEqual("contract_id", "ctr_2").
 		CheckEqual("product_id", "prd_3").
 		CheckEqual("name", "property_name").
-		CheckEqual("asset_id", "aid_55555")
+		CheckEqual("asset_id", "aid_55555").
+		CheckEqual("use_hostname_bucket", "false")
 
 	tests := map[string]struct {
 		init          func(*mockProperty)
@@ -334,6 +382,21 @@ func TestBootstrapResourceImport(t *testing.T) {
 		"import with only property_id and contract_id - error": {
 			importStateID: "123,2",
 			error:         regexp.MustCompile("Error: missing group id or contract id"),
+		},
+		"import with hostname bucket set": {
+			mockData: basicDataBootstrap,
+			init: func(p *mockProperty) {
+				p.useHostnameBucket = true
+				p.mockGetProperty()
+				p.mockGetPropertyVersion()
+				// read
+				p.mockGetProperty()
+			},
+			stateCheck: baseChecker.
+				CheckEqual("product_id", "").
+				CheckEqual("use_hostname_bucket", "true").
+				Build(),
+			importStateID: "prp_123,2,1",
 		},
 	}
 
