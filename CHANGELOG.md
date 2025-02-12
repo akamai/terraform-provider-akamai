@@ -11,7 +11,7 @@
 
 #### FEATURES/ENHANCEMENTS:
 
-
+* Migrated to Go `1.23.6` and adopted a semver-compliant Go directive.
 
 
 
