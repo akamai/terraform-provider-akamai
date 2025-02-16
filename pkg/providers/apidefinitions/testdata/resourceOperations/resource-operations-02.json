@@ -1,16 +1,16 @@
 {
-  "resourceOperationsMap": {
+  "operations": {
     "/index.php*": {
       "onlineshop": {
-        "operationPurpose": "LOGIN",
+        "purpose": "LOGIN",
         "method": "POST",
-        "operationParameter": {
+        "parameters": {
           "username": {
-            "parameterPath": [
+            "path": [
               "root",
               "email"
             ],
-            "parameterLocation": "REQUEST_BODY"
+            "location": "REQUEST_BODY"
           }
         },
         "successConditions": [
@@ -28,7 +28,7 @@
         ]
       },
       "onlineshop-get": {
-        "operationPurpose": "SEARCH",
+        "purpose": "SEARCH",
         "method": "GET",
         "successConditions": [
           {
@@ -47,11 +47,11 @@
     },
     "/login": {
       "purposeLoginGET": {
-        "operationPurpose": "ACCOUNT_VERIFICATION",
+        "purpose": "ACCOUNT_VERIFICATION",
         "method": "GET"
       },
       "purposeLoginPOST": {
-        "operationPurpose": "ACCOUNT_VERIFICATION",
+        "purpose": "ACCOUNT_VERIFICATION",
         "method": "POST"
       }
     }

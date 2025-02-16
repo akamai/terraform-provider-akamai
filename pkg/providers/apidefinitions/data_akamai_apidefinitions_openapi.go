@@ -67,7 +67,6 @@ func (d *openAPIDataSource) Schema(_ context.Context, _ datasource.SchemaRequest
 	resp.Schema = schema.Schema{
 		Description: "Map OpenAPI/Swagger file to API configuration",
 		Attributes: map[string]schema.Attribute{
-<<<<<<< HEAD
 			"file_path": schema.StringAttribute{
 				Required:    true,
 				Description: "Path to OpenAPI/Swagger file",
@@ -76,16 +75,6 @@ func (d *openAPIDataSource) Schema(_ context.Context, _ datasource.SchemaRequest
 			"api_file_name": schema.StringAttribute{
 				Optional:    true,
 				Description: "Main API file name in case of zip archive",
-=======
-			"file": schema.StringAttribute{
-				Required:    true,
-				Description: "OpenAPI/Swagger file content",
-				Validators:  []validator.String{validators.NotEmptyString()},
-			},
-			"root_file_name": schema.StringAttribute{
-				Optional:    true,
-				Description: "Root file name in case of zip archive",
->>>>>>> 298d84c3 (SECKSD-27443 API Definitions Sub Provider)
 				Validators:  []validator.String{validators.NotEmptyString()},
 			},
 			"api": schema.StringAttribute{
@@ -103,7 +92,6 @@ func (d *openAPIDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	if resp.Diagnostics.Append(req.Config.Get(ctx, &data)...); resp.Diagnostics.HasError() {
 		return
 	}
-<<<<<<< HEAD
 
 	content, err := os.ReadFile(data.FilePath.ValueString())
 	if err != nil {
@@ -114,11 +102,6 @@ func (d *openAPIDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	response, err := clientV0.FromOpenAPIFile(ctx, v0.FromOpenAPIFileRequest{
 		Content:  content,
 		RootFile: data.APIFileName.ValueStringPointer(),
-=======
-	response, err := clientV0.FromOpenAPIFile(ctx, v0.FromOpenAPIFileRequest{
-		Content:  data.File.ValueString(),
-		RootFile: data.RootFileName.ValueStringPointer(),
->>>>>>> 298d84c3 (SECKSD-27443 API Definitions Sub Provider)
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("Mapping OpenAPI File Failed", err.Error())
@@ -130,10 +113,6 @@ func (d *openAPIDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		resp.Diagnostics.AddError("Unable to serialize API state", err.Error())
 		return
 	}
-<<<<<<< HEAD
-=======
-
->>>>>>> 298d84c3 (SECKSD-27443 API Definitions Sub Provider)
 	data.API = types.StringValue(*toJSON)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

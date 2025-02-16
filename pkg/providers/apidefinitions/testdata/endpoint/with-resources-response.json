@@ -24,7 +24,6 @@
     }
   },
   "constraints": {
-<<<<<<< HEAD
     "enforceOn": {
       "request": true,
       "response": false,
@@ -35,10 +34,6 @@
         "requestCookie": true
       }
     },
-=======
-    "enforceOnRequest": true,
-    "enforceOnResponse": true,
->>>>>>> 298d84c3 (SECKSD-27443 API Definitions Sub Provider)
     "requestBody": {
       "consumeType": [
         "json",
@@ -53,25 +48,10 @@
         "maxCount": 100,
         "maxNameLength": 100
       }
-<<<<<<< HEAD
     }
   },
   "versioning": {
     "in": "header",
-=======
-    },
-    "bypassOn": {
-      "undefinedMethods": [
-        "GET"
-      ],
-      "undefinedParameters": [
-        "REQUEST_COOKIE"
-      ]
-    }
-  },
-  "versioning": {
-    "in": "HEADER",
->>>>>>> 298d84c3 (SECKSD-27443 API Definitions Sub Provider)
     "name": "APIKEY",
     "value": "1"
   },
@@ -169,19 +149,12 @@
             }
           ]
         },
-<<<<<<< HEAD
         "constraints": {
           "enforceOn": {
             "undefinedParameters": {
               "requestCookie": true
             }
           }
-=======
-        "bypassOn": {
-          "undefinedParameters": [
-            "REQUEST_COOKIE"
-          ]
->>>>>>> 298d84c3 (SECKSD-27443 API Definitions Sub Provider)
         }
       },
       "post": {

@@ -36,63 +36,9 @@ func TestCheckSemanticEquality_ConsumeType(t *testing.T) {
 	assert.Equal(t, []string(nil), checkSemanticEquality(before, after))
 }
 
-<<<<<<< HEAD
 func base() v0.APIAttributes {
 	return v0.APIAttributes{
 		Name:      "Name",
 		Hostnames: []string{"host1.com"},
-=======
-func TestCheckSemanticEquality_BypassOn(t *testing.T) {
-	var before = base()
-	var after = base()
-
-	before.Constraints = &v0.Constraints{
-		BypassOn: &v0.BypassOn{
-			UndefinedMethods:    []string{"trace", "get"},
-			UndefinedParameters: []string{"z", "a"},
-		},
-	}
-	before.Resources = orderedmap.New[string, v0.Resource](orderedmap.WithInitialData[string, v0.Resource](
-		orderedmap.Pair[string, v0.Resource]{
-			Key: "/one",
-			Value: v0.Resource{
-				Get: &v0.Method{
-					BypassOn: &v0.MethodBypassOn{
-						UndefinedParameters: []string{"z", "a"},
-					},
-				},
-			},
-		},
-	))
-
-	after.Constraints = &v0.Constraints{
-		BypassOn: &v0.BypassOn{
-			UndefinedMethods:    []string{"get", "trace"},
-			UndefinedParameters: []string{"a", "z"},
-		},
-	}
-	after.Resources = orderedmap.New[string, v0.Resource](orderedmap.WithInitialData[string, v0.Resource](
-		orderedmap.Pair[string, v0.Resource]{
-			Key: "/one",
-			Value: v0.Resource{
-				Get: &v0.Method{
-					BypassOn: &v0.MethodBypassOn{
-						UndefinedParameters: []string{"a", "z"},
-					},
-				},
-			},
-		},
-	))
-
-	assert.Equal(t, []string(nil), checkSemanticEquality(before, after))
-}
-
-func base() v0.RegisterAPIRequest {
-	return v0.RegisterAPIRequest{
-		Name:       "Name",
-		Hostnames:  []string{"host1.com"},
-		ContractID: "Contract-1",
-		GroupID:    1,
->>>>>>> 298d84c3 (SECKSD-27443 API Definitions Sub Provider)
 	}
 }

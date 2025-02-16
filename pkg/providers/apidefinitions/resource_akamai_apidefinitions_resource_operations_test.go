@@ -2,170 +2,132 @@ package apidefinitions
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"os"
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-testing/terraform"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/apidefinitions"
 	v0 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/apidefinitions/v0"
 	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/stretchr/testify/mock"
 )
-
-type testData struct {
-	response string
-}
 
 func TestAPIResourceOperations(t *testing.T) {
 	t.Parallel()
 
+	checker := test.NewStateChecker("akamai_apidefinitions_resource_operations.e2")
+
 	var tests = map[string]struct {
-		configPath string
-		init       func(*testing.T, *apidefinitions.Mock, *v0.Mock, testData)
-		mockData   testData
-		steps      []resource.TestStep
-		error      *regexp.Regexp
+		init   func(*v0.Mock)
+		steps  []resource.TestStep
+		error  *regexp.Regexp
+		checks resource.TestCheckFunc
 	}{
 		"create api resource operations": {
-			init: func(t *testing.T, m *apidefinitions.Mock, mV0 *v0.Mock, resourceData testData) {
-				mockListEndpointVersions(m, 3)
+			init: func(mV0 *v0.Mock) {
 				mockUpdateResourceOperation(mV0, "resource-operations-01.json", 1)
 				mockGetResourceOperation(mV0, "resource-operations-01.json", 1)
 				mockDeleteResourceOperation(mV0, 1)
 			},
-			mockData: testData{
-				response: "resource-operations-01.json",
-			},
 			steps: []resource.TestStep{
 				{
 					Config: apiResourceOperationsConfig(),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_apidefinitions_resource_operations.e1", "endpoint_id", "1"),
-					),
 				},
-			}},
+			},
+			checks: checker.CheckEqual("api_id", "1").CheckEqual("resource_operations", readJSONFile("resource-operations-01.json")).Build(),
+		},
 		"create api resource operations with all fields": {
-			init: func(t *testing.T, m *apidefinitions.Mock, mV0 *v0.Mock, resourceData testData) {
-				mockListEndpointVersions(m, 3)
+			init: func(mV0 *v0.Mock) {
 				mockUpdateResourceOperation(mV0, "resource-operations-02.json", 1)
 				mockGetResourceOperation(mV0, "resource-operations-02.json", 1)
 				mockDeleteResourceOperation(mV0, 1)
 			},
-			mockData: testData{
-				response: "resource-operations-02.json",
-			},
 			steps: []resource.TestStep{
 				{
-					Config: apiResourceOperationsCfgWithAllFields(),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_apidefinitions_resource_operations.e2", "endpoint_id", "1"),
-						resource.TestCheckResourceAttr("akamai_apidefinitions_resource_operations.e2", "resource_operations", readJSONFile("resource-operations-02.json")),
-					),
-				},
-			}},
+					Config:           apiResourceOperationsCfgWithAllFieldsFromFile(),
+					ImportState:      true,
+					ImportStateId:    "1:1",
+					ResourceName:     "akamai_apidefinitions_resource_operations.e2",
+					ImportStateCheck: test.NewImportChecker().CheckEqual("api_id", "1").CheckEqual("resource_operations", "{\n  \"operations\": {\n    \"/index.php*\": {\n      \"onlineshop\": {\n        \"method\": \"POST\",\n        \"purpose\": \"LOGIN\",\n        \"parameters\": {\n          \"username\": {\n            \"path\": [\n              \"root\",\n              \"email\"\n            ],\n            \"location\": \"REQUEST_BODY\"\n          }\n        },\n        \"successConditions\": [\n          {\n            \"headerName\": \"X-Success\",\n            \"positiveMatch\": true,\n            \"suppressFromClientResponse\": false,\n            \"type\": \"HEADER_VALUE\",\n            \"valueCase\": false,\n            \"valueWildcard\": false,\n            \"values\": [\n              \"201\"\n            ]\n          }\n        ]\n      },\n      \"onlineshop-get\": {\n        \"method\": \"GET\",\n        \"purpose\": \"SEARCH\",\n        \"successConditions\": [\n          {\n            \"headerName\": \"X-Success\",\n            \"positiveMatch\": true,\n            \"suppressFromClientResponse\": false,\n            \"type\": \"HEADER_VALUE\",\n            \"valueCase\": false,\n            \"valueWildcard\": false,\n            \"values\": [\n              \"201\"\n            ]\n          }\n        ]\n      }\n    },\n    \"/login\": {\n      \"purposeLoginGET\": {\n        \"method\": \"GET\",\n        \"purpose\": \"ACCOUNT_VERIFICATION\"\n      },\n      \"purposeLoginPOST\": {\n        \"method\": \"POST\",\n        \"purpose\": \"ACCOUNT_VERIFICATION\"\n      }\n    }\n  }\n}").Build()},
+			},
+			checks: checker.CheckEqual("api_id", "1").CheckEqual("resource_operations", readJSONFile("resource-operations-02.json")).Build(),
+		},
 		"delete api resource operations": {
-			init: func(t *testing.T, m *apidefinitions.Mock, mV0 *v0.Mock, resourceData testData) {
-				mockListEndpointVersions(m, 3)
+			init: func(mV0 *v0.Mock) {
 				mockUpdateResourceOperation(mV0, "resource-operations-delete.json", 1)
 				mockGetResourceOperation(mV0, "resource-operations-delete.json", 1)
 				mockDeleteResourceOperation(mV0, 1)
 			},
-			mockData: testData{
-				response: "resource-operations-delete.json",
-			},
 			steps: []resource.TestStep{
 				{
 					Config: deleteAPIResourceOperationsConfig(),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_apidefinitions_resource_operations.e3", "endpoint_id", "1"),
-						resource.TestCheckResourceAttr("akamai_apidefinitions_resource_operations.e3", "resource_operations", readJSONFile("resource-operations-delete.json")),
-					),
 				},
-			}},
+			},
+			checks: checker.CheckEqual("api_id", "1").CheckEqual("resource_operations", readJSONFile("resource-operations-delete.json")).Build(),
+		},
 		"update api resource operations with all fields": {
-			init: func(t *testing.T, m *apidefinitions.Mock, mV0 *v0.Mock, resourceData testData) {
-				mockListEndpointVersions(m, 6)
+			init: func(mV0 *v0.Mock) {
 				mockUpdateResourceOperation(mV0, "resource-operations-02.json", 1)
 				mockGetResourceOperation(mV0, "resource-operations-02.json", 2)
 				mockUpdateResourceOperation(mV0, "resource-operations-03.json", 1)
 				mockGetResourceOperation(mV0, "resource-operations-03.json", 1)
 				mockDeleteResourceOperation(mV0, 1)
 			},
-			mockData: testData{
-				response: "resource-operations-02.json",
-			},
 			steps: []resource.TestStep{
 				{
-					Config: apiResourceOperationsCfgWithAllFields(),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_apidefinitions_resource_operations.e2", "endpoint_id", "1"),
-						resource.TestCheckResourceAttr("akamai_apidefinitions_resource_operations.e2", "resource_operations", readJSONFile("resource-operations-02.json")),
-					),
+					Config:           apiResourceOperationsCfgWithAllFieldsFromFile(),
+					ImportState:      true,
+					ImportStateId:    "1:1",
+					ResourceName:     "akamai_apidefinitions_resource_operations.e2",
+					ImportStateCheck: test.NewImportChecker().CheckEqual("api_id", "1").CheckEqual("resource_operations", "{\n  \"operations\": {\n    \"/index.php*\": {\n      \"onlineshop\": {\n        \"method\": \"POST\",\n        \"purpose\": \"LOGIN\",\n        \"parameters\": {\n          \"username\": {\n            \"path\": [\n              \"root\",\n              \"email\"\n            ],\n            \"location\": \"REQUEST_BODY\"\n          }\n        },\n        \"successConditions\": [\n          {\n            \"headerName\": \"X-Success\",\n            \"positiveMatch\": true,\n            \"suppressFromClientResponse\": false,\n            \"type\": \"HEADER_VALUE\",\n            \"valueCase\": false,\n            \"valueWildcard\": false,\n            \"values\": [\n              \"201\"\n            ]\n          }\n        ]\n      },\n      \"onlineshop-get\": {\n        \"method\": \"GET\",\n        \"purpose\": \"SEARCH\",\n        \"successConditions\": [\n          {\n            \"headerName\": \"X-Success\",\n            \"positiveMatch\": true,\n            \"suppressFromClientResponse\": false,\n            \"type\": \"HEADER_VALUE\",\n            \"valueCase\": false,\n            \"valueWildcard\": false,\n            \"values\": [\n              \"201\"\n            ]\n          }\n        ]\n      }\n    },\n    \"/login\": {\n      \"purposeLoginGET\": {\n        \"method\": \"GET\",\n        \"purpose\": \"ACCOUNT_VERIFICATION\"\n      },\n      \"purposeLoginPOST\": {\n        \"method\": \"POST\",\n        \"purpose\": \"ACCOUNT_VERIFICATION\"\n      }\n    }\n  }\n}").Build(),
 				},
 				{
 					Config: updateAPIiResourceOperationsCfgWithAllFields(),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_apidefinitions_resource_operations.e2", "endpoint_id", "1"),
-						resource.TestCheckResourceAttr("akamai_apidefinitions_resource_operations.e2", "resource_operations", readJSONFile("resource-operations-03.json")),
-					),
 				},
-			}},
+			},
+			checks: checker.CheckEqual("api_id", "1").CheckEqual("resource_operations", readJSONFile("resource-operations-03.json")).Build(),
+		},
 		"update api resource operations with all fields : 400 Bad Request": {
-			init: func(t *testing.T, m *apidefinitions.Mock, mV0 *v0.Mock, resourceData testData) {
-				mockListEndpointVersions(m, 5)
+			init: func(mV0 *v0.Mock) {
 				mockUpdateResourceOperation(mV0, "resource-operations-02.json", 1)
 				mockGetResourceOperation(mV0, "resource-operations-02.json", 2)
 				mockUpdateResourceOperationFail(mV0, 1)
 				mockGetResourceOperation(mV0, "resource-operations-03.json", 1)
 				mockDeleteResourceOperation(mV0, 1)
 			},
-			mockData: testData{
-				response: "resource-operations-02.json",
-			},
 			steps: []resource.TestStep{
 				{
-					Config: apiResourceOperationsCfgWithAllFields(),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_apidefinitions_resource_operations.e2", "endpoint_id", "1"),
-						resource.TestCheckResourceAttr("akamai_apidefinitions_resource_operations.e2", "resource_operations", readJSONFile("resource-operations-02.json")),
-					),
+					Config: apiResourceOperationsCfgWithAllFieldsFromFile(),
 				},
 				{
 					Config:      updateAPIiResourceOperationsCfgWithAllFields(),
-					ExpectError: regexp.MustCompile("Create Resource Operations Failed"),
+					ExpectError: regexp.MustCompile("Upsert Resource Operations Failed"),
 				},
-			}},
+			},
+			checks: checker.CheckEqual("api_id", "1").CheckEqual("resource_operations", readJSONFile("resource-operations-02.json")).Build(),
+		},
 		"import state resource operations ok": {
-			init: func(t *testing.T, m *apidefinitions.Mock, mV0 *v0.Mock, resourceData testData) {
-				mockListEndpointVersions(m, 2)
+			init: func(mV0 *v0.Mock) {
 				mockUpdateResourceOperation(mV0, "resource-operations-01.json", 1)
 				mockGetResourceOperation(mV0, "resource-operations-01.json", 2)
 				mockDeleteResourceOperation(mV0, 1)
 			},
-			mockData: testData{
-				response: "resource-operations-01.json",
-			},
 			steps: []resource.TestStep{
 				{
-					Config:        apiResourceOperationsConfig(),
-					ImportState:   true,
-					ImportStateId: "1:1",
-					ResourceName:  "akamai_apidefinitions_resource_operations.e1",
-					ImportStateCheck: func(states []*terraform.InstanceState) error {
-						state := states[0].Attributes
-						assert.Equal(t, "1", state["endpoint_id"])
-						return nil
-					},
+					Config:             apiResourceOperationsConfig(),
+					ImportState:        true,
+					ImportStateId:      "1:1",
+					ResourceName:       "akamai_apidefinitions_resource_operations.e1",
+					ImportStateCheck:   test.NewImportChecker().CheckEqual("api_id", "1").CheckEqual("version", "1").CheckEqual("resource_operations", "{\n  \"operations\": {\n    \"/index.php*\": {\n      \"testPurpose\": {\n        \"method\": \"POST\",\n        \"purpose\": \"LOGIN\"\n      }\n    }\n  }\n}").Build(),
 					ImportStatePersist: true,
 				},
-			}},
+			},
+			checks: checker.CheckEqual("api_id", "1").CheckEqual("resource_operations", readJSONFile("resource-operations-01.json")).Build(),
+		},
 		"import - invalid id format": {
 			steps: []resource.TestStep{
 				{
@@ -186,7 +148,7 @@ func TestAPIResourceOperations(t *testing.T) {
 					ImportStateId:      "abc:123",
 					ResourceName:       "akamai_apidefinitions_resource_operations.e1",
 					ImportStatePersist: true,
-					ExpectError:        regexp.MustCompile("Error: invalid API id 'abc'"),
+					ExpectError:        regexp.MustCompile("Error: invalid API ID 'abc'"),
 				},
 			},
 		},
@@ -195,7 +157,7 @@ func TestAPIResourceOperations(t *testing.T) {
 				{
 					Config:             apiResourceOperationsConfig(),
 					ImportState:        true,
-					ImportStateId:      "12345:abc",
+					ImportStateId:      "1:abc",
 					ResourceName:       "akamai_apidefinitions_resource_operations.e1",
 					ImportStatePersist: true,
 					ExpectError:        regexp.MustCompile("Error: invalid API version 'abc'"),
@@ -205,10 +167,11 @@ func TestAPIResourceOperations(t *testing.T) {
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			client := &apidefinitions.Mock{}
 			clientV0 := &v0.Mock{}
 			if test.init != nil {
-				test.init(t, client, clientV0, test.mockData)
+				test.init(clientV0)
 			}
 			useClient(client, clientV0, func() {
 				resource.UnitTest(t, resource.TestCase{
@@ -223,8 +186,16 @@ func TestAPIResourceOperations(t *testing.T) {
 }
 
 func mockUpdateResourceOperation(clientV0 *v0.Mock, file string, times int) {
-	data, _ := os.ReadFile("testdata/resourceOperations/" + file)
-	response, _ := deserializeAPIRequest(string(data))
+	data, err := os.ReadFile("testdata/resourceOperations/" + file)
+	if err != nil {
+		log.Printf("Warning: Could not read file %s: %v", file, err)
+		return
+	}
+	response, err := deserializeAPIRequest(string(data))
+	if err != nil {
+		log.Printf("Warning: Deserialization error  %s: %v", file, err)
+		return
+	}
 	clientV0.On("UpdateResourceOperation", mock.Anything, mock.Anything).
 		Return(ptr.To(v0.UpdateResourceOperationResponse(*response)), nil).Times(times)
 }
@@ -236,16 +207,14 @@ func mockUpdateResourceOperationFail(clientV0 *v0.Mock, times int) {
 
 func mockGetResourceOperation(clientV0 *v0.Mock, file string, times int) {
 	data, err := os.ReadFile("testdata/resourceOperations/" + file)
-
 	if err != nil {
 		log.Printf("Warning: Could not read file %s: %v", file, err)
-		return // or handle it appropriately
+		return
 	}
 
 	response := v0.GetResourceOperationResponse{}
 
 	err = json.Unmarshal([]byte(data), &response)
-
 	if err != nil {
 		return
 	}
@@ -266,39 +235,11 @@ func mockDeleteResourceOperation(clientV0 *v0.Mock, times int) {
 
 func readJSONFile(file string) string {
 	data, err := os.ReadFile("testdata/resourceOperations/" + file)
-
 	if err != nil {
 		log.Printf("Warning: Could not read file %s: %v", file, err)
 		return ""
 	}
-
-	response := v0.GetResourceOperationResponse{}
-	// unmarshal the input json file to struct
-	err = json.Unmarshal([]byte(data), &response)
-
-	if err != nil {
-		return ""
-	}
-
-	// marshal the struct to json string
-	jsonString, err := json.Marshal(response)
-
-	if err != nil {
-		return ""
-	}
-
-	// normalize the json string response
-	jsonFile, err := normalizeJSON(string(jsonString))
-
-	if err != nil {
-		return ""
-	}
-
-	if err != nil {
-		return ""
-	}
-
-	return jsonFile
+	return string(data)
 }
 
 func deserializeAPIRequest(body string) (*v0.UpdateResourceOperationResponse, error) {
@@ -313,167 +254,49 @@ func deserializeAPIRequest(body string) (*v0.UpdateResourceOperationResponse, er
 }
 
 func apiResourceOperationsConfig() string {
-	return providerConfig + fmt.Sprintf(`
+	return providerConfig + `
 resource "akamai_apidefinitions_resource_operations" "e1" {
-  endpoint_id = 1
+  api_id = 1
+  version = 1
   resource_operations = jsonencode({
-  "resourceOperationsMap": {
+  "operations": {
     "/index.php*": {
       "testPurpose": {
         "method": "POST",
-        "operationPurpose": "LOGIN"
+        "purpose": "LOGIN"
       }
     }
   }
 })
 }
-`)
+`
 }
 
 func deleteAPIResourceOperationsConfig() string {
-	return providerConfig + fmt.Sprintf(`
-resource "akamai_apidefinitions_resource_operations" "e3" {
-  endpoint_id = 1
-  resource_operations = jsonencode({
-  "resourceOperationsMap": {}
- })
-}
-`)
-
+	return providerConfig + `
+		resource "akamai_apidefinitions_resource_operations" "e3" {
+		  api_id = 1
+          version = 1
+		  resource_operations = file("testdata/resourceOperations/resource-operations-delete.json")
+		}`
 }
 
-func apiResourceOperationsCfgWithAllFields() string {
-	return providerConfig + fmt.Sprintf(`
-resource "akamai_apidefinitions_resource_operations" "e2" {
-  endpoint_id = 1
-  resource_operations = jsonencode({
-  "resourceOperationsMap": {
-    "/index.php*": {
-      "onlineshop": {
-        "operationPurpose": "LOGIN",
-        "method": "POST",
-        "operationParameter": {
-          "username": {
-            "parameterPath": [
-              "root",
-              "email"
-            ],
-            "parameterLocation": "REQUEST_BODY"
-          }
-        },
-        "successConditions": [
-          {
-            "headerName": "X-Success",
-            "positiveMatch": true,
-            "suppressFromClientResponse": false,
-            "type": "HEADER_VALUE",
-            "valueCase": false,
-            "valueWildcard": false,
-            "values": [
-              "201"
-            ]
-          }
-        ]
-      },
-      "onlineshop-get": {
-        "operationPurpose": "SEARCH",
-        "method": "GET",
-        "successConditions": [
-          {
-            "headerName": "X-Success",
-            "positiveMatch": true,
-            "suppressFromClientResponse": false,
-            "type": "HEADER_VALUE",
-            "valueCase": false,
-            "valueWildcard": false,
-            "values": [
-              "201"
-            ]
-          }
-        ]
-      }
-    },
-    "/login": {
-      "purposeLoginGET": {
-        "operationPurpose": "ACCOUNT_VERIFICATION",
-        "method": "GET"
-      },
-      "purposeLoginPOST": {
-        "operationPurpose": "ACCOUNT_VERIFICATION",
-        "method": "POST"
-      }
-    }
-  }
-})
-}
-`)
+func apiResourceOperationsCfgWithAllFieldsFromFile() string {
+	return providerConfig + `
+			resource "akamai_apidefinitions_resource_operations" "e2" {
+			  api_id = 1
+              version = 1
+			  resource_operations = file("testdata/resourceOperations/resource-operations-02.json")
+			}`
 }
 
 func updateAPIiResourceOperationsCfgWithAllFields() string {
-	return providerConfig + fmt.Sprintf(`
-resource "akamai_apidefinitions_resource_operations" "e2" {
-  endpoint_id = 1
-  resource_operations = jsonencode({
-  "resourceOperationsMap": {
-    "/index.php*": {
-      "onlineshop": {
-        "operationPurpose": "ACCOUNT_CREATION",
-        "method": "POST",
-        "operationParameter": {
-          "username": {
-            "parameterPath": [
-              "root123",
-              "email"
-            ],
-            "parameterLocation": "REQUEST_BODY"
-          }
-        },
-        "successConditions": [
-          {
-            "headerName": "X-Success",
-            "positiveMatch": true,
-            "suppressFromClientResponse": false,
-            "type": "HEADER_VALUE",
-            "valueCase": false,
-            "valueWildcard": false,
-            "values": [
-              "201"
-            ]
-          }
-        ]
-      },
-      "onlineshop-get": {
-        "operationPurpose": "SEARCH",
-        "method": "GET",
-        "successConditions": [
-          {
-            "headerName": "X-Success",
-            "positiveMatch": true,
-            "suppressFromClientResponse": false,
-            "type": "HEADER_VALUE",
-            "valueCase": false,
-            "valueWildcard": false,
-            "values": [
-              "201"
-            ]
-          }
-        ]
-      }
-    },
-    "/login": {
-      "purposeLoginGET": {
-        "operationPurpose": "ACCOUNT_VERIFICATION",
-        "method": "GET"
-      },
-      "purposeLoginPOST": {
-        "operationPurpose": "ACCOUNT_VERIFICATION",
-        "method": "POST"
-      }
-    }
-  }
-})
-}
-`)
+	return providerConfig + `
+			resource "akamai_apidefinitions_resource_operations" "e2" {
+			  api_id = 1
+              version = 1
+			  resource_operations = file("testdata/resourceOperations/resource-operations-03.json")
+			}`
 }
 
 var badRequestErrorResOperations = v0.Error{

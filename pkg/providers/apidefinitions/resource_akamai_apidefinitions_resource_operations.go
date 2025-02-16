@@ -9,10 +9,13 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/apidefinitions"
 	v0 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/apidefinitions/v0"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf/validators"
 	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
@@ -20,8 +23,9 @@ import (
 type apiResourceOperation struct{}
 
 type apiResourceOperationModel struct {
-	APIEndpointID      types.Int64  `tfsdk:"endpoint_id"`
-	ResourceOperations types.String `tfsdk:"resource_operations"`
+	APIID              types.Int64   `tfsdk:"api_id"`
+	Version            types.Int64   `tfsdk:"version"`
+	ResourceOperations apiStateValue `tfsdk:"resource_operations"`
 }
 
 // NewAPIResourceOperationResource returns new api resource operations
@@ -29,12 +33,12 @@ func NewAPIResourceOperationResource() resource.Resource {
 	return &apiResourceOperation{}
 }
 
-// Metadata implements resource.Resource.
+// Metadata implements resource.Resource Operations.
 func (r *apiResourceOperation) Metadata(_ context.Context, _ resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = "akamai_apidefinitions_resource_operations"
 }
 
-// Configure implements resource.Resource.
+// Configure implements resource.Resource Operations.
 func (r *apiResourceOperation) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 
 	if req.ProviderData == nil {
@@ -58,26 +62,33 @@ func (r *apiResourceOperation) Configure(_ context.Context, req resource.Configu
 	}
 }
 
-// Schema implements resource.Resource.
+// Schema implements resource.Resource Operations.
 func (r *apiResourceOperation) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
-			"endpoint_id": schema.Int64Attribute{
+			"api_id": schema.Int64Attribute{
 				Required:    true,
-				Description: "(needed)",
+				Description: "The unique identifier for the endpoint",
+			},
+			"version": schema.Int64Attribute{
+				Required:    true,
+				Description: "Version of the endpoint",
 			},
 			"resource_operations": schema.StringAttribute{
-				Optional:    true,
-				Computed:    true,
-				Description: "JSON-formatted information about the API Resource Operations",
+				CustomType: apiStateType{},
+				Required:   true,
+				Validators: []validator.String{
+					validators.NotEmptyString(),
+				},
+				Description: "JSON-formatted information about the API configuration",
 			},
 		},
 	}
 }
 
-// Create implements resource.Resource.
+// Create implements resource.Resource Operations.
 func (r *apiResourceOperation) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	tflog.Debug(ctx, "Creating API Definitions API Resource Operation")
+	tflog.Debug(ctx, "Creating API Definitions API Resource Operations")
 
 	var data *apiResourceOperationModel
 
@@ -87,7 +98,7 @@ func (r *apiResourceOperation) Create(ctx context.Context, req resource.CreateRe
 		return
 	}
 
-	resp.Diagnostics.Append(r.create(ctx, data)...)
+	resp.Diagnostics.Append(r.upsert(ctx, data)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -95,65 +106,42 @@ func (r *apiResourceOperation) Create(ctx context.Context, req resource.CreateRe
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *apiResourceOperation) create(ctx context.Context, data *apiResourceOperationModel) diag.Diagnostics {
+func (r *apiResourceOperation) upsert(ctx context.Context, data *apiResourceOperationModel) diag.Diagnostics {
 	var diags diag.Diagnostics
-
-	result, err := client.ListEndpointVersions(ctx, apidefinitions.ListEndpointVersionsRequest{
-		APIEndpointID: data.APIEndpointID.ValueInt64(),
-	})
-	if err != nil {
-		diags.AddError("Reading Resource Operations Failed", err.Error())
-		return diags
-	}
-
-	var latestVersion int64
-	for _, v := range result.APIVersions {
-		if v.VersionNumber > latestVersion {
-			latestVersion = v.VersionNumber
-		}
-	}
 
 	// Convert stored JSON string into Go struct
 	var requestBody = v0.ResourceOperationsRequestBody{}
 
-	err = json.Unmarshal([]byte(data.ResourceOperations.ValueString()), &requestBody)
+	err := json.Unmarshal([]byte(data.ResourceOperations.ValueString()), &requestBody)
 	if err != nil {
-		diags.AddError("Create Resource Operations Failed, Unable to deserialize state", err.Error())
+		diags.AddError("Upsert Resource Operations Failed, Unable to deserialize state", err.Error())
 		return diags
 	}
 	// Prepare request
 	var resourceOperationRequest = v0.UpdateResourceOperationRequest{
-		APIID:         data.APIEndpointID.ValueInt64(),
-		VersionNumber: latestVersion,
+		APIID:         data.APIID.ValueInt64(),
+		VersionNumber: data.Version.ValueInt64(),
 		Body:          requestBody,
 	}
 
 	resp, err := clientV0.UpdateResourceOperation(ctx, resourceOperationRequest)
-
 	if err != nil || resp == nil {
-		diags.AddError("Create Resource Operations Failed", err.Error())
+		diags.AddError("Upsert Resource Operations Failed", err.Error())
 		return diags
 	}
 
-	jsonBytes, err := json.Marshal(resp)
+	operationsContent, err := serializeResourceOperationResponseIndent((*v0.ResourceOperationResponse)(resp))
 	if err != nil {
-		diags.AddError("Error reading the response", err.Error())
+		diags.AddError("Upsert Resource Operations Failed, Unable to serialize response", err.Error())
 		return diags
 	}
 
-	// Normalize JSON before storing in Terraform state
-	normalizeJSON, err := normalizeJSON(string(jsonBytes))
-	if err != nil {
-		diags.AddError("Error normalizing JSON", err.Error())
-		return diags
-	}
-
-	data.APIEndpointID = types.Int64Value(data.APIEndpointID.ValueInt64())
-	data.ResourceOperations = types.StringValue(normalizeJSON)
+	data.ResourceOperations = apiStateValue{types.StringValue(*operationsContent)}
+	data.APIID = types.Int64Value(data.APIID.ValueInt64())
 	return diags
 }
 
-// Read implements resource.Resource.
+// Read implements resource.Resource Operations.
 func (r *apiResourceOperation) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	tflog.Debug(ctx, "Reading API Resource Operations")
 
@@ -174,51 +162,31 @@ func (r *apiResourceOperation) Read(ctx context.Context, req resource.ReadReques
 
 func (r *apiResourceOperation) read(ctx context.Context, data *apiResourceOperationModel) diag.Diagnostics {
 	var diags diag.Diagnostics
-	result, err := client.ListEndpointVersions(ctx, apidefinitions.ListEndpointVersionsRequest{
-		APIEndpointID: data.APIEndpointID.ValueInt64(),
-	})
 
+	resourceOperation, err := clientV0.GetResourceOperation(ctx, v0.GetResourceOperationRequest{
+		APIID:         data.APIID.ValueInt64(),
+		VersionNumber: data.Version.ValueInt64(),
+	})
 	if err != nil {
 		diags.AddError("Reading Resource Operations Failed", err.Error())
 		return diags
 	}
-	var latestVersion int64
-	for _, v := range result.APIVersions {
-		if v.VersionNumber > latestVersion {
-			latestVersion = v.VersionNumber
-		}
-	}
-	resourceOperation, err := clientV0.GetResourceOperation(ctx, v0.GetResourceOperationRequest{
-		APIID:         data.APIEndpointID.ValueInt64(),
-		VersionNumber: latestVersion,
-	})
+
+	operationsContent, err := serializeResourceOperationResponseIndent((*v0.ResourceOperationResponse)(resourceOperation))
 	if err != nil {
-		diags.AddError("Unable to read Resource Operations", err.Error())
+		diags.AddError("Reading Resource Operations Failed : Unable to serialize response", err.Error())
 		return diags
 	}
 
-	jsonBody, err := json.Marshal(resourceOperation)
-	if err != nil {
-		diags.AddError("Error marshalling resource operation JSON", err.Error())
-		return diags
-	}
-
-	//  Normalize JSON before storing state
-	normalizeJSON, err := normalizeJSON(string(jsonBody))
-	if err != nil {
-		diags.AddError("Error normalizing JSON", err.Error())
-		return diags
-	}
-
-	data.ResourceOperations = types.StringValue(normalizeJSON)
-	data.APIEndpointID = types.Int64Value(data.APIEndpointID.ValueInt64())
+	data.ResourceOperations = apiStateValue{types.StringValue(*operationsContent)}
+	data.APIID = types.Int64Value(data.APIID.ValueInt64())
 
 	return diags
 }
 
-// Update implements resource.Resource.
+// Update implements resource.Resource Operations.
 func (r *apiResourceOperation) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	tflog.Debug(ctx, "Updating API Resource")
+	tflog.Debug(ctx, "Updating API Resource Operations")
 
 	var data *apiResourceOperationModel
 
@@ -233,7 +201,7 @@ func (r *apiResourceOperation) Update(ctx context.Context, req resource.UpdateRe
 		return
 	}
 
-	resp.Diagnostics.Append(r.create(ctx, data)...)
+	resp.Diagnostics.Append(r.upsert(ctx, data)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -241,9 +209,9 @@ func (r *apiResourceOperation) Update(ctx context.Context, req resource.UpdateRe
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-// Delete implements resource.Resource.
+// Delete implements resource.Resource Operations.
 func (r *apiResourceOperation) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	tflog.Debug(ctx, "Deleting API Resource")
+	tflog.Debug(ctx, "Deleting API Resource Operations")
 	var data apiResourceOperationModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -251,45 +219,27 @@ func (r *apiResourceOperation) Delete(ctx context.Context, req resource.DeleteRe
 		return
 	}
 
-	result, err := client.ListEndpointVersions(ctx, apidefinitions.ListEndpointVersionsRequest{
-		APIEndpointID: data.APIEndpointID.ValueInt64(),
+	deleteResponse, err := clientV0.DeleteResourceOperation(ctx, v0.DeleteResourceOperationRequest{
+		APIID:         data.APIID.ValueInt64(),
+		VersionNumber: data.Version.ValueInt64(),
 	})
-
 	if err != nil {
-		resp.Diagnostics.AddError("Reading Resource Operations Failed", err.Error())
-	}
-	var latestVersion int64
-	for _, v := range result.APIVersions {
-		if v.VersionNumber > latestVersion {
-			latestVersion = v.VersionNumber
-		}
-	}
-
-	var deleteResourceOperationRequest = v0.DeleteResourceOperationRequest{
-		APIID:         data.APIEndpointID.ValueInt64(),
-		VersionNumber: latestVersion,
-	}
-
-	deleteResponse, err := clientV0.DeleteResourceOperation(ctx, deleteResourceOperationRequest)
-
-	if err != nil {
-		resp.Diagnostics.AddError("Deletion of API Resource Operations Failed", err.Error())
+		resp.Diagnostics.AddError("Deleting Resource Operations Failed", err.Error())
 		return
 	}
 
-	jsonBody, err := json.Marshal(deleteResponse)
+	respJSON, err := serializeDeleteResourceOperationResponseIndent(deleteResponse)
 	if err != nil {
-		resp.Diagnostics.AddError("Unable to parse Deletion of API Resource Operations response", err.Error())
+		resp.Diagnostics.AddError("Deleting Resource Operations Failed : Unable to serialize response", err.Error())
 		return
 	}
-
-	tflog.Info(ctx, string(jsonBody))
-
+	tflog.Info(ctx, string(*respJSON))
 }
 
 // ImportState implements resource's ImportState method
 func (r *apiResourceOperation) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	tflog.Debug(ctx, "Importing API Definitions API resource")
+
 	parts := strings.Split(req.ID, ":")
 
 	if len(parts) != 2 {
@@ -299,7 +249,7 @@ func (r *apiResourceOperation) ImportState(ctx context.Context, req resource.Imp
 
 	endpointID, err := strconv.ParseInt(parts[0], 10, 64)
 	if err != nil {
-		resp.Diagnostics.AddError(fmt.Sprintf("invalid API id '%v'", parts[0]), "")
+		resp.Diagnostics.AddError(fmt.Sprintf("invalid API ID '%v'", parts[0]), "")
 		return
 	}
 
@@ -309,48 +259,25 @@ func (r *apiResourceOperation) ImportState(ctx context.Context, req resource.Imp
 		return
 	}
 
-	resourceOperation, err := clientV0.GetResourceOperation(ctx, v0.GetResourceOperationRequest{
-		APIID:         endpointID,
-		VersionNumber: versionNumber,
-	})
-
-	if err != nil {
-		resp.Diagnostics.AddError("Unable to read Resource Operations", err.Error())
-		return
-	}
-
-	jsonBody, err := json.Marshal(resourceOperation)
-
-	if err != nil {
-		resp.Diagnostics.AddError("Error marshalling resource operation JSON", err.Error())
-		return
-	}
-
-	//  Normalize JSON before storing state
-	normalizeJSON, err := normalizeJSON(string(jsonBody))
-	if err != nil {
-		resp.Diagnostics.AddError("Error normalizing JSON", err.Error())
-		return
-	}
-
 	data := apiResourceOperationModel{}
-	data.ResourceOperations = types.StringValue(normalizeJSON)
-	data.APIEndpointID = types.Int64Value(endpointID)
+	data.APIID = types.Int64Value(endpointID)
+	data.Version = types.Int64Value(versionNumber)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, data)...)
 }
 
-// Function to normalize JSON for Terraform state
-func normalizeJSON(input string) (string, error) {
-	var jsonObj map[string]interface{}
-	err := json.Unmarshal([]byte(input), &jsonObj)
+func serializeResourceOperationResponseIndent(response *v0.ResourceOperationResponse) (*string, error) {
+	jsonBody, err := json.MarshalIndent(response, "", "  ")
 	if err != nil {
-		return "", err
+		return nil, err
 	}
+	return ptr.To(string(jsonBody)), nil
+}
 
-	normalizedBytes, err := json.Marshal(jsonObj) // Ensures consistent key order
+func serializeDeleteResourceOperationResponseIndent(response *v0.DeleteResourceOperationResponse) (*string, error) {
+	jsonBody, err := json.MarshalIndent(response, "", "  ")
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return string(normalizedBytes), nil
+	return ptr.To(string(jsonBody)), nil
 }

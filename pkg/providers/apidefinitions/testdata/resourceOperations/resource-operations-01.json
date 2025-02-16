@@ -1,11 +1,10 @@
 {
-  "resourceOperationsMap": {
+  "operations": {
     "/index.php*": {
       "testPurpose": {
         "method": "POST",
-        "operationPurpose": "LOGIN"
+        "purpose": "LOGIN"
       }
     }
   }
-
 }
