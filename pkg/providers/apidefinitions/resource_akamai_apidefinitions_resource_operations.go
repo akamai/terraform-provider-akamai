@@ -9,7 +9,6 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/apidefinitions"
 	v0 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/apidefinitions/v0"
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -339,15 +338,6 @@ func (r *apiResourceOperation) ImportState(ctx context.Context, req resource.Imp
 	data.APIEndpointID = types.Int64Value(endpointID)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, data)...)
-}
-
-func serializeWithIndent(version v0.RegisterAPIRequest) (*string, error) {
-	jsonBody, err := json.MarshalIndent(version, "", "  ")
-	if err != nil {
-		return nil, err
-	}
-
-	return ptr.To(string(jsonBody)), nil
 }
 
 // Function to normalize JSON for Terraform state
