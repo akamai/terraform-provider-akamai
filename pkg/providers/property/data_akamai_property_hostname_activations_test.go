@@ -8,7 +8,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/hapi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/papi"
 	internal "github.com/akamai/terraform-provider-akamai/v7/internal/test"
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -59,8 +58,8 @@ func TestDataPropertyHostnameActivations(t *testing.T) {
 				NotifyEmails:         []string{"nomail@akamai.com"},
 			},
 		},
-		TotalItems:       ptr.To(3),
-		CurrentItemCount: ptr.To(3),
+		TotalItems:       3,
+		CurrentItemCount: 3,
 	}
 
 	activations999 := make([]papi.HostnameActivationListItem, 999)
@@ -258,8 +257,8 @@ func TestDataPropertyHostnameActivations(t *testing.T) {
 					ContractID: "ctr_1",
 					GroupID:    "grp_1",
 					HostnameActivations: papi.HostnameActivationsList{
-						TotalItems:       ptr.To(1100),
-						CurrentItemCount: ptr.To(999),
+						TotalItems:       1100,
+						CurrentItemCount: 999,
 						Items:            activations999,
 					},
 				}, nil).Times(3)
@@ -274,8 +273,8 @@ func TestDataPropertyHostnameActivations(t *testing.T) {
 					ContractID: "ctr_1",
 					GroupID:    "grp_1",
 					HostnameActivations: papi.HostnameActivationsList{
-						TotalItems:       ptr.To(1100),
-						CurrentItemCount: ptr.To(999),
+						TotalItems:       1100,
+						CurrentItemCount: 101,
 						Items:            activations101,
 					},
 				}, nil).Times(3)
@@ -298,6 +297,70 @@ func TestDataPropertyHostnameActivations(t *testing.T) {
 						CheckEqual("hostname_activations.0.notify_emails.#", "1").
 						CheckEqual("hostname_activations.0.notify_emails.0", "nomail@akamai.com").
 						CheckEqual("hostname_activations.1099.hostname_activation_id", "1099").
+						Build()},
+			}},
+		"happy path - with limit paging": {
+			init: func(m *papi.Mock) {
+				m.On("ListPropertyHostnameActivations", testutils.MockContext, papi.ListPropertyHostnameActivationsRequest{
+					ContractID: "1",
+					GroupID:    "1",
+					PropertyID: "1",
+					Offset:     0,
+					Limit:      999,
+				}).Return(&papi.ListPropertyHostnameActivationsResponse{
+					AccountID:  "act_1",
+					ContractID: "ctr_1",
+					GroupID:    "grp_1",
+					HostnameActivations: papi.HostnameActivationsList{
+						TotalItems:       999,
+						CurrentItemCount: 999,
+						Items:            activations999,
+					},
+				}, nil).Times(3)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataPropertyHostnameActivations/valid.tf"),
+					Check: baseChecker.
+						CheckEqual("account_id", "1").
+						CheckEqual("property_name", "my_property_1").
+						CheckEqual("property_id", "1").
+						CheckEqual("hostname_activations.#", "999").
+						CheckEqual("hostname_activations.0.activation_type", "ACTIVATE").
+						CheckEqual("hostname_activations.0.hostname_activation_id", "0").
+						CheckEqual("hostname_activations.0.network", "PRODUCTION").
+						CheckEqual("hostname_activations.0.status", "ACTIVE").
+						CheckEqual("hostname_activations.0.submit_date", "2025-01-22T19:36:29Z").
+						CheckEqual("hostname_activations.0.update_date", "2025-01-22T19:37:48Z").
+						CheckEqual("hostname_activations.0.note", "   ").
+						CheckEqual("hostname_activations.0.notify_emails.#", "1").
+						CheckEqual("hostname_activations.0.notify_emails.0", "nomail@akamai.com").
+						Build()},
+			}},
+		"happy path - empty hostname activations list": {
+			init: func(m *papi.Mock) {
+				m.On("ListPropertyHostnameActivations", testutils.MockContext, papi.ListPropertyHostnameActivationsRequest{
+					ContractID: "1",
+					GroupID:    "1",
+					PropertyID: "1",
+					Offset:     0,
+					Limit:      999,
+				}).Return(&papi.ListPropertyHostnameActivationsResponse{
+					AccountID:  "act_1",
+					ContractID: "ctr_1",
+					GroupID:    "grp_1",
+					HostnameActivations: papi.HostnameActivationsList{
+						TotalItems: 0,
+						Items:      []papi.HostnameActivationListItem{},
+					},
+				}, nil).Times(3)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataPropertyHostnameActivations/valid.tf"),
+					Check: baseChecker.
+						CheckEqual("account_id", "1").
+						CheckEqual("hostname_activations.#", "0").
 						Build()},
 			}},
 

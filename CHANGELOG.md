@@ -44,6 +44,12 @@
 
 
 
+* PAPI
+  * Added datasource `akamai_property_hostnames_diff` to retrieve the diff between staging and production active hostnames.
+
+
+
+
 
 
 

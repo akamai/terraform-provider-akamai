@@ -128,6 +128,7 @@ func (p *Subprovider) FrameworkDataSources() []func() datasource.DataSource {
 		NewCPCodesDataSource,
 		NewHostnameActivationDataSource,
 		NewHostnameActivationsDataSource,
+		NewHostnamesDiffDataSource,
 		NewIncludeDataSource,
 	}
 }

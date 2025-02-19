@@ -174,15 +174,16 @@ func getAllActivations(ctx context.Context, client papi.PAPI, contractID string,
 		response.ContractID = act.ContractID
 		response.GroupID = act.GroupID
 		for _, item := range act.HostnameActivations.Items {
-			if network != "" && !strings.EqualFold(network, string(item.Network)) {
+			if network != "" && !strings.EqualFold(network, item.Network) {
 				continue
 			}
 			response.HostnameActivations.Items = append(response.HostnameActivations.Items, item)
 		}
-		if len(act.HostnameActivations.Items) < pageSize {
+
+		offset += pageSize
+		if offset >= act.HostnameActivations.TotalItems {
 			break
 		}
-		offset += pageSize
 	}
 
 	return response, nil
@@ -220,7 +221,6 @@ func (d *hostnameActivationsDataSource) Read(ctx context.Context, req datasource
 			emails[i] = types.StringValue(email)
 		}
 		a := hostnameActivation{
-
 			ActivationType:       types.StringValue(item.ActivationType),
 			Network:              types.StringValue(item.Network),
 			Note:                 types.StringValue(item.Note),
