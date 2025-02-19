@@ -33,6 +33,7 @@
 
 * PAPI
   * Added datasource `akamai_property_hostname_activations` to retrieve property hostname activations.
+  * Added datasource `akamai_property_hostname_activation` to retrieve information about specific property hostname activation.
 
 
 
