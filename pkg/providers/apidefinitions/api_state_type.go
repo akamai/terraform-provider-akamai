@@ -116,69 +116,18 @@ func (v apiStateValue) StringSemanticEquals(ctx context.Context, valuable basety
 }
 
 func checkSemanticEquality(before v0.RegisterAPIRequest, after v0.RegisterAPIRequest) []string {
-	if before.EnableAPIGateway == nil && after.EnableAPIGateway != nil && !*after.EnableAPIGateway {
-		after.EnableAPIGateway = nil
-	}
-	if before.GraphQL == nil && after.GraphQL != nil && !*after.GraphQL {
-		after.GraphQL = nil
-	}
-	if before.MatchPathSegmentParameter == nil && after.MatchPathSegmentParameter != nil && !*after.MatchPathSegmentParameter {
-		after.MatchPathSegmentParameter = nil
-	}
-	if before.MatchCaseSensitive == nil && after.MatchCaseSensitive != nil && !*after.MatchCaseSensitive {
-		after.MatchCaseSensitive = nil
-	}
-
 	if before.BasePath != nil && *before.BasePath == "" && after.BasePath == nil {
 		after.BasePath = ptr.To("")
 	}
 
-	sortCollections(before)
-	sortCollections(after)
+	sortConsumeTypes(before)
+	sortConsumeTypes(after)
 
 	return deep.Equal(before, after)
-}
-
-func sortCollections(state v0.RegisterAPIRequest) {
-	sortConsumeTypes(state)
-	sortBypassOn(state)
 }
 
 func sortConsumeTypes(state v0.RegisterAPIRequest) {
 	if state.Constraints != nil && state.Constraints.RequestBody != nil && state.Constraints.RequestBody.ConsumeType != nil {
 		slices.Sort(state.Constraints.RequestBody.ConsumeType)
 	}
-}
-
-func sortBypassOn(state v0.RegisterAPIRequest) {
-	if state.Constraints != nil && state.Constraints.BypassOn != nil {
-		if state.Constraints.BypassOn.UndefinedMethods != nil {
-			slices.Sort(state.Constraints.BypassOn.UndefinedMethods)
-		}
-
-		if state.Constraints.BypassOn.UndefinedParameters != nil {
-			slices.Sort(state.Constraints.BypassOn.UndefinedParameters)
-		}
-	}
-
-	if state.Resources != nil {
-		for pair := state.Resources.Oldest(); pair != nil; pair = pair.Next() {
-			resource := pair.Value
-			sortMethodBypassOn(resource.Get)
-			sortMethodBypassOn(resource.Post)
-			sortMethodBypassOn(resource.Put)
-			sortMethodBypassOn(resource.Delete)
-			sortMethodBypassOn(resource.Options)
-			sortMethodBypassOn(resource.Head)
-			sortMethodBypassOn(resource.Patch)
-		}
-
-	}
-}
-
-func sortMethodBypassOn(method *v0.Method) {
-	if method == nil || method.BypassOn == nil || method.BypassOn.UndefinedParameters == nil {
-		return
-	}
-	slices.Sort(method.BypassOn.UndefinedParameters)
 }

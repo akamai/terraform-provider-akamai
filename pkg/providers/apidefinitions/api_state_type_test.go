@@ -3,24 +3,10 @@ package apidefinitions
 import (
 	"testing"
 
-	orderedmap "github.com/wk8/go-ordered-map/v2"
-
 	v0 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/apidefinitions/v0"
 	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
 	"github.com/stretchr/testify/assert"
 )
-
-func TestCheckSemanticEquality_DefaultFlags(t *testing.T) {
-	var before = base()
-	var after = base()
-
-	after.MatchPathSegmentParameter = ptr.To(false)
-	after.MatchCaseSensitive = ptr.To(false)
-	after.EnableAPIGateway = ptr.To(false)
-	after.GraphQL = ptr.To(false)
-
-	assert.Equal(t, []string(nil), checkSemanticEquality(before, after))
-}
 
 func TestCheckSemanticEquality_BasePath(t *testing.T) {
 	var before = base()
@@ -46,51 +32,6 @@ func TestCheckSemanticEquality_ConsumeType(t *testing.T) {
 			ConsumeType: []v0.ConsumeType{v0.ConsumeTypeJSON, v0.ConsumeTypeXML, v0.ConsumeTypeUrlencoded},
 		},
 	}
-
-	assert.Equal(t, []string(nil), checkSemanticEquality(before, after))
-}
-
-func TestCheckSemanticEquality_BypassOn(t *testing.T) {
-	var before = base()
-	var after = base()
-
-	before.Constraints = &v0.Constraints{
-		BypassOn: &v0.BypassOn{
-			UndefinedMethods:    []string{"trace", "get"},
-			UndefinedParameters: []string{"z", "a"},
-		},
-	}
-	before.Resources = orderedmap.New[string, v0.Resource](orderedmap.WithInitialData[string, v0.Resource](
-		orderedmap.Pair[string, v0.Resource]{
-			Key: "/one",
-			Value: v0.Resource{
-				Get: &v0.Method{
-					BypassOn: &v0.MethodBypassOn{
-						UndefinedParameters: []string{"z", "a"},
-					},
-				},
-			},
-		},
-	))
-
-	after.Constraints = &v0.Constraints{
-		BypassOn: &v0.BypassOn{
-			UndefinedMethods:    []string{"get", "trace"},
-			UndefinedParameters: []string{"a", "z"},
-		},
-	}
-	after.Resources = orderedmap.New[string, v0.Resource](orderedmap.WithInitialData[string, v0.Resource](
-		orderedmap.Pair[string, v0.Resource]{
-			Key: "/one",
-			Value: v0.Resource{
-				Get: &v0.Method{
-					BypassOn: &v0.MethodBypassOn{
-						UndefinedParameters: []string{"a", "z"},
-					},
-				},
-			},
-		},
-	))
 
 	assert.Equal(t, []string(nil), checkSemanticEquality(before, after))
 }

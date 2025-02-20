@@ -24,8 +24,16 @@
     }
   },
   "constraints": {
-    "enforceOnRequest": true,
-    "enforceOnResponse": true,
+    "enforceOn": {
+      "request": true,
+      "response": false,
+      "undefinedMethods": {
+        "get": true
+      },
+      "undefinedParameters": {
+        "requestCookie": true
+      }
+    },
     "requestBody": {
       "consumeType": [
         "json",
@@ -40,18 +48,10 @@
         "maxCount": 100,
         "maxNameLength": 100
       }
-    },
-    "bypassOn": {
-      "undefinedMethods": [
-        "GET"
-      ],
-      "undefinedParameters": [
-        "REQUEST_COOKIE"
-      ]
     }
   },
   "versioning": {
-    "in": "HEADER",
+    "in": "header",
     "name": "APIKEY",
     "value": "1"
   },
@@ -149,10 +149,12 @@
             }
           ]
         },
-        "bypassOn": {
-          "undefinedParameters": [
-            "REQUEST_COOKIE"
-          ]
+        "constraints": {
+          "enforceOn": {
+            "undefinedParameters": {
+              "requestCookie": true
+            }
+          }
         }
       },
       "post": {
