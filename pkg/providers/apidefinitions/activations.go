@@ -14,8 +14,8 @@ import (
 )
 
 var (
-	pollInterval    = time.Second
-	activationRetry = time.Second
+	pollInterval    = time.Second * 30
+	activationRetry = time.Second * 5
 )
 
 func startActivation(ctx context.Context, activationRequest apidefinitions.ActivateVersionRequest) error {
