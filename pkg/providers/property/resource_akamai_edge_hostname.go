@@ -546,16 +546,13 @@ func resourceSecureEdgeHostNameImport(ctx context.Context, d *schema.ResourceDat
 		return nil, fmt.Errorf("expected import identifier with format: "+
 			`"EdgehostNameID,contractID,groupID[,productID]". Got: %q`, d.Id())
 	}
-
+	var productID string
 	if len(parts) == 4 {
 		if len(parts[3]) == 0 {
 			return nil, fmt.Errorf("productID is empty for the import ID=%q", d.Id())
 		}
-		productID := str.AddPrefix(parts[3], "prd_")
+		productID = str.AddPrefix(parts[3], "prd_")
 		logger.Debugf("Setting product_id=%s", productID)
-		if err := d.Set("product_id", productID); err != nil {
-			return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
-		}
 	}
 
 	edgehostID := parts[0]
@@ -570,6 +567,9 @@ func resourceSecureEdgeHostNameImport(ctx context.Context, d *schema.ResourceDat
 	if err != nil {
 		return nil, err
 	}
+	if len(productID) == 0 {
+		productID = edgehostnameDetails.EdgeHostname.ProductID
+	}
 
 	if err := d.Set("contract_id", edgehostnameDetails.ContractID); err != nil {
 		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
@@ -578,6 +578,9 @@ func resourceSecureEdgeHostNameImport(ctx context.Context, d *schema.ResourceDat
 		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("edge_hostname", edgehostnameDetails.EdgeHostname.Domain); err != nil {
+		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
+	}
+	if err := d.Set("product_id", productID); err != nil {
 		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 

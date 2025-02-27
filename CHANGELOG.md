@@ -15,7 +15,8 @@
 
 
 
-
+* PAPI
+  * Added populating `product_id` during import of `akamai_edge_hostname` if available and not provided in import key.
 
 
 
