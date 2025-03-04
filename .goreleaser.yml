@@ -3,8 +3,8 @@
 version: 2
 before:
   hooks:
-    # this is just an example and not a requirement for provider building/publishing
-    - go mod tidy -compat=1.22.9
+    # this hook is called to ensure that the go.mod file reflects the current module's dependencies without making any changes, allowing for a review of potential updates.
+    - go mod tidy -diff
 builds:
 - env:
     # goreleaser does not work with CGO, it could also complicate

@@ -11,7 +11,7 @@
 
 #### FEATURES/ENHANCEMENTS:
 
-* Migrated to Go `1.23.6` and adopted a semver-compliant Go directive.
+* Migrated to Go `1.23.6`, adopted a semver-compliant Go directive and updated the Go version used for builds.
 
 
 
