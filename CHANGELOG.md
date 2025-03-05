@@ -17,6 +17,7 @@
 
 * PAPI
   * Added populating `product_id` during import of `akamai_edge_hostname` if available and not provided in import key.
+  * Added the `akamai_cp_codes` datasource. ([I#604](https://github.com/akamai/terraform-provider-akamai/issues/604)).
 
 
 
@@ -46,11 +47,12 @@
 
 
 
-
+  
 
 #### BUG FIXES:
 
-
+* PAPI
+  *  Fixed filtering by name for `akamai_cp_code` datasource. ([I#604](https://github.com/akamai/terraform-provider-akamai/issues/604)).
 
 
 

@@ -16,12 +16,12 @@ func TestDSCPCode(t *testing.T) {
 		// name provided by fixture is "test cpcode"
 		cpc := papi.CPCodeItems{Items: []papi.CPCode{
 			{ID: "cpc_123", Name: "wrong CP code"},
-			{ID: "cpc_234", Name: "test cpcode", ProductIDs: []string{"prd_test1", "prd_test2"}},
+			{ID: "cpc_234", Name: "test cpcode", CreatedDate: "2021-11-11T11:22:33Z", ProductIDs: []string{"prd_test1", "prd_test2"}},
 		}}
 
 		client.On("GetCPCodes",
 			testutils.MockContext,
-			papi.GetCPCodesRequest{ContractID: "ctr_test", GroupID: "grp_test"},
+			papi.GetCPCodesRequest{ContractID: "ctr_11", GroupID: "grp_22"},
 		).Return(&papi.GetCPCodesResponse{CPCodes: cpc}, nil)
 
 		useClient(client, nil, func() {
@@ -32,8 +32,9 @@ func TestDSCPCode(t *testing.T) {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "id", "234"),
 						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "name", "test cpcode"),
-						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "group_id", "grp_test"),
-						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "contract_id", "ctr_test"),
+						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "created_date", "2021-11-11T11:22:33Z"),
+						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "group_id", "grp_22"),
+						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "contract_id", "ctr_11"),
 					),
 				}},
 			})
@@ -48,12 +49,12 @@ func TestDSCPCode(t *testing.T) {
 		// name provided by fixture is "test cpcode"
 		cpc := papi.CPCodeItems{Items: []papi.CPCode{
 			{ID: "cpc_123", Name: "wrong CP code"},
-			{ID: "cpc_234", Name: "test cpcode", ProductIDs: []string{"prd_test1", "prd_test2"}},
+			{ID: "cpc_234", Name: "test cpcode", CreatedDate: "2021-11-11T11:22:33Z", ProductIDs: []string{"prd_test1", "prd_test2"}},
 		}}
 
 		client.On("GetCPCodes",
 			testutils.MockContext,
-			papi.GetCPCodesRequest{ContractID: "ctr_test", GroupID: "grp_test"},
+			papi.GetCPCodesRequest{ContractID: "ctr_11", GroupID: "grp_22"},
 		).Return(&papi.GetCPCodesResponse{CPCodes: cpc}, nil)
 
 		useClient(client, nil, func() {
@@ -64,8 +65,9 @@ func TestDSCPCode(t *testing.T) {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "id", "234"),
 						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "name", "test cpcode"),
-						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "group_id", "grp_test"),
-						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "contract_id", "ctr_test"),
+						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "created_date", "2021-11-11T11:22:33Z"),
+						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "group_id", "grp_22"),
+						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "contract_id", "ctr_11"),
 						resource.TestCheckOutput("product1", "prd_test1"),
 						resource.TestCheckOutput("product2", "prd_test2"),
 					),
@@ -81,13 +83,13 @@ func TestDSCPCode(t *testing.T) {
 
 		// name provided by fixture is "cpc_234"
 		cpc := papi.CPCodeItems{Items: []papi.CPCode{
-			{ID: "cpc_123", Name: "wrong CP code"},
-			{ID: "cpc_234", Name: "test cpcode", ProductIDs: []string{"prd_test1", "prd_test2"}},
+			{ID: "cpc_123", CreatedDate: "2021-11-11T11:22:33Z", Name: "wrong CP code"},
+			{ID: "cpc_234", Name: "test cpcode", CreatedDate: "2021-11-11T11:22:33Z", ProductIDs: []string{"prd_test1", "prd_test2"}},
 		}}
 
 		client.On("GetCPCodes",
 			testutils.MockContext,
-			papi.GetCPCodesRequest{ContractID: "ctr_test", GroupID: "grp_test"},
+			papi.GetCPCodesRequest{ContractID: "ctr_11", GroupID: "grp_22"},
 		).Return(&papi.GetCPCodesResponse{CPCodes: cpc}, nil)
 
 		useClient(client, nil, func() {
@@ -98,8 +100,9 @@ func TestDSCPCode(t *testing.T) {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "id", "234"),
 						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "name", "cpc_234"),
-						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "group_id", "grp_test"),
-						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "contract_id", "ctr_test"),
+						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "created_date", "2021-11-11T11:22:33Z"),
+						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "group_id", "grp_22"),
+						resource.TestCheckResourceAttr("data.akamai_cp_code.test", "contract_id", "ctr_11"),
 					),
 				}},
 			})
@@ -113,13 +116,13 @@ func TestDSCPCode(t *testing.T) {
 
 		// name provided by fixture is "234"
 		cpc := papi.CPCodeItems{Items: []papi.CPCode{
-			{ID: "cpc_123", Name: "wrong CP code"},
-			{ID: "cpc_234", Name: "test cpcode", ProductIDs: []string{"prd_test1", "prd_test2"}},
+			{ID: "cpc_123", CreatedDate: "2021-11-11T11:22:33Z", Name: "wrong CP code"},
+			{ID: "cpc_234", Name: "test cpcode", CreatedDate: "2021-11-11T11:22:33Z", ProductIDs: []string{"prd_test1", "prd_test2"}},
 		}}
 
 		client.On("GetCPCodes",
 			testutils.MockContext,
-			papi.GetCPCodesRequest{ContractID: "ctr_test", GroupID: "grp_test"},
+			papi.GetCPCodesRequest{ContractID: "ctr_11", GroupID: "grp_22"},
 		).Return(&papi.GetCPCodesResponse{CPCodes: cpc}, nil)
 
 		useClient(client, nil, func() {
@@ -148,7 +151,7 @@ func TestDSCPCode(t *testing.T) {
 
 		client.On("GetCPCodes",
 			testutils.MockContext,
-			papi.GetCPCodesRequest{ContractID: "ctr_test", GroupID: "grp_test"},
+			papi.GetCPCodesRequest{ContractID: "ctr_11", GroupID: "grp_22"},
 		).Return(&papi.GetCPCodesResponse{CPCodes: cpc}, nil)
 
 		useClient(client, nil, func() {
@@ -164,16 +167,43 @@ func TestDSCPCode(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
+	t.Run("more than one match by name", func(t *testing.T) {
+		client := &papi.Mock{}
+
+		// name provided by fixture is "test cpcode"
+		cpc := papi.CPCodeItems{Items: []papi.CPCode{
+			{ID: "cpc_123", Name: "test cpcode"},
+			{ID: "cpc_234", Name: "test cpcode", CreatedDate: "2021-11-11T11:22:33Z", ProductIDs: []string{"prd_test1", "prd_test2"}},
+		}}
+
+		client.On("GetCPCodes",
+			testutils.MockContext,
+			papi.GetCPCodesRequest{ContractID: "ctr_11", GroupID: "grp_22"},
+		).Return(&papi.GetCPCodesResponse{CPCodes: cpc}, nil)
+
+		useClient(client, nil, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDSCPCode/match_by_name.tf"),
+					ExpectError: regexp.MustCompile(`more cp codes found`),
+				}},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
 	t.Run("group not found in state", func(t *testing.T) {
 		client := &papi.Mock{}
 		client.On("GetCPCodes",
-			testutils.MockContext, testutils.MockContext,
+			testutils.MockContext, papi.GetCPCodesRequest{ContractID: "ctr_11", GroupID: "grp_22"},
 		).Return(&papi.GetCPCodesResponse{CPCodes: papi.CPCodeItems{Items: []papi.CPCode{{
-			ID: "cpc_123", Name: "test-ft-cp-code", CreatedDate: "", ProductIDs: []string{"prd_prod1"},
+			ID: "cpc_123", Name: "test-ft-cp-code", CreatedDate: "2021-11-11T11:22:33Z", ProductIDs: []string{"prd_3"},
 		}}}}, nil)
-		client.On("CreateCPCode", testutils.MockContext, testutils.MockContext).Return(&papi.CreateCPCodeResponse{}, nil)
-		client.On("GetCPCode", testutils.MockContext, testutils.MockContext).Return(&papi.GetCPCodesResponse{CPCode: papi.CPCode{
-			ID: "cpc_123", Name: "test-ft-cp-code", CreatedDate: "", ProductIDs: []string{"prd_prod1"},
+		client.On("CreateCPCode", testutils.MockContext, papi.CreateCPCodeRequest{ContractID: "ctr_11", GroupID: "grp_22", CPCode: papi.CreateCPCode{ProductID: "prd_3", CPCodeName: "test-ft-cp-code"}}).Return(&papi.CreateCPCodeResponse{}, nil)
+		client.On("GetCPCode", testutils.MockContext, papi.GetCPCodeRequest{CPCodeID: "123", ContractID: "ctr_11", GroupID: "grp_22"}).Return(&papi.GetCPCodesResponse{CPCode: papi.CPCode{
+			ID: "cpc_123", Name: "test-ft-cp-code", CreatedDate: "2021-11-11T11:22:33Z", ProductIDs: []string{"prd_3"},
 		}}, nil).Times(3)
 		useClient(client, nil, func() {
 			resource.UnitTest(t, resource.TestCase{
