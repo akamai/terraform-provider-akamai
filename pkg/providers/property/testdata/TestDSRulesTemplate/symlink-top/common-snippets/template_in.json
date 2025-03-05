@@ -1,0 +1,6 @@
+{
+  "rules": {
+    "name": "${env.name}",
+    "children": ["#include:some-template.json"]
+  }
+}

@@ -43,7 +43,9 @@
 
 
 
-
+* PAPI
+  * Added the `follow_links` boolean attribute to the `akamai_property_rules_template` data source.
+    It allows the directory with rule snippets or any of its subdirectories to be a symlink.
 
 
 
