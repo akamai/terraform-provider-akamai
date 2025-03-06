@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -27,6 +28,12 @@ const retriesMax = 15
 var (
 	// EgdeHostnameCreatePollInterval is the interval for polling an edgehostname creation
 	EgdeHostnameCreatePollInterval = time.Minute
+
+	// domainPrefixPatterns maps domain suffixes to their respective regex patterns for validating domain prefixes
+	domainPrefixPatterns = map[string]*regexp.Regexp{
+		"akamaized.net": regexp.MustCompile(`^[A-Za-z]([A-Za-z0-9-]*[A-Za-z0-9])?$`),
+		"default":       regexp.MustCompile(`^[A-Za-z]([A-Za-z0-9.-]*[A-Za-z0-9])?(\.)?$`),
+	}
 )
 
 func resourceSecureEdgeHostName() *schema.Resource {
@@ -170,6 +177,10 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 	newHostname.ProductID = productID
 	newHostname.DomainSuffix, newHostname.SecureNetwork = parseEdgeHostname(edgeHostname)
 	newHostname.DomainPrefix = strings.TrimSuffix(edgeHostname, "."+newHostname.DomainSuffix)
+	err = validateDomainPrefix(newHostname.DomainPrefix, newHostname.DomainSuffix)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	// ip_behavior is required value in schema.
 	newHostname.IPVersionBehavior = strings.ToUpper(d.Get("ip_behavior").(string))
 
@@ -239,6 +250,25 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 
 	d.SetId(hostname.EdgeHostnameID)
 	return resourceSecureEdgeHostNameRead(ctx, d, meta)
+}
+
+func validateDomainPrefix(domainPrefix, domainSuffix string) error {
+	if len(domainPrefix) > 63 {
+		return fmt.Errorf("edge hostname must be 63 characters or less; got %d characters", len(domainPrefix))
+	}
+
+	pattern := domainPrefixPatterns[domainSuffix]
+	if pattern == nil {
+		pattern = domainPrefixPatterns["default"]
+	}
+
+	if !pattern.MatchString(domainPrefix) {
+		if domainSuffix == "akamaized.net" {
+			return fmt.Errorf("edge hostname for \"akamaized.net\" suffix must begin with a letter, end with a letter or digit and only contain letters, digits and hyphens")
+		}
+		return fmt.Errorf("edge hostname for \"%s\" suffix must begin with a letter, end with a letter, digit or dot and only contain letters, digits, dots and hyphens", domainSuffix)
+	}
+	return nil
 }
 
 func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {

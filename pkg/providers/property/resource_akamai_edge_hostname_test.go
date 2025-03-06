@@ -2004,6 +2004,139 @@ func TestResourceEdgeHostname(t *testing.T) {
 				},
 			},
 		},
+		"invalid edge hostname domain prefix for .akamaized.net - illegal character # used in the domain prefix name": {
+			init: func(mp *papi.Mock, _ *hapi.Mock) {
+				mp.On("GetEdgeHostnames", testutils.MockContext, papi.GetEdgeHostnamesRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+				}).Return(&papi.GetEdgeHostnamesResponse{}, nil)
+			},
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureStringf(t, "%s/%s", testDir, "incorrect_edgehostname_domainprefix.tf"),
+					ExpectError: regexp.MustCompile("edge hostname for \"akamaized.net\" suffix must begin with a letter, end with a letter or digit and only contain letters, digits and hyphens"),
+				},
+			},
+		},
+		"invalid edge hostname domain prefix for .akamaized.net - non utf8 character(t中esãt) used in the domain prefix name": {
+			init: func(mp *papi.Mock, _ *hapi.Mock) {
+				mp.On("GetEdgeHostnames", testutils.MockContext, papi.GetEdgeHostnamesRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+				}).Return(&papi.GetEdgeHostnamesResponse{}, nil)
+			},
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureStringf(t, "%s/%s", testDir, "incorrect_edgehostname_domainprefix_3.tf"),
+					ExpectError: regexp.MustCompile("edge hostname for \"akamaized.net\" suffix must begin with a letter, end with a letter or digit and only contain letters, digits and hyphens"),
+				},
+			},
+		},
+		"invalid edge hostname domain prefix for .akamaized.net - domain prefix name ends with hyphen": {
+			init: func(mp *papi.Mock, _ *hapi.Mock) {
+				mp.On("GetEdgeHostnames", testutils.MockContext, papi.GetEdgeHostnamesRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+				}).Return(&papi.GetEdgeHostnamesResponse{}, nil)
+			},
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureStringf(t, "%s/%s", testDir, "incorrect_edgehostname_domainprefix_1.tf"),
+					ExpectError: regexp.MustCompile("edge hostname for \"akamaized.net\" suffix must begin with a letter, end with a letter or digit and only contain letters, digits and hyphens"),
+				},
+			},
+		},
+		"invalid edge hostname domain prefix for .edgesuite.net - domain prefix name ends with 2 dots": {
+			init: func(mp *papi.Mock, _ *hapi.Mock) {
+				mp.On("GetEdgeHostnames", testutils.MockContext, papi.GetEdgeHostnamesRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+				}).Return(&papi.GetEdgeHostnamesResponse{}, nil)
+			},
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureStringf(t, "%s/%s", testDir, "incorrect_edgehostname_domainprefix_2.tf"),
+					ExpectError: regexp.MustCompile("edge hostname for \"edgesuite.net\" suffix must begin with a letter, end with a letter, digit or dot and only contain letters, digits, dots and hyphens"),
+				},
+			},
+		},
+		"invalid edge hostname domain prefix - domain prefix length greater than 63": {
+			init: func(mp *papi.Mock, _ *hapi.Mock) {
+				mp.On("GetEdgeHostnames", testutils.MockContext, papi.GetEdgeHostnamesRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+				}).Return(&papi.GetEdgeHostnamesResponse{}, nil)
+			},
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureStringf(t, "%s/%s", testDir, "invalid_edgehostname_domainprefix.tf"),
+					ExpectError: regexp.MustCompile("edge hostname must be 63 characters or less; got 64 characters"),
+				},
+			},
+		},
+		"valid edge hostname with hyphen in domain prefix name for .akamaized.net, create edge hostname": {
+			init: func(mp *papi.Mock, _ *hapi.Mock) {
+				mp.On("GetEdgeHostnames", testutils.MockContext, papi.GetEdgeHostnamesRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+				}).Return(&papi.GetEdgeHostnamesResponse{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
+						{
+							ID:                "ehn_123",
+							Domain:            "test2.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test2",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
+						},
+					}},
+				}, nil).Once()
+				mp.On("CreateEdgeHostname", testutils.MockContext, papi.CreateEdgeHostnameRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostname: papi.EdgeHostnameCreate{
+						ProductID:         "prd_2",
+						DomainPrefix:      "test-prefix1",
+						DomainSuffix:      "akamaized.net",
+						SecureNetwork:     "SHARED_CERT",
+						IPVersionBehavior: "IPV6_COMPLIANCE",
+					},
+				}).Return(&papi.CreateEdgeHostnameResponse{
+					EdgeHostnameID: "ehn_456",
+				}, nil)
+				mp.On("GetEdgeHostnames", testutils.MockContext, papi.GetEdgeHostnamesRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+				}).Return(&papi.GetEdgeHostnamesResponse{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
+						{
+							ID:                "ehn_456",
+							Domain:            "test-prefix1.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test-prefix1",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV6_COMPLIANCE",
+						},
+					}},
+				}, nil)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/%s", testDir, "valid_domain_name.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "id", "ehn_456"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "ip_behavior", "IPV6_COMPLIANCE"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "contract_id", "ctr_2"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "group_id", "grp_2"),
+						resource.TestCheckResourceAttr("akamai_edge_hostname.edgehostname", "edge_hostname", "test-prefix1.akamaized.net"),
+					),
+				},
+			},
+		},
 	}
 
 	for name, test := range tests {
