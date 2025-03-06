@@ -45,7 +45,7 @@ func resourceCPSDVEnrollment() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
-				Description: "Allow to duplicate common name",
+				Description: "Allow to duplicate common name. Default is false",
 			},
 			"sans": {
 				Type:        schema.TypeSet,
@@ -69,7 +69,7 @@ func resourceCPSDVEnrollment() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
-				Description: "Whether acknowledge warnings before certificate verification",
+				Description: "Whether acknowledge warnings before certificate verification. Default is false",
 			},
 			"admin_contact": {
 				Type:        schema.TypeSet,
@@ -83,7 +83,7 @@ func resourceCPSDVEnrollment() *schema.Resource {
 				Type:        schema.TypeString,
 				Default:     "default",
 				Optional:    true,
-				Description: "Certificate trust chain type",
+				Description: "Certificate trust chain type. Default is 'default'",
 			},
 			"csr": {
 				Type:        schema.TypeSet,

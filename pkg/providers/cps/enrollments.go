@@ -190,7 +190,8 @@ var (
 			"clone_dns_names": {
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Description: "Enable CPS to direct traffic using all the SANs listed in the SANs parameter when enrollment is created",
+				Default:     false,
+				Description: "Enable CPS to direct traffic using all the SANs listed in the SANs parameter when enrollment is created. Default is false",
 			},
 			"geography": {
 				Type:        schema.TypeString,
@@ -200,22 +201,26 @@ var (
 			"must_have_ciphers": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Mandatory Ciphers which are included for enrollment",
+				Default:     "ak-akamai-2020q1",
+				Description: "Mandatory Ciphers which are included for enrollment. Default is 'ak-akamai-2020q1'",
 			},
 			"ocsp_stapling": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Enable OCSP stapling",
+				Default:     "on",
+				Description: "Enable OCSP stapling. Default is 'on'",
 			},
 			"preferred_ciphers": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Preferred Ciphers which are included for enrollment",
+				Default:     "ak-akamai-2020q1",
+				Description: "Preferred Ciphers which are included for enrollment. Default is 'ak-akamai-2020q1'",
 			},
 			"quic_enabled": {
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Description: "Enable QUIC protocol",
+				Default:     false,
+				Description: "Enable QUIC protocol. Default is false",
 			},
 		},
 	}
