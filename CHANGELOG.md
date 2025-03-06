@@ -56,10 +56,12 @@
 
 #### BUG FIXES:
 
+
+* GTM
+  * Fixed a bug in `resource_akamai_gtm_property` where removing the last `liveness_test` block during an update incorrectly resulted in "no infra changes."([GH#603](https://github.com/akamai/terraform-provider-akamai/issues/603))
+  * Fixed a bug in `resource_akamai_gtm_property` where updating a property of type `static` without a `traffic_target` block now works correctly.
 * PAPI
   *  Fixed filtering by name for `akamai_cp_code` datasource. ([I#604](https://github.com/akamai/terraform-provider-akamai/issues/604)).
-
-
 
 
 

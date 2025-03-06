@@ -220,7 +220,6 @@ func resourceGTMv1Property() *schema.Resource {
 			"liveness_test": {
 				Type:             schema.TypeList,
 				Optional:         true,
-				MinItems:         1,
 				DiffSuppressFunc: livenessTestsDiffSuppress,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -521,15 +520,9 @@ func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m 
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	// Static properties cannot have traffic_targets. Non-static properties must
-	traffTargList, err := tf.GetInterfaceArrayValue("traffic_target", d)
-	if strings.ToUpper(propertyType) == "STATIC" && err == nil && (len(traffTargList) > 0) {
-		logger.Errorf("Property %s create error. Static property cannot have traffic targets", propertyName)
-		return diag.Errorf("property create error. Static property cannot have traffic targets")
-	}
-	if strings.ToUpper(propertyType) != "STATIC" && (err != nil || (traffTargList == nil || len(traffTargList) < 1)) {
-		logger.Errorf("Property %s create error. Property must have one or more traffic targets", propertyName)
-		return diag.Errorf("property create error. Property must have one or more traffic targets")
+
+	if err := validatePropertyTypeForTrafficTarget(d, logger, propertyName, propertyType); err != nil {
+		return diag.FromErr(err)
 	}
 
 	logger.Infof("Creating property [%s] in domain [%s]", propertyName, domain)
@@ -578,6 +571,20 @@ func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m 
 	d.SetId(propertyResourceID)
 	return resourceGTMv1PropertyRead(ctx, d, m)
 
+}
+
+func validatePropertyTypeForTrafficTarget(d *schema.ResourceData, logger akalog.Interface, propertyName string, propertyType string) error {
+	// Static properties cannot have traffic_targets. Non-static properties must
+	traffTargList, err := tf.GetInterfaceArrayValue("traffic_target", d)
+	if strings.EqualFold(propertyType, "STATIC") && err == nil && (len(traffTargList) > 0) {
+		logger.Errorf("Property %s create error. Static property cannot have traffic targets", propertyName)
+		return fmt.Errorf("property create error. Static property cannot have traffic targets")
+	}
+	if !strings.EqualFold(propertyType, "STATIC") && (err != nil || (traffTargList == nil || len(traffTargList) < 1)) {
+		logger.Errorf("Property %s create error. Property must have one or more traffic targets", propertyName)
+		return fmt.Errorf("property create error. Property must have one or more traffic targets")
+	}
+	return nil
 }
 
 func createPropertyWithRetry(ctx context.Context, meta meta.Meta, logger akalog.Interface, createPropertyRequest gtm.CreatePropertyRequest) (*gtm.CreatePropertyResponse, error) {
@@ -680,6 +687,21 @@ func resourceGTMv1PropertyUpdate(ctx context.Context, d *schema.ResourceData, m 
 		logger.Errorf("Property read error: %s", err.Error())
 		return diag.Errorf("property read error: %s", err.Error())
 	}
+
+	propertyName, err := tf.GetStringValue("name", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	propertyType, err := tf.GetStringValue("type", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := validatePropertyTypeForTrafficTarget(d, logger, propertyName, propertyType); err != nil {
+		return diag.FromErr(err)
+	}
+
 	newProp := createPropertyStruct(existProp)
 	logger.Debugf("Updating Property BEFORE: %v", existProp)
 	err = populatePropertyObject(d, newProp, m)
@@ -1022,9 +1044,7 @@ func populatePropertyObject(d *schema.ResourceData, prop *gtm.Property, m interf
 		return fmt.Errorf("property Object could not be populated: %v", err.Error())
 	}
 
-	if strings.ToUpper(ptype) != "STATIC" {
-		populateTrafficTargetObject(d, prop, m)
-	}
+	populateTrafficTargetObject(d, prop, m)
 	populateStaticRRSetObject(d, prop)
 	populateLivenessTestObject(d, prop)
 
@@ -1136,6 +1156,7 @@ func populateTrafficTargetObject(d *schema.ResourceData, prop *gtm.Property, m i
 		}
 		prop.TrafficTargets = trafficObjList
 	} else {
+		prop.TrafficTargets = []gtm.TrafficTarget{}
 		logger.Warnf("traffic_target not set in ResourceData: %s", err.Error())
 	}
 }
@@ -1156,6 +1177,10 @@ func populateTerraformTrafficTargetState(d *schema.ResourceData, prop *gtm.GetPr
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
+
+	// Collects the final list of traffic_targets by comparing the state with the API response
+	var updatedTtStateList []interface{}
+
 	for _, ttMap := range ttStateList {
 		tt := ttMap.(map[string]interface{})
 		objIndex := tt["datacenter_id"].(int)
@@ -1172,6 +1197,7 @@ func populateTerraformTrafficTargetState(d *schema.ResourceData, prop *gtm.GetPr
 		if ttObject.Precedence != nil {
 			tt["precedence"] = *ttObject.Precedence
 		}
+		updatedTtStateList = append(updatedTtStateList, ttMap)
 		// remove object
 		delete(objectInventory, objIndex)
 	}
@@ -1190,10 +1216,11 @@ func populateTerraformTrafficTargetState(d *schema.ResourceData, prop *gtm.GetPr
 				ttNew["precedence"] = mttObj.Precedence
 			}
 			ttStateList = append(ttStateList, ttNew)
+			updatedTtStateList = append(updatedTtStateList, ttNew)
 		}
 	}
 
-	return d.Set("traffic_target", ttStateList)
+	return d.Set("traffic_target", updatedTtStateList)
 }
 
 // Populate existing static_rr_sets object from resource data
@@ -1333,6 +1360,8 @@ func populateLivenessTestObject(d *schema.ResourceData, prop *gtm.Property) {
 			liveTestObjList[i] = lt
 		}
 		prop.LivenessTests = liveTestObjList
+	} else {
+		prop.LivenessTests = []gtm.LivenessTest{}
 	}
 }
 
@@ -1352,6 +1381,10 @@ func populateTerraformLivenessTestState(d *schema.ResourceData, prop *gtm.GetPro
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
+
+	// Collects the final list of liveness_tests by comparing the state with the API response
+	var updatedLtStateList []interface{}
+
 	for _, ltMap := range ltStateList {
 		lt := ltMap.(map[string]interface{})
 		objIndex := lt["name"].(string)
@@ -1402,6 +1435,7 @@ func populateTerraformLivenessTestState(d *schema.ResourceData, prop *gtm.GetPro
 			httpHeaderListNew[i] = httpHeaderNew
 		}
 		lt["http_header"] = httpHeaderListNew
+		updatedLtStateList = append(updatedLtStateList, ltMap)
 		// remove object
 		delete(objectInventory, objIndex)
 	}
@@ -1453,11 +1487,10 @@ func populateTerraformLivenessTestState(d *schema.ResourceData, prop *gtm.GetPro
 				httpHeaderListNew[i] = httpHeaderNew
 			}
 			ltNew["http_header"] = httpHeaderListNew
-			ltStateList = append(ltStateList, ltNew)
+			updatedLtStateList = append(updatedLtStateList, ltNew)
 		}
 	}
-
-	return d.Set("liveness_test", ltStateList)
+	return d.Set("liveness_test", updatedLtStateList)
 }
 
 func convertStringToInterfaceList(stringList []string, m interface{}) []interface{} {
@@ -1505,6 +1538,11 @@ func reconcileTerraformLists(terraList []interface{}, newList []interface{}, m i
 
 func trafficTargetDiffSuppress(_, _, _ string, d *schema.ResourceData) bool {
 	logger := log.Get("Akamai GTM", "trafficTargetDiffSuppress")
+
+	if d.GetRawConfig().GetAttr("traffic_target").LengthInt() == 0 {
+		return false
+	}
+
 	oldTarget, newTarget := d.GetChange("traffic_target")
 
 	oldTrafficTarget, ok := oldTarget.([]interface{})
@@ -1560,6 +1598,11 @@ func createPropertyStruct(prop *gtm.GetPropertyResponse) *gtm.Property {
 }
 
 func livenessTestsDiffSuppress(_, _, _ string, d *schema.ResourceData) bool {
+
+	if d.GetRawConfig().GetAttr("liveness_test").LengthInt() == 0 {
+		return false
+	}
+
 	oldLTests, newLTests := d.GetChange("liveness_test")
 	oldLivenessTest := oldLTests.([]any)
 	newLivenessTest := newLTests.([]any)
