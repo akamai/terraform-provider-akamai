@@ -75,7 +75,7 @@
 
 
 
-* Added default values for following fields in the `akamai_cps_dv_enrollment` and `akamai_cps_third_party_enrollment` resources to fix the constant diff:
+* Added default values for following fields in the `akamai_cps_dv_enrollment` and `akamai_cps_third_party_enrollment` resources to fix the constant diff ([I#607](https://github.com/akamai/terraform-provider-akamai/issues/607)):
   * `clone_dns_names`, default is `false`
   * `must_have_ciphers`, default is `ak-akamai-2020q1`
   * `ocsp_stapling`, default is `on`
