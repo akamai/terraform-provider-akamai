@@ -7,16 +7,16 @@ import (
 
 func init() {
 	schemasRegistry.register(RuleFormat{
-		version:          "rules_v2025_01_13",
-		behaviorsSchemas: getBehaviorsSchemaV20250113(),
-		criteriaSchemas:  getCriteriaSchemaV20250113(),
+		version:          "rules_v2025_02_18",
+		behaviorsSchemas: getBehaviorsSchemaV20250218(),
+		criteriaSchemas:  getCriteriaSchemaV20250218(),
 		typeMappings:     map[string]interface{}{"adScalerCircuitBreaker.returnErrorResponseCodeBased.408": 408, "adScalerCircuitBreaker.returnErrorResponseCodeBased.500": 500, "adScalerCircuitBreaker.returnErrorResponseCodeBased.502": 502, "adScalerCircuitBreaker.returnErrorResponseCodeBased.504": 504},
 		nameMappings:     map[string]string{"allowFcmParentOverride": "allowFCMParentOverride", "allowHttpsCacheKeySharing": "allowHTTPSCacheKeySharing", "allowHttpsDowngrade": "allowHTTPSDowngrade", "allowHttpsUpgrade": "allowHTTPSUpgrade", "c": "C", "canBeCa": "canBeCA", "cn": "CN", "conditionalHttpStatus": "conditionalHTTPStatus", "contentCharacteristicsAmd": "contentCharacteristicsAMD", "contentCharacteristicsDd": "contentCharacteristicsDD", "dcpAuthHmacTransformation": "dcpAuthHMACTransformation", "detectSmartDnsProxy": "detectSmartDNSProxy", "detectSmartDnsProxyAction": "detectSmartDNSProxyAction", "detectSmartDnsProxyRedirecturl": "detectSmartDNSProxyRedirecturl", "enableCmcdSegmentPrefetch": "enableCMCDSegmentPrefetch", "enableEs256": "enableES256", "enableIpAvoidance": "enableIPAvoidance", "enableIpProtection": "enableIPProtection", "enableIpRedirectOnDeny": "enableIPRedirectOnDeny", "enableRs256": "enableRS256", "enableTokenInUri": "enableTokenInURI", "g2OToken": "g2oToken", "g2Oheader": "g2oheader", "i18NCharset": "i18nCharset", "i18NStatus": "i18nStatus", "isCertificateSniOnly": "isCertificateSNIOnly", "issuerRdns": "issuerRDNs", "logEdgeIp": "logEdgeIP", "o": "O", "originSettings": "origin_settings", "ou": "OU", "overrideIpAddresses": "overrideIPAddresses", "segmentDurationDash": "segmentDurationDASH", "segmentDurationDashCustom": "segmentDurationDASHCustom", "segmentDurationHds": "segmentDurationHDS", "segmentDurationHdsCustom": "segmentDurationHDSCustom", "segmentDurationHls": "segmentDurationHLS", "segmentDurationHlsCustom": "segmentDurationHLSCustom", "segmentSizeDash": "segmentSizeDASH", "segmentSizeHds": "segmentSizeHDS", "segmentSizeHls": "segmentSizeHLS", "sf3COriginHost": "sf3cOriginHost", "sf3COriginHostHeader": "sf3cOriginHostHeader", "smartDnsProxy": "smartDNSProxy", "standardTlsMigration": "standardTLSMigration", "standardTlsMigrationOverride": "standardTLSMigrationOverride", "subjectCn": "subjectCN", "subjectRdns": "subjectRDNs", "titleAicMobile": "title_aic_mobile", "titleAicNonmobile": "title_aic_nonmobile", "tokenAuthDashTitle": "tokenAuthDASHTitle", "tokenAuthHlsTitle": "tokenAuthHLSTitle"},
 		shouldFlatten:    []string{"apiPrioritization.cloudletPolicy", "apiPrioritization.throttledCpCode", "apiPrioritization.throttledCpCode.cpCodeLimits", "apiPrioritization.netStorage", "applicationLoadBalancer.cloudletPolicy", "applicationLoadBalancer.allDownNetStorage", "audienceSegmentation.cloudletPolicy", "cpCode.value", "cpCode.value.cpCodeLimits", "edgeRedirector.cloudletPolicy", "failAction.netStorageHostname", "failAction.cpCode", "failAction.cpCode.cpCodeLimits", "firstPartyMarketing.cloudletPolicy", "firstPartyMarketingPlus.cloudletPolicy", "forwardRewrite.cloudletPolicy", "imageAndVideoManager.cpCodeOriginal", "imageAndVideoManager.cpCodeOriginal.cpCodeLimits", "imageAndVideoManager.cpCodeTransformed", "imageAndVideoManager.cpCodeTransformed.cpCodeLimits", "imageManager.cpCodeOriginal", "imageManager.cpCodeOriginal.cpCodeLimits", "imageManager.cpCodeTransformed", "imageManager.cpCodeTransformed.cpCodeLimits", "imageManagerVideo.cpCodeOriginal", "imageManagerVideo.cpCodeOriginal.cpCodeLimits", "imageManagerVideo.cpCodeTransformed", "imageManagerVideo.cpCodeTransformed.cpCodeLimits", "origin.netStorage", "origin.customCertificateAuthorities.subjectRDNs", "origin.customCertificateAuthorities.issuerRDNs", "origin.customCertificates.subjectRDNs", "origin.customCertificates.issuerRDNs", "phasedRelease.cloudletPolicy", "requestControl.cloudletPolicy", "requestControl.netStorage", "siteShield.ssmap", "visitorPrioritization.cloudletPolicy", "visitorPrioritization.waitingRoomCpCode", "visitorPrioritization.waitingRoomCpCode.cpCodeLimits", "visitorPrioritization.waitingRoomNetStorage", "webApplicationFirewall.firewallConfiguration", "matchCpCode.value", "matchCpCode.value.cpCodeLimits"},
 	})
 }
 
-func getBehaviorsSchemaV20250113() map[string]*schema.Schema {
+func getBehaviorsSchemaV20250218() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"ad_scaler_circuit_breaker": {
 			Optional:    true,
@@ -4359,6 +4359,37 @@ func getBehaviorsSchemaV20250113() map[string]*schema.Schema {
 				},
 			},
 		},
+		"early_data_advanced": {
+			Optional:    true,
+			Type:        schema.TypeList,
+			Description: "This behavior cannot be used in includes.",
+			MaxItems:    1,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"locked": {
+						Optional:    true,
+						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
+						Type:        schema.TypeBool,
+					},
+					"uuid": {
+						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
+						Optional:         true,
+						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
+						Type:             schema.TypeString,
+					},
+					"template_uuid": {
+						Optional:    true,
+						Description: "This option is for internal usage only.",
+						Type:        schema.TypeString,
+					},
+					"allow_query_string_params": {
+						Optional:    true,
+						Description: "",
+						Type:        schema.TypeBool,
+					},
+				},
+			},
+		},
 		"early_hints": {
 			Optional:    true,
 			Type:        schema.TypeList,
@@ -6884,6 +6915,24 @@ func getBehaviorsSchemaV20250113() map[string]*schema.Schema {
 						Optional:         true,
 						Description:      "Specifies a location for your site's heaviest traffic, for use in caching derivatives on edge servers.",
 						Type:             schema.TypeString,
+					},
+					"cloud_wrapper_enabled": {
+						Optional:    true,
+						Description: "",
+						Type:        schema.TypeBool,
+					},
+					"cloud_wrapper_rollout_start": {
+						Optional:    true,
+						Description: "",
+						Type:        schema.TypeBool,
+					},
+					"cloud_wrapper_url_path": {
+						Optional:    true,
+						Description: "",
+						Type:        schema.TypeList,
+						Elem: &schema.Schema{
+							Type: schema.TypeString,
+						},
 					},
 					"traffic_title": {
 						Optional:    true,
@@ -14328,7 +14377,7 @@ func getBehaviorsSchemaV20250113() map[string]*schema.Schema {
 	}
 }
 
-func getCriteriaSchemaV20250113() map[string]*schema.Schema {
+func getCriteriaSchemaV20250218() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"advanced_im_match": {
 			Optional:    true,

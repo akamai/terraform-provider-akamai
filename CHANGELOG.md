@@ -51,7 +51,8 @@
     It allows the directory with rule snippets or any of its subdirectories to be a symlink.
 
 
-
+* PAPI
+  * Added support for the new rule format `v2025-02-18`. List of changes can be found [here](https://techdocs.akamai.com/terraform/docs/rule-format-changes#v2025-02-18).
   
 
 #### BUG FIXES:
