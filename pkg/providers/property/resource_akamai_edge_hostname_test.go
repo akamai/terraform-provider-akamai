@@ -2004,77 +2004,47 @@ func TestResourceEdgeHostname(t *testing.T) {
 				},
 			},
 		},
-		"invalid edge hostname domain prefix for .akamaized.net - illegal character # used in the domain prefix name": {
-			init: func(mp *papi.Mock, _ *hapi.Mock) {
-				mp.On("GetEdgeHostnames", testutils.MockContext, papi.GetEdgeHostnamesRequest{
-					ContractID: "ctr_2",
-					GroupID:    "grp_2",
-				}).Return(&papi.GetEdgeHostnamesResponse{}, nil)
-			},
+		"invalid edge hostname domain prefix for the akamaized.net domain suffix - The character '#' isn't allowed in the domain prefix.": {
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureStringf(t, "%s/%s", testDir, "incorrect_edgehostname_domainprefix.tf"),
-					ExpectError: regexp.MustCompile("edge hostname for \"akamaized.net\" suffix must begin with a letter, end with a letter or digit and only contain letters, digits and hyphens"),
+					Config:      testutils.LoadFixtureStringf(t, "%s/%s", testDir, "invalid_char_#_in_edgehostname_domainprefix.tf"),
+					ExpectError: regexp.MustCompile("A prefix for the edge hostname with the \"akamaized.net\" suffix must begin with a letter, end with a letter or digit, and contain only letters, digits, and hyphens, for example, abc-def, or abc-123"),
 				},
 			},
 		},
-		"invalid edge hostname domain prefix for .akamaized.net - non utf8 character(t中esãt) used in the domain prefix name": {
-			init: func(mp *papi.Mock, _ *hapi.Mock) {
-				mp.On("GetEdgeHostnames", testutils.MockContext, papi.GetEdgeHostnamesRequest{
-					ContractID: "ctr_2",
-					GroupID:    "grp_2",
-				}).Return(&papi.GetEdgeHostnamesResponse{}, nil)
-			},
+		"invalid edge hostname domain prefix for the `akamaized.net` domain suffix. The domain prefix contains non-UTF-8 characters ('t中esãt').": {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureStringf(t, "%s/%s", testDir, "incorrect_edgehostname_domainprefix_3.tf"),
-					ExpectError: regexp.MustCompile("edge hostname for \"akamaized.net\" suffix must begin with a letter, end with a letter or digit and only contain letters, digits and hyphens"),
+					ExpectError: regexp.MustCompile("A prefix for the edge hostname with the \"akamaized.net\" suffix must begin with a letter, end with a letter or digit, and contain only letters, digits, and hyphens, for example, abc-def, or abc-123"),
 				},
 			},
 		},
-		"invalid edge hostname domain prefix for .akamaized.net - domain prefix name ends with hyphen": {
-			init: func(mp *papi.Mock, _ *hapi.Mock) {
-				mp.On("GetEdgeHostnames", testutils.MockContext, papi.GetEdgeHostnamesRequest{
-					ContractID: "ctr_2",
-					GroupID:    "grp_2",
-				}).Return(&papi.GetEdgeHostnamesResponse{}, nil)
-			},
+		"invalid edge hostname domain prefix for `akamaized.net`. The domain prefix can't end with a hyphen": {
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureStringf(t, "%s/%s", testDir, "incorrect_edgehostname_domainprefix_1.tf"),
-					ExpectError: regexp.MustCompile("edge hostname for \"akamaized.net\" suffix must begin with a letter, end with a letter or digit and only contain letters, digits and hyphens"),
+					Config:      testutils.LoadFixtureStringf(t, "%s/%s", testDir, "edgehostname_domainprefix_ends_with_invalid_char_-.tf"),
+					ExpectError: regexp.MustCompile("A prefix for the edge hostname with the \"akamaized.net\" suffix must begin with a letter, end with a letter or digit, and contain only letters, digits, and hyphens, for example, abc-def, or abc-123"),
 				},
 			},
 		},
-		"invalid edge hostname domain prefix for .edgesuite.net - domain prefix name ends with 2 dots": {
-			init: func(mp *papi.Mock, _ *hapi.Mock) {
-				mp.On("GetEdgeHostnames", testutils.MockContext, papi.GetEdgeHostnamesRequest{
-					ContractID: "ctr_2",
-					GroupID:    "grp_2",
-				}).Return(&papi.GetEdgeHostnamesResponse{}, nil)
-			},
+		"invalid edge hostname domain prefix for `edgesuite.net`. The domain prefix can't end with two consecutive dots": {
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureStringf(t, "%s/%s", testDir, "incorrect_edgehostname_domainprefix_2.tf"),
-					ExpectError: regexp.MustCompile("edge hostname for \"edgesuite.net\" suffix must begin with a letter, end with a letter, digit or dot and only contain letters, digits, dots and hyphens"),
+					Config:      testutils.LoadFixtureStringf(t, "%s/%s", testDir, "edgehostname_domainprefix_ends_with_consecutive_dots.tf"),
+					ExpectError: regexp.MustCompile("A prefix for the edge hostname with the \"edgesuite.net\" suffix must begin with a letter, end with a letter, digit, or dot, and contain only letters, digits, dots, and hyphens, for example, abc-def.123.456., or abc.123-def"),
 				},
 			},
 		},
-		"invalid edge hostname domain prefix - domain prefix length greater than 63": {
-			init: func(mp *papi.Mock, _ *hapi.Mock) {
-				mp.On("GetEdgeHostnames", testutils.MockContext, papi.GetEdgeHostnamesRequest{
-					ContractID: "ctr_2",
-					GroupID:    "grp_2",
-				}).Return(&papi.GetEdgeHostnamesResponse{}, nil)
-			},
+		"invalid edge hostname domain prefix. The domain prefix exceeds the maximum allowed length of 63 characters": {
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureStringf(t, "%s/%s", testDir, "invalid_edgehostname_domainprefix.tf"),
-					ExpectError: regexp.MustCompile("edge hostname must be 63 characters or less; got 64 characters"),
+					Config:      testutils.LoadFixtureStringf(t, "%s/%s", testDir, "edgehostname_domainprefix_more_than_allowed_length.tf"),
+					ExpectError: regexp.MustCompile("The edge hostname prefix must be 63 characters or less; you provided 64 characters"),
 				},
 			},
 		},
-		"valid edge hostname with hyphen in domain prefix name for .akamaized.net, create edge hostname": {
+		"valid edge hostname with hyphen in domain prefix name for akamaized.net, create edge hostname": {
 			init: func(mp *papi.Mock, _ *hapi.Mock) {
 				mp.On("GetEdgeHostnames", testutils.MockContext, papi.GetEdgeHostnamesRequest{
 					ContractID: "ctr_2",

@@ -18,6 +18,7 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v7/pkg/log"
 	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 
+	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -77,7 +78,7 @@ var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
 		Required:         true,
 		ForceNew:         true,
 		DiffSuppressFunc: diffSuppressEdgeHostname,
-		ValidateDiagFunc: tf.IsNotBlank,
+		ValidateDiagFunc: tf.AggregateValidations(tf.IsNotBlank, validateDomainPrefix),
 		StateFunc:        appendDefaultSuffixToEdgeHostname,
 	},
 	"ttl": {
@@ -177,10 +178,6 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 	newHostname.ProductID = productID
 	newHostname.DomainSuffix, newHostname.SecureNetwork = parseEdgeHostname(edgeHostname)
 	newHostname.DomainPrefix = strings.TrimSuffix(edgeHostname, "."+newHostname.DomainSuffix)
-	err = validateDomainPrefix(newHostname.DomainPrefix, newHostname.DomainSuffix)
-	if err != nil {
-		return diag.FromErr(err)
-	}
 	// ip_behavior is required value in schema.
 	newHostname.IPVersionBehavior = strings.ToUpper(d.Get("ip_behavior").(string))
 
@@ -252,21 +249,29 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 	return resourceSecureEdgeHostNameRead(ctx, d, meta)
 }
 
-func validateDomainPrefix(domainPrefix, domainSuffix string) error {
+func validateDomainPrefix(v interface{}, _ cty.Path) diag.Diagnostics {
+
+	edgeHostname, ok := v.(string)
+	if !ok {
+		return diag.Errorf("expected string, got %T", v)
+	}
+	domainSuffix, _ := parseEdgeHostname(edgeHostname)
+	domainPrefix := strings.TrimSuffix(edgeHostname, "."+domainSuffix)
+
 	if len(domainPrefix) > 63 {
-		return fmt.Errorf("edge hostname must be 63 characters or less; got %d characters", len(domainPrefix))
+		return diag.Errorf("The edge hostname prefix must be 63 characters or less; you provided %d characters", len(domainPrefix))
 	}
 
-	pattern := domainPrefixPatterns[domainSuffix]
-	if pattern == nil {
+	pattern, exists := domainPrefixPatterns[domainSuffix]
+	if !exists {
 		pattern = domainPrefixPatterns["default"]
 	}
 
 	if !pattern.MatchString(domainPrefix) {
 		if domainSuffix == "akamaized.net" {
-			return fmt.Errorf("edge hostname for \"akamaized.net\" suffix must begin with a letter, end with a letter or digit and only contain letters, digits and hyphens")
+			return diag.Errorf(`A prefix for the edge hostname with the "akamaized.net" suffix must begin with a letter, end with a letter or digit, and contain only letters, digits, and hyphens, for example, abc-def, or abc-123.`)
 		}
-		return fmt.Errorf("edge hostname for \"%s\" suffix must begin with a letter, end with a letter, digit or dot and only contain letters, digits, dots and hyphens", domainSuffix)
+		return diag.Errorf(`A prefix for the edge hostname with the "%s" suffix must begin with a letter, end with a letter, digit, or dot, and contain only letters, digits, dots, and hyphens, for example, abc-def.123.456., or abc.123-def.`, domainSuffix)
 	}
 	return nil
 }
