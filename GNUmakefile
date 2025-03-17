@@ -1,6 +1,9 @@
 TEST ?= $$(go list ./... | grep -v retryablehttp)
 PKG_NAME = akamai
 
+GOIMPORTS_VERSION = v0.24.0
+GOLANGCI_LINT_VERSION = v1.63.4
+
 # Local provider install parameters
 version = 0.11.0
 registry_name = registry.terraform.io
@@ -27,9 +30,8 @@ $(BIN)/%: | $(BIN) ; $(info $(M) Installing $(PACKAGE)...)
 	env GOBIN=$(BIN) $(GOCMD) install $(PACKAGE)
 
 GOIMPORTS = $(BIN)/goimports
-$(BIN)/goimports: PACKAGE=golang.org/x/tools/cmd/goimports@v0.24.0
+$(BIN)/goimports: PACKAGE=golang.org/x/tools/cmd/goimports@$(GOIMPORTS_VERSION)
 
-GOLANGCI_LINT_VERSION = v1.63.4
 GOLANGCILINT = $(BIN)/golangci-lint
 $(BIN)/golangci-lint: ; $(info $(M) Installing golangci-lint...) @
 	$Q curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(BIN) $(GOLANGCI_LINT_VERSION)
