@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 
@@ -71,11 +72,22 @@ func overrideRetryPolicy(basePolicy retryablehttp.CheckRetry) retryablehttp.Chec
 			return false, ctx.Err()
 		}
 
-		// Retry all PAPI requests resulting status code 429
-		// The backoff time is calculated in getXRateLimitBackoff
-		is429 := resp != nil && resp.StatusCode == http.StatusTooManyRequests
-		if is429 && strings.HasPrefix(resp.Request.URL.Path, "/papi/") {
-			return true, nil
+		if resp != nil && resp.StatusCode == http.StatusTooManyRequests {
+			isPatchHostnameURL, e := regexp.MatchString(
+				regexp.MustCompile(`^/papi/v1/properties/[^/]+/hostnames$`).String(),
+				resp.Request.URL.Path)
+			if e != nil {
+				return false, e
+			}
+			// If the request is PATCH hostname bucket resulting in 429 (default cert limit exceeded), do not retry it
+			if isPatchHostnameURL && resp.Request.Method == http.MethodPatch {
+				return false, nil
+			}
+			// Retry all PAPI requests resulting in status code 429
+			// The backoff time is calculated in getXRateLimitBackoff
+			if strings.HasPrefix(resp.Request.URL.Path, "/papi/") {
+				return true, nil
+			}
 		}
 
 		var urlErr *url.Error

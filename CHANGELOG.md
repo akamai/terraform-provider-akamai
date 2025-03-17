@@ -63,6 +63,9 @@
   * Added the `follow_links` boolean attribute to the `akamai_property_rules_template` data source.
     It allows the directory with rule snippets or any of its subdirectories to be a symlink.
 
+* PAPI
+  * Added the `akamai_property_hostname_bucket` resource to manage hostnames assigned to the property's bucket.
+
 
 * PAPI
   * Added support for the new rule format `v2025-02-18`. List of changes can be found [here](https://techdocs.akamai.com/terraform/docs/rule-format-changes#v2025-02-18).

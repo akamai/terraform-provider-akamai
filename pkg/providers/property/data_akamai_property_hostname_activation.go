@@ -28,7 +28,7 @@ type hostnameActivationDataSource struct {
 	meta meta.Meta
 }
 
-type hostnames struct {
+type hostnameModel struct {
 	EdgeHostnameID       types.String `tfsdk:"edge_hostname_id"`
 	CnameFrom            types.String `tfsdk:"cname_from"`
 	CnameTo              types.String `tfsdk:"cname_to"`
@@ -37,21 +37,21 @@ type hostnames struct {
 }
 
 type hostnameActivationDataSourceModel struct {
-	PropertyID           types.String `tfsdk:"property_id"`
-	HostnameActivationID types.String `tfsdk:"hostname_activation_id"`
-	ContractID           types.String `tfsdk:"contract_id"`
-	GroupID              types.String `tfsdk:"group_id"`
-	IncludeHostnames     types.Bool   `tfsdk:"include_hostnames"`
-	AccountID            types.String `tfsdk:"account_id"`
-	ActivationType       types.String `tfsdk:"activation_type"`
-	Network              types.String `tfsdk:"network"`
-	Note                 types.String `tfsdk:"note"`
-	NotifyEmails         types.List   `tfsdk:"notify_emails"`
-	PropertyName         types.String `tfsdk:"property_name"`
-	Status               types.String `tfsdk:"status"`
-	SubmitDate           types.String `tfsdk:"submit_date"`
-	UpdateDate           types.String `tfsdk:"update_date"`
-	Hostnames            []hostnames  `tfsdk:"hostnames"`
+	PropertyID           types.String    `tfsdk:"property_id"`
+	HostnameActivationID types.String    `tfsdk:"hostname_activation_id"`
+	ContractID           types.String    `tfsdk:"contract_id"`
+	GroupID              types.String    `tfsdk:"group_id"`
+	IncludeHostnames     types.Bool      `tfsdk:"include_hostnames"`
+	AccountID            types.String    `tfsdk:"account_id"`
+	ActivationType       types.String    `tfsdk:"activation_type"`
+	Network              types.String    `tfsdk:"network"`
+	Note                 types.String    `tfsdk:"note"`
+	NotifyEmails         types.List      `tfsdk:"notify_emails"`
+	PropertyName         types.String    `tfsdk:"property_name"`
+	Status               types.String    `tfsdk:"status"`
+	SubmitDate           types.String    `tfsdk:"submit_date"`
+	UpdateDate           types.String    `tfsdk:"update_date"`
+	Hostnames            []hostnameModel `tfsdk:"hostnames"`
 }
 
 func (p *hostnameActivationDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -82,21 +82,21 @@ func (p *hostnameActivationDataSource) Schema(_ context.Context, _ datasource.Sc
 		Attributes: map[string]schema.Attribute{
 			"property_id": schema.StringAttribute{
 				Required:    true,
-				Description: "Unique identifier for the property.",
+				Description: "The unique identifier for the property.",
 			},
 			"hostname_activation_id": schema.StringAttribute{
 				Required:    true,
-				Description: "Unique identifier for the hostname activation.",
+				Description: "The unique identifier for the hostname activation.",
 			},
 			"contract_id": schema.StringAttribute{
 				Optional:    true,
 				Computed:    true,
-				Description: "Unique identifier for the contract.",
+				Description: "The unique identifier for the contract.",
 			},
 			"group_id": schema.StringAttribute{
 				Optional:    true,
 				Computed:    true,
-				Description: "Unique identifier for the group.",
+				Description: "The unique identifier for the group.",
 			},
 			"include_hostnames": schema.BoolAttribute{
 				Optional:    true,
@@ -108,11 +108,11 @@ func (p *hostnameActivationDataSource) Schema(_ context.Context, _ datasource.Sc
 			},
 			"activation_type": schema.StringAttribute{
 				Computed:    true,
-				Description: "Either ACTIVATE or DEACTIVATE.",
+				Description: "The activation type, either `ACTIVATE` or `DEACTIVATE`.",
 			},
 			"network": schema.StringAttribute{
 				Computed:    true,
-				Description: "The network of activation, either STAGING or PRODUCTION.",
+				Description: "The network of activation, either `STAGING` or `PRODUCTION`.",
 			},
 			"note": schema.StringAttribute{
 				Computed:    true,
@@ -128,20 +128,23 @@ func (p *hostnameActivationDataSource) Schema(_ context.Context, _ datasource.Sc
 				Description: "A descriptive name for the property with the hostname bucket the activated property hostnames belong to.",
 			},
 			"status": schema.StringAttribute{
-				Computed:    true,
-				Description: "The activation's status. ACTIVE if currently serving traffic. INACTIVE if another activation has superseded this one. PENDING if not yet active. ABORTED if the client followed up with a DELETE request in time. FAILED if the activation causes a range of edge network errors that may cause a fallback to the previous activation. PENDING_DEACTIVATION or DEACTIVATED when the activationType is DEACTIVATE to no longer serve traffic.",
+				Computed: true,
+				Description: "The activation's status. `ACTIVE` if currently serving traffic. `INACTIVE` if another activation has superseded this one. " +
+					"`PENDING` if not yet active. `ABORTED` if the client followed up with a `DELETE` request in time. " +
+					"`FAILED` if the activation causes a range of edge network errors that may cause a fallback to the previous activation. " +
+					"`PENDING_DEACTIVATION` or `DEACTIVATED` when the `activation_type` is `DEACTIVATE` to no longer serve traffic.",
 			},
 			"submit_date": schema.StringAttribute{
 				Computed:    true,
-				Description: "A date stamp marking when the activation initiated.",
+				Description: "The ISO 8601 timestamp indicating when the activation was initiated.",
 			},
 			"update_date": schema.StringAttribute{
 				Computed:    true,
-				Description: "A date stamp marking when the status last changed.",
+				Description: "The ISO 8601 timestamp indicating when the `status` last changed.",
 			},
 			"hostnames": schema.ListNestedAttribute{
 				Computed:    true,
-				Description: "The set of activated hostnames.",
+				Description: "The set of hostnames activated within a given property activation on the staging and production networks.",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"edge_hostname_id": schema.StringAttribute{
@@ -157,12 +160,14 @@ func (p *hostnameActivationDataSource) Schema(_ context.Context, _ datasource.Sc
 							Description: "The edge hostname you point the property hostname to so that you can start serving traffic through Akamai servers.",
 						},
 						"cert_provisioning_type": schema.StringAttribute{
-							Computed:    true,
-							Description: "Indicates the certificate's provisioning type. Either CPS_MANAGED type for the certificates you create with the Certificate Provisioning System API (CPS), or DEFAULT for the Default Domain Validation (DV) certificates created automatically. Note that you can't specify the DEFAULT value if your property hostname uses the akamaized.net domain suffix.",
+							Computed: true,
+							Description: "Indicates the certificate's provisioning type. Either `CPS_MANAGED` for the certificates you create with the Certificate Provisioning System (CPS) API, " +
+								"or `DEFAULT` for the Domain Validation (DV) certificates created automatically. " +
+								"Note that you can't specify the `DEFAULT` value if your property hostname uses the `akamaized.net` domain suffix.",
 						},
 						"action": schema.StringAttribute{
 							Computed:    true,
-							Description: "Specifies whether following activation add or removes hostname item. Available options are `ADD` and `REMOVE`.",
+							Description: "Specifies whether a given activation adds or removes a hostname item. Available options are `ADD` and `REMOVE`.",
 						},
 					},
 				},
@@ -219,13 +224,13 @@ func (m *hostnameActivationDataSourceModel) assignActivationToModel(ctx context.
 		return data, diags
 	}
 	data.NotifyEmails = notifyEmails
-	for _, hostname := range activation.HostnameActivation.Hostnames {
-		var hostnameData hostnames
-		hostnameData.EdgeHostnameID = types.StringValue(strings.TrimPrefix(hostname.EdgeHostnameID, "ehn_"))
-		hostnameData.CnameTo = types.StringValue(hostname.CnameTo)
-		hostnameData.CnameFrom = types.StringValue(hostname.CnameFrom)
-		hostnameData.CertProvisioningType = types.StringValue(hostname.CertProvisioningType)
-		hostnameData.Action = types.StringValue(hostname.Action)
+	for _, h := range activation.HostnameActivation.Hostnames {
+		var hostnameData hostnameModel
+		hostnameData.EdgeHostnameID = types.StringValue(strings.TrimPrefix(h.EdgeHostnameID, "ehn_"))
+		hostnameData.CnameTo = types.StringValue(h.CnameTo)
+		hostnameData.CnameFrom = types.StringValue(h.CnameFrom)
+		hostnameData.CertProvisioningType = types.StringValue(h.CertProvisioningType)
+		hostnameData.Action = types.StringValue(h.Action)
 		data.Hostnames = append(data.Hostnames, hostnameData)
 	}
 	return data, diags
