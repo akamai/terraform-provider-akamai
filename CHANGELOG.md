@@ -71,6 +71,26 @@
   * Added support for the new rule format `v2025-02-18`. List of changes can be found [here](https://techdocs.akamai.com/terraform/docs/rule-format-changes#v2025-02-18).
   
 
+
+
+
+
+* PAPI 
+  * Added the filter_pending_default_certs attribute to the akamai_property_hostnames data source, enabling filtering of 
+    HOSTNAME_BUCKET type hostnames to include only DEFAULT cert types with a PENDING state in staging or production.
+
+
+
+
+
+
+
+
+
+
+
+
+
 #### BUG FIXES:
 
 

@@ -116,6 +116,12 @@ func dataSourcePropertyHostnames() *schema.Resource {
 					},
 				},
 			},
+			"filter_pending_default_certs": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Allow to include `DEFAULT` cert types that have staging or production in a `PENDING` state. Default is false.",
+			},
 		},
 	}
 }
@@ -154,6 +160,11 @@ func dataPropertyHostnamesRead(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 
+	filterCerts, err := tf.GetBoolValue("filter_pending_default_certs", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	property, err := client.GetProperty(ctx, papi.GetPropertyRequest{ContractID: contractID, GroupID: groupID, PropertyID: propertyID})
 	if err != nil {
 		log.Error("could not fetch property", "error", err)
@@ -165,7 +176,7 @@ func dataPropertyHostnamesRead(ctx context.Context, d *schema.ResourceData, m in
 		if version != 0 {
 			diags = append(diags, diag.Diagnostic{Severity: diag.Warning, Summary: "provided `version` for HOSTNAME_BUCKET property, ignoring provided value"})
 		}
-		hostnames, err := getAllActivePropertyHostnames(ctx, client, contractID, groupID, propertyID)
+		hostnames, err := getAllActivePropertyHostnames(ctx, client, contractID, groupID, propertyID, filterCerts)
 		if err != nil {
 			return append(diags, diag.FromErr(err)...)
 		}
@@ -234,7 +245,7 @@ func dataPropertyHostnamesRead(ctx context.Context, d *schema.ResourceData, m in
 
 }
 
-func getAllActivePropertyHostnames(ctx context.Context, client papi.PAPI, contractID string, groupID string, propertyID string) ([]papi.HostnameItem, error) {
+func getAllActivePropertyHostnames(ctx context.Context, client papi.PAPI, contractID, groupID, propertyID string, filterCerts bool) ([]papi.HostnameItem, error) {
 	offset := 0
 	returnedResults := listActivePropertyHostnamesResultsPerPage
 	var allHostnames []papi.HostnameItem
@@ -252,8 +263,20 @@ func getAllActivePropertyHostnames(ctx context.Context, client papi.PAPI, contra
 			return nil, fmt.Errorf("error fetching property hostnames: %w", err)
 		}
 
+		if filterCerts {
+			for _, item := range hostnames.Hostnames.Items {
+				prodPending := item.ProductionCertType == "DEFAULT" && item.CertStatus.Production[0].Status == "PENDING"
+				stagingPending := item.StagingCertType == "DEFAULT" && item.CertStatus.Staging[0].Status == "PENDING"
+
+				if prodPending || stagingPending {
+					allHostnames = append(allHostnames, item)
+				}
+			}
+		} else {
+			allHostnames = append(allHostnames, hostnames.Hostnames.Items...)
+		}
+
 		returnedResults = len(hostnames.Hostnames.Items)
-		allHostnames = append(allHostnames, hostnames.Hostnames.Items...)
 		offset += listActivePropertyHostnamesResultsPerPage
 	}
 

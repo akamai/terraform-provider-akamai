@@ -169,6 +169,252 @@ func TestDataPropertyHostnames(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
+	t.Run("list hostnames - filter_pending_default_certs set to true", func(t *testing.T) {
+		client := &papi.Mock{}
+
+		mockGetPropertyWithPropertyType(client, ptr.To("HOSTNAME_BUCKET")).Times(3)
+
+		hostnames := buildHostnameItems(12)
+
+		hostnames = append(hostnames, []papi.HostnameItem{
+			{
+				CertStatus: &papi.CertStatusItem{
+					ValidationCname: papi.ValidationCname{
+						Hostname: "cnamef13",
+						Target:   "cnamet13",
+					},
+					Staging:    []papi.StatusItem{{Status: "PENDING"}},
+					Production: []papi.StatusItem{{Status: "PENDING"}},
+				},
+				CnameFrom:                "cnamef13",
+				CnameType:                papi.HostnameCnameTypeEdgeHostname,
+				ProductionCertType:       papi.CertTypeCPSManaged,
+				ProductionCnameTo:        "cnamet13",
+				ProductionEdgeHostnameId: "ehn13",
+				StagingCertType:          papi.CertTypeCPSManaged,
+				StagingCnameTo:           "cnamet13",
+				StagingEdgeHostnameId:    "ehn13",
+			},
+			{
+				CertStatus: &papi.CertStatusItem{
+					ValidationCname: papi.ValidationCname{
+						Hostname: "cnamef14",
+						Target:   "cnamet14",
+					},
+					Staging:    []papi.StatusItem{{Status: "DEPLOYED"}},
+					Production: []papi.StatusItem{{Status: "DEPLOYED"}},
+				},
+				CnameFrom:                "cnamef14",
+				CnameType:                papi.HostnameCnameTypeEdgeHostname,
+				ProductionCertType:       papi.CertTypeDefault,
+				ProductionCnameTo:        "cnamet14",
+				ProductionEdgeHostnameId: "ehn14",
+				StagingCertType:          papi.CertTypeDefault,
+				StagingCnameTo:           "cnamet14",
+				StagingEdgeHostnameId:    "ehn14",
+			},
+			{
+				CertStatus: &papi.CertStatusItem{
+					ValidationCname: papi.ValidationCname{
+						Hostname: "cnamef15",
+						Target:   "cnamet15",
+					},
+					Staging:    []papi.StatusItem{{Status: "DEPLOYED"}},
+					Production: []papi.StatusItem{},
+				},
+				CnameFrom:                "cnamef15",
+				CnameType:                papi.HostnameCnameTypeEdgeHostname,
+				ProductionCertType:       "",
+				ProductionCnameTo:        "",
+				ProductionEdgeHostnameId: "",
+				StagingCertType:          papi.CertTypeDefault,
+				StagingCnameTo:           "cnamet15",
+				StagingEdgeHostnameId:    "ehn15",
+			},
+			{
+				CertStatus: &papi.CertStatusItem{
+					ValidationCname: papi.ValidationCname{
+						Hostname: "cnamef16",
+						Target:   "cnamet16",
+					},
+					Staging:    []papi.StatusItem{{Status: "DEPLOYED"}},
+					Production: []papi.StatusItem{{Status: "PENDING"}},
+				},
+				CnameFrom:                "cnamef16",
+				CnameType:                papi.HostnameCnameTypeEdgeHostname,
+				ProductionCertType:       papi.CertTypeDefault,
+				ProductionCnameTo:        "cnamet16",
+				ProductionEdgeHostnameId: "ehn16",
+				StagingCertType:          papi.CertTypeDefault,
+				StagingCnameTo:           "cnamet16",
+				StagingEdgeHostnameId:    "ehn16",
+			},
+		}...)
+
+		mockListActivePropertyHostnames(client, 0, &papi.ListActivePropertyHostnamesResponse{
+			ContractID: "ctr_test",
+			GroupID:    "grp_test",
+			PropertyID: "prp_test",
+			AccountID:  "act_test",
+			Hostnames: papi.HostnamesResponseItems{
+				Items: hostnames,
+			},
+		}, nil).Times(3)
+
+		useClient(client, nil, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataPropertyHostnames/property_hostnames_with_filter.tf"),
+					Check: test.NewStateChecker("data.akamai_property_hostnames.akaprophosts").
+						CheckEqual("id", "prp_test").
+						CheckEqual("group_id", "grp_test").
+						CheckEqual("contract_id", "ctr_test").
+						CheckEqual("property_id", "prp_test").
+						CheckMissing("version").
+						CheckEqual("hostname_bucket.#", "13").
+						CheckEqual("hostname_bucket.0.cname_from", "cnamef0").
+						CheckEqual("hostname_bucket.0.cname_type", "EDGE_HOSTNAME").
+						CheckEqual("hostname_bucket.0.staging_edge_hostname_id", "ehn0").
+						CheckEqual("hostname_bucket.0.staging_cert_type", "DEFAULT").
+						CheckEqual("hostname_bucket.0.staging_cname_to", "cnamet0").
+						CheckEqual("hostname_bucket.0.production_edge_hostname_id", "ehn0").
+						CheckEqual("hostname_bucket.0.production_cert_type", "DEFAULT").
+						CheckEqual("hostname_bucket.0.production_cname_to", "cnamet0").
+						CheckEqual("hostname_bucket.0.cert_status.0.hostname", "cnamef0").
+						CheckEqual("hostname_bucket.0.cert_status.0.target", "cnamet0").
+						CheckEqual("hostname_bucket.0.cert_status.0.staging_status", "PENDING").
+						CheckEqual("hostname_bucket.0.cert_status.0.production_status", "PENDING").
+						CheckEqual("hostname_bucket.12.cname_from", "cnamef16").
+						CheckEqual("hostname_bucket.12.cname_type", "EDGE_HOSTNAME").
+						CheckEqual("hostname_bucket.12.staging_edge_hostname_id", "ehn16").
+						CheckEqual("hostname_bucket.12.staging_cert_type", "DEFAULT").
+						CheckEqual("hostname_bucket.12.staging_cname_to", "cnamet16").
+						CheckEqual("hostname_bucket.12.production_edge_hostname_id", "ehn16").
+						CheckEqual("hostname_bucket.12.production_cert_type", "DEFAULT").
+						CheckEqual("hostname_bucket.12.production_cname_to", "cnamet16").
+						CheckEqual("hostname_bucket.12.cert_status.0.hostname", "cnamef16").
+						CheckEqual("hostname_bucket.12.cert_status.0.target", "cnamet16").
+						CheckEqual("hostname_bucket.12.cert_status.0.staging_status", "DEPLOYED").
+						CheckEqual("hostname_bucket.12.cert_status.0.production_status", "PENDING").
+						Build(),
+				}},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("list hostnames with status `DEPLOYED` - filter_pending_default_certs set to true", func(t *testing.T) {
+		client := &papi.Mock{}
+
+		mockGetPropertyWithPropertyType(client, ptr.To("HOSTNAME_BUCKET")).Times(3)
+
+		hostnames := []papi.HostnameItem{
+			{
+				CertStatus: &papi.CertStatusItem{
+					ValidationCname: papi.ValidationCname{
+						Hostname: "cnamef1",
+						Target:   "cnamet1",
+					},
+					Staging:    []papi.StatusItem{{Status: "DEPLOYED"}},
+					Production: []papi.StatusItem{{Status: "DEPLOYED"}},
+				},
+				CnameFrom:                "cnamef1",
+				CnameType:                papi.HostnameCnameTypeEdgeHostname,
+				ProductionCertType:       papi.CertTypeDefault,
+				ProductionCnameTo:        "cnamet1",
+				ProductionEdgeHostnameId: "ehn1",
+				StagingCertType:          papi.CertTypeDefault,
+				StagingCnameTo:           "cnamet1",
+				StagingEdgeHostnameId:    "ehn1",
+			},
+			{
+				CertStatus: &papi.CertStatusItem{
+					ValidationCname: papi.ValidationCname{
+						Hostname: "cnamef2",
+						Target:   "cnamet2",
+					},
+					Staging:    []papi.StatusItem{{Status: "DEPLOYED"}},
+					Production: []papi.StatusItem{{Status: "DEPLOYED"}},
+				},
+				CnameFrom:                "cnamef2",
+				CnameType:                papi.HostnameCnameTypeEdgeHostname,
+				ProductionCertType:       papi.CertTypeDefault,
+				ProductionCnameTo:        "cnamet2",
+				ProductionEdgeHostnameId: "ehn2",
+				StagingCertType:          papi.CertTypeDefault,
+				StagingCnameTo:           "cnamet2",
+				StagingEdgeHostnameId:    "ehn2",
+			},
+			{
+				CertStatus: &papi.CertStatusItem{
+					ValidationCname: papi.ValidationCname{
+						Hostname: "cnamef3",
+						Target:   "cnamet3",
+					},
+					Staging:    []papi.StatusItem{{Status: "DEPLOYED"}},
+					Production: []papi.StatusItem{{Status: "DEPLOYED"}},
+				},
+				CnameFrom:                "cnamef3",
+				CnameType:                papi.HostnameCnameTypeEdgeHostname,
+				ProductionCertType:       papi.CertTypeDefault,
+				ProductionCnameTo:        "cnamet3",
+				ProductionEdgeHostnameId: "ehn3",
+				StagingCertType:          papi.CertTypeDefault,
+				StagingCnameTo:           "cnamet3",
+				StagingEdgeHostnameId:    "ehn3",
+			},
+			{
+				CertStatus: &papi.CertStatusItem{
+					ValidationCname: papi.ValidationCname{
+						Hostname: "cnamef16",
+						Target:   "cnamet16",
+					},
+					Staging:    []papi.StatusItem{{Status: "DEPLOYED"}},
+					Production: []papi.StatusItem{{Status: "DEPLOYED"}},
+				},
+				CnameFrom:                "cnamef4",
+				CnameType:                papi.HostnameCnameTypeEdgeHostname,
+				ProductionCertType:       papi.CertTypeDefault,
+				ProductionCnameTo:        "cnamet4",
+				ProductionEdgeHostnameId: "ehn4",
+				StagingCertType:          papi.CertTypeDefault,
+				StagingCnameTo:           "cnamet4",
+				StagingEdgeHostnameId:    "ehn4",
+			},
+		}
+
+		mockListActivePropertyHostnames(client, 0, &papi.ListActivePropertyHostnamesResponse{
+			ContractID: "ctr_test",
+			GroupID:    "grp_test",
+			PropertyID: "prp_test",
+			AccountID:  "act_test",
+			Hostnames: papi.HostnamesResponseItems{
+				Items: hostnames,
+			},
+		}, nil).Times(3)
+
+		useClient(client, nil, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataPropertyHostnames/property_hostnames_with_filter.tf"),
+					Check: test.NewStateChecker("data.akamai_property_hostnames.akaprophosts").
+						CheckEqual("id", "prp_test").
+						CheckEqual("group_id", "grp_test").
+						CheckEqual("contract_id", "ctr_test").
+						CheckEqual("property_id", "prp_test").
+						CheckMissing("version").
+						CheckEqual("hostname_bucket.#", "0").
+						Build(),
+				}},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
 	t.Run("list hostnames without group prefix", func(t *testing.T) {
 		client := &papi.Mock{}
 
