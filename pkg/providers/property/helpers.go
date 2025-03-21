@@ -18,20 +18,24 @@ import (
 var certStatus = &schema.Resource{
 	Schema: map[string]*schema.Schema{
 		"target": {
-			Type:     schema.TypeString,
-			Computed: true,
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "The destination part of the CNAME record used to validate the certificate's domain.",
 		},
 		"hostname": {
-			Type:     schema.TypeString,
-			Computed: true,
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "The hostname part of the CNAME record used to validate the certificate's domain.",
 		},
 		"production_status": {
-			Type:     schema.TypeString,
-			Computed: true,
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "The certificate's deployment status on the production network.",
 		},
 		"staging_status": {
-			Type:     schema.TypeString,
-			Computed: true,
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "The certificate's deployment status on the staging network.",
 		},
 	},
 }
@@ -149,10 +153,10 @@ func flattenBucketHostnames(hostnames []papi.HostnameItem) []map[string]any {
 		result = append(result, map[string]any{
 			"cname_from":                  hostname.CnameFrom,
 			"cname_type":                  hostname.CnameType,
-			"staging_edge_hostname_id":    hostname.StagingEdgeHostnameId,
+			"staging_edge_hostname_id":    hostname.StagingEdgeHostnameID,
 			"staging_cert_type":           hostname.StagingCertType,
 			"staging_cname_to":            hostname.StagingCnameTo,
-			"production_edge_hostname_id": hostname.ProductionEdgeHostnameId,
+			"production_edge_hostname_id": hostname.ProductionEdgeHostnameID,
 			"production_cert_type":        hostname.ProductionCertType,
 			"production_cname_to":         hostname.ProductionCnameTo,
 			"cert_status":                 []map[string]any{flattenCertType(hostname.CertStatus)},

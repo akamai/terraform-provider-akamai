@@ -190,10 +190,10 @@ func TestDataPropertyHostnames(t *testing.T) {
 				CnameType:                papi.HostnameCnameTypeEdgeHostname,
 				ProductionCertType:       papi.CertTypeCPSManaged,
 				ProductionCnameTo:        "cnamet13",
-				ProductionEdgeHostnameId: "ehn13",
+				ProductionEdgeHostnameID: "ehn13",
 				StagingCertType:          papi.CertTypeCPSManaged,
 				StagingCnameTo:           "cnamet13",
-				StagingEdgeHostnameId:    "ehn13",
+				StagingEdgeHostnameID:    "ehn13",
 			},
 			{
 				CertStatus: &papi.CertStatusItem{
@@ -208,10 +208,10 @@ func TestDataPropertyHostnames(t *testing.T) {
 				CnameType:                papi.HostnameCnameTypeEdgeHostname,
 				ProductionCertType:       papi.CertTypeDefault,
 				ProductionCnameTo:        "cnamet14",
-				ProductionEdgeHostnameId: "ehn14",
+				ProductionEdgeHostnameID: "ehn14",
 				StagingCertType:          papi.CertTypeDefault,
 				StagingCnameTo:           "cnamet14",
-				StagingEdgeHostnameId:    "ehn14",
+				StagingEdgeHostnameID:    "ehn14",
 			},
 			{
 				CertStatus: &papi.CertStatusItem{
@@ -226,10 +226,10 @@ func TestDataPropertyHostnames(t *testing.T) {
 				CnameType:                papi.HostnameCnameTypeEdgeHostname,
 				ProductionCertType:       "",
 				ProductionCnameTo:        "",
-				ProductionEdgeHostnameId: "",
+				ProductionEdgeHostnameID: "",
 				StagingCertType:          papi.CertTypeDefault,
 				StagingCnameTo:           "cnamet15",
-				StagingEdgeHostnameId:    "ehn15",
+				StagingEdgeHostnameID:    "ehn15",
 			},
 			{
 				CertStatus: &papi.CertStatusItem{
@@ -244,10 +244,10 @@ func TestDataPropertyHostnames(t *testing.T) {
 				CnameType:                papi.HostnameCnameTypeEdgeHostname,
 				ProductionCertType:       papi.CertTypeDefault,
 				ProductionCnameTo:        "cnamet16",
-				ProductionEdgeHostnameId: "ehn16",
+				ProductionEdgeHostnameID: "ehn16",
 				StagingCertType:          papi.CertTypeDefault,
 				StagingCnameTo:           "cnamet16",
-				StagingEdgeHostnameId:    "ehn16",
+				StagingEdgeHostnameID:    "ehn16",
 			},
 		}...)
 
@@ -324,10 +324,10 @@ func TestDataPropertyHostnames(t *testing.T) {
 				CnameType:                papi.HostnameCnameTypeEdgeHostname,
 				ProductionCertType:       papi.CertTypeDefault,
 				ProductionCnameTo:        "cnamet1",
-				ProductionEdgeHostnameId: "ehn1",
+				ProductionEdgeHostnameID: "ehn1",
 				StagingCertType:          papi.CertTypeDefault,
 				StagingCnameTo:           "cnamet1",
-				StagingEdgeHostnameId:    "ehn1",
+				StagingEdgeHostnameID:    "ehn1",
 			},
 			{
 				CertStatus: &papi.CertStatusItem{
@@ -342,10 +342,10 @@ func TestDataPropertyHostnames(t *testing.T) {
 				CnameType:                papi.HostnameCnameTypeEdgeHostname,
 				ProductionCertType:       papi.CertTypeDefault,
 				ProductionCnameTo:        "cnamet2",
-				ProductionEdgeHostnameId: "ehn2",
+				ProductionEdgeHostnameID: "ehn2",
 				StagingCertType:          papi.CertTypeDefault,
 				StagingCnameTo:           "cnamet2",
-				StagingEdgeHostnameId:    "ehn2",
+				StagingEdgeHostnameID:    "ehn2",
 			},
 			{
 				CertStatus: &papi.CertStatusItem{
@@ -360,10 +360,10 @@ func TestDataPropertyHostnames(t *testing.T) {
 				CnameType:                papi.HostnameCnameTypeEdgeHostname,
 				ProductionCertType:       papi.CertTypeDefault,
 				ProductionCnameTo:        "cnamet3",
-				ProductionEdgeHostnameId: "ehn3",
+				ProductionEdgeHostnameID: "ehn3",
 				StagingCertType:          papi.CertTypeDefault,
 				StagingCnameTo:           "cnamet3",
-				StagingEdgeHostnameId:    "ehn3",
+				StagingEdgeHostnameID:    "ehn3",
 			},
 			{
 				CertStatus: &papi.CertStatusItem{
@@ -378,10 +378,10 @@ func TestDataPropertyHostnames(t *testing.T) {
 				CnameType:                papi.HostnameCnameTypeEdgeHostname,
 				ProductionCertType:       papi.CertTypeDefault,
 				ProductionCnameTo:        "cnamet4",
-				ProductionEdgeHostnameId: "ehn4",
+				ProductionEdgeHostnameID: "ehn4",
 				StagingCertType:          papi.CertTypeDefault,
 				StagingCnameTo:           "cnamet4",
-				StagingEdgeHostnameId:    "ehn4",
+				StagingEdgeHostnameID:    "ehn4",
 			},
 		}
 
@@ -715,10 +715,10 @@ func buildHostnameItems(itemsNo int) []papi.HostnameItem {
 			CnameType:                papi.HostnameCnameTypeEdgeHostname,
 			ProductionCertType:       papi.CertTypeDefault,
 			ProductionCnameTo:        fmt.Sprintf("cnamet%v", i),
-			ProductionEdgeHostnameId: fmt.Sprintf("ehn%v", i),
+			ProductionEdgeHostnameID: fmt.Sprintf("ehn%v", i),
 			StagingCertType:          papi.CertTypeDefault,
 			StagingCnameTo:           fmt.Sprintf("cnamet%v", i),
-			StagingEdgeHostnameId:    fmt.Sprintf("ehn%v", i),
+			StagingEdgeHostnameID:    fmt.Sprintf("ehn%v", i),
 		})
 	}
 	return hostnames

@@ -227,10 +227,10 @@ func TestHostnameRequestBuilder(t *testing.T) {
 		assert.Equal(t, "prp_111", rd.requests[0].PropertyID)
 		assert.Equal(t, "ctr_222", rd.requests[0].ContractID)
 		assert.Equal(t, "grp_333", rd.requests[0].GroupID)
-		assert.Equal(t, "STAGING", rd.requests[0].Body.Network)
+		assert.Equal(t, papi.ActivationNetworkStaging, rd.requests[0].Body.Network)
 		assert.Equal(t, "Note", rd.requests[0].Body.Note)
 		assert.Equal(t, "test@mail.com", rd.requests[0].Body.NotifyEmails[0])
-		assert.Equal(t, papi.CertType("CPS_MANAGED"), rd.requests[0].Body.Add[0].CertProvisioningType)
+		assert.Equal(t, papi.CertTypeCPSManaged, rd.requests[0].Body.Add[0].CertProvisioningType)
 		assert.Equal(t, "ehn_444", rd.requests[0].Body.Add[0].EdgeHostnameID)
 	})
 }

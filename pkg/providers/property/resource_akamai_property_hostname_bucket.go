@@ -753,10 +753,10 @@ func listHostnamesResponses(ctx context.Context, client papi.PAPI, data *Hostnam
 		res, err := client.ListActivePropertyHostnames(ctx, papi.ListActivePropertyHostnamesRequest{
 			Offset:            offset,
 			Limit:             limit,
-			PropertyID:        str.AddPrefix(data.PropertyID.ValueString(), "prp_"),
-			Network:           papi.NetworkType(data.Network.ValueString()),
-			ContractID:        str.AddPrefix(data.ContractID.ValueString(), "ctr_"),
-			GroupID:           str.AddPrefix(data.GroupID.ValueString(), "grp_"),
+			PropertyID:        data.PropertyID.ValueString(),
+			Network:           papi.ActivationNetwork(data.Network.ValueString()),
+			ContractID:        data.ContractID.ValueString(),
+			GroupID:           data.GroupID.ValueString(),
 			Sort:              papi.SortAscending,
 			IncludeCertStatus: true,
 		})
@@ -818,7 +818,7 @@ func setHostnameDetails(ctx context.Context, hostnames []papi.HostnameItem, resu
 				// If there is a hostname in the API but not in the current state, add it.
 				h := Hostname{
 					CertProvisioningType: types.StringValue(string(hn.StagingCertType)),
-					EdgeHostnameID:       types.StringValue(hn.StagingEdgeHostnameId),
+					EdgeHostnameID:       types.StringValue(hn.StagingEdgeHostnameID),
 					CnameTo:              types.StringValue(hn.StagingCnameTo),
 				}
 				result[hn.CnameFrom] = h
@@ -833,7 +833,7 @@ func setHostnameDetails(ctx context.Context, hostnames []papi.HostnameItem, resu
 				// If there is a hostname in the API but not in the current state, add it.
 				h := Hostname{
 					CertProvisioningType: types.StringValue(string(hn.ProductionCertType)),
-					EdgeHostnameID:       types.StringValue(hn.ProductionEdgeHostnameId),
+					EdgeHostnameID:       types.StringValue(hn.ProductionEdgeHostnameID),
 					CnameTo:              types.StringValue(hn.ProductionCnameTo),
 				}
 				result[hn.CnameFrom] = h
@@ -850,9 +850,9 @@ func findCurrentActivation(ctx context.Context, client papi.PAPI, data *Hostname
 	offset, limit := 0, 999
 	for {
 		activations, err := client.ListPropertyHostnameActivations(ctx, papi.ListPropertyHostnameActivationsRequest{
-			PropertyID: str.AddPrefix(data.PropertyID.ValueString(), "prp_"),
-			ContractID: str.AddPrefix(data.ContractID.ValueString(), "ctr_"),
-			GroupID:    str.AddPrefix(data.GroupID.ValueString(), "grp_"),
+			PropertyID: data.PropertyID.ValueString(),
+			ContractID: data.ContractID.ValueString(),
+			GroupID:    data.GroupID.ValueString(),
 			Offset:     offset,
 			Limit:      limit,
 		})
@@ -861,7 +861,7 @@ func findCurrentActivation(ctx context.Context, client papi.PAPI, data *Hostname
 		}
 
 		for _, act := range activations.HostnameActivations.Items {
-			if act.Status == "ACTIVE" && act.Network == data.Network.ValueString() {
+			if act.Status == "ACTIVE" && string(act.Network) == data.Network.ValueString() {
 				return act, nil
 			}
 		}
@@ -885,10 +885,10 @@ func waitForHostnameBucketActivation(ctx context.Context, client papi.PAPI, data
 
 	for {
 		activation, err := client.GetPropertyHostnameActivation(ctx, papi.GetPropertyHostnameActivationRequest{
-			PropertyID:           str.AddPrefix(data.PropertyID.ValueString(), "prp_"),
+			PropertyID:           data.PropertyID.ValueString(),
 			HostnameActivationID: data.ActivationID.ValueString(),
-			ContractID:           str.AddPrefix(data.ContractID.ValueString(), "ctr_"),
-			GroupID:              str.AddPrefix(data.GroupID.ValueString(), "grp_"),
+			ContractID:           data.ContractID.ValueString(),
+			GroupID:              data.GroupID.ValueString(),
 		})
 		if err != nil {
 			return err
@@ -899,9 +899,9 @@ func waitForHostnameBucketActivation(ctx context.Context, client papi.PAPI, data
 
 		if time.Now().After(deadline) {
 			cancelResp, err := client.CancelPropertyHostnameActivation(ctx, papi.CancelPropertyHostnameActivationRequest{
-				PropertyID:           str.AddPrefix(data.PropertyID.ValueString(), "prp_"),
-				ContractID:           str.AddPrefix(data.ContractID.ValueString(), "ctr_"),
-				GroupID:              str.AddPrefix(data.GroupID.ValueString(), "grp_"),
+				PropertyID:           data.PropertyID.ValueString(),
+				ContractID:           data.ContractID.ValueString(),
+				GroupID:              data.GroupID.ValueString(),
 				HostnameActivationID: data.ActivationID.ValueString(),
 			})
 			if err != nil && (errors.Is(err, papi.ErrActivationTooFar) || errors.Is(err, papi.ErrActivationAlreadyActive)) {
@@ -914,10 +914,10 @@ func waitForHostnameBucketActivation(ctx context.Context, client papi.PAPI, data
 				cancelActivationID := cancelResp.HostnameActivation.HostnameActivationID
 				for {
 					cancelActivation, err := client.GetPropertyHostnameActivation(ctx, papi.GetPropertyHostnameActivationRequest{
-						PropertyID:           str.AddPrefix(data.PropertyID.ValueString(), "prp_"),
+						PropertyID:           data.PropertyID.ValueString(),
 						HostnameActivationID: cancelActivationID,
-						ContractID:           str.AddPrefix(data.ContractID.ValueString(), "ctr_"),
-						GroupID:              str.AddPrefix(data.GroupID.ValueString(), "grp_"),
+						ContractID:           data.ContractID.ValueString(),
+						GroupID:              data.GroupID.ValueString(),
 					})
 					if err != nil {
 						return err
@@ -947,10 +947,10 @@ func waitForHostnameBucketActivation(ctx context.Context, client papi.PAPI, data
 func waitForHostnameBucketDeletion(ctx context.Context, client papi.PAPI, data HostnameBucketResourceModel) error {
 	for {
 		activation, err := client.GetPropertyHostnameActivation(ctx, papi.GetPropertyHostnameActivationRequest{
-			PropertyID:           str.AddPrefix(data.PropertyID.ValueString(), "prp_"),
+			PropertyID:           data.PropertyID.ValueString(),
 			HostnameActivationID: data.ActivationID.ValueString(),
-			ContractID:           str.AddPrefix(data.ContractID.ValueString(), "ctr_"),
-			GroupID:              str.AddPrefix(data.GroupID.ValueString(), "grp_"),
+			ContractID:           data.ContractID.ValueString(),
+			GroupID:              data.GroupID.ValueString(),
 		})
 		if err != nil {
 			return err

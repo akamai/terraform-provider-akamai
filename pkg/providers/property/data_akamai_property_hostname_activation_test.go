@@ -15,6 +15,7 @@ import (
 )
 
 func TestHostnameActivationDataSource(t *testing.T) {
+	t.Parallel()
 	workdir := "testdata/TestDataPropertyHostnameActivation"
 	commonStateChecker := test.NewStateChecker("data.akamai_property_hostname_activation.activation").
 		CheckEqual("property_id", "1").
@@ -44,8 +45,9 @@ func TestHostnameActivationDataSource(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/full.tf", workdir),
 					Check: commonStateChecker.
+						CheckEqual("property_id", "prp_1").
 						CheckEqual("include_hostnames", "true").
-						CheckEqual("hostnames.0.edge_hostname_id", "1").
+						CheckEqual("hostnames.0.edge_hostname_id", "ehn_1").
 						CheckEqual("hostnames.0.cname_from", "test.buckets.1.1111.com.edgesuite.net").
 						CheckEqual("hostnames.0.cname_to", "test.buckets.1.com.edgesuite.net").
 						CheckEqual("hostnames.0.cert_provisioning_type", "CPS_MANAGED").
@@ -96,6 +98,7 @@ func TestHostnameActivationDataSource(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			client := &papi.Mock{}
 			hapiClient := &hapi.Mock{}
 			if test.init != nil {

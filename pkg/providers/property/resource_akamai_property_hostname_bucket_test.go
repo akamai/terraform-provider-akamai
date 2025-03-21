@@ -36,10 +36,10 @@ var basicChecker = test.NewStateChecker("akamai_property_hostname_bucket.test").
 	CheckEqual("hostnames.www.test.hostname.0.com.edgesuite.net.cert_provisioning_type", "CPS_MANAGED")
 
 func TestHostnameBucketResource_Create(t *testing.T) {
+	t.Parallel()
 	// decrease timeout and intervals for tests
 	forceTimeoutDuration = time.Second
 	getHostnameBucketActivationInterval = time.Second
-	t.Parallel()
 
 	tests := map[string]struct {
 		init            func(*mockProperty)
@@ -50,7 +50,7 @@ func TestHostnameBucketResource_Create(t *testing.T) {
 		"create with 1 hostname on STAGING": {
 			init: func(p *mockProperty) {
 				// Set up initial data for the property and hostname bucket
-				setUpInitialData(p)
+				setUpInitialData(p, true)
 				// Create
 				mockResourceHostnameBucketUpsert(p)
 				// Read
@@ -88,7 +88,7 @@ func TestHostnameBucketResource_Create(t *testing.T) {
 		"create with 1 hostname without prefixes on STAGING": {
 			init: func(p *mockProperty) {
 				// Set up initial data for the property and hostname bucket
-				setUpInitialData(p)
+				setUpInitialData(p, false)
 				// Create
 				mockResourceHostnameBucketUpsert(p)
 				// Read
@@ -174,7 +174,7 @@ func TestHostnameBucketResource_Create(t *testing.T) {
 		},
 		"create with 1 hostname on STAGING: change activation status from PENDING to ACTIVE": {
 			init: func(p *mockProperty) {
-				setUpInitialData(p)
+				setUpInitialData(p, true)
 				// Create
 				req := createDefaultPatchPropertyHostnameBucketRequest()
 				p.papiMock.On("PatchPropertyHostnameBucket", testutils.MockContext, req).Return(&papi.PatchPropertyHostnameBucketResponse{
@@ -254,7 +254,7 @@ func TestHostnameBucketResource_Create(t *testing.T) {
 		"create with 1 hostname on STAGING, timeout when waiting for activation: send successful CANCEL pending activation request - expect error": {
 			init: func(p *mockProperty) {
 				// Set up initial data for the property and hostname bucket
-				setUpInitialData(p)
+				setUpInitialData(p, true)
 				// Create
 				req := createDefaultPatchPropertyHostnameBucketRequest()
 				p.papiMock.On("PatchPropertyHostnameBucket", testutils.MockContext, req).Return(&papi.PatchPropertyHostnameBucketResponse{
@@ -314,7 +314,7 @@ func TestHostnameBucketResource_Create(t *testing.T) {
 		"create with 1 hostname on STAGING, CANCEL request returns ErrActivationTooFar, next GetPropertyHostnameActivation returns ACTIVE activation": {
 			init: func(p *mockProperty) {
 				// Set up initial data for the property and hostname bucket
-				setUpInitialData(p)
+				setUpInitialData(p, true)
 				// Create
 				req := createDefaultPatchPropertyHostnameBucketRequest()
 				p.papiMock.On("PatchPropertyHostnameBucket", testutils.MockContext, req).Return(&papi.PatchPropertyHostnameBucketResponse{
@@ -400,7 +400,7 @@ func TestHostnameBucketResource_Create(t *testing.T) {
 		"create with 1 hostname on STAGING, CANCEL request returns ErrActivationAlreadyActive, next GetPropertyHostnameActivation returns ACTIVE activation": {
 			init: func(p *mockProperty) {
 				// Set up initial data for the property and hostname bucket
-				setUpInitialData(p)
+				setUpInitialData(p, true)
 				// Create
 				req := createDefaultPatchPropertyHostnameBucketRequest()
 				p.papiMock.On("PatchPropertyHostnameBucket", testutils.MockContext, req).Return(&papi.PatchPropertyHostnameBucketResponse{
@@ -486,7 +486,7 @@ func TestHostnameBucketResource_Create(t *testing.T) {
 		"expect error - CancelPendingHostnameActivation request returns error different than ErrActivationAlreadyActive and ErrActivationTooFar": {
 			init: func(p *mockProperty) {
 				// Set up initial data for the property and hostname bucket
-				setUpInitialData(p)
+				setUpInitialData(p, true)
 				// Create
 				req := createDefaultPatchPropertyHostnameBucketRequest()
 				p.papiMock.On("PatchPropertyHostnameBucket", testutils.MockContext, req).Return(&papi.PatchPropertyHostnameBucketResponse{
@@ -545,7 +545,7 @@ func TestHostnameBucketResource_Create(t *testing.T) {
 		"expect error - ListActivePropertyHostnames call in Create": {
 			init: func(p *mockProperty) {
 				// Set up initial data for the property and hostname bucket
-				setUpInitialData(p)
+				setUpInitialData(p, true)
 				// Create
 				p.mockPatchPropertyHostnameBucket()
 				p.papiMock.On("ListActivePropertyHostnames", testutils.MockContext, papi.ListActivePropertyHostnamesRequest{
@@ -600,7 +600,6 @@ func TestHostnameBucketResource_Create(t *testing.T) {
 
 func TestHostnameBucketResource_Update(t *testing.T) {
 	t.Parallel()
-
 	tests := map[string]struct {
 		init            func(*mockProperty)
 		checksForCreate resource.TestCheckFunc
@@ -613,7 +612,7 @@ func TestHostnameBucketResource_Update(t *testing.T) {
 		"create 1, update by adding 3 hostnames": {
 			init: func(p *mockProperty) {
 				// Set up initial data for the property and hostname bucket
-				setUpInitialData(p)
+				setUpInitialData(p, true)
 				// Create
 				mockResourceHostnameBucketUpsert(p)
 				// Read x2
@@ -674,7 +673,7 @@ func TestHostnameBucketResource_Update(t *testing.T) {
 					PropertyID:        p.propertyID,
 					Offset:            0,
 					Limit:             999,
-					Network:           papi.NetworkType(p.hostnameBucket.network),
+					Network:           papi.ActivationNetwork(p.hostnameBucket.network),
 					IncludeCertStatus: true,
 					Sort:              "hostname:a",
 				}
@@ -692,7 +691,7 @@ func TestHostnameBucketResource_Update(t *testing.T) {
 								CnameType:             "EDGE_HOSTNAME",
 								StagingCertType:       "CPS_MANAGED",
 								StagingCnameTo:        "www.test.hostname.0.to.com.edgesuite.net",
-								StagingEdgeHostnameId: "ehn_444",
+								StagingEdgeHostnameID: "ehn_444",
 							},
 						},
 						TotalItems: 1,
@@ -1167,8 +1166,8 @@ func TestHostnameBucketResource_Import(t *testing.T) {
 					state:   generateHostnames(100, "CPS_MANAGED", "ehn_444"),
 					network: "PRODUCTION",
 					activations: papi.ListPropertyHostnameActivationsResponse{
-						ContractID: "ctr_222",
-						GroupID:    "grp_333",
+						ContractID: "222",
+						GroupID:    "333",
 						HostnameActivations: papi.HostnameActivationsList{
 							Items: []papi.HostnameActivationListItem{
 								{
@@ -1185,7 +1184,7 @@ func TestHostnameBucketResource_Import(t *testing.T) {
 						},
 					},
 				}
-				p.propertyID = "prp_111"
+				p.propertyID = "111"
 				p.mockListPropertyHostnameActivations()
 				// fill contract and group attributes to be used in the next API call
 				p.contractID = "ctr_222"
@@ -1235,8 +1234,8 @@ func TestHostnameBucketResource_Import(t *testing.T) {
 					state:   generateHostnames(100, "CPS_MANAGED", "ehn_444"),
 					network: "PRODUCTION",
 					activations: papi.ListPropertyHostnameActivationsResponse{
-						ContractID: "ctr_222",
-						GroupID:    "grp_333",
+						ContractID: "222",
+						GroupID:    "333",
 						HostnameActivations: papi.HostnameActivationsList{
 							Items: []papi.HostnameActivationListItem{
 								{
@@ -1251,9 +1250,9 @@ func TestHostnameBucketResource_Import(t *testing.T) {
 						},
 					},
 				}
-				p.propertyID = "prp_111"
-				p.contractID = "ctr_222"
-				p.groupID = "grp_333"
+				p.propertyID = "111"
+				p.contractID = "222"
+				p.groupID = "333"
 				p.mockListPropertyHostnameActivations()
 				p.mockListActivePropertyHostnames()
 			},
@@ -1442,7 +1441,7 @@ func TestHostnameBucketResource_ValidationErrors(t *testing.T) {
 		"validation error - create with group and contract, update group": {
 			init: func(p *mockProperty) {
 				// Set up initial data for the property and hostname bucket
-				setUpInitialData(p)
+				setUpInitialData(p, true)
 				// Create
 				mockResourceHostnameBucketUpsert(p)
 				// Read x2
@@ -1478,7 +1477,7 @@ func TestHostnameBucketResource_ValidationErrors(t *testing.T) {
 					PropertyID:        p.propertyID,
 					Offset:            0,
 					Limit:             999,
-					Network:           papi.NetworkType(p.hostnameBucket.network),
+					Network:           papi.ActivationNetwork(p.hostnameBucket.network),
 					IncludeCertStatus: true,
 					Sort:              "hostname:a",
 				}
@@ -1496,7 +1495,7 @@ func TestHostnameBucketResource_ValidationErrors(t *testing.T) {
 								CnameType:             "EDGE_HOSTNAME",
 								StagingCertType:       "CPS_MANAGED",
 								StagingCnameTo:        "www.test.hostname.0.to.com.edgesuite.net",
-								StagingEdgeHostnameId: "ehn_444",
+								StagingEdgeHostnameID: "ehn_444",
 							},
 						},
 						TotalItems: 1,
@@ -1521,7 +1520,7 @@ func TestHostnameBucketResource_ValidationErrors(t *testing.T) {
 		"validation error - updating to empty map": {
 			init: func(p *mockProperty) {
 				// Set up initial data for the property and hostname bucket
-				setUpInitialData(p)
+				setUpInitialData(p, true)
 				// Create
 				mockResourceHostnameBucketUpsert(p)
 				// Read x2
@@ -1628,7 +1627,6 @@ func TestHostnameBucketResource_ValidationErrors(t *testing.T) {
 
 func TestHostnameBucketResource_Diff(t *testing.T) {
 	t.Parallel()
-
 	tests := map[string]struct {
 		init  func(*mockProperty)
 		steps []resource.TestStep
@@ -1636,7 +1634,7 @@ func TestHostnameBucketResource_Diff(t *testing.T) {
 		"create basic, verify no diff on next plan": {
 			init: func(p *mockProperty) {
 				// Set up initial data for the property and hostname bucket
-				setUpInitialData(p)
+				setUpInitialData(p, true)
 				// Create
 				mockResourceHostnameBucketUpsert(p)
 				// Read x2
@@ -1664,7 +1662,7 @@ func TestHostnameBucketResource_Diff(t *testing.T) {
 		"create basic with custom timeout, verify no diff on next plan": {
 			init: func(p *mockProperty) {
 				// Set up initial data for the property and hostname bucket
-				setUpInitialData(p)
+				setUpInitialData(p, true)
 				// Create
 				mockResourceHostnameBucketUpsert(p)
 				// Read x2
@@ -1694,7 +1692,7 @@ func TestHostnameBucketResource_Diff(t *testing.T) {
 		"create with default timeout, update only timeout - verify no diff": {
 			init: func(p *mockProperty) {
 				// Set up initial data for the property and hostname bucket
-				setUpInitialData(p)
+				setUpInitialData(p, true)
 				// Create
 				mockResourceHostnameBucketUpsert(p)
 				// Read x2
@@ -1722,7 +1720,7 @@ func TestHostnameBucketResource_Diff(t *testing.T) {
 		"create with custom timeout, verify no diff present in the next plan for timeout, note and notify_emails attributes when hostname entry is modified": {
 			init: func(p *mockProperty) {
 				// Set up initial data for the property and hostname bucket
-				setUpInitialData(p)
+				setUpInitialData(p, true)
 				// Create
 				mockResourceHostnameBucketUpsert(p)
 				// Read x2
@@ -1755,7 +1753,7 @@ func TestHostnameBucketResource_Diff(t *testing.T) {
 		"create, update note - expect no diff": {
 			init: func(p *mockProperty) {
 				// Set up initial data for the property and hostname bucket
-				setUpInitialData(p)
+				setUpInitialData(p, true)
 				// Create
 				mockResourceHostnameBucketUpsert(p)
 				// Read x2
@@ -1784,7 +1782,7 @@ func TestHostnameBucketResource_Diff(t *testing.T) {
 		"create, update notify_emails - expect no diff": {
 			init: func(p *mockProperty) {
 				// Set up initial data for the property and hostname bucket
-				setUpInitialData(p)
+				setUpInitialData(p, true)
 				// Create
 				mockResourceHostnameBucketUpsert(p)
 				// Read x2
@@ -2087,7 +2085,7 @@ func generateAbortedActivations(n int, network string) []papi.HostnameActivation
 		result = append(result, papi.HostnameActivationListItem{
 			HostnameActivationID: fmt.Sprintf("act_%d", i),
 			PropertyID:           "prp_111",
-			Network:              network,
+			Network:              papi.ActivationNetwork(network),
 			Status:               "ABORTED",
 		})
 	}
@@ -2129,15 +2127,24 @@ func createDefaultPatchPropertyHostnameBucketRequest() papi.PatchPropertyHostnam
 	}
 }
 
-func setUpInitialData(p *mockProperty) {
+func setUpInitialData(p *mockProperty, withPrefixes bool) {
+	p.propertyID = "111"
+	p.contractID = "222"
+	p.groupID = "333"
+	ehn := "444"
+
+	if withPrefixes {
+		p.propertyID = "prp_111"
+		p.contractID = "ctr_222"
+		p.groupID = "grp_333"
+		ehn = "ehn_444"
+	}
+
 	p.hostnameBucket = hostnameBucket{
-		plan:         generateHostnames(1, "CPS_MANAGED", "ehn_444"),
+		plan:         generateHostnames(1, "CPS_MANAGED", ehn),
 		network:      "STAGING",
 		notifyEmails: []string{"nomail@akamai.com"},
 		note:         "   ",
 		state:        map[string]Hostname{},
 	}
-	p.propertyID = "prp_111"
-	p.contractID = "ctr_222"
-	p.groupID = "grp_333"
 }

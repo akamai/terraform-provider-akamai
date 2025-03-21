@@ -75,7 +75,7 @@ func (d *mockPropertyData) getPropertyResponse() papi.GetPropertyResponse {
 type hostnameBucket struct {
 	plan         map[string]Hostname
 	state        map[string]Hostname
-	network      string
+	network      papi.ActivationNetwork
 	notifyEmails []string
 	note         string
 	activations  papi.ListPropertyHostnameActivationsResponse
@@ -108,7 +108,7 @@ func (p *mockProperty) mockPatchPropertyHostnameBucket() {
 			propertyID:     p.propertyID,
 			contractID:     p.contractID,
 			groupID:        p.groupID,
-			network:        p.hostnameBucket.network,
+			network:        string(p.hostnameBucket.network),
 			emails:         p.hostnameBucket.notifyEmails,
 			note:           p.hostnameBucket.note,
 		},
@@ -141,7 +141,7 @@ func (p *mockProperty) mockPatchPropertyHostnameBucket() {
 		p.hostnameBucket.activations.HostnameActivations.Items = append(p.hostnameBucket.activations.HostnameActivations.Items, papi.HostnameActivationListItem{
 			HostnameActivationID: fmt.Sprintf(actID, i),
 			PropertyID:           p.propertyID,
-			Network:              p.hostnameBucket.network,
+			Network:              papi.ActivationNetwork(p.hostnameBucket.network),
 			Status:               "ACTIVE",
 			Note:                 p.hostnameBucket.note,
 			NotifyEmails:         p.hostnameBucket.notifyEmails,
@@ -176,24 +176,24 @@ func (p *mockProperty) mockListActivePropertyHostnames(withoutGroupAndContract .
 		if p.hostnameBucket.network == "STAGING" {
 			hostnameItem := papi.HostnameItem{
 				CnameFrom:             k,
-				CnameType:             "EDGE_HOSTNAME",
+				CnameType:             papi.HostnameCnameTypeEdgeHostname,
 				StagingCertType:       papi.CertType(v.CertProvisioningType.ValueString()),
 				StagingCnameTo:        v.CnameTo.ValueString(),
-				StagingEdgeHostnameId: v.EdgeHostnameID.ValueString(),
+				StagingEdgeHostnameID: v.EdgeHostnameID.ValueString(),
 			}
-			if v.CertProvisioningType.ValueString() == "DEFAULT" {
+			if v.CertProvisioningType.ValueString() == string(papi.CertTypeDefault) {
 				hostnameItem.CertStatus = &papi.CertStatusItem{Staging: []papi.StatusItem{{Status: "PENDING"}}}
 			}
 			hostnameItems = append(hostnameItems, hostnameItem)
 		} else {
 			hostnameItem := papi.HostnameItem{
 				CnameFrom:                k,
-				CnameType:                "EDGE_HOSTNAME",
+				CnameType:                papi.HostnameCnameTypeEdgeHostname,
 				ProductionCertType:       papi.CertType(v.CertProvisioningType.ValueString()),
 				ProductionCnameTo:        v.CnameTo.ValueString(),
-				ProductionEdgeHostnameId: v.EdgeHostnameID.ValueString(),
+				ProductionEdgeHostnameID: v.EdgeHostnameID.ValueString(),
 			}
-			if v.CertProvisioningType.ValueString() == "DEFAULT" {
+			if v.CertProvisioningType.ValueString() == string(papi.CertTypeDefault) {
 				hostnameItem.CertStatus = &papi.CertStatusItem{Production: []papi.StatusItem{{Status: "PENDING"}}}
 			}
 			hostnameItems = append(hostnameItems, hostnameItem)
@@ -208,7 +208,7 @@ func (p *mockProperty) mockListActivePropertyHostnames(withoutGroupAndContract .
 			PropertyID:        p.propertyID,
 			Offset:            offset,
 			Limit:             limit,
-			Network:           papi.NetworkType(p.hostnameBucket.network),
+			Network:           p.hostnameBucket.network,
 			ContractID:        reqContractID,
 			GroupID:           reqGroupID,
 			IncludeCertStatus: true,
@@ -233,7 +233,7 @@ func (p *mockProperty) mockListActivePropertyHostnames(withoutGroupAndContract .
 		PropertyID:        p.propertyID,
 		Offset:            offset,
 		Limit:             limit,
-		Network:           papi.NetworkType(p.hostnameBucket.network),
+		Network:           p.hostnameBucket.network,
 		ContractID:        reqContractID,
 		GroupID:           reqGroupID,
 		IncludeCertStatus: true,

@@ -172,7 +172,7 @@ func (h *hostnameRequestBuilder) buildPatchRequests(ops []hostnameOp) []papi.Pat
 				hostnamesToAdd = append(hostnamesToAdd, papi.PatchPropertyHostnameBucketAdd{
 					EdgeHostnameID:       str.AddPrefix(op.edgeHostnameID, "ehn_"),
 					CertProvisioningType: papi.CertType(op.certProvisioningType),
-					CnameType:            "EDGE_HOSTNAME",
+					CnameType:            papi.HostnameCnameTypeEdgeHostname,
 					CnameFrom:            op.cnameFrom,
 				})
 			} else {
@@ -186,7 +186,7 @@ func (h *hostnameRequestBuilder) buildPatchRequests(ops []hostnameOp) []papi.Pat
 			Body: papi.PatchPropertyHostnameBucketBody{
 				Add:          hostnamesToAdd,
 				Remove:       hostnamesToRemove,
-				Network:      h.hostnameRequestData.network,
+				Network:      papi.ActivationNetwork(h.hostnameRequestData.network),
 				NotifyEmails: h.hostnameRequestData.emails,
 				Note:         h.hostnameRequestData.note,
 			},

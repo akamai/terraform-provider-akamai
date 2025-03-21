@@ -3,7 +3,6 @@ package property
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/date"
@@ -18,12 +17,12 @@ import (
 var _ datasource.DataSource = &hostnameActivationDataSource{}
 var _ datasource.DataSourceWithConfigure = &hostnameActivationDataSource{}
 
-// NewHostnameActivationDataSource returns a new property hostname activation data source
+// NewHostnameActivationDataSource returns a new property hostname activation data source.
 func NewHostnameActivationDataSource() datasource.DataSource {
 	return &hostnameActivationDataSource{}
 }
 
-// hostnameActivationDataSource defines the data source implementation for fetching property include information.
+// hostnameActivationDataSource defines the data source implementation for fetching property hostname activation information.
 type hostnameActivationDataSource struct {
 	meta meta.Meta
 }
@@ -177,7 +176,7 @@ func (p *hostnameActivationDataSource) Schema(_ context.Context, _ datasource.Sc
 }
 
 func (p *hostnameActivationDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	tflog.Debug(ctx, "HostnameActivationDataSource Read")
+	tflog.Debug(ctx, "Property HostnameActivationDataSource Read")
 	var diags diag.Diagnostics
 	var data hostnameActivationDataSourceModel
 	if resp.Diagnostics.Append(req.Config.Get(ctx, &data)...); resp.Diagnostics.HasError() {
@@ -197,41 +196,40 @@ func (p *hostnameActivationDataSource) Read(ctx context.Context, req datasource.
 		return
 	}
 
-	data, diags = data.assignActivationToModel(ctx, data, activation)
-	if diags.HasError() {
+	if diags = data.assignActivationToModel(ctx, activation); diags.HasError() {
 		resp.Diagnostics.Append(diags...)
 		return
 	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, data)...)
 }
 
-func (m *hostnameActivationDataSourceModel) assignActivationToModel(ctx context.Context, data hostnameActivationDataSourceModel, activation *papi.GetPropertyHostnameActivationResponse) (hostnameActivationDataSourceModel, diag.Diagnostics) {
+func (m *hostnameActivationDataSourceModel) assignActivationToModel(ctx context.Context, activation *papi.GetPropertyHostnameActivationResponse) diag.Diagnostics {
 	var diags diag.Diagnostics
-	data.HostnameActivationID = types.StringValue(strings.TrimPrefix(activation.HostnameActivation.HostnameActivationID, "atv_"))
-	data.PropertyID = types.StringValue(strings.TrimPrefix(activation.HostnameActivation.PropertyID, "prp_"))
-	data.GroupID = types.StringValue(strings.TrimPrefix(activation.GroupID, "grp_"))
-	data.ContractID = types.StringValue(strings.TrimPrefix(activation.ContractID, "ctr_"))
-	data.AccountID = types.StringValue(strings.TrimPrefix(activation.AccountID, "act_"))
-	data.ActivationType = types.StringValue(activation.HostnameActivation.ActivationType)
-	data.Network = types.StringValue(activation.HostnameActivation.Network)
-	data.Note = types.StringValue(activation.HostnameActivation.Note)
-	data.PropertyName = types.StringValue(activation.HostnameActivation.PropertyName)
-	data.Status = types.StringValue(activation.HostnameActivation.Status)
-	data.SubmitDate = types.StringValue(date.FormatRFC3339Nano(activation.HostnameActivation.SubmitDate))
-	data.UpdateDate = types.StringValue(date.FormatRFC3339Nano(activation.HostnameActivation.UpdateDate))
+	m.HostnameActivationID = types.StringValue(activation.HostnameActivation.HostnameActivationID)
+	m.GroupID = types.StringValue(activation.GroupID)
+	m.ContractID = types.StringValue(activation.ContractID)
+	m.AccountID = types.StringValue(activation.AccountID)
+	m.ActivationType = types.StringValue(activation.HostnameActivation.ActivationType)
+	m.Network = types.StringValue(string(activation.HostnameActivation.Network))
+	m.Note = types.StringValue(activation.HostnameActivation.Note)
+	m.PropertyName = types.StringValue(activation.HostnameActivation.PropertyName)
+	m.Status = types.StringValue(activation.HostnameActivation.Status)
+	m.SubmitDate = types.StringValue(date.FormatRFC3339Nano(activation.HostnameActivation.SubmitDate))
+	m.UpdateDate = types.StringValue(date.FormatRFC3339Nano(activation.HostnameActivation.UpdateDate))
 	notifyEmails, diags := types.ListValueFrom(ctx, types.StringType, activation.HostnameActivation.NotifyEmails)
 	if diags.HasError() {
-		return data, diags
+		return diags
 	}
-	data.NotifyEmails = notifyEmails
+	m.NotifyEmails = notifyEmails
 	for _, h := range activation.HostnameActivation.Hostnames {
 		var hostnameData hostnameModel
-		hostnameData.EdgeHostnameID = types.StringValue(strings.TrimPrefix(h.EdgeHostnameID, "ehn_"))
+		hostnameData.EdgeHostnameID = types.StringValue(h.EdgeHostnameID)
 		hostnameData.CnameTo = types.StringValue(h.CnameTo)
 		hostnameData.CnameFrom = types.StringValue(h.CnameFrom)
-		hostnameData.CertProvisioningType = types.StringValue(h.CertProvisioningType)
+		hostnameData.CertProvisioningType = types.StringValue(string(h.CertProvisioningType))
 		hostnameData.Action = types.StringValue(h.Action)
-		data.Hostnames = append(data.Hostnames, hostnameData)
+		m.Hostnames = append(m.Hostnames, hostnameData)
 	}
-	return data, diags
+	return diags
 }

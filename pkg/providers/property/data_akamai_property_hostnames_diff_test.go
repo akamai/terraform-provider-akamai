@@ -14,10 +14,12 @@ import (
 )
 
 func TestDataPropertyHostnamesDiff(t *testing.T) {
+	t.Parallel()
 	baseChecker := test.NewStateChecker("data.akamai_property_hostnames_diff.diff").
-		CheckEqual("property_id", "1").
-		CheckEqual("group_id", "1").
-		CheckEqual("contract_id", "1")
+		CheckEqual("property_id", "prp_1").
+		CheckEqual("group_id", "grp_1").
+		CheckEqual("contract_id", "ctr_1").
+		CheckEqual("account_id", "act_1")
 
 	hostnamesDiff3 := papi.HostnamesDiffResponseItems{
 		Items: []papi.HostnameDiffItem{
@@ -26,33 +28,33 @@ func TestDataPropertyHostnamesDiff(t *testing.T) {
 				ProductionCertProvisioningType: "",
 				ProductionCnameTo:              "",
 				ProductionCnameType:            "",
-				ProductionEdgeHostnameId:       "",
+				ProductionEdgeHostnameID:       "",
 				StagingCertProvisioningType:    "DEFAULT",
 				StagingCnameTo:                 "www.example-stag1-test.com",
 				StagingCnameType:               "EDGE_HOSTNAME",
-				StagingEdgeHostnameId:          "ehn_1",
+				StagingEdgeHostnameID:          "ehn_1",
 			},
 			{
 				CnameFrom:                      "www.example-prod1.com",
 				ProductionCertProvisioningType: "DEFAULT",
 				ProductionCnameTo:              "www.example-prod1-test.com",
 				ProductionCnameType:            "EDGE_HOSTNAME",
-				ProductionEdgeHostnameId:       "ehn_1",
+				ProductionEdgeHostnameID:       "ehn_1",
 				StagingCertProvisioningType:    "",
 				StagingCnameTo:                 "",
 				StagingCnameType:               "",
-				StagingEdgeHostnameId:          "",
+				StagingEdgeHostnameID:          "",
 			},
 			{
 				CnameFrom:                      "www.example-prod2.com",
 				ProductionCertProvisioningType: "DEFAULT",
 				ProductionCnameTo:              "www.example-prod2-test.com",
 				ProductionCnameType:            "EDGE_HOSTNAME",
-				ProductionEdgeHostnameId:       "ehn_1",
+				ProductionEdgeHostnameID:       "ehn_1",
 				StagingCertProvisioningType:    "",
 				StagingCnameTo:                 "",
 				StagingCnameType:               "",
-				StagingEdgeHostnameId:          "",
+				StagingEdgeHostnameID:          "",
 			},
 		},
 		TotalItems:       3,
@@ -66,11 +68,11 @@ func TestDataPropertyHostnamesDiff(t *testing.T) {
 			ProductionCertProvisioningType: "DEFAULT",
 			ProductionCnameTo:              fmt.Sprintf("www.example-prod%d-test.com", i),
 			ProductionCnameType:            "EDGE_HOSTNAME",
-			ProductionEdgeHostnameId:       "ehn_1",
+			ProductionEdgeHostnameID:       "ehn_1",
 			StagingCertProvisioningType:    "",
 			StagingCnameTo:                 "",
 			StagingCnameType:               "",
-			StagingEdgeHostnameId:          "",
+			StagingEdgeHostnameID:          "",
 		}
 	}
 	hostnamesDiff101 := make([]papi.HostnameDiffItem, 101)
@@ -80,11 +82,11 @@ func TestDataPropertyHostnamesDiff(t *testing.T) {
 			ProductionCertProvisioningType: "",
 			ProductionCnameTo:              "",
 			ProductionCnameType:            "",
-			ProductionEdgeHostnameId:       "",
+			ProductionEdgeHostnameID:       "",
 			StagingCertProvisioningType:    "DEFAULT",
 			StagingCnameTo:                 fmt.Sprintf("www.example-stag%d-test.com", i),
 			StagingCnameType:               "EDGE_HOSTNAME",
-			StagingEdgeHostnameId:          "ehn_1",
+			StagingEdgeHostnameID:          "ehn_1",
 		}
 	}
 
@@ -101,8 +103,6 @@ func TestDataPropertyHostnamesDiff(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDataPropertyHostnamesDiff/valid.tf"),
 					Check: baseChecker.
-						CheckEqual("account_id", "1").
-						CheckEqual("property_id", "1").
 						CheckEqual("hostnames.#", "3").
 						CheckEqual("hostnames.0.cname_from", "www.example-stag1.com").
 						CheckEqual("hostnames.0.staging_cname_type", "EDGE_HOSTNAME").
@@ -131,8 +131,10 @@ func TestDataPropertyHostnamesDiff(t *testing.T) {
 						CheckEqual("hostnames.2.production_cert_provisioning_type", "DEFAULT").
 						CheckEqual("hostnames.2.staging_cname_to", "").
 						CheckEqual("hostnames.2.production_cname_to", "www.example-prod2-test.com").
-						Build()},
-			}},
+						Build(),
+				},
+			},
+		},
 		"happy path - no contract and group": {
 			init: func(m *papi.Mock) {
 				mockGetActivePropertyHostnamesDiff(m, "prp_1", "", "", 0, 999,
@@ -142,8 +144,6 @@ func TestDataPropertyHostnamesDiff(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDataPropertyHostnamesDiff/valid_no_contract_and_group.tf"),
 					Check: baseChecker.
-						CheckEqual("account_id", "1").
-						CheckEqual("property_id", "1").
 						CheckEqual("hostnames.#", "3").
 						CheckEqual("hostnames.0.cname_from", "www.example-stag1.com").
 						CheckEqual("hostnames.0.staging_cname_type", "EDGE_HOSTNAME").
@@ -172,8 +172,10 @@ func TestDataPropertyHostnamesDiff(t *testing.T) {
 						CheckEqual("hostnames.2.production_cert_provisioning_type", "DEFAULT").
 						CheckEqual("hostnames.2.staging_cname_to", "").
 						CheckEqual("hostnames.2.production_cname_to", "www.example-prod2-test.com").
-						Build()},
-			}},
+						Build(),
+				},
+			},
+		},
 		"happy path - empty diff items": {
 			init: func(m *papi.Mock) {
 				mockGetActivePropertyHostnamesDiff(m, "prp_1", "grp_1", "ctr_1", 0, 999,
@@ -185,11 +187,11 @@ func TestDataPropertyHostnamesDiff(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDataPropertyHostnamesDiff/valid.tf"),
 					Check: baseChecker.
-						CheckEqual("account_id", "1").
-						CheckEqual("property_id", "1").
 						CheckEqual("hostnames.#", "0").
-						Build()},
-			}},
+						Build(),
+				},
+			},
+		},
 		"happy path - with paging": {
 			init: func(m *papi.Mock) {
 				mockGetActivePropertyHostnamesDiff(m, "prp_1", "grp_1", "ctr_1", 0, 999,
@@ -209,8 +211,6 @@ func TestDataPropertyHostnamesDiff(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDataPropertyHostnamesDiff/valid.tf"),
 					Check: baseChecker.
-						CheckEqual("account_id", "1").
-						CheckEqual("property_id", "1").
 						CheckEqual("hostnames.#", "1100").
 						CheckEqual("hostnames.0.cname_from", "www.example-prod0.com").
 						CheckEqual("hostnames.0.staging_cname_type", "").
@@ -227,8 +227,10 @@ func TestDataPropertyHostnamesDiff(t *testing.T) {
 						CheckEqual("hostnames.999.staging_cname_to", "www.example-stag0-test.com").
 						CheckEqual("hostnames.1099.cname_from", "www.example-stag100.com").
 						CheckEqual("hostnames.1099.staging_cname_to", "www.example-stag100-test.com").
-						Build()},
-			}},
+						Build(),
+				},
+			},
+		},
 		"happy path - with limit paging": {
 			init: func(m *papi.Mock) {
 				mockGetActivePropertyHostnamesDiff(m, "prp_1", "grp_1", "ctr_1", 0, 999,
@@ -242,8 +244,6 @@ func TestDataPropertyHostnamesDiff(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDataPropertyHostnamesDiff/valid.tf"),
 					Check: baseChecker.
-						CheckEqual("account_id", "1").
-						CheckEqual("property_id", "1").
 						CheckEqual("hostnames.#", "999").
 						CheckEqual("hostnames.0.cname_from", "www.example-prod0.com").
 						CheckEqual("hostnames.0.staging_cname_type", "").
@@ -256,9 +256,10 @@ func TestDataPropertyHostnamesDiff(t *testing.T) {
 						CheckEqual("hostnames.0.production_cname_to", "www.example-prod0-test.com").
 						CheckEqual("hostnames.998.cname_from", "www.example-prod998.com").
 						CheckEqual("hostnames.998.production_cname_to", "www.example-prod998-test.com").
-						Build()},
-			}},
-
+						Build(),
+				},
+			},
+		},
 		"error response from api": {
 			init: func(m *papi.Mock) {
 				mockGetActivePropertyHostnamesDiff(m, "prp_1", "grp_1", "ctr_1", 0, 999,
@@ -280,8 +281,10 @@ func TestDataPropertyHostnamesDiff(t *testing.T) {
 			},
 		},
 	}
+
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			client := &papi.Mock{}
 			hapiClient := &hapi.Mock{}
 

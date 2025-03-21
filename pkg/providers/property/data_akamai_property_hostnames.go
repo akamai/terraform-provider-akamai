@@ -24,36 +24,59 @@ func dataSourcePropertyHostnames() *schema.Resource {
 			"group_id": {
 				Type:             schema.TypeString,
 				Required:         true,
+				Description:      "The unique identifier for the group.",
 				ValidateDiagFunc: tf.IsNotBlank,
 			},
 			"contract_id": {
 				Type:             schema.TypeString,
 				Required:         true,
+				Description:      "The unique identifier for the contract.",
 				ValidateDiagFunc: tf.IsNotBlank,
 			},
 			"property_id": {
 				Type:             schema.TypeString,
 				Required:         true,
 				StateFunc:        addPrefixToState("prp_"),
+				Description:      "The unique identifier for the property.",
 				ValidateDiagFunc: tf.IsNotBlank,
 			},
 			"version": {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Computed:    true,
-				Description: "Version of property to fetch hostnames for. If not provided, 'latest' is used",
+				Description: "The property version to fetch hostnames for. If not provided, `latest` is used",
 			},
 			"hostnames": {
 				Type:        schema.TypeList,
 				Computed:    true,
-				Description: "List of hostnames",
+				Description: "A list of hostnames",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"cname_type":             {Type: schema.TypeString, Computed: true},
-						"edge_hostname_id":       {Type: schema.TypeString, Computed: true},
-						"cname_from":             {Type: schema.TypeString, Computed: true},
-						"cname_to":               {Type: schema.TypeString, Computed: true},
-						"cert_provisioning_type": {Type: schema.TypeString, Computed: true},
+						"cname_type": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "A hostname's CNAME type. Supports only the `EDGE_HOSTNAME` value.",
+						},
+						"edge_hostname_id": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The unique identifier for the edge hostname.",
+						},
+						"cname_from": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The hostname that your end users see, indicated by the Host header in end user requests.",
+						},
+						"cname_to": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The edge hostname you point the property hostname to so that you can start serving traffic through Akamai servers. This member corresponds to the edge hostname object's `edgeHostnameDomain` member.",
+						},
+						"cert_provisioning_type": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Indicates the certificate's provisioning type. Either `CPS_MANAGED` for the certificates you create with the Certificate Provisioning System (CPS) API, or `DEFAULT` for the Domain Validation (DV) certificates created automatically. Note that you can't specify the `DEFAULT` value if your property hostname uses the `akamaized.net` domain suffix.",
+						},
 						"cert_status": {
 							Type:     schema.TypeList,
 							Computed: true,
@@ -65,7 +88,7 @@ func dataSourcePropertyHostnames() *schema.Resource {
 			"hostname_bucket": {
 				Type:        schema.TypeList,
 				Computed:    true,
-				Description: "List of hostnames for property of type HOSTNAME_BUCKET",
+				Description: "A list of hostnames for a property of the `HOSTNAME_BUCKET` type.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"cname_from": {
@@ -76,37 +99,37 @@ func dataSourcePropertyHostnames() *schema.Resource {
 						"cname_type": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Only one supported EDGE_HOSTNAME value.",
+							Description: "A hostname's CNAME type. Supports only the `EDGE_HOSTNAME` value.",
 						},
 						"staging_edge_hostname_id": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Identifies each edge hostname.",
+							Description: "The unique identifier for the edge hostname.",
 						},
 						"staging_cert_type": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Indicates the certificate's provisioning type. Either CPS_MANAGED type for the certificates you create with the Certificate Provisioning System API (CPS), or DEFAULT for the Default Domain Validation (DV) certificates created automatically. Note that you can't specify the DEFAULT value if your property hostname uses the akamaized.net domain suffix.",
+							Description: "Indicates the certificate's provisioning type. Either `CPS_MANAGED` for the certificates you create with the Certificate Provisioning System (CPS) API, or `DEFAULT` for the Domain Validation (DV) certificates created automatically. Note that you can't specify the `DEFAULT` value if your property hostname uses the `akamaized.net` domain suffix.",
 						},
 						"staging_cname_to": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "The edge hostname you point the property hostname to so that you can start serving traffic through Akamai servers. This member corresponds to the edge hostname object's edgeHostnameDomain member.",
+							Description: "The edge hostname you point the property hostname to so that you can start serving traffic through Akamai servers. This member corresponds to the edge hostname object's `edgeHostnameDomain` member.",
 						},
 						"production_edge_hostname_id": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Identifies each edge hostname.",
+							Description: "The unique identifier for the edge hostname.",
 						},
 						"production_cert_type": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Indicates the certificate's provisioning type. Either CPS_MANAGED type for the certificates you create with the Certificate Provisioning System API (CPS), or DEFAULT for the Default Domain Validation (DV) certificates created automatically. Note that you can't specify the DEFAULT value if your property hostname uses the akamaized.net domain suffix.",
+							Description: "Indicates the certificate's provisioning type. Either `CPS_MANAGED` for the certificates you create with the Certificate Provisioning System (CPS) API, or `DEFAULT` for the Domain Validation (DV) certificates created automatically. Note that you can't specify the `DEFAULT` value if your property hostname uses the `akamaized.net` domain suffix.",
 						},
 						"production_cname_to": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "The edge hostname you point the property hostname to so that you can start serving traffic through Akamai servers. This member corresponds to the edge hostname object's edgeHostnameDomain member.",
+							Description: "The edge hostname you point the property hostname to so that you can start serving traffic through Akamai servers. This member corresponds to the edge hostname object's `edgeHostnameDomain` member.",
 						},
 						"cert_status": {
 							Type:     schema.TypeList,
@@ -183,7 +206,8 @@ func dataPropertyHostnamesRead(ctx context.Context, d *schema.ResourceData, m in
 
 		d.SetId(propertyID)
 
-		if err := d.Set("hostname_bucket", flattenBucketHostnames(hostnames)); err != nil {
+		err = d.Set("hostname_bucket", flattenBucketHostnames(hostnames))
+		if err != nil {
 			return append(diags, diag.Errorf("error setting hostnames: %s", err)...)
 		}
 

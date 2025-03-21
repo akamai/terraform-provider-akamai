@@ -3,7 +3,6 @@ package property
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
@@ -16,7 +15,7 @@ import (
 var _ datasource.DataSource = &hostnamesDiffDataSource{}
 var _ datasource.DataSourceWithConfigure = &hostnamesDiffDataSource{}
 
-// NewHostnamesDiffDataSource returns a new property hostnames diff data source
+// NewHostnamesDiffDataSource returns a new property hostnames diff data source.
 func NewHostnamesDiffDataSource() datasource.DataSource {
 	return &hostnamesDiffDataSource{}
 }
@@ -26,7 +25,7 @@ type hostnamesDiffDataSource struct {
 	meta meta.Meta
 }
 
-// hostnameDiffDataSourceModel describes the data source data model for PropertyHostnamesDiffDataSource.
+// hostnamesDiffDataSourceModel describes the data source data model for PropertyHostnamesDiffDataSource.
 type hostnamesDiffDataSourceModel struct {
 	PropertyID types.String    `tfsdk:"property_id"`
 	ContractID types.String    `tfsdk:"contract_id"`
@@ -47,29 +46,29 @@ type hostnamesDiff struct {
 	ProductionCNameTo              types.String `tfsdk:"production_cname_to"`
 }
 
-// Metadata configures data source's meta information
+// Metadata configures data source's meta information.
 func (d *hostnamesDiffDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "akamai_property_hostnames_diff"
 }
 
-// Schema is used to define data source's terraform schema
+// Schema is used to define data source's terraform schema.
 func (d *hostnamesDiffDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Property hostnames diff data source",
 		Attributes: map[string]schema.Attribute{
 			"property_id": schema.StringAttribute{
 				Required:    true,
-				Description: "Unique identifier for the property",
+				Description: "The unique identifier for the property.",
 			},
 			"contract_id": schema.StringAttribute{
 				Optional:    true,
 				Computed:    true,
-				Description: "Unique identifier for the contract.",
+				Description: "The unique identifier for the contract.",
 			},
 			"group_id": schema.StringAttribute{
 				Optional:    true,
 				Computed:    true,
-				Description: "Unique identifier for the group.",
+				Description: "The unique identifier for the group.",
 			},
 			"account_id": schema.StringAttribute{
 				Computed:    true,
@@ -85,35 +84,35 @@ func (d *hostnamesDiffDataSource) Schema(_ context.Context, _ datasource.SchemaR
 						},
 						"staging_cname_type": schema.StringAttribute{
 							Computed:    true,
-							Description: "Only one supported EDGE_HOSTNAME value.",
+							Description: "A hostname's CNAME type. Supports only the `EDGE_HOSTNAME` value.",
 						},
 						"production_cname_type": schema.StringAttribute{
 							Computed:    true,
-							Description: "Only one supported EDGE_HOSTNAME value.",
+							Description: "A hostname's CNAME type. Supports only the `EDGE_HOSTNAME` value.",
 						},
 						"staging_edge_hostname_id": schema.StringAttribute{
 							Computed:    true,
-							Description: "Identifies each edge hostname.",
+							Description: "The unique identifier for the edge hostname.",
 						},
 						"production_edge_hostname_id": schema.StringAttribute{
 							Computed:    true,
-							Description: "Identifies each edge hostname.",
+							Description: "The unique identifier for the edge hostname.",
 						},
 						"staging_cert_provisioning_type": schema.StringAttribute{
 							Computed:    true,
-							Description: "Indicates the certificate's provisioning type. Either CPS_MANAGED type for the certificates you create with the Certificate Provisioning System API (CPS), or DEFAULT for the Default Domain Validation (DV) certificates created automatically. Note that you can't specify the DEFAULT value if your property hostname uses the akamaized.net domain suffix.",
+							Description: "Indicates the certificate's provisioning type. Either `CPS_MANAGED` for the certificates you create with the Certificate Provisioning System (CPS) API, or `DEFAULT` for the Domain Validation (DV) certificates created automatically. Note that you can't specify the `DEFAULT` value if your property hostname uses the `akamaized.net` domain suffix.",
 						},
 						"production_cert_provisioning_type": schema.StringAttribute{
 							Computed:    true,
-							Description: "Indicates the certificate's provisioning type. Either CPS_MANAGED type for the certificates you create with the Certificate Provisioning System API (CPS), or DEFAULT for the Default Domain Validation (DV) certificates created automatically. Note that you can't specify the DEFAULT value if your property hostname uses the akamaized.net domain suffix.",
+							Description: "Indicates the certificate's provisioning type. Either `CPS_MANAGED` for the certificates you create with the Certificate Provisioning System (CPS) API, or `DEFAULT` for the Domain Validation (DV) certificates created automatically. Note that you can't specify the `DEFAULT` value if your property hostname uses the `akamaized.net` domain suffix.",
 						},
 						"staging_cname_to": schema.StringAttribute{
 							Computed:    true,
-							Description: "The edge hostname you point the property hostname to so that you can start serving traffic through Akamai servers. This member corresponds to the edge hostname object's edgeHostnameDomain member.",
+							Description: "The edge hostname you point the property hostname to so that you can start serving traffic through Akamai servers. This member corresponds to the edge hostname object's `edgeHostnameDomain` member.",
 						},
 						"production_cname_to": schema.StringAttribute{
 							Computed:    true,
-							Description: "The edge hostname you point the property hostname to so that you can start serving traffic through Akamai servers. This member corresponds to the edge hostname object's edgeHostnameDomain member.",
+							Description: "The edge hostname you point the property hostname to so that you can start serving traffic through Akamai servers. This member corresponds to the edge hostname object's `edgeHostnameDomain` member.",
 						},
 					},
 				},
@@ -122,7 +121,7 @@ func (d *hostnamesDiffDataSource) Schema(_ context.Context, _ datasource.SchemaR
 	}
 }
 
-// Configure  configures data source at the beginning of the lifecycle
+// Configure  configures data source at the beginning of the lifecycle.
 func (d *hostnamesDiffDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		// ProviderData is nil when Configure is run first time as part of ValidateDataSourceConfig in framework provider
@@ -141,7 +140,7 @@ func (d *hostnamesDiffDataSource) Configure(_ context.Context, req datasource.Co
 	d.meta = meta.Must(req.ProviderData)
 }
 
-func getHostnameDiff(ctx context.Context, client papi.PAPI, contractID, groupID, propertyID string) (*papi.GetActivePropertyHostnamesDiffResponse, error) {
+func getHostnamesDiff(ctx context.Context, client papi.PAPI, contractID, groupID, propertyID string) (*papi.GetActivePropertyHostnamesDiffResponse, error) {
 	pageSize, offset := 999, 0
 	response := &papi.GetActivePropertyHostnamesDiffResponse{}
 
@@ -173,7 +172,7 @@ func getHostnameDiff(ctx context.Context, client papi.PAPI, contractID, groupID,
 
 }
 
-// Read is called when the provider must read data source values in order to update state
+// Read is called when the provider must read data source values in order to update state.
 func (d *hostnamesDiffDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	tflog.Debug(ctx, "PropertyHostnamesDiffDataSource Read")
 
@@ -183,26 +182,25 @@ func (d *hostnamesDiffDataSource) Read(ctx context.Context, req datasource.ReadR
 	}
 
 	client := Client(d.meta)
-	activations, err := getHostnameDiff(ctx, client, data.ContractID.ValueString(), data.GroupID.ValueString(), data.PropertyID.ValueString())
+	activations, err := getHostnamesDiff(ctx, client, data.ContractID.ValueString(), data.GroupID.ValueString(), data.PropertyID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("fetching property hostnames diff failed", err.Error())
 		return
 	}
 
-	data.AccountID = types.StringValue(strings.TrimPrefix(activations.AccountID, "act_"))
-	data.ContractID = types.StringValue(strings.TrimPrefix(activations.ContractID, "ctr_"))
-	data.GroupID = types.StringValue(strings.TrimPrefix(activations.GroupID, "grp_"))
-	data.PropertyID = types.StringValue(strings.TrimPrefix(activations.PropertyID, "prp_"))
+	data.AccountID = types.StringValue(activations.AccountID)
+	data.ContractID = types.StringValue(activations.ContractID)
+	data.GroupID = types.StringValue(activations.GroupID)
 
 	for _, item := range activations.Hostnames.Items {
 		a := hostnamesDiff{
 			CNameFrom:                      types.StringValue(item.CnameFrom),
 			StagingCNameType:               types.StringValue(string(item.StagingCnameType)),
 			ProductionCNameType:            types.StringValue(string(item.ProductionCnameType)),
-			StagingEdgeHostnameID:          types.StringValue(item.StagingEdgeHostnameId),
-			ProductionEdgeHostnameID:       types.StringValue(item.ProductionEdgeHostnameId),
-			StagingCertProvisioningType:    types.StringValue(item.StagingCertProvisioningType),
-			ProductionCertProvisioningType: types.StringValue(item.ProductionCertProvisioningType),
+			StagingEdgeHostnameID:          types.StringValue(item.StagingEdgeHostnameID),
+			ProductionEdgeHostnameID:       types.StringValue(item.ProductionEdgeHostnameID),
+			StagingCertProvisioningType:    types.StringValue(string(item.StagingCertProvisioningType)),
+			ProductionCertProvisioningType: types.StringValue(string(item.ProductionCertProvisioningType)),
 			StagingCNameTo:                 types.StringValue(item.StagingCnameTo),
 			ProductionCNameTo:              types.StringValue(item.ProductionCnameTo),
 		}

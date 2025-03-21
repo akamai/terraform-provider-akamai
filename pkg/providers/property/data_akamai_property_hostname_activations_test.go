@@ -14,10 +14,22 @@ import (
 )
 
 func TestDataPropertyHostnameActivations(t *testing.T) {
+	t.Parallel()
 	baseChecker := test.NewStateChecker("data.akamai_property_hostname_activations.activation").
-		CheckEqual("property_id", "1").
-		CheckEqual("group_id", "1").
-		CheckEqual("contract_id", "1")
+		CheckEqual("property_id", "prp_1").
+		CheckEqual("group_id", "grp_1").
+		CheckEqual("contract_id", "ctr_1").
+		CheckEqual("account_id", "act_1").
+		CheckEqual("property_name", "my_property_1").
+		CheckEqual("hostname_activations.0.activation_type", "ACTIVATE").
+		CheckEqual("hostname_activations.0.hostname_activation_id", "44").
+		CheckEqual("hostname_activations.0.network", "STAGING").
+		CheckEqual("hostname_activations.0.status", "ACTIVE").
+		CheckEqual("hostname_activations.0.submit_date", "2025-01-22T19:36:29Z").
+		CheckEqual("hostname_activations.0.update_date", "2025-01-22T19:37:48Z").
+		CheckEqual("hostname_activations.0.note", "   ").
+		CheckEqual("hostname_activations.0.notify_emails.#", "1").
+		CheckEqual("hostname_activations.0.notify_emails.0", "nomail@akamai.com")
 
 	activations := papi.HostnameActivationsList{
 		Items: []papi.HostnameActivationListItem{
@@ -116,19 +128,8 @@ func TestDataPropertyHostnameActivations(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDataPropertyHostnameActivations/valid.tf"),
 					Check: baseChecker.
-						CheckEqual("account_id", "1").
-						CheckEqual("property_name", "my_property_1").
 						CheckEqual("property_id", "1").
 						CheckEqual("hostname_activations.#", "3").
-						CheckEqual("hostname_activations.0.activation_type", "ACTIVATE").
-						CheckEqual("hostname_activations.0.hostname_activation_id", "44").
-						CheckEqual("hostname_activations.0.network", "STAGING").
-						CheckEqual("hostname_activations.0.status", "ACTIVE").
-						CheckEqual("hostname_activations.0.submit_date", "2025-01-22T19:36:29Z").
-						CheckEqual("hostname_activations.0.update_date", "2025-01-22T19:37:48Z").
-						CheckEqual("hostname_activations.0.note", "   ").
-						CheckEqual("hostname_activations.0.notify_emails.#", "1").
-						CheckEqual("hostname_activations.0.notify_emails.0", "nomail@akamai.com").
 						CheckEqual("hostname_activations.1.activation_type", "ACTIVATE").
 						CheckEqual("hostname_activations.1.hostname_activation_id", "55").
 						CheckEqual("hostname_activations.1.network", "PRODUCTION").
@@ -147,8 +148,10 @@ func TestDataPropertyHostnameActivations(t *testing.T) {
 						CheckEqual("hostname_activations.2.note", "   ").
 						CheckEqual("hostname_activations.2.notify_emails.#", "1").
 						CheckEqual("hostname_activations.2.notify_emails.0", "nomail@akamai.com").
-						Build()},
-			}},
+						Build(),
+				},
+			},
+		},
 		"happy path - no contract and group": {
 			init: func(m *papi.Mock) {
 				m.On("ListPropertyHostnameActivations", testutils.MockContext, papi.ListPropertyHostnameActivationsRequest{
@@ -168,19 +171,7 @@ func TestDataPropertyHostnameActivations(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDataPropertyHostnameActivations/valid_no_contract_and_group.tf"),
 					Check: baseChecker.
-						CheckEqual("account_id", "1").
-						CheckEqual("property_name", "my_property_1").
-						CheckEqual("property_id", "1").
 						CheckEqual("hostname_activations.#", "3").
-						CheckEqual("hostname_activations.0.activation_type", "ACTIVATE").
-						CheckEqual("hostname_activations.0.hostname_activation_id", "44").
-						CheckEqual("hostname_activations.0.network", "STAGING").
-						CheckEqual("hostname_activations.0.status", "ACTIVE").
-						CheckEqual("hostname_activations.0.submit_date", "2025-01-22T19:36:29Z").
-						CheckEqual("hostname_activations.0.update_date", "2025-01-22T19:37:48Z").
-						CheckEqual("hostname_activations.0.note", "   ").
-						CheckEqual("hostname_activations.0.notify_emails.#", "1").
-						CheckEqual("hostname_activations.0.notify_emails.0", "nomail@akamai.com").
 						CheckEqual("hostname_activations.1.activation_type", "ACTIVATE").
 						CheckEqual("hostname_activations.1.hostname_activation_id", "55").
 						CheckEqual("hostname_activations.1.network", "PRODUCTION").
@@ -199,8 +190,10 @@ func TestDataPropertyHostnameActivations(t *testing.T) {
 						CheckEqual("hostname_activations.2.note", "   ").
 						CheckEqual("hostname_activations.2.notify_emails.#", "1").
 						CheckEqual("hostname_activations.2.notify_emails.0", "nomail@akamai.com").
-						Build()},
-			}},
+						Build(),
+				},
+			},
+		},
 		"happy path - only production network": {
 			init: func(m *papi.Mock) {
 				m.On("ListPropertyHostnameActivations", testutils.MockContext, papi.ListPropertyHostnameActivationsRequest{
@@ -220,19 +213,9 @@ func TestDataPropertyHostnameActivations(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDataPropertyHostnameActivations/valid_production.tf"),
 					Check: baseChecker.
-						CheckEqual("account_id", "1").
-						CheckEqual("property_name", "my_property_1").
-						CheckEqual("property_id", "1").
 						CheckEqual("hostname_activations.#", "2").
-						CheckEqual("hostname_activations.0.activation_type", "ACTIVATE").
 						CheckEqual("hostname_activations.0.hostname_activation_id", "55").
 						CheckEqual("hostname_activations.0.network", "PRODUCTION").
-						CheckEqual("hostname_activations.0.status", "ACTIVE").
-						CheckEqual("hostname_activations.0.submit_date", "2025-01-22T19:36:29Z").
-						CheckEqual("hostname_activations.0.update_date", "2025-01-22T19:37:48Z").
-						CheckEqual("hostname_activations.0.note", "   ").
-						CheckEqual("hostname_activations.0.notify_emails.#", "1").
-						CheckEqual("hostname_activations.0.notify_emails.0", "nomail@akamai.com").
 						CheckEqual("hostname_activations.1.activation_type", "ACTIVATE").
 						CheckEqual("hostname_activations.1.hostname_activation_id", "66").
 						CheckEqual("hostname_activations.1.network", "PRODUCTION").
@@ -242,8 +225,10 @@ func TestDataPropertyHostnameActivations(t *testing.T) {
 						CheckEqual("hostname_activations.1.note", "   ").
 						CheckEqual("hostname_activations.1.notify_emails.#", "1").
 						CheckEqual("hostname_activations.1.notify_emails.0", "nomail@akamai.com").
-						Build()},
-			}},
+						Build(),
+				},
+			},
+		},
 		"happy path - with paging": {
 			init: func(m *papi.Mock) {
 				m.On("ListPropertyHostnameActivations", testutils.MockContext, papi.ListPropertyHostnameActivationsRequest{
@@ -283,22 +268,14 @@ func TestDataPropertyHostnameActivations(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDataPropertyHostnameActivations/valid_production.tf"),
 					Check: baseChecker.
-						CheckEqual("account_id", "1").
-						CheckEqual("property_name", "my_property_1").
-						CheckEqual("property_id", "1").
 						CheckEqual("hostname_activations.#", "1100").
-						CheckEqual("hostname_activations.0.activation_type", "ACTIVATE").
 						CheckEqual("hostname_activations.0.hostname_activation_id", "0").
 						CheckEqual("hostname_activations.0.network", "PRODUCTION").
-						CheckEqual("hostname_activations.0.status", "ACTIVE").
-						CheckEqual("hostname_activations.0.submit_date", "2025-01-22T19:36:29Z").
-						CheckEqual("hostname_activations.0.update_date", "2025-01-22T19:37:48Z").
-						CheckEqual("hostname_activations.0.note", "   ").
-						CheckEqual("hostname_activations.0.notify_emails.#", "1").
-						CheckEqual("hostname_activations.0.notify_emails.0", "nomail@akamai.com").
 						CheckEqual("hostname_activations.1099.hostname_activation_id", "1099").
-						Build()},
-			}},
+						Build(),
+				},
+			},
+		},
 		"happy path - with limit paging": {
 			init: func(m *papi.Mock) {
 				m.On("ListPropertyHostnameActivations", testutils.MockContext, papi.ListPropertyHostnameActivationsRequest{
@@ -322,21 +299,14 @@ func TestDataPropertyHostnameActivations(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDataPropertyHostnameActivations/valid.tf"),
 					Check: baseChecker.
-						CheckEqual("account_id", "1").
-						CheckEqual("property_name", "my_property_1").
 						CheckEqual("property_id", "1").
 						CheckEqual("hostname_activations.#", "999").
-						CheckEqual("hostname_activations.0.activation_type", "ACTIVATE").
 						CheckEqual("hostname_activations.0.hostname_activation_id", "0").
 						CheckEqual("hostname_activations.0.network", "PRODUCTION").
-						CheckEqual("hostname_activations.0.status", "ACTIVE").
-						CheckEqual("hostname_activations.0.submit_date", "2025-01-22T19:36:29Z").
-						CheckEqual("hostname_activations.0.update_date", "2025-01-22T19:37:48Z").
-						CheckEqual("hostname_activations.0.note", "   ").
-						CheckEqual("hostname_activations.0.notify_emails.#", "1").
-						CheckEqual("hostname_activations.0.notify_emails.0", "nomail@akamai.com").
-						Build()},
-			}},
+						Build(),
+				},
+			},
+		},
 		"happy path - empty hostname activations list": {
 			init: func(m *papi.Mock) {
 				m.On("ListPropertyHostnameActivations", testutils.MockContext, papi.ListPropertyHostnameActivationsRequest{
@@ -359,11 +329,22 @@ func TestDataPropertyHostnameActivations(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDataPropertyHostnameActivations/valid.tf"),
 					Check: baseChecker.
-						CheckEqual("account_id", "1").
+						CheckEqual("property_id", "1").
 						CheckEqual("hostname_activations.#", "0").
-						Build()},
-			}},
-
+						CheckMissing("property_name").
+						CheckMissing("hostname_activations.0.notify_emails.0").
+						CheckMissing("hostname_activations.0.activation_type").
+						CheckMissing("hostname_activations.0.note").
+						CheckMissing("hostname_activations.0.status").
+						CheckMissing("hostname_activations.0.network").
+						CheckMissing("hostname_activations.0.submit_date").
+						CheckMissing("hostname_activations.0.update_date").
+						CheckMissing("hostname_activations.0.hostname_activation_id").
+						CheckMissing("hostname_activations.0.notify_emails.#").
+						Build(),
+				},
+			},
+		},
 		"error response from api": {
 			init: func(m *papi.Mock) {
 				m.On("ListPropertyHostnameActivations", testutils.MockContext, papi.ListPropertyHostnameActivationsRequest{
@@ -390,8 +371,10 @@ func TestDataPropertyHostnameActivations(t *testing.T) {
 			},
 		},
 	}
+
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			client := &papi.Mock{}
 			hapiClient := &hapi.Mock{}
 

@@ -51,29 +51,29 @@ type hostnameActivation struct {
 	HostnameActivationID types.String   `tfsdk:"hostname_activation_id"`
 }
 
-// Metadata configures data source's meta information
+// Metadata configures data source's meta information.
 func (d *hostnameActivationsDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "akamai_property_hostname_activations"
 }
 
-// Schema is used to define data source's terraform schema
+// Schema is used to define data source's terraform schema.
 func (d *hostnameActivationsDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Property hostname activations data source",
 		Attributes: map[string]schema.Attribute{
 			"property_id": schema.StringAttribute{
 				Required:    true,
-				Description: "Unique identifier for the property",
+				Description: "The unique identifier for the property.",
 			},
 			"network": schema.StringAttribute{
 				Optional:    true,
-				Description: "The network of activation, either STAGING, PRODUCTION or none.",
+				Description: "The network of activation, either `STAGING`, `PRODUCTION`, or none.",
 				Validators:  []validator.String{stringvalidator.OneOfCaseInsensitive("production", "staging", "")},
 			},
 			"contract_id": schema.StringAttribute{
 				Optional:    true,
 				Computed:    true,
-				Description: "Unique identifier for the contract.",
+				Description: "The unique identifier for the contract.",
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(1),
 				},
@@ -81,7 +81,7 @@ func (d *hostnameActivationsDataSource) Schema(_ context.Context, _ datasource.S
 			"group_id": schema.StringAttribute{
 				Optional:    true,
 				Computed:    true,
-				Description: "Unique identifier for the group.",
+				Description: "The unique identifier for the group.",
 			},
 			"account_id": schema.StringAttribute{
 				Computed:    true,
@@ -97,11 +97,11 @@ func (d *hostnameActivationsDataSource) Schema(_ context.Context, _ datasource.S
 					Attributes: map[string]schema.Attribute{
 						"activation_type": schema.StringAttribute{
 							Computed:    true,
-							Description: "Either ACTIVATE or DEACTIVATE.",
+							Description: "The activation type, either `ACTIVATE` or `DEACTIVATE`.",
 						},
 						"network": schema.StringAttribute{
 							Computed:    true,
-							Description: "The network of activation, either STAGING or PRODUCTION.",
+							Description: "The network of activation, either `STAGING` or `PRODUCTION`.`",
 						},
 						"note": schema.StringAttribute{
 							Computed:    true,
@@ -114,19 +114,19 @@ func (d *hostnameActivationsDataSource) Schema(_ context.Context, _ datasource.S
 						},
 						"status": schema.StringAttribute{
 							Computed:    true,
-							Description: "The activation's status. ACTIVE if currently serving traffic. INACTIVE if another activation has superseded this one. PENDING if not yet active. ABORTED if the client followed up with a DELETE request in time. FAILED if the activation causes a range of edge network errors that may cause a fallback to the previous activation. PENDING_DEACTIVATION or DEACTIVATED when the activationType is DEACTIVATE to no longer serve traffic.",
+							Description: "The activation's status. `ACTIVE` if currently serving traffic. `INACTIVE` if another activation has superseded this one. `PENDING` if not yet active. `ABORTED` if the client followed up with a `DELETE` request in time. `FAILED` if the activation causes a range of edge network errors that may cause a fallback to the previous activation. `PENDING_DEACTIVATION` or `DEACTIVATED` when the `activation_type` is `DEACTIVATE` to no longer serve traffic.",
 						},
 						"submit_date": schema.StringAttribute{
 							Computed:    true,
-							Description: "A date stamp marking when the activation initiated.",
+							Description: "The timestamp indicating when the activation was initiated.",
 						},
 						"update_date": schema.StringAttribute{
 							Computed:    true,
-							Description: "A date stamp marking when the status last changed.",
+							Description: "The ISO 8601 timestamp indicating when the status last changed.",
 						},
 						"hostname_activation_id": schema.StringAttribute{
 							Computed:    true,
-							Description: "The property hostname activation's unique identifier.",
+							Description: "The ISO 8601 timestamp property hostname activation's unique identifier.",
 						},
 					},
 				},
@@ -135,7 +135,7 @@ func (d *hostnameActivationsDataSource) Schema(_ context.Context, _ datasource.S
 	}
 }
 
-// Configure  configures data source at the beginning of the lifecycle
+// Configure configures data source at the beginning of the lifecycle.
 func (d *hostnameActivationsDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		// ProviderData is nil when Configure is run first time as part of ValidateDataSourceConfig in framework provider
@@ -154,10 +154,9 @@ func (d *hostnameActivationsDataSource) Configure(_ context.Context, req datasou
 	d.meta = meta.Must(req.ProviderData)
 }
 
-func getAllActivations(ctx context.Context, client papi.PAPI, contractID string, groupID string, propertyID string, network string) (*papi.ListPropertyHostnameActivationsResponse, error) {
+func getAllActivations(ctx context.Context, client papi.PAPI, contractID, groupID, propertyID, network string) (*papi.ListPropertyHostnameActivationsResponse, error) {
 	pageSize, offset := 999, 0
 	response := &papi.ListPropertyHostnameActivationsResponse{}
-
 	for {
 		act, err := client.ListPropertyHostnameActivations(ctx, papi.ListPropertyHostnameActivationsRequest{
 			PropertyID: propertyID,
@@ -174,7 +173,7 @@ func getAllActivations(ctx context.Context, client papi.PAPI, contractID string,
 		response.ContractID = act.ContractID
 		response.GroupID = act.GroupID
 		for _, item := range act.HostnameActivations.Items {
-			if network != "" && !strings.EqualFold(network, item.Network) {
+			if network != "" && !strings.EqualFold(network, string(item.Network)) {
 				continue
 			}
 			response.HostnameActivations.Items = append(response.HostnameActivations.Items, item)
@@ -190,9 +189,9 @@ func getAllActivations(ctx context.Context, client papi.PAPI, contractID string,
 
 }
 
-// Read is called when the provider must read data source values in order to update state
+// Read is called when the provider must read data source values in order to update state.
 func (d *hostnameActivationsDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	tflog.Debug(ctx, "PropertyHostnameActivationsDataSource Read")
+	tflog.Debug(ctx, "Property HostnameActivationsDataSource Read")
 
 	var data hostnameActivationsDataSourceModel
 	if resp.Diagnostics.Append(req.Config.Get(ctx, &data)...); resp.Diagnostics.HasError() {
@@ -206,12 +205,11 @@ func (d *hostnameActivationsDataSource) Read(ctx context.Context, req datasource
 		return
 	}
 
-	data.AccountID = types.StringValue(strings.TrimPrefix(activations.AccountID, "act_"))
-	data.ContractID = types.StringValue(strings.TrimPrefix(activations.ContractID, "ctr_"))
-	data.GroupID = types.StringValue(strings.TrimPrefix(activations.GroupID, "grp_"))
+	data.AccountID = types.StringValue(activations.AccountID)
+	data.ContractID = types.StringValue(activations.ContractID)
+	data.GroupID = types.StringValue(activations.GroupID)
 	if len(activations.HostnameActivations.Items) > 0 {
 		data.PropertyName = types.StringValue(activations.HostnameActivations.Items[0].PropertyName)
-		data.PropertyID = types.StringValue(strings.TrimPrefix(activations.HostnameActivations.Items[0].PropertyID, "prp_"))
 	} else {
 		data.PropertyName = types.StringNull()
 	}
@@ -222,7 +220,7 @@ func (d *hostnameActivationsDataSource) Read(ctx context.Context, req datasource
 		}
 		a := hostnameActivation{
 			ActivationType:       types.StringValue(item.ActivationType),
-			Network:              types.StringValue(item.Network),
+			Network:              types.StringValue(string(item.Network)),
 			Note:                 types.StringValue(item.Note),
 			NotifyEmails:         emails,
 			Status:               types.StringValue(item.Status),

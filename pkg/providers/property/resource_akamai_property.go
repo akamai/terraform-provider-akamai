@@ -1447,7 +1447,7 @@ func mapToHostnames(givenList []interface{}) []papi.Hostname {
 		certProvisioningType := r["cert_provisioning_type"]
 		if len(r) != 0 {
 			hostnames = append(hostnames, papi.Hostname{
-				CnameType:            "EDGE_HOSTNAME",
+				CnameType:            papi.HostnameCnameTypeEdgeHostname,
 				CnameFrom:            cnameFrom.(string),
 				CnameTo:              cnameTo.(string), // guaranteed by schema to be a string
 				CertProvisioningType: certProvisioningType.(string),
