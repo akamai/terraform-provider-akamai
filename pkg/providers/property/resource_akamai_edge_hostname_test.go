@@ -2040,7 +2040,23 @@ func TestResourceEdgeHostname(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureStringf(t, "%s/%s", testDir, "edgehostname_domainprefix_more_than_allowed_length.tf"),
-					ExpectError: regexp.MustCompile("The edge hostname prefix must be 63 characters or less; you provided 64 characters"),
+					ExpectError: regexp.MustCompile(regexp.QuoteMeta(`The edge hostname prefix must be at least 1 character(s) and no more than 63 characters for "edgesuite.net" suffix; you provided 64 character(s).`)),
+				},
+			},
+		},
+		"invalid edge hostname domain prefix. The domain prefix less the minimum required length of 4 characters for akamaized.net": {
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureStringf(t, "%s/%s", testDir, "edgehostname_domainprefix_for_akamaized_dot_net_less_than_minimum_required_length.tf"),
+					ExpectError: regexp.MustCompile(regexp.QuoteMeta(`The edge hostname prefix must be at least 4 character(s) and no more than 63 characters for "akamaized.net" suffix; you provided 2 character(s).`)),
+				},
+			},
+		},
+		"invalid edge hostname domain prefix. The domain prefix less the minimum required length of 1 characters": {
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureStringf(t, "%s/%s", testDir, "edgehostname_domainprefix_less_than_minimum_required_length.tf"),
+					ExpectError: regexp.MustCompile(regexp.QuoteMeta(`The edge hostname prefix must be at least 1 character(s) and no more than 63 characters for "edgesuite.net" suffix; you provided 0 character(s).`)),
 				},
 			},
 		},

@@ -24,7 +24,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-const retriesMax = 15
+const (
+	retriesMax                     = 15
+	minDomainPrefixLength          = 1
+	minDomainPrefixLengthAkamaized = 4
+)
 
 var (
 	// EgdeHostnameCreatePollInterval is the interval for polling an edgehostname creation
@@ -257,9 +261,15 @@ func validateDomainPrefix(v interface{}, _ cty.Path) diag.Diagnostics {
 	}
 	domainSuffix, _ := parseEdgeHostname(edgeHostname)
 	domainPrefix := strings.TrimSuffix(edgeHostname, "."+domainSuffix)
+	domainPrefixLen := len(domainPrefix)
 
-	if len(domainPrefix) > 63 {
-		return diag.Errorf("The edge hostname prefix must be 63 characters or less; you provided %d characters", len(domainPrefix))
+	minLen := minDomainPrefixLength
+	if domainSuffix == "akamaized.net" {
+		minLen = minDomainPrefixLengthAkamaized
+	}
+
+	if domainPrefixLen < minLen || domainPrefixLen > 63 {
+		return diag.Errorf(`The edge hostname prefix must be at least %d character(s) and no more than 63 characters for "%s" suffix; you provided %d character(s).`, minLen, domainSuffix, domainPrefixLen)
 	}
 
 	pattern, exists := domainPrefixPatterns[domainSuffix]
