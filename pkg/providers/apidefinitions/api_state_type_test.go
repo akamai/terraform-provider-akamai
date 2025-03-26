@@ -36,11 +36,9 @@ func TestCheckSemanticEquality_ConsumeType(t *testing.T) {
 	assert.Equal(t, []string(nil), checkSemanticEquality(before, after))
 }
 
-func base() v0.RegisterAPIRequest {
-	return v0.RegisterAPIRequest{
-		Name:       "Name",
-		Hostnames:  []string{"host1.com"},
-		ContractID: "Contract-1",
-		GroupID:    1,
+func base() v0.APIAttributes {
+	return v0.APIAttributes{
+		Name:      "Name",
+		Hostnames: []string{"host1.com"},
 	}
 }

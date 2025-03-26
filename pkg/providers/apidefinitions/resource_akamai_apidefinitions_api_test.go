@@ -204,8 +204,16 @@ func TestAPIResource(t *testing.T) {
 		"check schema - missing required attributes": {
 			steps: []resource.TestStep{
 				{
-					Config:      endpointResourceConfigEmpty(),
+					Config:      endpointResourceConfigWithEmptyAPI(),
 					ExpectError: regexp.MustCompile("Attribute api cannot be empty"),
+				},
+				{
+					Config:      endpointResourceConfigWithEmptyContractID(),
+					ExpectError: regexp.MustCompile("Attribute contract_id string length must be at least 1, got: 0"),
+				},
+				{
+					Config:      endpointResourceConfigWithoutGroupID(),
+					ExpectError: regexp.MustCompile("The argument \"group_id\" is required, but no definition was found"),
 				},
 			},
 		},
@@ -225,6 +233,8 @@ func TestAPIResource(t *testing.T) {
 						state := states[0].Attributes
 						assert.Equal(t, "1", state["id"])
 						assert.Equal(t, "1", state["latest_version"])
+						assert.Equal(t, "Contract-1", state["contract_id"])
+						assert.Equal(t, "1", state["group_id"])
 						return nil
 					},
 					ImportStatePersist: true,
@@ -402,7 +412,7 @@ func toState(file string) *v0.API {
 
 func toStateJSON(file string) string {
 	data := toState(file)
-	json, _ := serializeIndent(data.RegisterAPIRequest)
+	json, _ := serializeIndent(data.RegisterAPIRequest.APIAttributes)
 	return *json
 }
 
@@ -410,14 +420,35 @@ func endpointResourceConfig(file string) string {
 	return providerConfig + fmt.Sprintf(`
 resource "akamai_apidefinitions_api" "e1" {
   api = file("testdata/endpoint/%v")
+  contract_id = "Contract-1"
+  group_id = 12345
 }
 `, file)
 }
 
-func endpointResourceConfigEmpty() string {
+func endpointResourceConfigWithEmptyAPI() string {
 	return providerConfig + `
 resource "akamai_apidefinitions_api" "e1" {
   api = ""
+  contract_id = "Contract-1"
+  group_id = 12345
+}`
+}
+
+func endpointResourceConfigWithEmptyContractID() string {
+	return providerConfig + `
+resource "akamai_apidefinitions_api" "e1" {
+  api = "{}"
+  contract_id = ""
+  group_id = 12345
+}`
+}
+
+func endpointResourceConfigWithoutGroupID() string {
+	return providerConfig + `
+resource "akamai_apidefinitions_api" "e1" {
+  api = "{}"
+  contract_id = "Contract-1"
 }`
 }
 

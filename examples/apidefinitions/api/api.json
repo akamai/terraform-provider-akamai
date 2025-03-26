@@ -2,7 +2,5 @@
   "name": "Pet Store",
   "hostnames": [
     "akamai.com"
-  ],
-  "contractId": "Contract-1",
-  "groupId": 1
+  ]
 }

@@ -9,9 +9,11 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/apidefinitions"
 	v0 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/apidefinitions/v0"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/framework/modifiers"
 	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf/validators"
 	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -33,6 +35,8 @@ type apiResource struct{}
 type apiResourceModel struct {
 	ID                types.Int64   `tfsdk:"id"`
 	API               apiStateValue `tfsdk:"api"`
+	ContractID        types.String  `tfsdk:"contract_id"`
+	GroupID           types.Int64   `tfsdk:"group_id"`
 	LatestVersion     types.Int64   `tfsdk:"latest_version"`
 	StagingVersion    types.Int64   `tfsdk:"staging_version"`
 	ProductionVersion types.Int64   `tfsdk:"production_version"`
@@ -83,6 +87,23 @@ func (r *apiResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *
 					validators.NotEmptyString(),
 				},
 				Description: "JSON-formatted information about the API configuration",
+			},
+			"contract_id": schema.StringAttribute{
+				Required: true,
+				PlanModifiers: []planmodifier.String{
+					modifiers.PreventStringUpdate(),
+				},
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(1),
+				},
+				Description: "The unique identifier for the contract (without the 'ctr_' prefix) assigned to the access key.",
+			},
+			"group_id": schema.Int64Attribute{
+				Required: true,
+				PlanModifiers: []planmodifier.Int64{
+					modifiers.PreventInt64Update(),
+				},
+				Description: "The unique identifier for the group (without the 'grp_' prefix) assigned to the access key.",
 			},
 			"id": schema.Int64Attribute{
 				Computed: true,
@@ -146,7 +167,8 @@ func (r *apiResource) create(ctx context.Context, data *apiResourceModel) diag.D
 		diags.AddError("Create API Failed, Unable to deserialize state", err.Error())
 		return diags
 	}
-
+	registerEndpointRequest.ContractID = data.ContractID.ValueString()
+	registerEndpointRequest.GroupID = data.GroupID.ValueInt64()
 	resp, err := clientV0.RegisterAPI(ctx, registerEndpointRequest)
 	if err != nil {
 		diags.AddError("Create API Failed", err.Error())
@@ -252,6 +274,8 @@ func (r *apiResource) update(ctx context.Context, state *apiResourceModel, data 
 	var body = v0.API{}
 
 	err := json.Unmarshal(jsonPayloadRaw, &body)
+	body.ContractID = data.ContractID.ValueString()
+	body.GroupID = data.GroupID.ValueInt64()
 	if err != nil {
 		diags.AddError("Update API Failed", err.Error())
 		return diags
@@ -378,6 +402,8 @@ func (r *apiResource) ImportState(ctx context.Context, req resource.ImportStateR
 
 	data.populateFromEndpoint(endpoint)
 	data.populateFromVersion((*v0.API)(version), versionNumber, true)
+	data.ContractID = types.StringValue(version.ContractID)
+	data.GroupID = types.Int64Value(version.GroupID)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, data)...)
 }
@@ -406,9 +432,9 @@ func (m *apiResourceModel) populateFromVersion(resp *v0.API, versionNumber int64
 	var apiState *string
 	var err error
 	if importState {
-		apiState, err = serializeIndent(resp.RegisterAPIRequest)
+		apiState, err = serializeIndent(resp.RegisterAPIRequest.APIAttributes)
 	} else {
-		apiState, err = serialize(resp.RegisterAPIRequest)
+		apiState, err = serialize(resp.RegisterAPIRequest.APIAttributes)
 	}
 	if err != nil {
 		diags.AddError("error parsing API", err.Error())
@@ -418,16 +444,15 @@ func (m *apiResourceModel) populateFromVersion(resp *v0.API, versionNumber int64
 	return diags
 }
 
-func serializeIndent(version v0.RegisterAPIRequest) (*string, error) {
+func serializeIndent(version v0.APIAttributes) (*string, error) {
 	jsonBody, err := json.MarshalIndent(version, "", "  ")
 	if err != nil {
 		return nil, err
 	}
 	return ptr.To(string(jsonBody)), nil
-
 }
 
-func serialize(version v0.RegisterAPIRequest) (*string, error) {
+func serialize(version v0.APIAttributes) (*string, error) {
 	jsonBody, err := json.Marshal(version)
 	if err != nil {
 		return nil, err
@@ -435,8 +460,8 @@ func serialize(version v0.RegisterAPIRequest) (*string, error) {
 	return ptr.To(string(jsonBody)), nil
 }
 
-func deserialize(body string) (*v0.RegisterAPIRequest, error) {
-	endpoint := v0.RegisterAPIRequest{}
+func deserialize(body string) (*v0.APIAttributes, error) {
+	endpoint := v0.APIAttributes{}
 
 	err := json.Unmarshal([]byte(body), &endpoint)
 	if err != nil {

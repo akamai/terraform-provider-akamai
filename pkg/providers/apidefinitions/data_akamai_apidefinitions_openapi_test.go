@@ -47,7 +47,7 @@ func TestOpenAPIDataSource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      datasourceConfigEmpty(),
-					ExpectError: regexp.MustCompile("Attribute file cannot be empty"),
+					ExpectError: regexp.MustCompile("Attribute file_path cannot be empty"),
 				},
 			},
 		},
@@ -89,7 +89,7 @@ func mockFromOpenAPIFileFail(client *v0.Mock) {
 func datasourceConfig() string {
 	return providerConfig + `
 data "akamai_apidefinitions_openapi" "o1" {
-  file = "OpenAPI"
+  file_path = "testdata/endpoint/openapi.yaml"
 }
 `
 }
@@ -97,7 +97,7 @@ data "akamai_apidefinitions_openapi" "o1" {
 func datasourceConfigEmpty() string {
 	return providerConfig + `
 data "akamai_apidefinitions_openapi" "o1" {
-  file = ""
+  file_path = ""
 }
 `
 }

@@ -3,6 +3,7 @@ package apidefinitions
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/apidefinitions"
 	v0 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/apidefinitions/v0"
@@ -24,9 +25,9 @@ type (
 	openAPIDataSource struct{}
 
 	openAPIModel struct {
-		File         types.String `tfsdk:"file"`
-		RootFileName types.String `tfsdk:"root_file_name"`
-		API          types.String `tfsdk:"api"`
+		FilePath    types.String `tfsdk:"file_path"`
+		APIFileName types.String `tfsdk:"api_file_name"`
+		API         types.String `tfsdk:"api"`
 	}
 )
 
@@ -66,14 +67,14 @@ func (d *openAPIDataSource) Schema(_ context.Context, _ datasource.SchemaRequest
 	resp.Schema = schema.Schema{
 		Description: "Map OpenAPI/Swagger file to API configuration",
 		Attributes: map[string]schema.Attribute{
-			"file": schema.StringAttribute{
+			"file_path": schema.StringAttribute{
 				Required:    true,
-				Description: "OpenAPI/Swagger file content",
-				Validators:  []validator.String{validators.NotEmptyString()},
+				Description: "Path to OpenAPI/Swagger file",
+				Validators:  []validator.String{validators.NotEmptyString(), validators.FileReadable()},
 			},
-			"root_file_name": schema.StringAttribute{
+			"api_file_name": schema.StringAttribute{
 				Optional:    true,
-				Description: "Root file name in case of zip archive",
+				Description: "Main API file name in case of zip archive",
 				Validators:  []validator.String{validators.NotEmptyString()},
 			},
 			"api": schema.StringAttribute{
@@ -91,9 +92,16 @@ func (d *openAPIDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	if resp.Diagnostics.Append(req.Config.Get(ctx, &data)...); resp.Diagnostics.HasError() {
 		return
 	}
+
+	content, err := os.ReadFile(data.FilePath.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Unable to read file content", err.Error())
+		return
+	}
+
 	response, err := clientV0.FromOpenAPIFile(ctx, v0.FromOpenAPIFileRequest{
-		Content:  data.File.ValueString(),
-		RootFile: data.RootFileName.ValueStringPointer(),
+		Content:  content,
+		RootFile: data.APIFileName.ValueStringPointer(),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("Mapping OpenAPI File Failed", err.Error())
@@ -105,7 +113,6 @@ func (d *openAPIDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		resp.Diagnostics.AddError("Unable to serialize API state", err.Error())
 		return
 	}
-
 	data.API = types.StringValue(*toJSON)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

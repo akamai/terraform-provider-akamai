@@ -115,7 +115,7 @@ func (v apiStateValue) StringSemanticEquals(ctx context.Context, valuable basety
 	return true, nil
 }
 
-func checkSemanticEquality(before v0.RegisterAPIRequest, after v0.RegisterAPIRequest) []string {
+func checkSemanticEquality(before v0.APIAttributes, after v0.APIAttributes) []string {
 	if before.BasePath != nil && *before.BasePath == "" && after.BasePath == nil {
 		after.BasePath = ptr.To("")
 	}
@@ -126,7 +126,7 @@ func checkSemanticEquality(before v0.RegisterAPIRequest, after v0.RegisterAPIReq
 	return deep.Equal(before, after)
 }
 
-func sortConsumeTypes(state v0.RegisterAPIRequest) {
+func sortConsumeTypes(state v0.APIAttributes) {
 	if state.Constraints != nil && state.Constraints.RequestBody != nil && state.Constraints.RequestBody.ConsumeType != nil {
 		slices.Sort(state.Constraints.RequestBody.ConsumeType)
 	}

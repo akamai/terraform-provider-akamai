@@ -7,8 +7,15 @@ terraform {
   }
 }
 
+data "akamai_group" "group" {
+  group_name  = "Group-1"
+  contract_id = "Contract-1"
+}
+
 resource "akamai_apidefinitions_api" "api" {
-  api = file("${path.module}/api.json")
+  api         = file("${path.module}/api.json")
+  contract_id = trimprefix(data.akamai_group.group.contract_id, "ctr_")
+  group_id    = trimprefix(data.akamai_group.group.id, "grp_")
 }
 
 resource "akamai_apidefinitions_activation" "api_activation_staging" {

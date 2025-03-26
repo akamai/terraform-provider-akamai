@@ -63,5 +63,4 @@ func (p *SubProvider) FrameworkDataSources() []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewOpenAPIDataSource,
 	}
-
 }

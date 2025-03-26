@@ -6,9 +6,6 @@ info:
     name: MIT
 servers:
   - url: 'akamai.com'
-x-akamai-api-definitions:
-  contractId: "Contract-1"
-  groupId: 1
 paths:
   /pets:
     get:
