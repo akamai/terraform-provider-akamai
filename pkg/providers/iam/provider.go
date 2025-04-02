@@ -88,6 +88,7 @@ func (p *Subprovider) SDKDataSources() map[string]*schema.Resource {
 // FrameworkResources returns the IAM resources implemented using terraform-plugin-framework
 func (p *Subprovider) FrameworkResources() []func() resource.Resource {
 	return []func() resource.Resource{
+		NewAPIClientResource,
 		NewCIDRBlockResource,
 		NewIPAllowlistResource,
 	}

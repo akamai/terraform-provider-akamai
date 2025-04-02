@@ -49,8 +49,18 @@
   * Enabled domain deletion support for the `akamai_gtm_domain` resource, allowing users to submit requests to remove GTM domains.
 
 * IAM
-  * Added new data source:
-    * `akamai_iam_api_clients`
+  * Added a new data source:
+    * `akamai_iam_api_clients` – lists all API clients an account administrator can manage.
+
+
+
+
+
+
+
+* IAM
+  * Added a new resource:
+    * `akamai_iam_api_client` - manages API clients in the Akamai Identity and Access Management.
 
 
 
