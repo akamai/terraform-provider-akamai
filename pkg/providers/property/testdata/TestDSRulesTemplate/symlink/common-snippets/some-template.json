@@ -1,0 +1,19 @@
+{
+  "name": "RUM",
+  "children": ["#include:common/sub/another-template.json"],
+  "behaviors": [
+    {
+      "name": "mPulse",
+      "options": {
+        "enabled": "${env.enabled}",
+        "requirePci": false,
+        "titleOptional": "",
+        "apiKey": "",
+        "bufferSize": "",
+        "configOverride": ""
+      }
+    }
+  ],
+  "criteria": [],
+  "criteriaMustSatisfy": "${env.criteriaMustSatisfy}"
+}

@@ -914,9 +914,13 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 					DNSNameSettings: &cps.DNSNameSettings{
 						CloneDNSNames: false,
 					},
-					Geography:     "core",
-					SecureNetwork: "enhanced-tls",
-					SNIOnly:       true,
+					Geography:        "core",
+					MustHaveCiphers:  "ak-akamai-2020q1",
+					OCSPStapling:     "on",
+					PreferredCiphers: "ak-akamai-2020q1",
+					QuicEnabled:      false,
+					SecureNetwork:    "enhanced-tls",
+					SNIOnly:          true,
 				}
 			}),
 		)
@@ -1013,9 +1017,13 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 					DNSNameSettings: &cps.DNSNameSettings{
 						CloneDNSNames: false,
 					},
-					Geography:     "core",
-					SecureNetwork: "enhanced-tls",
-					SNIOnly:       true,
+					Geography:        "core",
+					MustHaveCiphers:  "ak-akamai-2020q1",
+					OCSPStapling:     "on",
+					PreferredCiphers: "ak-akamai-2020q1",
+					QuicEnabled:      false,
+					SecureNetwork:    "enhanced-tls",
+					SNIOnly:          true,
 				}
 			}),
 		)
@@ -1207,9 +1215,13 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 					DNSNameSettings: &cps.DNSNameSettings{
 						CloneDNSNames: false,
 					},
-					Geography:     "core",
-					SecureNetwork: "enhanced-tls",
-					SNIOnly:       true,
+					Geography:        "core",
+					MustHaveCiphers:  "ak-akamai-2020q1",
+					OCSPStapling:     "on",
+					PreferredCiphers: "ak-akamai-2020q1",
+					QuicEnabled:      false,
+					SecureNetwork:    "enhanced-tls",
+					SNIOnly:          true,
 				}
 			}),
 		)
@@ -1280,9 +1292,13 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 					DNSNameSettings: &cps.DNSNameSettings{
 						CloneDNSNames: false,
 					},
-					Geography:     "core",
-					SecureNetwork: "enhanced-tls",
-					SNIOnly:       true,
+					Geography:        "core",
+					MustHaveCiphers:  "ak-akamai-2020q1",
+					OCSPStapling:     "on",
+					PreferredCiphers: "ak-akamai-2020q1",
+					QuicEnabled:      false,
+					SecureNetwork:    "enhanced-tls",
+					SNIOnly:          true,
 				}
 			}),
 		)
@@ -1321,9 +1337,13 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 					DNSNameSettings: &cps.DNSNameSettings{
 						CloneDNSNames: false,
 					},
-					Geography:     "core",
-					SecureNetwork: "enhanced-tls",
-					SNIOnly:       true,
+					Geography:        "core",
+					MustHaveCiphers:  "ak-akamai-2020q1",
+					OCSPStapling:     "on",
+					PreferredCiphers: "ak-akamai-2020q1",
+					QuicEnabled:      false,
+					SecureNetwork:    "enhanced-tls",
+					SNIOnly:          true,
 				}
 			}),
 		)
@@ -1426,9 +1446,13 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 					DNSNameSettings: &cps.DNSNameSettings{
 						CloneDNSNames: false,
 					},
-					Geography:     "core",
-					SecureNetwork: "enhanced-tls",
-					SNIOnly:       true,
+					Geography:        "core",
+					MustHaveCiphers:  "ak-akamai-2020q1",
+					OCSPStapling:     "on",
+					PreferredCiphers: "ak-akamai-2020q1",
+					QuicEnabled:      false,
+					SecureNetwork:    "enhanced-tls",
+					SNIOnly:          true,
 				}
 			}),
 		)
@@ -1499,9 +1523,13 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 					DNSNameSettings: &cps.DNSNameSettings{
 						CloneDNSNames: false,
 					},
-					Geography:     "core",
-					SecureNetwork: "enhanced-tls",
-					SNIOnly:       true,
+					Geography:        "core",
+					MustHaveCiphers:  "ak-akamai-2020q1",
+					OCSPStapling:     "on",
+					PreferredCiphers: "ak-akamai-2020q1",
+					QuicEnabled:      false,
+					SecureNetwork:    "enhanced-tls",
+					SNIOnly:          true,
 				}
 			}),
 		)
@@ -1580,9 +1608,13 @@ func TestResourceThirdPartyEnrollmentImport(t *testing.T) {
 					DNSNameSettings: &cps.DNSNameSettings{
 						CloneDNSNames: false,
 					},
-					Geography:     "core",
-					SecureNetwork: "enhanced-tls",
-					SNIOnly:       true,
+					Geography:        "core",
+					MustHaveCiphers:  "ak-akamai-2020q1",
+					OCSPStapling:     "on",
+					PreferredCiphers: "ak-akamai-2020q1",
+					QuicEnabled:      false,
+					SecureNetwork:    "enhanced-tls",
+					SNIOnly:          true,
 				}
 			}),
 		)

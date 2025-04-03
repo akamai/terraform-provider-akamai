@@ -21,7 +21,7 @@ func TestResGTMResource(t *testing.T) {
 		client := &gtm.Mock{}
 
 		// Create
-		mockGetResource(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+		mockGetResource(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
 		mockCreateResource(client, getDefaultResource(), &gtm.CreateResourceResponse{
 			Resource: getDefaultResource(),
@@ -29,20 +29,20 @@ func TestResGTMResource(t *testing.T) {
 		}, nil)
 
 		// Read after create + refresh
-		mockGetResource(client, getDefaultResource(), nil, 3)
+		mockGetResource(client, getDefaultResource(), nil, testutils.ThreeTimes)
 
 		// Update
-		mockGetResource(client, getUpdatedResource(), nil, 1)
+		mockGetResource(client, getUpdatedResource(), nil, testutils.Once)
 
 		mockUpdateResource(client, &gtm.UpdateResourceResponse{Status: getDefaultResponseStatus()}, nil)
 
-		mockGetDomainStatus(client, 1)
+		mockGetDomainStatus(client, testutils.Once)
 
 		// Read after create + refresh
-		mockGetResource(client, getUpdatedResource(), nil, 3)
+		mockGetResource(client, getUpdatedResource(), nil, testutils.ThreeTimes)
 
 		mockDeleteResource(client)
-		mockGetDomainStatus(client, 1)
+		mockGetDomainStatus(client, testutils.Once)
 
 		resourceName := "akamai_gtm_resource.tfexample_resource_1"
 
@@ -75,7 +75,7 @@ func TestResGTMResource(t *testing.T) {
 		client := &gtm.Mock{}
 
 		// Create
-		mockGetResource(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+		mockGetResource(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
 		mockCreateResource(client, getDefaultResource(), &gtm.CreateResourceResponse{
 			Resource: getDefaultResource(),
@@ -83,10 +83,10 @@ func TestResGTMResource(t *testing.T) {
 		}, nil)
 
 		// Read after create + refresh
-		mockGetResource(client, getDefaultResource(), nil, 3)
+		mockGetResource(client, getDefaultResource(), nil, testutils.ThreeTimes)
 
 		// Update
-		mockGetResource(client, getUpdatedResource(), nil, 1)
+		mockGetResource(client, getUpdatedResource(), nil, testutils.Once)
 
 		mockUpdateResource(client, nil, &gtm.Error{
 			Type:       "internal_error",
@@ -96,10 +96,10 @@ func TestResGTMResource(t *testing.T) {
 		})
 
 		// Read after create + refresh
-		mockGetResource(client, getDefaultResource(), nil, 1)
+		mockGetResource(client, getDefaultResource(), nil, testutils.Once)
 
 		mockDeleteResource(client)
-		mockGetDomainStatus(client, 1)
+		mockGetDomainStatus(client, testutils.Once)
 
 		resourceName := "akamai_gtm_resource.tfexample_resource_1"
 
@@ -128,20 +128,20 @@ func TestResGTMResource(t *testing.T) {
 	t.Run("create resource, remove outside of terraform, expect non-empty plan", func(t *testing.T) {
 		client := &gtm.Mock{}
 
-		mockGetResource(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+		mockGetResource(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
 		mockCreateResource(client, getDefaultResource(), &gtm.CreateResourceResponse{
 			Resource: getDefaultResource(),
 			Status:   getDefaultResponseStatus(),
 		}, nil)
 
-		mockGetResource(client, getDefaultResource(), nil, 2)
+		mockGetResource(client, getDefaultResource(), nil, testutils.Twice)
 
 		// Mock that the resource was deleted outside terraform
-		mockGetResource(client, nil, gtm.ErrNotFound, 1)
+		mockGetResource(client, nil, gtm.ErrNotFound, testutils.Once)
 
 		// For terraform test framework, we need to mock GetResource as it would actually exist before deletion
-		mockGetResource(client, getDefaultResource(), nil, 1)
+		mockGetResource(client, getDefaultResource(), nil, testutils.Once)
 
 		mockDeleteResource(client)
 
@@ -173,7 +173,7 @@ func TestResGTMResource(t *testing.T) {
 	t.Run("create resource failed", func(t *testing.T) {
 		client := &gtm.Mock{}
 
-		mockGetResource(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+		mockGetResource(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
 		mockCreateResource(client, getDefaultResource(), nil, &gtm.Error{StatusCode: http.StatusBadRequest})
 
@@ -195,7 +195,7 @@ func TestResGTMResource(t *testing.T) {
 	t.Run("create resource failed - resource already exists", func(t *testing.T) {
 		client := &gtm.Mock{}
 
-		mockGetResource(client, getDefaultResource(), nil, 1)
+		mockGetResource(client, getDefaultResource(), nil, testutils.Once)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -215,7 +215,7 @@ func TestResGTMResource(t *testing.T) {
 	t.Run("create resource denied", func(t *testing.T) {
 		client := &gtm.Mock{}
 
-		mockGetResource(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+		mockGetResource(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
 		mockCreateResource(client, getDefaultResource(), &gtm.CreateResourceResponse{
 			Resource: getDefaultResource(),
@@ -386,7 +386,7 @@ func TestResGTMResourceImport(t *testing.T) {
 			resourceName: testResourceName,
 			init: func(m *gtm.Mock) {
 				// Read
-				mockGetResource(m, getImportedResource(), nil, 2)
+				mockGetResource(m, getImportedResource(), nil, testutils.Twice)
 			},
 			stateCheck: test.NewImportChecker().
 				CheckEqual("domain", "gtm_terra_testdomain.akadns.net").
@@ -426,7 +426,7 @@ func TestResGTMResourceImport(t *testing.T) {
 			resourceName: testResourceName,
 			init: func(m *gtm.Mock) {
 				// Read - error
-				mockGetResource(m, nil, fmt.Errorf("get failed"), 1)
+				mockGetResource(m, nil, fmt.Errorf("get failed"), testutils.Once)
 			},
 			expectError: regexp.MustCompile(`get failed`),
 		},
@@ -462,14 +462,14 @@ func TestResGTMResourceImport(t *testing.T) {
 func getGTMResourceMocks() *gtm.Mock {
 	client := &gtm.Mock{}
 
-	mockGetResource(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+	mockGetResource(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
 	mockCreateResource(client, getCreatedResource(), &gtm.CreateResourceResponse{
 		Resource: getCreatedResourceResp(),
 		Status:   getDefaultResponseStatus(),
 	}, nil)
 
-	mockGetResource(client, getCreatedResourceResp(), nil, 4)
+	mockGetResource(client, getCreatedResourceResp(), nil, testutils.FourTimes)
 
 	mockDeleteResource(client)
 

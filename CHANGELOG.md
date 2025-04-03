@@ -1,5 +1,47 @@
 # RELEASE NOTES
 
+## 7.1.0 (Apr 3, 2025)
+
+#### FEATURES/ENHANCEMENTS:
+
+* Migrated to Go `1.23.6`, adopted a semver-compliant Go directive and updated the Go version used for builds.
+
+* PAPI
+  * Added support for the property's hostname bucket feature:
+    * Added the `use_hostname_bucket` attribute to the `akamai_property` and `akamai_property_bootstrap` resources
+      which allows adding or removing property hostnames without incrementing property versions.
+    * Added the `akamai_property_hostname_bucket` resource to manage hostnames assigned to the property's bucket.
+    * Added the `akamai_property_hostname_activation` data source to retrieve information about a specific property hostname activation.
+    * Added the `akamai_property_hostname_activations` data source to retrieve property hostname activations.
+    * Added the `akamai_property_hostnames_diff` data source to retrieve the diff between staging and production active hostnames.
+    * Added the `property_type` schema field to the `akamai_property` and `akamai_properties` data sources.
+    * Added the `hostname_bucket` field to the `akamai_property_hostnames` data source to hold information related to hostnames for the hostname bucket property.
+    * Added the `filter_pending_default_certs` attribute to the `akamai_property_hostnames` data source, enabling filtering of
+      hostnames from the property's hostname bucket to include only `DEFAULT` cert types with a `PENDING` state on the staging or production network.
+  * Added the `akamai_cp_codes` data source ([I#604](https://github.com/akamai/terraform-provider-akamai/issues/604)).
+  * Added support for the new rule format `v2025-02-18`. List of changes can be found [here](https://techdocs.akamai.com/terraform/docs/rule-format-changes#v2025-02-18).
+  * Added populating the `product_id` when importing the `akamai_edge_hostname` resource if available and not provided in the import key.
+  * Added the `follow_links` boolean attribute to the `akamai_property_rules_template` data source.
+    It allows the directory with rule snippets or any of its subdirectories to be a symlink.
+  * Added name format validations and a size limit for the domain prefix.
+
+#### BUG FIXES:
+
+* CPS
+  * Added default values for the following fields in the `akamai_cps_dv_enrollment` and `akamai_cps_third_party_enrollment` resources to fix a constant diff ([I#607](https://github.com/akamai/terraform-provider-akamai/issues/607)):
+    * `clone_dns_names`. Default is `false`.
+    * `must_have_ciphers`. Default is `ak-akamai-2020q1`.
+    * `ocsp_stapling`. Default is `on`.
+    * `preferred_ciphers`. Default is `ak-akamai-2020q1`.
+    * `quic_enabled`. Default is `false`.
+
+* GTM
+  * Fixed a bug in `resource_akamai_gtm_property` where removing the last `liveness_test` block during an update incorrectly resulted in "no infra changes"([I#603](https://github.com/akamai/terraform-provider-akamai/issues/603)).
+  * Fixed a bug in `resource_akamai_gtm_property` where updating a property of the `static` type without a `traffic_target` block didn't work correctly.
+
+* PAPI
+  *  Fixed filtering by name for the `akamai_cp_code` data source ([I#604](https://github.com/akamai/terraform-provider-akamai/issues/604)).
+
 ## 7.0.0 (Feb 5, 2025)
 
 #### BREAKING CHANGES:
@@ -76,12 +118,13 @@
   * Added CPS configuration examples ([I#467](https://github.com/akamai/terraform-provider-akamai/issues/467)).
 
 * PAPI
-  * Added support for the new rule format `v2025-01-13`. List of changes can be found [here](https://techdocs.akamai.com/terraform/docs/rule-format-changes#v2025-01-13).
+  * Added support for the new rule format `v2025-01-13`. The list of changes can be found [here](https://techdocs.akamai.com/terraform/docs/rule-format-changes#v2025-01-13).
   * Added the `gov_cloud_title` field to the `gov_cloud` behaviour defined inside the `rules_v2024_10_21` of the `akamai_property_rules_builder` datasource.
   * Added support for moving a PAPI property between groups (the `akamai_property` and `akamai_property_bootstrap` resources)
     by updating the `group_id` field. Currently, properties that have never been activated are not supported.
   * Added the `asset_id` schema field to the `akamai_property_bootstrap` resource.
   * Added validation to raise an error when updating the `contact` and `auto_acknowledge_rule_warnings` fields on active property versions in the `akamai_property_activation` resource.
+
 #### BUG FIXES:
 
 * Cloud Access

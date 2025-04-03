@@ -119,12 +119,17 @@ func (p *Subprovider) SDKDataSources() map[string]*schema.Resource {
 func (p *Subprovider) FrameworkResources() []func() resource.Resource {
 	return []func() resource.Resource{
 		NewBootstrapResource,
+		NewHostnameBucketResource,
 	}
 }
 
 // FrameworkDataSources returns the property data sources implemented using terraform-plugin-framework
 func (p *Subprovider) FrameworkDataSources() []func() datasource.DataSource {
 	return []func() datasource.DataSource{
+		NewCPCodesDataSource,
+		NewHostnameActivationDataSource,
+		NewHostnameActivationsDataSource,
+		NewHostnamesDiffDataSource,
 		NewIncludeDataSource,
 	}
 }

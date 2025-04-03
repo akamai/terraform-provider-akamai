@@ -119,6 +119,74 @@ func TestDataAkamaiPropertyRulesRead(t *testing.T) {
 			})
 		})
 	})
+	t.Run("valid property-snippets folder as symlink", func(t *testing.T) {
+		client := papi.Mock{}
+		useClient(&client, nil, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_symlink_top.tf"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/symlink/rules_out.json")),
+						),
+					},
+				},
+			})
+		})
+	})
+	t.Run("valid property-snippets subfolder as symlink", func(t *testing.T) {
+		client := papi.Mock{}
+		useClient(&client, nil, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_symlink.tf"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/symlink/rules_out.json")),
+						),
+					},
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_symlink_with_data.tf"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/symlink/rules_out.json")),
+						),
+					},
+				},
+			})
+		})
+	})
+	t.Run("valid property-snippets subfolders as recursive symlinks", func(t *testing.T) {
+		client := papi.Mock{}
+		useClient(&client, nil, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_symlink_recursive.tf"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/symlink/rules_out.json")),
+						),
+					},
+				},
+			})
+		})
+	})
+	t.Run("returns error if property-snippets subfolder is symlink but follow_links disabled", func(t *testing.T) {
+		client := papi.Mock{}
+		useClient(&client, nil, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_symlink_follow_links_disabled.tf"),
+						ExpectError: regexp.MustCompile(`reading file: read testdata/TestDSRulesTemplate/symlink/property-snippets/common: is a directory: set follow_links to allow symlinks as snippet folders`),
+					},
+				},
+			})
+		})
+	})
 	t.Run("error conflicts in template_file and template", func(t *testing.T) {
 		client := papi.Mock{}
 		useClient(&client, nil, func() {

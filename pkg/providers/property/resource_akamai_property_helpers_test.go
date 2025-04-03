@@ -1,13 +1,16 @@
 package property
 
 import (
+	"context"
 	"fmt"
+	"maps"
 	"net/http"
 	"strconv"
 	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/iam"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
 	"github.com/stretchr/testify/mock"
 )
@@ -31,6 +34,7 @@ type mockPropertyData struct {
 	ruleTree            mockRuleTreeData
 	versions            papi.PropertyVersionItems
 	hostnames           papi.HostnameResponseItems
+	useHostnameBucket   bool
 	responseErrors      []*papi.Error
 	responseWarnings    []*papi.Error
 	activations         papi.ActivationsItems
@@ -38,6 +42,7 @@ type mockPropertyData struct {
 	deleteActivationID  string
 	groups              papi.GroupItems
 	moveGroup           moveGroup
+	hostnameBucket      hostnameBucket
 }
 
 func (d *mockPropertyData) getPropertyRequest() papi.GetPropertyRequest {
@@ -49,6 +54,10 @@ func (d *mockPropertyData) getPropertyRequest() papi.GetPropertyRequest {
 }
 
 func (d *mockPropertyData) getPropertyResponse() papi.GetPropertyResponse {
+	var propertyType *string
+	if d.useHostnameBucket {
+		propertyType = ptr.To("HOSTNAME_BUCKET")
+	}
 	return papi.GetPropertyResponse{
 		Property: &papi.Property{
 			AssetID:       d.assetID,
@@ -58,8 +67,18 @@ func (d *mockPropertyData) getPropertyResponse() papi.GetPropertyResponse {
 			// although optional in PAPI documentation, ProductID is not being set by PAPI in the response
 			PropertyID:   d.propertyID,
 			PropertyName: d.propertyName,
+			PropertyType: propertyType,
 		},
 	}
+}
+
+type hostnameBucket struct {
+	plan         map[string]Hostname
+	state        map[string]Hostname
+	network      papi.ActivationNetwork
+	notifyEmails []string
+	note         string
+	activations  papi.ListPropertyHostnameActivationsResponse
 }
 
 type moveGroup struct {
@@ -75,14 +94,186 @@ type mockRuleTreeData struct {
 	ruleWarnings []papi.RuleWarnings
 }
 
+func (p *mockProperty) mockPatchPropertyHostnameBucket() {
+
+	var inUpdate bool
+	if len(p.hostnameBucket.state) != 0 || len(p.hostnameBucket.activations.HostnameActivations.Items) > 0 {
+		inUpdate = true
+	}
+
+	rb := hostnameRequestBuilder{
+		hostnameRequestData: hostnameRequestData{
+			planHostnames:  p.hostnameBucket.plan,
+			stateHostnames: p.hostnameBucket.state,
+			propertyID:     p.propertyID,
+			contractID:     p.contractID,
+			groupID:        p.groupID,
+			network:        string(p.hostnameBucket.network),
+			emails:         p.hostnameBucket.notifyEmails,
+			note:           p.hostnameBucket.note,
+		},
+		ctx: context.Background(),
+	}
+	requestData, diags := rb.build()
+	if diags.HasError() {
+		panic(diags)
+	}
+
+	for i, req := range requestData.requests {
+		var actID string
+		if inUpdate {
+			actID = "act_%d_update"
+		} else {
+			actID = "act_%d"
+		}
+
+		p.papiMock.On("PatchPropertyHostnameBucket", testutils.MockContext, req).Return(&papi.PatchPropertyHostnameBucketResponse{
+			ActivationID: fmt.Sprintf(actID, i),
+		}, nil).Once()
+
+		getReq := papi.GetPropertyHostnameActivationRequest{
+			PropertyID:           p.propertyID,
+			HostnameActivationID: fmt.Sprintf(actID, i),
+			ContractID:           p.contractID,
+			GroupID:              p.groupID,
+		}
+
+		p.hostnameBucket.activations.HostnameActivations.Items = append(p.hostnameBucket.activations.HostnameActivations.Items, papi.HostnameActivationListItem{
+			HostnameActivationID: fmt.Sprintf(actID, i),
+			PropertyID:           p.propertyID,
+			Network:              papi.ActivationNetwork(p.hostnameBucket.network),
+			Status:               "ACTIVE",
+			Note:                 p.hostnameBucket.note,
+			NotifyEmails:         p.hostnameBucket.notifyEmails,
+		})
+		p.hostnameBucket.activations.HostnameActivations.TotalItems = len(p.hostnameBucket.state)
+
+		p.papiMock.On("GetPropertyHostnameActivation", testutils.MockContext, getReq).Return(&papi.GetPropertyHostnameActivationResponse{
+			ContractID: p.propertyID,
+			GroupID:    p.groupID,
+			HostnameActivation: papi.HostnameActivationGetItem{
+				HostnameActivationID: fmt.Sprintf(actID, i),
+				PropertyID:           p.propertyID,
+				Network:              p.hostnameBucket.network,
+				Status:               "ACTIVE",
+				Note:                 p.hostnameBucket.note,
+				NotifyEmails:         p.hostnameBucket.notifyEmails,
+			},
+		}, nil).Once()
+	}
+}
+
+func (p *mockProperty) mockListActivePropertyHostnames(withoutGroupAndContract ...bool) {
+	// if withoutGroupAndContract was provided with a 'true' value, then fill the requests with empty contract and group
+	var reqContractID, reqGroupID string
+	if (len(withoutGroupAndContract) > 0 && !withoutGroupAndContract[0]) || len(withoutGroupAndContract) == 0 {
+		reqContractID = p.contractID
+		reqGroupID = p.groupID
+	}
+
+	var hostnameItems []papi.HostnameItem
+	for k, v := range p.hostnameBucket.state {
+		if p.hostnameBucket.network == "STAGING" {
+			hostnameItem := papi.HostnameItem{
+				CnameFrom:             k,
+				CnameType:             papi.HostnameCnameTypeEdgeHostname,
+				StagingCertType:       papi.CertType(v.CertProvisioningType.ValueString()),
+				StagingCnameTo:        v.CnameTo.ValueString(),
+				StagingEdgeHostnameID: v.EdgeHostnameID.ValueString(),
+			}
+			if v.CertProvisioningType.ValueString() == string(papi.CertTypeDefault) {
+				hostnameItem.CertStatus = &papi.CertStatusItem{Staging: []papi.StatusItem{{Status: "PENDING"}}}
+			}
+			hostnameItems = append(hostnameItems, hostnameItem)
+		} else {
+			hostnameItem := papi.HostnameItem{
+				CnameFrom:                k,
+				CnameType:                papi.HostnameCnameTypeEdgeHostname,
+				ProductionCertType:       papi.CertType(v.CertProvisioningType.ValueString()),
+				ProductionCnameTo:        v.CnameTo.ValueString(),
+				ProductionEdgeHostnameID: v.EdgeHostnameID.ValueString(),
+			}
+			if v.CertProvisioningType.ValueString() == string(papi.CertTypeDefault) {
+				hostnameItem.CertStatus = &papi.CertStatusItem{Production: []papi.StatusItem{{Status: "PENDING"}}}
+			}
+			hostnameItems = append(hostnameItems, hostnameItem)
+		}
+	}
+
+	offset := 0
+	limit := 999
+
+	for len(hostnameItems) > 999 {
+		req := papi.ListActivePropertyHostnamesRequest{
+			PropertyID:        p.propertyID,
+			Offset:            offset,
+			Limit:             limit,
+			Network:           p.hostnameBucket.network,
+			ContractID:        reqContractID,
+			GroupID:           reqGroupID,
+			IncludeCertStatus: true,
+			Sort:              "hostname:a",
+		}
+		offset += 999
+		resp := papi.ListActivePropertyHostnamesResponse{
+			ContractID: p.contractID,
+			GroupID:    p.groupID,
+			PropertyID: p.propertyID,
+			Hostnames: papi.HostnamesResponseItems{
+				Items:            hostnameItems[:999],
+				CurrentItemCount: 999,
+				TotalItems:       len(p.hostnameBucket.state),
+			},
+		}
+		hostnameItems = hostnameItems[999:]
+		p.papiMock.On("ListActivePropertyHostnames", testutils.MockContext, req).Return(&resp, nil).Once()
+	}
+
+	req := papi.ListActivePropertyHostnamesRequest{
+		PropertyID:        p.propertyID,
+		Offset:            offset,
+		Limit:             limit,
+		Network:           p.hostnameBucket.network,
+		ContractID:        reqContractID,
+		GroupID:           reqGroupID,
+		IncludeCertStatus: true,
+		Sort:              "hostname:a",
+	}
+	resp := papi.ListActivePropertyHostnamesResponse{
+		ContractID: p.contractID,
+		GroupID:    p.groupID,
+		PropertyID: p.propertyID,
+		Hostnames: papi.HostnamesResponseItems{
+			Items:            hostnameItems,
+			CurrentItemCount: len(hostnameItems),
+			TotalItems:       len(p.hostnameBucket.state),
+		},
+	}
+	p.papiMock.On("ListActivePropertyHostnames", testutils.MockContext, req).Return(&resp, nil).Once()
+}
+
+func (p *mockProperty) mockListPropertyHostnameActivations() {
+	req := papi.ListPropertyHostnameActivationsRequest{
+		PropertyID: p.propertyID,
+		Offset:     0,
+		Limit:      999,
+		ContractID: p.contractID,
+		GroupID:    p.groupID,
+	}
+	resp := p.hostnameBucket.activations
+
+	p.papiMock.On("ListPropertyHostnameActivations", testutils.MockContext, req).Return(&resp, nil).Once()
+}
+
 func (p *mockProperty) mockCreateProperty(err ...error) *mock.Call {
 	req := papi.CreatePropertyRequest{
 		GroupID:    p.groupID,
 		ContractID: p.contractID,
 		Property: papi.PropertyCreate{
-			ProductID:    p.productID,
-			PropertyName: p.propertyName,
-			RuleFormat:   p.ruleTree.ruleFormat,
+			ProductID:         p.productID,
+			PropertyName:      p.propertyName,
+			RuleFormat:        p.ruleTree.ruleFormat,
+			UseHostnameBucket: p.useHostnameBucket,
 		},
 	}
 
@@ -490,4 +681,28 @@ func mockResourcePropertyRead(p *mockProperty, times ...int) {
 	p.mockGetPropertyVersionHostnames().Times(i)
 	p.mockGetRuleTree().Times(i)
 	p.mockGetPropertyVersion().Times(i)
+}
+
+func mockResourceHostnameBucketDelete(p *mockProperty) {
+	p.hostnameBucket.plan = map[string]Hostname{}
+	p.mockPatchPropertyHostnameBucket()
+}
+
+func mockResourceHostnameBucketRead(p *mockProperty, times ...int) {
+	if len(times) == 1 && times[0] == 2 {
+		p.mockListActivePropertyHostnames()
+		p.mockListActivePropertyHostnames()
+		p.mockListPropertyHostnameActivations()
+		p.mockListPropertyHostnameActivations()
+		return
+	}
+	p.mockListActivePropertyHostnames()
+	p.mockListPropertyHostnameActivations()
+}
+
+// mockResourceHostnameBucketUpsert mocks either Create or Update, as the operations are exactly the same.
+func mockResourceHostnameBucketUpsert(p *mockProperty) {
+	p.mockPatchPropertyHostnameBucket()
+	p.hostnameBucket.state = maps.Clone(p.hostnameBucket.plan)
+	p.mockListActivePropertyHostnames()
 }

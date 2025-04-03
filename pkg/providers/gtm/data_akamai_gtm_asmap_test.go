@@ -41,7 +41,7 @@ func TestDataGTMASMap(t *testing.T) {
 						Href: "href.test",
 						Rel:  "TestRel",
 					}},
-				}, nil, 3)
+				}, nil, testutils.ThreeTimes)
 			},
 			expectedAttributes: map[string]string{
 				"domain":                           "gtm_terra_testdomain.akadns.net",
@@ -69,7 +69,7 @@ func TestDataGTMASMap(t *testing.T) {
 		"error response from api": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				mockGetASMap(m, nil, fmt.Errorf("test error"), 1)
+				mockGetASMap(m, nil, fmt.Errorf("test error"), testutils.Once)
 			},
 			expectError: regexp.MustCompile("test error"),
 		},
@@ -88,7 +88,7 @@ func TestDataGTMASMap(t *testing.T) {
 						Rel:  "TestRel",
 					},
 					},
-				}, nil, 3)
+				}, nil, testutils.ThreeTimes)
 			},
 			expectedAttributes: map[string]string{
 				"map_name":                         "TestName",

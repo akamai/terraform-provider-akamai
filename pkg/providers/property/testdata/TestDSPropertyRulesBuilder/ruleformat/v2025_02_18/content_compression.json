@@ -1,0 +1,68 @@
+{
+  "_ruleFormat_": "rules_v2025_02_18",
+  "rules": {
+    "behaviors": [
+      {
+        "name": "cpCode",
+        "options": {
+          "value": {
+            "cpCodeLimits": {
+              "currentCapacity": -143,
+              "limit": 100,
+              "limitType": "global"
+            },
+            "createdDate": 1678276597000,
+            "description": "papi.declarativ.test.ipqa",
+            "id": 1048126,
+            "name": "papi.declarativ.test.ipqa",
+            "products": [
+              "Fresca"
+            ]
+          }
+        }
+      },
+      {
+        "name": "gzipResponse",
+        "options": {
+          "behavior": "ALWAYS"
+        }
+      }
+    ],
+    "criteria": [
+      {
+        "name": "contentType",
+        "options": {
+          "matchCaseSensitive": false,
+          "matchOperator": "IS_ONE_OF",
+          "matchWildcard": true,
+          "values": [
+            "text/*",
+            "application/javascript",
+            "application/x-javascript",
+            "application/x-javascript*",
+            "application/json",
+            "application/x-json",
+            "application/*+json",
+            "application/*+xml",
+            "application/text",
+            "application/vnd.microsoft.icon",
+            "application/vnd-ms-fontobject",
+            "application/x-font-ttf",
+            "application/x-font-opentype",
+            "application/x-font-truetype",
+            "application/xmlfont/eot",
+            "application/xml",
+            "font/opentype",
+            "font/otf",
+            "font/eot",
+            "image/svg+xml",
+            "image/vnd.microsoft.icon"
+          ]
+        }
+      }
+    ],
+    "name": "Content Compression",
+    "options": {},
+    "criteriaMustSatisfy": "all"
+  }
+}

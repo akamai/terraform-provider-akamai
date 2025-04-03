@@ -19,26 +19,26 @@ func TestResGTMGeoMap(t *testing.T) {
 	t.Run("create geomap", func(t *testing.T) {
 		client := &gtm.Mock{}
 
-		mockGetGeoMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+		mockGetGeoMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
 		mockCreateGeoMap(client, getDefaultGeomap(), &gtm.CreateGeoMapResponse{
 			Resource: getDefaultGeomap(),
 			Status:   getDefaultResponseStatus(),
 		}, nil)
 
-		mockGetGeoMap(client, getDefaultGeomap(), nil, 4)
+		mockGetGeoMap(client, getDefaultGeomap(), nil, testutils.FourTimes)
 
-		mockGetDatacenter(client, datacenterID5400, getTestDatacenterResp(), nil, 1)
+		mockGetDatacenter(client, datacenterID5400, getTestDatacenterResp(), nil, testutils.Once)
 
 		mockUpdateGeoMap(client, getDefaultUpdatedGeomap(), &gtm.UpdateGeoMapResponse{Status: getDefaultResponseStatus()}, nil)
 
-		mockGetDomainStatus(client, 1)
+		mockGetDomainStatus(client, testutils.Once)
 
-		mockGetGeoMap(client, getDefaultUpdatedGeomap(), nil, 3)
+		mockGetGeoMap(client, getDefaultUpdatedGeomap(), nil, testutils.ThreeTimes)
 
 		mockDeleteGeoMap(client)
 
-		mockGetDomainStatus(client, 1)
+		mockGetDomainStatus(client, testutils.Once)
 
 		resourceName := "akamai_gtm_geomap.tfexample_geomap_1"
 
@@ -68,16 +68,16 @@ func TestResGTMGeoMap(t *testing.T) {
 	t.Run("update geomap failed", func(t *testing.T) {
 		client := &gtm.Mock{}
 
-		mockGetGeoMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+		mockGetGeoMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
 		mockCreateGeoMap(client, getDefaultGeomap(), &gtm.CreateGeoMapResponse{
 			Resource: getDefaultGeomap(),
 			Status:   getDefaultResponseStatus(),
 		}, nil)
 
-		mockGetGeoMap(client, getDefaultGeomap(), nil, 4)
+		mockGetGeoMap(client, getDefaultGeomap(), nil, testutils.FourTimes)
 
-		mockGetDatacenter(client, datacenterID5400, getTestDatacenterResp(), nil, 1)
+		mockGetDatacenter(client, datacenterID5400, getTestDatacenterResp(), nil, testutils.Once)
 
 		mockUpdateGeoMap(client, getDefaultUpdatedGeomap(), nil, &gtm.Error{
 			Type:       "internal_error",
@@ -86,11 +86,11 @@ func TestResGTMGeoMap(t *testing.T) {
 			StatusCode: http.StatusInternalServerError,
 		})
 
-		mockGetGeoMap(client, getDefaultGeomap(), nil, 1)
+		mockGetGeoMap(client, getDefaultGeomap(), nil, testutils.Once)
 
 		mockDeleteGeoMap(client)
 
-		mockGetDomainStatus(client, 1)
+		mockGetDomainStatus(client, testutils.Once)
 
 		resourceName := "akamai_gtm_geomap.tfexample_geomap_1"
 
@@ -118,22 +118,22 @@ func TestResGTMGeoMap(t *testing.T) {
 	t.Run("create GEO map, remove outside of terraform, expect non-empty plan", func(t *testing.T) {
 		client := &gtm.Mock{}
 
-		mockGetGeoMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+		mockGetGeoMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
 		mockCreateGeoMap(client, getDefaultGeomap(), &gtm.CreateGeoMapResponse{
 			Resource: getDefaultGeomap(),
 			Status:   getDefaultResponseStatus(),
 		}, nil)
 
-		mockGetGeoMap(client, getDefaultGeomap(), nil, 2)
+		mockGetGeoMap(client, getDefaultGeomap(), nil, testutils.Twice)
 
-		mockGetDatacenter(client, datacenterID5400, getTestDatacenterResp(), nil, 1)
+		mockGetDatacenter(client, datacenterID5400, getTestDatacenterResp(), nil, testutils.Once)
 
 		// Mock that the GEOMap was deleted outside terraform
-		mockGetGeoMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+		mockGetGeoMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
 		// For terraform test framework, we need to mock GetGEOMap as it would actually exist before deletion
-		mockGetGeoMap(client, getDefaultGeomap(), nil, 1)
+		mockGetGeoMap(client, getDefaultGeomap(), nil, testutils.Once)
 
 		mockDeleteGeoMap(client)
 
@@ -164,11 +164,11 @@ func TestResGTMGeoMap(t *testing.T) {
 	t.Run("create geomap failed", func(t *testing.T) {
 		client := &gtm.Mock{}
 
-		mockGetGeoMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+		mockGetGeoMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
 		mockCreateGeoMap(client, getDefaultGeomap(), nil, &gtm.Error{StatusCode: http.StatusBadRequest})
 
-		mockGetDatacenter(client, datacenterID5400, getTestDatacenterResp(), nil, 1)
+		mockGetDatacenter(client, datacenterID5400, getTestDatacenterResp(), nil, testutils.Once)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -188,7 +188,7 @@ func TestResGTMGeoMap(t *testing.T) {
 	t.Run("create geomap failed - geomap already exists", func(t *testing.T) {
 		client := &gtm.Mock{}
 
-		mockGetGeoMap(client, getDefaultGeomap(), nil, 1)
+		mockGetGeoMap(client, getDefaultGeomap(), nil, testutils.Once)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -208,14 +208,14 @@ func TestResGTMGeoMap(t *testing.T) {
 	t.Run("create geomap denied", func(t *testing.T) {
 		client := &gtm.Mock{}
 
-		mockGetGeoMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+		mockGetGeoMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
 		mockCreateGeoMap(client, getDefaultGeomap(), &gtm.CreateGeoMapResponse{
 			Resource: getDefaultGeomap(),
 			Status:   getDeniedResponseStatus(),
 		}, nil)
 
-		mockGetDatacenter(client, datacenterID5400, getTestDatacenterResp(), nil, 1)
+		mockGetDatacenter(client, datacenterID5400, getTestDatacenterResp(), nil, testutils.Once)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -318,7 +318,7 @@ func TestResGTMGeoMapImport(t *testing.T) {
 			mapName:    testGeomapName,
 			init: func(m *gtm.Mock) {
 				// Read
-				mockGetGeoMap(m, getImportedGeoMap(), nil, 2)
+				mockGetGeoMap(m, getImportedGeoMap(), nil, testutils.Twice)
 			},
 			stateCheck: test.NewImportChecker().
 				CheckEqual("domain", "gtm_terra_testdomain.akadns.net").
@@ -345,7 +345,7 @@ func TestResGTMGeoMapImport(t *testing.T) {
 			mapName:    testGeomapName,
 			init: func(m *gtm.Mock) {
 				// Read - error
-				mockGetGeoMap(m, nil, fmt.Errorf("get failed"), 1)
+				mockGetGeoMap(m, nil, fmt.Errorf("get failed"), testutils.Once)
 			},
 			expectError: regexp.MustCompile(`get failed`),
 		},
@@ -381,20 +381,20 @@ func TestResGTMGeoMapImport(t *testing.T) {
 func getGeoMapOrderingTestMock() *gtm.Mock {
 	client := &gtm.Mock{}
 
-	mockGetGeoMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+	mockGetGeoMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
 	mockCreateGeoMap(client, getDiffOrderGeoMap(), &gtm.CreateGeoMapResponse{
 		Resource: getDiffOrderGeoMapForResponse(),
 		Status:   getDefaultResponseStatus(),
 	}, nil)
 
-	mockGetDomainStatus(client, 1)
+	mockGetDomainStatus(client, testutils.Once)
 
-	mockGetGeoMap(client, getDiffOrderGeoMapForResponse(), nil, 4)
+	mockGetGeoMap(client, getDiffOrderGeoMapForResponse(), nil, testutils.FourTimes)
 
-	mockGetDatacenter(client, datacenterID5400, getTestDatacenterResp(), nil, 1)
+	mockGetDatacenter(client, datacenterID5400, getTestDatacenterResp(), nil, testutils.Once)
 
-	mockGetDomainStatus(client, 1)
+	mockGetDomainStatus(client, testutils.Once)
 
 	mockDeleteGeoMap(client)
 

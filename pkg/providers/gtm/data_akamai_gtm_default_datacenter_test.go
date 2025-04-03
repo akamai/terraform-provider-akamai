@@ -17,7 +17,7 @@ func TestAccDataSourceGTMDefaultDatacenter_basic(t *testing.T) {
 			DatacenterID: 1000,
 		}
 
-		mockCreateMapsDefaultDatacenter(client, &dc, 3)
+		mockCreateMapsDefaultDatacenter(client, &dc, testutils.ThreeTimes)
 
 		dataSourceName := "data.akamai_gtm_default_datacenter.test"
 

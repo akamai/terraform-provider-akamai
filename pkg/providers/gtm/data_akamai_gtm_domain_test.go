@@ -165,7 +165,7 @@ func TestDataGtmDomain(t *testing.T) {
 							Precedence: ptr.To(10),
 						}},
 					}},
-				}, nil, 3)
+				}, nil, testutils.ThreeTimes)
 			},
 			expectedAttributes: map[string]string{
 				"name":                                                           "gtm_terra_testdomain.akadns.net",
@@ -255,7 +255,7 @@ func TestDataGtmDomain(t *testing.T) {
 		"error response from api": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				mockGetDomain(m, nil, fmt.Errorf("oops"), 1)
+				mockGetDomain(m, nil, fmt.Errorf("oops"), testutils.Once)
 			},
 			expectError: regexp.MustCompile("oops"),
 		},

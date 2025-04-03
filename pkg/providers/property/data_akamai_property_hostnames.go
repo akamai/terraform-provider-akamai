@@ -3,6 +3,7 @@ package property
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/papi"
@@ -14,6 +15,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+var listActivePropertyHostnamesResultsPerPage = 50
+
 func dataSourcePropertyHostnames() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataPropertyHostnamesRead,
@@ -21,36 +24,59 @@ func dataSourcePropertyHostnames() *schema.Resource {
 			"group_id": {
 				Type:             schema.TypeString,
 				Required:         true,
+				Description:      "The unique identifier for the group.",
 				ValidateDiagFunc: tf.IsNotBlank,
 			},
 			"contract_id": {
 				Type:             schema.TypeString,
 				Required:         true,
+				Description:      "The unique identifier for the contract.",
 				ValidateDiagFunc: tf.IsNotBlank,
 			},
 			"property_id": {
 				Type:             schema.TypeString,
 				Required:         true,
 				StateFunc:        addPrefixToState("prp_"),
+				Description:      "The unique identifier for the property.",
 				ValidateDiagFunc: tf.IsNotBlank,
 			},
 			"version": {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Computed:    true,
-				Description: "Version of property to fetch hostnames for. If not provided, 'latest' is used",
+				Description: "The property version to fetch hostnames for. If not provided, `latest` is used",
 			},
 			"hostnames": {
 				Type:        schema.TypeList,
 				Computed:    true,
-				Description: "List of hostnames",
+				Description: "A list of hostnames",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"cname_type":             {Type: schema.TypeString, Computed: true},
-						"edge_hostname_id":       {Type: schema.TypeString, Computed: true},
-						"cname_from":             {Type: schema.TypeString, Computed: true},
-						"cname_to":               {Type: schema.TypeString, Computed: true},
-						"cert_provisioning_type": {Type: schema.TypeString, Computed: true},
+						"cname_type": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "A hostname's CNAME type. Supports only the `EDGE_HOSTNAME` value.",
+						},
+						"edge_hostname_id": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The unique identifier for the edge hostname.",
+						},
+						"cname_from": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The hostname that your end users see, indicated by the Host header in end user requests.",
+						},
+						"cname_to": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The edge hostname you point the property hostname to so that you can start serving traffic through Akamai servers. This member corresponds to the edge hostname object's `edgeHostnameDomain` member.",
+						},
+						"cert_provisioning_type": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Indicates the certificate's provisioning type. Either `CPS_MANAGED` for the certificates you create with the Certificate Provisioning System (CPS) API, or `DEFAULT` for the Domain Validation (DV) certificates created automatically. Note that you can't specify the `DEFAULT` value if your property hostname uses the `akamaized.net` domain suffix.",
+						},
 						"cert_status": {
 							Type:     schema.TypeList,
 							Computed: true,
@@ -58,6 +84,66 @@ func dataSourcePropertyHostnames() *schema.Resource {
 						},
 					},
 				},
+			},
+			"hostname_bucket": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "A list of hostnames for a property of the `HOSTNAME_BUCKET` type.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"cname_from": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The hostname that your end users see, indicated by the Host header in end user requests.",
+						},
+						"cname_type": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "A hostname's CNAME type. Supports only the `EDGE_HOSTNAME` value.",
+						},
+						"staging_edge_hostname_id": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The unique identifier for the edge hostname.",
+						},
+						"staging_cert_type": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Indicates the certificate's provisioning type. Either `CPS_MANAGED` for the certificates you create with the Certificate Provisioning System (CPS) API, or `DEFAULT` for the Domain Validation (DV) certificates created automatically. Note that you can't specify the `DEFAULT` value if your property hostname uses the `akamaized.net` domain suffix.",
+						},
+						"staging_cname_to": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The edge hostname you point the property hostname to so that you can start serving traffic through Akamai servers. This member corresponds to the edge hostname object's `edgeHostnameDomain` member.",
+						},
+						"production_edge_hostname_id": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The unique identifier for the edge hostname.",
+						},
+						"production_cert_type": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Indicates the certificate's provisioning type. Either `CPS_MANAGED` for the certificates you create with the Certificate Provisioning System (CPS) API, or `DEFAULT` for the Domain Validation (DV) certificates created automatically. Note that you can't specify the `DEFAULT` value if your property hostname uses the `akamaized.net` domain suffix.",
+						},
+						"production_cname_to": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The edge hostname you point the property hostname to so that you can start serving traffic through Akamai servers. This member corresponds to the edge hostname object's `edgeHostnameDomain` member.",
+						},
+						"cert_status": {
+							Type:     schema.TypeList,
+							Computed: true,
+							Elem:     certStatus,
+						},
+					},
+				},
+			},
+			"filter_pending_default_certs": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Allow to include `DEFAULT` cert types that have staging or production in a `PENDING` state. Default is false.",
 			},
 		},
 	}
@@ -95,6 +181,37 @@ func dataPropertyHostnamesRead(ctx context.Context, d *schema.ResourceData, m in
 	version, err := tf.GetIntValue("version", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
+	}
+
+	filterCerts, err := tf.GetBoolValue("filter_pending_default_certs", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	property, err := client.GetProperty(ctx, papi.GetPropertyRequest{ContractID: contractID, GroupID: groupID, PropertyID: propertyID})
+	if err != nil {
+		log.Error("could not fetch property", "error", err)
+		return diag.FromErr(err)
+	}
+
+	if property.Property.PropertyType != nil && *property.Property.PropertyType == "HOSTNAME_BUCKET" {
+		var diags diag.Diagnostics
+		if version != 0 {
+			diags = append(diags, diag.Diagnostic{Severity: diag.Warning, Summary: "provided `version` for HOSTNAME_BUCKET property, ignoring provided value"})
+		}
+		hostnames, err := getAllActivePropertyHostnames(ctx, client, contractID, groupID, propertyID, filterCerts)
+		if err != nil {
+			return append(diags, diag.FromErr(err)...)
+		}
+
+		d.SetId(propertyID)
+
+		err = d.Set("hostname_bucket", flattenBucketHostnames(hostnames))
+		if err != nil {
+			return append(diags, diag.Errorf("error setting hostnames: %s", err)...)
+		}
+
+		return diags
 	}
 
 	var prpVersion *papi.GetPropertyVersionsResponse
@@ -149,4 +266,43 @@ func dataPropertyHostnamesRead(ctx context.Context, d *schema.ResourceData, m in
 	}
 
 	return nil
+
+}
+
+func getAllActivePropertyHostnames(ctx context.Context, client papi.PAPI, contractID, groupID, propertyID string, filterCerts bool) ([]papi.HostnameItem, error) {
+	offset := 0
+	returnedResults := listActivePropertyHostnamesResultsPerPage
+	var allHostnames []papi.HostnameItem
+
+	for returnedResults == listActivePropertyHostnamesResultsPerPage {
+		hostnames, err := client.ListActivePropertyHostnames(ctx, papi.ListActivePropertyHostnamesRequest{
+			ContractID:        contractID,
+			GroupID:           groupID,
+			PropertyID:        propertyID,
+			Limit:             listActivePropertyHostnamesResultsPerPage,
+			Offset:            offset,
+			IncludeCertStatus: true,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("error fetching property hostnames: %w", err)
+		}
+
+		if filterCerts {
+			for _, item := range hostnames.Hostnames.Items {
+				prodPending := item.ProductionCertType == "DEFAULT" && item.CertStatus.Production[0].Status == "PENDING"
+				stagingPending := item.StagingCertType == "DEFAULT" && item.CertStatus.Staging[0].Status == "PENDING"
+
+				if prodPending || stagingPending {
+					allHostnames = append(allHostnames, item)
+				}
+			}
+		} else {
+			allHostnames = append(allHostnames, hostnames.Hostnames.Items...)
+		}
+
+		returnedResults = len(hostnames.Hostnames.Items)
+		offset += listActivePropertyHostnamesResultsPerPage
+	}
+
+	return allHostnames, nil
 }

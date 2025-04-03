@@ -19,22 +19,22 @@ func TestResGTMASMap(t *testing.T) {
 	t.Run("create asmap", func(t *testing.T) {
 		client := &gtm.Mock{}
 
-		mockGetASMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+		mockGetASMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
-		mockGetDatacenter(client, datacenterID5400, getDefaultDatacenter(), nil, 1)
+		mockGetDatacenter(client, datacenterID5400, getDefaultDatacenter(), nil, testutils.Once)
 
 		mockCreateASMap(client, getASMapForTestsForCreate(), &gtm.CreateASMapResponse{
 			Resource: getASMapForTestsForCreateResponse(),
 			Status:   getDefaultResponseStatus(),
 		}, nil)
 
-		mockGetASMap(client, getASMapForTestsForCreateResponse(), nil, 4)
+		mockGetASMap(client, getASMapForTestsForCreateResponse(), nil, testutils.FourTimes)
 
-		mockGetDomainStatus(client, 2)
+		mockGetDomainStatus(client, testutils.Twice)
 
 		mockUpdateASMap(client, &gtm.UpdateASMapResponse{Status: getDefaultResponseStatus()}, nil)
 
-		mockGetASMap(client, getASMapUpdateResponse(), nil, 3)
+		mockGetASMap(client, getASMapUpdateResponse(), nil, testutils.ThreeTimes)
 
 		mockDeleteASMap(client)
 
@@ -66,18 +66,18 @@ func TestResGTMASMap(t *testing.T) {
 	t.Run("update asmap failed", func(t *testing.T) {
 		client := &gtm.Mock{}
 
-		mockGetASMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+		mockGetASMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
-		mockGetDatacenter(client, datacenterID5400, getDefaultDatacenter(), nil, 1)
+		mockGetDatacenter(client, datacenterID5400, getDefaultDatacenter(), nil, testutils.Once)
 
 		mockCreateASMap(client, getASMapForTestsForCreate(), &gtm.CreateASMapResponse{
 			Resource: getASMapForTestsForCreateResponse(),
 			Status:   getDefaultResponseStatus(),
 		}, nil)
 
-		mockGetASMap(client, getASMapForTestsForCreateResponse(), nil, 4)
+		mockGetASMap(client, getASMapForTestsForCreateResponse(), nil, testutils.FourTimes)
 
-		mockGetDomainStatus(client, 1)
+		mockGetDomainStatus(client, testutils.Once)
 
 		mockUpdateASMap(client, nil, &gtm.Error{
 			Type:       "internal_error",
@@ -86,7 +86,7 @@ func TestResGTMASMap(t *testing.T) {
 			StatusCode: http.StatusInternalServerError,
 		})
 
-		mockGetASMap(client, getASMapForTestsForCreateResponse(), nil, 1)
+		mockGetASMap(client, getASMapForTestsForCreateResponse(), nil, testutils.Once)
 
 		mockDeleteASMap(client)
 
@@ -116,22 +116,22 @@ func TestResGTMASMap(t *testing.T) {
 	t.Run("create asmap, remove outside of terraform, expect non-empty plan", func(t *testing.T) {
 		client := &gtm.Mock{}
 
-		mockGetASMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+		mockGetASMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
-		mockGetDatacenter(client, datacenterID5400, getDefaultDatacenter(), nil, 1)
+		mockGetDatacenter(client, datacenterID5400, getDefaultDatacenter(), nil, testutils.Once)
 
 		mockCreateASMap(client, getASMapForTestsForCreate(), &gtm.CreateASMapResponse{
 			Resource: getASMapForTestsForCreateResponse(),
 			Status:   getDefaultResponseStatus(),
 		}, nil)
 
-		mockGetASMap(client, getASMapForTestsForCreateResponse(), nil, 2)
+		mockGetASMap(client, getASMapForTestsForCreateResponse(), nil, testutils.Twice)
 
 		// Mock that the ASMap was deleted outside terraform
-		mockGetASMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+		mockGetASMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
 		// For terraform test framework, we need to mock GetASMap as it would actually exist before deletion
-		mockGetASMap(client, getASMapForTestsForCreateResponse(), nil, 1)
+		mockGetASMap(client, getASMapForTestsForCreateResponse(), nil, testutils.Once)
 
 		mockDeleteASMap(client)
 
@@ -162,11 +162,11 @@ func TestResGTMASMap(t *testing.T) {
 	t.Run("create asmap failed", func(t *testing.T) {
 		client := &gtm.Mock{}
 
-		mockGetASMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+		mockGetASMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
 		mockCreateASMap(client, getASMapForTestsForCreate(), nil, &gtm.Error{StatusCode: http.StatusBadRequest})
 
-		mockGetDatacenter(client, datacenterID5400, getDefaultDatacenter(), nil, 1)
+		mockGetDatacenter(client, datacenterID5400, getDefaultDatacenter(), nil, testutils.Once)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -186,7 +186,7 @@ func TestResGTMASMap(t *testing.T) {
 	t.Run("create asmap failed - asmap already exists", func(t *testing.T) {
 		client := &gtm.Mock{}
 
-		mockGetASMap(client, getASMapForTestsForCreateResponse(), nil, 1)
+		mockGetASMap(client, getASMapForTestsForCreateResponse(), nil, testutils.Once)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -206,14 +206,14 @@ func TestResGTMASMap(t *testing.T) {
 	t.Run("create asmap denied", func(t *testing.T) {
 		client := &gtm.Mock{}
 
-		mockGetASMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+		mockGetASMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
 		mockCreateASMap(client, getASMapForTestsForCreate(), &gtm.CreateASMapResponse{
 			Resource: getASMapForTestsForCreateResponse(),
 			Status:   getDeniedResponseStatus(),
 		}, nil)
 
-		mockGetDatacenter(client, datacenterID5400, getTestDatacenterResp(), nil, 1)
+		mockGetDatacenter(client, datacenterID5400, getTestDatacenterResp(), nil, testutils.Once)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -321,7 +321,7 @@ func TestResGTMASMapImport(t *testing.T) {
 			mapName:    testASMapName,
 			init: func(m *gtm.Mock) {
 				// Read
-				mockGetASMap(m, getImportedASMap(), nil, 2)
+				mockGetASMap(m, getImportedASMap(), nil, testutils.Twice)
 			},
 			stateCheck: test.NewImportChecker().
 				CheckEqual("domain", "gtm_terra_testdomain.akadns.net").
@@ -350,7 +350,7 @@ func TestResGTMASMapImport(t *testing.T) {
 			mapName:    testASMapName,
 			init: func(m *gtm.Mock) {
 				// Read - error
-				mockGetASMap(m, nil, fmt.Errorf("get failed"), 1)
+				mockGetASMap(m, nil, fmt.Errorf("get failed"), testutils.Once)
 			},
 			expectError: regexp.MustCompile(`get failed`),
 		},
@@ -386,18 +386,18 @@ func TestResGTMASMapImport(t *testing.T) {
 func getASMapMocks() *gtm.Mock {
 	client := &gtm.Mock{}
 
-	mockGetASMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+	mockGetASMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
-	mockGetDatacenter(client, datacenterID5400, getTestDatacenterResp(), nil, 1)
+	mockGetDatacenter(client, datacenterID5400, getTestDatacenterResp(), nil, testutils.Once)
 
 	mockCreateASMap(client, getASMapForOrder(), &gtm.CreateASMapResponse{
 		Resource: getASMapForOrderResp(),
 		Status:   getDefaultResponseStatus(),
 	}, nil)
 
-	mockGetASMap(client, getASMapForOrderResp(), nil, 4)
+	mockGetASMap(client, getASMapForOrderResp(), nil, testutils.FourTimes)
 
-	mockGetDomainStatus(client, 2)
+	mockGetDomainStatus(client, testutils.Twice)
 
 	mockDeleteASMap(client)
 

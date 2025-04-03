@@ -69,6 +69,7 @@ docker run -d -it --name akatf-container --entrypoint "/usr/bin/tail" \
         -e SSH_CONFIG="${SSH_CONFIG}" \
         -e TIMEOUT="$TIMEOUT" \
         -e TERRAFORM_VERSION="$TERRAFORM_VERSION" \
+        -e GOTOOLCHAIN="auto" \
         -v "$HOME"/.ssh/id_rsa=/root/id_rsa \
         -v "$HOME"/.ssh/id_rsa.pub=/root/id_rsa.pub \
         -v "$HOME"/.ssh/known_hosts=/root/known_hosts \

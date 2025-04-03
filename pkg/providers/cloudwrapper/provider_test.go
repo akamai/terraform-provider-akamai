@@ -74,7 +74,6 @@ func (ts *TestSubprovider) SDKDataSources() map[string]*schema.Resource {
 func (ts *TestSubprovider) FrameworkResources() []func() resource.Resource {
 	for i, fn := range ts.resources {
 		// decorate
-		fn := fn
 		ts.resources[i] = func() resource.Resource {
 			res := fn()
 			if v, ok := res.(clientSetter); ok {
@@ -91,7 +90,6 @@ func (ts *TestSubprovider) FrameworkResources() []func() resource.Resource {
 
 func (ts *TestSubprovider) FrameworkDataSources() []func() datasource.DataSource {
 	for i, fn := range ts.datasources {
-		fn := fn
 		// decorate
 		ts.datasources[i] = func() datasource.DataSource {
 			ds := fn()

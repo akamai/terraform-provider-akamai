@@ -46,7 +46,7 @@ func TestDataGTMResource(t *testing.T) {
 							LoadServers:    []string{"2.3.4.5"},
 						},
 					}},
-				}, nil, 3)
+				}, nil, testutils.ThreeTimes)
 			},
 			expectedAttributes: map[string]string{
 				"aggregation_type":                   "latest",
@@ -70,7 +70,7 @@ func TestDataGTMResource(t *testing.T) {
 		"error response from api": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				mockGetResource(m, nil, fmt.Errorf("oops"), 1)
+				mockGetResource(m, nil, fmt.Errorf("oops"), testutils.Once)
 			},
 			expectError: regexp.MustCompile("oops"),
 		},

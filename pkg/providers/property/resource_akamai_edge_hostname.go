@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -17,16 +18,27 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v7/pkg/log"
 	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 
+	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-const retriesMax = 15
+const (
+	retriesMax                     = 15
+	minDomainPrefixLength          = 1
+	minDomainPrefixLengthAkamaized = 4
+)
 
 var (
 	// EgdeHostnameCreatePollInterval is the interval for polling an edgehostname creation
 	EgdeHostnameCreatePollInterval = time.Minute
+
+	// domainPrefixPatterns maps domain suffixes to their respective regex patterns for validating domain prefixes
+	domainPrefixPatterns = map[string]*regexp.Regexp{
+		"akamaized.net": regexp.MustCompile(`^[A-Za-z]([A-Za-z0-9-]*[A-Za-z0-9])?$`),
+		"default":       regexp.MustCompile(`^[A-Za-z]([A-Za-z0-9.-]*[A-Za-z0-9])?(\.)?$`),
+	}
 )
 
 func resourceSecureEdgeHostName() *schema.Resource {
@@ -70,7 +82,7 @@ var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
 		Required:         true,
 		ForceNew:         true,
 		DiffSuppressFunc: diffSuppressEdgeHostname,
-		ValidateDiagFunc: tf.IsNotBlank,
+		ValidateDiagFunc: tf.AggregateValidations(tf.IsNotBlank, validateDomainPrefix),
 		StateFunc:        appendDefaultSuffixToEdgeHostname,
 	},
 	"ttl": {
@@ -239,6 +251,39 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 
 	d.SetId(hostname.EdgeHostnameID)
 	return resourceSecureEdgeHostNameRead(ctx, d, meta)
+}
+
+func validateDomainPrefix(v interface{}, _ cty.Path) diag.Diagnostics {
+
+	edgeHostname, ok := v.(string)
+	if !ok {
+		return diag.Errorf("expected string, got %T", v)
+	}
+	domainSuffix, _ := parseEdgeHostname(edgeHostname)
+	domainPrefix := strings.TrimSuffix(edgeHostname, "."+domainSuffix)
+	domainPrefixLen := len(domainPrefix)
+
+	minLen := minDomainPrefixLength
+	if domainSuffix == "akamaized.net" {
+		minLen = minDomainPrefixLengthAkamaized
+	}
+
+	if domainPrefixLen < minLen || domainPrefixLen > 63 {
+		return diag.Errorf(`The edge hostname prefix must be at least %d character(s) and no more than 63 characters for "%s" suffix; you provided %d character(s).`, minLen, domainSuffix, domainPrefixLen)
+	}
+
+	pattern, exists := domainPrefixPatterns[domainSuffix]
+	if !exists {
+		pattern = domainPrefixPatterns["default"]
+	}
+
+	if !pattern.MatchString(domainPrefix) {
+		if domainSuffix == "akamaized.net" {
+			return diag.Errorf(`A prefix for the edge hostname with the "akamaized.net" suffix must begin with a letter, end with a letter or digit, and contain only letters, digits, and hyphens, for example, abc-def, or abc-123.`)
+		}
+		return diag.Errorf(`A prefix for the edge hostname with the "%s" suffix must begin with a letter, end with a letter, digit, or dot, and contain only letters, digits, dots, and hyphens, for example, abc-def.123.456., or abc.123-def.`, domainSuffix)
+	}
+	return nil
 }
 
 func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -546,16 +591,13 @@ func resourceSecureEdgeHostNameImport(ctx context.Context, d *schema.ResourceDat
 		return nil, fmt.Errorf("expected import identifier with format: "+
 			`"EdgehostNameID,contractID,groupID[,productID]". Got: %q`, d.Id())
 	}
-
+	var productID string
 	if len(parts) == 4 {
 		if len(parts[3]) == 0 {
 			return nil, fmt.Errorf("productID is empty for the import ID=%q", d.Id())
 		}
-		productID := str.AddPrefix(parts[3], "prd_")
+		productID = str.AddPrefix(parts[3], "prd_")
 		logger.Debugf("Setting product_id=%s", productID)
-		if err := d.Set("product_id", productID); err != nil {
-			return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
-		}
 	}
 
 	edgehostID := parts[0]
@@ -570,6 +612,9 @@ func resourceSecureEdgeHostNameImport(ctx context.Context, d *schema.ResourceDat
 	if err != nil {
 		return nil, err
 	}
+	if len(productID) == 0 {
+		productID = edgehostnameDetails.EdgeHostname.ProductID
+	}
 
 	if err := d.Set("contract_id", edgehostnameDetails.ContractID); err != nil {
 		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
@@ -578,6 +623,9 @@ func resourceSecureEdgeHostNameImport(ctx context.Context, d *schema.ResourceDat
 		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("edge_hostname", edgehostnameDetails.EdgeHostname.Domain); err != nil {
+		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
+	}
+	if err := d.Set("product_id", productID); err != nil {
 		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 

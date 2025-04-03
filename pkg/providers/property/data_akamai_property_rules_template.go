@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -16,6 +17,7 @@ import (
 	"text/template"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/log"
+	"github.com/akamai/terraform-provider-akamai/v7/internal/files"
 	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	"github.com/hashicorp/go-cty/cty"
@@ -52,6 +54,13 @@ func dataSourcePropertyRulesTemplate() *schema.Resource {
 					},
 				},
 				Optional: true,
+			},
+			"follow_links": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Description: "The folder with snippets can contain symlinks to other folders with snippets " +
+					"and can be a symlink itself. Symlinks are handled recursively so be aware of the possibility " +
+					"of infinite recursion if a link points to its own parent directory.",
 			},
 			"variables": {
 				Type: schema.TypeSet,
@@ -148,6 +157,66 @@ func (v variablePopulator) replaceMatchWithVar(template string, varMap map[strin
 	return strings.ReplaceAll(template, matchingVariable, fmt.Sprintf("%s.%s%s", leftDelim, varName, rightDelim)), nil
 }
 
+func findSnippetsInSymlinkDir(parentDir, symlinkDir string) (map[string]string, error) {
+	templateFiles := map[string]string{}
+	target, err := filepath.EvalSymlinks(symlinkDir)
+	if err != nil {
+		return nil, err
+	}
+	snippets, err := findSnippets(target)
+	if err != nil {
+		return nil, err
+	}
+
+	relPath, err := filepath.Rel(parentDir, symlinkDir)
+	if err != nil {
+		return nil, err
+	}
+	for snippetName, snippetPath := range snippets {
+		// Prepend the relative path of the symlink directory to the map key
+		// (which is the template name).
+		fullName := filepath.Join(relPath, snippetName)
+		templateFiles[fullName] = snippetPath
+	}
+	return templateFiles, nil
+}
+
+func findSnippets(dir string) (map[string]string, error) {
+	templateFiles := map[string]string{}
+	err := filepath.Walk(dir,
+		func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			if info.IsDir() {
+				return nil
+			}
+			isDirSymlink, err := files.IsSymlinkToDir(path)
+			if err != nil {
+				return err
+			}
+
+			if isDirSymlink {
+				additionalTemplates, err := findSnippetsInSymlinkDir(dir, path)
+				if err != nil {
+					return err
+				}
+				maps.Copy(templateFiles, additionalTemplates)
+				return nil
+			}
+
+			if info.Size() > 0 {
+				relPath, err := filepath.Rel(dir, path)
+				if err != nil {
+					return err
+				}
+				templateFiles[relPath] = path
+			}
+			return nil
+		})
+	return templateFiles, err
+}
+
 //nolint:gocyclo
 func dataPropertyRulesTemplateRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
@@ -211,6 +280,8 @@ func dataPropertyRulesTemplateRead(_ context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 
+	// Find all snippets within the snippet directory, skipping the main template file.
+	// Handle symlinks recursively if follow_links is enabled.
 	templateFiles := make(map[string]string)
 	err = filepath.Walk(dir,
 		func(path string, info os.FileInfo, err error) error {
@@ -220,8 +291,30 @@ func dataPropertyRulesTemplateRead(_ context.Context, d *schema.ResourceData, m 
 
 			pathDiff := strings.TrimPrefix(path, dir)
 			if !info.IsDir() && path != file && !strings.Contains(pathDiff, ".terraform") {
+				if d.Get("follow_links").(bool) {
+					isDirSymlink, err := files.IsSymlinkToDir(path)
+					if err != nil {
+						return err
+					}
+					if isDirSymlink {
+						additionalTemplates, err := findSnippetsInSymlinkDir(dir, path)
+						if err != nil {
+							return err
+						}
+						maps.Copy(templateFiles, additionalTemplates)
+						return nil
+					}
+				}
+
 				pathData, err := os.ReadFile(path)
 				if err != nil {
+					// Check if the problem is that we try to read a file
+					// while it is a symlink to a directory
+					isDirSymlink, linkErr := files.IsSymlinkToDir(path)
+					if linkErr == nil && isDirSymlink {
+						return fmt.Errorf("%w: %w: %s", ErrReadFile, err,
+							"set follow_links to allow symlinks as snippet folders")
+					}
 					return fmt.Errorf("%w: %s", ErrReadFile, err)
 				}
 
@@ -235,6 +328,7 @@ func dataPropertyRulesTemplateRead(_ context.Context, d *schema.ResourceData, m 
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
 	for name, f := range templateFiles {
 		templateStr, err := convertToTemplate(f, varsMap)
 		if err != nil {

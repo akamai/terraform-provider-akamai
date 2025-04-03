@@ -26,6 +26,126 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestPropertyCreate(t *testing.T) {
+	basicData := mockPropertyData{
+		propertyName:  "test_property",
+		productID:     "prd_3",
+		propertyID:    "prp_4",
+		groupID:       "grp_2",
+		contractID:    "ctr_1",
+		assetID:       "aid_5555",
+		latestVersion: 1,
+		ruleTree: mockRuleTreeData{
+			rules: papi.Rules{
+				Name: "default",
+			},
+		},
+	}
+
+	defaultChecker := test.NewStateChecker("akamai_property.prop").
+		CheckEqual("id", "prp_4").
+		CheckEqual("name", "test_property").
+		CheckEqual("contract_id", "ctr_1").
+		CheckEqual("group_id", "grp_2").
+		CheckEqual("product_id", "prd_3").
+		CheckEqual("rule_warnings.#", "0").
+		CheckEqual("latest_version", "1").
+		CheckEqual("staging_version", "0").
+		CheckEqual("production_version", "0").
+		CheckEqual("rule_format", "v2024-02-12").
+		CheckEqual("use_hostname_bucket", "false").
+		CheckEqual("rules", `{"rules":{"name":"default","options":{}}}`)
+
+	tests := map[string]struct {
+		init       func(*mockProperty)
+		check      resource.TestCheckFunc
+		configFile string
+	}{
+		"Create basic property": {
+			init: func(p *mockProperty) {
+				p.mockPropertyData = basicData
+				p.mockCreateProperty()
+				p.mockPropertyData.ruleTree.ruleFormat = "v2024-02-12"
+				mockResourcePropertyRead(p, 2)
+				p.mockRemoveProperty()
+			},
+			configFile: "property.tf",
+			check:      defaultChecker.Build(),
+		},
+		"Create property with hostname bucket": {
+			init: func(p *mockProperty) {
+				p.mockPropertyData = basicData
+				p.mockPropertyData.useHostnameBucket = true
+				p.mockCreateProperty()
+				p.mockPropertyData.ruleTree.ruleFormat = "v2024-02-12"
+				p.mockGetProperty().Twice()
+				p.mockGetRuleTree().Times(2)
+				p.mockGetPropertyVersion().Times(2)
+				p.mockRemoveProperty()
+			},
+			configFile: "property_with_hostname_bucket.tf",
+			check: defaultChecker.
+				CheckEqual("use_hostname_bucket", "true").
+				Build(),
+		},
+		"No error creating property with hostnames and use_hostname_bucket set to false": {
+			init: func(p *mockProperty) {
+				p.mockPropertyData = basicData
+				p.hostnames = papi.HostnameResponseItems{
+					Items: []papi.Hostname{
+						{
+							CnameType:            "EDGE_HOSTNAME",
+							EdgeHostnameID:       "ehn_123",
+							CnameFrom:            "from.test.domain",
+							CnameTo:              "to.test.domain",
+							CertProvisioningType: "DEFAULT",
+						},
+					},
+				}
+
+				mockResourcePropertyCreateWithVersionHostnames(p)
+				p.mockPropertyData.ruleTree.ruleFormat = "v2024-02-12"
+				mockResourcePropertyRead(p, 2)
+				p.mockRemoveProperty()
+			},
+			configFile: "with_hostname_bucket_false_and_hostnames.tf",
+			check: defaultChecker.
+				CheckEqual("hostnames.0.cname_from", "from.test.domain").
+				CheckEqual("hostnames.0.cname_to", "to.test.domain").
+				CheckEqual("hostnames.0.edge_hostname_id", "ehn_123").
+				Build(),
+		},
+	}
+
+	for name, td := range tests {
+		t.Run(name, func(t *testing.T) {
+			papiMock := &papi.Mock{}
+			iamMock := &iam.Mock{}
+			mp := mockProperty{
+				papiMock: papiMock,
+				iamMock:  iamMock,
+			}
+			td.init(&mp)
+
+			useClient(papiMock, nil, func() {
+				useIam(iamMock, func() {
+					resource.UnitTest(t, resource.TestCase{
+						ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+						Steps: []resource.TestStep{
+							{
+								Config: testutils.LoadFixtureStringf(t, "testdata/TestResProperty/Creation/%s", td.configFile),
+								Check:  td.check,
+							},
+						},
+					})
+				})
+			})
+			papiMock.AssertExpectations(t)
+			iamMock.AssertExpectations(t)
+		})
+	}
+}
+
 // TestPropertyLifecycle tests various lifecycle workflows that result in a success
 func TestPropertyLifecycle(t *testing.T) {
 
@@ -42,6 +162,7 @@ func TestPropertyLifecycle(t *testing.T) {
 		CheckEqual("latest_version", "1").
 		CheckEqual("staging_version", "0").
 		CheckEqual("production_version", "0").
+		CheckEqual("use_hostname_bucket", "false").
 		CheckEqual("rules", `{"rules":{"name":"default","options":{}}}`)
 
 	// basicData holds basic, common data across test cases
@@ -1088,6 +1209,7 @@ func TestPropertyLifecycle(t *testing.T) {
 			})
 
 			papiMock.AssertExpectations(t)
+			iamMock.AssertExpectations(t)
 		})
 	}
 
@@ -1387,15 +1509,18 @@ func TestPropertyImport(t *testing.T) {
 	basicDataWithoutGroupAndContract.groupID = ""
 	basicDataWithoutGroupAndContract.contractID = ""
 
-	// defaultChecker builds basic, common checks across test cases
-	defaultChecker := test.NewImportChecker().
+	basicChecker := test.NewImportChecker().
 		CheckEqual("id", "prp_4").
-		CheckEqual("hostnames.0.cname_to", "to.test.domain").
-		CheckEqual("hostnames.0.edge_hostname_id", "ehn_123").
 		CheckEqual("latest_version", "1").
 		CheckEqual("staging_version", "1").
 		CheckEqual("production_version", "0").
+		CheckEqual("use_hostname_bucket", "false").
 		CheckEqual("rules", `{"rules":{"name":"","options":{}}}`)
+
+	// defaultChecker builds basic, common checks across test cases
+	defaultChecker := basicChecker.
+		CheckEqual("hostnames.0.cname_to", "to.test.domain").
+		CheckEqual("hostnames.0.edge_hostname_id", "ehn_123")
 
 	tests := map[string]struct {
 		importID   string
@@ -1617,6 +1742,23 @@ func TestPropertyImport(t *testing.T) {
 			},
 			stateCheck: defaultChecker.Build(),
 		},
+		"Importable: use_hostname_bucket set properly": {
+			importID: "prp_4",
+			init: func(p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicDataWithoutGroupAndContract
+				p.useHostnameBucket = true
+				// import
+				p.mockGetProperty().Once()
+				// read
+				p.mockGetProperty().Once()
+				p.mockGetRuleTree().Once()
+				p.mockGetPropertyVersion().Once()
+			},
+			stateCheck: basicChecker.
+				CheckEqual("use_hostname_bucket", "true").
+				Build(),
+		},
 	}
 
 	for name, test := range tests {
@@ -1665,10 +1807,8 @@ func TestPropertyErrors(t *testing.T) {
 		latestVersion: 1,
 	}
 
-	defaultChecker := test.NewStateChecker("akamai_property.test").
+	basicChecker := test.NewStateChecker("akamai_property.test").
 		CheckEqual("id", "prp_4").
-		CheckEqual("hostnames.0.cname_to", "to.test.domain").
-		CheckEqual("hostnames.0.edge_hostname_id", "ehn_123").
 		CheckEqual("latest_version", "1").
 		CheckEqual("staging_version", "0").
 		CheckEqual("production_version", "0").
@@ -1677,6 +1817,11 @@ func TestPropertyErrors(t *testing.T) {
 		CheckEqual("group_id", "grp_2").
 		CheckEqual("product_id", "prd_3").
 		CheckEqual("rule_warnings.#", "0").
+		CheckEqual("use_hostname_bucket", "false")
+
+	defaultChecker := basicChecker.
+		CheckEqual("hostnames.0.cname_to", "to.test.domain").
+		CheckEqual("hostnames.0.edge_hostname_id", "ehn_123").
 		CheckEqual("rules", `{"rules":{"name":"default","options":{}}}`)
 
 	inactiveVersions := papi.PropertyVersionItems{
@@ -2142,6 +2287,114 @@ func TestPropertyErrors(t *testing.T) {
 				},
 			},
 		},
+		"error turning on use_hostname_bucket on existing property": {
+			init: func(p *mockProperty) {
+				p.mockPropertyData = basicData
+				p.mockCreateProperty()
+				mockResourcePropertyRead(p, 2)
+				// refresh - read
+				mockResourcePropertyRead(p)
+				p.mockRemoveProperty()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/HostnameBucketErrors/basic_property.tf"),
+					Check:  basicChecker.Build(),
+				},
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResProperty/HostnameBucketErrors/with_hostname_bucket.tf"),
+					ExpectError: regexp.MustCompile(`property attribute "use_hostname_bucket" cannot be changed after creation \(immutable\)`),
+				},
+			},
+		},
+		"error turning off use_hostname_bucket on existing property": {
+			init: func(p *mockProperty) {
+				p.mockPropertyData = basicData
+				p.useHostnameBucket = true
+				p.mockCreateProperty()
+				p.mockGetProperty().Times(2)
+				p.mockGetRuleTree().Times(2)
+				p.mockGetPropertyVersion().Times(2)
+				// refresh - read
+				p.mockGetProperty().Once()
+				p.mockGetRuleTree().Once()
+				p.mockGetPropertyVersion().Once()
+				p.mockRemoveProperty()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/HostnameBucketErrors/with_hostname_bucket.tf"),
+					Check: basicChecker.
+						CheckEqual("use_hostname_bucket", "true").
+						Build(),
+				},
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResProperty/HostnameBucketErrors/basic_property.tf"),
+					ExpectError: regexp.MustCompile(`property attribute "use_hostname_bucket" cannot be changed after creation \(immutable\)`),
+				},
+			},
+		},
+		"error adding hostnames to a property with use_hostname_bucket": {
+			init: func(p *mockProperty) {
+				p.mockPropertyData = basicData
+				p.useHostnameBucket = true
+				p.mockCreateProperty()
+				p.mockGetProperty().Times(2)
+				p.mockGetRuleTree().Times(2)
+				p.mockGetPropertyVersion().Times(2)
+				// refresh - read
+				p.mockGetProperty().Once()
+				p.mockGetRuleTree().Once()
+				p.mockGetPropertyVersion().Once()
+				p.mockRemoveProperty()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/HostnameBucketErrors/with_hostname_bucket.tf"),
+					Check: basicChecker.
+						CheckEqual("use_hostname_bucket", "true").
+						Build(),
+				},
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResProperty/HostnameBucketErrors/with_hostname_bucket_and_hostnames.tf"),
+					ExpectError: regexp.MustCompile(`hostnames should be empty for use_hostname_bucket enabled`),
+				},
+			},
+		},
+		"error setting use_hostname_bucket on a property with hostnames": {
+			init: func(p *mockProperty) {
+				p.mockPropertyData = basicData
+				p.hostnames = defaultHostname
+				mockResourcePropertyCreateWithVersionHostnames(p)
+				mockResourcePropertyRead(p, 2)
+				// refresh - read
+				mockResourcePropertyRead(p)
+				p.mockRemoveProperty()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/HostnameBucketErrors/with_hostnames.tf"),
+					Check: basicChecker.
+						CheckEqual("hostnames.0.cname_from", "from.test.domain").
+						CheckEqual("hostnames.0.cname_to", "to.test.domain").
+						CheckEqual("hostnames.0.edge_hostname_id", "ehn_123").
+						Build(),
+				},
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResProperty/HostnameBucketErrors/with_hostname_bucket_and_hostnames.tf"),
+					ExpectError: regexp.MustCompile(`hostnames should be empty for use_hostname_bucket enabled`),
+				},
+			},
+		},
+		"error creating property with both hostnames and use_hostname_bucket": {
+			init: func(_ *mockProperty) {},
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResProperty/HostnameBucketErrors/with_hostname_bucket_and_hostnames.tf"),
+					ExpectError: regexp.MustCompile(`hostnames should be empty for use_hostname_bucket enabled`),
+				},
+			},
+		},
 	}
 
 	for name, test := range tests {
@@ -2203,7 +2456,8 @@ func TestPropertyResource_VersionNotesLifecycle(t *testing.T) {
 		CheckEqual("id", "prp_123").
 		CheckEqual("group_id", "grp_123").
 		CheckEqual("contract_id", "ctr_123").
-		CheckEqual("latest_version", "1")
+		CheckEqual("latest_version", "1").
+		CheckEqual("use_hostname_bucket", "false")
 
 	papiMock := &papi.Mock{}
 	basicData := mockPropertyData{

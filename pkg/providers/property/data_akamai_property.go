@@ -83,6 +83,11 @@ func dataSourceProperty() *schema.Resource {
 				Computed:    true,
 				Description: "ID of the property in the Identity and Access Management API.",
 			},
+			"property_type": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Specifies the type of the property.",
+			},
 		},
 	}
 }
@@ -179,6 +184,12 @@ func getPropertyAttributes(propertyResponse *papi.Property, propertyVersionRespo
 		"property_id":        propertyResponse.PropertyID,
 		"rule_format":        propertyVersion.RuleFormat,
 		"staging_version":    decodeVersion(propertyResponse.StagingVersion),
+	}
+
+	if propertyResponse.PropertyType != nil {
+		property["property_type"] = *propertyResponse.PropertyType
+	} else {
+		property["property_type"] = ""
 	}
 	return property
 }

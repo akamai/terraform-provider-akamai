@@ -4,8 +4,8 @@ provider "akamai" {
 
 data "akamai_cp_code" "test" {
   name        = "test cpcode"
-  contract_id = "ctr_test"
-  group_id    = "grp_test"
+  contract_id = "ctr_11"
+  group_id    = "grp_22"
 }
 
 output "products" {

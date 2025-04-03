@@ -30,13 +30,13 @@ func TestResGTMDatacenter(t *testing.T) {
 			Status:   getPendingResponseStatus(),
 		}, nil)
 
-		mockGetDatacenter(client, datacenterID3132, getTestDatacenterResp(), nil, 4)
+		mockGetDatacenter(client, datacenterID3132, getTestDatacenterResp(), nil, testutils.FourTimes)
 
-		mockGetDomainStatus(client, 2)
+		mockGetDomainStatus(client, testutils.Twice)
 
 		mockUpdateDatacenter(client, &gtm.UpdateDatacenterResponse{Status: getDefaultResponseStatus()}, nil)
 
-		mockGetDatacenter(client, datacenterID3132, getTestDatacenterUpdate(), nil, 3)
+		mockGetDatacenter(client, datacenterID3132, getTestDatacenterUpdate(), nil, testutils.ThreeTimes)
 
 		mockDeleteDatacenter(client)
 
@@ -75,9 +75,9 @@ func TestResGTMDatacenter(t *testing.T) {
 			Status:   getPendingResponseStatus(),
 		}, nil)
 
-		mockGetDatacenter(client, datacenterID3132, getTestDatacenterResp(), nil, 4)
+		mockGetDatacenter(client, datacenterID3132, getTestDatacenterResp(), nil, testutils.FourTimes)
 
-		mockGetDomainStatus(client, 1)
+		mockGetDomainStatus(client, testutils.Once)
 
 		mockUpdateDatacenter(client, nil, &gtm.Error{
 			Type:       "internal_error",
@@ -86,7 +86,7 @@ func TestResGTMDatacenter(t *testing.T) {
 			StatusCode: http.StatusInternalServerError,
 		})
 
-		mockGetDatacenter(client, datacenterID3132, getTestDatacenterResp(), nil, 1)
+		mockGetDatacenter(client, datacenterID3132, getTestDatacenterResp(), nil, testutils.Once)
 
 		mockDeleteDatacenter(client)
 
@@ -122,13 +122,13 @@ func TestResGTMDatacenter(t *testing.T) {
 			Status:   getPendingResponseStatus(),
 		}, nil)
 
-		mockGetDatacenter(client, datacenterID3132, getTestDatacenterResp(), nil, 2)
+		mockGetDatacenter(client, datacenterID3132, getTestDatacenterResp(), nil, testutils.Twice)
 
 		// Mock that the datacenter was deleted outside terraform
-		mockGetDatacenter(client, datacenterID3132, nil, &gtm.Error{StatusCode: http.StatusNotFound}, 1)
+		mockGetDatacenter(client, datacenterID3132, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
 		// For terraform test framework, we need to mock GetDatacenter as it would actually exist before deletion
-		mockGetDatacenter(client, datacenterID3132, getTestDatacenterResp(), nil, 1)
+		mockGetDatacenter(client, datacenterID3132, getTestDatacenterResp(), nil, testutils.Once)
 
 		mockDeleteDatacenter(client)
 
@@ -214,7 +214,7 @@ func TestResGTMDatacenterImport(t *testing.T) {
 			datacenterID: "3132",
 			init: func(m *gtm.Mock) {
 				// Read
-				mockGetDatacenter(m, datacenterID3132, getImportedDatacenter(), nil, 2)
+				mockGetDatacenter(m, datacenterID3132, getImportedDatacenter(), nil, testutils.Twice)
 			},
 			stateCheck: test.NewImportChecker().
 				CheckEqual("domain", "gtm_terra_testdomain.akadns.net").
@@ -257,7 +257,7 @@ func TestResGTMDatacenterImport(t *testing.T) {
 			datacenterID: "3132",
 			init: func(m *gtm.Mock) {
 				// Read - error
-				mockGetDatacenter(m, datacenterID3132, nil, fmt.Errorf("get failed"), 1)
+				mockGetDatacenter(m, datacenterID3132, nil, fmt.Errorf("get failed"), testutils.Once)
 			},
 			expectError: regexp.MustCompile(`get failed`),
 		},

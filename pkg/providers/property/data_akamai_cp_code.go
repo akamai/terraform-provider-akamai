@@ -32,6 +32,10 @@ func dataSourceCPCode() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
+			"created_date": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 			"product_ids": {
 				Type:     schema.TypeList,
 				Computed: true,
@@ -81,6 +85,10 @@ func dataCPCodeRead(ctx context.Context, d *schema.ResourceData, m interface{}) 
 		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 
+	if err := d.Set("created_date", cpCode.CreatedDate); err != nil {
+		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
+	}
+
 	d.SetId(strings.TrimPrefix(cpCode.ID, cpCodePrefix))
 	log.Debugf("Read CP Code: %+v", cpCode)
 	return nil
@@ -97,13 +105,20 @@ func findCPCode(ctx context.Context, client papi.PAPI, nameOrID, contractID, gro
 		return nil, err
 	}
 
+	var matchedCPCodes []papi.CPCode
 	for _, cpc := range r.CPCodes.Items {
 		if cpCodeNameOrIDMatches(cpc, nameOrID) {
-			return &cpc, nil
+			matchedCPCodes = append(matchedCPCodes, cpc)
 		}
 	}
 
-	return nil, fmt.Errorf("%w: CP code: %s", ErrCpCodeNotFound, nameOrID)
+	if len(matchedCPCodes) > 1 {
+		return nil, fmt.Errorf("%w: more than one CP code for name %s was found", ErrMoreCPCodesFound, nameOrID)
+	} else if len(matchedCPCodes) == 1 {
+		return &matchedCPCodes[0], nil
+	}
+
+	return nil, fmt.Errorf("%w: CP code: %s", ErrCPCodeNotFound, nameOrID)
 }
 
 func cpCodeNameOrIDMatches(cpCode papi.CPCode, s string) bool {

@@ -29,19 +29,19 @@ output "aka_cp_contract" {
 variable "groupid" {
   description = "Name of the group associated with this CP code"
   type        = string
-  default     = "grp_15225"
+  default     = "grp_22"
 }
 
 variable "contractid" {
   description = "Contract ID associated with this CP code"
   type        = string
-  default     = "ctr_1-1TJZH5"
+  default     = "ctr_11"
 }
 
 variable "product" {
   description = "Name of the product associated with this CP code"
   type        = string
-  default     = "prd_prod1"
+  default     = "prd_3"
 }
 
 variable "cp_code" {

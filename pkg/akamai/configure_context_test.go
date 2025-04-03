@@ -162,14 +162,14 @@ func TestOverrideRetryPolicy(t *testing.T) {
 		"should retry for GET with status 409 conflict": {
 			ctx: context.Background(),
 			resp: &http.Response{
-				Request:    &http.Request{Method: http.MethodGet},
+				Request:    newRequest(t, http.MethodGet, "/papi/v1/sth"),
 				StatusCode: http.StatusConflict,
 			},
 			expectedResult: true,
 		},
 		"should call base policy for other GETs": {
 			ctx:           context.Background(),
-			resp:          &http.Response{Request: &http.Request{Method: http.MethodGet}},
+			resp:          &http.Response{Request: newRequest(t, http.MethodGet, "/papi/v1/sth")},
 			expectedError: "base policy: dummy, not implemented",
 		},
 		"should forward context error when present": {
@@ -178,33 +178,57 @@ func TestOverrideRetryPolicy(t *testing.T) {
 				cancel()
 				return ctx
 			}(),
-			resp:          &http.Response{Request: &http.Request{Method: http.MethodGet}},
+			resp:          &http.Response{Request: newRequest(t, http.MethodGet, "/papi/v1/sth")},
 			expectedError: "context canceled",
 		},
 		"should not retry for POST": {
 			ctx:            context.Background(),
-			resp:           &http.Response{Request: &http.Request{Method: http.MethodPost}},
+			resp:           &http.Response{Request: newRequest(t, http.MethodPost, "/papi/v1/sth")},
 			expectedResult: false,
 		},
 		"should not retry for PUT": {
 			ctx:            context.Background(),
-			resp:           &http.Response{Request: &http.Request{Method: http.MethodPut}},
+			resp:           &http.Response{Request: newRequest(t, http.MethodPut, "/papi/v1/sth")},
 			expectedResult: false,
 		},
 		"should not retry for PATCH": {
 			ctx:            context.Background(),
-			resp:           &http.Response{Request: &http.Request{Method: http.MethodPatch}},
+			resp:           &http.Response{Request: newRequest(t, http.MethodPatch, "/papi/v1/sth")},
 			expectedResult: false,
 		},
 		"should not retry for HEAD": {
 			ctx:            context.Background(),
-			resp:           &http.Response{Request: &http.Request{Method: http.MethodHead}},
+			resp:           &http.Response{Request: newRequest(t, http.MethodHead, "/papi/v1/sth")},
 			expectedResult: false,
 		},
 		"should not retry for DELETE": {
 			ctx:            context.Background(),
-			resp:           &http.Response{Request: &http.Request{Method: http.MethodDelete}},
+			resp:           &http.Response{Request: newRequest(t, http.MethodDelete, "/papi/v1/sth")},
 			expectedResult: false,
+		},
+		"should not retry for PATCH hostnames bucket if 429": {
+			ctx: context.Background(),
+			resp: &http.Response{
+				Request:    newRequest(t, http.MethodPatch, "/papi/v1/properties/prp_111/hostnames"),
+				StatusCode: http.StatusTooManyRequests,
+			},
+			expectedResult: false,
+		},
+		"should retry for PATCH hostnames bucket if method different than PATCH": {
+			ctx: context.Background(),
+			resp: &http.Response{
+				Request:    newRequest(t, http.MethodGet, "/papi/v1/properties/prp_111/hostnames"),
+				StatusCode: http.StatusTooManyRequests,
+			},
+			expectedResult: true,
+		},
+		"should retry for PATCH hostnames bucket if status different than 429": {
+			ctx: context.Background(),
+			resp: &http.Response{
+				Request:    newRequest(t, http.MethodGet, "/papi/v1/properties/prp_111/hostnames"),
+				StatusCode: http.StatusConflict,
+			},
+			expectedResult: true,
 		},
 	}
 	for name, tst := range tests {

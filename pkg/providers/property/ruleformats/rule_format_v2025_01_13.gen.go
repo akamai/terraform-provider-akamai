@@ -8001,13 +8001,13 @@ func getBehaviorsSchemaV20250113() map[string]*schema.Schema {
 					},
 					"origin_unresponsive_blocklist_origin_ip": {
 						Optional:    true,
-						Description: "",
+						Description: "Enabling this blocklists the origin's IP address.",
 						Type:        schema.TypeBool,
 					},
 					"origin_unresponsive_blocklist_window": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"TEN_S", "THIRTY_S"}, false)),
 						Optional:         true,
-						Description:      "",
+						Description:      "This sets the delay before blocklisting an IP address.",
 						Type:             schema.TypeString,
 					},
 					"origin_unresponsive_recovery": {
@@ -8093,13 +8093,13 @@ func getBehaviorsSchemaV20250113() map[string]*schema.Schema {
 					},
 					"origin_unavailable_blocklist_origin_ip": {
 						Optional:    true,
-						Description: "",
+						Description: "Enabling this blocklists the origin's IP address.",
 						Type:        schema.TypeBool,
 					},
 					"origin_unavailable_blocklist_window": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"TEN_S", "THIRTY_S"}, false)),
 						Optional:         true,
-						Description:      "",
+						Description:      "This sets the delay before blocklisting an IP address.",
 						Type:             schema.TypeString,
 					},
 					"origin_unavailable_recovery": {
@@ -8185,13 +8185,13 @@ func getBehaviorsSchemaV20250113() map[string]*schema.Schema {
 					},
 					"object_unavailable_blocklist_origin_ip": {
 						Optional:    true,
-						Description: "",
+						Description: "Enabling this blocklists the origin's IP address.",
 						Type:        schema.TypeBool,
 					},
 					"object_unavailable_blocklist_window": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"TEN_S", "THIRTY_S"}, false)),
 						Optional:         true,
-						Description:      "",
+						Description:      "This sets the delay before blocklisting an IP address.",
 						Type:             schema.TypeString,
 					},
 					"object_unavailable_recovery": {
@@ -9471,17 +9471,17 @@ func getBehaviorsSchemaV20250113() map[string]*schema.Schema {
 					},
 					"sort_query_params": {
 						Optional:    true,
-						Description: "",
+						Description: "Sorts the query string parameters alphabetically by key name.",
 						Type:        schema.TypeBool,
 					},
 					"encode_query_params": {
 						Optional:    true,
-						Description: "",
+						Description: "Encodes the query string parameters.",
 						Type:        schema.TypeBool,
 					},
 					"encode_equals": {
 						Optional:    true,
-						Description: "",
+						Description: "Encodes any equal (`=`) characters in a query parameter's value.",
 						Type:        schema.TypeBool,
 					},
 					"origin_location_title": {
