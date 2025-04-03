@@ -1,6 +1,6 @@
 # RELEASE NOTES
 
-## 7.1.0 (Apr 7, 2025)
+## 7.1.0 (Apr 3, 2025)
 
 #### FEATURES/ENHANCEMENTS:
 
@@ -8,7 +8,7 @@
 
 * PAPI
   * Added support for the property's hostname bucket feature:
-    * Added the `use_hostname_bucket` attribute to the `akamai_property` resource
+    * Added the `use_hostname_bucket` attribute to the `akamai_property` and `akamai_property_bootstrap` resources
       which allows adding or removing property hostnames without incrementing property versions.
     * Added the `akamai_property_hostname_bucket` resource to manage hostnames assigned to the property's bucket.
     * Added the `akamai_property_hostname_activation` data source to retrieve information about a specific property hostname activation.
@@ -123,7 +123,7 @@
   * Added support for moving a PAPI property between groups (the `akamai_property` and `akamai_property_bootstrap` resources)
     by updating the `group_id` field. Currently, properties that have never been activated are not supported.
   * Added the `asset_id` schema field to the `akamai_property_bootstrap` resource.
-  * Added validation to raise an error when updating the `contact` and `auto_acknowledge_rule_warnings` fields on active property versions in the`akamai_property_activation` resource.
+  * Added validation to raise an error when updating the `contact` and `auto_acknowledge_rule_warnings` fields on active property versions in the `akamai_property_activation` resource.
 
 #### BUG FIXES:
 
