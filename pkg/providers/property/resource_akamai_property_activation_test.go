@@ -373,7 +373,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 				expectGetActivations(m, "prp_test", generateActivationResponseMock("atv_activation1", "property activation note for creating", 1, papi.ActivationTypeActivate, "2020-10-28T15:04:05Z", []string{"user@example.com"}), nil).Once()
 				// no update for only timeout change
 
-				//read
+				// read
 				expectGetActivations(m, "prp_test", generateActivationResponseMock("atv_activation1", "property activation note for creating", 1, papi.ActivationTypeActivate, "2020-10-28T15:04:05Z", []string{"user@example.com"}), nil).Once()
 
 				//// delete
@@ -485,7 +485,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 				},
 			},
 		},
-		"Note field change suppressed when other fields not changed": {
+		"Note and contact fields change suppressed when other fields not changed": {
 			init: func(m *papi.Mock) {
 				// first step
 				// create
@@ -511,7 +511,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, "./testdata/TestPropertyActivation/ok/resource_property_activation.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestPropertyActivation/diff_suppress/resource_property_activation.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "id", "prp_test:STAGING"),
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "property_id", "prp_test"),
@@ -527,7 +527,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 					),
 				},
 				{
-					Config: testutils.LoadFixtureString(t, "./testdata/TestPropertyActivation/ok/resource_property_activation.tf"),
+					Config: testutils.LoadFixtureString(t, "./testdata/TestPropertyActivation/diff_suppress/resource_property_activation_update_suppressed.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "id", "prp_test:STAGING"),
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "property_id", "prp_test"),
@@ -688,6 +688,299 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "activation_id", "atv_update"),
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "status", "ACTIVE"),
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "note", "property activation note for updating"),
+					),
+				},
+			},
+		},
+		"property activation lifecycle - contact is correctly read in update when contact list is extended": {
+			init: func(m *papi.Mock) {
+				// first step
+				// create
+				expectGetRuleTree(m, "prp_test", 1, ruleTreeResponseValid, nil).Once()
+				expectGetActivations(m, "prp_test", papi.GetActivationsResponse{}, nil).Once()
+				expectCreateActivation(m, "prp_test", papi.ActivationTypeActivate, 1, "STAGING",
+					[]string{"user@example.com"}, "property activation note for creating", "atv_activation1", true, nil).Once()
+				expectGetActivation(m, "prp_test", "atv_activation1", 1, "STAGING", papi.ActivationStatusActive, papi.ActivationTypeActivate, "property activation note for creating", []string{"user@example.com"}, nil).Once()
+				// read
+				expectGetActivations(m, "prp_test", generateActivationResponseMock("atv_activation1", "property activation note for creating", 1, papi.ActivationTypeActivate, "2020-10-28T15:04:05Z", []string{"user@example.com"}), nil).Once()
+
+				// second step
+				// read
+				expectGetActivations(m, "prp_test", generateActivationResponseMock("atv_activation1", "property activation note for creating", 1, papi.ActivationTypeActivate, "2020-10-28T15:04:05Z", []string{"user@example.com"}), nil).Once()
+				// update
+				expectGetRuleTree(m, "prp_test", 2, ruleTreeResponseValid, nil).Once()
+				expectGetActivations(m, "prp_test", generateActivationResponseMock("atv_activation1", "property activation note for creating", 1, papi.ActivationTypeActivate, "2020-10-28T15:04:05Z", []string{"user@example.com"}), nil).Once()
+				expectGetPropertyVersion(m, "prp_test", "", "", 2, papi.VersionStatusInactive, "").Once()
+				expectCreateActivation(m, "prp_test", papi.ActivationTypeActivate, 2, "STAGING",
+					[]string{"user@example.com", "user2@example.com"}, "property activation note for updating", "atv_update", true, nil).Once()
+				expectGetActivation(m, "prp_test", "atv_update", 2, "STAGING", papi.ActivationStatusActive, papi.ActivationTypeActivate, "property activation note for updating", []string{"user@example.com", "user2@example.com"}, nil).Once()
+				// read
+				getActivationsAfterUpdateResponse := papi.GetActivationsResponse{
+					Activations: papi.ActivationsItems{Items: []*papi.Activation{mockDeactivationForLifecycle, generateActivationItemMock("atv_update", "property activation note for updating", 2, papi.ActivationTypeActivate, "2020-10-28T15:04:05Z", []string{"user@example.com", "user2@example.com"})}},
+				}
+				expectGetActivations(m, "prp_test", getActivationsAfterUpdateResponse, nil).Once()
+				// delete
+				expectGetActivations(m, "prp_test", getActivationsAfterUpdateResponse, nil).Once()
+				expectCreateActivation(m, "prp_test", papi.ActivationTypeDeactivate, 2, "STAGING",
+					[]string{"user@example.com", "user2@example.com"}, "property activation note for updating", "atv_update", true, nil).Once()
+				expectGetActivation(m, "prp_test", "atv_update", 2, "STAGING", papi.ActivationStatusActive, papi.ActivationTypeDeactivate, "property activation note for updating", []string{"user@example.com", "user2@example.com"}, nil).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "./testdata/TestPropertyActivation/ok/resource_property_activation.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "id", "prp_test:STAGING"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "property_id", "prp_test"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "contact.#", "1"),
+						resource.TestCheckResourceAttrSet("akamai_property_activation.test", "contact.0"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "contact.0", "user@example.com"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "network", "STAGING"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "version", "1"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "warnings", ""),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "errors", ""),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "rule_errors.#", "0"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "auto_acknowledge_rule_warnings", "true"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "activation_id", "atv_activation1"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "status", "ACTIVE"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "note", "property activation note for creating"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "timeouts.#", "0"),
+					),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "./testdata/TestPropertyActivation/ok/resource_property_activation_extend_contact.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "id", "prp_test:STAGING"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "contact.#", "2"),
+						resource.TestCheckResourceAttrSet("akamai_property_activation.test", "contact.0"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "contact.0", "user2@example.com"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "contact.1", "user@example.com"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "property_id", "prp_test"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "network", "STAGING"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "version", "2"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "activation_id", "atv_update"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "status", "ACTIVE"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "note", "property activation note for updating"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "timeouts.#", "0"),
+					),
+				},
+			},
+		},
+		"property activation lifecycle - contact is correctly read in update when contact list shrinks": {
+			init: func(m *papi.Mock) {
+				// first step
+				// create
+				expectGetRuleTree(m, "prp_test", 2, ruleTreeResponseValid, nil).Once()
+				expectGetActivations(m, "prp_test", papi.GetActivationsResponse{}, nil).Once()
+				expectCreateActivation(m, "prp_test", papi.ActivationTypeActivate, 2, "STAGING",
+					[]string{"user@example.com", "user2@example.com"}, "property activation note for updating", "atv_update", true, nil).Once()
+				expectGetActivation(m, "prp_test", "atv_update", 2, "STAGING", papi.ActivationStatusActive, papi.ActivationTypeActivate, "property activation note for updating", []string{"user@example.com", "user2@example.com"}, nil).Once()
+				// read
+				expectGetActivations(m, "prp_test", generateActivationResponseMock("atv_activation1", "property activation note for updating", 2, papi.ActivationTypeActivate, "2020-10-28T15:04:05Z", []string{"user@example.com", "user2@example.com"}), nil).Once()
+
+				// second step
+				// read
+				expectGetActivations(m, "prp_test", generateActivationResponseMock("atv_activation1", "property activation note for updating", 2, papi.ActivationTypeActivate, "2020-10-28T15:04:05Z", []string{"user@example.com", "user2@example.com"}), nil).Once()
+				// update
+				expectGetRuleTree(m, "prp_test", 1, ruleTreeResponseValid, nil).Once()
+				expectGetActivations(m, "prp_test", generateActivationResponseMock("atv_activation1", "property activation note for updating", 2, papi.ActivationTypeActivate, "2020-10-28T15:04:05Z", []string{"user@example.com", "user2@example.com"}), nil).Once()
+				expectGetPropertyVersion(m, "prp_test", "", "", 1, papi.VersionStatusDeactivated, "").Once()
+				expectCreateActivation(m, "prp_test", papi.ActivationTypeActivate, 1, "STAGING",
+					[]string{"user@example.com"}, "property activation note for creating", "atv_activation1", true, nil).Once()
+				expectGetActivation(m, "prp_test", "atv_activation1", 1, "STAGING", papi.ActivationStatusActive, papi.ActivationTypeActivate, "property activation note for creating", []string{"user@example.com"}, nil).Once()
+				// read
+				getActivationsAfterUpdateResponse := papi.GetActivationsResponse{
+					Activations: papi.ActivationsItems{Items: []*papi.Activation{mockDeactivationForLifecycle, generateActivationItemMock("atv_activation1", "property activation note for creating", 1, papi.ActivationTypeActivate, "2020-10-28T15:04:05Z", []string{"user@example.com"})}},
+				}
+				expectGetActivations(m, "prp_test", getActivationsAfterUpdateResponse, nil).Once()
+				// delete
+				expectGetActivations(m, "prp_test", getActivationsAfterUpdateResponse, nil).Once()
+				expectCreateActivation(m, "prp_test", papi.ActivationTypeDeactivate, 1, "STAGING",
+					[]string{"user@example.com"}, "property activation note for creating", "atv_update", true, nil).Once()
+				expectGetActivation(m, "prp_test", "atv_update", 1, "STAGING", papi.ActivationStatusActive, papi.ActivationTypeDeactivate, "property activation note for updating", []string{"user@example.com"}, nil).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "./testdata/TestPropertyActivation/ok/resource_property_activation_extend_contact.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "id", "prp_test:STAGING"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "contact.#", "2"),
+						resource.TestCheckResourceAttrSet("akamai_property_activation.test", "contact.0"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "contact.0", "user2@example.com"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "contact.1", "user@example.com"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "property_id", "prp_test"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "network", "STAGING"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "version", "2"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "activation_id", "atv_update"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "status", "ACTIVE"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "note", "property activation note for updating"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "timeouts.#", "0"),
+					),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "./testdata/TestPropertyActivation/ok/resource_property_activation.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "id", "prp_test:STAGING"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "property_id", "prp_test"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "contact.#", "1"),
+						resource.TestCheckResourceAttrSet("akamai_property_activation.test", "contact.0"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "contact.0", "user@example.com"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "network", "STAGING"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "version", "1"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "warnings", ""),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "errors", ""),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "rule_errors.#", "0"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "auto_acknowledge_rule_warnings", "true"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "activation_id", "atv_activation1"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "status", "ACTIVE"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "note", "property activation note for creating"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "timeouts.#", "0"),
+					),
+				},
+			},
+		},
+		"property activation lifecycle - contact is correctly read in update when contact is exchanged": {
+			init: func(m *papi.Mock) {
+				// first step
+				// create
+				expectGetRuleTree(m, "prp_test", 1, ruleTreeResponseValid, nil).Once()
+				expectGetActivations(m, "prp_test", papi.GetActivationsResponse{}, nil).Once()
+				expectCreateActivation(m, "prp_test", papi.ActivationTypeActivate, 1, "STAGING",
+					[]string{"user@example.com"}, "property activation note for creating", "atv_activation1", true, nil).Once()
+				expectGetActivation(m, "prp_test", "atv_activation1", 1, "STAGING", papi.ActivationStatusActive, papi.ActivationTypeActivate, "property activation note for creating", []string{"user@example.com"}, nil).Once()
+				// read
+				expectGetActivations(m, "prp_test", generateActivationResponseMock("atv_activation1", "property activation note for creating", 1, papi.ActivationTypeActivate, "2020-10-28T15:04:05Z", []string{"user@example.com"}), nil).Once()
+
+				// second step
+				// read
+				expectGetActivations(m, "prp_test", generateActivationResponseMock("atv_activation1", "property activation note for creating", 1, papi.ActivationTypeActivate, "2020-10-28T15:04:05Z", []string{"user@example.com"}), nil).Once()
+				// update
+				expectGetRuleTree(m, "prp_test", 2, ruleTreeResponseValid, nil).Once()
+				expectGetActivations(m, "prp_test", generateActivationResponseMock("atv_activation1", "property activation note for creating", 1, papi.ActivationTypeActivate, "2020-10-28T15:04:05Z", []string{"user@example.com"}), nil).Once()
+				expectGetPropertyVersion(m, "prp_test", "", "", 2, papi.VersionStatusInactive, "").Once()
+				expectCreateActivation(m, "prp_test", papi.ActivationTypeActivate, 2, "STAGING",
+					[]string{"user2@example.com"}, "property activation note for updating", "atv_update", true, nil).Once()
+				expectGetActivation(m, "prp_test", "atv_update", 2, "STAGING", papi.ActivationStatusActive, papi.ActivationTypeActivate, "property activation note for updating", []string{"user2@example.com"}, nil).Once()
+				// read
+				getActivationsAfterUpdateResponse := papi.GetActivationsResponse{
+					Activations: papi.ActivationsItems{Items: []*papi.Activation{mockDeactivationForLifecycle, generateActivationItemMock("atv_update", "property activation note for updating", 2, papi.ActivationTypeActivate, "2020-10-28T15:04:05Z", []string{"user2@example.com"})}},
+				}
+				expectGetActivations(m, "prp_test", getActivationsAfterUpdateResponse, nil).Once()
+				// delete
+				expectGetActivations(m, "prp_test", getActivationsAfterUpdateResponse, nil).Once()
+				expectCreateActivation(m, "prp_test", papi.ActivationTypeDeactivate, 2, "STAGING",
+					[]string{"user2@example.com"}, "property activation note for updating", "atv_update", true, nil).Once()
+				expectGetActivation(m, "prp_test", "atv_update", 2, "STAGING", papi.ActivationStatusActive, papi.ActivationTypeDeactivate, "property activation note for updating", []string{"user2@example.com"}, nil).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "./testdata/TestPropertyActivation/ok/resource_property_activation.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "id", "prp_test:STAGING"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "property_id", "prp_test"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "contact.#", "1"),
+						resource.TestCheckResourceAttrSet("akamai_property_activation.test", "contact.0"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "contact.0", "user@example.com"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "network", "STAGING"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "version", "1"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "warnings", ""),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "errors", ""),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "rule_errors.#", "0"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "auto_acknowledge_rule_warnings", "true"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "activation_id", "atv_activation1"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "status", "ACTIVE"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "note", "property activation note for creating"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "timeouts.#", "0"),
+					),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "./testdata/TestPropertyActivation/ok/resource_property_activation_exchange_contact.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "id", "prp_test:STAGING"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "contact.#", "1"),
+						resource.TestCheckResourceAttrSet("akamai_property_activation.test", "contact.0"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "contact.0", "user2@example.com"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "property_id", "prp_test"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "network", "STAGING"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "version", "2"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "activation_id", "atv_update"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "status", "ACTIVE"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "note", "property activation note for updating"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "timeouts.#", "0"),
+					),
+				},
+			},
+		},
+		"property activation lifecycle - contact is correctly read in update when many changes within contacts": {
+			init: func(m *papi.Mock) {
+				// first step
+				// create
+				expectGetRuleTree(m, "prp_test", 1, ruleTreeResponseValid, nil).Once()
+				expectGetActivations(m, "prp_test", papi.GetActivationsResponse{}, nil).Once()
+				expectCreateActivation(m, "prp_test", papi.ActivationTypeActivate, 1, "STAGING",
+					[]string{"user3@example.com", "user@example.com", "user2@example.com"}, "property activation note for creating", "atv_activation1", true, nil).Once()
+				expectGetActivation(m, "prp_test", "atv_activation1", 1, "STAGING", papi.ActivationStatusActive, papi.ActivationTypeActivate, "property activation note for creating", []string{"user3@example.com", "user@example.com", "user2@example.com"}, nil).Once()
+				// read
+				expectGetActivations(m, "prp_test", generateActivationResponseMock("atv_activation1", "property activation note for creating", 1, papi.ActivationTypeActivate, "2020-10-28T15:04:05Z", []string{"user3@example.com", "user@example.com", "user2@example.com"}), nil).Once()
+
+				// second step
+				// read
+				expectGetActivations(m, "prp_test", generateActivationResponseMock("atv_activation1", "property activation note for creating", 1, papi.ActivationTypeActivate, "2020-10-28T15:04:05Z", []string{"user3@example.com", "user@example.com", "user2@example.com"}), nil).Once()
+				// update
+				expectGetRuleTree(m, "prp_test", 2, ruleTreeResponseValid, nil).Once()
+				expectGetActivations(m, "prp_test", generateActivationResponseMock("atv_activation1", "property activation note for creating", 1, papi.ActivationTypeActivate, "2020-10-28T15:04:05Z", []string{"user3@example.com", "user@example.com", "user2@example.com"}), nil).Once()
+				expectGetPropertyVersion(m, "prp_test", "", "", 2, papi.VersionStatusInactive, "").Once()
+				expectCreateActivation(m, "prp_test", papi.ActivationTypeActivate, 2, "STAGING",
+					[]string{"user3@example.com", "user5@example.com", "user2@example.com", "user4@example.com"}, "property activation note for updating", "atv_update", true, nil).Once()
+				expectGetActivation(m, "prp_test", "atv_update", 2, "STAGING", papi.ActivationStatusActive, papi.ActivationTypeActivate, "property activation note for updating", []string{"user3@example.com", "user5@example.com", "user2@example.com", "user4@example.com"}, nil).Once()
+				// read
+				getActivationsAfterUpdateResponse := papi.GetActivationsResponse{
+					Activations: papi.ActivationsItems{Items: []*papi.Activation{mockDeactivationForLifecycle, generateActivationItemMock("atv_update", "property activation note for updating", 2, papi.ActivationTypeActivate, "2020-10-28T15:04:05Z", []string{"user3@example.com", "user5@example.com", "user2@example.com", "user4@example.com"})}},
+				}
+				expectGetActivations(m, "prp_test", getActivationsAfterUpdateResponse, nil).Once()
+				// delete
+				expectGetActivations(m, "prp_test", getActivationsAfterUpdateResponse, nil).Once()
+				expectCreateActivation(m, "prp_test", papi.ActivationTypeDeactivate, 2, "STAGING",
+					[]string{"user3@example.com", "user5@example.com", "user2@example.com", "user4@example.com"}, "property activation note for updating", "atv_update", true, nil).Once()
+				expectGetActivation(m, "prp_test", "atv_update", 2, "STAGING", papi.ActivationStatusActive, papi.ActivationTypeDeactivate, "property activation note for updating", []string{"user3@example.com", "user5@example.com", "user2@example.com", "user4@example.com"}, nil).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "./testdata/TestPropertyActivation/ok/resource_property_activation_complicated_contact.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "id", "prp_test:STAGING"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "property_id", "prp_test"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "contact.#", "3"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "contact.0", "user2@example.com"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "contact.1", "user3@example.com"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "contact.2", "user@example.com"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "network", "STAGING"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "version", "1"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "warnings", ""),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "errors", ""),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "rule_errors.#", "0"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "auto_acknowledge_rule_warnings", "true"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "activation_id", "atv_activation1"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "status", "ACTIVE"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "note", "property activation note for creating"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "timeouts.#", "0"),
+					),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "./testdata/TestPropertyActivation/ok/resource_property_activation_complicated_contact_update.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "id", "prp_test:STAGING"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "contact.#", "4"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "contact.0", "user2@example.com"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "contact.1", "user3@example.com"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "contact.2", "user4@example.com"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "contact.3", "user5@example.com"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "property_id", "prp_test"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "network", "STAGING"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "version", "2"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "activation_id", "atv_update"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "status", "ACTIVE"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "note", "property activation note for updating"),
+						resource.TestCheckResourceAttr("akamai_property_activation.test", "timeouts.#", "0"),
 					),
 				},
 			},
@@ -919,7 +1212,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 				},
 			},
 		},
-		"fail update of contact and auto_acknowledge_rule_warnings updated if property version is active": {
+		"fail update of auto_acknowledge_rule_warnings updated if property version is active": {
 			init: func(m *papi.Mock) {
 				// first step
 				// create
@@ -946,7 +1239,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 				// delete
 				expectGetActivations(m, "prp_test", generateActivationResponseMock("atv_activation1", "property activation note for creating", 1, papi.ActivationTypeActivate, "2020-10-28T15:04:05Z", []string{"user@example.com"}), nil).Once()
 				expectCreateActivation(m, "prp_test", papi.ActivationTypeDeactivate, 1, "STAGING",
-					[]string{"user@example1.com"}, "property activation note for creating", "atv_activation1", false, nil).Once()
+					[]string{"user@example.com"}, "property activation note for creating", "atv_activation1", false, nil).Once()
 
 				expectGetActivation(m, "prp_test", "atv_activation1", 1, "STAGING", papi.ActivationStatusActive, papi.ActivationTypeDeactivate, "property activation note for creating", []string{"user@example.com"}, nil).Once()
 			},
@@ -957,56 +1250,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 				},
 				{
 					Config:      testutils.LoadFixtureString(t, "./testdata/TestPropertyActivation/ok/resource_property_activation_with_changes.tf"),
-					ExpectError: regexp.MustCompile(`Error: Cannot update 'contact', 'auto_acknowledge_rule_warnings' field\(s\) while property version is ACTIVE\.\s*Deactivate the current version to update, or create a new property version activation\.`),
-				},
-			},
-		},
-		"allow update of contact and auto_acknowledge_rule_warnings if property version is inactive ": {
-			init: func(m *papi.Mock) {
-				// first step
-				// create
-				expectGetRuleTree(m, "prp_test", 1, ruleTreeResponseValid, nil).Once()
-				expectGetActivations(m, "prp_test", papi.GetActivationsResponse{}, nil).Once()
-				expectCreateActivation(m, "prp_test", papi.ActivationTypeActivate, 1, "STAGING",
-					[]string{"user@example.com"}, "property activation note for creating", "atv_activation1", true, nil).Once()
-				expectGetActivation(m, "prp_test", "atv_activation1", 1, "STAGING", papi.ActivationStatusActive, papi.ActivationTypeActivate, "property activation note for creating", []string{"user@example.com"}, nil).Once()
-				// read
-				expectGetActivations(m, "prp_test", generateActivationResponseMock("atv_activation1", "property activation note for creating", 1, papi.ActivationTypeActivate, "2020-10-28T15:04:05Z", []string{"user@example.com"}), nil).Once()
-
-				// second step
-				expectGetRuleTree(m, "prp_test", 1, ruleTreeResponseValid, nil).Once()
-
-				// property version is inactive
-				expectGetPropertyVersion(m, "prp_test", "", "", 1, papi.VersionStatusInactive, "").Once()
-
-				// read
-				expectGetActivations(m, "prp_test", generateActivationResponseMock("atv_activation1", "property activation note for creating", 1, papi.ActivationTypeActivate, "2020-10-28T15:04:05Z", []string{"user@example.com"}), nil).Once()
-
-				// update
-				expectGetActivations(m, "prp_test", generateActivationResponseMock("atv_activation1", "property activation note for creating", 1, papi.ActivationTypeActivate, "2020-10-28T15:04:05Z", []string{"user@example1.com"}), nil).Once()
-
-				// read
-				expectGetActivations(m, "prp_test", generateActivationResponseMock("atv_activation1", "property activation note for creating", 1, papi.ActivationTypeActivate, "2020-10-28T15:04:05Z", []string{"user@example1.com"}), nil).Once()
-
-				// delete
-				expectGetActivations(m, "prp_test", generateActivationResponseMock("atv_activation1", "property activation note for creating", 1, papi.ActivationTypeActivate, "2020-10-28T15:04:05Z", []string{"user@example.com"}), nil).Once()
-				expectCreateActivation(m, "prp_test", papi.ActivationTypeDeactivate, 1, "STAGING",
-					[]string{"user@example1.com"}, "property activation note for creating", "atv_activation1", false, nil).Once()
-
-				expectGetActivation(m, "prp_test", "atv_activation1", 1, "STAGING", papi.ActivationStatusActive, papi.ActivationTypeDeactivate, "property activation note for creating", []string{"user@example.com"}, nil).Once()
-			},
-			steps: []resource.TestStep{
-				{
-					Config: testutils.LoadFixtureString(t, "./testdata/TestPropertyActivation/ok/resource_property_activation.tf"),
-					Check:  baseChecker.Build(),
-				},
-				{
-					Config: testutils.LoadFixtureString(t, "./testdata/TestPropertyActivation/ok/resource_property_activation_with_changes.tf"),
-					Check: baseChecker.
-						CheckEqual("contact.0", "user@example1.com").
-						CheckEqual("version", "1").
-						CheckEqual("auto_acknowledge_rule_warnings", "false").
-						Build(),
+					ExpectError: regexp.MustCompile(`Error: Cannot update 'auto_acknowledge_rule_warnings' field\(s\) while property version is ACTIVE\.\s*Deactivate the current version to update, or create a new property version activation\.`),
 				},
 			},
 		},
@@ -1032,7 +1276,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 
 func generateActivationResponseMock(activationID string, note string, version int, activationType papi.ActivationType, date string, emails []string) papi.GetActivationsResponse {
 	return papi.GetActivationsResponse{
-		Activations: papi.ActivationsItems{Items: append([]*papi.Activation{}, generateActivationItemMock(activationID, note, version, activationType, date, emails))},
+		Activations: papi.ActivationsItems{Items: []*papi.Activation{generateActivationItemMock(activationID, note, version, activationType, date, emails)}},
 	}
 }
 
@@ -1055,9 +1299,9 @@ func generateActivationItemMock(activationID string, note string, version int, a
 }
 
 var (
-	mockActivationsListForDeactivation      = append([]*papi.Activation{}, mockDeactivation, mockActivationCreation)
-	mockActivationsListForLifecycle         = append([]*papi.Activation{}, mockDeactivationForLifecycle, mockActivationUpdate)
-	mockActivationsListForNoteNotSuppressed = append([]*papi.Activation{}, mockDeactivationForLifecycle, mockActivationNoteNotSuppressed)
+	mockActivationsListForDeactivation      = []*papi.Activation{mockDeactivation, mockActivationCreation}
+	mockActivationsListForLifecycle         = []*papi.Activation{mockDeactivationForLifecycle, mockActivationUpdate}
+	mockActivationsListForNoteNotSuppressed = []*papi.Activation{mockDeactivationForLifecycle, mockActivationNoteNotSuppressed}
 	mockDeactivation                        = generateActivationItemMock("atv_activation1", "property activation note for creating", 1, papi.ActivationTypeDeactivate, "2020-10-28T15:04:05Z", []string{"user@example.com"})
 	mockDeactivationForLifecycle            = generateActivationItemMock("atv_activation1", "property activation note for creating", 1, papi.ActivationTypeDeactivate, "2020-10-28T14:04:05Z", []string{"user@example.com"})
 	mockActivationCreation                  = generateActivationItemMock("atv_activation1", "property activation note for creating", 1, papi.ActivationTypeActivate, "2020-10-28T15:04:05Z", []string{"user@example.com"})

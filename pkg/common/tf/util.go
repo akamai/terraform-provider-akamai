@@ -40,3 +40,12 @@ func InterfaceSliceToStringSlice(list []interface{}) []string {
 	}
 	return stringList
 }
+
+// StringFieldHasChangesWithStateFunc is an implementation of d.HasChange method for a string field, that uses SchemaStateFunc.
+func StringFieldHasChangesWithStateFunc(d *schema.ResourceData, key string, stateFunc schema.SchemaStateFunc) bool {
+	if !d.HasChange(key) {
+		return false
+	}
+	oldValue, newValue := d.GetChange(key)
+	return oldValue.(string) != stateFunc(newValue)
+}

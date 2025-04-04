@@ -9,5 +9,5 @@ resource "akamai_property_include_activation" "activation" {
   version       = 4
   network       = "STAGING"
   notify_emails = ["jbond@example.com", "jbond2@example.com"]
-  note          = "not suppressed note field change"
+  note          = "test activation"
 }

@@ -61,7 +61,9 @@
 
 
 
-
+* PAPI
+  * Changed the `akamai_property_activation` resource that modifying `contact` field without changing `version`, `network` or `property_id` no longer shows diff ([I#624](https://github.com/akamai/terraform-provider-akamai/issues/624)).
+  * Changed the `akamai_property_include_activation` resource that modifying `notify_emails` field without changing `version` no longer shows diff.
 
 
 
@@ -72,7 +74,8 @@
 
 
 
-
+* PAPI
+  * Fixed issue in the `akamai_property_activation` resource that in some cases modification of only `note` field triggered a diff.
 
 
 

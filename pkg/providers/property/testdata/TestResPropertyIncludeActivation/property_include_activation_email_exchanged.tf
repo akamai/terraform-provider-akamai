@@ -8,6 +8,6 @@ resource "akamai_property_include_activation" "activation" {
   group_id      = "test_group"
   version       = 4
   network       = "STAGING"
-  notify_emails = ["jbond@example.com", "jbond2@example.com"]
-  note          = "not suppressed note field change"
+  notify_emails = ["jbond2@example.com"]
+  note          = "test activation"
 }
