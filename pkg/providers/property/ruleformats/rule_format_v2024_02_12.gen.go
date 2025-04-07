@@ -11,7 +11,7 @@ func init() {
 		behaviorsSchemas: getBehaviorsSchemaV20240212(),
 		criteriaSchemas:  getCriteriaSchemaV20240212(),
 		typeMappings:     map[string]interface{}{"adScalerCircuitBreaker.returnErrorResponseCodeBased.408": 408, "adScalerCircuitBreaker.returnErrorResponseCodeBased.500": 500, "adScalerCircuitBreaker.returnErrorResponseCodeBased.502": 502, "adScalerCircuitBreaker.returnErrorResponseCodeBased.504": 504},
-		nameMappings:     map[string]string{"allowFcmParentOverride": "allowFCMParentOverride", "allowHttpsCacheKeySharing": "allowHTTPSCacheKeySharing", "allowHttpsDowngrade": "allowHTTPSDowngrade", "allowHttpsUpgrade": "allowHTTPSUpgrade", "c": "C", "canBeCa": "canBeCA", "cn": "CN", "conditionalHttpStatus": "conditionalHTTPStatus", "contentCharacteristicsAmd": "contentCharacteristicsAMD", "contentCharacteristicsDd": "contentCharacteristicsDD", "dcpAuthHmacTransformation": "dcpAuthHMACTransformation", "detectSmartDnsProxy": "detectSmartDNSProxy", "detectSmartDnsProxyAction": "detectSmartDNSProxyAction", "detectSmartDnsProxyRedirecturl": "detectSmartDNSProxyRedirecturl", "enableCmcdSegmentPrefetch": "enableCMCDSegmentPrefetch", "enableEs256": "enableES256", "enableIpAvoidance": "enableIPAvoidance", "enableIpProtection": "enableIPProtection", "enableIpRedirectOnDeny": "enableIPRedirectOnDeny", "enableRs256": "enableRS256", "enableTokenInUri": "enableTokenInURI", "g2OToken": "g2oToken", "g2Oheader": "g2oheader", "i18NCharset": "i18nCharset", "i18NStatus": "i18nStatus", "isCertificateSniOnly": "isCertificateSNIOnly", "issuerRdns": "issuerRDNs", "logEdgeIp": "logEdgeIP", "o": "O", "originSettings": "origin_settings", "ou": "OU", "overrideIpAddresses": "overrideIPAddresses", "segmentDurationDash": "segmentDurationDASH", "segmentDurationDashCustom": "segmentDurationDASHCustom", "segmentDurationHds": "segmentDurationHDS", "segmentDurationHdsCustom": "segmentDurationHDSCustom", "segmentDurationHls": "segmentDurationHLS", "segmentDurationHlsCustom": "segmentDurationHLSCustom", "segmentSizeDash": "segmentSizeDASH", "segmentSizeHds": "segmentSizeHDS", "segmentSizeHls": "segmentSizeHLS", "sf3COriginHost": "sf3cOriginHost", "sf3COriginHostHeader": "sf3cOriginHostHeader", "smartDnsProxy": "smartDNSProxy", "standardTlsMigration": "standardTLSMigration", "standardTlsMigrationOverride": "standardTLSMigrationOverride", "subjectCn": "subjectCN", "subjectRdns": "subjectRDNs", "titleAicMobile": "title_aic_mobile", "titleAicNonmobile": "title_aic_nonmobile", "tokenAuthHlsTitle": "tokenAuthHLSTitle"},
+		nameMappings:     map[string]string{"allowFcmParentOverride": "allowFCMParentOverride", "allowHttpsCacheKeySharing": "allowHTTPSCacheKeySharing", "allowHttpsDowngrade": "allowHTTPSDowngrade", "allowHttpsUpgrade": "allowHTTPSUpgrade", "businessCategory": "BUSINESS_CATEGORY", "c": "C", "canBeCa": "canBeCA", "cn": "CN", "conditionalHttpStatus": "conditionalHTTPStatus", "contentCharacteristicsAmd": "contentCharacteristicsAMD", "contentCharacteristicsDd": "contentCharacteristicsDD", "countryOfCitizenship": "COUNTRY_OF_CITIZENSHIP", "countryOfResidence": "COUNTRY_OF_RESIDENCE", "dateOfBirth": "DATE_OF_BIRTH", "dc": "DC", "dcpAuthHmacTransformation": "dcpAuthHMACTransformation", "detectSmartDnsProxy": "detectSmartDNSProxy", "detectSmartDnsProxyAction": "detectSmartDNSProxyAction", "detectSmartDnsProxyRedirecturl": "detectSmartDNSProxyRedirecturl", "dnQualifier": "DN_QUALIFIER", "emailAddress": "EmailAddress", "enableCmcdSegmentPrefetch": "enableCMCDSegmentPrefetch", "enableEs256": "enableES256", "enableIpAvoidance": "enableIPAvoidance", "enableIpProtection": "enableIPProtection", "enableIpRedirectOnDeny": "enableIPRedirectOnDeny", "enableRs256": "enableRS256", "enableTokenInUri": "enableTokenInURI", "g2OToken": "g2oToken", "g2Oheader": "g2oheader", "gender": "GENDER", "generation": "GENERATION", "givenname": "GIVENNAME", "i18NCharset": "i18nCharset", "i18NStatus": "i18nStatus", "initials": "INITIALS", "isCertificateSniOnly": "isCertificateSNIOnly", "issuerRDNs.description": "DESCRIPTION", "issuerRDNs.name": "NAME", "issuerRdns": "issuerRDNs", "jurisdictionC": "JURISDICTION_C", "jurisdictionL": "JURISDICTION_L", "jurisdictionSt": "JURISDICTION_ST", "l": "L", "logEdgeIp": "logEdgeIP", "nameAtBirth": "NAME_AT_BIRTH", "o": "O", "organizationIdentifier": "ORGANIZATION_IDENTIFIER", "originSettings": "origin_settings", "ou": "OU", "overrideIpAddresses": "overrideIPAddresses", "placeOfBirth": "PLACE_OF_BIRTH", "postalAddress": "POSTAL_ADDRESS", "postalCode": "POSTAL_CODE", "pseudonym": "PSEUDONYM", "role": "ROLE", "segmentDurationDash": "segmentDurationDASH", "segmentDurationDashCustom": "segmentDurationDASHCustom", "segmentDurationHds": "segmentDurationHDS", "segmentDurationHdsCustom": "segmentDurationHDSCustom", "segmentDurationHls": "segmentDurationHLS", "segmentDurationHlsCustom": "segmentDurationHLSCustom", "segmentSizeDash": "segmentSizeDASH", "segmentSizeHds": "segmentSizeHDS", "segmentSizeHls": "segmentSizeHLS", "serialnumber": "SERIALNUMBER", "sf3COriginHost": "sf3cOriginHost", "sf3COriginHostHeader": "sf3cOriginHostHeader", "smartDnsProxy": "smartDNSProxy", "st": "ST", "standardTlsMigration": "standardTLSMigration", "standardTlsMigrationOverride": "standardTLSMigrationOverride", "street": "STREET", "subjectCn": "subjectCN", "subjectRDNs.description": "DESCRIPTION", "subjectRDNs.name": "NAME", "subjectRdns": "subjectRDNs", "surname": "SURNAME", "t": "T", "telephoneNumber": "TELEPHONE_NUMBER", "titleAicMobile": "title_aic_mobile", "titleAicNonmobile": "title_aic_nonmobile", "tokenAuthHlsTitle": "tokenAuthHLSTitle", "uid": "UID", "uniqueIdentifier": "UNIQUE_IDENTIFIER", "unstructuredAddress": "UnstructuredAddress", "unstructuredName": "UnstructuredName"},
 		shouldFlatten:    []string{"apiPrioritization.cloudletPolicy", "apiPrioritization.throttledCpCode", "apiPrioritization.throttledCpCode.cpCodeLimits", "apiPrioritization.netStorage", "applicationLoadBalancer.cloudletPolicy", "applicationLoadBalancer.allDownNetStorage", "audienceSegmentation.cloudletPolicy", "cpCode.value", "cpCode.value.cpCodeLimits", "edgeRedirector.cloudletPolicy", "failAction.netStorageHostname", "failAction.cpCode", "failAction.cpCode.cpCodeLimits", "firstPartyMarketing.cloudletPolicy", "firstPartyMarketingPlus.cloudletPolicy", "forwardRewrite.cloudletPolicy", "imageAndVideoManager.cpCodeOriginal", "imageAndVideoManager.cpCodeOriginal.cpCodeLimits", "imageAndVideoManager.cpCodeTransformed", "imageAndVideoManager.cpCodeTransformed.cpCodeLimits", "imageManager.cpCodeOriginal", "imageManager.cpCodeOriginal.cpCodeLimits", "imageManager.cpCodeTransformed", "imageManager.cpCodeTransformed.cpCodeLimits", "imageManagerVideo.cpCodeOriginal", "imageManagerVideo.cpCodeOriginal.cpCodeLimits", "imageManagerVideo.cpCodeTransformed", "imageManagerVideo.cpCodeTransformed.cpCodeLimits", "origin.netStorage", "origin.customCertificateAuthorities.subjectRDNs", "origin.customCertificateAuthorities.issuerRDNs", "origin.customCertificates.subjectRDNs", "origin.customCertificates.issuerRDNs", "phasedRelease.cloudletPolicy", "requestControl.cloudletPolicy", "requestControl.netStorage", "siteShield.ssmap", "visitorPrioritization.cloudletPolicy", "visitorPrioritization.waitingRoomCpCode", "visitorPrioritization.waitingRoomCpCode.cpCodeLimits", "visitorPrioritization.waitingRoomNetStorage", "webApplicationFirewall.firewallConfiguration", "matchCpCode.value", "matchCpCode.value.cpCodeLimits"},
 	})
 }
@@ -8815,6 +8815,176 @@ func getBehaviorsSchemaV20240212() map[string]*schema.Schema {
 												Description: "",
 												Type:        schema.TypeString,
 											},
+											"t": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"l": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"st": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"serialnumber": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"email_address": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"dc": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"uid": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"street": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"surname": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"givenname": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"initials": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"generation": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"description": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"role": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"unstructured_address": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"unstructured_name": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"unique_identifier": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"dn_qualifier": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"pseudonym": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"postal_address": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"name_at_birth": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"country_of_citizenship": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"country_of_residence": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"gender": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"place_of_birth": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"date_of_birth": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"postal_code": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"business_category": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"telephone_number": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"name": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"organization_identifier": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"jurisdiction_c": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"jurisdiction_st": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"jurisdiction_l": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
 										},
 									},
 								},
@@ -8841,6 +9011,176 @@ func getBehaviorsSchemaV20240212() map[string]*schema.Schema {
 												Type:        schema.TypeString,
 											},
 											"cn": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"t": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"l": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"st": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"serialnumber": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"email_address": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"dc": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"uid": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"street": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"surname": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"givenname": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"initials": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"generation": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"description": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"role": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"unstructured_address": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"unstructured_name": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"unique_identifier": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"dn_qualifier": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"pseudonym": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"postal_address": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"name_at_birth": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"country_of_citizenship": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"country_of_residence": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"gender": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"place_of_birth": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"date_of_birth": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"postal_code": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"business_category": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"telephone_number": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"name": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"organization_identifier": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"jurisdiction_c": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"jurisdiction_st": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"jurisdiction_l": {
 												Optional:    true,
 												Description: "",
 												Type:        schema.TypeString,
@@ -8964,6 +9304,176 @@ func getBehaviorsSchemaV20240212() map[string]*schema.Schema {
 												Description: "",
 												Type:        schema.TypeString,
 											},
+											"t": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"l": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"st": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"serialnumber": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"email_address": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"dc": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"uid": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"street": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"surname": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"givenname": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"initials": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"generation": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"description": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"role": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"unstructured_address": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"unstructured_name": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"unique_identifier": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"dn_qualifier": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"pseudonym": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"postal_address": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"name_at_birth": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"country_of_citizenship": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"country_of_residence": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"gender": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"place_of_birth": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"date_of_birth": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"postal_code": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"business_category": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"telephone_number": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"name": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"organization_identifier": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"jurisdiction_c": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"jurisdiction_st": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"jurisdiction_l": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
 										},
 									},
 								},
@@ -8990,6 +9500,176 @@ func getBehaviorsSchemaV20240212() map[string]*schema.Schema {
 												Type:        schema.TypeString,
 											},
 											"cn": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"t": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"l": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"st": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"serialnumber": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"email_address": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"dc": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"uid": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"street": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"surname": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"givenname": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"initials": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"generation": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"description": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"role": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"unstructured_address": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"unstructured_name": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"unique_identifier": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"dn_qualifier": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"pseudonym": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"postal_address": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"name_at_birth": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"country_of_citizenship": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"country_of_residence": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"gender": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"place_of_birth": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"date_of_birth": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"postal_code": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"business_category": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"telephone_number": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"name": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"organization_identifier": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"jurisdiction_c": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"jurisdiction_st": {
+												Optional:    true,
+												Description: "",
+												Type:        schema.TypeString,
+											},
+											"jurisdiction_l": {
 												Optional:    true,
 												Description: "",
 												Type:        schema.TypeString,

@@ -31,6 +31,8 @@
 
 #### FEATURES/ENHANCEMENTS:
 
+* PAPI
+  * Added support for an additional `RDN` compliant fields in `subject_rdns` under `custom_certificate_authorities` in the rule formats.
 
 
 
