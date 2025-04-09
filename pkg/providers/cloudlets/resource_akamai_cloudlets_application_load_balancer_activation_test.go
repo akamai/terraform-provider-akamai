@@ -166,7 +166,7 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_version1.tf"),
-					ExpectError: regexp.MustCompile("application load balancer activation create: error while waiting until load balancer activation status == 'active':\nan error"),
+					ExpectError: regexp.MustCompile("application load balancer activation create: an error occurred while waiting for the load balancer activation status == 'active':\nan error"),
 				},
 			},
 		},
@@ -419,7 +419,7 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 				},
 				{
 					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceCloudletsApplicationLoadBalancerActivation/alb_activation_update.tf"),
-					ExpectError: regexp.MustCompile("application load balancer activation update: error while waiting until load balancer activation status == 'active':\nan error"),
+					ExpectError: regexp.MustCompile("application load balancer activation update: an error occurred while waiting for the load balancer activation status == 'active':\nan error"),
 				},
 			},
 		},
@@ -517,7 +517,7 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 					ImportStateId:     "wrong_import_id",
 					ResourceName:      "akamai_cloudlets_application_load_balancer_activation.test",
 					ImportStateVerify: true,
-					ExpectError:       regexp.MustCompile(`import id has to be a comma separated list of origin id, network and version`),
+					ExpectError:       regexp.MustCompile(`the import ID has to be a comma separated list of the origin ID, network, and version`),
 				},
 			},
 		},

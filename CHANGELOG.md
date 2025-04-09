@@ -35,6 +35,10 @@
   * Added support for an additional `RDN` compliant fields in `subject_rdns` under `custom_certificate_authorities` in the rule formats.
 
 
+* Cloudlets
+  * Added warnings to `akamai_cloudlets_application_load_balancer` and `akamai_cloudlets_application_load_balancer_activation` that deleting these resources, only removes them from the state file ([I#610](https://github.com/akamai/terraform-provider-akamai/issues/610)).
+  * Added an error message when creating `akamai_cloudlets_application_load_balancer` for origins that already exist on the server, advising to import this resource ([I#610](https://github.com/akamai/terraform-provider-akamai/issues/610)).
+
 
 
 

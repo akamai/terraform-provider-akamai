@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -284,14 +285,8 @@ func isAkamaized(dc cloudlets.DataCenter, origins []cloudlets.OriginResponse) bo
 	return false
 }
 
-func validateLivenessHosts(ctx context.Context, client cloudlets.Cloudlets, d *schema.ResourceData) error {
+func validateLivenessHosts(origins []cloudlets.OriginResponse, d *schema.ResourceData) error {
 	dcs := getDataCenters(d)
-
-	origins, err := client.ListOrigins(ctx, cloudlets.ListOriginsRequest{})
-	if err != nil {
-		return err
-	}
-
 	for _, dc := range dcs {
 		if len(dc.LivenessHosts) > 0 && isAkamaized(dc, origins) {
 			return fmt.Errorf("'liveness_hosts' field should be omitted for GTM hostname: %q. "+
@@ -321,7 +316,16 @@ func resourceALBCreate(ctx context.Context, d *schema.ResourceData, m interface{
 		return diag.FromErr(err)
 	}
 
-	if err := validateLivenessHosts(ctx, client, d); err != nil {
+	origins, err := client.ListOrigins(ctx, cloudlets.ListOriginsRequest{})
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := validateLivenessHosts(origins, d); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := validateUniqueOriginID(origins, originID); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -347,6 +351,15 @@ func resourceALBCreate(ctx context.Context, d *schema.ResourceData, m interface{
 		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
 	return resourceALBRead(ctx, d, m)
+}
+
+func validateUniqueOriginID(originList []cloudlets.OriginResponse, originID string) error {
+	if slices.ContainsFunc(originList, func(origin cloudlets.OriginResponse) bool {
+		return origin.OriginID == originID
+	}) {
+		return fmt.Errorf("the origin with the provided origin_id: %s already exists. Please try to import this resource", originID)
+	}
+	return nil
 }
 
 func resourceALBRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -425,7 +438,12 @@ func resourceALBUpdate(ctx context.Context, d *schema.ResourceData, m interface{
 		return diag.FromErr(err)
 	}
 
-	if err := validateLivenessHosts(ctx, client, d); err != nil {
+	origins, err := client.ListOrigins(ctx, cloudlets.ListOriginsRequest{})
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := validateLivenessHosts(origins, d); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -485,14 +503,19 @@ func resourceALBUpdate(ctx context.Context, d *schema.ResourceData, m interface{
 
 // resourceALBDelete does not call any delete operation in the API, because there is no such operation
 // resource will simply be removed from state in that case
-// to allow re-using existing config, create function also covers the import functionality, saving the existing origin and version in state
+// to allow re-using existing config, please import existing origin and the latest version
 func resourceALBDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("Cloudlets", "resourceLoadBalancerConfigurationDelete")
 	logger.Debug("Deleting load balancer configuration")
 	logger.Info("Cloudlets API does not support load balancer configuration and load balancer configuration version deletion - resource will only be removed from state")
 	d.SetId("")
-	return nil
+	return diag.Diagnostics{
+		diag.Diagnostic{
+			Severity: diag.Warning,
+			Summary:  "Running terraform destroyfor thecloudlets_application_load_balancer resource does not delete your configuration. It only removes it from your state file.",
+		},
+	}
 }
 
 // resourceALBImport does a basic import based on the originID specified it imports the latest version
@@ -502,11 +525,11 @@ func resourceALBImport(ctx context.Context, d *schema.ResourceData, m interface{
 	logger.Debug("Import ALB")
 
 	client := Client(meta)
-	logger.Debug("Importing load balancer configuration")
+	logger.Debug("Importing load balancer configuration.")
 
 	originID := d.Id()
 	if originID == "" {
-		return nil, fmt.Errorf("origin id cannot be empty")
+		return nil, fmt.Errorf("the origin ID cannot be empty")
 	}
 
 	origin, err := client.GetOrigin(ctx, cloudlets.GetOriginRequest{OriginID: originID})
@@ -515,7 +538,7 @@ func resourceALBImport(ctx context.Context, d *schema.ResourceData, m interface{
 	}
 
 	if origin == nil {
-		return nil, fmt.Errorf("could not find origin with origin_id: %s", originID)
+		return nil, fmt.Errorf("could not find an origin with the origin_id: %s", originID)
 	}
 
 	versions, err := client.ListLoadBalancerVersions(ctx, cloudlets.ListLoadBalancerVersionsRequest{
@@ -526,7 +549,7 @@ func resourceALBImport(ctx context.Context, d *schema.ResourceData, m interface{
 	}
 
 	if len(versions) == 0 {
-		return nil, fmt.Errorf("no load balancer version found for origin_id: %s", originID)
+		return nil, fmt.Errorf("no load balancer version found for the origin_id: %s", originID)
 	}
 
 	var version int64

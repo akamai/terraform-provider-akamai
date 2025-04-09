@@ -100,10 +100,14 @@ var (
 func resourceApplicationLoadBalancerActivationDelete(_ context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("Cloudlets", "resourceApplicationLoadBalancerActivationDelete")
-	logger.Debug("Deleting cloudlets application load balancer activation from local schema only")
-	logger.Info("Cloudlets API does not support application load balancer activation version deletion - resource will only be removed from state")
+	logger.Debug("Deleting a cloudlets application load balancer activation from a local schema only.")
+	logger.Info("The Cloudlets API does not support the deletion of application load balancer activation versions – the resource will only be removed from your state file.")
 	rd.SetId("")
-	return nil
+	return diag.Diagnostics{
+		diag.Diagnostic{
+			Severity: diag.Warning,
+			Summary:  "Running `terraform destroy` for the `cloudlets_application_load_balancer_activation` resource does not delete your configuration. It only removes it from your state file.",
+		}}
 }
 
 func resourceApplicationLoadBalancerActivationUpdate(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -111,12 +115,12 @@ func resourceApplicationLoadBalancerActivationUpdate(ctx context.Context, rd *sc
 	logger := meta.Log("Cloudlets", "resourceApplicationLoadBalancerActivationUpdate")
 
 	if !rd.HasChangeExcept("timeouts") {
-		logger.Debug("Only timeouts were updated, skipping")
+		logger.Debug("Only timeouts were updated, skipping.")
 		return nil
 	}
 
 	if !rd.HasChanges("version", "network") {
-		logger.Debugf("nothing has changed, nothing to update")
+		logger.Debugf("Nothing has changed, nothing to update.")
 		return resourceApplicationLoadBalancerActivationRead(ctx, rd, m)
 	}
 	logger.Debugf("version number or network has changed: proceeding to update application load balancer activation version")
@@ -138,7 +142,7 @@ func resourceApplicationLoadBalancerActivationCreate(ctx context.Context, rd *sc
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 	client := Client(meta)
 
-	logger.Debug("Creating application load balancer activation")
+	logger.Debug("Creating an application load balancer activation.")
 
 	activation, err := resourceApplicationLoadBalancerActivationChange(ctx, rd, logger, client)
 	if err != nil {
@@ -152,19 +156,19 @@ func resourceApplicationLoadBalancerActivationImport(ctx context.Context, rd *sc
 	meta := meta.Must(m)
 	logger := meta.Log("Cloudlets", "resourceApplicationLoadBalancerActivationImport")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	logger.Debug("Importing application load balancer activation")
+	logger.Debug("Importing an application load balancer activation.")
 	client := Client(meta)
 
 	parts := strings.Split(rd.Id(), ",")
 	if len(parts) != 3 {
-		return nil, fmt.Errorf("import id has to be a comma separated list of origin id, network and version")
+		return nil, fmt.Errorf("the import ID has to be a comma separated list of the origin ID, network, and version")
 	}
 
 	originID := parts[0]
 	network := parts[1]
 	version := parts[2]
 	if originID == "" || network == "" || version == "" {
-		return nil, fmt.Errorf("originID, network and version must have non empty values")
+		return nil, fmt.Errorf("the originID, network, and version can't be empty")
 	}
 
 	activationNetwork, err := getALBActivationNetwork(network)
@@ -214,7 +218,7 @@ func resourceApplicationLoadBalancerActivationChange(ctx context.Context, rd *sc
 	}
 	version := int64(v)
 
-	logger.Debugf("checking if application load balancer version %d is active", version)
+	logger.Debugf("Checking if the application load balancer version %d is active.", version)
 	activations, err := client.ListLoadBalancerActivations(ctx, cloudlets.ListLoadBalancerActivationsRequest{OriginID: originID})
 	if err != nil {
 		return nil, err
@@ -224,7 +228,7 @@ func resourceApplicationLoadBalancerActivationChange(ctx context.Context, rd *sc
 		if act.Network == activationNetwork && act.Version == version {
 			if act.Status == cloudlets.LoadBalancerActivationStatusActive {
 				// if the given version is active, just refresh status and quit
-				logger.Debugf("application load balancer version %d is already active in %s, fetching all details from server", version, string(activationNetwork))
+				logger.Debugf("The application load balancer version %d is already active in %s, fetching all details from the servers.", version, string(activationNetwork))
 				return &act, nil
 			}
 			break
@@ -232,7 +236,7 @@ func resourceApplicationLoadBalancerActivationChange(ctx context.Context, rd *sc
 	}
 
 	// at this point, we are sure that the given version is not active
-	logger.Debugf("activating application load balancer version %d", version)
+	logger.Debugf("Activating application load balancer version %d.", version)
 	pollingActivationTries := ALBActivationPollMinimum
 	var activation *cloudlets.LoadBalancerActivation
 
@@ -256,10 +260,10 @@ func resourceApplicationLoadBalancerActivationChange(ctx context.Context, rd *sc
 			if pollingActivationTries > ApplicationLoadBalancerActivationRetryTimeout ||
 				!strings.Contains(strings.ToLower(err.Error()), ErrApplicationLoadBalancerActivationOriginNotDefined.Error()) {
 				if errOnRestore := tf.RestoreOldValues(rd, []string{"network", "version"}); errOnRestore != nil {
-					return activation, fmt.Errorf(`%w failed. No changes were written to server:
+					return activation, fmt.Errorf(`%w failed. No changes were written to the server:
 %s
 
-Failed to restore previous local schema values. The schema will remain in tainted state:
+Failed to restore previous local schema values. The schema will remain in a tainted state:
 %s`, ErrApplicationLoadBalancerActivation, err.Error(), errOnRestore.Error())
 				}
 				return activation, fmt.Errorf("%w failed. No changes were written to server:\n%s", ErrApplicationLoadBalancerActivation, err.Error())
@@ -279,7 +283,7 @@ Failed to restore previous local schema values. The schema will remain in tainte
 	// wait until application load balancer activation is done
 	activation, err = waitForLoadBalancerActivation(ctx, client, originID, version, activationNetwork)
 	if err != nil {
-		return nil, fmt.Errorf("error while waiting until load balancer activation status == 'active':\n%s", err.Error())
+		return nil, fmt.Errorf("an error occurred while waiting for the load balancer activation status == 'active':\n%s", err.Error())
 	}
 
 	if err := rd.Set("status", activation.Status); err != nil {
@@ -297,7 +301,7 @@ func resourceApplicationLoadBalancerActivationRead(ctx context.Context, rd *sche
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 	client := Client(meta)
 
-	logger.Debug("Reading application load balancer activations")
+	logger.Debug("Reading application load balancer activations.")
 
 	originID, err := tf.GetStringValue("origin_id", rd)
 	if err != nil {
@@ -352,7 +356,7 @@ func getApplicationLoadBalancerActivation(ctx context.Context, client cloudlets.
 		}
 	}
 
-	// The API is not providing any id to match the status of the activation request within the list of the activation statuses.
+	// API is not providing any id to match the status of the activation request within the list of the activation statuses.
 	// The recommended solution is to get the newest activation which is most likely the right one.
 	// So we sort by ActivatedDate to get the newest activation.
 	sort.Slice(filteredActivations, func(i, j int) bool {
@@ -435,5 +439,5 @@ func validateNetwork(i interface{}, _ cty.Path) diag.Diagnostics {
 	case "PRODUCTION", "STAGING", "prod", "production", "staging":
 		return nil
 	}
-	return diag.Errorf("'%s' is an invalid network value: should be 'PRODUCTION', 'STAGING', 'prod', 'production', 'staging'", val)
+	return diag.Errorf("'%s' is an invalid network value. It should be 'PRODUCTION', 'STAGING', 'prod', 'production', or 'staging'", val)
 }
