@@ -513,7 +513,7 @@ func resourceALBDelete(_ context.Context, d *schema.ResourceData, m interface{})
 	return diag.Diagnostics{
 		diag.Diagnostic{
 			Severity: diag.Warning,
-			Summary:  "Running terraform destroyfor thecloudlets_application_load_balancer resource does not delete your configuration. It only removes it from your state file.",
+			Summary:  "Running `terraform destroy` for the `cloudlets_application_load_balancer` resource does not delete your configuration. It only removes it from your state file.",
 		},
 	}
 }
