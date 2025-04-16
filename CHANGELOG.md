@@ -52,6 +52,12 @@
 
 
 
+* Cloudlets
+  * Added option to provide a policy name instead of policy id in `akamai_cloudlets_policy` data source. ([I#619](https://github.com/akamai/terraform-provider-akamai/issues/619))
+
+
+
+
 
 
 
