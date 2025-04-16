@@ -25,18 +25,19 @@ import (
 )
 
 var (
-	// DeletionPolicyPollInterval is the default poll interval for delete policy retries
+	// DeletionPolicyPollInterval is the default poll interval for delete policy retries.
 	DeletionPolicyPollInterval = time.Second * 10
 
-	// DeletionPolicyTimeout is the default timeout for the policy deletion
+	// DeletionPolicyTimeout is the default timeout for the policy deletion.
 	DeletionPolicyTimeout = time.Minute * 90
 )
 
 func resourceCloudletsPolicy() *schema.Resource {
 	return &schema.Resource{
 		CustomizeDiff: customdiff.All(
-			EnforcePolicyVersionChange,
-			EnforceMatchRulesChange,
+			suppressDescriptionChange,
+			enforcePolicyVersionChange,
+			enforceMatchRulesChange,
 			cloudletTypeChangesValidation,
 			cloudletCodeValidation,
 			cloudletCodeChangeValidation,
@@ -49,62 +50,63 @@ func resourceCloudletsPolicy() *schema.Resource {
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The name of the policy. The name must be unique",
+				Description: "The name of the policy. The name must be unique.",
 			},
 			"cloudlet_code": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Code for the type of Cloudlet (ALB, AP, AS, CD, ER, FR, IG, or VP)",
+				Description: "Code for the type of Cloudlet (ALB, AP, AS, CD, ER, FR, IG, or VP).",
 			},
 			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "The description of this specific policy",
+				Computed:    true,
+				Description: "The description of this specific policy.",
 			},
 			"group_id": {
 				Type:             schema.TypeString,
 				Required:         true,
 				DiffSuppressFunc: diffSuppressGroupID,
-				Description:      "Defines the group association for the policy. You must have edit privileges for the group",
+				Description:      "Defines the group association for the policy. You must have edit privileges for the group.",
 			},
 			"match_rule_format": {
 				Type:             schema.TypeString,
 				Optional:         true,
 				DiffSuppressFunc: diffSuppressMatchRuleFormat,
-				Description:      "The version of the Cloudlet specific matchRules",
+				Description:      "The version of the Cloudlet specific matchRules.",
 			},
 			"match_rules": {
 				Type:             schema.TypeString,
 				Optional:         true,
 				DiffSuppressFunc: diffSuppressMatchRules,
-				Description:      "A JSON structure that defines the rules for this policy",
+				Description:      "A JSON structure that defines the rules for this policy.",
 			},
 			"is_shared": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
-				Description: "The type of policy that you want to create",
+				Description: "The type of policy that you want to create.",
 			},
 			"cloudlet_id": {
 				Type:        schema.TypeInt,
 				Computed:    true,
-				Description: "An integer that corresponds to a non-shared Cloudlets policy type (0 to 9). Not used for shared policies",
+				Description: "An integer that corresponds to a non-shared Cloudlets policy type (0 to 9). Not used for shared policies.",
 			},
 			"version": {
 				Type:        schema.TypeInt,
 				Computed:    true,
-				Description: "The version number of the policy",
+				Description: "The version number of the policy.",
 			},
 			"warnings": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "A JSON encoded list of warnings",
+				Description: "A JSON encoded list of warnings.",
 			},
 			"timeouts": {
 				Type:        schema.TypeList,
 				Optional:    true,
 				MaxItems:    1,
-				Description: "Enables to set timeout for processing",
+				Description: "Enables to set timeout for processing.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"default": {
@@ -125,14 +127,14 @@ func resourceCloudletsPolicy() *schema.Resource {
 	}
 }
 
-func cloudletCodeChangeValidation(_ context.Context, diff *schema.ResourceDiff, _ interface{}) error {
+func cloudletCodeChangeValidation(_ context.Context, diff *schema.ResourceDiff, _ any) error {
 	if diff.Id() != "" && diff.HasChange("cloudlet_code") {
 		return fmt.Errorf("cloudlet code cannot be changed after creation, please destroy policy and create new one with modified `cloudlet_code`")
 	}
 	return nil
 }
 
-func cloudletCodeValidation(_ context.Context, diff *schema.ResourceDiff, _ interface{}) error {
+func cloudletCodeValidation(_ context.Context, diff *schema.ResourceDiff, _ any) error {
 	isShared := diff.Get("is_shared").(bool)
 	providedCode := diff.Get("cloudlet_code").(string)
 	if isShared {
@@ -154,8 +156,8 @@ func cloudletCodeValidation(_ context.Context, diff *schema.ResourceDiff, _ inte
 	return fmt.Errorf("provided cloudlet code %s cannot be used in legacy policy - use one of %s", providedCode, possibleValues)
 }
 
-// cloudletTypeChangesValidation is used to run validation for v2 -> v3 (or vice versa) related migrations
-func cloudletTypeChangesValidation(_ context.Context, diff *schema.ResourceDiff, _ interface{}) error {
+// cloudletTypeChangesValidation is used to run validation for v2 -> v3 (or vice versa) related migrations.
+func cloudletTypeChangesValidation(_ context.Context, diff *schema.ResourceDiff, _ any) error {
 	if diff.Id() != "" {
 		if diff.HasChange("is_shared") {
 			return fmt.Errorf("it is impossible to convert shared cloudlet to legacy one or vice versa; create new policy with modified named for target policy type")
@@ -168,16 +170,101 @@ func cloudletTypeChangesValidation(_ context.Context, diff *schema.ResourceDiff,
 	return nil
 }
 
-// EnforcePolicyVersionChange enforces that change to any field will most likely result in creating a new version
-func EnforcePolicyVersionChange(_ context.Context, diff *schema.ResourceDiff, _ interface{}) error {
-	if diff.HasChanges("name", "description", "match_rule_format", "version") {
+// suppressDescriptionChange checks if the "description" field has been updated without any changes
+// to other fields such as "name", "cloudlet_code", "match_rule_format", "is_shared", "match_rules" or "group_id" fields.
+//
+// If only the "description" field has been modified, the function verifies whether the
+// associated policy version is active. If the policy version is active, the change to
+// the "description" field is disregarded by clearing the field in the diff.
+func suppressDescriptionChange(ctx context.Context, diff *schema.ResourceDiff, m any) error {
+	meta := meta.Must(m)
+	logger := meta.Log("Cloudlets", "suppressDescriptionChange")
+	ctx = session.ContextWithOptions(
+		ctx,
+		session.WithContextLog(logger),
+	)
+	// if the only change is done to the "description" field, we need to determine if the version is active and suppress such change.
+	// Otherwise, we need to allow the change.
+	onlyDescriptionChanged, err := isOnlyDescriptionChanged(diff)
+	if err != nil {
+		return err
+	}
+	if onlyDescriptionChanged {
+		logger.Debug("Only description was updated, need to check if the policy version is active")
+
+		isShared := diff.Get("is_shared").(bool)
+		var strategy policyExecutionStrategy
+		if isShared {
+			strategy = v3PolicyStrategy{ClientV3(meta)}
+		} else {
+			strategy = v2PolicyStrategy{Client(meta)}
+		}
+
+		policyID, err := strconv.ParseInt(diff.Id(), 10, 0)
+		if err != nil {
+			return err
+		}
+		version := diff.Get("version").(int)
+		if version != 0 {
+			isActive, err := strategy.newPolicyVersionIsNeeded(ctx, policyID, int64(version))
+			if err != nil {
+				return err
+			}
+			if isActive {
+				logger.Debug("The policy version is active, disregarding description change")
+				if err := diff.Clear("description"); err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func isOnlyDescriptionChanged(diff *schema.ResourceDiff) (bool, error) {
+	// diff.HasChanges() returns `true` for the "group_id" and "match_rules" when comparing configuration and server values
+	// and they diff in prefixes and newline characters. To avoid this, we need to check and directly compare the old and new values.
+	if !diff.HasChanges("description") ||
+		diff.HasChanges("name", "cloudlet_code", "match_rule_format", "is_shared") {
+		return false, nil
+	}
+
+	oldGroupIDRaw, newGroupIDRaw := diff.GetChange("group_id")
+	oldGroupID, ok := oldGroupIDRaw.(string)
+	if !ok {
+		return false, fmt.Errorf("unable to cast 'group_id' to string")
+	}
+	newGroupID, ok := newGroupIDRaw.(string)
+	if !ok {
+		return false, fmt.Errorf("unable to cast 'group_id' to string")
+	}
+	if !diffSuppressGroupID("", oldGroupID, newGroupID, nil) {
+		return false, nil
+	}
+
+	oldRulesRaw, newRulesRaw := diff.GetChange("match_rules")
+	oldRules, ok := oldRulesRaw.(string)
+	if !ok {
+		return false, fmt.Errorf("unable to cast 'match_rules' to string")
+	}
+	newRules, ok := newRulesRaw.(string)
+	if !ok {
+		return false, fmt.Errorf("unable to cast 'match_rules' to string")
+	}
+	return diffMatchRules(oldRules, newRules), nil
+}
+
+// enforcePolicyVersionChange enforces that change to any field will most likely result in creating a new version.
+func enforcePolicyVersionChange(_ context.Context, diff *schema.ResourceDiff, _ any) error {
+	if diff.HasChanges("name", "match_rule_format", "version") {
 		return diff.SetNewComputed("version")
 	}
 	return nil
 }
 
-// EnforceMatchRulesChange enforces that any changes to match_rules will re compute the warnings
-func EnforceMatchRulesChange(_ context.Context, diff *schema.ResourceDiff, _ interface{}) error {
+// enforceMatchRulesChange enforces that any changes to `match_rules“ will re-compute the warnings.
+func enforceMatchRulesChange(_ context.Context, diff *schema.ResourceDiff, _ any) error {
 	oldVal, newVal := diff.GetChange("match_rules")
 	if diffMatchRules(oldVal.(string), newVal.(string)) {
 		return nil
@@ -188,10 +275,9 @@ func EnforceMatchRulesChange(_ context.Context, diff *schema.ResourceDiff, _ int
 	return diff.SetNewComputed("version")
 }
 
-func resourcePolicyCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourcePolicyCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("Cloudlets", "resourcePolicyCreate")
-	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
 		ctx,
 		session.WithContextLog(logger),
@@ -258,7 +344,7 @@ func resourcePolicyCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	return resourcePolicyRead(ctx, d, m)
 }
 
-func resourcePolicyRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourcePolicyRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("Cloudlets", "resourcePolicyRead")
 	ctx = session.ContextWithOptions(
@@ -297,7 +383,7 @@ func resourcePolicyRead(ctx context.Context, d *schema.ResourceData, m interface
 	return nil
 }
 
-func resourcePolicyUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourcePolicyUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("Cloudlets", "resourcePolicyUpdate")
 	ctx = session.ContextWithOptions(
@@ -320,26 +406,11 @@ func resourcePolicyUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	if d.HasChanges("name", "group_id") {
-		name, err := tf.GetStringValue("name", d)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		groupID, err := tf.GetStringValue("group_id", d)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		groupIDNum, err := str.GetIntID(groupID, "grp_")
-		if err != nil {
-			return diag.FromErr(err)
-		}
 
-		err = executionStrategy.updatePolicy(ctx, policyID, int64(groupIDNum), name)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-	}
-	if d.HasChanges("description", "match_rules", "match_rule_format") {
+	// If the only field with new value is "description", we need to process such case differently. We need to check if the
+	// version is active and suppress such change. Otherwise, we need to allow the change.
+	if d.HasChange("description") && !d.HasChanges("name", "cloudlet_code", "match_rule_format", "is_shared", "match_rules", "group_id") {
+		logger.Debug("Only description was updated, need to check if the policy version is active")
 		var isNewVersionNeeded bool
 		version, err := tf.GetIntValue("version", d)
 		if err != nil {
@@ -348,38 +419,121 @@ func resourcePolicyUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 			} else {
 				return diag.FromErr(err)
 			}
-		} else {
-			isNewVersionNeeded, err = executionStrategy.newPolicyVersionIsNeeded(ctx, policyID, int64(version))
+		}
+		if version != 0 {
+			isVersionActive, err := executionStrategy.newPolicyVersionIsNeeded(ctx, policyID, int64(version))
 			if err != nil {
 				return diag.FromErr(err)
 			}
-		}
-		matchRulesJSON, err := tf.GetStringValue("match_rules", d)
-		if err != nil && !errors.Is(err, tf.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		description, err := tf.GetStringValue("description", d)
-		if err != nil && !errors.Is(err, tf.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-
-		err, updateVersionErr := executionStrategy.updatePolicyVersion(ctx, d, policyID, int64(version), description, matchRulesJSON, isNewVersionNeeded)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-
-		if updateVersionErr != nil {
-			// We still want to have actual (server's) values in state. Otherwise, the values from config would be put into the state as default.
-			if errPolicyRead := resourcePolicyRead(ctx, d, m); errPolicyRead != nil {
-				return append(errPolicyRead, diag.FromErr(updateVersionErr)...)
+			if isVersionActive {
+				logger.Debug("The policy version is active, disregarding description change")
+			} else {
+				logger.Debug("The policy version is not active, proceeding with description change")
+				description, err := tf.GetStringValue("description", d)
+				if err != nil && !errors.Is(err, tf.ErrNotFound) {
+					return diag.FromErr(err)
+				}
+				matchRulesJSON, err := tf.GetStringValue("match_rules", d)
+				if err != nil && !errors.Is(err, tf.ErrNotFound) {
+					return diag.FromErr(err)
+				}
+				err, updateVersionErr := executionStrategy.updatePolicyVersion(ctx, d, policyID, int64(version), description, matchRulesJSON, isNewVersionNeeded)
+				if err != nil {
+					return diag.FromErr(err)
+				}
+				if updateVersionErr != nil {
+					// We still want to have actual (server's) values in state. Otherwise, the values from config would be put into the state as default.
+					if errPolicyRead := resourcePolicyRead(ctx, d, m); errPolicyRead != nil {
+						return append(errPolicyRead, diag.FromErr(updateVersionErr)...)
+					}
+					return diag.FromErr(updateVersionErr)
+				}
 			}
-			return diag.FromErr(updateVersionErr)
+			return resourcePolicyRead(ctx, d, m)
 		}
 	}
+
+	if d.HasChanges("name", "group_id") {
+		if err := updatePolicyNameAndGroup(ctx, d, executionStrategy, policyID); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	if d.HasChanges("description", "match_rules", "match_rule_format") {
+		if diags := updatePolicyVersion(ctx, d, m, executionStrategy, policyID); diags != nil {
+			return diags
+		}
+	}
+
 	return resourcePolicyRead(ctx, d, m)
 }
 
-func resourcePolicyDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func updatePolicyNameAndGroup(ctx context.Context, d *schema.ResourceData, executionStrategy policyExecutionStrategy, policyID int64) error {
+	name, err := tf.GetStringValue("name", d)
+	if err != nil {
+		return err
+	}
+	groupID, err := tf.GetStringValue("group_id", d)
+	if err != nil {
+		return err
+	}
+	groupIDNum, err := str.GetIntID(groupID, "grp_")
+	if err != nil {
+		return err
+	}
+
+	return executionStrategy.updatePolicy(ctx, policyID, int64(groupIDNum), name)
+}
+
+func updatePolicyVersion(ctx context.Context, d *schema.ResourceData, m any, executionStrategy policyExecutionStrategy, policyID int64) diag.Diagnostics {
+	isNewVersionNeeded, version, err := determineIfNewVersionNeeded(ctx, d, executionStrategy, policyID)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	matchRulesJSON, err := tf.GetStringValue("match_rules", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	description, err := tf.GetStringValue("description", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+
+	err, updateVersionErr := executionStrategy.updatePolicyVersion(ctx, d, policyID, int64(version), description, matchRulesJSON, isNewVersionNeeded)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	if updateVersionErr != nil {
+		// We still want to have actual (server's) values in state. Otherwise, the values from config would be put into the state as default.
+		if errPolicyRead := resourcePolicyRead(ctx, d, m); errPolicyRead != nil {
+			return append(errPolicyRead, diag.FromErr(updateVersionErr)...)
+		}
+		return diag.FromErr(updateVersionErr)
+	}
+
+	return nil
+}
+
+func determineIfNewVersionNeeded(ctx context.Context, d *schema.ResourceData, executionStrategy policyExecutionStrategy, policyID int64) (bool, int, error) {
+	version, err := tf.GetIntValue("version", d)
+	if err != nil {
+		if errors.Is(err, tf.ErrNotFound) {
+			return true, 0, nil
+		}
+		return false, 0, err
+	}
+
+	isNewVersionNeeded, err := executionStrategy.newPolicyVersionIsNeeded(ctx, policyID, int64(version))
+	if err != nil {
+		return false, 0, err
+	}
+
+	return isNewVersionNeeded, version, nil
+}
+
+func resourcePolicyDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("Cloudlets", "resourcePolicyDelete")
 	ctx = session.ContextWithOptions(
@@ -407,7 +561,7 @@ func resourcePolicyDelete(ctx context.Context, d *schema.ResourceData, m interfa
 	return nil
 }
 
-func resourcePolicyImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+func resourcePolicyImport(ctx context.Context, d *schema.ResourceData, m any) ([]*schema.ResourceData, error) {
 	meta := meta.Must(m)
 	logger := meta.Log("Cloudlets", "resourcePolicyImport")
 	logger.Debugf("Import Policy")

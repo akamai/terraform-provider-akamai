@@ -255,7 +255,7 @@ func ensureTotalPercentageSum(_ context.Context, diff *schema.ResourceDiff, _ in
 			percent := dc["percent"].(float64)
 			total += percent
 		}
-		if 100.0 != total {
+		if total != 100.0 {
 			t := strconv.FormatFloat(total, 'f', -1, 64)
 			return fmt.Errorf("the total data center percentage must be 100%%: total=%s%%", t)
 		}

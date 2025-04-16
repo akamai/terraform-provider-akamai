@@ -152,7 +152,7 @@ func TestResourcePolicyV2(t *testing.T) {
 			return &versionUpdate
 		}
 
-		expectUpdatePolicyVersion = func(client *cloudlets.Mock, policyID int64, version *cloudlets.PolicyVersion, newMatchRules cloudlets.MatchRules) *cloudlets.PolicyVersion {
+		expectUpdatePolicyVersion = func(client *cloudlets.Mock, policyID int64, version *cloudlets.PolicyVersion, newMatchRules cloudlets.MatchRules, newDescription string) *cloudlets.PolicyVersion {
 			client.On("GetPolicyVersion", testutils.MockContext, cloudlets.GetPolicyVersionRequest{
 				PolicyID:  policyID,
 				Version:   version.Version,
@@ -162,10 +162,11 @@ func TestResourcePolicyV2(t *testing.T) {
 			err := copier.CopyWithOption(&versionUpdate, version, copier.Option{DeepCopy: true})
 			require.NoError(t, err)
 			versionUpdate.MatchRules = newMatchRules
+			versionUpdate.Description = newDescription
 			client.On("UpdatePolicyVersion", testutils.MockContext, cloudlets.UpdatePolicyVersionRequest{
 				UpdatePolicyVersion: cloudlets.UpdatePolicyVersion{
 					MatchRuleFormat: "1.0",
-					Description:     "test policy description",
+					Description:     newDescription,
 					MatchRules:      newMatchRules,
 				},
 				PolicyID: policyID,
@@ -201,6 +202,7 @@ func TestResourcePolicyV2(t *testing.T) {
 				},
 			}, nil).Once()
 		}
+
 		checkPolicyAttributes = func(attrs policyAttributes) resource.TestCheckFunc {
 			var matchRulesPath string
 			if attrs.matchRulesPath != "" {
@@ -232,13 +234,16 @@ func TestResourcePolicyV2(t *testing.T) {
 
 			return resource.ComposeAggregateTestCheckFunc(checkFunc...)
 		}
-	)
 
-	t.Run("policy lifecycle with create new version", func(t *testing.T) {
-		testDir := "testdata/TestResPolicy/lifecycle"
+		expectSupressDescriptionChange = func(client *cloudlets.Mock, policyID, policyVersion int64, version *cloudlets.PolicyVersion, times int) {
+			client.On("GetPolicyVersion", testutils.MockContext, cloudlets.GetPolicyVersionRequest{
+				PolicyID:  policyID,
+				Version:   policyVersion,
+				OmitRules: true,
+			}).Return(version, nil).Times(times)
+		}
 
-		client := new(cloudlets.Mock)
-		matchRules := cloudlets.MatchRules{
+		commonMatchRules = cloudlets.MatchRules{
 			&cloudlets.MatchRuleER{
 				Name:                     "r1",
 				Type:                     "erMatchRule",
@@ -265,11 +270,17 @@ func TestResourcePolicyV2(t *testing.T) {
 				UseIncomingSchemeAndHost: true,
 			},
 		}
-		policy, version := expectCreatePolicy(client, 2, "test_policy", matchRules, "test policy description")
+	)
+
+	t.Run("policy lifecycle with create new version", func(t *testing.T) {
+		testDir := "testdata/TestResPolicy/lifecycle"
+
+		client := new(cloudlets.Mock)
+		policy, version := expectCreatePolicy(client, 2, "test_policy", commonMatchRules, "test policy description")
 		policyVersions := []cloudlets.PolicyVersion{*version}
 		expectReadPolicy(client, policy, policyVersions, 3)
 		policy = expectUpdatePolicy(client, policy, "test_policy_updated")
-		version = expectCreatePolicyVersion(client, policy.PolicyID, version, matchRules[:1])
+		version = expectCreatePolicyVersion(client, policy.PolicyID, version, commonMatchRules[:1])
 		policyVersions = slices.Insert(policyVersions, 0, *version)
 		expectReadPolicy(client, policy, policyVersions, 2)
 		expectRemovePolicy(client, policy.PolicyID, 2, 0)
@@ -306,43 +317,18 @@ func TestResourcePolicyV2(t *testing.T) {
 		testDir := "testdata/TestResPolicy/lifecycle_with_drift"
 
 		client := new(cloudlets.Mock)
-		matchRules := cloudlets.MatchRules{
-			&cloudlets.MatchRuleER{
-				Name:                     "r1",
-				Type:                     "erMatchRule",
-				UseRelativeURL:           "copy_scheme_hostname",
-				StatusCode:               301,
-				RedirectURL:              "/ddd",
-				MatchURL:                 "abc.com",
-				UseIncomingSchemeAndHost: true,
-			},
-			&cloudlets.MatchRuleER{
-				Name: "r3",
-				Type: "erMatchRule",
-				Matches: []cloudlets.MatchCriteriaER{
-					{
-						MatchType:     "hostname",
-						MatchValue:    "3333.dom",
-						MatchOperator: "equals",
-						CaseSensitive: true,
-					},
-				},
-				UseRelativeURL:           "copy_scheme_hostname",
-				StatusCode:               307,
-				RedirectURL:              "/abc/sss",
-				UseIncomingSchemeAndHost: true,
-			},
-		}
-		policy, version := expectCreatePolicy(client, 2, "test_policy", matchRules, "test policy description")
+		policy, version := expectCreatePolicy(client, 2, "test_policy", commonMatchRules, "test policy description")
 		policyVersions := []cloudlets.PolicyVersion{*version}
 		expectReadPolicy(client, policy, policyVersions, 1)
+		// CustomDiff call to check if the policy version is active
+		expectSupressDescriptionChange(client, 2, 2, version, 1)
 		// new version which causes drift
 		versionWithDrift := &cloudlets.PolicyVersion{
 			Location:        "/version/2",
 			PolicyID:        2,
 			Version:         2,
 			Description:     "new description after drift",
-			MatchRules:      matchRules,
+			MatchRules:      commonMatchRules,
 			MatchRuleFormat: "1.0",
 			Warnings: []cloudlets.Warning{
 				{
@@ -381,34 +367,7 @@ func TestResourcePolicyV2(t *testing.T) {
 		testDir := "testdata/TestResPolicy/lifecycle"
 
 		client := new(cloudlets.Mock)
-		matchRules := cloudlets.MatchRules{
-			&cloudlets.MatchRuleER{
-				Name:                     "r1",
-				Type:                     "erMatchRule",
-				UseRelativeURL:           "copy_scheme_hostname",
-				StatusCode:               301,
-				RedirectURL:              "/ddd",
-				MatchURL:                 "abc.com",
-				UseIncomingSchemeAndHost: true,
-			},
-			&cloudlets.MatchRuleER{
-				Name: "r3",
-				Type: "erMatchRule",
-				Matches: []cloudlets.MatchCriteriaER{
-					{
-						MatchType:     "hostname",
-						MatchValue:    "3333.dom",
-						MatchOperator: "equals",
-						CaseSensitive: true,
-					},
-				},
-				UseRelativeURL:           "copy_scheme_hostname",
-				StatusCode:               307,
-				RedirectURL:              "/abc/sss",
-				UseIncomingSchemeAndHost: true,
-			},
-		}
-		policy, version := expectCreatePolicy(client, 2, "test_policy", matchRules, "test policy description")
+		policy, version := expectCreatePolicy(client, 2, "test_policy", commonMatchRules, "test policy description")
 		expectReadPolicy(client, policy, []cloudlets.PolicyVersion{*version}, 2)
 		expectRemovePolicy(client, policy.PolicyID, 1, 1)
 
@@ -435,38 +394,11 @@ func TestResourcePolicyV2(t *testing.T) {
 		testDir := "testdata/TestResPolicy/lifecycle"
 
 		client := new(cloudlets.Mock)
-		matchRules := cloudlets.MatchRules{
-			&cloudlets.MatchRuleER{
-				Name:                     "r1",
-				Type:                     "erMatchRule",
-				UseRelativeURL:           "copy_scheme_hostname",
-				StatusCode:               301,
-				RedirectURL:              "/ddd",
-				MatchURL:                 "abc.com",
-				UseIncomingSchemeAndHost: true,
-			},
-			&cloudlets.MatchRuleER{
-				Name: "r3",
-				Type: "erMatchRule",
-				Matches: []cloudlets.MatchCriteriaER{
-					{
-						MatchType:     "hostname",
-						MatchValue:    "3333.dom",
-						MatchOperator: "equals",
-						CaseSensitive: true,
-					},
-				},
-				UseRelativeURL:           "copy_scheme_hostname",
-				StatusCode:               307,
-				RedirectURL:              "/abc/sss",
-				UseIncomingSchemeAndHost: true,
-			},
-		}
-		policy, version := expectCreatePolicy(client, 2, "test_policy", matchRules, "test policy description")
+		policy, version := expectCreatePolicy(client, 2, "test_policy", commonMatchRules, "test policy description")
 		policyVersions := []cloudlets.PolicyVersion{*version}
 		expectReadPolicy(client, policy, policyVersions, 3)
 		policy = expectUpdatePolicy(client, policy, "test_policy_updated")
-		version = expectUpdatePolicyVersion(client, policy.PolicyID, version, matchRules[:1])
+		version = expectUpdatePolicyVersion(client, policy.PolicyID, version, commonMatchRules[:1], "test policy description")
 		expectReadPolicy(client, policy, []cloudlets.PolicyVersion{*version}, 2)
 		expectRemovePolicy(client, policy.PolicyID, 1, 0)
 
@@ -502,34 +434,7 @@ func TestResourcePolicyV2(t *testing.T) {
 		testDir := "testdata/TestResPolicy/lifecycle_policy_update"
 
 		client := new(cloudlets.Mock)
-		matchRules := cloudlets.MatchRules{
-			&cloudlets.MatchRuleER{
-				Name:                     "r1",
-				Type:                     "erMatchRule",
-				UseRelativeURL:           "copy_scheme_hostname",
-				StatusCode:               301,
-				RedirectURL:              "/ddd",
-				MatchURL:                 "abc.com",
-				UseIncomingSchemeAndHost: true,
-			},
-			&cloudlets.MatchRuleER{
-				Name: "r3",
-				Type: "erMatchRule",
-				Matches: []cloudlets.MatchCriteriaER{
-					{
-						MatchType:     "hostname",
-						MatchValue:    "3333.dom",
-						MatchOperator: "equals",
-						CaseSensitive: true,
-					},
-				},
-				UseRelativeURL:           "copy_scheme_hostname",
-				StatusCode:               307,
-				RedirectURL:              "/abc/sss",
-				UseIncomingSchemeAndHost: true,
-			},
-		}
-		policy, version := expectCreatePolicy(client, 2, "test_policy", matchRules, "test policy description")
+		policy, version := expectCreatePolicy(client, 2, "test_policy", commonMatchRules, "test policy description")
 		policyVersions := []cloudlets.PolicyVersion{*version}
 		expectReadPolicy(client, policy, policyVersions, 3)
 		policy = expectUpdatePolicy(client, policy, "test_policy_updated")
@@ -569,37 +474,10 @@ func TestResourcePolicyV2(t *testing.T) {
 		testDir := "testdata/TestResPolicy/lifecycle_version_update"
 
 		client := new(cloudlets.Mock)
-		matchRules := cloudlets.MatchRules{
-			&cloudlets.MatchRuleER{
-				Name:                     "r1",
-				Type:                     "erMatchRule",
-				UseRelativeURL:           "copy_scheme_hostname",
-				StatusCode:               301,
-				RedirectURL:              "/ddd",
-				MatchURL:                 "abc.com",
-				UseIncomingSchemeAndHost: true,
-			},
-			&cloudlets.MatchRuleER{
-				Name: "r3",
-				Type: "erMatchRule",
-				Matches: []cloudlets.MatchCriteriaER{
-					{
-						MatchType:     "hostname",
-						MatchValue:    "3333.dom",
-						MatchOperator: "equals",
-						CaseSensitive: true,
-					},
-				},
-				UseRelativeURL:           "copy_scheme_hostname",
-				StatusCode:               307,
-				RedirectURL:              "/abc/sss",
-				UseIncomingSchemeAndHost: true,
-			},
-		}
-		policy, version := expectCreatePolicy(client, 2, "test_policy", matchRules, "test policy description")
+		policy, version := expectCreatePolicy(client, 2, "test_policy", commonMatchRules, "test policy description")
 		policyVersions := []cloudlets.PolicyVersion{*version}
 		expectReadPolicy(client, policy, policyVersions, 3)
-		version = expectUpdatePolicyVersion(client, policy.PolicyID, version, matchRules[:1])
+		version = expectUpdatePolicyVersion(client, policy.PolicyID, version, commonMatchRules[:1], "test policy description")
 		policyVersions = []cloudlets.PolicyVersion{*version}
 		expectReadPolicy(client, policy, policyVersions, 2)
 		expectRemovePolicy(client, policy.PolicyID, 1, 0)
@@ -632,41 +510,97 @@ func TestResourcePolicyV2(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
+	t.Run("update only description for not active policy - expect no new version", func(t *testing.T) {
+		testDir := "testdata/TestResPolicy/lifecycle_description_update"
+
+		client := new(cloudlets.Mock)
+		policy, version := expectCreatePolicy(client, 2, "test_policy", commonMatchRules, "test policy description")
+		policyVersions := []cloudlets.PolicyVersion{*version}
+		expectReadPolicy(client, policy, policyVersions, 3)
+		// CustomDiff calls to check if the policy version is active
+		expectSupressDescriptionChange(client, 2, 1, version, 2)
+		version = expectUpdatePolicyVersion(client, policy.PolicyID, version, commonMatchRules, "test policy description - updated")
+		policyVersions = []cloudlets.PolicyVersion{*version}
+		expectReadPolicy(client, policy, policyVersions, 2)
+		expectRemovePolicy(client, policy.PolicyID, 1, 0)
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
+						Check: checkPolicyAttributes(policyAttributes{
+							name:           "test_policy",
+							version:        "1",
+							matchRulesPath: fmt.Sprintf("%s/match_rules/match_rules.json", testDir),
+							description:    "test policy description",
+						}),
+					},
+					{
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_update.tf", testDir),
+						Check: checkPolicyAttributes(policyAttributes{
+							name:           "test_policy",
+							version:        "1",
+							matchRulesPath: fmt.Sprintf("%s/match_rules/match_rules.json", testDir),
+							description:    "test policy description - updated",
+						}),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+
+	t.Run("update description for active policy version - suppress diff", func(t *testing.T) {
+		testDir := "testdata/TestResPolicy/lifecycle_description_update"
+
+		client := new(cloudlets.Mock)
+		policy, version := expectCreatePolicy(client, 2, "test_policy", commonMatchRules, "test policy description")
+		policyVersions := []cloudlets.PolicyVersion{*version}
+		expectReadPolicy(client, policy, policyVersions, 3)
+		version.Activations = []cloudlets.PolicyActivation{{Network: "STAGING"}}
+		// CustomDiff calls to check if the policy version is active
+		expectSupressDescriptionChange(client, 2, 1, version, 3)
+		expectReadPolicy(client, policy, policyVersions, 1)
+		expectRemovePolicy(client, policy.PolicyID, 1, 0)
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
+						Check: checkPolicyAttributes(policyAttributes{
+							name:           "test_policy",
+							version:        "1",
+							matchRulesPath: fmt.Sprintf("%s/match_rules/match_rules.json", testDir),
+							description:    "test policy description",
+						}),
+					},
+					{
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_update.tf", testDir),
+						Check: checkPolicyAttributes(policyAttributes{
+							name:           "test_policy",
+							version:        "1",
+							matchRulesPath: fmt.Sprintf("%s/match_rules/match_rules.json", testDir),
+							description:    "test policy description",
+						}),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+
 	t.Run("warnings creating and updating version", func(t *testing.T) {
 		testDir := "testdata/TestResPolicy/lifecycle_version_update"
 
 		client := new(cloudlets.Mock)
-		matchRules := cloudlets.MatchRules{
-			&cloudlets.MatchRuleER{
-				Name:                     "r1",
-				Type:                     "erMatchRule",
-				UseRelativeURL:           "copy_scheme_hostname",
-				StatusCode:               301,
-				RedirectURL:              "/ddd",
-				MatchURL:                 "abc.com",
-				UseIncomingSchemeAndHost: true,
-			},
-			&cloudlets.MatchRuleER{
-				Name: "r3",
-				Type: "erMatchRule",
-				Matches: []cloudlets.MatchCriteriaER{
-					{
-						MatchType:     "hostname",
-						MatchValue:    "3333.dom",
-						MatchOperator: "equals",
-						CaseSensitive: true,
-					},
-				},
-				UseRelativeURL:           "copy_scheme_hostname",
-				StatusCode:               307,
-				RedirectURL:              "/abc/sss",
-				UseIncomingSchemeAndHost: true,
-			},
-		}
-		policy, version := expectCreatePolicy(client, 2, "test_policy", matchRules, "test policy description")
+		policy, version := expectCreatePolicy(client, 2, "test_policy", commonMatchRules, "test policy description")
 		policyVersions := []cloudlets.PolicyVersion{*version}
 		expectReadPolicy(client, policy, policyVersions, 3)
-		version = expectUpdatePolicyVersion(client, policy.PolicyID, version, matchRules[:1])
+		version = expectUpdatePolicyVersion(client, policy.PolicyID, version, commonMatchRules[:1], "test policy description")
 		// update existing version in slice by deleting old policyVersions and defining new one
 		policyVersions = []cloudlets.PolicyVersion{*version}
 		expectReadPolicy(client, policy, policyVersions, 4)
@@ -706,37 +640,10 @@ func TestResourcePolicyV2(t *testing.T) {
 		testDir := "testdata/TestResPolicy/lifecycle_remove_match_rules"
 
 		client := new(cloudlets.Mock)
-		matchRules := cloudlets.MatchRules{
-			&cloudlets.MatchRuleER{
-				Name:                     "r1",
-				Type:                     "erMatchRule",
-				UseRelativeURL:           "copy_scheme_hostname",
-				StatusCode:               301,
-				RedirectURL:              "/ddd",
-				MatchURL:                 "abc.com",
-				UseIncomingSchemeAndHost: true,
-			},
-			&cloudlets.MatchRuleER{
-				Name: "r3",
-				Type: "erMatchRule",
-				Matches: []cloudlets.MatchCriteriaER{
-					{
-						MatchType:     "hostname",
-						MatchValue:    "3333.dom",
-						MatchOperator: "equals",
-						CaseSensitive: true,
-					},
-				},
-				UseRelativeURL:           "copy_scheme_hostname",
-				StatusCode:               307,
-				RedirectURL:              "/abc/sss",
-				UseIncomingSchemeAndHost: true,
-			},
-		}
-		policy, version := expectCreatePolicy(client, 2, "test_policy", matchRules, "test policy description")
+		policy, version := expectCreatePolicy(client, 2, "test_policy", commonMatchRules, "test policy description")
 		policyVersions := []cloudlets.PolicyVersion{*version}
 		expectReadPolicy(client, policy, policyVersions, 3)
-		version = expectUpdatePolicyVersion(client, policy.PolicyID, version, cloudlets.MatchRules{})
+		version = expectUpdatePolicyVersion(client, policy.PolicyID, version, cloudlets.MatchRules{}, "test policy description")
 		// update existing version in slice by deleting old policyVersions and defining new one
 		policyVersions = []cloudlets.PolicyVersion{*version}
 		expectReadPolicy(client, policy, policyVersions, 2)
@@ -891,33 +798,6 @@ func TestResourcePolicyV2(t *testing.T) {
 	t.Run("error creating policy version", func(t *testing.T) {
 		testDir := "testdata/TestResPolicy/lifecycle"
 
-		matchRules := cloudlets.MatchRules{
-			&cloudlets.MatchRuleER{
-				Name:                     "r1",
-				Type:                     "erMatchRule",
-				UseRelativeURL:           "copy_scheme_hostname",
-				StatusCode:               301,
-				RedirectURL:              "/ddd",
-				MatchURL:                 "abc.com",
-				UseIncomingSchemeAndHost: true,
-			},
-			&cloudlets.MatchRuleER{
-				Name: "r3",
-				Type: "erMatchRule",
-				Matches: []cloudlets.MatchCriteriaER{
-					{
-						MatchType:     "hostname",
-						MatchValue:    "3333.dom",
-						MatchOperator: "equals",
-						CaseSensitive: true,
-					},
-				},
-				UseRelativeURL:           "copy_scheme_hostname",
-				StatusCode:               307,
-				RedirectURL:              "/abc/sss",
-				UseIncomingSchemeAndHost: true,
-			},
-		}
 		policy := &cloudlets.Policy{
 			PolicyID:     2,
 			GroupID:      123,
@@ -935,7 +815,7 @@ func TestResourcePolicyV2(t *testing.T) {
 			client.On("UpdatePolicyVersion", testutils.MockContext, cloudlets.UpdatePolicyVersionRequest{
 				UpdatePolicyVersion: cloudlets.UpdatePolicyVersion{
 					Description: "test policy description",
-					MatchRules:  matchRules,
+					MatchRules:  commonMatchRules,
 				},
 				PolicyID: 2,
 				Version:  1,
@@ -1044,34 +924,7 @@ func TestResourcePolicyV2(t *testing.T) {
 		testDir := "testdata/TestResPolicy/lifecycle_policy_update"
 
 		client := new(cloudlets.Mock)
-		matchRules := cloudlets.MatchRules{
-			&cloudlets.MatchRuleER{
-				Name:                     "r1",
-				Type:                     "erMatchRule",
-				UseRelativeURL:           "copy_scheme_hostname",
-				StatusCode:               301,
-				RedirectURL:              "/ddd",
-				MatchURL:                 "abc.com",
-				UseIncomingSchemeAndHost: true,
-			},
-			&cloudlets.MatchRuleER{
-				Name: "r3",
-				Type: "erMatchRule",
-				Matches: []cloudlets.MatchCriteriaER{
-					{
-						MatchType:     "hostname",
-						MatchValue:    "3333.dom",
-						MatchOperator: "equals",
-						CaseSensitive: true,
-					},
-				},
-				UseRelativeURL:           "copy_scheme_hostname",
-				StatusCode:               307,
-				RedirectURL:              "/abc/sss",
-				UseIncomingSchemeAndHost: true,
-			},
-		}
-		policy, version := expectCreatePolicy(client, 2, "test_policy", matchRules, "test policy description")
+		policy, version := expectCreatePolicy(client, 2, "test_policy", commonMatchRules, "test policy description")
 		policyVersions := []cloudlets.PolicyVersion{*version}
 		expectReadPolicy(client, policy, policyVersions, 3)
 		client.On("UpdatePolicy", testutils.MockContext, cloudlets.UpdatePolicyRequest{
@@ -1103,36 +956,8 @@ func TestResourcePolicyV2(t *testing.T) {
 	t.Run("error updating version", func(t *testing.T) {
 		testDir := "testdata/TestResPolicy/lifecycle_version_update"
 
-		matchRules := cloudlets.MatchRules{
-			&cloudlets.MatchRuleER{
-				Name:                     "r1",
-				Type:                     "erMatchRule",
-				UseRelativeURL:           "copy_scheme_hostname",
-				StatusCode:               301,
-				RedirectURL:              "/ddd",
-				MatchURL:                 "abc.com",
-				UseIncomingSchemeAndHost: true,
-			},
-			&cloudlets.MatchRuleER{
-				Name: "r3",
-				Type: "erMatchRule",
-				Matches: []cloudlets.MatchCriteriaER{
-					{
-						MatchType:     "hostname",
-						MatchValue:    "3333.dom",
-						MatchOperator: "equals",
-						CaseSensitive: true,
-					},
-				},
-				UseRelativeURL:           "copy_scheme_hostname",
-				StatusCode:               307,
-				RedirectURL:              "/abc/sss",
-				UseIncomingSchemeAndHost: true,
-			},
-		}
-
 		expectErrorUpdatingVersion := func(client *cloudlets.Mock, expectReadPolicyTimes int) (policy *cloudlets.Policy) {
-			policy, version := expectCreatePolicy(client, 2, "test_policy", matchRules, "test policy description")
+			policy, version := expectCreatePolicy(client, 2, "test_policy", commonMatchRules, "test policy description")
 			expectReadPolicy(client, policy, []cloudlets.PolicyVersion{*version}, expectReadPolicyTimes)
 			client.On("GetPolicyVersion", testutils.MockContext, cloudlets.GetPolicyVersionRequest{
 				PolicyID:  policy.PolicyID,
@@ -1143,7 +968,7 @@ func TestResourcePolicyV2(t *testing.T) {
 				UpdatePolicyVersion: cloudlets.UpdatePolicyVersion{
 					Description:     "test policy description",
 					MatchRuleFormat: "1.0",
-					MatchRules:      matchRules[:1],
+					MatchRules:      commonMatchRules[:1],
 				},
 				PolicyID: policy.PolicyID,
 				Version:  version.Version,
@@ -1222,35 +1047,7 @@ func TestResourcePolicyV2(t *testing.T) {
 		testDir := "testdata/TestResPolicy/import"
 		client := new(cloudlets.Mock)
 
-		matchRules := cloudlets.MatchRules{
-			&cloudlets.MatchRuleER{
-				Name:                     "r1",
-				Type:                     "erMatchRule",
-				UseRelativeURL:           "copy_scheme_hostname",
-				StatusCode:               301,
-				RedirectURL:              "/ddd",
-				MatchURL:                 "abc.com",
-				UseIncomingSchemeAndHost: true,
-			},
-			&cloudlets.MatchRuleER{
-				Name: "r3",
-				Type: "erMatchRule",
-				Matches: []cloudlets.MatchCriteriaER{
-					{
-						MatchType:     "hostname",
-						MatchValue:    "3333.dom",
-						MatchOperator: "equals",
-						CaseSensitive: true,
-					},
-				},
-				UseRelativeURL:           "copy_scheme_hostname",
-				StatusCode:               307,
-				RedirectURL:              "/abc/sss",
-				UseIncomingSchemeAndHost: true,
-			},
-		}
-
-		policy, version := expectCreatePolicy(client, 2, "test_policy", matchRules, "test policy description")
+		policy, version := expectCreatePolicy(client, 2, "test_policy", commonMatchRules, "test policy description")
 		policyVersions := []cloudlets.PolicyVersion{*version}
 		expectReadPolicy(client, policy, policyVersions, 3)
 		expectImportPolicy(client, 2, "test_policy")
@@ -1281,35 +1078,7 @@ func TestResourcePolicyV2(t *testing.T) {
 		client := new(cloudlets.Mock)
 		policyID := int64(2)
 
-		matchRules := cloudlets.MatchRules{
-			&cloudlets.MatchRuleER{
-				Name:                     "r1",
-				Type:                     "erMatchRule",
-				UseRelativeURL:           "copy_scheme_hostname",
-				StatusCode:               301,
-				RedirectURL:              "/ddd",
-				MatchURL:                 "abc.com",
-				UseIncomingSchemeAndHost: true,
-			},
-			&cloudlets.MatchRuleER{
-				Name: "r3",
-				Type: "erMatchRule",
-				Matches: []cloudlets.MatchCriteriaER{
-					{
-						MatchType:     "hostname",
-						MatchValue:    "3333.dom",
-						MatchOperator: "equals",
-						CaseSensitive: true,
-					},
-				},
-				UseRelativeURL:           "copy_scheme_hostname",
-				StatusCode:               307,
-				RedirectURL:              "/abc/sss",
-				UseIncomingSchemeAndHost: true,
-			},
-		}
-
-		policy, version := expectCreatePolicy(client, policyID, "test_policy", matchRules, "test policy description")
+		policy, version := expectCreatePolicy(client, policyID, "test_policy", commonMatchRules, "test policy description")
 		policyVersions := []cloudlets.PolicyVersion{*version}
 		expectReadPolicy(client, policy, policyVersions, 3)
 		// custom import mocks
@@ -1537,6 +1306,7 @@ func TestResourcePolicyV3(t *testing.T) {
 				require.NoError(t, err)
 				versionWithoutWarnings.MatchRulesWarnings = []v3.MatchRulesWarning{}
 				versionWithoutWarnings.MatchRules = version.MatchRules
+				versionWithoutWarnings.Description = version.Description
 				client.On("GetPolicyVersion", testutils.MockContext, v3.GetPolicyVersionRequest{
 					PolicyID:      policy.ID,
 					PolicyVersion: version.PolicyVersion,
@@ -1586,7 +1356,7 @@ func TestResourcePolicyV3(t *testing.T) {
 			return &versionUpdate
 		}
 
-		expectUpdatePolicyVersion = func(client *v3.Mock, policyID int64, version *v3.PolicyVersion, newMatchRules v3.MatchRules) *v3.PolicyVersion {
+		expectUpdatePolicyVersion = func(client *v3.Mock, policyID int64, version *v3.PolicyVersion, newMatchRules v3.MatchRules, newDescription string) *v3.PolicyVersion {
 			client.On("GetPolicyVersion", testutils.MockContext, v3.GetPolicyVersionRequest{
 				PolicyID:      policyID,
 				PolicyVersion: version.PolicyVersion,
@@ -1596,9 +1366,10 @@ func TestResourcePolicyV3(t *testing.T) {
 			err := copier.CopyWithOption(&versionUpdate, version, copier.Option{DeepCopy: true})
 			require.NoError(t, err)
 			versionUpdate.MatchRules = newMatchRules
+			versionUpdate.Description = &newDescription
 			client.On("UpdatePolicyVersion", testutils.MockContext, v3.UpdatePolicyVersionRequest{
 				UpdatePolicyVersion: v3.UpdatePolicyVersion{
-					Description: ptr.To("test policy description"),
+					Description: ptr.To(newDescription),
 					MatchRules:  newMatchRules,
 				},
 				PolicyID:      policyID,
@@ -1639,6 +1410,13 @@ func TestResourcePolicyV3(t *testing.T) {
 			}, nil).Once()
 		}
 
+		expectSupressDescriptionChange = func(clientV3 *v3.Mock, policyID, policyVersion int64, version *v3.PolicyVersion, times int) {
+			clientV3.On("GetPolicyVersion", testutils.MockContext, v3.GetPolicyVersionRequest{
+				PolicyID:      policyID,
+				PolicyVersion: policyVersion,
+			}).Return(version, nil).Times(times)
+		}
+
 		checkPolicyAttributes = func(attrs policyAttributes) resource.TestCheckFunc {
 			var matchRulesPath string
 			if attrs.matchRulesPath != "" {
@@ -1677,13 +1455,8 @@ func TestResourcePolicyV3(t *testing.T) {
 
 			return resource.ComposeAggregateTestCheckFunc(checkFunc...)
 		}
-	)
 
-	t.Run("policy v3 lifecycle with create new version", func(t *testing.T) {
-		testDir := "testdata/TestResPolicyV3/lifecycle"
-
-		client := new(v3.Mock)
-		matchRules := v3.MatchRules{
+		commonMatchRules = v3.MatchRules{
 			&v3.MatchRuleER{
 				Name:                     "r1",
 				Type:                     "erMatchRule",
@@ -1710,10 +1483,16 @@ func TestResourcePolicyV3(t *testing.T) {
 				UseIncomingSchemeAndHost: true,
 			},
 		}
-		policy, version := expectCreatePolicy(client, 2, 123, matchRules, "test policy description")
+	)
+
+	t.Run("policy v3 lifecycle with create new version", func(t *testing.T) {
+		testDir := "testdata/TestResPolicyV3/lifecycle"
+
+		client := new(v3.Mock)
+		policy, version := expectCreatePolicy(client, 2, 123, commonMatchRules, "test policy description")
 		expectReadPolicy(client, policy, version, 3)
 		policy = expectUpdatePolicy(client, policy, 321)
-		version = expectCreatePolicyVersion(client, policy.ID, version, matchRules[:1])
+		version = expectCreatePolicyVersion(client, policy.ID, version, commonMatchRules[:1])
 		expectReadPolicy(client, policy, version, 2)
 		expectRemovePolicy(client, policy.ID)
 
@@ -1749,40 +1528,13 @@ func TestResourcePolicyV3(t *testing.T) {
 		testDir := "testdata/TestResPolicyV3/lifecycle_with_drift"
 
 		client := new(v3.Mock)
-		matchRules := v3.MatchRules{
-			&v3.MatchRuleER{
-				Name:                     "r1",
-				Type:                     "erMatchRule",
-				UseRelativeURL:           "copy_scheme_hostname",
-				StatusCode:               301,
-				RedirectURL:              "/ddd",
-				MatchURL:                 "abc.com",
-				UseIncomingSchemeAndHost: true,
-			},
-			&v3.MatchRuleER{
-				Name: "r3",
-				Type: "erMatchRule",
-				Matches: []v3.MatchCriteriaER{
-					{
-						MatchType:     "hostname",
-						MatchValue:    "3333.dom",
-						MatchOperator: "equals",
-						CaseSensitive: true,
-					},
-				},
-				UseRelativeURL:           "copy_scheme_hostname",
-				StatusCode:               307,
-				RedirectURL:              "/abc/sss",
-				UseIncomingSchemeAndHost: true,
-			},
-		}
-		policy, version := expectCreatePolicy(client, 2, 123, matchRules, "test policy description")
+		policy, version := expectCreatePolicy(client, 2, 123, commonMatchRules, "test policy description")
 		expectReadPolicy(client, policy, version, 1)
 		version = &v3.PolicyVersion{
 			PolicyID:      2,
 			PolicyVersion: 2,
 			Description:   ptr.To("new description after drift"),
-			MatchRules:    matchRules,
+			MatchRules:    commonMatchRules,
 			MatchRulesWarnings: []v3.MatchRulesWarning{
 				{
 					Detail:      "test warning details",
@@ -1793,6 +1545,8 @@ func TestResourcePolicyV3(t *testing.T) {
 			},
 		}
 		expectReadPolicy(client, policy, version, 1)
+		// CustomDiff call to check if the policy version is active
+		expectSupressDescriptionChange(client, 2, 2, version, 1)
 		expectRemovePolicy(client, policy.ID)
 
 		useClientV3(client, func() {
@@ -1819,34 +1573,7 @@ func TestResourcePolicyV3(t *testing.T) {
 		testDir := "testdata/TestResPolicyV3/lifecycle"
 
 		client := new(v3.Mock)
-		matchRules := v3.MatchRules{
-			&v3.MatchRuleER{
-				Name:                     "r1",
-				Type:                     "erMatchRule",
-				UseRelativeURL:           "copy_scheme_hostname",
-				StatusCode:               301,
-				RedirectURL:              "/ddd",
-				MatchURL:                 "abc.com",
-				UseIncomingSchemeAndHost: true,
-			},
-			&v3.MatchRuleER{
-				Name: "r3",
-				Type: "erMatchRule",
-				Matches: []v3.MatchCriteriaER{
-					{
-						MatchType:     "hostname",
-						MatchValue:    "3333.dom",
-						MatchOperator: "equals",
-						CaseSensitive: true,
-					},
-				},
-				UseRelativeURL:           "copy_scheme_hostname",
-				StatusCode:               307,
-				RedirectURL:              "/abc/sss",
-				UseIncomingSchemeAndHost: true,
-			},
-		}
-		policy, version := expectCreatePolicy(client, 2, 123, matchRules, "test policy description")
+		policy, version := expectCreatePolicy(client, 2, 123, commonMatchRules, "test policy description")
 		expectReadPolicy(client, policy, version, 2)
 
 		client.On("GetPolicy", testutils.MockContext, v3.GetPolicyRequest{
@@ -1928,34 +1655,7 @@ func TestResourcePolicyV3(t *testing.T) {
 		testDir := "testdata/TestResPolicyV3/lifecycle"
 
 		client := new(v3.Mock)
-		matchRules := v3.MatchRules{
-			&v3.MatchRuleER{
-				Name:                     "r1",
-				Type:                     "erMatchRule",
-				UseRelativeURL:           "copy_scheme_hostname",
-				StatusCode:               301,
-				RedirectURL:              "/ddd",
-				MatchURL:                 "abc.com",
-				UseIncomingSchemeAndHost: true,
-			},
-			&v3.MatchRuleER{
-				Name: "r3",
-				Type: "erMatchRule",
-				Matches: []v3.MatchCriteriaER{
-					{
-						MatchType:     "hostname",
-						MatchValue:    "3333.dom",
-						MatchOperator: "equals",
-						CaseSensitive: true,
-					},
-				},
-				UseRelativeURL:           "copy_scheme_hostname",
-				StatusCode:               307,
-				RedirectURL:              "/abc/sss",
-				UseIncomingSchemeAndHost: true,
-			},
-		}
-		policy, version := expectCreatePolicy(client, 2, 123, matchRules, "test policy description")
+		policy, version := expectCreatePolicy(client, 2, 123, commonMatchRules, "test policy description")
 		expectReadPolicy(client, policy, version, 2)
 
 		client.On("GetPolicy", testutils.MockContext, v3.GetPolicyRequest{
@@ -2029,37 +1729,10 @@ func TestResourcePolicyV3(t *testing.T) {
 		testDir := "testdata/TestResPolicyV3/lifecycle"
 
 		client := new(v3.Mock)
-		matchRules := v3.MatchRules{
-			&v3.MatchRuleER{
-				Name:                     "r1",
-				Type:                     "erMatchRule",
-				UseRelativeURL:           "copy_scheme_hostname",
-				StatusCode:               301,
-				RedirectURL:              "/ddd",
-				MatchURL:                 "abc.com",
-				UseIncomingSchemeAndHost: true,
-			},
-			&v3.MatchRuleER{
-				Name: "r3",
-				Type: "erMatchRule",
-				Matches: []v3.MatchCriteriaER{
-					{
-						MatchType:     "hostname",
-						MatchValue:    "3333.dom",
-						MatchOperator: "equals",
-						CaseSensitive: true,
-					},
-				},
-				UseRelativeURL:           "copy_scheme_hostname",
-				StatusCode:               307,
-				RedirectURL:              "/abc/sss",
-				UseIncomingSchemeAndHost: true,
-			},
-		}
-		policy, version := expectCreatePolicy(client, 2, 123, matchRules, "test policy description")
+		policy, version := expectCreatePolicy(client, 2, 123, commonMatchRules, "test policy description")
 		expectReadPolicy(client, policy, version, 3)
 		policy = expectUpdatePolicy(client, policy, 321)
-		version = expectUpdatePolicyVersion(client, policy.ID, version, matchRules[:1])
+		version = expectUpdatePolicyVersion(client, policy.ID, version, commonMatchRules[:1], "test policy description")
 		expectReadPolicy(client, policy, version, 2)
 		expectRemovePolicy(client, policy.ID)
 
@@ -2095,34 +1768,7 @@ func TestResourcePolicyV3(t *testing.T) {
 		testDir := "testdata/TestResPolicyV3/lifecycle_policy_update"
 
 		client := new(v3.Mock)
-		matchRules := v3.MatchRules{
-			&v3.MatchRuleER{
-				Name:                     "r1",
-				Type:                     "erMatchRule",
-				UseRelativeURL:           "copy_scheme_hostname",
-				StatusCode:               301,
-				RedirectURL:              "/ddd",
-				MatchURL:                 "abc.com",
-				UseIncomingSchemeAndHost: true,
-			},
-			&v3.MatchRuleER{
-				Name: "r3",
-				Type: "erMatchRule",
-				Matches: []v3.MatchCriteriaER{
-					{
-						MatchType:     "hostname",
-						MatchValue:    "3333.dom",
-						MatchOperator: "equals",
-						CaseSensitive: true,
-					},
-				},
-				UseRelativeURL:           "copy_scheme_hostname",
-				StatusCode:               307,
-				RedirectURL:              "/abc/sss",
-				UseIncomingSchemeAndHost: true,
-			},
-		}
-		policy, version := expectCreatePolicy(client, 2, 123, matchRules, "test policy description")
+		policy, version := expectCreatePolicy(client, 2, 123, commonMatchRules, "test policy description")
 		expectReadPolicy(client, policy, version, 3)
 		policy = expectUpdatePolicy(client, policy, 321)
 		expectReadPolicy(client, policy, version, 2)
@@ -2156,40 +1802,93 @@ func TestResourcePolicyV3(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
+	t.Run("update only description for not active v3 policy - expect no new version", func(t *testing.T) {
+		testDir := "testdata/TestResPolicyV3/lifecycle_description_update"
+
+		client := new(v3.Mock)
+		policy, version := expectCreatePolicy(client, 2, 123, commonMatchRules, "test policy description")
+		expectReadPolicy(client, policy, version, 3)
+		// CustomDiff calls to check if the policy version is active
+		expectSupressDescriptionChange(client, policy.ID, version.PolicyVersion, version, 2)
+		policyVersionUpdated := expectUpdatePolicyVersion(client, 2, version, commonMatchRules, "test policy description - updated")
+		expectReadPolicy(client, policy, policyVersionUpdated, 2)
+		expectRemovePolicy(client, policy.ID)
+
+		useClientV3(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
+						Check: checkPolicyAttributes(policyAttributes{
+							groupID:        123,
+							version:        "1",
+							matchRulesPath: fmt.Sprintf("%s/match_rules/match_rules.json", testDir),
+							description:    "test policy description",
+						}),
+					},
+					{
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_update.tf", testDir),
+						Check: checkPolicyAttributes(policyAttributes{
+							groupID:        123,
+							version:        "1",
+							matchRulesPath: fmt.Sprintf("%s/match_rules/match_rules.json", testDir),
+							description:    "test policy description - updated",
+						}),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+
+	t.Run("update only description for active v3 policy - expect no changes", func(t *testing.T) {
+		testDir := "testdata/TestResPolicyV3/lifecycle_description_update"
+
+		client := new(v3.Mock)
+		policy, version := expectCreatePolicy(client, 2, 123, commonMatchRules, "test policy description")
+		expectReadPolicy(client, policy, version, 3)
+		version.Immutable = true
+		// CustomDiff calls to check if the policy version is active
+		expectSupressDescriptionChange(client, policy.ID, version.PolicyVersion, version, 3)
+		expectReadPolicy(client, policy, version, 1)
+		expectRemovePolicy(client, policy.ID)
+
+		useClientV3(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
+						Check: checkPolicyAttributes(policyAttributes{
+							groupID:        123,
+							version:        "1",
+							matchRulesPath: fmt.Sprintf("%s/match_rules/match_rules.json", testDir),
+							description:    "test policy description",
+						}),
+					},
+					{
+						Config: testutils.LoadFixtureStringf(t, "%s/policy_update.tf", testDir),
+						Check: checkPolicyAttributes(policyAttributes{
+							groupID:        123,
+							version:        "1",
+							matchRulesPath: fmt.Sprintf("%s/match_rules/match_rules.json", testDir),
+							description:    "test policy description",
+						}),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+
 	t.Run("update only version for v3 policy", func(t *testing.T) {
 		testDir := "testdata/TestResPolicyV3/lifecycle_version_update"
 
 		client := new(v3.Mock)
-		matchRules := v3.MatchRules{
-			&v3.MatchRuleER{
-				Name:                     "r1",
-				Type:                     "erMatchRule",
-				UseRelativeURL:           "copy_scheme_hostname",
-				StatusCode:               301,
-				RedirectURL:              "/ddd",
-				MatchURL:                 "abc.com",
-				UseIncomingSchemeAndHost: true,
-			},
-			&v3.MatchRuleER{
-				Name: "r3",
-				Type: "erMatchRule",
-				Matches: []v3.MatchCriteriaER{
-					{
-						MatchType:     "hostname",
-						MatchValue:    "3333.dom",
-						MatchOperator: "equals",
-						CaseSensitive: true,
-					},
-				},
-				UseRelativeURL:           "copy_scheme_hostname",
-				StatusCode:               307,
-				RedirectURL:              "/abc/sss",
-				UseIncomingSchemeAndHost: true,
-			},
-		}
-		policy, version := expectCreatePolicy(client, 2, 123, matchRules, "test policy description")
+		policy, version := expectCreatePolicy(client, 2, 123, commonMatchRules, "test policy description")
 		expectReadPolicy(client, policy, version, 3)
-		version = expectUpdatePolicyVersion(client, policy.ID, version, matchRules[:1])
+		version = expectUpdatePolicyVersion(client, policy.ID, version, commonMatchRules[:1], "test policy description")
 		expectReadPolicy(client, policy, version, 2)
 		expectRemovePolicy(client, policy.ID)
 
@@ -2225,36 +1924,9 @@ func TestResourcePolicyV3(t *testing.T) {
 		testDir := "testdata/TestResPolicyV3/lifecycle_version_update"
 
 		client := new(v3.Mock)
-		matchRules := v3.MatchRules{
-			&v3.MatchRuleER{
-				Name:                     "r1",
-				Type:                     "erMatchRule",
-				UseRelativeURL:           "copy_scheme_hostname",
-				StatusCode:               301,
-				RedirectURL:              "/ddd",
-				MatchURL:                 "abc.com",
-				UseIncomingSchemeAndHost: true,
-			},
-			&v3.MatchRuleER{
-				Name: "r3",
-				Type: "erMatchRule",
-				Matches: []v3.MatchCriteriaER{
-					{
-						MatchType:     "hostname",
-						MatchValue:    "3333.dom",
-						MatchOperator: "equals",
-						CaseSensitive: true,
-					},
-				},
-				UseRelativeURL:           "copy_scheme_hostname",
-				StatusCode:               307,
-				RedirectURL:              "/abc/sss",
-				UseIncomingSchemeAndHost: true,
-			},
-		}
-		policy, version := expectCreatePolicy(client, 2, 123, matchRules, "test policy description")
+		policy, version := expectCreatePolicy(client, 2, 123, commonMatchRules, "test policy description")
 		expectReadPolicy(client, policy, version, 3)
-		version = expectUpdatePolicyVersion(client, policy.ID, version, matchRules[:1])
+		version = expectUpdatePolicyVersion(client, policy.ID, version, commonMatchRules[:1], "test policy description")
 		expectReadPolicy(client, policy, version, 4)
 		expectRemovePolicy(client, policy.ID)
 
@@ -2292,36 +1964,9 @@ func TestResourcePolicyV3(t *testing.T) {
 		testDir := "testdata/TestResPolicyV3/lifecycle_remove_match_rules"
 
 		client := new(v3.Mock)
-		matchRules := v3.MatchRules{
-			&v3.MatchRuleER{
-				Name:                     "r1",
-				Type:                     "erMatchRule",
-				UseRelativeURL:           "copy_scheme_hostname",
-				StatusCode:               301,
-				RedirectURL:              "/ddd",
-				MatchURL:                 "abc.com",
-				UseIncomingSchemeAndHost: true,
-			},
-			&v3.MatchRuleER{
-				Name: "r3",
-				Type: "erMatchRule",
-				Matches: []v3.MatchCriteriaER{
-					{
-						MatchType:     "hostname",
-						MatchValue:    "3333.dom",
-						MatchOperator: "equals",
-						CaseSensitive: true,
-					},
-				},
-				UseRelativeURL:           "copy_scheme_hostname",
-				StatusCode:               307,
-				RedirectURL:              "/abc/sss",
-				UseIncomingSchemeAndHost: true,
-			},
-		}
-		policy, version := expectCreatePolicy(client, 2, 123, matchRules, "test policy description")
+		policy, version := expectCreatePolicy(client, 2, 123, commonMatchRules, "test policy description")
 		expectReadPolicy(client, policy, version, 3)
-		version = expectUpdatePolicyVersion(client, policy.ID, version, v3.MatchRules{})
+		version = expectUpdatePolicyVersion(client, policy.ID, version, v3.MatchRules{}, "test policy description")
 		expectReadPolicy(client, policy, version, 2)
 		expectRemovePolicy(client, policy.ID)
 
@@ -2527,34 +2172,6 @@ func TestResourcePolicyV3(t *testing.T) {
 			CloudletType: "ER",
 		}
 
-		matchRules := v3.MatchRules{
-			&v3.MatchRuleER{
-				Name:                     "r1",
-				Type:                     "erMatchRule",
-				UseRelativeURL:           "copy_scheme_hostname",
-				StatusCode:               301,
-				RedirectURL:              "/ddd",
-				MatchURL:                 "abc.com",
-				UseIncomingSchemeAndHost: true,
-			},
-			&v3.MatchRuleER{
-				Name: "r3",
-				Type: "erMatchRule",
-				Matches: []v3.MatchCriteriaER{
-					{
-						MatchType:     "hostname",
-						MatchValue:    "3333.dom",
-						MatchOperator: "equals",
-						CaseSensitive: true,
-					},
-				},
-				UseRelativeURL:           "copy_scheme_hostname",
-				StatusCode:               307,
-				RedirectURL:              "/abc/sss",
-				UseIncomingSchemeAndHost: true,
-			},
-		}
-
 		expectErrorCreatingVersion := func(client *v3.Mock) {
 			client.On("CreatePolicy", testutils.MockContext, v3.CreatePolicyRequest{
 				Name:         "test_policy",
@@ -2564,7 +2181,7 @@ func TestResourcePolicyV3(t *testing.T) {
 			client.On("CreatePolicyVersion", testutils.MockContext, v3.CreatePolicyVersionRequest{
 				CreatePolicyVersion: v3.CreatePolicyVersion{
 					Description: ptr.To("test policy description"),
-					MatchRules:  matchRules,
+					MatchRules:  commonMatchRules,
 				},
 				PolicyID: 2,
 			}).Return(nil, fmt.Errorf("CreatePolicyVersionError"))
@@ -2675,34 +2292,7 @@ func TestResourcePolicyV3(t *testing.T) {
 		testDir := "testdata/TestResPolicyV3/lifecycle_policy_update"
 
 		client := new(v3.Mock)
-		matchRules := v3.MatchRules{
-			&v3.MatchRuleER{
-				Name:                     "r1",
-				Type:                     "erMatchRule",
-				UseRelativeURL:           "copy_scheme_hostname",
-				StatusCode:               301,
-				RedirectURL:              "/ddd",
-				MatchURL:                 "abc.com",
-				UseIncomingSchemeAndHost: true,
-			},
-			&v3.MatchRuleER{
-				Name: "r3",
-				Type: "erMatchRule",
-				Matches: []v3.MatchCriteriaER{
-					{
-						MatchType:     "hostname",
-						MatchValue:    "3333.dom",
-						MatchOperator: "equals",
-						CaseSensitive: true,
-					},
-				},
-				UseRelativeURL:           "copy_scheme_hostname",
-				StatusCode:               307,
-				RedirectURL:              "/abc/sss",
-				UseIncomingSchemeAndHost: true,
-			},
-		}
-		policy, version := expectCreatePolicy(client, 2, 123, matchRules, "test policy description")
+		policy, version := expectCreatePolicy(client, 2, 123, commonMatchRules, "test policy description")
 		expectReadPolicy(client, policy, version, 3)
 		client.On("UpdatePolicy", testutils.MockContext, v3.UpdatePolicyRequest{
 			Body: v3.UpdatePolicyRequestBody{
@@ -2732,36 +2322,8 @@ func TestResourcePolicyV3(t *testing.T) {
 	t.Run("error updating version in v3 policy", func(t *testing.T) {
 		testDir := "testdata/TestResPolicyV3/lifecycle_version_update"
 
-		matchRules := v3.MatchRules{
-			&v3.MatchRuleER{
-				Name:                     "r1",
-				Type:                     "erMatchRule",
-				UseRelativeURL:           "copy_scheme_hostname",
-				StatusCode:               301,
-				RedirectURL:              "/ddd",
-				MatchURL:                 "abc.com",
-				UseIncomingSchemeAndHost: true,
-			},
-			&v3.MatchRuleER{
-				Name: "r3",
-				Type: "erMatchRule",
-				Matches: []v3.MatchCriteriaER{
-					{
-						MatchType:     "hostname",
-						MatchValue:    "3333.dom",
-						MatchOperator: "equals",
-						CaseSensitive: true,
-					},
-				},
-				UseRelativeURL:           "copy_scheme_hostname",
-				StatusCode:               307,
-				RedirectURL:              "/abc/sss",
-				UseIncomingSchemeAndHost: true,
-			},
-		}
-
 		expectErrorUpdatingVersion := func(client *v3.Mock, expectReadPolicyTimes int) (policy *v3.Policy) {
-			policy, version := expectCreatePolicy(client, 2, 123, matchRules, "test policy description")
+			policy, version := expectCreatePolicy(client, 2, 123, commonMatchRules, "test policy description")
 			expectReadPolicy(client, policy, version, expectReadPolicyTimes)
 			client.On("GetPolicyVersion", testutils.MockContext, v3.GetPolicyVersionRequest{
 				PolicyID:      policy.ID,
@@ -2770,7 +2332,7 @@ func TestResourcePolicyV3(t *testing.T) {
 			client.On("UpdatePolicyVersion", testutils.MockContext, v3.UpdatePolicyVersionRequest{
 				UpdatePolicyVersion: v3.UpdatePolicyVersion{
 					Description: ptr.To("test policy description"),
-					MatchRules:  matchRules[:1],
+					MatchRules:  commonMatchRules[:1],
 				},
 				PolicyID:      policy.ID,
 				PolicyVersion: version.PolicyVersion,

@@ -82,6 +82,19 @@
 
 
 
+
+
+
+
+
+
+
+* Cloudlets
+  * Modifying the description of an inactive `cloudlets_policy` resource no longer triggers the creation of a new version. 
+  Changes to the `description` attribute are now suppressed if the policy is active ([I#617](https://github.com/akamai/terraform-provider-akamai/issues/617)).
+
+
+
 ## 7.1.0 (Apr 3, 2025)
 
 #### FEATURES/ENHANCEMENTS:
