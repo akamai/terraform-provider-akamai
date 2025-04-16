@@ -27,7 +27,7 @@ require (
 	github.com/spf13/cast v1.7.0
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/exp v0.0.0-20241204233417-43b7b7cde48d
-	golang.org/x/net v0.37.0
+	golang.org/x/net v0.38.0
 	golang.org/x/sync v0.12.0
 )
 
