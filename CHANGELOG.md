@@ -56,7 +56,8 @@
   * Added option to provide a policy name instead of policy id in `akamai_cloudlets_policy` data source. ([I#619](https://github.com/akamai/terraform-provider-akamai/issues/619))
 
 
-
+* PAPI
+  * Added support for the new rule format `v2025-03-24`. List of changes can be found [here](https://techdocs.akamai.com/terraform/docs/rule-format-changes#v2025-03-24).
 
 
 
