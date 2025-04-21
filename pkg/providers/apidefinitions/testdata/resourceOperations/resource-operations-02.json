@@ -2,7 +2,7 @@
   "operations": {
     "/index.php*": {
       "onlineshop": {
-        "purpose": "LOGIN",
+        "purpose": "login",
         "method": "POST",
         "parameters": {
           "username": {
@@ -10,7 +10,7 @@
               "root",
               "email"
             ],
-            "location": "REQUEST_BODY"
+            "location": "request_body"
           }
         },
         "successConditions": [
@@ -18,7 +18,7 @@
             "headerName": "X-Success",
             "positiveMatch": true,
             "suppressFromClientResponse": false,
-            "type": "HEADER_VALUE",
+            "type": "header_value",
             "valueCase": false,
             "valueWildcard": false,
             "values": [
@@ -28,14 +28,14 @@
         ]
       },
       "onlineshop-get": {
-        "purpose": "SEARCH",
+        "purpose": "search",
         "method": "GET",
         "successConditions": [
           {
             "headerName": "X-Success",
             "positiveMatch": true,
             "suppressFromClientResponse": false,
-            "type": "HEADER_VALUE",
+            "type": "header_value",
             "valueCase": false,
             "valueWildcard": false,
             "values": [
@@ -47,11 +47,11 @@
     },
     "/login": {
       "purposeLoginGET": {
-        "purpose": "ACCOUNT_VERIFICATION",
+        "purpose": "account_verification",
         "method": "GET"
       },
       "purposeLoginPOST": {
-        "purpose": "ACCOUNT_VERIFICATION",
+        "purpose": "account_verification",
         "method": "POST"
       }
     }

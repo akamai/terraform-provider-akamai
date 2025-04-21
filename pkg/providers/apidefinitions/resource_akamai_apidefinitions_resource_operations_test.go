@@ -22,13 +22,14 @@ func TestAPIResourceOperations(t *testing.T) {
 	checker := test.NewStateChecker("akamai_apidefinitions_resource_operations.e2")
 
 	var tests = map[string]struct {
-		init   func(*v0.Mock)
+		init   func(*apidefinitions.Mock, *v0.Mock)
 		steps  []resource.TestStep
 		error  *regexp.Regexp
 		checks resource.TestCheckFunc
 	}{
 		"create api resource operations": {
-			init: func(mV0 *v0.Mock) {
+			init: func(m *apidefinitions.Mock, mV0 *v0.Mock) {
+				mockListEndpointVersions(m, 2)
 				mockUpdateResourceOperation(mV0, "resource-operations-01.json", 1)
 				mockGetResourceOperation(mV0, "resource-operations-01.json", 1)
 				mockDeleteResourceOperation(mV0, 1)
@@ -41,23 +42,22 @@ func TestAPIResourceOperations(t *testing.T) {
 			checks: checker.CheckEqual("api_id", "1").CheckEqual("resource_operations", readJSONFile("resource-operations-01.json")).Build(),
 		},
 		"create api resource operations with all fields": {
-			init: func(mV0 *v0.Mock) {
+			init: func(m *apidefinitions.Mock, mV0 *v0.Mock) {
+				mockListEndpointVersions(m, 2)
 				mockUpdateResourceOperation(mV0, "resource-operations-02.json", 1)
 				mockGetResourceOperation(mV0, "resource-operations-02.json", 1)
 				mockDeleteResourceOperation(mV0, 1)
 			},
 			steps: []resource.TestStep{
 				{
-					Config:           apiResourceOperationsCfgWithAllFieldsFromFile(),
-					ImportState:      true,
-					ImportStateId:    "1:1",
-					ResourceName:     "akamai_apidefinitions_resource_operations.e2",
-					ImportStateCheck: test.NewImportChecker().CheckEqual("api_id", "1").CheckEqual("resource_operations", "{\n  \"operations\": {\n    \"/index.php*\": {\n      \"onlineshop\": {\n        \"method\": \"POST\",\n        \"purpose\": \"LOGIN\",\n        \"parameters\": {\n          \"username\": {\n            \"path\": [\n              \"root\",\n              \"email\"\n            ],\n            \"location\": \"REQUEST_BODY\"\n          }\n        },\n        \"successConditions\": [\n          {\n            \"headerName\": \"X-Success\",\n            \"positiveMatch\": true,\n            \"suppressFromClientResponse\": false,\n            \"type\": \"HEADER_VALUE\",\n            \"valueCase\": false,\n            \"valueWildcard\": false,\n            \"values\": [\n              \"201\"\n            ]\n          }\n        ]\n      },\n      \"onlineshop-get\": {\n        \"method\": \"GET\",\n        \"purpose\": \"SEARCH\",\n        \"successConditions\": [\n          {\n            \"headerName\": \"X-Success\",\n            \"positiveMatch\": true,\n            \"suppressFromClientResponse\": false,\n            \"type\": \"HEADER_VALUE\",\n            \"valueCase\": false,\n            \"valueWildcard\": false,\n            \"values\": [\n              \"201\"\n            ]\n          }\n        ]\n      }\n    },\n    \"/login\": {\n      \"purposeLoginGET\": {\n        \"method\": \"GET\",\n        \"purpose\": \"ACCOUNT_VERIFICATION\"\n      },\n      \"purposeLoginPOST\": {\n        \"method\": \"POST\",\n        \"purpose\": \"ACCOUNT_VERIFICATION\"\n      }\n    }\n  }\n}").Build()},
+					Config: apiResourceOperationsCfgWithAllFieldsFromFile(),
+				},
 			},
 			checks: checker.CheckEqual("api_id", "1").CheckEqual("resource_operations", readJSONFile("resource-operations-02.json")).Build(),
 		},
 		"delete api resource operations": {
-			init: func(mV0 *v0.Mock) {
+			init: func(m *apidefinitions.Mock, mV0 *v0.Mock) {
+				mockListEndpointVersions(m, 2)
 				mockUpdateResourceOperation(mV0, "resource-operations-delete.json", 1)
 				mockGetResourceOperation(mV0, "resource-operations-delete.json", 1)
 				mockDeleteResourceOperation(mV0, 1)
@@ -70,7 +70,8 @@ func TestAPIResourceOperations(t *testing.T) {
 			checks: checker.CheckEqual("api_id", "1").CheckEqual("resource_operations", readJSONFile("resource-operations-delete.json")).Build(),
 		},
 		"update api resource operations with all fields": {
-			init: func(mV0 *v0.Mock) {
+			init: func(m *apidefinitions.Mock, mV0 *v0.Mock) {
+				mockListEndpointVersions(m, 2)
 				mockUpdateResourceOperation(mV0, "resource-operations-02.json", 1)
 				mockGetResourceOperation(mV0, "resource-operations-02.json", 2)
 				mockUpdateResourceOperation(mV0, "resource-operations-03.json", 1)
@@ -83,7 +84,7 @@ func TestAPIResourceOperations(t *testing.T) {
 					ImportState:      true,
 					ImportStateId:    "1:1",
 					ResourceName:     "akamai_apidefinitions_resource_operations.e2",
-					ImportStateCheck: test.NewImportChecker().CheckEqual("api_id", "1").CheckEqual("resource_operations", "{\n  \"operations\": {\n    \"/index.php*\": {\n      \"onlineshop\": {\n        \"method\": \"POST\",\n        \"purpose\": \"LOGIN\",\n        \"parameters\": {\n          \"username\": {\n            \"path\": [\n              \"root\",\n              \"email\"\n            ],\n            \"location\": \"REQUEST_BODY\"\n          }\n        },\n        \"successConditions\": [\n          {\n            \"headerName\": \"X-Success\",\n            \"positiveMatch\": true,\n            \"suppressFromClientResponse\": false,\n            \"type\": \"HEADER_VALUE\",\n            \"valueCase\": false,\n            \"valueWildcard\": false,\n            \"values\": [\n              \"201\"\n            ]\n          }\n        ]\n      },\n      \"onlineshop-get\": {\n        \"method\": \"GET\",\n        \"purpose\": \"SEARCH\",\n        \"successConditions\": [\n          {\n            \"headerName\": \"X-Success\",\n            \"positiveMatch\": true,\n            \"suppressFromClientResponse\": false,\n            \"type\": \"HEADER_VALUE\",\n            \"valueCase\": false,\n            \"valueWildcard\": false,\n            \"values\": [\n              \"201\"\n            ]\n          }\n        ]\n      }\n    },\n    \"/login\": {\n      \"purposeLoginGET\": {\n        \"method\": \"GET\",\n        \"purpose\": \"ACCOUNT_VERIFICATION\"\n      },\n      \"purposeLoginPOST\": {\n        \"method\": \"POST\",\n        \"purpose\": \"ACCOUNT_VERIFICATION\"\n      }\n    }\n  }\n}").Build(),
+					ImportStateCheck: test.NewImportChecker().CheckEqual("api_id", "1").CheckEqual("resource_operations", "{\n  \"operations\": {\n    \"/index.php*\": {\n      \"onlineshop\": {\n        \"method\": \"POST\",\n        \"purpose\": \"login\",\n        \"parameters\": {\n          \"username\": {\n            \"path\": [\n              \"root\",\n              \"email\"\n            ],\n            \"location\": \"request_body\"\n          }\n        },\n        \"successConditions\": [\n          {\n            \"headerName\": \"X-Success\",\n            \"positiveMatch\": true,\n            \"suppressFromClientResponse\": false,\n            \"type\": \"header_value\",\n            \"valueCase\": false,\n            \"valueWildcard\": false,\n            \"values\": [\n              \"201\"\n            ]\n          }\n        ]\n      },\n      \"onlineshop-get\": {\n        \"method\": \"GET\",\n        \"purpose\": \"search\",\n        \"successConditions\": [\n          {\n            \"headerName\": \"X-Success\",\n            \"positiveMatch\": true,\n            \"suppressFromClientResponse\": false,\n            \"type\": \"header_value\",\n            \"valueCase\": false,\n            \"valueWildcard\": false,\n            \"values\": [\n              \"201\"\n            ]\n          }\n        ]\n      }\n    },\n    \"/login\": {\n      \"purposeLoginGET\": {\n        \"method\": \"GET\",\n        \"purpose\": \"account_verification\"\n      },\n      \"purposeLoginPOST\": {\n        \"method\": \"POST\",\n        \"purpose\": \"account_verification\"\n      }\n    }\n  }\n}").Build(),
 				},
 				{
 					Config: updateAPIiResourceOperationsCfgWithAllFields(),
@@ -92,7 +93,8 @@ func TestAPIResourceOperations(t *testing.T) {
 			checks: checker.CheckEqual("api_id", "1").CheckEqual("resource_operations", readJSONFile("resource-operations-03.json")).Build(),
 		},
 		"update api resource operations with all fields : 400 Bad Request": {
-			init: func(mV0 *v0.Mock) {
+			init: func(m *apidefinitions.Mock, mV0 *v0.Mock) {
+				mockListEndpointVersions(m, 3)
 				mockUpdateResourceOperation(mV0, "resource-operations-02.json", 1)
 				mockGetResourceOperation(mV0, "resource-operations-02.json", 2)
 				mockUpdateResourceOperationFail(mV0, 1)
@@ -111,7 +113,8 @@ func TestAPIResourceOperations(t *testing.T) {
 			checks: checker.CheckEqual("api_id", "1").CheckEqual("resource_operations", readJSONFile("resource-operations-02.json")).Build(),
 		},
 		"import state resource operations ok": {
-			init: func(mV0 *v0.Mock) {
+			init: func(m *apidefinitions.Mock, mV0 *v0.Mock) {
+				mockListEndpointVersions(m, 1)
 				mockUpdateResourceOperation(mV0, "resource-operations-01.json", 1)
 				mockGetResourceOperation(mV0, "resource-operations-01.json", 2)
 				mockDeleteResourceOperation(mV0, 1)
@@ -122,7 +125,7 @@ func TestAPIResourceOperations(t *testing.T) {
 					ImportState:        true,
 					ImportStateId:      "1:1",
 					ResourceName:       "akamai_apidefinitions_resource_operations.e1",
-					ImportStateCheck:   test.NewImportChecker().CheckEqual("api_id", "1").CheckEqual("version", "1").CheckEqual("resource_operations", "{\n  \"operations\": {\n    \"/index.php*\": {\n      \"testPurpose\": {\n        \"method\": \"POST\",\n        \"purpose\": \"LOGIN\"\n      }\n    }\n  }\n}").Build(),
+					ImportStateCheck:   test.NewImportChecker().CheckEqual("api_id", "1").CheckEqual("version", "1").CheckEqual("resource_operations", "{\n  \"operations\": {\n    \"/index.php*\": {\n      \"testPurpose\": {\n        \"method\": \"POST\",\n        \"purpose\": \"login\"\n      }\n    }\n  }\n}").Build(),
 					ImportStatePersist: true,
 				},
 			},
@@ -171,7 +174,7 @@ func TestAPIResourceOperations(t *testing.T) {
 			client := &apidefinitions.Mock{}
 			clientV0 := &v0.Mock{}
 			if test.init != nil {
-				test.init(clientV0)
+				test.init(client, clientV0)
 			}
 			useClient(client, clientV0, func() {
 				resource.UnitTest(t, resource.TestCase{
@@ -257,13 +260,12 @@ func apiResourceOperationsConfig() string {
 	return providerConfig + `
 resource "akamai_apidefinitions_resource_operations" "e1" {
   api_id = 1
-  version = 1
   resource_operations = jsonencode({
   "operations": {
     "/index.php*": {
       "testPurpose": {
         "method": "POST",
-        "purpose": "LOGIN"
+        "purpose": "login"
       }
     }
   }
@@ -276,7 +278,6 @@ func deleteAPIResourceOperationsConfig() string {
 	return providerConfig + `
 		resource "akamai_apidefinitions_resource_operations" "e3" {
 		  api_id = 1
-          version = 1
 		  resource_operations = file("testdata/resourceOperations/resource-operations-delete.json")
 		}`
 }
@@ -285,7 +286,6 @@ func apiResourceOperationsCfgWithAllFieldsFromFile() string {
 	return providerConfig + `
 			resource "akamai_apidefinitions_resource_operations" "e2" {
 			  api_id = 1
-              version = 1
 			  resource_operations = file("testdata/resourceOperations/resource-operations-02.json")
 			}`
 }
@@ -294,7 +294,6 @@ func updateAPIiResourceOperationsCfgWithAllFields() string {
 	return providerConfig + `
 			resource "akamai_apidefinitions_resource_operations" "e2" {
 			  api_id = 1
-              version = 1
 			  resource_operations = file("testdata/resourceOperations/resource-operations-03.json")
 			}`
 }
@@ -315,7 +314,7 @@ var badRequestErrorResOperations = v0.Error{
 			Field:    ptr.To("put.dto.resourceOperationsMap[/base].<map value>[test login].operationParameter"),
 			RejectedValue: map[string]interface{}{
 				"method":           "POST",
-				"operationPurpose": "LOGIN",
+				"operationPurpose": "login",
 			},
 		},
 		{
@@ -326,7 +325,7 @@ var badRequestErrorResOperations = v0.Error{
 			Field:    ptr.To("put.dto.resourceOperationsMap[/base].<map value>[test login].operationParameter.username"),
 			RejectedValue: map[string]interface{}{
 				"method":           "POST",
-				"operationPurpose": "LOGIN",
+				"operationPurpose": "login",
 			},
 		},
 	},

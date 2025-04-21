@@ -71,7 +71,7 @@ func (r *apiResourceOperation) Schema(_ context.Context, _ resource.SchemaReques
 				Description: "The unique identifier for the endpoint",
 			},
 			"version": schema.Int64Attribute{
-				Required:    true,
+				Computed:    true,
 				Description: "Version of the endpoint",
 			},
 			"resource_operations": schema.StringAttribute{
@@ -109,10 +109,20 @@ func (r *apiResourceOperation) Create(ctx context.Context, req resource.CreateRe
 func (r *apiResourceOperation) upsert(ctx context.Context, data *apiResourceOperationModel) diag.Diagnostics {
 	var diags diag.Diagnostics
 
+	result, err := client.ListEndpointVersions(ctx, apidefinitions.ListEndpointVersionsRequest{
+		APIEndpointID: data.APIID.ValueInt64(),
+	})
+	if err != nil {
+		diags.AddError("Upsert Resource Operations Failed", err.Error())
+		return diags
+	}
+
+	var latestVersion = getLatestVersion(result)
+
 	// Convert stored JSON string into Go struct
 	var requestBody = v0.ResourceOperationsRequestBody{}
 
-	err := json.Unmarshal([]byte(data.ResourceOperations.ValueString()), &requestBody)
+	err = json.Unmarshal([]byte(data.ResourceOperations.ValueString()), &requestBody)
 	if err != nil {
 		diags.AddError("Upsert Resource Operations Failed, Unable to deserialize state", err.Error())
 		return diags
@@ -120,7 +130,7 @@ func (r *apiResourceOperation) upsert(ctx context.Context, data *apiResourceOper
 	// Prepare request
 	var resourceOperationRequest = v0.UpdateResourceOperationRequest{
 		APIID:         data.APIID.ValueInt64(),
-		VersionNumber: data.Version.ValueInt64(),
+		VersionNumber: latestVersion,
 		Body:          requestBody,
 	}
 
@@ -138,6 +148,7 @@ func (r *apiResourceOperation) upsert(ctx context.Context, data *apiResourceOper
 
 	data.ResourceOperations = apiStateValue{types.StringValue(*operationsContent)}
 	data.APIID = types.Int64Value(data.APIID.ValueInt64())
+	data.Version = types.Int64Value(latestVersion)
 	return diags
 }
 
@@ -219,9 +230,19 @@ func (r *apiResourceOperation) Delete(ctx context.Context, req resource.DeleteRe
 		return
 	}
 
+	result, err := client.ListEndpointVersions(ctx, apidefinitions.ListEndpointVersionsRequest{
+		APIEndpointID: data.APIID.ValueInt64(),
+	})
+	if err != nil {
+		resp.Diagnostics.AddError("Deleting Resource Operations Failed", err.Error())
+		return
+	}
+
+	var latestVersion = getLatestVersion(result)
+
 	deleteResponse, err := clientV0.DeleteResourceOperation(ctx, v0.DeleteResourceOperationRequest{
 		APIID:         data.APIID.ValueInt64(),
-		VersionNumber: data.Version.ValueInt64(),
+		VersionNumber: latestVersion,
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("Deleting Resource Operations Failed", err.Error())
@@ -280,4 +301,14 @@ func serializeDeleteResourceOperationResponseIndent(response *v0.DeleteResourceO
 		return nil, err
 	}
 	return ptr.To(string(jsonBody)), nil
+}
+
+func getLatestVersion(result *apidefinitions.ListEndpointVersionsResponse) int64 {
+	var response int64
+	for _, v := range result.APIVersions {
+		if v.VersionNumber > response {
+			response = v.VersionNumber
+		}
+	}
+	return response
 }
