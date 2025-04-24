@@ -25,6 +25,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -196,6 +197,7 @@ func (r *apiClientResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 			"client_description": schema.StringAttribute{
 				Optional:    true,
 				Computed:    true,
+				Default:     stringdefault.StaticString(""),
 				Description: "A human-readable description of the API client.",
 				Validators:  []validator.String{validators.NotEmptyString()},
 			},
@@ -250,6 +252,8 @@ func (r *apiClientResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 				ElementType: types.StringType,
 				Optional:    true,
 				Computed:    true,
+				Default: listdefault.StaticValue(types.ListValueMust(
+					types.StringType, []attr.Value{})),
 				Description: "Email addresses to notify users when credentials expire.",
 				Validators: []validator.List{
 					listvalidator.SizeAtLeast(1),
@@ -944,6 +948,28 @@ func (r *apiClientResource) create(ctx context.Context, plan *apiClientResourceM
 	})
 	if err != nil {
 		return err
+	}
+
+	// If the notification emails are empty, we need to update the API client as the
+	// the API fills the emails by default with the email of the user who created the API client.
+	if len(notificationEmails) == 0 {
+		_, err := client.UpdateAPIClient(ctx, iam.UpdateAPIClientRequest{
+			ClientID: createAPIClientResponse.ClientID,
+			Body: iam.UpdateAPIClientRequestBody{
+				NotificationEmails: []string{},
+				ClientName:         plan.ClientName.ValueString(),
+				APIAccess:          *access,
+				AuthorizedUsers:    authorizedUsers,
+				ClientType:         iam.ClientType(plan.ClientType.ValueString()),
+				GroupAccess: iam.GroupAccess{
+					CloneAuthorizedUserGroups: plan.GroupAccess.CloneAuthorizedUserGroups.ValueBool(),
+					Groups:                    groups,
+				},
+			},
+		})
+		if err != nil {
+			return err
+		}
 	}
 
 	if plan.Lock.ValueBool() {

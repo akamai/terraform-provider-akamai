@@ -3,12 +3,10 @@ provider "akamai" {
 }
 
 resource "akamai_iam_api_client" "test" {
-  authorized_users    = ["mw+2"]
-  client_type         = "CLIENT"
-  client_name         = "mw+2_1"
-  lock                = false
-  notification_emails = ["mw+2@example.com"]
-  client_description  = "Test API Client"
+  authorized_users = ["mw+2"]
+  client_type      = "CLIENT"
+  client_name      = "mw+2_1"
+  lock             = false
   group_access = {
     clone_authorized_user_groups = false
     groups = [

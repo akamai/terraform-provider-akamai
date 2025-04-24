@@ -14,12 +14,13 @@ import (
 )
 
 type testData struct {
-	createAPIClientRequest  iam.CreateAPIClientRequest
-	createAPIClientResponse iam.CreateAPIClientResponse
-	getAPIClientRequest     iam.GetAPIClientRequest
-	getAPIClientResponse    iam.GetAPIClientResponse
-	updateAPIClientRequest  iam.UpdateAPIClientRequest
-	updateAPIClientResponse iam.UpdateAPIClientResponse
+	createAPIClientRequest                   iam.CreateAPIClientRequest
+	createAPIClientResponse                  iam.CreateAPIClientResponse
+	updateAPIClientNotificationEmailsRequest iam.UpdateAPIClientRequest
+	getAPIClientRequest                      iam.GetAPIClientRequest
+	getAPIClientResponse                     iam.GetAPIClientResponse
+	updateAPIClientRequest                   iam.UpdateAPIClientRequest
+	updateAPIClientResponse                  iam.UpdateAPIClientResponse
 }
 
 func TestResourceAPIClient(t *testing.T) {
@@ -187,6 +188,7 @@ func TestResourceAPIClient(t *testing.T) {
 			init: func(m *iam.Mock, createData, _ testData) {
 				// Create
 				mockCreateAPIClient(m, createData)
+				mockUpdateAPIClientNotificationEmails(m, createData)
 				mockLockAPIClient(m, createData)
 				mockGetAPIClient(m, createData)
 				// Read
@@ -201,6 +203,8 @@ func TestResourceAPIClient(t *testing.T) {
 					Check: fullDataChecker.
 						CheckEqual("lock", "true").
 						CheckEqual("group_access.groups.0.sub_groups.#", "0").
+						CheckEqual("client_description", "").
+						CheckMissing("notification_emails.0").
 						CheckMissing("ip_acl.enable").
 						CheckMissing("ip_acl.cidr.0").
 						CheckMissing("purge_options.can_purge_by_cache_tag").
@@ -219,6 +223,7 @@ func TestResourceAPIClient(t *testing.T) {
 				createData.createAPIClientResponse.Actions = &lockedClientActions
 				// Create
 				mockCreateAPIClient(m, createData)
+				mockUpdateAPIClientNotificationEmails(m, createData)
 				mockLockAPIClient(m, createData)
 				mockGetAPIClient(m, createData)
 				// Read
@@ -242,9 +247,11 @@ func TestResourceAPIClient(t *testing.T) {
 						CheckEqual("actions.lock", "false").
 						CheckEqual("actions.unlock", "true").
 						CheckEqual("lock", "true").
+						CheckEqual("group_access.groups.0.sub_groups.#", "0").
+						CheckEqual("client_description", "").
+						CheckMissing("notification_emails.0").
 						CheckMissing("ip_acl.enable").
 						CheckMissing("ip_acl.cidr.0").
-						CheckEqual("group_access.groups.0.sub_groups.#", "0").
 						CheckMissing("purge_options.can_purge_by_cache_tag").
 						CheckMissing("purge_options.can_purge_by_cp_code").
 						CheckMissing("purge_options.cp_code_access.all_current_and_new_cp_codes").
@@ -277,18 +284,25 @@ func TestResourceAPIClient(t *testing.T) {
 				createData.createAPIClientResponse.Actions = &lockedClientActions
 				// Create
 				mockCreateAPIClient(m, createData)
+				mockUpdateAPIClientNotificationEmails(m, createData)
 				mockLockAPIClient(m, createData)
 				mockGetAPIClient(m, createData)
 				// Read
 				mockGetAPIClient(m, createData)
 				mockGetAPIClient(m, createData)
 				// Update
+				updateData.updateAPIClientRequest.Body.ClientDescription = ""
+				updateData.updateAPIClientRequest.Body.NotificationEmails = []string{}
 				updateData.updateAPIClientRequest.Body.APIAccess.AllAccessibleAPIs = true
 				updateData.updateAPIClientRequest.Body.APIAccess.APIs = nil
 				updateData.updateAPIClientResponse.APIAccess.AllAccessibleAPIs = true
 				updateData.updateAPIClientResponse.APIAccess.APIs = apisAllGet
+				updateData.updateAPIClientResponse.ClientDescription = ""
+				updateData.updateAPIClientResponse.NotificationEmails = []string{}
 				updateData.getAPIClientResponse.APIAccess.AllAccessibleAPIs = true
 				updateData.getAPIClientResponse.APIAccess.APIs = apisAllGet
+				updateData.getAPIClientResponse.ClientDescription = ""
+				updateData.getAPIClientResponse.NotificationEmails = []string{}
 
 				mockUpdateAPIClient(m, updateData)
 				mockUnlockAPIClient(m, updateData)
@@ -307,9 +321,11 @@ func TestResourceAPIClient(t *testing.T) {
 						CheckEqual("actions.lock", "false").
 						CheckEqual("actions.unlock", "true").
 						CheckEqual("lock", "true").
+						CheckEqual("group_access.groups.0.sub_groups.#", "0").
+						CheckEqual("client_description", "").
+						CheckMissing("notification_emails.0").
 						CheckMissing("ip_acl.enable").
 						CheckMissing("ip_acl.cidr.0").
-						CheckEqual("group_access.groups.0.sub_groups.#", "0").
 						CheckMissing("purge_options.can_purge_by_cache_tag").
 						CheckMissing("purge_options.can_purge_by_cp_code").
 						CheckMissing("purge_options.cp_code_access.all_current_and_new_cp_codes").
@@ -344,6 +360,8 @@ func TestResourceAPIClient(t *testing.T) {
 						CheckEqual("group_access.groups.0.sub_groups.0.role_description", "group description").
 						CheckEqual("group_access.groups.0.sub_groups.0.role_id", "540").
 						CheckEqual("group_access.groups.0.sub_groups.0.role_name", "role 2").
+						CheckEqual("client_description", "").
+						CheckMissing("notification_emails.0").
 						Build(),
 				},
 			},
@@ -351,8 +369,6 @@ func TestResourceAPIClient(t *testing.T) {
 		"happy path - create with clone_authorized_user_groups false and one group, update to clone_authorized_user_groups true, no groups": {
 			init: func(m *iam.Mock, createData, updateData testData) {
 
-				createData.createAPIClientRequest.ClientDescription = "Test API Client"
-				createData.createAPIClientRequest.NotificationEmails = []string{"mw+2@example.com"}
 				createData.createAPIClientRequest.GroupAccess.Groups = []iam.ClientGroup{
 					{
 						GroupID: 578,
@@ -381,16 +397,22 @@ func TestResourceAPIClient(t *testing.T) {
 					},
 				}
 
+				createData.updateAPIClientNotificationEmailsRequest.Body.GroupAccess.Groups = []iam.ClientGroup{
+					{
+						GroupID: 578,
+						RoleID:  341,
+					},
+				}
+
 				// Create
 				mockCreateAPIClient(m, createData)
+				mockUpdateAPIClientNotificationEmails(m, createData)
 				mockGetAPIClient(m, createData)
 				// Read
 				mockGetAPIClient(m, createData)
 				mockGetAPIClient(m, createData)
 
 				// Update
-				updateData.updateAPIClientRequest.Body.ClientDescription = "Test API Client"
-				updateData.updateAPIClientRequest.Body.NotificationEmails = []string{"mw+2@example.com"}
 				updateData.updateAPIClientRequest.Body.GroupAccess.CloneAuthorizedUserGroups = true
 				updateData.updateAPIClientRequest.Body.GroupAccess.Groups = nil
 				updateData.updateAPIClientResponse.IsLocked = false
@@ -420,6 +442,8 @@ func TestResourceAPIClient(t *testing.T) {
 						CheckEqual("group_access.groups.0.role_id", "341").
 						CheckEqual("group_access.groups.0.role_name", "role 3").
 						CheckEqual("group_access.groups.0.sub_groups.#", "0").
+						CheckEqual("client_description", "").
+						CheckMissing("notification_emails.0").
 						CheckMissing("ip_acl.enable").
 						CheckMissing("ip_acl.cidr.0").
 						CheckMissing("purge_options.can_purge_by_cache_tag").
@@ -433,6 +457,8 @@ func TestResourceAPIClient(t *testing.T) {
 					Check: fullDataChecker.
 						CheckEqual("group_access.clone_authorized_user_groups", "true").
 						CheckEqual("group_access.groups.0.sub_groups.#", "0").
+						CheckEqual("client_description", "").
+						CheckMissing("notification_emails.0").
 						CheckMissing("ip_acl.enable").
 						CheckMissing("ip_acl.cidr.0").
 						CheckMissing("purge_options.can_purge_by_cache_tag").
@@ -445,25 +471,24 @@ func TestResourceAPIClient(t *testing.T) {
 		},
 		"happy path - create with clone_authorized_user_groups true and no explicit group, update to clone_authorized_user_groups false, one group": {
 			init: func(m *iam.Mock, createData, updateData testData) {
-				createData.createAPIClientRequest.ClientDescription = "Test API Client"
-				createData.createAPIClientRequest.NotificationEmails = []string{"mw+2@example.com"}
 				createData.createAPIClientRequest.GroupAccess.CloneAuthorizedUserGroups = true
 				createData.createAPIClientRequest.GroupAccess.Groups = nil
 				createData.createAPIClientResponse.IsLocked = false
 				createData.createAPIClientResponse.GroupAccess.CloneAuthorizedUserGroups = true
+				createData.updateAPIClientNotificationEmailsRequest.Body.GroupAccess.CloneAuthorizedUserGroups = true
+				createData.updateAPIClientNotificationEmailsRequest.Body.GroupAccess.Groups = nil
 				createData.getAPIClientResponse.IsLocked = false
 				createData.getAPIClientResponse.GroupAccess.CloneAuthorizedUserGroups = true
 
 				// Create
 				mockCreateAPIClient(m, createData)
+				mockUpdateAPIClientNotificationEmails(m, createData)
 				mockGetAPIClient(m, createData)
 				// Read
 				mockGetAPIClient(m, createData)
 				mockGetAPIClient(m, createData)
 
 				// Update
-				updateData.updateAPIClientRequest.Body.ClientDescription = "Test API Client"
-				updateData.updateAPIClientRequest.Body.NotificationEmails = []string{"mw+2@example.com"}
 				updateData.updateAPIClientRequest.Body.GroupAccess.Groups = []iam.ClientGroup{
 					{
 						GroupID: 578,
@@ -512,6 +537,8 @@ func TestResourceAPIClient(t *testing.T) {
 					Check: fullDataChecker.
 						CheckEqual("group_access.clone_authorized_user_groups", "true").
 						CheckEqual("group_access.groups.0.sub_groups.#", "0").
+						CheckEqual("client_description", "").
+						CheckMissing("notification_emails.0").
 						CheckMissing("ip_acl.enable").
 						CheckMissing("ip_acl.cidr.0").
 						CheckMissing("purge_options.can_purge_by_cache_tag").
@@ -533,6 +560,8 @@ func TestResourceAPIClient(t *testing.T) {
 						CheckEqual("group_access.groups.0.role_id", "341").
 						CheckEqual("group_access.groups.0.role_name", "role 3").
 						CheckEqual("group_access.groups.0.sub_groups.#", "0").
+						CheckEqual("client_description", "").
+						CheckMissing("notification_emails.0").
 						CheckMissing("ip_acl.enable").
 						CheckMissing("ip_acl.cidr.0").
 						CheckMissing("purge_options.can_purge_by_cache_tag").
@@ -551,7 +580,7 @@ func TestResourceAPIClient(t *testing.T) {
 				createData.createAPIClientResponse.Actions = &unlockedClientActions
 				// Create
 				mockCreateAPIClient(m, createData)
-				//mockLockAPIClient(m, createData)
+				mockUpdateAPIClientNotificationEmails(m, createData)
 				mockGetAPIClient(m, createData)
 				// Read
 				mockGetAPIClient(m, createData)
@@ -580,9 +609,11 @@ func TestResourceAPIClient(t *testing.T) {
 						CheckEqual("lock", "false").
 						CheckEqual("actions.lock", "true").
 						CheckEqual("actions.unlock", "false").
+						CheckEqual("group_access.groups.0.sub_groups.#", "0").
+						CheckEqual("client_description", "").
+						CheckMissing("notification_emails.0").
 						CheckMissing("ip_acl.enable").
 						CheckMissing("ip_acl.cidr.0").
-						CheckEqual("group_access.groups.0.sub_groups.#", "0").
 						CheckMissing("purge_options.can_purge_by_cache_tag").
 						CheckMissing("purge_options.can_purge_by_cp_code").
 						CheckMissing("purge_options.cp_code_access.all_current_and_new_cp_codes").
@@ -615,7 +646,7 @@ func TestResourceAPIClient(t *testing.T) {
 				createData.createAPIClientResponse.Actions = &unlockedClientActions
 				// Create
 				mockCreateAPIClient(m, createData)
-				//mockLockAPIClient(m, createData)
+				mockUpdateAPIClientNotificationEmails(m, createData)
 				mockGetAPIClient(m, createData)
 				// Read
 				mockGetAPIClient(m, createData)
@@ -644,9 +675,11 @@ func TestResourceAPIClient(t *testing.T) {
 						CheckEqual("lock", "false").
 						CheckEqual("actions.lock", "true").
 						CheckEqual("actions.unlock", "false").
+						CheckEqual("group_access.groups.0.sub_groups.#", "0").
+						CheckEqual("client_description", "").
+						CheckMissing("notification_emails.0").
 						CheckMissing("ip_acl.enable").
 						CheckMissing("ip_acl.cidr.0").
-						CheckEqual("group_access.groups.0.sub_groups.#", "0").
 						CheckMissing("purge_options.can_purge_by_cache_tag").
 						CheckMissing("purge_options.can_purge_by_cp_code").
 						CheckMissing("purge_options.cp_code_access.all_current_and_new_cp_codes").
@@ -659,9 +692,11 @@ func TestResourceAPIClient(t *testing.T) {
 						CheckEqual("lock", "true").
 						CheckEqual("actions.lock", "false").
 						CheckEqual("actions.unlock", "true").
+						CheckEqual("group_access.groups.0.sub_groups.#", "0").
+						CheckEqual("client_description", "").
+						CheckMissing("notification_emails.0").
 						CheckMissing("ip_acl.enable").
 						CheckMissing("ip_acl.cidr.0").
-						CheckEqual("group_access.groups.0.sub_groups.#", "0").
 						CheckMissing("purge_options.can_purge_by_cache_tag").
 						CheckMissing("purge_options.can_purge_by_cp_code").
 						CheckMissing("purge_options.cp_code_access.all_current_and_new_cp_codes").
@@ -1084,6 +1119,12 @@ func mockUpdateAPIClient(m *iam.Mock, testData testData) *mock.Call {
 		Return(&testData.updateAPIClientResponse, nil).Once()
 }
 
+// For updating notification emails to an empty list, the response in the production code is disregarded.
+func mockUpdateAPIClientNotificationEmails(m *iam.Mock, testData testData) *mock.Call {
+	return m.On("UpdateAPIClient", testutils.MockContext, testData.updateAPIClientNotificationEmailsRequest).
+		Return(nil, nil).Once()
+}
+
 func mockGetAPIClient(m *iam.Mock, testData testData) *mock.Call {
 	return m.On("GetAPIClient", testutils.MockContext, testData.getAPIClientRequest).Return(&testData.getAPIClientResponse, nil).Once()
 }
@@ -1396,7 +1437,7 @@ var (
 			},
 		},
 		IPACL:              nil,
-		NotificationEmails: nil,
+		NotificationEmails: []string{},
 		PurgeOptions:       nil,
 	}
 
@@ -1423,7 +1464,35 @@ var (
 				},
 			},
 			IPACL:              nil,
-			NotificationEmails: nil,
+			NotificationEmails: []string{},
+			PurgeOptions:       nil,
+		},
+	}
+
+	updateAPIClientNotificationEmails = iam.UpdateAPIClientRequest{
+		ClientID: "c1ien41d",
+		Body: iam.UpdateAPIClientRequestBody{
+			AllowAccountSwitch: false,
+			APIAccess: iam.APIAccess{
+				AllAccessibleAPIs: false,
+				APIs:              apisCreate,
+			},
+			AuthorizedUsers:         []string{"mw+2"},
+			CanAutoCreateCredential: false,
+			ClientDescription:       "",
+			ClientName:              "mw+2_1",
+			ClientType:              "CLIENT",
+			GroupAccess: iam.GroupAccess{
+				CloneAuthorizedUserGroups: false,
+				Groups: []iam.ClientGroup{
+					{
+						GroupID: 123,
+						RoleID:  340,
+					},
+				},
+			},
+			IPACL:              nil,
+			NotificationEmails: []string{},
 			PurgeOptions:       nil,
 		},
 	}
@@ -1440,7 +1509,7 @@ var (
 		AuthorizedUsers:         []string{"mw+2"},
 		BaseURL:                 "base_url",
 		CanAutoCreateCredential: false,
-		ClientDescription:       "Test API Client",
+		ClientDescription:       "",
 		ClientID:                "c1ien41d",
 		ClientName:              "mw+2_1",
 		ClientType:              "CLIENT",
@@ -1517,7 +1586,7 @@ var (
 		AuthorizedUsers:         []string{"mw+2"},
 		BaseURL:                 "base_url",
 		CanAutoCreateCredential: false,
-		ClientDescription:       "Test API Client",
+		ClientDescription:       "",
 		ClientID:                "c1ien41d",
 		ClientName:              "mw+2_1",
 		ClientType:              "CLIENT",
@@ -1530,7 +1599,7 @@ var (
 		},
 		IPACL:              nil,
 		IsLocked:           true,
-		NotificationEmails: []string{"mw+2@example.com"},
+		NotificationEmails: []string{},
 		PurgeOptions:       nil,
 	}
 
@@ -1546,7 +1615,7 @@ var (
 		AuthorizedUsers:         []string{"mw+2"},
 		BaseURL:                 "base_url",
 		CanAutoCreateCredential: false,
-		ClientDescription:       "Test API Client",
+		ClientDescription:       "",
 		ClientID:                "c1ien41d",
 		ClientName:              "mw+2_1",
 		ClientType:              "CLIENT",
@@ -1559,7 +1628,7 @@ var (
 		},
 		IPACL:              nil,
 		IsLocked:           true,
-		NotificationEmails: []string{"mw+2@example.com"},
+		NotificationEmails: []string{},
 		PurgeOptions:       nil,
 	}
 
@@ -1665,12 +1734,13 @@ var (
 	}
 
 	minData = testData{
-		createAPIClientRequest:  createAPIClientRequestMin,
-		createAPIClientResponse: createAPIClientResponseMin,
-		getAPIClientRequest:     getAPIClientRequest,
-		getAPIClientResponse:    getAPIClientResponseMin,
-		updateAPIClientRequest:  updateAPIClientRequestMin,
-		updateAPIClientResponse: updateAPIClientResponseMin,
+		createAPIClientRequest:                   createAPIClientRequestMin,
+		createAPIClientResponse:                  createAPIClientResponseMin,
+		updateAPIClientNotificationEmailsRequest: updateAPIClientNotificationEmails,
+		getAPIClientRequest:                      getAPIClientRequest,
+		getAPIClientResponse:                     getAPIClientResponseMin,
+		updateAPIClientRequest:                   updateAPIClientRequestMin,
+		updateAPIClientResponse:                  updateAPIClientResponseMin,
 	}
 )
 
