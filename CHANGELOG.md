@@ -66,7 +66,9 @@
 
 
 
-
+* [IMPORTANT] mTLS TrustStore:
+  * Added new data sources:
+    * `data_akamai_mtlstruststore_ca_set_activities` - reads CA set activities.
 
 * APPSEC
   * Added support for challenge actions in Rate Policy `resource_akamai_appsec_rate_policy_action` resource.
