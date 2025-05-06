@@ -3,6 +3,7 @@ package mtlstruststore
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/mtlstruststore"
 	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
@@ -168,7 +169,7 @@ func (d *caSetActivitiesDataSource) Read(ctx context.Context, req datasource.Rea
 
 	if !data.CASetName.IsNull() {
 		caSets, err := client.ListCASets(ctx, mtlstruststore.ListCASetsRequest{
-			CASetName: data.CASetName.ValueString(),
+			CASetNamePrefix: data.CASetName.ValueString(),
 		})
 		if err != nil {
 			resp.Diagnostics.AddError("Read CA set activities failed", err.Error())
@@ -194,10 +195,23 @@ func (d *caSetActivitiesDataSource) Read(ctx context.Context, req datasource.Rea
 }
 
 func (m caSetActivitiesDataSourceModel) getActivities(ctx context.Context, client mtlstruststore.MTLSTruststore) (*mtlstruststore.ListCASetActivitiesResponse, error) {
+	var start, end time.Time
+	var err error
+	if m.Start.ValueString() != "" {
+		if start, err = time.Parse(time.RFC3339, m.Start.ValueString()); err != nil {
+			return nil, fmt.Errorf("invalid start time format: %w", err)
+		}
+	}
+	if m.End.ValueString() != "" {
+		if end, err = time.Parse(time.RFC3339, m.End.ValueString()); err != nil {
+			return nil, fmt.Errorf("invalid end time format: %w", err)
+		}
+	}
+
 	activities, err := client.ListCASetActivities(ctx, mtlstruststore.ListCASetActivitiesRequest{
-		CASetID:   m.CASetID.ValueInt64(),
-		StartDate: m.Start.ValueString(),
-		EndDate:   m.End.ValueString(),
+		CASetID: m.CASetID.ValueInt64(),
+		Start:   start,
+		End:     end,
 	})
 	if err != nil {
 		return nil, err

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/mtlstruststore"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/ptr"
@@ -201,17 +202,31 @@ func mockListCASetActivities(t *testing.T, m *mtlstruststore.Mock, startDate, en
 		getResponse.DeletedDate = ptr.To(tst.NewTimeFromString(t, "2026-04-16T12:08:34.099457Z"))
 		getResponse.CASetStatus = "DELETED"
 	}
-
+	var start, end time.Time
+	if startDate != "" {
+		var err error
+		start, err = time.Parse(time.RFC3339, startDate)
+		if err != nil {
+			t.Fatalf("failed to parse start date: %v", err)
+		}
+	}
+	if endDate != "" {
+		var err error
+		end, err = time.Parse(time.RFC3339, endDate)
+		if err != nil {
+			t.Fatalf("failed to parse end date: %v", err)
+		}
+	}
 	m.On("ListCASetActivities", testutils.MockContext, mtlstruststore.ListCASetActivitiesRequest{
-		CASetID:   12345,
-		StartDate: startDate,
-		EndDate:   endDate,
+		CASetID: 12345,
+		Start:   start,
+		End:     end,
 	}).Return(getResponse, nil).Times(3)
 }
 
 func mockListCASets(m *mtlstruststore.Mock) {
 	m.On("ListCASets", testutils.MockContext, mtlstruststore.ListCASetsRequest{
-		CASetName: "test name",
+		CASetNamePrefix: "test name",
 	}).Return(&mtlstruststore.ListCASetsResponse{
 		CASets: []mtlstruststore.CASetResponse{
 			{
