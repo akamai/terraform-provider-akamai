@@ -2515,6 +2515,116 @@ func TestResourceEdgeHostnames_WithImport(t *testing.T) {
 		client.AssertExpectations(t)
 		clientHapi.AssertExpectations(t)
 	})
+	t.Run("import existing akamaized edgehostname without domain validation", func(t *testing.T) {
+		client := &papi.Mock{}
+		clientHapi := &hapi.Mock{}
+		id := "ehn_1,2,2"
+
+		client.On("GetEdgeHostname", testutils.MockContext, papi.GetEdgeHostnameRequest{
+			EdgeHostnameID: "ehn_1",
+			ContractID:     "ctr_2",
+			GroupID:        "grp_2",
+		}).Return(&papi.GetEdgeHostnamesResponse{
+			ContractID: "ctr_2",
+			GroupID:    "grp_2",
+			EdgeHostname: papi.EdgeHostnameGetItem{
+				ID:                "ehn_1",
+				Domain:            "t1.akamaized.net",
+				DomainPrefix:      "t1",
+				DomainSuffix:      "akamaized.net",
+				IPVersionBehavior: "IPV4",
+				Secure:            true,
+			},
+			EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
+				{
+					ID:                "ehn_2",
+					Domain:            "test2.edgekey.net",
+					DomainPrefix:      "test2",
+					DomainSuffix:      "edgekey.net",
+					IPVersionBehavior: "IPV4",
+				},
+				{
+					ID:                "ehn_3",
+					Domain:            "test3.edgesuite.net",
+					DomainPrefix:      "test3",
+					DomainSuffix:      "edgesuite.net",
+					IPVersionBehavior: "IPV4",
+				},
+			}},
+		}, nil)
+		clientHapi.On("GetEdgeHostname", testutils.MockContext, 1).Return(&hapi.GetEdgeHostnameResponse{
+			EdgeHostnameID:         1,
+			RecordName:             "t1",
+			DNSZone:                "akamaized.net",
+			SecurityType:           "STANDARD-TLS",
+			UseDefaultTTL:          true,
+			UseDefaultMap:          true,
+			IPVersionBehavior:      "IPV4",
+			ProductID:              "DSA",
+			TTL:                    21600,
+			Map:                    "a;dscb.akamai.net",
+			SlotNumber:             3250,
+			Comments:               "Created by Property-Manager/PAPI on Tue Feb 21 14:03:36 UTC 2023",
+			SerialNumber:           1520,
+			CustomTarget:           "",
+			ChinaCdn:               hapi.ChinaCDN{},
+			IsEdgeIPBindingEnabled: false,
+			MapAlias:               "",
+			UseCases:               nil,
+		}, nil)
+		client.On("GetEdgeHostnames", testutils.MockContext, papi.GetEdgeHostnamesRequest{
+			ContractID: "ctr_2",
+			GroupID:    "grp_2",
+		}).Return(&papi.GetEdgeHostnamesResponse{
+			ContractID: "ctr_2",
+			GroupID:    "grp_2",
+			EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
+				{
+					ID:                "ehn_1",
+					Domain:            "t1.akamaized.net",
+					DomainPrefix:      "t1",
+					DomainSuffix:      "akamaized.net",
+					IPVersionBehavior: "IPV4",
+					Secure:            true,
+				},
+				{
+					ID:                "ehn_3",
+					Domain:            "test3.edgesuite.net",
+					DomainPrefix:      "test3",
+					DomainSuffix:      "edgesuite.net",
+					IPVersionBehavior: "IPV4",
+				},
+			}},
+		}, nil)
+		useClient(client, clientHapi, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResourceEdgeHostname/edgehostname_domainprefix_for_akamaized_dot_net_less_than_minimum_required_length.tf"),
+						ImportState: true,
+						ImportStateCheck: func(s []*terraform.InstanceState) error {
+							assert.Len(t, s, 1)
+							rs := s[0]
+							assert.Equal(t, "grp_2", rs.Attributes["group_id"])
+							assert.Equal(t, "ctr_2", rs.Attributes["contract_id"])
+							assert.Equal(t, "ehn_1", rs.Attributes["id"])
+							// edgehostname bellow is not validated, because flow does not use create context
+							assert.Equal(t, "t1.akamaized.net", rs.Attributes["edge_hostname"])
+							assert.Equal(t, "", rs.Attributes["certificate"])
+							return nil
+						},
+						ImportStateId: id,
+						ResourceName:  "akamai_edge_hostname.edgehostname",
+						// ImportStateVerify is set to false. Because of validation it can't use create context, which means it doesn't have old state.
+						ImportStateVerify: false,
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+		clientHapi.AssertExpectations(t)
+	})
 	t.Run("import existing akamaized edgehostname without certificate - product provided by user, different product id returned by api", func(t *testing.T) {
 		client := &papi.Mock{}
 		clientHapi := &hapi.Mock{}

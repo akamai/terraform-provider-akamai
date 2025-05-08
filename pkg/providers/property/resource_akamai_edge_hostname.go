@@ -18,7 +18,6 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v7/pkg/log"
 	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 
-	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -82,7 +81,7 @@ var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
 		Required:         true,
 		ForceNew:         true,
 		DiffSuppressFunc: diffSuppressEdgeHostname,
-		ValidateDiagFunc: tf.AggregateValidations(tf.IsNotBlank, validateDomainPrefix),
+		ValidateDiagFunc: tf.IsNotBlank,
 		StateFunc:        appendDefaultSuffixToEdgeHostname,
 	},
 	"ttl": {
@@ -135,6 +134,16 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 
 	client := Client(meta)
 
+	edgeHostname, err := tf.GetStringValue("edge_hostname", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	diags := validateDomainPrefix(edgeHostname)
+	if diags.HasError() {
+		return diags
+	}
+
 	groupID, err := tf.GetStringValue("group_id", d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -174,10 +183,6 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	var edgeHostname string
-	if got, ok := d.GetOk("edge_hostname"); ok {
-		edgeHostname = got.(string)
-	}
 	newHostname := papi.EdgeHostnameCreate{}
 	newHostname.ProductID = productID
 	newHostname.DomainSuffix, newHostname.SecureNetwork = parseEdgeHostname(edgeHostname)
@@ -253,12 +258,8 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 	return resourceSecureEdgeHostNameRead(ctx, d, meta)
 }
 
-func validateDomainPrefix(v interface{}, _ cty.Path) diag.Diagnostics {
+func validateDomainPrefix(edgeHostname string) diag.Diagnostics {
 
-	edgeHostname, ok := v.(string)
-	if !ok {
-		return diag.Errorf("expected string, got %T", v)
-	}
 	domainSuffix, _ := parseEdgeHostname(edgeHostname)
 	domainPrefix := strings.TrimSuffix(edgeHostname, "."+domainSuffix)
 	domainPrefixLen := len(domainPrefix)
