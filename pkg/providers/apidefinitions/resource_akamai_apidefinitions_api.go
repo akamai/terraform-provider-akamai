@@ -25,10 +25,9 @@ import (
 )
 
 var (
-	_ resource.Resource                   = &apiResource{}
-	_ resource.ResourceWithConfigure      = &apiResource{}
-	_ resource.ResourceWithImportState    = &apiResource{}
-	_ resource.ResourceWithValidateConfig = &apiResource{}
+	_ resource.Resource                = &apiResource{}
+	_ resource.ResourceWithConfigure   = &apiResource{}
+	_ resource.ResourceWithImportState = &apiResource{}
 )
 
 type apiResource struct{}
@@ -86,6 +85,7 @@ func (r *apiResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *
 				Required:   true,
 				Validators: []validator.String{
 					validators.NotEmptyString(),
+					APIConfigurationValidator(),
 				},
 				Description: "JSON-formatted information about the API configuration",
 			},
@@ -134,22 +134,6 @@ func (r *apiResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *
 				Description: "Version of the API currently deployed in production",
 			},
 		},
-	}
-}
-
-// ValidateConfig implements resource.ResourceWithValidateConfig.
-func (r *apiResource) ValidateConfig(ctx context.Context, request resource.ValidateConfigRequest, response *resource.ValidateConfigResponse) {
-	var data apiResourceModel
-
-	response.Diagnostics.Append(request.Config.Get(ctx, &data)...)
-	if response.Diagnostics.HasError() {
-		return
-	}
-
-	diags := validateAPIConfiguration(&data)
-	if diags.HasError() {
-		response.Diagnostics.Append(diags...)
-		return
 	}
 }
 
@@ -486,17 +470,4 @@ func deserialize(body string) (*v0.APIAttributes, error) {
 	}
 
 	return &endpoint, nil
-}
-
-func validateAPIConfiguration(data *apiResourceModel) diag.Diagnostics {
-	var diags diag.Diagnostics
-	endpoint := v0.APIAttributes{}
-	body := data.API.ValueString()
-	decoder := json.NewDecoder(strings.NewReader(body))
-	decoder.DisallowUnknownFields()
-	err := decoder.Decode(&endpoint)
-	if err != nil {
-		diags.AddError("Invalid JSON provided", err.Error())
-	}
-	return diags
 }
