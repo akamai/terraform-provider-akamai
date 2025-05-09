@@ -9,23 +9,23 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 )
 
-var _ validator.String = apiConfigurationValidator{}
+var _ validator.String = apiStateValidator{}
 
-// apiConfigurationValidator validates JSON-formatted information about the API configuration.
-type apiConfigurationValidator struct{}
+// apiStateValidator validates JSON-formatted information about the API configuration.
+type apiStateValidator struct{}
 
 // Description describes the validation in plain text formatting.
-func (v apiConfigurationValidator) Description(_ context.Context) string {
+func (v apiStateValidator) Description(_ context.Context) string {
 	return "Invalid JSON-formatted information about the API configuration provided"
 }
 
 // MarkdownDescription describes the validation in Markdown formatting.
-func (v apiConfigurationValidator) MarkdownDescription(ctx context.Context) string {
+func (v apiStateValidator) MarkdownDescription(ctx context.Context) string {
 	return v.Description(ctx)
 }
 
 // ValidateString performs the validation.
-func (v apiConfigurationValidator) ValidateString(_ context.Context, request validator.StringRequest, response *validator.StringResponse) {
+func (v apiStateValidator) ValidateString(_ context.Context, request validator.StringRequest, response *validator.StringResponse) {
 	if request.ConfigValue.IsNull() || request.ConfigValue.IsUnknown() {
 		return
 	}
@@ -40,8 +40,8 @@ func (v apiConfigurationValidator) ValidateString(_ context.Context, request val
 	}
 }
 
-// APIConfigurationValidator returns a validator which ensures that JSON-formatted information
+// APIStateValidator returns a validator which ensures that JSON-formatted information
 // about the API configuration is valid.
-func APIConfigurationValidator() validator.String {
-	return apiConfigurationValidator{}
+func APIStateValidator() validator.String {
+	return apiStateValidator{}
 }

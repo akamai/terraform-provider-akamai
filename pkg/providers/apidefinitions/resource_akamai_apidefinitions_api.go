@@ -85,7 +85,7 @@ func (r *apiResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *
 				Required:   true,
 				Validators: []validator.String{
 					validators.NotEmptyString(),
-					APIConfigurationValidator(),
+					APIStateValidator(),
 				},
 				Description: "JSON-formatted information about the API configuration",
 			},
