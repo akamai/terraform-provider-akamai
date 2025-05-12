@@ -995,6 +995,9 @@ func pollActivation(ctx context.Context, client papi.PAPI, activation *papi.Acti
 }
 
 func suppressDiffIfNoPropertyReactivation(_, oldValue, newValue string, d *schema.ResourceData) bool {
+	if d.Id() == "" {
+		return false
+	}
 	shouldReactivate := d.HasChanges("version", "network") || tf.StringFieldHasChangesWithStateFunc(d, "property_id", addPrefixToState("prp_"))
 	if !shouldReactivate {
 		return true

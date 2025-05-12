@@ -814,6 +814,9 @@ func addComplianceRecord(complianceRecord []interface{}, activateIncludeRequest 
 }
 
 func suppressDiffIfNoIncludeReactivation(_, oldValue, newValue string, d *schema.ResourceData) bool {
+	if d.Id() == "" {
+		return false
+	}
 	shouldReactivate := d.HasChange("version")
 	if !shouldReactivate {
 		return true
