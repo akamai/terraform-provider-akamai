@@ -8,6 +8,8 @@
   * Added removal of the corresponding namespace to the `akamai_edgekv` resource deletion.
     However, the namespace will not be removed if there are any items in it: in such case, an error
     will be returned.
+* Appsec
+  * Renamed `clientIdentifier` field to `clientIdentifiers` and changed field from `string` to list of strings in the `rate_policy` attribute inside resource `akamai_appsec_rate_policy`.
 
 #### DEPRECATIONS:
 
