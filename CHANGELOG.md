@@ -40,6 +40,8 @@
   * Added an error message when creating `akamai_cloudlets_application_load_balancer` for origins that already exist on the server, advising to import this resource ([I#610](https://github.com/akamai/terraform-provider-akamai/issues/610)).
 
 
+* GTM
+  * Enabled domain deletion support for the `akamai_gtm_domain` resource, allowing users to submit requests to remove GTM domains.
 
 
 
