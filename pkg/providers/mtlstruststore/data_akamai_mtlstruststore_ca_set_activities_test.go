@@ -17,8 +17,8 @@ import (
 func TestCASetActivitiesDataSource(t *testing.T) {
 	t.Parallel()
 	commonStateChecker := test.NewStateChecker("data.akamai_mtlstruststore_ca_set_activities.test").
-		CheckEqual("ca_set_id", "12345").
-		CheckEqual("ca_set_name", "example-ca-set").
+		CheckEqual("id", "12345").
+		CheckEqual("name", "example-ca-set").
 		CheckEqual("status", "NOT_DELETED").
 		CheckEqual("created_date", "2025-04-16 12:08:34.099457 +0000 UTC").
 		CheckEqual("created_by", "example user").
@@ -48,13 +48,13 @@ func TestCASetActivitiesDataSource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: `
-provider "akamai" {
-  edgerc = "../../common/testutils/edgerc"
-}
+						provider "akamai" {
+						  edgerc = "../../common/testutils/edgerc"
+						}
 
-data "akamai_mtlstruststore_ca_set_activities" "test" {
-  ca_set_id = 12345
-}`,
+						data "akamai_mtlstruststore_ca_set_activities" "test" {
+						  id = 12345
+						}`,
 					Check: commonStateChecker.Build(),
 				},
 			},
@@ -66,13 +66,13 @@ data "akamai_mtlstruststore_ca_set_activities" "test" {
 			steps: []resource.TestStep{
 				{
 					Config: `
-provider "akamai" {
-  edgerc = "../../common/testutils/edgerc"
-}
+						provider "akamai" {
+						  edgerc = "../../common/testutils/edgerc"
+						}
 
-data "akamai_mtlstruststore_ca_set_activities" "test" {
-  ca_set_id = 12345
-}`,
+						data "akamai_mtlstruststore_ca_set_activities" "test" {
+						  id = 12345
+						}`,
 					Check: commonStateChecker.
 						CheckEqual("deleted_date", "2026-04-16 12:08:34.099457 +0000 UTC").
 						CheckEqual("deleted_by", "example user").
@@ -89,16 +89,167 @@ data "akamai_mtlstruststore_ca_set_activities" "test" {
 			steps: []resource.TestStep{
 				{
 					Config: `
-provider "akamai" {
-  edgerc = "../../common/testutils/edgerc"
-}
+						provider "akamai" {
+						  edgerc = "../../common/testutils/edgerc"
+						}
 
-data "akamai_mtlstruststore_ca_set_activities" "test" {
-  ca_set_name = "test name"
-  start	   = "2024-04-16T12:08:34.099457Z"
-  end 	   = "2025-04-16T12:08:34.099457Z"
-}`,
+						data "akamai_mtlstruststore_ca_set_activities" "test" {
+						  name = "test name"
+						  start	   = "2024-04-16T12:08:34.099457Z"
+						  end 	   = "2025-04-16T12:08:34.099457Z"
+						}`,
 					Check: commonStateChecker.Build(),
+				},
+			},
+		},
+		"happy path - find by ca set name when also deleted sets returned": {
+			init: func(m *mtlstruststore.Mock) {
+				m.On("ListCASets", testutils.MockContext, mtlstruststore.ListCASetsRequest{
+					CASetNamePrefix: "test name",
+				}).Return(&mtlstruststore.ListCASetsResponse{
+					CASets: []mtlstruststore.CASetResponse{
+						{
+							CASetID:     01234,
+							CASetName:   "test name",
+							CASetStatus: "DELETED",
+						},
+						{
+							CASetID:     00007,
+							CASetName:   "test name",
+							CASetStatus: "DELETING",
+						},
+						{
+							CASetID:     12345,
+							CASetName:   "test name",
+							CASetStatus: "NOT_DELETED",
+						},
+						{
+							CASetID:     55555,
+							CASetName:   "test name",
+							CASetStatus: "DELETED",
+						},
+					},
+				}, nil).Times(3)
+				mockListCASetActivities(t, m, "", "", false)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: `
+						provider "akamai" {
+						  edgerc = "../../common/testutils/edgerc"
+						}
+
+						data "akamai_mtlstruststore_ca_set_activities" "test" {
+						  name = "test name"
+						}`,
+					Check: commonStateChecker.Build(),
+				},
+			},
+		},
+		"happy path - find by ca set name for non-unique prefix": {
+			init: func(m *mtlstruststore.Mock) {
+				m.On("ListCASets", testutils.MockContext, mtlstruststore.ListCASetsRequest{
+					CASetNamePrefix: "test name",
+				}).Return(&mtlstruststore.ListCASetsResponse{
+					CASets: []mtlstruststore.CASetResponse{
+						{
+							CASetID:     01234,
+							CASetName:   "test name foo",
+							CASetStatus: "NOT_DELETED",
+						},
+						{
+							CASetID:     12345,
+							CASetName:   "test name",
+							CASetStatus: "NOT_DELETED",
+						},
+						{
+							CASetID:     67890,
+							CASetName:   "test name bar",
+							CASetStatus: "NOT_DELETED",
+						},
+					},
+				}, nil).Times(3)
+				mockListCASetActivities(t, m, "", "", false)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: `
+						provider "akamai" {
+						  edgerc = "../../common/testutils/edgerc"
+						}
+
+						data "akamai_mtlstruststore_ca_set_activities" "test" {
+						  name = "test name"
+						}`,
+					Check: commonStateChecker.Build(),
+				},
+			},
+		},
+		"error: could not find by ca set name": {
+			init: func(m *mtlstruststore.Mock) {
+				m.On("ListCASets", testutils.MockContext, mtlstruststore.ListCASetsRequest{
+					CASetNamePrefix: "test name",
+				}).Return(&mtlstruststore.ListCASetsResponse{
+					CASets: []mtlstruststore.CASetResponse{
+						{
+							CASetID:     01234,
+							CASetName:   "test name foo",
+							CASetStatus: "NOT_DELETED",
+						},
+						{
+							CASetID:     12345,
+							CASetName:   "test name",
+							CASetStatus: "DELETED",
+						},
+					},
+				}, nil).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: `
+						provider "akamai" {
+						  edgerc = "../../common/testutils/edgerc"
+						}
+
+						data "akamai_mtlstruststore_ca_set_activities" "test" {
+						  name = "test name"
+						}`,
+					ExpectError: regexp.MustCompile("no CA set found with name 'test name'"),
+				},
+			},
+		},
+		"error: failed to list CA sets": {
+			init: func(m *mtlstruststore.Mock) {
+				m.On("ListCASets", testutils.MockContext, mtlstruststore.ListCASetsRequest{
+					CASetNamePrefix: "test name",
+				}).Return(nil, fmt.Errorf("listing error")).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: `
+						provider "akamai" {
+						  edgerc = "../../common/testutils/edgerc"
+						}
+
+						data "akamai_mtlstruststore_ca_set_activities" "test" {
+						  name = "test name"
+						}`,
+					ExpectError: regexp.MustCompile("failed to list CA sets: listing error"),
+				},
+			},
+		},
+		"error: empty CA set name": {
+			steps: []resource.TestStep{
+				{
+					Config: `
+						provider "akamai" {
+						  edgerc = "../../common/testutils/edgerc"
+						}
+
+						data "akamai_mtlstruststore_ca_set_activities" "test" {
+						  name = ""
+						}`,
+					ExpectError: regexp.MustCompile("Attribute name string length must be at least 1, got: 0"),
 				},
 			},
 		},
@@ -111,45 +262,45 @@ data "akamai_mtlstruststore_ca_set_activities" "test" {
 			steps: []resource.TestStep{
 				{
 					Config: `
-provider "akamai" {
-  edgerc = "../../common/testutils/edgerc"
-}
+						provider "akamai" {
+						  edgerc = "../../common/testutils/edgerc"
+						}
 
-data "akamai_mtlstruststore_ca_set_activities" "test" {
-  ca_set_id = 12345
-}`,
+						data "akamai_mtlstruststore_ca_set_activities" "test" {
+						  id = 12345
+						}`,
 					ExpectError: regexp.MustCompile("failed to retrieve CA set activities"),
 				},
 			},
 		},
-		"validation error - missing required argument ca_set_id or ca_set_name": {
+		"validation error - missing required argument id or name": {
 			steps: []resource.TestStep{
 				{
 					Config: `
-provider "akamai" {
-  edgerc = "../../common/testutils/edgerc"
-}
+						provider "akamai" {
+						  edgerc = "../../common/testutils/edgerc"
+						}
 
-data "akamai_mtlstruststore_ca_set_activities" "test" {}
-					`,
-					ExpectError: regexp.MustCompile(`No attribute specified when one \(and only one\) of \[ca_set_id,ca_set_name\] is\s+required`),
+						data "akamai_mtlstruststore_ca_set_activities" "test" {}
+											`,
+					ExpectError: regexp.MustCompile(`No attribute specified when one \(and only one\) of \[id,name\] is\s+required`),
 				},
 			},
 		},
-		"validation error - both ca_set_id and ca_set_name are provided": {
+		"validation error - both id and name are provided": {
 			steps: []resource.TestStep{
 				{
 					Config: `
-provider "akamai" {
-  edgerc = "../../common/testutils/edgerc"
-}
+						provider "akamai" {
+						  edgerc = "../../common/testutils/edgerc"
+						}
 
-data "akamai_mtlstruststore_ca_set_activities" "test" {
-  ca_set_id   = 12345
-  ca_set_name = "example-ca-set"
-}
-					`,
-					ExpectError: regexp.MustCompile(`2 attributes specified when one \(and only one\) of \[ca_set_name,ca_set_id\] is\s+required`),
+						data "akamai_mtlstruststore_ca_set_activities" "test" {
+						  id   = 12345
+						  name = "example-ca-set"
+						}
+											`,
+					ExpectError: regexp.MustCompile(`2 attributes specified when one \(and only one\) of \[name,id\] is\s+required`),
 				},
 			},
 		},
@@ -230,7 +381,9 @@ func mockListCASets(m *mtlstruststore.Mock) {
 	}).Return(&mtlstruststore.ListCASetsResponse{
 		CASets: []mtlstruststore.CASetResponse{
 			{
-				CASetID: 12345,
+				CASetID:     12345,
+				CASetName:   "test name",
+				CASetStatus: "NOT_DELETED",
 			},
 		},
 	}, nil).Times(3)

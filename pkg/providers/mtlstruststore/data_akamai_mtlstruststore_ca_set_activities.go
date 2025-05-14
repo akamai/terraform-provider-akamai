@@ -29,8 +29,8 @@ type (
 	}
 
 	caSetActivitiesDataSourceModel struct {
-		CASetID     types.Int64     `tfsdk:"ca_set_id"`
-		CASetName   types.String    `tfsdk:"ca_set_name"`
+		ID          types.Int64     `tfsdk:"id"`
+		Name        types.String    `tfsdk:"name"`
 		Start       types.String    `tfsdk:"start"`
 		End         types.String    `tfsdk:"end"`
 		CreatedDate types.String    `tfsdk:"created_date"`
@@ -81,18 +81,21 @@ func (d *caSetActivitiesDataSource) Schema(_ context.Context, _ datasource.Schem
 	resp.Schema = schema.Schema{
 		Description: "Retrieve activities for a specific MTLS Truststore CA Set.",
 		Attributes: map[string]schema.Attribute{
-			"ca_set_id": schema.Int64Attribute{
+			"id": schema.Int64Attribute{
 				Description: "Identifies each CA set.",
 				Optional:    true,
+				Computed:    true,
 				Validators: []validator.Int64{
-					int64validator.ExactlyOneOf(path.MatchRoot("ca_set_name"), path.MatchRoot("ca_set_id")),
+					int64validator.ExactlyOneOf(path.MatchRoot("name"), path.MatchRoot("id")),
 				},
 			},
-			"ca_set_name": schema.StringAttribute{
+			"name": schema.StringAttribute{
 				Description: "The name of the CA set.",
 				Optional:    true,
+				Computed:    true,
 				Validators: []validator.String{
-					stringvalidator.ExactlyOneOf(path.MatchRoot("ca_set_id"), path.MatchRoot("ca_set_name")),
+					stringvalidator.ExactlyOneOf(path.MatchRoot("id"), path.MatchRoot("name")),
+					stringvalidator.LengthAtLeast(1),
 				},
 			},
 			"start": schema.StringAttribute{
@@ -167,19 +170,14 @@ func (d *caSetActivitiesDataSource) Read(ctx context.Context, req datasource.Rea
 	}
 	client = Client(d.meta)
 
-	if !data.CASetName.IsNull() {
-		caSets, err := client.ListCASets(ctx, mtlstruststore.ListCASetsRequest{
-			CASetNamePrefix: data.CASetName.ValueString(),
-		})
+	if !data.Name.IsNull() {
+		setID, err := findCASetID(ctx, client, data.Name.ValueString())
 		if err != nil {
 			resp.Diagnostics.AddError("Read CA set activities failed", err.Error())
 			return
 		}
-		if len(caSets.CASets) == 0 {
-			resp.Diagnostics.AddError("Read CA set activities failed", fmt.Sprintf("No CA set found with name '%s'", data.CASetName.ValueString()))
-			return
-		}
-		data.CASetID = types.Int64Value(caSets.CASets[0].CASetID)
+
+		data.ID = types.Int64Value(setID)
 	}
 
 	activities, err := data.getActivities(ctx, client)
@@ -192,6 +190,29 @@ func (d *caSetActivitiesDataSource) Read(ctx context.Context, req datasource.Rea
 	data.setData(modelData)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, data)...)
+}
+
+func findCASetID(ctx context.Context, client mtlstruststore.MTLSTruststore, caSetName string) (int64, error) {
+	caSets, err := client.ListCASets(ctx, mtlstruststore.ListCASetsRequest{
+		CASetNamePrefix: caSetName,
+	})
+	if err != nil {
+		return 0, fmt.Errorf("failed to list CA sets: %w", err)
+	}
+
+	var matchingSets []mtlstruststore.CASetResponse
+	for _, caSet := range caSets.CASets {
+		if caSet.CASetStatus == "NOT_DELETED" && caSet.CASetName == caSetName {
+			matchingSets = append(matchingSets, caSet)
+		}
+	}
+	if len(matchingSets) == 0 {
+		return 0, fmt.Errorf("no CA set found with name '%s'", caSetName)
+	}
+	if len(matchingSets) > 1 {
+		return 0, fmt.Errorf("multiple CA sets found with name '%s'", caSetName)
+	}
+	return matchingSets[0].CASetID, nil
 }
 
 func (m caSetActivitiesDataSourceModel) getActivities(ctx context.Context, client mtlstruststore.MTLSTruststore) (*mtlstruststore.ListCASetActivitiesResponse, error) {
@@ -209,7 +230,7 @@ func (m caSetActivitiesDataSourceModel) getActivities(ctx context.Context, clien
 	}
 
 	activities, err := client.ListCASetActivities(ctx, mtlstruststore.ListCASetActivitiesRequest{
-		CASetID: m.CASetID.ValueInt64(),
+		CASetID: m.ID.ValueInt64(),
 		Start:   start,
 		End:     end,
 	})
@@ -222,8 +243,8 @@ func (m caSetActivitiesDataSourceModel) getActivities(ctx context.Context, clien
 
 func convertDataToModel(activities mtlstruststore.ListCASetActivitiesResponse) caSetActivitiesDataSourceModel {
 	data := caSetActivitiesDataSourceModel{
-		CASetID:     types.Int64Value(activities.CASetID),
-		CASetName:   types.StringValue(activities.CASetName),
+		ID:          types.Int64Value(activities.CASetID),
+		Name:        types.StringValue(activities.CASetName),
 		CreatedDate: types.StringValue(activities.CreatedDate.String()),
 		CreatedBy:   types.StringValue(activities.CreatedBy),
 		Status:      types.StringValue(activities.CASetStatus),
@@ -262,8 +283,8 @@ func convertDataToModel(activities mtlstruststore.ListCASetActivitiesResponse) c
 }
 
 func (m *caSetActivitiesDataSourceModel) setData(activities caSetActivitiesDataSourceModel) {
-	m.CASetID = activities.CASetID
-	m.CASetName = activities.CASetName
+	m.ID = activities.ID
+	m.Name = activities.Name
 	m.CreatedDate = activities.CreatedDate
 	m.CreatedBy = activities.CreatedBy
 	m.Status = activities.Status
