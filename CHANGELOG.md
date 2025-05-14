@@ -4,7 +4,10 @@
 
 #### BREAKING CHANGES:
 
-
+* EdgeKV
+  * Added removal of the corresponding namespace to the `akamai_edgekv` resource deletion.
+    However, the namespace will not be removed if there are any items in it: in such case, an error
+    will be returned.
 
 
 
@@ -70,8 +73,6 @@
 
 * PAPI
   * Changed validation of edgehostnames domain prefixes in `resource_akamai_edge_hostname` to create context.
-
-
 
 
 #### BUG FIXES:

@@ -19,7 +19,8 @@ import (
 )
 
 var (
-	initWindow = time.Duration(10) * time.Second
+	initWindow    = time.Duration(10) * time.Second
+	deleteTimeout = time.Minute
 )
 
 func resourceEdgeKV() *schema.Resource {
@@ -266,11 +267,46 @@ func resourceEdgeKVUpdate(ctx context.Context, rd *schema.ResourceData, m interf
 	return resourceEdgeKVRead(ctx, rd, m)
 }
 
-func resourceEdgeKVDelete(_ context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceEdgeKVDelete(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("EdgeKV", "resourceEdgeKVDelete")
+	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
+	client := inst.Client(meta)
 	logger.Debug("Deleting EdgeKV namespace configuration")
-	logger.Info("EdgeKV namespace deletion is highly discouraged - resource will only be removed from local state")
+
+	name, err := tf.GetStringValue("namespace_name", rd)
+	if err != nil {
+		return diag.Errorf("could not get 'namespace_name' attribute: %s", err)
+	}
+
+	network, err := tf.GetStringValue("network", rd)
+	if err != nil {
+		return diag.Errorf("could not get 'network' attribute: %s", err)
+	}
+
+	// We do not delete the namespace if there are any items in it: they should have been removed
+	// while deleting corresponding akamai_edgekv_group_items resources.
+	//
+	// We need to wait in a loop since EdgeKV is a distributed database and checks for empty
+	// groups from akamai_edgekv_group_items' delete may have been done on a different replica.
+	//
+	// Timeout is set to 1 minute (deleteTimeout), because the user may have not deleted all groups
+	// anyway (controlled outside TF) and there is no point in waiting 20 minutes in such case.
+	err = waitUntilNoGroupsInNamespace(ctx, client, name, network)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	_, err = client.DeleteEdgeKVNamespace(ctx, edgeworkers.DeleteEdgeKVNamespaceRequest{
+		Network: edgeworkers.NamespaceNetwork(network),
+		Name:    name,
+		Sync:    true, // remove immediately
+	})
+	if err != nil {
+		return diag.Errorf("could not delete namespace '%s' in network '%s': %s",
+			name, network, err)
+	}
+
 	rd.SetId("")
 	return nil
 }
@@ -283,6 +319,37 @@ func displayGroupIDWarning() schema.SchemaValidateDiagFunc {
 				Summary:       `Attribute "group_id" is required in order to support the next EdgeKV API release. Currently the value is not used.`,
 				AttributePath: path,
 			},
+		}
+	}
+}
+
+// waitUntilNoGroupsInNamespace waits until there are no groups in the namespace
+func waitUntilNoGroupsInNamespace(ctx context.Context, client edgeworkers.Edgeworkers, name string, network string) error {
+	ctx, cancel := context.WithTimeout(ctx, deleteTimeout)
+	defer cancel()
+	for {
+		select {
+		case <-time.After(pollForConsistentEdgeKVDatabaseInterval):
+			groups, err := client.ListGroupsWithinNamespace(ctx, edgeworkers.ListGroupsWithinNamespaceRequest{
+				Network:     edgeworkers.NamespaceNetwork(network),
+				NamespaceID: name,
+			})
+			if errors.Is(err, edgeworkers.ErrNotFound) {
+				return nil
+			}
+			if err != nil {
+				return fmt.Errorf("could not get groups within namespace '%s' in network '%s': %s", name, network, err)
+			}
+
+			// Theoretically, API should always return 404 if there are no groups in the namespace,
+			// but there is no harm in an extra check.
+			if len(groups) == 0 {
+				return nil
+			}
+		case <-ctx.Done():
+			return fmt.Errorf("namespace '%s' in network '%s' has groups, "+
+				"please remove all items from this namespace before trying to delete the resource",
+				name, network)
 		}
 	}
 }
