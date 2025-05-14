@@ -64,7 +64,9 @@
 
 
 
-
+* mTLS KeyStore:
+    * Added new data sources:
+        * `data_akamai_mtlskeystore_account_ca_certificates` - lists CA certificates under the account.
 
 
 
