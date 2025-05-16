@@ -21,7 +21,8 @@
 
 
 
-
+* PAPI
+  * Modified `akamai_edge_hostname` resource - replaced no-op destroy with fully developed delete.  
 
 
 
@@ -52,7 +53,9 @@
 
 
 
-
+* PAPI
+  * Increased `akamai_edge_hostname` resource default timeout to 45 minutes.
+  * Added support for whole resource drift in `akamai_edge_hostname` resource.
 
 
 

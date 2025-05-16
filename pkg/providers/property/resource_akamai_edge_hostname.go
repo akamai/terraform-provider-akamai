@@ -29,9 +29,16 @@ const (
 	minDomainPrefixLengthAkamaized = 4
 )
 
+const (
+	changeRequestStatusPending   = "PENDING"
+	changeRequestStatusSucceeded = "SUCCEEDED"
+	changeRequestStatusFailed    = "FAILED"
+	changeRequestStatusIgnored   = "IGNORED"
+)
+
 var (
-	// EgdeHostnameCreatePollInterval is the interval for polling an edgehostname creation
-	EgdeHostnameCreatePollInterval = time.Minute
+	// EgdeHostnamePollInterval is the interval for polling an edgehostname creation or deletion
+	EgdeHostnamePollInterval = time.Minute
 
 	// domainPrefixPatterns maps domain suffixes to their respective regex patterns for validating domain prefixes
 	domainPrefixPatterns = map[string]*regexp.Regexp{
@@ -39,6 +46,8 @@ var (
 		"default":       regexp.MustCompile(`^[A-Za-z]([A-Za-z0-9.-]*[A-Za-z0-9])?(\.)?$`),
 	}
 )
+
+var defaultEdgeHostnameTimeout = time.Minute * 45
 
 func resourceSecureEdgeHostName() *schema.Resource {
 	return &schema.Resource{
@@ -54,7 +63,7 @@ func resourceSecureEdgeHostName() *schema.Resource {
 		},
 		Schema: akamaiSecureEdgeHostNameSchema,
 		Timeouts: &schema.ResourceTimeout{
-			Default: &timeouts.SDKDefaultTimeout,
+			Default: &defaultEdgeHostnameTimeout,
 		},
 	}
 }
@@ -234,7 +243,7 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 			return diag.FromErr(err)
 		}
 		hapiClient := HapiClient(meta)
-		err = waitForHAPIPropagation(ctx, hapiClient, edgeHostnameID)
+		_, err = waitForHAPIPropagation(ctx, hapiClient, edgeHostnameID)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -339,6 +348,11 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 	}
 
 	foundEdgeHostname, err := findEdgeHostname(edgeHostnames.EdgeHostnames, edgeHostname)
+	if err != nil && errors.Is(err, ErrEdgeHostnameNotFound) {
+		logger.Info("edge hostname was deleted outside of terraform")
+		d.SetId("")
+		return nil
+	}
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -371,7 +385,7 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 
 		hapiClient := HapiClient(meta)
 		// in theory this call is redundant, added here as safeguard
-		err = waitForHAPIPropagation(ctx, hapiClient, edgeHostnameID)
+		_, err = waitForHAPIPropagation(ctx, hapiClient, edgeHostnameID)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -494,7 +508,7 @@ func patchEdgeHostname(ctx context.Context, d *schema.ResourceData, meta meta.Me
 	}
 
 	hapiClient := HapiClient(meta)
-	err = waitForHAPIPropagation(ctx, hapiClient, edgeHostnameID)
+	_, err = waitForHAPIPropagation(ctx, hapiClient, edgeHostnameID)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -516,30 +530,30 @@ Failed to restore previous local schema values. The schema will remain in tainte
 	return nil
 }
 
-func waitForHAPIPropagation(ctx context.Context, hapiClient hapi.HAPI, edgeHostnameID int) error {
+func waitForHAPIPropagation(ctx context.Context, hapiClient hapi.HAPI, edgeHostnameID int) (*hapi.GetEdgeHostnameResponse, error) {
 	retries := 0
 	for {
 		select {
-		case <-time.After(EgdeHostnameCreatePollInterval):
+		case <-time.After(EgdeHostnamePollInterval):
 			resp, err := hapiClient.GetEdgeHostname(ctx, edgeHostnameID)
 			if resp == nil && err != nil {
 				var target = &hapi.Error{}
 				if !errors.As(err, &target) {
-					return fmt.Errorf("error has unexpected type: %T", err)
+					return nil, fmt.Errorf("error has unexpected type: %T", err)
 				}
 				if target.Status != 200 {
 					retries++
 					if retries > retriesMax {
-						return fmt.Errorf("reached max number of retries: %d", retries-1)
+						return nil, fmt.Errorf("reached max number of retries: %d", retries-1)
 					}
 					continue
 				}
 			}
 
-			return nil
+			return resp, nil
 
 		case <-ctx.Done():
-			return fmt.Errorf("update edge hostname context terminated: %s", ctx.Err())
+			return nil, fmt.Errorf("get edge hostname context terminated: %s", ctx.Err())
 		}
 	}
 }
@@ -552,7 +566,7 @@ func waitForChange(ctx context.Context, client hapi.HAPI, changeID int) error {
 		if err != nil {
 			return err
 		}
-		if change.Status == "PENDING" {
+		if change.Status == changeRequestStatusPending {
 			select {
 			case <-time.After(time.Second * 10):
 			case <-ctx.Done():
@@ -560,20 +574,76 @@ func waitForChange(ctx context.Context, client hapi.HAPI, changeID int) error {
 			}
 			continue
 		}
-		if change.Status == "SUCCEEDED" {
+		if change.Status == changeRequestStatusSucceeded {
 			return nil
 		}
 		return fmt.Errorf("unexpected change status: %s", change.Status)
 	}
 }
 
-func resourceSecureEdgeHostNameDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceSecureEdgeHostNameDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameDelete")
-	logger.Debug("DELETING")
-	logger.Info("PAPI does not support edge hostname deletion - resource will only be removed from state")
+
+	edgeHostnameID, err := strconv.Atoi(strings.TrimPrefix(d.Id(), "ehn_"))
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	hapiClient := HapiClient(meta)
+	hostname, err := waitForHAPIPropagation(ctx, hapiClient, edgeHostnameID)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	emails, err := tf.GetListValue("status_update_email", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+
+	statusUpdateEmail := make([]string, 0)
+	for _, email := range emails {
+		statusUpdateEmail = append(statusUpdateEmail, email.(string))
+	}
+
+	deleteEdgeHostname, err := hapiClient.DeleteEdgeHostname(ctx, hapi.DeleteEdgeHostnameRequest{
+		DNSZone:           hostname.DNSZone,
+		RecordName:        hostname.RecordName,
+		StatusUpdateEmail: statusUpdateEmail,
+		Comments:          hostname.Comments,
+	})
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	for deleteInProgress := true; deleteInProgress; {
+		select {
+		case <-time.After(EgdeHostnamePollInterval):
+			deleteStatus, err := hapiClient.GetChangeRequest(ctx, hapi.GetChangeRequest{ChangeID: deleteEdgeHostname.ChangeID})
+			if err != nil {
+				return diag.FromErr(err)
+			}
+
+			switch deleteStatus.Status {
+			case changeRequestStatusSucceeded:
+				deleteInProgress = false
+				continue
+			case changeRequestStatusFailed, changeRequestStatusIgnored:
+				return diag.Diagnostics{diag.Diagnostic{
+					Severity: diag.Error,
+					Summary:  fmt.Sprintf("edgehostname deletion request got status %s", deleteStatus.Status),
+					Detail:   deleteStatus.StatusMessage,
+				}}
+			case changeRequestStatusPending:
+				logger.Debugf("edgehostname %d deletion is not yet ready, waiting for another attempt", edgeHostnameID)
+			}
+		case <-ctx.Done():
+			return diag.FromErr(fmt.Errorf("delete edge hostname context terminated: %s", ctx.Err()))
+		}
+	}
+
+	logger.Info("edge hostname was deleted successfully")
 	d.SetId("")
-	logger.Debugf("DONE")
 	return nil
 }
 

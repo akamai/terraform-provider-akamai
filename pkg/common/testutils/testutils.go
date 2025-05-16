@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"regexp"
 	"testing"
+
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 // tfTestTempDir specifies the location of tmp directory which will be used by provider SDK's testing framework
@@ -59,4 +62,17 @@ type TattleT struct{ *testing.T }
 func (t TattleT) FailNow() {
 	t.T.Helper()
 	t.T.Fatalf("FAIL: %s", t.T.Name())
+}
+
+// TestStepDestroyFailed creates a terraform test step, to work around an issue of verifying error if resource destroy failed correctly.
+// Problem: When throwing an error from destroy terraform units produce “Error running post-test destroy, there may be dangling resources" because
+// Terraform requires that destroy is successful to clean up the resources. Adding this step to the end will cause destroy to be triggered twice:
+// First one will test the erroneous behaviour, the second one will be successful (to fulfil Terraform units requirement).
+// Usage: add returned test step as the last step with the same config file as in previous step and expected error message.
+func TestStepDestroyFailed(config string, expectedError *regexp.Regexp) resource.TestStep {
+	return resource.TestStep{
+		Config:      config,
+		Destroy:     true,
+		ExpectError: expectedError,
+	}
 }
