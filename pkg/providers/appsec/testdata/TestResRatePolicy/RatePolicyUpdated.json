@@ -67,5 +67,6 @@
     "sameActionOnIpv6": false,
     "type": "WAF",
     "useXForwardForHeaders": true,
-    "counterType": "region_aggregated"
+    "counterType": "region_aggregated",
+    "penaltyBoxDuration": "THIRTY_MINUTES"
 }

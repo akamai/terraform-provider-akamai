@@ -45,6 +45,11 @@ func suppressRatePolicyDiffs(_, oldString, newString string, _ *schema.ResourceD
 		newResp.CounterType = "per_edge"
 	}
 
+	// Set default value if not set, then check if there is a diff
+	if oldResp.PenaltyBoxDuration != newResp.PenaltyBoxDuration && len(newResp.PenaltyBoxDuration) == 0 {
+		newResp.PenaltyBoxDuration = "TEN_MINUTES"
+	}
+
 	n, err := json.Marshal(newResp)
 	if err != nil {
 		log.Printf("unable to marshal new rate policy: %s", err)

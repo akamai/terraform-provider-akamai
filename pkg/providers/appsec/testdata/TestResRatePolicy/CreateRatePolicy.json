@@ -61,5 +61,6 @@
             "positiveMatch": true,
             "valueInRange": false
         }
-    ]
+    ],
+    "penaltyBoxDuration": "THIRTY_MINUTES"
 }

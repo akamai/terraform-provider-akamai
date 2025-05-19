@@ -96,7 +96,7 @@ func TestAkamaiRatePolicy_res_basic(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
-	t.Run("suppress counterType attribute", func(t *testing.T) {
+	t.Run("suppress counterType and penaltyBoxDuration attributes", func(t *testing.T) {
 		configResponse := appsec.GetConfigurationResponse{}
 		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &configResponse)
 		require.NoError(t, err)

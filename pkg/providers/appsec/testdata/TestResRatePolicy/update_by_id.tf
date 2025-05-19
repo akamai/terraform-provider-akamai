@@ -72,7 +72,8 @@ resource "akamai_appsec_rate_policy" "test" {
             "valueInRange": false
         }
     ],
-    "counterType": "region_aggregated"
+    "counterType": "region_aggregated",
+    "penaltyBoxDuration": "THIRTY_MINUTES"
 }
 EOF
 }

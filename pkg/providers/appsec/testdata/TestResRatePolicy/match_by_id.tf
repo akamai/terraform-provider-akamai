@@ -69,7 +69,8 @@ resource "akamai_appsec_rate_policy" "test" {
             "positiveMatch": true,
             "valueInRange": false
         }
-    ]
+    ],
+    "penaltyBoxDuration": "THIRTY_MINUTES"
 }
 EOF
 }

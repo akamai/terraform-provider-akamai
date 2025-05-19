@@ -66,5 +66,6 @@
     "sameActionOnIpv6": false,
     "type": "WAF",
     "useXForwardForHeaders": true,
-    "counterType": "per_edge"
+    "counterType": "per_edge",
+    "penaltyBoxDuration": "TEN_MINUTES"
 }
