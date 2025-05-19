@@ -56,6 +56,9 @@
 * PAPI
   * Increased `akamai_edge_hostname` resource default timeout to 45 minutes.
   * Added support for whole resource drift in `akamai_edge_hostname` resource.
+  
+* PAPI
+  * Added support for the new rule format `v2025-04-29`. List of changes can be found [here](https://techdocs.akamai.com/terraform/docs/rule-format-changes#v2025-04-29).
 
 
 

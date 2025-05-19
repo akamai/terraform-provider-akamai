@@ -3268,7 +3268,7 @@ func getBehaviorsSchemaV20250324() map[string]*schema.Schema {
 					},
 					"methods": {
 						Optional:    true,
-						Description: "Specifies any combination of the following methods: `DELETE`, `GET`, `PATCH`, `POST`, and `PUT` that are allowed when accessing the resource from an external domain.",
+						Description: "Specifies any combination of the following methods that are allowed when accessing the resource from an external domain: `DELETE`, `GET`, `PATCH`, `POST`, `HEAD`, and `PUT`.",
 						Type:        schema.TypeList,
 						Elem: &schema.Schema{
 							Type: schema.TypeString,
@@ -5173,7 +5173,7 @@ func getBehaviorsSchemaV20250324() map[string]*schema.Schema {
 					},
 					"enable_deny_request": {
 						Optional:    true,
-						Description: "This denies a request from a client that doesn't match what you've set for the options in this behavior. When disabled, non-matching requests are allowed, but you can incorporate a custom handling operation, such as reviewing generated log entries to see the discrepancies, enable the `Client-To-Edge` authentication header, or issue a custom message.",
+						Description: "This denies a request from a client that doesn't match what you've set for the options in this behavior. When disabled, non-matching requests are allowed, but you can incorporate a custom handling operation, such as reviewing generated log entries to see the discrepancies, enable the `Client-To-Edge` authentication header, or issue a custom message. This behavior only checks the `Certificate Provisioning System` settings. It doesn't check the current client certificate and doesn't deny invalid certs.",
 						Type:        schema.TypeBool,
 					},
 				},
@@ -6181,7 +6181,7 @@ func getBehaviorsSchemaV20250324() map[string]*schema.Schema {
 		"gov_cloud": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior cannot be used in includes.",
+			Description: "This behavior is for internal usage only. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -6519,7 +6519,7 @@ func getBehaviorsSchemaV20250324() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"max_age": {
-						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"ZERO_MINS", "TEN_MINS", "ONE_DAY", "ONE_MONTH", "THREE_MONTHS", "SIX_MONTHS", "ONE_YEAR"}, false)),
+						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"ZERO_MINS", "TEN_MINS", "ONE_DAY", "ONE_MONTH", "THREE_MONTHS", "SIX_MONTHS", "ONE_YEAR", "TWO_YEARS"}, false)),
 						Optional:         true,
 						Description:      "Specifies the duration for which to apply HSTS for new browser connections.",
 						Type:             schema.TypeString,

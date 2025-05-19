@@ -3209,7 +3209,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 					},
 					"methods": {
 						Optional:    true,
-						Description: "Specifies any combination of the following methods: `DELETE`, `GET`, `PATCH`, `POST`, and `PUT` that are allowed when accessing the resource from an external domain.",
+						Description: "Specifies any combination of the following methods that are allowed when accessing the resource from an external domain: `DELETE`, `GET`, `PATCH`, `POST`, `HEAD`, and `PUT`.",
 						Type:        schema.TypeList,
 						Elem: &schema.Schema{
 							Type: schema.TypeString,
@@ -6194,7 +6194,7 @@ func getBehaviorsSchemaV20230530() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"max_age": {
-						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"ZERO_MINS", "TEN_MINS", "ONE_DAY", "ONE_MONTH", "THREE_MONTHS", "SIX_MONTHS", "ONE_YEAR"}, false)),
+						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"ZERO_MINS", "TEN_MINS", "ONE_DAY", "ONE_MONTH", "THREE_MONTHS", "SIX_MONTHS", "ONE_YEAR", "TWO_YEARS"}, false)),
 						Optional:         true,
 						Description:      "Specifies the duration for which to apply HSTS for new browser connections.",
 						Type:             schema.TypeString,
