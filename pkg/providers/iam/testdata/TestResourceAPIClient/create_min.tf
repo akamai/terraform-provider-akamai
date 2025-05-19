@@ -7,6 +7,7 @@ resource "akamai_iam_api_client" "test" {
   client_type      = "CLIENT"
   client_name      = "mw+2_1"
   lock             = true
+  credential       = {}
   group_access = {
     clone_authorized_user_groups = false
     groups = [

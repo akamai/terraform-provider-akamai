@@ -16,6 +16,7 @@ import (
 type testData struct {
 	createAPIClientRequest                   iam.CreateAPIClientRequest
 	createAPIClientResponse                  iam.CreateAPIClientResponse
+	updateCredentialRequest                  iam.UpdateCredentialRequest
 	updateAPIClientNotificationEmailsRequest iam.UpdateAPIClientRequest
 	getAPIClientRequest                      iam.GetAPIClientRequest
 	getAPIClientResponse                     iam.GetAPIClientResponse
@@ -41,6 +42,7 @@ func TestResourceAPIClient(t *testing.T) {
 				// Read
 				mockGetAPIClient(m, createData)
 				// Delete
+				mockDeactivateCredential(m, createData)
 				mockDeleteAPIClient(m, createData)
 			},
 			createData: fullData,
@@ -86,6 +88,7 @@ func TestResourceAPIClient(t *testing.T) {
 				// Read
 				mockGetAPIClient(m, createData)
 				// Delete
+				mockDeactivateCredential(m, createData)
 				mockDeleteAPIClient(m, createData)
 			},
 			createData: fullData,
@@ -131,6 +134,7 @@ func TestResourceAPIClient(t *testing.T) {
 				// Read
 				mockGetAPIClient(m, createData)
 				// Delete
+				mockDeactivateCredential(m, createData)
 				mockDeleteAPIClient(m, createData)
 			},
 			createData: fullData,
@@ -163,6 +167,7 @@ func TestResourceAPIClient(t *testing.T) {
 				// Read
 				mockGetAPIClient(m, createData)
 				// Delete
+				mockDeactivateCredential(m, createData)
 				mockDeleteAPIClient(m, createData)
 			},
 			createData: fullData,
@@ -194,6 +199,7 @@ func TestResourceAPIClient(t *testing.T) {
 				// Read
 				mockGetAPIClient(m, createData)
 				// Delete
+				mockDeactivateCredential(m, createData)
 				mockDeleteAPIClient(m, createData)
 			},
 			createData: minData,
@@ -211,6 +217,377 @@ func TestResourceAPIClient(t *testing.T) {
 						CheckMissing("purge_options.can_purge_by_cp_code").
 						CheckMissing("purge_options.cp_code_access.all_current_and_new_cp_codes").
 						CheckMissing("purge_options.cp_code_access.cp_codes.0").
+						Build(),
+				},
+			},
+		},
+		"happy path - create with all fields set and custom credential details": {
+			init: func(m *iam.Mock, createData, _ testData) {
+				// Create
+				mockCreateAPIClient(m, createData)
+				mockUpdateCredential(m, createData)
+				mockGetAPIClient(m, createData)
+				// Read
+				mockGetAPIClient(m, createData)
+				// Delete
+				mockDeactivateCredential(m, createData)
+				mockDeleteAPIClient(m, createData)
+			},
+			createData: fullDataWithCredential,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/with_credential/create_all_with_credential_detail.tf"),
+					Check: fullDataChecker.
+						CheckEqual("group_access.groups.0.sub_groups.#", "1").
+						CheckEqual("group_access.groups.0.sub_groups.0.group_id", "333").
+						CheckEqual("group_access.groups.0.sub_groups.0.group_name", "group2_1").
+						CheckEqual("group_access.groups.0.sub_groups.0.is_blocked", "false").
+						CheckEqual("group_access.groups.0.sub_groups.0.parent_group_id", "0").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_description", "group description").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_id", "540").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_name", "role 2").
+						CheckEqual("credential.expires_on", "2026-06-13T14:48:07Z").
+						CheckEqual("credential.description", "Test API Client Credential").
+						Build(),
+				},
+			},
+		},
+		"happy path - create with all fields set and credential inactive status": {
+			init: func(m *iam.Mock, createData, _ testData) {
+				// Create
+				mockCreateAPIClient(m, createData)
+				mockUpdateCredential(m, createData)
+				mockGetAPIClient(m, createData)
+				// Read
+				mockGetAPIClient(m, createData)
+				// Delete
+				mockDeleteAPIClient(m, createData)
+			},
+			createData: fullDataWithInactiveCredential,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/with_credential/create_all_with_credential_inactive.tf"),
+					Check: fullDataChecker.
+						CheckEqual("group_access.groups.0.sub_groups.#", "1").
+						CheckEqual("group_access.groups.0.sub_groups.0.group_id", "333").
+						CheckEqual("group_access.groups.0.sub_groups.0.group_name", "group2_1").
+						CheckEqual("group_access.groups.0.sub_groups.0.is_blocked", "false").
+						CheckEqual("group_access.groups.0.sub_groups.0.parent_group_id", "0").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_description", "group description").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_id", "540").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_name", "role 2").
+						CheckEqual("credential.expires_on", "2025-06-13T14:48:07Z").
+						CheckEqual("credential.description", "Test API Client Credential").
+						CheckEqual("credential.status", "INACTIVE").
+						CheckEqual("credential.actions.deactivate", "false").
+						CheckEqual("credential.actions.activate", "true").
+						CheckEqual("credential.actions.delete", "true").
+						CheckEqual("active_credential_count", "0").
+						Build(),
+				},
+			},
+		},
+		"happy path - create with credential, encounter diff in read which returns credential as DELETED": {
+			init: func(m *iam.Mock, createData, _ testData) {
+				// Create
+				mockCreateAPIClient(m, createData)
+				mockUpdateCredential(m, createData)
+				mockGetAPIClient(m, createData)
+				// Read
+				mockGetAPIClient(m, createData)
+				// Delete
+				mockDeleteAPIClient(m, createData)
+			},
+			createData: fullDataWithCredentialDrift,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/with_credential/create_all_with_credential_detail.tf"),
+					Check: fullDataChecker.
+						CheckEqual("group_access.groups.0.sub_groups.#", "1").
+						CheckEqual("group_access.groups.0.sub_groups.0.group_id", "333").
+						CheckEqual("group_access.groups.0.sub_groups.0.group_name", "group2_1").
+						CheckEqual("group_access.groups.0.sub_groups.0.is_blocked", "false").
+						CheckEqual("group_access.groups.0.sub_groups.0.parent_group_id", "0").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_description", "group description").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_id", "540").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_name", "role 2").
+						CheckEqual("credential.expires_on", "2026-06-13T14:48:07Z").
+						CheckEqual("credential.description", "Test API Client Credential").
+						CheckEqual("credential.status", "DELETED").
+						CheckEqual("credential.actions.deactivate", "false").
+						CheckEqual("credential.actions.activate", "false").
+						CheckEqual("credential.actions.delete", "false").
+						CheckEqual("credential.actions.edit_description", "false").
+						CheckEqual("credential.actions.edit_expiration", "false").
+						CheckEqual("active_credential_count", "1").
+						Build(),
+				},
+			},
+		},
+		"happy path - create without credential, update by changing description and expires_on": {
+			init: func(m *iam.Mock, createData, updateData testData) {
+				// Create
+				mockCreateAPIClient(m, createData)
+				mockGetAPIClient(m, createData)
+				// Read
+				mockGetAPIClient(m, createData)
+				mockGetAPIClient(m, createData)
+				// Update
+				mockUpdateCredential(m, updateData)
+				mockGetAPIClient(m, updateData)
+				// Read
+				mockGetAPIClient(m, updateData)
+				// Delete
+				mockDeactivateCredential(m, updateData)
+				mockDeleteAPIClient(m, updateData)
+			},
+			createData: fullData,
+			updateData: fullDataWithCredential,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/create_all.tf"),
+					Check: fullDataChecker.
+						CheckEqual("group_access.groups.0.sub_groups.#", "1").
+						CheckEqual("group_access.groups.0.sub_groups.0.group_id", "333").
+						CheckEqual("group_access.groups.0.sub_groups.0.group_name", "group2_1").
+						CheckEqual("group_access.groups.0.sub_groups.0.is_blocked", "false").
+						CheckEqual("group_access.groups.0.sub_groups.0.parent_group_id", "0").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_description", "group description").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_id", "540").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_name", "role 2").
+						Build(),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/with_credential/create_all_with_credential_detail.tf"),
+					Check: fullDataChecker.
+						CheckEqual("group_access.groups.0.sub_groups.#", "1").
+						CheckEqual("group_access.groups.0.sub_groups.0.group_id", "333").
+						CheckEqual("group_access.groups.0.sub_groups.0.group_name", "group2_1").
+						CheckEqual("group_access.groups.0.sub_groups.0.is_blocked", "false").
+						CheckEqual("group_access.groups.0.sub_groups.0.parent_group_id", "0").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_description", "group description").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_id", "540").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_name", "role 2").
+						CheckEqual("credential.description", "Test API Client Credential").
+						CheckEqual("credential.expires_on", "2026-06-13T14:48:07Z").
+						Build(),
+				},
+			},
+		},
+		"happy path - create without credential, update by changing description, expires_on and status": {
+			init: func(m *iam.Mock, createData, updateData testData) {
+				// Create
+				mockCreateAPIClient(m, createData)
+				mockGetAPIClient(m, createData)
+				// Read
+				mockGetAPIClient(m, createData)
+				mockGetAPIClient(m, createData)
+				// Update
+				mockUpdateCredential(m, updateData)
+				mockGetAPIClient(m, updateData)
+				// Read
+				mockGetAPIClient(m, updateData)
+				// Delete
+				mockDeleteAPIClient(m, updateData)
+			},
+			createData: fullData,
+			updateData: fullDataWithInactiveCredential,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/create_all.tf"),
+					Check: fullDataChecker.
+						CheckEqual("group_access.groups.0.sub_groups.#", "1").
+						CheckEqual("group_access.groups.0.sub_groups.0.group_id", "333").
+						CheckEqual("group_access.groups.0.sub_groups.0.group_name", "group2_1").
+						CheckEqual("group_access.groups.0.sub_groups.0.is_blocked", "false").
+						CheckEqual("group_access.groups.0.sub_groups.0.parent_group_id", "0").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_description", "group description").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_id", "540").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_name", "role 2").
+						Build(),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/with_credential/create_all_with_credential_inactive.tf"),
+					Check: fullDataChecker.
+						CheckEqual("group_access.groups.0.sub_groups.#", "1").
+						CheckEqual("group_access.groups.0.sub_groups.0.group_id", "333").
+						CheckEqual("group_access.groups.0.sub_groups.0.group_name", "group2_1").
+						CheckEqual("group_access.groups.0.sub_groups.0.is_blocked", "false").
+						CheckEqual("group_access.groups.0.sub_groups.0.parent_group_id", "0").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_description", "group description").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_id", "540").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_name", "role 2").
+						CheckEqual("credential.description", "Test API Client Credential").
+						CheckEqual("credential.status", "INACTIVE").
+						CheckEqual("credential.expires_on", "2025-06-13T14:48:07Z").
+						CheckEqual("credential.actions.deactivate", "false").
+						CheckEqual("credential.actions.activate", "true").
+						CheckEqual("credential.actions.delete", "true").
+						CheckEqual("active_credential_count", "0").
+						Build(),
+				},
+			},
+		},
+		"happy path - create with credential, update by changing description and expires_on": {
+			init: func(m *iam.Mock, createData, updateData testData) {
+				// Create
+				mockCreateAPIClient(m, createData)
+				mockUpdateCredential(m, createData)
+				mockGetAPIClient(m, createData)
+				// Read
+				mockGetAPIClient(m, createData)
+				mockGetAPIClient(m, createData)
+				// Update
+				mockUpdateCredential(m, updateData)
+				mockGetAPIClient(m, updateData)
+				// Read
+				mockGetAPIClient(m, updateData)
+				// Delete
+				mockDeactivateCredential(m, updateData)
+				mockDeleteAPIClient(m, updateData)
+			},
+			createData: fullDataWithCredential,
+			updateData: fullDataWithCredential2,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/with_credential/create_all_with_credential_detail.tf"),
+					Check: fullDataChecker.
+						CheckEqual("group_access.groups.0.sub_groups.#", "1").
+						CheckEqual("group_access.groups.0.sub_groups.0.group_id", "333").
+						CheckEqual("group_access.groups.0.sub_groups.0.group_name", "group2_1").
+						CheckEqual("group_access.groups.0.sub_groups.0.is_blocked", "false").
+						CheckEqual("group_access.groups.0.sub_groups.0.parent_group_id", "0").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_description", "group description").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_id", "540").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_name", "role 2").
+						CheckEqual("credential.expires_on", "2026-06-13T14:48:07Z").
+						CheckEqual("credential.description", "Test API Client Credential").
+						Build(),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/with_credential/create_all_with_credential_detail_2.tf"),
+					Check: fullDataChecker.
+						CheckEqual("group_access.groups.0.sub_groups.#", "1").
+						CheckEqual("group_access.groups.0.sub_groups.0.group_id", "333").
+						CheckEqual("group_access.groups.0.sub_groups.0.group_name", "group2_1").
+						CheckEqual("group_access.groups.0.sub_groups.0.is_blocked", "false").
+						CheckEqual("group_access.groups.0.sub_groups.0.parent_group_id", "0").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_description", "group description").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_id", "540").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_name", "role 2").
+						CheckEqual("credential.description", "Test API Client Credential 2").
+						CheckEqual("credential.expires_on", "2027-06-13T14:48:07Z").
+						Build(),
+				},
+			},
+		},
+		"happy path - create with credential, update by changing description, expires_on and status": {
+			init: func(m *iam.Mock, createData, updateData testData) {
+				// Create
+				mockCreateAPIClient(m, createData)
+				mockUpdateCredential(m, createData)
+				mockGetAPIClient(m, createData)
+				// Read
+				mockGetAPIClient(m, createData)
+				mockGetAPIClient(m, createData)
+				// Update
+				mockUpdateCredential(m, updateData)
+				mockGetAPIClient(m, updateData)
+				// Read
+				mockGetAPIClient(m, updateData)
+				// Delete
+				mockDeleteAPIClient(m, updateData)
+			},
+			createData: fullDataWithCredential,
+			updateData: fullDataWithInactiveCredential2,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/with_credential/create_all_with_credential_detail.tf"),
+					Check: fullDataChecker.
+						CheckEqual("group_access.groups.0.sub_groups.#", "1").
+						CheckEqual("group_access.groups.0.sub_groups.0.group_id", "333").
+						CheckEqual("group_access.groups.0.sub_groups.0.group_name", "group2_1").
+						CheckEqual("group_access.groups.0.sub_groups.0.is_blocked", "false").
+						CheckEqual("group_access.groups.0.sub_groups.0.parent_group_id", "0").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_description", "group description").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_id", "540").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_name", "role 2").
+						CheckEqual("credential.expires_on", "2026-06-13T14:48:07Z").
+						CheckEqual("credential.description", "Test API Client Credential").
+						Build(),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/with_credential/create_all_with_credential_inactive_2.tf"),
+					Check: fullDataChecker.
+						CheckEqual("group_access.groups.0.sub_groups.#", "1").
+						CheckEqual("group_access.groups.0.sub_groups.0.group_id", "333").
+						CheckEqual("group_access.groups.0.sub_groups.0.group_name", "group2_1").
+						CheckEqual("group_access.groups.0.sub_groups.0.is_blocked", "false").
+						CheckEqual("group_access.groups.0.sub_groups.0.parent_group_id", "0").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_description", "group description").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_id", "540").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_name", "role 2").
+						CheckEqual("credential.description", "Test API Client Credential 2").
+						CheckEqual("credential.status", "INACTIVE").
+						CheckEqual("credential.expires_on", "2027-06-13T14:48:07Z").
+						CheckEqual("credential.actions.deactivate", "false").
+						CheckEqual("credential.actions.activate", "true").
+						CheckEqual("credential.actions.delete", "true").
+						CheckEqual("active_credential_count", "0").
+						Build(),
+				},
+			},
+		},
+		"happy path - create with credential, update by changing description, expires_on and api client description - expect update credential and api client": {
+			init: func(m *iam.Mock, createData, updateData testData) {
+				// Create
+				mockCreateAPIClient(m, createData)
+				mockUpdateCredential(m, createData)
+				mockGetAPIClient(m, createData)
+				// Read
+				mockGetAPIClient(m, createData)
+				mockGetAPIClient(m, createData)
+				// Update
+				mockUpdateCredential(m, updateData)
+				mockUpdateAPIClient(m, updateData)
+				// Read
+				mockGetAPIClient(m, updateData)
+				// Delete
+				mockDeactivateCredential(m, updateData)
+				mockDeleteAPIClient(m, updateData)
+			},
+			createData: fullDataWithCredential,
+			updateData: fullDataWithCredential2AndClientDescription,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/with_credential/create_all_with_credential_detail.tf"),
+					Check: fullDataChecker.
+						CheckEqual("group_access.groups.0.sub_groups.#", "1").
+						CheckEqual("group_access.groups.0.sub_groups.0.group_id", "333").
+						CheckEqual("group_access.groups.0.sub_groups.0.group_name", "group2_1").
+						CheckEqual("group_access.groups.0.sub_groups.0.is_blocked", "false").
+						CheckEqual("group_access.groups.0.sub_groups.0.parent_group_id", "0").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_description", "group description").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_id", "540").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_name", "role 2").
+						CheckEqual("credential.expires_on", "2026-06-13T14:48:07Z").
+						CheckEqual("credential.description", "Test API Client Credential").
+						Build(),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/with_credential/create_all_with_credential_detail_2_and_api_client_description.tf"),
+					Check: fullDataChecker.
+						CheckEqual("group_access.groups.0.sub_groups.#", "1").
+						CheckEqual("group_access.groups.0.sub_groups.0.group_id", "333").
+						CheckEqual("group_access.groups.0.sub_groups.0.group_name", "group2_1").
+						CheckEqual("group_access.groups.0.sub_groups.0.is_blocked", "false").
+						CheckEqual("group_access.groups.0.sub_groups.0.parent_group_id", "0").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_description", "group description").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_id", "540").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_name", "role 2").
+						CheckEqual("credential.description", "Test API Client Credential 2").
+						CheckEqual("credential.expires_on", "2027-06-13T14:48:07Z").
+						CheckEqual("client_description", "Test API Client 2").
 						Build(),
 				},
 			},
@@ -235,6 +612,7 @@ func TestResourceAPIClient(t *testing.T) {
 				// Read
 				mockGetAPIClient(m, updateData)
 				// Delete
+				mockDeactivateCredential(m, createData)
 				mockDeleteAPIClient(m, updateData)
 			},
 			createData: minData,
@@ -309,6 +687,7 @@ func TestResourceAPIClient(t *testing.T) {
 				// Read
 				mockGetAPIClient(m, updateData)
 				// Delete
+				mockDeactivateCredential(m, createData)
 				mockDeleteAPIClient(m, updateData)
 			},
 			createData: minData,
@@ -424,6 +803,7 @@ func TestResourceAPIClient(t *testing.T) {
 				// Read
 				mockGetAPIClient(m, updateData)
 				// Delete
+				mockDeactivateCredential(m, createData)
 				mockDeleteAPIClient(m, updateData)
 			},
 			createData: minData,
@@ -527,6 +907,7 @@ func TestResourceAPIClient(t *testing.T) {
 				// Read
 				mockGetAPIClient(m, updateData)
 				// Delete
+				mockDeactivateCredential(m, createData)
 				mockDeleteAPIClient(m, updateData)
 			},
 			createData: minData,
@@ -598,6 +979,7 @@ func TestResourceAPIClient(t *testing.T) {
 				mockGetAPIClient(m, updateData)
 				mockGetAPIClient(m, updateData)
 				// Delete
+				mockDeactivateCredential(m, createData)
 				mockDeleteAPIClient(m, updateData)
 			},
 			createData: minData,
@@ -664,6 +1046,7 @@ func TestResourceAPIClient(t *testing.T) {
 				mockGetAPIClient(m, updateData)
 				mockGetAPIClient(m, updateData)
 				// Delete
+				mockDeactivateCredential(m, createData)
 				mockDeleteAPIClient(m, updateData)
 			},
 			createData: minData,
@@ -851,7 +1234,14 @@ func TestImportAPIClientResource(t *testing.T) {
 		CheckEqual("client_type", "CLIENT").
 		CheckEqual("created_by", "someuser").
 		CheckEqual("created_date", "2024-06-13T14:48:07Z").
-		CheckMissing("credential").
+		CheckEqual("credential.description", "Update this credential").
+		CheckEqual("credential.status", "ACTIVE").
+		CheckEqual("credential.expires_on", "2025-06-13T14:48:08Z").
+		CheckEqual("credential.actions.deactivate", "true").
+		CheckEqual("credential.actions.activate", "false").
+		CheckEqual("credential.actions.delete", "false").
+		CheckEqual("credential.actions.edit_expiration", "true").
+		CheckEqual("credential.actions.edit_description", "true").
 		CheckEqual("group_access.clone_authorized_user_groups", "false").
 		CheckEqual("group_access.groups.#", "1").
 		CheckEqual("group_access.groups.0.group_id", "123").
@@ -981,6 +1371,7 @@ func TestImportAPIClientResource(t *testing.T) {
 				// Read
 				mockGetAPIClient(m, updateData)
 				// Delete
+				mockDeactivateCredential(m, updateData)
 				mockDeleteAPIClient(m, updateData)
 			},
 			steps: []resource.TestStep{
@@ -1004,19 +1395,7 @@ func TestImportAPIClientResource(t *testing.T) {
 						CheckEqual("api_access.all_accessible_apis", "true").
 						CheckEqual("actions.lock", "true").
 						CheckEqual("actions.unlock", "false").
-						CheckMissing("credential.actions.activate").
-						CheckMissing("credential.actions.deactivate").
-						CheckMissing("credential.actions.delete").
-						CheckMissing("credential.actions.edit_description").
-						CheckMissing("credential.actions.edit_expiration").
 						CheckMissing("credential.client_secret").
-						CheckMissing("credential.client_secret").
-						CheckMissing("credential.client_token").
-						CheckMissing("credential.created_on").
-						CheckMissing("credential.credential_id").
-						CheckMissing("credential.description").
-						CheckMissing("credential.expires_on").
-						CheckMissing("credential.status").
 						CheckEqual("group_access.groups.0.sub_groups.#", "1").
 						CheckEqual("group_access.groups.0.sub_groups.0.group_id", "333").
 						CheckEqual("group_access.groups.0.sub_groups.0.group_name", "group2_1").
@@ -1045,6 +1424,7 @@ func TestImportAPIClientResource(t *testing.T) {
 				// Update attempt
 				mockGetAPIClient(m, data)
 				// Delete
+				mockDeactivateCredential(m, updateData)
 				mockDeleteAPIClient(m, updateData)
 			},
 			steps: []resource.TestStep{
@@ -1114,6 +1494,11 @@ func mockCreateAPIClient(m *iam.Mock, testData testData) *mock.Call {
 		Return(&testData.createAPIClientResponse, nil).Once()
 }
 
+func mockUpdateCredential(m *iam.Mock, testData testData) *mock.Call {
+	return m.On("UpdateCredential", testutils.MockContext, testData.updateCredentialRequest).
+		Return(nil, nil).Once()
+}
+
 func mockUpdateAPIClient(m *iam.Mock, testData testData) *mock.Call {
 	return m.On("UpdateAPIClient", testutils.MockContext, testData.updateAPIClientRequest).
 		Return(&testData.updateAPIClientResponse, nil).Once()
@@ -1144,6 +1529,13 @@ func mockUnlockAPIClient(m *iam.Mock, data testData) *mock.Call {
 func mockDeleteAPIClient(m *iam.Mock, testData testData) *mock.Call {
 	return m.On("DeleteAPIClient", testutils.MockContext, iam.DeleteAPIClientRequest{
 		ClientID: testData.createAPIClientResponse.ClientID,
+	}).Return(nil).Once()
+}
+
+func mockDeactivateCredential(m *iam.Mock, testData testData) *mock.Call {
+	return m.On("DeactivateCredential", testutils.MockContext, iam.DeactivateCredentialRequest{
+		ClientID:     testData.createAPIClientResponse.ClientID,
+		CredentialID: testData.createAPIClientResponse.Credentials[0].CredentialID,
 	}).Return(nil).Once()
 }
 
@@ -1335,6 +1727,96 @@ var (
 		},
 	}
 
+	customCredentials = []iam.APIClientCredential{
+		{
+			CredentialID: 4444,
+			ClientToken:  "token",
+			Status:       "ACTIVE",
+			CreatedOn:    test.NewTimeFromStringMust("2024-06-13T14:48:07.000Z"),
+			Description:  "Test API Client Credential",
+			ExpiresOn:    test.NewTimeFromStringMust("2026-06-13T14:48:07.000Z"),
+			Actions: iam.CredentialActions{
+				Deactivate:      true,
+				Delete:          false,
+				Activate:        false,
+				EditDescription: true,
+				EditExpiration:  true,
+			},
+		},
+	}
+
+	customCredentials2 = []iam.APIClientCredential{
+		{
+			CredentialID: 4444,
+			ClientToken:  "token",
+			Status:       "ACTIVE",
+			CreatedOn:    test.NewTimeFromStringMust("2024-06-13T14:48:07.000Z"),
+			Description:  "Test API Client Credential 2",
+			ExpiresOn:    test.NewTimeFromStringMust("2027-06-13T14:48:07.000Z"),
+			Actions: iam.CredentialActions{
+				Deactivate:      true,
+				Delete:          false,
+				Activate:        false,
+				EditDescription: true,
+				EditExpiration:  true,
+			},
+		},
+	}
+
+	customCredentialsDrift = []iam.APIClientCredential{
+		{
+			CredentialID: 4444,
+			ClientToken:  "token",
+			Status:       "DELETED",
+			CreatedOn:    test.NewTimeFromStringMust("2024-06-13T14:48:07.000Z"),
+			Description:  "Test API Client Credential",
+			ExpiresOn:    test.NewTimeFromStringMust("2026-06-13T14:48:07.000Z"),
+			Actions: iam.CredentialActions{
+				Deactivate:      false,
+				Delete:          false,
+				Activate:        false,
+				EditDescription: false,
+				EditExpiration:  false,
+			},
+		},
+	}
+
+	inactiveCredentials = []iam.APIClientCredential{
+		{
+			CredentialID: 4444,
+			ClientToken:  "token",
+			Status:       "INACTIVE",
+			CreatedOn:    test.NewTimeFromStringMust("2024-06-13T14:48:07.000Z"),
+			Description:  "Test API Client Credential",
+			ExpiresOn:    test.NewTimeFromStringMust("2025-06-13T14:48:07.000Z"),
+			Actions: iam.CredentialActions{
+				Deactivate:      false,
+				Delete:          true,
+				Activate:        true,
+				EditDescription: true,
+				EditExpiration:  true,
+			},
+		},
+	}
+
+	inactiveCredentials2 = []iam.APIClientCredential{
+		{
+			CredentialID: 4444,
+			ClientToken:  "token",
+			Status:       "INACTIVE",
+			CreatedOn:    test.NewTimeFromStringMust("2024-06-13T14:48:07.000Z"),
+			Description:  "Test API Client Credential 2",
+			ExpiresOn:    test.NewTimeFromStringMust("2027-06-13T14:48:07.000Z"),
+			Actions: iam.CredentialActions{
+				Deactivate:      false,
+				Delete:          true,
+				Activate:        true,
+				EditDescription: true,
+				EditExpiration:  true,
+			},
+		},
+	}
+
 	createCredentials = []iam.CreateAPIClientCredential{
 		{
 			CredentialID: 4444,
@@ -1413,6 +1895,46 @@ var (
 		IsLocked:           false,
 		NotificationEmails: []string{"mw+2@example.com"},
 		PurgeOptions:       &purgeOptions,
+	}
+
+	updateCredentialRequest = iam.UpdateCredentialRequest{
+		CredentialID: 4444,
+		ClientID:     "c1ien41d",
+		Body: iam.UpdateCredentialRequestBody{
+			Description: "Test API Client Credential",
+			ExpiresOn:   test.NewTimeFromStringMust("2026-06-13T14:48:07.000Z"),
+			Status:      iam.CredentialActive,
+		},
+	}
+
+	updateCredentialRequest2 = iam.UpdateCredentialRequest{
+		CredentialID: 4444,
+		ClientID:     "c1ien41d",
+		Body: iam.UpdateCredentialRequestBody{
+			Description: "Test API Client Credential 2",
+			ExpiresOn:   test.NewTimeFromStringMust("2027-06-13T14:48:07.000Z"),
+			Status:      iam.CredentialActive,
+		},
+	}
+
+	updateInactiveCredentialRequest = iam.UpdateCredentialRequest{
+		CredentialID: 4444,
+		ClientID:     "c1ien41d",
+		Body: iam.UpdateCredentialRequestBody{
+			Description: "Test API Client Credential",
+			ExpiresOn:   test.NewTimeFromStringMust("2025-06-13T14:48:07.000Z"),
+			Status:      iam.CredentialInactive,
+		},
+	}
+
+	updateInactiveCredentialRequest2 = iam.UpdateCredentialRequest{
+		CredentialID: 4444,
+		ClientID:     "c1ien41d",
+		Body: iam.UpdateCredentialRequestBody{
+			Description: "Test API Client Credential 2",
+			ExpiresOn:   test.NewTimeFromStringMust("2027-06-13T14:48:07.000Z"),
+			Status:      iam.CredentialInactive,
+		},
 	}
 
 	createAPIClientRequestMin = iam.CreateAPIClientRequest{
@@ -1574,6 +2096,180 @@ var (
 		PurgeOptions:       &purgeOptions,
 	}
 
+	getAPIClientResponseWithCustomCredential = iam.GetAPIClientResponse{
+		AccessToken:           "access_token",
+		Actions:               &unlockedClientActions,
+		ActiveCredentialCount: 1,
+		AllowAccountSwitch:    false,
+		APIAccess: iam.APIAccess{
+			AllAccessibleAPIs: false,
+			APIs:              apisGet,
+		},
+		AuthorizedUsers:         []string{"mw+2"},
+		BaseURL:                 "base_url",
+		CanAutoCreateCredential: false,
+		ClientDescription:       "Test API Client",
+		ClientID:                "c1ien41d",
+		ClientName:              "mw+2_1",
+		ClientType:              "CLIENT",
+		CreatedBy:               "someuser",
+		CreatedDate:             test.NewTimeFromStringMust("2024-06-13T14:48:07.000Z"),
+		Credentials:             customCredentials,
+		GroupAccess: iam.GroupAccess{
+			CloneAuthorizedUserGroups: false,
+			Groups:                    nestedGroups,
+		},
+		IPACL:              &ipACL,
+		IsLocked:           false,
+		NotificationEmails: []string{"mw+2@example.com"},
+		PurgeOptions:       &purgeOptions,
+	}
+
+	getAPIClientResponseWithCustomCredential2 = iam.GetAPIClientResponse{
+		AccessToken:           "access_token",
+		Actions:               &unlockedClientActions,
+		ActiveCredentialCount: 1,
+		AllowAccountSwitch:    false,
+		APIAccess: iam.APIAccess{
+			AllAccessibleAPIs: false,
+			APIs:              apisGet,
+		},
+		AuthorizedUsers:         []string{"mw+2"},
+		BaseURL:                 "base_url",
+		CanAutoCreateCredential: false,
+		ClientDescription:       "Test API Client",
+		ClientID:                "c1ien41d",
+		ClientName:              "mw+2_1",
+		ClientType:              "CLIENT",
+		CreatedBy:               "someuser",
+		CreatedDate:             test.NewTimeFromStringMust("2024-06-13T14:48:07.000Z"),
+		Credentials:             customCredentials2,
+		GroupAccess: iam.GroupAccess{
+			CloneAuthorizedUserGroups: false,
+			Groups:                    nestedGroups,
+		},
+		IPACL:              &ipACL,
+		IsLocked:           false,
+		NotificationEmails: []string{"mw+2@example.com"},
+		PurgeOptions:       &purgeOptions,
+	}
+
+	getAPIClientResponseWithCustomCredentialDrift = iam.GetAPIClientResponse{
+		AccessToken:           "access_token",
+		Actions:               &unlockedClientActions,
+		ActiveCredentialCount: 1,
+		AllowAccountSwitch:    false,
+		APIAccess: iam.APIAccess{
+			AllAccessibleAPIs: false,
+			APIs:              apisGet,
+		},
+		AuthorizedUsers:         []string{"mw+2"},
+		BaseURL:                 "base_url",
+		CanAutoCreateCredential: false,
+		ClientDescription:       "Test API Client",
+		ClientID:                "c1ien41d",
+		ClientName:              "mw+2_1",
+		ClientType:              "CLIENT",
+		CreatedBy:               "someuser",
+		CreatedDate:             test.NewTimeFromStringMust("2024-06-13T14:48:07.000Z"),
+		Credentials:             customCredentialsDrift,
+		GroupAccess: iam.GroupAccess{
+			CloneAuthorizedUserGroups: false,
+			Groups:                    nestedGroups,
+		},
+		IPACL:              &ipACL,
+		IsLocked:           false,
+		NotificationEmails: []string{"mw+2@example.com"},
+		PurgeOptions:       &purgeOptions,
+	}
+
+	getAPIClientResponseWithCustomCredential2AndAPIClientDescription = iam.GetAPIClientResponse{
+		AccessToken:           "access_token",
+		Actions:               &unlockedClientActions,
+		ActiveCredentialCount: 1,
+		AllowAccountSwitch:    false,
+		APIAccess: iam.APIAccess{
+			AllAccessibleAPIs: false,
+			APIs:              apisGet,
+		},
+		AuthorizedUsers:         []string{"mw+2"},
+		BaseURL:                 "base_url",
+		CanAutoCreateCredential: false,
+		ClientDescription:       "Test API Client 2",
+		ClientID:                "c1ien41d",
+		ClientName:              "mw+2_1",
+		ClientType:              "CLIENT",
+		CreatedBy:               "someuser",
+		CreatedDate:             test.NewTimeFromStringMust("2024-06-13T14:48:07.000Z"),
+		Credentials:             customCredentials2,
+		GroupAccess: iam.GroupAccess{
+			CloneAuthorizedUserGroups: false,
+			Groups:                    nestedGroups,
+		},
+		IPACL:              &ipACL,
+		IsLocked:           false,
+		NotificationEmails: []string{"mw+2@example.com"},
+		PurgeOptions:       &purgeOptions,
+	}
+
+	getAPIClientResponseWithInactiveCredential = iam.GetAPIClientResponse{
+		AccessToken:           "access_token",
+		Actions:               &unlockedClientActions,
+		ActiveCredentialCount: 0,
+		AllowAccountSwitch:    false,
+		APIAccess: iam.APIAccess{
+			AllAccessibleAPIs: false,
+			APIs:              apisGet,
+		},
+		AuthorizedUsers:         []string{"mw+2"},
+		BaseURL:                 "base_url",
+		CanAutoCreateCredential: false,
+		ClientDescription:       "Test API Client",
+		ClientID:                "c1ien41d",
+		ClientName:              "mw+2_1",
+		ClientType:              "CLIENT",
+		CreatedBy:               "someuser",
+		CreatedDate:             test.NewTimeFromStringMust("2024-06-13T14:48:07.000Z"),
+		Credentials:             inactiveCredentials,
+		GroupAccess: iam.GroupAccess{
+			CloneAuthorizedUserGroups: false,
+			Groups:                    nestedGroups,
+		},
+		IPACL:              &ipACL,
+		IsLocked:           false,
+		NotificationEmails: []string{"mw+2@example.com"},
+		PurgeOptions:       &purgeOptions,
+	}
+
+	getAPIClientResponseWithInactiveCredential2 = iam.GetAPIClientResponse{
+		AccessToken:           "access_token",
+		Actions:               &unlockedClientActions,
+		ActiveCredentialCount: 0,
+		AllowAccountSwitch:    false,
+		APIAccess: iam.APIAccess{
+			AllAccessibleAPIs: false,
+			APIs:              apisGet,
+		},
+		AuthorizedUsers:         []string{"mw+2"},
+		BaseURL:                 "base_url",
+		CanAutoCreateCredential: false,
+		ClientDescription:       "Test API Client",
+		ClientID:                "c1ien41d",
+		ClientName:              "mw+2_1",
+		ClientType:              "CLIENT",
+		CreatedBy:               "someuser",
+		CreatedDate:             test.NewTimeFromStringMust("2024-06-13T14:48:07.000Z"),
+		Credentials:             inactiveCredentials2,
+		GroupAccess: iam.GroupAccess{
+			CloneAuthorizedUserGroups: false,
+			Groups:                    nestedGroups,
+		},
+		IPACL:              &ipACL,
+		IsLocked:           false,
+		NotificationEmails: []string{"mw+2@example.com"},
+		PurgeOptions:       &purgeOptions,
+	}
+
 	getAPIClientResponseMin = iam.GetAPIClientResponse{
 		AccessToken:           "access_token",
 		Actions:               &unlockedClientActions,
@@ -1695,6 +2391,40 @@ var (
 		},
 	}
 
+	updateAPIClientRequestWithClientDescription = iam.UpdateAPIClientRequest{
+		ClientID: "c1ien41d",
+		Body: iam.UpdateAPIClientRequestBody{
+			AllowAccountSwitch: false,
+			APIAccess: iam.APIAccess{
+				AllAccessibleAPIs: false,
+				APIs:              apisCreate,
+			},
+			AuthorizedUsers:         []string{"mw+2"},
+			CanAutoCreateCredential: false,
+			ClientDescription:       "Test API Client 2",
+			ClientName:              "mw+2_1",
+			ClientType:              "CLIENT",
+			GroupAccess: iam.GroupAccess{
+				CloneAuthorizedUserGroups: false,
+				Groups: []iam.ClientGroup{
+					{
+						GroupID: 123,
+						RoleID:  340,
+						Subgroups: []iam.ClientGroup{
+							{
+								GroupID: 333,
+								RoleID:  540,
+							},
+						},
+					},
+				},
+			},
+			IPACL:              &ipACL,
+			NotificationEmails: []string{"mw+2@example.com"},
+			PurgeOptions:       &purgeOptions,
+		},
+	}
+
 	updateAPIClientResponse = iam.UpdateAPIClientResponse{
 		AccessToken:           "access_token",
 		Actions:               &unlockedClientActions,
@@ -1724,11 +2454,100 @@ var (
 		PurgeOptions:       &purgeOptions,
 	}
 
+	updateAPIClientResponseWithClientDescription = iam.UpdateAPIClientResponse{
+		AccessToken:           "access_token",
+		Actions:               &unlockedClientActions,
+		ActiveCredentialCount: 1,
+		AllowAccountSwitch:    false,
+		APIAccess: iam.APIAccess{
+			AllAccessibleAPIs: false,
+			APIs:              apisGet,
+		},
+		AuthorizedUsers:         []string{"mw+2"},
+		BaseURL:                 "base_url",
+		CanAutoCreateCredential: false,
+		ClientDescription:       "Test API Client 2",
+		ClientID:                "c1ien41d",
+		ClientName:              "mw+2_1",
+		ClientType:              "CLIENT",
+		CreatedBy:               "someuser",
+		CreatedDate:             test.NewTimeFromStringMust("2024-06-13T14:48:07.000Z"),
+		Credentials:             customCredentials2,
+		GroupAccess: iam.GroupAccess{
+			CloneAuthorizedUserGroups: false,
+			Groups:                    nestedGroups,
+		},
+		IPACL:              &ipACL,
+		IsLocked:           false,
+		NotificationEmails: []string{"mw+2@example.com"},
+		PurgeOptions:       &purgeOptions,
+	}
+
 	fullData = testData{
 		createAPIClientRequest:  createAPIClientRequest,
 		createAPIClientResponse: createAPIClientResponse,
 		getAPIClientRequest:     getAPIClientRequest,
 		getAPIClientResponse:    getAPIClientResponse,
+		updateAPIClientRequest:  updateAPIClientRequest,
+		updateAPIClientResponse: updateAPIClientResponse,
+	}
+
+	fullDataWithCredential = testData{
+		createAPIClientRequest:  createAPIClientRequest,
+		createAPIClientResponse: createAPIClientResponse,
+		updateCredentialRequest: updateCredentialRequest,
+		getAPIClientRequest:     getAPIClientRequest,
+		getAPIClientResponse:    getAPIClientResponseWithCustomCredential,
+		updateAPIClientRequest:  updateAPIClientRequest,
+		updateAPIClientResponse: updateAPIClientResponse,
+	}
+
+	fullDataWithCredential2 = testData{
+		createAPIClientRequest:  createAPIClientRequest,
+		createAPIClientResponse: createAPIClientResponse,
+		updateCredentialRequest: updateCredentialRequest2,
+		getAPIClientRequest:     getAPIClientRequest,
+		getAPIClientResponse:    getAPIClientResponseWithCustomCredential2,
+		updateAPIClientRequest:  updateAPIClientRequest,
+		updateAPIClientResponse: updateAPIClientResponse,
+	}
+
+	fullDataWithCredentialDrift = testData{
+		createAPIClientRequest:  createAPIClientRequest,
+		createAPIClientResponse: createAPIClientResponse,
+		updateCredentialRequest: updateCredentialRequest,
+		getAPIClientRequest:     getAPIClientRequest,
+		getAPIClientResponse:    getAPIClientResponseWithCustomCredentialDrift,
+		updateAPIClientRequest:  updateAPIClientRequest,
+		updateAPIClientResponse: updateAPIClientResponse,
+	}
+
+	fullDataWithCredential2AndClientDescription = testData{
+		createAPIClientRequest:  createAPIClientRequest,
+		createAPIClientResponse: createAPIClientResponse,
+		updateCredentialRequest: updateCredentialRequest2,
+		getAPIClientRequest:     getAPIClientRequest,
+		getAPIClientResponse:    getAPIClientResponseWithCustomCredential2AndAPIClientDescription,
+		updateAPIClientRequest:  updateAPIClientRequestWithClientDescription,
+		updateAPIClientResponse: updateAPIClientResponseWithClientDescription,
+	}
+
+	fullDataWithInactiveCredential = testData{
+		createAPIClientRequest:  createAPIClientRequest,
+		createAPIClientResponse: createAPIClientResponse,
+		updateCredentialRequest: updateInactiveCredentialRequest,
+		getAPIClientRequest:     getAPIClientRequest,
+		getAPIClientResponse:    getAPIClientResponseWithInactiveCredential,
+		updateAPIClientRequest:  updateAPIClientRequest,
+		updateAPIClientResponse: updateAPIClientResponse,
+	}
+
+	fullDataWithInactiveCredential2 = testData{
+		createAPIClientRequest:  createAPIClientRequest,
+		createAPIClientResponse: createAPIClientResponse,
+		updateCredentialRequest: updateInactiveCredentialRequest2,
+		getAPIClientRequest:     getAPIClientRequest,
+		getAPIClientResponse:    getAPIClientResponseWithInactiveCredential2,
 		updateAPIClientRequest:  updateAPIClientRequest,
 		updateAPIClientResponse: updateAPIClientResponse,
 	}

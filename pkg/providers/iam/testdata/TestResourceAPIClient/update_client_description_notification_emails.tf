@@ -9,6 +9,7 @@ resource "akamai_iam_api_client" "test" {
   client_description  = "Test description"
   notification_emails = ["test@nomail.com"]
   lock                = false
+  credential          = {}
   group_access = {
     clone_authorized_user_groups = false
     groups = [

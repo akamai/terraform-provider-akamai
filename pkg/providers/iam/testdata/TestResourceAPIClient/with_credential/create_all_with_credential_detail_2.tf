@@ -8,7 +8,11 @@ resource "akamai_iam_api_client" "test" {
   client_name         = "mw+2_1"
   notification_emails = ["mw+2@example.com"]
   client_description  = "Test API Client"
-  credential          = {}
+  lock                = false
+  credential = {
+    description = "Test API Client Credential 2"
+    expires_on  = "2027-06-13T14:48:07Z"
+  }
   group_access = {
     clone_authorized_user_groups = false
     groups = [
@@ -53,7 +57,7 @@ resource "akamai_iam_api_client" "test" {
     can_purge_by_cp_code   = true
     can_purge_by_cache_tag = true
     cp_code_access = {
-      all_current_and_new_cp_codes = true
+      all_current_and_new_cp_codes = false
       cp_codes                     = [101]
     }
   }

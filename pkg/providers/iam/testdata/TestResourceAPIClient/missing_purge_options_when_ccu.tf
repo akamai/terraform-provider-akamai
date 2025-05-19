@@ -8,6 +8,7 @@ resource "akamai_iam_api_client" "test" {
   client_name         = "mw+2_1"
   notification_emails = ["mw+2@example.com"]
   client_description  = "Test API Client"
+  credential          = {}
   api_access = {
     all_accessible_apis = false
     apis = [

@@ -3,10 +3,12 @@ package iam
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/date"
 	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/framework/modifiers"
 	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf/validators"
 	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
@@ -28,6 +30,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -114,14 +117,14 @@ type (
 	}
 
 	credentialsModel struct {
-		Actions      credentialActionsModel `tfsdk:"actions"`
-		ClientToken  types.String           `tfsdk:"client_token"`
-		ClientSecret types.String           `tfsdk:"client_secret"`
-		CreatedOn    types.String           `tfsdk:"created_on"`
-		CredentialID types.Int64            `tfsdk:"credential_id"`
-		Description  types.String           `tfsdk:"description"`
-		ExpiresOn    types.String           `tfsdk:"expires_on"`
-		Status       types.String           `tfsdk:"status"`
+		Actions      types.Object `tfsdk:"actions"`
+		ClientToken  types.String `tfsdk:"client_token"`
+		ClientSecret types.String `tfsdk:"client_secret"`
+		CreatedOn    types.String `tfsdk:"created_on"`
+		CredentialID types.Int64  `tfsdk:"credential_id"`
+		Description  types.String `tfsdk:"description"`
+		ExpiresOn    types.String `tfsdk:"expires_on"`
+		Status       types.String `tfsdk:"status"`
 	}
 
 	ipACLModel struct {
@@ -255,9 +258,6 @@ func (r *apiClientResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 				Default: listdefault.StaticValue(types.ListValueMust(
 					types.StringType, []attr.Value{})),
 				Description: "Email addresses to notify users when credentials expire.",
-				Validators: []validator.List{
-					listvalidator.SizeAtLeast(1),
-				},
 			},
 			"purge_options": schema.SingleNestedAttribute{
 				Optional:    true,
@@ -480,52 +480,12 @@ func groupsSchema(depth int) schema.ListNestedAttribute {
 
 func credentialSchema() schema.SingleNestedAttribute {
 	return schema.SingleNestedAttribute{
-		Computed: true,
+		Required: true,
 		PlanModifiers: []planmodifier.Object{
 			objectplanmodifier.UseStateForUnknown(),
 		},
 		Attributes: map[string]schema.Attribute{
-			"actions": schema.SingleNestedAttribute{
-				Computed:    true,
-				Description: "Actions available on the API client's credentials.",
-				Attributes: map[string]schema.Attribute{
-					"delete": schema.BoolAttribute{
-						Computed:    true,
-						Description: "Whether you can remove the credential.",
-						PlanModifiers: []planmodifier.Bool{
-							boolplanmodifier.UseStateForUnknown(),
-						},
-					},
-					"activate": schema.BoolAttribute{
-						Computed:    true,
-						Description: "Whether you can activate the credential.",
-						PlanModifiers: []planmodifier.Bool{
-							boolplanmodifier.UseStateForUnknown(),
-						},
-					},
-					"deactivate": schema.BoolAttribute{
-						Computed:    true,
-						Description: "Whether you can deactivate the credential.",
-						PlanModifiers: []planmodifier.Bool{
-							boolplanmodifier.UseStateForUnknown(),
-						},
-					},
-					"edit_description": schema.BoolAttribute{
-						Computed:    true,
-						Description: "Whether you can modify the credential's description.",
-						PlanModifiers: []planmodifier.Bool{
-							boolplanmodifier.UseStateForUnknown(),
-						},
-					},
-					"edit_expiration": schema.BoolAttribute{
-						Computed:    true,
-						Description: "Whether you can modify the credential's expiration date.",
-						PlanModifiers: []planmodifier.Bool{
-							boolplanmodifier.UseStateForUnknown(),
-						},
-					},
-				},
-			},
+			"actions": credentialActionsSchema(),
 			"client_token": schema.StringAttribute{
 				Computed:    true,
 				Sensitive:   true,
@@ -558,6 +518,7 @@ func credentialSchema() schema.SingleNestedAttribute {
 			},
 			"description": schema.StringAttribute{
 				Computed:    true,
+				Optional:    true,
 				Description: "A human-readable description for the credential.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
@@ -565,6 +526,7 @@ func credentialSchema() schema.SingleNestedAttribute {
 			},
 			"expires_on": schema.StringAttribute{
 				Computed:    true,
+				Optional:    true,
 				Description: "The ISO 8601 timestamp indicating when the credential expires. The default expiration date is two years from the creation date.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
@@ -572,9 +534,54 @@ func credentialSchema() schema.SingleNestedAttribute {
 			},
 			"status": schema.StringAttribute{
 				Computed:    true,
-				Description: "Whether a credential is 'ACTIVE', 'INACTIVE', or 'DELETED'.",
+				Optional:    true,
+				Description: "Whether a credential is 'ACTIVE', 'INACTIVE', or 'DELETED'. Can be updated to 'ACTIVE' or 'INACTIVE' only.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+		},
+	}
+}
+
+func credentialActionsSchema() schema.SingleNestedAttribute {
+	return schema.SingleNestedAttribute{
+		Computed:    true,
+		Description: "Actions available on the API client's credentials.",
+		Attributes: map[string]schema.Attribute{
+			"delete": schema.BoolAttribute{
+				Computed:    true,
+				Description: "Whether you can remove the credential.",
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"activate": schema.BoolAttribute{
+				Computed:    true,
+				Description: "Whether you can activate the credential.",
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"deactivate": schema.BoolAttribute{
+				Computed:    true,
+				Description: "Whether you can deactivate the credential.",
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"edit_description": schema.BoolAttribute{
+				Computed:    true,
+				Description: "Whether you can modify the credential's description.",
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"edit_expiration": schema.BoolAttribute{
+				Computed:    true,
+				Description: "Whether you can modify the credential's expiration date.",
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.UseStateForUnknown(),
 				},
 			},
 		},
@@ -691,7 +698,7 @@ func (r *apiClientResource) ModifyPlan(ctx context.Context, request resource.Mod
 	}
 
 	if request.Plan.Raw.IsNull() || request.State.Raw.IsNull() {
-		tflog.Debug(ctx, "Plan and state are null, skipping plan modification")
+		tflog.Debug(ctx, "Plan or state are null, skipping plan modification")
 		return
 	}
 
@@ -702,6 +709,13 @@ func (r *apiClientResource) ModifyPlan(ctx context.Context, request resource.Mod
 		if response.Diagnostics.HasError() {
 			return
 		}
+	}
+
+	// Perform modification of the credential object depending on the state and plan values.
+	// Includes suppressing actions attributes or marking dependant attributes as unknown.
+	modifyCredential(ctx, state, plan, response)
+	if response.Diagnostics.HasError() {
+		return
 	}
 
 	modifyActions(ctx, state, plan, response)
@@ -733,6 +747,85 @@ func (r *apiClientResource) ModifyPlan(ctx context.Context, request resource.Mod
 			return
 		}
 	}
+}
+
+func modifyCredential(ctx context.Context, state *apiClientResourceModel, plan *apiClientResourceModel, response *resource.ModifyPlanResponse) {
+	if !state.Credential.IsNull() && !plan.Credential.IsUnknown() {
+		planCredentialModel, diags := credentialObjectToModel(ctx, plan.Credential)
+		if diags.HasError() {
+			response.Diagnostics.Append(diags...)
+			return
+		}
+
+		stateCredentialModel, diags := credentialObjectToModel(ctx, state.Credential)
+		if diags.HasError() {
+			response.Diagnostics.Append(diags...)
+			return
+		}
+
+		if shouldSuppressCredential(stateCredentialModel, planCredentialModel) {
+			response.Diagnostics.Append(response.Plan.SetAttribute(ctx, path.Root("credential"), state.Credential)...)
+			if response.Diagnostics.HasError() {
+				return
+			}
+		} else if shouldActiveCredentialCountChange(stateCredentialModel, planCredentialModel) {
+			response.Diagnostics.Append(response.Plan.SetAttribute(ctx, path.Root("active_credential_count"), types.Int64Unknown())...)
+			if response.Diagnostics.HasError() {
+				return
+			}
+		} else if shouldSuppressCredentialActions(stateCredentialModel, planCredentialModel) {
+			credentialActions, diags := types.ObjectValueFrom(ctx, credentialActionsType(), stateCredentialModel.Actions)
+			if diags.HasError() {
+				response.Diagnostics.Append(diags...)
+				return
+			}
+			response.Diagnostics.Append(response.Plan.SetAttribute(ctx, path.Root("credential").AtName("actions"), credentialActions)...)
+			if response.Diagnostics.HasError() {
+				return
+			}
+		}
+	}
+}
+
+// If the plan credential 'description' or 'expires_on' is different from the state credential values,
+// the plan credential actions are unknown and the status is the same, suppress changes to the actions attribute to limit the diff.
+func shouldSuppressCredentialActions(stateCredentialModel, planCredentialModel credentialsModel) bool {
+	return !planCredentialModel.Description.Equal(stateCredentialModel.Description) ||
+		!planCredentialModel.ExpiresOn.Equal(stateCredentialModel.ExpiresOn) &&
+			planCredentialModel.Status.Equal(stateCredentialModel.Status) &&
+			planCredentialModel.Actions.IsUnknown()
+}
+
+// If the plan credential status is different from the state credential status,
+// mark the 'active_credential_count' as unknown, as such change will change the
+// value of the attribute in the state.
+func shouldActiveCredentialCountChange(stateCredentialModel, planCredentialModel credentialsModel) bool {
+	return !planCredentialModel.Status.Equal(stateCredentialModel.Status)
+}
+
+// If the plan credential actions are unknown and all mutable attributes are the same,
+// set the plan credential to the state credential to suppress changes to the actions attribute.
+func shouldSuppressCredential(stateCredentialModel, planCredentialModel credentialsModel) bool {
+	return planCredentialModel.Actions.IsUnknown() &&
+		planCredentialModel.Description.Equal(stateCredentialModel.Description) &&
+		planCredentialModel.ExpiresOn.Equal(stateCredentialModel.ExpiresOn) &&
+		planCredentialModel.Status.Equal(stateCredentialModel.Status)
+}
+
+func credentialObjectToModel(ctx context.Context, credentialObject types.Object) (credentialsModel, diag.Diagnostics) {
+	var credentialModel credentialsModel
+
+	credential, diags := types.ObjectValueFrom(ctx, credentialType(), credentialObject)
+	if diags.HasError() {
+		return credentialModel, diags
+	}
+
+	diags = credential.As(ctx, &credentialModel, basetypes.ObjectAsOptions{})
+	if diags.HasError() {
+		return credentialModel, diags
+	}
+
+	return credentialModel, diags
 }
 
 func isKnown(value attr.Value) bool {
@@ -804,6 +897,46 @@ func modifyActions(ctx context.Context, state *apiClientResourceModel, plan *api
 			}
 		} else {
 			response.Diagnostics.Append(response.Plan.SetAttribute(ctx, path.Root("actions"), state.Actions)...)
+			if response.Diagnostics.HasError() {
+				return
+			}
+		}
+	}
+
+	// Get the latest actions from the plan, as they may have been modified already.
+	var actions apiClientActionsModel
+	diags := response.Plan.GetAttribute(ctx, path.Root("actions"), &actions)
+	if diags.HasError() {
+		response.Diagnostics.Append(diags...)
+		return
+	}
+
+	// Set 'deactive_all' and 'delete' inside top-level 'actions' attribute
+	// to unknown if the credential status has been changed.
+	// Checking if state credential is not null is not needed, as the state is always
+	// pupulated with credential and before import, plan modification is not invoked.
+	if !plan.Credential.IsUnknown() {
+		planCredentialModel, diags := credentialObjectToModel(ctx, plan.Credential)
+		if diags.HasError() {
+			response.Diagnostics.Append(diags...)
+			return
+		}
+		stateCredentialModel, diags := credentialObjectToModel(ctx, state.Credential)
+		if diags.HasError() {
+			response.Diagnostics.Append(diags...)
+			return
+		}
+
+		if !stateCredentialModel.Status.Equal(planCredentialModel.Status) {
+			var actions apiClientActionsModel
+			response.Diagnostics.Append(state.Actions.As(ctx, &actions, basetypes.ObjectAsOptions{})...)
+			if response.Diagnostics.HasError() {
+				return
+			}
+			actions.DeactivateAll = types.BoolUnknown()
+			actions.Delete = types.BoolUnknown()
+
+			response.Diagnostics.Append(response.Plan.SetAttribute(ctx, path.Root("actions"), actions)...)
 			if response.Diagnostics.HasError() {
 				return
 			}
@@ -950,6 +1083,44 @@ func (r *apiClientResource) create(ctx context.Context, plan *apiClientResourceM
 		return err
 	}
 
+	if !plan.Credential.IsUnknown() {
+		credential, diags := credentialObjectToModel(ctx, plan.Credential)
+		if diags.HasError() {
+			return fmt.Errorf("could not convert credential object to the model: %v", diags)
+		}
+
+		// Since `credential` is required, update credential only if one of the modifiable attributes is set.
+		// No attribute can be null.
+		if !credential.ExpiresOn.IsUnknown() || !credential.Description.IsUnknown() || !credential.Status.IsUnknown() {
+			updateCredentialReq := iam.UpdateCredentialRequest{
+				CredentialID: createAPIClientResponse.Credentials[0].CredentialID,
+				ClientID:     createAPIClientResponse.ClientID,
+			}
+			if !credential.Description.IsNull() && !credential.Description.IsUnknown() {
+				updateCredentialReq.Body.Description = credential.Description.ValueString()
+			}
+			if !credential.Status.IsNull() && !credential.Status.IsUnknown() {
+				updateCredentialReq.Body.Status = iam.CredentialStatus(credential.Status.ValueString())
+			} else {
+				updateCredentialReq.Body.Status = iam.CredentialStatus(createAPIClientResponse.Credentials[0].Status)
+			}
+			if !credential.ExpiresOn.IsNull() != credential.ExpiresOn.IsUnknown() {
+				expiresOn, err := date.ParseFormat(time.RFC3339Nano, credential.ExpiresOn.ValueString())
+				if err != nil {
+					return fmt.Errorf("failed to parse expires on date: %v", err)
+				}
+				updateCredentialReq.Body.ExpiresOn = expiresOn
+			} else {
+				updateCredentialReq.Body.ExpiresOn = createAPIClientResponse.Credentials[0].ExpiresOn
+			}
+
+			_, err := client.UpdateCredential(ctx, updateCredentialReq)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
 	// If the notification emails are empty, we need to update the API client as the
 	// the API fills the emails by default with the email of the user who created the API client.
 	if len(notificationEmails) == 0 {
@@ -965,6 +1136,11 @@ func (r *apiClientResource) create(ctx context.Context, plan *apiClientResourceM
 					CloneAuthorizedUserGroups: plan.GroupAccess.CloneAuthorizedUserGroups.ValueBool(),
 					Groups:                    groups,
 				},
+				AllowAccountSwitch:      plan.AllowAccountSwitch.ValueBool(),
+				CanAutoCreateCredential: plan.CanCreateAutoCredential.ValueBool(),
+				ClientDescription:       plan.ClientDescription.ValueString(),
+				IPACL:                   ipACL,
+				PurgeOptions:            purgeOptions,
 			},
 		})
 		if err != nil {
@@ -1069,9 +1245,90 @@ func (r *apiClientResource) Update(ctx context.Context, req resource.UpdateReque
 		}
 	}
 
-	if err := r.update(ctx, &plan); err != nil {
-		resp.Diagnostics.AddError("Updating API Client Resource failed", err.Error())
-		return
+	// Update credential if the planned value is known and credential differs from the state
+	// by comparing mutable attributes: description, expires_on, status. Status and expires_on
+	// are required in the update request, so if they were not changed, fallback to the state values.
+	// Check if state credential is not null is not needed, as state will always have credential in update.
+	if !plan.Credential.IsUnknown() {
+		stateCredentialModel, diags := credentialObjectToModel(ctx, state.Credential)
+		if diags.HasError() {
+			resp.Diagnostics.Append(diags...)
+			return
+		}
+		planCredentialModel, diags := credentialObjectToModel(ctx, plan.Credential)
+		if diags.HasError() {
+			resp.Diagnostics.Append(diags...)
+			return
+		}
+
+		if !stateCredentialModel.Description.Equal(planCredentialModel.Description) ||
+			!stateCredentialModel.ExpiresOn.Equal(planCredentialModel.ExpiresOn) ||
+			!stateCredentialModel.Status.Equal(planCredentialModel.Status) {
+
+			updateCredentialReq := iam.UpdateCredentialRequest{
+				CredentialID: stateCredentialModel.CredentialID.ValueInt64(),
+				ClientID:     state.ClientID.ValueString(),
+				Body: iam.UpdateCredentialRequestBody{
+					Description: stateCredentialModel.Description.ValueString(),
+					Status:      iam.CredentialStatus(stateCredentialModel.Status.ValueString()),
+				},
+			}
+			if !stateCredentialModel.Description.Equal(planCredentialModel.Description) {
+				updateCredentialReq.Body.Description = planCredentialModel.Description.ValueString()
+			}
+			if !stateCredentialModel.Status.Equal(planCredentialModel.Status) {
+				updateCredentialReq.Body.Status = iam.CredentialStatus(planCredentialModel.Status.ValueString())
+			}
+			if !stateCredentialModel.ExpiresOn.Equal(planCredentialModel.ExpiresOn) {
+				expiresOn, err := date.ParseFormat(time.RFC3339Nano, planCredentialModel.ExpiresOn.ValueString())
+				if err != nil {
+					resp.Diagnostics.AddError("Updating API Client Resource failed", fmt.Sprintf("failed to parse 'expires_on' date: %v", err))
+					return
+				}
+				updateCredentialReq.Body.ExpiresOn = expiresOn
+			} else {
+				expiresOn, err := date.ParseFormat(time.RFC3339Nano, stateCredentialModel.ExpiresOn.ValueString())
+				if err != nil {
+					resp.Diagnostics.AddError("Updating API Client Resource failed", fmt.Sprintf("failed to parse 'expires_on' date: %v", err))
+					return
+				}
+				updateCredentialReq.Body.ExpiresOn = expiresOn
+			}
+
+			client := inst.Client(r.meta)
+			_, err := client.UpdateCredential(ctx, updateCredentialReq)
+			if err != nil {
+				resp.Diagnostics.AddError("Updating API Client Resource failed", err.Error())
+				return
+			}
+		}
+	}
+
+	if isUpdateNeeded(ctx, &req.State, &req.Plan) {
+		if err := r.update(ctx, &plan); err != nil {
+			resp.Diagnostics.AddError("Updating API Client Resource failed", err.Error())
+			return
+		}
+	} else {
+		// if planned credential secret is unknown, it means we are coming from import,
+		// where the secret is not available, so we need to set it to null.
+		planCredentialModel, diags := credentialObjectToModel(ctx, plan.Credential)
+		if diags.HasError() {
+			resp.Diagnostics.Append(diags...)
+			return
+		}
+		if planCredentialModel.ClientSecret.IsUnknown() {
+			planCredentialModel.ClientSecret = types.StringNull()
+		}
+		plan.Credential, diags = types.ObjectValueFrom(ctx, credentialType(), planCredentialModel)
+		if diags.HasError() {
+			resp.Diagnostics.Append(diags...)
+			return
+		}
+		if err := r.read(ctx, &plan); err != nil {
+			resp.Diagnostics.AddError("Updating API Client Resource failed", err.Error())
+			return
+		}
 	}
 
 	if plannedLock && !state.Lock.ValueBool() {
@@ -1169,6 +1426,27 @@ func (r *apiClientResource) Delete(ctx context.Context, req resource.DeleteReque
 	}
 
 	client := inst.Client(r.meta)
+	if !state.Credential.IsNull() {
+		credential, diags := credentialObjectToModel(ctx, state.Credential)
+		if diags.HasError() {
+			resp.Diagnostics.Append(diags...)
+			return
+		}
+
+		// If the credential is ACTIVE, deactivate it before deleting the API client.
+		// If there are more active credentials, DeleteAPIClient will fail. User must deactivate or delete them first.
+		if credential.Status.ValueString() == "ACTIVE" {
+			tflog.Debug(ctx, fmt.Sprintf("Deactivating Credential %s", credential.CredentialID))
+			err := client.DeactivateCredential(ctx, iam.DeactivateCredentialRequest{
+				ClientID:     state.ClientID.ValueString(),
+				CredentialID: credential.CredentialID.ValueInt64(),
+			})
+			if err != nil {
+				resp.Diagnostics.AddError(fmt.Sprintf("Deactivating Credential %s failed", credential.CredentialID), err.Error())
+				return
+			}
+		}
+	}
 
 	if err := client.DeleteAPIClient(ctx, iam.DeleteAPIClientRequest{
 		ClientID: state.ClientID.ValueString(),
@@ -1193,6 +1471,21 @@ func (r *apiClientResource) ImportState(ctx context.Context, req resource.Import
 	data.AuthorizedUsers = types.ListUnknown(types.StringType)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func isUpdateNeeded(ctx context.Context, state *tfsdk.State, plan *tfsdk.Plan) bool {
+	// Set all attributes that are modified due to plan modification logic to null
+	// to avoid unnecessary updates after comparing the state and plan.
+	stateCopy := state
+	stateCopy.SetAttribute(ctx, path.Root("credential"), types.ObjectNull(credentialType()))
+	stateCopy.SetAttribute(ctx, path.Root("actions"), types.ObjectNull(actionsType()))
+	stateCopy.SetAttribute(ctx, path.Root("active_credential_count"), types.Int64Null())
+	planCopy := plan
+	planCopy.SetAttribute(ctx, path.Root("credential"), types.ObjectNull(credentialType()))
+	planCopy.SetAttribute(ctx, path.Root("actions"), types.ObjectNull(actionsType()))
+	planCopy.SetAttribute(ctx, path.Root("active_credential_count"), types.Int64Null())
+
+	return !stateCopy.Raw.Equal(planCopy.Raw)
 }
 
 func (m *apiClientResourceModel) getAPIAccess(ctx context.Context) (*iam.APIAccess, diag.Diagnostics) {
@@ -1406,21 +1699,37 @@ func (m *apiClientResourceModel) setData(ctx context.Context, getResponse *iam.G
 			return diags
 		}
 		credential := createResponse.Credentials[0]
+
+		// Use Credential from GetResponse to populate state with the latest values
+		// of status, expires_on, description and actions attributes. In case of providing those fields during the create,
+		// create response will not contain them, but get response will.
+		var getResponseCredential iam.APIClientCredential
+		for _, cred := range getResponse.Credentials {
+			if cred.CredentialID == credential.CredentialID {
+				getResponseCredential = cred
+			}
+		}
+
+		credentialActions, diags := types.ObjectValueFrom(ctx, credentialActionsType(), credentialActionsModel{
+			Delete:          types.BoolValue(getResponseCredential.Actions.Delete),
+			Activate:        types.BoolValue(getResponseCredential.Actions.Activate),
+			Deactivate:      types.BoolValue(getResponseCredential.Actions.Deactivate),
+			EditDescription: types.BoolValue(getResponseCredential.Actions.EditDescription),
+			EditExpiration:  types.BoolValue(getResponseCredential.Actions.EditExpiration),
+		})
+		if diags.HasError() {
+			return diags
+		}
+
 		credModel = credentialsModel{
-			Actions: credentialActionsModel{
-				Delete:          types.BoolValue(credential.Actions.Delete),
-				Activate:        types.BoolValue(credential.Actions.Activate),
-				Deactivate:      types.BoolValue(credential.Actions.Deactivate),
-				EditDescription: types.BoolValue(credential.Actions.EditDescription),
-				EditExpiration:  types.BoolValue(credential.Actions.EditExpiration),
-			},
+			Actions:      credentialActions,
 			ClientSecret: types.StringValue(credential.ClientSecret),
 			ClientToken:  types.StringValue(credential.ClientToken),
 			CreatedOn:    types.StringValue(credential.CreatedOn.Format(time.RFC3339Nano)),
 			CredentialID: types.Int64Value(credential.CredentialID),
-			Description:  types.StringValue(credential.Description),
-			ExpiresOn:    types.StringValue(credential.ExpiresOn.Format(time.RFC3339Nano)),
-			Status:       types.StringValue(string(credential.Status)),
+			Description:  types.StringValue(getResponseCredential.Description),
+			ExpiresOn:    types.StringValue(getResponseCredential.ExpiresOn.Format(time.RFC3339Nano)),
+			Status:       types.StringValue(string(getResponseCredential.Status)),
 		}
 		found = true
 	} else {
@@ -1433,15 +1742,19 @@ func (m *apiClientResourceModel) setData(ctx context.Context, getResponse *iam.G
 
 			for _, credential := range getResponse.Credentials {
 				if oldCredential.CredentialID.ValueInt64() == credential.CredentialID {
+					credentialActions, diags := types.ObjectValueFrom(ctx, credentialActionsType(), credentialActionsModel{
+						Delete:          types.BoolValue(credential.Actions.Delete),
+						Activate:        types.BoolValue(credential.Actions.Activate),
+						Deactivate:      types.BoolValue(credential.Actions.Deactivate),
+						EditDescription: types.BoolValue(credential.Actions.EditDescription),
+						EditExpiration:  types.BoolValue(credential.Actions.EditExpiration),
+					})
+					if diags.HasError() {
+						return diags
+					}
 
 					credModel = credentialsModel{
-						Actions: credentialActionsModel{
-							Delete:          types.BoolValue(credential.Actions.Delete),
-							Activate:        types.BoolValue(credential.Actions.Activate),
-							Deactivate:      types.BoolValue(credential.Actions.Deactivate),
-							EditDescription: types.BoolValue(credential.Actions.EditDescription),
-							EditExpiration:  types.BoolValue(credential.Actions.EditExpiration),
-						},
+						Actions:      credentialActions,
 						ClientSecret: oldCredential.ClientSecret,
 						ClientToken:  types.StringValue(credential.ClientToken),
 						CreatedOn:    types.StringValue(credential.CreatedOn.Format(time.RFC3339Nano)),
@@ -1454,6 +1767,42 @@ func (m *apiClientResourceModel) setData(ctx context.Context, getResponse *iam.G
 					break
 				}
 			}
+			// If m.Credential is not known or null, we need to get the oldest credential,
+			// as they would be created along the API client. If the response does not contain
+			// any credentials, credential attribute will be set to null.
+		} else if m.Credential.IsUnknown() || m.Credential.IsNull() {
+			credentialsResponse := getResponse.Credentials
+			sort.Slice(credentialsResponse, func(i, j int) bool {
+				return credentialsResponse[i].CreatedOn.Before(credentialsResponse[j].CreatedOn)
+			})
+			// credentialsResponse should never be empty, as it also stores the removed credentials.
+			// Even if the removed credential was the one created during the API client creation,
+			// we should set in state. There will
+			if len(credentialsResponse) > 0 {
+				oldestCredential := credentialsResponse[0]
+				credentialActions, diags := types.ObjectValueFrom(ctx, credentialActionsType(), credentialActionsModel{
+					Delete:          types.BoolValue(oldestCredential.Actions.Delete),
+					Activate:        types.BoolValue(oldestCredential.Actions.Activate),
+					Deactivate:      types.BoolValue(oldestCredential.Actions.Deactivate),
+					EditDescription: types.BoolValue(oldestCredential.Actions.EditDescription),
+					EditExpiration:  types.BoolValue(oldestCredential.Actions.EditExpiration),
+				})
+				if diags.HasError() {
+					return diags
+				}
+
+				credModel = credentialsModel{
+					Actions:      credentialActions,
+					ClientSecret: types.StringNull(),
+					ClientToken:  types.StringValue(oldestCredential.ClientToken),
+					CreatedOn:    types.StringValue(oldestCredential.CreatedOn.Format(time.RFC3339Nano)),
+					CredentialID: types.Int64Value(oldestCredential.CredentialID),
+					Description:  types.StringValue(oldestCredential.Description),
+					ExpiresOn:    types.StringValue(oldestCredential.ExpiresOn.Format(time.RFC3339Nano)),
+					Status:       types.StringValue(string(oldestCredential.Status)),
+				}
+				found = true
+			}
 		}
 	}
 	if found {
@@ -1463,6 +1812,7 @@ func (m *apiClientResourceModel) setData(ctx context.Context, getResponse *iam.G
 		}
 		m.Credential = credentialObject
 	} else {
+		// If there are no credentials, set the credential to null.
 		m.Credential = types.ObjectNull(credentialType())
 	}
 
@@ -1489,6 +1839,10 @@ func (m *apiClientResourceModel) setData(ctx context.Context, getResponse *iam.G
 	m.ID = types.StringValue(getResponse.ClientID)
 
 	return nil
+}
+
+func credentialActionsType() map[string]attr.Type {
+	return credentialActionsSchema().GetType().(attr.TypeWithAttributeTypes).AttributeTypes()
 }
 
 func actionsType() map[string]attr.Type {
