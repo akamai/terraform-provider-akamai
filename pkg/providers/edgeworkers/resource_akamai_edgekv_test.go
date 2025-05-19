@@ -2,6 +2,7 @@ package edgeworkers
 
 import (
 	"fmt"
+	"net/http"
 	"regexp"
 	"testing"
 	"time"
@@ -196,6 +197,55 @@ func TestResourceEdgeKV(t *testing.T) {
 				// read
 				mockEdgeKVRead(m, basicData).Times(2)
 				// delete
+				mockListTwoGroupsInNamespace(m, basicData)
+				mockNoGroupsInNamespace(m, basicData)
+				mockEdgeKVDelete(m, basicData)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", "DevExpTest:staging"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", "DevExpTest"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "network", "staging"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", "1234"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", "86401"),
+					),
+				},
+			},
+		},
+		"waiting in delete until namespace appears": {
+			init: func(m *edgeworkers.Mock) {
+				// create
+				mockEdgeKVCreate(m, basicData)
+				// read
+				mockEdgeKVRead(m, basicData).Times(2)
+				// delete
+				mockNoNamespaceWhenListingGroups(m, basicData)
+				mockNoGroupsInNamespace(m, basicData)
+				mockEdgeKVDelete(m, basicData)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", "DevExpTest:staging"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", "DevExpTest"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "network", "staging"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", "1234"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", "86401"),
+					),
+				},
+			},
+		},
+		"waiting in delete until namespace appears and contains no groups": {
+			init: func(m *edgeworkers.Mock) {
+				// create
+				mockEdgeKVCreate(m, basicData)
+				// read
+				mockEdgeKVRead(m, basicData).Times(2)
+				// delete
+				mockNoNamespaceWhenListingGroups(m, basicData)
 				mockListTwoGroupsInNamespace(m, basicData)
 				mockNoGroupsInNamespace(m, basicData)
 				mockEdgeKVDelete(m, basicData)
@@ -502,6 +552,15 @@ func mockListTwoGroupsInNamespace(m *edgeworkers.Mock, data edgeKVmockData) {
 		Network:     data.network,
 		NamespaceID: data.name,
 	}).Return([]string{"foo", "bar"}, nil).Once()
+}
+
+func mockNoNamespaceWhenListingGroups(m *edgeworkers.Mock, data edgeKVmockData) {
+	err := edgeworkers.Error{}
+	err.Status = http.StatusBadRequest
+	m.On("ListGroupsWithinNamespace", testutils.MockContext, edgeworkers.ListGroupsWithinNamespaceRequest{
+		Network:     data.network,
+		NamespaceID: data.name,
+	}).Return(nil, &err).Once()
 }
 
 func mockEdgeKVDelete(m *edgeworkers.Mock, data edgeKVmockData) {

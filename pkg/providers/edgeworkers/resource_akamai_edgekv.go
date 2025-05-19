@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
@@ -290,6 +291,10 @@ func resourceEdgeKVDelete(ctx context.Context, rd *schema.ResourceData, m interf
 	// We need to wait in a loop since EdgeKV is a distributed database and checks for empty
 	// groups from akamai_edgekv_group_items' delete may have been done on a different replica.
 	//
+	// We also need to retry when 400 Bad Request is returned. This applies to the case when
+	// the namespace is being deleted just after creation. It may be not yet visible on the
+	// current replica.
+	//
 	// Timeout is set to 1 minute (deleteTimeout), because the user may have not deleted all groups
 	// anyway (controlled outside TF) and there is no point in waiting 20 minutes in such case.
 	err = waitUntilNoGroupsInNamespace(ctx, client, name, network)
@@ -327,6 +332,7 @@ func displayGroupIDWarning() schema.SchemaValidateDiagFunc {
 func waitUntilNoGroupsInNamespace(ctx context.Context, client edgeworkers.Edgeworkers, name string, network string) error {
 	ctx, cancel := context.WithTimeout(ctx, deleteTimeout)
 	defer cancel()
+	var badRequestErr error
 	for {
 		select {
 		case <-time.After(pollForConsistentEdgeKVDatabaseInterval):
@@ -337,6 +343,11 @@ func waitUntilNoGroupsInNamespace(ctx context.Context, client edgeworkers.Edgewo
 			if errors.Is(err, edgeworkers.ErrNotFound) {
 				return nil
 			}
+			var ewErr *edgeworkers.Error
+			if errors.As(err, &ewErr) && ewErr.Status == http.StatusBadRequest {
+				badRequestErr = ewErr
+				continue
+			}
 			if err != nil {
 				return fmt.Errorf("could not get groups within namespace '%s' in network '%s': %s", name, network, err)
 			}
@@ -346,7 +357,13 @@ func waitUntilNoGroupsInNamespace(ctx context.Context, client edgeworkers.Edgewo
 			if len(groups) == 0 {
 				return nil
 			}
+			// Clear the error, as we have successfully checked the groups
+			badRequestErr = nil
 		case <-ctx.Done():
+			if badRequestErr != nil {
+				return fmt.Errorf("could not read groups within namespace '%s' in network '%s': %s",
+					name, network, badRequestErr)
+			}
 			return fmt.Errorf("namespace '%s' in network '%s' has groups, "+
 				"please remove all items from this namespace before trying to delete the resource",
 				name, network)
