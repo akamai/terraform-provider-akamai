@@ -90,7 +90,7 @@ func (d *apiClientsDataSource) Schema(_ context.Context, _ datasource.SchemaRequ
 					Attributes: map[string]schema.Attribute{
 						"access_token": schema.StringAttribute{
 							Computed:    true,
-							Description: "Part of the client secret that identifies your API client and lets you access applications and resources.",
+							Description: "The part of the client secret that identifies your API client and lets you access applications and resources.",
 						},
 						"actions": schema.SingleNestedAttribute{
 							Computed:    true,
@@ -124,7 +124,7 @@ func (d *apiClientsDataSource) Schema(_ context.Context, _ datasource.SchemaRequ
 						},
 						"active_credential_count": schema.Int64Attribute{
 							Computed:    true,
-							Description: "Number of credentials active for the API client.",
+							Description: "The number of credentials active for the API client.",
 						},
 						"allow_account_switch": schema.BoolAttribute{
 							Computed:    true,
@@ -141,15 +141,15 @@ func (d *apiClientsDataSource) Schema(_ context.Context, _ datasource.SchemaRequ
 						},
 						"client_description": schema.StringAttribute{
 							Computed:    true,
-							Description: "Descriptive label about the API client.",
+							Description: "A human-readable description of the API client.",
 						},
 						"client_id": schema.StringAttribute{
 							Computed:    true,
-							Description: "Unique identifier for each API client.",
+							Description: "A unique identifier for the API client.",
 						},
 						"client_name": schema.StringAttribute{
 							Computed:    true,
-							Description: "Descriptive label for the API client.",
+							Description: "A human-readable name for the API client.",
 						},
 						"client_type": schema.StringAttribute{
 							Computed:    true,
@@ -161,16 +161,16 @@ func (d *apiClientsDataSource) Schema(_ context.Context, _ datasource.SchemaRequ
 						},
 						"created_date": schema.StringAttribute{
 							Computed:    true,
-							Description: "ISO 8601 timestamp indicating when the API client was created.",
+							Description: "The ISO 8601 timestamp indicating when the API client was created.",
 						},
 						"is_locked": schema.BoolAttribute{
 							Computed:    true,
-							Description: "Whether the user's account is locked.",
+							Description: "Whether the API client is locked.",
 						},
 						"notification_emails": schema.ListAttribute{
 							ElementType: types.StringType,
 							Computed:    true,
-							Description: "Email addresses to notify users of expiring credentials.",
+							Description: "Email addresses to notify users when credentials expire.",
 						},
 						"service_consumer_token": schema.StringAttribute{
 							Computed:    true,

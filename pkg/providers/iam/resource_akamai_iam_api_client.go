@@ -90,7 +90,7 @@ type (
 	}
 
 	cpCodeAccessModel struct {
-		AllCurrentAndNewCpCodes types.Bool `tfsdk:"all_current_and_new_cp_codes"`
+		AllCurrentAndNewCPCodes types.Bool `tfsdk:"all_current_and_new_cp_codes"`
 		CPCodes                 types.List `tfsdk:"cp_codes"`
 	}
 
@@ -136,7 +136,7 @@ type (
 		AllowAccountSwitch      types.Bool         `tfsdk:"allow_account_switch"`
 		APIAccess               apiAccessModel     `tfsdk:"api_access"`
 		AuthorizedUsers         types.List         `tfsdk:"authorized_users"`
-		CanCreateAutoCredential types.Bool         `tfsdk:"can_create_auto_credential"`
+		CanAutoCreateCredential types.Bool         `tfsdk:"can_auto_create_credential"`
 		ClientDescription       types.String       `tfsdk:"client_description"`
 		ClientName              types.String       `tfsdk:"client_name"`
 		ClientType              types.String       `tfsdk:"client_type"`
@@ -191,7 +191,7 @@ func (r *apiClientResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 					listvalidator.ValueStringsAre(stringvalidator.LengthAtLeast(1)),
 				},
 			},
-			"can_create_auto_credential": schema.BoolAttribute{
+			"can_auto_create_credential": schema.BoolAttribute{
 				Optional:    true,
 				Computed:    true, // needed for default
 				Default:     booldefault.StaticBool(false),
@@ -299,7 +299,7 @@ func (r *apiClientResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 			"access_token": schema.StringAttribute{
 				Computed:    true,
 				Sensitive:   true,
-				Description: "Part of the client secret that identifies your API client and lets you access applications and resources.",
+				Description: "The part of the client secret that identifies your API client and lets you access applications and resources.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
@@ -365,9 +365,9 @@ func apisSchema() schema.SetNestedAttribute {
 			Attributes: map[string]schema.Attribute{
 				"access_level": schema.StringAttribute{
 					Required:    true,
-					Description: "The API client's access level on an API basis, either 'READ', 'READ-ONLY', 'READ-WRITE', 'CREDENTIAL-READ-ONLY', or 'CREDENTIAL-READ-WRITE'.",
+					Description: "The API client's access level on an API basis, either 'READ-ONLY', 'READ-WRITE', 'CREDENTIAL-READ-ONLY', or 'CREDENTIAL-READ-WRITE'.",
 					Validators: []validator.String{
-						stringvalidator.OneOf("READ", "READ-ONLY", "READ-WRITE", "CREDENTIAL-READ-ONLY", "CREDENTIAL-READ-WRITE"),
+						stringvalidator.OneOf("READ-ONLY", "READ-WRITE", "CREDENTIAL-READ-ONLY", "CREDENTIAL-READ-WRITE"),
 					},
 				},
 				"api_id": schema.Int64Attribute{
@@ -607,15 +607,15 @@ func actionsSchema() schema.SingleNestedAttribute {
 			},
 			"edit_apis": schema.BoolAttribute{
 				Computed:    true,
-				Description: "Whether you can update the APIs the API client can access.",
+				Description: "Whether you can update the `apis` the API client can access, same as `edit_auth`.",
 			},
 			"edit_auth": schema.BoolAttribute{
 				Computed:    true,
-				Description: "Whether you can update the 'groups' or 'apis' the API client can access.",
+				Description: "Whether you can update the `apis` the API client can access, same as `edit_apis`.",
 			},
 			"edit_groups": schema.BoolAttribute{
 				Computed:    true,
-				Description: "Whether you can update the groups the API client can access.",
+				Description: "Whether you can update the `groups` the API client can access.",
 			},
 			"edit_ip_acl": schema.BoolAttribute{
 				Computed:    true,
@@ -999,7 +999,7 @@ func (r *apiClientResource) ValidateConfig(ctx context.Context, req resource.Val
 		}
 	}
 
-	if data.PurgeOptions != nil && data.PurgeOptions.CPCodeAccess.AllCurrentAndNewCpCodes.ValueBool() && len(cpCodes) != 0 {
+	if data.PurgeOptions != nil && data.PurgeOptions.CPCodeAccess.AllCurrentAndNewCPCodes.ValueBool() && len(cpCodes) != 0 {
 		resp.Diagnostics.AddAttributeError(path.Root("purge_options"), invalidConfigurationAttribute, "You cannot specify any CP Code when 'all_current_and_new_cp_codes' is true")
 	}
 }
@@ -1059,7 +1059,7 @@ func (r *apiClientResource) create(ctx context.Context, plan *apiClientResourceM
 		AllowAccountSwitch:      plan.AllowAccountSwitch.ValueBool(),
 		APIAccess:               *access,
 		AuthorizedUsers:         authorizedUsers,
-		CanAutoCreateCredential: plan.CanCreateAutoCredential.ValueBool(),
+		CanAutoCreateCredential: plan.CanAutoCreateCredential.ValueBool(),
 		ClientDescription:       plan.ClientDescription.ValueString(),
 		ClientName:              plan.ClientName.ValueString(),
 		ClientType:              iam.ClientType(plan.ClientType.ValueString()),
@@ -1130,7 +1130,7 @@ func (r *apiClientResource) create(ctx context.Context, plan *apiClientResourceM
 					Groups:                    groups,
 				},
 				AllowAccountSwitch:      plan.AllowAccountSwitch.ValueBool(),
-				CanAutoCreateCredential: plan.CanCreateAutoCredential.ValueBool(),
+				CanAutoCreateCredential: plan.CanAutoCreateCredential.ValueBool(),
 				ClientDescription:       plan.ClientDescription.ValueString(),
 				IPACL:                   ipACL,
 				PurgeOptions:            purgeOptions,
@@ -1384,7 +1384,7 @@ func (r *apiClientResource) update(ctx context.Context, plan *apiClientResourceM
 			AllowAccountSwitch:      plan.AllowAccountSwitch.ValueBool(),
 			APIAccess:               *access,
 			AuthorizedUsers:         authorizedUsers,
-			CanAutoCreateCredential: plan.CanCreateAutoCredential.ValueBool(),
+			CanAutoCreateCredential: plan.CanAutoCreateCredential.ValueBool(),
 			ClientDescription:       plan.ClientDescription.ValueString(),
 			ClientName:              plan.ClientName.ValueString(),
 			ClientType:              iam.ClientType(plan.ClientType.ValueString()),
@@ -1585,7 +1585,7 @@ func (m *apiClientResourceModel) getPurgeOptions(ctx context.Context) (*iam.Purg
 			CanPurgeByCacheTag: m.PurgeOptions.CanPurgeByCacheTag.ValueBool(),
 			CanPurgeByCPCode:   m.PurgeOptions.CanPurgeByCPCode.ValueBool(),
 			CPCodeAccess: iam.CPCodeAccess{
-				AllCurrentAndNewCPCodes: m.PurgeOptions.CPCodeAccess.AllCurrentAndNewCpCodes.ValueBool(),
+				AllCurrentAndNewCPCodes: m.PurgeOptions.CPCodeAccess.AllCurrentAndNewCPCodes.ValueBool(),
 				CPCodes:                 cpCodes,
 			},
 		}
@@ -1600,7 +1600,7 @@ func (m *apiClientResourceModel) setData(ctx context.Context, getResponse *iam.G
 	m.ClientDescription = types.StringValue(getResponse.ClientDescription)
 	m.CreatedBy = types.StringValue(getResponse.CreatedBy)
 	m.CreatedDate = types.StringValue(getResponse.CreatedDate.Format(time.RFC3339Nano))
-	m.CanCreateAutoCredential = types.BoolValue(getResponse.CanAutoCreateCredential)
+	m.CanAutoCreateCredential = types.BoolValue(getResponse.CanAutoCreateCredential)
 	m.AccessToken = types.StringValue(getResponse.AccessToken)
 	m.Lock = types.BoolValue(getResponse.IsLocked)
 	m.AllowAccountSwitch = types.BoolValue(getResponse.AllowAccountSwitch)
@@ -1622,7 +1622,7 @@ func (m *apiClientResourceModel) setData(ctx context.Context, getResponse *iam.G
 			CanPurgeByCacheTag: types.BoolValue(getResponse.PurgeOptions.CanPurgeByCacheTag),
 			CanPurgeByCPCode:   types.BoolValue(getResponse.PurgeOptions.CanPurgeByCPCode),
 			CPCodeAccess: cpCodeAccessModel{
-				AllCurrentAndNewCpCodes: types.BoolValue(getResponse.PurgeOptions.CPCodeAccess.AllCurrentAndNewCPCodes),
+				AllCurrentAndNewCPCodes: types.BoolValue(getResponse.PurgeOptions.CPCodeAccess.AllCurrentAndNewCPCodes),
 				CPCodes:                 cpCodes,
 			},
 		}

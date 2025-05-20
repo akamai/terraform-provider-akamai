@@ -1219,7 +1219,7 @@ func TestImportAPIClientResource(t *testing.T) {
 		CheckEqual("api_access.apis.1.endpoint", "/edgeworkers/").
 		CheckEqual("authorized_users.0", "mw+2").
 		CheckEqual("base_url", "base_url").
-		CheckEqual("can_create_auto_credential", "false").
+		CheckEqual("can_auto_create_credential", "false").
 		CheckEqual("client_description", "Test API Client").
 		CheckEqual("client_id", "c1ien41d").
 		CheckEqual("client_name", "mw+2_1").
@@ -2579,7 +2579,7 @@ var fullDataChecker = tst.NewStateChecker("akamai_iam_api_client.test").
 	CheckEqual("api_access.apis.1.endpoint", "/edgeworkers/").
 	CheckEqual("authorized_users.0", "mw+2").
 	CheckEqual("base_url", "base_url").
-	CheckEqual("can_create_auto_credential", "false").
+	CheckEqual("can_auto_create_credential", "false").
 	CheckEqual("client_description", "Test API Client").
 	CheckEqual("client_id", "c1ien41d").
 	CheckEqual("client_name", "mw+2_1").

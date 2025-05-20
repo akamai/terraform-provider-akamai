@@ -51,6 +51,7 @@
 * IAM
   * Added a new data source:
     * `akamai_iam_api_clients` – lists all API clients an account administrator can manage.
+    * `akamai_iam_api_client` – gets an API client.
 
 
 
