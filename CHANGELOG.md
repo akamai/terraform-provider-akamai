@@ -175,6 +175,9 @@
 * PAPI
   *  Fixed filtering by name for the `akamai_cp_code` data source ([I#604](https://github.com/akamai/terraform-provider-akamai/issues/604)).
 
+* APPSEC
+  * Fix by trimming prefix in group_id (if present) in akamai_appsec_configuration resource to support numeric value.
+
 ## 7.0.0 (Feb 5, 2025)
 
 #### BREAKING CHANGES:

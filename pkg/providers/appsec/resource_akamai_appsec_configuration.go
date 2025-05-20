@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/str"
 	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -42,7 +43,7 @@ func resourceConfiguration() *schema.Resource {
 				Description: "Unique identifier of the Akamai contract associated with the new configuration",
 			},
 			"group_id": {
-				Type:        schema.TypeInt,
+				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Unique identifier of the contract group associated with the new configuration",
 			},
@@ -89,7 +90,11 @@ func resourceConfigurationCreate(ctx context.Context, d *schema.ResourceData, m 
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	groupID, err := tf.GetIntValue("group_id", d)
+	strGrpID, err := tf.GetStringValue("group_id", d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	groupID, err := str.GetIntID(strGrpID, "grp_")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -129,6 +134,11 @@ func resourceConfigurationCreate(ctx context.Context, d *schema.ResourceData, m 
 		if err := d.Set("config_id", response.ConfigID); err != nil {
 			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
+		if groupID > 0 {
+			if err := d.Set("group_id", strconv.Itoa(groupID)); err != nil {
+				return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+			}
+		}
 
 		d.SetId(fmt.Sprintf("%d", response.ConfigID))
 
@@ -148,6 +158,11 @@ func resourceConfigurationCreate(ctx context.Context, d *schema.ResourceData, m 
 		}
 		if err := d.Set("config_id", response.ConfigID); err != nil {
 			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+		}
+		if groupID > 0 {
+			if err := d.Set("group_id", strconv.Itoa(groupID)); err != nil {
+				return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+			}
 		}
 		d.SetId(fmt.Sprintf("%d", response.ConfigID))
 	}
