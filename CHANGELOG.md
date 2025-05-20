@@ -14,7 +14,8 @@
 
 
 
-
+* DNS
+  * Added support for full deletion of `akamai_dns_zone` resource.
 
 
 
