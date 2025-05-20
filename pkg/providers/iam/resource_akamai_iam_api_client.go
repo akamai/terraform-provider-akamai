@@ -375,22 +375,22 @@ func apisSchema() schema.SetNestedAttribute {
 					Description: "A unique identifier of the API.",
 				},
 				"api_name": schema.StringAttribute{
-					Required:    true,
+					Computed:    true,
 					Validators:  []validator.String{validators.NotEmptyString()},
 					Description: "A human-readable name for the API.",
 				},
 				"description": schema.StringAttribute{
-					Required:    true,
+					Computed:    true,
 					Validators:  []validator.String{validators.NotEmptyString()},
 					Description: "A human-readable description for the API.",
 				},
 				"documentation_url": schema.StringAttribute{
-					Required:    true,
+					Computed:    true,
 					Validators:  []validator.String{validators.NotEmptyString()},
 					Description: "A link to more information about the API.",
 				},
 				"endpoint": schema.StringAttribute{
-					Required:    true,
+					Computed:    true,
 					Validators:  []validator.String{validators.NotEmptyString()},
 					Description: "Specifies where the API can access resources.",
 				},
@@ -991,13 +991,6 @@ func (r *apiClientResource) ValidateConfig(ctx context.Context, req resource.Val
 		return
 	}
 
-	for _, api := range apis {
-		if api.APIName == "CCU APIs" && data.PurgeOptions == nil {
-			resp.Diagnostics.AddAttributeError(path.Root("purge_options"), invalidConfigurationAttribute, "You must specify 'purge_options' when 'api_name' is 'CCU APIs'")
-			return
-		}
-	}
-
 	var cpCodes []int64
 	if data.PurgeOptions != nil && isKnown(data.PurgeOptions.CPCodeAccess.CPCodes) {
 		resp.Diagnostics.Append(data.PurgeOptions.CPCodeAccess.CPCodes.ElementsAs(ctx, &cpCodes, false)...)
@@ -1041,7 +1034,7 @@ func (r *apiClientResource) create(ctx context.Context, plan *apiClientResourceM
 	if diags.HasError() {
 		return fmt.Errorf("failed to get groups: %v", diags)
 	}
-	access, diags := plan.getAPIAccess(ctx)
+	access, diags := plan.getAPIAccessRequest(ctx)
 	if diags.HasError() {
 		return fmt.Errorf("failed to get api access: %v", diags)
 	}
@@ -1071,7 +1064,7 @@ func (r *apiClientResource) create(ctx context.Context, plan *apiClientResourceM
 		ClientName:              plan.ClientName.ValueString(),
 		ClientType:              iam.ClientType(plan.ClientType.ValueString()),
 		CreateCredential:        true,
-		GroupAccess: iam.GroupAccess{
+		GroupAccess: iam.GroupAccessRequest{
 			CloneAuthorizedUserGroups: plan.GroupAccess.CloneAuthorizedUserGroups.ValueBool(),
 			Groups:                    groups,
 		},
@@ -1132,7 +1125,7 @@ func (r *apiClientResource) create(ctx context.Context, plan *apiClientResourceM
 				APIAccess:          *access,
 				AuthorizedUsers:    authorizedUsers,
 				ClientType:         iam.ClientType(plan.ClientType.ValueString()),
-				GroupAccess: iam.GroupAccess{
+				GroupAccess: iam.GroupAccessRequest{
 					CloneAuthorizedUserGroups: plan.GroupAccess.CloneAuthorizedUserGroups.ValueBool(),
 					Groups:                    groups,
 				},
@@ -1365,7 +1358,7 @@ func (r *apiClientResource) update(ctx context.Context, plan *apiClientResourceM
 	if diags.HasError() {
 		return fmt.Errorf("failed to get groups: %v", diags)
 	}
-	access, diags := plan.getAPIAccess(ctx)
+	access, diags := plan.getAPIAccessRequest(ctx)
 	if diags.HasError() {
 		return fmt.Errorf("failed to get api access: %v", diags)
 	}
@@ -1395,7 +1388,7 @@ func (r *apiClientResource) update(ctx context.Context, plan *apiClientResourceM
 			ClientDescription:       plan.ClientDescription.ValueString(),
 			ClientName:              plan.ClientName.ValueString(),
 			ClientType:              iam.ClientType(plan.ClientType.ValueString()),
-			GroupAccess: iam.GroupAccess{
+			GroupAccess: iam.GroupAccessRequest{
 				CloneAuthorizedUserGroups: plan.GroupAccess.CloneAuthorizedUserGroups.ValueBool(),
 				Groups:                    groups,
 			},
@@ -1488,9 +1481,9 @@ func isUpdateNeeded(ctx context.Context, state *tfsdk.State, plan *tfsdk.Plan) b
 	return !stateCopy.Raw.Equal(planCopy.Raw)
 }
 
-func (m *apiClientResourceModel) getAPIAccess(ctx context.Context) (*iam.APIAccess, diag.Diagnostics) {
-	var apiAccess iam.APIAccess
-	var apis []iam.API
+func (m *apiClientResourceModel) getAPIAccessRequest(ctx context.Context) (*iam.APIAccessRequest, diag.Diagnostics) {
+	var apiAccess iam.APIAccessRequest
+	var apis []iam.APIRequestItem
 	// we should modify the list of apis only when all_accessible_apis is false
 	if !m.APIAccess.AllAccessibleAPIs.ValueBool() {
 		var diags diag.Diagnostics
@@ -1499,7 +1492,7 @@ func (m *apiClientResourceModel) getAPIAccess(ctx context.Context) (*iam.APIAcce
 			return nil, diags
 		}
 	}
-	apiAccess = iam.APIAccess{
+	apiAccess = iam.APIAccessRequest{
 		AllAccessibleAPIs: m.APIAccess.AllAccessibleAPIs.ValueBool(),
 		APIs:              apis,
 	}
@@ -1507,8 +1500,8 @@ func (m *apiClientResourceModel) getAPIAccess(ctx context.Context) (*iam.APIAcce
 	return &apiAccess, nil
 }
 
-func (m *apiClientResourceModel) apisFromModel(ctx context.Context) ([]iam.API, diag.Diagnostics) {
-	var apis []iam.API
+func (m *apiClientResourceModel) apisFromModel(ctx context.Context) ([]iam.APIRequestItem, diag.Diagnostics) {
+	var apis []iam.APIRequestItem
 
 	var apiModel []apiClientAPIModel
 	if isKnown(m.APIAccess.APIs) {
@@ -1518,15 +1511,11 @@ func (m *apiClientResourceModel) apisFromModel(ctx context.Context) ([]iam.API, 
 		}
 	}
 
-	apis = make([]iam.API, 0, len(apiModel))
+	apis = make([]iam.APIRequestItem, 0, len(apiModel))
 	for _, api := range apiModel {
-		apis = append(apis, iam.API{
-			AccessLevel:      iam.AccessLevel(api.AccessLevel.ValueString()),
-			APIID:            api.APIID.ValueInt64(),
-			APIName:          api.APIName.ValueString(),
-			Description:      api.Description.ValueString(),
-			DocumentationURL: api.DocumentationURL.ValueString(),
-			Endpoint:         api.Endpoint.ValueString(),
+		apis = append(apis, iam.APIRequestItem{
+			AccessLevel: iam.AccessLevel(api.AccessLevel.ValueString()),
+			APIID:       api.APIID.ValueInt64(),
 		})
 	}
 
@@ -1551,7 +1540,7 @@ func (m *apiClientResourceModel) getIPACL(ctx context.Context) (*iam.IPACL, diag
 	return ipACL, nil
 }
 
-func getGroupsFromModel(ctx context.Context, groupModels types.List) ([]iam.ClientGroup, diag.Diagnostics) {
+func getGroupsFromModel(ctx context.Context, groupModels types.List) ([]iam.ClientGroupRequestItem, diag.Diagnostics) {
 	if groupModels.IsNull() || groupModels.IsUnknown() {
 		return nil, nil
 	}
@@ -1565,18 +1554,16 @@ func getGroupsFromModel(ctx context.Context, groupModels types.List) ([]iam.Clie
 	if len(groups) == 0 {
 		return nil, nil
 	}
-	result := make([]iam.ClientGroup, 0, len(groups))
+	result := make([]iam.ClientGroupRequestItem, 0, len(groups))
 	for _, group := range groups {
 		subGroups, diags := getGroupsFromModel(ctx, group.Subgroups)
 		if diags.HasError() {
 			return nil, diags
 		}
-		result = append(result, iam.ClientGroup{
-			GroupID:       group.GroupID.ValueInt64(),
-			IsBlocked:     group.IsBlocked.ValueBool(),
-			ParentGroupID: group.ParentGroupID.ValueInt64(),
-			RoleID:        group.RoleID.ValueInt64(),
-			Subgroups:     subGroups,
+		result = append(result, iam.ClientGroupRequestItem{
+			GroupID:   group.GroupID.ValueInt64(),
+			RoleID:    group.RoleID.ValueInt64(),
+			Subgroups: subGroups,
 		})
 	}
 	return result, nil

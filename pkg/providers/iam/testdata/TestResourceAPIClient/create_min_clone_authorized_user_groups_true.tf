@@ -15,20 +15,12 @@ resource "akamai_iam_api_client" "test" {
     all_accessible_apis = false
     apis = [
       {
-        api_id            = 5580
-        api_name          = "Search Data Feed"
-        description       = "Search Data Feed"
-        endpoint          = "/search-portal-data-feed-api/"
-        documentation_url = "/"
-        access_level      = "READ-ONLY"
+        api_id       = 5580
+        access_level = "READ-ONLY"
       },
       {
-        api_id            = 5801
-        api_name          = "EdgeWorkers"
-        description       = "EdgeWorkers"
-        endpoint          = "/edgeworkers/"
-        documentation_url = "https://developer.akamai.com/api/web_performance/edgeworkers/v1.html"
-        access_level      = "READ-WRITE"
+        api_id       = 5801
+        access_level = "READ-WRITE"
       }
     ]
   }

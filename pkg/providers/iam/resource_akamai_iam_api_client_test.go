@@ -748,7 +748,7 @@ func TestResourceAPIClient(t *testing.T) {
 		"happy path - create with clone_authorized_user_groups false and one group, update to clone_authorized_user_groups true, no groups": {
 			init: func(m *iam.Mock, createData, updateData testData) {
 
-				createData.createAPIClientRequest.GroupAccess.Groups = []iam.ClientGroup{
+				createData.createAPIClientRequest.GroupAccess.Groups = []iam.ClientGroupRequestItem{
 					{
 						GroupID: 578,
 						RoleID:  341,
@@ -776,7 +776,7 @@ func TestResourceAPIClient(t *testing.T) {
 					},
 				}
 
-				createData.updateAPIClientNotificationEmailsRequest.Body.GroupAccess.Groups = []iam.ClientGroup{
+				createData.updateAPIClientNotificationEmailsRequest.Body.GroupAccess.Groups = []iam.ClientGroupRequestItem{
 					{
 						GroupID: 578,
 						RoleID:  341,
@@ -869,7 +869,7 @@ func TestResourceAPIClient(t *testing.T) {
 				mockGetAPIClient(m, createData)
 
 				// Update
-				updateData.updateAPIClientRequest.Body.GroupAccess.Groups = []iam.ClientGroup{
+				updateData.updateAPIClientRequest.Body.GroupAccess.Groups = []iam.ClientGroupRequestItem{
 					{
 						GroupID: 578,
 						RoleID:  341,
@@ -1125,14 +1125,6 @@ func TestResourceAPIClient(t *testing.T) {
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/missing_purge_options_when_all_accessible_apis.tf"),
 					ExpectError: regexp.MustCompile(`You must specify 'purge_options' when 'all_accessible_apis' is true`),
-				},
-			},
-		},
-		"validation error - 'purge_options' are required when 'apis' contains 'ccu'": {
-			steps: []resource.TestStep{
-				{
-					Config:      testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/missing_purge_options_when_ccu.tf"),
-					ExpectError: regexp.MustCompile(`You must specify 'purge_options' when 'api_name' is 'CCU APIs'`),
 				},
 			},
 		},
@@ -1540,22 +1532,14 @@ func mockDeactivateCredential(m *iam.Mock, testData testData) *mock.Call {
 }
 
 var (
-	apisCreate = []iam.API{
+	apisCreate = []iam.APIRequestItem{
 		{
-			APIID:            5580,
-			APIName:          "Search Data Feed",
-			Description:      "Search Data Feed",
-			Endpoint:         "/search-portal-data-feed-api/",
-			DocumentationURL: "/",
-			AccessLevel:      "READ-ONLY",
+			APIID:       5580,
+			AccessLevel: "READ-ONLY",
 		},
 		{
-			APIID:            5801,
-			APIName:          "EdgeWorkers",
-			Description:      "EdgeWorkers",
-			Endpoint:         "/edgeworkers/",
-			DocumentationURL: "https://developer.akamai.com/api/web_performance/edgeworkers/v1.html",
-			AccessLevel:      "READ-WRITE",
+			APIID:       5801,
+			AccessLevel: "READ-WRITE",
 		},
 	}
 
@@ -1838,7 +1822,7 @@ var (
 
 	createAPIClientRequest = iam.CreateAPIClientRequest{
 		AllowAccountSwitch: false,
-		APIAccess: iam.APIAccess{
+		APIAccess: iam.APIAccessRequest{
 			AllAccessibleAPIs: false,
 			APIs:              apisCreate,
 		},
@@ -1848,13 +1832,13 @@ var (
 		ClientName:              "mw+2_1",
 		ClientType:              "CLIENT",
 		CreateCredential:        true,
-		GroupAccess: iam.GroupAccess{
+		GroupAccess: iam.GroupAccessRequest{
 			CloneAuthorizedUserGroups: false,
-			Groups: []iam.ClientGroup{
+			Groups: []iam.ClientGroupRequestItem{
 				{
 					GroupID: 123,
 					RoleID:  340,
-					Subgroups: []iam.ClientGroup{
+					Subgroups: []iam.ClientGroupRequestItem{
 						{
 							GroupID: 333,
 							RoleID:  540,
@@ -1939,7 +1923,7 @@ var (
 
 	createAPIClientRequestMin = iam.CreateAPIClientRequest{
 		AllowAccountSwitch: false,
-		APIAccess: iam.APIAccess{
+		APIAccess: iam.APIAccessRequest{
 			AllAccessibleAPIs: false,
 			APIs:              apisCreate,
 		},
@@ -1949,9 +1933,9 @@ var (
 		ClientName:              "mw+2_1",
 		ClientType:              "CLIENT",
 		CreateCredential:        true,
-		GroupAccess: iam.GroupAccess{
+		GroupAccess: iam.GroupAccessRequest{
 			CloneAuthorizedUserGroups: false,
-			Groups: []iam.ClientGroup{
+			Groups: []iam.ClientGroupRequestItem{
 				{
 					GroupID: 123,
 					RoleID:  340,
@@ -1967,7 +1951,7 @@ var (
 		ClientID: "c1ien41d",
 		Body: iam.UpdateAPIClientRequestBody{
 			AllowAccountSwitch: false,
-			APIAccess: iam.APIAccess{
+			APIAccess: iam.APIAccessRequest{
 				AllAccessibleAPIs: false,
 				APIs:              apisCreate,
 			},
@@ -1976,9 +1960,9 @@ var (
 			ClientDescription:       "",
 			ClientName:              "mw+2_1",
 			ClientType:              "CLIENT",
-			GroupAccess: iam.GroupAccess{
+			GroupAccess: iam.GroupAccessRequest{
 				CloneAuthorizedUserGroups: false,
-				Groups: []iam.ClientGroup{
+				Groups: []iam.ClientGroupRequestItem{
 					{
 						GroupID: 123,
 						RoleID:  340,
@@ -1995,7 +1979,7 @@ var (
 		ClientID: "c1ien41d",
 		Body: iam.UpdateAPIClientRequestBody{
 			AllowAccountSwitch: false,
-			APIAccess: iam.APIAccess{
+			APIAccess: iam.APIAccessRequest{
 				AllAccessibleAPIs: false,
 				APIs:              apisCreate,
 			},
@@ -2004,9 +1988,9 @@ var (
 			ClientDescription:       "",
 			ClientName:              "mw+2_1",
 			ClientType:              "CLIENT",
-			GroupAccess: iam.GroupAccess{
+			GroupAccess: iam.GroupAccessRequest{
 				CloneAuthorizedUserGroups: false,
-				Groups: []iam.ClientGroup{
+				Groups: []iam.ClientGroupRequestItem{
 					{
 						GroupID: 123,
 						RoleID:  340,
@@ -2046,7 +2030,6 @@ var (
 		IsLocked:           true,
 		NotificationEmails: []string{"mw+2@example.com"},
 		PurgeOptions:       nil,
-		ServiceProviderID:  0,
 	}
 
 	getAPIClientRequest = iam.GetAPIClientRequest{
@@ -2361,7 +2344,7 @@ var (
 		ClientID: "c1ien41d",
 		Body: iam.UpdateAPIClientRequestBody{
 			AllowAccountSwitch: false,
-			APIAccess: iam.APIAccess{
+			APIAccess: iam.APIAccessRequest{
 				AllAccessibleAPIs: false,
 				APIs:              apisCreate,
 			},
@@ -2370,13 +2353,13 @@ var (
 			ClientDescription:       "Test API Client",
 			ClientName:              "mw+2_1",
 			ClientType:              "CLIENT",
-			GroupAccess: iam.GroupAccess{
+			GroupAccess: iam.GroupAccessRequest{
 				CloneAuthorizedUserGroups: false,
-				Groups: []iam.ClientGroup{
+				Groups: []iam.ClientGroupRequestItem{
 					{
 						GroupID: 123,
 						RoleID:  340,
-						Subgroups: []iam.ClientGroup{
+						Subgroups: []iam.ClientGroupRequestItem{
 							{
 								GroupID: 333,
 								RoleID:  540,
@@ -2395,7 +2378,7 @@ var (
 		ClientID: "c1ien41d",
 		Body: iam.UpdateAPIClientRequestBody{
 			AllowAccountSwitch: false,
-			APIAccess: iam.APIAccess{
+			APIAccess: iam.APIAccessRequest{
 				AllAccessibleAPIs: false,
 				APIs:              apisCreate,
 			},
@@ -2404,13 +2387,13 @@ var (
 			ClientDescription:       "Test API Client 2",
 			ClientName:              "mw+2_1",
 			ClientType:              "CLIENT",
-			GroupAccess: iam.GroupAccess{
+			GroupAccess: iam.GroupAccessRequest{
 				CloneAuthorizedUserGroups: false,
-				Groups: []iam.ClientGroup{
+				Groups: []iam.ClientGroupRequestItem{
 					{
 						GroupID: 123,
 						RoleID:  340,
-						Subgroups: []iam.ClientGroup{
+						Subgroups: []iam.ClientGroupRequestItem{
 							{
 								GroupID: 333,
 								RoleID:  540,
