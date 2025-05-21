@@ -6,9 +6,9 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/iam"
-	"github.com/akamai/terraform-provider-akamai/v7/internal/test"
-	tst "github.com/akamai/terraform-provider-akamai/v7/pkg/common/test"
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
+	"github.com/akamai/terraform-provider-akamai/v8/internal/test"
+	tst "github.com/akamai/terraform-provider-akamai/v8/pkg/common/test"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 

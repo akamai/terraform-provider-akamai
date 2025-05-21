@@ -1,4 +1,4 @@
-module github.com/akamai/terraform-provider-akamai/v7
+module github.com/akamai/terraform-provider-akamai/v8
 
 go 1.23.6
 

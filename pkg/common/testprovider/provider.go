@@ -2,7 +2,7 @@
 package testprovider
 
 import (
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/subprovider"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/subprovider"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"

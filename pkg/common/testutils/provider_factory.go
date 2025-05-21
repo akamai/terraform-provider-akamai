@@ -3,8 +3,8 @@ package testutils
 import (
 	"context"
 
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/subprovider"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/subprovider"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-mux/tf6muxserver"
