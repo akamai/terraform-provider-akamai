@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/networklists"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/networklists"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/hash"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"

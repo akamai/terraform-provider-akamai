@@ -4,10 +4,10 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/cloudlets"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/cloudlets"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/testutils"
 
-	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/cloudlets/v3"
+	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/cloudlets/v3"
 )
 
 func TestMain(m *testing.M) {

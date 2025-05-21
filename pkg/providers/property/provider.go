@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/hapi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/iam"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/hapi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/str"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/subprovider"

@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	akalog "github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/log"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/session"
+	akalog "github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/log"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/log"
 	"github.com/hashicorp/go-hclog"
 )
