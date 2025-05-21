@@ -89,7 +89,8 @@
   * Added support for the new rule format `v2025-03-24`. List of changes can be found [here](https://techdocs.akamai.com/terraform/docs/rule-format-changes#v2025-03-24).
 
 
-
+* General
+  * Updated various dependencies.
 
 * PAPI
   * Changed the `akamai_property_activation` resource that modifying `contact` field without changing `version`, `network` or `property_id` no longer shows diff ([I#624](https://github.com/akamai/terraform-provider-akamai/issues/624)).
