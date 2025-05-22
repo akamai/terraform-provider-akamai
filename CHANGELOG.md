@@ -8,14 +8,14 @@
   * Renamed the `clientIdentifier` field to `clientIdentifiers` and changed its type from a string to a list of strings in the `rate_policy` attribute of the `akamai_appsec_rate_policy` resource.
 
 * DNS
-  * Added support for full deletion of the `akamai_dns_zone` resource.
+  * Added support for full deletion of the `akamai_dns_zone` resource ([I#517](https://github.com/akamai/terraform-provider-akamai/issues/517)).
 
 * EdgeKV
   * Added removal of the corresponding namespace in the `akamai_edgekv` resource.
     It can be removed only if there are no items in it. Otherwise, an error is returned.
 
 * PAPI
-  * Modified the `akamai_edge_hostname` resource - replaced the no-op destroy operation with fully developed delete.  
+  * Modified the `akamai_edge_hostname` resource - replaced the no-op destroy operation with fully developed delete ([I#504](https://github.com/akamai/terraform-provider-akamai/issues/504)).  
 
 #### FEATURES/ENHANCEMENTS:
 
@@ -31,29 +31,29 @@
   * Added an option to provide a policy name instead of a policy ID in the `akamai_cloudlets_policy` data source. ([I#619](https://github.com/akamai/terraform-provider-akamai/issues/619)).
 
 * GTM
-  * Enabled deleting the `akamai_gtm_domain` resource, allowing users to submit requests to remove GTM domains.
+  * Enabled deleting the `akamai_gtm_domain` resource, allowing users to submit requests to remove GTM domains ([I#602](https://github.com/akamai/terraform-provider-akamai/issues/602)).
 
 * IAM
   * Added new data sources:
     * `akamai_iam_api_clients` – lists all API clients.
     * `akamai_iam_api_client` – gets an API client.
   * Added a new resource:
-    * `akamai_iam_api_client` - manages API clients.
+    * `akamai_iam_api_client` - manages API clients ([I#380](https://github.com/akamai/terraform-provider-akamai/issues/380)).
 
 * PAPI
-  * Added support for the additional `RDN` compliant fields in `subject_rdns` under `custom_certificate_authorities` in the rule formats.
+  * Added support for the additional `RDN` compliant fields in `subject_rdns` under `custom_certificate_authorities` in the rule formats ([I#618](https://github.com/akamai/terraform-provider-akamai/issues/618)).
   * Increased the `akamai_edge_hostname` resource's default timeout to `45` minutes.
   * Added support for the whole resource drift in the `akamai_edge_hostname` resource.
   * Added support for the new rule format `v2025-04-29`. The list of changes can be found [here](https://techdocs.akamai.com/terraform/docs/rule-format-changes#v2025-04-29).
   * Added support for the new rule format `v2025-03-24`. The list of changes can be found [here](https://techdocs.akamai.com/terraform/docs/rule-format-changes#v2025-03-24).
   * Changed the `akamai_property_activation` resource that modifying the `contact` field without changing the `version`, `network` or `property_id` field no longer shows diff ([I#624](https://github.com/akamai/terraform-provider-akamai/issues/624)).
   * Changed the `akamai_property_include_activation` resource that modifying the `notify_emails` field without changing the `version` field no longer shows diff.
-  * Changed validation of edgehostnames domain prefixes in the `resource_akamai_edge_hostname` resource to create context.
+  * Changed validation of edgehostnames domain prefixes in the `resource_akamai_edge_hostname` resource to create context ([I#636](https://github.com/akamai/terraform-provider-akamai/issues/636)).
 
 #### BUG FIXES:
 
 * Appsec
-  * Fixed trimming a prefix in the `group_id` field (if present) in the `akamai_appsec_configuration` resource to support a numeric value.
+  * Fixed trimming a prefix in the `group_id` field (if present) in the `akamai_appsec_configuration` resource to support a numeric value ([I#551](https://github.com/akamai/terraform-provider-akamai/issues/551)).
 
 * Cloudlets
   * Improved the behavior of an inactive `cloudlets_policy` resource so that changing its description no longer triggers the creation of a new version.
