@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	"log"
 	"reflect"
@@ -467,4 +468,16 @@ func suppressFieldsForAppSecActivation(_, oldValue, newValue string, d *schema.R
 		return false
 	}
 	return true
+}
+
+func suppressFieldForPrefixedGroupID(_, oldValue, newValue string, d *schema.ResourceData) bool {
+	// oldValue: load from DataSource - which can also be freshly Instantiated (to be populated with Inputs);
+	// newValue: from Input (eg. 'grp_12345' ) vs. '12345' Loaded from existing ('old' and 'new' are the same)
+	if oldValue != newValue && d.HasChanges("group_id") && len(oldValue) > 0 {
+		if _, err := strconv.Atoi(newValue); err != nil {
+			var toSuppress = strings.HasSuffix(newValue, "_"+oldValue)
+			return toSuppress
+		}
+	}
+	return oldValue == newValue
 }

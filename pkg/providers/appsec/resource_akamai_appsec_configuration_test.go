@@ -191,8 +191,8 @@ func TestAkamaiConfiguration_Create_txt_group_id(t *testing.T) {
 								knownvalue.StringExact("64867"),
 							),
 						},
-						// 2) Finally, determining that a Plan will put forward prior to: 'terraform apply' phase.
-						ExpectNonEmptyPlan: true,
+						// 2) Finally, determining that a Plan: its 'state' is No-Difference from 'config-in-request'.
+						ExpectNonEmptyPlan: false,
 					},
 				},
 			})
@@ -229,8 +229,8 @@ func TestAkamaiConfiguration_Clone_txt_group_id(t *testing.T) {
 								knownvalue.StringExact("64867"),
 							),
 						},
-						// 2) Finally, determining that a Plan will put forward prior to: 'terraform apply' phase.
-						ExpectNonEmptyPlan: true,
+						// 2) Finally, determining that a Plan: its 'state' is No-Difference from 'config-in-request'.
+						ExpectNonEmptyPlan: false,
 					},
 				},
 			})
