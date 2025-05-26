@@ -1507,9 +1507,28 @@ func (r *apiClientResource) ImportState(ctx context.Context, req resource.Import
 	tflog.Debug(ctx, "Importing API Client Resource")
 
 	data := &apiClientResourceModel{}
+	clientID := strings.TrimSpace(req.ID)
+	// Fetch the API client to check if there are any credentials.
+	// If there are no credentials, we cannot import the API client.
+	client := inst.Client(r.meta)
+	apiClient, err := client.GetAPIClient(ctx, iam.GetAPIClientRequest{
+		ClientID:    strings.TrimSpace(req.ID),
+		Actions:     true,
+		GroupAccess: true,
+		APIAccess:   true,
+		Credentials: true,
+		IPACL:       true,
+	})
+	if err != nil {
+		resp.Diagnostics.AddError("Importing API Client Resource failed", err.Error())
+		return
+	}
+	if len(apiClient.Credentials) == 0 {
+		resp.Diagnostics.AddError("Importing API Client Resource failed", "API client has no credentials")
+		return
+	}
 
 	// in import, we only need to set api client ID to allow read function to fill other attributes
-	clientID := strings.TrimSpace(req.ID)
 	data.ClientID = types.StringValue(clientID)
 	data.NotificationEmails = types.ListUnknown(types.StringType)
 	data.Credential = types.ObjectUnknown(credentialType())

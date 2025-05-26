@@ -1383,6 +1383,8 @@ func TestImportAPIClientResource(t *testing.T) {
 				getAPIClientResponse: getAPIClientResponse,
 			},
 			init: func(m *iam.Mock, data, _ testData) {
+				// Import
+				mockGetAPIClient(m, data)
 				// Read
 				mockGetAPIClient(m, data)
 			},
@@ -1403,6 +1405,8 @@ func TestImportAPIClientResource(t *testing.T) {
 				getAPIClientResponse: getAPIClientResponseAAA,
 			},
 			init: func(m *iam.Mock, data, _ testData) {
+				// Import
+				mockGetAPIClient(m, data)
 				// Read
 				mockGetAPIClient(m, data)
 			},
@@ -1426,6 +1430,8 @@ func TestImportAPIClientResource(t *testing.T) {
 				getAPIClientResponse: getAPIClientResponse,
 			},
 			init: func(m *iam.Mock, data, _ testData) {
+				// Import
+				mockGetAPIClient(m, data)
 				// Read
 				mockGetAPIClient(m, data)
 			},
@@ -1451,6 +1457,8 @@ func TestImportAPIClientResource(t *testing.T) {
 				data.getAPIClientResponse.APIAccess.AllAccessibleAPIs = true
 				data.getAPIClientResponse.IsLocked = true
 				data.getAPIClientResponse.Actions = &lockedClientActions
+				// Import
+				mockGetAPIClient(m, data)
 				// Read
 				mockGetAPIClient(m, data)
 
@@ -1521,6 +1529,8 @@ func TestImportAPIClientResource(t *testing.T) {
 				data.getAPIClientResponse.APIAccess.AllAccessibleAPIs = true
 				data.getAPIClientResponse.IsLocked = true
 				data.getAPIClientResponse.Actions = &lockedClientActions
+				// Import
+				mockGetAPIClient(m, data)
 				// Read after import
 				mockGetAPIClient(m, data)
 				// Update attempt
@@ -1567,7 +1577,31 @@ func TestImportAPIClientResource(t *testing.T) {
 					ImportState:   true,
 					ResourceName:  "akamai_iam_api_client.test",
 					Config:        testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/importable.tf"),
-					ExpectError:   regexp.MustCompile(`Reading API Client Resource failed`),
+					ExpectError:   regexp.MustCompile(`Importing API Client Resource failed`),
+				},
+			},
+		},
+		"expect error - import client with no credentials": {
+			importID: "c1ien41d",
+			init: func(m *iam.Mock, _, _ testData) {
+				m.On("GetAPIClient", testutils.MockContext, iam.GetAPIClientRequest{
+					ClientID:    "c1ien41d",
+					Actions:     true,
+					GroupAccess: true,
+					APIAccess:   true,
+					Credentials: true,
+					IPACL:       true,
+				}).Return(&iam.GetAPIClientResponse{
+					Credentials: []iam.APIClientCredential{},
+				}, nil).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					ImportStateId: "c1ien41d",
+					ImportState:   true,
+					ResourceName:  "akamai_iam_api_client.test",
+					Config:        testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/importable.tf"),
+					ExpectError:   regexp.MustCompile(`API client has no credentials`),
 				},
 			},
 		},
