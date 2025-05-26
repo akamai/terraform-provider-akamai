@@ -182,12 +182,12 @@ func (r *apiClientResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 				},
 			},
 			"authorized_users": schema.ListAttribute{
-				Optional:    true,
-				Computed:    true,
+				Required:    true,
 				ElementType: types.StringType,
 				Description: "The API client's valid users. When the 'client_type' is either 'CLIENT' or 'USER_CLIENT', you need to specify a single username in an array.",
 				Validators: []validator.List{
 					listvalidator.SizeAtLeast(1),
+					listvalidator.SizeAtMost(1),
 					listvalidator.ValueStringsAre(stringvalidator.LengthAtLeast(1)),
 				},
 			},
@@ -238,7 +238,7 @@ func (r *apiClientResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 				Attributes: map[string]schema.Attribute{
 					"cidr": schema.ListAttribute{
 						ElementType: types.StringType,
-						Required:    true,
+						Optional:    true,
 						Description: "IP addresses or CIDR blocks the API client can access.",
 						Validators: []validator.List{
 							listvalidator.SizeAtLeast(1),
@@ -659,6 +659,48 @@ func (r *apiClientResource) Configure(_ context.Context, req resource.ConfigureR
 	r.meta = meta.Must(req.ProviderData)
 }
 
+func (r *apiClientResource) validateCPCodes(ctx context.Context, plan *apiClientResourceModel, response *resource.ModifyPlanResponse) {
+	tflog.Debug(ctx, "If 'cp_codes' and `group_access.groups` is not empty, we should verify that CP codes are available for a user under these groups")
+
+	var authorizedUsers []string
+	diags := plan.AuthorizedUsers.ElementsAs(ctx, &authorizedUsers, false)
+	if diags.HasError() {
+		response.Diagnostics.Append(diags...)
+		return
+	}
+
+	var plannedCPCodes []int64
+	diags = plan.PurgeOptions.CPCodeAccess.CPCodes.ElementsAs(ctx, &plannedCPCodes, false)
+	if diags.HasError() {
+		response.Diagnostics.Append(diags...)
+		return
+	}
+
+	groups, diags := getGroupsFromModel(ctx, plan.GroupAccess.Groups)
+	if diags.HasError() {
+		response.Diagnostics.Append(diags...)
+		return
+	}
+
+	client := inst.Client(r.meta)
+	allowedCPCodes, err := client.ListAllowedCPCodes(ctx, iam.ListAllowedCPCodesRequest{
+		UserName: authorizedUsers[0],
+		Body: iam.ListAllowedCPCodesRequestBody{
+			ClientType: iam.ClientType(plan.ClientType.ValueString()),
+			Groups:     groups,
+		},
+	})
+	if err != nil {
+		response.Diagnostics.AddError("API Client resource ModifyPlan failed", err.Error())
+		return
+	}
+
+	if !checkAllowedCPCodes(plannedCPCodes, allowedCPCodes) {
+		response.Diagnostics.Append(diag.NewAttributeErrorDiagnostic(path.Root("group_id"), "provided invalid data", fmt.Sprintf("cp codes provided in 'purge_options.cp_code_access.cp_codes' are not available for 'authorized_users' %s for given groups", authorizedUsers)))
+		return
+	}
+}
+
 // ModifyPlan performs plan modification on a resource level.
 func (r *apiClientResource) ModifyPlan(ctx context.Context, request resource.ModifyPlanRequest, response *resource.ModifyPlanResponse) {
 	tflog.Debug(ctx, "Modifying plan for API Client Resource")
@@ -676,25 +718,14 @@ func (r *apiClientResource) ModifyPlan(ctx context.Context, request resource.Mod
 		}
 	}
 
-	// If all_accessible_apis is true on create, we should disallow purge_options.cp_code_access.cp_codes
-	if request.State.Raw.IsNull() &&
-		isKnown(plan.APIAccess.AllAccessibleAPIs) &&
-		plan.APIAccess.AllAccessibleAPIs.ValueBool() &&
-		isKnown(plan.PurgeOptions.CPCodeAccess.CPCodes) {
-
-		tflog.Debug(ctx, "If 'all_accessible_apis' is true on create, we should disallow 'purge_options.cp_code_access.cp_codes'")
-		var cpCodes []types.Int64
-		plan.PurgeOptions.CPCodeAccess.CPCodes.ElementsAs(ctx, &cpCodes, false)
-		if len(cpCodes) > 0 {
-			response.Diagnostics.Append(diag.NewAttributeErrorDiagnostic(path.Root("purge_options"), "invalid fields combination", "purge_options.cp_code_access.cp_codes cannot be provided when all_accessible_apis is true"))
-			return
-		}
-
-		plan.APIAccess.APIs = types.SetUnknown(apiType())
-		response.Diagnostics.Append(response.Plan.SetAttribute(ctx, path.Root("api_access"), plan.APIAccess)...)
-		if response.Diagnostics.HasError() {
-			return
-		}
+	// If 'cp_codes' and `group_access.groups` are not empty, we should verify that CP codes are available for a user under these groups.
+	// Otherwise, terraform will throw `.purge_options.cp_code_access.cp_codes: element 0 has vanished.` error,
+	// because in this case cp_codes are not preserved and in the API response cp_codes field is an empty list.
+	// This validation does not work if `clone_authorized_user_groups` is set to `true`.
+	if plan != nil && plan.PurgeOptions != nil && !plan.PurgeOptions.CPCodeAccess.CPCodes.IsNull() &&
+		!plan.GroupAccess.Groups.IsNull() &&
+		isKnown(plan.PurgeOptions.CPCodeAccess.CPCodes) && isKnown(plan.GroupAccess.Groups) {
+		r.validateCPCodes(ctx, plan, response)
 	}
 
 	if request.Plan.Raw.IsNull() || request.State.Raw.IsNull() {
@@ -747,6 +778,21 @@ func (r *apiClientResource) ModifyPlan(ctx context.Context, request resource.Mod
 			return
 		}
 	}
+}
+
+func checkAllowedCPCodes(cpCodes []int64, allowed []iam.ListAllowedCPCodesResponseItem) bool {
+	allowedSet := make(map[int]struct{}, len(allowed))
+	for _, a := range allowed {
+		allowedSet[a.Value] = struct{}{}
+	}
+
+	for _, cp := range cpCodes {
+		if _, found := allowedSet[int(cp)]; !found {
+			return false
+		}
+	}
+
+	return true
 }
 
 func modifyCredential(ctx context.Context, state *apiClientResourceModel, plan *apiClientResourceModel, response *resource.ModifyPlanResponse) {
@@ -1002,6 +1048,14 @@ func (r *apiClientResource) ValidateConfig(ctx context.Context, req resource.Val
 	if data.PurgeOptions != nil && data.PurgeOptions.CPCodeAccess.AllCurrentAndNewCPCodes.ValueBool() && len(cpCodes) != 0 {
 		resp.Diagnostics.AddAttributeError(path.Root("purge_options"), invalidConfigurationAttribute, "You cannot specify any CP Code when 'all_current_and_new_cp_codes' is true")
 	}
+
+	if data.IPACL != nil && data.IPACL.Enable.ValueBool() {
+		if data.IPACL.CIDR.IsNull() || data.IPACL.CIDR.IsUnknown() || len(data.IPACL.CIDR.Elements()) == 0 {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("ip_acl").AtName("cidr"), invalidConfigurationAttribute, "You should specify 'cidr' when 'enable' is true",
+			)
+		}
+	}
 }
 
 func (r *apiClientResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -1114,7 +1168,7 @@ func (r *apiClientResource) create(ctx context.Context, plan *apiClientResourceM
 		}
 	}
 
-	// If the notification emails are empty, we need to update the API client as the
+	// If the notification emails are empty, we need to update the API client as
 	// the API fills the emails by default with the email of the user who created the API client.
 	if len(notificationEmails) == 0 {
 		_, err := client.UpdateAPIClient(ctx, iam.UpdateAPIClientRequest{

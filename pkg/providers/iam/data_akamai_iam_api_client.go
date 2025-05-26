@@ -39,12 +39,22 @@ type (
 		ClientType              types.String           `tfsdk:"client_type"`
 		CreatedBy               types.String           `tfsdk:"created_by"`
 		CreatedDate             types.String           `tfsdk:"created_date"`
-		Credentials             []credentialsModel     `tfsdk:"credentials"`
+		Credentials             []getCredentialsModel  `tfsdk:"credentials"`
 		GroupAccess             *groupAccessModel      `tfsdk:"group_access"`
 		IPACL                   *ipACLModel            `tfsdk:"ip_acl"`
 		NotificationEmails      types.List             `tfsdk:"notification_emails"`
 		PurgeOptions            *purgeOptionsModel     `tfsdk:"purge_options"`
 		IsLocked                types.Bool             `tfsdk:"is_locked"`
+	}
+
+	getCredentialsModel struct {
+		Actions      types.Object `tfsdk:"actions"`
+		ClientToken  types.String `tfsdk:"client_token"`
+		CreatedOn    types.String `tfsdk:"created_on"`
+		CredentialID types.Int64  `tfsdk:"credential_id"`
+		Description  types.String `tfsdk:"description"`
+		ExpiresOn    types.String `tfsdk:"expires_on"`
+		Status       types.String `tfsdk:"status"`
 	}
 )
 
@@ -256,11 +266,6 @@ func (d *apiClientDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 							Computed:    true,
 							Sensitive:   true,
 							Description: "The part of the credential that identifies the API client.",
-						},
-						"client_secret": schema.StringAttribute{
-							Computed:    true,
-							Sensitive:   true,
-							Description: "The client secret.",
 						},
 						"created_on": schema.StringAttribute{
 							Computed:    true,
@@ -485,7 +490,7 @@ func (m *clientModel) read(ctx context.Context, res *iam.GetAPIClientResponse) d
 		Groups:                    subGroups,
 	}
 
-	var credentials []credentialsModel
+	var credentials []getCredentialsModel
 	for _, cred := range res.Credentials {
 		credentialActions, diags := types.ObjectValueFrom(ctx, credentialActionsType(), credentialActionsModel{
 			Delete:          types.BoolValue(cred.Actions.Delete),
@@ -497,7 +502,7 @@ func (m *clientModel) read(ctx context.Context, res *iam.GetAPIClientResponse) d
 		if diags.HasError() {
 			return diags
 		}
-		credentials = append(credentials, credentialsModel{
+		credentials = append(credentials, getCredentialsModel{
 			Actions:      credentialActions,
 			ClientToken:  types.StringValue(cred.ClientToken),
 			CreatedOn:    types.StringValue(cred.CreatedOn.Format(time.RFC3339Nano)),

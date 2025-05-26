@@ -36,6 +36,7 @@ func TestResourceAPIClient(t *testing.T) {
 	}{
 		"happy path - create with all fields set": {
 			init: func(m *iam.Mock, createData, _ testData) {
+				mockListAllowedCPCodes(m).Times(4)
 				// Create
 				mockCreateAPIClient(m, createData)
 				mockGetAPIClient(m, createData)
@@ -64,6 +65,7 @@ func TestResourceAPIClient(t *testing.T) {
 		},
 		"happy path - create with all fields set, all_accessible_apis is true": {
 			init: func(m *iam.Mock, createData, _ testData) {
+				mockListAllowedCPCodes(m).Times(4)
 				// Create
 				purgeOptions := iam.PurgeOptions{
 					CanPurgeByCacheTag: true,
@@ -125,6 +127,7 @@ func TestResourceAPIClient(t *testing.T) {
 		},
 		"happy path - create with all fields set, no cpcodes": {
 			init: func(m *iam.Mock, createData, _ testData) {
+				mockListAllowedCPCodes(m).Times(4)
 				createData.createAPIClientRequest.PurgeOptions = &purgeOptionsNoCPCodes
 				createData.createAPIClientResponse.PurgeOptions = &purgeOptionsNoCPCodes
 				createData.getAPIClientResponse.PurgeOptions = &purgeOptionsNoCPCodes
@@ -158,6 +161,7 @@ func TestResourceAPIClient(t *testing.T) {
 		},
 		"happy path - create with all fields set, missing cpcodes": {
 			init: func(m *iam.Mock, createData, _ testData) {
+				mockListAllowedCPCodes(m).Times(4)
 				createData.createAPIClientRequest.PurgeOptions = &purgeOptionsNoCPCodes
 				createData.createAPIClientResponse.PurgeOptions = &purgeOptionsNoCPCodes
 				createData.getAPIClientResponse.PurgeOptions = &purgeOptionsNoCPCodes
@@ -223,6 +227,7 @@ func TestResourceAPIClient(t *testing.T) {
 		},
 		"happy path - create with all fields set and custom credential details": {
 			init: func(m *iam.Mock, createData, _ testData) {
+				mockListAllowedCPCodes(m).Times(4)
 				// Create
 				mockCreateAPIClient(m, createData)
 				mockUpdateCredential(m, createData)
@@ -254,6 +259,7 @@ func TestResourceAPIClient(t *testing.T) {
 		},
 		"happy path - create with all fields set and credential inactive status": {
 			init: func(m *iam.Mock, createData, _ testData) {
+				mockListAllowedCPCodes(m).Times(4)
 				// Create
 				mockCreateAPIClient(m, createData)
 				mockUpdateCredential(m, createData)
@@ -289,6 +295,7 @@ func TestResourceAPIClient(t *testing.T) {
 		},
 		"happy path - create with credential, encounter diff in read which returns credential as DELETED": {
 			init: func(m *iam.Mock, createData, _ testData) {
+				mockListAllowedCPCodes(m).Times(4)
 				// Create
 				mockCreateAPIClient(m, createData)
 				mockUpdateCredential(m, createData)
@@ -326,6 +333,7 @@ func TestResourceAPIClient(t *testing.T) {
 		},
 		"happy path - create without credential, update by changing description and expires_on": {
 			init: func(m *iam.Mock, createData, updateData testData) {
+				mockListAllowedCPCodes(m).Times(8)
 				// Create
 				mockCreateAPIClient(m, createData)
 				mockGetAPIClient(m, createData)
@@ -376,6 +384,7 @@ func TestResourceAPIClient(t *testing.T) {
 		},
 		"happy path - create without credential, update by changing description, expires_on and status": {
 			init: func(m *iam.Mock, createData, updateData testData) {
+				mockListAllowedCPCodes(m).Times(8)
 				// Create
 				mockCreateAPIClient(m, createData)
 				mockGetAPIClient(m, createData)
@@ -430,6 +439,7 @@ func TestResourceAPIClient(t *testing.T) {
 		},
 		"happy path - create with credential, update by changing description and expires_on": {
 			init: func(m *iam.Mock, createData, updateData testData) {
+				mockListAllowedCPCodes(m).Times(8)
 				// Create
 				mockCreateAPIClient(m, createData)
 				mockUpdateCredential(m, createData)
@@ -483,6 +493,7 @@ func TestResourceAPIClient(t *testing.T) {
 		},
 		"happy path - create with credential, update by changing description, expires_on and status": {
 			init: func(m *iam.Mock, createData, updateData testData) {
+				mockListAllowedCPCodes(m).Times(8)
 				// Create
 				mockCreateAPIClient(m, createData)
 				mockUpdateCredential(m, createData)
@@ -540,6 +551,7 @@ func TestResourceAPIClient(t *testing.T) {
 		},
 		"happy path - create with credential, update by changing description, expires_on and api client description - expect update credential and api client": {
 			init: func(m *iam.Mock, createData, updateData testData) {
+				mockListAllowedCPCodes(m).Times(8)
 				// Create
 				mockCreateAPIClient(m, createData)
 				mockUpdateCredential(m, createData)
@@ -592,8 +604,102 @@ func TestResourceAPIClient(t *testing.T) {
 				},
 			},
 		},
+		"happy path - create with all fields set but `ip_acl.enable` as false no `cidr`": {
+			init: func(m *iam.Mock, createData, _ testData) {
+				mockListAllowedCPCodes(m).Times(4)
+				createData.createAPIClientRequest.IPACL = &ipACLNoCidr
+				createData.createAPIClientResponse.IPACL = &ipACLNoCidr
+				createData.getAPIClientResponse.IPACL = &ipACLNoCidr
+				// Create
+				mockCreateAPIClient(m, createData)
+				mockGetAPIClient(m, createData)
+				// Read
+				mockGetAPIClient(m, createData)
+				// Delete
+				mockDeactivateCredential(m, createData)
+				mockDeleteAPIClient(m, createData)
+			},
+			createData: fullData,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/create_no_cidr.tf"),
+					Check: fullDataChecker.
+						CheckMissing("ip_acl.cidr.0").
+						CheckEqual("ip_acl.enable", "false").
+						Build(),
+				},
+			},
+		},
+		"happy path - purge_options.cp_code_access.cp_codes can be provided when all_accessible_apis is true": {
+			init: func(m *iam.Mock, createData, _ testData) {
+				mockListAllowedCPCodes(m).Times(4)
+				createData.createAPIClientRequest.APIAccess = iam.APIAccessRequest{
+					AllAccessibleAPIs: true,
+				}
+				createData.createAPIClientResponse.APIAccess = apiAccess
+				createData.getAPIClientResponse.APIAccess = apiAccess
+
+				createData.createAPIClientRequest.PurgeOptions = &purgeOptionsCPCodes
+				createData.createAPIClientResponse.PurgeOptions = &purgeOptionsCPCodes
+				createData.getAPIClientResponse.PurgeOptions = &purgeOptionsCPCodes
+
+				// Create
+				mockCreateAPIClient(m, createData)
+				mockGetAPIClient(m, createData)
+				// Read
+				mockGetAPIClient(m, createData)
+				// Delete
+				mockDeactivateCredential(m, createData)
+				mockDeleteAPIClient(m, createData)
+			},
+			createData: fullData,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/cp_codes_can_be_provided_when_all_accessible_apis_true.tf"),
+					Check: tst.NewStateChecker("akamai_iam_api_client.test").
+						CheckEqual("api_access.all_accessible_apis", "true").
+						CheckMissing("api_access.all_accessible_apis.0").
+						CheckEqual("purge_options.can_purge_by_cache_tag", "false").
+						CheckEqual("purge_options.can_purge_by_cp_code", "false").
+						CheckEqual("purge_options.cp_code_access.all_current_and_new_cp_codes", "false").
+						CheckEqual("purge_options.cp_code_access.cp_codes.0", "101").
+						Build(),
+				},
+			},
+		},
+		"happy path - client does not have access to the cp code - expect error": {
+			init: func(m *iam.Mock, _, _ testData) {
+				m.On("ListAllowedCPCodes", testutils.MockContext, iam.ListAllowedCPCodesRequest{
+					UserName: "mw+2",
+					Body: iam.ListAllowedCPCodesRequestBody{
+						ClientType: "CLIENT",
+						Groups: []iam.ClientGroupRequestItem{
+							{
+								GroupID: 123,
+								RoleID:  340,
+								Subgroups: []iam.ClientGroupRequestItem{
+									{
+										GroupID: 333,
+										RoleID:  540,
+									},
+								},
+							},
+						},
+					},
+				}).Return(iam.ListAllowedCPCodesResponse{
+					{},
+				}, nil).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/vanished_cp_codes_after_creation.tf"),
+					ExpectError: regexp.MustCompile(`Error: provided invalid data`),
+				},
+			},
+		},
 		"happy path - update from min to full and from locked to unlocked": {
 			init: func(m *iam.Mock, createData, updateData testData) {
+				mockListAllowedCPCodes(m).Times(4)
 				createData.getAPIClientResponse.IsLocked = true
 				createData.getAPIClientResponse.Actions = &lockedClientActions
 				createData.createAPIClientResponse.IsLocked = true
@@ -656,6 +762,7 @@ func TestResourceAPIClient(t *testing.T) {
 		},
 		"happy path - update from min to full and all_accessible_apis from false to true ": {
 			init: func(m *iam.Mock, createData, updateData testData) {
+				mockListAllowedCPCodes(m).Times(4)
 				createData.getAPIClientResponse.IsLocked = true
 				createData.getAPIClientResponse.Actions = &lockedClientActions
 				createData.createAPIClientResponse.IsLocked = true
@@ -955,6 +1062,7 @@ func TestResourceAPIClient(t *testing.T) {
 		},
 		"happy path - update from min to full and from unlocked to locked": {
 			init: func(m *iam.Mock, createData, updateData testData) {
+				mockListAllowedCPCodes(m).Times(4)
 				createData.getAPIClientResponse.IsLocked = false
 				createData.getAPIClientResponse.Actions = &unlockedClientActions
 				createData.createAPIClientResponse.IsLocked = false
@@ -1112,14 +1220,6 @@ func TestResourceAPIClient(t *testing.T) {
 				},
 			},
 		},
-		"validation error - 'purge_options.cp_code_access.cp_codes' should not be provided when 'all_accessible_apis' is true": {
-			steps: []resource.TestStep{
-				{
-					Config:      testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/invalid_all_accessible_apis_true.tf"),
-					ExpectError: regexp.MustCompile(`purge_options.cp_code_access.cp_codes cannot be provided when\sall_accessible_apis is true`),
-				},
-			},
-		},
 		"validation error - 'purge_options' are required when 'all_accessible_apis' is true": {
 			steps: []resource.TestStep{
 				{
@@ -1149,6 +1249,14 @@ func TestResourceAPIClient(t *testing.T) {
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/invalid_cp_codes.tf"),
 					ExpectError: regexp.MustCompile(`You cannot specify any CP Code when 'all_current_and_new_cp_codes' is true`),
+				},
+			},
+		},
+		"validation error - 'ip_acl.cidr' must not be empty when `ip_acl.enable` is true": {
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/missing_cidr.tf"),
+					ExpectError: regexp.MustCompile(`You should specify 'cidr' when 'enable' is true`),
 				},
 			},
 		},
@@ -1339,6 +1447,7 @@ func TestImportAPIClientResource(t *testing.T) {
 			},
 			updateData: fullData,
 			init: func(m *iam.Mock, data, updateData testData) {
+				mockListAllowedCPCodes(m).Times(4)
 				data.getAPIClientResponse.APIAccess.AllAccessibleAPIs = true
 				data.getAPIClientResponse.IsLocked = true
 				data.getAPIClientResponse.Actions = &lockedClientActions
@@ -1408,6 +1517,7 @@ func TestImportAPIClientResource(t *testing.T) {
 			},
 			updateData: fullData,
 			init: func(m *iam.Mock, data, updateData testData) {
+				mockListAllowedCPCodes(m).Once()
 				data.getAPIClientResponse.APIAccess.AllAccessibleAPIs = true
 				data.getAPIClientResponse.IsLocked = true
 				data.getAPIClientResponse.Actions = &lockedClientActions
@@ -1504,6 +1614,32 @@ func mockUpdateAPIClientNotificationEmails(m *iam.Mock, testData testData) *mock
 
 func mockGetAPIClient(m *iam.Mock, testData testData) *mock.Call {
 	return m.On("GetAPIClient", testutils.MockContext, testData.getAPIClientRequest).Return(&testData.getAPIClientResponse, nil).Once()
+}
+
+func mockListAllowedCPCodes(m *iam.Mock) *mock.Call {
+	return m.On("ListAllowedCPCodes", testutils.MockContext, iam.ListAllowedCPCodesRequest{
+		UserName: "mw+2",
+		Body: iam.ListAllowedCPCodesRequestBody{
+			ClientType: "CLIENT",
+			Groups: []iam.ClientGroupRequestItem{
+				{
+					GroupID: 123,
+					RoleID:  340,
+					Subgroups: []iam.ClientGroupRequestItem{
+						{
+							GroupID: 333,
+							RoleID:  540,
+						},
+					},
+				},
+			},
+		},
+	}).Return(iam.ListAllowedCPCodesResponse{
+		{
+			Name:  "test",
+			Value: 101,
+		},
+	}, nil).Once()
 }
 
 func mockLockAPIClient(m *iam.Mock, data testData) *mock.Call {
@@ -1624,9 +1760,27 @@ var (
 		},
 	}
 
+	purgeOptionsCPCodes = iam.PurgeOptions{
+		CanPurgeByCacheTag: false,
+		CanPurgeByCPCode:   false,
+		CPCodeAccess: iam.CPCodeAccess{
+			AllCurrentAndNewCPCodes: false,
+			CPCodes:                 []int64{101},
+		},
+	}
+
+	apiAccess = iam.APIAccess{
+		AllAccessibleAPIs: true,
+		APIs:              nil,
+	}
+
 	ipACL = iam.IPACL{
 		CIDR:   []string{"128.5.6.5/24"},
 		Enable: true,
+	}
+
+	ipACLNoCidr = iam.IPACL{
+		Enable: false,
 	}
 
 	unlockedClientActions = iam.APIClientActions{
@@ -2617,3 +2771,52 @@ var fullDataChecker = tst.NewStateChecker("akamai_iam_api_client.test").
 	CheckEqual("purge_options.can_purge_by_cp_code", "true").
 	CheckEqual("purge_options.cp_code_access.all_current_and_new_cp_codes", "false").
 	CheckEqual("purge_options.cp_code_access.cp_codes.0", "101")
+
+func TestCheckCPCodesAllowed(t *testing.T) {
+	tests := []struct {
+		name     string
+		cpCodes  []int64
+		allowed  []iam.ListAllowedCPCodesResponseItem
+		expected bool
+	}{
+		{
+			name:     "All codes allowed",
+			cpCodes:  []int64{1001, 1002},
+			allowed:  []iam.ListAllowedCPCodesResponseItem{{Name: "A", Value: 1001}, {Name: "B", Value: 1002}},
+			expected: true,
+		},
+		{
+			name:     "One code not allowed",
+			cpCodes:  []int64{1001, 9999},
+			allowed:  []iam.ListAllowedCPCodesResponseItem{{Name: "A", Value: 1001}, {Name: "B", Value: 1002}},
+			expected: false,
+		},
+		{
+			name:     "Empty cpCodes list",
+			cpCodes:  []int64{},
+			allowed:  []iam.ListAllowedCPCodesResponseItem{{Name: "A", Value: 1001}},
+			expected: true,
+		},
+		{
+			name:     "Empty allowed list",
+			cpCodes:  []int64{1001},
+			allowed:  []iam.ListAllowedCPCodesResponseItem{},
+			expected: false,
+		},
+		{
+			name:     "All codes allowed with more allowed values",
+			cpCodes:  []int64{1002},
+			allowed:  []iam.ListAllowedCPCodesResponseItem{{Name: "A", Value: 1001}, {Name: "B", Value: 1002}, {Name: "C", Value: 1003}},
+			expected: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := checkAllowedCPCodes(tt.cpCodes, tt.allowed)
+			if result != tt.expected {
+				t.Errorf("Expected %v, got %v", tt.expected, result)
+			}
+		})
+	}
+}

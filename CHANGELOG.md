@@ -38,7 +38,7 @@
     * `akamai_iam_api_clients` – lists all API clients.
     * `akamai_iam_api_client` – gets an API client.
   * Added a new resource:
-    * `akamai_iam_api_client` - manages API clients ([I#380](https://github.com/akamai/terraform-provider-akamai/issues/380)).
+    * `akamai_iam_api_client` - manages API clients ([I#380](https://github.com/akamai/terraform-provider-akamai/issues/380)) (Beta).
 
 * PAPI
   * Added support for the additional `RDN` compliant fields in `subject_rdns` under `custom_certificate_authorities` in the rule formats ([I#618](https://github.com/akamai/terraform-provider-akamai/issues/618)).
