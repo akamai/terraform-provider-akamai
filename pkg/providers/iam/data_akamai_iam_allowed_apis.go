@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/iam"
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -93,11 +93,11 @@ func (d *allowedAPIsDataSource) Schema(_ context.Context, _ datasource.SchemaReq
 						"access_levels": schema.ListAttribute{
 							ElementType: types.StringType,
 							Computed:    true,
-							Description: "API access levels, possible values are READ-ONLY and READ-WRITE.",
+							Description: "API access levels, possible values are READ-ONLY, READ-WRITE, CREDENTIAL-READ-ONLY and CREDENTIAL-READ-WRITE.",
 						},
 						"api_id": schema.Int64Attribute{
 							Computed:    true,
-							Description: "Unique identifier for each API.",
+							Description: "A unique identifier for each API.",
 						},
 						"api_name": schema.StringAttribute{
 							Computed:    true,
@@ -105,11 +105,11 @@ func (d *allowedAPIsDataSource) Schema(_ context.Context, _ datasource.SchemaReq
 						},
 						"description": schema.StringAttribute{
 							Computed:    true,
-							Description: "Descriptive label for the API.",
+							Description: "A human-readable name for the API.",
 						},
 						"documentation_url": schema.StringAttribute{
 							Computed:    true,
-							Description: "Link to more information about the API.",
+							Description: "A link to more information about the API.",
 						},
 						"endpoint": schema.StringAttribute{
 							Computed:    true,

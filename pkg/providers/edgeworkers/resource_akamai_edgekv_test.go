@@ -2,13 +2,14 @@ package edgeworkers
 
 import (
 	"fmt"
+	"net/http"
 	"regexp"
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/edgeworkers"
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/edgeworkers"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -28,12 +29,15 @@ func TestResourceEdgeKV(t *testing.T) {
 		steps []resource.TestStep
 		data  edgeKVmockData
 	}{
-		"basic": {
+		"basic: creation and deletion with no items": {
 			init: func(m *edgeworkers.Mock) {
 				// create
 				mockEdgeKVCreate(m, basicData)
 				// read
 				mockEdgeKVRead(m, basicData).Times(2)
+				// delete
+				mockNoGroupsInNamespace(m, basicData)
+				mockEdgeKVDelete(m, basicData)
 			},
 			steps: []resource.TestStep{
 				{
@@ -42,8 +46,8 @@ func TestResourceEdgeKV(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", "DevExpTest:staging"),
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", "DevExpTest"),
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "network", "staging"),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", fmt.Sprintf("%d", 1234)),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", fmt.Sprintf("%d", 86401)),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", "1234"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", "86401"),
 					),
 				},
 			},
@@ -56,6 +60,9 @@ func TestResourceEdgeKV(t *testing.T) {
 				mockEdgeKVCreate(m, data)
 				// read
 				mockEdgeKVRead(m, data).Times(2)
+				// delete
+				mockNoGroupsInNamespace(m, basicData)
+				mockEdgeKVDelete(m, basicData)
 			},
 			steps: []resource.TestStep{
 				{
@@ -64,8 +71,8 @@ func TestResourceEdgeKV(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", "DevExpTest:staging"),
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", "DevExpTest"),
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "network", "staging"),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", fmt.Sprintf("%d", 1234)),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", fmt.Sprintf("%d", 0)),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", "1234"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", "0"),
 					),
 				},
 			},
@@ -97,6 +104,9 @@ func TestResourceEdgeKV(t *testing.T) {
 				mockCreateEdgeKVNamespace(m, basicData)
 				// read
 				mockEdgeKVRead(m, basicData).Times(2)
+				// delete
+				mockNoGroupsInNamespace(m, basicData)
+				mockEdgeKVDelete(m, basicData)
 			},
 			steps: []resource.TestStep{
 				{
@@ -105,8 +115,8 @@ func TestResourceEdgeKV(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", "DevExpTest:staging"),
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", "DevExpTest"),
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "network", "staging"),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", fmt.Sprintf("%d", 1234)),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", fmt.Sprintf("%d", 86401)),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", "1234"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", "86401"),
 					),
 				},
 			},
@@ -119,6 +129,9 @@ func TestResourceEdgeKV(t *testing.T) {
 				mockCreateEdgeKVNamespace(m, basicData)
 				// read
 				mockEdgeKVRead(m, basicData).Times(2)
+				// delete
+				mockNoGroupsInNamespace(m, basicData)
+				mockEdgeKVDelete(m, basicData)
 			},
 			steps: []resource.TestStep{
 				{
@@ -127,8 +140,8 @@ func TestResourceEdgeKV(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", "DevExpTest:staging"),
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", "DevExpTest"),
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "network", "staging"),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", fmt.Sprintf("%d", 1234)),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", fmt.Sprintf("%d", 86401)),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", "1234"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", "86401"),
 					),
 				},
 			},
@@ -166,11 +179,87 @@ func TestResourceEdgeKV(t *testing.T) {
 					Network: basicData.network,
 					Name:    basicData.name,
 				}).Return(nil, fmt.Errorf("error reading edgekv namespace")).Once()
+				// delete
+				mockNoGroupsInNamespace(m, basicData)
+				mockEdgeKVDelete(m, basicData)
 			},
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
 					ExpectError: regexp.MustCompile("error reading edgekv namespace"),
+				},
+			},
+		},
+		"waiting in delete until namespace contains no groups": {
+			init: func(m *edgeworkers.Mock) {
+				// create
+				mockEdgeKVCreate(m, basicData)
+				// read
+				mockEdgeKVRead(m, basicData).Times(2)
+				// delete
+				mockListTwoGroupsInNamespace(m, basicData)
+				mockNoGroupsInNamespace(m, basicData)
+				mockEdgeKVDelete(m, basicData)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", "DevExpTest:staging"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", "DevExpTest"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "network", "staging"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", "1234"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", "86401"),
+					),
+				},
+			},
+		},
+		"waiting in delete until namespace appears": {
+			init: func(m *edgeworkers.Mock) {
+				// create
+				mockEdgeKVCreate(m, basicData)
+				// read
+				mockEdgeKVRead(m, basicData).Times(2)
+				// delete
+				mockNoNamespaceWhenListingGroups(m, basicData)
+				mockNoGroupsInNamespace(m, basicData)
+				mockEdgeKVDelete(m, basicData)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", "DevExpTest:staging"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", "DevExpTest"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "network", "staging"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", "1234"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", "86401"),
+					),
+				},
+			},
+		},
+		"waiting in delete until namespace appears and contains no groups": {
+			init: func(m *edgeworkers.Mock) {
+				// create
+				mockEdgeKVCreate(m, basicData)
+				// read
+				mockEdgeKVRead(m, basicData).Times(2)
+				// delete
+				mockNoNamespaceWhenListingGroups(m, basicData)
+				mockListTwoGroupsInNamespace(m, basicData)
+				mockNoGroupsInNamespace(m, basicData)
+				mockEdgeKVDelete(m, basicData)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", "DevExpTest:staging"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", "DevExpTest"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "network", "staging"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", "1234"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", "86401"),
+					),
 				},
 			},
 		},
@@ -182,6 +271,9 @@ func TestResourceEdgeKV(t *testing.T) {
 				mockEdgeKVRead(m, basicData).Times(2)
 				// read before update
 				mockEdgeKVRead(m, basicData).Times(2)
+				// delete
+				mockNoGroupsInNamespace(m, basicData)
+				mockEdgeKVDelete(m, basicData)
 			},
 			steps: []resource.TestStep{
 				{
@@ -190,8 +282,8 @@ func TestResourceEdgeKV(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", "DevExpTest:staging"),
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", "DevExpTest"),
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "network", "staging"),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", fmt.Sprintf("%d", 1234)),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", fmt.Sprintf("%d", 86401)),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", "1234"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", "86401"),
 					),
 				},
 				{
@@ -200,8 +292,8 @@ func TestResourceEdgeKV(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", "DevExpTest:staging"),
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", "DevExpTest"),
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "network", "staging"),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", fmt.Sprintf("%d", 1234)),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", fmt.Sprintf("%d", 86401)),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", "1234"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", "86401"),
 					),
 				},
 			},
@@ -214,6 +306,9 @@ func TestResourceEdgeKV(t *testing.T) {
 				mockEdgeKVRead(m, basicData).Times(2)
 				// read before update
 				mockEdgeKVRead(m, basicData).Times(2)
+				// delete
+				mockNoGroupsInNamespace(m, basicData)
+				mockEdgeKVDelete(m, basicData)
 			},
 			steps: []resource.TestStep{
 				{
@@ -222,8 +317,8 @@ func TestResourceEdgeKV(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", "DevExpTest:staging"),
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", "DevExpTest"),
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "network", "staging"),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", fmt.Sprintf("%d", 1234)),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", fmt.Sprintf("%d", 86401)),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", "1234"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", "86401"),
 					),
 				},
 				{
@@ -232,8 +327,8 @@ func TestResourceEdgeKV(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", "DevExpTest:staging"),
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", "DevExpTest"),
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "network", "staging"),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", fmt.Sprintf("%d", 1234)),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", fmt.Sprintf("%d", 86401)),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", "1234"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", "86401"),
 					),
 				},
 			},
@@ -254,6 +349,9 @@ func TestResourceEdgeKV(t *testing.T) {
 
 				// read
 				mockEdgeKVRead(m, data).Times(2)
+				// delete
+				mockNoGroupsInNamespace(m, basicData)
+				mockEdgeKVDelete(m, basicData)
 			},
 			steps: []resource.TestStep{
 				{
@@ -262,8 +360,8 @@ func TestResourceEdgeKV(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", "DevExpTest:staging"),
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", "DevExpTest"),
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "network", "staging"),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", fmt.Sprintf("%d", 1234)),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", fmt.Sprintf("%d", 86401)),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", "1234"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", "86401"),
 					),
 				},
 				{
@@ -272,8 +370,8 @@ func TestResourceEdgeKV(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", "DevExpTest:staging"),
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", "DevExpTest"),
 						resource.TestCheckResourceAttr("akamai_edgekv.test", "network", "staging"),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", fmt.Sprintf("%d", 1234)),
-						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", fmt.Sprintf("%d", 88401)),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", "1234"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", "88401"),
 					),
 				},
 			},
@@ -286,6 +384,9 @@ func TestResourceEdgeKV(t *testing.T) {
 				mockEdgeKVRead(m, basicData).Times(2)
 				// 2nd step: import (read)
 				mockEdgeKVRead(m, basicData)
+				// delete
+				mockNoGroupsInNamespace(m, basicData)
+				mockEdgeKVDelete(m, basicData)
 			},
 			steps: []resource.TestStep{
 				{
@@ -305,6 +406,9 @@ func TestResourceEdgeKV(t *testing.T) {
 				mockEdgeKVCreate(m, basicData)
 				// read
 				mockEdgeKVRead(m, basicData).Times(2)
+				// delete
+				mockNoGroupsInNamespace(m, basicData)
+				mockEdgeKVDelete(m, basicData)
 			},
 			steps: []resource.TestStep{
 				{
@@ -320,6 +424,13 @@ func TestResourceEdgeKV(t *testing.T) {
 			},
 		},
 	}
+
+	deleteTimeout = 10 * time.Second
+	pollForConsistentEdgeKVDatabaseInterval = time.Second
+	defer func() {
+		deleteTimeout = time.Minute
+		pollForConsistentEdgeKVDatabaseInterval = 5 * time.Second
+	}()
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -427,4 +538,37 @@ func mockUpdateEdgeKVNamespace(m *edgeworkers.Mock, data edgeKVmockData) {
 		Retention: data.retention,
 		GroupID:   data.groupID,
 	}, nil).Once()
+}
+
+func mockNoGroupsInNamespace(m *edgeworkers.Mock, data edgeKVmockData) {
+	m.On("ListGroupsWithinNamespace", testutils.MockContext, edgeworkers.ListGroupsWithinNamespaceRequest{
+		Network:     data.network,
+		NamespaceID: data.name,
+	}).Return(nil, edgeworkers.ErrNotFound).Once()
+}
+
+func mockListTwoGroupsInNamespace(m *edgeworkers.Mock, data edgeKVmockData) {
+	m.On("ListGroupsWithinNamespace", testutils.MockContext, edgeworkers.ListGroupsWithinNamespaceRequest{
+		Network:     data.network,
+		NamespaceID: data.name,
+	}).Return([]string{"foo", "bar"}, nil).Once()
+}
+
+func mockNoNamespaceWhenListingGroups(m *edgeworkers.Mock, data edgeKVmockData) {
+	err := edgeworkers.Error{}
+	err.Status = http.StatusBadRequest
+	m.On("ListGroupsWithinNamespace", testutils.MockContext, edgeworkers.ListGroupsWithinNamespaceRequest{
+		Network:     data.network,
+		NamespaceID: data.name,
+	}).Return(nil, &err).Once()
+}
+
+func mockEdgeKVDelete(m *edgeworkers.Mock, data edgeKVmockData) {
+	m.On("DeleteEdgeKVNamespace", testutils.MockContext, edgeworkers.DeleteEdgeKVNamespaceRequest{
+		Network: data.network,
+		Name:    data.name,
+		Sync:    true,
+	}).Return(&edgeworkers.DeleteEdgeKVNamespacesResponse{
+		ScheduledDeleteTime: nil,
+	}, nil)
 }

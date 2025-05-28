@@ -3,7 +3,7 @@ package cps
 import (
 	"testing"
 
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 

@@ -3,146 +3,153 @@ package cloudlets
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/cloudlets"
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/cloudlets"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
+
+const pageSize = 1000
 
 func dataSourceCloudletsPolicy() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceCloudletsPolicyRead,
 		Schema: map[string]*schema.Schema{
 			"policy_id": {
-				Type:        schema.TypeInt,
-				Required:    true,
-				Description: "An integer ID that is associated with a policy",
+				Type:         schema.TypeInt,
+				Optional:     true,
+				Computed:     true,
+				ExactlyOneOf: []string{"policy_id", "name"},
+				Description:  "An integer ID that is associated with a policy.",
 			},
 			"version": {
 				Type:        schema.TypeInt,
 				Optional:    true,
-				Description: "The version number of the policy",
+				Description: "The version number of the policy.",
 			},
 			"group_id": {
 				Type:        schema.TypeInt,
 				Computed:    true,
-				Description: "Defines the group association for the policy. You must have edit privileges for the group",
+				Description: "Defines the group association for the policy. You must have edit privileges for the group.",
 			},
 			"name": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "The name of the policy. The name must be unique",
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ExactlyOneOf: []string{"policy_id", "name"},
+				Description:  "The name of the policy. The name must be unique.",
 			},
 			"api_version": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "The specific version of this API",
+				Description: "The specific version of this API.",
 			},
 			"cloudlet_id": {
 				Type:        schema.TypeInt,
 				Computed:    true,
-				Description: "Defines the policy type",
+				Description: "Defines the policy type.",
 			},
 			"cloudlet_code": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Code for the type of Cloudlet (ALB, AP, CD, ER, FR or VP)",
+				Description: "Code for the type of Cloudlet (ALB, AP, CD, ER, FR or VP).",
 			},
 			"revision_id": {
 				Type:        schema.TypeInt,
 				Computed:    true,
-				Description: "Unique ID given to every policy version update",
+				Description: "Unique ID given to every policy version update.",
 			},
 			"description": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "The description of this specific policy",
+				Description: "The description of this specific policy.",
 			},
 			"version_description": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "The description of this specific version",
+				Description: "The description of this specific version.",
 			},
 			"rules_locked": {
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "If true, you cannot edit the match rules for the Cloudlet policy version",
+				Description: "If true, you cannot edit the match rules for the Cloudlet policy version.",
 			},
 			"match_rules": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "A JSON structure that defines the rules for this policy",
+				Description: "A JSON structure that defines the rules for this policy.",
 			},
 			"match_rule_format": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "The version of the Cloudlet-specific matchRules",
+				Description: "The version of the Cloudlet-specific matchRules.",
 			},
 			"warnings": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "A JSON encoded list of warnings",
+				Description: "A JSON encoded list of warnings.",
 			},
 			"activations": {
 				Type:        schema.TypeSet,
 				Computed:    true,
-				Description: "A set of current policy activation information",
+				Description: "A set of current policy activation information.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"api_version": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "The specific version of this API",
+							Description: "The specific version of this API.",
 						},
 						"network": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "The network type, either 'staging' or 'prod' where a property or a Cloudlet policy has been activated",
+							Description: "The network type, either 'staging' or 'prod' where a property or a Cloudlet policy has been activated.",
 						},
 						"policy_info": {
 							Type:        schema.TypeSet,
 							Computed:    true,
-							Description: "The object containing Cloudlet policy information",
+							Description: "The object containing Cloudlet policy information.",
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"policy_id": {
 										Type:        schema.TypeInt,
 										Computed:    true,
-										Description: "An integer ID that is associated with all versions of a policy",
+										Description: "An integer ID that is associated with all versions of a policy.",
 									},
 									"name": {
 										Type:        schema.TypeString,
 										Computed:    true,
-										Description: "The name of the policy",
+										Description: "The name of the policy.",
 									},
 									"version": {
 										Type:        schema.TypeInt,
 										Computed:    true,
-										Description: "The version number of the activated policy",
+										Description: "The version number of the activated policy.",
 									},
 									"status": {
 										Type:        schema.TypeString,
 										Computed:    true,
-										Description: "The activation status for the policy: active, inactive, deactivated, pending or failed",
+										Description: "The activation status for the policy: active, inactive, deactivated, pending or failed.",
 									},
 									"status_detail": {
 										Type:        schema.TypeString,
 										Computed:    true,
-										Description: "Information about the status of an activation operation",
+										Description: "Information about the status of an activation operation.",
 									},
 									"activated_by": {
 										Type:        schema.TypeString,
 										Computed:    true,
-										Description: "The name of the user who activated the policy",
+										Description: "The name of the user who activated the policy.",
 									},
 									"activation_date": {
 										Type:        schema.TypeInt,
 										Computed:    true,
-										Description: "The date on which the policy was activated (in milliseconds since Epoch)",
+										Description: "The date on which the policy was activated (in milliseconds since Epoch).",
 									},
 								},
 							},
@@ -150,38 +157,38 @@ func dataSourceCloudletsPolicy() *schema.Resource {
 						"property_info": {
 							Type:        schema.TypeSet,
 							Computed:    true,
-							Description: "A set containing information about the property associated with a particular Cloudlet policy",
+							Description: "A set containing information about the property associated with a particular Cloudlet policy.",
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"name": {
 										Type:        schema.TypeString,
 										Computed:    true,
-										Description: "The name of the property",
+										Description: "The name of the property.",
 									},
 									"version": {
 										Type:        schema.TypeInt,
 										Computed:    true,
-										Description: "The version number of the activated property",
+										Description: "The version number of the activated property.",
 									},
 									"group_id": {
 										Type:        schema.TypeInt,
 										Computed:    true,
-										Description: "Defines the group association for the policy or property",
+										Description: "Defines the group association for the policy or property.",
 									},
 									"status": {
 										Type:        schema.TypeString,
 										Computed:    true,
-										Description: "The activation status for the property. Can be active, inactive, deactivated, pending or failed",
+										Description: "The activation status for the property. Can be active, inactive, deactivated, pending or failed.",
 									},
 									"activated_by": {
 										Type:        schema.TypeString,
 										Computed:    true,
-										Description: "The name of the user who activated the property",
+										Description: "The name of the user who activated the property.",
 									},
 									"activation_date": {
 										Type:        schema.TypeInt,
 										Computed:    true,
-										Description: "The date on which the property was activated (in milliseconds since Epoch)",
+										Description: "The date on which the property was activated (in milliseconds since Epoch).",
 									},
 								},
 							},
@@ -238,6 +245,7 @@ func getSchemaActivationsFrom(act []cloudlets.PolicyActivation) []map[string]int
 
 func populateSchemaFieldsWithPolicy(p *cloudlets.Policy, d *schema.ResourceData) error {
 	fields := map[string]interface{}{
+		"policy_id":     p.PolicyID,
 		"group_id":      p.GroupID,
 		"name":          p.Name,
 		"description":   p.Description,
@@ -289,8 +297,20 @@ func dataSourceCloudletsPolicyRead(ctx context.Context, d *schema.ResourceData, 
 	client := Client(meta)
 
 	policyID, err := tf.GetIntValue("policy_id", d)
-	if err != nil {
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
+	}
+
+	name, err := tf.GetStringValue("name", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+
+	if policyID == 0 {
+		policyID, err = findPolicyID(ctx, client, name)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	var version *int64
@@ -344,4 +364,30 @@ func dataSourceCloudletsPolicyRead(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	return nil
+}
+
+func findPolicyID(ctx context.Context, client cloudlets.Cloudlets, name string) (int, error) {
+	offset := 0
+	for {
+		policies, err := client.ListPolicies(ctx, cloudlets.ListPoliciesRequest{
+			Offset:   offset,
+			PageSize: ptr.To(pageSize),
+		})
+		if err != nil {
+			return 0, err
+		}
+
+		for _, p := range policies {
+			if p.Name == name {
+				return int(p.PolicyID), nil
+			}
+		}
+
+		if len(policies) < pageSize {
+			break
+		}
+		offset += pageSize
+	}
+
+	return 0, fmt.Errorf("policy not found: %s", name)
 }

@@ -4,14 +4,15 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	"log"
 	"reflect"
 	"sort"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/appsec"
-	logger "github.com/akamai/terraform-provider-akamai/v7/pkg/log"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/appsec"
+	logger "github.com/akamai/terraform-provider-akamai/v8/pkg/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -43,6 +44,11 @@ func suppressRatePolicyDiffs(_, oldString, newString string, _ *schema.ResourceD
 	// Set default value if not set, then check if there is a diff
 	if oldResp.CounterType != newResp.CounterType && len(newResp.CounterType) == 0 {
 		newResp.CounterType = "per_edge"
+	}
+
+	// Set default value if not set, then check if there is a diff
+	if oldResp.PenaltyBoxDuration != newResp.PenaltyBoxDuration && len(newResp.PenaltyBoxDuration) == 0 {
+		newResp.PenaltyBoxDuration = "TEN_MINUTES"
 	}
 
 	n, err := json.Marshal(newResp)
@@ -462,4 +468,16 @@ func suppressFieldsForAppSecActivation(_, oldValue, newValue string, d *schema.R
 		return false
 	}
 	return true
+}
+
+func suppressFieldForPrefixedGroupID(_, oldValue, newValue string, d *schema.ResourceData) bool {
+	// oldValue: load from DataSource - which can also be freshly Instantiated (to be populated with Inputs);
+	// newValue: from Input (eg. 'grp_12345' ) vs. '12345' Loaded from existing ('old' and 'new' are the same)
+	if oldValue != newValue && d.HasChanges("group_id") && len(oldValue) > 0 {
+		if _, err := strconv.Atoi(newValue); err != nil {
+			var toSuppress = strings.HasSuffix(newValue, "_"+oldValue)
+			return toSuppress
+		}
+	}
+	return oldValue == newValue
 }

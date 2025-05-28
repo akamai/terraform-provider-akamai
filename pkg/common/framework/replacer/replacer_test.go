@@ -4,8 +4,8 @@ package replacer_test
 import (
 	"testing"
 
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/framework/modifiers"
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/framework/replacer"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/framework/modifiers"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/framework/replacer"
 	"github.com/stretchr/testify/assert"
 )
 

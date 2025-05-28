@@ -13,7 +13,7 @@ resource "akamai_appsec_rate_policy" "test" {
     "description": "AFW Test Extensions",
     "averageThreshold": 5,
     "burstThreshold": 10,
-    "clientIdentifier": "ip",
+    "clientIdentifiers": ["ip"],
     "useXForwardForHeaders": true,
     "requestType": "ClientRequest",
     "sameActionOnIpv6": false,
@@ -69,7 +69,8 @@ resource "akamai_appsec_rate_policy" "test" {
             "positiveMatch": true,
             "valueInRange": false
         }
-    ]
+    ],
+    "penaltyBoxDuration": "THIRTY_MINUTES"
 }
 EOF
 }

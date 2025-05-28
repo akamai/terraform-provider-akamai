@@ -7,10 +7,10 @@ import (
 	"encoding/json"
 	"io"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/imaging"
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/providers/imaging/imagewriter"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/imaging"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/providers/imaging/imagewriter"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )

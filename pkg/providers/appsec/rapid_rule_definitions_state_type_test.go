@@ -3,8 +3,8 @@ package appsec
 import (
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/ptr"
 	"github.com/stretchr/testify/assert"
 )
 

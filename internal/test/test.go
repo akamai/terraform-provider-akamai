@@ -20,6 +20,16 @@ func NewTimeFromString(t *testing.T, s string) time.Time {
 	return parsedTime
 }
 
+// NewTimeFromStringMust returns a time value parsed from a string
+// in the RFC3339Nano format. It assumes that the input string is always valid
+func NewTimeFromStringMust(s string) time.Time {
+	parsedTime, err := time.Parse(time.RFC3339Nano, s)
+	if err != nil {
+		panic(err)
+	}
+	return parsedTime
+}
+
 // XRateLimitHTTPHandler first returns status 429 with the X-RateLimit-Next header set to
 // time.Now() plus a random value between 1 and 5 milliseconds. It keeps sending 429 until the
 // X-RateLimit-Next point in time. Then it starts to return SuccessCode and SuccessBody

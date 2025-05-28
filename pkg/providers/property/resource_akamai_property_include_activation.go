@@ -11,14 +11,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/papi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/id"
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/str"
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/timeouts"
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/log"
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/id"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/str"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/timeouts"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/log"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -77,14 +77,15 @@ func resourcePropertyIncludeActivation() *schema.Resource {
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
-				Description: "The list of email addresses to notify about an activation status",
+				Description:      "The list of email addresses to notify about an activation status",
+				DiffSuppressFunc: suppressDiffIfNoIncludeReactivation,
 			},
 			"note": {
 				Type:             schema.TypeString,
 				Optional:         true,
 				Description:      "The note to assign to a log message of the activation request",
 				Default:          "",
-				DiffSuppressFunc: suppressNoteFieldForIncludeActivation,
+				DiffSuppressFunc: suppressDiffIfNoIncludeReactivation,
 			},
 			"auto_acknowledge_rule_warnings": {
 				Type:        schema.TypeBool,
@@ -234,9 +235,8 @@ func resourcePropertyIncludeActivationUpdate(ctx context.Context, d *schema.Reso
 		return nil
 	}
 
-	mutableAttrsHaveChanges := d.HasChanges("notify_emails", "auto_acknowledge_rule_warnings")
-	if mutableAttrsHaveChanges && !d.HasChanges("version") {
-		return diag.FromErr(fmt.Errorf("attributes such as 'notify_emails', 'auto_acknowledge_rule_warnings', cannot be updated after resource creation without 'version' attribute modification"))
+	if d.HasChange("auto_acknowledge_rule_warnings") && !d.HasChanges("version") {
+		return diag.Errorf("'auto_acknowledge_rule_warnings' attribute cannot be updated after resource creation without 'version' attribute modification")
 	}
 
 	err := resourcePropertyIncludeActivationUpsert(ctx, d, client)
@@ -395,11 +395,11 @@ func (p *propertyIncludeActivationData) populateFromResource(d *schema.ResourceD
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	notifyEmailsSet, err := tf.GetSetValue("notify_emails", d)
+	notifyEmailsSet, err := tf.GetRawSetValue("notify_emails", d, tf.NewRawConfig(d))
 	if err != nil {
 		return err
 	}
-	p.notifyEmails = tf.SetToStringSlice(notifyEmailsSet)
+	p.notifyEmails = tf.InterfaceSliceToStringSlice(notifyEmailsSet)
 	p.note, err = tf.GetStringValue("note", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
@@ -813,11 +813,15 @@ func addComplianceRecord(complianceRecord []interface{}, activateIncludeRequest 
 	return activateIncludeRequest
 }
 
-func suppressNoteFieldForIncludeActivation(_, oldValue, newValue string, d *schema.ResourceData) bool {
-	if oldValue != newValue && d.HasChanges("version", "network") {
+func suppressDiffIfNoIncludeReactivation(_, oldValue, newValue string, d *schema.ResourceData) bool {
+	if d.Id() == "" {
 		return false
 	}
-	return true
+	shouldReactivate := d.HasChange("version")
+	if !shouldReactivate {
+		return true
+	}
+	return oldValue == newValue
 }
 
 type expectedIncludeActivation struct {

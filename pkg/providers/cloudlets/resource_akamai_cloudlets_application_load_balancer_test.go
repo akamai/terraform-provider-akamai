@@ -5,9 +5,9 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/cloudlets"
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/cloudlets"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/jinzhu/copier"
@@ -77,12 +77,12 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 				{
 					Hostname: "test-hostname",
 					Origin: cloudlets.Origin{
-						OriginID:  "test_origin",
+						OriginID:  "test_origin_2",
 						Akamaized: false,
 					},
 				},
 			}
-			client.On("ListOrigins", testutils.MockContext, mock.Anything).Return(origins, nil)
+			client.On("ListOrigins", testutils.MockContext, mock.Anything).Return(origins, nil).Once()
 
 			client.On("CreateOrigin", testutils.MockContext, loadBalancerConfig).Return(&origin, nil).Once()
 			client.On("CreateLoadBalancerVersion", testutils.MockContext, cloudlets.CreateLoadBalancerVersionRequest{
@@ -105,6 +105,23 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		}
 
 		expectCreateLoadBalancerVersion = func(client *cloudlets.Mock, originID string, loadBalancerVersion *cloudlets.LoadBalancerVersion, newBalancingType, description string) *cloudlets.LoadBalancerVersion {
+			origins := []cloudlets.OriginResponse{
+				{
+					Hostname: "test-hostname",
+					Origin: cloudlets.Origin{
+						OriginID:  "test_origin",
+						Akamaized: false,
+					},
+				},
+				{
+					Hostname: "test-hostname",
+					Origin: cloudlets.Origin{
+						OriginID:  "test_origin_2",
+						Akamaized: false,
+					},
+				},
+			}
+			client.On("ListOrigins", testutils.MockContext, mock.Anything).Return(origins, nil).Once()
 			client.On("ListLoadBalancerActivations", testutils.MockContext, cloudlets.ListLoadBalancerActivationsRequest{OriginID: originID}).Return([]cloudlets.LoadBalancerActivation{
 				{
 					OriginID: originID,
@@ -112,7 +129,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 					Version:  loadBalancerVersion.Version,
 					Status:   cloudlets.LoadBalancerActivationStatusActive,
 				},
-			}, nil)
+			}, nil).Once()
 			var newVersionReq, newVersionResp cloudlets.LoadBalancerVersion
 			err := copier.CopyWithOption(&newVersionReq, loadBalancerVersion, copier.Option{DeepCopy: true})
 			require.NoError(t, err)
@@ -146,13 +163,30 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 				Description: cloudlets.Description{
 					Description: description,
 				},
-			}).Return(&newOrigin, nil)
+			}).Return(&newOrigin, nil).Once()
 
 			return &newOrigin
 		}
 
 		expectUpdateLoadBalancerVersion = func(client *cloudlets.Mock, originID string, loadBalancerVersion *cloudlets.LoadBalancerVersion, newBalancingType, description string) *cloudlets.LoadBalancerVersion {
-			client.On("ListLoadBalancerActivations", testutils.MockContext, cloudlets.ListLoadBalancerActivationsRequest{OriginID: originID}).Return(nil, nil)
+			origins := []cloudlets.OriginResponse{
+				{
+					Hostname: "test-hostname",
+					Origin: cloudlets.Origin{
+						OriginID:  "test_origin",
+						Akamaized: false,
+					},
+				},
+				{
+					Hostname: "test-hostname",
+					Origin: cloudlets.Origin{
+						OriginID:  "test_origin_2",
+						Akamaized: false,
+					},
+				},
+			}
+			client.On("ListOrigins", testutils.MockContext, mock.Anything).Return(origins, nil).Once()
+			client.On("ListLoadBalancerActivations", testutils.MockContext, cloudlets.ListLoadBalancerActivationsRequest{OriginID: originID}).Return(nil, nil).Once()
 			var updateVersionReq, updateVersionResp cloudlets.LoadBalancerVersion
 			err := copier.CopyWithOption(&updateVersionReq, loadBalancerVersion, copier.Option{DeepCopy: true})
 			require.NoError(t, err)
@@ -380,6 +414,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		})
 		client.AssertExpectations(t)
 	})
+
 	t.Run("update version + empty liveness_settings", func(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle_no_liveness_settings"
 		client := new(cloudlets.Mock)
@@ -436,12 +471,12 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 			{
 				Hostname: "test-hostname",
 				Origin: cloudlets.Origin{
-					OriginID:  "test_origin",
+					OriginID:  "test_origin_2",
 					Akamaized: false,
 				},
 			},
 		}
-		client.On("ListOrigins", testutils.MockContext, mock.Anything).Return(origins, nil)
+		client.On("ListOrigins", testutils.MockContext, mock.Anything).Return(origins, nil).Once()
 
 		client.On("CreateOrigin", testutils.MockContext, cloudlets.CreateOriginRequest{OriginID: "test_origin"}).Return(nil, fmt.Errorf("creating origin")).Once()
 
@@ -459,7 +494,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
-	t.Run("error creating version", func(t *testing.T) {
+	t.Run("error creating origin which already exist", func(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
 		client := new(cloudlets.Mock)
 
@@ -472,7 +507,36 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 				},
 			},
 		}
-		client.On("ListOrigins", testutils.MockContext, mock.Anything).Return(origins, nil)
+		client.On("ListOrigins", testutils.MockContext, mock.Anything).Return(origins, nil).Once()
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
+						ExpectError: regexp.MustCompile("already exists"),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+
+	t.Run("error creating version", func(t *testing.T) {
+		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
+		client := new(cloudlets.Mock)
+
+		origins := []cloudlets.OriginResponse{
+			{
+				Hostname: "test-hostname",
+				Origin: cloudlets.Origin{
+					OriginID:  "test_origin_2",
+					Akamaized: false,
+				},
+			},
+		}
+		client.On("ListOrigins", testutils.MockContext, mock.Anything).Return(origins, nil).Once()
 
 		client.On("CreateOrigin", testutils.MockContext, cloudlets.CreateOriginRequest{OriginID: "test_origin"}).Return(&cloudlets.Origin{OriginID: "test_origin"}, nil).Once()
 
@@ -675,7 +739,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 
 		expectReadLoadBalancer(client, origin, lbVersion, 2)
 
-		client.On("GetOrigin", testutils.MockContext, cloudlets.GetOriginRequest{OriginID: "not_existing_test_origin"}).Return(nil, nil).Once()
+		client.On("GetOrigin", testutils.MockContext, cloudlets.GetOriginRequest{OriginID: "not_existing_test_origin"}).Return(nil, fmt.Errorf("could not find origin with origin_id: not_existing_test_origin")).Once()
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -717,7 +781,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 							return "", nil
 						},
 						ResourceName: "akamai_cloudlets_application_load_balancer.alb",
-						ExpectError:  regexp.MustCompile("origin id cannot be empty"),
+						ExpectError:  regexp.MustCompile("the origin ID cannot be empty"),
 					},
 				},
 			})
@@ -746,7 +810,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 						ImportState:   true,
 						ImportStateId: "test_origin",
 						ResourceName:  "akamai_cloudlets_application_load_balancer.alb",
-						ExpectError:   regexp.MustCompile("no load balancer version found for origin_id: test_origin"),
+						ExpectError:   regexp.MustCompile("no load balancer version found for the origin_id: test_origin"),
 					},
 				},
 			})
@@ -767,7 +831,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 				},
 			},
 		}
-		client.On("ListOrigins", testutils.MockContext, mock.Anything).Return(origins, nil)
+		client.On("ListOrigins", testutils.MockContext, mock.Anything).Return(origins, nil).Once()
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -788,6 +852,10 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle_dc_update"
 		client := new(cloudlets.Mock)
 
+		origin, lbVersion := expectCreateLoadBalancer(client, "test_origin", "", "test description", "WEIGHTED", 1, []string{})
+
+		expectReadLoadBalancer(client, origin, lbVersion, 3)
+
 		origins := []cloudlets.OriginResponse{
 			{
 				Hostname: "test-hostname",
@@ -796,12 +864,15 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 					Akamaized: true,
 				},
 			},
+			{
+				Hostname: "test-hostname",
+				Origin: cloudlets.Origin{
+					OriginID:  "test_origin_2",
+					Akamaized: false,
+				},
+			},
 		}
-		client.On("ListOrigins", testutils.MockContext, mock.Anything).Return(origins, nil).Times(2)
-
-		origin, lbVersion := expectCreateLoadBalancer(client, "test_origin", "", "test description", "WEIGHTED", 1, []string{})
-
-		expectReadLoadBalancer(client, origin, lbVersion, 3)
+		client.On("ListOrigins", testutils.MockContext, mock.Anything).Return(origins, nil).Once()
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{

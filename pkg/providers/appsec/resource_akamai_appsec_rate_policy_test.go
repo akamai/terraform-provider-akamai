@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/require"
 )
@@ -96,7 +96,7 @@ func TestAkamaiRatePolicy_res_basic(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
-	t.Run("suppress counterType attribute", func(t *testing.T) {
+	t.Run("suppress counterType and penaltyBoxDuration attributes", func(t *testing.T) {
 		configResponse := appsec.GetConfigurationResponse{}
 		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &configResponse)
 		require.NoError(t, err)

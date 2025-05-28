@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/testutils"
 	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
@@ -94,6 +94,24 @@ func TestDataPropertyRulesBuilder(t *testing.T) {
 						testCheckResourceAttrJSON("data.akamai_property_rules_builder.content_compression",
 							"json",
 							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/ruleformat/content_compression_variables.json")),
+					),
+				}},
+			})
+		})
+	})
+	t.Run("valid rule with subject_rdns and issuer_rdns details", func(t *testing.T) {
+		useClient(nil, nil, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/ruleformat/rules_with_subject_rdns_and_issuer_rdns_details.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("data.akamai_property_rules_builder.default",
+							"rule_format",
+							"v2025-02-18"),
+						testCheckResourceAttrJSON("data.akamai_property_rules_builder.default",
+							"json",
+							testutils.LoadFixtureString(t, "testdata/TestDSPropertyRulesBuilder/ruleformat/rules_with_rdns_details.json")),
 					),
 				}},
 			})

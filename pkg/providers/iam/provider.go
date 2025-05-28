@@ -4,10 +4,10 @@ package iam
 import (
 	"sync"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/iam"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/subprovider"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/subprovider"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -88,6 +88,7 @@ func (p *Subprovider) SDKDataSources() map[string]*schema.Resource {
 // FrameworkResources returns the IAM resources implemented using terraform-plugin-framework
 func (p *Subprovider) FrameworkResources() []func() resource.Resource {
 	return []func() resource.Resource{
+		NewAPIClientResource,
 		NewCIDRBlockResource,
 		NewIPAllowlistResource,
 	}
@@ -99,6 +100,8 @@ func (p *Subprovider) FrameworkDataSources() []func() datasource.DataSource {
 		NewAccessibleGroupsDataSource,
 		NewAccountSwitchKeysDataSource,
 		NewAllowedAPIsDataSource,
+		NewAPIClientDataSource,
+		NewAPIClientsDataSource,
 		NewAuthorizedUsersDataSource,
 		NewBlockedPropertiesDataSource,
 		NewCIDRBlockDataSource,

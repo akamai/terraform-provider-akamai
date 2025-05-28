@@ -8,11 +8,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/gtm"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/gtm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -466,99 +466,96 @@ func resourceGTMv1DomainUpdate(ctx context.Context, d *schema.ResourceData, m in
 
 }
 
-// Delete GTM Domain. Admin privileges required in current API version.
+// Delete an existing GTM Domain
 func resourceGTMv1DomainDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1DomainDelete")
-	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
 		ctx,
 		session.WithContextLog(logger),
 	)
 
-	logger.Debugf("Deleting GTM Domain: %s", d.Id())
 	var diags diag.Diagnostics
-	// Get existing domain
-	existDom, err := Client(meta).GetDomain(ctx, gtm.GetDomainRequest{
-		DomainName: d.Id(),
+	var domainName = d.Id()
+	logger.Debugf("Initiating delete request for GTM domain: %s", domainName)
+
+	resp, err := Client(meta).DeleteDomains(ctx, gtm.DeleteDomainsRequest{
+		Body: gtm.DeleteDomainsRequestBody{
+			DomainNames: []string{domainName},
+		},
 	})
+	if err != nil {
+		if errors.Is(err, gtm.ErrDomainNotFound) {
+			logger.Warnf("Domain %s not found or appears to already be deleted.", domainName)
+			d.SetId("")
+			return diag.FromErr(fmt.Errorf("domain %s not found or appears to already be deleted: %w", domainName, err))
+		}
+		logger.Errorf("DeleteDomains API error: %v", err)
+		return diag.FromErr(fmt.Errorf("failed to submit delete request for domain %s: %w", domainName, err))
+	}
+
+	logger.Debugf("Check Delete Domain Status for requestID: %v", resp.RequestID)
+
+	status, err := waitForDeletion(ctx, resp.RequestID, meta)
+
 	if err != nil {
 		logger.Errorf("Domain delete error: %s", err.Error())
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Invalid domain ID: %s", d.Id()),
+			Summary:  "Domain delete error",
 			Detail:   err.Error(),
 		})
 	}
-	logger.Debugf("Deleting Domain: %v", existDom)
-	uStat, err := Client(meta).DeleteDomain(ctx, gtm.DeleteDomainRequest{
-		DomainName: d.Id(),
-	})
-	if err != nil {
-		// Errored. Let's see if special hack
-		if !HashiAcc {
-			logger.Errorf("Domain delete error: %s", err.Error())
-			return append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  "Domain delete error",
-				Detail:   err.Error(),
-			})
-		}
-		apiError, ok := err.(*gtm.Error)
-		if !ok && apiError.StatusCode != http.StatusMethodNotAllowed {
-			logger.Errorf("Domain delete error: %s", err.Error())
-			return append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  "Domain delete error",
-				Detail:   err.Error(),
-			})
-		}
-		if strings.Contains(apiError.Detail, "Bad Request") && strings.Contains(apiError.Detail, "DELETE method is not supported") {
-			logger.Warnf(": Domain %s delete failed.  Ignoring error (Hashicorp).", d.Id())
-		} else {
-			logger.Errorf("Domain delete error: %s", err.Error())
-			return append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  "Domain delete error",
-				Detail:   err.Error(),
-			})
-		}
-	} else {
-		logger.Debugf("Delete status: %v", uStat)
-		if uStat.PropagationStatus == "DENIED" {
-			logger.Errorf(uStat.Message)
-			return append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  uStat.Message,
-			})
-		}
 
-		waitOnComplete, err := tf.GetBoolValue("wait_on_complete", d)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-
-		if waitOnComplete {
-			done, err := waitForCompletion(ctx, d.Id(), m)
-			if done {
-				logger.Infof("Domain delete completed")
-			} else {
-				if err == nil {
-					logger.Infof("Domain delete pending")
-				} else {
-					logger.Errorf("Domain delete error: %s", err.Error())
-					return append(diags, diag.Diagnostic{
-						Severity: diag.Error,
-						Summary:  "Domain delete error",
-						Detail:   err.Error(),
-					})
-				}
-			}
-		}
+	if status.IsComplete && status.SuccessCount == 0 {
+		logger.Errorf("Domain deletion failed domain: %s", domainName)
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Domain deletion failed",
+			Detail:   "No additional details available.",
+		})
 	}
+
+	logger.Infof("Domain delete completed")
 	d.SetId("")
 	return nil
+}
 
+// waitForDeletion waits for the deletion process to complete by polling the status.
+func waitForDeletion(ctx context.Context, requestID string, meta meta.Meta) (*gtm.DeleteDomainsStatusResponse, error) {
+	logger := meta.Log("Akamai GTM", "waitForDeletion")
+
+	const sleepInterval = 5 * time.Second
+	const timeoutDuration = 300 * time.Second
+
+	ctx, cancel := context.WithTimeout(ctx, timeoutDuration)
+	defer cancel()
+
+	ticker := time.NewTicker(sleepInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return nil, fmt.Errorf("context cancelled while waiting for domain deletion: %w", ctx.Err())
+		case <-ticker.C:
+			status, err := Client(meta).GetDeleteDomainsStatus(ctx, gtm.DeleteDomainsStatusRequest{
+				RequestID: requestID,
+			})
+
+			if err != nil {
+				return nil, fmt.Errorf("error checking delete domain status for request %s: %w", requestID, err)
+			}
+
+			logger.Debugf("Delete status for request %s: %v", requestID, status)
+
+			if status.IsComplete {
+				return status, nil
+			}
+
+			logger.Debugf("Waiting for deletion...")
+		}
+	}
 }
 
 func resourceGTMv1DomainImport(_ context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {

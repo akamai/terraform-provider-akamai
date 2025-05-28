@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/papi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/str"
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
-	akameta "github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/str"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/tf"
+	akameta "github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )

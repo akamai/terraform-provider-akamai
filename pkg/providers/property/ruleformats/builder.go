@@ -5,10 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/iancoleman/strcase"
 )
@@ -281,6 +282,12 @@ func (r RulesBuilder) remapOptionValues(behaviorName string, options papi.RuleOp
 	for optionName, v := range options {
 		optKey := fmt.Sprintf("%s.%s", behaviorName, optionName)
 		optValKey := fmt.Sprintf("%s.%v", optKey, v)
+
+		lastTwoSegments := extractLastTwoSegments(optKey)
+		if mappedName, exists := r.nameMappings[lastTwoSegments]; exists {
+			optionName = mappedName
+		}
+
 		if r.shouldFlatten(optKey) {
 			slc, ok := v.([]any)
 			if !ok {
@@ -313,6 +320,14 @@ func (r RulesBuilder) remapOptionValues(behaviorName string, options papi.RuleOp
 	}
 
 	return newRom
+}
+
+func extractLastTwoSegments(input string) string {
+	parts := strings.Split(input, ".")
+	if len(parts) < 2 {
+		return input
+	}
+	return strings.Join(parts[len(parts)-2:], ".")
 }
 
 func (r RulesBuilder) ruleChildren() ([]papi.Rules, error) {

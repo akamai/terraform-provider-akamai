@@ -6,9 +6,12 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
+	"github.com/hashicorp/terraform-plugin-testing/statecheck"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 	"github.com/stretchr/testify/require"
 )
 
@@ -158,4 +161,152 @@ func TestAkamaiConfiguration_res_error_updating_configuration(t *testing.T) {
 
 		client.AssertExpectations(t)
 	})
+}
+
+func TestAkamaiConfiguration_Create_txt_group_id(t *testing.T) {
+	t.Run("Config-Create-with-non-numeric-GroupID", func(t *testing.T) {
+		client := appsec.Mock{}
+
+		setGetConfiguration(&client, t)
+		setGetSelectedHostnames(&client, t)
+		setGetConfigurationVersions(&client, t)
+		setRemoveConfiguration(&client, t)
+		setCreateConfiguration(&client, t)
+
+		// [Create-Configuration] : 'group_id' is Not-Numeric
+		tfCONFIG := testutils.LoadFixtureString(t, "testdata/TestResConfiguration/match_by_prefixed_group_id_create.tf")
+
+		useClient(&client, func() {
+			resource.Test(t, resource.TestCase{
+				IsUnitTest:               true,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: tfCONFIG,
+						// 1) verify [terraform plan] will indicate '~ update in-place' of ("64867" -> "grp_64867")
+						ConfigStateChecks: []statecheck.StateCheck{
+							statecheck.ExpectKnownValue(
+								"akamai_appsec_configuration.test",
+								tfjsonpath.New("group_id"),
+								knownvalue.StringExact("64867"),
+							),
+						},
+						// 2) Finally, determining that a Plan: its 'state' is No-Difference from 'config-in-request'.
+						ExpectNonEmptyPlan: false,
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+}
+
+func TestAkamaiConfiguration_Clone_txt_group_id(t *testing.T) {
+	t.Run("Config-Clone-with-non-numeric-GroupID", func(t *testing.T) {
+		client := appsec.Mock{}
+
+		setGetConfiguration(&client, t)
+		setGetSelectedHostnames(&client, t)
+		setGetConfigurationVersions(&client, t)
+		setRemoveConfiguration(&client, t)
+		setCreateConfigurationClone(&client, t)
+
+		// [Clone-Configuration] : 'group_id' is Not-Numeric
+		tfCONFIG := testutils.LoadFixtureString(t, "testdata/TestResConfiguration/match_by_prefixed_group_id_clone.tf")
+
+		useClient(&client, func() {
+			resource.Test(t, resource.TestCase{
+				IsUnitTest:               true,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: tfCONFIG,
+						// 1) verify [terraform plan] will indicate '~ update in-place' of ("64867" -> "grp_64867")
+						ConfigStateChecks: []statecheck.StateCheck{
+							statecheck.ExpectKnownValue(
+								"akamai_appsec_configuration.test",
+								tfjsonpath.New("group_id"),
+								knownvalue.StringExact("64867"),
+							),
+						},
+						// 2) Finally, determining that a Plan: its 'state' is No-Difference from 'config-in-request'.
+						ExpectNonEmptyPlan: false,
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+}
+
+func setGetConfiguration(mock *appsec.Mock, test *testing.T) {
+	obj := appsec.GetConfigurationResponse{}
+	err := json.Unmarshal(testutils.LoadFixtureBytes(test, "testdata/TestResConfiguration/Configuration.json"), &obj)
+	require.NoError(test, err)
+
+	mock.On("GetConfiguration",
+		testutils.MockContext,
+		appsec.GetConfigurationRequest{ConfigID: 43253},
+	).Return(&obj, nil)
+}
+
+func setGetSelectedHostnames(mock *appsec.Mock, test *testing.T) {
+	obj := appsec.GetSelectedHostnamesResponse{}
+	err := json.Unmarshal(testutils.LoadFixtureBytes(test, "testdata/TestResConfiguration/SelectedHostname.json"), &obj)
+	require.NoError(test, err)
+
+	mock.On("GetSelectedHostnames",
+		testutils.MockContext,
+		appsec.GetSelectedHostnamesRequest{ConfigID: 43253, Version: 7},
+	).Return(&obj, nil)
+}
+
+func setGetConfigurationVersions(mock *appsec.Mock, test *testing.T) {
+	obj := appsec.GetConfigurationVersionsResponse{}
+	err := json.Unmarshal(testutils.LoadFixtureBytes(test, "testdata/TestResConfiguration/ConfigurationVersions.json"), &obj)
+	require.NoError(test, err)
+
+	mock.On("GetConfigurationVersions",
+		testutils.MockContext,
+		appsec.GetConfigurationVersionsRequest{ConfigID: 43253},
+	).Return(&obj, nil)
+
+}
+
+func setRemoveConfiguration(mock *appsec.Mock, test *testing.T) {
+	obj := appsec.RemoveConfigurationResponse{}
+	err := json.Unmarshal(testutils.LoadFixtureBytes(test, "testdata/TestResConfiguration/Configuration.json"), &obj)
+	require.NoError(test, err)
+
+	mock.On("RemoveConfiguration",
+		testutils.MockContext,
+		appsec.RemoveConfigurationRequest{ConfigID: 43253},
+	).Return(&obj, nil)
+}
+
+func setCreateConfiguration(mock *appsec.Mock, test *testing.T) {
+	obj := appsec.CreateConfigurationResponse{}
+	err := json.Unmarshal(testutils.LoadFixtureBytes(test, "testdata/TestResConfiguration/ConfigurationCreate.json"), &obj)
+	require.NoError(test, err)
+
+	mock.On("CreateConfiguration",
+		testutils.MockContext,
+		// ie. expect Attributes match to above JSON-File.
+		appsec.CreateConfigurationRequest{Name: "Akamai Tools", Description: "Akamai Tools", ContractID: "C-1FRYVV3", GroupID: 64867, Hostnames: []string{"rinaldi.sandbox.akamaideveloper.com", "sujala.sandbox.akamaideveloper.com"}},
+	).Return(&obj, nil)
+}
+
+func setCreateConfigurationClone(mock *appsec.Mock, test *testing.T) {
+	objClone := appsec.CreateConfigurationCloneResponse{}
+	err := json.Unmarshal(testutils.LoadFixtureBytes(test, "testdata/TestResConfiguration/ConfigurationCloneFrom.json"), &objClone)
+	require.NoError(test, err)
+
+	mock.On("CreateConfigurationClone",
+		testutils.MockContext,
+		// ie. expect Attributes match to above JSON-File.
+		appsec.CreateConfigurationCloneRequest{Name: "Akamai Tools", Description: "Akamai Tools", ContractID: "C-1FRYVV3", GroupID: 64867, Hostnames: []string{"rinaldi.sandbox.akamaideveloper.com", "sujala.sandbox.akamaideveloper.com"}, CreateFrom: struct {
+			ConfigID int "json:\"configId\""
+			Version  int "json:\"version\""
+		}{43253, 1}},
+	).Return(&objClone, nil)
 }

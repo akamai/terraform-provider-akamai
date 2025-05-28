@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf/validators"
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/subprovider"
-	"github.com/akamai/terraform-provider-akamai/v7/version"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/tf/validators"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/subprovider"
+	"github.com/akamai/terraform-provider-akamai/v8/version"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/provider"

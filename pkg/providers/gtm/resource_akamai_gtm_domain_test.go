@@ -6,10 +6,10 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/gtm"
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/test"
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/gtm"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/test"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -31,13 +31,15 @@ func TestResGTMDomain(t *testing.T) {
 
 		mockGetDomain(client, getReturnedTestDomain(), nil, testutils.FourTimes)
 
-		mockGetDomainStatus(client, testutils.ThreeTimes)
+		mockGetDomainStatus(client, testutils.Twice)
 
 		mockUpdateDomain(client, &gtm.UpdateDomainResponse{Status: getDefaultResponseStatus()}, nil)
 
-		mockGetDomain(client, getTestUpdateDomain(), nil, testutils.ThreeTimes)
+		mockGetDomain(client, getTestUpdateDomain(), nil, testutils.Twice)
 
-		mockDeleteDomain(client)
+		mockDeleteDomain(client, nil)
+
+		mockDeleteDomainStatus(client, nil)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -82,7 +84,7 @@ func TestResGTMDomain(t *testing.T) {
 
 		mockGetDomain(client, getReturnedTestDomain(), nil, testutils.FourTimes)
 
-		mockGetDomainStatus(client, testutils.Twice)
+		mockGetDomainStatus(client, testutils.Once)
 
 		mockUpdateDomain(client, nil, &gtm.Error{
 			Type:       "internal_error",
@@ -91,9 +93,9 @@ func TestResGTMDomain(t *testing.T) {
 			StatusCode: http.StatusInternalServerError,
 		})
 
-		mockGetDomain(client, getReturnedTestDomain(), nil, testutils.Once)
+		mockDeleteDomain(client, nil)
 
-		mockDeleteDomain(client)
+		mockDeleteDomainStatus(client, nil)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -132,15 +134,14 @@ func TestResGTMDomain(t *testing.T) {
 
 		mockGetDomain(client, getReturnedTestDomain(), nil, testutils.Twice)
 
-		mockGetDomainStatus(client, testutils.Twice)
+		mockGetDomainStatus(client, testutils.Once)
 
 		// Mock that the domain was deleted outside terraform
 		mockGetDomain(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
-		// For terraform test framework, we need to mock GetDomain as it would actually exist before deletion
-		mockGetDomain(client, getReturnedTestDomain(), nil, testutils.Once)
+		mockDeleteDomain(client, nil)
 
-		mockDeleteDomain(client)
+		mockDeleteDomainStatus(client, nil)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -178,11 +179,13 @@ func TestResGTMDomain(t *testing.T) {
 			Status:   getDefaultResponseStatus(),
 		}, nil)
 
-		mockGetDomain(client, getTestDomainWithSignAndServe(), nil, testutils.ThreeTimes)
+		mockGetDomain(client, getTestDomainWithSignAndServe(), nil, testutils.Twice)
 
-		mockGetDomainStatus(client, testutils.Twice)
+		mockGetDomainStatus(client, testutils.Once)
 
-		mockDeleteDomain(client)
+		mockDeleteDomain(client, nil)
+
+		mockDeleteDomainStatus(client, nil)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -215,11 +218,13 @@ func TestResGTMDomain(t *testing.T) {
 			Status:   getDefaultResponseStatus(),
 		}, nil)
 
-		mockGetDomain(client, getReturnedTestDomain(), nil, testutils.FiveTimes)
+		mockGetDomain(client, getReturnedTestDomain(), nil, testutils.FourTimes)
 
-		mockGetDomainStatus(client, testutils.Twice)
+		mockGetDomainStatus(client, testutils.Once)
 
-		mockDeleteDomain(client)
+		mockDeleteDomain(client, nil)
+
+		mockDeleteDomainStatus(client, nil)
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -450,11 +455,13 @@ func getDomainOrderClient() *gtm.Mock {
 		Status:   getDefaultResponseStatus(),
 	}, nil)
 
-	mockGetDomain(client, getTestDomainWithNotifications(), nil, testutils.FourTimes)
+	mockGetDomain(client, getTestDomainWithNotifications(), nil, testutils.ThreeTimes)
 
-	mockGetDomainStatus(client, testutils.Twice)
+	mockGetDomainStatus(client, testutils.Once)
 
-	mockDeleteDomain(client)
+	mockDeleteDomain(client, nil)
+
+	mockDeleteDomainStatus(client, nil)
 
 	return client
 }
@@ -485,14 +492,44 @@ func mockCreateDomain(client *gtm.Mock, domain *gtm.Domain, resp *gtm.CreateDoma
 	).Return(resp, err).Once()
 }
 
-func mockDeleteDomain(client *gtm.Mock) *mock.Call {
-	responseStatus := gtm.DeleteDomainResponse(*getDefaultResponseStatus())
-	return client.On("DeleteDomain",
+func mockDeleteDomain(client *gtm.Mock, err error) *mock.Call {
+	resp := gtm.DeleteDomainsResponse{
+		RequestID:      "e585a640-0849-4b87-8dd9-91afdaf8851c",
+		ExpirationDate: "2050-01-03T12:00:00Z",
+	}
+
+	return client.On("DeleteDomains",
 		testutils.MockContext,
-		gtm.DeleteDomainRequest{
-			DomainName: testDomainName,
+		gtm.DeleteDomainsRequest{
+			Body: gtm.DeleteDomainsRequestBody{
+				DomainNames: []string{
+					testDomainName,
+				},
+			},
 		},
-	).Return(&responseStatus, nil).Once()
+	).Return(&resp, err).Once()
+}
+
+func mockDeleteDomainStatus(client *gtm.Mock, err error) *mock.Call {
+	resp := gtm.DeleteDomainsStatusResponse{
+		DomainsSubmitted: 1,
+		SuccessCount:     1,
+		FailureCount:     0,
+		IsComplete:       true,
+		RequestID:        "e585a640-0849-4b87-8dd9-91afdaf8851c",
+		ExpirationDate:   "2050-01-03T12:00:00Z",
+	}
+	if err != nil {
+		resp.SuccessCount = 0
+		resp.FailureCount = 1
+	}
+
+	return client.On("GetDeleteDomainsStatus",
+		testutils.MockContext,
+		gtm.DeleteDomainsStatusRequest{
+			RequestID: "e585a640-0849-4b87-8dd9-91afdaf8851c",
+		},
+	).Return(&resp, err).Once()
 }
 
 func mockGetDomain(m *gtm.Mock, domain *gtm.Domain, err error, times int) *mock.Call {

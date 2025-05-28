@@ -85,7 +85,7 @@ terraform-fmt:
 
 .PHONY: lint
 lint: | $(GOLANGCILINT) ; $(info $(M) Running golangci-lint...) @
-	$Q $(BIN)/golangci-lint run
+	$Q $(BIN)/golangci-lint run --timeout 5m
 
 .PHONY: terraform-lint
 terraform-lint: | $(TFLINT) ; $(info $(M) Checking source code against tflint...) @ ## Run tflint on all HCL files in the project

@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/iam"
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -66,11 +66,11 @@ func (d *accountSwitchKeysDataSource) Schema(_ context.Context, _ datasource.Sch
 		Attributes: map[string]schema.Attribute{
 			"client_id": schema.StringAttribute{
 				Optional:    true,
-				Description: "Unique identifier for each API client. If not provided it assumes your client id.",
+				Description: "A unique identifier for each API client. If not provided, it assumes your client ID.",
 			},
 			"filter": schema.StringAttribute{
 				Optional:    true,
-				Description: "Filters results by accountId or accountName. Enter at least three characters to filter the results by substring.",
+				Description: "Filters results by `account_id` or `account_name`. Enter at least three characters to filter the results by substring.",
 				Validators:  []validator.String{stringvalidator.LengthAtLeast(3)},
 			},
 			"account_switch_keys": schema.ListNestedAttribute{

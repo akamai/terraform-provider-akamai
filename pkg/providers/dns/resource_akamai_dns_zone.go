@@ -5,16 +5,16 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/dns"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/log"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/dns"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/log"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -535,7 +535,7 @@ func resourceDNSv2ZoneImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 	return []*schema.ResourceData{d}, nil
 }
 
-func resourceDNSv2ZoneDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceDNSv2ZoneDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	hostname, err := tf.GetStringValue("zone", d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -543,15 +543,78 @@ func resourceDNSv2ZoneDelete(_ context.Context, d *schema.ResourceData, m interf
 	meta := meta.Must(m)
 	logger := meta.Log("AkamaiDNS", "resourceDNSZoneDelete")
 	logger.Info("Zone Delete", "zone", hostname)
-	// Ignore for Unit test Lifecycle
-	if _, ok := os.LookupEnv("DNS_ZONE_SKIP_DELETE"); ok {
-		logger.Info("DNS Zone delete: intentionally skipping")
+
+	ctx = session.ContextWithOptions(
+		ctx,
+		session.WithContextLog(logger),
+	)
+
+	resp, err := inst.Client(meta).DeleteBulkZones(ctx, dns.DeleteBulkZonesRequest{
+		ZonesList: &dns.ZoneNameListResponse{
+			Zones: []string{hostname},
+		},
+	})
+	if err != nil {
+		return diag.Errorf("failed to submit bulk deletion: %s", err)
+	}
+
+	err = waitUntilDeletionProcessCompleted(ctx, inst.Client(meta), resp.RequestID)
+	if err != nil {
+		return diag.Errorf("failed to complete deletion: %s", err)
+	}
+
+	err = checkIfZoneDeletionSucceeded(ctx, inst.Client(meta), resp.RequestID, hostname)
+	if err != nil {
+		return diag.Errorf("failed to delete zone %s: %s", hostname, err.Error())
+	}
+
+	logger.Debugf("Zone %s deleted successfully", hostname)
+	d.SetId("")
+	return nil
+}
+
+func checkIfZoneDeletionSucceeded(ctx context.Context, client dns.DNS, id, zone string) error {
+	result, err := client.GetBulkZoneDeleteResult(ctx, dns.GetBulkZoneDeleteResultRequest{
+		RequestID: id,
+	})
+	if err != nil {
+		return err
+	}
+	// We need to check with lower case because the API returns zones in lower case
+	lowerZone := strings.ToLower(zone)
+	for _, failedZone := range result.FailedZones {
+		if failedZone.Zone == lowerZone {
+			return fmt.Errorf("zone %s deletion failed because of following reason: %s", lowerZone, failedZone.FailureReason)
+		}
+	}
+	if slices.Contains(result.SuccessfullyDeletedZones, lowerZone) {
 		return nil
 	}
-	logger.Warn("DNS Zone deletion not allowed")
+	return fmt.Errorf("zone %s not found in either successfully deleted or failed zones", lowerZone)
+}
 
-	// No ZONE delete operation permitted.
-	return diag.Errorf("DNS zone deletion is not supported via this sub provider")
+var (
+	checkDeletionStatusInterval = 5 * time.Second
+)
+
+func waitUntilDeletionProcessCompleted(ctx context.Context, client dns.DNS, reqID string) error {
+	for {
+		select {
+		case <-time.After(checkDeletionStatusInterval):
+			resp, err := client.GetBulkZoneDeleteStatus(ctx, dns.GetBulkZoneDeleteStatusRequest{
+				RequestID: reqID,
+			})
+			if err != nil {
+				return fmt.Errorf("could not get bulk zone delete status: %w", err)
+			}
+
+			if resp.IsComplete {
+				return nil
+			}
+		case <-ctx.Done():
+			return fmt.Errorf("retry timeout reached for bulk zone delete status retrieval: %w", ctx.Err())
+		}
+	}
 }
 
 // validateZoneType is a SchemaValidateDiagFunc to validate the Zone type.

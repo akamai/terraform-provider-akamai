@@ -18,7 +18,7 @@
     "allTraffic": false,
     "averageThreshold": 5,
     "burstThreshold": 10,
-    "clientIdentifier": "ip",
+    "clientIdentifiers": ["ip"],
     "description": "AFW Test Extensions",
     "fileExtensions": {
         "positiveMatch": false,
@@ -67,5 +67,6 @@
     "sameActionOnIpv6": false,
     "type": "WAF",
     "useXForwardForHeaders": true,
-    "counterType": "region_aggregated"
+    "counterType": "region_aggregated",
+    "penaltyBoxDuration": "THIRTY_MINUTES"
 }

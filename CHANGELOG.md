@@ -1,5 +1,67 @@
 # RELEASE NOTES
 
+## 8.0.0 (May 28, 2025)
+
+#### BREAKING CHANGES:
+
+* Appsec
+  * Renamed the `clientIdentifier` field to `clientIdentifiers` and changed its type from a string to a list of strings in the `rate_policy` attribute of the `akamai_appsec_rate_policy` resource.
+
+* DNS
+  * Added support for full deletion of the `akamai_dns_zone` resource ([I#517](https://github.com/akamai/terraform-provider-akamai/issues/517)).
+
+* EdgeKV
+  * Added removal of the corresponding namespace in the `akamai_edgekv` resource.
+    It can be removed only if there are no items in it. Otherwise, an error is returned.
+
+* PAPI
+  * Modified the `akamai_edge_hostname` resource - replaced the no-op destroy operation with fully developed delete ([I#504](https://github.com/akamai/terraform-provider-akamai/issues/504)).  
+
+#### FEATURES/ENHANCEMENTS:
+
+* General
+  * Updated various dependencies.
+
+* Appsec
+  * Suppressed the `PenaltyBoxDuration` field change if a value wasn't set in config for the `akamai_appsec_rate_policy` resource. Defaults to `TEN_MINUTES`.
+
+* Cloudlets
+  * Added warnings to the `akamai_cloudlets_application_load_balancer` and `akamai_cloudlets_application_load_balancer_activation` resources informing that deleting these resources only removes them from the state file ([I#610](https://github.com/akamai/terraform-provider-akamai/issues/610)).
+  * Added an error message when creating the `akamai_cloudlets_application_load_balancer` resource for origins that already exist on the server, advising to import this resource ([I#610](https://github.com/akamai/terraform-provider-akamai/issues/610)).
+  * Added an option to provide a policy name instead of a policy ID in the `akamai_cloudlets_policy` data source. ([I#619](https://github.com/akamai/terraform-provider-akamai/issues/619)).
+
+* GTM
+  * Enabled deleting the `akamai_gtm_domain` resource, allowing users to submit requests to remove GTM domains ([I#602](https://github.com/akamai/terraform-provider-akamai/issues/602)).
+
+* IAM
+  * Added new data sources:
+    * `akamai_iam_api_clients` – lists all API clients.
+    * `akamai_iam_api_client` – gets an API client.
+  * Added a new resource:
+    * `akamai_iam_api_client` - manages API clients ([I#380](https://github.com/akamai/terraform-provider-akamai/issues/380)) (Beta).
+
+* PAPI
+  * Added support for the additional `RDN` compliant fields in `subject_rdns` under `custom_certificate_authorities` in the rule formats ([I#618](https://github.com/akamai/terraform-provider-akamai/issues/618)).
+  * Increased the `akamai_edge_hostname` resource's default timeout to `45` minutes.
+  * Added support for the whole resource drift in the `akamai_edge_hostname` resource.
+  * Added support for the new rule format `v2025-04-29`. The list of changes can be found [here](https://techdocs.akamai.com/terraform/docs/rule-format-changes#v2025-04-29).
+  * Added support for the new rule format `v2025-03-24`. The list of changes can be found [here](https://techdocs.akamai.com/terraform/docs/rule-format-changes#v2025-03-24).
+  * Changed the `akamai_property_activation` resource that modifying the `contact` field without changing the `version`, `network` or `property_id` field no longer shows diff ([I#624](https://github.com/akamai/terraform-provider-akamai/issues/624)).
+  * Changed the `akamai_property_include_activation` resource that modifying the `notify_emails` field without changing the `version` field no longer shows diff.
+  * Changed validation of edgehostnames domain prefixes in the `resource_akamai_edge_hostname` resource to create context ([I#636](https://github.com/akamai/terraform-provider-akamai/issues/636)).
+
+#### BUG FIXES:
+
+* Appsec
+  * Fixed trimming a prefix in the `group_id` field (if present) in the `akamai_appsec_configuration` resource to support a numeric value ([I#551](https://github.com/akamai/terraform-provider-akamai/issues/551)).
+
+* Cloudlets
+  * Improved the behavior of an inactive `cloudlets_policy` resource so that changing its description no longer triggers the creation of a new version.
+    Changes to the `description` attribute are now suppressed if the policy is active ([I#617](https://github.com/akamai/terraform-provider-akamai/issues/617)).
+
+* PAPI
+  * Fixed an issue in the `akamai_property_activation` resource that in some cases modification of only the `note` field triggered a diff.
+
 ## 7.1.0 (Apr 3, 2025)
 
 #### FEATURES/ENHANCEMENTS:
@@ -59,8 +121,8 @@
 
 * Cloudlets
   * Removed the `id` attributes from the following data sources:
-    * `data_akamai_cloudlets_policy_activation` 
-    * `data_akamai_cloudlets_shared_policy` 
+    * `data_akamai_cloudlets_policy_activation`
+    * `data_akamai_cloudlets_shared_policy`
 
 * Cloud Wrapper
   * Removed the `id` attributes from the following data sources:
@@ -89,7 +151,7 @@
     * `data_akamai_gtm_geomap`
     * `data_akamai_gtm_geomaps`
     * `data_akamai_gtm_resources`
-    
+
 * Logging
   * Changed the logger from `apex` to a new interface.
     * By default, `slog` with a custom handler is used.
@@ -98,7 +160,7 @@
 
 * PAPI
   * Removed the `product_id` and `rule_format` attributes from the `akamai_properties` data source.
-  * Removed the `enabled` field from the `gov_cloud` behaviour defined inside the `rules_v2024_10_21` in the `akamai_property_rules_builder` datasource. 
+  * Removed the `enabled` field from the `gov_cloud` behaviour defined inside the `rules_v2024_10_21` in the `akamai_property_rules_builder` datasource.
 
 #### FEATURES/ENHANCEMENTS:
 
@@ -159,7 +221,7 @@
 #### FEATURES/ENHANCEMENTS:
 
 * Appsec
-  * Fixed a problem with the missing `security_policy_id` during update if a resource was imported previously. 
+  * Fixed a problem with the missing `security_policy_id` during update if a resource was imported previously.
   * Added the `akamai_appsec_aap_selected_hostnames` resource and data source.
   * Modified the `enable_botman_siem` field from `Required` to the `Optional` parameter in the`akamai_appsec_siem_settings` resource.
 
@@ -169,10 +231,10 @@
 
 * CPS
   * Refreshed a list of warnings returned by the `akamai_cps_warnings` data source.
-  
+
 * DNS
   * Added the new `outbound_zone_transfer` field to the `akamai_dns_zone` resource.
-  
+
 * Edgeworkers
   * Stopped sending an EdgeKV initialization request in the `akamai_edgekv` resource when EdgeKV is already initialized ([I#589](https://github.com/akamai/terraform-provider-akamai/issues/589)).
 
@@ -188,14 +250,14 @@
 * Cloud Access
   * Resolved issues with drift detection after deleting a key version in the `akamai_cloudaccess_key` resource ([I#579](https://github.com/akamai/terraform-provider-akamai/issues/579)).
   * Fixed cases where ProcessingType = "FAILED" was received in a response from the `akamai_cloudaccess_key` resource. This was causing unnecessary pooling until the timeout.
-  
+
 * GTM
   * Added checks to verify the existence of specific objects on the server when creating these resources:
-    * `akamai_gtm_asmap` 
-    * `akamai_gtm_cidrmap` 
-    * `akamai_gtm_domain` 
-    * `akamai_gtm_geomap` 
-    * `akamai_gtm_property` 
+    * `akamai_gtm_asmap`
+    * `akamai_gtm_cidrmap`
+    * `akamai_gtm_domain`
+    * `akamai_gtm_geomap`
+    * `akamai_gtm_property`
     * `akamai_gtm_resource`
 
 * PAPI
@@ -233,7 +295,7 @@
 
 * GTM
   * Added the retry logic to the `akamai_gtm_property` resource to handle errors caused by the prolonged creation time, leading to Property Validation Failure with the "no datacenter is assigned to map target (all others)" error from the API.
- 
+
 * IAM
   * Added new data sources:
     * `akamai_iam_accessible_groups` - reads the groups and subgroups accessible for a given user.
@@ -257,7 +319,7 @@
      * `user_notifications` to support user notifications.
      * `enable_mfa` to support authentication of type "MFA".
      * `password` to allow users to set a password when creating and updating a user.
-  * Made the `enable_tfa` attribute optional in the `resource_akamai_iam_user` resource. 
+  * Made the `enable_tfa` attribute optional in the `resource_akamai_iam_user` resource.
   * Added the `asset_id` schema field (an IAM identifier of a property or include) to:
     * The `akamai_property` resource and data source,
     * The `akamai_property_include` resource and data source.
@@ -278,7 +340,7 @@
 #### DEPRECATIONS:
 
 * PAPI
-  * Deprecated fields `product_id` and `rule_format` from `akamai_properties` datasource. Please use `akamai_property` to fetch this data. 
+  * Deprecated fields `product_id` and `rule_format` from `akamai_properties` datasource. Please use `akamai_property` to fetch this data.
 
 ## 6.4.0 (Sep 04, 2024)
 
@@ -349,7 +411,7 @@
 
 * PAPI
   * Added support for new rule format `v2024-05-31`
-  * Added new optional field `ttl` to `akamai_edge_hostname` resource. 
+  * Added new optional field `ttl` to `akamai_edge_hostname` resource.
     When it is used, creation or update takes longer as resource has to synchronize its state with HAPI.
 
 #### BUG FIXES:

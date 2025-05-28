@@ -1,9 +1,9 @@
-module github.com/akamai/terraform-provider-akamai/v7
+module github.com/akamai/terraform-provider-akamai/v8
 
 go 1.23.6
 
 require (
-	github.com/akamai/AkamaiOPEN-edgegrid-golang/v10 v10.1.0
+	github.com/akamai/AkamaiOPEN-edgegrid-golang/v11 v11.0.0
 	github.com/allegro/bigcache/v2 v2.2.5
 	github.com/dlclark/regexp2 v1.11.4
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
@@ -27,8 +27,8 @@ require (
 	github.com/spf13/cast v1.7.0
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/exp v0.0.0-20241204233417-43b7b7cde48d
-	golang.org/x/net v0.37.0
-	golang.org/x/sync v0.12.0
+	golang.org/x/net v0.38.0
+	golang.org/x/sync v0.14.0
 )
 
 require (
@@ -76,8 +76,8 @@ require (
 	go.uber.org/ratelimit v0.3.1 // indirect
 	golang.org/x/crypto v0.36.0 // indirect
 	golang.org/x/mod v0.22.0 // indirect
-	golang.org/x/sys v0.31.0 // indirect
-	golang.org/x/text v0.23.0 // indirect
+	golang.org/x/sys v0.33.0 // indirect
+	golang.org/x/text v0.25.0 // indirect
 	golang.org/x/tools v0.28.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250324211829-b45e905df463 // indirect
@@ -90,4 +90,4 @@ require (
 
 replace gopkg.in/yaml.v2 v2.2.2 => gopkg.in/yaml.v2 v2.4.0 // Fix security vulnerability
 
-// replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v10 => ../AkamaiOPEN-edgegrid-golang
+// replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v11 => ../AkamaiOPEN-edgegrid-golang

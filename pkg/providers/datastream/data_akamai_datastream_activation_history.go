@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/datastream"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/datastream"
 )
 
 func dataAkamaiDatastreamActivationHistory() *schema.Resource {

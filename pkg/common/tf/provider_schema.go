@@ -220,6 +220,33 @@ func GetSetValue(key string, rd ResourceDataFetcher) (*schema.Set, error) {
 	return val, nil
 }
 
+// GetRawSetValue fetches value with given key from RawConfig with fallback to ResourceData object and returns it as []any.
+//
+// It attempts to work around an issue that Set with diff suppress, returns in some cases only diff (rather than whole value).
+func GetRawSetValue(key string, rd ResourceDataFetcher, rawConfig *RawConfig) ([]any, error) {
+	setFunctionProvider, directErr := GetSetValue(key, rd)
+	listValue, rawErr := GetListValue(key, rawConfig)
+
+	if directErr == nil && rawErr == nil {
+		// All data is available - using value from 'raw' and order from 'direct'
+		return schema.NewSet(setFunctionProvider.F, listValue).List(), nil
+	}
+
+	if directErr != nil && rawErr == nil {
+		// Only 'raw' is available - values should be correct, order may be slightly changed, but for set it shouldn't matter
+		return listValue, nil
+	}
+
+	if directErr == nil {
+		// Only 'direct' is available so falling back to it.
+		// In some cases 'direct' can have incorrect values so we cannot always use it. No such use case was identified that 'raw' was not available and 'direct' hold incorrect values.
+		return setFunctionProvider.List(), nil
+	}
+
+	// Both errors - unable to provide values
+	return nil, fmt.Errorf("was not able to read %s value, %w: %s", key, directErr, rawErr)
+}
+
 // GetListValue fetches value with given key from ResourceData object and attempts type cast to []interface{}
 //
 // if value is not present on provided resource, ErrNotFound is returned

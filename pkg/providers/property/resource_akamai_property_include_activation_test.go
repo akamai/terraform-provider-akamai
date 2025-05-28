@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -275,8 +275,13 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 				resource.TestCheckResourceAttr("akamai_property_include_activation.activation", "version", strconv.Itoa(attrs.version)),
 				resource.TestCheckResourceAttr("akamai_property_include_activation.activation", "network", attrs.network),
 				resource.TestCheckResourceAttr("akamai_property_include_activation.activation", "note", attrs.note),
+				resource.TestCheckResourceAttr("akamai_property_include_activation.activation", "notify_emails.#", fmt.Sprintf("%d", len(attrs.notifyEmails))),
 				resource.TestCheckResourceAttr("akamai_property_include_activation.activation", "notify_emails.0", attrs.notifyEmails[0]),
 				resource.TestCheckResourceAttr("akamai_property_include_activation.activation", "auto_acknowledge_rule_warnings", strconv.FormatBool(attrs.autoAcknowledgeRuleWarnings)),
+			}
+
+			for i, email := range attrs.notifyEmails {
+				checks = append(checks, resource.TestCheckResourceAttr("akamai_property_include_activation.activation", fmt.Sprintf("notify_emails.%d", i), email))
 			}
 
 			if attrs.timeout != "" {
@@ -461,6 +466,318 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 							note:                        note,
 							notifyEmails:                []string{email},
 							autoAcknowledgeRuleWarnings: true,
+						}),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("update include activation lifecycle - extended notify emails is correctly read in update", func(t *testing.T) {
+		client := new(papi.Mock)
+		state := State{}
+
+		// 1. first step
+
+		// create
+		actReq := activateIncludeReq("STAGING", false)
+		state = expectCreate(client, state, actReq)
+
+		// read
+		expectRead(client, state, papi.ActivationNetworkStaging)
+
+		// read
+		expectRead(client, state, papi.ActivationNetworkStaging)
+
+		// 2. second step - activation of new version
+
+		// read
+		expectRead(client, state, papi.ActivationNetworkStaging)
+
+		// update
+		updateVersion := 4
+		updateNotificationEmails := []string{"jbond@example.com", "jbond2@example.com"}
+
+		actReq = activateIncludeReq("STAGING", false)
+		actReq.Version = updateVersion
+		actReq.NotifyEmails = updateNotificationEmails
+		state = expectCreate(client, state, actReq)
+
+		// read
+		expectRead(client, state, papi.ActivationNetworkStaging)
+
+		// read
+		expectRead(client, state, papi.ActivationNetworkStaging)
+
+		// delete
+		deactReq := deactivateIncludeReq("STAGING", false)
+		deactReq.Version = updateVersion
+		deactReq.NotifyEmails = updateNotificationEmails
+		_ = expectDelete(client, state, deactReq)
+
+		useClient(client, nil, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation.tf", testDir),
+						Check: checkAttributes(attrs{
+							includeID:    includeID,
+							contractID:   contractID,
+							groupID:      groupID,
+							version:      version,
+							network:      "STAGING",
+							note:         note,
+							notifyEmails: []string{email},
+						}),
+					},
+					{
+						Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation_email_updated.tf", testDir),
+						Check: checkAttributes(attrs{
+							includeID:                   includeID,
+							contractID:                  contractID,
+							groupID:                     groupID,
+							version:                     4,
+							network:                     "STAGING",
+							note:                        note,
+							notifyEmails:                []string{"jbond2@example.com", email},
+							autoAcknowledgeRuleWarnings: false,
+						}),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("update include activation lifecycle - shrinking notify emails is correctly read in update", func(t *testing.T) {
+		client := new(papi.Mock)
+		state := State{}
+
+		// 1. first step
+
+		// create
+		createVersion := 4
+		createNotificationEmails := []string{"jbond@example.com", "jbond2@example.com"}
+
+		actReq := activateIncludeReq("STAGING", false)
+		actReq.Version = createVersion
+		actReq.NotifyEmails = createNotificationEmails
+		state = expectCreate(client, state, actReq)
+
+		// read
+		expectRead(client, state, papi.ActivationNetworkStaging)
+
+		// read
+		expectRead(client, state, papi.ActivationNetworkStaging)
+
+		// 2. second step - activation of new version
+
+		// read
+		expectRead(client, state, papi.ActivationNetworkStaging)
+
+		// update
+
+		actReq = activateIncludeReq("STAGING", false)
+		state = expectCreate(client, state, actReq)
+
+		// read
+		expectRead(client, state, papi.ActivationNetworkStaging)
+
+		// read
+		expectRead(client, state, papi.ActivationNetworkStaging)
+
+		// delete
+		deactReq := deactivateIncludeReq("STAGING", false)
+		_ = expectDelete(client, state, deactReq)
+
+		useClient(client, nil, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation_email_updated.tf", testDir),
+						Check: checkAttributes(attrs{
+							includeID:                   includeID,
+							contractID:                  contractID,
+							groupID:                     groupID,
+							version:                     4,
+							network:                     "STAGING",
+							note:                        note,
+							notifyEmails:                []string{"jbond2@example.com", email},
+							autoAcknowledgeRuleWarnings: false,
+						}),
+					},
+					{
+						Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation.tf", testDir),
+						Check: checkAttributes(attrs{
+							includeID:    includeID,
+							contractID:   contractID,
+							groupID:      groupID,
+							version:      version,
+							network:      "STAGING",
+							note:         note,
+							notifyEmails: []string{email},
+						}),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("update include activation lifecycle - replaced notify emails is correctly read in update", func(t *testing.T) {
+		client := new(papi.Mock)
+		state := State{}
+
+		// 1. first step
+
+		// create
+		actReq := activateIncludeReq("STAGING", false)
+		state = expectCreate(client, state, actReq)
+
+		// read
+		expectRead(client, state, papi.ActivationNetworkStaging)
+
+		// read
+		expectRead(client, state, papi.ActivationNetworkStaging)
+
+		// 2. second step - activation of new version
+
+		// read
+		expectRead(client, state, papi.ActivationNetworkStaging)
+
+		// update
+		updateVersion := 4
+		updateNotificationEmails := []string{"jbond2@example.com"}
+
+		actReq = activateIncludeReq("STAGING", false)
+		actReq.Version = updateVersion
+		actReq.NotifyEmails = updateNotificationEmails
+		state = expectCreate(client, state, actReq)
+
+		// read
+		expectRead(client, state, papi.ActivationNetworkStaging)
+
+		// read
+		expectRead(client, state, papi.ActivationNetworkStaging)
+
+		// delete
+		deactReq := deactivateIncludeReq("STAGING", false)
+		deactReq.Version = updateVersion
+		deactReq.NotifyEmails = updateNotificationEmails
+		_ = expectDelete(client, state, deactReq)
+
+		useClient(client, nil, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation.tf", testDir),
+						Check: checkAttributes(attrs{
+							includeID:    includeID,
+							contractID:   contractID,
+							groupID:      groupID,
+							version:      version,
+							network:      "STAGING",
+							note:         note,
+							notifyEmails: []string{email},
+						}),
+					},
+					{
+						Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation_email_exchanged.tf", testDir),
+						Check: checkAttributes(attrs{
+							includeID:                   includeID,
+							contractID:                  contractID,
+							groupID:                     groupID,
+							version:                     4,
+							network:                     "STAGING",
+							note:                        note,
+							notifyEmails:                []string{"jbond2@example.com"},
+							autoAcknowledgeRuleWarnings: false,
+						}),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("update include activation lifecycle - notify emails is correctly read in update when complicated changes within contacts", func(t *testing.T) {
+		client := new(papi.Mock)
+		state := State{}
+
+		// 1. first step
+
+		// create
+		actReq := activateIncludeReq("STAGING", false)
+		actReq.NotifyEmails = []string{"jbond3@example.com", "jbond@example.com", "jbond2@example.com"}
+		state = expectCreate(client, state, actReq)
+
+		// read
+		expectRead(client, state, papi.ActivationNetworkStaging)
+
+		// read
+		expectRead(client, state, papi.ActivationNetworkStaging)
+
+		// 2. second step - activation of new version
+
+		// read
+		expectRead(client, state, papi.ActivationNetworkStaging)
+
+		// update
+		updateVersion := 4
+		updateNotificationEmails := []string{"jbond5@example.com", "jbond3@example.com", "jbond2@example.com", "jbond4@example.com"}
+
+		actReq = activateIncludeReq("STAGING", false)
+		actReq.Version = updateVersion
+		actReq.NotifyEmails = updateNotificationEmails
+		state = expectCreate(client, state, actReq)
+
+		// read
+		expectRead(client, state, papi.ActivationNetworkStaging)
+
+		// read
+		expectRead(client, state, papi.ActivationNetworkStaging)
+
+		// delete
+		deactReq := deactivateIncludeReq("STAGING", false)
+		deactReq.Version = updateVersion
+		deactReq.NotifyEmails = updateNotificationEmails
+		_ = expectDelete(client, state, deactReq)
+
+		useClient(client, nil, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation_complicated_emails.tf", testDir),
+						Check: checkAttributes(attrs{
+							includeID:    includeID,
+							contractID:   contractID,
+							groupID:      groupID,
+							version:      version,
+							network:      "STAGING",
+							note:         note,
+							notifyEmails: []string{"jbond2@example.com", "jbond3@example.com", "jbond@example.com"},
+						}),
+					},
+					{
+						Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation_complicated_emails_update.tf", testDir),
+						Check: checkAttributes(attrs{
+							includeID:                   includeID,
+							contractID:                  contractID,
+							groupID:                     groupID,
+							version:                     4,
+							network:                     "STAGING",
+							note:                        note,
+							notifyEmails:                []string{"jbond2@example.com", "jbond3@example.com", "jbond4@example.com", "jbond5@example.com"},
+							autoAcknowledgeRuleWarnings: false,
 						}),
 					},
 				},
@@ -962,7 +1279,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
-	t.Run("note filed change suppressed", func(t *testing.T) {
+	t.Run("note and notify_emails fields change suppressed", func(t *testing.T) {
 		client := new(papi.Mock)
 		state := State{}
 
@@ -972,13 +1289,15 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		actReq := activateIncludeReq("STAGING", false)
 		state = expectCreate(client, state, actReq)
 
-		// read
-		expectRead(client, state, papi.ActivationNetworkStaging)
-
-		// read
+		// read after create
 		expectRead(client, state, papi.ActivationNetworkStaging)
 
 		// 2. second step - update only note field - change suppressed
+		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client, state, papi.ActivationNetworkStaging)
+
+		// read before delete
+		expectRead(client, state, papi.ActivationNetworkStaging)
 		// delete
 		deactReq := deactivateIncludeReq("STAGING", false)
 		_ = expectDelete(client, state, deactReq)
@@ -999,6 +1318,18 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 							notifyEmails: []string{email},
 						}),
 					},
+					{
+						Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation_suppressed.tf", testDir),
+						Check: checkAttributes(attrs{
+							includeID:    includeID,
+							contractID:   contractID,
+							groupID:      groupID,
+							version:      version,
+							network:      "STAGING",
+							note:         note,
+							notifyEmails: []string{email},
+						}),
+					},
 				},
 			})
 		})
@@ -1006,7 +1337,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
-	t.Run("note and version filed change not suppressed", func(t *testing.T) {
+	t.Run("note and notify_emails change not suppressed when version is updated", func(t *testing.T) {
 		client := new(papi.Mock)
 		state := State{}
 
@@ -1024,14 +1355,14 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 
 		expectRead(client, state, papi.ActivationNetworkStaging)
 
-		// 2. second step - update note and version with creation of new activation - note change not suppressed
+		// 2. second step - update note and version with creation of new activation - note and notify_emails change not suppressed
 		// create
 		req := papi.ActivateIncludeRequest{
 			IncludeID:    includeID,
 			Version:      4,
 			Network:      "STAGING",
 			Note:         "not suppressed note field change",
-			NotifyEmails: []string{email},
+			NotifyEmails: []string{email, "jbond2@example.com"},
 		}
 		state = expectCreate(client, state, req)
 
@@ -1047,7 +1378,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 			Version:      4,
 			Network:      "STAGING",
 			Note:         "not suppressed note field change",
-			NotifyEmails: []string{email},
+			NotifyEmails: []string{email, "jbond2@example.com"},
 		}
 		_ = expectDelete(client, state, deactReq)
 
@@ -1076,7 +1407,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 							version:      4,
 							network:      "STAGING",
 							note:         "not suppressed note field change",
-							notifyEmails: []string{email},
+							notifyEmails: []string{"jbond2@example.com", email},
 						}),
 					},
 				},

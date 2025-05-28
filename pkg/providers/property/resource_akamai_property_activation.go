@@ -10,14 +10,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/log"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/papi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v10/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/date"
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/str"
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/common/timeouts"
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/log"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/date"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/str"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/timeouts"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -64,27 +64,32 @@ var (
 
 var akamaiPropertyActivationSchema = map[string]*schema.Schema{
 	"property_id": {
-		Type:      schema.TypeString,
-		Required:  true,
-		StateFunc: addPrefixToState("prp_"),
+		Type:        schema.TypeString,
+		Required:    true,
+		StateFunc:   addPrefixToState("prp_"),
+		Description: "Your property's ID, including the prp_ prefix.",
 	},
 	"activation_id": {
-		Type:     schema.TypeString,
-		Optional: true,
-		Computed: true,
+		Type:        schema.TypeString,
+		Optional:    true,
+		Computed:    true,
+		Description: "The ID given to the activation event while it's in progress.",
 	},
 	"errors": {
-		Type:     schema.TypeString,
-		Computed: true,
+		Type:        schema.TypeString,
+		Computed:    true,
+		Description: "Errors returned during activation.",
 	},
 	"warnings": {
-		Type:     schema.TypeString,
-		Computed: true,
+		Type:        schema.TypeString,
+		Computed:    true,
+		Description: "Warnings returned during activation.",
 	},
 	"rule_errors": {
-		Type:     schema.TypeList,
-		Computed: true,
-		Elem:     papiError(),
+		Type:        schema.TypeList,
+		Computed:    true,
+		Elem:        papiError(),
+		Description: "Any errors returned by the API about rules.",
 	},
 	"auto_acknowledge_rule_warnings": {
 		Type:        schema.TypeBool,
@@ -96,39 +101,44 @@ var akamaiPropertyActivationSchema = map[string]*schema.Schema{
 		Type:             schema.TypeInt,
 		Required:         true,
 		ValidateDiagFunc: tf.IsNotBlank,
+		Description:      "Your property's version number.",
 	},
 	"network": {
-		Type:     schema.TypeString,
-		Optional: true,
-		Default:  papi.ActivationNetworkStaging,
+		Type:        schema.TypeString,
+		Optional:    true,
+		Default:     papi.ActivationNetworkStaging,
+		Description: "Akamai network in which to activate your property, either STAGING or PRODUCTION. The default is STAGING.",
 	},
 	"contact": {
-		Type:     schema.TypeSet,
-		Required: true,
-		Elem:     &schema.Schema{Type: schema.TypeString},
+		Type:             schema.TypeSet,
+		Required:         true,
+		Elem:             &schema.Schema{Type: schema.TypeString},
+		DiffSuppressFunc: suppressDiffIfNoPropertyReactivation,
+		Description:      "One or more email addresses to which to send activation status changes.",
 	},
 	"status": {
-		Type:     schema.TypeString,
-		Computed: true,
+		Type:        schema.TypeString,
+		Computed:    true,
+		Description: "The property version's activation status on the given network.",
 	},
 	"note": {
 		Type:             schema.TypeString,
 		Optional:         true,
-		Description:      "assigns a log message to the activation request",
-		DiffSuppressFunc: suppressNoteFieldForPropertyActivation,
+		Description:      "Assigns a log message to the activation request.",
+		DiffSuppressFunc: suppressDiffIfNoPropertyReactivation,
 	},
 	"compliance_record": {
 		Type:        schema.TypeList,
 		Optional:    true,
 		MaxItems:    1,
-		Description: "Provides an audit record when activating on a production network",
+		Description: "Provides an audit record when activating on a production network.",
 		Elem:        complianceRecordSchema,
 	},
 	"timeouts": {
 		Type:        schema.TypeList,
 		Optional:    true,
 		MaxItems:    1,
-		Description: "Enables to set timeout for processing",
+		Description: "Enables to set timeout for processing.",
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"default": {
@@ -227,13 +237,13 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 
 	// we create a new property activation in case of no previous activation, or deleted activation
 	if activation == nil || activation.ActivationType == papi.ActivationTypeDeactivate || activation.PropertyVersion != version {
-		notifySet, err := tf.GetSetValue("contact", d)
+		contactSet, err := tf.GetSetValue("contact", d)
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		var notify []string
-		for _, contact := range notifySet.List() {
-			notify = append(notify, cast.ToString(contact))
+		var contacts []string
+		for _, contact := range contactSet.List() {
+			contacts = append(contacts, cast.ToString(contact))
 		}
 
 		note, err := tf.GetStringValue("note", d)
@@ -247,7 +257,7 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 				ActivationType:         papi.ActivationTypeActivate,
 				Network:                network,
 				PropertyVersion:        version,
-				NotifyEmails:           notify,
+				NotifyEmails:           contacts,
 				AcknowledgeAllWarnings: acknowledgeRuleWarnings,
 				Note:                   note,
 			},
@@ -347,13 +357,13 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 	}
 
 	if activation == nil || activation.ActivationType == papi.ActivationTypeActivate {
-		notifySet, err := tf.GetSetValue("contact", d)
+		contactSet, err := tf.GetRawSetValue("contact", d, tf.NewRawConfig(d))
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		var notify []string
-		for _, contact := range notifySet.List() {
-			notify = append(notify, cast.ToString(contact))
+		var contacts []string
+		for _, contact := range contactSet {
+			contacts = append(contacts, cast.ToString(contact))
 		}
 		note, err := tf.GetStringValue("note", d)
 		if err != nil && !errors.Is(err, tf.ErrNotFound) {
@@ -366,7 +376,7 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 				ActivationType:         papi.ActivationTypeDeactivate,
 				Network:                network,
 				PropertyVersion:        version,
-				NotifyEmails:           notify,
+				NotifyEmails:           contacts,
 				AcknowledgeAllWarnings: acknowledgeRuleWarnings,
 				Note:                   note,
 			},
@@ -638,9 +648,6 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 	if versionStatus == papi.VersionStatusActive {
 		var updatedFields []string
 
-		if d.HasChange("contact") {
-			updatedFields = append(updatedFields, "'contact'")
-		}
 		if d.HasChange("auto_acknowledge_rule_warnings") {
 			updatedFields = append(updatedFields, "'auto_acknowledge_rule_warnings'")
 		}
@@ -650,13 +657,13 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	if propertyActivation == nil || versionStatus == papi.VersionStatusDeactivated {
-		notifySet, err := tf.GetSetValue("contact", d)
+		contactSet, err := tf.GetRawSetValue("contact", d, tf.NewRawConfig(d))
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		var notify []string
-		for _, contact := range notifySet.List() {
-			notify = append(notify, cast.ToString(contact))
+		var contacts []string
+		for _, contact := range contactSet {
+			contacts = append(contacts, cast.ToString(contact))
 		}
 
 		createActivationRequest := papi.CreateActivationRequest{
@@ -665,7 +672,7 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 				ActivationType:         papi.ActivationTypeActivate,
 				Network:                network,
 				PropertyVersion:        version,
-				NotifyEmails:           notify,
+				NotifyEmails:           contacts,
 				AcknowledgeAllWarnings: acknowledgeRuleWarnings,
 				Note:                   note,
 			},
@@ -987,11 +994,15 @@ func pollActivation(ctx context.Context, client papi.PAPI, activation *papi.Acti
 	return activation, nil
 }
 
-func suppressNoteFieldForPropertyActivation(_, oldValue, newValue string, d *schema.ResourceData) bool {
-	if oldValue != newValue && d.HasChanges("property_id", "version", "network") {
+func suppressDiffIfNoPropertyReactivation(_, oldValue, newValue string, d *schema.ResourceData) bool {
+	if d.Id() == "" {
 		return false
 	}
-	return true
+	shouldReactivate := d.HasChanges("version", "network") || tf.StringFieldHasChangesWithStateFunc(d, "property_id", addPrefixToState("prp_"))
+	if !shouldReactivate {
+		return true
+	}
+	return oldValue == newValue
 }
 
 func createActivation(ctx context.Context, client papi.PAPI, request papi.CreateActivationRequest) (string, diag.Diagnostics) {
