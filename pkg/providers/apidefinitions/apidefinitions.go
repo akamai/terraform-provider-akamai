@@ -1,7 +1,7 @@
 package apidefinitions
 
 import (
-	"github.com/akamai/terraform-provider-akamai/v7/pkg/providers/registry"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/providers/registry"
 )
 
 func init() {
