@@ -94,4 +94,4 @@ require (
 
 replace gopkg.in/yaml.v2 v2.2.2 => gopkg.in/yaml.v2 v2.4.0 // Fix security vulnerability
 
-// replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v11 => ../AkamaiOPEN-edgegrid-golang
+replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v11 => ../AkamaiOPEN-edgegrid-golang
