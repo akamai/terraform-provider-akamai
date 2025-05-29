@@ -109,22 +109,22 @@ func TestCASetActivitiesDataSource(t *testing.T) {
 				}).Return(&mtlstruststore.ListCASetsResponse{
 					CASets: []mtlstruststore.CASetResponse{
 						{
-							CASetID:     01234,
+							CASetID:     "01234",
 							CASetName:   "test name",
 							CASetStatus: "DELETED",
 						},
 						{
-							CASetID:     00007,
+							CASetID:     "00007",
 							CASetName:   "test name",
 							CASetStatus: "DELETING",
 						},
 						{
-							CASetID:     12345,
+							CASetID:     "12345",
 							CASetName:   "test name",
 							CASetStatus: "NOT_DELETED",
 						},
 						{
-							CASetID:     55555,
+							CASetID:     "55555",
 							CASetName:   "test name",
 							CASetStatus: "DELETED",
 						},
@@ -153,17 +153,17 @@ func TestCASetActivitiesDataSource(t *testing.T) {
 				}).Return(&mtlstruststore.ListCASetsResponse{
 					CASets: []mtlstruststore.CASetResponse{
 						{
-							CASetID:     01234,
+							CASetID:     "01234",
 							CASetName:   "test name foo",
 							CASetStatus: "NOT_DELETED",
 						},
 						{
-							CASetID:     12345,
+							CASetID:     "12345",
 							CASetName:   "test name",
 							CASetStatus: "NOT_DELETED",
 						},
 						{
-							CASetID:     67890,
+							CASetID:     "67890",
 							CASetName:   "test name bar",
 							CASetStatus: "NOT_DELETED",
 						},
@@ -192,12 +192,12 @@ func TestCASetActivitiesDataSource(t *testing.T) {
 				}).Return(&mtlstruststore.ListCASetsResponse{
 					CASets: []mtlstruststore.CASetResponse{
 						{
-							CASetID:     01234,
+							CASetID:     "01234",
 							CASetName:   "test name foo",
 							CASetStatus: "NOT_DELETED",
 						},
 						{
-							CASetID:     12345,
+							CASetID:     "12345",
 							CASetName:   "test name",
 							CASetStatus: "DELETED",
 						},
@@ -256,7 +256,7 @@ func TestCASetActivitiesDataSource(t *testing.T) {
 		"error API response": {
 			init: func(m *mtlstruststore.Mock) {
 				m.On("ListCASetActivities", testutils.MockContext, mtlstruststore.ListCASetActivitiesRequest{
-					CASetID: 12345,
+					CASetID: "12345",
 				}).Return(nil, fmt.Errorf("failed to retrieve CA set activities")).Once()
 			},
 			steps: []resource.TestStep{
@@ -327,7 +327,7 @@ func TestCASetActivitiesDataSource(t *testing.T) {
 
 func mockListCASetActivities(t *testing.T, m *mtlstruststore.Mock, startDate, endDate string, withDeletion bool) {
 	getResponse := &mtlstruststore.ListCASetActivitiesResponse{
-		CASetID:     12345,
+		CASetID:     "12345",
 		CASetName:   "example-ca-set",
 		CASetStatus: "NOT_DELETED",
 		CreatedDate: tst.NewTimeFromString(t, "2025-04-16T12:08:34.099457Z"),
@@ -369,7 +369,7 @@ func mockListCASetActivities(t *testing.T, m *mtlstruststore.Mock, startDate, en
 		}
 	}
 	m.On("ListCASetActivities", testutils.MockContext, mtlstruststore.ListCASetActivitiesRequest{
-		CASetID: 12345,
+		CASetID: "12345",
 		Start:   start,
 		End:     end,
 	}).Return(getResponse, nil).Times(3)
@@ -381,7 +381,7 @@ func mockListCASets(m *mtlstruststore.Mock) {
 	}).Return(&mtlstruststore.ListCASetsResponse{
 		CASets: []mtlstruststore.CASetResponse{
 			{
-				CASetID:     12345,
+				CASetID:     "12345",
 				CASetName:   "test name",
 				CASetStatus: "NOT_DELETED",
 			},

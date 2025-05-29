@@ -434,7 +434,7 @@ func (r *ConfigurationResource) isPendingDelete(ctx context.Context, id int64) (
 		ConfigID: id,
 	})
 	if err != nil {
-		diags.AddError("Error Retreiving Configutation", err.Error())
+		diags.AddError("Error retrieving configuration", err.Error())
 		return false, diags
 	}
 

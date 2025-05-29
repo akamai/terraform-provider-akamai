@@ -7,7 +7,6 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/mtlstruststore"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
-	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -29,7 +28,7 @@ type (
 	}
 
 	caSetActivitiesDataSourceModel struct {
-		ID          types.Int64     `tfsdk:"id"`
+		ID          types.String    `tfsdk:"id"`
 		Name        types.String    `tfsdk:"name"`
 		Start       types.String    `tfsdk:"start"`
 		End         types.String    `tfsdk:"end"`
@@ -81,12 +80,12 @@ func (d *caSetActivitiesDataSource) Schema(_ context.Context, _ datasource.Schem
 	resp.Schema = schema.Schema{
 		Description: "Retrieve activities for a specific MTLS Truststore CA Set.",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.Int64Attribute{
+			"id": schema.StringAttribute{
 				Description: "Identifies each CA set.",
 				Optional:    true,
 				Computed:    true,
-				Validators: []validator.Int64{
-					int64validator.ExactlyOneOf(path.MatchRoot("name"), path.MatchRoot("id")),
+				Validators: []validator.String{
+					stringvalidator.ExactlyOneOf(path.MatchRoot("name"), path.MatchRoot("id")),
 				},
 			},
 			"name": schema.StringAttribute{
@@ -177,7 +176,7 @@ func (d *caSetActivitiesDataSource) Read(ctx context.Context, req datasource.Rea
 			return
 		}
 
-		data.ID = types.Int64Value(setID)
+		data.ID = types.StringValue(setID)
 	}
 
 	activities, err := data.getActivities(ctx, client)
@@ -192,12 +191,12 @@ func (d *caSetActivitiesDataSource) Read(ctx context.Context, req datasource.Rea
 	resp.Diagnostics.Append(resp.State.Set(ctx, data)...)
 }
 
-func findCASetID(ctx context.Context, client mtlstruststore.MTLSTruststore, caSetName string) (int64, error) {
+func findCASetID(ctx context.Context, client mtlstruststore.MTLSTruststore, caSetName string) (string, error) {
 	caSets, err := client.ListCASets(ctx, mtlstruststore.ListCASetsRequest{
 		CASetNamePrefix: caSetName,
 	})
 	if err != nil {
-		return 0, fmt.Errorf("failed to list CA sets: %w", err)
+		return "", fmt.Errorf("failed to list CA sets: %w", err)
 	}
 
 	var matchingSets []mtlstruststore.CASetResponse
@@ -207,15 +206,15 @@ func findCASetID(ctx context.Context, client mtlstruststore.MTLSTruststore, caSe
 		}
 	}
 	if len(matchingSets) == 0 {
-		return 0, fmt.Errorf("no CA set found with name '%s'", caSetName)
+		return "", fmt.Errorf("no CA set found with name '%s'", caSetName)
 	}
 	if len(matchingSets) > 1 {
-		return 0, fmt.Errorf("multiple CA sets found with name '%s'", caSetName)
+		return "", fmt.Errorf("multiple CA sets found with name '%s'", caSetName)
 	}
 	return matchingSets[0].CASetID, nil
 }
 
-func (m caSetActivitiesDataSourceModel) getActivities(ctx context.Context, client mtlstruststore.MTLSTruststore) (*mtlstruststore.ListCASetActivitiesResponse, error) {
+func (m *caSetActivitiesDataSourceModel) getActivities(ctx context.Context, client mtlstruststore.MTLSTruststore) (*mtlstruststore.ListCASetActivitiesResponse, error) {
 	var start, end time.Time
 	var err error
 	if m.Start.ValueString() != "" {
@@ -230,7 +229,7 @@ func (m caSetActivitiesDataSourceModel) getActivities(ctx context.Context, clien
 	}
 
 	activities, err := client.ListCASetActivities(ctx, mtlstruststore.ListCASetActivitiesRequest{
-		CASetID: m.ID.ValueInt64(),
+		CASetID: m.ID.ValueString(),
 		Start:   start,
 		End:     end,
 	})
@@ -243,7 +242,7 @@ func (m caSetActivitiesDataSourceModel) getActivities(ctx context.Context, clien
 
 func convertDataToModel(activities mtlstruststore.ListCASetActivitiesResponse) caSetActivitiesDataSourceModel {
 	data := caSetActivitiesDataSourceModel{
-		ID:          types.Int64Value(activities.CASetID),
+		ID:          types.StringValue(activities.CASetID),
 		Name:        types.StringValue(activities.CASetName),
 		CreatedDate: types.StringValue(activities.CreatedDate.String()),
 		CreatedBy:   types.StringValue(activities.CreatedBy),
@@ -260,12 +259,12 @@ func convertDataToModel(activities mtlstruststore.ListCASetActivitiesResponse) c
 	activitiesModel := make([]activityModel, len(activities.Activities))
 	for i, activity := range activities.Activities {
 		am := activityModel{
-			Type:         types.StringValue(string(activity.Type)),
+			Type:         types.StringValue(activity.Type),
 			ActivityDate: types.StringValue(activity.ActivityDate.String()),
 			ActivityBy:   types.StringValue(activity.ActivityBy),
 		}
 		if activity.Network != nil {
-			am.Network = types.StringValue(string(*activity.Network))
+			am.Network = types.StringValue(*activity.Network)
 		} else {
 			am.Network = types.StringNull()
 		}
