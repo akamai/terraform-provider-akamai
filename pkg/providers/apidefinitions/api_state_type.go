@@ -122,6 +122,10 @@ func checkSemanticEquality(before v0.APIAttributes, after v0.APIAttributes) []st
 
 	sortConsumeTypes(before)
 	sortConsumeTypes(after)
+	sortHosts(before)
+	sortHosts(after)
+	sortTags(before)
+	sortTags(after)
 
 	return deep.Equal(before, after)
 }
@@ -129,5 +133,16 @@ func checkSemanticEquality(before v0.APIAttributes, after v0.APIAttributes) []st
 func sortConsumeTypes(state v0.APIAttributes) {
 	if state.Constraints != nil && state.Constraints.RequestBody != nil && state.Constraints.RequestBody.ConsumeType != nil {
 		slices.Sort(state.Constraints.RequestBody.ConsumeType)
+	}
+}
+
+func sortTags(state v0.APIAttributes) {
+	if state.Tags != nil {
+		slices.Sort(state.Tags)
+	}
+}
+func sortHosts(state v0.APIAttributes) {
+	if state.Hostnames != nil {
+		slices.Sort(state.Hostnames)
 	}
 }

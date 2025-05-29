@@ -36,6 +36,26 @@ func TestCheckSemanticEquality_ConsumeType(t *testing.T) {
 	assert.Equal(t, []string(nil), checkSemanticEquality(before, after))
 }
 
+func TestCheckSemanticEquality_Hostnames(t *testing.T) {
+	var before = base()
+	var after = base()
+
+	before.Hostnames = []string{"host2.com", "host1.com"}
+	after.Hostnames = []string{"host1.com", "host2.com"}
+
+	assert.Equal(t, []string(nil), checkSemanticEquality(before, after))
+}
+
+func TestCheckSemanticEquality_Tags(t *testing.T) {
+	var before = base()
+	var after = base()
+
+	before.Tags = []string{"tag2", "tag1"}
+	after.Tags = []string{"tag1", "tag2"}
+
+	assert.Equal(t, []string(nil), checkSemanticEquality(before, after))
+}
+
 func base() v0.APIAttributes {
 	return v0.APIAttributes{
 		Name:      "Name",
