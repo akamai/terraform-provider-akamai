@@ -191,29 +191,6 @@ func (d *caSetActivitiesDataSource) Read(ctx context.Context, req datasource.Rea
 	resp.Diagnostics.Append(resp.State.Set(ctx, data)...)
 }
 
-func findCASetID(ctx context.Context, client mtlstruststore.MTLSTruststore, caSetName string) (string, error) {
-	caSets, err := client.ListCASets(ctx, mtlstruststore.ListCASetsRequest{
-		CASetNamePrefix: caSetName,
-	})
-	if err != nil {
-		return "", fmt.Errorf("failed to list CA sets: %w", err)
-	}
-
-	var matchingSets []mtlstruststore.CASetResponse
-	for _, caSet := range caSets.CASets {
-		if caSet.CASetStatus == "NOT_DELETED" && caSet.CASetName == caSetName {
-			matchingSets = append(matchingSets, caSet)
-		}
-	}
-	if len(matchingSets) == 0 {
-		return "", fmt.Errorf("no CA set found with name '%s'", caSetName)
-	}
-	if len(matchingSets) > 1 {
-		return "", fmt.Errorf("multiple CA sets found with name '%s'", caSetName)
-	}
-	return matchingSets[0].CASetID, nil
-}
-
 func (m *caSetActivitiesDataSourceModel) getActivities(ctx context.Context, client mtlstruststore.MTLSTruststore) (*mtlstruststore.ListCASetActivitiesResponse, error) {
 	var start, end time.Time
 	var err error
@@ -290,4 +267,62 @@ func (m *caSetActivitiesDataSourceModel) setData(activities caSetActivitiesDataS
 	m.DeletedDate = activities.DeletedDate
 	m.DeletedBy = activities.DeletedBy
 	m.Activities = activities.Activities
+}
+
+func findCASetID(ctx context.Context, client mtlstruststore.MTLSTruststore, caSetName string) (string, error) {
+	caSets, err := client.ListCASets(ctx, mtlstruststore.ListCASetsRequest{
+		CASetNamePrefix: caSetName,
+	})
+	if err != nil {
+		return "", fmt.Errorf("could not find CA Set ID for the given CA Set Name '%s', API error: %w", caSetName, err)
+	}
+
+	var matchingSets []mtlstruststore.CASetResponse
+	for _, caSet := range caSets.CASets {
+		if caSet.CASetName == caSetName {
+			matchingSets = append(matchingSets, caSet)
+		}
+	}
+
+	switch len(matchingSets) {
+	case 0:
+		return "", fmt.Errorf("no CA set found with name '%s'", caSetName)
+	case 1:
+		return matchingSets[0].CASetID, nil
+	default:
+		return "", fmt.Errorf("multiple CA sets IDs found with name '%s': %v. Use the ID to fetch a specific CA set", caSetName, buildSetsMap(matchingSets))
+	}
+}
+
+func findNotDeletedCASetID(ctx context.Context, client mtlstruststore.MTLSTruststore, caSetName string) (string, error) {
+	caSets, err := client.ListCASets(ctx, mtlstruststore.ListCASetsRequest{
+		CASetNamePrefix: caSetName,
+	})
+	if err != nil {
+		return "", fmt.Errorf("could not find CA Set ID for the given CA Set Name '%s', API error: %w", caSetName, err)
+	}
+
+	var matchingSets []mtlstruststore.CASetResponse
+	for _, caSet := range caSets.CASets {
+		if caSet.CASetName == caSetName && caSet.CASetStatus == "NOT_DELETED" {
+			matchingSets = append(matchingSets, caSet)
+		}
+	}
+
+	switch len(matchingSets) {
+	case 0:
+		return "", fmt.Errorf("no CA set found with name '%s' and status 'NOT_DELETED'", caSetName)
+	case 1:
+		return matchingSets[0].CASetID, nil
+	default:
+		return "", fmt.Errorf("multiple CA sets IDs found with name '%s' and status 'NOT_DELETED': %v. Use the ID to fetch a specific CA set", caSetName, buildSetsMap(matchingSets))
+	}
+}
+
+func buildSetsMap(sets []mtlstruststore.CASetResponse) map[string]string {
+	m := make(map[string]string)
+	for _, set := range sets {
+		m[set.CASetID] = set.CASetStatus
+	}
+	return m
 }

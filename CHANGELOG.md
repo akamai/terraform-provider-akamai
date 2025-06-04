@@ -105,6 +105,37 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+* mTLS TrustStore:
+  * Added new data source:
+    * `akamai_mtlstruststore_ca_set` - reads CA set.
+
+
+
+
+
+
+
 #### BUG FIXES:
 
 * APPSEC
