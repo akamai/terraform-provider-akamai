@@ -76,6 +76,14 @@
 
 
 
+* mTLS KeyStore:
+  * Added new resources:
+    * `akamai_mtlskeystore_client_certificate_third_party` - manages third-party client certificates.
+
+
+
+
+
 
 
 
