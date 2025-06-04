@@ -15,6 +15,8 @@ import (
 )
 
 const testDomainName = "gtm_terra_testdomain.akadns.net"
+const testContractID = "ctr_1-2ABCDEF"
+const testGroupID = "grp_123456"
 
 func TestResGTMDomain(t *testing.T) {
 	const resourceName = "akamai_gtm_domain.testdomain"
@@ -364,18 +366,24 @@ func TestGTMDomainOrder(t *testing.T) {
 func TestResGTMDomainImport(t *testing.T) {
 	tests := map[string]struct {
 		domainName  string
+		contractID  string
+		groupID     string
 		init        func(*gtm.Mock)
 		expectError *regexp.Regexp
 		stateCheck  resource.ImportStateCheckFunc
 	}{
 		"happy path - import": {
 			domainName: testDomainName,
+			contractID: testContractID,
+			groupID:    testGroupID,
 			init: func(m *gtm.Mock) {
 				// Read
 				mockGetDomain(m, getImportedDomain(), nil, testutils.Once)
 			},
 			stateCheck: test.NewImportChecker().
 				CheckEqual("name", "gtm_terra_testdomain.akadns.net").
+				CheckEqual("contract", testContractID).
+				CheckEqual("group", testGroupID).
 				CheckEqual("type", "weighted").
 				CheckEqual("default_unreachable_threshold", "5").
 				CheckEqual("email_notification_list.0", "email1@nomail.com").
@@ -412,6 +420,8 @@ func TestResGTMDomainImport(t *testing.T) {
 		},
 		"expect error - read": {
 			domainName: testDomainName,
+			contractID: testContractID,
+			groupID:    testGroupID,
 			init: func(m *gtm.Mock) {
 				// Read - error
 				mockGetDomain(m, nil, fmt.Errorf("get failed"), testutils.Once)
@@ -430,7 +440,7 @@ func TestResGTMDomainImport(t *testing.T) {
 					Steps: []resource.TestStep{
 						{
 							ImportStateCheck: tc.stateCheck,
-							ImportStateId:    tc.domainName,
+							ImportStateId:    fmt.Sprintf("%s,%s,%s", tc.domainName, tc.groupID, tc.contractID),
 							ImportState:      true,
 							ResourceName:     "akamai_gtm_domain.test",
 							Config:           testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/import_basic.tf"),

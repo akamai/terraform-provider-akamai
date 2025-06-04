@@ -562,11 +562,32 @@ func resourceGTMv1DomainImport(_ context.Context, d *schema.ResourceData, m inte
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1DomainImport")
 
-	logger.Debugf("Importing GTM Domain: %s", d.Id())
+	var domainID, groupID, contractID string
+	parts := strings.Split(d.Id(), ",")
+
+	domainID = parts[0]
+	groupID = parts[1]
+	contractID = parts[2]
+
+	logger.Debugf("Importing GTM Domain: %s", domainID)
 
 	if err := d.Set("wait_on_complete", true); err != nil {
 		return nil, err
 	}
+
+	if err := d.Set("name", domainID); err != nil {
+		return nil, err
+	}
+
+	if err := d.Set("group", groupID); err != nil {
+		return nil, err
+	}
+
+	if err := d.Set("contract", contractID); err != nil {
+		return nil, err
+	}
+
+	d.SetId(domainID)
 
 	return []*schema.ResourceData{d}, nil
 }
