@@ -63,13 +63,13 @@
 
 
 
-
 * mTLS KeyStore:
     * Added new data sources:
         * `akamai_mtlskeystore_account_ca_certificates` - lists CA certificates under the account.
         * `akamai_mtlskeystore_client_certificate` - reads client certificate with its versions.
         * `akamai_mtlskeystore_client_certificates` - lists client certificates under the account.
-
+    * Added new resources:
+        * `akamai_mtlskeystore_client_certificate_upload` - uploads signed 3rd party certificate
 
 
 
