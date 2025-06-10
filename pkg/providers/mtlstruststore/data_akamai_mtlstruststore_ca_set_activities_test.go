@@ -17,7 +17,7 @@ import (
 )
 
 func TestCASetActivitiesDataSource(t *testing.T) {
-	testDir := "testdata/caSetActivitiesDataSource/"
+	testDir := "testdata/TestDataCASetActivities/"
 	t.Parallel()
 	commonStateChecker := test.NewStateChecker("data.akamai_mtlstruststore_ca_set_activities.test").
 		CheckEqual("id", "12345").

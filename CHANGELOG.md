@@ -112,6 +112,10 @@
 
 
 
+* mTLS TrustStore:
+  * Added new data source:
+    * `akamai_mtlstruststore_ca_set_associations` - reads list of properties and enrollments using CA Set.
+
 
 
 
