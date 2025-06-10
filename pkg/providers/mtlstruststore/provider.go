@@ -54,5 +54,6 @@ func (p *Subprovider) FrameworkDataSources() []func() datasource.DataSource {
 		NewCASetActivitiesDataSource,
 		NewCASetAssociationsDataSource,
 		NewCASetDataSource,
+		NewCASetsDataSource,
 	}
 }

@@ -109,7 +109,9 @@
 
 
 
-
+* mTLS TrustStore:
+  * Added new data source:
+    * `akamai_mtlstruststore_ca_sets` - reads CA sets.
 
 
 * mTLS TrustStore:
