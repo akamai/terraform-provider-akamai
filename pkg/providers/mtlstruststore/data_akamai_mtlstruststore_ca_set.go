@@ -45,20 +45,6 @@ type (
 		ProductionVersion   types.Int64        `tfsdk:"production_version"`
 		Certificates        []certificateModel `tfsdk:"certificates"`
 	}
-
-	certificateModel struct {
-		CertificatePEM     types.String `tfsdk:"certificate_pem"`
-		Description        types.String `tfsdk:"description"`
-		CreatedBy          types.String `tfsdk:"created_by"`
-		CreatedDate        types.String `tfsdk:"created_date"`
-		StartDate          types.String `tfsdk:"start_date"`
-		EndDate            types.String `tfsdk:"end_date"`
-		Fingerprint        types.String `tfsdk:"fingerprint"`
-		Issuer             types.String `tfsdk:"issuer"`
-		SerialNumber       types.String `tfsdk:"serial_number"`
-		SignatureAlgorithm types.String `tfsdk:"signature_algorithm"`
-		Subject            types.String `tfsdk:"subject"`
-	}
 )
 
 // NewCASetDataSource returns a new mtls truststore ca set data source.
