@@ -94,7 +94,7 @@ func (d *caSetVersionsDataSource) Schema(_ context.Context, _ datasource.SchemaR
 		Description: "Retrieve versions for a specific MTLS Truststore CA Set.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				Description: "Identifies each CA set.",
+				Description: "Identifies each CA set. Either `id` or `name` must be provided.",
 				Optional:    true,
 				Computed:    true,
 				Validators: []validator.String{
@@ -103,7 +103,7 @@ func (d *caSetVersionsDataSource) Schema(_ context.Context, _ datasource.SchemaR
 				},
 			},
 			"name": schema.StringAttribute{
-				Description: "The name of the CA set.",
+				Description: "The name of the CA set. Either `id` or `name` must be provided.",
 				Optional:    true,
 				Computed:    true,
 				Validators: []validator.String{

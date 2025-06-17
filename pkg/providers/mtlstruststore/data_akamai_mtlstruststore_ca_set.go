@@ -79,7 +79,7 @@ func (d *caSetDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, 
 		Description: "Retrieve details of a specific MTLS Truststore CA Set.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				Description: "The ID of the CA set.",
+				Description: "The ID of the CA set. Either `id` or `name` must be provided.",
 				Optional:    true,
 				Computed:    true,
 				Validators: []validator.String{
@@ -87,7 +87,7 @@ func (d *caSetDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, 
 				},
 			},
 			"name": schema.StringAttribute{
-				Description: "The name of the CA set.",
+				Description: "The name of the CA set. Either `id` or `name` must be provided.",
 				Optional:    true,
 				Computed:    true,
 				Validators: []validator.String{
@@ -277,36 +277,16 @@ func (d *caSetDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 
 func convertCASetDataToModel(caSet *mtlstruststore.GetCASetResponse, caSetVersion *mtlstruststore.GetCASetVersionResponse) caSetDataSourceModel {
 	model := caSetDataSourceModel{
-		ID:          types.StringValue(caSet.CASetID),
-		Name:        types.StringValue(caSet.CASetName),
-		Description: types.StringValue(caSet.Description),
-		AccountID:   types.StringValue(caSet.AccountID),
-		CreatedBy:   types.StringValue(caSet.CreatedBy),
-		CreatedDate: types.StringValue(caSet.CreatedDate.String()),
-	}
-
-	if caSet.LatestVersion != nil {
-		model.Version = types.Int64Value(*caSet.LatestVersion)
-	} else {
-		model.Version = types.Int64Null()
-	}
-
-	if caSet.StagingVersion != nil {
-		model.StagingVersion = types.Int64Value(*caSet.StagingVersion)
-	} else {
-		model.StagingVersion = types.Int64Null()
-	}
-
-	if caSet.ProductionVersion != nil {
-		model.ProductionVersion = types.Int64Value(*caSet.ProductionVersion)
-	} else {
-		model.ProductionVersion = types.Int64Null()
-	}
-
-	if caSet.DeletedBy != nil {
-		model.DeletedBy = types.StringValue(*caSet.DeletedBy)
-	} else {
-		model.DeletedBy = types.StringNull()
+		ID:                types.StringValue(caSet.CASetID),
+		Name:              types.StringValue(caSet.CASetName),
+		Description:       types.StringValue(caSet.Description),
+		AccountID:         types.StringValue(caSet.AccountID),
+		CreatedBy:         types.StringValue(caSet.CreatedBy),
+		CreatedDate:       types.StringValue(caSet.CreatedDate.String()),
+		Version:           types.Int64PointerValue(caSet.LatestVersion),
+		StagingVersion:    types.Int64PointerValue(caSet.StagingVersion),
+		ProductionVersion: types.Int64PointerValue(caSet.ProductionVersion),
+		DeletedBy:         types.StringPointerValue(caSet.DeletedBy),
 	}
 
 	if caSet.DeletedDate != nil {
@@ -327,12 +307,7 @@ func (m *caSetDataSourceModel) setCASetVersionData(v *mtlstruststore.GetCASetVer
 	m.VersionDescription = types.StringValue(v.Description)
 	m.VersionCreatedBy = types.StringValue(v.CreatedBy)
 	m.VersionCreatedDate = types.StringValue(v.CreatedDate.String())
-
-	if v.ModifiedBy != nil {
-		m.VersionModifiedBy = types.StringValue(*v.ModifiedBy)
-	} else {
-		m.VersionModifiedBy = types.StringNull()
-	}
+	m.VersionModifiedBy = types.StringPointerValue(v.ModifiedBy)
 
 	if v.ModifiedDate != nil {
 		m.VersionModifiedDate = types.StringValue(v.ModifiedDate.String())

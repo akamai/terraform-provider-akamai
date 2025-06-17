@@ -81,7 +81,7 @@ func (d *caSetActivitiesDataSource) Schema(_ context.Context, _ datasource.Schem
 		Description: "Retrieve activities for a specific MTLS Truststore CA Set.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				Description: "Identifies each CA set.",
+				Description: "Identifies each CA set. Either `id` or `name` must be provided.",
 				Optional:    true,
 				Computed:    true,
 				Validators: []validator.String{
@@ -89,7 +89,7 @@ func (d *caSetActivitiesDataSource) Schema(_ context.Context, _ datasource.Schem
 				},
 			},
 			"name": schema.StringAttribute{
-				Description: "The name of the CA set.",
+				Description: "The name of the CA set. Either `id` or `name` must be provided.",
 				Optional:    true,
 				Computed:    true,
 				Validators: []validator.String{
@@ -170,6 +170,7 @@ func (d *caSetActivitiesDataSource) Read(ctx context.Context, req datasource.Rea
 	client = Client(d.meta)
 
 	if !data.Name.IsNull() {
+		tflog.Debug(ctx, "'name' provided, attempting to find CA set ID")
 		setID, err := findCASetID(ctx, client, data.Name.ValueString())
 		if err != nil {
 			resp.Diagnostics.AddError("Read CA set activities failed", err.Error())
@@ -224,11 +225,9 @@ func convertDataToModel(activities mtlstruststore.ListCASetActivitiesResponse) c
 		CreatedDate: types.StringValue(activities.CreatedDate.String()),
 		CreatedBy:   types.StringValue(activities.CreatedBy),
 		Status:      types.StringValue(activities.CASetStatus),
+		DeletedBy:   types.StringPointerValue(activities.DeletedBy),
 	}
 
-	if activities.DeletedBy != nil {
-		data.DeletedBy = types.StringValue(*activities.DeletedBy)
-	}
 	if activities.DeletedDate != nil {
 		data.DeletedDate = types.StringValue(activities.DeletedDate.String())
 	}
@@ -239,16 +238,8 @@ func convertDataToModel(activities mtlstruststore.ListCASetActivitiesResponse) c
 			Type:         types.StringValue(activity.Type),
 			ActivityDate: types.StringValue(activity.ActivityDate.String()),
 			ActivityBy:   types.StringValue(activity.ActivityBy),
-		}
-		if activity.Network != nil {
-			am.Network = types.StringValue(*activity.Network)
-		} else {
-			am.Network = types.StringNull()
-		}
-		if activity.Version != nil {
-			am.Version = types.Int64Value(*activity.Version)
-		} else {
-			am.Version = types.Int64Null()
+			Network:      types.StringPointerValue(activity.Network),
+			Version:      types.Int64PointerValue(activity.Version),
 		}
 		activitiesModel[i] = am
 	}

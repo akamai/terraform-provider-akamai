@@ -87,7 +87,7 @@ func (d *caSetAssociationsDataSource) Schema(_ context.Context, _ datasource.Sch
 		Description: "Retrieves a list of the properties and/or enrollments where a given ca set is used.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				Description: "ID is a unique identifier representing the CA set.",
+				Description: "ID is a unique identifier representing the CA set. Either `id` or `name` must be provided.",
 				Optional:    true,
 				Computed:    true,
 				Validators: []validator.String{
@@ -96,7 +96,7 @@ func (d *caSetAssociationsDataSource) Schema(_ context.Context, _ datasource.Sch
 				},
 			},
 			"name": schema.StringAttribute{
-				Description: "The name of the CA set.",
+				Description: "The name of the CA set. Either `id` or `name` must be provided.",
 				Optional:    true,
 				Computed:    true,
 				Validators: []validator.String{

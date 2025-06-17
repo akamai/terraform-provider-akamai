@@ -290,6 +290,7 @@ type caSetTestData struct {
 	caSetVersion         int64
 	caSetName            string
 	caSets               []mtlstruststore.CASetResponse
+	caSetActivations     []mtlstruststore.ActivateCASetVersionResponse
 	caSetResponse        mtlstruststore.GetCASetResponse
 	caSetVersionResponse mtlstruststore.GetCASetVersionResponse
 }
