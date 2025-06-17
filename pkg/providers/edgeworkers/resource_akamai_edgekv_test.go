@@ -155,7 +155,7 @@ func TestResourceEdgeKV(t *testing.T) {
 				// expect error on creating EdgeKV namespace
 				m.On("CreateEdgeKVNamespace", testutils.MockContext, edgeworkers.CreateEdgeKVNamespaceRequest{
 					Network: basicData.network,
-					Namespace: edgeworkers.Namespace{
+					NamespaceRequest: edgeworkers.NamespaceRequest{
 						Name:        basicData.name,
 						GeoLocation: basicData.geoLocation,
 						Retention:   basicData.retention,
@@ -477,7 +477,7 @@ func mockEdgeKVRead(m *edgeworkers.Mock, data edgeKVmockData) *mock.Call {
 	return m.On("GetEdgeKVNamespace", testutils.MockContext, edgeworkers.GetEdgeKVNamespaceRequest{
 		Network: data.network,
 		Name:    data.name,
-	}).Return(&edgeworkers.Namespace{
+	}).Return(&edgeworkers.GetNamespaceResponse{
 		Name:      data.name,
 		Retention: data.retention,
 		GroupID:   data.groupID,
@@ -498,7 +498,14 @@ func mockInitializeEdgeKV(m *edgeworkers.Mock) {
 }
 
 func mockCreateEdgeKVNamespace(m *edgeworkers.Mock, data edgeKVmockData) {
-	namespace := edgeworkers.Namespace{
+	namespaceReq := edgeworkers.NamespaceRequest{
+		Name:        data.name,
+		GeoLocation: data.geoLocation,
+		Retention:   data.retention,
+		GroupID:     data.groupID,
+	}
+
+	namespaceRes := edgeworkers.Namespace{
 		Name:        data.name,
 		GeoLocation: data.geoLocation,
 		Retention:   data.retention,
@@ -506,9 +513,9 @@ func mockCreateEdgeKVNamespace(m *edgeworkers.Mock, data edgeKVmockData) {
 	}
 
 	m.On("CreateEdgeKVNamespace", testutils.MockContext, edgeworkers.CreateEdgeKVNamespaceRequest{
-		Network:   data.network,
-		Namespace: namespace,
-	}).Return(&namespace, nil).Once()
+		Network:          data.network,
+		NamespaceRequest: namespaceReq,
+	}).Return(&namespaceRes, nil).Once()
 }
 
 func mockUpsertItems(m *edgeworkers.Mock, data edgeKVmockData) {
@@ -533,7 +540,7 @@ func mockUpdateEdgeKVNamespace(m *edgeworkers.Mock, data edgeKVmockData) {
 			Retention: data.retention,
 			GroupID:   data.groupID,
 		},
-	}).Return(&edgeworkers.Namespace{
+	}).Return(&edgeworkers.UpdateNamespaceResponse{
 		Name:      data.name,
 		Retention: data.retention,
 		GroupID:   data.groupID,

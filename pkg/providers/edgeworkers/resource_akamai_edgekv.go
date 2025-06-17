@@ -159,7 +159,7 @@ func resourceEdgeKVCreate(ctx context.Context, rd *schema.ResourceData, m interf
 	// create namespace
 	namespace, err := client.CreateEdgeKVNamespace(ctx, edgeworkers.CreateEdgeKVNamespaceRequest{
 		Network: edgeworkers.NamespaceNetwork(network),
-		Namespace: edgeworkers.Namespace{
+		NamespaceRequest: edgeworkers.NamespaceRequest{
 			Name:        name,
 			GeoLocation: geoLocation,
 			Retention:   ptr.To(retention),
