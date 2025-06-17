@@ -13411,7 +13411,7 @@ func getBehaviorsSchemaV20230920() map[string]*schema.Schema {
 		"tea_leaf": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Allows IBM Tealeaf Customer Experience on Cloud to record HTTPS requests and responses for Akamai-enabled properties. Recorded data becomes available in your IBM Tealeaf account. This behavior cannot be used in includes.",
+			Description: "Note that this behavior is decommissioned. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -16132,7 +16132,7 @@ func getCriteriaSchemaV20230920() map[string]*schema.Schema {
 					"cookie_name": {
 						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9_\\-*\\.]+$"),
 						Optional:         true,
-						Description:      "The name of the cookie, for example, `visitor` in `visitor:anon`.",
+						Description:      "The name of the cookie, which can be a variable. For example, `visitor` in `visitor:anon`.",
 						Type:             schema.TypeString,
 					},
 					"match_operator": {
@@ -16144,7 +16144,7 @@ func getCriteriaSchemaV20230920() map[string]*schema.Schema {
 					"value": {
 						ValidateDiagFunc: validateRegexOrVariable("^[^\\s;]+$"),
 						Optional:         true,
-						Description:      "The cookie's value, for example, `anon` in `visitor:anon`.",
+						Description:      "The cookie's value, which can be a variable. For example, `anon` in `visitor:anon`.",
 						Type:             schema.TypeString,
 					},
 					"lower_bound": {

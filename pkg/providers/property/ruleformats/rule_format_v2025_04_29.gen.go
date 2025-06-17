@@ -4271,7 +4271,7 @@ func getBehaviorsSchemaV20250429() map[string]*schema.Schema {
 					},
 					"supported_http_methods": {
 						Optional:    true,
-						Description: "",
+						Description: "Sets the HTTP methods to use Early Data for, with allowed values: `GET`, `PUT`, `POST`, `DELETE`, `HEAD`, and `OPTIONS`. The default is only `GET`.",
 						Type:        schema.TypeList,
 						Elem: &schema.Schema{
 							Type: schema.TypeString,
@@ -10685,7 +10685,7 @@ func getBehaviorsSchemaV20250429() map[string]*schema.Schema {
 		"pqc_origin": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior can be used in includes.",
+			Description: "Note that this behavior is in Limited Availability. To enable it, contact your Akamai account team. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -10707,7 +10707,7 @@ func getBehaviorsSchemaV20250429() map[string]*schema.Schema {
 					},
 					"enabled": {
 						Optional:    true,
-						Description: "",
+						Description: "Enables Post Quantum Cryptography (PQC) key exchanges.",
 						Type:        schema.TypeBool,
 					},
 				},
@@ -13613,7 +13613,7 @@ func getBehaviorsSchemaV20250429() map[string]*schema.Schema {
 		"tea_leaf": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Allows IBM Tealeaf Customer Experience on Cloud to record HTTPS requests and responses for Akamai-enabled properties. Recorded data becomes available in your IBM Tealeaf account. This behavior cannot be used in includes.",
+			Description: "Note that this behavior is decommissioned. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -16375,7 +16375,7 @@ func getCriteriaSchemaV20250429() map[string]*schema.Schema {
 					"cookie_name": {
 						ValidateDiagFunc: validateRegexOrVariable("^[a-zA-Z0-9_\\-*\\.]+$"),
 						Optional:         true,
-						Description:      "The name of the cookie, for example, `visitor` in `visitor:anon`.",
+						Description:      "The name of the cookie, which can be a variable. For example, `visitor` in `visitor:anon`.",
 						Type:             schema.TypeString,
 					},
 					"match_operator": {
@@ -16387,7 +16387,7 @@ func getCriteriaSchemaV20250429() map[string]*schema.Schema {
 					"value": {
 						ValidateDiagFunc: validateRegexOrVariable("^[^\\s;]+$"),
 						Optional:         true,
-						Description:      "The cookie's value, for example, `anon` in `visitor:anon`.",
+						Description:      "The cookie's value, which can be a variable. For example, `anon` in `visitor:anon`.",
 						Type:             schema.TypeString,
 					},
 					"lower_bound": {
