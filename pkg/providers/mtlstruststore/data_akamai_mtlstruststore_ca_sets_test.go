@@ -13,8 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
-// TestNewCASetsDataSource tests the data source for retrieving CA sets from the mTLS Truststore.
-func TestNewCASetsDataSource(t *testing.T) {
+func TestCASetsDataSource(t *testing.T) {
 	testDir := "testdata/TestDataCASets/"
 	t.Parallel()
 	stagingNetworkStateChecker := test.NewStateChecker("data.akamai_mtlstruststore_ca_sets.test").
@@ -24,9 +23,9 @@ func TestNewCASetsDataSource(t *testing.T) {
 		CheckEqual("ca_sets.0.latest_version", "1").
 		CheckEqual("ca_sets.0.staging_version", "1").
 		CheckEqual("ca_sets.0.created_by", "user1").
-		CheckEqual("ca_sets.0.created_date", "2023-01-01 00:00:00 +0000 UTC").
+		CheckEqual("ca_sets.0.created_date", "2023-01-01T00:00:00Z").
 		CheckEqual("ca_sets.0.deleted_by", "user1").
-		CheckEqual("ca_sets.0.deleted_date", "2023-01-03 00:00:00 +0000 UTC").
+		CheckEqual("ca_sets.0.deleted_date", "2023-01-03T00:00:00Z").
 		CheckEqual("ca_sets.0.account_id", "test_account_1").
 		CheckEqual("ca_sets.0.description", "Test CA Set Only Staging Description")
 
@@ -38,9 +37,9 @@ func TestNewCASetsDataSource(t *testing.T) {
 		CheckEqual("ca_sets.0.latest_version", "1").
 		CheckEqual("ca_sets.0.production_version", "1").
 		CheckEqual("ca_sets.0.created_by", "user1").
-		CheckEqual("ca_sets.0.created_date", "2023-01-01 00:00:00 +0000 UTC").
+		CheckEqual("ca_sets.0.created_date", "2023-01-01T00:00:00Z").
 		CheckEqual("ca_sets.0.deleted_by", "user3").
-		CheckEqual("ca_sets.0.deleted_date", "2023-01-03 00:00:00 +0000 UTC").
+		CheckEqual("ca_sets.0.deleted_date", "2023-01-03T00:00:00Z").
 		CheckEqual("ca_sets.0.account_id", "test_account_1").
 		CheckEqual("ca_sets.0.description", "Test CA Set Only Production Description")
 
@@ -52,9 +51,9 @@ func TestNewCASetsDataSource(t *testing.T) {
 		CheckEqual("ca_sets.0.staging_version", "1").
 		CheckEqual("ca_sets.0.production_version", "1").
 		CheckEqual("ca_sets.0.created_by", "user1").
-		CheckEqual("ca_sets.0.created_date", "2023-01-01 00:00:00 +0000 UTC").
+		CheckEqual("ca_sets.0.created_date", "2023-01-01T00:00:00Z").
 		CheckEqual("ca_sets.0.deleted_by", "user3").
-		CheckEqual("ca_sets.0.deleted_date", "2023-01-03 00:00:00 +0000 UTC").
+		CheckEqual("ca_sets.0.deleted_date", "2023-01-03T00:00:00Z").
 		CheckEqual("ca_sets.0.account_id", "test_account_1").
 		CheckEqual("ca_sets.0.description", "Test CA Set Both Description")
 
@@ -66,9 +65,9 @@ func TestNewCASetsDataSource(t *testing.T) {
 		CheckEqual("ca_sets.1.latest_version", "1").
 		CheckEqual("ca_sets.1.production_version", "1").
 		CheckEqual("ca_sets.1.created_by", "user1").
-		CheckEqual("ca_sets.1.created_date", "2023-01-01 00:00:00 +0000 UTC").
+		CheckEqual("ca_sets.1.created_date", "2023-01-01T00:00:00Z").
 		CheckEqual("ca_sets.1.deleted_by", "user3").
-		CheckEqual("ca_sets.1.deleted_date", "2023-01-03 00:00:00 +0000 UTC").
+		CheckEqual("ca_sets.1.deleted_date", "2023-01-03T00:00:00Z").
 		CheckEqual("ca_sets.1.account_id", "test_account_1").
 		CheckEqual("ca_sets.1.description", "Test CA Set Only Production Description").
 		CheckEqual("ca_sets.2.name", "both_ca_set").
@@ -78,9 +77,9 @@ func TestNewCASetsDataSource(t *testing.T) {
 		CheckEqual("ca_sets.2.staging_version", "1").
 		CheckEqual("ca_sets.2.production_version", "1").
 		CheckEqual("ca_sets.2.created_by", "user1").
-		CheckEqual("ca_sets.2.created_date", "2023-01-01 00:00:00 +0000 UTC").
+		CheckEqual("ca_sets.2.created_date", "2023-01-01T00:00:00Z").
 		CheckEqual("ca_sets.2.deleted_by", "user3").
-		CheckEqual("ca_sets.2.deleted_date", "2023-01-03 00:00:00 +0000 UTC").
+		CheckEqual("ca_sets.2.deleted_date", "2023-01-03T00:00:00Z").
 		CheckEqual("ca_sets.2.account_id", "test_account_1").
 		CheckEqual("ca_sets.2.description", "Test CA Set Both Description")
 

@@ -3,6 +3,7 @@ package mtlstruststore
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/mtlstruststore"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
@@ -285,13 +286,13 @@ func convertCASetVersionsDataToModel(versions mtlstruststore.ListCASetVersionsRe
 			certModel = append(certModel, certificateModel{
 				CertificatePEM:     types.StringValue(cert.CertificatePEM),
 				CreatedBy:          types.StringValue(cert.CreatedBy),
-				CreatedDate:        types.StringValue(cert.CreatedDate.String()),
-				EndDate:            types.StringValue(cert.EndDate.String()),
+				CreatedDate:        types.StringValue(cert.CreatedDate.Format(time.RFC3339Nano)),
+				EndDate:            types.StringValue(cert.EndDate.Format(time.RFC3339Nano)),
 				Fingerprint:        types.StringValue(cert.Fingerprint),
 				Issuer:             types.StringValue(cert.Issuer),
 				SerialNumber:       types.StringValue(cert.SerialNumber),
 				SignatureAlgorithm: types.StringValue(cert.SignatureAlgorithm),
-				StartDate:          types.StringValue(cert.StartDate.String()),
+				StartDate:          types.StringValue(cert.StartDate.Format(time.RFC3339Nano)),
 				Subject:            types.StringValue(cert.Subject),
 				Description:        types.StringValue(cert.Description),
 			})
@@ -302,7 +303,7 @@ func convertCASetVersionsDataToModel(versions mtlstruststore.ListCASetVersionsRe
 			AllowInsecureSHA1:  types.BoolValue(version.AllowInsecureSHA1),
 			VersionDescription: types.StringValue(version.Description),
 			CreatedBy:          types.StringValue(version.CreatedBy),
-			CreatedDate:        types.StringValue(version.CreatedDate.String()),
+			CreatedDate:        types.StringValue(version.CreatedDate.Format(time.RFC3339Nano)),
 			ProductionStatus:   types.StringValue(version.ProductionStatus),
 			StagingStatus:      types.StringValue(version.StagingStatus),
 			ModifiedBy:         types.StringPointerValue(version.ModifiedBy),
@@ -310,7 +311,7 @@ func convertCASetVersionsDataToModel(versions mtlstruststore.ListCASetVersionsRe
 		}
 
 		if version.ModifiedDate != nil {
-			versionModel.ModifiedDate = types.StringValue(version.ModifiedDate.String())
+			versionModel.ModifiedDate = types.StringValue(version.ModifiedDate.Format(time.RFC3339Nano))
 		}
 
 		model.Versions = append(model.Versions, versionModel)

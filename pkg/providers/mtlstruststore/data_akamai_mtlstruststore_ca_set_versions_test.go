@@ -14,7 +14,7 @@ import (
 )
 
 func TestCASetVersionsDataSource(t *testing.T) {
-	testDir := "testdata/caSetVersionsDataSource/"
+	testDir := "testdata/TestDataCASetVersions/"
 	t.Parallel()
 	baseChecker := test.NewStateChecker("data.akamai_mtlstruststore_ca_set_versions.test").
 		CheckEqual("id", "12345").
@@ -27,18 +27,18 @@ func TestCASetVersionsDataSource(t *testing.T) {
 		CheckEqual("versions.0.staging_status", "ACTIVE").
 		CheckEqual("versions.0.production_status", "ACTIVE").
 		CheckEqual("versions.0.created_by", "jkowalski").
-		CheckEqual("versions.0.created_date", "2024-04-16 12:08:34.099457 +0000 UTC").
+		CheckEqual("versions.0.created_date", "2024-04-16T12:08:34.099457Z").
 		CheckEqual("versions.0.modified_by", "jkowalski").
-		CheckEqual("versions.0.modified_date", "2024-04-16 12:08:34.099457 +0000 UTC").
+		CheckEqual("versions.0.modified_date", "2024-04-16T12:08:34.099457Z").
 		CheckEqual("versions.1.version", "2").
 		CheckEqual("versions.1.version_description", "test-description-one-active").
 		CheckEqual("versions.1.allow_insecure_sha1", "true").
 		CheckEqual("versions.1.staging_status", "INACTIVE").
 		CheckEqual("versions.1.production_status", "ACTIVE").
 		CheckEqual("versions.1.created_by", "jkowalski").
-		CheckEqual("versions.1.created_date", "2024-04-16 12:08:34.099457 +0000 UTC").
+		CheckEqual("versions.1.created_date", "2024-04-16T12:08:34.099457Z").
 		CheckEqual("versions.1.modified_by", "jkowalski").
-		CheckEqual("versions.1.modified_date", "2024-04-16 12:08:34.099457 +0000 UTC")
+		CheckEqual("versions.1.modified_date", "2024-04-16T12:08:34.099457Z")
 
 	baseResponse := mtlstruststore.ListCASetVersionsResponse{
 		Versions: []mtlstruststore.CASetVersion{
@@ -193,37 +193,37 @@ func TestCASetVersionsDataSource(t *testing.T) {
 						CheckEqual("versions.0.certificates.#", "1").
 						CheckEqual("versions.0.certificates.0.subject", "C=US,ST=MA,L=Cambridge,O=Akamai,CN=test-subject-example.com").
 						CheckEqual("versions.0.certificates.0.issuer", "C=US,ST=MA,L=Cambridge,O=Akamai,CN=test-issuer-example.com").
-						CheckEqual("versions.0.certificates.0.end_date", "2025-04-16 12:08:34.099457 +0000 UTC").
-						CheckEqual("versions.0.certificates.0.start_date", "2024-04-16 12:08:34.099457 +0000 UTC").
+						CheckEqual("versions.0.certificates.0.end_date", "2025-04-16T12:08:34.099457Z").
+						CheckEqual("versions.0.certificates.0.start_date", "2024-04-16T12:08:34.099457Z").
 						CheckEqual("versions.0.certificates.0.fingerprint", "test-fingerprint").
 						CheckEqual("versions.0.certificates.0.certificate_pem", "-----BEGIN CERTIFICATE-----test-----END CERTIFICATE-----").
 						CheckEqual("versions.0.certificates.0.serial_number", "1234").
 						CheckEqual("versions.0.certificates.0.signature_algorithm", "SHA256WITHRSA").
-						CheckEqual("versions.0.certificates.0.created_date", "2024-04-16 12:08:34.099457 +0000 UTC").
+						CheckEqual("versions.0.certificates.0.created_date", "2024-04-16T12:08:34.099457Z").
 						CheckEqual("versions.0.certificates.0.created_by", "jkowalski").
 						CheckEqual("versions.0.certificates.0.description", "test-description1").
 						CheckEqual("versions.1.certificates.#", "1").
 						CheckEqual("versions.1.certificates.0.subject", "C=US,ST=MA,L=Cambridge,O=Akamai,CN=test-subject-example.com").
 						CheckEqual("versions.1.certificates.0.issuer", "C=US,ST=MA,L=Cambridge,O=Akamai,CN=test-issuer-example.com").
-						CheckEqual("versions.1.certificates.0.end_date", "2025-04-16 12:08:34.099457 +0000 UTC").
-						CheckEqual("versions.1.certificates.0.start_date", "2024-04-16 12:08:34.099457 +0000 UTC").
+						CheckEqual("versions.1.certificates.0.end_date", "2025-04-16T12:08:34.099457Z").
+						CheckEqual("versions.1.certificates.0.start_date", "2024-04-16T12:08:34.099457Z").
 						CheckEqual("versions.1.certificates.0.fingerprint", "test-fingerprint").
 						CheckEqual("versions.1.certificates.0.certificate_pem", "-----BEGIN CERTIFICATE-----test-----END CERTIFICATE-----").
 						CheckEqual("versions.1.certificates.0.serial_number", "12345").
 						CheckEqual("versions.1.certificates.0.signature_algorithm", "SHA256WITHRSA").
-						CheckEqual("versions.1.certificates.0.created_date", "2024-04-16 12:08:34.099457 +0000 UTC").
+						CheckEqual("versions.1.certificates.0.created_date", "2024-04-16T12:08:34.099457Z").
 						CheckEqual("versions.1.certificates.0.created_by", "jkowalski").
 						CheckEqual("versions.1.certificates.0.description", "test-description2").
 						CheckEqual("versions.2.certificates.#", "1").
 						CheckEqual("versions.2.certificates.0.subject", "C=US,ST=MA,L=Cambridge,O=Akamai,CN=test-subject-example.com").
 						CheckEqual("versions.2.certificates.0.issuer", "C=US,ST=MA,L=Cambridge,O=Akamai,CN=test-issuer-example.com").
-						CheckEqual("versions.2.certificates.0.end_date", "2025-04-16 12:08:34.099457 +0000 UTC").
-						CheckEqual("versions.2.certificates.0.start_date", "2024-04-16 12:08:34.099457 +0000 UTC").
+						CheckEqual("versions.2.certificates.0.end_date", "2025-04-16T12:08:34.099457Z").
+						CheckEqual("versions.2.certificates.0.start_date", "2024-04-16T12:08:34.099457Z").
 						CheckEqual("versions.2.certificates.0.fingerprint", "test-fingerprint").
 						CheckEqual("versions.2.certificates.0.certificate_pem", "-----BEGIN CERTIFICATE-----test-----END CERTIFICATE-----").
 						CheckEqual("versions.2.certificates.0.serial_number", "123456").
 						CheckEqual("versions.2.certificates.0.signature_algorithm", "SHA256WITHRSA").
-						CheckEqual("versions.2.certificates.0.created_date", "2024-04-16 12:08:34.099457 +0000 UTC").
+						CheckEqual("versions.2.certificates.0.created_date", "2024-04-16T12:08:34.099457Z").
 						CheckEqual("versions.2.certificates.0.created_by", "jkowalski").
 						CheckEqual("versions.2.certificates.0.description", "test-description3").
 						Build(),
@@ -258,9 +258,9 @@ func TestCASetVersionsDataSource(t *testing.T) {
 						CheckEqual("versions.2.staging_status", "INACTIVE").
 						CheckEqual("versions.2.production_status", "INACTIVE").
 						CheckEqual("versions.2.created_by", "jkowalski").
-						CheckEqual("versions.2.created_date", "2024-04-16 12:08:34.099457 +0000 UTC").
+						CheckEqual("versions.2.created_date", "2024-04-16T12:08:34.099457Z").
 						CheckEqual("versions.2.modified_by", "jkowalski").
-						CheckEqual("versions.2.modified_date", "2024-04-16 12:08:34.099457 +0000 UTC").
+						CheckEqual("versions.2.modified_date", "2024-04-16T12:08:34.099457Z").
 						CheckEqual("versions.2.certificates.#", "1").
 						Build(),
 				},
@@ -284,9 +284,9 @@ func TestCASetVersionsDataSource(t *testing.T) {
 						CheckEqual("versions.2.staging_status", "INACTIVE").
 						CheckEqual("versions.2.production_status", "INACTIVE").
 						CheckEqual("versions.2.created_by", "jkowalski").
-						CheckEqual("versions.2.created_date", "2024-04-16 12:08:34.099457 +0000 UTC").
+						CheckEqual("versions.2.created_date", "2024-04-16T12:08:34.099457Z").
 						CheckEqual("versions.2.modified_by", "jkowalski").
-						CheckEqual("versions.2.modified_date", "2024-04-16 12:08:34.099457 +0000 UTC").
+						CheckEqual("versions.2.modified_date", "2024-04-16T12:08:34.099457Z").
 						CheckEqual("versions.2.certificates.#", "0").
 						Build(),
 				},
@@ -373,9 +373,9 @@ func TestCASetVersionsDataSource(t *testing.T) {
 						CheckEqual("versions.2.staging_status", "INACTIVE").
 						CheckEqual("versions.2.production_status", "INACTIVE").
 						CheckEqual("versions.2.created_by", "jkowalski").
-						CheckEqual("versions.2.created_date", "2024-04-16 12:08:34.099457 +0000 UTC").
+						CheckEqual("versions.2.created_date", "2024-04-16T12:08:34.099457Z").
 						CheckEqual("versions.2.modified_by", "jkowalski").
-						CheckEqual("versions.2.modified_date", "2024-04-16 12:08:34.099457 +0000 UTC").
+						CheckEqual("versions.2.modified_date", "2024-04-16T12:08:34.099457Z").
 						CheckEqual("versions.2.certificates.#", "0").
 						Build(),
 				},

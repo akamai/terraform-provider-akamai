@@ -3,6 +3,7 @@ package mtlstruststore
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/mtlstruststore"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
@@ -84,6 +85,7 @@ func (d *caSetDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, 
 				Computed:    true,
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(path.MatchRoot("name"), path.MatchRoot("id")),
+					stringvalidator.LengthAtLeast(1),
 				},
 			},
 			"name": schema.StringAttribute{
@@ -255,7 +257,7 @@ func (d *caSetDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 	}
 
 	if version != 0 {
-		tflog.Debug(ctx, "Fetching specific version of CA set", map[string]interface{}{
+		tflog.Debug(ctx, "Fetching specific version of CA set", map[string]any{
 			"ca_set_id": data.ID.ValueString(),
 			"version":   version,
 		})
@@ -282,7 +284,7 @@ func convertCASetDataToModel(caSet *mtlstruststore.GetCASetResponse, caSetVersio
 		Description:       types.StringValue(caSet.Description),
 		AccountID:         types.StringValue(caSet.AccountID),
 		CreatedBy:         types.StringValue(caSet.CreatedBy),
-		CreatedDate:       types.StringValue(caSet.CreatedDate.String()),
+		CreatedDate:       types.StringValue(caSet.CreatedDate.Format(time.RFC3339Nano)),
 		Version:           types.Int64PointerValue(caSet.LatestVersion),
 		StagingVersion:    types.Int64PointerValue(caSet.StagingVersion),
 		ProductionVersion: types.Int64PointerValue(caSet.ProductionVersion),
@@ -290,7 +292,7 @@ func convertCASetDataToModel(caSet *mtlstruststore.GetCASetResponse, caSetVersio
 	}
 
 	if caSet.DeletedDate != nil {
-		model.DeletedDate = types.StringValue(caSet.DeletedDate.String())
+		model.DeletedDate = types.StringValue(caSet.DeletedDate.Format(time.RFC3339Nano))
 	} else {
 		model.DeletedDate = types.StringNull()
 	}
@@ -306,11 +308,11 @@ func (m *caSetDataSourceModel) setCASetVersionData(v *mtlstruststore.GetCASetVer
 	m.AllowInsecureSHA1 = types.BoolValue(v.AllowInsecureSHA1)
 	m.VersionDescription = types.StringValue(v.Description)
 	m.VersionCreatedBy = types.StringValue(v.CreatedBy)
-	m.VersionCreatedDate = types.StringValue(v.CreatedDate.String())
+	m.VersionCreatedDate = types.StringValue(v.CreatedDate.Format(time.RFC3339Nano))
 	m.VersionModifiedBy = types.StringPointerValue(v.ModifiedBy)
 
 	if v.ModifiedDate != nil {
-		m.VersionModifiedDate = types.StringValue(v.ModifiedDate.String())
+		m.VersionModifiedDate = types.StringValue(v.ModifiedDate.Format(time.RFC3339Nano))
 	} else {
 		m.VersionModifiedDate = types.StringNull()
 	}
@@ -321,9 +323,9 @@ func (m *caSetDataSourceModel) setCASetVersionData(v *mtlstruststore.GetCASetVer
 			CertificatePEM:     types.StringValue(cert.CertificatePEM),
 			Description:        types.StringValue(cert.Description),
 			CreatedBy:          types.StringValue(cert.CreatedBy),
-			CreatedDate:        types.StringValue(cert.CreatedDate.String()),
-			StartDate:          types.StringValue(cert.StartDate.String()),
-			EndDate:            types.StringValue(cert.EndDate.String()),
+			CreatedDate:        types.StringValue(cert.CreatedDate.Format(time.RFC3339Nano)),
+			StartDate:          types.StringValue(cert.StartDate.Format(time.RFC3339Nano)),
+			EndDate:            types.StringValue(cert.EndDate.Format(time.RFC3339Nano)),
 			Fingerprint:        types.StringValue(cert.Fingerprint),
 			Issuer:             types.StringValue(cert.Issuer),
 			SerialNumber:       types.StringValue(cert.SerialNumber),

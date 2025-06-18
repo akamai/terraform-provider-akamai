@@ -86,6 +86,7 @@ func (d *caSetActivitiesDataSource) Schema(_ context.Context, _ datasource.Schem
 				Computed:    true,
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(path.MatchRoot("name"), path.MatchRoot("id")),
+					stringvalidator.LengthAtLeast(1),
 				},
 			},
 			"name": schema.StringAttribute{
@@ -222,21 +223,21 @@ func convertDataToModel(activities mtlstruststore.ListCASetActivitiesResponse) c
 	data := caSetActivitiesDataSourceModel{
 		ID:          types.StringValue(activities.CASetID),
 		Name:        types.StringValue(activities.CASetName),
-		CreatedDate: types.StringValue(activities.CreatedDate.String()),
+		CreatedDate: types.StringValue(activities.CreatedDate.Format(time.RFC3339Nano)),
 		CreatedBy:   types.StringValue(activities.CreatedBy),
 		Status:      types.StringValue(activities.CASetStatus),
 		DeletedBy:   types.StringPointerValue(activities.DeletedBy),
 	}
 
 	if activities.DeletedDate != nil {
-		data.DeletedDate = types.StringValue(activities.DeletedDate.String())
+		data.DeletedDate = types.StringValue(activities.DeletedDate.Format(time.RFC3339Nano))
 	}
 
 	activitiesModel := make([]activityModel, len(activities.Activities))
 	for i, activity := range activities.Activities {
 		am := activityModel{
 			Type:         types.StringValue(activity.Type),
-			ActivityDate: types.StringValue(activity.ActivityDate.String()),
+			ActivityDate: types.StringValue(activity.ActivityDate.Format(time.RFC3339Nano)),
 			ActivityBy:   types.StringValue(activity.ActivityBy),
 			Network:      types.StringPointerValue(activity.Network),
 			Version:      types.Int64PointerValue(activity.Version),

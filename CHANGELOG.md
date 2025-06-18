@@ -124,7 +124,9 @@
 
 
 
-
+* mTLS TrustStore:
+  * Added new data source:
+    * `akamai_mtlstruststore_ca_set_activations` - reads CA set activations.
 
 
 

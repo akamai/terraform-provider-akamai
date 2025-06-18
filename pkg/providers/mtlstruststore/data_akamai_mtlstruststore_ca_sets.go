@@ -3,6 +3,7 @@ package mtlstruststore
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/mtlstruststore"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
@@ -169,7 +170,7 @@ func (m *caSetsDataSourceModel) convertCASetsToModel(caSets mtlstruststore.ListC
 			ID:                types.StringValue(caSet.CASetID),
 			Name:              types.StringValue(caSet.CASetName),
 			CreatedBy:         types.StringValue(caSet.CreatedBy),
-			CreatedDate:       types.StringValue(caSet.CreatedDate.String()),
+			CreatedDate:       types.StringValue(caSet.CreatedDate.Format(time.RFC3339Nano)),
 			Description:       types.StringValue(caSet.Description),
 			Status:            types.StringValue(caSet.CASetStatus),
 			DeletedBy:         types.StringPointerValue(caSet.DeletedBy),
@@ -178,7 +179,7 @@ func (m *caSetsDataSourceModel) convertCASetsToModel(caSets mtlstruststore.ListC
 			ProductionVersion: types.Int64PointerValue(caSet.ProductionVersion),
 		}
 		if caSet.DeletedDate != nil {
-			caSetModel.DeletedDate = types.StringValue(caSet.DeletedDate.String())
+			caSetModel.DeletedDate = types.StringValue(caSet.DeletedDate.Format(time.RFC3339Nano))
 		}
 		m.CASets = append(m.CASets, caSetModel)
 	}

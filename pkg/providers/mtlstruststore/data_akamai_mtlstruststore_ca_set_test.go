@@ -23,11 +23,11 @@ func TestCASetDataSource(t *testing.T) {
 		CheckEqual("description", "Example CA Set").
 		CheckEqual("account_id", "account-123").
 		CheckEqual("created_by", "example user").
-		CheckEqual("created_date", "2025-04-16 12:08:34.099457 +0000 UTC").
+		CheckEqual("created_date", "2025-04-16T12:08:34.099457Z").
 		CheckEqual("version_created_by", "example user").
-		CheckEqual("version_created_date", "2025-04-16 12:08:34.099457 +0000 UTC").
+		CheckEqual("version_created_date", "2025-04-16T12:08:34.099457Z").
 		CheckEqual("version_modified_by", "example user").
-		CheckEqual("version_modified_date", "2025-05-16 12:08:34.099457 +0000 UTC").
+		CheckEqual("version_modified_date", "2025-05-16T12:08:34.099457Z").
 		CheckEqual("allow_insecure_sha1", "false").
 		CheckEqual("version_description", "Version 1 description").
 		CheckEqual("staging_version", "1").
@@ -36,9 +36,9 @@ func TestCASetDataSource(t *testing.T) {
 		CheckEqual("certificates.0.certificate_pem", "-----BEGIN CERTIFICATE-----...").
 		CheckEqual("certificates.0.description", "Example Certificate").
 		CheckEqual("certificates.0.created_by", "example user").
-		CheckEqual("certificates.0.created_date", "2025-04-16 12:08:34.099457 +0000 UTC").
-		CheckEqual("certificates.0.start_date", "2025-04-16 12:08:34.099457 +0000 UTC").
-		CheckEqual("certificates.0.end_date", "2026-04-16 12:08:34.099457 +0000 UTC").
+		CheckEqual("certificates.0.created_date", "2025-04-16T12:08:34.099457Z").
+		CheckEqual("certificates.0.start_date", "2025-04-16T12:08:34.099457Z").
+		CheckEqual("certificates.0.end_date", "2026-04-16T12:08:34.099457Z").
 		CheckEqual("certificates.0.fingerprint", "AB:CD:EF:12:34:56:78:90").
 		CheckEqual("certificates.0.issuer", "Example Issuer").
 		CheckEqual("certificates.0.serial_number", "123456789").

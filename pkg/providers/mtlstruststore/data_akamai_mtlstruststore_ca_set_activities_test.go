@@ -23,16 +23,16 @@ func TestCASetActivitiesDataSource(t *testing.T) {
 		CheckEqual("id", "12345").
 		CheckEqual("name", "example-ca-set").
 		CheckEqual("status", "NOT_DELETED").
-		CheckEqual("created_date", "2025-04-16 12:08:34.099457 +0000 UTC").
+		CheckEqual("created_date", "2025-04-16T12:08:34.099457Z").
 		CheckEqual("created_by", "example user").
 		CheckEqual("activities.#", "2").
 		CheckEqual("activities.0.type", "ACTIVATE_CA_SET_VERSION").
 		CheckEqual("activities.0.network", "PRODUCTION").
 		CheckEqual("activities.0.version", "1").
-		CheckEqual("activities.0.activity_date", "2025-04-16 12:08:34.099457 +0000 UTC").
+		CheckEqual("activities.0.activity_date", "2025-04-16T12:08:34.099457Z").
 		CheckEqual("activities.0.activity_by", "example user").
 		CheckEqual("activities.1.type", "CREATE_CA_SET").
-		CheckEqual("activities.1.activity_date", "2025-04-16 12:08:34.099457 +0000 UTC").
+		CheckEqual("activities.1.activity_date", "2025-04-16T12:08:34.099457Z").
 		CheckEqual("activities.1.activity_by", "example user").
 		CheckMissing("activities.1.network").
 		CheckMissing("activities.1.version").
@@ -63,7 +63,7 @@ func TestCASetActivitiesDataSource(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, testDir+"id.tf"),
 					Check: commonStateChecker.
-						CheckEqual("deleted_date", "2026-04-16 12:08:34.099457 +0000 UTC").
+						CheckEqual("deleted_date", "2026-04-16T12:08:34.099457Z").
 						CheckEqual("deleted_by", "example user").
 						CheckEqual("status", "DELETED").
 						Build(),

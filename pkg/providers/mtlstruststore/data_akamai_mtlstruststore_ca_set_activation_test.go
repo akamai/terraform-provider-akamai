@@ -53,9 +53,9 @@ func TestCASetActivationDataSource(t *testing.T) {
 		CheckEqual("version", "1").
 		CheckEqual("network", "PRODUCTION").
 		CheckEqual("created_by", "example user").
-		CheckEqual("created_date", "2025-04-16 12:08:34.099457 +0000 UTC").
+		CheckEqual("created_date", "2025-04-16T12:08:34.099457Z").
 		CheckEqual("modified_by", "example user").
-		CheckEqual("modified_date", "2025-04-16 12:10:00 +0000 UTC").
+		CheckEqual("modified_date", "2025-04-16T12:10:00Z").
 		CheckEqual("status", "COMPLETE").
 		CheckEqual("type", "ACTIVATE")
 

@@ -3,6 +3,7 @@ package mtlstruststore
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/mtlstruststore"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
@@ -183,12 +184,12 @@ func (m *caSetActivationDataSourceModel) setFromActivationResponse(act mtlstrust
 	m.Version = types.Int64Value(act.Version)
 	m.Network = types.StringValue(act.Network)
 	m.CreatedBy = types.StringValue(act.CreatedBy)
-	m.CreatedDate = types.StringValue(act.CreatedDate.String())
+	m.CreatedDate = types.StringValue(act.CreatedDate.Format(time.RFC3339Nano))
 	m.ModifiedBy = types.StringPointerValue(act.ModifiedBy)
 	m.Status = types.StringValue(act.ActivationStatus)
 	m.Type = types.StringValue(act.ActivationType)
 	if act.ModifiedDate != nil {
-		m.ModifiedDate = types.StringValue(act.ModifiedDate.String())
+		m.ModifiedDate = types.StringValue(act.ModifiedDate.Format(time.RFC3339Nano))
 	} else {
 		m.ModifiedDate = types.StringNull()
 	}
