@@ -117,7 +117,22 @@ func (r *apiResourceOperation) upsert(ctx context.Context, data *apiResourceOper
 		return diags
 	}
 
-	var latestVersion = getLatestVersion(result)
+	var latestEndpointVersion = getLatestVersion(result)
+	var latestVersionNumber = latestEndpointVersion.VersionNumber
+
+	if latestEndpointVersion.IsVersionLocked {
+		resp, err := client.CloneEndpointVersion(ctx, apidefinitions.CloneEndpointVersionRequest{
+			VersionNumber: latestVersionNumber,
+			APIEndpointID: data.APIID.ValueInt64(),
+		})
+
+		if err != nil {
+			diags.AddError("Unable to clone an API Version", err.Error())
+			return diags
+		}
+
+		latestVersionNumber = resp.VersionNumber
+	}
 
 	// Convert stored JSON string into Go struct
 	var requestBody = v0.ResourceOperationsRequestBody{}
@@ -130,7 +145,7 @@ func (r *apiResourceOperation) upsert(ctx context.Context, data *apiResourceOper
 	// Prepare request
 	var resourceOperationRequest = v0.UpdateResourceOperationRequest{
 		APIID:         data.APIID.ValueInt64(),
-		VersionNumber: latestVersion,
+		VersionNumber: latestVersionNumber,
 		Body:          requestBody,
 	}
 
@@ -148,7 +163,7 @@ func (r *apiResourceOperation) upsert(ctx context.Context, data *apiResourceOper
 
 	data.ResourceOperations = apiStateValue{types.StringValue(*operationsContent)}
 	data.APIID = types.Int64Value(data.APIID.ValueInt64())
-	data.Version = types.Int64Value(latestVersion)
+	data.Version = types.Int64Value(latestVersionNumber)
 	return diags
 }
 
@@ -238,11 +253,12 @@ func (r *apiResourceOperation) Delete(ctx context.Context, req resource.DeleteRe
 		return
 	}
 
-	var latestVersion = getLatestVersion(result)
+	var latestEndpointVersion = getLatestVersion(result)
+	var latestVersionNumber = latestEndpointVersion.VersionNumber
 
 	deleteResponse, err := clientV0.DeleteResourceOperation(ctx, v0.DeleteResourceOperationRequest{
 		APIID:         data.APIID.ValueInt64(),
-		VersionNumber: latestVersion,
+		VersionNumber: latestVersionNumber,
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("Deleting Resource Operations Failed", err.Error())
@@ -303,11 +319,11 @@ func serializeDeleteResourceOperationResponseIndent(response *v0.DeleteResourceO
 	return ptr.To(string(jsonBody)), nil
 }
 
-func getLatestVersion(result *apidefinitions.ListEndpointVersionsResponse) int64 {
-	var response int64
+func getLatestVersion(result *apidefinitions.ListEndpointVersionsResponse) apidefinitions.APIVersion {
+	var response apidefinitions.APIVersion
 	for _, v := range result.APIVersions {
-		if v.VersionNumber > response {
-			response = v.VersionNumber
+		if v.VersionNumber > response.VersionNumber {
+			response = v
 		}
 	}
 	return response

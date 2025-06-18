@@ -55,6 +55,21 @@ func TestAPIResourceOperations(t *testing.T) {
 			},
 			checks: checker.CheckEqual("api_id", "1").CheckEqual("resource_operations", readJSONFile("resource-operations-02.json")).Build(),
 		},
+		"create api resource operations with all fields When Latest Version is Active": {
+			init: func(m *apidefinitions.Mock, mV0 *v0.Mock) {
+				mockListEndpointVerWithActiveVer(m, 2)
+				mockCloneEndpointVersion(m)
+				mockUpdateResourceOperation(mV0, "resource-operations-02.json", 1)
+				mockGetResourceOperation(mV0, "resource-operations-02.json", 1)
+				mockDeleteResourceOperation(mV0, 1)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: apiResourceOperationsCfgWithAllFieldsFromFile(),
+				},
+			},
+			checks: checker.CheckEqual("api_id", "1").CheckEqual("resource_operations", readJSONFile("resource-operations-02.json")).Build(),
+		},
 		"delete api resource operations": {
 			init: func(m *apidefinitions.Mock, mV0 *v0.Mock) {
 				mockListEndpointVersions(m, 2)
@@ -296,6 +311,20 @@ func updateAPIiResourceOperationsCfgWithAllFields() string {
 			  api_id = 1
 			  resource_operations = file("testdata/resourceOperations/resource-operations-03.json")
 			}`
+}
+
+func mockListEndpointVerWithActiveVer(client *apidefinitions.Mock, times int) *mock.Call {
+	return client.On("ListEndpointVersions", mock.Anything, mock.Anything).
+		Return(&apidefinitions.ListEndpointVersionsResponse{
+			TotalSize: 2,
+			APIVersions: []apidefinitions.APIVersion{
+				{
+					VersionNumber:   1,
+					IsVersionLocked: true,
+				},
+			},
+		}, nil).
+		Times(times)
 }
 
 var badRequestErrorResOperations = v0.Error{
