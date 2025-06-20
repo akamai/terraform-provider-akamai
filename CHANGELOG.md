@@ -41,7 +41,17 @@
     * `akamai_apidefinitions_resource_operations` - create, read, update, delete and import API resource operations
   * Added new data source:
     * `akamai_apidefinitions_openapi` - maps OpenAPI/Swagger file to API configuration
-  
+* ACCOUNT_PROTECTION
+    * Added following data sources:
+        * `akamai_apr_protected_operations`
+        * `akamai_apr_general_settings`
+        * `akamai_apr_user_risk_response_strategy`
+        * `akamai_apr_user_allow_list`
+    * Added following resources:
+        * `akamai_apr_protected_operations`
+        * `akamai_apr_general_settings`
+        * `akamai_apr_user_risk_response_strategy`
+        * `akamai_apr_user_allow_list`  
 
   * Appsec
     * Added a new data source:
