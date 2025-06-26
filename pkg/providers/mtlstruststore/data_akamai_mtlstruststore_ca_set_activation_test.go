@@ -17,6 +17,22 @@ func TestCASetActivationDataSource(t *testing.T) {
 	t.Parallel()
 	testDir := "testdata/TestDataCASetActivation/"
 
+	mockListCASetActivations := func(m *mtlstruststore.Mock, testData caSetTestData) {
+		m.On("ListCASetActivations", testutils.MockContext, mtlstruststore.ListCASetActivationsRequest{
+			CASetID: testData.caSetID,
+		}).Return(&mtlstruststore.ListCASetActivationsResponse{
+			Activations: testData.caSetActivations,
+		}, nil).Times(3)
+	}
+
+	mockListCASets := func(m *mtlstruststore.Mock, testData caSetTestData) {
+		m.On("ListCASets", testutils.MockContext, mtlstruststore.ListCASetsRequest{
+			CASetNamePrefix: testData.caSetName,
+		}).Return(&mtlstruststore.ListCASetsResponse{
+			CASets: testData.caSets,
+		}, nil).Times(3)
+	}
+
 	twoActivations := []mtlstruststore.ActivateCASetVersionResponse{
 		{
 			ActivationID:     321,
@@ -251,12 +267,4 @@ func TestCASetActivationDataSource(t *testing.T) {
 			client.AssertExpectations(t)
 		})
 	}
-}
-
-func mockListCASetActivations(m *mtlstruststore.Mock, testData caSetTestData) {
-	m.On("ListCASetActivations", testutils.MockContext, mtlstruststore.ListCASetActivationsRequest{
-		CASetID: testData.caSetID,
-	}).Return(&mtlstruststore.ListCASetActivationsResponse{
-		Activations: testData.caSetActivations,
-	}, nil).Times(3)
 }

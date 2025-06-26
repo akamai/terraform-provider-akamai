@@ -15,6 +15,27 @@ import (
 
 func TestCASetDataSource(t *testing.T) {
 	testDir := "testdata/TestDataCASet/"
+	mockGetCASet := func(m *mtlstruststore.Mock, testData caSetTestData) {
+		m.On("GetCASet", testutils.MockContext, mtlstruststore.GetCASetRequest{
+			CASetID: testData.caSetID,
+		}).Return(&testData.caSetResponse, nil).Times(3)
+	}
+
+	mockGetCASetVersion := func(m *mtlstruststore.Mock, testData caSetTestData) {
+		m.On("GetCASetVersion", testutils.MockContext, mtlstruststore.GetCASetVersionRequest{
+			CASetID: testData.caSetID,
+			Version: testData.caSetVersion,
+		}).Return(&testData.caSetVersionResponse, nil).Times(3)
+	}
+
+	mockListCASets := func(m *mtlstruststore.Mock, testData caSetTestData) {
+		m.On("ListCASets", testutils.MockContext, mtlstruststore.ListCASetsRequest{
+			CASetNamePrefix: testData.caSetName,
+		}).Return(&mtlstruststore.ListCASetsResponse{
+			CASets: testData.caSets,
+		}, nil).Times(3)
+	}
+
 	t.Parallel()
 	commonStateChecker := test.NewStateChecker("data.akamai_mtlstruststore_ca_set.test").
 		CheckEqual("id", "12345").
@@ -119,7 +140,7 @@ func TestCASetDataSource(t *testing.T) {
 				caSetResponse: mtlstruststore.GetCASetResponse{
 					CASetID:     "12345",
 					CASetName:   "example-ca-set",
-					Description: "Example CA Set",
+					Description: ptr.To("Example CA Set"),
 					AccountID:   "account-123",
 					CreatedBy:   "example user",
 					CreatedDate: tst.NewTimeFromString(t, "2025-04-16T12:08:34.099457Z"),
@@ -177,7 +198,7 @@ func TestCASetDataSource(t *testing.T) {
 				caSetResponse: mtlstruststore.GetCASetResponse{
 					CASetID:           "12345",
 					CASetName:         "example-ca-set",
-					Description:       "Example CA Set",
+					Description:       ptr.To("Example CA Set"),
 					AccountID:         "account-123",
 					CreatedBy:         "example user",
 					CreatedDate:       tst.NewTimeFromString(t, "2025-04-16T12:08:34.099457Z"),
@@ -264,27 +285,6 @@ func TestCASetDataSource(t *testing.T) {
 	}
 }
 
-func mockGetCASet(m *mtlstruststore.Mock, testData caSetTestData) {
-	m.On("GetCASet", testutils.MockContext, mtlstruststore.GetCASetRequest{
-		CASetID: testData.caSetID,
-	}).Return(&testData.caSetResponse, nil).Times(3)
-}
-
-func mockGetCASetVersion(m *mtlstruststore.Mock, testData caSetTestData) {
-	m.On("GetCASetVersion", testutils.MockContext, mtlstruststore.GetCASetVersionRequest{
-		CASetID: testData.caSetID,
-		Version: testData.caSetVersion,
-	}).Return(&testData.caSetVersionResponse, nil).Times(3)
-}
-
-func mockListCASets(m *mtlstruststore.Mock, testData caSetTestData) {
-	m.On("ListCASets", testutils.MockContext, mtlstruststore.ListCASetsRequest{
-		CASetNamePrefix: testData.caSetName,
-	}).Return(&mtlstruststore.ListCASetsResponse{
-		CASets: testData.caSets,
-	}, nil).Times(3)
-}
-
 type caSetTestData struct {
 	caSetID              string
 	caSetVersion         int64
@@ -302,7 +302,7 @@ var commonTestData = caSetTestData{
 	caSetResponse: mtlstruststore.GetCASetResponse{
 		CASetID:           "12345",
 		CASetName:         "example-ca-set",
-		Description:       "Example CA Set",
+		Description:       ptr.To("Example CA Set"),
 		AccountID:         "account-123",
 		CreatedBy:         "example user",
 		CreatedDate:       tst.NewTimeFromStringMust("2025-04-16T12:08:34.099457Z"),
@@ -311,7 +311,7 @@ var commonTestData = caSetTestData{
 		LatestVersion:     ptr.To(int64(1)),
 	},
 	caSetVersionResponse: mtlstruststore.GetCASetVersionResponse{
-		Description:       "Version 1 description",
+		Description:       ptr.To("Version 1 description"),
 		AllowInsecureSHA1: false,
 		CreatedDate:       tst.NewTimeFromStringMust("2025-04-16T12:08:34.099457Z"),
 		CreatedBy:         "example user",
@@ -320,7 +320,7 @@ var commonTestData = caSetTestData{
 		Certificates: []mtlstruststore.CertificateResponse{
 			{
 				CertificatePEM:     "-----BEGIN CERTIFICATE-----...",
-				Description:        "Example Certificate",
+				Description:        ptr.To("Example Certificate"),
 				CreatedBy:          "example user",
 				CreatedDate:        tst.NewTimeFromStringMust("2025-04-16T12:08:34.099457Z"),
 				StartDate:          tst.NewTimeFromStringMust("2025-04-16T12:08:34.099457Z"),

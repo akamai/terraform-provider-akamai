@@ -171,7 +171,7 @@ func (m *caSetsDataSourceModel) convertCASetsToModel(caSets mtlstruststore.ListC
 			Name:              types.StringValue(caSet.CASetName),
 			CreatedBy:         types.StringValue(caSet.CreatedBy),
 			CreatedDate:       types.StringValue(caSet.CreatedDate.Format(time.RFC3339Nano)),
-			Description:       types.StringValue(caSet.Description),
+			Description:       types.StringPointerValue(caSet.Description),
 			Status:            types.StringValue(caSet.CASetStatus),
 			DeletedBy:         types.StringPointerValue(caSet.DeletedBy),
 			LatestVersion:     types.Int64PointerValue(caSet.LatestVersion),

@@ -210,7 +210,7 @@ var (
 		DeletedBy:      ptr.To("user1"),
 		DeletedDate:    ptr.To(tst.NewTimeFromStringMust("2023-01-03T00:00:00Z")),
 		AccountID:      "test_account_1",
-		Description:    "Test CA Set Only Staging Description",
+		Description:    ptr.To("Test CA Set Only Staging Description"),
 	}
 
 	mockCASetProductionNetworkModel = mtlstruststore.CASetResponse{
@@ -224,7 +224,7 @@ var (
 		DeletedBy:         ptr.To("user3"),
 		DeletedDate:       ptr.To(tst.NewTimeFromStringMust("2023-01-03T00:00:00Z")),
 		AccountID:         "test_account_1",
-		Description:       "Test CA Set Only Production Description",
+		Description:       ptr.To("Test CA Set Only Production Description"),
 	}
 
 	mockCASetBothNetworkModel = mtlstruststore.CASetResponse{
@@ -239,6 +239,6 @@ var (
 		DeletedBy:         ptr.To("user3"),
 		DeletedDate:       ptr.To(tst.NewTimeFromStringMust("2023-01-03T00:00:00Z")),
 		AccountID:         "test_account_1",
-		Description:       "Test CA Set Both Description",
+		Description:       ptr.To("Test CA Set Both Description"),
 	}
 )

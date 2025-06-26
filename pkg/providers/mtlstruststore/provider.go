@@ -45,7 +45,9 @@ func (p *Subprovider) SDKDataSources() map[string]*schema.Resource {
 
 // FrameworkResources returns the MTLS Truststore resources implemented using terraform-plugin-framework
 func (p *Subprovider) FrameworkResources() []func() resource.Resource {
-	return []func() resource.Resource{}
+	return []func() resource.Resource{
+		NewCASetResource,
+	}
 }
 
 // FrameworkDataSources returns the MTLS Truststore data sources implemented using terraform-plugin-framework

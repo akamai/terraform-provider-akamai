@@ -47,20 +47,6 @@ type (
 		StagingStatus      types.String       `tfsdk:"staging_status"`
 		Certificates       []certificateModel `tfsdk:"certificates"`
 	}
-
-	certificateModel struct {
-		CertificatePEM     types.String `tfsdk:"certificate_pem"`
-		CreatedBy          types.String `tfsdk:"created_by"`
-		CreatedDate        types.String `tfsdk:"created_date"`
-		EndDate            types.String `tfsdk:"end_date"`
-		Fingerprint        types.String `tfsdk:"fingerprint"`
-		Issuer             types.String `tfsdk:"issuer"`
-		SerialNumber       types.String `tfsdk:"serial_number"`
-		SignatureAlgorithm types.String `tfsdk:"signature_algorithm"`
-		StartDate          types.String `tfsdk:"start_date"`
-		Subject            types.String `tfsdk:"subject"`
-		Description        types.String `tfsdk:"description"`
-	}
 )
 
 // NewCASetVersionsDataSource returns a new mtls truststore ca set versions data source.
@@ -294,14 +280,14 @@ func convertCASetVersionsDataToModel(versions mtlstruststore.ListCASetVersionsRe
 				SignatureAlgorithm: types.StringValue(cert.SignatureAlgorithm),
 				StartDate:          types.StringValue(cert.StartDate.Format(time.RFC3339Nano)),
 				Subject:            types.StringValue(cert.Subject),
-				Description:        types.StringValue(cert.Description),
+				Description:        types.StringPointerValue(cert.Description),
 			})
 		}
 
 		versionModel := versionModel{
 			Version:            types.Int64Value(version.Version),
 			AllowInsecureSHA1:  types.BoolValue(version.AllowInsecureSHA1),
-			VersionDescription: types.StringValue(version.Description),
+			VersionDescription: types.StringPointerValue(version.Description),
 			CreatedBy:          types.StringValue(version.CreatedBy),
 			CreatedDate:        types.StringValue(version.CreatedDate.Format(time.RFC3339Nano)),
 			ProductionStatus:   types.StringValue(version.ProductionStatus),

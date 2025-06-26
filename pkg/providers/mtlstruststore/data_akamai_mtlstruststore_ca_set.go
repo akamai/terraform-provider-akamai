@@ -281,7 +281,7 @@ func convertCASetDataToModel(caSet *mtlstruststore.GetCASetResponse, caSetVersio
 	model := caSetDataSourceModel{
 		ID:                types.StringValue(caSet.CASetID),
 		Name:              types.StringValue(caSet.CASetName),
-		Description:       types.StringValue(caSet.Description),
+		Description:       types.StringPointerValue(caSet.Description),
 		AccountID:         types.StringValue(caSet.AccountID),
 		CreatedBy:         types.StringValue(caSet.CreatedBy),
 		CreatedDate:       types.StringValue(caSet.CreatedDate.Format(time.RFC3339Nano)),
@@ -306,7 +306,7 @@ func convertCASetDataToModel(caSet *mtlstruststore.GetCASetResponse, caSetVersio
 
 func (m *caSetDataSourceModel) setCASetVersionData(v *mtlstruststore.GetCASetVersionResponse) {
 	m.AllowInsecureSHA1 = types.BoolValue(v.AllowInsecureSHA1)
-	m.VersionDescription = types.StringValue(v.Description)
+	m.VersionDescription = types.StringPointerValue(v.Description)
 	m.VersionCreatedBy = types.StringValue(v.CreatedBy)
 	m.VersionCreatedDate = types.StringValue(v.CreatedDate.Format(time.RFC3339Nano))
 	m.VersionModifiedBy = types.StringPointerValue(v.ModifiedBy)
@@ -321,7 +321,7 @@ func (m *caSetDataSourceModel) setCASetVersionData(v *mtlstruststore.GetCASetVer
 	for i, cert := range v.Certificates {
 		certificates[i] = certificateModel{
 			CertificatePEM:     types.StringValue(cert.CertificatePEM),
-			Description:        types.StringValue(cert.Description),
+			Description:        types.StringPointerValue(cert.Description),
 			CreatedBy:          types.StringValue(cert.CreatedBy),
 			CreatedDate:        types.StringValue(cert.CreatedDate.Format(time.RFC3339Nano)),
 			StartDate:          types.StringValue(cert.StartDate.Format(time.RFC3339Nano)),

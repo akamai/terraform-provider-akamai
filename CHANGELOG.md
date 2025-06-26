@@ -55,6 +55,11 @@
         * `akamai_apr_user_risk_response_strategy`
         * `akamai_apr_user_allow_list`  
 
+* [IMPORTANT] mTLS TrustStore:
+  * Added new resources:
+    * `akamai_mtlstruststore_ca_set` - manages lifecycle of CA set and its version.
+
+
   * Appsec
     * Added a new data source:
       * `data_akamai_appsec_advanced_settings_ja4_fingerprint`

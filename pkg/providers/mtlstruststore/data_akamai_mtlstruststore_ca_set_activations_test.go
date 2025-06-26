@@ -59,6 +59,22 @@ func TestCASetActivationsDataSource(t *testing.T) {
 		CheckEqual("activations.0.modified_by", "example user").
 		CheckEqual("activations.0.modified_date", "2025-05-16T12:08:34.099457Z")
 
+	mockListCASetActivations := func(m *mtlstruststore.Mock, testData caSetTestData) {
+		m.On("ListCASetActivations", testutils.MockContext, mtlstruststore.ListCASetActivationsRequest{
+			CASetID: testData.caSetID,
+		}).Return(&mtlstruststore.ListCASetActivationsResponse{
+			Activations: testData.caSetActivations,
+		}, nil).Times(3)
+	}
+
+	mockListCASets := func(m *mtlstruststore.Mock, testData caSetTestData) {
+		m.On("ListCASets", testutils.MockContext, mtlstruststore.ListCASetsRequest{
+			CASetNamePrefix: testData.caSetName,
+		}).Return(&mtlstruststore.ListCASetsResponse{
+			CASets: testData.caSets,
+		}, nil).Times(3)
+	}
+
 	tests := map[string]struct {
 		init     func(*mtlstruststore.Mock, caSetTestData)
 		testData caSetTestData

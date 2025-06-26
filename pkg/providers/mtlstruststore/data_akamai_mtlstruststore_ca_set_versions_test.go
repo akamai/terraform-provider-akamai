@@ -14,7 +14,21 @@ import (
 )
 
 func TestCASetVersionsDataSource(t *testing.T) {
-	testDir := "testdata/TestDataCASetVersions/"
+	mockListCASetVersions := func(m *mtlstruststore.Mock, caSetID string, includeCertificates, activeVersionsOnly bool, versionsResponse mtlstruststore.ListCASetVersionsResponse) {
+		m.On("ListCASetVersions", testutils.MockContext, mtlstruststore.ListCASetVersionsRequest{
+			CASetID:             caSetID,
+			IncludeCertificates: includeCertificates,
+			ActiveVersionsOnly:  activeVersionsOnly,
+		}).Return(&versionsResponse, nil).Times(3)
+	}
+
+	mockListCASets := func(m *mtlstruststore.Mock, testData caSetTestData) {
+		m.On("ListCASets", testutils.MockContext, mtlstruststore.ListCASetsRequest{
+			CASetNamePrefix: testData.caSetName,
+		}).Return(&mtlstruststore.ListCASetsResponse{
+			CASets: testData.caSets,
+		}, nil).Times(3)
+	}
 	t.Parallel()
 	baseChecker := test.NewStateChecker("data.akamai_mtlstruststore_ca_set_versions.test").
 		CheckEqual("id", "12345").
@@ -46,7 +60,7 @@ func TestCASetVersionsDataSource(t *testing.T) {
 				CASetID:           "12345",
 				CASetName:         "test-ca-set-name",
 				Version:           1,
-				Description:       "test-description-two-active",
+				Description:       ptr.To("test-description-two-active"),
 				AllowInsecureSHA1: true,
 				StagingStatus:     "ACTIVE",
 				ProductionStatus:  "ACTIVE",
@@ -60,7 +74,7 @@ func TestCASetVersionsDataSource(t *testing.T) {
 				CASetID:           "12345",
 				CASetName:         "test-ca-set-name",
 				Version:           2,
-				Description:       "test-description-one-active",
+				Description:       ptr.To("test-description-one-active"),
 				AllowInsecureSHA1: true,
 				StagingStatus:     "INACTIVE",
 				ProductionStatus:  "ACTIVE",
@@ -74,7 +88,7 @@ func TestCASetVersionsDataSource(t *testing.T) {
 				CASetID:           "12345",
 				CASetName:         "test-ca-set-name",
 				Version:           3,
-				Description:       "test-description-two-inactive",
+				Description:       ptr.To("test-description-two-inactive"),
 				AllowInsecureSHA1: true,
 				StagingStatus:     "INACTIVE",
 				ProductionStatus:  "INACTIVE",
@@ -93,7 +107,7 @@ func TestCASetVersionsDataSource(t *testing.T) {
 				CASetID:           "12345",
 				CASetName:         "test-ca-set-name",
 				Version:           1,
-				Description:       "test-description-two-active",
+				Description:       ptr.To("test-description-two-active"),
 				AllowInsecureSHA1: true,
 				StagingStatus:     "ACTIVE",
 				ProductionStatus:  "ACTIVE",
@@ -113,7 +127,7 @@ func TestCASetVersionsDataSource(t *testing.T) {
 						SignatureAlgorithm: "SHA256WITHRSA",
 						CreatedDate:        tst.NewTimeFromString(t, "2024-04-16T12:08:34.099457Z"),
 						CreatedBy:          "jkowalski",
-						Description:        "test-description1",
+						Description:        ptr.To("test-description1"),
 					},
 				},
 			},
@@ -121,7 +135,7 @@ func TestCASetVersionsDataSource(t *testing.T) {
 				CASetID:           "12345",
 				CASetName:         "test-ca-set-name",
 				Version:           2,
-				Description:       "test-description-one-active",
+				Description:       ptr.To("test-description-one-active"),
 				AllowInsecureSHA1: true,
 				StagingStatus:     "INACTIVE",
 				ProductionStatus:  "ACTIVE",
@@ -141,7 +155,7 @@ func TestCASetVersionsDataSource(t *testing.T) {
 						SignatureAlgorithm: "SHA256WITHRSA",
 						CreatedDate:        tst.NewTimeFromString(t, "2024-04-16T12:08:34.099457Z"),
 						CreatedBy:          "jkowalski",
-						Description:        "test-description2",
+						Description:        ptr.To("test-description2"),
 					},
 				},
 			},
@@ -149,7 +163,7 @@ func TestCASetVersionsDataSource(t *testing.T) {
 				CASetID:           "12345",
 				CASetName:         "test-ca-set-name",
 				Version:           3,
-				Description:       "test-description-two-inactive",
+				Description:       ptr.To("test-description-two-inactive"),
 				AllowInsecureSHA1: true,
 				StagingStatus:     "INACTIVE",
 				ProductionStatus:  "INACTIVE",
@@ -169,7 +183,7 @@ func TestCASetVersionsDataSource(t *testing.T) {
 						SignatureAlgorithm: "SHA256WITHRSA",
 						CreatedDate:        tst.NewTimeFromString(t, "2024-04-16T12:08:34.099457Z"),
 						CreatedBy:          "jkowalski",
-						Description:        "test-description3",
+						Description:        ptr.To("test-description3"),
 					},
 				},
 			},
@@ -187,7 +201,7 @@ func TestCASetVersionsDataSource(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, testDir+"id.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataCASetVersions/id.tf"),
 					Check: baseChecker.
 						CheckEqual("versions.#", "3").
 						CheckEqual("versions.0.certificates.#", "1").
@@ -247,7 +261,7 @@ func TestCASetVersionsDataSource(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, testDir+"name.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataCASetVersions/name.tf"),
 					Check: baseChecker.
 						CheckEqual("versions.#", "3").
 						CheckEqual("versions.0.certificates.#", "1").
@@ -272,7 +286,7 @@ func TestCASetVersionsDataSource(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, testDir+"id_include_certificates.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataCASetVersions/id_include_certificates.tf"),
 					Check: baseChecker.
 						CheckEqual("include_certificates", "false").
 						CheckEqual("versions.#", "3").
@@ -301,7 +315,7 @@ func TestCASetVersionsDataSource(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, testDir+"id_include_certificates_and_active_versions_only.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataCASetVersions/id_include_certificates_and_active_versions_only.tf"),
 					Check: baseChecker.
 						CheckEqual("active_versions_only", "true").
 						CheckEqual("include_certificates", "false").
@@ -321,7 +335,7 @@ func TestCASetVersionsDataSource(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, testDir+"id_active_versions_only.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataCASetVersions/id_active_versions_only.tf"),
 					Check: baseChecker.
 						CheckEqual("active_versions_only", "true").
 						CheckEqual("versions.#", "2").
@@ -346,7 +360,7 @@ func TestCASetVersionsDataSource(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, testDir+"id_active_versions_only.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataCASetVersions/id_active_versions_only.tf"),
 					Check: test.NewStateChecker("data.akamai_mtlstruststore_ca_set_versions.test").
 						CheckEqual("id", "12345").
 						CheckEqual("name", "test-ca-set-name").
@@ -362,7 +376,7 @@ func TestCASetVersionsDataSource(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, testDir+"id.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataCASetVersions/id.tf"),
 					Check: baseChecker.
 						CheckEqual("versions.#", "3").
 						CheckEqual("versions.0.certificates.#", "0").
@@ -397,7 +411,7 @@ func TestCASetVersionsDataSource(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, testDir+"name.tf"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDataCASetVersions/name.tf"),
 					ExpectError: regexp.MustCompile("no CA set found with name 'test-ca-set-name'"),
 				},
 			},
@@ -405,7 +419,7 @@ func TestCASetVersionsDataSource(t *testing.T) {
 		"error: empty CA set name": {
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, testDir+"empty_name.tf"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDataCASetVersions/empty_name.tf"),
 					ExpectError: regexp.MustCompile("Attribute name string length must be at least 1, got: 0"),
 				},
 			},
@@ -413,7 +427,7 @@ func TestCASetVersionsDataSource(t *testing.T) {
 		"error: empty CA set id": {
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, testDir+"empty_id.tf"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDataCASetVersions/empty_id.tf"),
 					ExpectError: regexp.MustCompile("Attribute id string length must be at least 1, got: 0"),
 				},
 			},
@@ -427,7 +441,7 @@ func TestCASetVersionsDataSource(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, testDir+"id.tf"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDataCASetVersions/id.tf"),
 					ExpectError: regexp.MustCompile("failed to retrieve CA set versions"),
 				},
 			},
@@ -435,7 +449,7 @@ func TestCASetVersionsDataSource(t *testing.T) {
 		"validation error - missing required argument id or name": {
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, testDir+"empty.tf"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDataCASetVersions/empty.tf"),
 					ExpectError: regexp.MustCompile(`No attribute specified when one \(and only one\) of \[id,name\] is\s+required`),
 				},
 			},
@@ -443,7 +457,7 @@ func TestCASetVersionsDataSource(t *testing.T) {
 		"validation error - both id and name are provided": {
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, testDir+"id_name.tf"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDataCASetVersions/id_name.tf"),
 					ExpectError: regexp.MustCompile(`2 attributes specified when one \(and only one\) of \[name,id\] is\s+required`),
 				},
 			},
@@ -467,12 +481,4 @@ func TestCASetVersionsDataSource(t *testing.T) {
 			client.AssertExpectations(t)
 		})
 	}
-}
-
-func mockListCASetVersions(m *mtlstruststore.Mock, caSetID string, includeCertificates, activeVersionsOnly bool, versionsResponse mtlstruststore.ListCASetVersionsResponse) {
-	m.On("ListCASetVersions", testutils.MockContext, mtlstruststore.ListCASetVersionsRequest{
-		CASetID:             caSetID,
-		IncludeCertificates: includeCertificates,
-		ActiveVersionsOnly:  activeVersionsOnly,
-	}).Return(&versionsResponse, nil).Times(3)
 }

@@ -126,12 +126,12 @@ func (d *caSetAssociationsDataSource) Schema(_ context.Context, _ datasource.Sch
 							Computed:    true,
 						},
 						"hostnames": schema.ListNestedAttribute{
-							Description: "Hostnames contains details about associated hostnames.",
+							Description: "Hostnames contain details about associated hostnames.",
 							Computed:    true,
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: map[string]schema.Attribute{
 									"hostname": schema.StringAttribute{
-										Description: "Hostname is name of device.",
+										Description: "Hostname is the name of the device.",
 										Computed:    true,
 									},
 									"network": schema.StringAttribute{
@@ -154,7 +154,7 @@ func (d *caSetAssociationsDataSource) Schema(_ context.Context, _ datasource.Sch
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"enrollment_id": schema.Int64Attribute{
-							Description: "EnrollmentID is unique identifier for the enrollment.",
+							Description: "EnrollmentID is a unique identifier for the enrollment.",
 							Computed:    true,
 						},
 						"staging_slots": schema.ListAttribute{

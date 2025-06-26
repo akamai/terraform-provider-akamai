@@ -119,7 +119,8 @@ func (d *caSetActivationsDataSource) Schema(_ context.Context, _ datasource.Sche
 				Description: "If provided, filters the results to return only activities of the specified type, either 'ACTIVATE', 'DEACTIVATE', or 'DELETE'.",
 			},
 			"activations": schema.ListNestedAttribute{
-				Computed: true,
+				Computed:    true,
+				Description: "List of CA set activations or deactivations.",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"id": schema.Int64Attribute{
