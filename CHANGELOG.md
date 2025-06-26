@@ -4,6 +4,7 @@
 
 #### BREAKING CHANGES:
 
+* Updated the `akamai_dns_record_set` data source and fixed issue with swapped `host` and `name` attributes.
 
 
 

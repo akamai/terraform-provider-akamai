@@ -8,7 +8,6 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/dns"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestDataSourceDNSRecordSet_basic(t *testing.T) {
@@ -22,7 +21,7 @@ func TestDataSourceDNSRecordSet_basic(t *testing.T) {
 
 		client.On("GetRdata",
 			testutils.MockContext,
-			mock.AnythingOfType("dns.GetRdataRequest"),
+			dns.GetRdataRequest{Zone: "exampleterraform.io", Name: "www.exampleterraform.io", RecordType: "A"},
 		).Return(rdata, nil)
 
 		useClient(client, func() {
@@ -36,7 +35,7 @@ func TestDataSourceDNSRecordSet_basic(t *testing.T) {
 							// rdata is an array that becomes rdata.0 and rdata.1 in tf state
 							resource.TestCheckResourceAttr(dataSourceName, "rdata.0", "10.1.0.1"),
 							resource.TestCheckResourceAttr(dataSourceName, "rdata.1", "10.2.0.1"),
-							resource.TestCheckResourceAttr(dataSourceName, "id", "exampleterraform.io"),
+							resource.TestCheckResourceAttr(dataSourceName, "id", "www.exampleterraform.io"),
 						),
 					},
 				},
@@ -55,7 +54,7 @@ func TestDataSourceDNSRecordSet_basic(t *testing.T) {
 
 		client.On("GetRdata",
 			testutils.MockContext,
-			dns.GetRdataRequest{Zone: "exampleterraform.io", Name: "exampleterraform.io", RecordType: "TXT"},
+			dns.GetRdataRequest{Zone: "exampleterraform.io", Name: "www.exampleterraform.io", RecordType: "TXT"},
 		).Return(rdata, nil)
 
 		useClient(client, func() {
@@ -68,7 +67,7 @@ func TestDataSourceDNSRecordSet_basic(t *testing.T) {
 							resource.TestCheckResourceAttr(dataSourceName, "rdata.0", "abc"),
 							resource.TestCheckResourceAttr(dataSourceName, "rdata.1", "zxy"),
 							resource.TestCheckResourceAttr(dataSourceName, "rdata.2", "hji"),
-							resource.TestCheckResourceAttr(dataSourceName, "id", "exampleterraform.io"),
+							resource.TestCheckResourceAttr(dataSourceName, "id", "www.exampleterraform.io"),
 						),
 					},
 				},
@@ -83,7 +82,7 @@ func TestDataSourceDNSRecordSet_basic(t *testing.T) {
 
 		client.On("GetRdata",
 			testutils.MockContext,
-			mock.AnythingOfType("dns.GetRdataRequest"),
+			dns.GetRdataRequest{Zone: "exampleterraform.io", Name: "www.exampleterraform.io", RecordType: "A"},
 		).Return(nil, errors.New("invalid zone"))
 
 		useClient(client, func() {

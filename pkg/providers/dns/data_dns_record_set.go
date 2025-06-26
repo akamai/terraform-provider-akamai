@@ -21,23 +21,23 @@ func dataSourceDNSRecordSet() *schema.Resource {
 			"zone": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The domain zone, including any nested subdomains",
+				Description: "The domain zone, including any nested subdomains.",
 			},
-			"host": {
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The base credential hostname without the protocol",
+				Description: "A domain name, including the parent zone.",
 			},
 			"record_type": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The DNS record type",
+				Description: "The DNS record type.",
 			},
 			"rdata": {
 				Type:        schema.TypeList,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Computed:    true,
-				Description: "An array of data strings that represent multiple records within a set",
+				Description: "An array of data strings that represent multiple records within a set.",
 			},
 		},
 	}
@@ -56,7 +56,7 @@ func dataSourceDNSRecordSetRead(ctx context.Context, d *schema.ResourceData, m i
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	host, err := tf.GetStringValue("host", d)
+	name, err := tf.GetStringValue("name", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -66,20 +66,20 @@ func dataSourceDNSRecordSetRead(ctx context.Context, d *schema.ResourceData, m i
 	}
 	logger.Debug("Start Searching for records", log.Fields{
 		"zone":       zone,
-		"host":       host,
+		"name":       name,
 		"recordtype": recordType})
 
 	// Warning or Errors can be collected in a slice type
 	var diags diag.Diagnostics
 	rdata, err := inst.Client(meta).GetRdata(ctx, dns.GetRdataRequest{
-		Name:       zone,
-		Zone:       host,
+		Name:       name,
+		Zone:       zone,
 		RecordType: recordType,
 	})
 	if err != nil {
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  fmt.Sprintf("Failed retrieving recordset: %s", host),
+			Summary:  fmt.Sprintf("Failed retrieving recordset: %s", name),
 			Detail:   err.Error(),
 		})
 	}
@@ -91,6 +91,6 @@ func dataSourceDNSRecordSetRead(ctx context.Context, d *schema.ResourceData, m i
 	if err := d.Set("rdata", rdata); err != nil {
 		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
-	d.SetId(host)
+	d.SetId(name)
 	return nil
 }
