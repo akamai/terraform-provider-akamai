@@ -46,7 +46,7 @@ func (p *Subprovider) SDKDataSources() map[string]*schema.Resource {
 // FrameworkResources returns the MTLS Keystore resources implemented using terraform-plugin-framework
 func (p *Subprovider) FrameworkResources() []func() resource.Resource {
 	return []func() resource.Resource{
-		NewAkamaiMTLSKeystoreClientCertificateUploadResource,
+		NewClientCertificateUploadResource,
 	}
 }
 
