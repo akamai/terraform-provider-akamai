@@ -135,17 +135,11 @@ func (r *caSetResource) Schema(ctx context.Context, _ resource.SchemaRequest, re
 				Description: "When the CA set was created.",
 			},
 			"version_created_by": schema.StringAttribute{
-				Computed: true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
+				Computed:    true,
 				Description: "The user who created the CA set version.",
 			},
 			"version_created_date": schema.StringAttribute{
-				Computed: true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
+				Computed:    true,
 				Description: "When the CA set version was created.",
 			},
 			"version_modified_by": schema.StringAttribute{
@@ -185,7 +179,7 @@ func (r *caSetResource) Schema(ctx context.Context, _ resource.SchemaRequest, re
 		Blocks: map[string]schema.Block{
 			"timeouts": timeouts.Block(ctx, timeouts.Opts{
 				Delete:            true,
-				CreateDescription: "Optional configurable resource delete timeout. By default it's 1h with 15m polling interval.",
+				DeleteDescription: "Optional configurable resource delete timeout. By default it's 1h with 15m polling interval.",
 			}),
 		},
 	}
@@ -395,10 +389,38 @@ func (r *caSetResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanR
 		if resp.Diagnostics.HasError() {
 			return
 		}
+
+		activations, err := client.ListCASetActivations(ctx, mtlstruststore.ListCASetActivationsRequest{
+			CASetID: state.ID.ValueString(),
+		})
+		if err != nil {
+			resp.Diagnostics.AddError("list ca set activations failed", err.Error())
+			return
+		}
+		latestVersionNeverActivated := true
+		for _, activation := range activations.Activations {
+			if activation.Version == state.LatestVersion.ValueInt64() {
+				latestVersionNeverActivated = false
+				break
+			}
+		}
+
+		if latestVersionNeverActivated {
+			// Current version is not activated in staging or production, so we can just update the current version
+			// Following fields will not change then.
+			plan.LatestVersion = state.LatestVersion
+			plan.VersionCreatedBy = state.VersionCreatedBy
+			plan.VersionCreatedDate = state.VersionCreatedDate
+		}
+		plan.StagingVersion = state.StagingVersion
+		plan.ProductionVersion = state.ProductionVersion
+
 		// if only timeouts are changed, we can just ignore the plan
-		if state.onlyTimeoutChanged(plan) {
+		if state.onlyTimeoutChanged(plan) && !state.Timeouts.IsNull() && !plan.Timeouts.IsNull() {
 			plan.Timeouts = state.Timeouts
 		}
+		resp.Plan.Set(ctx, &plan)
+
 		return
 	}
 }
