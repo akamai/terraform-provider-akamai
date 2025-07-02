@@ -40,6 +40,8 @@ type (
 		Signer                      types.String   `tfsdk:"signer"`
 		Subject                     types.String   `tfsdk:"subject"`
 		Versions                    []versionModel `tfsdk:"versions"`
+		Current                     *versionModel  `tfsdk:"current"`
+		Previous                    *versionModel  `tfsdk:"previous"`
 	}
 
 	versionModel struct {
@@ -59,7 +61,7 @@ type (
 		CertificateBlock         certificateBlockModel `tfsdk:"certificate_block"`
 		CertificateSubmittedBy   types.String          `tfsdk:"certificate_submitted_by"`
 		CertificateSubmittedDate types.String          `tfsdk:"certificate_submitted_date"`
-		CSRBlock                 csrBlockModel         `tfsdk:"csr_block"`
+		CSRBlock                 *csrBlockModel        `tfsdk:"csr_block"`
 		DeleteRequestedDate      types.String          `tfsdk:"delete_requested_date"`
 		ScheduledDeleteDate      types.String          `tfsdk:"scheduled_delete_date"`
 		IssuedDate               types.String          `tfsdk:"issued_date"`
@@ -125,6 +127,183 @@ func (d *clientCertificateDataSource) Configure(_ context.Context, req datasourc
 
 // Schema is used to define data source's terraform schema.
 func (d *clientCertificateDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+	versionSchema := map[string]schema.Attribute{
+		"version": schema.Int64Attribute{
+			Description: "The unique identifier of the client certificate version.",
+			Computed:    true,
+		},
+		"version_guid": schema.StringAttribute{
+			Description: "Unique identifier for the client certificate version. Use it to configure mutual authentication (mTLS) sessions between the origin and edge servers in Property Manager's Mutual TLS Origin Keystore behavior.",
+			Computed:    true,
+		},
+		"status": schema.StringAttribute{
+			Description: "The client certificate version status. Possible values: `AWAITING_SIGNED_CERTIFICATE`, `DEPLOYMENT_PENDING`, `DEPLOYED`, or `DELETE_PENDING`.",
+			Computed:    true,
+		},
+		"created_by": schema.StringAttribute{
+			Description: "The user who created the client certificate version.",
+			Computed:    true,
+		},
+		"created_date": schema.StringAttribute{
+			Description: "An ISO 8601 timestamp indicating the client certificate version's creation.",
+			Computed:    true,
+		},
+		"deployed_date": schema.StringAttribute{
+			Description: "An ISO 8601 timestamp indicating when the client certificate version was activated.",
+			Computed:    true,
+		},
+		"expiry_date": schema.StringAttribute{
+			Description: "An ISO 8601 timestamp indicating when the client certificate version expires.",
+			Computed:    true,
+		},
+		"issuer": schema.StringAttribute{
+			Description: "The signing entity of the client certificate version.",
+			Computed:    true,
+		},
+		"key_algorithm": schema.StringAttribute{
+			Description: "Identifies the client certificate version's encryption algorithm. Supported values are `RSA` and `ECDSA`.",
+			Computed:    true,
+		},
+		"key_elliptic_curve": schema.StringAttribute{
+			Description: "Specifies the key elliptic curve when the key algorithm `ECDSA` is used.",
+			Computed:    true,
+		},
+		"key_size_in_bytes": schema.StringAttribute{
+			Description: "The private key length of the client certificate version when the key algorithm `RSA` is used.",
+			Computed:    true,
+		},
+		"signature_algorithm": schema.StringAttribute{
+			Description: "Specifies the algorithm that secures the data exchange between the edge server and origin.",
+			Computed:    true,
+		},
+		"subject": schema.StringAttribute{
+			Description: "The public key's entity stored in the client certificate version's subject public key field.",
+			Computed:    true,
+		},
+		"certificate_block": schema.SingleNestedAttribute{
+			Description: "Details of the certificate block for the client certificate version.",
+			Computed:    true,
+			Attributes: map[string]schema.Attribute{
+				"certificate": schema.StringAttribute{
+					Description: "A text representation of the client certificate in PEM format.",
+					Computed:    true,
+				},
+				"key_algorithm": schema.StringAttribute{
+					Description: "Identifies the CA certificate's encryption algorithm. The only currently supported value is `RSA`.",
+					Computed:    true,
+				},
+				"trust_chain": schema.StringAttribute{
+					Description: "A text representation of the trust chain in PEM format.",
+					Computed:    true,
+				},
+			},
+		},
+		"certificate_submitted_by": schema.StringAttribute{
+			Description: "The user who uploaded the `THIRD_PARTY` client certificate version.",
+			Computed:    true,
+		},
+		"certificate_submitted_date": schema.StringAttribute{
+			Description: "An ISO 8601 timestamp indicating when the `THIRD_PARTY` signer client certificate version was uploaded.",
+			Computed:    true,
+		},
+		"csr_block": schema.SingleNestedAttribute{
+			Description: "Details of the Certificate Signing Request (CSR) for the client certificate version.",
+			Computed:    true,
+			Attributes: map[string]schema.Attribute{
+				"csr": schema.StringAttribute{
+					Description: "Text of the certificate signing request.",
+					Computed:    true,
+				},
+				"key_algorithm": schema.StringAttribute{
+					Description: "Identifies the client certificate's encryption algorithm. The only currently supported value is `RSA`.",
+					Computed:    true,
+				},
+			},
+		},
+		"delete_requested_date": schema.StringAttribute{
+			Description: "An ISO 8601 timestamp indicating the client certificate version's deletion request.",
+			Computed:    true,
+		},
+		"scheduled_delete_date": schema.StringAttribute{
+			Description: "An ISO 8601 timestamp indicating the client certificate version's scheduled deletion.",
+			Computed:    true,
+		},
+		"issued_date": schema.StringAttribute{
+			Description: "An ISO 8601 timestamp indicating the client certificate version's availability.",
+			Computed:    true,
+		},
+		"properties": schema.ListNestedAttribute{
+			Description: "A list of properties associated with the client certificate.",
+			Computed:    true,
+			NestedObject: schema.NestedAttributeObject{
+				Attributes: map[string]schema.Attribute{
+					"asset_id": schema.Int64Attribute{
+						Description: "The unique identifier of the asset.",
+						Required:    true,
+					},
+					"group_id": schema.Int64Attribute{
+						Description: "The unique identifier of the group.",
+						Required:    true,
+					},
+					"property_name": schema.StringAttribute{
+						Description: "The name of the property.",
+						Required:    true,
+					},
+					"property_version": schema.Int64Attribute{
+						Description: "The version of the property.",
+						Required:    true,
+					},
+				},
+			},
+		},
+		"validation": schema.SingleNestedAttribute{
+			Description: "Validation results for the client certificate version.",
+			Computed:    true,
+			Attributes: map[string]schema.Attribute{
+				"errors": schema.ListNestedAttribute{
+					Description: "Validation errors that need to be resolved for the request to succeed.",
+					Computed:    true,
+					NestedObject: schema.NestedAttributeObject{
+						Attributes: map[string]schema.Attribute{
+							"message": schema.StringAttribute{
+								Description: "Specifies the error or warning details.",
+								Computed:    true,
+							},
+							"reason": schema.StringAttribute{
+								Description: "Specifies the error or warning root cause.",
+								Computed:    true,
+							},
+							"type": schema.StringAttribute{
+								Description: "Specifies the error or warning category.",
+								Computed:    true,
+							},
+						},
+					},
+				},
+				"warnings": schema.ListNestedAttribute{
+					Description: "Validation warnings that can be resolved.",
+					Computed:    true,
+					NestedObject: schema.NestedAttributeObject{
+						Attributes: map[string]schema.Attribute{
+							"message": schema.StringAttribute{
+								Description: "Specifies the error or warning details.",
+								Computed:    true,
+							},
+							"reason": schema.StringAttribute{
+								Description: "Specifies the error or warning root cause.",
+								Computed:    true,
+							},
+							"type": schema.StringAttribute{
+								Description: "Specifies the error or warning category.",
+								Computed:    true,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
 	resp.Schema = schema.Schema{
 		Description: "Retrieve client certificate with its versions.",
 		Attributes: map[string]schema.Attribute{
@@ -174,186 +353,21 @@ func (d *clientCertificateDataSource) Schema(_ context.Context, _ datasource.Sch
 				Computed:    true,
 				Description: "Specifies the client certificate. The `CN` attribute is required and is included in the subject.",
 			},
+			"previous": schema.SingleNestedAttribute{
+				Description: "Details of the previous client certificate version.",
+				Computed:    true,
+				Attributes:  versionSchema,
+			},
+			"current": schema.SingleNestedAttribute{
+				Description: "Details of the current client certificate version.",
+				Computed:    true,
+				Attributes:  versionSchema,
+			},
 			"versions": schema.ListNestedAttribute{
 				Description: "A list of client certificate versions.",
 				Computed:    true,
 				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"version": schema.Int64Attribute{
-							Description: "The unique identifier of the client certificate version.",
-							Computed:    true,
-						},
-						"version_guid": schema.StringAttribute{
-							Description: "Unique identifier for the client certificate version. Use it to configure mutual authentication (mTLS) sessions between the origin and edge servers in Property Manager's Mutual TLS Origin Keystore behavior.",
-							Computed:    true,
-						},
-						"status": schema.StringAttribute{
-							Description: "The client certificate version status. Possible values: `AWAITING_SIGNED_CERTIFICATE`, `DEPLOYMENT_PENDING`, `DEPLOYED`, or `DELETE_PENDING`.",
-							Computed:    true,
-						},
-						"created_by": schema.StringAttribute{
-							Description: "The user who created the client certificate version.",
-							Computed:    true,
-						},
-						"created_date": schema.StringAttribute{
-							Description: "An ISO 8601 timestamp indicating the client certificate version's creation.",
-							Computed:    true,
-						},
-						"deployed_date": schema.StringAttribute{
-							Description: "An ISO 8601 timestamp indicating when the client certificate version was activated.",
-							Computed:    true,
-						},
-						"expiry_date": schema.StringAttribute{
-							Description: "An ISO 8601 timestamp indicating when the client certificate version expires.",
-							Computed:    true,
-						},
-						"issuer": schema.StringAttribute{
-							Description: "The signing entity of the client certificate version.",
-							Computed:    true,
-						},
-						"key_algorithm": schema.StringAttribute{
-							Description: "Identifies the client certificate version's encryption algorithm. Supported values are `RSA` and `ECDSA`.",
-							Computed:    true,
-						},
-						"key_elliptic_curve": schema.StringAttribute{
-							Description: "Specifies the key elliptic curve when the key algorithm `ECDSA` is used.",
-							Computed:    true,
-						},
-						"key_size_in_bytes": schema.StringAttribute{
-							Description: "The private key length of the client certificate version when the key algorithm `RSA` is used.",
-							Computed:    true,
-						},
-						"signature_algorithm": schema.StringAttribute{
-							Description: "Specifies the algorithm that secures the data exchange between the edge server and origin.",
-							Computed:    true,
-						},
-						"subject": schema.StringAttribute{
-							Description: "The public key's entity stored in the client certificate version's subject public key field.",
-							Computed:    true,
-						},
-						"certificate_block": schema.SingleNestedAttribute{
-							Description: "Details of the certificate block for the client certificate version.",
-							Computed:    true,
-							Attributes: map[string]schema.Attribute{
-								"certificate": schema.StringAttribute{
-									Description: "A text representation of the client certificate in PEM format.",
-									Computed:    true,
-								},
-								"key_algorithm": schema.StringAttribute{
-									Description: "Identifies the CA certificate's encryption algorithm. The only currently supported value is `RSA`.",
-									Computed:    true,
-								},
-								"trust_chain": schema.StringAttribute{
-									Description: "A text representation of the trust chain in PEM format.",
-									Computed:    true,
-								},
-							},
-						},
-						"certificate_submitted_by": schema.StringAttribute{
-							Description: "The user who uploaded the `THIRD_PARTY` client certificate version.",
-							Computed:    true,
-						},
-						"certificate_submitted_date": schema.StringAttribute{
-							Description: "An ISO 8601 timestamp indicating when the `THIRD_PARTY` signer client certificate version was uploaded.",
-							Computed:    true,
-						},
-						"csr_block": schema.SingleNestedAttribute{
-							Description: "Details of the Certificate Signing Request (CSR) for the client certificate version.",
-							Computed:    true,
-							Attributes: map[string]schema.Attribute{
-								"csr": schema.StringAttribute{
-									Description: "Text of the certificate signing request.",
-									Computed:    true,
-								},
-								"key_algorithm": schema.StringAttribute{
-									Description: "Identifies the client certificate's encryption algorithm. The only currently supported value is `RSA`.",
-									Computed:    true,
-								},
-							},
-						},
-						"delete_requested_date": schema.StringAttribute{
-							Description: "An ISO 8601 timestamp indicating the client certificate version's deletion request.",
-							Computed:    true,
-						},
-						"scheduled_delete_date": schema.StringAttribute{
-							Description: "An ISO 8601 timestamp indicating the client certificate version's scheduled deletion.",
-							Computed:    true,
-						},
-						"issued_date": schema.StringAttribute{
-							Description: "An ISO 8601 timestamp indicating the client certificate version's availability.",
-							Computed:    true,
-						},
-						"properties": schema.ListNestedAttribute{
-							Description: "A list of properties associated with the client certificate.",
-							Computed:    true,
-							NestedObject: schema.NestedAttributeObject{
-								Attributes: map[string]schema.Attribute{
-									"asset_id": schema.Int64Attribute{
-										Description: "The unique identifier of the asset.",
-										Required:    true,
-									},
-									"group_id": schema.Int64Attribute{
-										Description: "The unique identifier of the group.",
-										Required:    true,
-									},
-									"property_name": schema.StringAttribute{
-										Description: "The name of the property.",
-										Required:    true,
-									},
-									"property_version": schema.Int64Attribute{
-										Description: "The version of the property.",
-										Required:    true,
-									},
-								},
-							},
-						},
-						"validation": schema.SingleNestedAttribute{
-							Description: "Validation results for the client certificate version.",
-							Computed:    true,
-							Attributes: map[string]schema.Attribute{
-								"errors": schema.ListNestedAttribute{
-									Description: "Validation errors that need to be resolved for the request to succeed.",
-									Computed:    true,
-									NestedObject: schema.NestedAttributeObject{
-										Attributes: map[string]schema.Attribute{
-											"message": schema.StringAttribute{
-												Description: "Specifies the error or warning details.",
-												Computed:    true,
-											},
-											"reason": schema.StringAttribute{
-												Description: "Specifies the error or warning root cause.",
-												Computed:    true,
-											},
-											"type": schema.StringAttribute{
-												Description: "Specifies the error or warning category.",
-												Computed:    true,
-											},
-										},
-									},
-								},
-								"warnings": schema.ListNestedAttribute{
-									Description: "Validation warnings that can be resolved.",
-									Computed:    true,
-									NestedObject: schema.NestedAttributeObject{
-										Attributes: map[string]schema.Attribute{
-											"message": schema.StringAttribute{
-												Description: "Specifies the error or warning details.",
-												Computed:    true,
-											},
-											"reason": schema.StringAttribute{
-												Description: "Specifies the error or warning root cause.",
-												Computed:    true,
-											},
-											"type": schema.StringAttribute{
-												Description: "Specifies the error or warning category.",
-												Computed:    true,
-											},
-										},
-									},
-								},
-							},
-						},
-					},
+					Attributes: versionSchema,
 				},
 			},
 		},
@@ -378,7 +392,7 @@ func (d *clientCertificateDataSource) Read(ctx context.Context, req datasource.R
 		return
 	}
 
-	versions, err := client.GetClientCertificateVersions(ctx, mtlskeystore.GetClientCertificateVersionsRequest{
+	versionsResponse, err := client.ListClientCertificateVersions(ctx, mtlskeystore.ListClientCertificateVersionsRequest{
 		CertificateID:               data.CertificateID.ValueInt64(),
 		IncludeAssociatedProperties: data.IncludeAssociatedProperties.ValueBool(),
 	})
@@ -386,8 +400,13 @@ func (d *clientCertificateDataSource) Read(ctx context.Context, req datasource.R
 		resp.Diagnostics.AddError("Read Client Certificate failed", err.Error())
 		return
 	}
+	if versionsResponse == nil {
+		resp.Diagnostics.AddError("Read Client Certificate failed", "Unexpected nil response for client certificate versions.")
+		return
+	}
 
-	diags := data.parseClientCertificate(ctx, clientCertificate, versions)
+	versionsData := extractVersions(versionsResponse.Versions)
+	diags := data.parseClientCertificate(ctx, clientCertificate, versionsData)
 	if diags.HasError() {
 		resp.Diagnostics.Append(diags...)
 		return
@@ -396,8 +415,36 @@ func (d *clientCertificateDataSource) Read(ctx context.Context, req datasource.R
 	resp.Diagnostics.Append(resp.State.Set(ctx, data)...)
 }
 
+type versionsData struct {
+	otherVersions []mtlskeystore.ClientCertificateVersion
+	current       *mtlskeystore.ClientCertificateVersion
+	previous      *mtlskeystore.ClientCertificateVersion
+}
+
+func extractVersions(versions []mtlskeystore.ClientCertificateVersion) versionsData {
+	var otherVersions []mtlskeystore.ClientCertificateVersion
+	var current, previous *mtlskeystore.ClientCertificateVersion
+	for _, version := range versions {
+		if version.VersionAlias == nil {
+			otherVersions = append(otherVersions, version)
+		} else {
+			if *version.VersionAlias == "CURRENT" {
+				current = &version
+			} else {
+				previous = &version
+			}
+		}
+	}
+
+	return versionsData{
+		otherVersions: otherVersions,
+		current:       current,
+		previous:      previous,
+	}
+}
+
 // parseClientCertificate maps the client certificate response to the data source model.
-func (d *clientCertificateDataSourceModel) parseClientCertificate(ctx context.Context, clientCertificate *mtlskeystore.GetClientCertificateResponse, versions *mtlskeystore.GetClientCertificateVersionsResponse) diag.Diagnostics {
+func (d *clientCertificateDataSourceModel) parseClientCertificate(ctx context.Context, clientCertificate *mtlskeystore.GetClientCertificateResponse, versionsData versionsData) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	d.CertificateName = types.StringValue(clientCertificate.CertificateName)
@@ -414,59 +461,57 @@ func (d *clientCertificateDataSourceModel) parseClientCertificate(ctx context.Co
 		return diags
 	}
 
-	if versions == nil {
-		diags.AddError("Read Client Certificate failed", "Unexpected nil response for client certificate versions.")
-		return diags
+	for _, version := range versionsData.otherVersions {
+		d.Versions = append(d.Versions, *convertDataToVersionModel(version))
 	}
 
-	for _, version := range versions.Versions {
-		versionModel := versionModel{
-			Version:            types.Int64Value(version.Version),
-			VersionGUID:        types.StringValue(version.VersionGUID),
-			Status:             types.StringValue(string(version.Status)),
-			CreatedBy:          types.StringValue(version.CreatedBy),
-			CreatedDate:        types.StringValue(version.CreatedDate),
-			ExpiryDate:         types.StringValue(version.ExpiryDate),
-			Issuer:             types.StringValue(version.Issuer),
-			KeyAlgorithm:       types.StringValue(string(version.KeyAlgorithm)),
-			KeyEllipticCurve:   types.StringValue(version.KeyEllipticCurve),
-			KeySizeInBytes:     types.StringValue(version.KeySizeInBytes),
-			SignatureAlgorithm: types.StringValue(version.SignatureAlgorithm),
-			Subject:            types.StringValue(version.Subject),
-			IssuedDate:         types.StringValue(version.IssuedDate),
-			Properties:         parseProperties(version.AssociatedProperties),
-			Validation:         parseValidation(version.Validation),
-		}
-
-		if version.CertificateSubmittedBy != nil {
-			versionModel.CertificateSubmittedBy = types.StringValue(*version.CertificateSubmittedBy)
-		}
-		if version.CertificateSubmittedDate != nil {
-			versionModel.CertificateSubmittedDate = types.StringValue(*version.CertificateSubmittedDate)
-		}
-		if version.DeployedDate != nil {
-			versionModel.DeployedDate = types.StringValue(*version.DeployedDate)
-		}
-		if version.DeleteRequestedDate != nil {
-			versionModel.DeleteRequestedDate = types.StringValue(*version.DeleteRequestedDate)
-		}
-		if version.ScheduledDeleteDate != nil {
-			versionModel.ScheduledDeleteDate = types.StringValue(*version.ScheduledDeleteDate)
-		}
-		if version.CertificateBlock != nil {
-			versionModel.CertificateBlock.Certificate = types.StringValue(version.CertificateBlock.Certificate)
-			versionModel.CertificateBlock.KeyAlgorithm = types.StringValue(string(version.CertificateBlock.KeyAlgorithm))
-			versionModel.CertificateBlock.TrustChain = types.StringValue(version.CertificateBlock.TrustChain)
-		}
-		if version.CSRBlock != nil {
-			versionModel.CSRBlock.CSR = types.StringValue(version.CSRBlock.CSR)
-			versionModel.CSRBlock.KeyAlgorithm = types.StringValue(string(version.CSRBlock.KeyAlgorithm))
-		}
-
-		d.Versions = append(d.Versions, versionModel)
+	if versionsData.current != nil {
+		d.Current = convertDataToVersionModel(*versionsData.current)
+	}
+	if versionsData.previous != nil {
+		d.Previous = convertDataToVersionModel(*versionsData.previous)
 	}
 
 	return diags
+}
+
+func convertDataToVersionModel(v mtlskeystore.ClientCertificateVersion) *versionModel {
+	versionModel := versionModel{
+		Version:                  types.Int64Value(v.Version),
+		VersionGUID:              types.StringValue(v.VersionGUID),
+		Status:                   types.StringValue(string(v.Status)),
+		CreatedBy:                types.StringValue(v.CreatedBy),
+		CreatedDate:              types.StringValue(v.CreatedDate),
+		ExpiryDate:               types.StringValue(v.ExpiryDate),
+		Issuer:                   types.StringValue(v.Issuer),
+		KeyAlgorithm:             types.StringValue(string(v.KeyAlgorithm)),
+		KeyEllipticCurve:         types.StringValue(v.KeyEllipticCurve),
+		KeySizeInBytes:           types.StringValue(v.KeySizeInBytes),
+		SignatureAlgorithm:       types.StringValue(v.SignatureAlgorithm),
+		Subject:                  types.StringValue(v.Subject),
+		IssuedDate:               types.StringValue(v.IssuedDate),
+		CertificateSubmittedBy:   types.StringPointerValue(v.CertificateSubmittedBy),
+		CertificateSubmittedDate: types.StringPointerValue(v.CertificateSubmittedDate),
+		DeployedDate:             types.StringPointerValue(v.DeployedDate),
+		DeleteRequestedDate:      types.StringPointerValue(v.DeleteRequestedDate),
+		ScheduledDeleteDate:      types.StringPointerValue(v.ScheduledDeleteDate),
+		Properties:               parseProperties(v.AssociatedProperties),
+		Validation:               parseValidation(v.Validation),
+	}
+
+	if v.CertificateBlock != nil {
+		versionModel.CertificateBlock.Certificate = types.StringValue(v.CertificateBlock.Certificate)
+		versionModel.CertificateBlock.KeyAlgorithm = types.StringValue(string(v.CertificateBlock.KeyAlgorithm))
+		versionModel.CertificateBlock.TrustChain = types.StringValue(v.CertificateBlock.TrustChain)
+	}
+	if v.CSRBlock != nil {
+		versionModel.CSRBlock = &csrBlockModel{
+			CSR:          types.StringValue(v.CSRBlock.CSR),
+			KeyAlgorithm: types.StringValue(string(v.CSRBlock.KeyAlgorithm)),
+		}
+	}
+
+	return &versionModel
 }
 
 func (d *clientCertificateDataSourceModel) setNotificationEmails(ctx context.Context, emails []string) diag.Diagnostics {
@@ -475,7 +520,7 @@ func (d *clientCertificateDataSourceModel) setNotificationEmails(ctx context.Con
 		return diags
 	}
 	d.NotificationEmails = notificationEmails
-	return diags
+	return nil
 }
 
 func parseProperties(properties []mtlskeystore.AssociatedProperty) []propertyModel {

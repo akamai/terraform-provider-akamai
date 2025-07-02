@@ -26,8 +26,9 @@ func TestClientCertificateDataSource(t *testing.T) {
 		CheckEqual("notification_emails.0", "jkowalski@akamai.com").
 		CheckEqual("notification_emails.1", "jsmith@akamai.com").
 		CheckEqual("secure_network", "STANDARD_TLS").
-		CheckEqual("signer", "AKAMAI").
+		CheckEqual("signer", "THIRD_PARTY").
 		CheckEqual("subject", "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS/CN=test/").
+		CheckEqual("versions.#", "2").
 		CheckEqual("versions.0.version", "1").
 		CheckEqual("versions.0.version_guid", "test1234").
 		CheckEqual("versions.0.certificate_block.certificate", "-----BEGIN CERTIFICATE-----\ntest\n-----END CERTIFICATE-----").
@@ -50,9 +51,67 @@ func TestClientCertificateDataSource(t *testing.T) {
 		CheckEqual("versions.0.status", "DEPLOYED").
 		CheckEqual("versions.0.subject", "/C=US/O=Akamai Technologies/OU=test/CN=test/").
 		CheckEqual("versions.1.validation.errors.#", "0").
-		CheckEqual("versions.1.validation.warnings.#", "0")
+		CheckEqual("versions.1.validation.warnings.#", "0").
+		CheckMissing("include_associated_properties").
+		CheckMissing("versions.0.current").
+		CheckMissing("versions.0.previous").
+		CheckMissing("versions.1.current").
+		CheckMissing("versions.1.previous")
 
-	baseResponse := &mtlskeystore.GetClientCertificateResponse{
+	currentAndPreviousChecker := test.NewStateChecker("data.akamai_mtlskeystore_client_certificate.test").
+		CheckEqual("certificate_id", "1234").
+		CheckEqual("certificate_name", "test-name").
+		CheckEqual("created_by", "jkowalski").
+		CheckEqual("created_date", "2024-05-18T23:08:07Z").
+		CheckEqual("geography", "CORE").
+		CheckEqual("key_algorithm", "RSA").
+		CheckEqual("notification_emails.#", "2").
+		CheckEqual("notification_emails.0", "jkowalski@akamai.com").
+		CheckEqual("notification_emails.1", "jsmith@akamai.com").
+		CheckEqual("secure_network", "STANDARD_TLS").
+		CheckEqual("signer", "THIRD_PARTY").
+		CheckEqual("subject", "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS/CN=test/").
+		CheckEqual("versions.#", "0").
+		CheckEqual("current.version", "1").
+		CheckEqual("current.csr_block.csr", "test-csr").
+		CheckEqual("previous.version", "2").
+		CheckEqual("previous.csr_block.csr", "test-csr")
+
+	akamaiSignerNoCSRBlockChecker := test.NewStateChecker("data.akamai_mtlskeystore_client_certificate.test").
+		CheckEqual("certificate_id", "1234").
+		CheckEqual("certificate_name", "test-name").
+		CheckEqual("created_by", "jkowalski").
+		CheckEqual("created_date", "2024-05-18T23:08:07Z").
+		CheckEqual("geography", "CORE").
+		CheckEqual("key_algorithm", "RSA").
+		CheckEqual("notification_emails.#", "2").
+		CheckEqual("notification_emails.0", "jkowalski@akamai.com").
+		CheckEqual("notification_emails.1", "jsmith@akamai.com").
+		CheckEqual("secure_network", "STANDARD_TLS").
+		CheckEqual("signer", "AKAMAI").
+		CheckEqual("subject", "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS/CN=test/").
+		CheckEqual("versions.#", "0").
+		CheckEqual("current.version", "1").
+		CheckMissing("current.csr_block").
+		CheckMissing("previous")
+
+	baseThirdPartyResponse := &mtlskeystore.GetClientCertificateResponse{
+		CertificateID:   1234,
+		CertificateName: "test-name",
+		CreatedBy:       "jkowalski",
+		CreatedDate:     tst.NewTimeFromString(t, "2024-05-18T23:08:07Z"),
+		Geography:       "CORE",
+		KeyAlgorithm:    "RSA",
+		NotificationEmails: []string{
+			"jkowalski@akamai.com",
+			"jsmith@akamai.com",
+		},
+		SecureNetwork: "STANDARD_TLS",
+		Signer:        "THIRD_PARTY",
+		Subject:       "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS/CN=test/",
+	}
+
+	baseAkamaiResponse := &mtlskeystore.GetClientCertificateResponse{
 		CertificateID:   1234,
 		CertificateName: "test-name",
 		CreatedBy:       "jkowalski",
@@ -68,7 +127,7 @@ func TestClientCertificateDataSource(t *testing.T) {
 		Subject:       "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS/CN=test/",
 	}
 
-	baseVersionsResponse := &mtlskeystore.GetClientCertificateVersionsResponse{
+	baseVersionsResponse := &mtlskeystore.ListClientCertificateVersionsResponse{
 		Versions: []mtlskeystore.ClientCertificateVersion{
 			{
 				Version:     1,
@@ -148,7 +207,7 @@ func TestClientCertificateDataSource(t *testing.T) {
 		},
 	}
 
-	versionsResponseWithAssociatedProperties := &mtlskeystore.GetClientCertificateVersionsResponse{
+	versionsResponseWithAssociatedProperties := &mtlskeystore.ListClientCertificateVersionsResponse{
 		Versions: []mtlskeystore.ClientCertificateVersion{
 			{
 				Version:     1,
@@ -191,13 +250,129 @@ func TestClientCertificateDataSource(t *testing.T) {
 			},
 		},
 	}
+
+	versionsResponseWithCurrentAndPrevious := &mtlskeystore.ListClientCertificateVersionsResponse{
+		Versions: []mtlskeystore.ClientCertificateVersion{
+			{
+				Version:     1,
+				VersionGUID: "test1234",
+				CertificateBlock: &mtlskeystore.CertificateBlock{
+					Certificate:  "-----BEGIN CERTIFICATE-----\ntest\n-----END CERTIFICATE-----",
+					KeyAlgorithm: "RSA",
+					TrustChain:   "-----BEGIN CERTIFICATE-----\ntest-trust\n-----END CERTIFICATE-----",
+				},
+				VersionAlias:             ptr.To("CURRENT"),
+				CertificateSubmittedBy:   ptr.To("jkowalski"),
+				CertificateSubmittedDate: ptr.To("2024-05-18T23:08:07Z"),
+				CreatedBy:                "jkowalski",
+				CreatedDate:              "2024-05-17T23:08:07Z",
+				CSRBlock: &mtlskeystore.CSRBlock{
+					CSR:          "test-csr",
+					KeyAlgorithm: "RSA",
+				},
+				DeployedDate:       ptr.To("2024-05-18T23:08:07Z"),
+				ExpiryDate:         "2027-05-18T23:08:07Z",
+				IssuedDate:         "2027-05-18T23:08:07Z",
+				Issuer:             "test-issuer",
+				KeyAlgorithm:       "RSA",
+				KeyEllipticCurve:   "test-rsa",
+				KeySizeInBytes:     "2048",
+				SignatureAlgorithm: "SHA256_WITH_RSA",
+				Status:             "DEPLOYED",
+				Subject:            "/C=US/O=Akamai Technologies/OU=test/CN=test/",
+				Validation: mtlskeystore.ValidationResult{
+					Errors:   []mtlskeystore.ValidationDetail{},
+					Warnings: []mtlskeystore.ValidationDetail{},
+				},
+			},
+			{
+				Version:     2,
+				VersionGUID: "test12345",
+				CertificateBlock: &mtlskeystore.CertificateBlock{
+					Certificate:  "-----BEGIN CERTIFICATE-----\ntest\n-----END CERTIFICATE-----",
+					KeyAlgorithm: "RSA",
+					TrustChain:   "-----BEGIN CERTIFICATE-----\ntest-trust\n-----END CERTIFICATE-----",
+				},
+				VersionAlias:             ptr.To("PREVIOUS"),
+				CertificateSubmittedBy:   ptr.To("jkowalski"),
+				CertificateSubmittedDate: ptr.To("2024-05-18T23:08:07Z"),
+				CreatedBy:                "jkowalski",
+				CreatedDate:              "2024-05-17T23:08:07Z",
+				CSRBlock: &mtlskeystore.CSRBlock{
+					CSR:          "test-csr",
+					KeyAlgorithm: "RSA",
+				},
+				DeleteRequestedDate: ptr.To("2024-05-19T23:08:07Z"),
+				DeployedDate:        ptr.To("2024-05-18T23:08:07Z"),
+				ExpiryDate:          "2027-05-18T23:08:07Z",
+				IssuedDate:          "2027-05-18T23:08:07Z",
+				Issuer:              "test-issuer",
+				KeyAlgorithm:        "ECDSA",
+				KeyEllipticCurve:    "test-ecdsa",
+				ScheduledDeleteDate: ptr.To("2024-05-20T23:08:07Z"),
+				SignatureAlgorithm:  "SHA256_WITH_RSA",
+				Status:              "DELETE_PENDING",
+				Subject:             "/C=US/O=Akamai Technologies/OU=test/CN=test/",
+				Validation: mtlskeystore.ValidationResult{
+					Errors: []mtlskeystore.ValidationDetail{
+						{
+							Message: "test-error-message",
+							Reason:  "test-error-reason",
+							Type:    "test-error-type",
+						},
+					},
+					Warnings: []mtlskeystore.ValidationDetail{
+						{
+							Message: "test-warning-message",
+							Reason:  "test-warning-reason",
+							Type:    "test-warning-type",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	versionsResponseWithoutCSRBlock := &mtlskeystore.ListClientCertificateVersionsResponse{
+		Versions: []mtlskeystore.ClientCertificateVersion{
+			{
+				Version:     1,
+				VersionGUID: "test1234",
+				CertificateBlock: &mtlskeystore.CertificateBlock{
+					Certificate:  "-----BEGIN CERTIFICATE-----\ntest\n-----END CERTIFICATE-----",
+					KeyAlgorithm: "RSA",
+					TrustChain:   "-----BEGIN CERTIFICATE-----\ntest-trust\n-----END CERTIFICATE-----",
+				},
+				VersionAlias:             ptr.To("CURRENT"),
+				CertificateSubmittedBy:   ptr.To("jkowalski"),
+				CertificateSubmittedDate: ptr.To("2024-05-18T23:08:07Z"),
+				CreatedBy:                "jkowalski",
+				CreatedDate:              "2024-05-17T23:08:07Z",
+				DeployedDate:             ptr.To("2024-05-18T23:08:07Z"),
+				ExpiryDate:               "2027-05-18T23:08:07Z",
+				IssuedDate:               "2027-05-18T23:08:07Z",
+				Issuer:                   "test-issuer",
+				KeyAlgorithm:             "RSA",
+				KeyEllipticCurve:         "test-rsa",
+				KeySizeInBytes:           "2048",
+				SignatureAlgorithm:       "SHA256_WITH_RSA",
+				Status:                   "DEPLOYED",
+				Subject:                  "/C=US/O=Akamai Technologies/OU=test/CN=test/",
+				Validation: mtlskeystore.ValidationResult{
+					Errors:   []mtlskeystore.ValidationDetail{},
+					Warnings: []mtlskeystore.ValidationDetail{},
+				},
+			},
+		},
+	}
+
 	tests := map[string]struct {
 		init  func(*mtlskeystore.Mock)
 		steps []resource.TestStep
 	}{
 		"happy path without associated properties": {
 			init: func(m *mtlskeystore.Mock) {
-				mockClientCertificate(m, 1234, false, baseResponse, baseVersionsResponse)
+				mockClientCertificate(m, 1234, false, baseThirdPartyResponse, baseVersionsResponse)
 			},
 			steps: []resource.TestStep{
 				{
@@ -210,8 +385,6 @@ func TestClientCertificateDataSource(t *testing.T) {
 							certificate_id = 1234
 						}`,
 					Check: baseChecker.
-						CheckMissing("include_associated_properties").
-						CheckEqual("versions.#", "2").
 						CheckEqual("versions.1.version", "2").
 						CheckEqual("versions.1.version_guid", "test12345").
 						CheckEqual("versions.1.certificate_block.certificate", "-----BEGIN CERTIFICATE-----\ntest\n-----END CERTIFICATE-----").
@@ -240,15 +413,15 @@ func TestClientCertificateDataSource(t *testing.T) {
 						CheckEqual("versions.1.validation.warnings.0.message", "test-warning-message").
 						CheckEqual("versions.1.validation.warnings.0.reason", "test-warning-reason").
 						CheckEqual("versions.1.validation.warnings.0.type", "test-warning-type").
-						CheckMissing("versions.0.associated_properties.#").
-						CheckMissing("versions.1.associated_properties.#").
+						CheckMissing("versions.0.associated_properties").
+						CheckMissing("versions.1.associated_properties").
 						Build(),
 				},
 			},
 		},
 		"happy path with associated properties": {
 			init: func(m *mtlskeystore.Mock) {
-				mockClientCertificate(m, 1234, true, baseResponse, versionsResponseWithAssociatedProperties)
+				mockClientCertificate(m, 1234, true, baseThirdPartyResponse, versionsResponseWithAssociatedProperties)
 			},
 			steps: []resource.TestStep{
 				{
@@ -275,7 +448,7 @@ func TestClientCertificateDataSource(t *testing.T) {
 		},
 		"happy path - empty versions": {
 			init: func(m *mtlskeystore.Mock) {
-				mockClientCertificate(m, 12344, false, baseResponse, &mtlskeystore.GetClientCertificateVersionsResponse{Versions: []mtlskeystore.ClientCertificateVersion{}})
+				mockClientCertificate(m, 12344, false, baseThirdPartyResponse, &mtlskeystore.ListClientCertificateVersionsResponse{Versions: []mtlskeystore.ClientCertificateVersion{}})
 			},
 			steps: []resource.TestStep{
 				{
@@ -289,7 +462,6 @@ func TestClientCertificateDataSource(t *testing.T) {
 						}`,
 					Check: test.NewStateChecker("data.akamai_mtlskeystore_client_certificate.test").
 						CheckEqual("certificate_id", "12344").
-						CheckMissing("include_associated_properties").
 						CheckEqual("certificate_name", "test-name").
 						CheckEqual("created_by", "jkowalski").
 						CheckEqual("created_date", "2024-05-18T23:08:07Z").
@@ -299,10 +471,46 @@ func TestClientCertificateDataSource(t *testing.T) {
 						CheckEqual("notification_emails.0", "jkowalski@akamai.com").
 						CheckEqual("notification_emails.1", "jsmith@akamai.com").
 						CheckEqual("secure_network", "STANDARD_TLS").
-						CheckEqual("signer", "AKAMAI").
+						CheckEqual("signer", "THIRD_PARTY").
 						CheckEqual("subject", "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS/CN=test/").
 						CheckEqual("versions.#", "0").
 						Build(),
+				},
+			},
+		},
+		"happy path with CURRENT and PREVIOUS versions": {
+			init: func(m *mtlskeystore.Mock) {
+				mockClientCertificate(m, 1234, false, baseThirdPartyResponse, versionsResponseWithCurrentAndPrevious)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: `
+						provider "akamai" {
+						  edgerc = "../../common/testutils/edgerc"
+						}
+						
+						data "akamai_mtlskeystore_client_certificate" "test" {
+							certificate_id = 1234
+						}`,
+					Check: currentAndPreviousChecker.Build(),
+				},
+			},
+		},
+		"happy path with AKAMAI signer certificate without CSR block": {
+			init: func(m *mtlskeystore.Mock) {
+				mockClientCertificate(m, 1234, false, baseAkamaiResponse, versionsResponseWithoutCSRBlock)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: `
+						provider "akamai" {
+						  edgerc = "../../common/testutils/edgerc"
+						}
+						
+						data "akamai_mtlskeystore_client_certificate" "test" {
+							certificate_id = 1234
+						}`,
+					Check: akamaiSignerNoCSRBlockChecker.Build(),
 				},
 			},
 		},
@@ -326,13 +534,13 @@ func TestClientCertificateDataSource(t *testing.T) {
 				},
 			},
 		},
-		"error response from GetClientCertificateVersions": {
+		"error response from ListClientCertificateVersions": {
 			init: func(m *mtlskeystore.Mock) {
 				m.On("GetClientCertificate", testutils.MockContext, mtlskeystore.GetClientCertificateRequest{
 					CertificateID: 1233,
-				}).Return(baseResponse, nil).Once()
+				}).Return(baseThirdPartyResponse, nil).Once()
 
-				m.On("GetClientCertificateVersions", testutils.MockContext, mtlskeystore.GetClientCertificateVersionsRequest{
+				m.On("ListClientCertificateVersions", testutils.MockContext, mtlskeystore.ListClientCertificateVersionsRequest{
 					CertificateID: 1233,
 				}).Return(nil, fmt.Errorf("oops")).Once()
 			},
@@ -354,9 +562,9 @@ func TestClientCertificateDataSource(t *testing.T) {
 			init: func(m *mtlskeystore.Mock) {
 				m.On("GetClientCertificate", testutils.MockContext, mtlskeystore.GetClientCertificateRequest{
 					CertificateID: 12345,
-				}).Return(baseResponse, nil).Once()
+				}).Return(baseThirdPartyResponse, nil).Once()
 
-				m.On("GetClientCertificateVersions", testutils.MockContext, mtlskeystore.GetClientCertificateVersionsRequest{
+				m.On("ListClientCertificateVersions", testutils.MockContext, mtlskeystore.ListClientCertificateVersionsRequest{
 					CertificateID: 12345,
 				}).Return(nil, nil).Once()
 			},
@@ -423,12 +631,12 @@ func TestClientCertificateDataSource(t *testing.T) {
 	}
 }
 
-func mockClientCertificate(m *mtlskeystore.Mock, certificateID int64, includeProp bool, response *mtlskeystore.GetClientCertificateResponse, versionResponse *mtlskeystore.GetClientCertificateVersionsResponse) {
+func mockClientCertificate(m *mtlskeystore.Mock, certificateID int64, includeProp bool, response *mtlskeystore.GetClientCertificateResponse, versionResponse *mtlskeystore.ListClientCertificateVersionsResponse) {
 	m.On("GetClientCertificate", testutils.MockContext, mtlskeystore.GetClientCertificateRequest{
 		CertificateID: certificateID,
 	}).Return(response, nil).Times(3)
 
-	m.On("GetClientCertificateVersions", testutils.MockContext, mtlskeystore.GetClientCertificateVersionsRequest{
+	m.On("ListClientCertificateVersions", testutils.MockContext, mtlskeystore.ListClientCertificateVersionsRequest{
 		CertificateID:               certificateID,
 		IncludeAssociatedProperties: includeProp,
 	}).Return(versionResponse, nil).Times(3)
