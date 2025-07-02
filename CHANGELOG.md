@@ -40,7 +40,8 @@
 
 #### FEATURES/ENHANCEMENTS:
 
-
+* GTM
+  * Added a new optional parameters to the import id of the `akamai_gtm_domain` resource. It allows to specify the contract and the group of the imported domain and save them in the state ([I#631](https://github.com/akamai/terraform-provider-akamai/issues/631)).
 
 
 

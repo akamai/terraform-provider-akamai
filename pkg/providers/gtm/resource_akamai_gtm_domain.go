@@ -562,12 +562,36 @@ func resourceGTMv1DomainImport(_ context.Context, d *schema.ResourceData, m inte
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1DomainImport")
 
-	logger.Debugf("Importing GTM Domain: %s", d.Id())
+	// User-supplied import ID is a comma-separated list of domain,[,groupID[,contractID]]
+	// groupID and contractID are optional
+	parts := strings.Split(d.Id(), ",")
+
+	if len(parts) > 3 {
+		return nil, fmt.Errorf("invalid importID format: %v. An importID must be in the format 'domain[,groupID[,contractID]]'. "+
+			"It can include up to three comma-separated parts: domain (required), groupID (optional), and contractID (optional)", parts)
+	}
+	domain := parts[0]
+	var group, contract string
+	if len(parts) > 1 {
+		group = parts[1]
+		if err := d.Set("group", group); err != nil {
+			return nil, err
+		}
+	}
+	if len(parts) > 2 {
+		contract = parts[2]
+		if err := d.Set("contract", contract); err != nil {
+			return nil, err
+		}
+	}
+
+	logger.Debugf("Importing GTM Domain: %s", domain)
 
 	if err := d.Set("wait_on_complete", true); err != nil {
 		return nil, err
 	}
 
+	d.SetId(domain)
 	return []*schema.ResourceData{d}, nil
 }
 

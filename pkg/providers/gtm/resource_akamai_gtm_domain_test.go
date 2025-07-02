@@ -410,6 +410,16 @@ func TestResGTMDomainImport(t *testing.T) {
 				CheckEqual("sign_and_serve_algorithm", "RSA-SHA1").
 				CheckEqual("end_user_mapping_enabled", "false").Build(),
 		},
+		"happy path - import with optional fields": {
+			domainName: testDomainName + ",12345,54321",
+			init: func(m *gtm.Mock) {
+				// Read
+				mockGetDomain(m, getImportedDomain(), nil, testutils.Once)
+			},
+			stateCheck: test.NewImportChecker().
+				CheckEqual("group", "12345").
+				CheckEqual("contract", "54321").Build(),
+		},
 		"expect error - read": {
 			domainName: testDomainName,
 			init: func(m *gtm.Mock) {
@@ -418,12 +428,18 @@ func TestResGTMDomainImport(t *testing.T) {
 			},
 			expectError: regexp.MustCompile(`get failed`),
 		},
+		"expect error - too many parts in importID": {
+			domainName:  testDomainName + ",12345,54321,incorrect_part",
+			expectError: regexp.MustCompile(`invalid importID format: \[gtm_terra_testdomain.akadns.net 12345 54321 incorrect_part]. An importID must be in the format 'domain\[,groupID\[,contractID]]'. It can include up to three comma-separated parts: domain \(required\), groupID \(optional\), and contractID \(optional\)`),
+		},
 	}
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &gtm.Mock{}
-			tc.init(client)
+			if tc.init != nil {
+				tc.init(client)
+			}
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
