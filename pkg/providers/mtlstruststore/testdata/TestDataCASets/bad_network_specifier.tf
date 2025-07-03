@@ -3,5 +3,5 @@ provider "akamai" {
 }
 
 data "akamai_mtlstruststore_ca_sets" "test" {
-  name_prefix = "pref"
+  activated_on = "FOO+BAR"
 }

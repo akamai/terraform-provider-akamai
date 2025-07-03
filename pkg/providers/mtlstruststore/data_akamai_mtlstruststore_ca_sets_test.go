@@ -105,12 +105,12 @@ func TestCASetsDataSource(t *testing.T) {
 			init: func(m *mtlstruststore.Mock) {
 				var resp mtlstruststore.ListCASetsResponse
 				resp.CASets = append(resp.CASets, mockCASetStagingNetworkModel)
-				mockListCASetsWithParams(m, ptr.To("staging"), nil, &resp, false)
+				mockListCASetsWithParams(m, ptr.To("STAGING"), nil, &resp, false)
 			},
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, testDir+"activated_on_staging_network.tf"),
-					Check:  stagingNetworkStateChecker.CheckEqual("activated_on", "staging").Build(),
+					Check:  stagingNetworkStateChecker.CheckEqual("activated_on", "STAGING").Build(),
 				},
 			},
 		},
@@ -118,12 +118,12 @@ func TestCASetsDataSource(t *testing.T) {
 			init: func(m *mtlstruststore.Mock) {
 				var resp mtlstruststore.ListCASetsResponse
 				resp.CASets = append(resp.CASets, mockCASetProductionNetworkModel)
-				mockListCASetsWithParams(m, ptr.To("production"), nil, &resp, false)
+				mockListCASetsWithParams(m, ptr.To("PRODUCTION"), nil, &resp, false)
 			},
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, testDir+"activated_on_production_network.tf"),
-					Check:  productionNetworkStateChecker.CheckEqual("activated_on", "production").Build(),
+					Check:  productionNetworkStateChecker.CheckEqual("activated_on", "PRODUCTION").Build(),
 				},
 			},
 		},
@@ -131,12 +131,12 @@ func TestCASetsDataSource(t *testing.T) {
 			init: func(m *mtlstruststore.Mock) {
 				var resp mtlstruststore.ListCASetsResponse
 				resp.CASets = append(resp.CASets, mockCASetBothNetworkModel)
-				mockListCASetsWithParams(m, ptr.To("staging+production"), nil, &resp, false)
+				mockListCASetsWithParams(m, ptr.To("STAGING+PRODUCTION"), nil, &resp, false)
 			},
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, testDir+"activated_on_both_networks.tf"),
-					Check:  bothNetworksStateChecker.CheckEqual("activated_on", "staging+production").Build(),
+					Check:  bothNetworksStateChecker.CheckEqual("activated_on", "STAGING+PRODUCTION").Build(),
 				},
 			},
 		},
@@ -144,12 +144,12 @@ func TestCASetsDataSource(t *testing.T) {
 			init: func(m *mtlstruststore.Mock) {
 				var resp mtlstruststore.ListCASetsResponse
 				resp.CASets = append(resp.CASets, mockCASetStagingNetworkModel)
-				mockListCASetsWithParams(m, nil, ptr.To("staging"), &resp, false)
+				mockListCASetsWithParams(m, nil, ptr.To("pref"), &resp, false)
 			},
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, testDir+"filtered_by_name_prefix.tf"),
-					Check:  stagingNetworkStateChecker.CheckEqual("name_prefix", "staging").Build(),
+					Check:  stagingNetworkStateChecker.CheckEqual("name_prefix", "pref").Build(),
 				},
 			},
 		},
@@ -163,7 +163,16 @@ func TestCASetsDataSource(t *testing.T) {
 					ExpectError: regexp.MustCompile("oops"),
 				},
 			},
-		}}
+		},
+		"error - bad network specifier": {
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, testDir+"bad_network_specifier.tf"),
+					ExpectError: regexp.MustCompile("Attribute activated_on value must be one of"),
+				},
+			},
+		},
+	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()

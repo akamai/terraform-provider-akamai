@@ -60,9 +60,9 @@ func (d *caSetsDataSource) Schema(_ context.Context, _ datasource.SchemaRequest,
 				Optional:    true,
 			},
 			"activated_on": schema.StringAttribute{
-				Description: "Enum Includes CA sets in the response only if any version is active on the `STAGING` or `PRODUCTION` or `STAGING+PRODUCTION` network.",
+				Description: "When provided it filters where CA sets were activated `INACTIVE`, `STAGING`, `PRODUCTION`, `STAGING+PRODUCTION`, `PRODUCTION+STAGING`, `STAGING,PRODUCTION`, `PRODUCTION,STAGING` network.",
 				Optional:    true,
-				Validators:  []validator.String{stringvalidator.OneOfCaseInsensitive("production", "staging", "staging+production", "production+staging", "")},
+				Validators:  []validator.String{stringvalidator.OneOf("INACTIVE", "STAGING", "PRODUCTION", "STAGING+PRODUCTION", "PRODUCTION+STAGING", "STAGING,PRODUCTION", "PRODUCTION,STAGING", "")},
 			},
 			"ca_sets": schema.ListNestedAttribute{
 				Description: "List of CA sets.",

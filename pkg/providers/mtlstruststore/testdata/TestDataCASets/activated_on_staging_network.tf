@@ -3,5 +3,5 @@ provider "akamai" {
 }
 
 data "akamai_mtlstruststore_ca_sets" "test" {
-  activated_on = "staging"
+  activated_on = "STAGING"
 }
