@@ -9,17 +9,20 @@ import (
 	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/mtlskeystore"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/framework/modifiers"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/mapvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -28,6 +31,7 @@ import (
 var (
 	_ resource.Resource                = &clientCertificateThirdPartyResource{}
 	_ resource.ResourceWithImportState = &clientCertificateThirdPartyResource{}
+	_ resource.ResourceWithModifyPlan  = &clientCertificateThirdPartyResource{}
 )
 
 type clientCertificateThirdPartyResource struct {
@@ -48,7 +52,6 @@ type (
 		GroupID            types.Int64  `tfsdk:"group_id"`
 		KeyAlgorithm       types.String `tfsdk:"key_algorithm"`
 		NotificationEmails types.List   `tfsdk:"notification_emails"`
-		PreferredCA        types.String `tfsdk:"preferred_ca"`
 		SecureNetwork      types.String `tfsdk:"secure_network"`
 		Subject            types.String `tfsdk:"subject"`
 		Versions           types.Map    `tfsdk:"versions"`
@@ -162,6 +165,10 @@ func (r *clientCertificateThirdPartyResource) Schema(_ context.Context, _ resour
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(1),
 				},
+				PlanModifiers: []planmodifier.String{
+					modifiers.StringUseStateIf(modifiers.EqualUpToPrefixFunc("ctr_")),
+					modifiers.PreventStringUpdate(),
+				},
 			},
 			"geography": schema.StringAttribute{
 				Required:    true,
@@ -173,10 +180,16 @@ func (r *clientCertificateThirdPartyResource) Schema(_ context.Context, _ resour
 						"CHINA_AND_CORE",
 					),
 				},
+				PlanModifiers: []planmodifier.String{
+					modifiers.PreventStringUpdate(),
+				},
 			},
 			"group_id": schema.Int64Attribute{
 				Required:    true,
 				Description: "The group assigned to the client certificate. Must be greater than or equal to 0.",
+				PlanModifiers: []planmodifier.Int64{
+					modifiers.PreventInt64Update(),
+				},
 			},
 			"key_algorithm": schema.StringAttribute{
 				Optional:    true,
@@ -189,6 +202,9 @@ func (r *clientCertificateThirdPartyResource) Schema(_ context.Context, _ resour
 						"ECDSA",
 					),
 				},
+				PlanModifiers: []planmodifier.String{
+					modifiers.PreventStringUpdate(),
+				},
 			},
 			"notification_emails": schema.ListAttribute{
 				Required:    true,
@@ -196,13 +212,6 @@ func (r *clientCertificateThirdPartyResource) Schema(_ context.Context, _ resour
 				ElementType: types.StringType,
 				Validators: []validator.List{
 					listvalidator.SizeAtLeast(1),
-				},
-			},
-			"preferred_ca": schema.StringAttribute{
-				Optional:    true,
-				Description: "The common name of the account CA certificate selected to sign the client certificate. Specify `null` if you want to add this later.",
-				Validators: []validator.String{
-					stringvalidator.LengthBetween(0, 64),
 				},
 			},
 			"secure_network": schema.StringAttribute{
@@ -214,6 +223,9 @@ func (r *clientCertificateThirdPartyResource) Schema(_ context.Context, _ resour
 						"ENHANCED_TLS",
 					),
 				},
+				PlanModifiers: []planmodifier.String{
+					modifiers.PreventStringUpdate(),
+				},
 			},
 			"subject": schema.StringAttribute{
 				Optional:    true,
@@ -221,6 +233,9 @@ func (r *clientCertificateThirdPartyResource) Schema(_ context.Context, _ resour
 				Description: "Specifies the client certificate. The `CN` attribute is required and cannot exceed 64 characters. When `null`, the subject is constructed with the following format: `/C=US/O=Akamai Technologies, Inc./OU={vcdId} {contractId} {groupId}/CN={certificateName}/`.",
 				Validators: []validator.String{
 					stringvalidator.RegexMatches(cnRegex, "The `subject` must contain a valid `CN` attribute with a maximum length of 64 characters."),
+				},
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
 			"versions": versionsSchema(),
@@ -446,11 +461,91 @@ func (r *clientCertificateThirdPartyResource) Configure(_ context.Context, req r
 	r.meta = meta.Must(req.ProviderData)
 }
 
+func (r *clientCertificateThirdPartyResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	tflog.Debug(ctx, "Modifying Client Certificate Third Party Resource Plan")
+	var state, plan *clientCertificateThirdPartyResourceModel
+
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Updating 'subject' is not allowed and must be handled
+	// on plan modification level as it is optional and PreventStringUpdate() modifier is not enough.
+	if !req.State.Raw.IsNull() && !req.Plan.Raw.IsNull() {
+		if !state.Subject.Equal(plan.Subject) {
+			resp.Diagnostics.AddAttributeError(path.Root("subject"), "Cannot Update 'subject'",
+				"The `subject` attribute cannot be updated after the resource has been created.")
+			return
+		}
+	}
+
+	// If the only attributes that have changed are 'notification_emails' and/or 'certificate_name',
+	// suppress changes to the 'versions' attribute by using the state value.
+	if !req.State.Raw.IsNull() && !req.Plan.Raw.IsNull() {
+		if (state.haveNotificationEmailsChanged(plan) || state.hasNameChanged(plan)) && state.haveVersionsChanged(plan) {
+			tflog.Debug(ctx, "only 'notification_emails' or 'certificate_name' changed, using state value for versions instead")
+			resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("versions"), state.Versions)...)
+			if resp.Diagnostics.HasError() {
+				return
+			}
+		}
+	}
+
+	// Copy state versions to plan versions for the keys that are the same.
+	// This will suppress the changes for existing versions if other versions are being removed or created.
+	if !req.State.Raw.IsNull() && !req.Plan.Raw.IsNull() {
+		var stateVersions map[string]clientCertificateVersionModel
+		if diags := state.Versions.ElementsAs(ctx, &stateVersions, false); diags.HasError() {
+			resp.Diagnostics.Append(diags...)
+			return
+		}
+		var planVersions map[string]clientCertificateVersionModel
+		if diags := plan.Versions.ElementsAs(ctx, &planVersions, false); diags.HasError() {
+			resp.Diagnostics.Append(diags...)
+			return
+		}
+		for k := range planVersions {
+			if stateVersion, ok := stateVersions[k]; ok {
+				tflog.Debug(ctx, fmt.Sprintf("Using state values for version with key '%s'", k))
+				planVersions[k] = stateVersion
+			}
+		}
+		versionsValue, diags := types.MapValueFrom(ctx, versionsObjectType, planVersions)
+		if diags.HasError() {
+			resp.Diagnostics.Append(diags...)
+			return
+		}
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("versions"), versionsValue)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+	}
+}
+
+func (m *clientCertificateThirdPartyResourceModel) haveVersionsChanged(plan *clientCertificateThirdPartyResourceModel) bool {
+	return !m.Versions.Equal(plan.Versions)
+}
+
+func (m *clientCertificateThirdPartyResourceModel) haveNotificationEmailsChanged(plan *clientCertificateThirdPartyResourceModel) bool {
+	return !m.NotificationEmails.Equal(plan.NotificationEmails)
+}
+
+func (m *clientCertificateThirdPartyResourceModel) hasNameChanged(plan *clientCertificateThirdPartyResourceModel) bool {
+	return !m.CertificateName.Equal(plan.CertificateName)
+}
+
 func (r *clientCertificateThirdPartyResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	tflog.Debug(ctx, "Creating Client Certificate Third Party Resource")
-	var plan clientCertificateThirdPartyResourceModel
 
-	// Read the plan data into the model
+	var plan clientCertificateThirdPartyResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -483,14 +578,14 @@ func (r *clientCertificateThirdPartyResource) create(ctx context.Context, plan *
 	}
 	versionsKeys := extractVersionKeys(versions)
 	slices.Sort(versionsKeys)
+	tflog.Debug(ctx, fmt.Sprintf("Sorted versions keys for creation: %v", versionsKeys))
 
 	request := mtlskeystore.CreateClientCertificateRequest{
 		CertificateName:    plan.CertificateName.ValueString(),
-		ContractID:         plan.ContractID.ValueString(),
+		ContractID:         strings.TrimPrefix(plan.ContractID.ValueString(), "ctr_"),
 		Geography:          mtlskeystore.Geography(plan.Geography.ValueString()),
 		GroupID:            plan.GroupID.ValueInt64(),
 		NotificationEmails: notificationEmails,
-		PreferredCA:        plan.PreferredCA.ValueStringPointer(),
 		SecureNetwork:      mtlskeystore.SecureNetwork(plan.SecureNetwork.ValueString()),
 		Subject:            plan.Subject.ValueStringPointer(),
 		Signer:             mtlskeystore.SignerThirdParty,
@@ -508,19 +603,28 @@ func (r *clientCertificateThirdPartyResource) create(ctx context.Context, plan *
 
 	err = createMissingVersionsExplicitly(ctx, client, createClientCertificateResponse.CertificateID, versionsKeys[1:])
 	if err != nil {
-		return fmt.Errorf("failed to create missing versions: %w", err)
+		return fmt.Errorf("failed to create missing versions: %w. "+
+			"Client Certificate has been created successfully, but other operations failed. "+
+			"If you wish to manage the same client certificate, please import it and apply your configuration again. "+
+			"Client Certificate ID: %d", err, createClientCertificateResponse.CertificateID)
 	}
 
 	clientCertificate, err := client.GetClientCertificate(ctx, mtlskeystore.GetClientCertificateRequest{
 		CertificateID: createClientCertificateResponse.CertificateID,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to get client certificate: %w", err)
+		return fmt.Errorf("failed to get client certificate: %w. "+
+			"Client Certificate has been created successfully, but other operations failed. "+
+			"If you wish to manage the same client certificate, please import it and apply your configuration again. "+
+			"Client Certificate ID: %d", err, createClientCertificateResponse.CertificateID)
 	}
 
 	diags = plan.setClientCertificateData(ctx, clientCertificate)
 	if diags.HasError() {
-		return fmt.Errorf("failed to set data: %v", diags)
+		return fmt.Errorf("failed to set data: %v. "+
+			"Client Certificate has been created successfully, but other operations failed. "+
+			"If you wish to manage the same client certificate, please import it and apply your configuration again. "+
+			"Client Certificate ID: %d", createClientCertificateResponse.CertificateID, diags)
 	}
 
 	clientCertificateVersions, err := client.ListClientCertificateVersions(ctx, mtlskeystore.ListClientCertificateVersionsRequest{
@@ -528,12 +632,18 @@ func (r *clientCertificateThirdPartyResource) create(ctx context.Context, plan *
 		IncludeAssociatedProperties: true,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to get client certificate versions: %w", err)
+		return fmt.Errorf("failed to get client certificate versions: %w. "+
+			"Client Certificate has been created successfully, but other operations failed. "+
+			"If you wish to manage the same client certificate, please import it and apply your configuration again. "+
+			"Client Certificate ID: %d", err, createClientCertificateResponse.CertificateID)
 	}
 
 	diags = plan.setVersionsData(ctx, clientCertificateVersions, versionsKeys, nil)
 	if diags.HasError() {
-		return fmt.Errorf("failed to set versions data: %v", diags)
+		return fmt.Errorf("failed to set versions data: %v. "+
+			"Client Certificate has been created successfully, but other operations failed. "+
+			"If you wish to manage the same client certificate, please import it and apply your configuration again. "+
+			"Client Certificate ID: %d", createClientCertificateResponse.CertificateID, diags)
 	}
 
 	return nil
@@ -547,21 +657,22 @@ func createMissingVersionsExplicitly(ctx context.Context, client mtlskeystore.MT
 		if err != nil {
 			return fmt.Errorf("failed to create version %s: %w", version, err)
 		}
+		tflog.Debug(ctx, fmt.Sprintf("Successfully created version %s", version))
 	}
 	return nil
 }
 
 func (r *clientCertificateThirdPartyResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	tflog.Debug(ctx, "Reading Client Certificate Third Party Resource")
-	var state clientCertificateThirdPartyResourceModel
 
+	var state clientCertificateThirdPartyResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	if err := r.read(ctx, &state); err != nil {
-		resp.Diagnostics.AddError("Reading API Client Resource failed", err.Error())
+		resp.Diagnostics.AddError("Reading Client Certificate Third Party Resource failed", err.Error())
 		return
 	}
 
@@ -570,7 +681,6 @@ func (r *clientCertificateThirdPartyResource) Read(ctx context.Context, req reso
 
 func (r *clientCertificateThirdPartyResource) read(ctx context.Context, data *clientCertificateThirdPartyResourceModel) error {
 	client := Client(r.meta)
-
 	clientCertificate, err := client.GetClientCertificate(ctx, mtlskeystore.GetClientCertificateRequest{
 		CertificateID: data.CertificateID.ValueInt64(),
 	})
@@ -590,10 +700,19 @@ func (r *clientCertificateThirdPartyResource) read(ctx context.Context, data *cl
 	if err != nil {
 		return err
 	}
-	var dataVersions map[string]clientCertificateVersionModel
 
-	data.Versions.ElementsAs(ctx, &dataVersions, false)
+	// Read the state versions only if they are known.
+	// This excludes the case when the Read is invoked after the Import.
+	// In case of Import, dataVersions are nil.
+	var dataVersions map[string]clientCertificateVersionModel
+	if !data.Versions.IsUnknown() {
+		diags = data.Versions.ElementsAs(ctx, &dataVersions, false)
+		if diags.HasError() {
+			return fmt.Errorf("failed to get versions: %v", diags)
+		}
+	}
 	stateVersions := mapKeyToVersionGUID(dataVersions)
+	tflog.Debug(ctx, fmt.Sprintf("State versions keys: %v", stateVersions))
 
 	diags = data.setVersionsData(ctx, clientCertificateVersions, nil, stateVersions)
 	if diags.HasError() {
@@ -601,27 +720,6 @@ func (r *clientCertificateThirdPartyResource) read(ctx context.Context, data *cl
 	}
 
 	return nil
-}
-
-func (r *clientCertificateThirdPartyResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	tflog.Debug(ctx, "Importing Client Certificate Third Party Resource")
-
-	certificateID, err := strconv.ParseInt(req.ID, 10, 64)
-	if err != nil {
-		resp.Diagnostics.AddError("could not convert import ID to int", err.Error())
-		return
-	}
-
-	data := &clientCertificateThirdPartyResourceModel{
-		CertificateName:    types.StringUnknown(),
-		CertificateID:      types.Int64Value(certificateID),
-		Geography:          types.StringUnknown(),
-		NotificationEmails: types.ListUnknown(types.StringType),
-		SecureNetwork:      types.StringUnknown(),
-		Versions:           types.MapUnknown(versionsObjectType),
-	}
-
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 func (r *clientCertificateThirdPartyResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -649,22 +747,28 @@ func (r *clientCertificateThirdPartyResource) Update(ctx context.Context, req re
 func (r *clientCertificateThirdPartyResource) update(ctx context.Context, plan, oldState *clientCertificateThirdPartyResourceModel) error {
 	client := Client(r.meta)
 
-	if plan.CertificateName != oldState.CertificateName || !plan.NotificationEmails.Equal(oldState.NotificationEmails) {
-		var notificationEmails []string
-		if isKnown(plan.NotificationEmails) {
-			diags := plan.NotificationEmails.ElementsAs(ctx, &notificationEmails, false)
-			if diags.HasError() {
-				return fmt.Errorf("failed to get notification emails: %v", diags)
-			}
-		}
-		err := client.PatchClientCertificate(ctx, mtlskeystore.PatchClientCertificateRequest{
+	if !plan.CertificateName.Equal(oldState.CertificateName) || !plan.NotificationEmails.Equal(oldState.NotificationEmails) {
+		patchReq := mtlskeystore.PatchClientCertificateRequest{
 			CertificateID: oldState.CertificateID.ValueInt64(),
-			Body: mtlskeystore.PatchClientCertificateRequestBody{
-				CertificateName:    plan.CertificateName.ValueStringPointer(),
-				NotificationEmails: notificationEmails,
-			},
-		})
-		if err != nil {
+			Body:          mtlskeystore.PatchClientCertificateRequestBody{},
+		}
+		if plan.CertificateName != oldState.CertificateName {
+			tflog.Debug(ctx, fmt.Sprintf("Updating certificate name from '%s' to '%s'", oldState.CertificateName.ValueString(), plan.CertificateName.ValueString()))
+			patchReq.Body.CertificateName = plan.CertificateName.ValueStringPointer()
+		}
+		if !plan.NotificationEmails.Equal(oldState.NotificationEmails) {
+			tflog.Debug(ctx, "Updating notification emails")
+			var notificationEmails []string
+			if isKnown(plan.NotificationEmails) {
+				diags := plan.NotificationEmails.ElementsAs(ctx, &notificationEmails, false)
+				if diags.HasError() {
+					return fmt.Errorf("failed to get notification emails: %v", diags)
+				}
+			}
+			patchReq.Body.NotificationEmails = notificationEmails
+		}
+
+		if err := client.PatchClientCertificate(ctx, patchReq); err != nil {
 			return fmt.Errorf("failed to update client certificate: %w", err)
 		}
 	}
@@ -672,14 +776,23 @@ func (r *clientCertificateThirdPartyResource) update(ctx context.Context, plan, 
 	var planVersions map[string]clientCertificateVersionModel
 	var oldStateVersions map[string]clientCertificateVersionModel
 
-	plan.Versions.ElementsAs(ctx, &planVersions, false)
-	oldState.Versions.ElementsAs(ctx, &oldStateVersions, false)
+	if diags := plan.Versions.ElementsAs(ctx, &planVersions, false); diags.HasError() {
+		return fmt.Errorf("failed to get plan versions: %v", diags)
+	}
+	if diags := oldState.Versions.ElementsAs(ctx, &oldStateVersions, false); diags.HasError() {
+		return fmt.Errorf("failed to get old state versions: %v", diags)
+	}
 
 	planKeys := extractVersionKeys(planVersions)
 	stateKeys := extractVersionKeys(oldStateVersions)
 	slices.Sort(planKeys)
 
 	versionsToRemove, versionsToAdd, stateVersions := filterVersionsToRemoveAndAdd(stateKeys, planKeys, oldStateVersions)
+	tflog.Debug(ctx, "Changes to be performed during the update", map[string]any{
+		"versionsToRemove": versionsToRemove,
+		"versionsToAdd":    versionsToAdd,
+		"stateVersions":    stateVersions,
+	})
 
 	if len(versionsToRemove) > 0 {
 		err := checkStatus(ctx, client, oldState.CertificateID.ValueInt64(), versionsToRemove)
@@ -784,7 +897,11 @@ func (r *clientCertificateThirdPartyResource) Delete(ctx context.Context, req re
 	}
 
 	var stateVersions map[string]clientCertificateVersionModel
-	state.Versions.ElementsAs(ctx, &stateVersions, false)
+	diags := state.Versions.ElementsAs(ctx, &stateVersions, false)
+	if diags.HasError() {
+		resp.Diagnostics.Append(diags...)
+		return
+	}
 
 	for version := range stateVersions {
 		deleteMessage, err := client.DeleteClientCertificateVersion(ctx, mtlskeystore.DeleteClientCertificateVersionRequest{
@@ -803,6 +920,50 @@ func (r *clientCertificateThirdPartyResource) Delete(ctx context.Context, req re
 			return
 		}
 	}
+}
+
+func (r *clientCertificateThirdPartyResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	tflog.Debug(ctx, "Importing Client Certificate Third Party Resource")
+
+	certificateID, err := strconv.ParseInt(req.ID, 10, 64)
+	if err != nil {
+		resp.Diagnostics.AddError("could not convert import ID to int64", err.Error())
+		return
+	}
+	// Get client certiticate only to extract contract and group from the subject. Must be done in import method,
+	// as these values cannot be extracted from the API once the resource is created with a custom subject.
+	// If the subject does not contain the contract and group, the import will fail. This will be handled in DXE-5294.
+	client := Client(r.meta)
+	clientCertificate, err := client.GetClientCertificate(ctx, mtlskeystore.GetClientCertificateRequest{
+		CertificateID: certificateID,
+	})
+	if err != nil {
+		resp.Diagnostics.AddError("failed to get client certificate", err.Error())
+		return
+	}
+	ctr, grp, err := extractContractAndGroup(clientCertificate.Subject)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to extract contract and group from subject", err.Error())
+		return
+	}
+	grpInt64, err := strconv.ParseInt(grp, 10, 64)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to convert group to int64", err.Error())
+		return
+	}
+
+	data := &clientCertificateThirdPartyResourceModel{
+		CertificateName:    types.StringUnknown(),
+		CertificateID:      types.Int64Value(certificateID),
+		Geography:          types.StringUnknown(),
+		NotificationEmails: types.ListUnknown(types.StringType),
+		SecureNetwork:      types.StringUnknown(),
+		Versions:           types.MapUnknown(versionsObjectType),
+		ContractID:         types.StringValue(ctr),
+		GroupID:            types.Int64Value(grpInt64),
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 func isKnown(value attr.Value) bool {
@@ -943,15 +1104,14 @@ func (m *clientCertificateThirdPartyResourceModel) setClientCertificateData(ctx 
 	m.CertificateID = types.Int64Value(clientCertificate.CertificateID)
 	m.Geography = types.StringValue(string(clientCertificate.Geography))
 	m.KeyAlgorithm = types.StringValue(string(clientCertificate.KeyAlgorithm))
+	m.SecureNetwork = types.StringValue(string(clientCertificate.SecureNetwork))
+	m.Subject = types.StringValue(clientCertificate.Subject)
 
 	notificationEmailsObject, diags := types.ListValueFrom(ctx, types.StringType, clientCertificate.NotificationEmails)
 	if diags.HasError() {
 		return diags
 	}
 	m.NotificationEmails = notificationEmailsObject
-
-	m.SecureNetwork = types.StringValue(string(clientCertificate.SecureNetwork))
-	m.Subject = types.StringValue(clientCertificate.Subject)
 
 	return nil
 }
@@ -1030,4 +1190,37 @@ func validationType() map[string]attr.Type {
 
 func associatedPropertiesType() types.ObjectType {
 	return associatedPropertiesSchema().NestedObject.Type().(types.ObjectType)
+}
+
+func extractContractAndGroup(subject string) (string, string, error) {
+	// Capture the part before required '/CN=' label.
+	re := regexp.MustCompile(`\/([^\/]+)\/CN=`)
+	matches := re.FindStringSubmatch(subject)
+	if len(matches) < 2 {
+		return "", "", fmt.Errorf("unable to extract group and contract from subject: unexpected format: '%s'", subject)
+	}
+	parts := strings.Fields(matches[1])
+	if len(parts) < 2 {
+		return "", "", fmt.Errorf("unable to extract group and contract from subject: no group or contract: '%s'", subject)
+	}
+	ctr := parts[len(parts)-2]
+	grp := parts[len(parts)-1]
+	// If groupID cannot be parsed as an integer, return an error.
+	_, err := strconv.ParseInt(grp, 10, 64) // Ensure grp is a valid integer
+	if err != nil {
+		return "", "", fmt.Errorf("unable to extract group and contract from subject: '%s'", subject)
+	}
+	for _, label := range subjectLabels() {
+		if strings.Contains(ctr, label) || strings.Contains(grp, label) {
+			return "", "", fmt.Errorf("unable to extract group and contract from subject: '%s'", subject)
+		}
+	}
+
+	return ctr, grp, nil
+}
+
+func subjectLabels() []string {
+	return []string{
+		"CN=", "O=", "OU=", "L=", "ST=", "C=",
+	}
 }

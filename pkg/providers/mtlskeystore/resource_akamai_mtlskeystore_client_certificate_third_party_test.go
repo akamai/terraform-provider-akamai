@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/mtlskeystore"
@@ -16,276 +17,407 @@ import (
 
 type (
 	commonDataForResource struct {
-		CertificateName    string
-		CertificateID      int64
-		ContractID         string
-		Geography          string
-		GroupID            int64
-		KeyAlgorithm       string
-		NotificationEmails []string
-		SecureNetwork      string
-		Subject            string
-		Versions           map[string]versionData
+		certificateName    string
+		certificateID      int64
+		contractID         string
+		geography          string
+		groupID            int64
+		keyAlgorithm       string
+		notificationEmails []string
+		secureNetwork      string
+		subject            string
+		preferredCA        *string
+		versions           map[string]versionData
 	}
 
 	versionData struct {
-		Version                  int64
-		Status                   string
-		ExpiryDate               string
-		Issuer                   string
-		KeyAlgorithm             string
-		CertificateSubmittedBy   string
-		CertificateSubmittedDate string
-		CreatedBy                string
-		CreatedDate              string
-		DeleteRequestedDate      string
-		DeployedDate             string
-		IssuedDate               string
-		KeyEllipticCurve         string
-		KeySizeInBytes           string
-		ScheduledDeleteDate      string
-		SignatureAlgorithm       string
-		Subject                  string
-		VersionGUID              string
-		CertificateBlock         certificateBlock
-		CSRBlock                 csrBlock
-		Validation               validation
-		AssociatedProperties     []associatedProperty
+		version                  int64
+		status                   string
+		expiryDate               string
+		issuer                   string
+		keyAlgorithm             string
+		certificateSubmittedBy   string
+		certificateSubmittedDate string
+		createdBy                string
+		createdDate              string
+		deleteRequestedDate      string
+		deployedDate             string
+		issuedDate               string
+		keyEllipticCurve         string
+		keySizeInBytes           string
+		scheduledDeleteDate      string
+		signatureAlgorithm       string
+		subject                  string
+		versionGUID              string
+		certificateBlock         certificateBlock
+		csrBlock                 csrBlock
+		validation               validation
+		associatedProperties     []associatedProperty
 	}
 
 	certificateBlock struct {
-		Certificate string
-		TrustChain  string
+		certificate string
+		trustChain  string
 	}
 
 	csrBlock struct {
-		CSR          string
-		KeyAlgorithm string
+		csr          string
+		keyAlgorithm string
 	}
 
 	validation struct {
-		Errors   []validationError
-		Warnings []validationError
+		errors   []validationError
+		warnings []validationError
 	}
 
 	validationError struct {
-		Message string
-		Reason  string
-		Type    string
+		message   string
+		reason    string
+		errorType string
 	}
 
 	associatedProperty struct {
-		AssetID         int64
-		GroupID         int64
-		PropertyVersion int64
-		PropertyName    string
+		assetID         int64
+		groupID         int64
+		propertyVersion int64
+		propertyName    string
 	}
 )
 
 var (
-	testTwoVersions = commonDataForResource{
-		CertificateName: "test-certificate",
-		CertificateID:   12345,
-		ContractID:      "ctr_12345",
-		Geography:       "CORE",
-		GroupID:         1234,
-		KeyAlgorithm:    "RSA",
-		NotificationEmails: []string{
+	testTwoVersionsWithOptionalParams = commonDataForResource{
+		certificateName: "test-certificate",
+		certificateID:   12345,
+		contractID:      "ctr_12345",
+		geography:       "CORE",
+		groupID:         1234,
+		keyAlgorithm:    "RSA",
+		notificationEmails: []string{
 			"jkowalski@akamai.com",
 			"jsmith@akamai.com",
 		},
-		SecureNetwork: "STANDARD_TLS",
-		Subject:       "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS/CN=test-certificate/",
-		Versions: map[string]versionData{
+		secureNetwork: "STANDARD_TLS",
+		subject:       "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS/CN=test-certificate/",
+		versions: map[string]versionData{
 			"v2": {
-				Version:                  2,
-				Status:                   "ACTIVE",
-				ExpiryDate:               "2024-12-31T23:59:59Z",
-				Issuer:                   "Example CA",
-				KeyAlgorithm:             "ECDSA",
-				CertificateSubmittedBy:   "jkowalski",
-				CertificateSubmittedDate: "2023-01-01T00:00:00Z",
-				CreatedBy:                "jkowalski",
-				CreatedDate:              "2023-01-01T00:00:00Z",
-				DeployedDate:             "2023-01-02T00:00:00Z",
-				IssuedDate:               "2023-01-03T00:00:00Z",
-				KeyEllipticCurve:         "test-ecdsa",
-				KeySizeInBytes:           "2048",
-				SignatureAlgorithm:       "SHA256_WITH_RSA",
-				Subject:                  "CN=test.example.com",
-				VersionGUID:              "v2-guid-12345",
-				CertificateBlock: certificateBlock{
-					Certificate: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
-					TrustChain:  "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+				version:                  2,
+				status:                   "ACTIVE",
+				expiryDate:               "2024-12-31T23:59:59Z",
+				issuer:                   "Example CA",
+				keyAlgorithm:             "ECDSA",
+				certificateSubmittedBy:   "jkowalski",
+				certificateSubmittedDate: "2023-01-01T00:00:00Z",
+				createdBy:                "jkowalski",
+				createdDate:              "2023-01-01T00:00:00Z",
+				deployedDate:             "2023-01-02T00:00:00Z",
+				issuedDate:               "2023-01-03T00:00:00Z",
+				keyEllipticCurve:         "test-ecdsa",
+				keySizeInBytes:           "2048",
+				signatureAlgorithm:       "SHA256_WITH_RSA",
+				subject:                  "CN=test.example.com",
+				versionGUID:              "v2-guid-12345",
+				certificateBlock: certificateBlock{
+					certificate: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+					trustChain:  "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
 				},
-				CSRBlock: csrBlock{
-					CSR:          "-----BEGIN CERTIFICATE REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----",
-					KeyAlgorithm: "RSA",
+				csrBlock: csrBlock{
+					csr:          "-----BEGIN CERTIFICATE REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----",
+					keyAlgorithm: "RSA",
 				},
 			},
 			"v1": {
-				Version:                  1,
-				Status:                   "ACTIVE",
-				ExpiryDate:               "2024-12-31T23:59:59Z",
-				Issuer:                   "Example CA",
-				KeyAlgorithm:             "RSA",
-				CertificateSubmittedBy:   "jkowalski",
-				CertificateSubmittedDate: "2023-01-01T00:00:00Z",
-				CreatedBy:                "jkowalski",
-				CreatedDate:              "2023-01-01T00:00:00Z",
-				DeployedDate:             "2023-01-02T00:00:00Z",
-				IssuedDate:               "2023-01-03T00:00:00Z",
-				KeySizeInBytes:           "2048",
-				SignatureAlgorithm:       "SHA256_WITH_RSA",
-				Subject:                  "CN=test.example.com",
-				VersionGUID:              "v1-guid-12345",
-				CertificateBlock: certificateBlock{
-					Certificate: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
-					TrustChain:  "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+				version:                  1,
+				status:                   "ACTIVE",
+				expiryDate:               "2024-12-31T23:59:59Z",
+				issuer:                   "Example CA",
+				keyAlgorithm:             "RSA",
+				certificateSubmittedBy:   "jkowalski",
+				certificateSubmittedDate: "2023-01-01T00:00:00Z",
+				createdBy:                "jkowalski",
+				createdDate:              "2023-01-01T00:00:00Z",
+				deployedDate:             "2023-01-02T00:00:00Z",
+				issuedDate:               "2023-01-03T00:00:00Z",
+				keySizeInBytes:           "2048",
+				signatureAlgorithm:       "SHA256_WITH_RSA",
+				subject:                  "CN=test.example.com",
+				versionGUID:              "v1-guid-12345",
+				certificateBlock: certificateBlock{
+					certificate: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+					trustChain:  "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
 				},
-				CSRBlock: csrBlock{
-					CSR:          "-----BEGIN CERTIFICATE REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----",
-					KeyAlgorithm: "RSA",
+				csrBlock: csrBlock{
+					csr:          "-----BEGIN CERTIFICATE REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----",
+					keyAlgorithm: "RSA",
 				},
 			},
 		},
 	}
 
 	testOneVersion = commonDataForResource{
-		CertificateName: "test-certificate",
-		CertificateID:   12345,
-		ContractID:      "ctr_12345",
-		Geography:       "CORE",
-		GroupID:         1234,
-		KeyAlgorithm:    "RSA",
-		NotificationEmails: []string{
+		certificateName: "test-certificate",
+		certificateID:   12345,
+		contractID:      "ctr_12345",
+		geography:       "CORE",
+		groupID:         1234,
+		keyAlgorithm:    "RSA",
+		notificationEmails: []string{
 			"jkowalski@akamai.com",
 			"jsmith@akamai.com",
 		},
-		SecureNetwork: "STANDARD_TLS",
-		Versions: map[string]versionData{
+		secureNetwork: "STANDARD_TLS",
+		versions: map[string]versionData{
 			"v1": {
-				Version:                  1,
-				Status:                   "ACTIVE",
-				ExpiryDate:               "2024-12-31T23:59:59Z",
-				Issuer:                   "Example CA",
-				KeyAlgorithm:             "RSA",
-				CertificateSubmittedBy:   "jkowalski",
-				CertificateSubmittedDate: "2023-01-01T00:00:00Z",
-				CreatedBy:                "jkowalski",
-				CreatedDate:              "2023-01-01T00:00:00Z",
-				DeployedDate:             "2023-01-02T00:00:00Z",
-				IssuedDate:               "2023-01-03T00:00:00Z",
-				KeySizeInBytes:           "2048",
-				SignatureAlgorithm:       "SHA256_WITH_RSA",
-				Subject:                  "CN=test.example.com",
-				VersionGUID:              "v1-guid-12345",
-				CertificateBlock: certificateBlock{
-					Certificate: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
-					TrustChain:  "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+				version:                  1,
+				status:                   "ACTIVE",
+				expiryDate:               "2024-12-31T23:59:59Z",
+				issuer:                   "Example CA",
+				keyAlgorithm:             "RSA",
+				certificateSubmittedBy:   "jkowalski",
+				certificateSubmittedDate: "2023-01-01T00:00:00Z",
+				createdBy:                "jkowalski",
+				createdDate:              "2023-01-01T00:00:00Z",
+				deployedDate:             "2023-01-02T00:00:00Z",
+				issuedDate:               "2023-01-03T00:00:00Z",
+				keySizeInBytes:           "2048",
+				signatureAlgorithm:       "SHA256_WITH_RSA",
+				subject:                  "CN=test.example.com",
+				versionGUID:              "v1-guid-12345",
+				certificateBlock: certificateBlock{
+					certificate: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+					trustChain:  "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
 				},
-				CSRBlock: csrBlock{
-					CSR:          "-----BEGIN CERTIFICATE REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----",
-					KeyAlgorithm: "RSA",
+				csrBlock: csrBlock{
+					csr:          "-----BEGIN CERTIFICATE REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----",
+					keyAlgorithm: "RSA",
 				},
-				Validation: validation{
-					Errors:   nil,
-					Warnings: nil,
+				validation: validation{
+					errors:   nil,
+					warnings: nil,
 				},
-				AssociatedProperties: []associatedProperty{},
+				associatedProperties: []associatedProperty{},
+			},
+		},
+	}
+
+	testOneVersionWithSubject = commonDataForResource{
+		certificateName: "test-certificate",
+		certificateID:   12345,
+		contractID:      "ctr_12345",
+		geography:       "CORE",
+		groupID:         1234,
+		keyAlgorithm:    "RSA",
+		subject:         "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS/CN=test-certificate/",
+		notificationEmails: []string{
+			"jkowalski@akamai.com",
+			"jsmith@akamai.com",
+		},
+		secureNetwork: "STANDARD_TLS",
+		versions: map[string]versionData{
+			"v1": {
+				version:                  1,
+				status:                   "ACTIVE",
+				expiryDate:               "2024-12-31T23:59:59Z",
+				issuer:                   "Example CA",
+				keyAlgorithm:             "RSA",
+				certificateSubmittedBy:   "jkowalski",
+				certificateSubmittedDate: "2023-01-01T00:00:00Z",
+				createdBy:                "jkowalski",
+				createdDate:              "2023-01-01T00:00:00Z",
+				deployedDate:             "2023-01-02T00:00:00Z",
+				issuedDate:               "2023-01-03T00:00:00Z",
+				keySizeInBytes:           "2048",
+				signatureAlgorithm:       "SHA256_WITH_RSA",
+				subject:                  "CN=test.example.com",
+				versionGUID:              "v1-guid-12345",
+				certificateBlock: certificateBlock{
+					certificate: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+					trustChain:  "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+				},
+				csrBlock: csrBlock{
+					csr:          "-----BEGIN CERTIFICATE REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----",
+					keyAlgorithm: "RSA",
+				},
+				validation: validation{
+					errors:   nil,
+					warnings: nil,
+				},
+				associatedProperties: []associatedProperty{},
 			},
 		},
 	}
 
 	testUpdateNotificationEmailsAndCertificateName = commonDataForResource{
-		CertificateName: "updated-certificate-name",
-		CertificateID:   12345,
-		ContractID:      "ctr_12345",
-		Geography:       "CORE",
-		GroupID:         1234,
-		KeyAlgorithm:    "RSA",
-		NotificationEmails: []string{
+		certificateName: "updated-certificate-name",
+		certificateID:   12345,
+		contractID:      "ctr_12345",
+		geography:       "CORE",
+		groupID:         1234,
+		keyAlgorithm:    "RSA",
+		notificationEmails: []string{
 			"jkowalski@akamai.com",
 			"jsmith-new@akamai.com",
 			"test@akamai.com",
 		},
-		SecureNetwork: "STANDARD_TLS",
-		Versions: map[string]versionData{
+		secureNetwork: "STANDARD_TLS",
+		versions: map[string]versionData{
 			"v1": {
-				Version:                  1,
-				Status:                   "ACTIVE",
-				ExpiryDate:               "2024-12-31T23:59:59Z",
-				Issuer:                   "Example CA",
-				KeyAlgorithm:             "RSA",
-				CertificateSubmittedBy:   "jkowalski",
-				CertificateSubmittedDate: "2023-01-01T00:00:00Z",
-				CreatedBy:                "jkowalski",
-				CreatedDate:              "2023-01-01T00:00:00Z",
-				DeployedDate:             "2023-01-02T00:00:00Z",
-				IssuedDate:               "2023-01-03T00:00:00Z",
-				KeySizeInBytes:           "2048",
-				SignatureAlgorithm:       "SHA256_WITH_RSA",
-				Subject:                  "CN=test.example.com",
-				VersionGUID:              "v1-guid-12345",
-				CertificateBlock: certificateBlock{
-					Certificate: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
-					TrustChain:  "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+				version:                  1,
+				status:                   "ACTIVE",
+				expiryDate:               "2024-12-31T23:59:59Z",
+				issuer:                   "Example CA",
+				keyAlgorithm:             "RSA",
+				certificateSubmittedBy:   "jkowalski",
+				certificateSubmittedDate: "2023-01-01T00:00:00Z",
+				createdBy:                "jkowalski",
+				createdDate:              "2023-01-01T00:00:00Z",
+				deployedDate:             "2023-01-02T00:00:00Z",
+				issuedDate:               "2023-01-03T00:00:00Z",
+				keySizeInBytes:           "2048",
+				signatureAlgorithm:       "SHA256_WITH_RSA",
+				subject:                  "CN=test.example.com",
+				versionGUID:              "v1-guid-12345",
+				certificateBlock: certificateBlock{
+					certificate: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+					trustChain:  "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
 				},
-				CSRBlock: csrBlock{
-					CSR:          "-----BEGIN CERTIFICATE REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----",
-					KeyAlgorithm: "RSA",
+				csrBlock: csrBlock{
+					csr:          "-----BEGIN CERTIFICATE REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----",
+					keyAlgorithm: "RSA",
+				},
+			},
+		},
+	}
+
+	testUpdateNotificationEmails = commonDataForResource{
+		certificateName: "test-certificate",
+		certificateID:   12345,
+		contractID:      "ctr_12345",
+		geography:       "CORE",
+		groupID:         1234,
+		keyAlgorithm:    "RSA",
+		notificationEmails: []string{
+			"jkowalski@akamai.com",
+			"jsmith-new@akamai.com",
+			"test@akamai.com",
+		},
+		secureNetwork: "STANDARD_TLS",
+		versions: map[string]versionData{
+			"v1": {
+				version:                  1,
+				status:                   "ACTIVE",
+				expiryDate:               "2024-12-31T23:59:59Z",
+				issuer:                   "Example CA",
+				keyAlgorithm:             "RSA",
+				certificateSubmittedBy:   "jkowalski",
+				certificateSubmittedDate: "2023-01-01T00:00:00Z",
+				createdBy:                "jkowalski",
+				createdDate:              "2023-01-01T00:00:00Z",
+				deployedDate:             "2023-01-02T00:00:00Z",
+				issuedDate:               "2023-01-03T00:00:00Z",
+				keySizeInBytes:           "2048",
+				signatureAlgorithm:       "SHA256_WITH_RSA",
+				subject:                  "CN=test.example.com",
+				versionGUID:              "v1-guid-12345",
+				certificateBlock: certificateBlock{
+					certificate: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+					trustChain:  "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+				},
+				csrBlock: csrBlock{
+					csr:          "-----BEGIN CERTIFICATE REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----",
+					keyAlgorithm: "RSA",
+				},
+			},
+		},
+	}
+
+	testUpdateCertificateName = commonDataForResource{
+		certificateName: "updated-certificate-name",
+		certificateID:   12345,
+		contractID:      "ctr_12345",
+		geography:       "CORE",
+		groupID:         1234,
+		keyAlgorithm:    "RSA",
+		notificationEmails: []string{
+			"jkowalski@akamai.com",
+			"jsmith@akamai.com",
+		},
+		secureNetwork: "STANDARD_TLS",
+		versions: map[string]versionData{
+			"v1": {
+				version:                  1,
+				status:                   "ACTIVE",
+				expiryDate:               "2024-12-31T23:59:59Z",
+				issuer:                   "Example CA",
+				keyAlgorithm:             "RSA",
+				certificateSubmittedBy:   "jkowalski",
+				certificateSubmittedDate: "2023-01-01T00:00:00Z",
+				createdBy:                "jkowalski",
+				createdDate:              "2023-01-01T00:00:00Z",
+				deployedDate:             "2023-01-02T00:00:00Z",
+				issuedDate:               "2023-01-03T00:00:00Z",
+				keySizeInBytes:           "2048",
+				signatureAlgorithm:       "SHA256_WITH_RSA",
+				subject:                  "CN=test.example.com",
+				versionGUID:              "v1-guid-12345",
+				certificateBlock: certificateBlock{
+					certificate: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+					trustChain:  "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+				},
+				csrBlock: csrBlock{
+					csr:          "-----BEGIN CERTIFICATE REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----",
+					keyAlgorithm: "RSA",
 				},
 			},
 		},
 	}
 
 	testDataVersionWithAssociatedProperties = commonDataForResource{
-		CertificateName: "test-certificate",
-		CertificateID:   12345,
-		ContractID:      "ctr_12345",
-		Geography:       "CORE",
-		GroupID:         1234,
-		KeyAlgorithm:    "RSA",
-		NotificationEmails: []string{
+		certificateName: "test-certificate",
+		certificateID:   12345,
+		contractID:      "ctr_12345",
+		geography:       "CORE",
+		groupID:         1234,
+		keyAlgorithm:    "RSA",
+		notificationEmails: []string{
 			"jkowalski@akamai.com",
 			"jsmith@akamai.com",
 		},
-		SecureNetwork: "STANDARD_TLS",
-		Versions: map[string]versionData{
+		secureNetwork: "STANDARD_TLS",
+		versions: map[string]versionData{
 			"v1": {
-				Version:                  1,
-				Status:                   "ACTIVE",
-				ExpiryDate:               "2024-12-31T23:59:59Z",
-				Issuer:                   "Example CA",
-				KeyAlgorithm:             "RSA",
-				CertificateSubmittedBy:   "jkowalski",
-				CertificateSubmittedDate: "2023-01-01T00:00:00Z",
-				CreatedBy:                "jkowalski",
-				CreatedDate:              "2023-01-01T00:00:00Z",
-				DeployedDate:             "2023-01-02T00:00:00Z",
-				IssuedDate:               "2023-01-03T00:00:00Z",
-				KeySizeInBytes:           "2048",
-				SignatureAlgorithm:       "SHA256_WITH_RSA",
-				Subject:                  "CN=test.example.com",
-				VersionGUID:              "v1-guid-12345",
-				CertificateBlock: certificateBlock{
-					Certificate: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
-					TrustChain:  "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+				version:                  1,
+				status:                   "ACTIVE",
+				expiryDate:               "2024-12-31T23:59:59Z",
+				issuer:                   "Example CA",
+				keyAlgorithm:             "RSA",
+				certificateSubmittedBy:   "jkowalski",
+				certificateSubmittedDate: "2023-01-01T00:00:00Z",
+				createdBy:                "jkowalski",
+				createdDate:              "2023-01-01T00:00:00Z",
+				deployedDate:             "2023-01-02T00:00:00Z",
+				issuedDate:               "2023-01-03T00:00:00Z",
+				keySizeInBytes:           "2048",
+				signatureAlgorithm:       "SHA256_WITH_RSA",
+				subject:                  "CN=test.example.com",
+				versionGUID:              "v1-guid-12345",
+				certificateBlock: certificateBlock{
+					certificate: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+					trustChain:  "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
 				},
-				CSRBlock: csrBlock{
-					CSR:          "-----BEGIN CERTIFICATE REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----",
-					KeyAlgorithm: "RSA",
+				csrBlock: csrBlock{
+					csr:          "-----BEGIN CERTIFICATE REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----",
+					keyAlgorithm: "RSA",
 				},
-				Validation: validation{
-					Errors:   nil,
-					Warnings: nil,
+				validation: validation{
+					errors:   nil,
+					warnings: nil,
 				},
-				AssociatedProperties: []associatedProperty{
+				associatedProperties: []associatedProperty{
 					{
-						AssetID:         123456,
-						GroupID:         1234,
-						PropertyVersion: 1,
-						PropertyName:    "test-property-1",
+						assetID:         123456,
+						groupID:         1234,
+						propertyVersion: 1,
+						propertyName:    "test-property-1",
 					},
 				},
 			},
@@ -306,7 +438,7 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 		CheckEqual("notification_emails.0", "jkowalski@akamai.com").
 		CheckEqual("notification_emails.1", "jsmith@akamai.com").
 		CheckEqual("secure_network", "STANDARD_TLS").
-		CheckEqual("subject", "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS/CN=test-certificate/").
+		CheckEqual("subject", "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS ctr_12345 1234/CN=test-certificate/").
 		CheckEqual("versions.v1.version", "1").
 		CheckEqual("versions.v1.status", "ACTIVE").
 		CheckEqual("versions.v1.expiry_date", "2024-12-31T23:59:59Z").
@@ -364,18 +496,47 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 			init: func(m *mtlskeystore.Mock, testData, _ commonDataForResource) {
 				// Create
 				mockCreateClientCertificate(m, testData)
-				// Get
-				mockGetClientCertificate(m, testData).Times(2)
-				mockListClientCertificateVersions(m, testData.Versions, testData.CertificateID).Times(2)
+				// Default subject is returned.
+				testData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS ctr_12345 1234/CN=test-certificate/"
+				mockGetClientCertificate(m, testData).Once()
+				mockListClientCertificateVersions(m, testData.versions, testData.certificateID).Once()
+				// Read
+				mockGetClientCertificate(m, testData).Once()
+				mockListClientCertificateVersions(m, testData.versions, testData.certificateID).Once()
 				// Delete
-				mockListClientCertificateVersions(m, testData.Versions, testData.CertificateID)
-				mockDeleteClientCertificateVersion(m, testData.Versions, nil, testData.CertificateID, "v1")
+				mockListClientCertificateVersions(m, testData.versions, testData.certificateID)
+				mockDeleteClientCertificateVersion(m, testData.versions, nil, testData.certificateID, "v1")
 			},
 			mockCreateData: testOneVersion,
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create/create.tf"),
 					Check:  baseChecker.Build(),
+				},
+			},
+		},
+		"happy path - with unprefixed contract_id": {
+			init: func(m *mtlskeystore.Mock, testData, _ commonDataForResource) {
+				// Create
+				mockCreateClientCertificate(m, testData)
+				// Default subject is returned.
+				testData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS ctr_12345 1234/CN=test-certificate/"
+				mockGetClientCertificate(m, testData).Once()
+				mockListClientCertificateVersions(m, testData.versions, testData.certificateID).Once()
+				// Read
+				mockGetClientCertificate(m, testData).Once()
+				mockListClientCertificateVersions(m, testData.versions, testData.certificateID).Once()
+				// Delete
+				mockListClientCertificateVersions(m, testData.versions, testData.certificateID)
+				mockDeleteClientCertificateVersion(m, testData.versions, nil, testData.certificateID, "v1")
+			},
+			mockCreateData: testOneVersion,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create/create_unprefixed_contract.tf"),
+					Check: baseChecker.
+						CheckEqual("contract_id", "12345").
+						Build(),
 				},
 			},
 		},
@@ -384,21 +545,101 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				// Create
 				mockCreateClientCertificate(m, testData)
 				// Rotate version
-				mockRotateClientCertificateVersion(m, testData.Versions, testData.CertificateID, "v2")
-				// Get
-				mockGetClientCertificate(m, testData).Times(2)
-				mockListClientCertificateVersions(m, testData.Versions, testData.CertificateID).Times(2)
+				mockRotateClientCertificateVersion(m, testData.versions, testData.certificateID, "v2")
+				mockGetClientCertificate(m, testData).Once()
+				mockListClientCertificateVersions(m, testData.versions, testData.certificateID).Once()
+				// Read
+				mockGetClientCertificate(m, testData).Once()
+				mockListClientCertificateVersions(m, testData.versions, testData.certificateID).Once()
 				// Delete
-				mockListClientCertificateVersions(m, testData.Versions, testData.CertificateID)
-				mockDeleteClientCertificateVersion(m, testData.Versions, nil, testData.CertificateID, "v1")
-				mockDeleteClientCertificateVersion(m, testData.Versions, nil, testData.CertificateID, "v2")
+				mockListClientCertificateVersions(m, testData.versions, testData.certificateID)
+				mockDeleteClientCertificateVersion(m, testData.versions, nil, testData.certificateID, "v1")
+				mockDeleteClientCertificateVersion(m, testData.versions, nil, testData.certificateID, "v2")
 			},
-			mockCreateData: testTwoVersions,
+			mockCreateData: testTwoVersionsWithOptionalParams,
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create_with_optional_params.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create/create_with_optional_params.tf"),
 					Check: secondVersionChecker.
 						CheckEqual("subject", "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS/CN=test-certificate/").
+						Build(),
+				},
+			},
+		},
+		"happy path - update notification emails only": {
+			init: func(m *mtlskeystore.Mock, testCreateData, testUpdateData commonDataForResource) {
+				// Create
+				mockCreateClientCertificate(m, testCreateData)
+				// Default subject is returned.
+				testCreateData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS ctr_12345 1234/CN=test-certificate/"
+				mockGetClientCertificate(m, testCreateData).Once()
+				mockListClientCertificateVersions(m, testCreateData.versions, testCreateData.certificateID).Once()
+				// Read x2
+				mockGetClientCertificate(m, testCreateData).Twice()
+				mockListClientCertificateVersions(m, testCreateData.versions, testCreateData.certificateID).Twice()
+				// Update
+				mockPatchClientCertificate(m, 12345, nil, []string{"jkowalski@akamai.com", "jsmith-new@akamai.com", "test@akamai.com"})
+				// Default subject is returned.
+				testUpdateData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS ctr_12345 1234/CN=test-certificate/"
+				mockGetClientCertificate(m, testUpdateData).Once()
+				mockListClientCertificateVersions(m, testUpdateData.versions, testUpdateData.certificateID).Once()
+				// Read
+				mockGetClientCertificate(m, testUpdateData).Once()
+				mockListClientCertificateVersions(m, testUpdateData.versions, testUpdateData.certificateID).Once()
+				// Delete
+				mockListClientCertificateVersions(m, testUpdateData.versions, testUpdateData.certificateID)
+				mockDeleteClientCertificateVersion(m, testUpdateData.versions, nil, testUpdateData.certificateID, "v1")
+			},
+			mockCreateData: testOneVersion,
+			mockUpdateData: testUpdateNotificationEmails,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create/create.tf"),
+					Check:  baseChecker.Build(),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/update/update_notification_emails.tf"),
+					Check: baseChecker.
+						CheckEqual("notification_emails.#", "3").
+						CheckEqual("notification_emails.0", "jkowalski@akamai.com").
+						CheckEqual("notification_emails.1", "jsmith-new@akamai.com").
+						CheckEqual("notification_emails.2", "test@akamai.com").
+						Build(),
+				},
+			},
+		},
+		"happy path - update certificate name only": {
+			init: func(m *mtlskeystore.Mock, testCreateData, testUpdateData commonDataForResource) {
+				// Create
+				mockCreateClientCertificate(m, testCreateData)
+				// Default subject is returned.
+				testCreateData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS ctr_12345 1234/CN=test-certificate/"
+				mockGetClientCertificate(m, testCreateData).Once()
+				mockListClientCertificateVersions(m, testCreateData.versions, testCreateData.certificateID).Once()
+				// Read x2
+				mockGetClientCertificate(m, testCreateData).Twice()
+				mockListClientCertificateVersions(m, testCreateData.versions, testCreateData.certificateID).Twice()
+				// Update
+				mockPatchClientCertificate(m, 12345, ptr.To("updated-certificate-name"), nil)
+				// Default subject is returned.
+				testUpdateData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS ctr_12345 1234/CN=test-certificate/"
+				mockGetClientCertificate(m, testUpdateData).Twice()
+				mockListClientCertificateVersions(m, testUpdateData.versions, testUpdateData.certificateID).Twice()
+				// Delete
+				mockListClientCertificateVersions(m, testUpdateData.versions, testUpdateData.certificateID)
+				mockDeleteClientCertificateVersion(m, testUpdateData.versions, nil, testUpdateData.certificateID, "v1")
+			},
+			mockCreateData: testOneVersion,
+			mockUpdateData: testUpdateCertificateName,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create/create.tf"),
+					Check:  baseChecker.Build(),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/update/update_certificate_name.tf"),
+					Check: baseChecker.
+						CheckEqual("certificate_name", "updated-certificate-name").
 						Build(),
 				},
 			},
@@ -407,33 +648,37 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 			init: func(m *mtlskeystore.Mock, testCreateData, testUpdateData commonDataForResource) {
 				// Create
 				mockCreateClientCertificate(m, testCreateData)
-				// Get
-				mockGetClientCertificate(m, testCreateData)
-				mockListClientCertificateVersions(m, testCreateData.Versions, testCreateData.CertificateID)
+				// Default subject is returned.
+				testCreateData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS ctr_12345 1234/CN=test-certificate/"
+				mockGetClientCertificate(m, testCreateData).Once()
+				mockListClientCertificateVersions(m, testCreateData.versions, testCreateData.certificateID).Once()
+				// Read x2
+				mockGetClientCertificate(m, testCreateData).Twice()
+				mockListClientCertificateVersions(m, testCreateData.versions, testCreateData.certificateID).Twice()
+				// Update
+				mockPatchClientCertificate(m, 12345, ptr.To("updated-certificate-name"), []string{"jkowalski@akamai.com", "jsmith-new@akamai.com", "test@akamai.com"})
+				// Default subject is returned.
+				testUpdateData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS ctr_12345 1234/CN=test-certificate/"
+				mockGetClientCertificate(m, testUpdateData).Once()
+				mockListClientCertificateVersions(m, testUpdateData.versions, testUpdateData.certificateID).Once()
 				// Read
-				mockGetClientCertificate(m, testCreateData).Times(2)
-				mockListClientCertificateVersions(m, testCreateData.Versions, testCreateData.CertificateID).Times(2)
-				// Patch
-				mockPatchClientCertificate(m, testUpdateData)
-				// Get
-				mockGetClientCertificate(m, testUpdateData).Times(2)
-				mockListClientCertificateVersions(m, testUpdateData.Versions, testUpdateData.CertificateID).Times(2)
+				mockGetClientCertificate(m, testUpdateData).Once()
+				mockListClientCertificateVersions(m, testUpdateData.versions, testUpdateData.certificateID).Once()
 				// Delete
-				mockListClientCertificateVersions(m, testUpdateData.Versions, testUpdateData.CertificateID)
-				mockDeleteClientCertificateVersion(m, testUpdateData.Versions, nil, testUpdateData.CertificateID, "v1")
+				mockListClientCertificateVersions(m, testUpdateData.versions, testUpdateData.certificateID)
+				mockDeleteClientCertificateVersion(m, testUpdateData.versions, nil, testUpdateData.certificateID, "v1")
 			},
 			mockCreateData: testOneVersion,
 			mockUpdateData: testUpdateNotificationEmailsAndCertificateName,
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create/create.tf"),
 					Check:  baseChecker.Build(),
 				},
 				{
-					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/update_certificate_name_and_notification_emails.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/update/update_certificate_name_and_notification_emails.tf"),
 					Check: baseChecker.
 						CheckEqual("certificate_name", "updated-certificate-name").
-						CheckEqual("subject", "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS/CN=test-certificate/").
 						CheckEqual("notification_emails.#", "3").
 						CheckEqual("notification_emails.0", "jkowalski@akamai.com").
 						CheckEqual("notification_emails.1", "jsmith-new@akamai.com").
@@ -446,92 +691,94 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 			init: func(m *mtlskeystore.Mock, testCreateData, _ commonDataForResource) {
 				newVersions := map[string]versionData{
 					"v4": {
-						Version:                  4,
-						Status:                   "ACTIVE",
-						ExpiryDate:               "2025-12-31T23:59:59Z",
-						Issuer:                   "Example CA",
-						KeyAlgorithm:             "RSA",
-						CertificateSubmittedBy:   "jkowalski",
-						CertificateSubmittedDate: "2023-01-01T00:00:00Z",
-						CreatedBy:                "jkowalski",
-						CreatedDate:              "2023-01-01T00:00:00Z",
-						DeployedDate:             "2023-01-02T00:00:00Z",
-						IssuedDate:               "2023-01-03T00:00:00Z",
-						KeySizeInBytes:           "2048",
-						SignatureAlgorithm:       "SHA256_WITH_RSA",
-						Subject:                  "CN=test.example.com",
-						VersionGUID:              "v4-guid-12345",
-						CertificateBlock: certificateBlock{
-							Certificate: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
-							TrustChain:  "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+						version:                  4,
+						status:                   "ACTIVE",
+						expiryDate:               "2025-12-31T23:59:59Z",
+						issuer:                   "Example CA",
+						keyAlgorithm:             "RSA",
+						certificateSubmittedBy:   "jkowalski",
+						certificateSubmittedDate: "2023-01-01T00:00:00Z",
+						createdBy:                "jkowalski",
+						createdDate:              "2023-01-01T00:00:00Z",
+						deployedDate:             "2023-01-02T00:00:00Z",
+						issuedDate:               "2023-01-03T00:00:00Z",
+						keySizeInBytes:           "2048",
+						signatureAlgorithm:       "SHA256_WITH_RSA",
+						subject:                  "CN=test.example.com",
+						versionGUID:              "v4-guid-12345",
+						certificateBlock: certificateBlock{
+							certificate: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+							trustChain:  "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
 						},
-						CSRBlock: csrBlock{
-							CSR:          "-----BEGIN CERTIFICATE REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----",
-							KeyAlgorithm: "RSA",
+						csrBlock: csrBlock{
+							csr:          "-----BEGIN CERTIFICATE REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----",
+							keyAlgorithm: "RSA",
 						},
 					},
 					"v3": {
-						Version:                  3,
-						Status:                   "ACTIVE",
-						ExpiryDate:               "2025-12-31T23:59:59Z",
-						Issuer:                   "Example CA",
-						KeyAlgorithm:             "RSA",
-						CertificateSubmittedBy:   "jkowalski",
-						CertificateSubmittedDate: "2023-01-01T00:00:00Z",
-						CreatedBy:                "jkowalski",
-						CreatedDate:              "2023-01-01T00:00:00Z",
-						DeployedDate:             "2023-01-02T00:00:00Z",
-						IssuedDate:               "2023-01-03T00:00:00Z",
-						KeySizeInBytes:           "2048",
-						SignatureAlgorithm:       "SHA256_WITH_RSA",
-						Subject:                  "CN=test.example.com",
-						VersionGUID:              "v3-guid-12345",
-						CertificateBlock: certificateBlock{
-							Certificate: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
-							TrustChain:  "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+						version:                  3,
+						status:                   "ACTIVE",
+						expiryDate:               "2025-12-31T23:59:59Z",
+						issuer:                   "Example CA",
+						keyAlgorithm:             "RSA",
+						certificateSubmittedBy:   "jkowalski",
+						certificateSubmittedDate: "2023-01-01T00:00:00Z",
+						createdBy:                "jkowalski",
+						createdDate:              "2023-01-01T00:00:00Z",
+						deployedDate:             "2023-01-02T00:00:00Z",
+						issuedDate:               "2023-01-03T00:00:00Z",
+						keySizeInBytes:           "2048",
+						signatureAlgorithm:       "SHA256_WITH_RSA",
+						subject:                  "CN=test.example.com",
+						versionGUID:              "v3-guid-12345",
+						certificateBlock: certificateBlock{
+							certificate: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+							trustChain:  "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
 						},
-						CSRBlock: csrBlock{
-							CSR:          "-----BEGIN CERTIFICATE REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----",
-							KeyAlgorithm: "RSA",
+						csrBlock: csrBlock{
+							csr:          "-----BEGIN CERTIFICATE REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----",
+							keyAlgorithm: "RSA",
 						},
 					},
-					"v2": testCreateData.Versions["v2"],
-					"v1": testCreateData.Versions["v1"],
+					"v2": testCreateData.versions["v2"],
+					"v1": testCreateData.versions["v1"],
 				}
 				// Create
 				mockCreateClientCertificate(m, testCreateData)
 				// Rotate version
-				mockRotateClientCertificateVersion(m, testCreateData.Versions, testCreateData.CertificateID, "v2")
-				// Get
-				mockGetClientCertificate(m, testCreateData)
-				mockListClientCertificateVersions(m, testCreateData.Versions, testCreateData.CertificateID)
+				mockRotateClientCertificateVersion(m, testCreateData.versions, testCreateData.certificateID, "v2")
+				mockGetClientCertificate(m, testCreateData).Once()
+				mockListClientCertificateVersions(m, testCreateData.versions, testCreateData.certificateID).Once()
+				// Read x2
+				mockGetClientCertificate(m, testCreateData).Twice()
+				mockListClientCertificateVersions(m, testCreateData.versions, testCreateData.certificateID).Twice()
+				// Update: Add new versions (Rotate)
+				mockRotateClientCertificateVersion(m, newVersions, testCreateData.certificateID, "v3")
+				mockRotateClientCertificateVersion(m, newVersions, testCreateData.certificateID, "v4")
+				mockGetClientCertificate(m, testCreateData).Once()
+				mockListClientCertificateVersions(m, newVersions, testCreateData.certificateID).Once()
 				// Read
-				mockGetClientCertificate(m, testCreateData).Times(2)
-				mockListClientCertificateVersions(m, testCreateData.Versions, testCreateData.CertificateID).Times(2)
-				// Add new versions (Rotate)
-				mockRotateClientCertificateVersion(m, newVersions, testCreateData.CertificateID, "v3")
-				mockRotateClientCertificateVersion(m, newVersions, testCreateData.CertificateID, "v4")
-				// Get
-				mockGetClientCertificate(m, testCreateData).Times(2)
-				mockListClientCertificateVersions(m, newVersions, testCreateData.CertificateID).Times(2)
+				mockGetClientCertificate(m, testCreateData).Once()
+				mockListClientCertificateVersions(m, newVersions, testCreateData.certificateID).Once()
 				// Delete
-				mockListClientCertificateVersions(m, newVersions, testCreateData.CertificateID)
-				mockDeleteClientCertificateVersion(m, newVersions, nil, testCreateData.CertificateID, "v1")
-				mockDeleteClientCertificateVersion(m, newVersions, nil, testCreateData.CertificateID, "v2")
-				mockDeleteClientCertificateVersion(m, newVersions, nil, testCreateData.CertificateID, "v3")
-				mockDeleteClientCertificateVersion(m, newVersions, nil, testCreateData.CertificateID, "v4")
+				mockListClientCertificateVersions(m, newVersions, testCreateData.certificateID)
+				mockDeleteClientCertificateVersion(m, newVersions, nil, testCreateData.certificateID, "v1")
+				mockDeleteClientCertificateVersion(m, newVersions, nil, testCreateData.certificateID, "v2")
+				mockDeleteClientCertificateVersion(m, newVersions, nil, testCreateData.certificateID, "v3")
+				mockDeleteClientCertificateVersion(m, newVersions, nil, testCreateData.certificateID, "v4")
 			},
-			mockCreateData: testTwoVersions,
+			mockCreateData: testTwoVersionsWithOptionalParams,
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create_with_optional_params.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create/create_with_optional_params.tf"),
 					Check: secondVersionChecker.
 						CheckEqual("subject", "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS/CN=test-certificate/").
 						Build(),
 				},
 				{
-					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/update_new_version.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/update/update_new_version.tf"),
 					Check: secondVersionChecker.
+						CheckEqual("subject", "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS/CN=test-certificate/").
 						CheckEqual("versions.v3.version", "3").
 						CheckEqual("versions.v3.status", "ACTIVE").
 						CheckEqual("versions.v3.expiry_date", "2025-12-31T23:59:59Z").
@@ -583,34 +830,37 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				// Create
 				mockCreateClientCertificate(m, testCreateData)
 				// Rotate version
-				mockRotateClientCertificateVersion(m, testCreateData.Versions, testCreateData.CertificateID, "v2")
-				// Get
-				mockGetClientCertificate(m, testCreateData)
-				mockListClientCertificateVersions(m, testCreateData.Versions, testCreateData.CertificateID)
-				// Read
-				mockGetClientCertificate(m, testCreateData).Times(2)
-				mockListClientCertificateVersions(m, testCreateData.Versions, testCreateData.CertificateID).Times(2)
+				mockRotateClientCertificateVersion(m, testCreateData.versions, testCreateData.certificateID, "v2")
+				mockGetClientCertificate(m, testCreateData).Once()
+				mockListClientCertificateVersions(m, testCreateData.versions, testCreateData.certificateID).Once()
+				// Read x2
+				mockGetClientCertificate(m, testCreateData).Twice()
+				mockListClientCertificateVersions(m, testCreateData.versions, testCreateData.certificateID).Twice()
 				// Update (delete version)
-				mockListClientCertificateVersions(m, testCreateData.Versions, testCreateData.CertificateID)
-				mockDeleteClientCertificateVersion(m, testCreateData.Versions, nil, testCreateData.CertificateID, "v2")
+				mockListClientCertificateVersions(m, testCreateData.versions, testCreateData.certificateID).Once()
+				mockDeleteClientCertificateVersion(m, testCreateData.versions, nil, testCreateData.certificateID, "v2")
+				// Modify update test data so the custom subject is returned.
+				testUpdateData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS/CN=test-certificate/"
+				mockGetClientCertificate(m, testUpdateData).Once()
+				mockListClientCertificateVersions(m, testUpdateData.versions, testUpdateData.certificateID).Once()
 				// Read
-				mockGetClientCertificate(m, testUpdateData).Times(2)
-				mockListClientCertificateVersions(m, testUpdateData.Versions, testUpdateData.CertificateID).Times(2)
+				mockGetClientCertificate(m, testUpdateData).Once()
+				mockListClientCertificateVersions(m, testUpdateData.versions, testUpdateData.certificateID).Once()
 				// Delete
-				mockListClientCertificateVersions(m, testUpdateData.Versions, testUpdateData.CertificateID)
-				mockDeleteClientCertificateVersion(m, testUpdateData.Versions, nil, testUpdateData.CertificateID, "v1")
+				mockListClientCertificateVersions(m, testUpdateData.versions, testUpdateData.certificateID)
+				mockDeleteClientCertificateVersion(m, testUpdateData.versions, nil, testUpdateData.certificateID, "v1")
 			},
-			mockCreateData: testTwoVersions,
+			mockCreateData: testTwoVersionsWithOptionalParams,
 			mockUpdateData: testOneVersion,
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create_with_optional_params.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create/create_with_optional_params.tf"),
 					Check: secondVersionChecker.
 						CheckEqual("subject", "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS/CN=test-certificate/").
 						Build(),
 				},
 				{
-					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/update_remove_one_version.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/update/update_remove_one_version.tf"),
 					Check: baseChecker.
 						CheckEqual("subject", "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS/CN=test-certificate/").
 						Build(),
@@ -621,64 +871,65 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 			init: func(m *mtlskeystore.Mock, testCreateData, _ commonDataForResource) {
 				newVersions := map[string]versionData{
 					"v3": {
-						Version:                  3,
-						Status:                   "ACTIVE",
-						ExpiryDate:               "2025-12-31T23:59:59Z",
-						Issuer:                   "Example CA",
-						KeyAlgorithm:             "RSA",
-						CertificateSubmittedBy:   "jkowalski",
-						CertificateSubmittedDate: "2023-01-01T00:00:00Z",
-						CreatedBy:                "jkowalski",
-						CreatedDate:              "2023-01-01T00:00:00Z",
-						DeployedDate:             "2023-01-02T00:00:00Z",
-						IssuedDate:               "2023-01-03T00:00:00Z",
-						KeySizeInBytes:           "2048",
-						SignatureAlgorithm:       "SHA256_WITH_RSA",
-						Subject:                  "CN=test.example.com",
-						VersionGUID:              "v3-guid-12345",
-						CertificateBlock: certificateBlock{
-							Certificate: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
-							TrustChain:  "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+						version:                  3,
+						status:                   "ACTIVE",
+						expiryDate:               "2025-12-31T23:59:59Z",
+						issuer:                   "Example CA",
+						keyAlgorithm:             "RSA",
+						certificateSubmittedBy:   "jkowalski",
+						certificateSubmittedDate: "2023-01-01T00:00:00Z",
+						createdBy:                "jkowalski",
+						createdDate:              "2023-01-01T00:00:00Z",
+						deployedDate:             "2023-01-02T00:00:00Z",
+						issuedDate:               "2023-01-03T00:00:00Z",
+						keySizeInBytes:           "2048",
+						signatureAlgorithm:       "SHA256_WITH_RSA",
+						subject:                  "CN=test.example.com",
+						versionGUID:              "v3-guid-12345",
+						certificateBlock: certificateBlock{
+							certificate: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+							trustChain:  "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
 						},
-						CSRBlock: csrBlock{
-							CSR:          "-----BEGIN CERTIFICATE REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----",
-							KeyAlgorithm: "RSA",
+						csrBlock: csrBlock{
+							csr:          "-----BEGIN CERTIFICATE REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----",
+							keyAlgorithm: "RSA",
 						},
 					},
-					"v1": testCreateData.Versions["v1"],
+					"v1": testCreateData.versions["v1"],
 				}
 				// Create
 				mockCreateClientCertificate(m, testCreateData)
 				// Rotate version
-				mockRotateClientCertificateVersion(m, testCreateData.Versions, testCreateData.CertificateID, "v2")
-				// Get
-				mockGetClientCertificate(m, testCreateData)
-				mockListClientCertificateVersions(m, testCreateData.Versions, testCreateData.CertificateID)
+				mockRotateClientCertificateVersion(m, testCreateData.versions, testCreateData.certificateID, "v2")
+				mockGetClientCertificate(m, testCreateData).Once()
+				mockListClientCertificateVersions(m, testCreateData.versions, testCreateData.certificateID).Once()
 				// Read
-				mockGetClientCertificate(m, testCreateData).Times(2)
-				mockListClientCertificateVersions(m, testCreateData.Versions, testCreateData.CertificateID).Times(2)
+				mockGetClientCertificate(m, testCreateData).Twice()
+				mockListClientCertificateVersions(m, testCreateData.versions, testCreateData.certificateID).Twice()
 				// Update (delete version + add new version)
-				mockListClientCertificateVersions(m, testCreateData.Versions, testCreateData.CertificateID)
-				mockDeleteClientCertificateVersion(m, testCreateData.Versions, nil, testCreateData.CertificateID, "v2")
-				mockRotateClientCertificateVersion(m, newVersions, testCreateData.CertificateID, "v3")
-				// Get
-				mockGetClientCertificate(m, testCreateData).Times(2)
-				mockListClientCertificateVersions(m, newVersions, testCreateData.CertificateID).Times(2)
+				mockListClientCertificateVersions(m, testCreateData.versions, testCreateData.certificateID)
+				mockDeleteClientCertificateVersion(m, testCreateData.versions, nil, testCreateData.certificateID, "v2")
+				mockRotateClientCertificateVersion(m, newVersions, testCreateData.certificateID, "v3")
+				mockGetClientCertificate(m, testCreateData).Once()
+				mockListClientCertificateVersions(m, newVersions, testCreateData.certificateID).Once()
+				// Read
+				mockGetClientCertificate(m, testCreateData).Once()
+				mockListClientCertificateVersions(m, newVersions, testCreateData.certificateID).Once()
 				// Delete
-				mockListClientCertificateVersions(m, newVersions, testCreateData.CertificateID)
-				mockDeleteClientCertificateVersion(m, newVersions, nil, testCreateData.CertificateID, "v1")
-				mockDeleteClientCertificateVersion(m, newVersions, nil, testCreateData.CertificateID, "v3")
+				mockListClientCertificateVersions(m, newVersions, testCreateData.certificateID)
+				mockDeleteClientCertificateVersion(m, newVersions, nil, testCreateData.certificateID, "v1")
+				mockDeleteClientCertificateVersion(m, newVersions, nil, testCreateData.certificateID, "v3")
 			},
-			mockCreateData: testTwoVersions,
+			mockCreateData: testTwoVersionsWithOptionalParams,
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create_with_optional_params.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create/create_with_optional_params.tf"),
 					Check: secondVersionChecker.
 						CheckEqual("subject", "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS/CN=test-certificate/").
 						Build(),
 				},
 				{
-					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/update_remove_one_and_add_one_version.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/update/update_remove_one_and_add_one_version.tf"),
 					Check: baseChecker.
 						CheckEqual("subject", "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS/CN=test-certificate/").
 						CheckEqual("versions.v3.version", "3").
@@ -710,90 +961,91 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 			init: func(m *mtlskeystore.Mock, testCreateData, _ commonDataForResource) {
 				newVersions := map[string]versionData{
 					"v4": {
-						Version:                  4,
-						Status:                   "ACTIVE",
-						ExpiryDate:               "2025-12-31T23:59:59Z",
-						Issuer:                   "Example CA",
-						KeyAlgorithm:             "RSA",
-						CertificateSubmittedBy:   "jkowalski",
-						CertificateSubmittedDate: "2023-01-01T00:00:00Z",
-						CreatedBy:                "jkowalski",
-						CreatedDate:              "2023-01-01T00:00:00Z",
-						DeployedDate:             "2023-01-02T00:00:00Z",
-						IssuedDate:               "2023-01-03T00:00:00Z",
-						KeySizeInBytes:           "2048",
-						SignatureAlgorithm:       "SHA256_WITH_RSA",
-						Subject:                  "CN=test.example.com",
-						VersionGUID:              "v4-guid-12345",
-						CertificateBlock: certificateBlock{
-							Certificate: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
-							TrustChain:  "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+						version:                  4,
+						status:                   "ACTIVE",
+						expiryDate:               "2025-12-31T23:59:59Z",
+						issuer:                   "Example CA",
+						keyAlgorithm:             "RSA",
+						certificateSubmittedBy:   "jkowalski",
+						certificateSubmittedDate: "2023-01-01T00:00:00Z",
+						createdBy:                "jkowalski",
+						createdDate:              "2023-01-01T00:00:00Z",
+						deployedDate:             "2023-01-02T00:00:00Z",
+						issuedDate:               "2023-01-03T00:00:00Z",
+						keySizeInBytes:           "2048",
+						signatureAlgorithm:       "SHA256_WITH_RSA",
+						subject:                  "CN=test.example.com",
+						versionGUID:              "v4-guid-12345",
+						certificateBlock: certificateBlock{
+							certificate: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+							trustChain:  "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
 						},
-						CSRBlock: csrBlock{
-							CSR:          "-----BEGIN CERTIFICATE REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----",
-							KeyAlgorithm: "RSA",
+						csrBlock: csrBlock{
+							csr:          "-----BEGIN CERTIFICATE REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----",
+							keyAlgorithm: "RSA",
 						},
 					},
 					"v3": {
-						Version:                  3,
-						Status:                   "ACTIVE",
-						ExpiryDate:               "2025-12-31T23:59:59Z",
-						Issuer:                   "Example CA",
-						KeyAlgorithm:             "RSA",
-						CertificateSubmittedBy:   "jkowalski",
-						CertificateSubmittedDate: "2023-01-01T00:00:00Z",
-						CreatedBy:                "jkowalski",
-						CreatedDate:              "2023-01-01T00:00:00Z",
-						DeployedDate:             "2023-01-02T00:00:00Z",
-						IssuedDate:               "2023-01-03T00:00:00Z",
-						KeySizeInBytes:           "2048",
-						SignatureAlgorithm:       "SHA256_WITH_RSA",
-						Subject:                  "CN=test.example.com",
-						VersionGUID:              "v3-guid-12345",
-						CertificateBlock: certificateBlock{
-							Certificate: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
-							TrustChain:  "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+						version:                  3,
+						status:                   "ACTIVE",
+						expiryDate:               "2025-12-31T23:59:59Z",
+						issuer:                   "Example CA",
+						keyAlgorithm:             "RSA",
+						certificateSubmittedBy:   "jkowalski",
+						certificateSubmittedDate: "2023-01-01T00:00:00Z",
+						createdBy:                "jkowalski",
+						createdDate:              "2023-01-01T00:00:00Z",
+						deployedDate:             "2023-01-02T00:00:00Z",
+						issuedDate:               "2023-01-03T00:00:00Z",
+						keySizeInBytes:           "2048",
+						signatureAlgorithm:       "SHA256_WITH_RSA",
+						subject:                  "CN=test.example.com",
+						versionGUID:              "v3-guid-12345",
+						certificateBlock: certificateBlock{
+							certificate: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+							trustChain:  "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
 						},
-						CSRBlock: csrBlock{
-							CSR:          "-----BEGIN CERTIFICATE REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----",
-							KeyAlgorithm: "RSA",
+						csrBlock: csrBlock{
+							csr:          "-----BEGIN CERTIFICATE REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----",
+							keyAlgorithm: "RSA",
 						},
 					},
 				}
 				// Create
 				mockCreateClientCertificate(m, testCreateData)
 				// Rotate version
-				mockRotateClientCertificateVersion(m, testCreateData.Versions, testCreateData.CertificateID, "v2")
-				// Get
-				mockGetClientCertificate(m, testCreateData)
-				mockListClientCertificateVersions(m, testCreateData.Versions, testCreateData.CertificateID)
-				// Read
-				mockGetClientCertificate(m, testCreateData).Times(2)
-				mockListClientCertificateVersions(m, testCreateData.Versions, testCreateData.CertificateID).Times(2)
+				mockRotateClientCertificateVersion(m, testCreateData.versions, testCreateData.certificateID, "v2")
+				mockGetClientCertificate(m, testCreateData).Once()
+				mockListClientCertificateVersions(m, testCreateData.versions, testCreateData.certificateID).Once()
+				// Read x2
+				mockGetClientCertificate(m, testCreateData).Twice()
+				mockListClientCertificateVersions(m, testCreateData.versions, testCreateData.certificateID).Twice()
 				// Update (delete all versions + add new versions)
-				mockListClientCertificateVersions(m, testCreateData.Versions, testCreateData.CertificateID)
-				mockDeleteClientCertificateVersion(m, testCreateData.Versions, nil, testCreateData.CertificateID, "v2")
-				mockRotateClientCertificateVersion(m, newVersions, testCreateData.CertificateID, "v3")
-				mockRotateClientCertificateVersion(m, newVersions, testCreateData.CertificateID, "v4")
-				mockDeleteClientCertificateVersion(m, testCreateData.Versions, nil, testCreateData.CertificateID, "v1")
-				// Get
-				mockGetClientCertificate(m, testCreateData).Times(2)
-				mockListClientCertificateVersions(m, newVersions, testCreateData.CertificateID).Times(2)
+				mockListClientCertificateVersions(m, testCreateData.versions, testCreateData.certificateID)
+				mockDeleteClientCertificateVersion(m, testCreateData.versions, nil, testCreateData.certificateID, "v2")
+				mockRotateClientCertificateVersion(m, newVersions, testCreateData.certificateID, "v3")
+				mockRotateClientCertificateVersion(m, newVersions, testCreateData.certificateID, "v4")
+				mockDeleteClientCertificateVersion(m, testCreateData.versions, nil, testCreateData.certificateID, "v1")
+				mockGetClientCertificate(m, testCreateData).Once()
+				mockListClientCertificateVersions(m, newVersions, testCreateData.certificateID).Once()
+				// Read
+				mockGetClientCertificate(m, testCreateData).Once()
+				mockListClientCertificateVersions(m, newVersions, testCreateData.certificateID).Once()
 				// Delete
-				mockListClientCertificateVersions(m, newVersions, testCreateData.CertificateID)
-				mockDeleteClientCertificateVersion(m, newVersions, nil, testCreateData.CertificateID, "v3")
-				mockDeleteClientCertificateVersion(m, newVersions, nil, testCreateData.CertificateID, "v4")
+				mockListClientCertificateVersions(m, newVersions, testCreateData.certificateID)
+				mockDeleteClientCertificateVersion(m, newVersions, nil, testCreateData.certificateID, "v3")
+				mockDeleteClientCertificateVersion(m, newVersions, nil, testCreateData.certificateID, "v4")
 			},
-			mockCreateData: testTwoVersions,
+			mockCreateData: testTwoVersionsWithOptionalParams,
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create_with_optional_params.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create/create_with_optional_params.tf"),
 					Check: secondVersionChecker.
 						CheckEqual("subject", "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS/CN=test-certificate/").
 						Build(),
 				},
 				{
-					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/update_remove_all_and_add_new_versions.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/update/update_remove_all_and_add_new_versions.tf"),
 					Check: test.NewStateChecker("akamai_mtlskeystore_client_certificate_third_party.test").
 						CheckEqual("certificate_id", "12345").
 						CheckEqual("certificate_name", "test-certificate").
@@ -856,61 +1108,60 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 			init: func(m *mtlskeystore.Mock, testCreateData, _ commonDataForResource) {
 				newVersions := map[string]versionData{
 					"v3": {
-						Version:                  3,
-						Status:                   "ACTIVE",
-						ExpiryDate:               "2025-12-31T23:59:59Z",
-						Issuer:                   "Example CA",
-						KeyAlgorithm:             "RSA",
-						CertificateSubmittedBy:   "jkowalski",
-						CertificateSubmittedDate: "2023-01-01T00:00:00Z",
-						CreatedBy:                "jkowalski",
-						CreatedDate:              "2024-01-01T00:00:00Z",
-						DeployedDate:             "2023-01-02T00:00:00Z",
-						IssuedDate:               "2023-01-03T00:00:00Z",
-						KeySizeInBytes:           "2048",
-						SignatureAlgorithm:       "SHA256_WITH_RSA",
-						Subject:                  "CN=test.example.com",
-						VersionGUID:              "v3-guid-12345",
-						CertificateBlock: certificateBlock{
-							Certificate: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
-							TrustChain:  "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+						version:                  3,
+						status:                   "ACTIVE",
+						expiryDate:               "2025-12-31T23:59:59Z",
+						issuer:                   "Example CA",
+						keyAlgorithm:             "RSA",
+						certificateSubmittedBy:   "jkowalski",
+						certificateSubmittedDate: "2023-01-01T00:00:00Z",
+						createdBy:                "jkowalski",
+						createdDate:              "2024-01-01T00:00:00Z",
+						deployedDate:             "2023-01-02T00:00:00Z",
+						issuedDate:               "2023-01-03T00:00:00Z",
+						keySizeInBytes:           "2048",
+						signatureAlgorithm:       "SHA256_WITH_RSA",
+						subject:                  "CN=test.example.com",
+						versionGUID:              "v3-guid-12345",
+						certificateBlock: certificateBlock{
+							certificate: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+							trustChain:  "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
 						},
-						CSRBlock: csrBlock{
-							CSR:          "-----BEGIN CERTIFICATE REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----",
-							KeyAlgorithm: "RSA",
+						csrBlock: csrBlock{
+							csr:          "-----BEGIN CERTIFICATE REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----",
+							keyAlgorithm: "RSA",
 						},
 					},
-					"v2": testCreateData.Versions["v2"],
-					"v1": testCreateData.Versions["v1"],
+					"v2": testCreateData.versions["v2"],
+					"v1": testCreateData.versions["v1"],
 				}
 				// Step 1
 				// Create
 				mockCreateClientCertificate(m, testCreateData)
 				// Rotate version
-				mockRotateClientCertificateVersion(m, testCreateData.Versions, testCreateData.CertificateID, "v2")
-				// Get
-				mockGetClientCertificate(m, testCreateData)
-				mockListClientCertificateVersions(m, testCreateData.Versions, testCreateData.CertificateID)
+				mockRotateClientCertificateVersion(m, testCreateData.versions, testCreateData.certificateID, "v2")
+				mockGetClientCertificate(m, testCreateData).Once()
+				mockListClientCertificateVersions(m, testCreateData.versions, testCreateData.certificateID).Once()
 				// Read
-				mockGetClientCertificate(m, testCreateData)
-				mockListClientCertificateVersions(m, testCreateData.Versions, testCreateData.CertificateID)
+				mockGetClientCertificate(m, testCreateData).Once()
+				mockListClientCertificateVersions(m, testCreateData.versions, testCreateData.certificateID).Once()
 				// Step 2
 				// Read - mock that the new version was created outside terraform
-				mockGetClientCertificate(m, testCreateData)
-				mockListClientCertificateVersions(m, newVersions, testCreateData.CertificateID)
+				mockGetClientCertificate(m, testCreateData).Once()
+				mockListClientCertificateVersions(m, newVersions, testCreateData.certificateID).Once()
 				// Read
-				mockGetClientCertificate(m, testCreateData)
-				mockListClientCertificateVersions(m, newVersions, testCreateData.CertificateID)
+				mockGetClientCertificate(m, testCreateData).Once()
+				mockListClientCertificateVersions(m, newVersions, testCreateData.certificateID).Once()
 				// Delete previous versions to allow delete
-				mockListClientCertificateVersions(m, testCreateData.Versions, testCreateData.CertificateID)
-				mockDeleteClientCertificateVersion(m, newVersions, nil, testCreateData.CertificateID, "v1")
-				mockDeleteClientCertificateVersion(m, newVersions, nil, testCreateData.CertificateID, "v2")
-				mockDeleteClientCertificateVersion(m, newVersions, nil, testCreateData.CertificateID, "v3")
+				mockListClientCertificateVersions(m, testCreateData.versions, testCreateData.certificateID)
+				mockDeleteClientCertificateVersion(m, newVersions, nil, testCreateData.certificateID, "v1")
+				mockDeleteClientCertificateVersion(m, newVersions, nil, testCreateData.certificateID, "v2")
+				mockDeleteClientCertificateVersion(m, newVersions, nil, testCreateData.certificateID, "v3")
 			},
-			mockCreateData: testTwoVersions,
+			mockCreateData: testTwoVersionsWithOptionalParams,
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create_with_optional_params.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create/create_with_optional_params.tf"),
 					Check: secondVersionChecker.
 						CheckEqual("subject", "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS/CN=test-certificate/").
 						Build(),
@@ -949,10 +1200,10 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 			init: func(m *mtlskeystore.Mock, testCreateData, _ commonDataForResource) {
 				mockCreateClientCertificate(m, testCreateData).Return(nil, fmt.Errorf("create failed"))
 			},
-			mockCreateData: testTwoVersions,
+			mockCreateData: testTwoVersionsWithOptionalParams,
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create_with_optional_params.tf"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create/create_with_optional_params.tf"),
 					ExpectError: regexp.MustCompile("create failed"),
 				},
 			},
@@ -961,61 +1212,60 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 			init: func(m *mtlskeystore.Mock, testCreateData, _ commonDataForResource) {
 				newVersions := map[string]versionData{
 					"v3": {
-						Version:                  3,
-						Status:                   "ACTIVE",
-						ExpiryDate:               "2025-12-31T23:59:59Z",
-						Issuer:                   "Example CA",
-						KeyAlgorithm:             "RSA",
-						CertificateSubmittedBy:   "jkowalski",
-						CertificateSubmittedDate: "2023-01-01T00:00:00Z",
-						CreatedBy:                "jkowalski",
-						CreatedDate:              "2023-01-01T00:00:00Z",
-						DeployedDate:             "2023-01-02T00:00:00Z",
-						IssuedDate:               "2023-01-03T00:00:00Z",
-						KeySizeInBytes:           "2048",
-						SignatureAlgorithm:       "SHA256_WITH_RSA",
-						Subject:                  "CN=test.example.com",
-						VersionGUID:              "v3-guid-12345",
-						CertificateBlock: certificateBlock{
-							Certificate: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
-							TrustChain:  "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+						version:                  3,
+						status:                   "ACTIVE",
+						expiryDate:               "2025-12-31T23:59:59Z",
+						issuer:                   "Example CA",
+						keyAlgorithm:             "RSA",
+						certificateSubmittedBy:   "jkowalski",
+						certificateSubmittedDate: "2023-01-01T00:00:00Z",
+						createdBy:                "jkowalski",
+						createdDate:              "2023-01-01T00:00:00Z",
+						deployedDate:             "2023-01-02T00:00:00Z",
+						issuedDate:               "2023-01-03T00:00:00Z",
+						keySizeInBytes:           "2048",
+						signatureAlgorithm:       "SHA256_WITH_RSA",
+						subject:                  "CN=test.example.com",
+						versionGUID:              "v3-guid-12345",
+						certificateBlock: certificateBlock{
+							certificate: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+							trustChain:  "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
 						},
-						CSRBlock: csrBlock{
-							CSR:          "-----BEGIN CERTIFICATE REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----",
-							KeyAlgorithm: "RSA",
+						csrBlock: csrBlock{
+							csr:          "-----BEGIN CERTIFICATE REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----",
+							keyAlgorithm: "RSA",
 						},
 					},
-					"v1": testCreateData.Versions["v1"],
+					"v1": testCreateData.versions["v1"],
 				}
 				// Create
 				mockCreateClientCertificate(m, testCreateData)
 				// Rotate version
-				mockRotateClientCertificateVersion(m, testCreateData.Versions, testCreateData.CertificateID, "v2")
-				// Get
-				mockGetClientCertificate(m, testCreateData)
-				mockListClientCertificateVersions(m, testCreateData.Versions, testCreateData.CertificateID)
+				mockRotateClientCertificateVersion(m, testCreateData.versions, testCreateData.certificateID, "v2")
+				mockGetClientCertificate(m, testCreateData).Once()
+				mockListClientCertificateVersions(m, testCreateData.versions, testCreateData.certificateID).Once()
 				// Read
-				mockGetClientCertificate(m, testCreateData).Times(2)
-				mockListClientCertificateVersions(m, testCreateData.Versions, testCreateData.CertificateID).Times(2)
+				mockGetClientCertificate(m, testCreateData).Twice()
+				mockListClientCertificateVersions(m, testCreateData.versions, testCreateData.certificateID).Twice()
 				// Update (delete version + add new version)
-				mockListClientCertificateVersions(m, testCreateData.Versions, testCreateData.CertificateID)
-				mockDeleteClientCertificateVersion(m, testCreateData.Versions, nil, testCreateData.CertificateID, "v2")
-				mockRotateClientCertificateVersion(m, newVersions, testCreateData.CertificateID, "v3").Return(nil, fmt.Errorf("update failed"))
+				mockListClientCertificateVersions(m, testCreateData.versions, testCreateData.certificateID)
+				mockDeleteClientCertificateVersion(m, testCreateData.versions, nil, testCreateData.certificateID, "v2")
+				mockRotateClientCertificateVersion(m, newVersions, testCreateData.certificateID, "v3").Return(nil, fmt.Errorf("update failed"))
 				// Delete - with old versions to allow deletion
-				mockListClientCertificateVersions(m, testCreateData.Versions, testCreateData.CertificateID)
-				mockDeleteClientCertificateVersion(m, testCreateData.Versions, nil, testCreateData.CertificateID, "v1")
-				mockDeleteClientCertificateVersion(m, testCreateData.Versions, nil, testCreateData.CertificateID, "v2")
+				mockListClientCertificateVersions(m, testCreateData.versions, testCreateData.certificateID)
+				mockDeleteClientCertificateVersion(m, testCreateData.versions, nil, testCreateData.certificateID, "v1")
+				mockDeleteClientCertificateVersion(m, testCreateData.versions, nil, testCreateData.certificateID, "v2")
 			},
-			mockCreateData: testTwoVersions,
+			mockCreateData: testTwoVersionsWithOptionalParams,
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create_with_optional_params.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create/create_with_optional_params.tf"),
 					Check: secondVersionChecker.
 						CheckEqual("subject", "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS/CN=test-certificate/").
 						Build(),
 				},
 				{
-					Config:      testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/update_remove_one_and_add_one_version.tf"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/update/update_remove_one_and_add_one_version.tf"),
 					ExpectError: regexp.MustCompile("update failed"),
 				},
 			},
@@ -1023,43 +1273,42 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 		"error update - version status is DELETE_PENDING": {
 			init: func(m *mtlskeystore.Mock, testCreateData, _ commonDataForResource) {
 				newVersions := map[string]versionData{
-					"v2": testCreateData.Versions["v2"],
-					"v1": testCreateData.Versions["v1"],
+					"v2": testCreateData.versions["v2"],
+					"v1": testCreateData.versions["v1"],
 				}
 				v2 := newVersions["v2"]
-				v2.Status = "DELETE_PENDING"
-				v2.DeleteRequestedDate = "2024-01-01T00:00:00Z"
-				v2.ScheduledDeleteDate = "2024-01-02T00:00:00Z"
+				v2.status = "DELETE_PENDING"
+				v2.deleteRequestedDate = "2024-01-01T00:00:00Z"
+				v2.scheduledDeleteDate = "2024-01-02T00:00:00Z"
 				newVersions["v2"] = v2
 				// Create
 				mockCreateClientCertificate(m, testCreateData)
 				// Rotate version
-				mockRotateClientCertificateVersion(m, testCreateData.Versions, testCreateData.CertificateID, "v2")
-				// Get
-				mockGetClientCertificate(m, testCreateData)
-				mockListClientCertificateVersions(m, testCreateData.Versions, testCreateData.CertificateID)
+				mockRotateClientCertificateVersion(m, testCreateData.versions, testCreateData.certificateID, "v2")
+				mockGetClientCertificate(m, testCreateData).Once()
+				mockListClientCertificateVersions(m, testCreateData.versions, testCreateData.certificateID).Once()
 				// Read
-				mockGetClientCertificate(m, testCreateData).Times(2)
-				mockListClientCertificateVersions(m, testCreateData.Versions, testCreateData.CertificateID).Times(2)
+				mockGetClientCertificate(m, testCreateData).Twice()
+				mockListClientCertificateVersions(m, testCreateData.versions, testCreateData.certificateID).Twice()
 				// Update (delete version)
-				mockListClientCertificateVersions(m, newVersions, testCreateData.CertificateID)
+				mockListClientCertificateVersions(m, newVersions, testCreateData.certificateID)
 				// Delete - set to `ACTIVE` to allow deletion
-				v2.Status = "ACTIVE"
+				v2.status = "ACTIVE"
 				newVersions["v2"] = v2
-				mockListClientCertificateVersions(m, newVersions, testCreateData.CertificateID)
-				mockDeleteClientCertificateVersion(m, newVersions, nil, testCreateData.CertificateID, "v1")
-				mockDeleteClientCertificateVersion(m, newVersions, nil, testCreateData.CertificateID, "v2")
+				mockListClientCertificateVersions(m, newVersions, testCreateData.certificateID)
+				mockDeleteClientCertificateVersion(m, newVersions, nil, testCreateData.certificateID, "v1")
+				mockDeleteClientCertificateVersion(m, newVersions, nil, testCreateData.certificateID, "v2")
 			},
-			mockCreateData: testTwoVersions,
+			mockCreateData: testTwoVersionsWithOptionalParams,
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create_with_optional_params.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create/create_with_optional_params.tf"),
 					Check: secondVersionChecker.
 						CheckEqual("subject", "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS/CN=test-certificate/").
 						Build(),
 				},
 				{
-					Config:      testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/update_remove_one_version.tf"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/update/update_remove_one_version.tf"),
 					ExpectError: regexp.MustCompile("cannot delete client certificate version with status DELETE_PENDING"),
 				},
 			},
@@ -1068,29 +1317,222 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 			init: func(m *mtlskeystore.Mock, testCreateData, testAllowDelete commonDataForResource) {
 				// Create
 				mockCreateClientCertificate(m, testCreateData)
-				// Get
-				mockGetClientCertificate(m, testCreateData)
-				mockListClientCertificateVersions(m, testCreateData.Versions, testCreateData.CertificateID)
-				// Read
-				mockGetClientCertificate(m, testCreateData).Times(2)
-				mockListClientCertificateVersions(m, testCreateData.Versions, testCreateData.CertificateID).Times(2)
+				// Default subject is returned
+				testCreateData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS ctr_12345 1234/CN=test-certificate/"
+				mockGetClientCertificate(m, testCreateData).Once()
+				mockListClientCertificateVersions(m, testCreateData.versions, testCreateData.certificateID).Once()
+				// Read x2
+				mockGetClientCertificate(m, testCreateData).Twice()
+				mockListClientCertificateVersions(m, testCreateData.versions, testCreateData.certificateID).Twice()
 				// Delete version with properties
-				mockListClientCertificateVersions(m, testCreateData.Versions, testCreateData.CertificateID)
-				mockDeleteClientCertificateVersion(m, testCreateData.Versions, nil, testCreateData.CertificateID, "v1")
+				mockListClientCertificateVersions(m, testCreateData.versions, testCreateData.certificateID)
+				mockDeleteClientCertificateVersion(m, testCreateData.versions, nil, testCreateData.certificateID, "v1")
 				// Delete - with old versions to allow deletion
-				mockListClientCertificateVersions(m, testAllowDelete.Versions, testCreateData.CertificateID)
+				mockListClientCertificateVersions(m, testAllowDelete.versions, testCreateData.certificateID)
 			},
 			mockCreateData: testDataVersionWithAssociatedProperties,
 			mockUpdateData: testOneVersion,
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create/create.tf"),
 					Check:  baseChecker.Build(),
 				},
 				{
-					Config:      testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create.tf"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create/create.tf"),
 					Destroy:     true,
 					ExpectError: regexp.MustCompile("cannot delete client certificate version 1 with associated properties"),
+				},
+			},
+		},
+		"error - update contract": {
+			init: func(m *mtlskeystore.Mock, testData, _ commonDataForResource) {
+				// Create
+				mockCreateClientCertificate(m, testData)
+				// Default subject is returned.
+				testData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS ctr_12345 1234/CN=test-certificate/"
+				mockGetClientCertificate(m, testData).Once()
+				mockListClientCertificateVersions(m, testData.versions, testData.certificateID).Once()
+				// Read
+				mockGetClientCertificate(m, testData).Twice()
+				mockListClientCertificateVersions(m, testData.versions, testData.certificateID).Twice()
+				// Delete
+				mockListClientCertificateVersions(m, testData.versions, testData.certificateID)
+				mockDeleteClientCertificateVersion(m, testData.versions, nil, testData.certificateID, "v1")
+			},
+			mockCreateData: testOneVersion,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create/create.tf"),
+					Check:  baseChecker.Build(),
+				},
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/error/error_update_contract.tf"),
+					ExpectError: regexp.MustCompile("updating field `contract_id` is not possible"),
+				},
+			},
+		},
+		"error - update group": {
+			init: func(m *mtlskeystore.Mock, testData, _ commonDataForResource) {
+				// Create
+				mockCreateClientCertificate(m, testData)
+				// Default subject is returned.
+				testData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS ctr_12345 1234/CN=test-certificate/"
+				mockGetClientCertificate(m, testData).Once()
+				mockListClientCertificateVersions(m, testData.versions, testData.certificateID).Once()
+				// Read
+				mockGetClientCertificate(m, testData).Twice()
+				mockListClientCertificateVersions(m, testData.versions, testData.certificateID).Twice()
+				// Delete
+				mockListClientCertificateVersions(m, testData.versions, testData.certificateID)
+				mockDeleteClientCertificateVersion(m, testData.versions, nil, testData.certificateID, "v1")
+			},
+			mockCreateData: testOneVersion,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create/create.tf"),
+					Check:  baseChecker.Build(),
+				},
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/error/error_update_group.tf"),
+					ExpectError: regexp.MustCompile("updating field `group_id` is not possible"),
+				},
+			},
+		},
+		"error - update geography": {
+			init: func(m *mtlskeystore.Mock, testData, _ commonDataForResource) {
+				// Create
+				mockCreateClientCertificate(m, testData)
+				// Default subject is returned.
+				testData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS ctr_12345 1234/CN=test-certificate/"
+				mockGetClientCertificate(m, testData).Once()
+				mockListClientCertificateVersions(m, testData.versions, testData.certificateID).Once()
+				// Read
+				mockGetClientCertificate(m, testData).Twice()
+				mockListClientCertificateVersions(m, testData.versions, testData.certificateID).Twice()
+				// Delete
+				mockListClientCertificateVersions(m, testData.versions, testData.certificateID)
+				mockDeleteClientCertificateVersion(m, testData.versions, nil, testData.certificateID, "v1")
+			},
+			mockCreateData: testOneVersion,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create/create.tf"),
+					Check:  baseChecker.Build(),
+				},
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/error/error_update_geography.tf"),
+					ExpectError: regexp.MustCompile("updating field `geography` is not possible"),
+				},
+			},
+		},
+		"error - update secure_network": {
+			init: func(m *mtlskeystore.Mock, testData, _ commonDataForResource) {
+				// Create
+				mockCreateClientCertificate(m, testData)
+				// Default subject is returned.
+				testData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS ctr_12345 1234/CN=test-certificate/"
+				mockGetClientCertificate(m, testData).Once()
+				mockListClientCertificateVersions(m, testData.versions, testData.certificateID).Once()
+				// Read
+				mockGetClientCertificate(m, testData).Twice()
+				mockListClientCertificateVersions(m, testData.versions, testData.certificateID).Twice()
+				// Delete
+				mockListClientCertificateVersions(m, testData.versions, testData.certificateID)
+				mockDeleteClientCertificateVersion(m, testData.versions, nil, testData.certificateID, "v1")
+			},
+			mockCreateData: testOneVersion,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create/create.tf"),
+					Check:  baseChecker.Build(),
+				},
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/error/error_update_secure_network.tf"),
+					ExpectError: regexp.MustCompile("updating field `secure_network` is not possible"),
+				},
+			},
+		},
+		"error - update key_algorithm": {
+			init: func(m *mtlskeystore.Mock, testData, _ commonDataForResource) {
+				// Create
+				mockCreateClientCertificate(m, testData)
+				// Rotate version
+				mockRotateClientCertificateVersion(m, testData.versions, testData.certificateID, "v2")
+				mockGetClientCertificate(m, testData).Once()
+				mockListClientCertificateVersions(m, testData.versions, testData.certificateID).Once()
+				// Read x2
+				mockGetClientCertificate(m, testData).Twice()
+				mockListClientCertificateVersions(m, testData.versions, testData.certificateID).Twice()
+				// Delete
+				mockListClientCertificateVersions(m, testData.versions, testData.certificateID)
+				mockDeleteClientCertificateVersion(m, testData.versions, nil, testData.certificateID, "v1")
+				mockDeleteClientCertificateVersion(m, testData.versions, nil, testData.certificateID, "v2")
+			},
+			mockCreateData: testTwoVersionsWithOptionalParams,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create/create_with_optional_params.tf"),
+					Check: secondVersionChecker.
+						CheckEqual("subject", "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS/CN=test-certificate/").
+						Build(),
+				},
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/error/error_update_key_algorithm.tf"),
+					ExpectError: regexp.MustCompile("updating field `key_algorithm` is not possible"),
+				},
+			},
+		},
+		"error - update subject when it was not provided during create": {
+			init: func(m *mtlskeystore.Mock, testData, _ commonDataForResource) {
+				// Create
+				mockCreateClientCertificate(m, testData)
+				// Default subject is returned.
+				testData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS ctr_12345 1234/CN=test-certificate/"
+				mockGetClientCertificate(m, testData).Once()
+				mockListClientCertificateVersions(m, testData.versions, testData.certificateID).Once()
+				// Read x2
+				mockGetClientCertificate(m, testData).Twice()
+				mockListClientCertificateVersions(m, testData.versions, testData.certificateID).Twice()
+				// Delete
+				mockListClientCertificateVersions(m, testData.versions, testData.certificateID)
+				mockDeleteClientCertificateVersion(m, testData.versions, nil, testData.certificateID, "v1")
+			},
+			mockCreateData: testOneVersion,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create/create.tf"),
+					Check:  baseChecker.Build(),
+				},
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/error/error_update_subject.tf"),
+					ExpectError: regexp.MustCompile("Error: Cannot Update 'subject'"),
+				},
+			},
+		},
+		"error - update subject when it was provided during create": {
+			init: func(m *mtlskeystore.Mock, testData, _ commonDataForResource) {
+				// Create
+				mockCreateClientCertificate(m, testData)
+				mockGetClientCertificate(m, testData).Once()
+				mockListClientCertificateVersions(m, testData.versions, testData.certificateID).Once()
+				// Read x2
+				mockGetClientCertificate(m, testData).Twice()
+				mockListClientCertificateVersions(m, testData.versions, testData.certificateID).Twice()
+				// Delete
+				mockListClientCertificateVersions(m, testData.versions, testData.certificateID)
+				mockDeleteClientCertificateVersion(m, testData.versions, nil, testData.certificateID, "v1")
+			},
+			mockCreateData: testOneVersionWithSubject,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create/create_with_subject.tf"),
+					Check: baseChecker.
+						CheckEqual("subject", "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS/CN=test-certificate/").
+						Build(),
+				},
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/error/error_update_subject.tf"),
+					ExpectError: regexp.MustCompile("Error: Cannot Update 'subject'"),
 				},
 			},
 		},
@@ -1121,11 +1563,13 @@ func TestClientCertificateThirdPartyResource_Import(t *testing.T) {
 		CheckEqual("certificate_name", "test-certificate").
 		CheckEqual("geography", "CORE").
 		CheckEqual("key_algorithm", "RSA").
+		CheckEqual("contract_id", "ctr_12345").
+		CheckEqual("group_id", "1234").
 		CheckEqual("notification_emails.#", "2").
 		CheckEqual("notification_emails.0", "jkowalski@akamai.com").
 		CheckEqual("notification_emails.1", "jsmith@akamai.com").
 		CheckEqual("secure_network", "STANDARD_TLS").
-		CheckEqual("subject", "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS/CN=test-certificate/").
+		CheckEqual("subject", "/C=US/O=Akamai Technologies, Inc./OU=17471 ctr_12345 1234/CN=test.example.com").
 		CheckEqual("versions.2023-01-01T00:00:00_v1.version", "1").
 		CheckEqual("versions.2023-01-01T00:00:00_v1.status", "ACTIVE").
 		CheckEqual("versions.2023-01-01T00:00:00_v1.expiry_date", "2024-12-31T23:59:59Z").
@@ -1180,10 +1624,14 @@ func TestClientCertificateThirdPartyResource_Import(t *testing.T) {
 	}{
 		"happy path - import with one version": {
 			importID: "12345",
-			init: func(m *mtlskeystore.Mock, testCreateData commonDataForResource) {
+			init: func(m *mtlskeystore.Mock, testImportData commonDataForResource) {
 				// Import
-				mockGetClientCertificate(m, testCreateData)
-				mockListClientCertificateVersions(m, testCreateData.Versions, testCreateData.CertificateID)
+				// modify mock data to return default subject that allows to parse contract and group
+				testImportData.subject = "/C=US/O=Akamai Technologies, Inc./OU=17471 ctr_12345 1234/CN=test.example.com"
+				mockGetClientCertificate(m, testImportData)
+				// Read
+				mockGetClientCertificate(m, testImportData)
+				mockListClientCertificateVersions(m, testImportData.versions, testImportData.certificateID)
 			},
 			importData: testOneVersion,
 			steps: []resource.TestStep{
@@ -1192,25 +1640,29 @@ func TestClientCertificateThirdPartyResource_Import(t *testing.T) {
 					ImportStateId:    "12345",
 					ImportState:      true,
 					ResourceName:     "akamai_mtlskeystore_client_certificate_third_party.test",
-					Config:           testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/import_one_version.tf"),
+					Config:           testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/import/import_one_version.tf"),
 				},
 			},
 		},
 		"happy path - import with two versions": {
 			importID: "12345",
-			init: func(m *mtlskeystore.Mock, testCreateData commonDataForResource) {
+			init: func(m *mtlskeystore.Mock, testImportData commonDataForResource) {
 				// Import
-				mockGetClientCertificate(m, testCreateData)
-				mockListClientCertificateVersions(m, testCreateData.Versions, testCreateData.CertificateID)
+				// modify mock data to return default subject that allows to parse contract and group.
+				testImportData.subject = "/C=US/O=Akamai Technologies, Inc./OU=17471 ctr_12345 1234/CN=test.example.com"
+				mockGetClientCertificate(m, testImportData)
+				// Read
+				mockGetClientCertificate(m, testImportData)
+				mockListClientCertificateVersions(m, testImportData.versions, testImportData.certificateID)
 			},
-			importData: testTwoVersions,
+			importData: testTwoVersionsWithOptionalParams,
 			steps: []resource.TestStep{
 				{
 					ImportStateCheck: secondVersionChecker.Build(),
 					ImportStateId:    "12345",
 					ImportState:      true,
 					ResourceName:     "akamai_mtlskeystore_client_certificate_third_party.test",
-					Config:           testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/import_two_versions.tf"),
+					Config:           testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/import/import_two_versions.tf"),
 				},
 			},
 		},
@@ -1223,15 +1675,35 @@ func TestClientCertificateThirdPartyResource_Import(t *testing.T) {
 					ImportStateId: "wrong-id",
 					ResourceName:  "akamai_mtlskeystore_client_certificate_third_party.test",
 					ExpectError:   regexp.MustCompile(`Error: could not convert import ID to int`),
-					Config:        testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/import_one_version.tf"),
+					Config:        testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/import/import_one_version.tf"),
+				},
+			},
+		},
+		"error - custom subject cannot be parsed": {
+			importID: "12345",
+			init: func(m *mtlskeystore.Mock, testImportData commonDataForResource) {
+				// Import
+				// modify mock data to return custom subject that cannot be parsed.
+				testImportData.subject = "some custom subject cannot parse contract and group/CN=test.example.com"
+				mockGetClientCertificate(m, testImportData)
+			},
+			importData:  testOneVersion,
+			expectError: regexp.MustCompile(`get failed`),
+			steps: []resource.TestStep{
+				{
+					ImportState:   true,
+					ImportStateId: "12345",
+					ResourceName:  "akamai_mtlskeystore_client_certificate_third_party.test",
+					ExpectError:   regexp.MustCompile(`failed to extract contract and group from subject`),
+					Config:        testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/import/import_one_version.tf"),
 				},
 			},
 		},
 		"error - Get Client Certificate failed": {
 			importID: "12345",
-			init: func(m *mtlskeystore.Mock, testCreateData commonDataForResource) {
+			init: func(m *mtlskeystore.Mock, testImportData commonDataForResource) {
 				// Import
-				mockGetClientCertificate(m, testCreateData).Return(nil, fmt.Errorf("get failed"))
+				mockGetClientCertificate(m, testImportData).Return(nil, fmt.Errorf("get failed"))
 			},
 			importData:  testOneVersion,
 			expectError: regexp.MustCompile(`get failed`),
@@ -1241,16 +1713,20 @@ func TestClientCertificateThirdPartyResource_Import(t *testing.T) {
 					ImportStateId: "12345",
 					ResourceName:  "akamai_mtlskeystore_client_certificate_third_party.test",
 					ExpectError:   regexp.MustCompile(`get failed`),
-					Config:        testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/import_one_version.tf"),
+					Config:        testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/import/import_one_version.tf"),
 				},
 			},
 		},
 		"error - List Client Certificate Versions failed": {
 			importID: "12345",
-			init: func(m *mtlskeystore.Mock, testCreateData commonDataForResource) {
+			init: func(m *mtlskeystore.Mock, testImportData commonDataForResource) {
 				// Import
-				mockGetClientCertificate(m, testCreateData)
-				mockListClientCertificateVersions(m, testCreateData.Versions, testCreateData.CertificateID).Return(nil, fmt.Errorf("list failed"))
+				// modify mock data to return default subject that allows to parse contract and group
+				testImportData.subject = "/C=US/O=Akamai Technologies, Inc./OU=17471 ctr_12345 1234/CN=test.example.com"
+				mockGetClientCertificate(m, testImportData)
+				// Read
+				mockGetClientCertificate(m, testImportData)
+				mockListClientCertificateVersions(m, testImportData.versions, testImportData.certificateID).Return(nil, fmt.Errorf("list failed"))
 			},
 			importData:  testOneVersion,
 			expectError: regexp.MustCompile(`list failed`),
@@ -1260,7 +1736,7 @@ func TestClientCertificateThirdPartyResource_Import(t *testing.T) {
 					ImportStateId: "12345",
 					ResourceName:  "akamai_mtlskeystore_client_certificate_third_party.test",
 					ExpectError:   regexp.MustCompile(`list failed`),
-					Config:        testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/import_one_version.tf"),
+					Config:        testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/import/import_one_version.tf"),
 				},
 			},
 		},
@@ -1293,7 +1769,7 @@ func TestClientCertificateThirdPartyResource_ValidationErrors(t *testing.T) {
 		"error - missing certificate_name": {
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/missing_certificate_name.tf"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/error/missing_certificate_name.tf"),
 					ExpectError: regexp.MustCompile(`The argument "certificate_name" is required, but no definition was found`),
 				},
 			},
@@ -1301,7 +1777,7 @@ func TestClientCertificateThirdPartyResource_ValidationErrors(t *testing.T) {
 		"error - missing contract_id": {
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/missing_contract_id.tf"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/error/missing_contract_id.tf"),
 					ExpectError: regexp.MustCompile(`The argument "contract_id" is required, but no definition was found`),
 				},
 			},
@@ -1309,7 +1785,7 @@ func TestClientCertificateThirdPartyResource_ValidationErrors(t *testing.T) {
 		"error - missing geography": {
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/missing_geography.tf"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/error/missing_geography.tf"),
 					ExpectError: regexp.MustCompile(`The argument "geography" is required, but no definition was found`),
 				},
 			},
@@ -1317,7 +1793,7 @@ func TestClientCertificateThirdPartyResource_ValidationErrors(t *testing.T) {
 		"error - missing group_id": {
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/missing_group_id.tf"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/error/missing_group_id.tf"),
 					ExpectError: regexp.MustCompile(`The argument "group_id" is required, but no definition was found`),
 				},
 			},
@@ -1325,7 +1801,7 @@ func TestClientCertificateThirdPartyResource_ValidationErrors(t *testing.T) {
 		"error - missing secure_network": {
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/missing_secure_network.tf"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/error/missing_secure_network.tf"),
 					ExpectError: regexp.MustCompile(`The argument "secure_network" is required, but no definition was found`),
 				},
 			},
@@ -1333,7 +1809,7 @@ func TestClientCertificateThirdPartyResource_ValidationErrors(t *testing.T) {
 		"error - missing version": {
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/missing_version.tf"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/error/missing_version.tf"),
 					ExpectError: regexp.MustCompile(`Attribute versions map must contain at least 1 elements and at most 5\nelements, got: 0`),
 				},
 			},
@@ -1341,7 +1817,7 @@ func TestClientCertificateThirdPartyResource_ValidationErrors(t *testing.T) {
 		"error - invalid key algorithm": {
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/invalid_key_algorithm.tf"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/error/invalid_key_algorithm.tf"),
 					ExpectError: regexp.MustCompile(`Attribute key_algorithm value must be one of: \["RSA" "ECDSA"], got: "INVALID"`),
 				},
 			},
@@ -1349,7 +1825,7 @@ func TestClientCertificateThirdPartyResource_ValidationErrors(t *testing.T) {
 		"error - invalid secure network": {
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/invalid_secure_network.tf"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/error/invalid_secure_network.tf"),
 					ExpectError: regexp.MustCompile(`Attribute secure_network value must be one of: \["STANDARD_TLS"\n"ENHANCED_TLS"], got: "INVALID"`),
 				},
 			},
@@ -1357,7 +1833,7 @@ func TestClientCertificateThirdPartyResource_ValidationErrors(t *testing.T) {
 		"error - invalid geography": {
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/invalid_geography.tf"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/error/invalid_geography.tf"),
 					ExpectError: regexp.MustCompile(`Attribute geography value must be one of: \["CORE" "RUSSIA_AND_CORE"\n"CHINA_AND_CORE"], got: "INVALID"`),
 				},
 			},
@@ -1365,7 +1841,7 @@ func TestClientCertificateThirdPartyResource_ValidationErrors(t *testing.T) {
 		"error - invalid subject": {
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/invalid_subject.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/error/invalid_subject.tf"),
 					ExpectError: regexp.MustCompile(
 						"Attribute subject The `subject` must contain a valid `CN` " +
 							"attribute with a\nmaximum length of 64 characters., got: /C=US/O=Akamai Technologies,\nInc./OU=Akamai\nmTLS/" +
@@ -1376,7 +1852,7 @@ func TestClientCertificateThirdPartyResource_ValidationErrors(t *testing.T) {
 		"error - more than 5 versions provided": {
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/more_than_5_versions.tf"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/error/more_than_5_versions.tf"),
 					ExpectError: regexp.MustCompile(`Attribute versions map must contain at least 1 elements and at most 5\nelements, got: 6`),
 				},
 			},
@@ -1400,80 +1876,78 @@ func TestClientCertificateThirdPartyResource_ValidationErrors(t *testing.T) {
 }
 
 func mockCreateClientCertificate(m *mtlskeystore.Mock, testData commonDataForResource) *mock.Call {
-	if testData.KeyAlgorithm == "" {
-		testData.KeyAlgorithm = "RSA"
+	if testData.keyAlgorithm == "" {
+		testData.keyAlgorithm = "RSA"
 	}
-	keyAlgorithm := mtlskeystore.CryptographicAlgorithm(testData.KeyAlgorithm)
+	keyAlgorithm := mtlskeystore.CryptographicAlgorithm(testData.keyAlgorithm)
 
 	request := mtlskeystore.CreateClientCertificateRequest{
-		CertificateName:    testData.CertificateName,
-		ContractID:         testData.ContractID,
-		Geography:          mtlskeystore.Geography(testData.Geography),
-		GroupID:            testData.GroupID,
+		CertificateName:    testData.certificateName,
+		ContractID:         strings.TrimPrefix(testData.contractID, "ctr_"),
+		Geography:          mtlskeystore.Geography(testData.geography),
+		GroupID:            testData.groupID,
 		KeyAlgorithm:       &keyAlgorithm,
-		NotificationEmails: testData.NotificationEmails,
-		SecureNetwork:      mtlskeystore.SecureNetwork(testData.SecureNetwork),
-		Subject:            ptr.To(testData.Subject),
+		NotificationEmails: testData.notificationEmails,
+		SecureNetwork:      mtlskeystore.SecureNetwork(testData.secureNetwork),
+		Subject:            ptr.To(testData.subject),
 		Signer:             mtlskeystore.SignerThirdParty,
+		PreferredCA:        testData.preferredCA,
 	}
-	//if testData.Subject != "" {
-	//	request.Subject = &testData.Subject
-	//}
 
 	return m.On("CreateClientCertificate", testutils.MockContext, request).Return(&mtlskeystore.CreateClientCertificateResponse{
-		CertificateID:      testData.CertificateID,
-		CertificateName:    testData.CertificateName,
-		Geography:          mtlskeystore.Geography(testData.Geography),
+		CertificateID:      testData.certificateID,
+		CertificateName:    testData.certificateName,
+		Geography:          mtlskeystore.Geography(testData.geography),
 		KeyAlgorithm:       keyAlgorithm,
-		NotificationEmails: testData.NotificationEmails,
-		SecureNetwork:      mtlskeystore.SecureNetwork(testData.SecureNetwork),
+		NotificationEmails: testData.notificationEmails,
+		SecureNetwork:      mtlskeystore.SecureNetwork(testData.secureNetwork),
 		Signer:             mtlskeystore.SignerThirdParty,
-		Subject:            testData.Subject,
+		Subject:            testData.subject,
 	}, nil).Once()
 }
 
 func mockRotateClientCertificateVersion(m *mtlskeystore.Mock, testData map[string]versionData, certificateID int64, versionKey string) *mock.Call {
 	response := mtlskeystore.RotateClientCertificateVersionResponse{
-		Version:            testData[versionKey].Version,
-		VersionGUID:        testData[versionKey].VersionGUID,
-		CreatedBy:          testData[versionKey].CreatedBy,
-		CreatedDate:        testData[versionKey].CreatedDate,
-		ExpiryDate:         testData[versionKey].ExpiryDate,
-		IssuedDate:         testData[versionKey].IssuedDate,
-		Issuer:             testData[versionKey].Issuer,
-		KeyAlgorithm:       mtlskeystore.CryptographicAlgorithm(testData[versionKey].KeyAlgorithm),
-		KeyEllipticCurve:   testData[versionKey].KeyEllipticCurve,
-		KeySizeInBytes:     testData[versionKey].KeySizeInBytes,
-		SignatureAlgorithm: testData[versionKey].SignatureAlgorithm,
-		Status:             mtlskeystore.CertificateVersionStatus(testData[versionKey].Status),
-		Subject:            testData[versionKey].Subject,
+		Version:            testData[versionKey].version,
+		VersionGUID:        testData[versionKey].versionGUID,
+		CreatedBy:          testData[versionKey].createdBy,
+		CreatedDate:        testData[versionKey].createdDate,
+		ExpiryDate:         testData[versionKey].expiryDate,
+		IssuedDate:         testData[versionKey].issuedDate,
+		Issuer:             testData[versionKey].issuer,
+		KeyAlgorithm:       mtlskeystore.CryptographicAlgorithm(testData[versionKey].keyAlgorithm),
+		KeyEllipticCurve:   testData[versionKey].keyEllipticCurve,
+		KeySizeInBytes:     testData[versionKey].keySizeInBytes,
+		SignatureAlgorithm: testData[versionKey].signatureAlgorithm,
+		Status:             mtlskeystore.CertificateVersionStatus(testData[versionKey].status),
+		Subject:            testData[versionKey].subject,
 	}
-	if testData[versionKey].CertificateBlock != (certificateBlock{}) {
+	if testData[versionKey].certificateBlock != (certificateBlock{}) {
 		response.CertificateBlock = &mtlskeystore.CertificateBlock{
-			Certificate: testData[versionKey].CertificateBlock.Certificate,
-			TrustChain:  testData[versionKey].CertificateBlock.TrustChain,
+			Certificate: testData[versionKey].certificateBlock.certificate,
+			TrustChain:  testData[versionKey].certificateBlock.trustChain,
 		}
 	}
-	if testData[versionKey].CSRBlock != (csrBlock{}) {
+	if testData[versionKey].csrBlock != (csrBlock{}) {
 		response.CSRBlock = &mtlskeystore.CSRBlock{
-			CSR:          testData[versionKey].CSRBlock.CSR,
-			KeyAlgorithm: mtlskeystore.CryptographicAlgorithm(testData[versionKey].CSRBlock.KeyAlgorithm),
+			CSR:          testData[versionKey].csrBlock.csr,
+			KeyAlgorithm: mtlskeystore.CryptographicAlgorithm(testData[versionKey].csrBlock.keyAlgorithm),
 		}
 	}
-	if testData[versionKey].CertificateSubmittedBy != "" {
-		response.CertificateSubmittedBy = ptr.To(testData[versionKey].CertificateSubmittedBy)
+	if testData[versionKey].certificateSubmittedBy != "" {
+		response.CertificateSubmittedBy = ptr.To(testData[versionKey].certificateSubmittedBy)
 	}
-	if testData[versionKey].CertificateSubmittedDate != "" {
-		response.CertificateSubmittedDate = ptr.To(testData[versionKey].CertificateSubmittedDate)
+	if testData[versionKey].certificateSubmittedDate != "" {
+		response.CertificateSubmittedDate = ptr.To(testData[versionKey].certificateSubmittedDate)
 	}
-	if testData[versionKey].DeleteRequestedDate != "" {
-		response.DeleteRequestedDate = ptr.To(testData[versionKey].DeleteRequestedDate)
+	if testData[versionKey].deleteRequestedDate != "" {
+		response.DeleteRequestedDate = ptr.To(testData[versionKey].deleteRequestedDate)
 	}
-	if testData[versionKey].DeployedDate != "" {
-		response.DeployedDate = ptr.To(testData[versionKey].DeployedDate)
+	if testData[versionKey].deployedDate != "" {
+		response.DeployedDate = ptr.To(testData[versionKey].deployedDate)
 	}
-	if testData[versionKey].ScheduledDeleteDate != "" {
-		response.ScheduledDeleteDate = ptr.To(testData[versionKey].ScheduledDeleteDate)
+	if testData[versionKey].scheduledDeleteDate != "" {
+		response.ScheduledDeleteDate = ptr.To(testData[versionKey].scheduledDeleteDate)
 	}
 
 	return m.On("RotateClientCertificateVersion", testutils.MockContext, mtlskeystore.RotateClientCertificateVersionRequest{
@@ -1481,12 +1955,12 @@ func mockRotateClientCertificateVersion(m *mtlskeystore.Mock, testData map[strin
 	}).Return(&response, nil).Once()
 }
 
-func mockPatchClientCertificate(m *mtlskeystore.Mock, testData commonDataForResource) *mock.Call {
+func mockPatchClientCertificate(m *mtlskeystore.Mock, certID int64, certName *string, emails []string) *mock.Call {
 	return m.On("PatchClientCertificate", testutils.MockContext, mtlskeystore.PatchClientCertificateRequest{
-		CertificateID: testData.CertificateID,
+		CertificateID: certID,
 		Body: mtlskeystore.PatchClientCertificateRequestBody{
-			CertificateName:    &testData.CertificateName,
-			NotificationEmails: testData.NotificationEmails,
+			CertificateName:    certName,
+			NotificationEmails: emails,
 		},
 	}).Return(nil).Once()
 }
@@ -1494,21 +1968,21 @@ func mockPatchClientCertificate(m *mtlskeystore.Mock, testData commonDataForReso
 func mockDeleteClientCertificateVersion(m *mtlskeystore.Mock, versions map[string]versionData, resp *mtlskeystore.DeleteClientCertificateVersionResponse, certificateID int64, versionKey string) *mock.Call {
 	return m.On("DeleteClientCertificateVersion", testutils.MockContext, mtlskeystore.DeleteClientCertificateVersionRequest{
 		CertificateID: certificateID,
-		Version:       versions[versionKey].Version,
+		Version:       versions[versionKey].version,
 	}).Return(resp, nil).Once()
 }
 
 func mockGetClientCertificate(m *mtlskeystore.Mock, testData commonDataForResource) *mock.Call {
 	return m.On("GetClientCertificate", testutils.MockContext, mtlskeystore.GetClientCertificateRequest{
-		CertificateID: testData.CertificateID,
+		CertificateID: testData.certificateID,
 	}).Return(&mtlskeystore.GetClientCertificateResponse{
-		CertificateID:      testData.CertificateID,
-		CertificateName:    testData.CertificateName,
-		Geography:          mtlskeystore.Geography(testData.Geography),
-		KeyAlgorithm:       mtlskeystore.CryptographicAlgorithm(testData.KeyAlgorithm),
-		NotificationEmails: testData.NotificationEmails,
-		SecureNetwork:      mtlskeystore.SecureNetwork(testData.SecureNetwork),
-		Subject:            "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS/CN=test-certificate/",
+		CertificateID:      testData.certificateID,
+		CertificateName:    testData.certificateName,
+		Geography:          mtlskeystore.Geography(testData.geography),
+		KeyAlgorithm:       mtlskeystore.CryptographicAlgorithm(testData.keyAlgorithm),
+		NotificationEmails: testData.notificationEmails,
+		SecureNetwork:      mtlskeystore.SecureNetwork(testData.secureNetwork),
+		Subject:            testData.subject,
 	}, nil).Once()
 }
 
@@ -1517,68 +1991,68 @@ func mockListClientCertificateVersions(m *mtlskeystore.Mock, versions map[string
 
 	for _, version := range versions {
 		certificateVersions := mtlskeystore.ClientCertificateVersion{
-			Version:            version.Version,
-			VersionGUID:        version.VersionGUID,
-			CreatedBy:          version.CreatedBy,
-			CreatedDate:        version.CreatedDate,
-			ExpiryDate:         version.ExpiryDate,
-			IssuedDate:         version.IssuedDate,
-			Issuer:             version.Issuer,
-			KeyAlgorithm:       mtlskeystore.CryptographicAlgorithm(version.KeyAlgorithm),
-			KeyEllipticCurve:   version.KeyEllipticCurve,
-			KeySizeInBytes:     version.KeySizeInBytes,
-			SignatureAlgorithm: version.SignatureAlgorithm,
-			Status:             mtlskeystore.CertificateVersionStatus(version.Status),
-			Subject:            version.Subject,
+			Version:            version.version,
+			VersionGUID:        version.versionGUID,
+			CreatedBy:          version.createdBy,
+			CreatedDate:        version.createdDate,
+			ExpiryDate:         version.expiryDate,
+			IssuedDate:         version.issuedDate,
+			Issuer:             version.issuer,
+			KeyAlgorithm:       mtlskeystore.CryptographicAlgorithm(version.keyAlgorithm),
+			KeyEllipticCurve:   version.keyEllipticCurve,
+			KeySizeInBytes:     version.keySizeInBytes,
+			SignatureAlgorithm: version.signatureAlgorithm,
+			Status:             mtlskeystore.CertificateVersionStatus(version.status),
+			Subject:            version.subject,
 		}
 
-		if version.CertificateBlock != (certificateBlock{}) {
+		if version.certificateBlock != (certificateBlock{}) {
 			certificateVersions.CertificateBlock = &mtlskeystore.CertificateBlock{
-				Certificate: version.CertificateBlock.Certificate,
-				TrustChain:  version.CertificateBlock.TrustChain,
+				Certificate: version.certificateBlock.certificate,
+				TrustChain:  version.certificateBlock.trustChain,
 			}
 		}
-		if version.CSRBlock != (csrBlock{}) {
+		if version.csrBlock != (csrBlock{}) {
 			certificateVersions.CSRBlock = &mtlskeystore.CSRBlock{
-				CSR:          version.CSRBlock.CSR,
-				KeyAlgorithm: mtlskeystore.CryptographicAlgorithm(version.CSRBlock.KeyAlgorithm),
+				CSR:          version.csrBlock.csr,
+				KeyAlgorithm: mtlskeystore.CryptographicAlgorithm(version.csrBlock.keyAlgorithm),
 			}
 		}
-		if version.CertificateSubmittedBy != "" {
-			certificateVersions.CertificateSubmittedBy = ptr.To(version.CertificateSubmittedBy)
+		if version.certificateSubmittedBy != "" {
+			certificateVersions.CertificateSubmittedBy = ptr.To(version.certificateSubmittedBy)
 		}
-		if version.CertificateSubmittedDate != "" {
-			certificateVersions.CertificateSubmittedDate = ptr.To(version.CertificateSubmittedDate)
+		if version.certificateSubmittedDate != "" {
+			certificateVersions.CertificateSubmittedDate = ptr.To(version.certificateSubmittedDate)
 		}
-		if version.DeleteRequestedDate != "" {
-			certificateVersions.DeleteRequestedDate = ptr.To(version.DeleteRequestedDate)
+		if version.deleteRequestedDate != "" {
+			certificateVersions.DeleteRequestedDate = ptr.To(version.deleteRequestedDate)
 		}
-		if version.DeployedDate != "" {
-			certificateVersions.DeployedDate = ptr.To(version.DeployedDate)
+		if version.deployedDate != "" {
+			certificateVersions.DeployedDate = ptr.To(version.deployedDate)
 		}
-		if version.ScheduledDeleteDate != "" {
-			certificateVersions.ScheduledDeleteDate = ptr.To(version.ScheduledDeleteDate)
+		if version.scheduledDeleteDate != "" {
+			certificateVersions.ScheduledDeleteDate = ptr.To(version.scheduledDeleteDate)
 		}
-		for _, property := range version.AssociatedProperties {
+		for _, property := range version.associatedProperties {
 			certificateVersions.AssociatedProperties = append(certificateVersions.AssociatedProperties, mtlskeystore.AssociatedProperty{
-				AssetID:         property.AssetID,
-				GroupID:         property.GroupID,
-				PropertyName:    property.PropertyName,
-				PropertyVersion: property.PropertyVersion,
+				AssetID:         property.assetID,
+				GroupID:         property.groupID,
+				PropertyName:    property.propertyName,
+				PropertyVersion: property.propertyVersion,
 			})
 		}
-		for _, err := range version.Validation.Errors {
+		for _, err := range version.validation.errors {
 			certificateVersions.Validation.Errors = append(certificateVersions.Validation.Errors, mtlskeystore.ValidationDetail{
-				Message: err.Message,
-				Reason:  err.Reason,
-				Type:    err.Type,
+				Message: err.message,
+				Reason:  err.reason,
+				Type:    err.errorType,
 			})
 		}
-		for _, warning := range version.Validation.Warnings {
+		for _, warning := range version.validation.warnings {
 			certificateVersions.Validation.Warnings = append(certificateVersions.Validation.Warnings, mtlskeystore.ValidationDetail{
-				Message: warning.Message,
-				Reason:  warning.Reason,
-				Type:    warning.Type,
+				Message: warning.message,
+				Reason:  warning.reason,
+				Type:    warning.errorType,
 			})
 		}
 
