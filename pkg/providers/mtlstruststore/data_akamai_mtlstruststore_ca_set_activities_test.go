@@ -437,7 +437,7 @@ func TestFindCASetID_NotDeleted(t *testing.T) {
 				CASetNamePrefix: tc.args.caSetName,
 			}).Return(tc.args.caSets, tc.args.err).Once()
 
-			id, err := findNotDeletedCASetID(context.Background(), m, tc.args.caSetName)
+			caSet, err := findNotDeletedCASet(context.Background(), m, tc.args.caSetName)
 			if tc.expectedErr != "" {
 				if err == nil {
 					t.Fatalf("expected error %q, got nil", tc.expectedErr)
@@ -449,8 +449,8 @@ func TestFindCASetID_NotDeleted(t *testing.T) {
 				if err != nil {
 					t.Fatalf("unexpected error: %v", err)
 				}
-				if id != tc.expectedID {
-					t.Errorf("expected id %q, got %q", tc.expectedID, id)
+				if caSet.CASetID != tc.expectedID {
+					t.Errorf("expected id %q, got %q", tc.expectedID, caSet.CASetID)
 				}
 			}
 			m.AssertExpectations(t)

@@ -75,7 +75,7 @@
   * Added new data sources:
     * `akamai_mtlstruststore_ca_set_activities` - lists CA set activities.
     * `akamai_mtlstruststore_ca_set_versions` - lists CA set versions.
-
+    * `akamai_mtlstruststore_ca_set_certificates` - retrieves the list of CA set certificates for a specified version, or for the latest version if none is provided.
 * APPSEC
   * Added support for challenge actions in Rate Policy `resource_akamai_appsec_rate_policy_action` resource.
 
@@ -102,7 +102,6 @@
 
 * mTLS Keystore:
   * Added fields: `created_by` and `created_date` to the `akamai_mtlskeystore_client_certificate_third_party` resource.
-
 
 
 
