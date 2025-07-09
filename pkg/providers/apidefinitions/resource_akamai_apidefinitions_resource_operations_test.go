@@ -341,10 +341,13 @@ var badRequestErrorResOperations = v0.Error{
 			Detail:   "resource-path-operation-check.detail",
 			Severity: ptr.To("ERROR"),
 			Field:    ptr.To("put.dto.resourceOperationsMap[/base].<map value>[test login].operationParameter"),
-			RejectedValue: map[string]interface{}{
-				"method":           "POST",
-				"operationPurpose": "login",
-			},
+			RejectedValue: func() *interface{} {
+				val := interface{}(map[string]interface{}{
+					"method":           "POST",
+					"operationPurpose": "login",
+				})
+				return &val
+			}(),
 		},
 		{
 			Type:     "/api-definitions/error-types/resource-path-operation-check",
@@ -352,10 +355,13 @@ var badRequestErrorResOperations = v0.Error{
 			Detail:   "resource-path-operation-check.detail",
 			Severity: ptr.To("ERROR"),
 			Field:    ptr.To("put.dto.resourceOperationsMap[/base].<map value>[test login].operationParameter.username"),
-			RejectedValue: map[string]interface{}{
-				"method":           "POST",
-				"operationPurpose": "login",
-			},
+			RejectedValue: func() *interface{} {
+				val := interface{}(map[string]interface{}{
+					"method":           "POST",
+					"operationPurpose": "login",
+				})
+				return &val
+			}(),
 		},
 	},
 }
