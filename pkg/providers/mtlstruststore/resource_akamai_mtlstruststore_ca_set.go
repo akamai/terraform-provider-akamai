@@ -159,7 +159,6 @@ func (r *caSetResource) Schema(ctx context.Context, _ resource.SchemaRequest, re
 				Optional:    true,
 				Computed:    true,
 				Validators:  []validator.String{stringvalidator.LengthAtMost(255)},
-				Default:     nullstringdefault.NullString(),
 				Description: "Additional description for the CA set version.",
 			},
 			"latest_version": schema.Int64Attribute{
@@ -311,6 +310,7 @@ func generateDiagnosticForValidationErrors(err error) diag.Diagnostics {
 	return diags
 }
 
+//nolint:gocyclo
 func (r *caSetResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
 	// If the entire plan is null, the resource is planned for destruction.
 	if req.Plan.Raw.IsNull() {
@@ -346,10 +346,21 @@ func (r *caSetResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanR
 	}
 	// Empty state means that the resource is being created.
 	if req.State.Raw.IsNull() {
-		var plan *caSetResourceModel
+		var plan, config caSetResourceModel
 		resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 		if resp.Diagnostics.HasError() {
 			return
+		}
+		resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		// If the version description is not set, we have to set it to null.
+		// This shouldn't be done via default values, because for a computed field which is altered
+		// in update, terraform returns an error.
+		if config.VersionDescription.IsNull() {
+			plan.VersionDescription = types.StringNull()
 		}
 
 		// If the certificate description is not set, we have to set it to null.
@@ -372,7 +383,9 @@ func (r *caSetResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanR
 			resp.Diagnostics.Append(diags...)
 			return
 		}
-		diags = resp.Plan.SetAttribute(ctx, path.Root("certificates"), updatedCerts)
+		plan.Certificates = updatedCerts
+
+		diags = resp.Plan.Set(ctx, &plan)
 		if diags.HasError() {
 			resp.Diagnostics.Append(diags...)
 			return

@@ -11,6 +11,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/ptr"
 	tst "github.com/akamai/terraform-provider-akamai/v8/internal/test"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/test"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/testprovider"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
@@ -95,6 +96,36 @@ func TestCASetResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/create.tf"),
+					Check:  check.Build(),
+				},
+			},
+		},
+		// Used for testing setting VersionDescription in ModifyPlan
+		// We want to check the tricky scenario, where VersionDescription is referenced from
+		// another resource. In ModifyPlan, it will be unknown during planning phase,
+		// and set to the known value during apply phase. Our code, checking for null config
+		// should not break this value by nulling it out.
+		"create a ca set with description provided by another resource": {
+			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
+				// create
+				mockValidateCertificates(m, resourceData, nil).Times(5)
+				mockCreateCASet(m, resourceData).Times(1)
+				mockCreateCASetVersion(m, resourceData).Times(1)
+				mockGetCASet(m, resourceData).Times(1)
+				// read
+				mockGetCASet(m, resourceData).Times(1)
+				mockGetCASetVersion(m, resourceData).Times(1)
+				mockListCASetActivations(m, resourceData, false).Times(2)
+				// delete
+				mockListCASetAssociations(m, resourceData).Times(2)
+				mockDeleteCASet(m, resourceData).Times(1)
+				mockGetCASetDeletionStatus(m, resourceData, "IN_PROGRESS", "IN_PROGRESS", "COMPLETED").Times(1)
+				mockGetCASetDeletionStatus(m, resourceData, "COMPLETE", "COMPLETE", "COMPLETE").Times(1)
+			},
+			mockData: createData,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/create_external_version_description.tf"),
 					Check:  check.Build(),
 				},
 			},
@@ -430,6 +461,63 @@ func TestCASetResource(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/update_allow_insecure_sha1.tf"),
 					Check: check.
+						CheckEqual("allow_insecure_sha1", "true").
+						Build(),
+					ConfigPlanChecks: resource.ConfigPlanChecks{
+						PreApply: []plancheck.PlanCheck{
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("staging_version"), knownvalue.Null()),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("production_version"), knownvalue.Null()),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("latest_version"), knownvalue.Int64Exact(1)),
+						},
+					},
+				},
+			},
+		},
+		// This case tests whether unknown config value for `description` is properly set to null
+		// in both create and update phases. This can be done using the Default field of StringAttribute
+		// since the `description` attribute is not modified.
+		"update a non activated ca set with no description, changing only allow_insecure_sha1": {
+			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
+				resourceData.description = nil
+				// create
+				mockValidateCertificates(m, resourceData, nil).Times(5)
+				mockCreateCASet(m, resourceData).Times(1)
+				mockCreateCASetVersion(m, resourceData).Times(1)
+				mockGetCASet(m, resourceData).Times(1)
+				// read
+				mockGetCASet(m, resourceData).Times(1)
+				mockGetCASetVersion(m, resourceData).Times(1)
+				mockListCASetActivations(m, resourceData, false).Times(3)
+				// update
+				updateData := resourceData
+				updateData.version = 1
+				mockGetCASet(m, updateData).Times(1)
+				mockGetCASetVersion(m, updateData).Times(1)
+				updateData.allowInsecureSHA1 = true
+				mockValidateCertificates(m, updateData, nil).Times(5)
+				mockUpdateCASetVersion(m, updateData).Times(1)
+				// read
+				mockGetCASet(m, updateData).Times(1)
+				mockGetCASetVersion(m, updateData).Times(1)
+				mockListCASetActivations(m, resourceData, false).Times(4)
+				// delete
+				mockListCASetAssociations(m, updateData).Times(2)
+				mockDeleteCASet(m, updateData).Times(1)
+				mockGetCASetDeletionStatus(m, updateData, "IN_PROGRESS", "IN_PROGRESS", "COMPLETED").Times(1)
+				mockGetCASetDeletionStatus(m, updateData, "COMPLETE", "COMPLETE", "COMPLETE").Times(1)
+			},
+			mockData: createData,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/create_no_description.tf"),
+					Check: check.
+						CheckMissing("description").
+						Build(),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/update_allow_insecure_sha1_no_description.tf"),
+					Check: check.
+						CheckMissing("description").
 						CheckEqual("allow_insecure_sha1", "true").
 						Build(),
 					ConfigPlanChecks: resource.ConfigPlanChecks{
@@ -982,7 +1070,7 @@ func TestCASetResource(t *testing.T) {
 							VersionConstraint: "3.1.0",
 						},
 					},
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider(), testprovider.NewMockSubprovider()),
 					IsUnitTest:               true,
 					Steps:                    test.steps,
 				})
