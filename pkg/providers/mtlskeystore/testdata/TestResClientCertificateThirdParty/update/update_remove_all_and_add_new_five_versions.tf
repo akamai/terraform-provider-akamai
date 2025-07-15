@@ -7,9 +7,14 @@ resource "akamai_mtlskeystore_client_certificate_third_party" "test" {
   contract_id         = "ctr_12345"
   geography           = "CORE"
   group_id            = 1234
+  key_algorithm       = "RSA"
   notification_emails = ["jkowalski@akamai.com", "jsmith@akamai.com"]
   secure_network      = "STANDARD_TLS"
   versions = {
-    "v1" = {},
+    "v1a" = {},
+    "v2a" = {},
+    "v3a" = {},
+    "v4a" = {},
+    "v5a" = {},
   }
 }

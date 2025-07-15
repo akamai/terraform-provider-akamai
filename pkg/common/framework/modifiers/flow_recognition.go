@@ -2,8 +2,8 @@ package modifiers
 
 import "github.com/hashicorp/terraform-plugin-framework/resource"
 
-// IsCreateOrImport checks if the ModifyPlan method is being called for a create or import operation.
-func IsCreateOrImport(request resource.ModifyPlanRequest) bool {
+// IsCreate checks if the ModifyPlan method is being called for a create operation.
+func IsCreate(request resource.ModifyPlanRequest) bool {
 	return request.State.Raw.IsNull()
 }
 

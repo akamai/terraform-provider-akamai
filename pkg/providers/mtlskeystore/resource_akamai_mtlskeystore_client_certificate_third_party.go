@@ -2,6 +2,7 @@ package mtlskeystore
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"regexp"
 	"slices"
@@ -32,6 +33,7 @@ var (
 	_ resource.Resource                = &clientCertificateThirdPartyResource{}
 	_ resource.ResourceWithImportState = &clientCertificateThirdPartyResource{}
 	_ resource.ResourceWithModifyPlan  = &clientCertificateThirdPartyResource{}
+	_ resource.ResourceWithConfigure   = &clientCertificateThirdPartyResource{}
 )
 
 type clientCertificateThirdPartyResource struct {
@@ -78,8 +80,6 @@ type (
 		VersionGUID              types.String `tfsdk:"version_guid"`
 		CertificateBlock         types.Object `tfsdk:"certificate_block"`
 		CSRBlock                 types.Object `tfsdk:"csr_block"`
-		Validation               types.Object `tfsdk:"validation"`
-		AssociatedProperties     types.List   `tfsdk:"associated_properties"`
 	}
 
 	certificateBlockResourceModel struct {
@@ -91,18 +91,12 @@ type (
 		CSR          types.String `tfsdk:"csr"`
 		KeyAlgorithm types.String `tfsdk:"key_algorithm"`
 	}
-
-	associatedPropertiesModel struct {
-		AssetID         types.Int64  `tfsdk:"asset_id"`
-		GroupID         types.Int64  `tfsdk:"group_id"`
-		PropertyName    types.String `tfsdk:"property_name"`
-		PropertyVersion types.Int64  `tfsdk:"property_version"`
-	}
 )
 
 var (
-	cnRegex            = regexp.MustCompile(`/CN=[^/]{1,64}/`)
-	versionsObjectType = types.ObjectType{
+	errorOneVersionWithDeletePendingStatus = errors.New("one version with `DELETE_PENDING` status found")
+	cnRegex                                = regexp.MustCompile(`/CN=[^/]{1,64}/`)
+	versionsObjectType                     = types.ObjectType{
 		AttrTypes: map[string]attr.Type{
 			"version":                    types.Int64Type,
 			"status":                     types.StringType,
@@ -128,15 +122,17 @@ var (
 			"csr_block": types.ObjectType{
 				AttrTypes: csrBlockType(),
 			},
-			"validation": types.ObjectType{
-				AttrTypes: validationType(),
-			},
-			"associated_properties": types.ListType{
-				ElemType: associatedPropertiesType(),
-			},
 		},
 	}
 )
+
+func certificateBlockType() map[string]attr.Type {
+	return certificateBlockSchema().GetType().(attr.TypeWithAttributeTypes).AttributeTypes()
+}
+
+func csrBlockType() map[string]attr.Type {
+	return csrBlockSchema().GetType().(attr.TypeWithAttributeTypes).AttributeTypes()
+}
 
 func (r *clientCertificateThirdPartyResource) Metadata(_ context.Context, _ resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = "akamai_mtlskeystore_client_certificate_third_party"
@@ -194,7 +190,7 @@ func (r *clientCertificateThirdPartyResource) Schema(_ context.Context, _ resour
 			"key_algorithm": schema.StringAttribute{
 				Optional:    true,
 				Computed:    true,
-				Description: "The cryptographic algorithm used for key generation. Possible values: `RSA` or `ECDSA`.",
+				Description: "The cryptographic algorithm used for key generation. Possible values: `RSA` or `ECDSA`. The default is `RSA`.",
 				Default:     stringdefault.StaticString(string(mtlskeystore.KeyAlgorithmRSA)),
 				Validators: []validator.String{
 					stringvalidator.OneOf(
@@ -230,7 +226,7 @@ func (r *clientCertificateThirdPartyResource) Schema(_ context.Context, _ resour
 			"subject": schema.StringAttribute{
 				Optional:    true,
 				Computed:    true,
-				Description: "Specifies the client certificate. The `CN` attribute is required and cannot exceed 64 characters. When `null`, the subject is constructed with the following format: `/C=US/O=Akamai Technologies, Inc./OU={vcdId} {contractId} {groupId}/CN={certificateName}/`.",
+				Description: "Specifies the client certificate. If provided, the `CN` attribute is required and cannot exceed 64 characters. When `null`, the subject is constructed with the following format: `/C=US/O=Akamai Technologies, Inc./OU={vcdId} {contractId} {groupId}/CN={certificateName}/`.",
 				Validators: []validator.String{
 					stringvalidator.RegexMatches(cnRegex, "The `subject` must contain a valid `CN` attribute with a maximum length of 64 characters."),
 				},
@@ -324,10 +320,8 @@ func versionsSchema() schema.MapNestedAttribute {
 					Description: "Unique identifier for the client certificate version. Use it to configure mutual authentication (mTLS) sessions between the origin and edge servers in Property Manager's Mutual TLS Origin Keystore behavior.",
 					Computed:    true,
 				},
-				"certificate_block":     certificateBlockSchema(),
-				"csr_block":             csrBlockSchema(),
-				"validation":            validationSchema(),
-				"associated_properties": associatedPropertiesSchema(),
+				"certificate_block": certificateBlockSchema(),
+				"csr_block":         csrBlockSchema(),
 			},
 		},
 	}
@@ -360,84 +354,8 @@ func csrBlockSchema() schema.SingleNestedAttribute {
 				Computed:    true,
 			},
 			"key_algorithm": schema.StringAttribute{
-				Description: "Identifies the client certificate's encryption algorithm. The only currently supported value is `RSA`.",
+				Description: "Identifies the client certificate's encryption algorithm.",
 				Computed:    true,
-			},
-		},
-	}
-}
-
-func validationSchema() schema.SingleNestedAttribute {
-	return schema.SingleNestedAttribute{
-		Description: "Details of the validation for the client certificate version.",
-		Computed:    true,
-		Attributes: map[string]schema.Attribute{
-			"errors": schema.ListNestedAttribute{
-				Description: "A list of validation errors for the client certificate version.",
-				Computed:    true,
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"message": schema.StringAttribute{
-							Description: "The validation error message.",
-							Computed:    true,
-						},
-						"reason": schema.StringAttribute{
-							Description: "The validation error reason.",
-							Computed:    true,
-						},
-						"type": schema.StringAttribute{
-							Description: "The validation error type.",
-							Computed:    true,
-						},
-					},
-				},
-			},
-			"warnings": schema.ListNestedAttribute{
-				Description: "A list of validation warnings for the client certificate version.",
-				Computed:    true,
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"message": schema.StringAttribute{
-							Description: "The validation warning message.",
-							Computed:    true,
-						},
-						"reason": schema.StringAttribute{
-							Description: "The validation warning reason.",
-							Computed:    true,
-						},
-						"type": schema.StringAttribute{
-							Description: "The validation warning type.",
-							Computed:    true,
-						},
-					},
-				},
-			},
-		},
-	}
-}
-
-func associatedPropertiesSchema() schema.ListNestedAttribute {
-	return schema.ListNestedAttribute{
-		Description: "A list of properties associated with the client certificate version.",
-		Computed:    true,
-		NestedObject: schema.NestedAttributeObject{
-			Attributes: map[string]schema.Attribute{
-				"asset_id": schema.Int64Attribute{
-					Description: "The unique identifier of the property associated with the client certificate version.",
-					Computed:    true,
-				},
-				"group_id": schema.Int64Attribute{
-					Description: "The group ID of the property associated with the client certificate version.",
-					Computed:    true,
-				},
-				"property_name": schema.StringAttribute{
-					Description: "The name of the property associated with the client certificate version.",
-					Computed:    true,
-				},
-				"property_version": schema.Int64Attribute{
-					Description: "The version of the property associated with the client certificate version.",
-					Computed:    true,
-				},
 			},
 		},
 	}
@@ -477,9 +395,28 @@ func (r *clientCertificateThirdPartyResource) ModifyPlan(ctx context.Context, re
 		return
 	}
 
+	if modifiers.IsDelete(req) {
+		var stateVersions map[string]clientCertificateVersionModel
+		if diags := state.Versions.ElementsAs(ctx, &stateVersions, false); diags.HasError() {
+			resp.Diagnostics.Append(diags...)
+			return
+		}
+
+		var versionsToRemove []int64
+		for _, version := range stateVersions {
+			versionsToRemove = append(versionsToRemove, version.Version.ValueInt64())
+		}
+
+		err := checkStatus(ctx, Client(r.meta), state.CertificateID.ValueInt64(), versionsToRemove)
+		if err != nil {
+			resp.Diagnostics.AddWarning("Versions deletion", err.Error())
+			return
+		}
+	}
+
 	// Updating 'subject' is not allowed and must be handled
 	// on plan modification level as it is optional and PreventStringUpdate() modifier is not enough.
-	if !req.State.Raw.IsNull() && !req.Plan.Raw.IsNull() {
+	if modifiers.IsUpdate(req) {
 		if !state.Subject.Equal(plan.Subject) {
 			resp.Diagnostics.AddAttributeError(path.Root("subject"), "Cannot Update 'subject'",
 				"The `subject` attribute cannot be updated after the resource has been created.")
@@ -489,8 +426,8 @@ func (r *clientCertificateThirdPartyResource) ModifyPlan(ctx context.Context, re
 
 	// If the only attributes that have changed are 'notification_emails' and/or 'certificate_name',
 	// suppress changes to the 'versions' attribute by using the state value.
-	if !req.State.Raw.IsNull() && !req.Plan.Raw.IsNull() {
-		if (state.haveNotificationEmailsChanged(plan) || state.hasNameChanged(plan)) && state.haveVersionsChanged(plan) {
+	if modifiers.IsUpdate(req) {
+		if state.haveNotificationEmailsChanged(plan) || state.hasNameChanged(plan) {
 			tflog.Debug(ctx, "only 'notification_emails' or 'certificate_name' changed, using state value for versions instead")
 			resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("versions"), state.Versions)...)
 			if resp.Diagnostics.HasError() {
@@ -501,7 +438,8 @@ func (r *clientCertificateThirdPartyResource) ModifyPlan(ctx context.Context, re
 
 	// Copy state versions to plan versions for the keys that are the same.
 	// This will suppress the changes for existing versions if other versions are being removed or created.
-	if !req.State.Raw.IsNull() && !req.Plan.Raw.IsNull() {
+	var numberOfNewVersions int
+	if modifiers.IsUpdate(req) {
 		var stateVersions map[string]clientCertificateVersionModel
 		if diags := state.Versions.ElementsAs(ctx, &stateVersions, false); diags.HasError() {
 			resp.Diagnostics.Append(diags...)
@@ -512,12 +450,30 @@ func (r *clientCertificateThirdPartyResource) ModifyPlan(ctx context.Context, re
 			resp.Diagnostics.Append(diags...)
 			return
 		}
+
+		var versionsToRemove []int64
+		for k := range stateVersions {
+			if _, ok := planVersions[k]; !ok {
+				versionsToRemove = append(versionsToRemove, stateVersions[k].Version.ValueInt64())
+			}
+		}
+		if len(versionsToRemove) > 0 {
+			err := checkStatus(ctx, Client(r.meta), state.CertificateID.ValueInt64(), versionsToRemove)
+			if err != nil {
+				resp.Diagnostics.AddWarning("Versions deletion", err.Error())
+				return
+			}
+		}
+
 		for k := range planVersions {
 			if stateVersion, ok := stateVersions[k]; ok {
 				tflog.Debug(ctx, fmt.Sprintf("Using state values for version with key '%s'", k))
 				planVersions[k] = stateVersion
+			} else {
+				numberOfNewVersions++
 			}
 		}
+
 		versionsValue, diags := types.MapValueFrom(ctx, versionsObjectType, planVersions)
 		if diags.HasError() {
 			resp.Diagnostics.Append(diags...)
@@ -528,10 +484,19 @@ func (r *clientCertificateThirdPartyResource) ModifyPlan(ctx context.Context, re
 			return
 		}
 	}
-}
 
-func (m *clientCertificateThirdPartyResourceModel) haveVersionsChanged(plan *clientCertificateThirdPartyResourceModel) bool {
-	return !m.Versions.Equal(plan.Versions)
+	// Adding a warning if there are multiple versions to create or update.
+	var planVersionsToCreate map[string]clientCertificateVersionModel
+	if modifiers.IsCreate(req) {
+		if diags := plan.Versions.ElementsAs(ctx, &planVersionsToCreate, false); diags.HasError() {
+			resp.Diagnostics.Append(diags...)
+			return
+		}
+	}
+	if len(planVersionsToCreate) > 1 || numberOfNewVersions > 1 {
+		tflog.Warn(ctx, "Versions will be sorted by key names in ascending order.")
+		resp.Diagnostics.AddWarning("Adding multiple versions", "While adding multiple new versions, they will be sorted by key names in ascending order.")
+	}
 }
 
 func (m *clientCertificateThirdPartyResourceModel) haveNotificationEmailsChanged(plan *clientCertificateThirdPartyResourceModel) bool {
@@ -563,22 +528,17 @@ func (r *clientCertificateThirdPartyResource) create(ctx context.Context, plan *
 	client := Client(r.meta)
 
 	var notificationEmails []string
-	if isKnown(plan.NotificationEmails) {
-		diags := plan.NotificationEmails.ElementsAs(ctx, &notificationEmails, false)
-		if diags.HasError() {
-			return fmt.Errorf("failed to get notification emails: %v", diags)
-		}
+	diags := plan.NotificationEmails.ElementsAs(ctx, &notificationEmails, false)
+	if diags.HasError() {
+		return fmt.Errorf("failed to get notification emails: %v", diags)
 	}
 
 	var versions map[string]clientCertificateVersionModel
 
-	diags := plan.Versions.ElementsAs(ctx, &versions, false)
+	diags = plan.Versions.ElementsAs(ctx, &versions, false)
 	if diags.HasError() {
 		return fmt.Errorf("failed to get versions: %v", diags)
 	}
-	versionsKeys := extractVersionKeys(versions)
-	slices.Sort(versionsKeys)
-	tflog.Debug(ctx, fmt.Sprintf("Sorted versions keys for creation: %v", versionsKeys))
 
 	request := mtlskeystore.CreateClientCertificateRequest{
 		CertificateName:    plan.CertificateName.ValueString(),
@@ -601,12 +561,17 @@ func (r *clientCertificateThirdPartyResource) create(ctx context.Context, plan *
 		return fmt.Errorf("creating client certificate third party: %w", err)
 	}
 
-	err = createMissingVersionsExplicitly(ctx, client, createClientCertificateResponse.CertificateID, versionsKeys[1:])
-	if err != nil {
-		return fmt.Errorf("failed to create missing versions: %w. "+
-			"Client Certificate has been created successfully, but other operations failed. "+
-			"If you wish to manage the same client certificate, please import it and apply your configuration again. "+
-			"Client Certificate ID: %d", err, createClientCertificateResponse.CertificateID)
+	versionsKeys := extractVersionKeys(versions)
+	if len(versionsKeys) > 1 {
+		slices.Sort(versionsKeys)
+		tflog.Debug(ctx, fmt.Sprintf("Sorted versions keys for creation: %v", versionsKeys))
+		err = createMissingVersionsExplicitly(ctx, client, createClientCertificateResponse.CertificateID, versionsKeys[1:])
+		if err != nil {
+			return fmt.Errorf("failed to create missing versions: %w. "+
+				"Client Certificate has been created successfully, but other operations failed. "+
+				"If you wish to manage the same client certificate, please import it and apply your configuration again. "+
+				"Client Certificate ID: %d", err, createClientCertificateResponse.CertificateID)
+		}
 	}
 
 	clientCertificate, err := client.GetClientCertificate(ctx, mtlskeystore.GetClientCertificateRequest{
@@ -671,7 +636,18 @@ func (r *clientCertificateThirdPartyResource) Read(ctx context.Context, req reso
 		return
 	}
 
-	if err := r.read(ctx, &state); err != nil {
+	err := r.read(ctx, &state)
+	if errors.Is(err, mtlskeystore.ErrClientCertificateNotFound) {
+		tflog.Debug(ctx, "Client Certificate Third Party Resource not found, removing from state")
+		resp.State.RemoveResource(ctx)
+		return
+	}
+	if errors.Is(err, errorOneVersionWithDeletePendingStatus) {
+		tflog.Debug(ctx, "Client Certificate Third Party Resource has one version with DELETE_PENDING status, removing from state")
+		resp.State.RemoveResource(ctx)
+		return
+	}
+	if err != nil {
 		resp.Diagnostics.AddError("Reading Client Certificate Third Party Resource failed", err.Error())
 		return
 	}
@@ -747,23 +723,21 @@ func (r *clientCertificateThirdPartyResource) Update(ctx context.Context, req re
 func (r *clientCertificateThirdPartyResource) update(ctx context.Context, plan, oldState *clientCertificateThirdPartyResourceModel) error {
 	client := Client(r.meta)
 
-	if !plan.CertificateName.Equal(oldState.CertificateName) || !plan.NotificationEmails.Equal(oldState.NotificationEmails) {
+	if oldState.hasNameChanged(plan) || oldState.haveNotificationEmailsChanged(plan) {
 		patchReq := mtlskeystore.PatchClientCertificateRequest{
 			CertificateID: oldState.CertificateID.ValueInt64(),
 			Body:          mtlskeystore.PatchClientCertificateRequestBody{},
 		}
-		if plan.CertificateName != oldState.CertificateName {
+		if oldState.hasNameChanged(plan) {
 			tflog.Debug(ctx, fmt.Sprintf("Updating certificate name from '%s' to '%s'", oldState.CertificateName.ValueString(), plan.CertificateName.ValueString()))
 			patchReq.Body.CertificateName = plan.CertificateName.ValueStringPointer()
 		}
-		if !plan.NotificationEmails.Equal(oldState.NotificationEmails) {
+		if oldState.haveNotificationEmailsChanged(plan) {
 			tflog.Debug(ctx, "Updating notification emails")
 			var notificationEmails []string
-			if isKnown(plan.NotificationEmails) {
-				diags := plan.NotificationEmails.ElementsAs(ctx, &notificationEmails, false)
-				if diags.HasError() {
-					return fmt.Errorf("failed to get notification emails: %v", diags)
-				}
+			diags := plan.NotificationEmails.ElementsAs(ctx, &notificationEmails, false)
+			if diags.HasError() {
+				return fmt.Errorf("failed to get notification emails: %v", diags)
 			}
 			patchReq.Body.NotificationEmails = notificationEmails
 		}
@@ -794,59 +768,16 @@ func (r *clientCertificateThirdPartyResource) update(ctx context.Context, plan, 
 		"stateVersions":    stateVersions,
 	})
 
-	if len(versionsToRemove) > 0 {
-		err := checkStatus(ctx, client, oldState.CertificateID.ValueInt64(), versionsToRemove)
-		if err != nil {
-			return err
-		}
-	}
-
 	if len(versionsToRemove) != 0 || len(versionsToAdd) != 0 {
 		if len(versionsToRemove) < len(stateKeys) {
-			for _, version := range versionsToRemove {
-				_, err := client.DeleteClientCertificateVersion(ctx, mtlskeystore.DeleteClientCertificateVersionRequest{
-					CertificateID: oldState.CertificateID.ValueInt64(),
-					Version:       version,
-				})
-				if err != nil {
-					return fmt.Errorf("failed to delete version %d: %w", version, err)
-				}
-			}
-			for _, version := range versionsToAdd {
-				newVersion, err := client.RotateClientCertificateVersion(ctx, mtlskeystore.RotateClientCertificateVersionRequest{
-					CertificateID: oldState.CertificateID.ValueInt64(),
-				})
-				if err != nil {
-					return fmt.Errorf("failed to create version %s: %w", version, err)
-				}
-				stateVersions[newVersion.VersionGUID] = version
+			err := someVersionDeletionAndRotation(ctx, client, versionsToAdd, versionsToRemove, stateVersions, oldState.CertificateID.ValueInt64())
+			if err != nil {
+				return err
 			}
 		} else {
-			slices.Sort(versionsToRemove)
-			for _, version := range versionsToRemove[1:] {
-				_, err := client.DeleteClientCertificateVersion(ctx, mtlskeystore.DeleteClientCertificateVersionRequest{
-					CertificateID: oldState.CertificateID.ValueInt64(),
-					Version:       version,
-				})
-				if err != nil {
-					return fmt.Errorf("failed to delete version %d: %w", version, err)
-				}
-			}
-			for _, version := range versionsToAdd {
-				newVersion, err := client.RotateClientCertificateVersion(ctx, mtlskeystore.RotateClientCertificateVersionRequest{
-					CertificateID: oldState.CertificateID.ValueInt64(),
-				})
-				if err != nil {
-					return fmt.Errorf("failed to create version %s: %w", version, err)
-				}
-				stateVersions[newVersion.VersionGUID] = version
-			}
-			_, err := client.DeleteClientCertificateVersion(ctx, mtlskeystore.DeleteClientCertificateVersionRequest{
-				CertificateID: oldState.CertificateID.ValueInt64(),
-				Version:       versionsToRemove[0],
-			})
+			err := allVersionDeletionAndRotation(ctx, client, versionsToAdd, versionsToRemove, stateVersions, oldState.CertificateID.ValueInt64())
 			if err != nil {
-				return fmt.Errorf("failed to delete version %d: %w", versionsToRemove[0], err)
+				return err
 			}
 		}
 	}
@@ -879,6 +810,73 @@ func (r *clientCertificateThirdPartyResource) update(ctx context.Context, plan, 
 	return nil
 }
 
+// allVersionDeletionAndRotation is responsible for managing the deletion and rotation of client certificate versions.
+// It ensures that all versions except the first one are deleted to prevent deletion of the whole client certificate, rotates first version to add, deletes the first version and then rotates the remaining versions to add.
+func allVersionDeletionAndRotation(ctx context.Context, client mtlskeystore.MTLSKeystore, versionsToAdd []string, versionsToRemove []int64, stateVersions map[string]string, certificateID int64) error {
+	slices.Sort(versionsToRemove)
+	for _, version := range versionsToRemove[1:] {
+		_, err := client.DeleteClientCertificateVersion(ctx, mtlskeystore.DeleteClientCertificateVersionRequest{
+			CertificateID: certificateID,
+			Version:       version,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to delete version %d: %w", version, err)
+		}
+	}
+
+	firstVersionToRotate, err := client.RotateClientCertificateVersion(ctx, mtlskeystore.RotateClientCertificateVersionRequest{
+		CertificateID: certificateID,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to create version %s: %w", versionsToAdd[0], err)
+	}
+	stateVersions[firstVersionToRotate.VersionGUID] = versionsToAdd[0]
+
+	_, err = client.DeleteClientCertificateVersion(ctx, mtlskeystore.DeleteClientCertificateVersionRequest{
+		CertificateID: certificateID,
+		Version:       versionsToRemove[0],
+	})
+	if err != nil {
+		return fmt.Errorf("failed to delete version %d: %w", versionsToRemove[0], err)
+	}
+
+	for _, version := range versionsToAdd[1:] {
+		newVersion, err := client.RotateClientCertificateVersion(ctx, mtlskeystore.RotateClientCertificateVersionRequest{
+			CertificateID: certificateID,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to create version %s: %w", version, err)
+		}
+		stateVersions[newVersion.VersionGUID] = version
+	}
+
+	return nil
+}
+
+// someVersionDeletionAndRotation is responsible for managing the deletion and rotation of client certificate versions.
+func someVersionDeletionAndRotation(ctx context.Context, client mtlskeystore.MTLSKeystore, versionsToAdd []string, versionsToRemove []int64, stateVersions map[string]string, certificateID int64) error {
+	for _, version := range versionsToRemove {
+		_, err := client.DeleteClientCertificateVersion(ctx, mtlskeystore.DeleteClientCertificateVersionRequest{
+			CertificateID: certificateID,
+			Version:       version,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to delete version %d: %w", version, err)
+		}
+	}
+	for _, version := range versionsToAdd {
+		newVersion, err := client.RotateClientCertificateVersion(ctx, mtlskeystore.RotateClientCertificateVersionRequest{
+			CertificateID: certificateID,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to create version %s: %w", version, err)
+		}
+		stateVersions[newVersion.VersionGUID] = version
+	}
+
+	return nil
+}
+
 func (r *clientCertificateThirdPartyResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	tflog.Debug(ctx, "Deleting Client Certificate Third Party Resource")
 
@@ -889,12 +887,6 @@ func (r *clientCertificateThirdPartyResource) Delete(ctx context.Context, req re
 	}
 
 	client := Client(r.meta)
-
-	err := checkStatus(ctx, client, state.CertificateID.ValueInt64(), nil)
-	if err != nil {
-		resp.Diagnostics.AddError("Deleting Client Certificate Versions failed", err.Error())
-		return
-	}
 
 	var stateVersions map[string]clientCertificateVersionModel
 	diags := state.Versions.ElementsAs(ctx, &stateVersions, false)
@@ -930,7 +922,7 @@ func (r *clientCertificateThirdPartyResource) ImportState(ctx context.Context, r
 		resp.Diagnostics.AddError("could not convert import ID to int64", err.Error())
 		return
 	}
-	// Get client certiticate only to extract contract and group from the subject. Must be done in import method,
+	// Get client certificate only to extract contract and group from the subject. Must be done in import method,
 	// as these values cannot be extracted from the API once the resource is created with a custom subject.
 	// If the subject does not contain the contract and group, the import will fail. This will be handled in DXE-5294.
 	client := Client(r.meta)
@@ -966,131 +958,32 @@ func (r *clientCertificateThirdPartyResource) ImportState(ctx context.Context, r
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func isKnown(value attr.Value) bool {
-	return !value.IsNull() && !value.IsUnknown()
-}
-
-func (m *clientCertificateThirdPartyResourceModel) setVersionsData(ctx context.Context, clientCertificateVersions *mtlskeystore.ListClientCertificateVersionsResponse, versionKeys []string, remainingVersions map[string]string) diag.Diagnostics {
-	slices.Reverse(versionKeys)
-	versions := make(map[string]clientCertificateVersionModel)
+func (m *clientCertificateThirdPartyResourceModel) setVersionsData(ctx context.Context, clientCertificateVersions *mtlskeystore.ListClientCertificateVersionsResponse, planVersions []string, stateVersions map[string]string) diag.Diagnostics {
+	slices.Reverse(planVersions)
+	alreadySetVersions := make(map[string]clientCertificateVersionModel)
 	for v, version := range clientCertificateVersions.Versions {
 		if version.VersionAlias != nil {
 			// Skip the version with an alias
 			continue
 		}
-		versionsModel := clientCertificateVersionModel{
-			Version:                  types.Int64Value(version.Version),
-			Status:                   types.StringValue(string(version.Status)),
-			ExpiryDate:               types.StringValue(version.ExpiryDate),
-			Issuer:                   types.StringValue(version.Issuer),
-			KeyAlgorithm:             types.StringValue(string(version.KeyAlgorithm)),
-			CertificateSubmittedBy:   types.StringPointerValue(version.CertificateSubmittedBy),
-			CertificateSubmittedDate: types.StringPointerValue(version.CertificateSubmittedDate),
-			CreatedBy:                types.StringValue(version.CreatedBy),
-			CreatedDate:              types.StringValue(version.CreatedDate),
-			DeleteRequestedDate:      types.StringPointerValue(version.DeleteRequestedDate),
-			DeployedDate:             types.StringPointerValue(version.DeployedDate),
-			IssuedDate:               types.StringValue(version.IssuedDate),
-			KeyEllipticCurve:         types.StringValue(version.KeyEllipticCurve),
-			KeySizeInBytes:           types.StringValue(version.KeySizeInBytes),
-			ScheduledDeleteDate:      types.StringPointerValue(version.ScheduledDeleteDate),
-			SignatureAlgorithm:       types.StringValue(version.SignatureAlgorithm),
-			Subject:                  types.StringValue(version.Subject),
-			VersionGUID:              types.StringValue(version.VersionGUID),
-		}
-
-		if version.CertificateBlock != nil {
-			certificate := &certificateBlockResourceModel{
-				Certificate: types.StringPointerValue(&version.CertificateBlock.Certificate),
-				TrustChain:  types.StringPointerValue(&version.CertificateBlock.TrustChain),
-			}
-			certificateObject, diags := types.ObjectValueFrom(ctx, certificateBlockType(), certificate)
-			if diags.HasError() {
-				return diags
-			}
-			versionsModel.CertificateBlock = certificateObject
-		} else {
-			certificate := &certificateBlockResourceModel{
-				Certificate: types.StringNull(),
-				TrustChain:  types.StringNull(),
-			}
-			certificateObject, diags := types.ObjectValueFrom(ctx, certificateBlockType(), certificate)
-			if diags.HasError() {
-				return diags
-			}
-			versionsModel.CertificateBlock = certificateObject
-		}
-
-		if version.CSRBlock != nil {
-			csr := &csrBlockResourceModel{
-				CSR:          types.StringPointerValue(&version.CSRBlock.CSR),
-				KeyAlgorithm: types.StringPointerValue((*string)(&version.CSRBlock.KeyAlgorithm)),
-			}
-			csrObject, diags := types.ObjectValueFrom(ctx, csrBlockType(), csr)
-			if diags.HasError() {
-				return diags
-			}
-			versionsModel.CSRBlock = csrObject
-		}
-
-		var errors []validationErrorModel
-		for _, err := range version.Validation.Errors {
-			errors = append(errors, validationErrorModel{
-				Message: err.Message,
-				Reason:  err.Reason,
-				Type:    err.Type,
-			})
-		}
-
-		var warnings []validationErrorModel
-		for _, warning := range version.Validation.Warnings {
-			warnings = append(warnings, validationErrorModel{
-				Message: warning.Message,
-				Reason:  warning.Reason,
-				Type:    warning.Type,
-			})
-		}
-
-		validation := validationModel{
-			Errors:   errors,
-			Warnings: warnings,
-		}
-
-		validationObject, diags := types.ObjectValueFrom(ctx, validationType(), validation)
+		versionsModel, diags := createClientVersionModel(ctx, version)
 		if diags.HasError() {
 			return diags
 		}
 
-		versionsModel.Validation = validationObject
-
-		var associatedProperties []associatedPropertiesModel
-		for _, property := range version.AssociatedProperties {
-			associatedProperties = append(associatedProperties, associatedPropertiesModel{
-				AssetID:         types.Int64Value(property.AssetID),
-				GroupID:         types.Int64Value(property.GroupID),
-				PropertyName:    types.StringValue(property.PropertyName),
-				PropertyVersion: types.Int64Value(property.PropertyVersion),
-			})
-		}
-		associatedPropertiesObject, diags := types.ListValueFrom(ctx, associatedPropertiesType(), associatedProperties)
-		if diags.HasError() {
-			return diags
-		}
-
-		versionsModel.AssociatedProperties = associatedPropertiesObject
-
-		if versionKey, exists := remainingVersions[version.VersionGUID]; exists {
-			versions[versionKey] = versionsModel
+		if versionKey, exists := stateVersions[version.VersionGUID]; exists {
+			alreadySetVersions[versionKey] = versionsModel
 		} else {
-			if v >= len(versionKeys) {
-				versions[fmt.Sprintf("%s_v%d", strings.TrimSuffix(version.CreatedDate, "Z"), version.Version)] = versionsModel
+			// If no version keys are provided, use the index as the key.
+			if v >= len(planVersions) {
+				alreadySetVersions[fmt.Sprintf("%s_v%d", strings.TrimSuffix(version.CreatedDate, "Z"), version.Version)] = versionsModel
 			} else {
-				versions[versionKeys[v]] = versionsModel
+				alreadySetVersions[planVersions[v]] = versionsModel
 			}
 		}
 	}
 
-	versionsValue, diags := types.MapValueFrom(ctx, versionsObjectType, versions)
+	versionsValue, diags := types.MapValueFrom(ctx, versionsObjectType, alreadySetVersions)
 	if diags.HasError() {
 		return diags
 	}
@@ -1116,6 +1009,66 @@ func (m *clientCertificateThirdPartyResourceModel) setClientCertificateData(ctx 
 	return nil
 }
 
+func createClientVersionModel(ctx context.Context, version mtlskeystore.ClientCertificateVersion) (clientCertificateVersionModel, diag.Diagnostics) {
+	versionsModel := clientCertificateVersionModel{
+		Version:                  types.Int64Value(version.Version),
+		Status:                   types.StringValue(string(version.Status)),
+		ExpiryDate:               types.StringValue(version.ExpiryDate),
+		Issuer:                   types.StringValue(version.Issuer),
+		KeyAlgorithm:             types.StringValue(string(version.KeyAlgorithm)),
+		CertificateSubmittedBy:   types.StringPointerValue(version.CertificateSubmittedBy),
+		CertificateSubmittedDate: types.StringPointerValue(version.CertificateSubmittedDate),
+		CreatedBy:                types.StringValue(version.CreatedBy),
+		CreatedDate:              types.StringValue(version.CreatedDate),
+		DeleteRequestedDate:      types.StringPointerValue(version.DeleteRequestedDate),
+		DeployedDate:             types.StringPointerValue(version.DeployedDate),
+		IssuedDate:               types.StringValue(version.IssuedDate),
+		KeyEllipticCurve:         types.StringValue(version.KeyEllipticCurve),
+		KeySizeInBytes:           types.StringValue(version.KeySizeInBytes),
+		ScheduledDeleteDate:      types.StringPointerValue(version.ScheduledDeleteDate),
+		SignatureAlgorithm:       types.StringValue(version.SignatureAlgorithm),
+		Subject:                  types.StringValue(version.Subject),
+		VersionGUID:              types.StringValue(version.VersionGUID),
+	}
+
+	if version.CertificateBlock != nil {
+		certificate := &certificateBlockResourceModel{
+			Certificate: types.StringPointerValue(&version.CertificateBlock.Certificate),
+			TrustChain:  types.StringPointerValue(&version.CertificateBlock.TrustChain),
+		}
+		certificateObject, diags := types.ObjectValueFrom(ctx, certificateBlockType(), certificate)
+		if diags.HasError() {
+			return clientCertificateVersionModel{}, diags
+		}
+		versionsModel.CertificateBlock = certificateObject
+	} else {
+		certificate := &certificateBlockResourceModel{
+			Certificate: types.StringNull(),
+			TrustChain:  types.StringNull(),
+		}
+		certificateObject, diags := types.ObjectValueFrom(ctx, certificateBlockType(), certificate)
+		if diags.HasError() {
+			return clientCertificateVersionModel{}, diags
+		}
+		versionsModel.CertificateBlock = certificateObject
+	}
+
+	if version.CSRBlock != nil {
+		csr := &csrBlockResourceModel{
+			CSR:          types.StringPointerValue(&version.CSRBlock.CSR),
+			KeyAlgorithm: types.StringPointerValue((*string)(&version.CSRBlock.KeyAlgorithm)),
+		}
+		csrObject, diags := types.ObjectValueFrom(ctx, csrBlockType(), csr)
+		if diags.HasError() {
+			return clientCertificateVersionModel{}, diags
+		}
+		versionsModel.CSRBlock = csrObject
+	}
+
+	return versionsModel, nil
+}
+
+// extractVersionKeys extracts the keys from the versions map.
 func extractVersionKeys(versions map[string]clientCertificateVersionModel) []string {
 	keys := make([]string, 0, len(versions))
 	for key := range versions {
@@ -1124,6 +1077,7 @@ func extractVersionKeys(versions map[string]clientCertificateVersionModel) []str
 	return keys
 }
 
+// mapKeyToVersionGUID maps the version GUIDs to their corresponding keys in the versions map.
 func mapKeyToVersionGUID(versions map[string]clientCertificateVersionModel) map[string]string {
 	var stateVersions = make(map[string]string)
 
@@ -1134,6 +1088,11 @@ func mapKeyToVersionGUID(versions map[string]clientCertificateVersionModel) map[
 	return stateVersions
 }
 
+// filterVersionsToRemoveAndAdd filters the versions to remove, add and leave based on the state and plan keys.
+// It returns three slices:
+// 1. versionsToRemove: the versions that need to be removed from the state.
+// 2. versionsToAdd: the versions that need to be added to the state.
+// 3. remainingVersions: a map of version GUIDs to their corresponding keys in the state.
 func filterVersionsToRemoveAndAdd(stateKeys, planKeys []string, versions map[string]clientCertificateVersionModel) ([]int64, []string, map[string]string) {
 	versionsToRemove := make([]int64, 0)
 	remainingVersions := make(map[string]string)
@@ -1151,6 +1110,7 @@ func filterVersionsToRemoveAndAdd(stateKeys, planKeys []string, versions map[str
 	return versionsToRemove, versionsToAdd, remainingVersions
 }
 
+// checkStatus checks the status of the client certificate versions to ensure they can be deleted.
 func checkStatus(ctx context.Context, client mtlskeystore.MTLSKeystore, certificateID int64, versionsToRemove []int64) error {
 	clientCertificateVersions, err := client.ListClientCertificateVersions(ctx, mtlskeystore.ListClientCertificateVersionsRequest{
 		CertificateID:               certificateID,
@@ -1166,9 +1126,6 @@ func checkStatus(ctx context.Context, client mtlskeystore.MTLSKeystore, certific
 				continue
 			}
 		}
-		if version.Status == mtlskeystore.DeletePending {
-			return fmt.Errorf("cannot delete client certificate version with status %s", version.Status)
-		}
 		if len(version.AssociatedProperties) > 0 {
 			return fmt.Errorf("cannot delete client certificate version %d with associated properties", version.Version)
 		}
@@ -1176,22 +1133,7 @@ func checkStatus(ctx context.Context, client mtlskeystore.MTLSKeystore, certific
 	return nil
 }
 
-func certificateBlockType() map[string]attr.Type {
-	return certificateBlockSchema().GetType().(attr.TypeWithAttributeTypes).AttributeTypes()
-}
-
-func csrBlockType() map[string]attr.Type {
-	return csrBlockSchema().GetType().(attr.TypeWithAttributeTypes).AttributeTypes()
-}
-
-func validationType() map[string]attr.Type {
-	return validationSchema().GetType().(attr.TypeWithAttributeTypes).AttributeTypes()
-}
-
-func associatedPropertiesType() types.ObjectType {
-	return associatedPropertiesSchema().NestedObject.Type().(types.ObjectType)
-}
-
+// extractContractAndGroup extracts the contract and group from the subject string.
 func extractContractAndGroup(subject string) (string, string, error) {
 	// Capture the part before required '/CN=' label.
 	re := regexp.MustCompile(`\/([^\/]+)\/CN=`)
