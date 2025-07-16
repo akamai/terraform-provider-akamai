@@ -58,6 +58,7 @@
 * [IMPORTANT] mTLS TrustStore:
   * Added new resources:
     * `akamai_mtlstruststore_ca_set` - manages lifecycle of CA set and its version.
+    * `akamai_mtlstruststore_ca_set_activation` - manages lifecycle of CA set version activation.
 
 
   * Appsec

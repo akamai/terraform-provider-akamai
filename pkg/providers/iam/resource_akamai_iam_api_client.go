@@ -10,6 +10,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/iam"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/date"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/framework/modifiers"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/tf/validators"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
@@ -724,7 +725,7 @@ func (r *apiClientResource) ModifyPlan(ctx context.Context, request resource.Mod
 	// This validation does not work if `clone_authorized_user_groups` is set to `true`.
 	if plan != nil && plan.PurgeOptions != nil && !plan.PurgeOptions.CPCodeAccess.CPCodes.IsNull() &&
 		!plan.GroupAccess.Groups.IsNull() &&
-		isKnown(plan.PurgeOptions.CPCodeAccess.CPCodes) && isKnown(plan.GroupAccess.Groups) {
+		tf.IsKnown(plan.PurgeOptions.CPCodeAccess.CPCodes) && tf.IsKnown(plan.GroupAccess.Groups) {
 		r.validateCPCodes(ctx, plan, response)
 	}
 
@@ -755,8 +756,8 @@ func (r *apiClientResource) ModifyPlan(ctx context.Context, request resource.Mod
 	}
 
 	if !request.Plan.Raw.Equal(request.State.Raw) &&
-		isKnown(state.Lock) && state.Lock.ValueBool() &&
-		isKnown(plan.Lock) && plan.Lock.ValueBool() {
+		tf.IsKnown(state.Lock) && state.Lock.ValueBool() &&
+		tf.IsKnown(plan.Lock) && plan.Lock.ValueBool() {
 		tflog.Debug(ctx, "Cannot change API client without unlocking it first")
 		response.Diagnostics.AddError("lock", "You cannot change API client without unlocking it first.")
 		return
@@ -768,8 +769,8 @@ func (r *apiClientResource) ModifyPlan(ctx context.Context, request resource.Mod
 	}
 
 	// If all_accessible_apis is true, we need to remove the apis from the plan
-	if isKnown(state.APIAccess.AllAccessibleAPIs) &&
-		isKnown(plan.APIAccess.AllAccessibleAPIs) &&
+	if tf.IsKnown(state.APIAccess.AllAccessibleAPIs) &&
+		tf.IsKnown(plan.APIAccess.AllAccessibleAPIs) &&
 		state.APIAccess.AllAccessibleAPIs.ValueBool() != plan.APIAccess.AllAccessibleAPIs.ValueBool() && plan.APIAccess.AllAccessibleAPIs.ValueBool() {
 		tflog.Debug(ctx, "If 'all_accessible_apis' is true, we need to remove the 'apis' from the plan")
 		plan.APIAccess.APIs = types.SetUnknown(apiType())
@@ -874,14 +875,10 @@ func credentialObjectToModel(ctx context.Context, credentialObject types.Object)
 	return credentialModel, diags
 }
 
-func isKnown(value attr.Value) bool {
-	return !value.IsNull() && !value.IsUnknown()
-}
-
 func modifyGroupAccess(ctx context.Context, state *apiClientResourceModel, plan *apiClientResourceModel, response *resource.ModifyPlanResponse) {
 	// If clone_authorized_user_groups is changed to false, we need to invalidate first element of `groups` from the plan
-	if isKnown(state.GroupAccess.CloneAuthorizedUserGroups) &&
-		isKnown(plan.GroupAccess.CloneAuthorizedUserGroups) &&
+	if tf.IsKnown(state.GroupAccess.CloneAuthorizedUserGroups) &&
+		tf.IsKnown(plan.GroupAccess.CloneAuthorizedUserGroups) &&
 		state.GroupAccess.CloneAuthorizedUserGroups.ValueBool() != plan.GroupAccess.CloneAuthorizedUserGroups.ValueBool() && !plan.GroupAccess.CloneAuthorizedUserGroups.ValueBool() {
 		tflog.Debug(ctx, "If 'clone_authorized_user_groups' is changed to false, we need to invalidate first element of 'groups' from the plan")
 		var groups []apiClientGroupModel
@@ -906,8 +903,8 @@ func modifyGroupAccess(ctx context.Context, state *apiClientResourceModel, plan 
 		}
 	}
 	// If clone_authorized_user_groups is changed to true, we need to invalidate all `groups` from the plan
-	if isKnown(state.GroupAccess.CloneAuthorizedUserGroups) &&
-		isKnown(plan.GroupAccess.CloneAuthorizedUserGroups) &&
+	if tf.IsKnown(state.GroupAccess.CloneAuthorizedUserGroups) &&
+		tf.IsKnown(plan.GroupAccess.CloneAuthorizedUserGroups) &&
 		state.GroupAccess.CloneAuthorizedUserGroups.ValueBool() != plan.GroupAccess.CloneAuthorizedUserGroups.ValueBool() && plan.GroupAccess.CloneAuthorizedUserGroups.ValueBool() {
 		tflog.Debug(ctx, "If 'clone_authorized_user_groups' is changed to true, we need to invalidate all 'groups' from the plan")
 		plan.GroupAccess.Groups = types.ListUnknown(groupsType(maxSupportedGroupNesting))
@@ -919,7 +916,7 @@ func modifyGroupAccess(ctx context.Context, state *apiClientResourceModel, plan 
 }
 
 func modifyActions(ctx context.Context, state *apiClientResourceModel, plan *apiClientResourceModel, response *resource.ModifyPlanResponse) {
-	if isKnown(state.Lock) && isKnown(plan.Lock) {
+	if tf.IsKnown(state.Lock) && tf.IsKnown(plan.Lock) {
 		if state.Lock.ValueBool() != plan.Lock.ValueBool() {
 			tflog.Debug(ctx, "If 'lock' is changed, we need to invalidate 'actions' from the plan")
 			var actions apiClientActionsModel
@@ -1038,7 +1035,7 @@ func (r *apiClientResource) ValidateConfig(ctx context.Context, req resource.Val
 	}
 
 	var cpCodes []int64
-	if data.PurgeOptions != nil && isKnown(data.PurgeOptions.CPCodeAccess.CPCodes) {
+	if data.PurgeOptions != nil && tf.IsKnown(data.PurgeOptions.CPCodeAccess.CPCodes) {
 		resp.Diagnostics.Append(data.PurgeOptions.CPCodeAccess.CPCodes.ElementsAs(ctx, &cpCodes, false)...)
 		if resp.Diagnostics.HasError() {
 			return
@@ -1077,7 +1074,7 @@ func (r *apiClientResource) Create(ctx context.Context, req resource.CreateReque
 
 func (r *apiClientResource) create(ctx context.Context, plan *apiClientResourceModel) error {
 	var notificationEmails []string
-	if isKnown(plan.NotificationEmails) {
+	if tf.IsKnown(plan.NotificationEmails) {
 		diags := plan.NotificationEmails.ElementsAs(ctx, &notificationEmails, false)
 		if diags.HasError() {
 			return fmt.Errorf("failed to get notification emails: %v", diags)
@@ -1098,7 +1095,7 @@ func (r *apiClientResource) create(ctx context.Context, plan *apiClientResourceM
 	}
 
 	var authorizedUsers []string
-	if isKnown(plan.AuthorizedUsers) {
+	if tf.IsKnown(plan.AuthorizedUsers) {
 		diags := plan.AuthorizedUsers.ElementsAs(ctx, &authorizedUsers, false)
 		if diags.HasError() {
 			return fmt.Errorf("failed to get authorized users: %v", diags)
@@ -1401,7 +1398,7 @@ func (r *apiClientResource) Update(ctx context.Context, req resource.UpdateReque
 
 func (r *apiClientResource) update(ctx context.Context, plan *apiClientResourceModel) error {
 	var notificationEmails []string
-	if isKnown(plan.NotificationEmails) {
+	if tf.IsKnown(plan.NotificationEmails) {
 		diags := plan.NotificationEmails.ElementsAs(ctx, &notificationEmails, false)
 		if diags.HasError() {
 			return fmt.Errorf("failed to get notification emails: %v", diags)
@@ -1421,7 +1418,7 @@ func (r *apiClientResource) update(ctx context.Context, plan *apiClientResourceM
 		return fmt.Errorf("failed to get purge options: %v", diags)
 	}
 	var authorizedUsers []string
-	if isKnown(plan.AuthorizedUsers) {
+	if tf.IsKnown(plan.AuthorizedUsers) {
 		diags := plan.AuthorizedUsers.ElementsAs(ctx, &authorizedUsers, false)
 		if diags.HasError() {
 			return fmt.Errorf("failed to get authorized users: %v", diags)
@@ -1577,7 +1574,7 @@ func (m *apiClientResourceModel) apisFromModel(ctx context.Context) ([]iam.APIRe
 	var apis []iam.APIRequestItem
 
 	var apiModel []apiClientAPIModel
-	if isKnown(m.APIAccess.APIs) {
+	if tf.IsKnown(m.APIAccess.APIs) {
 		diags := m.APIAccess.APIs.ElementsAs(ctx, &apiModel, false)
 		if diags.HasError() {
 			return nil, diags
@@ -1647,7 +1644,7 @@ func (m *apiClientResourceModel) getPurgeOptions(ctx context.Context) (*iam.Purg
 
 	if m.PurgeOptions != nil {
 		var cpCodes []int64
-		if m.PurgeOptions != nil && isKnown(m.PurgeOptions.CPCodeAccess.CPCodes) {
+		if m.PurgeOptions != nil && tf.IsKnown(m.PurgeOptions.CPCodeAccess.CPCodes) {
 			diags := m.PurgeOptions.CPCodeAccess.CPCodes.ElementsAs(ctx, &cpCodes, false)
 			if diags.HasError() {
 				return nil, diags
@@ -1794,7 +1791,7 @@ func (m *apiClientResourceModel) setData(ctx context.Context, getResponse *iam.G
 		found = true
 	} else {
 		var oldCredential credentialsModel
-		if isKnown(m.Credential) {
+		if tf.IsKnown(m.Credential) {
 			diags = m.Credential.As(ctx, &oldCredential, basetypes.ObjectAsOptions{})
 			if diags.HasError() {
 				return diags
