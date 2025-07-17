@@ -193,6 +193,64 @@ func TestCASetResource(t *testing.T) {
 				},
 			},
 		},
+		"create a ca set - when version creation fails - taint the resource for next apply": {
+			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
+				// create
+				mockValidateCertificates(m, resourceData, nil).Times(4)
+				mockCreateCASet(m, resourceData).Times(1)
+				m.On("CreateCASetVersion", testutils.MockContext, mtlstruststore.CreateCASetVersionRequest{
+					CASetID: resourceData.caSetID,
+					Body: mtlstruststore.CreateCASetVersionRequestBody{
+						AllowInsecureSHA1: resourceData.allowInsecureSHA1,
+						Description:       resourceData.versionDescription,
+						Certificates: []mtlstruststore.CertificateRequest{
+							{
+								CertificatePEM: "-----BEGIN CERTIFICATE-----\nMIIDXTCCAkWgAwIBAgIJALa6Rz1u5z2OMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV\n-----END CERTIFICATE-----\n",
+								Description:    ptr.To("Test certificate"),
+							},
+						},
+					},
+				}).Return(nil, fmt.Errorf("error creating CA set version")).Times(1)
+
+				// read
+				mockGetCASet(m, resourceData).Times(1)
+				mockGetCASetVersion(m, resourceData).Times(1)
+
+				// delete
+				mockListCASetAssociations(m, resourceData).Times(1)
+				mockDeleteCASet(m, resourceData).Times(1)
+				mockGetCASetDeletionStatus(m, resourceData, "IN_PROGRESS", "IN_PROGRESS", "COMPLETED").Times(1)
+				mockGetCASetDeletionStatus(m, resourceData, "COMPLETE", "COMPLETE", "COMPLETE").Times(1)
+
+				// create
+				mockValidateCertificates(m, resourceData, nil).Times(4)
+				mockCreateCASet(m, resourceData).Times(1)
+				mockCreateCASetVersion(m, resourceData).Times(1)
+				mockGetCASet(m, resourceData).Times(1)
+
+				// read
+				mockGetCASet(m, resourceData).Times(1)
+				mockGetCASetVersion(m, resourceData).Times(1)
+				mockListCASetActivations(m, resourceData, false).Times(2)
+
+				// delete
+				mockListCASetAssociations(m, resourceData).Times(2)
+				mockDeleteCASet(m, resourceData).Times(1)
+				mockGetCASetDeletionStatus(m, resourceData, "IN_PROGRESS", "IN_PROGRESS", "COMPLETED").Times(1)
+				mockGetCASetDeletionStatus(m, resourceData, "COMPLETE", "COMPLETE", "COMPLETE").Times(1)
+			},
+			mockData: createData,
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResCASet/create.tf"),
+					ExpectError: regexp.MustCompile("error creating CA set version"),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/create.tf"),
+					Check:  check.Build(),
+				},
+			},
+		},
 		"expect error - create a ca set with expired certificate": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
 				err := &mtlstruststore.Error{

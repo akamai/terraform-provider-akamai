@@ -47,6 +47,11 @@ func NewCASetResource() resource.Resource {
 	}
 }
 
+type caSetCreateResult struct {
+	caSet        *mtlstruststore.CreateCASetResponse
+	caSetVersion *mtlstruststore.CreateCASetVersionResponse
+}
+
 type caSetResourceModel struct {
 	Name                types.String   `tfsdk:"name"`
 	Description         types.String   `tfsdk:"description"`
@@ -537,31 +542,48 @@ func (r *caSetResource) Create(ctx context.Context, req resource.CreateRequest, 
 		return
 	}
 
-	if diags := r.create(ctx, &plan); diags.HasError() {
+	createResp, diags := r.create(ctx, &plan)
+	if diags.HasError() {
+		// On failure, save partial state if available
+		if createResp != nil && createResp.caSet != nil {
+			plan.setCASetData((*mtlstruststore.CASetResponse)(createResp.caSet))
+			if diags := populateDefaultVersionStateFromPlan(&plan); diags.HasError() {
+				resp.Diagnostics.Append(diags...)
+				return
+			}
+			resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
+		}
 		resp.Diagnostics.Append(diags...)
 		return
 	}
 
+	plan.setCASetData((*mtlstruststore.CASetResponse)(createResp.caSet))
+	plan.setCASetVersionData(ctx, (*mtlstruststore.CASetVersion)(createResp.caSetVersion))
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
-func (r *caSetResource) create(ctx context.Context, plan *caSetResourceModel) diag.Diagnostics {
+func (r *caSetResource) create(ctx context.Context, plan *caSetResourceModel) (*caSetCreateResult, diag.Diagnostics) {
 	client = Client(r.meta)
+
+	result := caSetCreateResult{}
 
 	createCASetResponse, err := client.CreateCASet(ctx, mtlstruststore.CreateCASetRequest{
 		CASetName:   plan.Name.ValueString(),
 		Description: plan.Description.ValueStringPointer(),
 	})
 	if err != nil {
-		return diag.Diagnostics{diag.NewErrorDiagnostic("create ca set failed", err.Error())}
+		return nil, diag.Diagnostics{diag.NewErrorDiagnostic("create ca set failed", err.Error())}
 	}
+
+	result.caSet = createCASetResponse
 	tflog.Debug(ctx, "Created CA set", map[string]interface{}{
 		"ca_set_id": createCASetResponse.CASetID,
 	})
 
 	certs, diags := createCertificatesRequest(ctx, plan.Certificates)
 	if diags.HasError() {
-		return diags
+		return &result, diags
 	}
 	createCASetVersionResponse, err := client.CreateCASetVersion(ctx, mtlstruststore.CreateCASetVersionRequest{
 		CASetID: createCASetResponse.CASetID,
@@ -572,24 +594,59 @@ func (r *caSetResource) create(ctx context.Context, plan *caSetResourceModel) di
 		},
 	})
 	if err != nil {
-		return diag.Diagnostics{diag.NewErrorDiagnostic("create ca set version failed", err.Error())}
+		return &result, diag.Diagnostics{diag.NewErrorDiagnostic("create ca set version failed", err.Error())}
 	}
+
+	result.caSetVersion = createCASetVersionResponse
 	tflog.Debug(ctx, "Created CA set version", map[string]interface{}{
 		"current_version": strconv.FormatInt(createCASetVersionResponse.Version, 10),
 	})
+
 	// After creating the CA set, version is empty. Version appears after creating the CA set version.
 	// To get the CA set version, we need to fetch it again.
 	getCASetResponse, err := client.GetCASet(ctx, mtlstruststore.GetCASetRequest{
 		CASetID: createCASetResponse.CASetID,
 	})
 	if err != nil {
-		return diag.Diagnostics{diag.NewErrorDiagnostic("get ca set failed", err.Error())}
+		return &result, diag.Diagnostics{diag.NewErrorDiagnostic("get ca set failed", err.Error())}
 	}
 
-	plan.setCASetData((*mtlstruststore.CASetResponse)(getCASetResponse))
-	diags = plan.setCASetVersionData(ctx, (*mtlstruststore.CASetVersion)(createCASetVersionResponse))
+	result.caSet = (*mtlstruststore.CreateCASetResponse)(getCASetResponse)
+	return &result, diags
+}
 
+func populateDefaultVersionStateFromPlan(plan *caSetResourceModel) diag.Diagnostics {
+	plan.VersionCreatedBy = types.StringNull()
+	plan.VersionCreatedDate = types.StringNull()
+	plan.VersionModifiedBy = types.StringNull()
+	plan.VersionModifiedDate = types.StringNull()
+
+	var certs []certificateModel
+	diags := plan.Certificates.ElementsAs(context.Background(), &certs, false)
+	if diags.HasError() {
+		return diags
+	}
+	for i := range certs {
+		certs[i] = defaultCertificateModelFromPlan(certs[i])
+	}
+	plan.Certificates, diags = types.SetValueFrom(context.Background(), certificatesType(), certs)
 	return diags
+}
+
+func defaultCertificateModelFromPlan(cert certificateModel) certificateModel {
+	return certificateModel{
+		CertificatePEM:     cert.CertificatePEM,
+		Description:        cert.Description,
+		CreatedBy:          types.StringNull(),
+		CreatedDate:        types.StringNull(),
+		StartDate:          types.StringNull(),
+		EndDate:            types.StringNull(),
+		Fingerprint:        types.StringNull(),
+		Issuer:             types.StringNull(),
+		SerialNumber:       types.StringNull(),
+		SignatureAlgorithm: types.StringNull(),
+		Subject:            types.StringNull(),
+	}
 }
 
 func createCertificatesRequest(ctx context.Context, c types.Set) ([]mtlstruststore.CertificateRequest, diag.Diagnostics) {
@@ -640,8 +697,6 @@ func (r *caSetResource) Read(ctx context.Context, req resource.ReadRequest, resp
 
 	if caSetResp.LatestVersion == nil {
 		tflog.Debug(ctx, "CA set or version is not found")
-		resp.Diagnostics.AddWarning("CA set version is not found, we can mark the resource as deleted", fmt.Sprintf("CA set with ID %s has no version. It may have been deleted outside of Terraform.", state.ID.ValueString()))
-		resp.State.RemoveResource(ctx)
 		return
 	}
 
