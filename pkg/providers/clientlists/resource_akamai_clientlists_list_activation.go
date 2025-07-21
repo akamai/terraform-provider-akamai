@@ -4,11 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/clientlists"
+	akalog "github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/log"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -17,22 +20,29 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
+const (
+	waitActivationCompletionTimeout = 10 * time.Minute
+	activationRetryMaxAttempts      = 3
+	activationRetryTimeout          = 45 * time.Second
+)
+
 var (
-	pollActivationInterval = 30 * time.Second
-	errActivationFailed    = errors.New("activation failed")
+	pollActivationInterval   = 30 * time.Second
+	activationRetryBaseDelay = 3 * time.Second
+	errActivationFailed      = errors.New("activation failed")
 )
 
 func resourceClientListActivation() *schema.Resource {
 	return &schema.Resource{
-		ReadContext:   resourceActivationRead,
-		CreateContext: resourceActivationCreate,
-		UpdateContext: resourceActivationUpdate,
-		DeleteContext: resourceActivationDelete,
+		ReadContext:   Read,
+		CreateContext: Create,
+		UpdateContext: Update,
+		DeleteContext: Delete,
 		CustomizeDiff: customdiff.All(
 			markStatusComputed,
 		),
 		Importer: &schema.ResourceImporter{
-			StateContext: resourceActivationImport,
+			StateContext: ImportState,
 		},
 		Schema: map[string]*schema.Schema{
 			"list_id": {
@@ -83,10 +93,11 @@ func resourceClientListActivation() *schema.Resource {
 	}
 }
 
-func resourceActivationRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+// Read implements resource's Read method
+func Read(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	client := inst.Client(meta)
-	logger := meta.Log("CLIENTLIST", "resourceActivationRead")
+	logger := meta.Log("CLIENTLIST", "Read")
 	logger.Debug("Reading client list activation")
 
 	id, err := strconv.ParseInt(d.Id(), 10, 64)
@@ -129,15 +140,83 @@ func resourceActivationRead(ctx context.Context, d *schema.ResourceData, m inter
 	return nil
 }
 
-func resourceActivationCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+// Create implements resource's Create method
+func Create(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	client := inst.Client(meta)
-	logger := meta.Log("CLIENTLIST", "resourceActivationCreate")
+	logger := meta.Log("CLIENTLIST", "Create")
 	logger.Debug("Creating client list activation")
 
-	attrs, err := getResourceAttrs(d)
+	diags := activate(ctx, d, meta, client, logger)
+	if diags.HasError() {
+		return diags
+	}
+
+	return Read(ctx, d, m)
+}
+
+// Update implements resource's Update method
+func Update(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := meta.Must(m)
+	client := inst.Client(meta)
+	logger := meta.Log("CLIENTLIST", "Update")
+	logger.Debug("Updating client list activation")
+
+	isActiveStatus := d.Get("status").(string) == string(clientlists.Active)
+	hasChanges := d.HasChanges("list_id", "version", "network")
+
+	if !isActiveStatus || hasChanges {
+		diags := activate(ctx, d, meta, client, logger)
+		if diags.HasError() {
+			return diags
+		}
+	}
+
+	return Read(ctx, d, m)
+}
+
+// Delete implements resource's Delete method
+func Delete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := meta.Must(m)
+	client := inst.Client(meta)
+	logger := meta.Log("CLIENTLIST", "Delete")
+	logger.Debug("Deleting client list activation")
+
+	attrs, err := getResourceAttrs(d, true)
 	if err != nil {
-		diag.FromErr(err)
+		return diag.FromErr(err)
+	}
+
+	req := clientlists.CreateDeactivationRequest{
+		ListID: attrs.ListID,
+		ActivationParams: clientlists.ActivationParams{
+			Action:                 clientlists.Deactivate,
+			Comments:               attrs.Comments,
+			SiebelTicketID:         attrs.SiebelTicketID,
+			Network:                clientlists.ActivationNetwork(attrs.Network),
+			NotificationRecipients: attrs.Emails,
+		},
+	}
+
+	res, err := createDeactivationWithRetry(ctx, meta, client, req)
+	if err != nil {
+		logger.Errorf("calling 'CreateDeactivation' failed: %s", err.Error())
+		return diag.FromErr(err)
+	}
+
+	_, err = waitForActivationCompletion(ctx, client, res.ActivationID, clientlists.Deactivated)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	d.SetId("")
+	return nil
+}
+
+func activate(ctx context.Context, d *schema.ResourceData, meta meta.Meta, client clientlists.ClientLists, logger akalog.Interface) diag.Diagnostics {
+	attrs, err := getResourceAttrs(d, false)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
 	req := clientlists.CreateActivationRequest{
@@ -151,7 +230,7 @@ func resourceActivationCreate(ctx context.Context, d *schema.ResourceData, m int
 		},
 	}
 
-	res, err := client.CreateActivation(ctx, req)
+	res, err := createActivationWithRetry(ctx, meta, client, req)
 	if err != nil {
 		logger.Errorf("calling 'CreateActivation' failed: %s", err.Error())
 		return diag.FromErr(err)
@@ -159,69 +238,11 @@ func resourceActivationCreate(ctx context.Context, d *schema.ResourceData, m int
 
 	d.SetId(fmt.Sprintf("%d", res.ActivationID))
 
-	_, err = waitForActivationCompletion(ctx, client, res.ActivationID)
+	_, err = waitForActivationCompletion(ctx, client, res.ActivationID, clientlists.Active)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
-	return resourceActivationRead(ctx, d, m)
-}
-
-func resourceActivationUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := meta.Must(m)
-	client := inst.Client(meta)
-	logger := meta.Log("CLIENTLIST", "resourceActivationUpdate")
-	logger.Debug("Updating client list activation")
-
-	isActiveStatus := d.Get("status").(string) == string(clientlists.Active)
-	hasChanges := d.HasChanges("list_id", "version", "network")
-
-	if !isActiveStatus || hasChanges {
-		attrs, err := getResourceAttrs(d)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-
-		req := clientlists.CreateActivationRequest{
-			ListID: attrs.ListID,
-			ActivationParams: clientlists.ActivationParams{
-				Action:                 clientlists.Activate,
-				Comments:               attrs.Comments,
-				SiebelTicketID:         attrs.SiebelTicketID,
-				Network:                clientlists.ActivationNetwork(attrs.Network),
-				NotificationRecipients: attrs.Emails,
-			},
-		}
-
-		res, err := client.CreateActivation(ctx, req)
-		if err != nil {
-			logger.Errorf("calling 'CreateActivation' failed: %s", err.Error())
-			return diag.FromErr(err)
-		}
-
-		d.SetId(fmt.Sprintf("%d", res.ActivationID))
-
-		_, err = waitForActivationCompletion(ctx, client, res.ActivationID)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-	}
-
-	return resourceActivationRead(ctx, d, m)
-}
-
-func resourceActivationDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := meta.Must(m)
-	logger := meta.Log("CLIENTLIST", "resourceActivationDelete")
-	logger.Debug("Deleting client list activation")
-
-	d.SetId("")
-	return diag.Diagnostics{
-		diag.Diagnostic{
-			Severity: diag.Warning,
-			Summary:  "Client Lists API does not support activation deletion - resource will only be removed from state",
-		},
-	}
+	return nil
 }
 
 type resourceAttrs struct {
@@ -233,15 +254,26 @@ type resourceAttrs struct {
 	Version        int64
 }
 
-func getResourceAttrs(d *schema.ResourceData) (*resourceAttrs, error) {
+func getResourceAttrs(d *schema.ResourceData, destroy bool) (*resourceAttrs, error) {
 	listID, err := tf.GetStringValue("list_id", d)
 	if err != nil {
 		return nil, err
 	}
-	version, err := tf.GetInt64Value("version", tf.NewRawConfig(d))
-	if err != nil {
-		return nil, err
+
+	var version int64
+	if destroy { // Don’t Use tf.NewRawConfig(d) in Destroy. It’s intended for config access only, which is unavailable during destroy.
+		ver, ok := d.Get("version").(int)
+		if !ok {
+			return nil, fmt.Errorf("%w: %s", errors.New("value not found"), "version")
+		}
+		version = int64(ver)
+	} else {
+		version, err = tf.GetInt64Value("version", tf.NewRawConfig(d))
+		if err != nil {
+			return nil, err
+		}
 	}
+
 	network, err := tf.GetStringValue("network", d)
 	if err != nil {
 		return nil, err
@@ -270,24 +302,86 @@ func getResourceAttrs(d *schema.ResourceData) (*resourceAttrs, error) {
 	}, nil
 }
 
-func waitForActivationCompletion(ctx context.Context, client clientlists.ClientLists, activationID int64) (*clientlists.GetActivationResponse, error) {
+func waitForActivationCompletion(ctx context.Context, client clientlists.ClientLists, activationID int64, status clientlists.ActivationStatus) (*clientlists.GetActivationResponse, error) {
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, waitActivationCompletionTimeout)
+	defer cancel()
 	for {
 		select {
 		case <-time.After(pollActivationInterval):
-			activation, err := client.GetActivation(ctx, clientlists.GetActivationRequest{ActivationID: activationID})
+			activation, err := client.GetActivation(ctxWithTimeout, clientlists.GetActivationRequest{ActivationID: activationID})
 			if err != nil {
 				return nil, fmt.Errorf("polling activation failed: %s", err)
 			}
 
-			if activation.ActivationStatus == clientlists.Active {
+			switch activation.ActivationStatus {
+			case status:
 				return activation, nil
-			} else if activation.ActivationStatus == clientlists.Failed {
+			case clientlists.Failed:
 				return nil, errActivationFailed
 			}
-		case <-ctx.Done():
-			return nil, fmt.Errorf("activation context terminated: %s", ctx.Err())
+		case <-ctxWithTimeout.Done():
+			if errors.Is(ctxWithTimeout.Err(), context.DeadlineExceeded) {
+				return nil, fmt.Errorf("activation polling timed out for activation ID: %d", activationID)
+			}
+			return nil, fmt.Errorf("activation context terminated: %w", ctx.Err())
 		}
 	}
+}
+
+func retry[T any](ctx context.Context, meta meta.Meta, operationName string, operation func(ctx context.Context) (*T, error),
+) (*T, error) {
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, activationRetryTimeout)
+	logger := meta.Log("CLIENTLIST", operationName)
+	defer cancel()
+
+	var lastErr error
+	var result *T
+
+	for attempt := 0; attempt < activationRetryMaxAttempts; attempt++ {
+		if ctxWithTimeout.Err() != nil {
+			logger.Warnf("%s context cancelled before attempt %d: %v", operationName, attempt+1, ctxWithTimeout.Err())
+			return nil, ctxWithTimeout.Err()
+		}
+
+		result, lastErr = operation(ctxWithTimeout)
+		if lastErr == nil {
+			return result, nil
+		}
+
+		var e *clientlists.Error
+		if errors.As(lastErr, &e) && e.StatusCode != http.StatusInternalServerError {
+			return nil, lastErr
+		}
+
+		if attempt < activationRetryMaxAttempts-1 {
+			delay := activationRetryBaseDelay * time.Duration(int64(math.Pow(3, float64(attempt))))
+			logger.Warnf("%s attempt %d failed: %s. Retrying in %s...", operationName, attempt+1, lastErr.Error(), delay)
+
+			select {
+			case <-time.After(delay):
+			case <-ctxWithTimeout.Done():
+				logger.Warnf("%s context timeout during retry delay on attempt %d: %v", operationName, attempt+1, ctxWithTimeout.Err())
+				return nil, ctxWithTimeout.Err()
+			}
+		}
+	}
+
+	logger.Errorf("%s failed after %d attempts: %v", operationName, activationRetryMaxAttempts, lastErr)
+	return nil, lastErr
+}
+
+func createActivationWithRetry(ctx context.Context, meta meta.Meta, client clientlists.ClientLists, req clientlists.CreateActivationRequest,
+) (*clientlists.CreateActivationResponse, error) {
+	return retry[clientlists.CreateActivationResponse](ctx, meta, "CreateActivation", func(ctx context.Context) (*clientlists.CreateActivationResponse, error) {
+		return client.CreateActivation(ctx, req)
+	})
+}
+
+func createDeactivationWithRetry(ctx context.Context, meta meta.Meta, client clientlists.ClientLists, req clientlists.CreateDeactivationRequest,
+) (*clientlists.CreateDeactivationResponse, error) {
+	return retry[clientlists.CreateDeactivationResponse](ctx, meta, "CreateDeactivation", func(ctx context.Context) (*clientlists.CreateDeactivationResponse, error) {
+		return client.CreateDeactivation(ctx, req)
+	})
 }
 
 // Suppress diff on callers field when activation is not required
@@ -298,7 +392,8 @@ func suppressFieldDiff(_, oldValue, newValue string, d *schema.ResourceData) boo
 	return true
 }
 
-func resourceActivationImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+// ImportState implements resource's ImportState method
+func ImportState(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	meta := meta.Must(m)
 	client := inst.Client(meta)
 	logger := meta.Log("CLIENTLIST", "importActivationState")
@@ -317,8 +412,16 @@ func resourceActivationImport(ctx context.Context, d *schema.ResourceData, m int
 		return nil, err
 	}
 
-	if res.ActivationStatus == clientlists.PendingActivation {
-		activation, err := waitForActivationCompletion(ctx, client, res.ActivationID)
+	if res.ActivationStatus == clientlists.PendingActivation || res.ActivationStatus == clientlists.PendingDeactivation {
+		var status clientlists.ActivationStatus
+
+		if res.ActivationStatus == clientlists.PendingActivation {
+			status = clientlists.Active
+		} else {
+			status = clientlists.Deactivated
+		}
+
+		activation, err := waitForActivationCompletion(ctx, client, res.ActivationID, status)
 		if err != nil && !errors.Is(err, errActivationFailed) {
 			return nil, err
 		}

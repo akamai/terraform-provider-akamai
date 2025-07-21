@@ -6,7 +6,6 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/clientlists"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
-
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -65,9 +64,7 @@ func (p *Subprovider) SDKResources() map[string]*schema.Resource {
 
 // SDKDataSources returns the clientlists data sources implemented using terraform-plugin-sdk
 func (p *Subprovider) SDKDataSources() map[string]*schema.Resource {
-	return map[string]*schema.Resource{
-		"akamai_clientlist_lists": dataSourceClientLists(),
-	}
+	return map[string]*schema.Resource{}
 }
 
 // FrameworkResources returns the clientlists resources implemented using terraform-plugin-framework
@@ -77,5 +74,7 @@ func (p *Subprovider) FrameworkResources() []func() resource.Resource {
 
 // FrameworkDataSources returns the clientlists data sources implemented using terraform-plugin-framework
 func (p *Subprovider) FrameworkDataSources() []func() datasource.DataSource {
-	return []func() datasource.DataSource{}
+	return []func() datasource.DataSource{
+		NewClientListsDataSource,
+	}
 }

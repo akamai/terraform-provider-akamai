@@ -43,8 +43,9 @@
 * GTM
   * Added a new optional parameters to the import id of the `akamai_gtm_domain` resource. It allows to specify the contract and the group of the imported domain and save them in the state ([I#631](https://github.com/akamai/terraform-provider-akamai/issues/631)).
 
-
-
+* ClientLists
+  * Added deactivation per network on destroy to `resource_akamai_clientlists_list_activation`
+  * Migrated from terraform-plugin-sdk to terraform-plugin-framework `data_akamai_clientlist_lists.go`
 
 
 
