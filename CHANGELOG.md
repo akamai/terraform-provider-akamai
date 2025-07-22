@@ -6,7 +6,14 @@
 
 * Updated the `akamai_dns_record_set` data source and fixed issue with swapped `host` and `name` attributes.
 
-
+* Appsec
+  * The following changes are made in `akamai_appsec_ip_geo` data source and resource :
+    * Replaced `ip_network_lists` field with `ip_controls` object containing `action` and `ip_network_lists`.
+      The action specifies the block request to be blocked from specified IP 'deny' or a 'custom_deny' action in block Mode. If no action is specified, by default its value will be det to 'deny'.
+    * Replaced `geo_network_lists` field with `geo_controls` object containing `action` and `geo_network_lists`.
+      The action specifies the block request to be blocked from specified Geo 'deny' or a 'custom_deny' action in block Mode.If no action is specified, by default its value will be det to 'deny'.
+    * Replaced `asn_network_lists` field with `asn_controls` object containing `action` and `asn_network_lists`.
+      The action specifies the block request to be blocked from specified ASN 'deny' or a 'custom_deny' action in block Mode.If no action is specified, by default its value will be det to 'deny'.
 
 
 
@@ -23,8 +30,10 @@
 
 
 
-
-
+* Appsec
+  * The following field is added in `akamai_appsec_ip_geo` data source and resource :
+    * `block_action` field to block the request with a 'deny' or a 'custom_deny' action in IP/GEO except from the allowedLists in 'allow' mode. If no action is specified, by default its value will be det to 'deny'.
+    *  Changed the Type to `TypeSet` to allow only distinct values for `exception_ip_network_lists`
 
 
 

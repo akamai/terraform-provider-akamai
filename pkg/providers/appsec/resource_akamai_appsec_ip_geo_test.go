@@ -74,14 +74,16 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 			Block:    "blockSpecificIPGeo",
 			ASNControls: &appsec.IPGeoASNControls{
 				BlockedIPNetworkLists: &appsec.IPGeoNetworkLists{
+					Action: "deny",
 					NetworkList: []string{
-						"40721_ASNLIST1",
 						"44811_ASNLIST2",
+						"40721_ASNLIST1",
 					},
 				},
 			},
 			GeoControls: &appsec.IPGeoGeoControls{
 				BlockedIPNetworkLists: &appsec.IPGeoNetworkLists{
+					Action: "deny",
 					NetworkList: []string{
 						"40731_BMROLLOUTGEO",
 						"44831_ECSCGEOBLACKLIST",
@@ -90,15 +92,16 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 			},
 			IPControls: &appsec.IPGeoIPControls{
 				BlockedIPNetworkLists: &appsec.IPGeoNetworkLists{
+					Action: "deny",
 					NetworkList: []string{
-						"49181_ADTIPBLACKLIST",
 						"49185_ADTWAFBYPASSLIST",
+						"49181_ADTIPBLACKLIST",
 					},
 				},
 				AllowedIPNetworkLists: &appsec.IPGeoNetworkLists{
 					NetworkList: []string{
-						"68762_ADYEN",
 						"69601_ADYENPRODWHITELIST",
+						"68762_ADYEN",
 					},
 				},
 			},
@@ -124,6 +127,7 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 
 		client.AssertExpectations(t)
 	})
+
 	t.Run("match by Ukraine Geo ID", func(t *testing.T) {
 		client := &appsec.Mock{}
 
@@ -136,14 +140,16 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 			Block:    "blockSpecificIPGeo",
 			ASNControls: &appsec.IPGeoASNControls{
 				BlockedIPNetworkLists: &appsec.IPGeoNetworkLists{
+					Action: "deny",
 					NetworkList: []string{
-						"40721_ASNLIST1",
 						"44811_ASNLIST2",
+						"40721_ASNLIST1",
 					},
 				},
 			},
 			GeoControls: &appsec.IPGeoGeoControls{
 				BlockedIPNetworkLists: &appsec.IPGeoNetworkLists{
+					Action: "deny",
 					NetworkList: []string{
 						"40731_BMROLLOUTGEO",
 						"44831_ECSCGEOBLACKLIST",
@@ -152,15 +158,16 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 			},
 			IPControls: &appsec.IPGeoIPControls{
 				BlockedIPNetworkLists: &appsec.IPGeoNetworkLists{
+					Action: "deny",
 					NetworkList: []string{
-						"49181_ADTIPBLACKLIST",
 						"49185_ADTWAFBYPASSLIST",
+						"49181_ADTIPBLACKLIST",
 					},
 				},
 				AllowedIPNetworkLists: &appsec.IPGeoNetworkLists{
 					NetworkList: []string{
-						"68762_ADYEN",
 						"69601_ADYENPRODWHITELIST",
+						"68762_ADYEN",
 					},
 				},
 			},
@@ -201,14 +208,16 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 			Block:    "blockSpecificIPGeo",
 			ASNControls: &appsec.IPGeoASNControls{
 				BlockedIPNetworkLists: &appsec.IPGeoNetworkLists{
+					Action: "deny",
 					NetworkList: []string{
-						"40721_ASNLIST1",
 						"44811_ASNLIST2",
+						"40721_ASNLIST1",
 					},
 				},
 			},
 			GeoControls: &appsec.IPGeoGeoControls{
 				BlockedIPNetworkLists: &appsec.IPGeoNetworkLists{
+					Action: "deny",
 					NetworkList: []string{
 						"40731_BMROLLOUTGEO",
 						"44831_ECSCGEOBLACKLIST",
@@ -217,21 +226,22 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 			},
 			IPControls: &appsec.IPGeoIPControls{
 				BlockedIPNetworkLists: &appsec.IPGeoNetworkLists{
+					Action: "deny",
 					NetworkList: []string{
-						"49181_ADTIPBLACKLIST",
 						"49185_ADTWAFBYPASSLIST",
+						"49181_ADTIPBLACKLIST",
 					},
 				},
 				AllowedIPNetworkLists: &appsec.IPGeoNetworkLists{
 					NetworkList: []string{
-						"68762_ADYEN",
 						"69601_ADYENPRODWHITELIST",
+						"68762_ADYEN",
 					},
 				},
 			},
 		}
 		getIPGeoResponse(43253, 7, "AAAA_81230", "testdata/TestResIPGeo/UkraineGeo.json", client)
-		updateIPGeoResponse("testdata/TestResIPGeo/IPGeo.json", updateRequest, client)
+		updateIPGeoResponse("testdata/TestResIPGeo/UkraineGeo.json", updateRequest, client)
 		updateIPGeoProtectionResponseAllProtectionsFalse(43253, 7, "AAAA_81230", "testdata/TestResIPGeoProtection/PolicyProtections.json", client)
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
@@ -269,14 +279,16 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 			Block:    "blockSpecificIPGeo",
 			ASNControls: &appsec.IPGeoASNControls{
 				BlockedIPNetworkLists: &appsec.IPGeoNetworkLists{
+					Action: "deny",
 					NetworkList: []string{
-						"40721_ASNLIST1",
 						"44811_ASNLIST2",
+						"40721_ASNLIST1",
 					},
 				},
 			},
 			GeoControls: &appsec.IPGeoGeoControls{
 				BlockedIPNetworkLists: &appsec.IPGeoNetworkLists{
+					Action: "deny",
 					NetworkList: []string{
 						"40731_BMROLLOUTGEO",
 						"44831_ECSCGEOBLACKLIST",
@@ -285,15 +297,16 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 			},
 			IPControls: &appsec.IPGeoIPControls{
 				BlockedIPNetworkLists: &appsec.IPGeoNetworkLists{
+					Action: "deny",
 					NetworkList: []string{
-						"49181_ADTIPBLACKLIST",
 						"49185_ADTWAFBYPASSLIST",
+						"49181_ADTIPBLACKLIST",
 					},
 				},
 				AllowedIPNetworkLists: &appsec.IPGeoNetworkLists{
 					NetworkList: []string{
-						"68762_ADYEN",
 						"69601_ADYENPRODWHITELIST",
+						"68762_ADYEN",
 					},
 				},
 			},
@@ -302,7 +315,7 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 			},
 		}
 		getIPGeoResponse(43253, 7, "AAAA_81230", "testdata/TestResIPGeo/UkraineGeo.json", client)
-		updateIPGeoResponse("testdata/TestResIPGeo/IPGeo.json", updateRequest, client)
+		updateIPGeoResponse("testdata/TestResIPGeo/UkraineGeo.json", updateRequest, client)
 		updateIPGeoProtectionResponseAllProtectionsFalse(43253, 7, "AAAA_81230", "testdata/TestResIPGeoProtection/PolicyProtections.json", client)
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
@@ -335,15 +348,16 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 		configVersion(43253, client)
 
 		updateRequest := appsec.UpdateIPGeoRequest{
-			ConfigID: 43253,
-			Version:  7,
-			PolicyID: "AAAA_81230",
-			Block:    "blockAllTrafficExceptAllowedIPs",
+			ConfigID:       43253,
+			Version:        7,
+			PolicyID:       "AAAA_81230",
+			Block:          "blockAllTrafficExceptAllowedIPs",
+			BlockAllAction: "deny",
 			IPControls: &appsec.IPGeoIPControls{
 				AllowedIPNetworkLists: &appsec.IPGeoNetworkLists{
 					NetworkList: []string{
-						"68762_ADYEN",
 						"69601_ADYENPRODWHITELIST",
+						"68762_ADYEN",
 					},
 				},
 			},
@@ -372,18 +386,6 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 	t.Run("block with empty lists", func(t *testing.T) {
 
 		client := &appsec.Mock{}
-
-		configVersion(43253, client)
-
-		updateRequest := appsec.UpdateIPGeoRequest{
-			ConfigID: 43253,
-			Version:  7,
-			PolicyID: "AAAA_81230",
-			Block:    "blockSpecificIPGeo",
-		}
-		getIPGeoResponse(43253, 7, "AAAA_81230", "testdata/TestResIPGeo/IPGeoBlockOnly.json", client)
-		updateIPGeoResponse("testdata/TestResIPGeo/IPGeoBlockOnly.json", updateRequest, client)
-		updateIPGeoProtectionResponseAllProtectionsFalse(43253, 7, "AAAA_81230", "testdata/TestResIPGeoProtection/PolicyProtections.json", client)
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
 				IsUnitTest:               true,
@@ -394,6 +396,7 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_ip_geo.test", "id", "43253:AAAA_81230"),
 						),
+						ExpectError: regexp.MustCompile(`(?s)Error: Missing required argument*`),
 					},
 				},
 			})
@@ -409,10 +412,11 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 		configVersion(43253, client)
 
 		updateRequest := appsec.UpdateIPGeoRequest{
-			ConfigID: 43253,
-			Version:  7,
-			PolicyID: "AAAA_81230",
-			Block:    "blockAllTrafficExceptAllowedIPs",
+			ConfigID:       43253,
+			Version:        7,
+			PolicyID:       "AAAA_81230",
+			BlockAllAction: "deny",
+			Block:          "blockAllTrafficExceptAllowedIPs",
 		}
 
 		getIPGeoResponse(43253, 7, "AAAA_81230", "testdata/TestResIPGeo/IPGeoAllowOnly.json", client)
@@ -448,7 +452,7 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_ip_geo.test", "id", "43253:AAAA_81230"),
 						),
-						ExpectError: regexp.MustCompile("Error: empty or invalid string value for config parameter geo_network_lists"),
+						ExpectError: regexp.MustCompile("Error: empty or invalid string value for config parameter geo_controls"),
 					},
 				},
 			})
@@ -469,7 +473,7 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_ip_geo.test", "id", "43253:AAAA_81230"),
 						),
-						ExpectError: regexp.MustCompile(`(?s)Error: empty or invalid string value for config parameter geo_network_lists.*Error: empty or invalid string value for config parameter ip_network_lists.*Error: empty or invalid string value for config parameter exception_ip_network_lists.*Error: empty or invalid string value for config parameter asn_network_lists.*`),
+						ExpectError: regexp.MustCompile(`(?s)Error: empty or invalid string value for config parameter geo_controls.*Error: empty or invalid string value for config parameter ip_controls.*Error: empty or invalid string value for config parameter exception_ip_network_lists.*`),
 					},
 				},
 			})

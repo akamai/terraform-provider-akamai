@@ -1,5 +1,6 @@
 {
     "block": "blockAllTrafficExceptAllowedIPs",
+    "blockAllAction": "deny",
     "ipControls": {
         "allowedIPNetworkLists": {
             "networkList": [
