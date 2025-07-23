@@ -5182,7 +5182,7 @@ func getBehaviorsSchemaV20250113() map[string]*schema.Schema {
 		"enhanced_debug": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior provides support for enhanced debugging on edge servers. It includes all the functionality provided by the existing `Pragma` header debugging, but is more secure and provides additional information. All requests that use this behavior pass an auth token that you generate using a secret debug key in the `Akamai-Debug` request header. This behavior can be used in includes.",
+			Description: "This behavior, available by default for all products, provides support for enhanced debugging on edge servers. It includes all the functionality provided by the existing `Pragma` header debugging, but is more secure and provides additional information. All requests that use this behavior pass an auth token that you generate using a secret debug key in the `Akamai-Debug` request header. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -5256,7 +5256,7 @@ func getBehaviorsSchemaV20250113() map[string]*schema.Schema {
 					},
 					"forward_header_enrichment": {
 						Optional:    true,
-						Description: "Whether the Enhanced Proxy Detection (Akamai-EPD) header is included in the forward request to mark a connecting IP address as an anonymous proxy, with a two-letter designation. See the `epdForwardHeaderEnrichment` behavior for details.",
+						Description: "Whether the Enhanced Proxy Detection (Akamai-EPD) header is included in the forward request to mark a connecting IP address as an anonymous proxy, with a two-letter or three-letter designation. See the `epdForwardHeaderEnrichment` behavior for details.",
 						Type:        schema.TypeBool,
 					},
 					"enable_configuration_mode": {
@@ -5284,7 +5284,7 @@ func getBehaviorsSchemaV20250113() map[string]*schema.Schema {
 					},
 					"detect_anonymous_vpn": {
 						Optional:    true,
-						Description: "This enables detection of requests from anonymous VPNs.",
+						Description: "This detects requests from anonymous VPNs.",
 						Type:        schema.TypeBool,
 					},
 					"detect_anonymous_vpn_action": {
@@ -5306,7 +5306,7 @@ func getBehaviorsSchemaV20250113() map[string]*schema.Schema {
 					},
 					"detect_public_proxy": {
 						Optional:    true,
-						Description: "This enables detection of requests from public proxies.",
+						Description: "This detects requests from public proxies.",
 						Type:        schema.TypeBool,
 					},
 					"detect_public_proxy_action": {
@@ -5328,7 +5328,7 @@ func getBehaviorsSchemaV20250113() map[string]*schema.Schema {
 					},
 					"detect_tor_exit_node": {
 						Optional:    true,
-						Description: "This enables detection of requests from Tor exit nodes.",
+						Description: "This detects requests from Tor exit nodes.",
 						Type:        schema.TypeBool,
 					},
 					"detect_tor_exit_node_action": {
@@ -5350,7 +5350,7 @@ func getBehaviorsSchemaV20250113() map[string]*schema.Schema {
 					},
 					"detect_smart_dns_proxy": {
 						Optional:    true,
-						Description: "This enables detection of requests from smart DNS proxies.",
+						Description: "This detects requests from smart DNS proxies.",
 						Type:        schema.TypeBool,
 					},
 					"detect_smart_dns_proxy_action": {
@@ -5394,7 +5394,7 @@ func getBehaviorsSchemaV20250113() map[string]*schema.Schema {
 					},
 					"detect_vpn_data_center": {
 						Optional:    true,
-						Description: "This enables detection of requests from VPN data centers.",
+						Description: "This detects requests from VPN data centers.",
 						Type:        schema.TypeBool,
 					},
 					"detect_vpn_data_center_action": {
@@ -5416,7 +5416,7 @@ func getBehaviorsSchemaV20250113() map[string]*schema.Schema {
 					},
 					"detect_residential_proxy": {
 						Optional:    true,
-						Description: "This enables detection of requests from a residential proxy. See `Enhanced Proxy Detection with GeoGuard` and learn more about this GeoGuard category before enabling it.",
+						Description: "This detects requests from a residential proxy. See `Enhanced Proxy Detection with GeoGuard` and learn more about this GeoGuard category before enabling it.",
 						Type:        schema.TypeBool,
 					},
 					"detect_residential_proxy_action": {
@@ -5459,7 +5459,7 @@ func getBehaviorsSchemaV20250113() map[string]*schema.Schema {
 					},
 					"enabled": {
 						Optional:    true,
-						Description: "Sends the Enhanced Proxy Detection (`Akamai-EPD`) header in the forward request to determine whether the connecting IP address is an anonymous proxy. The header can contain one or more two-letter codes that indicate the IP address type detected by edge servers:",
+						Description: "Sends the Enhanced Proxy Detection (`Akamai-EPD`) header in the forward request to determine whether the connecting IP address is an anonymous proxy. The header can contain one or more codes that indicate the IP address type detected by edge servers:",
 						Type:        schema.TypeBool,
 					},
 				},
