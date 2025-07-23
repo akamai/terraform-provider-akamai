@@ -105,7 +105,7 @@ func (v apiStateValue) StringSemanticEquals(ctx context.Context, valuable basety
 	stringAttribute, _ := valuable.ToStringValue(ctx)
 	var user, err1 = deserialize(stringAttribute.ValueString())
 	if err1 != nil {
-		diags.AddError("Unable to deserialize API state", err.Error())
+		diags.AddError("Unable to deserialize API state", err1.Error())
 	}
 
 	if diff := checkSemanticEquality(*user, *state); diff != nil {
