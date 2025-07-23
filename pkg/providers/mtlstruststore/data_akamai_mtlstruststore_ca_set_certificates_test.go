@@ -62,11 +62,16 @@ func TestCASetCertificatesDataSource(t *testing.T) {
 		"read successful - read by ca set name": {
 			testData: mockCASetData,
 			init: func(m *mtlstruststore.Mock, testData caSetTestData) {
-				testData.caSets[0].CASetStatus = "NOT_DELETED"
 				m.On("ListCASets", testutils.MockContext, mtlstruststore.ListCASetsRequest{
 					CASetNamePrefix: testData.caSetName,
 				}).Return(&mtlstruststore.ListCASetsResponse{
-					CASets: testData.caSets,
+					CASets: []mtlstruststore.CASetResponse{
+						{
+							CASetID:     "12345",
+							CASetName:   "example-ca-set",
+							CASetStatus: "NOT_DELETED",
+						},
+					},
 				}, nil)
 				mockGetCASetVersionCertificates(m)
 			},
