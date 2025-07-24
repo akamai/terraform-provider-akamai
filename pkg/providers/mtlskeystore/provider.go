@@ -48,6 +48,7 @@ func (p *Subprovider) FrameworkResources() []func() resource.Resource {
 	return []func() resource.Resource{
 		NewClientCertificateThirdPartyResource,
 		NewClientCertificateUploadResource,
+		NewClientCertificateAkamaiResource,
 	}
 }
 

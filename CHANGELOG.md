@@ -82,7 +82,9 @@
 
 
 
-
+* mTLS KeyStore:
+  * Added new resources:
+    * `akamai_mtlskeystore_client_certificate_akamai` - manages akamai flow for client certificates.
 
 
 
