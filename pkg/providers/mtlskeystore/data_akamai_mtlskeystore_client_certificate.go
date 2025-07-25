@@ -479,29 +479,29 @@ func convertDataToVersionModel(v mtlskeystore.ClientCertificateVersion) *version
 	versionModel := versionModel{
 		Version:                  types.Int64Value(v.Version),
 		VersionGUID:              types.StringValue(v.VersionGUID),
-		Status:                   types.StringValue(string(v.Status)),
+		Status:                   types.StringValue(v.Status),
 		CreatedBy:                types.StringValue(v.CreatedBy),
-		CreatedDate:              types.StringValue(v.CreatedDate),
-		ExpiryDate:               types.StringValue(v.ExpiryDate),
-		Issuer:                   types.StringValue(v.Issuer),
-		KeyAlgorithm:             types.StringValue(string(v.KeyAlgorithm)),
-		KeyEllipticCurve:         types.StringValue(v.KeyEllipticCurve),
-		KeySizeInBytes:           types.StringValue(v.KeySizeInBytes),
-		SignatureAlgorithm:       types.StringValue(v.SignatureAlgorithm),
-		Subject:                  types.StringValue(v.Subject),
-		IssuedDate:               types.StringValue(v.IssuedDate),
+		CreatedDate:              types.StringValue(v.CreatedDate.Format(time.RFC3339)),
+		ExpiryDate:               types.StringPointerValue(formatOptionalRFC3339(v.ExpiryDate)),
+		Issuer:                   types.StringPointerValue(v.Issuer),
+		KeyAlgorithm:             types.StringValue(v.KeyAlgorithm),
+		KeyEllipticCurve:         types.StringPointerValue(v.EllipticCurve),
+		KeySizeInBytes:           types.StringPointerValue(v.KeySizeInBytes),
+		SignatureAlgorithm:       types.StringPointerValue(v.SignatureAlgorithm),
+		Subject:                  types.StringPointerValue(v.Subject),
+		IssuedDate:               types.StringPointerValue(formatOptionalRFC3339(v.IssuedDate)),
 		CertificateSubmittedBy:   types.StringPointerValue(v.CertificateSubmittedBy),
-		CertificateSubmittedDate: types.StringPointerValue(v.CertificateSubmittedDate),
-		DeployedDate:             types.StringPointerValue(v.DeployedDate),
-		DeleteRequestedDate:      types.StringPointerValue(v.DeleteRequestedDate),
-		ScheduledDeleteDate:      types.StringPointerValue(v.ScheduledDeleteDate),
+		CertificateSubmittedDate: types.StringPointerValue(formatOptionalRFC3339(v.CertificateSubmittedDate)),
+		DeployedDate:             types.StringPointerValue(formatOptionalRFC3339(v.DeployedDate)),
+		DeleteRequestedDate:      types.StringPointerValue(formatOptionalRFC3339(v.DeleteRequestedDate)),
+		ScheduledDeleteDate:      types.StringPointerValue(formatOptionalRFC3339(v.ScheduledDeleteDate)),
 		Properties:               parseProperties(v.AssociatedProperties),
 		Validation:               parseValidation(v.Validation),
 	}
 
 	if v.CertificateBlock != nil {
 		versionModel.CertificateBlock.Certificate = types.StringValue(v.CertificateBlock.Certificate)
-		versionModel.CertificateBlock.KeyAlgorithm = types.StringValue(string(v.CertificateBlock.KeyAlgorithm))
+		versionModel.CertificateBlock.KeyAlgorithm = types.StringValue(v.CertificateBlock.KeyAlgorithm)
 		versionModel.CertificateBlock.TrustChain = types.StringValue(v.CertificateBlock.TrustChain)
 	}
 	if v.CSRBlock != nil {
@@ -562,4 +562,12 @@ func parseValidation(validation mtlskeystore.ValidationResult) validationModel {
 		Errors:   errors,
 		Warnings: warnings,
 	}
+}
+
+func formatOptionalRFC3339(t *time.Time) *string {
+	if t == nil {
+		return nil
+	}
+	parsed := (*t).Format(time.RFC3339)
+	return &parsed
 }

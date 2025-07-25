@@ -8,6 +8,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/mtlskeystore"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/framework/modifiers"
@@ -992,7 +993,7 @@ func (m *clientCertificateThirdPartyResourceModel) setVersionsData(ctx context.C
 		} else {
 			// If no version keys are provided, use the index as the key.
 			if v >= len(planVersions) {
-				alreadySetVersions[fmt.Sprintf("%s_v%d", strings.TrimSuffix(version.CreatedDate, "Z"), version.Version)] = versionsModel
+				alreadySetVersions[fmt.Sprintf("%s_v%d", strings.TrimSuffix(version.CreatedDate.Format(time.RFC3339), "Z"), version.Version)] = versionsModel
 			} else {
 				alreadySetVersions[planVersions[v]] = versionsModel
 			}
@@ -1028,22 +1029,22 @@ func (m *clientCertificateThirdPartyResourceModel) setClientCertificateData(ctx 
 func createClientVersionModel(ctx context.Context, version mtlskeystore.ClientCertificateVersion) (clientCertificateVersionModel, diag.Diagnostics) {
 	versionsModel := clientCertificateVersionModel{
 		Version:                  types.Int64Value(version.Version),
-		Status:                   types.StringValue(string(version.Status)),
-		ExpiryDate:               types.StringValue(version.ExpiryDate),
-		Issuer:                   types.StringValue(version.Issuer),
-		KeyAlgorithm:             types.StringValue(string(version.KeyAlgorithm)),
+		Status:                   types.StringValue(version.Status),
+		ExpiryDate:               types.StringPointerValue(formatOptionalRFC3339(version.ExpiryDate)),
+		Issuer:                   types.StringPointerValue(version.Issuer),
+		KeyAlgorithm:             types.StringValue(version.KeyAlgorithm),
 		CertificateSubmittedBy:   types.StringPointerValue(version.CertificateSubmittedBy),
-		CertificateSubmittedDate: types.StringPointerValue(version.CertificateSubmittedDate),
+		CertificateSubmittedDate: types.StringPointerValue(formatOptionalRFC3339(version.CertificateSubmittedDate)),
 		CreatedBy:                types.StringValue(version.CreatedBy),
-		CreatedDate:              types.StringValue(version.CreatedDate),
-		DeleteRequestedDate:      types.StringPointerValue(version.DeleteRequestedDate),
-		DeployedDate:             types.StringPointerValue(version.DeployedDate),
-		IssuedDate:               types.StringValue(version.IssuedDate),
-		KeyEllipticCurve:         types.StringValue(version.KeyEllipticCurve),
-		KeySizeInBytes:           types.StringValue(version.KeySizeInBytes),
-		ScheduledDeleteDate:      types.StringPointerValue(version.ScheduledDeleteDate),
-		SignatureAlgorithm:       types.StringValue(version.SignatureAlgorithm),
-		Subject:                  types.StringValue(version.Subject),
+		CreatedDate:              types.StringValue(version.CreatedDate.Format(time.RFC3339)),
+		DeleteRequestedDate:      types.StringPointerValue(formatOptionalRFC3339(version.DeleteRequestedDate)),
+		DeployedDate:             types.StringPointerValue(formatOptionalRFC3339(version.DeployedDate)),
+		IssuedDate:               types.StringPointerValue(formatOptionalRFC3339(version.IssuedDate)),
+		KeyEllipticCurve:         types.StringPointerValue(version.EllipticCurve),
+		KeySizeInBytes:           types.StringPointerValue(version.KeySizeInBytes),
+		ScheduledDeleteDate:      types.StringPointerValue(formatOptionalRFC3339(version.ScheduledDeleteDate)),
+		SignatureAlgorithm:       types.StringPointerValue(version.SignatureAlgorithm),
+		Subject:                  types.StringPointerValue(version.Subject),
 		VersionGUID:              types.StringValue(version.VersionGUID),
 	}
 

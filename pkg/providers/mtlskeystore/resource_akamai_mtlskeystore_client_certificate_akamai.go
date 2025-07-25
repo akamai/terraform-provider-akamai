@@ -433,7 +433,7 @@ func (c *clientCertificateAkamaiResource) Read(ctx context.Context, req resource
 		return
 	}
 
-	if len(versions.Versions) == 1 && versions.Versions[0].Status == mtlskeystore.DeletePending {
+	if len(versions.Versions) == 1 && versions.Versions[0].Status == string(mtlskeystore.DeletePending) {
 		tflog.Debug(ctx, "Client Certificate Akamai Resource's last version is in pending delete status, removing from state")
 		resp.Diagnostics.AddWarning("Resource Removal", "The last version of the Client Certificate is in `DELETE_PENDING` status. The resource will be removed from the state.")
 		resp.State.RemoveResource(ctx)
@@ -580,7 +580,7 @@ func (c *clientCertificateAkamaiResource) Delete(ctx context.Context, req resour
 		return
 	}
 	for _, version := range versions.Versions {
-		if version.Status == mtlskeystore.DeletePending {
+		if version.Status == string(mtlskeystore.DeletePending) {
 			tflog.Debug(ctx, fmt.Sprintf("Client Certificate Version %d is already in delete pending state, skipping deletion", version.Version))
 			continue
 		}
@@ -631,10 +631,10 @@ func (c *clientCertificateAkamaiResource) ModifyPlan(ctx context.Context, req re
 func (m *clientCertificateAkamaiResourceModel) populateCertModelFromResponse(ctx context.Context, cert mtlskeystore.Certificate) {
 	m.CertificateID = types.Int64Value(cert.CertificateID)
 	m.CertificateName = types.StringValue(cert.CertificateName)
-	m.Geography = types.StringValue(string(cert.Geography))
-	m.KeyAlgorithm = types.StringValue(string(cert.KeyAlgorithm))
+	m.Geography = types.StringValue(cert.Geography)
+	m.KeyAlgorithm = types.StringValue(cert.KeyAlgorithm)
 	m.NotificationEmails, _ = types.ListValueFrom(ctx, types.StringType, cert.NotificationEmails)
-	m.SecureNetwork = types.StringValue(string(cert.SecureNetwork))
+	m.SecureNetwork = types.StringValue(cert.SecureNetwork)
 	m.Subject = types.StringValue(cert.Subject)
 	m.CreatedBy = types.StringValue(cert.CreatedBy)
 	m.CreatedDate = types.StringValue(cert.CreatedDate.Format(time.RFC3339))
@@ -657,20 +657,20 @@ func (m *clientCertificateAkamaiResourceModel) populateVersionModelFromResponse(
 		}
 		versionsModel = append(versionsModel, clientCertificateAkamaiVersionModel{
 			Version:             types.Int64Value(version.Version),
-			Status:              types.StringValue(string(version.Status)),
-			ExpiryDate:          types.StringValue(version.ExpiryDate),
-			Issuer:              types.StringValue(version.Issuer),
-			KeyAlgorithm:        types.StringValue(string(version.KeyAlgorithm)),
+			Status:              types.StringValue(version.Status),
+			ExpiryDate:          types.StringPointerValue(formatOptionalRFC3339(version.ExpiryDate)),
+			Issuer:              types.StringPointerValue(version.Issuer),
+			KeyAlgorithm:        types.StringValue(version.KeyAlgorithm),
 			CreatedBy:           types.StringValue(version.CreatedBy),
-			CreatedDate:         types.StringValue(version.CreatedDate),
-			DeleteRequestedDate: types.StringPointerValue(version.DeleteRequestedDate),
-			DeployedDate:        types.StringPointerValue(version.DeployedDate),
-			IssuedDate:          types.StringValue(version.IssuedDate),
-			KeyEllipticCurve:    types.StringValue(version.KeyEllipticCurve),
-			KeySizeInBytes:      types.StringValue(version.KeySizeInBytes),
-			ScheduledDeleteDate: types.StringPointerValue(version.ScheduledDeleteDate),
-			SignatureAlgorithm:  types.StringValue(version.SignatureAlgorithm),
-			Subject:             types.StringValue(version.Subject),
+			CreatedDate:         types.StringValue(version.CreatedDate.Format(time.RFC3339)),
+			DeleteRequestedDate: types.StringPointerValue(formatOptionalRFC3339(version.DeleteRequestedDate)),
+			DeployedDate:        types.StringPointerValue(formatOptionalRFC3339(version.DeployedDate)),
+			IssuedDate:          types.StringPointerValue(formatOptionalRFC3339(version.IssuedDate)),
+			KeyEllipticCurve:    types.StringPointerValue(version.EllipticCurve),
+			KeySizeInBytes:      types.StringPointerValue(version.KeySizeInBytes),
+			ScheduledDeleteDate: types.StringPointerValue(formatOptionalRFC3339(version.ScheduledDeleteDate)),
+			SignatureAlgorithm:  types.StringPointerValue(version.SignatureAlgorithm),
+			Subject:             types.StringPointerValue(version.Subject),
 			VersionGUID:         types.StringValue(version.VersionGUID),
 			CertificateBlock:    certificateObject,
 		})
@@ -698,7 +698,7 @@ func (m *clientCertificateAkamaiResourceModel) waitUntilVersionDeployed(
 		}
 		if len(versions.Versions) == 1 {
 			tflog.Debug(ctx, fmt.Sprintf("Client Certificate Version status: %s", versions.Versions[0].Status))
-			if versions.Versions[0].Status == mtlskeystore.Deployed {
+			if versions.Versions[0].Status == string(mtlskeystore.Deployed) {
 				return &versions.Versions[0], nil
 			}
 		} else {

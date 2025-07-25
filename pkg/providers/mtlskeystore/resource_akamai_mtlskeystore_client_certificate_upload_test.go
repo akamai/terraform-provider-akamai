@@ -34,7 +34,7 @@ func TestClientCertificateUpload(t *testing.T) {
 			{
 				Version:     1,
 				VersionGUID: "unique-guid",
-				Status:      mtlskeystore.Deployed,
+				Status:      string(mtlskeystore.Deployed),
 			},
 		}
 	}
@@ -44,7 +44,7 @@ func TestClientCertificateUpload(t *testing.T) {
 			{
 				Version:     version,
 				VersionGUID: versionGUID,
-				Status:      status,
+				Status:      string(status),
 			},
 		}
 	}
