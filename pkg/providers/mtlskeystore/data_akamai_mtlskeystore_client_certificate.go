@@ -50,7 +50,6 @@ type (
 		Status                   types.String          `tfsdk:"status"`
 		CreatedBy                types.String          `tfsdk:"created_by"`
 		CreatedDate              types.String          `tfsdk:"created_date"`
-		DeployedDate             types.String          `tfsdk:"deployed_date"`
 		ExpiryDate               types.String          `tfsdk:"expiry_date"`
 		Issuer                   types.String          `tfsdk:"issuer"`
 		KeyAlgorithm             types.String          `tfsdk:"key_algorithm"`
@@ -146,10 +145,6 @@ func (d *clientCertificateDataSource) Schema(_ context.Context, _ datasource.Sch
 		},
 		"created_date": schema.StringAttribute{
 			Description: "An ISO 8601 timestamp indicating the client certificate version's creation.",
-			Computed:    true,
-		},
-		"deployed_date": schema.StringAttribute{
-			Description: "An ISO 8601 timestamp indicating when the client certificate version was activated.",
 			Computed:    true,
 		},
 		"expiry_date": schema.StringAttribute{
@@ -492,7 +487,6 @@ func convertDataToVersionModel(v mtlskeystore.ClientCertificateVersion) *version
 		IssuedDate:               types.StringPointerValue(formatOptionalRFC3339(v.IssuedDate)),
 		CertificateSubmittedBy:   types.StringPointerValue(v.CertificateSubmittedBy),
 		CertificateSubmittedDate: types.StringPointerValue(formatOptionalRFC3339(v.CertificateSubmittedDate)),
-		DeployedDate:             types.StringPointerValue(formatOptionalRFC3339(v.DeployedDate)),
 		DeleteRequestedDate:      types.StringPointerValue(formatOptionalRFC3339(v.DeleteRequestedDate)),
 		ScheduledDeleteDate:      types.StringPointerValue(formatOptionalRFC3339(v.ScheduledDeleteDate)),
 		Properties:               parseProperties(v.AssociatedProperties),

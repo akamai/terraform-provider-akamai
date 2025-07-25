@@ -378,7 +378,6 @@ func TestClientCertificateAkamaiResource(t *testing.T) {
 		CheckEqual("versions.0.key_algorithm", "RSA").
 		CheckEqual("versions.0.created_by", "joeDoe").
 		CheckEqual("versions.0.created_date", "2023-01-01T12:00:00Z").
-		CheckEqual("versions.0.deployed_date", "2023-01-02T12:00:00Z").
 		CheckEqual("versions.0.issued_date", "2023-01-01T12:00:00Z").
 		CheckEqual("versions.0.key_size_in_bytes", "2048").
 		CheckEqual("versions.0.subject", "/C=US/O=Akamai Technologies, Inc./OU=Example 123456789 987654321/CN=test-certificate/").
@@ -407,7 +406,6 @@ func TestClientCertificateAkamaiResource(t *testing.T) {
 		CheckEqual("versions.0.key_algorithm", "RSA").
 		CheckEqual("versions.0.created_by", "joeDoe").
 		CheckEqual("versions.0.created_date", "2025-01-01T12:00:00Z").
-		CheckEqual("versions.0.deployed_date", "2025-01-02T12:00:00Z").
 		CheckEqual("versions.0.issued_date", "2025-01-01T12:00:00Z").
 		CheckEqual("versions.0.key_size_in_bytes", "2048").
 		CheckEqual("versions.0.subject", "/C=US/O=Akamai Technologies, Inc./OU=Example 123456789 987654321/CN=test-certificate/").
@@ -420,7 +418,6 @@ func TestClientCertificateAkamaiResource(t *testing.T) {
 		CheckEqual("versions.1.key_algorithm", "RSA").
 		CheckEqual("versions.1.created_by", "joeDoe").
 		CheckEqual("versions.1.created_date", "2023-01-01T12:00:00Z").
-		CheckEqual("versions.1.deployed_date", "2023-01-02T12:00:00Z").
 		CheckEqual("versions.1.issued_date", "2023-01-01T12:00:00Z").
 		CheckEqual("versions.1.key_size_in_bytes", "2048").
 		CheckEqual("versions.1.subject", "/C=US/O=Akamai Technologies, Inc./OU=Example 123456789 987654321/CN=test-certificate/").
@@ -449,7 +446,6 @@ func TestClientCertificateAkamaiResource(t *testing.T) {
 		CheckEqual("versions.0.key_algorithm", "RSA").
 		CheckEqual("versions.0.created_by", "joeDoe").
 		CheckEqual("versions.0.created_date", "2025-01-01T12:00:00Z").
-		CheckEqual("versions.0.deployed_date", "2025-01-02T12:00:00Z").
 		CheckEqual("versions.0.issued_date", "2025-01-01T12:00:00Z").
 		CheckEqual("versions.0.key_size_in_bytes", "2048").
 		CheckEqual("versions.0.subject", "/C=US/O=Akamai Technologies, Inc./OU=Example 123456789 987654321/CN=test-certificate/").
@@ -462,7 +458,6 @@ func TestClientCertificateAkamaiResource(t *testing.T) {
 		CheckEqual("versions.1.key_algorithm", "RSA").
 		CheckEqual("versions.1.created_by", "joeDoe").
 		CheckEqual("versions.1.created_date", "2025-01-01T12:00:00Z").
-		CheckEqual("versions.1.deployed_date", "2025-01-02T12:00:00Z").
 		CheckEqual("versions.1.issued_date", "2025-01-01T12:00:00Z").
 		CheckEqual("versions.1.key_size_in_bytes", "2048").
 		CheckEqual("versions.1.subject", "/C=US/O=Akamai Technologies, Inc./OU=Example 123456789 987654321/CN=test-certificate/").
@@ -487,7 +482,7 @@ func TestClientCertificateAkamaiResource(t *testing.T) {
 				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Once()
 				// Delete
 				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
-				mockDeleteClientCertificateAkamaiVersion(m, testData.versions, nil, testData.certificateID, 1)
+				mockDeleteClientCertificateAkamaiVersion(m, testData.versions, testData.certificateID, 1)
 			},
 			mockData: testClientCertificateWithoutSubject,
 			steps: []resource.TestStep{
@@ -507,7 +502,7 @@ func TestClientCertificateAkamaiResource(t *testing.T) {
 				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Once()
 				// Delete
 				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
-				mockDeleteClientCertificateAkamaiVersion(m, testData.versions, nil, testData.certificateID, 1)
+				mockDeleteClientCertificateAkamaiVersion(m, testData.versions, testData.certificateID, 1)
 			},
 			mockData: testClientCertificateWithOptionals,
 			steps: []resource.TestStep{
@@ -527,7 +522,7 @@ func TestClientCertificateAkamaiResource(t *testing.T) {
 				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Once()
 				// Delete
 				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
-				mockDeleteClientCertificateAkamaiVersion(m, testData.versions, nil, testData.certificateID, 1)
+				mockDeleteClientCertificateAkamaiVersion(m, testData.versions, testData.certificateID, 1)
 			},
 			mockData: testClientCertificateWithContractPrefix,
 			steps: []resource.TestStep{
@@ -558,7 +553,7 @@ func TestClientCertificateAkamaiResource(t *testing.T) {
 				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Once()
 				// Delete
 				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
-				mockDeleteClientCertificateAkamaiVersion(m, testData.versions, nil, testData.certificateID, 1)
+				mockDeleteClientCertificateAkamaiVersion(m, testData.versions, testData.certificateID, 1)
 			},
 			mockData: testClientCertificateWithoutSubject,
 			steps: []resource.TestStep{
@@ -598,7 +593,7 @@ func TestClientCertificateAkamaiResource(t *testing.T) {
 				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Once()
 				// Delete
 				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
-				mockDeleteClientCertificateAkamaiVersion(m, testData.versions, nil, testData.certificateID, 1)
+				mockDeleteClientCertificateAkamaiVersion(m, testData.versions, testData.certificateID, 1)
 			},
 			mockData: testClientCertificateWithoutSubject,
 			steps: []resource.TestStep{
@@ -635,7 +630,7 @@ func TestClientCertificateAkamaiResource(t *testing.T) {
 				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Once()
 				// Delete
 				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
-				mockDeleteClientCertificateAkamaiVersion(m, testData.versions, nil, testData.certificateID, 1)
+				mockDeleteClientCertificateAkamaiVersion(m, testData.versions, testData.certificateID, 1)
 			},
 			mockData: testClientCertificateWithoutSubject,
 			steps: []resource.TestStep{
@@ -674,8 +669,8 @@ func TestClientCertificateAkamaiResource(t *testing.T) {
 				mockListClientCertificateAkamaiVersions(t, m, testUpdateData.versions, testUpdateData.certificateID).Twice()
 				// Delete
 				mockListClientCertificateAkamaiVersions(t, m, testUpdateData.versions, testUpdateData.certificateID).Once()
-				mockDeleteClientCertificateAkamaiVersion(m, testUpdateData.versions, nil, testUpdateData.certificateID, 2).Once()
-				mockDeleteClientCertificateAkamaiVersion(m, testUpdateData.versions, nil, testUpdateData.certificateID, 1).Once()
+				mockDeleteClientCertificateAkamaiVersion(m, testUpdateData.versions, testUpdateData.certificateID, 2).Once()
+				mockDeleteClientCertificateAkamaiVersion(m, testUpdateData.versions, testUpdateData.certificateID, 1).Once()
 			},
 			mockData:       testClientCertificateWithoutSubject,
 			mockUpdateData: testClientCertificateWith2Versions,
@@ -711,8 +706,8 @@ func TestClientCertificateAkamaiResource(t *testing.T) {
 				mockListClientCertificateAkamaiVersions(t, m, testUpdateData.versions, testUpdateData.certificateID).Twice()
 				// Delete
 				mockListClientCertificateAkamaiVersions(t, m, testUpdateData.versions, testUpdateData.certificateID).Once()
-				mockDeleteClientCertificateAkamaiVersion(m, testUpdateData.versions, nil, testUpdateData.certificateID, 2).Once()
-				mockDeleteClientCertificateAkamaiVersion(m, testUpdateData.versions, nil, testUpdateData.certificateID, 1).Once()
+				mockDeleteClientCertificateAkamaiVersion(m, testUpdateData.versions, testUpdateData.certificateID, 2).Once()
+				mockDeleteClientCertificateAkamaiVersion(m, testUpdateData.versions, testUpdateData.certificateID, 1).Once()
 			},
 			mockData:       testClientCertificateWithoutSubject,
 			mockUpdateData: testClientCertificateWith2RotatedVersions,
@@ -748,7 +743,7 @@ func TestClientCertificateAkamaiResource(t *testing.T) {
 				mockListClientCertificateAkamaiVersions(t, m, testUpdateData.versions, testUpdateData.certificateID).Twice()
 				// Delete
 				mockListClientCertificateAkamaiVersions(t, m, testUpdateData.versions, testUpdateData.certificateID).Once()
-				mockDeleteClientCertificateAkamaiVersion(m, testUpdateData.versions, nil, testUpdateData.certificateID, 1).Once()
+				mockDeleteClientCertificateAkamaiVersion(m, testUpdateData.versions, testUpdateData.certificateID, 1).Once()
 			},
 			mockData:       testClientCertificateWithoutSubject,
 			mockUpdateData: testClientCertificateDriftNameAndEmails,
@@ -787,7 +782,7 @@ func TestClientCertificateAkamaiResource(t *testing.T) {
 				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Once()
 				// Delete
 				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
-				mockDeleteClientCertificateAkamaiVersion(m, testData.versions, nil, testData.certificateID, 1)
+				mockDeleteClientCertificateAkamaiVersion(m, testData.versions, testData.certificateID, 1)
 			},
 			mockData: testClientCertificateWithoutSubject,
 			steps: []resource.TestStep{
@@ -809,7 +804,7 @@ func TestClientCertificateAkamaiResource(t *testing.T) {
 				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Twice()
 				// Delete
 				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
-				mockDeleteClientCertificateAkamaiVersion(m, testData.versions, nil, testData.certificateID, 1)
+				mockDeleteClientCertificateAkamaiVersion(m, testData.versions, testData.certificateID, 1)
 			},
 			mockData: testClientCertificateWithoutSubject,
 			steps: []resource.TestStep{
@@ -835,7 +830,7 @@ func TestClientCertificateAkamaiResource(t *testing.T) {
 				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Twice()
 				// Delete
 				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
-				mockDeleteClientCertificateAkamaiVersion(m, testData.versions, nil, testData.certificateID, 1)
+				mockDeleteClientCertificateAkamaiVersion(m, testData.versions, testData.certificateID, 1)
 			},
 			mockData: testClientCertificateWithoutSubject,
 			steps: []resource.TestStep{
@@ -861,7 +856,7 @@ func TestClientCertificateAkamaiResource(t *testing.T) {
 				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Twice()
 				// Delete
 				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
-				mockDeleteClientCertificateAkamaiVersion(m, testData.versions, nil, testData.certificateID, 1)
+				mockDeleteClientCertificateAkamaiVersion(m, testData.versions, testData.certificateID, 1)
 			},
 			mockData: testClientCertificateWithoutSubject,
 			steps: []resource.TestStep{
@@ -885,7 +880,7 @@ func TestClientCertificateAkamaiResource(t *testing.T) {
 				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Times(2)
 				// Delete
 				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
-				mockDeleteClientCertificateAkamaiVersion(m, testData.versions, nil, testData.certificateID, 1)
+				mockDeleteClientCertificateAkamaiVersion(m, testData.versions, testData.certificateID, 1)
 			},
 			mockData: testClientCertificateWithOptionals,
 			steps: []resource.TestStep{
@@ -909,7 +904,7 @@ func TestClientCertificateAkamaiResource(t *testing.T) {
 				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Times(2)
 				// Delete
 				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
-				mockDeleteClientCertificateAkamaiVersion(m, testData.versions, nil, testData.certificateID, 1)
+				mockDeleteClientCertificateAkamaiVersion(m, testData.versions, testData.certificateID, 1)
 			},
 			mockData: testClientCertificateWithOptionals,
 			steps: []resource.TestStep{
@@ -935,7 +930,7 @@ func TestClientCertificateAkamaiResource(t *testing.T) {
 				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Twice()
 				// Delete
 				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
-				mockDeleteClientCertificateAkamaiVersion(m, testData.versions, nil, testData.certificateID, 1)
+				mockDeleteClientCertificateAkamaiVersion(m, testData.versions, testData.certificateID, 1)
 			},
 			mockData: testClientCertificateWithoutSubject,
 			steps: []resource.TestStep{
@@ -1018,7 +1013,6 @@ func TestClientCertificateAkamaiResource_ImportState(t *testing.T) {
 		CheckEqual("versions.0.key_algorithm", "RSA").
 		CheckEqual("versions.0.created_by", "joeDoe").
 		CheckEqual("versions.0.created_date", "2023-01-01T12:00:00Z").
-		CheckEqual("versions.0.deployed_date", "2023-01-02T12:00:00Z").
 		CheckEqual("versions.0.issued_date", "2023-01-01T12:00:00Z").
 		CheckEqual("versions.0.key_size_in_bytes", "2048").
 		CheckEqual("versions.0.subject", "/C=US/O=Akamai Technologies, Inc./OU=Example 123456789 987654321/CN=test-certificate/").
@@ -1034,7 +1028,6 @@ func TestClientCertificateAkamaiResource_ImportState(t *testing.T) {
 		CheckEqual("versions.0.key_algorithm", "RSA").
 		CheckEqual("versions.0.created_by", "joeDoe").
 		CheckEqual("versions.0.created_date", "2025-01-01T12:00:00Z").
-		CheckEqual("versions.0.deployed_date", "2025-01-02T12:00:00Z").
 		CheckEqual("versions.0.issued_date", "2025-01-01T12:00:00Z").
 		CheckEqual("versions.0.key_size_in_bytes", "2048").
 		CheckEqual("versions.0.subject", "/C=US/O=Akamai Technologies, Inc./OU=Example 123456789 987654321/CN=test-certificate/").
@@ -1047,7 +1040,6 @@ func TestClientCertificateAkamaiResource_ImportState(t *testing.T) {
 		CheckEqual("versions.1.key_algorithm", "RSA").
 		CheckEqual("versions.1.created_by", "joeDoe").
 		CheckEqual("versions.1.created_date", "2023-01-01T12:00:00Z").
-		CheckEqual("versions.1.deployed_date", "2023-01-02T12:00:00Z").
 		CheckEqual("versions.1.issued_date", "2023-01-01T12:00:00Z").
 		CheckEqual("versions.1.key_size_in_bytes", "2048").
 		CheckEqual("versions.1.subject", "/C=US/O=Akamai Technologies, Inc./OU=Example 123456789 987654321/CN=test-certificate/").
@@ -1328,9 +1320,6 @@ func mockListClientCertificateAkamaiVersions(t *testing.T, m *mtlskeystore.Mock,
 		if version.deleteRequestedDate != "" {
 			certificateVersions.DeleteRequestedDate = ptr.To(test.NewTimeFromString(t, version.deleteRequestedDate))
 		}
-		if version.deployedDate != "" {
-			certificateVersions.DeployedDate = ptr.To(test.NewTimeFromString(t, version.deployedDate))
-		}
 		if version.scheduledDeleteDate != "" {
 			certificateVersions.ScheduledDeleteDate = ptr.To(test.NewTimeFromString(t, version.scheduledDeleteDate))
 		}
@@ -1345,9 +1334,9 @@ func mockListClientCertificateAkamaiVersions(t *testing.T, m *mtlskeystore.Mock,
 	}, nil).Once()
 }
 
-func mockDeleteClientCertificateAkamaiVersion(m *mtlskeystore.Mock, versions []clientCertificateVersionData, resp *mtlskeystore.DeleteClientCertificateVersionResponse, certificateID, version int64) *mock.Call {
+func mockDeleteClientCertificateAkamaiVersion(m *mtlskeystore.Mock, versions []clientCertificateVersionData, certificateID, version int64) *mock.Call {
 	return m.On("DeleteClientCertificateVersion", testutils.MockContext, mtlskeystore.DeleteClientCertificateVersionRequest{
 		CertificateID: certificateID,
 		Version:       versions[version-1].version,
-	}).Return(resp, nil).Once()
+	}).Return(nil).Once()
 }

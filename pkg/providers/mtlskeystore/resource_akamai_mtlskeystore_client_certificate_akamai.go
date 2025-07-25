@@ -68,7 +68,6 @@ type clientCertificateAkamaiVersionModel struct {
 	CreatedBy           types.String `tfsdk:"created_by"`
 	CreatedDate         types.String `tfsdk:"created_date"`
 	DeleteRequestedDate types.String `tfsdk:"delete_requested_date"`
-	DeployedDate        types.String `tfsdk:"deployed_date"`
 	IssuedDate          types.String `tfsdk:"issued_date"`
 	KeyEllipticCurve    types.String `tfsdk:"key_elliptic_curve"`
 	KeySizeInBytes      types.String `tfsdk:"key_size_in_bytes"`
@@ -95,7 +94,6 @@ var (
 			"created_by":            types.StringType,
 			"created_date":          types.StringType,
 			"delete_requested_date": types.StringType,
-			"deployed_date":         types.StringType,
 			"issued_date":           types.StringType,
 			"key_elliptic_curve":    types.StringType,
 			"key_size_in_bytes":     types.StringType,
@@ -302,10 +300,6 @@ func versionSchema() schema.ListNestedAttribute {
 				},
 				"delete_requested_date": schema.StringAttribute{
 					Description: "An ISO 8601 timestamp indicating the client certificate version's deletion request. Appears as null if there's no request.",
-					Computed:    true,
-				},
-				"deployed_date": schema.StringAttribute{
-					Description: "An ISO 8601 timestamp indicating the client certificate version's activation. Appears as null if not specified.",
 					Computed:    true,
 				},
 				"issued_date": schema.StringAttribute{
@@ -585,7 +579,7 @@ func (c *clientCertificateAkamaiResource) Delete(ctx context.Context, req resour
 			continue
 		}
 
-		_, err := client.DeleteClientCertificateVersion(ctx, mtlskeystore.DeleteClientCertificateVersionRequest{
+		err := client.DeleteClientCertificateVersion(ctx, mtlskeystore.DeleteClientCertificateVersionRequest{
 			CertificateID: state.CertificateID.ValueInt64(),
 			Version:       version.Version,
 		})
@@ -664,7 +658,6 @@ func (m *clientCertificateAkamaiResourceModel) populateVersionModelFromResponse(
 			CreatedBy:           types.StringValue(version.CreatedBy),
 			CreatedDate:         types.StringValue(version.CreatedDate.Format(time.RFC3339)),
 			DeleteRequestedDate: types.StringPointerValue(formatOptionalRFC3339(version.DeleteRequestedDate)),
-			DeployedDate:        types.StringPointerValue(formatOptionalRFC3339(version.DeployedDate)),
 			IssuedDate:          types.StringPointerValue(formatOptionalRFC3339(version.IssuedDate)),
 			KeyEllipticCurve:    types.StringPointerValue(version.EllipticCurve),
 			KeySizeInBytes:      types.StringPointerValue(version.KeySizeInBytes),

@@ -40,7 +40,6 @@ func TestClientCertificateDataSource(t *testing.T) {
 		CheckEqual("versions.0.created_date", "2024-05-17T23:08:07Z").
 		CheckEqual("versions.0.csr_block.csr", "test-csr").
 		CheckEqual("versions.0.csr_block.key_algorithm", "RSA").
-		CheckEqual("versions.0.deployed_date", "2024-05-18T23:08:07Z").
 		CheckEqual("versions.0.expiry_date", "2027-05-18T23:08:07Z").
 		CheckEqual("versions.0.issued_date", "2027-05-18T23:08:07Z").
 		CheckEqual("versions.0.issuer", "test-issuer").
@@ -145,7 +144,6 @@ func TestClientCertificateDataSource(t *testing.T) {
 					CSR:          "test-csr",
 					KeyAlgorithm: "RSA",
 				},
-				DeployedDate:       ptr.To(tst.NewTimeFromString(t, "2024-05-18T23:08:07Z")),
 				ExpiryDate:         ptr.To(tst.NewTimeFromString(t, "2027-05-18T23:08:07Z")),
 				IssuedDate:         ptr.To(tst.NewTimeFromString(t, "2027-05-18T23:08:07Z")),
 				Issuer:             ptr.To("test-issuer"),
@@ -177,7 +175,6 @@ func TestClientCertificateDataSource(t *testing.T) {
 					KeyAlgorithm: "RSA",
 				},
 				DeleteRequestedDate: ptr.To(tst.NewTimeFromString(t, "2024-05-19T23:08:07Z")),
-				DeployedDate:        ptr.To(tst.NewTimeFromString(t, "2024-05-18T23:08:07Z")),
 				ExpiryDate:          ptr.To(tst.NewTimeFromString(t, "2027-05-18T23:08:07Z")),
 				IssuedDate:          ptr.To(tst.NewTimeFromString(t, "2027-05-18T23:08:07Z")),
 				Issuer:              ptr.To("test-issuer"),
@@ -225,7 +222,6 @@ func TestClientCertificateDataSource(t *testing.T) {
 					CSR:          "test-csr",
 					KeyAlgorithm: "RSA",
 				},
-				DeployedDate:       ptr.To(tst.NewTimeFromString(t, "2024-05-18T23:08:07Z")),
 				ExpiryDate:         ptr.To(tst.NewTimeFromString(t, "2027-05-18T23:08:07Z")),
 				IssuedDate:         ptr.To(tst.NewTimeFromString(t, "2027-05-18T23:08:07Z")),
 				Issuer:             ptr.To("test-issuer"),
@@ -270,7 +266,6 @@ func TestClientCertificateDataSource(t *testing.T) {
 					CSR:          "test-csr",
 					KeyAlgorithm: "RSA",
 				},
-				DeployedDate:       ptr.To(tst.NewTimeFromString(t, "2024-05-18T23:08:07Z")),
 				ExpiryDate:         ptr.To(tst.NewTimeFromString(t, "2027-05-18T23:08:07Z")),
 				IssuedDate:         ptr.To(tst.NewTimeFromString(t, "2027-05-18T23:08:07Z")),
 				Issuer:             ptr.To("test-issuer"),
@@ -303,7 +298,6 @@ func TestClientCertificateDataSource(t *testing.T) {
 					KeyAlgorithm: "RSA",
 				},
 				DeleteRequestedDate: ptr.To(tst.NewTimeFromString(t, "2024-05-19T23:08:07Z")),
-				DeployedDate:        ptr.To(tst.NewTimeFromString(t, "2024-05-18T23:08:07Z")),
 				ExpiryDate:          ptr.To(tst.NewTimeFromString(t, "2027-05-18T23:08:07Z")),
 				IssuedDate:          ptr.To(tst.NewTimeFromString(t, "2027-05-18T23:08:07Z")),
 				Issuer:              ptr.To("test-issuer"),
@@ -348,7 +342,6 @@ func TestClientCertificateDataSource(t *testing.T) {
 				CertificateSubmittedDate: ptr.To(tst.NewTimeFromString(t, "2024-05-18T23:08:07Z")),
 				CreatedBy:                "jkowalski",
 				CreatedDate:              tst.NewTimeFromString(t, "2024-05-17T23:08:07Z"),
-				DeployedDate:             ptr.To(tst.NewTimeFromString(t, "2024-05-18T23:08:07Z")),
 				ExpiryDate:               ptr.To(tst.NewTimeFromString(t, "2027-05-18T23:08:07Z")),
 				IssuedDate:               ptr.To(tst.NewTimeFromString(t, "2027-05-18T23:08:07Z")),
 				Issuer:                   ptr.To("test-issuer"),
@@ -395,7 +388,6 @@ func TestClientCertificateDataSource(t *testing.T) {
 						CheckEqual("versions.1.created_by", "jkowalski").
 						CheckEqual("versions.1.created_date", "2024-05-17T23:08:07Z").
 						CheckEqual("versions.1.delete_requested_date", "2024-05-19T23:08:07Z").
-						CheckEqual("versions.1.deployed_date", "2024-05-18T23:08:07Z").
 						CheckEqual("versions.1.expiry_date", "2027-05-18T23:08:07Z").
 						CheckEqual("versions.1.issued_date", "2027-05-18T23:08:07Z").
 						CheckEqual("versions.1.issuer", "test-issuer").

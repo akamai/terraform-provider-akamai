@@ -71,7 +71,6 @@ type (
 		CreatedBy                types.String `tfsdk:"created_by"`
 		CreatedDate              types.String `tfsdk:"created_date"`
 		DeleteRequestedDate      types.String `tfsdk:"delete_requested_date"`
-		DeployedDate             types.String `tfsdk:"deployed_date"`
 		IssuedDate               types.String `tfsdk:"issued_date"`
 		KeyEllipticCurve         types.String `tfsdk:"key_elliptic_curve"`
 		KeySizeInBytes           types.String `tfsdk:"key_size_in_bytes"`
@@ -109,7 +108,6 @@ var (
 			"created_by":                 types.StringType,
 			"created_date":               types.StringType,
 			"delete_requested_date":      types.StringType,
-			"deployed_date":              types.StringType,
 			"issued_date":                types.StringType,
 			"key_elliptic_curve":         types.StringType,
 			"key_size_in_bytes":          types.StringType,
@@ -287,10 +285,6 @@ func versionsSchema() schema.MapNestedAttribute {
 				},
 				"delete_requested_date": schema.StringAttribute{
 					Description: "An ISO 8601 timestamp indicating the client certificate version's deletion request. Appears as null if there's no request.",
-					Computed:    true,
-				},
-				"deployed_date": schema.StringAttribute{
-					Description: "An ISO 8601 timestamp indicating the client certificate version's activation. Appears as null if not specified.",
 					Computed:    true,
 				},
 				"issued_date": schema.StringAttribute{
@@ -816,7 +810,7 @@ func (r *clientCertificateThirdPartyResource) update(ctx context.Context, plan, 
 func allVersionDeletionAndRotation(ctx context.Context, client mtlskeystore.MTLSKeystore, versionsToAdd []string, versionsToRemove []int64, stateVersions map[string]string, certificateID int64) error {
 	slices.Sort(versionsToRemove)
 	for _, version := range versionsToRemove[1:] {
-		_, err := client.DeleteClientCertificateVersion(ctx, mtlskeystore.DeleteClientCertificateVersionRequest{
+		err := client.DeleteClientCertificateVersion(ctx, mtlskeystore.DeleteClientCertificateVersionRequest{
 			CertificateID: certificateID,
 			Version:       version,
 		})
@@ -833,7 +827,7 @@ func allVersionDeletionAndRotation(ctx context.Context, client mtlskeystore.MTLS
 	}
 	stateVersions[firstVersionToRotate.VersionGUID] = versionsToAdd[0]
 
-	_, err = client.DeleteClientCertificateVersion(ctx, mtlskeystore.DeleteClientCertificateVersionRequest{
+	err = client.DeleteClientCertificateVersion(ctx, mtlskeystore.DeleteClientCertificateVersionRequest{
 		CertificateID: certificateID,
 		Version:       versionsToRemove[0],
 	})
@@ -857,7 +851,7 @@ func allVersionDeletionAndRotation(ctx context.Context, client mtlskeystore.MTLS
 // someVersionDeletionAndRotation is responsible for managing the deletion and rotation of client certificate versions.
 func someVersionDeletionAndRotation(ctx context.Context, client mtlskeystore.MTLSKeystore, versionsToAdd []string, versionsToRemove []int64, stateVersions map[string]string, certificateID int64) error {
 	for _, version := range versionsToRemove {
-		_, err := client.DeleteClientCertificateVersion(ctx, mtlskeystore.DeleteClientCertificateVersionRequest{
+		err := client.DeleteClientCertificateVersion(ctx, mtlskeystore.DeleteClientCertificateVersionRequest{
 			CertificateID: certificateID,
 			Version:       version,
 		})
@@ -897,18 +891,14 @@ func (r *clientCertificateThirdPartyResource) Delete(ctx context.Context, req re
 	}
 
 	for version := range stateVersions {
-		deleteMessage, err := client.DeleteClientCertificateVersion(ctx, mtlskeystore.DeleteClientCertificateVersionRequest{
+		err := client.DeleteClientCertificateVersion(ctx, mtlskeystore.DeleteClientCertificateVersionRequest{
 			CertificateID: state.CertificateID.ValueInt64(),
 			Version:       stateVersions[version].Version.ValueInt64(),
 		})
 		if err != nil {
-			message := ""
-			if deleteMessage != nil {
-				message += fmt.Sprintf("Delete message: %s", *deleteMessage)
-			}
 			resp.Diagnostics.AddError(
 				"Deleting Client Certificate Version failed",
-				fmt.Sprintf("Failed to delete version %s: %v. ", version, err)+message,
+				fmt.Sprintf("Failed to delete version %s: %v. ", version, err),
 			)
 			return
 		}
@@ -1038,7 +1028,6 @@ func createClientVersionModel(ctx context.Context, version mtlskeystore.ClientCe
 		CreatedBy:                types.StringValue(version.CreatedBy),
 		CreatedDate:              types.StringValue(version.CreatedDate.Format(time.RFC3339)),
 		DeleteRequestedDate:      types.StringPointerValue(formatOptionalRFC3339(version.DeleteRequestedDate)),
-		DeployedDate:             types.StringPointerValue(formatOptionalRFC3339(version.DeployedDate)),
 		IssuedDate:               types.StringPointerValue(formatOptionalRFC3339(version.IssuedDate)),
 		KeyEllipticCurve:         types.StringPointerValue(version.EllipticCurve),
 		KeySizeInBytes:           types.StringPointerValue(version.KeySizeInBytes),

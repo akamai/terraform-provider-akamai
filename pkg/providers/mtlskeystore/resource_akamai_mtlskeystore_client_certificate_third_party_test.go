@@ -501,7 +501,6 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 		CheckEqual("versions.v1.certificate_submitted_date", "2023-01-01T00:00:00Z").
 		CheckEqual("versions.v1.created_by", "jkowalski").
 		CheckEqual("versions.v1.created_date", "2023-01-01T00:00:00Z").
-		CheckEqual("versions.v1.deployed_date", "2023-01-02T00:00:00Z").
 		CheckEqual("versions.v1.issued_date", "2023-01-03T00:00:00Z").
 		CheckEqual("versions.v1.key_size_in_bytes", "2048").
 		CheckEqual("versions.v1.signature_algorithm", "SHA256_WITH_RSA").
@@ -524,7 +523,6 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 		CheckEqual("versions.v2.certificate_submitted_date", "2023-01-01T00:00:00Z").
 		CheckEqual("versions.v2.created_by", "jkowalski").
 		CheckEqual("versions.v2.created_date", "2023-01-01T00:00:00Z").
-		CheckEqual("versions.v2.deployed_date", "2023-01-02T00:00:00Z").
 		CheckEqual("versions.v2.issued_date", "2023-01-03T00:00:00Z").
 		CheckEqual("versions.v2.key_elliptic_curve", "test-ecdsa").
 		CheckEqual("versions.v2.key_size_in_bytes", "2048").
@@ -558,7 +556,7 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID)
 				// Delete
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID)
-				mockDeleteClientCertificateVersion(m, testData.versions, nil, testData.certificateID, "v1")
+				mockDeleteClientCertificateVersion(m, testData.versions, testData.certificateID, "v1")
 			},
 			mockCreateData: testOneVersion,
 			steps: []resource.TestStep{
@@ -581,7 +579,7 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID)
 				// Delete
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID)
-				mockDeleteClientCertificateVersion(m, testData.versions, nil, testData.certificateID, "v1")
+				mockDeleteClientCertificateVersion(m, testData.versions, testData.certificateID, "v1")
 			},
 			mockCreateData: testOneVersion,
 			steps: []resource.TestStep{
@@ -606,8 +604,8 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID)
 				// Delete
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID)
-				mockDeleteClientCertificateVersion(m, testData.versions, nil, testData.certificateID, "v1")
-				mockDeleteClientCertificateVersion(m, testData.versions, nil, testData.certificateID, "v2")
+				mockDeleteClientCertificateVersion(m, testData.versions, testData.certificateID, "v1")
+				mockDeleteClientCertificateVersion(m, testData.versions, testData.certificateID, "v2")
 			},
 			mockCreateData: testTwoVersionsWithOptionalParams,
 			steps: []resource.TestStep{
@@ -641,7 +639,7 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockListClientCertificateVersions(t, m, testUpdateData.versions, testUpdateData.certificateID)
 				// Delete
 				mockListClientCertificateVersions(t, m, testUpdateData.versions, testUpdateData.certificateID)
-				mockDeleteClientCertificateVersion(m, testUpdateData.versions, nil, testUpdateData.certificateID, "v1")
+				mockDeleteClientCertificateVersion(m, testUpdateData.versions, testUpdateData.certificateID, "v1")
 			},
 			mockCreateData: testOneVersion,
 			mockUpdateData: testUpdateNotificationEmails,
@@ -680,7 +678,7 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockListClientCertificateVersions(t, m, testUpdateData.versions, testUpdateData.certificateID).Twice()
 				// Delete
 				mockListClientCertificateVersions(t, m, testUpdateData.versions, testUpdateData.certificateID)
-				mockDeleteClientCertificateVersion(m, testUpdateData.versions, nil, testUpdateData.certificateID, "v1")
+				mockDeleteClientCertificateVersion(m, testUpdateData.versions, testUpdateData.certificateID, "v1")
 			},
 			mockCreateData: testOneVersion,
 			mockUpdateData: testUpdateCertificateName,
@@ -719,7 +717,7 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockListClientCertificateVersions(t, m, testUpdateData.versions, testUpdateData.certificateID)
 				// Delete
 				mockListClientCertificateVersions(t, m, testUpdateData.versions, testUpdateData.certificateID)
-				mockDeleteClientCertificateVersion(m, testUpdateData.versions, nil, testUpdateData.certificateID, "v1")
+				mockDeleteClientCertificateVersion(m, testUpdateData.versions, testUpdateData.certificateID, "v1")
 			},
 			mockCreateData: testOneVersion,
 			mockUpdateData: testUpdateNotificationEmailsAndCertificateName,
@@ -815,10 +813,10 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockListClientCertificateVersions(t, m, newVersions, testCreateData.certificateID)
 				// Delete
 				mockListClientCertificateVersions(t, m, newVersions, testCreateData.certificateID)
-				mockDeleteClientCertificateVersion(m, newVersions, nil, testCreateData.certificateID, "v1")
-				mockDeleteClientCertificateVersion(m, newVersions, nil, testCreateData.certificateID, "v2")
-				mockDeleteClientCertificateVersion(m, newVersions, nil, testCreateData.certificateID, "v3")
-				mockDeleteClientCertificateVersion(m, newVersions, nil, testCreateData.certificateID, "v4")
+				mockDeleteClientCertificateVersion(m, newVersions, testCreateData.certificateID, "v1")
+				mockDeleteClientCertificateVersion(m, newVersions, testCreateData.certificateID, "v2")
+				mockDeleteClientCertificateVersion(m, newVersions, testCreateData.certificateID, "v3")
+				mockDeleteClientCertificateVersion(m, newVersions, testCreateData.certificateID, "v4")
 			},
 			mockCreateData: testTwoVersionsWithOptionalParams,
 			steps: []resource.TestStep{
@@ -841,7 +839,6 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 						CheckEqual("versions.v3.certificate_submitted_date", "2023-01-01T00:00:00Z").
 						CheckEqual("versions.v3.created_by", "jkowalski").
 						CheckEqual("versions.v3.created_date", "2023-01-01T00:00:00Z").
-						CheckEqual("versions.v3.deployed_date", "2023-01-02T00:00:00Z").
 						CheckEqual("versions.v3.issued_date", "2023-01-03T00:00:00Z").
 						CheckEqual("versions.v3.key_size_in_bytes", "2048").
 						CheckEqual("versions.v3.signature_algorithm", "SHA256_WITH_RSA").
@@ -862,7 +859,6 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 						CheckEqual("versions.v4.certificate_submitted_date", "2023-01-01T00:00:00Z").
 						CheckEqual("versions.v4.created_by", "jkowalski").
 						CheckEqual("versions.v4.created_date", "2023-01-01T00:00:00Z").
-						CheckEqual("versions.v4.deployed_date", "2023-01-02T00:00:00Z").
 						CheckEqual("versions.v4.issued_date", "2023-01-03T00:00:00Z").
 						CheckEqual("versions.v4.key_size_in_bytes", "2048").
 						CheckEqual("versions.v4.signature_algorithm", "SHA256_WITH_RSA").
@@ -891,7 +887,7 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockListClientCertificateVersions(t, m, testCreateData.versions, testCreateData.certificateID).Twice()
 				// Update (delete version)
 				mockListClientCertificateVersions(t, m, testCreateData.versions, testCreateData.certificateID).Twice()
-				mockDeleteClientCertificateVersion(m, testCreateData.versions, nil, testCreateData.certificateID, "v2")
+				mockDeleteClientCertificateVersion(m, testCreateData.versions, testCreateData.certificateID, "v2")
 				// Modify update test data so the custom subject is returned.
 				testUpdateData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS/CN=test-certificate/"
 				mockGetClientCertificate(m, testUpdateData)
@@ -901,7 +897,7 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockListClientCertificateVersions(t, m, testUpdateData.versions, testUpdateData.certificateID)
 				// Delete
 				mockListClientCertificateVersions(t, m, testUpdateData.versions, testUpdateData.certificateID)
-				mockDeleteClientCertificateVersion(m, testUpdateData.versions, nil, testUpdateData.certificateID, "v1")
+				mockDeleteClientCertificateVersion(m, testUpdateData.versions, testUpdateData.certificateID, "v1")
 			},
 			mockCreateData: testTwoVersionsWithOptionalParams,
 			mockUpdateData: testOneVersion,
@@ -961,7 +957,7 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockListClientCertificateVersions(t, m, testCreateData.versions, testCreateData.certificateID).Twice()
 				// Update (delete version + add new version)
 				mockListClientCertificateVersions(t, m, testCreateData.versions, testCreateData.certificateID).Twice()
-				mockDeleteClientCertificateVersion(m, testCreateData.versions, nil, testCreateData.certificateID, "v2")
+				mockDeleteClientCertificateVersion(m, testCreateData.versions, testCreateData.certificateID, "v2")
 				mockRotateClientCertificateVersion(t, m, newVersions, testCreateData.certificateID, "v3")
 				mockGetClientCertificate(m, testCreateData)
 				mockListClientCertificateVersions(t, m, newVersions, testCreateData.certificateID)
@@ -970,8 +966,8 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockListClientCertificateVersions(t, m, newVersions, testCreateData.certificateID)
 				// Delete
 				mockListClientCertificateVersions(t, m, newVersions, testCreateData.certificateID)
-				mockDeleteClientCertificateVersion(m, newVersions, nil, testCreateData.certificateID, "v1")
-				mockDeleteClientCertificateVersion(m, newVersions, nil, testCreateData.certificateID, "v3")
+				mockDeleteClientCertificateVersion(m, newVersions, testCreateData.certificateID, "v1")
+				mockDeleteClientCertificateVersion(m, newVersions, testCreateData.certificateID, "v3")
 			},
 			mockCreateData: testTwoVersionsWithOptionalParams,
 			steps: []resource.TestStep{
@@ -994,7 +990,6 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 						CheckEqual("versions.v3.certificate_submitted_date", "2023-01-01T00:00:00Z").
 						CheckEqual("versions.v3.created_by", "jkowalski").
 						CheckEqual("versions.v3.created_date", "2023-01-01T00:00:00Z").
-						CheckEqual("versions.v3.deployed_date", "2023-01-02T00:00:00Z").
 						CheckEqual("versions.v3.issued_date", "2023-01-03T00:00:00Z").
 						CheckEqual("versions.v3.key_size_in_bytes", "2048").
 						CheckEqual("versions.v3.signature_algorithm", "SHA256_WITH_RSA").
@@ -1075,9 +1070,9 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockListClientCertificateVersions(t, m, testCreateData.versions, testCreateData.certificateID).Twice()
 				// Update (delete all versions + add new versions)
 				mockListClientCertificateVersions(t, m, testCreateData.versions, testCreateData.certificateID).Twice()
-				mockDeleteClientCertificateVersion(m, testCreateData.versions, nil, testCreateData.certificateID, "v2")
+				mockDeleteClientCertificateVersion(m, testCreateData.versions, testCreateData.certificateID, "v2")
 				mockRotateClientCertificateVersion(t, m, newVersions, testCreateData.certificateID, "v3")
-				mockDeleteClientCertificateVersion(m, testCreateData.versions, nil, testCreateData.certificateID, "v1")
+				mockDeleteClientCertificateVersion(m, testCreateData.versions, testCreateData.certificateID, "v1")
 				mockRotateClientCertificateVersion(t, m, newVersions, testCreateData.certificateID, "v4")
 				mockGetClientCertificate(m, testCreateData)
 				mockListClientCertificateVersions(t, m, newVersions, testCreateData.certificateID)
@@ -1086,8 +1081,8 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockListClientCertificateVersions(t, m, newVersions, testCreateData.certificateID)
 				// Delete
 				mockListClientCertificateVersions(t, m, newVersions, testCreateData.certificateID)
-				mockDeleteClientCertificateVersion(m, newVersions, nil, testCreateData.certificateID, "v3")
-				mockDeleteClientCertificateVersion(m, newVersions, nil, testCreateData.certificateID, "v4")
+				mockDeleteClientCertificateVersion(m, newVersions, testCreateData.certificateID, "v3")
+				mockDeleteClientCertificateVersion(m, newVersions, testCreateData.certificateID, "v4")
 			},
 			mockCreateData: testTwoVersionsWithOptionalParams,
 			steps: []resource.TestStep{
@@ -1120,7 +1115,6 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 						CheckEqual("versions.v3.certificate_submitted_date", "2023-01-01T00:00:00Z").
 						CheckEqual("versions.v3.created_by", "jkowalski").
 						CheckEqual("versions.v3.created_date", "2023-01-01T00:00:00Z").
-						CheckEqual("versions.v3.deployed_date", "2023-01-02T00:00:00Z").
 						CheckEqual("versions.v3.issued_date", "2023-01-03T00:00:00Z").
 						CheckEqual("versions.v3.key_size_in_bytes", "2048").
 						CheckEqual("versions.v3.signature_algorithm", "SHA256_WITH_RSA").
@@ -1141,7 +1135,6 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 						CheckEqual("versions.v4.certificate_submitted_date", "2023-01-01T00:00:00Z").
 						CheckEqual("versions.v4.created_by", "jkowalski").
 						CheckEqual("versions.v4.created_date", "2023-01-01T00:00:00Z").
-						CheckEqual("versions.v4.deployed_date", "2023-01-02T00:00:00Z").
 						CheckEqual("versions.v4.issued_date", "2023-01-03T00:00:00Z").
 						CheckEqual("versions.v4.key_size_in_bytes", "2048").
 						CheckEqual("versions.v4.signature_algorithm", "SHA256_WITH_RSA").
@@ -1301,12 +1294,12 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockListClientCertificateVersions(t, m, testCreateData.versions, testCreateData.certificateID).Twice()
 				// Update (delete all versions + add new versions)
 				mockListClientCertificateVersions(t, m, testCreateData.versions, testCreateData.certificateID).Twice()
-				mockDeleteClientCertificateVersion(m, testCreateData.versions, nil, testCreateData.certificateID, "v2")
-				mockDeleteClientCertificateVersion(m, testCreateData.versions, nil, testCreateData.certificateID, "v3")
-				mockDeleteClientCertificateVersion(m, testCreateData.versions, nil, testCreateData.certificateID, "v4")
-				mockDeleteClientCertificateVersion(m, testCreateData.versions, nil, testCreateData.certificateID, "v5")
+				mockDeleteClientCertificateVersion(m, testCreateData.versions, testCreateData.certificateID, "v2")
+				mockDeleteClientCertificateVersion(m, testCreateData.versions, testCreateData.certificateID, "v3")
+				mockDeleteClientCertificateVersion(m, testCreateData.versions, testCreateData.certificateID, "v4")
+				mockDeleteClientCertificateVersion(m, testCreateData.versions, testCreateData.certificateID, "v5")
 				mockRotateClientCertificateVersion(t, m, newFiveVersions, testCreateData.certificateID, "v1a")
-				mockDeleteClientCertificateVersion(m, testCreateData.versions, nil, testCreateData.certificateID, "v1")
+				mockDeleteClientCertificateVersion(m, testCreateData.versions, testCreateData.certificateID, "v1")
 				mockRotateClientCertificateVersion(t, m, newFiveVersions, testCreateData.certificateID, "v2a")
 				mockRotateClientCertificateVersion(t, m, newFiveVersions, testCreateData.certificateID, "v3a")
 				mockRotateClientCertificateVersion(t, m, newFiveVersions, testCreateData.certificateID, "v4a")
@@ -1318,11 +1311,11 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockListClientCertificateVersions(t, m, newFiveVersions, testCreateData.certificateID)
 				// Delete
 				mockListClientCertificateVersions(t, m, newFiveVersions, testCreateData.certificateID)
-				mockDeleteClientCertificateVersion(m, newFiveVersions, nil, testCreateData.certificateID, "v1a")
-				mockDeleteClientCertificateVersion(m, newFiveVersions, nil, testCreateData.certificateID, "v2a")
-				mockDeleteClientCertificateVersion(m, newFiveVersions, nil, testCreateData.certificateID, "v3a")
-				mockDeleteClientCertificateVersion(m, newFiveVersions, nil, testCreateData.certificateID, "v4a")
-				mockDeleteClientCertificateVersion(m, newFiveVersions, nil, testCreateData.certificateID, "v5a")
+				mockDeleteClientCertificateVersion(m, newFiveVersions, testCreateData.certificateID, "v1a")
+				mockDeleteClientCertificateVersion(m, newFiveVersions, testCreateData.certificateID, "v2a")
+				mockDeleteClientCertificateVersion(m, newFiveVersions, testCreateData.certificateID, "v3a")
+				mockDeleteClientCertificateVersion(m, newFiveVersions, testCreateData.certificateID, "v4a")
+				mockDeleteClientCertificateVersion(m, newFiveVersions, testCreateData.certificateID, "v5a")
 			},
 			mockCreateData: testFiveVersions,
 			steps: []resource.TestStep{
@@ -1355,7 +1348,6 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 						CheckEqual("versions.v1a.certificate_submitted_date", "2024-01-01T00:00:00Z").
 						CheckEqual("versions.v1a.created_by", "jkowalski").
 						CheckEqual("versions.v1a.created_date", "2024-01-01T00:00:00Z").
-						CheckEqual("versions.v1a.deployed_date", "2024-01-02T00:00:00Z").
 						CheckEqual("versions.v1a.issued_date", "2024-01-03T00:00:00Z").
 						CheckEqual("versions.v1a.key_size_in_bytes", "2048").
 						CheckEqual("versions.v1a.signature_algorithm", "SHA256_WITH_RSA").
@@ -1429,9 +1421,9 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockListClientCertificateVersions(t, m, newVersions, testCreateData.certificateID)
 				// Delete previous versions to allow delete
 				mockListClientCertificateVersions(t, m, testCreateData.versions, testCreateData.certificateID).Twice()
-				mockDeleteClientCertificateVersion(m, newVersions, nil, testCreateData.certificateID, "v1")
-				mockDeleteClientCertificateVersion(m, newVersions, nil, testCreateData.certificateID, "v2")
-				mockDeleteClientCertificateVersion(m, newVersions, nil, testCreateData.certificateID, "v3")
+				mockDeleteClientCertificateVersion(m, newVersions, testCreateData.certificateID, "v1")
+				mockDeleteClientCertificateVersion(m, newVersions, testCreateData.certificateID, "v2")
+				mockDeleteClientCertificateVersion(m, newVersions, testCreateData.certificateID, "v3")
 			},
 			mockCreateData: testTwoVersionsWithOptionalParams,
 			steps: []resource.TestStep{
@@ -1455,7 +1447,6 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 						CheckEqual("versions.2024-01-01T00:00:00_v3.certificate_submitted_date", "2023-01-01T00:00:00Z").
 						CheckEqual("versions.2024-01-01T00:00:00_v3.created_by", "jkowalski").
 						CheckEqual("versions.2024-01-01T00:00:00_v3.created_date", "2024-01-01T00:00:00Z").
-						CheckEqual("versions.2024-01-01T00:00:00_v3.deployed_date", "2023-01-02T00:00:00Z").
 						CheckEqual("versions.2024-01-01T00:00:00_v3.issued_date", "2023-01-03T00:00:00Z").
 						CheckEqual("versions.2024-01-01T00:00:00_v3.key_size_in_bytes", "2048").
 						CheckEqual("versions.2024-01-01T00:00:00_v3.signature_algorithm", "SHA256_WITH_RSA").
@@ -1495,7 +1486,7 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockListClientCertificateVersions(t, m, versionsWithoutV2, testCreateData.certificateID)
 				// Delete previous versions to allow delete
 				mockListClientCertificateVersions(t, m, versionsWithoutV2, testCreateData.certificateID)
-				mockDeleteClientCertificateVersion(m, versionsWithoutV2, nil, testCreateData.certificateID, "v1")
+				mockDeleteClientCertificateVersion(m, versionsWithoutV2, testCreateData.certificateID, "v1")
 			},
 			mockCreateData: testTwoVersionsWithOptionalParams,
 			steps: []resource.TestStep{
@@ -1519,7 +1510,6 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 						CheckMissing("versions.v2.certificate_submitted_date").
 						CheckMissing("versions.v2.created_by").
 						CheckMissing("versions.v2.created_date").
-						CheckMissing("versions.v2.deployed_date").
 						CheckMissing("versions.v2.issued_date").
 						CheckMissing("versions.v2.key_elliptic_curve").
 						CheckMissing("versions.v2.key_size_in_bytes").
@@ -1572,8 +1562,8 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockListClientCertificateVersions(t, m, newCertificateNameAndEmails.versions, testCreateData.certificateID)
 				// Delete previous versions to allow delete
 				mockListClientCertificateVersions(t, m, newCertificateNameAndEmails.versions, testCreateData.certificateID)
-				mockDeleteClientCertificateVersion(m, newCertificateNameAndEmails.versions, nil, testCreateData.certificateID, "v1")
-				mockDeleteClientCertificateVersion(m, newCertificateNameAndEmails.versions, nil, testCreateData.certificateID, "v2")
+				mockDeleteClientCertificateVersion(m, newCertificateNameAndEmails.versions, testCreateData.certificateID, "v1")
+				mockDeleteClientCertificateVersion(m, newCertificateNameAndEmails.versions, testCreateData.certificateID, "v2")
 			},
 			mockCreateData: testTwoVersionsWithOptionalParams,
 			steps: []resource.TestStep{
@@ -1649,12 +1639,12 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockListClientCertificateVersions(t, m, testCreateData.versions, testCreateData.certificateID).Twice()
 				// Update (delete version + add new version)
 				mockListClientCertificateVersions(t, m, testCreateData.versions, testCreateData.certificateID).Twice()
-				mockDeleteClientCertificateVersion(m, testCreateData.versions, nil, testCreateData.certificateID, "v2")
+				mockDeleteClientCertificateVersion(m, testCreateData.versions, testCreateData.certificateID, "v2")
 				mockRotateClientCertificateVersion(t, m, newVersions, testCreateData.certificateID, "v3").Return(nil, fmt.Errorf("update failed"))
 				// Delete - with old versions to allow deletion
 				mockListClientCertificateVersions(t, m, testCreateData.versions, testCreateData.certificateID)
-				mockDeleteClientCertificateVersion(m, testCreateData.versions, nil, testCreateData.certificateID, "v1")
-				mockDeleteClientCertificateVersion(m, testCreateData.versions, nil, testCreateData.certificateID, "v2")
+				mockDeleteClientCertificateVersion(m, testCreateData.versions, testCreateData.certificateID, "v1")
+				mockDeleteClientCertificateVersion(m, testCreateData.versions, testCreateData.certificateID, "v2")
 			},
 			mockCreateData: testTwoVersionsWithOptionalParams,
 			steps: []resource.TestStep{
@@ -1683,7 +1673,7 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID).Twice()
 				// Delete
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID)
-				mockDeleteClientCertificateVersion(m, testData.versions, nil, testData.certificateID, "v1")
+				mockDeleteClientCertificateVersion(m, testData.versions, testData.certificateID, "v1")
 			},
 			mockCreateData: testOneVersion,
 			steps: []resource.TestStep{
@@ -1710,7 +1700,7 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID).Twice()
 				// Delete
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID)
-				mockDeleteClientCertificateVersion(m, testData.versions, nil, testData.certificateID, "v1")
+				mockDeleteClientCertificateVersion(m, testData.versions, testData.certificateID, "v1")
 			},
 			mockCreateData: testOneVersion,
 			steps: []resource.TestStep{
@@ -1737,7 +1727,7 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID).Twice()
 				// Delete
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID)
-				mockDeleteClientCertificateVersion(m, testData.versions, nil, testData.certificateID, "v1")
+				mockDeleteClientCertificateVersion(m, testData.versions, testData.certificateID, "v1")
 			},
 			mockCreateData: testOneVersion,
 			steps: []resource.TestStep{
@@ -1764,7 +1754,7 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID).Twice()
 				// Delete
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID)
-				mockDeleteClientCertificateVersion(m, testData.versions, nil, testData.certificateID, "v1")
+				mockDeleteClientCertificateVersion(m, testData.versions, testData.certificateID, "v1")
 			},
 			mockCreateData: testOneVersion,
 			steps: []resource.TestStep{
@@ -1791,8 +1781,8 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID).Twice()
 				// Delete
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID)
-				mockDeleteClientCertificateVersion(m, testData.versions, nil, testData.certificateID, "v1")
-				mockDeleteClientCertificateVersion(m, testData.versions, nil, testData.certificateID, "v2")
+				mockDeleteClientCertificateVersion(m, testData.versions, testData.certificateID, "v1")
+				mockDeleteClientCertificateVersion(m, testData.versions, testData.certificateID, "v2")
 			},
 			mockCreateData: testTwoVersionsWithOptionalParams,
 			steps: []resource.TestStep{
@@ -1821,7 +1811,7 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID).Twice()
 				// Delete
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID)
-				mockDeleteClientCertificateVersion(m, testData.versions, nil, testData.certificateID, "v1")
+				mockDeleteClientCertificateVersion(m, testData.versions, testData.certificateID, "v1")
 			},
 			mockCreateData: testOneVersion,
 			steps: []resource.TestStep{
@@ -1846,7 +1836,7 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID).Twice()
 				// Delete
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID)
-				mockDeleteClientCertificateVersion(m, testData.versions, nil, testData.certificateID, "v1")
+				mockDeleteClientCertificateVersion(m, testData.versions, testData.certificateID, "v1")
 			},
 			mockCreateData: testOneVersionWithSubject,
 			steps: []resource.TestStep{
@@ -1905,7 +1895,6 @@ func TestClientCertificateThirdPartyResource_Import(t *testing.T) {
 		CheckEqual("versions.2023-01-01T00:00:00_v1.certificate_submitted_date", "2023-01-01T00:00:00Z").
 		CheckEqual("versions.2023-01-01T00:00:00_v1.created_by", "jkowalski").
 		CheckEqual("versions.2023-01-01T00:00:00_v1.created_date", "2023-01-01T00:00:00Z").
-		CheckEqual("versions.2023-01-01T00:00:00_v1.deployed_date", "2023-01-02T00:00:00Z").
 		CheckEqual("versions.2023-01-01T00:00:00_v1.issued_date", "2023-01-03T00:00:00Z").
 		CheckEqual("versions.2023-01-01T00:00:00_v1.key_size_in_bytes", "2048").
 		CheckEqual("versions.2023-01-01T00:00:00_v1.signature_algorithm", "SHA256_WITH_RSA").
@@ -1928,7 +1917,6 @@ func TestClientCertificateThirdPartyResource_Import(t *testing.T) {
 		CheckEqual("versions.2023-01-01T00:00:00_v2.certificate_submitted_date", "2023-01-01T00:00:00Z").
 		CheckEqual("versions.2023-01-01T00:00:00_v2.created_by", "jkowalski").
 		CheckEqual("versions.2023-01-01T00:00:00_v2.created_date", "2023-01-01T00:00:00Z").
-		CheckEqual("versions.2023-01-01T00:00:00_v2.deployed_date", "2023-01-02T00:00:00Z").
 		CheckEqual("versions.2023-01-01T00:00:00_v2.issued_date", "2023-01-03T00:00:00Z").
 		CheckEqual("versions.2023-01-01T00:00:00_v2.key_size_in_bytes", "2048").
 		CheckEqual("versions.2023-01-01T00:00:00_v2.signature_algorithm", "SHA256_WITH_RSA").
@@ -2322,21 +2310,6 @@ func mockRotateClientCertificateVersion(t *testing.T, m *mtlskeystore.Mock, test
 			KeyAlgorithm: testData[versionKey].csrBlock.keyAlgorithm,
 		}
 	}
-	if testData[versionKey].certificateSubmittedBy != "" {
-		response.CertificateSubmittedBy = ptr.To(testData[versionKey].certificateSubmittedBy)
-	}
-	if testData[versionKey].certificateSubmittedDate != "" {
-		response.CertificateSubmittedDate = ptr.To(tst.NewTimeFromString(t, testData[versionKey].certificateSubmittedDate))
-	}
-	if testData[versionKey].deleteRequestedDate != "" {
-		response.DeleteRequestedDate = ptr.To(tst.NewTimeFromString(t, testData[versionKey].deleteRequestedDate))
-	}
-	if testData[versionKey].deployedDate != "" {
-		response.DeployedDate = ptr.To(tst.NewTimeFromString(t, testData[versionKey].deployedDate))
-	}
-	if testData[versionKey].scheduledDeleteDate != "" {
-		response.ScheduledDeleteDate = ptr.To(tst.NewTimeFromString(t, testData[versionKey].scheduledDeleteDate))
-	}
 
 	return m.On("RotateClientCertificateVersion", testutils.MockContext, mtlskeystore.RotateClientCertificateVersionRequest{
 		CertificateID: certificateID,
@@ -2353,11 +2326,11 @@ func mockPatchClientCertificate(m *mtlskeystore.Mock, certID int64, certName *st
 	}).Return(nil).Once()
 }
 
-func mockDeleteClientCertificateVersion(m *mtlskeystore.Mock, versions map[string]versionData, resp *mtlskeystore.DeleteClientCertificateVersionResponse, certificateID int64, versionKey string) *mock.Call {
+func mockDeleteClientCertificateVersion(m *mtlskeystore.Mock, versions map[string]versionData, certificateID int64, versionKey string) *mock.Call {
 	return m.On("DeleteClientCertificateVersion", testutils.MockContext, mtlskeystore.DeleteClientCertificateVersionRequest{
 		CertificateID: certificateID,
 		Version:       versions[versionKey].version,
-	}).Return(resp, nil).Once()
+	}).Return(nil).Once()
 }
 
 func mockGetClientCertificate(m *mtlskeystore.Mock, testData commonDataForResource) *mock.Call {
@@ -2414,9 +2387,6 @@ func mockListClientCertificateVersions(t *testing.T, m *mtlskeystore.Mock, versi
 		}
 		if version.deleteRequestedDate != "" {
 			certificateVersions.DeleteRequestedDate = ptr.To(tst.NewTimeFromString(t, version.deleteRequestedDate))
-		}
-		if version.deployedDate != "" {
-			certificateVersions.DeployedDate = ptr.To(tst.NewTimeFromString(t, version.deployedDate))
 		}
 		if version.scheduledDeleteDate != "" {
 			certificateVersions.ScheduledDeleteDate = ptr.To(tst.NewTimeFromString(t, version.scheduledDeleteDate))
