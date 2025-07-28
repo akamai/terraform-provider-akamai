@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/mtlstruststore"
+	"github.com/akamai/terraform-provider-akamai/v8/internal/customtypes"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -267,7 +268,7 @@ func mapCertificatesResponseToModel(certificatesResp *mtlstruststore.GetCASetVer
 	certs := make([]certificateModel, len(certificatesResp.Certificates))
 	for i, cert := range certificatesResp.Certificates {
 		certs[i] = certificateModel{
-			CertificatePEM:     types.StringValue(cert.CertificatePEM),
+			CertificatePEM:     customtypes.NewIgnoreTrailingWhitespaceValue(cert.CertificatePEM),
 			CreatedBy:          types.StringValue(cert.CreatedBy),
 			CreatedDate:        types.StringValue(cert.CreatedDate.Format(time.RFC3339)),
 			Description:        types.StringPointerValue(cert.Description),

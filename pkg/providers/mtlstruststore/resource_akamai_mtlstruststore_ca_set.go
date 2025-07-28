@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/mtlstruststore"
+	"github.com/akamai/terraform-provider-akamai/v8/internal/customtypes"
+	"github.com/akamai/terraform-provider-akamai/v8/internal/text"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/framework/modifiers"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/framework/schema/nullstringdefault"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
@@ -29,10 +31,13 @@ import (
 )
 
 var (
-	_ resource.Resource                = &caSetResource{}
-	_ resource.ResourceWithConfigure   = &caSetResource{}
-	_ resource.ResourceWithModifyPlan  = &caSetResource{}
-	_ resource.ResourceWithImportState = &caSetResource{}
+	_ resource.Resource                   = &caSetResource{}
+	_ resource.ResourceWithConfigure      = &caSetResource{}
+	_ resource.ResourceWithModifyPlan     = &caSetResource{}
+	_ resource.ResourceWithImportState    = &caSetResource{}
+	_ resource.ResourceWithValidateConfig = &caSetResource{}
+
+	pemRegex = regexp.MustCompile(`-----BEGIN CERTIFICATE-----\n[0-9A-Za-z+/=\s]+\n-----END CERTIFICATE-----`)
 )
 
 type caSetResource struct {
@@ -73,17 +78,17 @@ type caSetResourceModel struct {
 }
 
 type certificateModel struct {
-	CertificatePEM     types.String `tfsdk:"certificate_pem"`
-	Description        types.String `tfsdk:"description"`
-	CreatedBy          types.String `tfsdk:"created_by"`
-	CreatedDate        types.String `tfsdk:"created_date"`
-	StartDate          types.String `tfsdk:"start_date"`
-	EndDate            types.String `tfsdk:"end_date"`
-	Fingerprint        types.String `tfsdk:"fingerprint"`
-	Issuer             types.String `tfsdk:"issuer"`
-	SerialNumber       types.String `tfsdk:"serial_number"`
-	SignatureAlgorithm types.String `tfsdk:"signature_algorithm"`
-	Subject            types.String `tfsdk:"subject"`
+	CertificatePEM     customtypes.IgnoreTrailingWhitespaceValue `tfsdk:"certificate_pem"`
+	Description        types.String                              `tfsdk:"description"`
+	CreatedBy          types.String                              `tfsdk:"created_by"`
+	CreatedDate        types.String                              `tfsdk:"created_date"`
+	StartDate          types.String                              `tfsdk:"start_date"`
+	EndDate            types.String                              `tfsdk:"end_date"`
+	Fingerprint        types.String                              `tfsdk:"fingerprint"`
+	Issuer             types.String                              `tfsdk:"issuer"`
+	SerialNumber       types.String                              `tfsdk:"serial_number"`
+	SignatureAlgorithm types.String                              `tfsdk:"signature_algorithm"`
+	Subject            types.String                              `tfsdk:"subject"`
 }
 
 func (r *caSetResource) Metadata(_ context.Context, _ resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -164,6 +169,7 @@ func (r *caSetResource) Schema(ctx context.Context, _ resource.SchemaRequest, re
 				Optional:    true,
 				Computed:    true,
 				Validators:  []validator.String{stringvalidator.LengthAtMost(255)},
+				Default:     nullstringdefault.NullString(),
 				Description: "Additional description for the CA set version.",
 			},
 			"latest_version": schema.Int64Attribute{
@@ -197,9 +203,10 @@ func certificatesSchema() schema.SetNestedAttribute {
 		NestedObject: schema.NestedAttributeObject{
 			Attributes: map[string]schema.Attribute{
 				"certificate_pem": schema.StringAttribute{
-					Required: true,
+					CustomType: customtypes.IgnoreTrailingWhitespaceType{},
+					Required:   true,
 					Validators: []validator.String{
-						stringvalidator.RegexMatches(regexp.MustCompile(`-----BEGIN CERTIFICATE-----\n[0-9A-Za-z+/=\s]+\n-----END CERTIFICATE-----`), "Certificate must be in PEM format")},
+						stringvalidator.RegexMatches(pemRegex, "Certificate must be in PEM format")},
 					Description: "The certificate in PEM format, as found in a Base64 ASCII encoded file.",
 				},
 				"description": schema.StringAttribute{
@@ -361,13 +368,6 @@ func (r *caSetResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanR
 			return
 		}
 
-		// If the version description is not set, we have to set it to null.
-		// This shouldn't be done via default values, because for a computed field which is altered
-		// in update, terraform returns an error.
-		if config.VersionDescription.IsNull() {
-			plan.VersionDescription = types.StringNull()
-		}
-
 		// If the certificate description is not set, we have to set it to null.
 		var planCerts []certificateModel
 		diags := plan.Certificates.ElementsAs(ctx, &planCerts, false)
@@ -408,39 +408,58 @@ func (r *caSetResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanR
 			return
 		}
 
-		activations, err := client.ListCASetActivations(ctx, mtlstruststore.ListCASetActivationsRequest{
-			CASetID: state.ID.ValueString(),
-		})
+		isActivationForLatestVersion, err := isActivationForVersion(ctx, client, state.ID.ValueString(), state.LatestVersion.ValueInt64())
 		if err != nil {
-			resp.Diagnostics.AddError("list ca set activations failed", err.Error())
+			summary := fmt.Sprintf("failed to check if latest version %d has activation",
+				state.LatestVersion.ValueInt64())
+			resp.Diagnostics.AddError(summary, err.Error())
 			return
 		}
-		latestVersionNeverActivated := true
-		for _, activation := range activations.Activations {
-			if activation.Version == state.LatestVersion.ValueInt64() {
-				latestVersionNeverActivated = false
-				break
-			}
-		}
 
-		if latestVersionNeverActivated {
+		equalContent := state.hasEqualContent(plan)
+
+		if !isActivationForLatestVersion || equalContent {
 			// Current version is not activated in staging or production, so we can just update the current version
 			// Following fields will not change then.
+			// They also will not change if the content has not changed at all.
 			plan.LatestVersion = state.LatestVersion
 			plan.VersionCreatedBy = state.VersionCreatedBy
 			plan.VersionCreatedDate = state.VersionCreatedDate
 		}
+
+		// If the content has not changed at all, the modification metadata will not change as well.
+		if equalContent {
+			plan.VersionModifiedBy = state.VersionModifiedBy
+			plan.VersionModifiedDate = state.VersionModifiedDate
+			// If a diff for timeouts exists, we have to leave it as it is,
+			// because for null timeouts object in state or plan terraform will return an error
+			// when trying to update plan. We only add a warning about a local update.
+			if !state.Timeouts.Equal(plan.Timeouts) {
+				resp.Diagnostics.AddWarning("Local update only",
+					"Only the timeout settings have changed, no API call will be made.")
+			}
+		}
+
 		plan.StagingVersion = state.StagingVersion
 		plan.ProductionVersion = state.ProductionVersion
 
-		// if only timeouts are changed, we can just ignore the plan
-		if state.onlyTimeoutChanged(plan) && !state.Timeouts.IsNull() && !plan.Timeouts.IsNull() {
-			plan.Timeouts = state.Timeouts
-		}
 		resp.Plan.Set(ctx, &plan)
-
-		return
 	}
+}
+
+func isActivationForVersion(ctx context.Context, client mtlstruststore.MTLSTruststore, caSetID string, version int64) (bool, error) {
+	activations, err := client.ListCASetActivations(ctx, mtlstruststore.ListCASetActivationsRequest{
+		CASetID: caSetID,
+	})
+	if err != nil {
+		return false, fmt.Errorf("list ca set activations failed: %w", err)
+	}
+	for _, activation := range activations.Activations {
+		if activation.Version == version {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 func getAssociationDetails(associationsResponse *mtlstruststore.ListCASetAssociationsResponse) string {
@@ -470,29 +489,17 @@ func getAssociationDetails(associationsResponse *mtlstruststore.ListCASetAssocia
 	return details
 }
 
-func (m *caSetResourceModel) onlyTimeoutChanged(plan *caSetResourceModel) bool {
-	if m == nil || plan == nil {
+func (m *caSetResourceModel) hasEqualContent(other *caSetResourceModel) bool {
+	if !m.AllowInsecureSHA1.Equal(other.AllowInsecureSHA1) {
 		return false
 	}
-	if !m.Name.Equal(plan.Name) {
+	if !m.VersionDescription.Equal(other.VersionDescription) {
 		return false
 	}
-	if !m.Description.Equal(plan.Description) {
+	if !m.Certificates.Equal(other.Certificates) {
 		return false
 	}
-	if !m.AllowInsecureSHA1.Equal(plan.AllowInsecureSHA1) {
-		return false
-	}
-	if !m.VersionDescription.Equal(plan.VersionDescription) {
-		return false
-	}
-	if !m.Certificates.Equal(plan.Certificates) {
-		return false
-	}
-	if !m.Timeouts.Equal(plan.Timeouts) {
-		return true
-	}
-	return false
+	return true
 }
 
 func validateCerts(ctx context.Context, client mtlstruststore.MTLSTruststore, config *caSetResourceModel) diag.Diagnostics {
@@ -516,13 +523,16 @@ func validateCerts(ctx context.Context, client mtlstruststore.MTLSTruststore, co
 	if len(certs) == 0 {
 		return nil
 	}
-	_, err := client.ValidateCertificates(ctx, mtlstruststore.ValidateCertificatesRequest{
+	res, err := client.ValidateCertificates(ctx, mtlstruststore.ValidateCertificatesRequest{
 		AllowInsecureSHA1: config.AllowInsecureSHA1.ValueBool(),
 		Certificates:      certs,
 	})
 	if err != nil {
 		return generateDiagnosticForValidationErrors(err)
 	}
+	tflog.Debug(ctx, "Validation succeeded", map[string]any{
+		"response": res,
+	})
 	return nil
 }
 
@@ -558,7 +568,10 @@ func (r *caSetResource) Create(ctx context.Context, req resource.CreateRequest, 
 	}
 
 	plan.setCASetData((*mtlstruststore.CASetResponse)(createResp.caSet))
-	plan.setCASetVersionData(ctx, (*mtlstruststore.CASetVersion)(createResp.caSetVersion))
+	resp.Diagnostics.Append(plan.setCASetVersionData(ctx, (*mtlstruststore.CASetVersion)(createResp.caSetVersion))...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
@@ -737,11 +750,13 @@ func (r *caSetResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		return
 	}
 
-	if state.onlyTimeoutChanged(&plan) {
+	// If only timeouts changed, it is enough to update state locally.
+	if state.hasEqualContent(&plan) && !state.Timeouts.Equal(plan.Timeouts) {
 		state.Timeouts = plan.Timeouts
 		resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 		return
 	}
+	state.Timeouts = plan.Timeouts
 
 	client = Client(r.meta)
 	if diags := validateCerts(ctx, client, &plan); diags.HasError() {
@@ -762,21 +777,14 @@ func (r *caSetResource) update(ctx context.Context, plan, state *caSetResourceMo
 
 	// We cannot update CA Set if it is active, or it was activated in the past.
 	// In such a situation we need to clone the current version and update the new one.
-	activations, err := client.ListCASetActivations(ctx, mtlstruststore.ListCASetActivationsRequest{
-		CASetID: state.ID.ValueString(),
-	})
+	isActivationForLatestVersion, err := isActivationForVersion(ctx, client, state.ID.ValueString(), state.LatestVersion.ValueInt64())
 	if err != nil {
-		return diag.Diagnostics{diag.NewErrorDiagnostic("list ca set activations failed", err.Error())}
-	}
-	latestVersionNeverActivated := true
-	for _, activation := range activations.Activations {
-		if activation.Version == state.LatestVersion.ValueInt64() {
-			latestVersionNeverActivated = false
-			break
-		}
+		summary := fmt.Sprintf("failed to check if latest version %d has activation",
+			state.LatestVersion.ValueInt64())
+		return diag.Diagnostics{diag.NewErrorDiagnostic(summary, err.Error())}
 	}
 
-	if latestVersionNeverActivated {
+	if !isActivationForLatestVersion {
 		// Current version is not activated in staging or production, so we can just update the current version
 		tflog.Debug(ctx, "Current version is not activated in staging or production, updating the current version.", map[string]interface{}{
 			"ca_set_id":       state.ID.ValueString(),
@@ -809,7 +817,7 @@ func (r *caSetResource) update(ctx context.Context, plan, state *caSetResourceMo
 		Version: plan.LatestVersion.ValueInt64(),
 		Body: mtlstruststore.UpdateCASetVersionRequestBody{
 			AllowInsecureSHA1: plan.AllowInsecureSHA1.ValueBool(),
-			Description:       plan.VersionDescription.ValueString(),
+			Description:       plan.VersionDescription.ValueStringPointer(),
 			Certificates:      certs,
 		},
 	})
@@ -931,16 +939,39 @@ func (r *caSetResource) ImportState(ctx context.Context, req resource.ImportStat
 		return
 	}
 
+	caSetVersionResp, err := client.GetCASetVersion(ctx, mtlstruststore.GetCASetVersionRequest{
+		CASetID: caSetID,
+		Version: *caSetResp.LatestVersion,
+	})
+	if err != nil {
+		resp.Diagnostics.AddError("read ca set version error", err.Error())
+		return
+	}
+
 	data := &caSetResourceModel{
 		ID:            types.StringValue(caSetID),
 		LatestVersion: types.Int64Value(*caSetResp.LatestVersion),
-		Certificates:  types.SetNull(certificatesType()),
 		Timeouts: timeouts.Value{
 			Object: types.ObjectNull(map[string]attr.Type{
 				"delete": types.StringType,
 			}),
 		},
 	}
+
+	// To ensure consistency between the configuration and state, we append a newline to the end
+	// of each PEM certificate. This matches the heredoc format used during export.
+	// Semantic equality (implemented for certificates here) does not ignore differences between
+	// the configuration and state. Suppressing these discrepancies would require an additional
+	// PlanModifier for the certificate attribute, which would complicate the resource logic.
+	//
+	// By adding a newline, we introduce an invariant that guarantees the configuration
+	// and state will always match.
+	data.setCertificates(ctx, (*mtlstruststore.CASetVersion)(caSetVersionResp),
+		func(pem string) string {
+			// Assure that the PEM certificate ends exactly with a single newline character.
+			return text.TrimRightWhitespace(pem) + "\n"
+		})
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -967,10 +998,20 @@ func (m *caSetResourceModel) setCASetVersionData(ctx context.Context, caSetVersi
 	}
 	m.VersionCreatedBy = types.StringValue(caSetVersionResp.CreatedBy)
 	m.VersionCreatedDate = types.StringValue(caSetVersionResp.CreatedDate.Format(time.RFC3339Nano))
-	certificates := make([]certificateModel, 0, len(caSetVersionResp.Certificates))
-	for _, cert := range caSetVersionResp.Certificates {
+
+	return m.setCertificates(ctx, caSetVersionResp, nil)
+}
+
+func (m *caSetResourceModel) setCertificates(ctx context.Context, caSetVersion *mtlstruststore.CASetVersion, pemModifier func(string) string) diag.Diagnostics {
+
+	certificates := make([]certificateModel, 0, len(caSetVersion.Certificates))
+	for _, cert := range caSetVersion.Certificates {
+		pem := cert.CertificatePEM
+		if pemModifier != nil {
+			pem = pemModifier(cert.CertificatePEM)
+		}
 		certificates = append(certificates, certificateModel{
-			CertificatePEM:     types.StringValue(cert.CertificatePEM),
+			CertificatePEM:     customtypes.NewIgnoreTrailingWhitespaceValue(pem),
 			Description:        types.StringPointerValue(cert.Description),
 			CreatedBy:          types.StringValue(cert.CreatedBy),
 			CreatedDate:        types.StringValue(cert.CreatedDate.Format(time.RFC3339Nano)),
@@ -983,6 +1024,7 @@ func (m *caSetResourceModel) setCASetVersionData(ctx context.Context, caSetVersi
 			Subject:            types.StringValue(cert.Subject),
 		})
 	}
+
 	certs, diags := types.SetValueFrom(ctx, certificatesType(), certificates)
 	if diags.HasError() {
 		return diags

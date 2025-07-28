@@ -51,6 +51,10 @@ func (c StateChecker) Build() resource.TestCheckFunc {
 // CheckEqual adds a check for provided attribute name and corresponding value.
 func (c StateChecker) CheckEqual(attr, val string) StateChecker {
 	copied := NewStateChecker(c.resourceName)
+	// TODO
+	// If we check equal timeouts.delete = 5m
+	// and we check missing for timeouts in the parent, we have a collision
+	// Add a check, probably in Build
 	maps.Copy(copied.attributes, c.attributes)
 	copied.attributes[attr] = checkData{
 		value: val,

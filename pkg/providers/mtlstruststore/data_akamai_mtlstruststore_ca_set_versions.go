@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/mtlstruststore"
+	"github.com/akamai/terraform-provider-akamai/v8/internal/customtypes"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -270,7 +271,7 @@ func convertCASetVersionsDataToModel(versions mtlstruststore.ListCASetVersionsRe
 		var certModel []certificateModel
 		for _, cert := range version.Certificates {
 			certModel = append(certModel, certificateModel{
-				CertificatePEM:     types.StringValue(cert.CertificatePEM),
+				CertificatePEM:     customtypes.NewIgnoreTrailingWhitespaceValue(cert.CertificatePEM),
 				CreatedBy:          types.StringValue(cert.CreatedBy),
 				CreatedDate:        types.StringValue(cert.CreatedDate.Format(time.RFC3339Nano)),
 				EndDate:            types.StringValue(cert.EndDate.Format(time.RFC3339Nano)),

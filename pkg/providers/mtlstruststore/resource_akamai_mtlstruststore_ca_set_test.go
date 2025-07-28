@@ -10,6 +10,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/mtlstruststore"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/ptr"
 	tst "github.com/akamai/terraform-provider-akamai/v8/internal/test"
+	"github.com/akamai/terraform-provider-akamai/v8/internal/text"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/testprovider"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/testutils"
@@ -25,7 +26,7 @@ import (
 type commonDataForResource struct {
 	description        *string
 	name               string
-	certificates       []mtlstruststore.ValidateCertificateResponse
+	certificates       []mtlstruststore.CertificateResponse
 	caSetID            string
 	versionDescription *string
 	version            int64
@@ -46,27 +47,54 @@ func TestCASetResource(t *testing.T) {
 		version:     1,
 		name:        "set-1",
 		description: ptr.To("Test CA Set for validation"),
-		certificates: []mtlstruststore.ValidateCertificateResponse{
+		certificates: []mtlstruststore.CertificateResponse{
 			{
-				CertificatePEM: "-----BEGIN CERTIFICATE-----\nMIIDXTCCAkWgAwIBAgIJALa6Rz1u5z2OMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV\n-----END CERTIFICATE-----\n",
-				Description:    ptr.To("Test certificate"),
+				CertificatePEM:     "-----BEGIN CERTIFICATE-----\nMIIDXTCCAkWgAwIBAgIJALa6Rz1u5z2OMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV\n-----END CERTIFICATE-----\n",
+				Description:        ptr.To("Test certificate"),
+				CreatedBy:          "johndoe",
+				CreatedDate:        tst.NewTimeFromStringMust("2025-04-16T16:01:02.555444Z"),
+				EndDate:            tst.NewTimeFromStringMust("2026-04-16T16:01:02.555444Z"),
+				Fingerprint:        "1234567890abcdef1234567890abcdef",
+				Issuer:             "CN=Dummy CA",
+				SerialNumber:       "987654321fedcba987654321fedcba",
+				SignatureAlgorithm: "SHA256WITHRSA",
+				StartDate:          tst.NewTimeFromStringMust("2025-04-17T16:01:02.555444Z"),
+				Subject:            "CN=Dummy CA test",
 			},
 		},
 		versionDescription: ptr.To("Initial version for testing"),
 		stagingVersion:     nil,
 		stagingStatus:      "INACTIVE",
 	}
-	check := test.NewStateChecker("akamai_mtlstruststore_ca_set.test").
+	baseCheck := test.NewStateChecker("akamai_mtlstruststore_ca_set.test").
 		CheckEqual("name", "set-1").
-		CheckEqual("id", "123456789").
 		CheckEqual("description", "Test CA Set for validation").
+		CheckEqual("account_id", "ACC-123456").
+		CheckEqual("id", "123456789").
+		CheckEqual("created_by", "someone").
+		CheckEqual("created_date", "2025-04-16T12:08:34.099457Z").
+		CheckEqual("version_created_by", "someone").
+		CheckEqual("version_created_date", "2025-04-16T12:08:34.099457Z").
+		CheckMissing("version_modified_by").
+		CheckMissing("version_modified_date").
 		CheckEqual("allow_insecure_sha1", "false").
 		CheckEqual("version_description", "Initial version for testing").
-		CheckEqual("certificates.0.certificate_pem", "-----BEGIN CERTIFICATE-----\nMIIDXTCCAkWgAwIBAgIJALa6Rz1u5z2OMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV\n-----END CERTIFICATE-----\n").
-		CheckEqual("certificates.0.description", "Test certificate").
 		CheckEqual("latest_version", "1").
 		CheckMissing("staging_version").
 		CheckMissing("production_version")
+	check := baseCheck.
+		CheckEqual("certificates.0.certificate_pem", "-----BEGIN CERTIFICATE-----\nMIIDXTCCAkWgAwIBAgIJALa6Rz1u5z2OMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV\n-----END CERTIFICATE-----\n").
+		CheckEqual("certificates.0.description", "Test certificate").
+		CheckEqual("certificates.0.created_by", "johndoe").
+		CheckEqual("certificates.0.created_date", "2025-04-16T16:01:02.555444Z").
+		CheckEqual("certificates.0.end_date", "2026-04-16T16:01:02.555444Z").
+		CheckEqual("certificates.0.fingerprint", "1234567890abcdef1234567890abcdef").
+		CheckEqual("certificates.0.issuer", "CN=Dummy CA").
+		CheckEqual("certificates.0.serial_number", "987654321fedcba987654321fedcba").
+		CheckEqual("certificates.0.signature_algorithm", "SHA256WITHRSA").
+		CheckEqual("certificates.0.start_date", "2025-04-17T16:01:02.555444Z").
+		CheckEqual("certificates.0.subject", "CN=Dummy CA test").
+		CheckMissing("timeouts.delete")
 
 	tests := map[string]struct {
 		configPath string
@@ -96,36 +124,6 @@ func TestCASetResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/create.tf"),
-					Check:  check.Build(),
-				},
-			},
-		},
-		// Used for testing setting VersionDescription in ModifyPlan
-		// We want to check the tricky scenario, where VersionDescription is referenced from
-		// another resource. In ModifyPlan, it will be unknown during planning phase,
-		// and set to the known value during apply phase. Our code, checking for null config
-		// should not break this value by nulling it out.
-		"create a ca set with description provided by another resource": {
-			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
-				// create
-				mockValidateCertificates(m, resourceData, nil).Times(5)
-				mockCreateCASet(m, resourceData).Times(1)
-				mockCreateCASetVersion(m, resourceData).Times(1)
-				mockGetCASet(m, resourceData).Times(1)
-				// read
-				mockGetCASet(m, resourceData).Times(1)
-				mockGetCASetVersion(m, resourceData).Times(1)
-				mockListCASetActivations(m, resourceData, false).Times(2)
-				// delete
-				mockListCASetAssociations(m, resourceData).Times(2)
-				mockDeleteCASet(m, resourceData).Times(1)
-				mockGetCASetDeletionStatus(m, resourceData, "IN_PROGRESS", "IN_PROGRESS", "COMPLETED").Times(1)
-				mockGetCASetDeletionStatus(m, resourceData, "COMPLETE", "COMPLETE", "COMPLETE").Times(1)
-			},
-			mockData: createData,
-			steps: []resource.TestStep{
-				{
-					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/create_external_version_description.tf"),
 					Check:  check.Build(),
 				},
 			},
@@ -161,9 +159,18 @@ func TestCASetResource(t *testing.T) {
 				resourceData.description = nil
 				resourceData.versionDescription = nil
 				resourceData.allowInsecureSHA1 = true
-				resourceData.certificates = []mtlstruststore.ValidateCertificateResponse{
+				resourceData.certificates = []mtlstruststore.CertificateResponse{
 					{
-						CertificatePEM: "-----BEGIN CERTIFICATE-----\nMIIDXTCCAkWgAwIBAgIJALa6Rz1u5z2OMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV\n-----END CERTIFICATE-----\n",
+						CertificatePEM:     "-----BEGIN CERTIFICATE-----\nMIIDXTCCAkWgAwIBAgIJALa6Rz1u5z2OMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV\n-----END CERTIFICATE-----\n",
+						CreatedBy:          "johndoe",
+						CreatedDate:        tst.NewTimeFromStringMust("2025-04-16T16:01:02.555444Z"),
+						EndDate:            tst.NewTimeFromStringMust("2026-04-16T16:01:02.555444Z"),
+						Fingerprint:        "1234567890abcdef1234567890abcdef",
+						Issuer:             "CN=Dummy CA",
+						SerialNumber:       "987654321fedcba987654321fedcba",
+						SignatureAlgorithm: "SHA256WITHRSA",
+						StartDate:          tst.NewTimeFromStringMust("2025-04-17T16:01:02.555444Z"),
+						Subject:            "CN=Dummy CA test",
 					},
 				}
 				mockValidateCertificates(m, resourceData, nil).Times(5)
@@ -443,7 +450,7 @@ func TestCASetResource(t *testing.T) {
 				mockListCASetActivations(m, updateData, false).Times(1)
 				mockGetCASet(m, updateData).Times(1)
 				mockGetCASetVersion(m, updateData).Times(1)
-				updateData.certificates = slices.Insert(updateData.certificates, 0, mtlstruststore.ValidateCertificateResponse{
+				updateData.certificates = slices.Insert(updateData.certificates, 0, mtlstruststore.CertificateResponse{
 					CertificatePEM: "-----BEGIN CERTIFICATE-----\nFOO\n-----END CERTIFICATE-----\n",
 					Description:    ptr.To("second cert"),
 				})
@@ -470,14 +477,88 @@ func TestCASetResource(t *testing.T) {
 				},
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/update.tf"),
-					Check: check.
+					Check: baseCheck.
 						CheckEqual("version_description", "Second version for testing").
+						CheckEqual("version_modified_by", "someone").
+						CheckEqual("version_modified_date", "2025-04-18T12:18:34Z").
 						CheckEqual("certificates.#", "2").
 						CheckEqual("certificates.0.certificate_pem", "-----BEGIN CERTIFICATE-----\nFOO\n-----END CERTIFICATE-----\n").
 						CheckEqual("certificates.0.description", "second cert").
 						CheckEqual("certificates.1.certificate_pem", "-----BEGIN CERTIFICATE-----\nMIIDXTCCAkWgAwIBAgIJALa6Rz1u5z2OMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV\n-----END CERTIFICATE-----\n").
 						CheckEqual("certificates.1.description", "Test certificate").
+						CheckEqual("certificates.1.created_by", "johndoe").
+						CheckEqual("certificates.1.created_date", "2025-04-16T16:01:02.555444Z").
+						CheckEqual("certificates.1.end_date", "2026-04-16T16:01:02.555444Z").
+						CheckEqual("certificates.1.fingerprint", "1234567890abcdef1234567890abcdef").
+						CheckEqual("certificates.1.issuer", "CN=Dummy CA").
+						CheckEqual("certificates.1.serial_number", "987654321fedcba987654321fedcba").
+						CheckEqual("certificates.1.signature_algorithm", "SHA256WITHRSA").
+						CheckEqual("certificates.1.start_date", "2025-04-17T16:01:02.555444Z").
+						CheckEqual("certificates.1.subject", "CN=Dummy CA test").
+						CheckEqual("timeouts.delete", "5m").
 						Build(),
+					ConfigPlanChecks: resource.ConfigPlanChecks{
+						PreApply: []plancheck.PlanCheck{
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("staging_version"), knownvalue.Null()),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("production_version"), knownvalue.Null()),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("latest_version"), knownvalue.Int64Exact(1)),
+							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_modified_by")),
+							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_modified_date")),
+
+							// The added certificate will be the first in the state
+							// We expect all computed attributes to be unknown except the description
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test",
+								tfjsonpath.New("certificates").AtSliceIndex(0).AtMapKey("certificate_pem"),
+								knownvalue.StringExact("-----BEGIN CERTIFICATE-----\nFOO\n-----END CERTIFICATE-----\n")),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test",
+								tfjsonpath.New("certificates").AtSliceIndex(0).AtMapKey("description"),
+								knownvalue.StringExact("second cert")),
+							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test",
+								tfjsonpath.New("certificates").AtSliceIndex(0).AtMapKey("created_by")),
+							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test",
+								tfjsonpath.New("certificates").AtSliceIndex(0).AtMapKey("created_date")),
+							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test",
+								tfjsonpath.New("certificates").AtSliceIndex(0).AtMapKey("end_date")),
+							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test",
+								tfjsonpath.New("certificates").AtSliceIndex(0).AtMapKey("fingerprint")),
+							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test",
+								tfjsonpath.New("certificates").AtSliceIndex(0).AtMapKey("issuer")),
+							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test",
+								tfjsonpath.New("certificates").AtSliceIndex(0).AtMapKey("serial_number")),
+							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test",
+								tfjsonpath.New("certificates").AtSliceIndex(0).AtMapKey("signature_algorithm")),
+							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test",
+								tfjsonpath.New("certificates").AtSliceIndex(0).AtMapKey("start_date")),
+							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test",
+								tfjsonpath.New("certificates").AtSliceIndex(0).AtMapKey("subject")),
+
+							// The existing certificate must be completely known at the plan phase
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test",
+								tfjsonpath.New("certificates").AtSliceIndex(1).AtMapKey("certificate_pem"),
+								knownvalue.StringExact("-----BEGIN CERTIFICATE-----\nMIIDXTCCAkWgAwIBAgIJALa6Rz1u5z2OMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV\n-----END CERTIFICATE-----\n")),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test",
+								tfjsonpath.New("certificates").AtSliceIndex(1).AtMapKey("description"),
+								knownvalue.StringExact("Test certificate")),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test",
+								tfjsonpath.New("certificates").AtSliceIndex(1).AtMapKey("created_by"), knownvalue.StringExact("johndoe")),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test",
+								tfjsonpath.New("certificates").AtSliceIndex(1).AtMapKey("created_date"), knownvalue.StringExact("2025-04-16T16:01:02.555444Z")),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test",
+								tfjsonpath.New("certificates").AtSliceIndex(1).AtMapKey("end_date"), knownvalue.StringExact("2026-04-16T16:01:02.555444Z")),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test",
+								tfjsonpath.New("certificates").AtSliceIndex(1).AtMapKey("fingerprint"), knownvalue.StringExact("1234567890abcdef1234567890abcdef")),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test",
+								tfjsonpath.New("certificates").AtSliceIndex(1).AtMapKey("issuer"), knownvalue.StringExact("CN=Dummy CA")),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test",
+								tfjsonpath.New("certificates").AtSliceIndex(1).AtMapKey("serial_number"), knownvalue.StringExact("987654321fedcba987654321fedcba")),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test",
+								tfjsonpath.New("certificates").AtSliceIndex(1).AtMapKey("signature_algorithm"), knownvalue.StringExact("SHA256WITHRSA")),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test",
+								tfjsonpath.New("certificates").AtSliceIndex(1).AtMapKey("start_date"), knownvalue.StringExact("2025-04-17T16:01:02.555444Z")),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test",
+								tfjsonpath.New("certificates").AtSliceIndex(1).AtMapKey("subject"), knownvalue.StringExact("CN=Dummy CA test")),
+						},
+					},
 				},
 			},
 		},
@@ -520,23 +601,27 @@ func TestCASetResource(t *testing.T) {
 					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/update_allow_insecure_sha1.tf"),
 					Check: check.
 						CheckEqual("allow_insecure_sha1", "true").
+						CheckEqual("version_modified_by", "someone").
+						CheckEqual("version_modified_date", "2025-04-18T12:18:34Z").
 						Build(),
 					ConfigPlanChecks: resource.ConfigPlanChecks{
 						PreApply: []plancheck.PlanCheck{
 							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("staging_version"), knownvalue.Null()),
 							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("production_version"), knownvalue.Null()),
 							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("latest_version"), knownvalue.Int64Exact(1)),
+							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_modified_by")),
+							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_modified_date")),
 						},
 					},
 				},
 			},
 		},
-		// This case tests whether unknown config value for `description` is properly set to null
-		// in both create and update phases. This can be done using the Default field of StringAttribute
-		// since the `description` attribute is not modified.
-		"update a non activated ca set with no description, changing only allow_insecure_sha1": {
+		// This case tests whether unknown config value for `description` and `version description`
+		// is properly set to null in both create and update phases.
+		"update a non activated ca set with no description and version description, changing only allow_insecure_sha1": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
 				resourceData.description = nil
+				resourceData.versionDescription = nil
 				// create
 				mockValidateCertificates(m, resourceData, nil).Times(5)
 				mockCreateCASet(m, resourceData).Times(1)
@@ -567,22 +652,36 @@ func TestCASetResource(t *testing.T) {
 			mockData: createData,
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/create_no_description.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/create_no_descriptions.tf"),
 					Check: check.
 						CheckMissing("description").
+						CheckMissing("version_description").
 						Build(),
+					ConfigPlanChecks: resource.ConfigPlanChecks{
+						PreApply: []plancheck.PlanCheck{
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("description"), knownvalue.Null()),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_description"), knownvalue.Null()),
+						},
+					},
 				},
 				{
-					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/update_allow_insecure_sha1_no_description.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/update_allow_insecure_sha1_no_descriptions.tf"),
 					Check: check.
 						CheckMissing("description").
+						CheckMissing("version_description").
 						CheckEqual("allow_insecure_sha1", "true").
+						CheckEqual("version_modified_by", "someone").
+						CheckEqual("version_modified_date", "2025-04-18T12:18:34Z").
 						Build(),
 					ConfigPlanChecks: resource.ConfigPlanChecks{
 						PreApply: []plancheck.PlanCheck{
 							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("staging_version"), knownvalue.Null()),
 							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("production_version"), knownvalue.Null()),
 							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("latest_version"), knownvalue.Int64Exact(1)),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("description"), knownvalue.Null()),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_description"), knownvalue.Null()),
+							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_modified_by")),
+							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_modified_date")),
 						},
 					},
 				},
@@ -627,7 +726,21 @@ func TestCASetResource(t *testing.T) {
 				},
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/update_timeout.tf"),
-					Check:  check.Build(),
+					Check: check.
+						CheckEqual("timeouts.delete", "5m").
+						Build(),
+					ConfigPlanChecks: resource.ConfigPlanChecks{
+						PreApply: []plancheck.PlanCheck{
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("timeouts").AtMapKey("delete"), knownvalue.StringExact("5m")),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("staging_version"), knownvalue.Null()),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("production_version"), knownvalue.Null()),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("latest_version"), knownvalue.Int64Exact(1)),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_created_by"), knownvalue.StringExact("someone")),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_created_date"), knownvalue.StringExact("2025-04-16T12:08:34.099457Z")),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_modified_by"), knownvalue.Null()),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_modified_date"), knownvalue.Null()),
+						},
+					},
 				},
 			},
 		},
@@ -663,18 +776,90 @@ func TestCASetResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/update_timeout.tf"),
-					Check:  check.Build(),
+					Check: check.
+						CheckEqual("timeouts.delete", "5m").
+						Build(),
 				},
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/create.tf"),
-					Check:  check.Build(),
+					Check: check.
+						CheckMissing("timeouts.delete").
+						Build(),
+					ConfigPlanChecks: resource.ConfigPlanChecks{
+						PreApply: []plancheck.PlanCheck{
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("timeouts"), knownvalue.Null()),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("staging_version"), knownvalue.Null()),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("production_version"), knownvalue.Null()),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("latest_version"), knownvalue.Int64Exact(1)),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_created_by"), knownvalue.StringExact("someone")),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_created_date"), knownvalue.StringExact("2025-04-16T12:08:34.099457Z")),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_modified_by"), knownvalue.Null()),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_modified_date"), knownvalue.Null()),
+						},
+					},
 				},
 			},
 		},
-		"update a non activated ca set with only order change": {
+		"update only timeout should do nothing (from some value to other value)": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
 				// create
-				resourceData.certificates = slices.Insert(resourceData.certificates, 0, mtlstruststore.ValidateCertificateResponse{
+				mockValidateCertificates(m, resourceData, nil).Times(5)
+				mockCreateCASet(m, resourceData).Times(1)
+				mockCreateCASetVersion(m, resourceData).Times(1)
+				mockGetCASet(m, resourceData).Times(1)
+				// read
+				mockGetCASet(m, resourceData).Times(1)
+				mockGetCASetVersion(m, resourceData).Times(1)
+				mockListCASetActivations(m, resourceData, false).Times(2)
+
+				// update
+				updateData := resourceData
+				mockGetCASet(m, updateData).Times(1)
+				mockGetCASetVersion(m, updateData).Times(1)
+				mockValidateCertificates(m, updateData, nil).Times(4)
+				// read
+				mockGetCASet(m, updateData).Times(1)
+				mockGetCASetVersion(m, updateData).Times(1)
+				mockListCASetActivations(m, resourceData, false).Times(4)
+
+				// delete
+				mockListCASetAssociations(m, updateData).Times(2)
+				mockDeleteCASet(m, updateData).Times(1)
+				mockGetCASetDeletionStatus(m, updateData, "IN_PROGRESS", "IN_PROGRESS", "COMPLETED").Times(1)
+				mockGetCASetDeletionStatus(m, updateData, "COMPLETE", "COMPLETE", "COMPLETE").Times(1)
+			},
+			mockData: createData,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/update_timeout.tf"),
+					Check: check.
+						CheckEqual("timeouts.delete", "5m").
+						Build(),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/update_timeout2.tf"),
+					Check: check.
+						CheckEqual("timeouts.delete", "6m").
+						Build(),
+					ConfigPlanChecks: resource.ConfigPlanChecks{
+						PreApply: []plancheck.PlanCheck{
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("timeouts").AtMapKey("delete"), knownvalue.StringExact("6m")),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("staging_version"), knownvalue.Null()),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("production_version"), knownvalue.Null()),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("latest_version"), knownvalue.Int64Exact(1)),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_created_by"), knownvalue.StringExact("someone")),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_created_date"), knownvalue.StringExact("2025-04-16T12:08:34.099457Z")),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_modified_by"), knownvalue.Null()),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_modified_date"), knownvalue.Null()),
+						},
+					},
+				},
+			},
+		},
+		"update a non activated ca set with only order change in the config": {
+			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
+				// create
+				resourceData.certificates = slices.Insert(resourceData.certificates, 0, mtlstruststore.CertificateResponse{
 					CertificatePEM: "-----BEGIN CERTIFICATE-----\nFOO\n-----END CERTIFICATE-----\n",
 					Description:    ptr.To("second cert"),
 				})
@@ -707,23 +892,51 @@ func TestCASetResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/create_two_certs.tf"),
-					Check: check.
+					Check: baseCheck.
 						CheckEqual("certificates.#", "2").
 						CheckEqual("certificates.0.certificate_pem", "-----BEGIN CERTIFICATE-----\nFOO\n-----END CERTIFICATE-----\n").
 						CheckEqual("certificates.0.description", "second cert").
 						CheckEqual("certificates.1.certificate_pem", "-----BEGIN CERTIFICATE-----\nMIIDXTCCAkWgAwIBAgIJALa6Rz1u5z2OMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV\n-----END CERTIFICATE-----\n").
 						CheckEqual("certificates.1.description", "Test certificate").
+						CheckEqual("certificates.1.created_by", "johndoe").
+						CheckEqual("certificates.1.created_date", "2025-04-16T16:01:02.555444Z").
+						CheckEqual("certificates.1.end_date", "2026-04-16T16:01:02.555444Z").
+						CheckEqual("certificates.1.fingerprint", "1234567890abcdef1234567890abcdef").
+						CheckEqual("certificates.1.issuer", "CN=Dummy CA").
+						CheckEqual("certificates.1.serial_number", "987654321fedcba987654321fedcba").
+						CheckEqual("certificates.1.signature_algorithm", "SHA256WITHRSA").
+						CheckEqual("certificates.1.start_date", "2025-04-17T16:01:02.555444Z").
+						CheckEqual("certificates.1.subject", "CN=Dummy CA test").
 						Build(),
 				},
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/update_two_certs.tf"),
-					Check: check.
+					Check: baseCheck.
 						CheckEqual("certificates.#", "2").
 						CheckEqual("certificates.0.certificate_pem", "-----BEGIN CERTIFICATE-----\nFOO\n-----END CERTIFICATE-----\n").
 						CheckEqual("certificates.0.description", "second cert").
 						CheckEqual("certificates.1.certificate_pem", "-----BEGIN CERTIFICATE-----\nMIIDXTCCAkWgAwIBAgIJALa6Rz1u5z2OMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV\n-----END CERTIFICATE-----\n").
 						CheckEqual("certificates.1.description", "Test certificate").
+						CheckEqual("certificates.1.created_by", "johndoe").
+						CheckEqual("certificates.1.created_date", "2025-04-16T16:01:02.555444Z").
+						CheckEqual("certificates.1.end_date", "2026-04-16T16:01:02.555444Z").
+						CheckEqual("certificates.1.fingerprint", "1234567890abcdef1234567890abcdef").
+						CheckEqual("certificates.1.issuer", "CN=Dummy CA").
+						CheckEqual("certificates.1.serial_number", "987654321fedcba987654321fedcba").
+						CheckEqual("certificates.1.signature_algorithm", "SHA256WITHRSA").
+						CheckEqual("certificates.1.start_date", "2025-04-17T16:01:02.555444Z").
+						CheckEqual("certificates.1.subject", "CN=Dummy CA test").
 						Build(),
+					ConfigPlanChecks: resource.ConfigPlanChecks{
+						PreApply: []plancheck.PlanCheck{
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test",
+								tfjsonpath.New("certificates").AtSliceIndex(0).AtMapKey("description"),
+								knownvalue.StringExact("second cert")),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test",
+								tfjsonpath.New("certificates").AtSliceIndex(1).AtMapKey("description"),
+								knownvalue.StringExact("Test certificate")),
+						},
+					},
 				},
 			},
 		},
@@ -747,7 +960,7 @@ func TestCASetResource(t *testing.T) {
 				updateData.stagingStatus = "ACTIVE"
 				mockGetCASet(m, updateData).Times(1)
 				mockGetCASetVersion(m, updateData).Times(1)
-				updateData.certificates = slices.Insert(updateData.certificates, 0, mtlstruststore.ValidateCertificateResponse{
+				updateData.certificates = slices.Insert(updateData.certificates, 0, mtlstruststore.CertificateResponse{
 					CertificatePEM: "-----BEGIN CERTIFICATE-----\nFOO\n-----END CERTIFICATE-----\n",
 					Description:    ptr.To("second cert"),
 				})
@@ -776,28 +989,47 @@ func TestCASetResource(t *testing.T) {
 				},
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/update.tf"),
-					Check: check.
+					Check: baseCheck.
 						CheckEqual("version_description", "Second version for testing").
+						CheckEqual("version_modified_by", "someone").
+						CheckEqual("version_modified_date", "2025-04-18T12:18:34Z").
 						CheckEqual("certificates.#", "2").
 						CheckEqual("certificates.0.certificate_pem", "-----BEGIN CERTIFICATE-----\nFOO\n-----END CERTIFICATE-----\n").
 						CheckEqual("certificates.0.description", "second cert").
 						CheckEqual("certificates.1.certificate_pem", "-----BEGIN CERTIFICATE-----\nMIIDXTCCAkWgAwIBAgIJALa6Rz1u5z2OMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV\n-----END CERTIFICATE-----\n").
 						CheckEqual("certificates.1.description", "Test certificate").
+						CheckEqual("certificates.1.created_by", "johndoe").
+						CheckEqual("certificates.1.created_date", "2025-04-16T16:01:02.555444Z").
+						CheckEqual("certificates.1.end_date", "2026-04-16T16:01:02.555444Z").
+						CheckEqual("certificates.1.fingerprint", "1234567890abcdef1234567890abcdef").
+						CheckEqual("certificates.1.issuer", "CN=Dummy CA").
+						CheckEqual("certificates.1.serial_number", "987654321fedcba987654321fedcba").
+						CheckEqual("certificates.1.signature_algorithm", "SHA256WITHRSA").
+						CheckEqual("certificates.1.start_date", "2025-04-17T16:01:02.555444Z").
+						CheckEqual("certificates.1.subject", "CN=Dummy CA test").
 						CheckEqual("latest_version", "2").
 						CheckEqual("staging_version", "1").
 						CheckMissing("production_version").
+						CheckEqual("timeouts.delete", "5m").
 						Build(),
 					ConfigPlanChecks: resource.ConfigPlanChecks{
 						PreApply: []plancheck.PlanCheck{
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("timeouts").AtMapKey("delete"), knownvalue.StringExact("5m")),
 							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("staging_version"), knownvalue.Int64Exact(1)),
 							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("production_version"), knownvalue.Null()),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("description"), knownvalue.StringExact("Test CA Set for validation")),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_description"), knownvalue.StringExact("Second version for testing")),
 							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("latest_version")),
+							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_created_by")),
+							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_created_date")),
+							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_modified_by")),
+							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_modified_date")),
 						},
 					},
 				},
 			},
 		},
-		"update an activated ca set on staging, changing only allow_insecure_sha1 should not create a new version": {
+		"update an activated ca set on staging, changing only allow_insecure_sha1 should also create a new version": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
 				// create
 				mockValidateCertificates(m, resourceData, nil).Times(5)
@@ -847,7 +1079,79 @@ func TestCASetResource(t *testing.T) {
 						CheckEqual("latest_version", "2").
 						CheckEqual("staging_version", "1").
 						CheckMissing("production_version").
+						CheckEqual("version_modified_by", "someone").
+						CheckEqual("version_modified_date", "2025-04-18T12:18:34Z").
 						Build(),
+					ConfigPlanChecks: resource.ConfigPlanChecks{
+						PreApply: []plancheck.PlanCheck{
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("staging_version"), knownvalue.Int64Exact(1)),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("production_version"), knownvalue.Null()),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("description"), knownvalue.StringExact("Test CA Set for validation")),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_description"), knownvalue.StringExact("Initial version for testing")),
+							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("latest_version")),
+							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_created_by")),
+							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_created_date")),
+							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_modified_by")),
+							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_modified_date")),
+						},
+					},
+				},
+			},
+		},
+		"update only timeout should do nothing, also when activated on staging (from default to some value)": {
+			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
+				// create
+				mockValidateCertificates(m, resourceData, nil).Times(5)
+				mockCreateCASet(m, resourceData).Times(1)
+				mockCreateCASetVersion(m, resourceData).Times(1)
+				mockGetCASet(m, resourceData).Times(1)
+				// read
+				mockGetCASet(m, resourceData).Times(1)
+				mockGetCASetVersion(m, resourceData).Times(1)
+				mockListCASetActivations(m, resourceData, true).Times(2)
+
+				// update
+				updateData := resourceData
+				//updateData.version = 1
+				//mockListCASetActivations(m, updateData, false).Times(1)
+				mockGetCASet(m, updateData).Times(1)
+				mockGetCASetVersion(m, updateData).Times(1)
+				mockValidateCertificates(m, updateData, nil).Times(4)
+				//mockUpdateCASetVersion(m, updateData).Times(1)
+				// read
+				mockGetCASet(m, updateData).Times(1)
+				mockGetCASetVersion(m, updateData).Times(1)
+				mockListCASetActivations(m, resourceData, true).Times(4)
+
+				// delete
+				mockListCASetAssociations(m, updateData).Times(2)
+				mockDeleteCASet(m, updateData).Times(1)
+				mockGetCASetDeletionStatus(m, updateData, "IN_PROGRESS", "IN_PROGRESS", "COMPLETED").Times(1)
+				mockGetCASetDeletionStatus(m, updateData, "COMPLETE", "COMPLETE", "COMPLETE").Times(1)
+			},
+			mockData: createData,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/create.tf"),
+					Check:  check.Build(),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/update_timeout.tf"),
+					Check: check.
+						CheckEqual("timeouts.delete", "5m").
+						Build(),
+					ConfigPlanChecks: resource.ConfigPlanChecks{
+						PreApply: []plancheck.PlanCheck{
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("timeouts").AtMapKey("delete"), knownvalue.StringExact("5m")),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("staging_version"), knownvalue.Null()),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("production_version"), knownvalue.Null()),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("latest_version"), knownvalue.Int64Exact(1)),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_created_by"), knownvalue.StringExact("someone")),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_created_date"), knownvalue.StringExact("2025-04-16T12:08:34.099457Z")),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_modified_by"), knownvalue.Null()),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_modified_date"), knownvalue.Null()),
+						},
+					},
 				},
 			},
 		},
@@ -872,7 +1176,7 @@ func TestCASetResource(t *testing.T) {
 				mockListCASetActivations(m, updateData, true).Times(1)
 				mockGetCASet(m, updateData).Times(1)
 				mockGetCASetVersion(m, updateData).Times(1)
-				updateData.certificates = slices.Insert(updateData.certificates, 0, mtlstruststore.ValidateCertificateResponse{
+				updateData.certificates = slices.Insert(updateData.certificates, 0, mtlstruststore.CertificateResponse{
 					CertificatePEM: "-----BEGIN CERTIFICATE-----\nFOO\n-----END CERTIFICATE-----\n",
 					Description:    ptr.To("second cert"),
 				})
@@ -901,8 +1205,10 @@ func TestCASetResource(t *testing.T) {
 				},
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/update.tf"),
-					Check: check.
+					Check: baseCheck.
 						CheckEqual("version_description", "Second version for testing").
+						CheckEqual("version_modified_by", "someone").
+						CheckEqual("version_modified_date", "2025-04-18T12:18:34Z").
 						CheckEqual("certificates.#", "2").
 						CheckEqual("certificates.0.certificate_pem", "-----BEGIN CERTIFICATE-----\nFOO\n-----END CERTIFICATE-----\n").
 						CheckEqual("certificates.0.description", "second cert").
@@ -911,6 +1217,7 @@ func TestCASetResource(t *testing.T) {
 						CheckEqual("latest_version", "2").
 						CheckMissing("staging_version").
 						CheckEqual("production_version", "1").
+						CheckEqual("timeouts.delete", "5m").
 						Build(),
 				},
 			},
@@ -934,7 +1241,7 @@ func TestCASetResource(t *testing.T) {
 				updateData := resourceData
 				updateData.caSetID = "777"
 				updateData.versionDescription = ptr.To("Second version for testing")
-				updateData.certificates = slices.Insert(updateData.certificates, 0, mtlstruststore.ValidateCertificateResponse{
+				updateData.certificates = slices.Insert(updateData.certificates, 0, mtlstruststore.CertificateResponse{
 					CertificatePEM: "-----BEGIN CERTIFICATE-----\nFOO\n-----END CERTIFICATE-----\n",
 					Description:    ptr.To("second cert"),
 				})
@@ -961,7 +1268,7 @@ func TestCASetResource(t *testing.T) {
 				},
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/update.tf"),
-					Check: check.
+					Check: baseCheck.
 						CheckEqual("id", "777").
 						CheckEqual("version_description", "Second version for testing").
 						CheckEqual("certificates.#", "2").
@@ -969,6 +1276,7 @@ func TestCASetResource(t *testing.T) {
 						CheckEqual("certificates.0.description", "second cert").
 						CheckEqual("certificates.1.certificate_pem", "-----BEGIN CERTIFICATE-----\nMIIDXTCCAkWgAwIBAgIJALa6Rz1u5z2OMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV\n-----END CERTIFICATE-----\n").
 						CheckEqual("certificates.1.description", "Test certificate").
+						CheckEqual("timeouts.delete", "5m").
 						Build(),
 				},
 			},
@@ -979,7 +1287,7 @@ func TestCASetResource(t *testing.T) {
 				mockGetCASet(m, resourceData).Times(1)
 				// read
 				mockGetCASet(m, resourceData).Times(1)
-				mockGetCASetVersion(m, resourceData).Times(1)
+				mockGetCASetVersion(m, resourceData).Times(2)
 				// delete
 				mockListCASetAssociations(m, resourceData).Times(2)
 				mockDeleteCASet(m, resourceData).Times(1)
@@ -1015,7 +1323,7 @@ func TestCASetResource(t *testing.T) {
 		"import with certs order change": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
 				// import
-				resourceData.certificates = slices.Insert(resourceData.certificates, 0, mtlstruststore.ValidateCertificateResponse{
+				resourceData.certificates = slices.Insert(resourceData.certificates, 0, mtlstruststore.CertificateResponse{
 					CertificatePEM: "-----BEGIN CERTIFICATE-----\nFOO\n-----END CERTIFICATE-----\n",
 					Description:    ptr.To("second cert"),
 				})
@@ -1026,7 +1334,7 @@ func TestCASetResource(t *testing.T) {
 				mockListCASetActivations(m, resourceData, false).Times(3)
 				// update
 				mockGetCASet(m, resourceData).Times(2)
-				mockGetCASetVersion(m, resourceData).Times(2)
+				mockGetCASetVersion(m, resourceData).Times(3)
 				mockValidateCertificates(m, resourceData, nil).Times(3)
 
 				// delete
@@ -1063,12 +1371,21 @@ func TestCASetResource(t *testing.T) {
 				},
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/import_order_change.tf"),
-					Check: check.
+					Check: baseCheck.
 						CheckEqual("certificates.#", "2").
 						CheckEqual("certificates.0.certificate_pem", "-----BEGIN CERTIFICATE-----\nFOO\n-----END CERTIFICATE-----\n").
 						CheckEqual("certificates.0.description", "second cert").
 						CheckEqual("certificates.1.certificate_pem", "-----BEGIN CERTIFICATE-----\nMIIDXTCCAkWgAwIBAgIJALa6Rz1u5z2OMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV\n-----END CERTIFICATE-----\n").
 						CheckEqual("certificates.1.description", "Test certificate").
+						CheckEqual("certificates.1.created_by", "johndoe").
+						CheckEqual("certificates.1.created_date", "2025-04-16T16:01:02.555444Z").
+						CheckEqual("certificates.1.end_date", "2026-04-16T16:01:02.555444Z").
+						CheckEqual("certificates.1.fingerprint", "1234567890abcdef1234567890abcdef").
+						CheckEqual("certificates.1.issuer", "CN=Dummy CA").
+						CheckEqual("certificates.1.serial_number", "987654321fedcba987654321fedcba").
+						CheckEqual("certificates.1.signature_algorithm", "SHA256WITHRSA").
+						CheckEqual("certificates.1.start_date", "2025-04-17T16:01:02.555444Z").
+						CheckEqual("certificates.1.subject", "CN=Dummy CA test").
 						Build(),
 				},
 			},
@@ -1149,7 +1466,8 @@ func mockValidateCertificates(client *mtlstruststore.Mock, testData commonDataFo
 	var certificatesResponse []mtlstruststore.ValidateCertificateResponse
 	for _, c := range testData.certificates {
 		certificatesResponse = append(certificatesResponse, mtlstruststore.ValidateCertificateResponse{
-			CertificatePEM: c.CertificatePEM,
+			// Certificates are trimmed in the API, so we do it here too
+			CertificatePEM: text.TrimRightWhitespace(c.CertificatePEM),
 			Description:    c.Description,
 		})
 	}
@@ -1175,7 +1493,7 @@ func mockCreateCASet(client *mtlstruststore.Mock, testData commonDataForResource
 			CASetStatus:           "NOT_DELETED",
 			Description:           testData.description,
 			LatestVersionLink:     nil,
-			LatestVersion:         ptr.To(testData.version),
+			LatestVersion:         nil,
 			StagingVersionLink:    nil,
 			StagingVersion:        nil,
 			ProductionVersionLink: nil,
@@ -1200,15 +1518,25 @@ func mockUpdateCASetVersion(client *mtlstruststore.Mock, testData commonDataForR
 	var certificateResponse []mtlstruststore.CertificateResponse
 	for _, c := range testData.certificates {
 		certificateResponse = append(certificateResponse, mtlstruststore.CertificateResponse{
-			CertificatePEM: c.CertificatePEM,
-			Description:    c.Description,
+			// Certificates are trimmed in the API, so we do it here too
+			CertificatePEM:     text.TrimRightWhitespace(c.CertificatePEM),
+			Description:        c.Description,
+			CreatedBy:          c.CreatedBy,
+			CreatedDate:        c.CreatedDate,
+			EndDate:            c.EndDate,
+			Fingerprint:        c.Fingerprint,
+			Issuer:             c.Issuer,
+			SerialNumber:       c.SerialNumber,
+			SignatureAlgorithm: c.SignatureAlgorithm,
+			StartDate:          c.StartDate,
+			Subject:            c.Subject,
 		})
 	}
 	return client.On("UpdateCASetVersion", testutils.MockContext, mtlstruststore.UpdateCASetVersionRequest{
 		CASetID: testData.caSetID,
 		Version: testData.version,
 		Body: mtlstruststore.UpdateCASetVersionRequestBody{
-			Description:       *testData.versionDescription,
+			Description:       testData.versionDescription,
 			AllowInsecureSHA1: testData.allowInsecureSHA1,
 			Certificates:      certificateRequests,
 		},
@@ -1234,7 +1562,8 @@ func mockCloneCASetVersion(client *mtlstruststore.Mock, testData commonDataForRe
 	var certificateResponse []mtlstruststore.CertificateResponse
 	for _, c := range testData.certificates {
 		certificateResponse = append(certificateResponse, mtlstruststore.CertificateResponse{
-			CertificatePEM: c.CertificatePEM,
+			// Certificates are trimmed in the API, so we do it here too
+			CertificatePEM: text.TrimRightWhitespace(c.CertificatePEM),
 			Description:    c.Description,
 		})
 	}
@@ -1301,8 +1630,18 @@ func mockCreateCASetVersion(client *mtlstruststore.Mock, testData commonDataForR
 	var certificateResponse []mtlstruststore.CertificateResponse
 	for _, c := range testData.certificates {
 		certificateResponse = append(certificateResponse, mtlstruststore.CertificateResponse{
-			CertificatePEM: c.CertificatePEM,
-			Description:    c.Description,
+			// Certificates are trimmed in the API, so we do it here too
+			CertificatePEM:     text.TrimRightWhitespace(c.CertificatePEM),
+			Description:        c.Description,
+			CreatedBy:          c.CreatedBy,
+			CreatedDate:        c.CreatedDate,
+			EndDate:            c.EndDate,
+			Fingerprint:        c.Fingerprint,
+			Issuer:             c.Issuer,
+			SerialNumber:       c.SerialNumber,
+			SignatureAlgorithm: c.SignatureAlgorithm,
+			StartDate:          c.StartDate,
+			Subject:            c.Subject,
 		})
 	}
 	return client.On("CreateCASetVersion", testutils.MockContext, mtlstruststore.CreateCASetVersionRequest{
@@ -1334,8 +1673,18 @@ func mockGetCASetVersion(client *mtlstruststore.Mock, testData commonDataForReso
 	var certificateResponse []mtlstruststore.CertificateResponse
 	for _, c := range testData.certificates {
 		certificateResponse = append(certificateResponse, mtlstruststore.CertificateResponse{
-			CertificatePEM: c.CertificatePEM,
-			Description:    c.Description,
+			// Certificates are trimmed in the API, so we do it here too
+			CertificatePEM:     text.TrimRightWhitespace(c.CertificatePEM),
+			Description:        c.Description,
+			CreatedBy:          c.CreatedBy,
+			CreatedDate:        c.CreatedDate,
+			EndDate:            c.EndDate,
+			Fingerprint:        c.Fingerprint,
+			Issuer:             c.Issuer,
+			SerialNumber:       c.SerialNumber,
+			SignatureAlgorithm: c.SignatureAlgorithm,
+			StartDate:          c.StartDate,
+			Subject:            c.Subject,
 		})
 	}
 	return client.On("GetCASetVersion", testutils.MockContext, mtlstruststore.GetCASetVersionRequest{
