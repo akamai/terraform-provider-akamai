@@ -115,7 +115,7 @@ func (d *clientCertificatesDataSource) Schema(_ context.Context, _ datasource.Sc
 							Computed:    true,
 						},
 						"subject": schema.StringAttribute{
-							Description: "Specifies the client certificate.",
+							Description: "The CA certificate’s key value details.",
 							Computed:    true,
 						},
 					},

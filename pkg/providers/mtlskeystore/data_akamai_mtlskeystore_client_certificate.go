@@ -346,7 +346,7 @@ func (d *clientCertificateDataSource) Schema(_ context.Context, _ datasource.Sch
 			},
 			"subject": schema.StringAttribute{
 				Computed:    true,
-				Description: "Specifies the client certificate. The `CN` attribute is required and is included in the subject.",
+				Description: "The CA certificate’s key value details.",
 			},
 			"previous": schema.SingleNestedAttribute{
 				Description: "Details of the previous client certificate version.",
@@ -359,7 +359,7 @@ func (d *clientCertificateDataSource) Schema(_ context.Context, _ datasource.Sch
 				Attributes:  versionSchema,
 			},
 			"versions": schema.ListNestedAttribute{
-				Description: "A list of client certificate versions.",
+				Description: "A list of client certificate versions. Only versions that do not have a version alias (current or previous) are included.",
 				Computed:    true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: versionSchema,

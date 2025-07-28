@@ -225,7 +225,7 @@ func (r *clientCertificateThirdPartyResource) Schema(_ context.Context, _ resour
 			"subject": schema.StringAttribute{
 				Optional:    true,
 				Computed:    true,
-				Description: "Specifies the client certificate. If provided, the `CN` attribute is required and cannot exceed 64 characters. When `null`, the subject is constructed with the following format: `/C=US/O=Akamai Technologies, Inc./OU={vcdId} {contractId} {groupId}/CN={certificateName}/`.",
+				Description: "The CA certificate’s key value details. The `CN` attribute is required and included in the subject. When not specified, the subject is constructed in this format: `/C=US/O=Akamai Technologies, Inc./OU={vcd_id} {contract_id} {group_id}/CN={certificate_name}/`.",
 				Validators: []validator.String{
 					stringvalidator.RegexMatches(cnRegex, "The `subject` must contain a valid `CN` attribute with a maximum length of 64 characters."),
 				},
@@ -515,7 +515,7 @@ func (r *clientCertificateThirdPartyResource) Create(ctx context.Context, req re
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
-		resp.Diagnostics.AddError("failed to set data", fmt.Sprintf("Client Certificate has been created successfully, but setting data. "+
+		resp.Diagnostics.AddError("failed to set data", fmt.Sprintf("Client Certificate has been created successfully, but failed when setting data into the state. "+
 			"If you wish to manage the same client certificate, please import it and apply your configuration again. "+
 			"Client Certificate ID: %d,%d,%s", plan.CertificateID, plan.GroupID.ValueInt64(), strings.TrimPrefix(plan.ContractID.ValueString(), "ctr_")))
 	}
@@ -565,10 +565,10 @@ func (r *clientCertificateThirdPartyResource) create(ctx context.Context, plan *
 		tflog.Debug(ctx, fmt.Sprintf("Sorted versions keys for creation: %v", versionsKeys))
 		err = createMissingVersionsExplicitly(ctx, client, createClientCertificateResponse.CertificateID, versionsKeys[1:])
 		if err != nil {
-			return fmt.Errorf("failed to create missing versions: %w. "+
+			return fmt.Errorf("failed to create missing versions. "+
 				"Client Certificate has been created successfully, but other operations failed. "+
 				"If you wish to manage the same client certificate, please import it and apply your configuration again. "+
-				"Client Certificate ID: %d,%d,%s", err, createClientCertificateResponse.CertificateID, plan.GroupID.ValueInt64(), contract)
+				"Client Certificate ID: %d,%d,%s\n Reason of failing: %w", createClientCertificateResponse.CertificateID, plan.GroupID.ValueInt64(), contract, err)
 		}
 	}
 
@@ -576,18 +576,18 @@ func (r *clientCertificateThirdPartyResource) create(ctx context.Context, plan *
 		CertificateID: createClientCertificateResponse.CertificateID,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to get client certificate: %w. "+
+		return fmt.Errorf("failed to get client certificate. "+
 			"Client Certificate has been created successfully, but other operations failed. "+
 			"If you wish to manage the same client certificate, please import it and apply your configuration again. "+
-			"Client Certificate ID: %d,%d,%s", err, createClientCertificateResponse.CertificateID, plan.GroupID.ValueInt64(), contract)
+			"Client Certificate ID: %d,%d,%s\n Reason of failing: %w", createClientCertificateResponse.CertificateID, plan.GroupID.ValueInt64(), contract, err)
 	}
 
 	diags = plan.setClientCertificateData(ctx, clientCertificate)
 	if diags.HasError() {
-		return fmt.Errorf("failed to set data: %v. "+
+		return fmt.Errorf("failed to set data. "+
 			"Client Certificate has been created successfully, but other operations failed. "+
 			"If you wish to manage the same client certificate, please import it and apply your configuration again. "+
-			"Client Certificate ID: %d,%d,%s", diags, createClientCertificateResponse.CertificateID, plan.GroupID.ValueInt64(), contract)
+			"Client Certificate ID: %d,%d,%s\n Reason of failing: %v", createClientCertificateResponse.CertificateID, plan.GroupID.ValueInt64(), contract, diags)
 	}
 
 	clientCertificateVersions, err := client.ListClientCertificateVersions(ctx, mtlskeystore.ListClientCertificateVersionsRequest{
@@ -595,18 +595,18 @@ func (r *clientCertificateThirdPartyResource) create(ctx context.Context, plan *
 		IncludeAssociatedProperties: true,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to get client certificate versions: %w. "+
+		return fmt.Errorf("failed to get client certificate versions. "+
 			"Client Certificate has been created successfully, but other operations failed. "+
 			"If you wish to manage the same client certificate, please import it and apply your configuration again. "+
-			"Client Certificate ID: %d,%d,%s", err, createClientCertificateResponse.CertificateID, plan.GroupID.ValueInt64(), contract)
+			"Client Certificate ID: %d,%d,%s\n Reason of failing: %w", createClientCertificateResponse.CertificateID, plan.GroupID.ValueInt64(), contract, err)
 	}
 
 	diags = plan.setVersionsData(ctx, clientCertificateVersions, versionsKeys, nil)
 	if diags.HasError() {
-		return fmt.Errorf("failed to set versions data: %v. "+
+		return fmt.Errorf("failed to set versions data. "+
 			"Client Certificate has been created successfully, but other operations failed. "+
 			"If you wish to manage the same client certificate, please import it and apply your configuration again. "+
-			"Client Certificate ID: %d,%d,%s", diags, createClientCertificateResponse.CertificateID, plan.GroupID.ValueInt64(), contract)
+			"Client Certificate ID: %d,%d,%s\n Reason of failing: %v", createClientCertificateResponse.CertificateID, plan.GroupID.ValueInt64(), contract, diags)
 	}
 
 	return nil

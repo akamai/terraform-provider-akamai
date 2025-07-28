@@ -216,7 +216,7 @@ func (c *clientCertificateAkamaiResource) Schema(_ context.Context, _ resource.S
 			"subject": schema.StringAttribute{
 				Optional:    true,
 				Computed:    true,
-				Description: "Specifies the client certificate. The `CN` attribute is required and cannot exceed 64 characters. When `null`, the subject is constructed with the following format: `/C=US/O=Akamai Technologies, Inc./OU={vcd_id} {contract_id} {group_id}/CN={certificate_name}/`.",
+				Description: "The CA certificate’s key value details. The `CN` attribute is required and included in the subject. When not specified, the subject is constructed in this format: `/C=US/O=Akamai Technologies, Inc./OU={vcd_id} {contract_id} {group_id}/CN={certificate_name}/`.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 					modifiers.PreventStringUpdate(),
@@ -355,7 +355,9 @@ func (c *clientCertificateAkamaiResource) Create(ctx context.Context, req resour
 		resp.Diagnostics.AddError("Unable to Create Client Certificate", err.Error())
 		return
 	}
-	plan.populateCertModelFromResponse(ctx, mtlskeystore.Certificate(*certificate))
+	if resp.Diagnostics.Append(plan.populateCertModelFromResponse(ctx, mtlskeystore.Certificate(*certificate))...); resp.Diagnostics.HasError() {
+		return
+	}
 
 	version, err := plan.waitUntilVersionDeployed(ctx, client)
 	if err != nil {
@@ -415,7 +417,9 @@ func (c *clientCertificateAkamaiResource) Read(ctx context.Context, req resource
 		return
 	}
 
-	state.populateCertModelFromResponse(ctx, mtlskeystore.Certificate(*certificate))
+	if resp.Diagnostics.Append(state.populateCertModelFromResponse(ctx, mtlskeystore.Certificate(*certificate))...); resp.Diagnostics.HasError() {
+		return
+	}
 
 	versions, err := client.ListClientCertificateVersions(ctx, mtlskeystore.ListClientCertificateVersionsRequest{
 		CertificateID: state.CertificateID.ValueInt64(),
@@ -488,7 +492,9 @@ func (c *clientCertificateAkamaiResource) Update(ctx context.Context, req resour
 			return
 		}
 
-		plan.populateCertModelFromResponse(ctx, mtlskeystore.Certificate(*certResponse))
+		if resp.Diagnostics.Append(plan.populateCertModelFromResponse(ctx, mtlskeystore.Certificate(*certResponse))...); resp.Diagnostics.HasError() {
+			return
+		}
 
 		tflog.Debug(ctx, "Client Certificate Name or Notification Emails updated successfully")
 	}
@@ -567,7 +573,7 @@ func onlyOneVersionPendingDelete(ctx context.Context, client mtlskeystore.MTLSKe
 	}
 	numberOfActualVersions := 0
 	for _, version := range versions.Versions {
-		// In third party case, sometimes versions are duplicated and those duplicate have alias. We don't count them.
+		// In the third party case, sometimes versions are duplicated and those duplicates have alias. We don't count them.
 		if signer == mtlskeystore.SignerThirdParty && version.VersionAlias != nil {
 			continue
 		}
@@ -642,16 +648,21 @@ func (c *clientCertificateAkamaiResource) ModifyPlan(ctx context.Context, req re
 	}
 }
 
-func (m *clientCertificateAkamaiResourceModel) populateCertModelFromResponse(ctx context.Context, cert mtlskeystore.Certificate) {
+func (m *clientCertificateAkamaiResourceModel) populateCertModelFromResponse(ctx context.Context, cert mtlskeystore.Certificate) diag.Diagnostics {
 	m.CertificateID = types.Int64Value(cert.CertificateID)
 	m.CertificateName = types.StringValue(cert.CertificateName)
 	m.Geography = types.StringValue(cert.Geography)
 	m.KeyAlgorithm = types.StringValue(cert.KeyAlgorithm)
-	m.NotificationEmails, _ = types.ListValueFrom(ctx, types.StringType, cert.NotificationEmails)
+	emails, diags := types.ListValueFrom(ctx, types.StringType, cert.NotificationEmails)
+	if diags.HasError() {
+		return diags
+	}
+	m.NotificationEmails = emails
 	m.SecureNetwork = types.StringValue(cert.SecureNetwork)
 	m.Subject = types.StringValue(cert.Subject)
 	m.CreatedBy = types.StringValue(cert.CreatedBy)
 	m.CreatedDate = types.StringValue(cert.CreatedDate.Format(time.RFC3339))
+	return nil
 }
 
 func (m *clientCertificateAkamaiResourceModel) populateVersionModelFromResponse(
