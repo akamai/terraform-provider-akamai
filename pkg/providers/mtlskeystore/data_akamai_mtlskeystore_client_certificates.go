@@ -73,7 +73,7 @@ func (d *clientCertificatesDataSource) Schema(_ context.Context, _ datasource.Sc
 		Description: "Retrieve client certificates under MTLS Keystore.",
 		Attributes: map[string]schema.Attribute{
 			"certificates": schema.ListNestedAttribute{
-				Description: "A list of account CA certificates.",
+				Description: "A list of client certificates under the account.",
 				Computed:    true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
@@ -98,7 +98,7 @@ func (d *clientCertificatesDataSource) Schema(_ context.Context, _ datasource.Sc
 							Computed:    true,
 						},
 						"key_algorithm": schema.StringAttribute{
-							Description: "Identifies the CA certificate's encryption algorithm. The only currently supported value is `RSA`.",
+							Description: "Identifies the CA certificate's encryption algorithm. Possible values: `RSA` or `ECDSA`.",
 							Computed:    true,
 						},
 						"notification_emails": schema.ListAttribute{
@@ -115,7 +115,7 @@ func (d *clientCertificatesDataSource) Schema(_ context.Context, _ datasource.Sc
 							Computed:    true,
 						},
 						"subject": schema.StringAttribute{
-							Description: "Specifies the client certificate. The `CN` attribute is required and is included in the subject.",
+							Description: "Specifies the client certificate.",
 							Computed:    true,
 						},
 					},
@@ -144,9 +144,7 @@ func (d *clientCertificatesDataSource) Read(ctx context.Context, req datasource.
 		return
 	}
 
-	diag := data.convertClientCertificatesToModel(ctx, clientCertificates)
-	if diag.HasError() {
-		resp.Diagnostics.Append(diag...)
+	if resp.Diagnostics.Append(data.convertClientCertificatesToModel(ctx, clientCertificates)...); resp.Diagnostics.HasError() {
 		return
 	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -161,10 +159,10 @@ func (m *clientCertificatesDataSourceModel) convertClientCertificatesToModel(ctx
 			CertificateName: types.StringValue(cert.CertificateName),
 			CreatedBy:       types.StringValue(cert.CreatedBy),
 			CreatedDate:     types.StringValue(cert.CreatedDate.Format(time.RFC3339)),
-			Geography:       types.StringValue(string(cert.Geography)),
-			KeyAlgorithm:    types.StringValue(string(cert.KeyAlgorithm)),
-			SecureNetwork:   types.StringValue(string(cert.SecureNetwork)),
-			Signer:          types.StringValue(string(cert.Signer)),
+			Geography:       types.StringValue(cert.Geography),
+			KeyAlgorithm:    types.StringValue(cert.KeyAlgorithm),
+			SecureNetwork:   types.StringValue(cert.SecureNetwork),
+			Signer:          types.StringValue(cert.Signer),
 			Subject:         types.StringValue(cert.Subject),
 		}
 

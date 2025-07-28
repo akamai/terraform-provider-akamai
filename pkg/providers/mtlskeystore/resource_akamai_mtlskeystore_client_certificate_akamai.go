@@ -216,7 +216,7 @@ func (c *clientCertificateAkamaiResource) Schema(_ context.Context, _ resource.S
 			"subject": schema.StringAttribute{
 				Optional:    true,
 				Computed:    true,
-				Description: "Specifies the client certificate. The `CN` attribute is required and cannot exceed 64 characters. When `null`, the subject is constructed with the following format: `/C=US/O=Akamai Technologies, Inc./OU={vcd_iId} {contract_Iid} {group_iId}/CN={certificate_nName}/`.",
+				Description: "Specifies the client certificate. The `CN` attribute is required and cannot exceed 64 characters. When `null`, the subject is constructed with the following format: `/C=US/O=Akamai Technologies, Inc./OU={vcd_id} {contract_id} {group_id}/CN={certificate_name}/`.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 					modifiers.PreventStringUpdate(),
@@ -245,7 +245,7 @@ func (c *clientCertificateAkamaiResource) Schema(_ context.Context, _ resource.S
 			},
 			"current_guid": schema.StringAttribute{
 				Computed:    true,
-				Description: "Unique identifier for the current client certificate version.",
+				Description: "Unique identifier for the `current` client certificate version.",
 				// Once GUID is established for the current version by API, it should not change.
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
@@ -253,7 +253,7 @@ func (c *clientCertificateAkamaiResource) Schema(_ context.Context, _ resource.S
 			},
 			"previous_guid": schema.StringAttribute{
 				Computed:    true,
-				Description: "Unique identifier for the previous client certificate version.",
+				Description: "Unique identifier for the `previous` client certificate version.",
 				// Once GUID is established for the previous version by API, it should not change.
 			},
 			"versions": versionSchema(),
@@ -275,7 +275,7 @@ func versionSchema() schema.ListNestedAttribute {
 					Description: "The unique identifier of the client certificate version.",
 				},
 				"status": schema.StringAttribute{
-					Description: "The client certificate version status. Possible values: `AWAITING_SIGNED_CERTIFICATE`, `DEPLOYMENT_PENDING`, `DEPLOYED`, or `DELETE_PENDING`.",
+					Description: "The client certificate version status. Possible values: `DEPLOYMENT_PENDING`, `DEPLOYED`, or `DELETE_PENDING`.",
 					Computed:    true,
 				},
 				"expiry_date": schema.StringAttribute{
@@ -362,9 +362,7 @@ func (c *clientCertificateAkamaiResource) Create(ctx context.Context, req resour
 		resp.Diagnostics.AddError("Error waiting for client certificate version deployment", err.Error())
 		return
 	}
-	diags = plan.populateVersionModelFromResponse(ctx, []mtlskeystore.ClientCertificateVersion{*version})
-	resp.Diagnostics.Append(diags...)
-	if diags.HasError() {
+	if resp.Diagnostics.Append(plan.populateVersionModelFromResponse(ctx, []mtlskeystore.ClientCertificateVersion{*version})...); resp.Diagnostics.HasError() {
 		return
 	}
 	plan.CurrentGUID = types.StringValue(version.VersionGUID)

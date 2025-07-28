@@ -386,9 +386,6 @@ func (r *clientCertificateThirdPartyResource) ModifyPlan(ctx context.Context, re
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	if resp.Diagnostics.HasError() {
-		return
-	}
 
 	if modifiers.IsDelete(req) {
 		var stateVersions map[string]clientCertificateVersionModel
@@ -517,6 +514,11 @@ func (r *clientCertificateThirdPartyResource) Create(ctx context.Context, req re
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		resp.Diagnostics.AddError("failed to set data", fmt.Sprintf("Client Certificate has been created successfully, but setting data. "+
+			"If you wish to manage the same client certificate, please import it and apply your configuration again. "+
+			"Client Certificate ID: %d,%d,%s", plan.CertificateID, plan.GroupID.ValueInt64(), strings.TrimPrefix(plan.ContractID.ValueString(), "ctr_")))
+	}
 }
 
 func (r *clientCertificateThirdPartyResource) create(ctx context.Context, plan *clientCertificateThirdPartyResourceModel) error {
@@ -535,9 +537,10 @@ func (r *clientCertificateThirdPartyResource) create(ctx context.Context, plan *
 		return fmt.Errorf("failed to get versions: %v", diags)
 	}
 
+	contract := strings.TrimPrefix(plan.ContractID.ValueString(), "ctr_")
 	request := mtlskeystore.CreateClientCertificateRequest{
 		CertificateName:    plan.CertificateName.ValueString(),
-		ContractID:         strings.TrimPrefix(plan.ContractID.ValueString(), "ctr_"),
+		ContractID:         contract,
 		Geography:          mtlskeystore.Geography(plan.Geography.ValueString()),
 		GroupID:            plan.GroupID.ValueInt64(),
 		NotificationEmails: notificationEmails,
@@ -565,7 +568,7 @@ func (r *clientCertificateThirdPartyResource) create(ctx context.Context, plan *
 			return fmt.Errorf("failed to create missing versions: %w. "+
 				"Client Certificate has been created successfully, but other operations failed. "+
 				"If you wish to manage the same client certificate, please import it and apply your configuration again. "+
-				"Client Certificate ID: %d", err, createClientCertificateResponse.CertificateID)
+				"Client Certificate ID: %d,%d,%s", err, createClientCertificateResponse.CertificateID, plan.GroupID.ValueInt64(), contract)
 		}
 	}
 
@@ -576,7 +579,7 @@ func (r *clientCertificateThirdPartyResource) create(ctx context.Context, plan *
 		return fmt.Errorf("failed to get client certificate: %w. "+
 			"Client Certificate has been created successfully, but other operations failed. "+
 			"If you wish to manage the same client certificate, please import it and apply your configuration again. "+
-			"Client Certificate ID: %d", err, createClientCertificateResponse.CertificateID)
+			"Client Certificate ID: %d,%d,%s", err, createClientCertificateResponse.CertificateID, plan.GroupID.ValueInt64(), contract)
 	}
 
 	diags = plan.setClientCertificateData(ctx, clientCertificate)
@@ -584,7 +587,7 @@ func (r *clientCertificateThirdPartyResource) create(ctx context.Context, plan *
 		return fmt.Errorf("failed to set data: %v. "+
 			"Client Certificate has been created successfully, but other operations failed. "+
 			"If you wish to manage the same client certificate, please import it and apply your configuration again. "+
-			"Client Certificate ID: %d", createClientCertificateResponse.CertificateID, diags)
+			"Client Certificate ID: %d,%d,%s", diags, createClientCertificateResponse.CertificateID, plan.GroupID.ValueInt64(), contract)
 	}
 
 	clientCertificateVersions, err := client.ListClientCertificateVersions(ctx, mtlskeystore.ListClientCertificateVersionsRequest{
@@ -595,7 +598,7 @@ func (r *clientCertificateThirdPartyResource) create(ctx context.Context, plan *
 		return fmt.Errorf("failed to get client certificate versions: %w. "+
 			"Client Certificate has been created successfully, but other operations failed. "+
 			"If you wish to manage the same client certificate, please import it and apply your configuration again. "+
-			"Client Certificate ID: %d", err, createClientCertificateResponse.CertificateID)
+			"Client Certificate ID: %d,%d,%s", err, createClientCertificateResponse.CertificateID, plan.GroupID.ValueInt64(), contract)
 	}
 
 	diags = plan.setVersionsData(ctx, clientCertificateVersions, versionsKeys, nil)
@@ -603,7 +606,7 @@ func (r *clientCertificateThirdPartyResource) create(ctx context.Context, plan *
 		return fmt.Errorf("failed to set versions data: %v. "+
 			"Client Certificate has been created successfully, but other operations failed. "+
 			"If you wish to manage the same client certificate, please import it and apply your configuration again. "+
-			"Client Certificate ID: %d", createClientCertificateResponse.CertificateID, diags)
+			"Client Certificate ID: %d,%d,%s", diags, createClientCertificateResponse.CertificateID, plan.GroupID.ValueInt64(), contract)
 	}
 
 	return nil
@@ -634,11 +637,13 @@ func (r *clientCertificateThirdPartyResource) Read(ctx context.Context, req reso
 	err := r.read(ctx, &state)
 	if errors.Is(err, mtlskeystore.ErrClientCertificateNotFound) {
 		tflog.Debug(ctx, "Client Certificate Third Party Resource not found, removing from state")
+		resp.Diagnostics.AddWarning("Resource Removal", "The client certificate was not found on the server. The resource will be removed from the state.")
 		resp.State.RemoveResource(ctx)
 		return
 	}
 	if errors.Is(err, errorOneVersionWithDeletePendingStatus) {
 		tflog.Debug(ctx, "Client Certificate Third Party Resource has one version with DELETE_PENDING status, removing from state")
+		resp.Diagnostics.AddWarning("Resource Removal", "The last version of the Client Certificate is in `DELETE_PENDING` status. The resource will be removed from the state.")
 		resp.State.RemoveResource(ctx)
 		return
 	}
@@ -891,16 +896,20 @@ func (r *clientCertificateThirdPartyResource) Delete(ctx context.Context, req re
 	}
 
 	for version := range stateVersions {
-		err := client.DeleteClientCertificateVersion(ctx, mtlskeystore.DeleteClientCertificateVersionRequest{
-			CertificateID: state.CertificateID.ValueInt64(),
-			Version:       stateVersions[version].Version.ValueInt64(),
-		})
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Deleting Client Certificate Version failed",
-				fmt.Sprintf("Failed to delete version %s: %v. ", version, err),
-			)
-			return
+		if stateVersions[version].Status.ValueString() != "DELETE_PENDING" {
+			err := client.DeleteClientCertificateVersion(ctx, mtlskeystore.DeleteClientCertificateVersionRequest{
+				CertificateID: state.CertificateID.ValueInt64(),
+				Version:       stateVersions[version].Version.ValueInt64(),
+			})
+			if err != nil {
+				resp.Diagnostics.AddError(
+					"Deleting Client Certificate Version failed",
+					fmt.Sprintf("Failed to delete version %s: %v. ", version, err),
+				)
+				return
+			}
+		} else {
+			tflog.Debug(ctx, fmt.Sprintf("Version %s is already in DELETE_PENDING status, skipping deletion", version))
 		}
 	}
 }
@@ -1002,9 +1011,9 @@ func (m *clientCertificateThirdPartyResourceModel) setVersionsData(ctx context.C
 func (m *clientCertificateThirdPartyResourceModel) setClientCertificateData(ctx context.Context, clientCertificate *mtlskeystore.GetClientCertificateResponse) diag.Diagnostics {
 	m.CertificateName = types.StringValue(clientCertificate.CertificateName)
 	m.CertificateID = types.Int64Value(clientCertificate.CertificateID)
-	m.Geography = types.StringValue(string(clientCertificate.Geography))
-	m.KeyAlgorithm = types.StringValue(string(clientCertificate.KeyAlgorithm))
-	m.SecureNetwork = types.StringValue(string(clientCertificate.SecureNetwork))
+	m.Geography = types.StringValue(clientCertificate.Geography)
+	m.KeyAlgorithm = types.StringValue(clientCertificate.KeyAlgorithm)
+	m.SecureNetwork = types.StringValue(clientCertificate.SecureNetwork)
 	m.Subject = types.StringValue(clientCertificate.Subject)
 
 	notificationEmailsObject, diags := types.ListValueFrom(ctx, types.StringType, clientCertificate.NotificationEmails)
@@ -1062,7 +1071,7 @@ func createClientVersionModel(ctx context.Context, version mtlskeystore.ClientCe
 	if version.CSRBlock != nil {
 		csr := &csrBlockResourceModel{
 			CSR:          types.StringPointerValue(&version.CSRBlock.CSR),
-			KeyAlgorithm: types.StringPointerValue((*string)(&version.CSRBlock.KeyAlgorithm)),
+			KeyAlgorithm: types.StringPointerValue(&version.CSRBlock.KeyAlgorithm),
 		}
 		csrObject, diags := types.ObjectValueFrom(ctx, csrBlockType(), csr)
 		if diags.HasError() {

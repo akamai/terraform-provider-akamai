@@ -45,27 +45,27 @@ type (
 	}
 
 	versionModel struct {
-		Version                  types.Int64           `tfsdk:"version"`
-		VersionGUID              types.String          `tfsdk:"version_guid"`
-		Status                   types.String          `tfsdk:"status"`
-		CreatedBy                types.String          `tfsdk:"created_by"`
-		CreatedDate              types.String          `tfsdk:"created_date"`
-		ExpiryDate               types.String          `tfsdk:"expiry_date"`
-		Issuer                   types.String          `tfsdk:"issuer"`
-		KeyAlgorithm             types.String          `tfsdk:"key_algorithm"`
-		KeyEllipticCurve         types.String          `tfsdk:"key_elliptic_curve"`
-		KeySizeInBytes           types.String          `tfsdk:"key_size_in_bytes"`
-		SignatureAlgorithm       types.String          `tfsdk:"signature_algorithm"`
-		Subject                  types.String          `tfsdk:"subject"`
-		CertificateBlock         certificateBlockModel `tfsdk:"certificate_block"`
-		CertificateSubmittedBy   types.String          `tfsdk:"certificate_submitted_by"`
-		CertificateSubmittedDate types.String          `tfsdk:"certificate_submitted_date"`
-		CSRBlock                 *csrBlockModel        `tfsdk:"csr_block"`
-		DeleteRequestedDate      types.String          `tfsdk:"delete_requested_date"`
-		ScheduledDeleteDate      types.String          `tfsdk:"scheduled_delete_date"`
-		IssuedDate               types.String          `tfsdk:"issued_date"`
-		Properties               []propertyModel       `tfsdk:"properties"`
-		Validation               validationModel       `tfsdk:"validation"`
+		Version                  types.Int64            `tfsdk:"version"`
+		VersionGUID              types.String           `tfsdk:"version_guid"`
+		Status                   types.String           `tfsdk:"status"`
+		CreatedBy                types.String           `tfsdk:"created_by"`
+		CreatedDate              types.String           `tfsdk:"created_date"`
+		ExpiryDate               types.String           `tfsdk:"expiry_date"`
+		Issuer                   types.String           `tfsdk:"issuer"`
+		KeyAlgorithm             types.String           `tfsdk:"key_algorithm"`
+		KeyEllipticCurve         types.String           `tfsdk:"key_elliptic_curve"`
+		KeySizeInBytes           types.String           `tfsdk:"key_size_in_bytes"`
+		SignatureAlgorithm       types.String           `tfsdk:"signature_algorithm"`
+		Subject                  types.String           `tfsdk:"subject"`
+		CertificateBlock         *certificateBlockModel `tfsdk:"certificate_block"`
+		CertificateSubmittedBy   types.String           `tfsdk:"certificate_submitted_by"`
+		CertificateSubmittedDate types.String           `tfsdk:"certificate_submitted_date"`
+		CSRBlock                 *csrBlockModel         `tfsdk:"csr_block"`
+		DeleteRequestedDate      types.String           `tfsdk:"delete_requested_date"`
+		ScheduledDeleteDate      types.String           `tfsdk:"scheduled_delete_date"`
+		IssuedDate               types.String           `tfsdk:"issued_date"`
+		Properties               []propertyModel        `tfsdk:"properties"`
+		Validation               validationModel        `tfsdk:"validation"`
 	}
 
 	certificateBlockModel struct {
@@ -184,7 +184,7 @@ func (d *clientCertificateDataSource) Schema(_ context.Context, _ datasource.Sch
 					Computed:    true,
 				},
 				"key_algorithm": schema.StringAttribute{
-					Description: "Identifies the CA certificate's encryption algorithm. The only currently supported value is `RSA`.",
+					Description: "Identifies the CA certificate's encryption algorithm. Possible values: `RSA` or `ECDSA`.",
 					Computed:    true,
 				},
 				"trust_chain": schema.StringAttribute{
@@ -210,7 +210,7 @@ func (d *clientCertificateDataSource) Schema(_ context.Context, _ datasource.Sch
 					Computed:    true,
 				},
 				"key_algorithm": schema.StringAttribute{
-					Description: "Identifies the client certificate's encryption algorithm. The only currently supported value is `RSA`.",
+					Description: "Identifies the CA certificate's encryption algorithm. Possible values: `RSA` or `ECDSA`.",
 					Computed:    true,
 				},
 			},
@@ -261,15 +261,15 @@ func (d *clientCertificateDataSource) Schema(_ context.Context, _ datasource.Sch
 					NestedObject: schema.NestedAttributeObject{
 						Attributes: map[string]schema.Attribute{
 							"message": schema.StringAttribute{
-								Description: "Specifies the error or warning details.",
+								Description: "Specifies the error details.",
 								Computed:    true,
 							},
 							"reason": schema.StringAttribute{
-								Description: "Specifies the error or warning root cause.",
+								Description: "Specifies the error root cause.",
 								Computed:    true,
 							},
 							"type": schema.StringAttribute{
-								Description: "Specifies the error or warning category.",
+								Description: "Specifies the error category.",
 								Computed:    true,
 							},
 						},
@@ -281,15 +281,15 @@ func (d *clientCertificateDataSource) Schema(_ context.Context, _ datasource.Sch
 					NestedObject: schema.NestedAttributeObject{
 						Attributes: map[string]schema.Attribute{
 							"message": schema.StringAttribute{
-								Description: "Specifies the error or warning details.",
+								Description: "Specifies the warning details.",
 								Computed:    true,
 							},
 							"reason": schema.StringAttribute{
-								Description: "Specifies the error or warning root cause.",
+								Description: "Specifies the warning root cause.",
 								Computed:    true,
 							},
 							"type": schema.StringAttribute{
-								Description: "Specifies the error or warning category.",
+								Description: "Specifies the warning category.",
 								Computed:    true,
 							},
 						},
@@ -445,10 +445,10 @@ func (d *clientCertificateDataSourceModel) parseClientCertificate(ctx context.Co
 	d.CertificateName = types.StringValue(clientCertificate.CertificateName)
 	d.CreatedBy = types.StringValue(clientCertificate.CreatedBy)
 	d.CreatedDate = types.StringValue(clientCertificate.CreatedDate.Format(time.RFC3339))
-	d.Geography = types.StringValue(string(clientCertificate.Geography))
-	d.KeyAlgorithm = types.StringValue(string(clientCertificate.KeyAlgorithm))
-	d.SecureNetwork = types.StringValue(string(clientCertificate.SecureNetwork))
-	d.Signer = types.StringValue(string(clientCertificate.Signer))
+	d.Geography = types.StringValue(clientCertificate.Geography)
+	d.KeyAlgorithm = types.StringValue(clientCertificate.KeyAlgorithm)
+	d.SecureNetwork = types.StringValue(clientCertificate.SecureNetwork)
+	d.Signer = types.StringValue(clientCertificate.Signer)
 	d.Subject = types.StringValue(clientCertificate.Subject)
 
 	diags.Append(d.setNotificationEmails(ctx, clientCertificate.NotificationEmails)...)
@@ -494,14 +494,16 @@ func convertDataToVersionModel(v mtlskeystore.ClientCertificateVersion) *version
 	}
 
 	if v.CertificateBlock != nil {
-		versionModel.CertificateBlock.Certificate = types.StringValue(v.CertificateBlock.Certificate)
-		versionModel.CertificateBlock.KeyAlgorithm = types.StringValue(v.CertificateBlock.KeyAlgorithm)
-		versionModel.CertificateBlock.TrustChain = types.StringValue(v.CertificateBlock.TrustChain)
+		versionModel.CertificateBlock = &certificateBlockModel{
+			Certificate:  types.StringValue(v.CertificateBlock.Certificate),
+			KeyAlgorithm: types.StringValue(v.CertificateBlock.KeyAlgorithm),
+			TrustChain:   types.StringValue(v.CertificateBlock.TrustChain),
+		}
 	}
 	if v.CSRBlock != nil {
 		versionModel.CSRBlock = &csrBlockModel{
 			CSR:          types.StringValue(v.CSRBlock.CSR),
-			KeyAlgorithm: types.StringValue(string(v.CSRBlock.KeyAlgorithm)),
+			KeyAlgorithm: types.StringValue(v.CSRBlock.KeyAlgorithm),
 		}
 	}
 

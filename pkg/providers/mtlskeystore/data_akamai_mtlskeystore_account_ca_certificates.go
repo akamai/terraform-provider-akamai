@@ -134,7 +134,7 @@ func (d *accountCACertificatesDataSource) Schema(_ context.Context, _ datasource
 							Computed:    true,
 						},
 						"key_algorithm": schema.StringAttribute{
-							Description: "Identifies the CA certificate's encryption algorithm. The only currently supported value is RSA.",
+							Description: "Identifies the CA certificate's encryption algorithm. Possible values: `RSA` or `ECDSA`.",
 							Computed:    true,
 						},
 						"key_size_in_bytes": schema.Int64Attribute{
@@ -209,10 +209,10 @@ func (a *accountCACertificatesDataSourceModel) convertResponseToModel(caCerts *m
 			ExpiryDate:         types.StringValue(cert.ExpiryDate.Format(time.RFC3339)),
 			ID:                 types.Int64Value(cert.ID),
 			IssuedDate:         types.StringValue(cert.IssuedDate.Format(time.RFC3339)),
-			KeyAlgorithm:       types.StringValue(string(cert.KeyAlgorithm)),
+			KeyAlgorithm:       types.StringValue(cert.KeyAlgorithm),
 			KeySizeInBytes:     types.Int64Value(cert.KeySizeInBytes),
 			SignatureAlgorithm: types.StringValue(cert.SignatureAlgorithm),
-			Status:             types.StringValue(string(cert.Status)),
+			Status:             types.StringValue(cert.Status),
 			Subject:            types.StringValue(cert.Subject),
 			Version:            types.Int64Value(cert.Version),
 		}
