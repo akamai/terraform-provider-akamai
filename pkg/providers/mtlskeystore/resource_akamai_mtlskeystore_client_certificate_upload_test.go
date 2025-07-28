@@ -488,6 +488,25 @@ func TestClientCertificateUpload(t *testing.T) {
 				},
 			},
 		},
+		"error update version number - same signed certificate": {
+			init: func(m *mtlskeystore.Mock) {
+				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.AwaitingSigned), nil).Once()
+				mockUploadSignedClientCertificate(m, getDefaultUploadCertRequest(), nil)
+				mockListClientCertificateVersions(m, getDefaultReturnedVersions(), nil).Twice()
+				// Read before update
+				mockListClientCertificateVersions(m, getDefaultReturnedVersions(), nil).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCertificateUpload/version_1.tf"),
+					Check:  commonStateChecker.Build(),
+				},
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResCertificateUpload/version_2_without_cert_updated.tf"),
+					ExpectError: regexp.MustCompile("No change in signed certificate"),
+				},
+			},
+		},
 		"error update - different certificate id": {
 			init: func(m *mtlskeystore.Mock) {
 				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.AwaitingSigned), nil).Once()

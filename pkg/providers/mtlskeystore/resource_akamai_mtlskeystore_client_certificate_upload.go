@@ -157,6 +157,10 @@ func (r *clientCertificateUploadResource) ModifyPlan(ctx context.Context, reques
 			response.Diagnostics.AddError("Only updates with a different version_number are supported", "The timeouts attribute cannot be updated after the initial upload. Please create a new version with the updated timeout.")
 		}
 
+		if versionChanged && state.SignedCertificate == plan.SignedCertificate {
+			response.Diagnostics.AddError("No change in signed certificate", "Updating version_number requires a change in the signed_certificate attribute. Please provide a new signed certificate for the new version.")
+		}
+
 		if response.Diagnostics.HasError() {
 			return
 		}
