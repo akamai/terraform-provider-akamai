@@ -46,7 +46,7 @@ type (
 		deleteRequestedDate      string
 		deployedDate             string
 		issuedDate               string
-		keyEllipticCurve         string
+		ellipticCurve            string
 		keySizeInBytes           string
 		scheduledDeleteDate      string
 		signatureAlgorithm       string
@@ -1297,7 +1297,7 @@ func mockListClientCertificateAkamaiVersions(t *testing.T, m *mtlskeystore.Mock,
 			IssuedDate:         ptr.To(test.NewTimeFromString(t, version.issuedDate)),
 			Issuer:             ptr.To(version.issuer),
 			KeyAlgorithm:       version.keyAlgorithm,
-			EllipticCurve:      ptr.To(version.keyEllipticCurve),
+			EllipticCurve:      ptr.To(version.ellipticCurve),
 			KeySizeInBytes:     ptr.To(version.keySizeInBytes),
 			SignatureAlgorithm: ptr.To(version.signatureAlgorithm),
 			Status:             version.status,

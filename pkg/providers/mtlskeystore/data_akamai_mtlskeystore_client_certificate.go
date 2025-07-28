@@ -53,7 +53,7 @@ type (
 		ExpiryDate               types.String           `tfsdk:"expiry_date"`
 		Issuer                   types.String           `tfsdk:"issuer"`
 		KeyAlgorithm             types.String           `tfsdk:"key_algorithm"`
-		KeyEllipticCurve         types.String           `tfsdk:"key_elliptic_curve"`
+		EllipticCurve            types.String           `tfsdk:"elliptic_curve"`
 		KeySizeInBytes           types.String           `tfsdk:"key_size_in_bytes"`
 		SignatureAlgorithm       types.String           `tfsdk:"signature_algorithm"`
 		Subject                  types.String           `tfsdk:"subject"`
@@ -159,7 +159,7 @@ func (d *clientCertificateDataSource) Schema(_ context.Context, _ datasource.Sch
 			Description: "Identifies the client certificate version's encryption algorithm. Supported values are `RSA` and `ECDSA`.",
 			Computed:    true,
 		},
-		"key_elliptic_curve": schema.StringAttribute{
+		"elliptic_curve": schema.StringAttribute{
 			Description: "Specifies the key elliptic curve when the key algorithm `ECDSA` is used.",
 			Computed:    true,
 		},
@@ -480,7 +480,7 @@ func convertDataToVersionModel(v mtlskeystore.ClientCertificateVersion) *version
 		ExpiryDate:               types.StringPointerValue(formatOptionalRFC3339(v.ExpiryDate)),
 		Issuer:                   types.StringPointerValue(v.Issuer),
 		KeyAlgorithm:             types.StringValue(v.KeyAlgorithm),
-		KeyEllipticCurve:         types.StringPointerValue(v.EllipticCurve),
+		EllipticCurve:            types.StringPointerValue(v.EllipticCurve),
 		KeySizeInBytes:           types.StringPointerValue(v.KeySizeInBytes),
 		SignatureAlgorithm:       types.StringPointerValue(v.SignatureAlgorithm),
 		Subject:                  types.StringPointerValue(v.Subject),

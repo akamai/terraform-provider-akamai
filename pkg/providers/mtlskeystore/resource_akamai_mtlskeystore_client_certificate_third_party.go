@@ -72,7 +72,7 @@ type (
 		CreatedDate              types.String `tfsdk:"created_date"`
 		DeleteRequestedDate      types.String `tfsdk:"delete_requested_date"`
 		IssuedDate               types.String `tfsdk:"issued_date"`
-		KeyEllipticCurve         types.String `tfsdk:"key_elliptic_curve"`
+		EllipticCurve            types.String `tfsdk:"elliptic_curve"`
 		KeySizeInBytes           types.String `tfsdk:"key_size_in_bytes"`
 		ScheduledDeleteDate      types.String `tfsdk:"scheduled_delete_date"`
 		SignatureAlgorithm       types.String `tfsdk:"signature_algorithm"`
@@ -109,7 +109,7 @@ var (
 			"created_date":               types.StringType,
 			"delete_requested_date":      types.StringType,
 			"issued_date":                types.StringType,
-			"key_elliptic_curve":         types.StringType,
+			"elliptic_curve":             types.StringType,
 			"key_size_in_bytes":          types.StringType,
 			"scheduled_delete_date":      types.StringType,
 			"signature_algorithm":        types.StringType,
@@ -291,7 +291,7 @@ func versionsSchema() schema.MapNestedAttribute {
 					Description: "An ISO 8601 timestamp indicating the client certificate version's availability.",
 					Computed:    true,
 				},
-				"key_elliptic_curve": schema.StringAttribute{
+				"elliptic_curve": schema.StringAttribute{
 					Description: "Specifies the key elliptic curve when key algorithm `ECDSA` is used.",
 					Computed:    true,
 				},
@@ -1038,7 +1038,7 @@ func createClientVersionModel(ctx context.Context, version mtlskeystore.ClientCe
 		CreatedDate:              types.StringValue(version.CreatedDate.Format(time.RFC3339)),
 		DeleteRequestedDate:      types.StringPointerValue(formatOptionalRFC3339(version.DeleteRequestedDate)),
 		IssuedDate:               types.StringPointerValue(formatOptionalRFC3339(version.IssuedDate)),
-		KeyEllipticCurve:         types.StringPointerValue(version.EllipticCurve),
+		EllipticCurve:            types.StringPointerValue(version.EllipticCurve),
 		KeySizeInBytes:           types.StringPointerValue(version.KeySizeInBytes),
 		ScheduledDeleteDate:      types.StringPointerValue(formatOptionalRFC3339(version.ScheduledDeleteDate)),
 		SignatureAlgorithm:       types.StringPointerValue(version.SignatureAlgorithm),

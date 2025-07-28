@@ -44,7 +44,7 @@ type (
 		deleteRequestedDate      string
 		deployedDate             string
 		issuedDate               string
-		keyEllipticCurve         string
+		ellipticCurve            string
 		keySizeInBytes           string
 		scheduledDeleteDate      string
 		signatureAlgorithm       string
@@ -185,7 +185,7 @@ var (
 				createdDate:              "2023-01-01T00:00:00Z",
 				deployedDate:             "2023-01-02T00:00:00Z",
 				issuedDate:               "2023-01-03T00:00:00Z",
-				keyEllipticCurve:         "test-ecdsa",
+				ellipticCurve:            "test-ecdsa",
 				keySizeInBytes:           "2048",
 				signatureAlgorithm:       "SHA256_WITH_RSA",
 				subject:                  "CN=test.example.com",
@@ -524,7 +524,7 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 		CheckEqual("versions.v2.created_by", "jkowalski").
 		CheckEqual("versions.v2.created_date", "2023-01-01T00:00:00Z").
 		CheckEqual("versions.v2.issued_date", "2023-01-03T00:00:00Z").
-		CheckEqual("versions.v2.key_elliptic_curve", "test-ecdsa").
+		CheckEqual("versions.v2.elliptic_curve", "test-ecdsa").
 		CheckEqual("versions.v2.key_size_in_bytes", "2048").
 		CheckEqual("versions.v2.signature_algorithm", "SHA256_WITH_RSA").
 		CheckEqual("versions.v2.subject", "CN=test.example.com").
@@ -1511,7 +1511,7 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 						CheckMissing("versions.v2.created_by").
 						CheckMissing("versions.v2.created_date").
 						CheckMissing("versions.v2.issued_date").
-						CheckMissing("versions.v2.key_elliptic_curve").
+						CheckMissing("versions.v2.elliptic_curve").
 						CheckMissing("versions.v2.key_size_in_bytes").
 						CheckMissing("versions.v2.signature_algorithm").
 						CheckMissing("versions.v2.subject").
@@ -2292,7 +2292,7 @@ func mockRotateClientCertificateVersion(t *testing.T, m *mtlskeystore.Mock, test
 		IssuedDate:         ptr.To(tst.NewTimeFromString(t, testData[versionKey].issuedDate)),
 		Issuer:             ptr.To(testData[versionKey].issuer),
 		KeyAlgorithm:       testData[versionKey].keyAlgorithm,
-		EllipticCurve:      ptr.To(testData[versionKey].keyEllipticCurve),
+		EllipticCurve:      ptr.To(testData[versionKey].ellipticCurve),
 		KeySizeInBytes:     ptr.To(testData[versionKey].keySizeInBytes),
 		SignatureAlgorithm: ptr.To(testData[versionKey].signatureAlgorithm),
 		Status:             testData[versionKey].status,
@@ -2360,7 +2360,7 @@ func mockListClientCertificateVersions(t *testing.T, m *mtlskeystore.Mock, versi
 			IssuedDate:         ptr.To(tst.NewTimeFromString(t, version.issuedDate)),
 			Issuer:             ptr.To(version.issuer),
 			KeyAlgorithm:       version.keyAlgorithm,
-			EllipticCurve:      ptr.To(version.keyEllipticCurve),
+			EllipticCurve:      ptr.To(version.ellipticCurve),
 			KeySizeInBytes:     ptr.To(version.keySizeInBytes),
 			SignatureAlgorithm: ptr.To(version.signatureAlgorithm),
 			Status:             version.status,

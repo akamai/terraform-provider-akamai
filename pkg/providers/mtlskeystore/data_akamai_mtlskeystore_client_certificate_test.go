@@ -44,7 +44,7 @@ func TestClientCertificateDataSource(t *testing.T) {
 		CheckEqual("versions.0.issued_date", "2027-05-18T23:08:07Z").
 		CheckEqual("versions.0.issuer", "test-issuer").
 		CheckEqual("versions.0.key_algorithm", "RSA").
-		CheckEqual("versions.0.key_elliptic_curve", "test-rsa").
+		CheckEqual("versions.0.elliptic_curve", "test-rsa").
 		CheckEqual("versions.0.key_size_in_bytes", "2048").
 		CheckEqual("versions.0.signature_algorithm", "SHA256_WITH_RSA").
 		CheckEqual("versions.0.status", "DEPLOYED").
@@ -392,7 +392,7 @@ func TestClientCertificateDataSource(t *testing.T) {
 						CheckEqual("versions.1.issued_date", "2027-05-18T23:08:07Z").
 						CheckEqual("versions.1.issuer", "test-issuer").
 						CheckEqual("versions.1.key_algorithm", "ECDSA").
-						CheckEqual("versions.1.key_elliptic_curve", "test-ecdsa").
+						CheckEqual("versions.1.elliptic_curve", "test-ecdsa").
 						CheckEqual("versions.1.scheduled_delete_date", "2024-05-20T23:08:07Z").
 						CheckEqual("versions.1.signature_algorithm", "SHA256_WITH_RSA").
 						CheckEqual("versions.1.status", "DELETE_PENDING").
