@@ -154,118 +154,122 @@ var (
 					keyAlgorithm: "RSA",
 				},
 			},
-			"v2": testTwoVersionsWithOptionalParams.versions["v2"],
-			"v1": testTwoVersionsWithOptionalParams.versions["v1"],
+			"v2": testTwoVersionsWithOptionalParams().versions["v2"],
+			"v1": testTwoVersionsWithOptionalParams().versions["v1"],
 		},
 	}
 
-	testTwoVersionsWithOptionalParams = commonDataForResource{
-		certificateName: "test-certificate",
-		certificateID:   12345,
-		contractID:      "ctr_12345",
-		geography:       "CORE",
-		groupID:         1234,
-		keyAlgorithm:    "RSA",
-		notificationEmails: []string{
-			"jkowalski@akamai.com",
-			"jsmith@akamai.com",
-		},
-		secureNetwork: "STANDARD_TLS",
-		subject:       "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS/CN=test-certificate/",
-		versions: map[string]versionData{
-			"v2": {
-				version:                  2,
-				status:                   "ACTIVE",
-				expiryDate:               "2024-12-31T23:59:59Z",
-				issuer:                   "Example CA",
-				keyAlgorithm:             "ECDSA",
-				certificateSubmittedBy:   "jkowalski",
-				certificateSubmittedDate: "2023-01-01T00:00:00Z",
-				createdBy:                "jkowalski",
-				createdDate:              "2023-01-01T00:00:00Z",
-				deployedDate:             "2023-01-02T00:00:00Z",
-				issuedDate:               "2023-01-03T00:00:00Z",
-				ellipticCurve:            "test-ecdsa",
-				keySizeInBytes:           "2048",
-				signatureAlgorithm:       "SHA256_WITH_RSA",
-				subject:                  "CN=test.example.com",
-				versionGUID:              "v2-guid-12345",
-				certificateBlock: certificateBlock{
-					certificate: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
-					trustChain:  "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+	testTwoVersionsWithOptionalParams = func() commonDataForResource {
+		return commonDataForResource{
+			certificateName: "test-certificate",
+			certificateID:   12345,
+			contractID:      "ctr_12345",
+			geography:       "CORE",
+			groupID:         1234,
+			keyAlgorithm:    "RSA",
+			notificationEmails: []string{
+				"jkowalski@akamai.com",
+				"jsmith@akamai.com",
+			},
+			secureNetwork: "STANDARD_TLS",
+			subject:       "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS/CN=test-certificate/",
+			versions: map[string]versionData{
+				"v2": {
+					version:                  2,
+					status:                   "ACTIVE",
+					expiryDate:               "2024-12-31T23:59:59Z",
+					issuer:                   "Example CA",
+					keyAlgorithm:             "ECDSA",
+					certificateSubmittedBy:   "jkowalski",
+					certificateSubmittedDate: "2023-01-01T00:00:00Z",
+					createdBy:                "jkowalski",
+					createdDate:              "2023-01-01T00:00:00Z",
+					deployedDate:             "2023-01-02T00:00:00Z",
+					issuedDate:               "2023-01-03T00:00:00Z",
+					ellipticCurve:            "test-ecdsa",
+					keySizeInBytes:           "2048",
+					signatureAlgorithm:       "SHA256_WITH_RSA",
+					subject:                  "CN=test.example.com",
+					versionGUID:              "v2-guid-12345",
+					certificateBlock: certificateBlock{
+						certificate: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+						trustChain:  "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+					},
+					csrBlock: csrBlock{
+						csr:          "-----BEGIN CERTIFICATE REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----",
+						keyAlgorithm: "RSA",
+					},
 				},
-				csrBlock: csrBlock{
-					csr:          "-----BEGIN CERTIFICATE REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----",
-					keyAlgorithm: "RSA",
+				"v1": {
+					version:                  1,
+					status:                   "ACTIVE",
+					expiryDate:               "2024-12-31T23:59:59Z",
+					issuer:                   "Example CA",
+					keyAlgorithm:             "RSA",
+					certificateSubmittedBy:   "jkowalski",
+					certificateSubmittedDate: "2023-01-01T00:00:00Z",
+					createdBy:                "jkowalski",
+					createdDate:              "2023-01-01T00:00:00Z",
+					deployedDate:             "2023-01-02T00:00:00Z",
+					issuedDate:               "2023-01-03T00:00:00Z",
+					keySizeInBytes:           "2048",
+					signatureAlgorithm:       "SHA256_WITH_RSA",
+					subject:                  "CN=test.example.com",
+					versionGUID:              "v1-guid-12345",
+					certificateBlock: certificateBlock{
+						certificate: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+						trustChain:  "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+					},
+					csrBlock: csrBlock{
+						csr:          "-----BEGIN CERTIFICATE REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----",
+						keyAlgorithm: "RSA",
+					},
 				},
 			},
-			"v1": {
-				version:                  1,
-				status:                   "ACTIVE",
-				expiryDate:               "2024-12-31T23:59:59Z",
-				issuer:                   "Example CA",
-				keyAlgorithm:             "RSA",
-				certificateSubmittedBy:   "jkowalski",
-				certificateSubmittedDate: "2023-01-01T00:00:00Z",
-				createdBy:                "jkowalski",
-				createdDate:              "2023-01-01T00:00:00Z",
-				deployedDate:             "2023-01-02T00:00:00Z",
-				issuedDate:               "2023-01-03T00:00:00Z",
-				keySizeInBytes:           "2048",
-				signatureAlgorithm:       "SHA256_WITH_RSA",
-				subject:                  "CN=test.example.com",
-				versionGUID:              "v1-guid-12345",
-				certificateBlock: certificateBlock{
-					certificate: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
-					trustChain:  "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
-				},
-				csrBlock: csrBlock{
-					csr:          "-----BEGIN CERTIFICATE REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----",
-					keyAlgorithm: "RSA",
-				},
-			},
-		},
+		}
 	}
 
-	testOneVersion = commonDataForResource{
-		certificateName: "test-certificate",
-		certificateID:   12345,
-		contractID:      "ctr_12345",
-		geography:       "CORE",
-		groupID:         1234,
-		keyAlgorithm:    "RSA",
-		notificationEmails: []string{
-			"jkowalski@akamai.com",
-			"jsmith@akamai.com",
-		},
-		secureNetwork: "STANDARD_TLS",
-		versions: map[string]versionData{
-			"v1": {
-				version:                  1,
-				status:                   "ACTIVE",
-				expiryDate:               "2024-12-31T23:59:59Z",
-				issuer:                   "Example CA",
-				keyAlgorithm:             "RSA",
-				certificateSubmittedBy:   "jkowalski",
-				certificateSubmittedDate: "2023-01-01T00:00:00Z",
-				createdBy:                "jkowalski",
-				createdDate:              "2023-01-01T00:00:00Z",
-				deployedDate:             "2023-01-02T00:00:00Z",
-				issuedDate:               "2023-01-03T00:00:00Z",
-				keySizeInBytes:           "2048",
-				signatureAlgorithm:       "SHA256_WITH_RSA",
-				subject:                  "CN=test.example.com",
-				versionGUID:              "v1-guid-12345",
-				certificateBlock: certificateBlock{
-					certificate: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
-					trustChain:  "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
-				},
-				csrBlock: csrBlock{
-					csr:          "-----BEGIN CERTIFICATE REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----",
-					keyAlgorithm: "RSA",
+	testOneVersion = func() commonDataForResource {
+		return commonDataForResource{
+			certificateName: "test-certificate",
+			certificateID:   12345,
+			contractID:      "ctr_12345",
+			geography:       "CORE",
+			groupID:         1234,
+			keyAlgorithm:    "RSA",
+			notificationEmails: []string{
+				"jkowalski@akamai.com",
+				"jsmith@akamai.com",
+			},
+			secureNetwork: "STANDARD_TLS",
+			versions: map[string]versionData{
+				"v1": {
+					version:                  1,
+					status:                   "ACTIVE",
+					expiryDate:               "2024-12-31T23:59:59Z",
+					issuer:                   "Example CA",
+					keyAlgorithm:             "RSA",
+					certificateSubmittedBy:   "jkowalski",
+					certificateSubmittedDate: "2023-01-01T00:00:00Z",
+					createdBy:                "jkowalski",
+					createdDate:              "2023-01-01T00:00:00Z",
+					deployedDate:             "2023-01-02T00:00:00Z",
+					issuedDate:               "2023-01-03T00:00:00Z",
+					keySizeInBytes:           "2048",
+					signatureAlgorithm:       "SHA256_WITH_RSA",
+					subject:                  "CN=test.example.com",
+					versionGUID:              "v1-guid-12345",
+					certificateBlock: certificateBlock{
+						certificate: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+						trustChain:  "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+					},
+					csrBlock: csrBlock{
+						csr:          "-----BEGIN CERTIFICATE REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----",
+						keyAlgorithm: "RSA",
+					},
 				},
 			},
-		},
+		}
 	}
 
 	testOneVersionWithSubject = commonDataForResource{
@@ -558,7 +562,7 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID)
 				mockDeleteClientCertificateVersion(m, testData.versions, testData.certificateID, "v1")
 			},
-			mockCreateData: testOneVersion,
+			mockCreateData: testOneVersion(),
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create/create.tf"),
@@ -581,7 +585,7 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID)
 				mockDeleteClientCertificateVersion(m, testData.versions, testData.certificateID, "v1")
 			},
-			mockCreateData: testOneVersion,
+			mockCreateData: testOneVersion(),
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create/create_unprefixed_contract.tf"),
@@ -607,7 +611,7 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockDeleteClientCertificateVersion(m, testData.versions, testData.certificateID, "v1")
 				mockDeleteClientCertificateVersion(m, testData.versions, testData.certificateID, "v2")
 			},
-			mockCreateData: testTwoVersionsWithOptionalParams,
+			mockCreateData: testTwoVersionsWithOptionalParams(),
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create/create_with_optional_params.tf"),
@@ -641,7 +645,7 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockListClientCertificateVersions(t, m, testUpdateData.versions, testUpdateData.certificateID)
 				mockDeleteClientCertificateVersion(m, testUpdateData.versions, testUpdateData.certificateID, "v1")
 			},
-			mockCreateData: testOneVersion,
+			mockCreateData: testOneVersion(),
 			mockUpdateData: testUpdateNotificationEmails,
 			steps: []resource.TestStep{
 				{
@@ -680,7 +684,7 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockListClientCertificateVersions(t, m, testUpdateData.versions, testUpdateData.certificateID)
 				mockDeleteClientCertificateVersion(m, testUpdateData.versions, testUpdateData.certificateID, "v1")
 			},
-			mockCreateData: testOneVersion,
+			mockCreateData: testOneVersion(),
 			mockUpdateData: testUpdateCertificateName,
 			steps: []resource.TestStep{
 				{
@@ -719,7 +723,7 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockListClientCertificateVersions(t, m, testUpdateData.versions, testUpdateData.certificateID)
 				mockDeleteClientCertificateVersion(m, testUpdateData.versions, testUpdateData.certificateID, "v1")
 			},
-			mockCreateData: testOneVersion,
+			mockCreateData: testOneVersion(),
 			mockUpdateData: testUpdateNotificationEmailsAndCertificateName,
 			steps: []resource.TestStep{
 				{
@@ -818,7 +822,7 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockDeleteClientCertificateVersion(m, newVersions, testCreateData.certificateID, "v3")
 				mockDeleteClientCertificateVersion(m, newVersions, testCreateData.certificateID, "v4")
 			},
-			mockCreateData: testTwoVersionsWithOptionalParams,
+			mockCreateData: testTwoVersionsWithOptionalParams(),
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create/create_with_optional_params.tf"),
@@ -899,8 +903,8 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockListClientCertificateVersions(t, m, testUpdateData.versions, testUpdateData.certificateID)
 				mockDeleteClientCertificateVersion(m, testUpdateData.versions, testUpdateData.certificateID, "v1")
 			},
-			mockCreateData: testTwoVersionsWithOptionalParams,
-			mockUpdateData: testOneVersion,
+			mockCreateData: testTwoVersionsWithOptionalParams(),
+			mockUpdateData: testOneVersion(),
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create/create_with_optional_params.tf"),
@@ -969,7 +973,7 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockDeleteClientCertificateVersion(m, newVersions, testCreateData.certificateID, "v1")
 				mockDeleteClientCertificateVersion(m, newVersions, testCreateData.certificateID, "v3")
 			},
-			mockCreateData: testTwoVersionsWithOptionalParams,
+			mockCreateData: testTwoVersionsWithOptionalParams(),
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create/create_with_optional_params.tf"),
@@ -1084,7 +1088,7 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockDeleteClientCertificateVersion(m, newVersions, testCreateData.certificateID, "v3")
 				mockDeleteClientCertificateVersion(m, newVersions, testCreateData.certificateID, "v4")
 			},
-			mockCreateData: testTwoVersionsWithOptionalParams,
+			mockCreateData: testTwoVersionsWithOptionalParams(),
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create/create_with_optional_params.tf"),
@@ -1425,7 +1429,7 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockDeleteClientCertificateVersion(m, newVersions, testCreateData.certificateID, "v2")
 				mockDeleteClientCertificateVersion(m, newVersions, testCreateData.certificateID, "v3")
 			},
-			mockCreateData: testTwoVersionsWithOptionalParams,
+			mockCreateData: testTwoVersionsWithOptionalParams(),
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create/create_with_optional_params.tf"),
@@ -1488,7 +1492,7 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockListClientCertificateVersions(t, m, versionsWithoutV2, testCreateData.certificateID)
 				mockDeleteClientCertificateVersion(m, versionsWithoutV2, testCreateData.certificateID, "v1")
 			},
-			mockCreateData: testTwoVersionsWithOptionalParams,
+			mockCreateData: testTwoVersionsWithOptionalParams(),
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create/create_with_optional_params.tf"),
@@ -1565,7 +1569,7 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockDeleteClientCertificateVersion(m, newCertificateNameAndEmails.versions, testCreateData.certificateID, "v1")
 				mockDeleteClientCertificateVersion(m, newCertificateNameAndEmails.versions, testCreateData.certificateID, "v2")
 			},
-			mockCreateData: testTwoVersionsWithOptionalParams,
+			mockCreateData: testTwoVersionsWithOptionalParams(),
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create/create_with_optional_params.tf"),
@@ -1590,7 +1594,7 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 			init: func(m *mtlskeystore.Mock, testCreateData, _ commonDataForResource) {
 				mockCreateClientCertificate(m, testCreateData).Return(nil, fmt.Errorf("create failed"))
 			},
-			mockCreateData: testTwoVersionsWithOptionalParams,
+			mockCreateData: testTwoVersionsWithOptionalParams(),
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create/create_with_optional_params.tf"),
@@ -1646,7 +1650,7 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockDeleteClientCertificateVersion(m, testCreateData.versions, testCreateData.certificateID, "v1")
 				mockDeleteClientCertificateVersion(m, testCreateData.versions, testCreateData.certificateID, "v2")
 			},
-			mockCreateData: testTwoVersionsWithOptionalParams,
+			mockCreateData: testTwoVersionsWithOptionalParams(),
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create/create_with_optional_params.tf"),
@@ -1675,7 +1679,7 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID)
 				mockDeleteClientCertificateVersion(m, testData.versions, testData.certificateID, "v1")
 			},
-			mockCreateData: testOneVersion,
+			mockCreateData: testOneVersion(),
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create/create.tf"),
@@ -1702,7 +1706,7 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID)
 				mockDeleteClientCertificateVersion(m, testData.versions, testData.certificateID, "v1")
 			},
-			mockCreateData: testOneVersion,
+			mockCreateData: testOneVersion(),
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create/create.tf"),
@@ -1729,7 +1733,7 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID)
 				mockDeleteClientCertificateVersion(m, testData.versions, testData.certificateID, "v1")
 			},
-			mockCreateData: testOneVersion,
+			mockCreateData: testOneVersion(),
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create/create.tf"),
@@ -1756,7 +1760,7 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID)
 				mockDeleteClientCertificateVersion(m, testData.versions, testData.certificateID, "v1")
 			},
-			mockCreateData: testOneVersion,
+			mockCreateData: testOneVersion(),
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create/create.tf"),
@@ -1784,7 +1788,7 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockDeleteClientCertificateVersion(m, testData.versions, testData.certificateID, "v1")
 				mockDeleteClientCertificateVersion(m, testData.versions, testData.certificateID, "v2")
 			},
-			mockCreateData: testTwoVersionsWithOptionalParams,
+			mockCreateData: testTwoVersionsWithOptionalParams(),
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create/create_with_optional_params.tf"),
@@ -1813,7 +1817,7 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID)
 				mockDeleteClientCertificateVersion(m, testData.versions, testData.certificateID, "v1")
 			},
-			mockCreateData: testOneVersion,
+			mockCreateData: testOneVersion(),
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/create/create.tf"),
@@ -1943,11 +1947,12 @@ func TestClientCertificateThirdPartyResource_Import(t *testing.T) {
 				// modify mock data to return default subject that allows to parse contract and group
 				testImportData.subject = "/C=US/O=Akamai Technologies, Inc./OU=17471 12345 1234/CN=test.example.com"
 				mockGetClientCertificate(m, testImportData)
+				mockListClientCertificateVersions(t, m, testImportData.versions, testImportData.certificateID)
 				// Read
 				mockGetClientCertificate(m, testImportData)
 				mockListClientCertificateVersions(t, m, testImportData.versions, testImportData.certificateID)
 			},
-			importData: testOneVersion,
+			importData: testOneVersion(),
 			steps: []resource.TestStep{
 				{
 					ImportStateCheck: importChecker.Build(),
@@ -1965,14 +1970,41 @@ func TestClientCertificateThirdPartyResource_Import(t *testing.T) {
 				// modify mock data to return default subject that allows to parse contract and group.
 				testImportData.subject = "/C=US/O=Akamai Technologies, Inc./OU=17471 12345 1234/CN=test.example.com"
 				mockGetClientCertificate(m, testImportData)
+				mockListClientCertificateVersions(t, m, testImportData.versions, testImportData.certificateID)
 				// Read
 				mockGetClientCertificate(m, testImportData)
 				mockListClientCertificateVersions(t, m, testImportData.versions, testImportData.certificateID)
 			},
-			importData: testTwoVersionsWithOptionalParams,
+			importData: testTwoVersionsWithOptionalParams(),
 			steps: []resource.TestStep{
 				{
 					ImportStateCheck: secondVersionChecker.Build(),
+					ImportStateId:    "12345",
+					ImportState:      true,
+					ResourceName:     "akamai_mtlskeystore_client_certificate_third_party.test",
+					Config:           testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/import/import.tf"),
+				},
+			},
+		},
+		"import - client certificate with two versions with one DELETE_PENDING": {
+			importID: "12345",
+			init: func(m *mtlskeystore.Mock, testImportData commonDataForResource) {
+				// Import
+				// modify mock data to return default subject that allows to parse contract and group.
+				testImportData.subject = "/C=US/O=Akamai Technologies, Inc./OU=17471 12345 1234/CN=test.example.com"
+				v1 := testImportData.versions["v1"]
+				v1.status = "DELETE_PENDING"
+				testImportData.versions["v1"] = v1
+				mockGetClientCertificate(m, testImportData)
+				mockListClientCertificateVersions(t, m, testImportData.versions, testImportData.certificateID)
+				// Read
+				mockGetClientCertificate(m, testImportData)
+				mockListClientCertificateVersions(t, m, testImportData.versions, testImportData.certificateID)
+			},
+			importData: testTwoVersionsWithOptionalParams(),
+			steps: []resource.TestStep{
+				{
+					ImportStateCheck: secondVersionChecker.CheckEqual("versions.2023-01-01T00:00:00_v1.status", "DELETE_PENDING").Build(),
 					ImportStateId:    "12345",
 					ImportState:      true,
 					ResourceName:     "akamai_mtlskeystore_client_certificate_third_party.test",
@@ -1985,6 +2017,7 @@ func TestClientCertificateThirdPartyResource_Import(t *testing.T) {
 			init: func(m *mtlskeystore.Mock, testImportData commonDataForResource) {
 				// Import
 				mockGetClientCertificate(m, testImportData)
+				mockListClientCertificateVersions(t, m, testImportData.versions, testImportData.certificateID)
 				// Read
 				mockGetClientCertificate(m, testImportData)
 				mockListClientCertificateVersions(t, m, testImportData.versions, testImportData.certificateID)
@@ -2024,7 +2057,7 @@ func TestClientCertificateThirdPartyResource_Import(t *testing.T) {
 				testImportData.subject = "some custom subject cannot parse contract and group/CN=test.example.com"
 				mockGetClientCertificate(m, testImportData)
 			},
-			importData:  testOneVersion,
+			importData:  testOneVersion(),
 			expectError: regexp.MustCompile(`get failed`),
 			steps: []resource.TestStep{
 				{
@@ -2042,7 +2075,7 @@ func TestClientCertificateThirdPartyResource_Import(t *testing.T) {
 				// Import
 				mockGetClientCertificate(m, testImportData).Return(nil, fmt.Errorf("get failed"))
 			},
-			importData:  testOneVersion,
+			importData:  testOneVersion(),
 			expectError: regexp.MustCompile(`get failed`),
 			steps: []resource.TestStep{
 				{
@@ -2054,6 +2087,29 @@ func TestClientCertificateThirdPartyResource_Import(t *testing.T) {
 				},
 			},
 		},
+		"error - importing one version DELETE_PENDING": {
+			importID: "12345",
+			init: func(m *mtlskeystore.Mock, testImportData commonDataForResource) {
+				// Import
+				// modify mock data to return default subject that allows to parse contract and group
+				testImportData.subject = "/C=US/O=Akamai Technologies, Inc./OU=17471 12345 1234/CN=test.example.com"
+				v1 := testImportData.versions["v1"]
+				v1.status = "DELETE_PENDING"
+				testImportData.versions["v1"] = v1
+				mockGetClientCertificate(m, testImportData)
+				mockListClientCertificateVersions(t, m, testImportData.versions, testImportData.certificateID)
+			},
+			importData: testOneVersion(),
+			steps: []resource.TestStep{
+				{
+					ExpectError:   regexp.MustCompile("Certificate in Delete Pending State"),
+					ImportStateId: "12345",
+					ImportState:   true,
+					ResourceName:  "akamai_mtlskeystore_client_certificate_third_party.test",
+					Config:        testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/import/import.tf"),
+				},
+			},
+		},
 		"error - List Client Certificate Versions failed": {
 			importID: "12345",
 			init: func(m *mtlskeystore.Mock, testImportData commonDataForResource) {
@@ -2061,11 +2117,12 @@ func TestClientCertificateThirdPartyResource_Import(t *testing.T) {
 				// modify mock data to return default subject that allows to parse contract and group
 				testImportData.subject = "/C=US/O=Akamai Technologies, Inc./OU=17471 12345 1234/CN=test.example.com"
 				mockGetClientCertificate(m, testImportData)
+				mockListClientCertificateVersions(t, m, testImportData.versions, testImportData.certificateID)
 				// Read
 				mockGetClientCertificate(m, testImportData)
 				mockListClientCertificateVersions(t, m, testImportData.versions, testImportData.certificateID).Return(nil, fmt.Errorf("list failed"))
 			},
-			importData:  testOneVersion,
+			importData:  testOneVersion(),
 			expectError: regexp.MustCompile(`list failed`),
 			steps: []resource.TestStep{
 				{

@@ -552,7 +552,29 @@ func (c *clientCertificateAkamaiResource) ImportState(ctx context.Context, req r
 		return
 	}
 
+	if onlyOneVersionPendingDelete(ctx, client, certificateID, false, mtlskeystore.SignerAkamai) {
+		resp.Diagnostics.AddError("Certificate in Delete Pending State", fmt.Sprintf("The client certificate %d has only one version and it's in `DELETE_PENDING` state. In order to import this resource, rotate this client certificate first", certificateID))
+		return
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func onlyOneVersionPendingDelete(ctx context.Context, client mtlskeystore.MTLSKeystore, clientID int64, withAssociatedProperties bool, signer mtlskeystore.Signer) bool {
+	versions, err := client.ListClientCertificateVersions(ctx, mtlskeystore.ListClientCertificateVersionsRequest{CertificateID: clientID, IncludeAssociatedProperties: withAssociatedProperties})
+	if err != nil {
+		return false
+	}
+	numberOfActualVersions := 0
+	for _, version := range versions.Versions {
+		// In third party case, sometimes versions are duplicated and those duplicate have alias. We don't count them.
+		if signer == mtlskeystore.SignerThirdParty && version.VersionAlias != nil {
+			continue
+		}
+		numberOfActualVersions++
+	}
+
+	return numberOfActualVersions == 1 && versions.Versions[0].Status == string(mtlskeystore.DeletePending)
 }
 
 func (c *clientCertificateAkamaiResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {

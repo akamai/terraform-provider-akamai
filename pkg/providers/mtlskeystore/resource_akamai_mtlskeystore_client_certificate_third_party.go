@@ -971,6 +971,11 @@ func (r *clientCertificateThirdPartyResource) ImportState(ctx context.Context, r
 		return
 	}
 
+	if onlyOneVersionPendingDelete(ctx, client, certificateID, true, mtlskeystore.SignerThirdParty) {
+		resp.Diagnostics.AddError("Certificate in Delete Pending State", fmt.Sprintf("The client certificate %d has only one version and it's in `DELETE_PENDING` state. In order to import this resource, rotate this client certificate first", certificateID))
+		return
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
