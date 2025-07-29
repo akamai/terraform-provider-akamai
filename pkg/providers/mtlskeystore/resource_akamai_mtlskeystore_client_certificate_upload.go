@@ -193,7 +193,7 @@ func (r *clientCertificateUploadResource) Create(ctx context.Context, req resour
 	plan.VersionGUID = types.StringValue(uploadedVersion.VersionGUID)
 
 	// Wait for deployment if needed
-	if plan.WaitForDeployment.ValueBool() && (uploadedVersion.Status != string(mtlskeystore.Deployed)) {
+	if plan.WaitForDeployment.ValueBool() && (uploadedVersion.Status != string(mtlskeystore.CertificateVersionStatusDeployed)) {
 		timeout, diag := plan.Timeouts.Create(ctx, defaultTimeout)
 		if diag.HasError() {
 			resp.Diagnostics.Append(diag...)
@@ -287,7 +287,7 @@ func (r *clientCertificateUploadResource) Update(ctx context.Context, req resour
 	plan.VersionGUID = types.StringValue(uploadedVersion.VersionGUID)
 
 	// Wait for deployment if needed
-	if plan.WaitForDeployment.ValueBool() && (uploadedVersion.Status != string(mtlskeystore.Deployed)) {
+	if plan.WaitForDeployment.ValueBool() && (uploadedVersion.Status != string(mtlskeystore.CertificateVersionStatusDeployed)) {
 		timeout, diag := plan.Timeouts.Update(ctx, defaultTimeout)
 		if diag.HasError() {
 			resp.Diagnostics.Append(diag...)
@@ -337,8 +337,8 @@ func (data *clientCertificateUploadModel) upsertClientCertificateUpload(ctx cont
 		return nil, fmt.Errorf("uploaded version not found: could not find the uploaded version in the response from the client")
 	}
 
-	if uploadedVersion.Status != string(mtlskeystore.AwaitingSigned) &&
-		uploadedVersion.Status != string(mtlskeystore.DeploymentPending) && uploadedVersion.Status != string(mtlskeystore.Deployed) {
+	if uploadedVersion.Status != string(mtlskeystore.CertificateVersionStatusAwaitingSigned) &&
+		uploadedVersion.Status != string(mtlskeystore.CertificateVersionStatusDeploymentPending) && uploadedVersion.Status != string(mtlskeystore.CertificateVersionStatusDeployed) {
 		return nil, fmt.Errorf(
 			"unexpected client certificate version status: expected status to be either 'AWAITING_SIGNED_CERTIFICATE', 'DEPLOYMENT_PENDING' or 'DEPLOYED', but got: %s",
 			uploadedVersion.Status,
@@ -382,7 +382,7 @@ func (data *clientCertificateUploadModel) waitForDeployment(ctx context.Context,
 			}
 			for _, version := range clientCertificateVersionsResp.Versions {
 				if isCorrectNonAliasedVersion(version, data.VersionNumber.ValueInt64()) {
-					if version.Status == string(mtlskeystore.Deployed) {
+					if version.Status == string(mtlskeystore.CertificateVersionStatusDeployed) {
 						tflog.Debug(ctx, fmt.Sprintf("Client certificate %d version %d is deployed", data.ClientCertificateID.ValueInt64(), data.VersionNumber.ValueInt64()))
 						return nil
 					}

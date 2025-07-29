@@ -430,7 +430,7 @@ func (c *clientCertificateAkamaiResource) Read(ctx context.Context, req resource
 		return
 	}
 
-	if len(versions.Versions) == 1 && versions.Versions[0].Status == string(mtlskeystore.DeletePending) {
+	if len(versions.Versions) == 1 && versions.Versions[0].Status == string(mtlskeystore.CertificateVersionStatusDeletePending) {
 		tflog.Debug(ctx, "Client Certificate Akamai Resource's last version is in pending delete status, removing from state")
 		resp.Diagnostics.AddWarning("Resource Removal", "The last version of the Client Certificate is in `DELETE_PENDING` status. The resource will be removed from the state.")
 		resp.State.RemoveResource(ctx)
@@ -581,7 +581,7 @@ func onlyOneVersionPendingDelete(ctx context.Context, client mtlskeystore.MTLSKe
 		numberOfActualVersions++
 	}
 
-	return numberOfActualVersions == 1 && versions.Versions[0].Status == string(mtlskeystore.DeletePending)
+	return numberOfActualVersions == 1 && versions.Versions[0].Status == string(mtlskeystore.CertificateVersionStatusDeletePending)
 }
 
 func (c *clientCertificateAkamaiResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
@@ -601,7 +601,7 @@ func (c *clientCertificateAkamaiResource) Delete(ctx context.Context, req resour
 		return
 	}
 	for _, version := range versions.Versions {
-		if version.Status == string(mtlskeystore.DeletePending) {
+		if version.Status == string(mtlskeystore.CertificateVersionStatusDeletePending) {
 			tflog.Debug(ctx, fmt.Sprintf("Client Certificate Version %d is already in delete pending state, skipping deletion", version.Version))
 			continue
 		}
@@ -723,7 +723,7 @@ func (m *clientCertificateAkamaiResourceModel) waitUntilVersionDeployed(
 		}
 		if len(versions.Versions) == 1 {
 			tflog.Debug(ctx, fmt.Sprintf("Client Certificate Version status: %s", versions.Versions[0].Status))
-			if versions.Versions[0].Status == string(mtlskeystore.Deployed) {
+			if versions.Versions[0].Status == string(mtlskeystore.CertificateVersionStatusDeployed) {
 				return &versions.Versions[0], nil
 			}
 		} else {

@@ -34,7 +34,7 @@ func TestClientCertificateUpload(t *testing.T) {
 			{
 				Version:     1,
 				VersionGUID: "unique-guid",
-				Status:      string(mtlskeystore.Deployed),
+				Status:      string(mtlskeystore.CertificateVersionStatusDeployed),
 			},
 		}
 	}
@@ -79,7 +79,7 @@ func TestClientCertificateUpload(t *testing.T) {
 	}{
 		"happy path": {
 			init: func(m *mtlskeystore.Mock) {
-				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.AwaitingSigned), nil).Once()
+				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.CertificateVersionStatusAwaitingSigned), nil).Once()
 				mockUploadSignedClientCertificate(m, getDefaultUploadCertRequest(), nil)
 				mockListClientCertificateVersions(m, getDefaultReturnedVersions(), nil).Twice()
 			},
@@ -92,7 +92,7 @@ func TestClientCertificateUpload(t *testing.T) {
 		},
 		"happy path with cert provided externally by another resource": {
 			init: func(m *mtlskeystore.Mock) {
-				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.AwaitingSigned), nil).Once()
+				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.CertificateVersionStatusAwaitingSigned), nil).Once()
 				mockUploadSignedClientCertificate(m, getDefaultUploadCertRequest(), nil)
 				mockListClientCertificateVersions(m, getDefaultReturnedVersions(), nil).Twice()
 			},
@@ -105,7 +105,7 @@ func TestClientCertificateUpload(t *testing.T) {
 		},
 		"happy path with auto_acknowledge_warnings": {
 			init: func(m *mtlskeystore.Mock) {
-				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.AwaitingSigned), nil).Once()
+				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.CertificateVersionStatusAwaitingSigned), nil).Once()
 				request := getDefaultUploadCertRequest()
 				request.AcknowledgeAllWarnings = ptr.To(true)
 				mockUploadSignedClientCertificate(m, request, nil)
@@ -121,7 +121,7 @@ func TestClientCertificateUpload(t *testing.T) {
 		},
 		"happy path - without trust chain": {
 			init: func(m *mtlskeystore.Mock) {
-				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.AwaitingSigned), nil).Once()
+				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.CertificateVersionStatusAwaitingSigned), nil).Once()
 				request := getDefaultUploadCertRequest()
 				request.Body.TrustChain = nil
 				mockUploadSignedClientCertificate(m, request, nil)
@@ -138,11 +138,11 @@ func TestClientCertificateUpload(t *testing.T) {
 		},
 		"happy path with polling": {
 			init: func(m *mtlskeystore.Mock) {
-				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.AwaitingSigned), nil).Once()
+				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.CertificateVersionStatusAwaitingSigned), nil).Once()
 				// Upload returns nil (success)
 				mockUploadSignedClientCertificate(m, getDefaultUploadCertRequest(), nil)
 				// First poll returns pending
-				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.DeploymentPending), nil).Once()
+				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.CertificateVersionStatusDeploymentPending), nil).Once()
 				// Second poll returns deployed
 				mockListClientCertificateVersions(m, getDefaultReturnedVersions(), nil).Once()
 				// Read
@@ -157,7 +157,7 @@ func TestClientCertificateUpload(t *testing.T) {
 		},
 		"happy path without polling": {
 			init: func(m *mtlskeystore.Mock) {
-				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.AwaitingSigned), nil).Once()
+				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.CertificateVersionStatusAwaitingSigned), nil).Once()
 				mockUploadSignedClientCertificate(m, getDefaultUploadCertRequest(), nil)
 				mockListClientCertificateVersions(m, getDefaultReturnedVersions(), nil).Twice()
 			},
@@ -171,11 +171,11 @@ func TestClientCertificateUpload(t *testing.T) {
 		},
 		"version dropped outside of terraform": {
 			init: func(m *mtlskeystore.Mock) {
-				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.AwaitingSigned), nil).Once()
+				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.CertificateVersionStatusAwaitingSigned), nil).Once()
 				mockUploadSignedClientCertificate(m, getDefaultUploadCertRequest(), nil)
 				mockListClientCertificateVersions(m, getDefaultReturnedVersions(), nil).Once()
 				// On second call, version 1 is not returned
-				mockListClientCertificateVersions(m, getCustomReturnedVersions(2, "unique-guid-updated", mtlskeystore.Deployed), nil).Once()
+				mockListClientCertificateVersions(m, getCustomReturnedVersions(2, "unique-guid-updated", mtlskeystore.CertificateVersionStatusDeployed), nil).Once()
 			},
 			steps: []resource.TestStep{
 				{
@@ -187,7 +187,7 @@ func TestClientCertificateUpload(t *testing.T) {
 		},
 		"certificate dropped outside of terraform": {
 			init: func(m *mtlskeystore.Mock) {
-				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.AwaitingSigned), nil).Once()
+				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.CertificateVersionStatusAwaitingSigned), nil).Once()
 				mockUploadSignedClientCertificate(m, getDefaultUploadCertRequest(), nil)
 				mockListClientCertificateVersions(m, getDefaultReturnedVersions(), nil).Once()
 				// On second call, no cert is found
@@ -203,7 +203,7 @@ func TestClientCertificateUpload(t *testing.T) {
 		},
 		"error API response from UploadSignedClientCertificate": {
 			init: func(m *mtlskeystore.Mock) {
-				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.AwaitingSigned), nil).Once()
+				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.CertificateVersionStatusAwaitingSigned), nil).Once()
 				mockUploadSignedClientCertificate(m, getDefaultUploadCertRequest(), fmt.Errorf("API error"))
 			},
 			steps: []resource.TestStep{
@@ -215,9 +215,9 @@ func TestClientCertificateUpload(t *testing.T) {
 		},
 		"error - timeout during deployment": {
 			init: func(m *mtlskeystore.Mock) {
-				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.AwaitingSigned), nil).Once()
+				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.CertificateVersionStatusAwaitingSigned), nil).Once()
 				mockUploadSignedClientCertificate(m, getDefaultUploadCertRequest(), nil)
-				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.DeploymentPending), nil) //Times(infinity)
+				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.CertificateVersionStatusDeploymentPending), nil) //Times(infinity)
 			},
 			steps: []resource.TestStep{
 				{
@@ -228,7 +228,7 @@ func TestClientCertificateUpload(t *testing.T) {
 		},
 		"error - unexpected status": {
 			init: func(m *mtlskeystore.Mock) {
-				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.AwaitingSigned), nil).Once()
+				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.CertificateVersionStatusAwaitingSigned), nil).Once()
 				mockUploadSignedClientCertificate(m, getDefaultUploadCertRequest(), nil)
 				m.On("ListClientCertificateVersions", testutils.MockContext, mtlskeystore.ListClientCertificateVersionsRequest{
 					CertificateID: 12345,
@@ -247,9 +247,9 @@ func TestClientCertificateUpload(t *testing.T) {
 		},
 		"error - API error during polling": {
 			init: func(m *mtlskeystore.Mock) {
-				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.AwaitingSigned), nil).Once()
+				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.CertificateVersionStatusAwaitingSigned), nil).Once()
 				mockUploadSignedClientCertificate(m, getDefaultUploadCertRequest(), nil)
-				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.DeploymentPending), nil).Twice()
+				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.CertificateVersionStatusDeploymentPending), nil).Twice()
 				mockListClientCertificateVersions(m, nil, fmt.Errorf("API error during polling"))
 			},
 			steps: []resource.TestStep{
@@ -261,11 +261,11 @@ func TestClientCertificateUpload(t *testing.T) {
 		},
 		"error - no version returned during polling": {
 			init: func(m *mtlskeystore.Mock) {
-				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.AwaitingSigned), nil).Once()
+				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.CertificateVersionStatusAwaitingSigned), nil).Once()
 				mockUploadSignedClientCertificate(m, getDefaultUploadCertRequest(), nil)
 
 				// Return a pending version on the first call and first poll
-				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.DeploymentPending), nil).Twice()
+				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.CertificateVersionStatusDeploymentPending), nil).Twice()
 				// On the next call, return no versions
 				mockListClientCertificateVersions(m, []mtlskeystore.ClientCertificateVersion{}, nil).Once()
 			},
@@ -279,14 +279,14 @@ func TestClientCertificateUpload(t *testing.T) {
 		"update - happy path with new version": {
 			init: func(m *mtlskeystore.Mock) {
 				// Initial create
-				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.AwaitingSigned), nil).Once()
+				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.CertificateVersionStatusAwaitingSigned), nil).Once()
 				mockUploadSignedClientCertificate(m, getDefaultUploadCertRequest(), nil)
 				mockListClientCertificateVersions(m, getDefaultReturnedVersions(), nil).Twice()
 
 				// Read before update
 				mockListClientCertificateVersions(m, getDefaultReturnedVersions(), nil).Once()
 				// Update with new version
-				mockListClientCertificateVersions(m, getCustomReturnedVersions(2, "unique-guid-updated", mtlskeystore.AwaitingSigned), nil).Once()
+				mockListClientCertificateVersions(m, getCustomReturnedVersions(2, "unique-guid-updated", mtlskeystore.CertificateVersionStatusAwaitingSigned), nil).Once()
 				updateRequest := getDefaultUploadCertRequest()
 				updateRequest.Body.Certificate = "certificate-data-updated"
 				updateRequest.Version = 2
@@ -314,23 +314,23 @@ func TestClientCertificateUpload(t *testing.T) {
 		"update - happy path with polling": {
 			init: func(m *mtlskeystore.Mock) {
 				// Initial create
-				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.AwaitingSigned), nil).Once()
+				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.CertificateVersionStatusAwaitingSigned), nil).Once()
 				mockUploadSignedClientCertificate(m, getDefaultUploadCertRequest(), nil)
 				mockListClientCertificateVersions(m, getDefaultReturnedVersions(), nil).Twice()
 				// Read before update
 				mockListClientCertificateVersions(m, getDefaultReturnedVersions(), nil).Once()
 				// Update with new version
-				mockListClientCertificateVersions(m, getCustomReturnedVersions(2, "unique-guid-updated", mtlskeystore.AwaitingSigned), nil).Once()
+				mockListClientCertificateVersions(m, getCustomReturnedVersions(2, "unique-guid-updated", mtlskeystore.CertificateVersionStatusAwaitingSigned), nil).Once()
 				updateRequest := getDefaultUploadCertRequest()
 				updateRequest.Version = 2
 				updateRequest.Body.Certificate = "certificate-data-updated"
 				mockUploadSignedClientCertificate(m, updateRequest, nil)
 				// Polling: first call returns pending, second returns deployed
-				mockListClientCertificateVersions(m, getCustomReturnedVersions(2, "unique-guid-updated", mtlskeystore.DeploymentPending), nil).Once()
-				mockListClientCertificateVersions(m, getCustomReturnedVersions(2, "unique-guid-updated", mtlskeystore.Deployed), nil).Once()
+				mockListClientCertificateVersions(m, getCustomReturnedVersions(2, "unique-guid-updated", mtlskeystore.CertificateVersionStatusDeploymentPending), nil).Once()
+				mockListClientCertificateVersions(m, getCustomReturnedVersions(2, "unique-guid-updated", mtlskeystore.CertificateVersionStatusDeployed), nil).Once()
 
 				// Final read
-				mockListClientCertificateVersions(m, getCustomReturnedVersions(2, "unique-guid-updated", mtlskeystore.Deployed), nil).Once()
+				mockListClientCertificateVersions(m, getCustomReturnedVersions(2, "unique-guid-updated", mtlskeystore.CertificateVersionStatusDeployed), nil).Once()
 			},
 			steps: []resource.TestStep{
 				{
@@ -349,14 +349,14 @@ func TestClientCertificateUpload(t *testing.T) {
 		"update - happy path with custom timeouts": {
 			init: func(m *mtlskeystore.Mock) {
 				// Initial create
-				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.AwaitingSigned), nil).Once()
+				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.CertificateVersionStatusAwaitingSigned), nil).Once()
 				mockUploadSignedClientCertificate(m, getDefaultUploadCertRequest(), nil)
 				mockListClientCertificateVersions(m, getDefaultReturnedVersions(), nil).Twice()
 
 				// Read before update
 				mockListClientCertificateVersions(m, getDefaultReturnedVersions(), nil).Once()
 				// Update with new version
-				mockListClientCertificateVersions(m, getCustomReturnedVersions(2, "unique-guid-updated", mtlskeystore.AwaitingSigned), nil).Once()
+				mockListClientCertificateVersions(m, getCustomReturnedVersions(2, "unique-guid-updated", mtlskeystore.CertificateVersionStatusAwaitingSigned), nil).Once()
 				updateRequest := getDefaultUploadCertRequest()
 				updateRequest.Body.Certificate = "certificate-data-updated"
 				updateRequest.Version = 2
@@ -385,7 +385,7 @@ func TestClientCertificateUpload(t *testing.T) {
 		},
 		"error update certificate - same version number": {
 			init: func(m *mtlskeystore.Mock) {
-				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.AwaitingSigned), nil).Once()
+				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.CertificateVersionStatusAwaitingSigned), nil).Once()
 				mockUploadSignedClientCertificate(m, getDefaultUploadCertRequest(), nil)
 				mockListClientCertificateVersions(m, getDefaultReturnedVersions(), nil).Twice()
 				// Read before update
@@ -404,7 +404,7 @@ func TestClientCertificateUpload(t *testing.T) {
 		},
 		"error update trust chain - same version number": {
 			init: func(m *mtlskeystore.Mock) {
-				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.AwaitingSigned), nil).Once()
+				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.CertificateVersionStatusAwaitingSigned), nil).Once()
 				mockUploadSignedClientCertificate(m, getDefaultUploadCertRequest(), nil)
 				mockListClientCertificateVersions(m, getDefaultReturnedVersions(), nil).Twice()
 				// Read before update
@@ -423,7 +423,7 @@ func TestClientCertificateUpload(t *testing.T) {
 		},
 		"error update wait_for_deployment - same version number": {
 			init: func(m *mtlskeystore.Mock) {
-				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.AwaitingSigned), nil).Once()
+				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.CertificateVersionStatusAwaitingSigned), nil).Once()
 				mockUploadSignedClientCertificate(m, getDefaultUploadCertRequest(), nil)
 				mockListClientCertificateVersions(m, getDefaultReturnedVersions(), nil).Twice()
 				// Read before update
@@ -442,7 +442,7 @@ func TestClientCertificateUpload(t *testing.T) {
 		},
 		"error update auto_acknowledge_warnings - same version number": {
 			init: func(m *mtlskeystore.Mock) {
-				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.AwaitingSigned), nil).Once()
+				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.CertificateVersionStatusAwaitingSigned), nil).Once()
 				updateRequest := getDefaultUploadCertRequest()
 				updateRequest.AcknowledgeAllWarnings = ptr.To(true)
 				mockUploadSignedClientCertificate(m, updateRequest, nil)
@@ -465,7 +465,7 @@ func TestClientCertificateUpload(t *testing.T) {
 		},
 		"error update timeout - same version number": {
 			init: func(m *mtlskeystore.Mock) {
-				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.AwaitingSigned), nil).Once()
+				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.CertificateVersionStatusAwaitingSigned), nil).Once()
 				mockUploadSignedClientCertificate(m, getDefaultUploadCertRequest(), nil)
 				mockListClientCertificateVersions(m, getDefaultReturnedVersions(), nil).Twice()
 				// Read before update
@@ -490,7 +490,7 @@ func TestClientCertificateUpload(t *testing.T) {
 		},
 		"error update version number - same signed certificate": {
 			init: func(m *mtlskeystore.Mock) {
-				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.AwaitingSigned), nil).Once()
+				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.CertificateVersionStatusAwaitingSigned), nil).Once()
 				mockUploadSignedClientCertificate(m, getDefaultUploadCertRequest(), nil)
 				mockListClientCertificateVersions(m, getDefaultReturnedVersions(), nil).Twice()
 				// Read before update
@@ -509,7 +509,7 @@ func TestClientCertificateUpload(t *testing.T) {
 		},
 		"error update - different certificate id": {
 			init: func(m *mtlskeystore.Mock) {
-				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.AwaitingSigned), nil).Once()
+				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.CertificateVersionStatusAwaitingSigned), nil).Once()
 				mockUploadSignedClientCertificate(m, getDefaultUploadCertRequest(), nil)
 				mockListClientCertificateVersions(m, getDefaultReturnedVersions(), nil).Twice()
 				// Read before update
@@ -528,7 +528,7 @@ func TestClientCertificateUpload(t *testing.T) {
 		},
 		"update - API error on version checking": {
 			init: func(m *mtlskeystore.Mock) {
-				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.AwaitingSigned), nil).Once()
+				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.CertificateVersionStatusAwaitingSigned), nil).Once()
 				mockUploadSignedClientCertificate(m, getDefaultUploadCertRequest(), nil)
 				mockListClientCertificateVersions(m, getDefaultReturnedVersions(), nil).Twice()
 				// Read before update
@@ -549,13 +549,13 @@ func TestClientCertificateUpload(t *testing.T) {
 		},
 		"update - API error on upload": {
 			init: func(m *mtlskeystore.Mock) {
-				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.AwaitingSigned), nil).Once()
+				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.CertificateVersionStatusAwaitingSigned), nil).Once()
 				mockUploadSignedClientCertificate(m, getDefaultUploadCertRequest(), nil)
 				mockListClientCertificateVersions(m, getDefaultReturnedVersions(), nil).Twice()
 				// Read before update
 				mockListClientCertificateVersions(m, getDefaultReturnedVersions(), nil).Once()
 
-				mockListClientCertificateVersions(m, getCustomReturnedVersions(2, "unique-guid-updated", mtlskeystore.AwaitingSigned), nil).Once()
+				mockListClientCertificateVersions(m, getCustomReturnedVersions(2, "unique-guid-updated", mtlskeystore.CertificateVersionStatusAwaitingSigned), nil).Once()
 				updateRequest := getDefaultUploadCertRequest()
 				updateRequest.Body.Certificate = "certificate-data-updated"
 				updateRequest.Version = 2
@@ -574,13 +574,13 @@ func TestClientCertificateUpload(t *testing.T) {
 		},
 		"update - API error on version retrieval": {
 			init: func(m *mtlskeystore.Mock) {
-				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.AwaitingSigned), nil).Once()
+				mockListClientCertificateVersions(m, getCustomReturnedVersions(1, "unique-guid", mtlskeystore.CertificateVersionStatusAwaitingSigned), nil).Once()
 				mockUploadSignedClientCertificate(m, getDefaultUploadCertRequest(), nil)
 				mockListClientCertificateVersions(m, getDefaultReturnedVersions(), nil).Twice()
 				// Read before update
 				mockListClientCertificateVersions(m, getDefaultReturnedVersions(), nil).Once()
 
-				mockListClientCertificateVersions(m, getCustomReturnedVersions(2, "unique-guid-updated", mtlskeystore.AwaitingSigned), nil).Once()
+				mockListClientCertificateVersions(m, getCustomReturnedVersions(2, "unique-guid-updated", mtlskeystore.CertificateVersionStatusAwaitingSigned), nil).Once()
 				updateRequest := getDefaultUploadCertRequest()
 				updateRequest.Body.Certificate = "certificate-data-updated"
 				updateRequest.Version = 2
