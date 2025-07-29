@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/mtlskeystore"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/framework/date"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/framework/modifiers"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
@@ -661,7 +662,7 @@ func (m *clientCertificateAkamaiResourceModel) populateCertModelFromResponse(ctx
 	m.SecureNetwork = types.StringValue(cert.SecureNetwork)
 	m.Subject = types.StringValue(cert.Subject)
 	m.CreatedBy = types.StringValue(cert.CreatedBy)
-	m.CreatedDate = types.StringValue(cert.CreatedDate.Format(time.RFC3339))
+	m.CreatedDate = date.TimeRFC3339Value(cert.CreatedDate)
 	return nil
 }
 
@@ -683,16 +684,16 @@ func (m *clientCertificateAkamaiResourceModel) populateVersionModelFromResponse(
 		versionsModel = append(versionsModel, clientCertificateAkamaiVersionModel{
 			Version:             types.Int64Value(version.Version),
 			Status:              types.StringValue(version.Status),
-			ExpiryDate:          types.StringPointerValue(formatOptionalRFC3339(version.ExpiryDate)),
+			ExpiryDate:          date.TimeRFC3339PointerValue(version.ExpiryDate),
 			Issuer:              types.StringPointerValue(version.Issuer),
 			KeyAlgorithm:        types.StringValue(version.KeyAlgorithm),
 			CreatedBy:           types.StringValue(version.CreatedBy),
-			CreatedDate:         types.StringValue(version.CreatedDate.Format(time.RFC3339)),
-			DeleteRequestedDate: types.StringPointerValue(formatOptionalRFC3339(version.DeleteRequestedDate)),
-			IssuedDate:          types.StringPointerValue(formatOptionalRFC3339(version.IssuedDate)),
+			CreatedDate:         date.TimeRFC3339Value(version.CreatedDate),
+			DeleteRequestedDate: date.TimeRFC3339PointerValue(version.DeleteRequestedDate),
+			IssuedDate:          date.TimeRFC3339PointerValue(version.IssuedDate),
 			EllipticCurve:       types.StringPointerValue(version.EllipticCurve),
 			KeySizeInBytes:      types.StringPointerValue(version.KeySizeInBytes),
-			ScheduledDeleteDate: types.StringPointerValue(formatOptionalRFC3339(version.ScheduledDeleteDate)),
+			ScheduledDeleteDate: date.TimeRFC3339PointerValue(version.ScheduledDeleteDate),
 			SignatureAlgorithm:  types.StringPointerValue(version.SignatureAlgorithm),
 			Subject:             types.StringPointerValue(version.Subject),
 			VersionGUID:         types.StringValue(version.VersionGUID),

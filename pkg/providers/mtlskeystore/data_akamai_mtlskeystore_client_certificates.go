@@ -3,9 +3,9 @@ package mtlskeystore
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/mtlskeystore"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/framework/date"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -158,7 +158,7 @@ func (m *clientCertificatesDataSourceModel) convertClientCertificatesToModel(ctx
 			CertificateID:   types.Int64Value(cert.CertificateID),
 			CertificateName: types.StringValue(cert.CertificateName),
 			CreatedBy:       types.StringValue(cert.CreatedBy),
-			CreatedDate:     types.StringValue(cert.CreatedDate.Format(time.RFC3339)),
+			CreatedDate:     date.TimeRFC3339Value(cert.CreatedDate),
 			Geography:       types.StringValue(cert.Geography),
 			KeyAlgorithm:    types.StringValue(cert.KeyAlgorithm),
 			SecureNetwork:   types.StringValue(cert.SecureNetwork),

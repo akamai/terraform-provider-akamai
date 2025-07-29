@@ -3,9 +3,9 @@ package mtlskeystore
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/mtlskeystore"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/framework/date"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -205,21 +205,17 @@ func (a *accountCACertificatesDataSourceModel) convertResponseToModel(caCerts *m
 			Certificate:        types.StringValue(cert.Certificate),
 			CommonName:         types.StringValue(cert.CommonName),
 			CreatedBy:          types.StringValue(cert.CreatedBy),
-			CreatedDate:        types.StringValue(cert.CreatedDate.Format(time.RFC3339)),
-			ExpiryDate:         types.StringValue(cert.ExpiryDate.Format(time.RFC3339)),
+			CreatedDate:        date.TimeRFC3339Value(cert.CreatedDate),
+			ExpiryDate:         date.TimeRFC3339Value(cert.ExpiryDate),
 			ID:                 types.Int64Value(cert.ID),
-			IssuedDate:         types.StringValue(cert.IssuedDate.Format(time.RFC3339)),
+			IssuedDate:         date.TimeRFC3339Value(cert.IssuedDate),
 			KeyAlgorithm:       types.StringValue(cert.KeyAlgorithm),
 			KeySizeInBytes:     types.Int64Value(cert.KeySizeInBytes),
+			QualificationDate:  date.TimeRFC3339PointerValue(cert.QualificationDate),
 			SignatureAlgorithm: types.StringValue(cert.SignatureAlgorithm),
 			Status:             types.StringValue(cert.Status),
 			Subject:            types.StringValue(cert.Subject),
 			Version:            types.Int64Value(cert.Version),
-		}
-		if cert.QualificationDate != nil {
-			certificates.QualificationDate = types.StringValue(cert.QualificationDate.Format(time.RFC3339))
-		} else {
-			certificates.QualificationDate = types.StringNull()
 		}
 
 		a.Certificates = append(a.Certificates, certificates)

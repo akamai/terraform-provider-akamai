@@ -3,9 +3,9 @@ package mtlskeystore
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/mtlskeystore"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/framework/date"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -444,7 +444,7 @@ func (d *clientCertificateDataSourceModel) parseClientCertificate(ctx context.Co
 
 	d.CertificateName = types.StringValue(clientCertificate.CertificateName)
 	d.CreatedBy = types.StringValue(clientCertificate.CreatedBy)
-	d.CreatedDate = types.StringValue(clientCertificate.CreatedDate.Format(time.RFC3339))
+	d.CreatedDate = date.TimeRFC3339Value(clientCertificate.CreatedDate)
 	d.Geography = types.StringValue(clientCertificate.Geography)
 	d.KeyAlgorithm = types.StringValue(clientCertificate.KeyAlgorithm)
 	d.SecureNetwork = types.StringValue(clientCertificate.SecureNetwork)
@@ -476,19 +476,19 @@ func convertDataToVersionModel(v mtlskeystore.ClientCertificateVersion) *version
 		VersionGUID:              types.StringValue(v.VersionGUID),
 		Status:                   types.StringValue(v.Status),
 		CreatedBy:                types.StringValue(v.CreatedBy),
-		CreatedDate:              types.StringValue(v.CreatedDate.Format(time.RFC3339)),
-		ExpiryDate:               types.StringPointerValue(formatOptionalRFC3339(v.ExpiryDate)),
+		CreatedDate:              date.TimeRFC3339Value(v.CreatedDate),
+		ExpiryDate:               date.TimeRFC3339PointerValue(v.ExpiryDate),
 		Issuer:                   types.StringPointerValue(v.Issuer),
 		KeyAlgorithm:             types.StringValue(v.KeyAlgorithm),
 		EllipticCurve:            types.StringPointerValue(v.EllipticCurve),
 		KeySizeInBytes:           types.StringPointerValue(v.KeySizeInBytes),
 		SignatureAlgorithm:       types.StringPointerValue(v.SignatureAlgorithm),
 		Subject:                  types.StringPointerValue(v.Subject),
-		IssuedDate:               types.StringPointerValue(formatOptionalRFC3339(v.IssuedDate)),
+		IssuedDate:               date.TimeRFC3339PointerValue(v.IssuedDate),
 		CertificateSubmittedBy:   types.StringPointerValue(v.CertificateSubmittedBy),
-		CertificateSubmittedDate: types.StringPointerValue(formatOptionalRFC3339(v.CertificateSubmittedDate)),
-		DeleteRequestedDate:      types.StringPointerValue(formatOptionalRFC3339(v.DeleteRequestedDate)),
-		ScheduledDeleteDate:      types.StringPointerValue(formatOptionalRFC3339(v.ScheduledDeleteDate)),
+		CertificateSubmittedDate: date.TimeRFC3339PointerValue(v.CertificateSubmittedDate),
+		DeleteRequestedDate:      date.TimeRFC3339PointerValue(v.DeleteRequestedDate),
+		ScheduledDeleteDate:      date.TimeRFC3339PointerValue(v.ScheduledDeleteDate),
 		Properties:               parseProperties(v.AssociatedProperties),
 		Validation:               parseValidation(v.Validation),
 	}
@@ -558,12 +558,4 @@ func parseValidation(validation mtlskeystore.ValidationResult) validationModel {
 		Errors:   errors,
 		Warnings: warnings,
 	}
-}
-
-func formatOptionalRFC3339(t *time.Time) *string {
-	if t == nil {
-		return nil
-	}
-	parsed := (*t).Format(time.RFC3339)
-	return &parsed
 }
