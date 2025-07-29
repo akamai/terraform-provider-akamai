@@ -61,6 +61,9 @@
 
 #### BUG FIXES:
 
+* APPSEC
+  * Fixed an issue in the `resource_akamai_appsec_rapid_rules` resource attribute does not accept values from variables.
+
 * Datastream
   * Fixed handling of `2051` data field  in `resource_akamai_datastream` when `collect_midgress` is set to `true` ([I#671](https://github.com/akamai/terraform-provider-akamai/issues/671))
   * Fixed discrepancy of computed fields (stream_version, latest_version, modified_by, modified_date) while updating them in the output after apply.

@@ -146,7 +146,7 @@ func (r *rapidRulesResource) ValidateConfig(ctx context.Context, req resource.Va
 	}
 
 	defaultAction := data.DefaultAction.ValueString()
-	if !data.DefaultAction.IsNull() {
+	if !data.DefaultAction.IsNull() && !data.DefaultAction.IsUnknown() {
 		diags := validateDefaultAction(&defaultAction)
 		if diags.HasError() {
 			resp.Diagnostics.AddAttributeError(path.Root("default_action"), invalidConfigurationAttribute, extractErrors(diags.Errors()))
@@ -757,6 +757,11 @@ func areDefaultActionsDifferent(firstDefaultAction, secondDefaultAction string) 
 func getRuleDefinitionsFromModel(data *rapidRulesResourceModel) ([]appsec.RuleDefinition, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	rules := data.RuleDefinitions.ValueString()
+
+	if data.RuleDefinitions.IsNull() || data.RuleDefinitions.IsUnknown() {
+		return nil, diags
+	}
+
 	ruleDefinitions, err := deserializeRuleDefinitions(rules)
 	if err != nil {
 		diags.AddError(err.Error(), "Invalid rule definition JSON file: The configuration contains undefined or unrecognized fields.\nPlease review and ensure the JSON conforms to the expected format.")

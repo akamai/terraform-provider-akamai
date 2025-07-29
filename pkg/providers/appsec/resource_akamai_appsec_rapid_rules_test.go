@@ -40,6 +40,26 @@ func TestRapidRulesResource(t *testing.T) {
 		CheckEqual("default_action", "akamai_managed").
 		CheckEqual("rule_definitions", "null")
 
+	createRapidRulesInit := func(m *appsec.Mock) {
+		mockGetConfiguration(m, 3)
+		mockUpdateRapidRulesStatus(m, true, 1)
+		mockUpdateRapidRulesDefaultAction(m, "deny")
+		mockGetRapidRules(m, rapidRulesPriorState, 1)
+		mockUpdateRapidRuleActionLock(m, 3000214, false, 2)
+		mockUpdateRapidRuleAction(m, 3000214, "deny_custom_858380")
+		mockUpdateRapidRuleException(m, 3000214, ruleConditionException)
+
+		mockGetRapidRulesStatus(m, true, 1)
+		mockGetRapidRulesDefaultAction(m, "deny", 1)
+		mockGetRapidRules(m, rapidRulesUpdatedState, 1)
+		mockUpdateRapidRulesStatus(m, false, 1)
+	}
+
+	createRapidRulesStateChecker := baseChecker.
+		CheckEqual("default_action", "deny").
+		CheckEqual("rule_definitions", toDefinitionsJSON("RuleDefinitions.json")).
+		Build()
+
 	var tests = map[string]struct {
 		init  func(*appsec.Mock)
 		steps []resource.TestStep
@@ -142,27 +162,20 @@ func TestRapidRulesResource(t *testing.T) {
 			},
 		},
 		"create rapid rules": {
-			init: func(m *appsec.Mock) {
-				mockGetConfiguration(m, 3)
-				mockUpdateRapidRulesStatus(m, true, 1)
-				mockUpdateRapidRulesDefaultAction(m, "deny")
-				mockGetRapidRules(m, rapidRulesPriorState, 1)
-				mockUpdateRapidRuleActionLock(m, 3000214, false, 2)
-				mockUpdateRapidRuleAction(m, 3000214, "deny_custom_858380")
-				mockUpdateRapidRuleException(m, 3000214, ruleConditionException)
-
-				mockGetRapidRulesStatus(m, true, 1)
-				mockGetRapidRulesDefaultAction(m, "deny", 1)
-				mockGetRapidRules(m, rapidRulesUpdatedState, 1)
-				mockUpdateRapidRulesStatus(m, false, 1)
-			},
+			init: createRapidRulesInit,
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResRapidRules/create_rapid_rules.tf"),
-					Check: baseChecker.
-						CheckEqual("default_action", "deny").
-						CheckEqual("rule_definitions", toDefinitionsJSON("RuleDefinitions.json")).
-						Build(),
+					Check:  createRapidRulesStateChecker,
+				},
+			},
+		},
+		"create rapid rules - attribute accept values from variables": {
+			init: createRapidRulesInit,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResRapidRules/create_rapid_rules_use_vars.tf"),
+					Check:  createRapidRulesStateChecker,
 				},
 			},
 		},
