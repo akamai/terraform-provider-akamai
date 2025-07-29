@@ -167,7 +167,6 @@ func (d *caSetDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, 
 						"certificate_pem": schema.StringAttribute{
 							Description: "The certificate in PEM format, as found in a Base64 ASCII encoded file.",
 							Computed:    true,
-							Sensitive:   true,
 						},
 						"description": schema.StringAttribute{
 							Description: "Optional description for the certificate.",
@@ -192,7 +191,6 @@ func (d *caSetDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, 
 						"fingerprint": schema.StringAttribute{
 							Description: "The fingerprint of the certificate.",
 							Computed:    true,
-							Sensitive:   true,
 						},
 						"issuer": schema.StringAttribute{
 							Description: "The certificate's issuer.",
