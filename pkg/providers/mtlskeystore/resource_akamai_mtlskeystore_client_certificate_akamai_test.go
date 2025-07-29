@@ -314,6 +314,44 @@ var (
 			},
 		},
 	}
+
+	testClientCertificateMissedContractAndGroupInSubject = clientCertificateData{
+		certificateName: "test-certificate",
+		certificateID:   123456789,
+		contractID:      "G-12RS3N4",
+		geography:       "CORE",
+		groupID:         123456,
+		notificationEmails: []string{
+			"testemail1@example.com",
+			"testemail2@example.com",
+		},
+		secureNetwork: "STANDARD_TLS",
+		createdBy:     "joeDoe",
+		createdDate:   "2023-01-01T12:00:00Z",
+		subject:       "/C=US/O=Akamai Technologies, Inc./OU=Example /CN=test-certificate/",
+		keyAlgorithm:  "RSA",
+		versions: []clientCertificateVersionData{
+			{
+				version:            1,
+				status:             "DEPLOYED",
+				expiryDate:         "2024-12-31T23:59:59Z",
+				issuer:             "Example Issuer",
+				keyAlgorithm:       "RSA",
+				createdBy:          "joeDoe",
+				createdDate:        "2023-01-01T12:00:00Z",
+				deployedDate:       "2023-01-02T12:00:00Z",
+				issuedDate:         "2023-01-01T12:00:00Z",
+				keySizeInBytes:     "2048",
+				subject:            "/C=US/O=Akamai Technologies, Inc./OU=Example ctr_123456789 987654321/CN=test-certificate/",
+				versionGUID:        "test_identifier_1-1",
+				signatureAlgorithm: "SHA256_WITH_RSA",
+				certificateBlock: certificateBlock{
+					certificate: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+					trustChain:  "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+				},
+			},
+		},
+	}
 )
 
 func TestClientCertificateAkamaiResource(t *testing.T) {
@@ -1068,6 +1106,29 @@ func TestClientCertificateAkamaiResource_ImportState(t *testing.T) {
 				},
 			},
 		},
+		"import - no group and contract in certificate subject, but provided with importID": {
+			// Default subject is returned.
+			init: func(m *mtlskeystore.Mock, testData clientCertificateData) {
+				// Import
+				mockGetClientCertificateAkamai(m, testData).Once()
+				// Read
+				mockGetClientCertificateAkamai(m, testData).Once()
+				mockListClientCertificateAkamaiVersions(m, testData.versions, testData.certificateID).Once()
+			},
+			mockData: testClientCertificateMissedContractAndGroupInSubject,
+			steps: []resource.TestStep{
+				{
+					ImportStateCheck: tst.NewImportChecker().
+						CheckEqual("certificate_id", "123456789").
+						CheckEqual("group_id", "123456").
+						CheckEqual("contract_id", "G-12RS3N4").Build(),
+					ImportStateId: "123456789,123456,G-12RS3N4",
+					ImportState:   true,
+					ResourceName:  "akamai_mtlskeystore_client_certificate_akamai.test",
+					Config:        testutils.LoadFixtureString(t, "testdata/TestResClientCertificateAkamai/import_one_version.tf"),
+				},
+			},
+		},
 		"error - problem with parsing custom subject": {
 			// Default subject is returned.
 			init: func(m *mtlskeystore.Mock, testData clientCertificateData) {
@@ -1084,7 +1145,7 @@ func TestClientCertificateAkamaiResource_ImportState(t *testing.T) {
 					ImportStateCheck: secnondVersionChecker.Build(),
 					ImportStateId:    "123456789",
 					ImportState:      true,
-					ExpectError:      regexp.MustCompile("unable to extract group and contract from subject"),
+					ExpectError:      regexp.MustCompile(`since it is not possible to extract contract and group from certificate\nsubject, you need to provide an importID in the format\n'certificateID,groupID,contractID'. Where certificate, groupID and contractID\nare required`),
 					ResourceName:     "akamai_mtlskeystore_client_certificate_akamai.test",
 					Config:           testutils.LoadFixtureString(t, "testdata/TestResClientCertificateAkamai/import_one_version.tf"),
 				},
@@ -1111,6 +1172,33 @@ func TestClientCertificateAkamaiResource_ImportState(t *testing.T) {
 					ExpectError:      regexp.MustCompile("Unable to Get Client Certificate"),
 					ResourceName:     "akamai_mtlskeystore_client_certificate_akamai.test",
 					Config:           testutils.LoadFixtureString(t, "testdata/TestResClientCertificateAkamai/import_one_version.tf"),
+				},
+			},
+		},
+		"error - no group and contract in certificate subject": {
+			init: func(m *mtlskeystore.Mock, testData clientCertificateData) {
+				mockGetClientCertificateAkamai(m, testData).Once()
+			},
+			mockData: testClientCertificateMissedContractAndGroupInSubject,
+			steps: []resource.TestStep{
+				{
+					ImportStateId: "123456789",
+					ImportState:   true,
+					ResourceName:  "akamai_mtlskeystore_client_certificate_akamai.test",
+					ExpectError:   regexp.MustCompile(`since it is not possible to extract contract and group from certificate\nsubject, you need to provide an importID in the format\n'certificateID,groupID,contractID'. Where certificate, groupID and contractID\nare required`),
+					Config:        testutils.LoadFixtureString(t, "testdata/TestResClientCertificateAkamai/import_one_version.tf"),
+				},
+			},
+		},
+		"error - incorrect number of parts in importID": {
+			mockData: testClientCertificateMissedContractAndGroupInSubject,
+			steps: []resource.TestStep{
+				{
+					ImportStateId: "123456789,123456,G-12RS3N4,123",
+					ImportState:   true,
+					ResourceName:  "akamai_mtlskeystore_client_certificate_akamai.test",
+					ExpectError:   regexp.MustCompile(`you need to provide an importID in the format\n'certificateID,\[groupID,contractID]'. Where certificateID is required and\ngroupID and contractID are optional`),
+					Config:        testutils.LoadFixtureString(t, "testdata/TestResClientCertificateAkamai/import_one_version.tf"),
 				},
 			},
 		},

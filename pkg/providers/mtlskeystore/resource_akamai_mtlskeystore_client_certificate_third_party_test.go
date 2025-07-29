@@ -433,6 +433,48 @@ var (
 			},
 		},
 	}
+
+	testClientCertificateMissedContractAndGroupInSubjectTP = commonDataForResource{
+		certificateName: "test-certificate",
+		certificateID:   12345,
+		contractID:      "G-12RS3N4",
+		geography:       "CORE",
+		groupID:         123456,
+		keyAlgorithm:    "RSA",
+		notificationEmails: []string{
+			"jkowalski@akamai.com",
+			"jsmith@akamai.com",
+		},
+		secureNetwork: "STANDARD_TLS",
+		subject:       "/C=US/O=Akamai Technologies, Inc./OU=Example /CN=test-certificate/",
+		versions: map[string]versionData{
+			"v1": {
+				version:                  1,
+				status:                   "ACTIVE",
+				expiryDate:               "2024-12-31T23:59:59Z",
+				issuer:                   "Example CA",
+				keyAlgorithm:             "RSA",
+				certificateSubmittedBy:   "jkowalski",
+				certificateSubmittedDate: "2023-01-01T00:00:00Z",
+				createdBy:                "jkowalski",
+				createdDate:              "2023-01-01T00:00:00Z",
+				deployedDate:             "2023-01-02T00:00:00Z",
+				issuedDate:               "2023-01-03T00:00:00Z",
+				keySizeInBytes:           "2048",
+				signatureAlgorithm:       "SHA256_WITH_RSA",
+				subject:                  "CN=test.example.com",
+				versionGUID:              "v1-guid-12345",
+				certificateBlock: certificateBlock{
+					certificate: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+					trustChain:  "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+				},
+				csrBlock: csrBlock{
+					csr:          "-----BEGIN CERTIFICATE REQUEST-----\n...\n-----END CERTIFICATE REQUEST-----",
+					keyAlgorithm: "RSA",
+				},
+			},
+		},
+	}
 )
 
 func TestClientCertificateThirdPartyResource(t *testing.T) {
@@ -1949,15 +1991,38 @@ func TestClientCertificateThirdPartyResource_Import(t *testing.T) {
 				},
 			},
 		},
+		"import - no group and contract in certificate subject, but provided with importID": {
+			importID: "12345,123456,G-12RS3N4",
+			init: func(m *mtlskeystore.Mock, testImportData commonDataForResource) {
+				// Import
+				mockGetClientCertificate(m, testImportData)
+				// Read
+				mockGetClientCertificate(m, testImportData)
+				mockListClientCertificateVersions(m, testImportData.versions, testImportData.certificateID)
+			},
+			importData: testClientCertificateMissedContractAndGroupInSubjectTP,
+			steps: []resource.TestStep{
+				{
+					ImportStateCheck: test.NewImportChecker().
+						CheckEqual("certificate_id", "12345").
+						CheckEqual("group_id", "123456").
+						CheckEqual("contract_id", "G-12RS3N4").Build(),
+					ImportStateId: "12345,123456,G-12RS3N4",
+					ImportState:   true,
+					ResourceName:  "akamai_mtlskeystore_client_certificate_third_party.test",
+					Config:        testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/import/import.tf"),
+				},
+			},
+		},
 		"error - wrong import ID": {
 			importID:    "wrong-id",
-			expectError: regexp.MustCompile(`Error: could not convert import ID to int`),
+			expectError: regexp.MustCompile(`failed to parse certificate ID as an integer: wrong-id`),
 			steps: []resource.TestStep{
 				{
 					ImportState:   true,
 					ImportStateId: "wrong-id",
 					ResourceName:  "akamai_mtlskeystore_client_certificate_third_party.test",
-					ExpectError:   regexp.MustCompile(`Error: could not convert import ID to int`),
+					ExpectError:   regexp.MustCompile(`failed to parse certificate ID as an integer: wrong-id`),
 					Config:        testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/import/import.tf"),
 				},
 			},
@@ -1977,7 +2042,7 @@ func TestClientCertificateThirdPartyResource_Import(t *testing.T) {
 					ImportState:   true,
 					ImportStateId: "12345",
 					ResourceName:  "akamai_mtlskeystore_client_certificate_third_party.test",
-					ExpectError:   regexp.MustCompile(`failed to extract contract and group from subject`),
+					ExpectError:   regexp.MustCompile(`since it is not possible to extract contract and group from certificate\nsubject, you need to provide an importID in the format\n'certificateID,groupID,contractID'. Where certificate, groupID and contractID\nare required`),
 					Config:        testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/import/import.tf"),
 				},
 			},
@@ -2019,6 +2084,37 @@ func TestClientCertificateThirdPartyResource_Import(t *testing.T) {
 					ImportStateId: "12345",
 					ResourceName:  "akamai_mtlskeystore_client_certificate_third_party.test",
 					ExpectError:   regexp.MustCompile(`list failed`),
+					Config:        testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/import/import.tf"),
+				},
+			},
+		},
+		"error - no group and contract in certificate subject": {
+			importID: "12345",
+			init: func(m *mtlskeystore.Mock, testImportData commonDataForResource) {
+				mockGetClientCertificate(m, testImportData)
+			},
+			importData:  testClientCertificateMissedContractAndGroupInSubjectTP,
+			expectError: regexp.MustCompile(`list failed`),
+			steps: []resource.TestStep{
+				{
+					ImportState:   true,
+					ImportStateId: "12345",
+					ResourceName:  "akamai_mtlskeystore_client_certificate_third_party.test",
+					ExpectError:   regexp.MustCompile(`since it is not possible to extract contract and group from certificate\nsubject, you need to provide an importID in the format\n'certificateID,groupID,contractID'. Where certificate, groupID and contractID\nare required`),
+					Config:        testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/import/import.tf"),
+				},
+			},
+		},
+		"error - incorrect number of parts in importID": {
+			importID:    "123456789,123456,G-12RS3N4,123",
+			importData:  testClientCertificateMissedContractAndGroupInSubjectTP,
+			expectError: regexp.MustCompile(`list failed`),
+			steps: []resource.TestStep{
+				{
+					ImportState:   true,
+					ImportStateId: "123456789,123456,G-12RS3N4,123",
+					ResourceName:  "akamai_mtlskeystore_client_certificate_third_party.test",
+					ExpectError:   regexp.MustCompile(`you need to provide an importID in the format\n'certificateID,\[groupID,contractID]'. Where certificateID is required and\ngroupID and contractID are optional`),
 					Config:        testutils.LoadFixtureString(t, "testdata/TestResClientCertificateThirdParty/import/import.tf"),
 				},
 			},

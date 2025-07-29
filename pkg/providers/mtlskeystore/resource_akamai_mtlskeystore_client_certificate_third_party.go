@@ -917,42 +917,58 @@ func (r *clientCertificateThirdPartyResource) Delete(ctx context.Context, req re
 func (r *clientCertificateThirdPartyResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	tflog.Debug(ctx, "Importing Client Certificate Third Party Resource")
 
-	certificateID, err := strconv.ParseInt(req.ID, 10, 64)
-	if err != nil {
-		resp.Diagnostics.AddError("could not convert import ID to int64", err.Error())
-		return
-	}
-	// Get client certificate only to extract contract and group from the subject. Must be done in import method,
-	// as these values cannot be extracted from the API once the resource is created with a custom subject.
-	// If the subject does not contain the contract and group, the import will fail. This will be handled in DXE-5294.
-	client := Client(r.meta)
-	clientCertificate, err := client.GetClientCertificate(ctx, mtlskeystore.GetClientCertificateRequest{
-		CertificateID: certificateID,
-	})
-	if err != nil {
-		resp.Diagnostics.AddError("failed to get client certificate", err.Error())
-		return
-	}
-	ctr, grp, err := extractContractAndGroup(clientCertificate.Subject)
-	if err != nil {
-		resp.Diagnostics.AddError("failed to extract contract and group from subject", err.Error())
-		return
-	}
-	grpInt64, err := strconv.ParseInt(grp, 10, 64)
-	if err != nil {
-		resp.Diagnostics.AddError("failed to convert group to int64", err.Error())
+	importID := strings.TrimSpace(req.ID)
+	parts := strings.Split(importID, ",")
+
+	if len(parts) != 3 && len(parts) != 1 {
+		resp.Diagnostics.AddError("Incorrect import ID: ", "you need to provide an importID in the format 'certificateID,[groupID,contractID]'. Where certificateID is required and groupID and contractID are optional")
 		return
 	}
 
-	data := &clientCertificateThirdPartyResourceModel{
+	certificateID, err := parseCertificateID(parts[0])
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid Certificate ID", err.Error())
+		return
+	}
+
+	data := clientCertificateThirdPartyResourceModel{
 		CertificateName:    types.StringUnknown(),
 		CertificateID:      types.Int64Value(certificateID),
 		Geography:          types.StringUnknown(),
 		NotificationEmails: types.ListUnknown(types.StringType),
 		SecureNetwork:      types.StringUnknown(),
 		Versions:           types.MapUnknown(versionsObjectType),
-		ContractID:         types.StringValue(ctr),
-		GroupID:            types.Int64Value(grpInt64),
+	}
+
+	// API call is needed to populate subject from server, and extract contract and group ID from it
+	client := Client(r.meta)
+	certificate, err := client.GetClientCertificate(ctx, mtlskeystore.GetClientCertificateRequest{
+		CertificateID: certificateID,
+	})
+	if err != nil {
+		resp.Diagnostics.AddError("Unable to Get Client Certificate", err.Error())
+		return
+	}
+
+	var contractID, groupID string
+	if len(parts) == 3 {
+		contractID, groupID = parts[2], parts[1]
+	} else {
+		ok, subjectParts := subjectContainsContractAndGroup(certificate.Subject)
+		if !ok {
+			resp.Diagnostics.AddError("Incorrect import ID: ", fmt.Sprintf("since it is not possible to extract contract and group from certificate subject, "+missedContractAndGroupError))
+			return
+		}
+		contractID, groupID, err = extractContractAndGroup(certificate.Subject, subjectParts)
+		if err != nil {
+			resp.Diagnostics.AddError("Unable to extract contract ID or group ID", err.Error())
+			return
+		}
+	}
+
+	if diags := data.assignGroupAndContractThirdParty(contractID, groupID); diags.HasError() {
+		resp.Diagnostics.Append(diags...)
+		return
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -1134,17 +1150,7 @@ func checkStatus(ctx context.Context, client mtlskeystore.MTLSKeystore, certific
 }
 
 // extractContractAndGroup extracts the contract and group from the subject string.
-func extractContractAndGroup(subject string) (string, string, error) {
-	// Capture the part before required '/CN=' label.
-	re := regexp.MustCompile(`\/([^\/]+)\/CN=`)
-	matches := re.FindStringSubmatch(subject)
-	if len(matches) < 2 {
-		return "", "", fmt.Errorf("unable to extract group and contract from subject: unexpected format: '%s'", subject)
-	}
-	parts := strings.Fields(matches[1])
-	if len(parts) < 2 {
-		return "", "", fmt.Errorf("unable to extract group and contract from subject: no group or contract: '%s'", subject)
-	}
+func extractContractAndGroup(subject string, parts []string) (string, string, error) {
 	ctr := parts[len(parts)-2]
 	grp := parts[len(parts)-1]
 	// If groupID cannot be parsed as an integer, return an error.
@@ -1165,4 +1171,19 @@ func subjectLabels() []string {
 	return []string{
 		"CN=", "O=", "OU=", "L=", "ST=", "C=",
 	}
+}
+
+func (m *clientCertificateThirdPartyResourceModel) assignGroupAndContractThirdParty(ctrID, grpID string) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	m.ContractID = types.StringValue(ctrID)
+
+	gr, err := strconv.ParseInt(grpID, 10, 64)
+	if err != nil {
+		diags.AddError("Unable to parse group ID", err.Error())
+		return diags
+	}
+
+	m.GroupID = types.Int64Value(gr)
+	return diags
 }

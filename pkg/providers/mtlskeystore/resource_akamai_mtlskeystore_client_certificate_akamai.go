@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -27,6 +28,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
+
+const missedContractAndGroupError = "you need to provide an importID in the format 'certificateID,groupID,contractID'. Where certificate, groupID and contractID are required"
 
 var (
 	_ resource.Resource                = &clientCertificateAkamaiResource{}
@@ -503,16 +506,22 @@ func (c *clientCertificateAkamaiResource) Update(ctx context.Context, req resour
 func (c *clientCertificateAkamaiResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	tflog.Debug(ctx, "MTLS Keystore Client Certificate Akamai Resource Import")
 
-	certificateID, err := strconv.Atoi(strings.TrimSpace(req.ID))
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error with ID conversion",
-			fmt.Sprintf("Conversion error: %s", err),
-		)
+	importID := strings.TrimSpace(req.ID)
+	parts := strings.Split(importID, ",")
+
+	if len(parts) != 3 && len(parts) != 1 {
+		resp.Diagnostics.AddError("Incorrect import ID: ", "you need to provide an importID in the format 'certificateID,[groupID,contractID]'. Where certificateID is required and groupID and contractID are optional")
 		return
 	}
+
+	certificateID, err := parseCertificateID(parts[0])
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid Certificate ID", err.Error())
+		return
+	}
+
 	data := clientCertificateAkamaiResourceModel{
-		CertificateID:      types.Int64Value(int64(certificateID)),
+		CertificateID:      types.Int64Value(certificateID),
 		CertificateName:    types.StringUnknown(),
 		Geography:          types.StringUnknown(),
 		NotificationEmails: types.ListUnknown(types.StringType),
@@ -523,24 +532,33 @@ func (c *clientCertificateAkamaiResource) ImportState(ctx context.Context, req r
 	// API call is needed to populate subject from server, and extract contract and group ID from it
 	client := Client(c.meta)
 	certificate, err := client.GetClientCertificate(ctx, mtlskeystore.GetClientCertificateRequest{
-		CertificateID: int64(certificateID),
+		CertificateID: certificateID,
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("Unable to Get Client Certificate", err.Error())
 		return
 	}
-	ctrID, grpID, err := extractContractAndGroup(certificate.Subject)
-	if err != nil {
-		resp.Diagnostics.AddError("Unable to extract contract ID or group ID", err.Error())
+
+	var contractID, groupID string
+	if len(parts) == 3 {
+		contractID, groupID = parts[2], parts[1]
+	} else {
+		ok, subjectParts := subjectContainsContractAndGroup(certificate.Subject)
+		if !ok {
+			resp.Diagnostics.AddError("Incorrect import ID: ", fmt.Sprintf("since it is not possible to extract contract and group from certificate subject, "+missedContractAndGroupError))
+			return
+		}
+		contractID, groupID, err = extractContractAndGroup(certificate.Subject, subjectParts)
+		if err != nil {
+			resp.Diagnostics.AddError("Unable to extract contract ID or group ID", err.Error())
+			return
+		}
+	}
+
+	if diags := data.assignGroupAndContract(contractID, groupID); diags.HasError() {
+		resp.Diagnostics.Append(diags...)
 		return
 	}
-	data.ContractID = types.StringValue(ctrID)
-	gr, err := strconv.ParseInt(grpID, 10, 64)
-	if err != nil {
-		resp.Diagnostics.AddError("Unable to extract contract ID or group ID", err.Error())
-		return
-	}
-	data.GroupID = types.Int64Value(gr)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -696,4 +714,38 @@ func (m *clientCertificateAkamaiResourceModel) waitUntilVersionDeployed(
 				fmt.Errorf("context cancelled while waiting for client certificate version deployment: %w", ctx.Err())
 		}
 	}
+}
+
+func parseCertificateID(idStr string) (int64, error) {
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		return 0, fmt.Errorf("failed to parse certificate ID as an integer: %v", idStr)
+	}
+	return int64(id), nil
+}
+
+func subjectContainsContractAndGroup(subject string) (bool, []string) {
+	// Capture the part before required '/CN=' label.
+	re := regexp.MustCompile(`\/([^\/]+)\/CN=`)
+	matches := re.FindStringSubmatch(subject)
+	if len(matches) < 2 {
+		return false, nil
+	}
+	parts := strings.Fields(matches[1])
+	return len(parts) >= 2, parts
+}
+
+func (m *clientCertificateAkamaiResourceModel) assignGroupAndContract(ctrID, grpID string) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	m.ContractID = types.StringValue(ctrID)
+
+	gr, err := strconv.ParseInt(grpID, 10, 64)
+	if err != nil {
+		diags.AddError("Unable to parse group ID", err.Error())
+		return diags
+	}
+
+	m.GroupID = types.Int64Value(gr)
+	return diags
 }
