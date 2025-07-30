@@ -40,6 +40,9 @@
 
 #### FEATURES/ENHANCEMENTS:
 
+* General
+  * Updated various dependencies.
+
 * GTM
   * Added a new optional parameters to the import id of the `akamai_gtm_domain` resource. It allows to specify the contract and the group of the imported domain and save them in the state ([I#631](https://github.com/akamai/terraform-provider-akamai/issues/631)).
 
@@ -52,7 +55,7 @@
 
 
 * Appsec
-* Added `include_expiry_details` attribute to the `akamai_appsec_rapid_rules` data source to fetch expiration information for rapid rules by filling out the `expired` and `expire_in_days` attributes.
+  * Added `include_expiry_details` attribute to the `akamai_appsec_rapid_rules` data source to fetch expiration information for rapid rules by filling out the `expired` and `expire_in_days` attributes.
 
 
 
