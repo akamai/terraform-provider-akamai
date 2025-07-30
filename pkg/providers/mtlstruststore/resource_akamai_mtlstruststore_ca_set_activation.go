@@ -402,6 +402,7 @@ func (c *caSetActivationResource) Delete(ctx context.Context, req resource.Delet
 	ongoingOperation, err := checkOngoingCASetOperation(ctx, client, state)
 	if err != nil {
 		resp.Diagnostics.AddError(fmt.Sprintf("Failed to deactivate CA set ID %s version %d", state.CASetID.ValueString(), state.Version.ValueInt64()), err.Error())
+		return
 	}
 
 	var deactivation *mtlstruststore.DeactivateCASetVersionResponse
@@ -415,10 +416,12 @@ func (c *caSetActivationResource) Delete(ctx context.Context, req resource.Delet
 			} else {
 				// Return error for different version deactivation in progress
 				resp.Diagnostics.AddError("Deactivation Error", fmt.Sprintf("deactivation already in progress for version %d", ongoingOperation.Version))
+				return
 			}
 		case "ACTIVATE":
 			// Return error for ongoing activation
 			resp.Diagnostics.AddError("Deactivation Error", fmt.Sprintf("activation in progress for version %d, cannot deactivate", ongoingOperation.Version))
+			return
 		}
 	} else {
 		// Create a new deactivation request
@@ -429,14 +432,15 @@ func (c *caSetActivationResource) Delete(ctx context.Context, req resource.Delet
 		})
 		if err != nil {
 			resp.Diagnostics.AddError(fmt.Sprintf("Failed to deactivate CA set ID %s version %d", state.CASetID.ValueString(), state.Version.ValueInt64()), err.Error())
+			return
 		}
 	}
 
 	deactivationInfo := cASetActivationInfo{
 		ExpectedType: "DEACTIVATE",
 		Label:        "deactivation",
-		CASetID:      deactivation.CASetID,
-		Version:      deactivation.Version,
+		CASetID:      caSetID,
+		Version:      version,
 		ActivationID: deactivation.ActivationID,
 		RetryAfter:   deactivation.RetryAfter,
 	}
