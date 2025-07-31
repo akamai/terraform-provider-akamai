@@ -1392,5 +1392,5 @@ func mockDeleteClientCertificateAkamaiVersion(m *mtlskeystore.Mock, versions []c
 	return m.On("DeleteClientCertificateVersion", testutils.MockContext, mtlskeystore.DeleteClientCertificateVersionRequest{
 		CertificateID: certificateID,
 		Version:       versions[version-1].version,
-	}).Return(nil).Once()
+	}).Return(nil, nil).Once()
 }

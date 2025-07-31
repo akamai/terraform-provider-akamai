@@ -816,7 +816,7 @@ func (r *clientCertificateThirdPartyResource) update(ctx context.Context, plan, 
 func allVersionDeletionAndRotation(ctx context.Context, client mtlskeystore.MTLSKeystore, versionsToAdd []string, versionsToRemove []int64, stateVersions map[string]string, certificateID int64) error {
 	slices.Sort(versionsToRemove)
 	for _, version := range versionsToRemove[1:] {
-		err := client.DeleteClientCertificateVersion(ctx, mtlskeystore.DeleteClientCertificateVersionRequest{
+		_, err := client.DeleteClientCertificateVersion(ctx, mtlskeystore.DeleteClientCertificateVersionRequest{
 			CertificateID: certificateID,
 			Version:       version,
 		})
@@ -833,7 +833,7 @@ func allVersionDeletionAndRotation(ctx context.Context, client mtlskeystore.MTLS
 	}
 	stateVersions[firstVersionToRotate.VersionGUID] = versionsToAdd[0]
 
-	err = client.DeleteClientCertificateVersion(ctx, mtlskeystore.DeleteClientCertificateVersionRequest{
+	_, err = client.DeleteClientCertificateVersion(ctx, mtlskeystore.DeleteClientCertificateVersionRequest{
 		CertificateID: certificateID,
 		Version:       versionsToRemove[0],
 	})
@@ -857,7 +857,7 @@ func allVersionDeletionAndRotation(ctx context.Context, client mtlskeystore.MTLS
 // someVersionDeletionAndRotation is responsible for managing the deletion and rotation of client certificate versions.
 func someVersionDeletionAndRotation(ctx context.Context, client mtlskeystore.MTLSKeystore, versionsToAdd []string, versionsToRemove []int64, stateVersions map[string]string, certificateID int64) error {
 	for _, version := range versionsToRemove {
-		err := client.DeleteClientCertificateVersion(ctx, mtlskeystore.DeleteClientCertificateVersionRequest{
+		_, err := client.DeleteClientCertificateVersion(ctx, mtlskeystore.DeleteClientCertificateVersionRequest{
 			CertificateID: certificateID,
 			Version:       version,
 		})
@@ -898,14 +898,18 @@ func (r *clientCertificateThirdPartyResource) Delete(ctx context.Context, req re
 
 	for version := range stateVersions {
 		if stateVersions[version].Status.ValueString() != "DELETE_PENDING" {
-			err := client.DeleteClientCertificateVersion(ctx, mtlskeystore.DeleteClientCertificateVersionRequest{
+			deleteMessage, err := client.DeleteClientCertificateVersion(ctx, mtlskeystore.DeleteClientCertificateVersionRequest{
 				CertificateID: state.CertificateID.ValueInt64(),
 				Version:       stateVersions[version].Version.ValueInt64(),
 			})
 			if err != nil {
+				message := ""
+				if deleteMessage != nil {
+					message += fmt.Sprintf("Delete message: %s", *deleteMessage)
+				}
 				resp.Diagnostics.AddError(
 					"Deleting Client Certificate Version failed",
-					fmt.Sprintf("Failed to delete version %s: %v. ", version, err),
+					fmt.Sprintf("Failed to delete version %s: %v. ", version, err)+message,
 				)
 				return
 			}

@@ -2387,7 +2387,7 @@ func mockDeleteClientCertificateVersion(m *mtlskeystore.Mock, versions map[strin
 	return m.On("DeleteClientCertificateVersion", testutils.MockContext, mtlskeystore.DeleteClientCertificateVersionRequest{
 		CertificateID: certificateID,
 		Version:       versions[versionKey].version,
-	}).Return(nil).Once()
+	}).Return(nil, nil).Once()
 }
 
 func mockGetClientCertificate(m *mtlskeystore.Mock, testData commonDataForResource) *mock.Call {

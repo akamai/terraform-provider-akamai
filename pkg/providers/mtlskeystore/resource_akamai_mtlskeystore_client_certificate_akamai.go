@@ -606,7 +606,7 @@ func (c *clientCertificateAkamaiResource) Delete(ctx context.Context, req resour
 			continue
 		}
 
-		err := client.DeleteClientCertificateVersion(ctx, mtlskeystore.DeleteClientCertificateVersionRequest{
+		_, err := client.DeleteClientCertificateVersion(ctx, mtlskeystore.DeleteClientCertificateVersionRequest{
 			CertificateID: state.CertificateID.ValueInt64(),
 			Version:       version.Version,
 		})
