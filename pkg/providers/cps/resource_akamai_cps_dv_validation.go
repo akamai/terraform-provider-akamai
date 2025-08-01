@@ -102,9 +102,6 @@ func resourceCPSDVValidationCreate(ctx context.Context, d *schema.ResourceData, 
 		}
 		return diag.FromErr(err)
 	}
-	if err != nil {
-		return diag.FromErr(err)
-	}
 
 	// if status is `coordinate-domain-validation` or `wait-review-cert-warning` proceed further
 	status, err := waitForChangeStatus(ctx, client, enrollmentID, changeID, coodinateDomainValidation, coordinateDomainValidation, waitReviewCertWarning)

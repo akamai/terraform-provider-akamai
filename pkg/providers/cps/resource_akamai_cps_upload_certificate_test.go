@@ -159,6 +159,9 @@ func TestResourceCPSUploadCertificateWithThirdPartyEnrollmentDependency(t *testi
 				}).Return(&cps.RemoveEnrollmentResponse{
 					Enrollment: fmt.Sprintf("%d", enrollmentID),
 				}, nil).Once()
+				// Mock that the enrollment in not found after removal.
+				client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: enrollmentID}).
+					Return(nil, cps.ErrEnrollmentNotFound).Once()
 			},
 			enrollment:   getSimpleEnrollment(),
 			enrollmentID: 2,
@@ -640,7 +643,7 @@ func TestCreateCPSUploadCertificate(t *testing.T) {
 			changeID:     22,
 			configPath:   "testdata/TestResCPSUploadCertificate/change_management/change_management_true.tf",
 			checkFunc:    nil,
-			error:        regexp.MustCompile("Error: could not get change ID: no pending changes were found on enrollment"),
+			error:        regexp.MustCompile("Error: provided enrollment has no pending changes"),
 		},
 	}
 

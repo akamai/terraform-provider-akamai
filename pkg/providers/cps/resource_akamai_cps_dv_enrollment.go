@@ -21,8 +21,10 @@ import (
 )
 
 var (
-	// PollForChangeStatusInterval defines retry interval for getting status of a pending change
+	// PollForChangeStatusInterval defines retry interval for getting status of a pending change.
 	PollForChangeStatusInterval = 10 * time.Second
+	// PollForGetEnrollmentInterval defines retry interval for getting enrollment.
+	PollForGetEnrollmentInterval = 10 * time.Second
 )
 
 func resourceCPSDVEnrollment() *schema.Resource {

@@ -136,6 +136,10 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			Enrollment: "1",
 		}, nil).Once()
 
+		// Mock that the enrollment is not found after removal.
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(nil, cps.ErrEnrollmentNotFound).Once()
+
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
@@ -283,6 +287,10 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			Enrollment: "1",
 		}, nil).Once()
 
+		// Mock that the enrollment is not found after removal.
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(nil, cps.ErrEnrollmentNotFound).Once()
+
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
@@ -418,6 +426,10 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			Enrollment: "1",
 		}, nil).Once()
 
+		// Mock that the enrollment is not found after removal.
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(nil, cps.ErrEnrollmentNotFound).Once()
+
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
@@ -514,6 +526,10 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			Enrollment: "1",
 		}, nil).Once()
 
+		// Mock that the enrollment is not found after removal.
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(nil, cps.ErrEnrollmentNotFound).Once()
+
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
@@ -530,6 +546,104 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 
 		client.AssertExpectations(t)
 	})
+
+	t.Run("create enrollment with empty sans and waiting for deletion", func(t *testing.T) {
+		PollForChangeStatusInterval = 1 * time.Millisecond
+		client := &cps.Mock{}
+
+		enrollment := newEnrollment(WithEmptySans)
+		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
+
+		client.On("CreateEnrollment",
+			testutils.MockContext,
+			cps.CreateEnrollmentRequest{
+				EnrollmentRequestBody: enrollmentReqBody,
+				ContractID:            "1",
+			},
+		).Return(&cps.CreateEnrollmentResponse{
+			ID:         1,
+			Enrollment: "/cps/v2/enrollments/1",
+			Changes:    []string{"/cps/v2/enrollments/1/changes/2"},
+		}, nil).Once()
+
+		enrollmentGet := newEnrollment(WithEmptySans, WithPendingChangeID(2))
+
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(&enrollmentGet, nil).Once()
+
+		// first verification loop, invalid status
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{
+			AllowedInput: []cps.AllowedInput{},
+			StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: "pre-verification-safety-checks",
+			},
+		}, nil).Once()
+
+		// second verification loop, valid status, empty allowed input array
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{
+			AllowedInput: []cps.AllowedInput{},
+			StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: coodinateDomainValidation,
+			},
+		}, nil).Once()
+
+		// final verification loop
+		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{
+			AllowedInput: []cps.AllowedInput{{Type: "third-party-certificate"}},
+			StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: waitUploadThirdParty,
+			},
+		}, nil).Once()
+
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(&enrollmentGet, nil).Times(2)
+
+		allowCancel := true
+
+		client.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
+			EnrollmentID:              1,
+			AllowCancelPendingChanges: &allowCancel,
+		}).Return(&cps.RemoveEnrollmentResponse{
+			Enrollment: "1",
+		}, nil).Once()
+
+		// Mock that the first get enrollment call still returns the enrollment.
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(&enrollmentGet, nil).Once()
+
+		// Mock that the second get enrollment is not found after removal.
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(nil, cps.ErrEnrollmentNotFound).Once()
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/empty_sans/create_enrollment.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr("akamai_cps_third_party_enrollment.third_party", "contract_id", "ctr_1"),
+						),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
 	t.Run("create enrollment, MTLS", func(t *testing.T) {
 		PollForChangeStatusInterval = 1 * time.Millisecond
 		client := &cps.Mock{}
@@ -630,6 +744,10 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			Enrollment: "1",
 		}, nil).Once()
 
+		// Mock that the enrollment is not found after removal.
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(nil, cps.ErrEnrollmentNotFound).Once()
+
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
@@ -720,6 +838,10 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		}).Return(&cps.RemoveEnrollmentResponse{
 			Enrollment: "1",
 		}, nil).Once()
+
+		// Mock that the enrollment is not found after removal.
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -821,6 +943,10 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			Enrollment: "1",
 		}, nil).Once()
 
+		// Mock that the enrollment is not found after removal.
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(nil, cps.ErrEnrollmentNotFound).Once()
+
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
@@ -887,6 +1013,10 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		}).Return(&cps.RemoveEnrollmentResponse{
 			Enrollment: "1",
 		}, nil).Once()
+
+		// Mock that the enrollment is not found after removal.
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -983,6 +1113,10 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		}).Return(&cps.RemoveEnrollmentResponse{
 			Enrollment: "1",
 		}, nil).Once()
+
+		// Mock that the enrollment is not found after removal.
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -1099,6 +1233,10 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			Enrollment: "1",
 		}, nil).Once()
 
+		// Mock that the enrollment is not found after removal.
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(nil, cps.ErrEnrollmentNotFound).Once()
+
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
@@ -1187,6 +1325,10 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			Enrollment: "1",
 		}, nil).Once()
 
+		// Mock that the enrollment is not found after removal.
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(nil, cps.ErrEnrollmentNotFound).Once()
+
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
@@ -1266,6 +1408,10 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		}).Return(&cps.RemoveEnrollmentResponse{
 			Enrollment: "1",
 		}, nil).Once()
+
+		// Mock that the enrollment is not found after removal.
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -1419,6 +1565,10 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			Enrollment: "1",
 		}, nil).Once()
 
+		// Mock that the enrollment is not found after removal.
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(nil, cps.ErrEnrollmentNotFound).Once()
+
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
@@ -1497,6 +1647,10 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		}).Return(&cps.RemoveEnrollmentResponse{
 			Enrollment: "1",
 		}, nil).Once()
+
+		// Mock that the enrollment is not found after removal.
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -1580,6 +1734,10 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		}).Return(&cps.RemoveEnrollmentResponse{
 			Enrollment: "1",
 		}, nil).Once()
+
+		// Mock that the enrollment is not found after removal.
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -1668,6 +1826,10 @@ func TestResourceThirdPartyEnrollmentImport(t *testing.T) {
 		}).Return(&cps.RemoveEnrollmentResponse{
 			Enrollment: "1",
 		}, nil).Once()
+
+		// Mock that the enrollment is not found after removal.
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -1813,6 +1975,10 @@ func TestSuppressingSignatureAlgorithm(t *testing.T) {
 		}).Return(&cps.RemoveEnrollmentResponse{
 			Enrollment: "1",
 		}, nil).Once()
+
+		// Mock that the enrollment is not found after removal.
+		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{

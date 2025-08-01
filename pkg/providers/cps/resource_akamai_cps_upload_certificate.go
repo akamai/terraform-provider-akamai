@@ -324,10 +324,10 @@ func upsertUploadCertificate(ctx context.Context, d *schema.ResourceData, m inte
 		return diag.Errorf("could not get an enrollment: %s", err)
 	}
 	changeID, err := cpstools.GetChangeIDFromPendingChanges(enrollment.PendingChanges)
-	if err != nil {
-		return diag.Errorf("could not get change ID: %s", err)
-	} else if err != nil && errors.Is(err, cpstools.ErrNoPendingChanges) {
+	if err != nil && errors.Is(err, cpstools.ErrNoPendingChanges) {
 		return diag.Errorf("provided enrollment has no pending changes")
+	} else if err != nil {
+		return diag.Errorf("could not get change ID: %s", err)
 	}
 
 	certs := wrapCertificatesToUpload(attrs.certificateECDSA, attrs.trustChainECDSA, attrs.certificateRSA, attrs.trustChainRSA)

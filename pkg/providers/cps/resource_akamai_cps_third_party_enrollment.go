@@ -293,9 +293,6 @@ func resourceCPSThirdPartyEnrollmentRead(ctx context.Context, d *schema.Resource
 	if err = tf.SetAttrs(d, attrs); err != nil {
 		return diag.FromErr(err)
 	}
-	if err != nil {
-		return diag.FromErr(err)
-	}
 	return nil
 }
 

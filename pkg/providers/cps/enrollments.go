@@ -382,7 +382,35 @@ func enrollmentDelete(ctx context.Context, d *schema.ResourceData, m interface{}
 	if _, err = client.RemoveEnrollment(ctx, req); err != nil {
 		return diag.FromErr(err)
 	}
-	return nil
+
+	_, err = client.GetEnrollment(ctx, cps.GetEnrollmentRequest{EnrollmentID: enrollmentID})
+	if errors.Is(err, cps.ErrEnrollmentNotFound) {
+		logger.Debugf("Enrollment %d successfully deleted", enrollmentID)
+		return nil
+	}
+
+	const getTimeout = 120 * time.Minute
+	deleteDeadline := time.Now().Add(getTimeout)
+
+	for {
+		select {
+		case <-time.After(PollForGetEnrollmentInterval):
+			if time.Now().After(deleteDeadline) {
+				return diag.Errorf("timed out waiting for enrollment deletion after %v", getTimeout)
+			}
+			_, err = client.GetEnrollment(ctx, cps.GetEnrollmentRequest{EnrollmentID: enrollmentID})
+			if errors.Is(err, cps.ErrEnrollmentNotFound) {
+				logger.Debugf("Enrollment %d successfully deleted", enrollmentID)
+				return nil
+			}
+			if err != nil {
+				return diag.Errorf("error checking enrollment deletion: %v", err)
+			}
+
+		case <-ctx.Done():
+			return diag.Errorf("get enrollment context terminated: %s", ctx.Err())
+		}
+	}
 }
 
 func readAttrs(enrollment *cps.GetEnrollmentResponse, d *schema.ResourceData) (map[string]interface{}, error) {
