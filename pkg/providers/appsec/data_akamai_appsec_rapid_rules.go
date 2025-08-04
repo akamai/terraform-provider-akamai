@@ -21,15 +21,14 @@ type (
 
 	// rapidRulesDataSourceModel describes the data source data model for RapidRulesDataSource.
 	rapidRulesDataSourceModel struct {
-		ID                   types.String     `tfsdk:"id"`
-		ConfigID             types.Int64      `tfsdk:"config_id"`
-		PolicyID             types.String     `tfsdk:"security_policy_id"`
-		RuleID               types.Int64      `tfsdk:"rule_id"`
-		Enabled              types.Bool       `tfsdk:"enabled"`
-		DefaultAction        types.String     `tfsdk:"default_action"`
-		RapidRules           []rapidRuleModel `tfsdk:"rapid_rules"`
-		IncludeExpiryDetails types.Bool       `tfsdk:"include_expiry_details"`
-		OutputText           types.String     `tfsdk:"output_text"`
+		ID            types.String     `tfsdk:"id"`
+		ConfigID      types.Int64      `tfsdk:"config_id"`
+		PolicyID      types.String     `tfsdk:"security_policy_id"`
+		RuleID        types.Int64      `tfsdk:"rule_id"`
+		Enabled       types.Bool       `tfsdk:"enabled"`
+		DefaultAction types.String     `tfsdk:"default_action"`
+		RapidRules    []rapidRuleModel `tfsdk:"rapid_rules"`
+		OutputText    types.String     `tfsdk:"output_text"`
 	}
 
 	rapidRuleModel struct {
@@ -40,8 +39,6 @@ type (
 		AttackGroup          types.String `tfsdk:"attack_group"`
 		AttackGroupException types.String `tfsdk:"attack_group_exception"`
 		ConditionException   types.String `tfsdk:"condition_exception"`
-		Expired              types.Bool   `tfsdk:"expired"`
-		ExpireInDays         types.Int64  `tfsdk:"expire_in_days"`
 	}
 )
 
@@ -74,10 +71,6 @@ func (d *rapidRulesDataSource) Schema(_ context.Context, _ datasource.SchemaRequ
 			"rule_id": schema.Int64Attribute{
 				Optional:    true,
 				Description: "Unique identifier of a specific rapid rule for which to retrieve information",
-			},
-			"include_expiry_details": schema.BoolAttribute{
-				Optional:    true,
-				Description: "Whether to return expiry details, including `expired` and `expire_in_days` attributes, for each rapid rule. Defaults to `false` if not set.",
 			},
 			"enabled": schema.BoolAttribute{
 				Computed:    true,
@@ -119,14 +112,6 @@ func (d *rapidRulesDataSource) Schema(_ context.Context, _ datasource.SchemaRequ
 						"condition_exception": schema.StringAttribute{
 							Computed:    true,
 							Description: "The rapid rule exception.",
-						},
-						"expired": schema.BoolAttribute{
-							Computed:    true,
-							Description: "Whether the rule has already expired.",
-						},
-						"expire_in_days": schema.Int64Attribute{
-							Computed:    true,
-							Description: "Number of days remaining before the rule expires. This field is present only if the rule has not yet expired.",
 						},
 					},
 				},
@@ -173,13 +158,10 @@ func (d *rapidRulesDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	configID := data.ConfigID.ValueInt64()
 	ruleID := getRuleID(data.RuleID)
 	policyID := data.PolicyID.ValueString()
-	includeExpiry := !data.IncludeExpiryDetails.IsNull() && data.IncludeExpiryDetails.ValueBool()
-
 	getRulesRequest := appsec.GetRapidRulesRequest{
-		ConfigID:             configID,
-		PolicyID:             policyID,
-		RuleID:               ruleID,
-		IncludeExpiryDetails: includeExpiry,
+		ConfigID: configID,
+		PolicyID: policyID,
+		RuleID:   ruleID,
 	}
 
 	version, err := getLatestConfigVersion(ctx, int(configID), d.meta)
@@ -303,8 +285,6 @@ func generateOutputRapidRules(input []appsec.RapidRuleDetails) (*[]rapidRuleMode
 			AttackGroup:          types.StringValue(rule.AttackGroup),
 			AttackGroupException: types.StringValue(attackGroupException),
 			ConditionException:   types.StringValue(conditionException),
-			Expired:              types.BoolPointerValue(rule.Expired),
-			ExpireInDays:         types.Int64PointerValue(rule.ExpireInDays),
 		}
 		output = append(output, outputRule)
 	}
@@ -312,7 +292,6 @@ func generateOutputRapidRules(input []appsec.RapidRuleDetails) (*[]rapidRuleMode
 }
 
 func convertGetRapidRulesResponseToRapidRules(input *appsec.GetRapidRulesResponse, attackGroups *appsec.GetAttackGroupsResponse) *[]appsec.RapidRuleDetails {
-
 	output := make([]appsec.RapidRuleDetails, 0, len(input.Rules))
 
 	for _, rule := range input.Rules {
@@ -325,8 +304,6 @@ func convertGetRapidRulesResponseToRapidRules(input *appsec.GetRapidRulesRespons
 			AttackGroup:          attackGroup,
 			AttackGroupException: getAttackGroupException(attackGroup, attackGroups),
 			ConditionException:   rule.ConditionException,
-			Expired:              rule.Expired,
-			ExpireInDays:         rule.ExpireInDays,
 		}
 		output = append(output, outputRule)
 	}

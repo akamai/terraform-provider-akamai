@@ -7,9 +7,6 @@
 * General
   * Updated various dependencies.
 
-* Appsec
-  * Added the `include_expiry_details` attribute to the `akamai_appsec_rapid_rules` data source to fetch expiration information for rapid rules by filling out the `expired` and `expire_in_days` attributes.
-
 * ClientLists
   * Added deactivation per network on destroy to `resource_akamai_clientlists_list_activation`.
   * Migrated from terraform-plugin-sdk to terraform-plugin-framework for `data_akamai_clientlist_lists.go`.
