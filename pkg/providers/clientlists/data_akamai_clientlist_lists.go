@@ -3,166 +3,223 @@ package clientlists
 import (
 	"context"
 	"encoding/json"
-	"errors"
+	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/clientlists"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/hash"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
-func dataSourceClientLists() *schema.Resource {
-	return &schema.Resource{
-		ReadContext: dataSourceClientListRead,
-		Schema: map[string]*schema.Schema{
-			"name": {
-				Type:     schema.TypeString,
-				Optional: true,
+type (
+	clientListsDataSource struct {
+		meta meta.Meta
+	}
+
+	// clientListsDataSourceModel describes the data source data model for ClientListsDataSource.
+	clientListsDataSourceModel struct {
+		ID          types.String      `tfsdk:"id"`
+		Name        types.String      `tfsdk:"name"`
+		TypeFilters []types.String    `tfsdk:"type"`
+		ListIDs     []types.String    `tfsdk:"list_ids"`
+		Lists       []clientListModel `tfsdk:"lists"`
+		JSON        types.String      `tfsdk:"json"`
+		OutputText  types.String      `tfsdk:"output_text"`
+	}
+
+	clientListModel struct {
+		Name                       types.String   `tfsdk:"name"`
+		Type                       types.String   `tfsdk:"type"`
+		Notes                      types.String   `tfsdk:"notes"`
+		Tags                       []types.String `tfsdk:"tags"`
+		ListID                     types.String   `tfsdk:"list_id"`
+		Version                    types.Int64    `tfsdk:"version"`
+		ItemsCount                 types.Int64    `tfsdk:"items_count"`
+		CreateDate                 types.String   `tfsdk:"create_date"`
+		CreatedBy                  types.String   `tfsdk:"created_by"`
+		UpdateDate                 types.String   `tfsdk:"update_date"`
+		UpdatedBy                  types.String   `tfsdk:"updated_by"`
+		ProductionActivationStatus types.String   `tfsdk:"production_activation_status"`
+		StagingActivationStatus    types.String   `tfsdk:"staging_activation_status"`
+		ListType                   types.String   `tfsdk:"list_type"`
+		Shared                     types.Bool     `tfsdk:"shared"`
+		ReadOnly                   types.Bool     `tfsdk:"read_only"`
+		Deprecated                 types.Bool     `tfsdk:"deprecated"`
+	}
+)
+
+var (
+	_ datasource.DataSource              = &clientListsDataSource{}
+	_ datasource.DataSourceWithConfigure = &clientListsDataSource{}
+)
+
+// NewClientListsDataSource returns a new client lists data source
+func NewClientListsDataSource() datasource.DataSource { return &clientListsDataSource{} }
+
+// Metadata configures data source's meta information
+func (d *clientListsDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, response *datasource.MetadataResponse) {
+	response.TypeName = "akamai_clientlist_lists"
+}
+
+// Schema is used to define data source's terraform schema
+func (d *clientListsDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		MarkdownDescription: "Client lists data source.",
+		Attributes: map[string]schema.Attribute{
+			"name": schema.StringAttribute{
+				Optional:    true,
+				Description: "Filter client lists by name",
 			},
-			"type": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				Elem: &schema.Schema{
-					Type:             schema.TypeString,
-					ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(getValidListTypes(), false)),
+			"type": schema.SetAttribute{
+				Optional:    true,
+				ElementType: types.StringType,
+				Description: "Filter client lists by type. Valid values: IP, GEO, ASN, TLS_FINGERPRINT, FILE_HASH.",
+				Validators: []validator.Set{
+					setvalidator.ValueStringsAre(stringvalidator.OneOf(getValidListTypes()...)),
 				},
 			},
-			"list_ids": {
-				Type:        schema.TypeList,
-				Elem:        &schema.Schema{Type: schema.TypeString},
+			"list_ids": schema.ListAttribute{
 				Computed:    true,
+				ElementType: types.StringType,
 				Description: "A set of client list ids.",
 			},
-			"lists": {
-				Type:        schema.TypeList,
+			"lists": schema.ListNestedAttribute{
 				Computed:    true,
 				Description: "A set of client lists.",
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"name": {
-							Type:        schema.TypeString,
-							Optional:    true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{
+							Computed:    true,
 							Description: "The name of the client list",
 						},
-						"type": {
-							Type:        schema.TypeString,
-							Optional:    true,
+						"type": schema.StringAttribute{
+							Computed:    true,
 							Description: "The type of the client list",
 						},
-						"notes": {
-							Type:        schema.TypeString,
+						"notes": schema.StringAttribute{
 							Computed:    true,
 							Description: "The client list notes",
 						},
-						"tags": {
-							Type:        schema.TypeList,
+						"tags": schema.ListAttribute{
 							Computed:    true,
+							ElementType: types.StringType,
 							Description: "The client list tags",
-							Elem:        &schema.Schema{Type: schema.TypeString},
 						},
-						"list_id": {
-							Type:        schema.TypeString,
+						"list_id": schema.StringAttribute{
 							Computed:    true,
 							Description: "The ID of the client list.",
 						},
-						"version": {
-							Type:        schema.TypeInt,
+						"version": schema.Int64Attribute{
 							Computed:    true,
 							Description: "The current version of the client list.",
 						},
-						"items_count": {
-							Type:        schema.TypeInt,
+						"items_count": schema.Int64Attribute{
 							Computed:    true,
 							Description: "The number of items that a client list contains.",
 						},
-						"create_date": {
-							Type:        schema.TypeString,
+						"create_date": schema.StringAttribute{
 							Computed:    true,
 							Description: "The client list creation date.",
 						},
-						"created_by": {
-							Type:        schema.TypeString,
+						"created_by": schema.StringAttribute{
 							Computed:    true,
 							Description: "The username of the user who created the client list.",
 						},
-						"update_date": {
-							Type:        schema.TypeString,
+						"update_date": schema.StringAttribute{
 							Computed:    true,
 							Description: "The date of last update.",
 						},
-						"updated_by": {
-							Type:        schema.TypeString,
+						"updated_by": schema.StringAttribute{
 							Computed:    true,
 							Description: "The username of the user that updated the client list last.",
 						},
-						"production_activation_status": {
-							Type:        schema.TypeString,
+						"production_activation_status": schema.StringAttribute{
 							Computed:    true,
 							Description: "The activation status in production environment.",
 						},
-						"staging_activation_status": {
-							Type:        schema.TypeString,
+						"staging_activation_status": schema.StringAttribute{
 							Computed:    true,
 							Description: "The activation status in staging environment.",
 						},
-						"list_type": {
-							Type:        schema.TypeString,
+						"list_type": schema.StringAttribute{
 							Computed:    true,
 							Description: "The client list type.",
 						},
-						"shared": {
-							Type:        schema.TypeBool,
+						"shared": schema.BoolAttribute{
 							Computed:    true,
 							Description: "Whether the client list is shared.",
 						},
-						"read_only": {
-							Type:        schema.TypeBool,
+						"read_only": schema.BoolAttribute{
 							Computed:    true,
 							Description: "Whether the client is editable for the authenticated user.",
 						},
-						"deprecated": {
-							Type:        schema.TypeBool,
+						"deprecated": schema.BoolAttribute{
 							Computed:    true,
 							Description: "Whether the client list was removed.",
 						},
 					},
 				},
 			},
-			"json": {
-				Type:        schema.TypeString,
+			"json": schema.StringAttribute{
 				Computed:    true,
 				Description: "JSON representation of the client lists.",
 			},
-			"output_text": {
-				Type:        schema.TypeString,
+			"output_text": schema.StringAttribute{
 				Computed:    true,
 				Description: "Tabular representation of the client lists.",
+			},
+			"id": schema.StringAttribute{
+				MarkdownDescription: "Identifier of the data source",
+				Computed:            true,
 			},
 		},
 	}
 }
 
-func dataSourceClientListRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := meta.Must(m)
-	client := inst.Client(meta)
-	logger := meta.Log("CLIENTLIST", "dataSourceClientListRead")
+func (d *clientListsDataSource) Configure(ctx context.Context, request datasource.ConfigureRequest, response *datasource.ConfigureResponse) {
+	tflog.Debug(ctx, "Configuring Client Lists data source")
 
-	name, err := tf.GetStringValue("name", d)
-	if err != nil && !errors.Is(err, tf.ErrNotFound) {
-		return diag.FromErr(err)
+	if request.ProviderData == nil {
+		return
 	}
 
-	listTypesSet, err := tf.GetSetValue("type", d)
-	if err != nil && !errors.Is(err, tf.ErrNotFound) {
-		return diag.FromErr(err)
+	meta, ok := request.ProviderData.(meta.Meta)
+	if !ok {
+		response.Diagnostics.AddError(
+			"Unexpected Data Source Configure Type",
+			fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.", request.ProviderData),
+		)
+		return
 	}
-	listTypesList := tf.SetToStringSlice(listTypesSet)
-	listTypes := make([]clientlists.ClientListType, 0, listTypesSet.Len())
-	for _, v := range listTypesList {
-		listTypes = append(listTypes, clientlists.ClientListType(v))
+
+	d.meta = meta
+}
+
+func (d *clientListsDataSource) Read(ctx context.Context, request datasource.ReadRequest, response *datasource.ReadResponse) {
+	tflog.Debug(ctx, "Reading Client Lists data source")
+
+	var data clientListsDataSourceModel
+	response.Diagnostics.Append(request.Config.Get(ctx, &data)...)
+	if response.Diagnostics.HasError() {
+		return
+	}
+
+	client := inst.Client(d.meta)
+	logger := d.meta.Log("CLIENTLIST", "dataSourceClientListRead")
+
+	name := data.Name.ValueString()
+
+	var listTypes []clientlists.ClientListType
+	if len(data.TypeFilters) > 0 {
+		for _, t := range data.TypeFilters {
+			listTypes = append(listTypes, clientlists.ClientListType(t.ValueString()))
+		}
 	}
 
 	lists, err := client.GetClientLists(ctx, clientlists.GetClientListsRequest{
@@ -171,77 +228,60 @@ func dataSourceClientListRead(ctx context.Context, d *schema.ResourceData, m int
 	})
 	if err != nil {
 		logger.Errorf("calling 'GetClientLists': %s", err.Error())
-		return diag.FromErr(err)
+		response.Diagnostics.AddError("get client lists error", err.Error())
+		return
 	}
 
-	mappedLists := mapClientListsToSchema(lists)
-	if err := d.Set("lists", mappedLists); err != nil {
-		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
+	listIDs := make([]types.String, 0, len(lists.Content))
+	clientLists := make([]clientListModel, 0, len(lists.Content))
+	for _, cl := range lists.Content {
+		tags := make([]types.String, 0, len(cl.Tags))
+		for _, tag := range cl.Tags {
+			tags = append(tags, types.StringValue(tag))
+		}
+
+		clientList := clientListModel{
+			Name:                       types.StringValue(cl.Name),
+			Type:                       types.StringValue(string(cl.Type)),
+			Notes:                      types.StringValue(cl.Notes),
+			Tags:                       tags,
+			ListID:                     types.StringValue(cl.ListID),
+			Version:                    types.Int64Value(cl.Version),
+			ItemsCount:                 types.Int64Value(cl.ItemsCount),
+			CreateDate:                 types.StringValue(cl.CreateDate),
+			CreatedBy:                  types.StringValue(cl.CreatedBy),
+			UpdateDate:                 types.StringValue(cl.UpdateDate),
+			UpdatedBy:                  types.StringValue(cl.UpdatedBy),
+			ProductionActivationStatus: types.StringValue(cl.ProductionActivationStatus),
+			StagingActivationStatus:    types.StringValue(cl.StagingActivationStatus),
+			ListType:                   types.StringValue(cl.ListType),
+			Shared:                     types.BoolValue(cl.Shared),
+			ReadOnly:                   types.BoolValue(cl.ReadOnly),
+			Deprecated:                 types.BoolValue(cl.Deprecated),
+		}
+		clientLists = append(clientLists, clientList)
+		listIDs = append(listIDs, types.StringValue(cl.ListID))
 	}
+	data.Lists = clientLists
+	data.ListIDs = listIDs
 
 	jsonBody, err := json.MarshalIndent(lists.Content, "", "  ")
 	if err != nil {
-		return diag.FromErr(err)
+		response.Diagnostics.AddError("Error marshaling JSON", err.Error())
+		return
 	}
-	if err := d.Set("json", string(jsonBody)); err != nil {
-		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
-	}
-
-	IDs := make([]string, 0, len(lists.Content))
-	for _, cl := range lists.Content {
-		IDs = append(IDs, cl.ListID)
-	}
-	if err := d.Set("list_ids", IDs); err != nil {
-		logger.Errorf("error setting 'list_ids': %s", err.Error())
-		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
-	}
+	data.JSON = types.StringValue(string(jsonBody))
 
 	ots := OutputTemplates{}
 	InitTemplates(ots)
-
 	outputText, err := RenderTemplates(ots, "clientListsDS", lists)
 	if err != nil {
-		return diag.FromErr(err)
+		response.Diagnostics.AddError("Error rendering output text", err.Error())
+		return
 	}
-	if err := d.Set("output_text", outputText); err != nil {
-		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
-	}
-
-	d.SetId(hash.GetSHAString(string(jsonBody)))
-
-	return nil
-}
-
-func mapClientListsToSchema(lists *clientlists.GetClientListsResponse) []interface{} {
-	if lists != nil && len(lists.Content) > 0 {
-		result := make([]interface{}, 0, len(lists.Content))
-
-		for _, list := range lists.Content {
-			result = append(result, map[string]interface{}{
-				"name":                         list.Name,
-				"type":                         list.Type,
-				"notes":                        list.Notes,
-				"tags":                         list.Tags,
-				"list_id":                      list.ListID,
-				"version":                      list.Version,
-				"items_count":                  list.ItemsCount,
-				"create_date":                  list.CreateDate,
-				"created_by":                   list.CreatedBy,
-				"update_date":                  list.UpdateDate,
-				"updated_by":                   list.UpdatedBy,
-				"production_activation_status": list.ProductionActivationStatus,
-				"staging_activation_status":    list.StagingActivationStatus,
-				"list_type":                    list.ListType,
-				"shared":                       list.Shared,
-				"read_only":                    list.ReadOnly,
-				"deprecated":                   list.Deprecated,
-			})
-		}
-
-		return result
-	}
-
-	return make([]interface{}, 0)
+	data.OutputText = types.StringValue(outputText)
+	data.ID = types.StringValue(hash.GetSHAString(string(jsonBody)))
+	response.Diagnostics.Append(response.State.Set(ctx, &data)...)
 }
 
 func getValidListTypes() []string {

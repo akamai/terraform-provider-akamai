@@ -16,6 +16,7 @@ import (
 	_ "github.com/akamai/terraform-provider-akamai/v8/pkg/providers/gtm"
 	_ "github.com/akamai/terraform-provider-akamai/v8/pkg/providers/iam"
 	_ "github.com/akamai/terraform-provider-akamai/v8/pkg/providers/imaging"
+	_ "github.com/akamai/terraform-provider-akamai/v8/pkg/providers/mtlskeystore"
 	_ "github.com/akamai/terraform-provider-akamai/v8/pkg/providers/networklists"
 	_ "github.com/akamai/terraform-provider-akamai/v8/pkg/providers/property"
 )

@@ -1,109 +1,127 @@
 package clientlists
 
 import (
-	"bytes"
 	"encoding/json"
-	"fmt"
-	"strconv"
+	"errors"
+	"regexp"
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/clientlists"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
-func TestClientList_data_all_lists(t *testing.T) {
-	dataSourceName := "data.akamai_clientlist_lists.lists"
+func TestDataClientLists(t *testing.T) {
+	allListsResponse := clientlists.GetClientListsResponse{}
+	err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testData/TestDSClientList/ClientLists.json"), &allListsResponse)
+	require.NoError(t, err)
+
+	emptyListsResponse := clientlists.GetClientListsResponse{
+		Content: []clientlists.ClientList{},
+	}
+
+	baseChecker := test.NewStateChecker("data.akamai_clientlist_lists.lists")
+
 	tests := map[string]struct {
-		params       clientlists.GetClientListsRequest
-		config       string
-		responseBody []byte
+		init  func(*clientlists.Mock)
+		steps []resource.TestStep
 	}{
-		"All lists": {
-			params: clientlists.GetClientListsRequest{
-				Type: []clientlists.ClientListType{},
+		"happy path - all lists": {
+			init: func(m *clientlists.Mock) {
+				mockGetClientLists(m, allListsResponse, clientlists.GetClientListsRequest{}, 3)
 			},
-			config:       loadFixtureString("testData/TestDSClientList/match_all.tf"),
-			responseBody: loadFixtureBytes("testData/TestDSClientList/ClientLists.json"),
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testData/TestDSClientList/match_all.tf"),
+					Check: baseChecker.
+						CheckEqual("list_ids.#", "10").
+						CheckEqual("lists.#", "10").
+						CheckEqual("lists.0.list_id", "91596_AUDITLOGSTESTLIST").
+						CheckEqual("lists.0.name", "AUDIT LOGS - TEST LIST").
+						CheckEqual("lists.0.type", "IP").
+						Build(),
+				},
+			},
 		},
-		"Filtered lists": {
-			params: clientlists.GetClientListsRequest{
-				Name: "test",
-				Type: []clientlists.ClientListType{clientlists.IP, clientlists.GEO},
+		"happy path - filtered lists": {
+			init: func(m *clientlists.Mock) {
+				mockGetClientLists(m, allListsResponse, clientlists.GetClientListsRequest{
+					Name: "test",
+					Type: []clientlists.ClientListType{clientlists.GEO, clientlists.IP},
+				}, 3)
 			},
-			config:       loadFixtureString("testData/TestDSClientList/match_by_filters.tf"),
-			responseBody: loadFixtureBytes("testData/TestDSClientList/ClientLists.json"),
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testData/TestDSClientList/match_by_filters.tf"),
+					Check: baseChecker.
+						CheckEqual("name", "test").
+						CheckEqual("type.#", "2").
+						CheckEqual("type.0", "GEO").
+						CheckEqual("type.1", "IP").
+						CheckEqual("list_ids.#", "10").
+						CheckEqual("lists.#", "10").
+						Build(),
+				},
+			},
 		},
-		"Empty content list": {
-			params: clientlists.GetClientListsRequest{
-				Type: []clientlists.ClientListType{},
+		"happy path - empty content list": {
+			init: func(m *clientlists.Mock) {
+				mockGetClientLists(m, emptyListsResponse, clientlists.GetClientListsRequest{}, 3)
 			},
-			config: loadFixtureString("testData/TestDSClientList/match_all.tf"),
-			responseBody: []byte(`{
-				"content": []
-			}`),
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testData/TestDSClientList/match_all.tf"),
+					Check: baseChecker.
+						CheckEqual("list_ids.#", "0").
+						CheckEqual("lists.#", "0").
+						CheckEqual("json", "[]").
+						Build(),
+				},
+			},
+		},
+		"error response from GetClientLists api": {
+			init: func(m *clientlists.Mock) {
+				mockGetClientListsFailure(m, clientlists.GetClientListsRequest{})
+			},
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testData/TestDSClientList/match_all.tf"),
+					ExpectError: regexp.MustCompile("get client lists error"),
+				},
+			},
 		},
 	}
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &clientlists.Mock{}
-			clientListsResponse := clientlists.GetClientListsResponse{}
-			err := json.Unmarshal(test.responseBody, &clientListsResponse)
-			require.NoError(t, err)
-
-			r, err := json.Marshal(clientListsResponse.Content)
-			require.NoError(t, err)
-
-			buf := &bytes.Buffer{}
-			err = json.Indent(buf, r, "", "  ")
-			require.NoError(t, err)
-
-			clientListsResponseJSONString := buf.String()
-
-			client.On("GetClientLists",
-				testutils.MockContext,
-				test.params,
-			).Return(&clientListsResponse, nil)
+			if test.init != nil {
+				test.init(client)
+			}
 
 			useClient(client, func() {
-				checks := []resource.TestCheckFunc{
-					resource.TestCheckResourceAttr(dataSourceName, "json", clientListsResponseJSONString),
-					resource.TestCheckResourceAttr(dataSourceName, "list_ids.#", strconv.Itoa(len(clientListsResponse.Content))),
-					resource.TestCheckResourceAttr(dataSourceName, "lists.#", strconv.Itoa(len(clientListsResponse.Content))),
-				}
-				for k, v := range clientListsResponse.Content {
-					checks = append(checks, resource.TestCheckResourceAttr(dataSourceName, fmt.Sprintf("list_ids.%d", k), v.ListID))
-					checks = append(checks, resource.TestCheckResourceAttr(dataSourceName, fmt.Sprintf("lists.%d.list_id", k), v.ListID))
-				}
-
-				if test.params.Name != "" {
-					checks = append(checks, resource.TestCheckResourceAttr(dataSourceName, "name", test.params.Name))
-				} else {
-					checks = append(checks, resource.TestCheckNoResourceAttr(dataSourceName, "name"))
-				}
-				if len(test.params.Type) > 0 {
-					checks = append(checks, resource.TestCheckResourceAttr(dataSourceName, "type.#", strconv.Itoa(len(test.params.Type))))
-					checks = append(checks, resource.TestCheckResourceAttr(dataSourceName, "type.0", string(test.params.Type[1])))
-					checks = append(checks, resource.TestCheckResourceAttr(dataSourceName, "type.1", string(test.params.Type[0])))
-				} else {
-					checks = append(checks, resource.TestCheckNoResourceAttr(dataSourceName, "type"))
-				}
-
-				resource.Test(t, resource.TestCase{
-					IsUnitTest:               true,
+				resource.UnitTest(t, resource.TestCase{
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							Config: test.config,
-							Check:  resource.ComposeAggregateTestCheckFunc(checks...),
-						},
-					},
+					IsUnitTest:               true,
+					Steps:                    test.steps,
 				})
 			})
 
 			client.AssertExpectations(t)
 		})
 	}
+}
+
+func mockGetClientLists(m *clientlists.Mock, response clientlists.GetClientListsResponse, request clientlists.GetClientListsRequest, times int) {
+	m.On("GetClientLists", mock.Anything, request).
+		Return(&response, nil).Times(times)
+}
+
+func mockGetClientListsFailure(m *clientlists.Mock, request clientlists.GetClientListsRequest) {
+	err := errors.New("failed to get client lists")
+	m.On("GetClientLists", mock.Anything, request).
+		Return(nil, err).Once()
 }

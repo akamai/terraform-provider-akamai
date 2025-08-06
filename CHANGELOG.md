@@ -1,5 +1,33 @@
 # RELEASE NOTES
 
+## 8.1.0 (Aug 06, 2025)
+
+#### FEATURES/ENHANCEMENTS:
+
+* General
+  * Updated various dependencies.
+
+* ClientLists
+  * Added deactivation per network on destroy to `resource_akamai_clientlists_list_activation`.
+  * Migrated from terraform-plugin-sdk to terraform-plugin-framework for `data_akamai_clientlist_lists.go`.
+
+* GTM
+  * Added new optional parameters to the `akamai_gtm_domain` resource's import ID. It allows specifying the imported domain's contract and group and save them in the state ([I#631](https://github.com/akamai/terraform-provider-akamai/issues/631)).
+
+* mTLS Keystore:
+    * Added new data sources:
+        * `akamai_mtlskeystore_account_ca_certificates` - lists CA certificates under the account.
+        * `akamai_mtlskeystore_client_certificate` - reads client certificate with its versions.
+        * `akamai_mtlskeystore_client_certificates` - lists client certificates under the account.
+    * Added new resources:
+        * `akamai_mtlskeystore_client_certificate_akamai` - manages the Akamai flow for client certificates.
+        * `akamai_mtlskeystore_client_certificate_third_party` - manages third-party client certificates.
+        * `akamai_mtlskeystore_client_certificate_upload` - uploads a signed third-party certificate version.
+
+* PAPI 
+  * Added support for the new rule format `v2025-05-30`. The list of changes can be found [here](https://techdocs.akamai.com/terraform/docs/rule-format-changes#v2025-05-30).
+  * Added support for the new rule format `v2025-07-07`. The list of changes can be found [here](https://techdocs.akamai.com/terraform/docs/rule-format-changes#v2025-07-07).
+
 ## 8.0.0 (May 28, 2025)
 
 #### BREAKING CHANGES:
