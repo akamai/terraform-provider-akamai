@@ -53,6 +53,7 @@ const (
 	readRapidRulesError                 = "Unable to read rapid rules"
 	updateRapidRulesStatusError         = "Unable to update rapid rules status"
 	updateRapidRulesDefaultActionFailed = "Unable to update rapid rules default action"
+	resourceName                        = "rapidRules"
 )
 
 // NewRapidRulesResource returns new appsec rapid rules resource
@@ -186,7 +187,7 @@ func (r *rapidRulesResource) Create(ctx context.Context, req resource.CreateRequ
 	configID := data.ConfigID.ValueInt64()
 	defaultAction := data.DefaultAction.ValueString()
 
-	version, err := getLatestConfigVersion(ctx, int(configID), r.meta)
+	version, err := getModifiableConfigVersion(ctx, int(configID), resourceName, r.meta)
 	if err != nil {
 		resp.Diagnostics.AddError("Unable to read latest config version from API", err.Error())
 		return
@@ -368,7 +369,7 @@ func (r *rapidRulesResource) Update(ctx context.Context, req resource.UpdateRequ
 	configID := plan.ConfigID.ValueInt64()
 	defaultAction := plan.DefaultAction.ValueString()
 
-	version, err := getLatestConfigVersion(ctx, int(configID), r.meta)
+	version, err := getModifiableConfigVersion(ctx, int(configID), resourceName, r.meta)
 	if err != nil {
 		resp.Diagnostics.AddError("invalid config version: ", err.Error())
 		return
@@ -477,7 +478,7 @@ func (r *rapidRulesResource) Delete(ctx context.Context, req resource.DeleteRequ
 
 	configID := int(data.ConfigID.ValueInt64())
 
-	version, err := getLatestConfigVersion(ctx, configID, r.meta)
+	version, err := getModifiableConfigVersion(ctx, int(configID), resourceName, r.meta)
 	if err != nil {
 		resp.Diagnostics.AddError("invalid config version: ", err.Error())
 		return

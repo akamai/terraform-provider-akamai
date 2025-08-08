@@ -33,7 +33,7 @@ func TestRapidRulesResource(t *testing.T) {
 	err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResRapidRules/ConditionException.json"), &ruleConditionException)
 	require.NoError(t, err)
 
-	baseChecker := test.NewStateChecker(resourceName).
+	baseChecker := test.NewStateChecker(resourceReferenceName).
 		CheckEqual("id", "111111:2222_333333").
 		CheckEqual("config_id", "111111").
 		CheckEqual("security_policy_id", "2222_333333").
@@ -347,9 +347,9 @@ func TestRapidRulesResource(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResRapidRules/delete_rapid_rules.tf"),
 					Check: func(s *terraform.State) error {
-						_, ok := s.RootModule().Resources[resourceName]
+						_, ok := s.RootModule().Resources[resourceReferenceName]
 						if ok {
-							return fmt.Errorf("resource %s is still present in the Terraform state", resourceName)
+							return fmt.Errorf("resource %s is still present in the Terraform state", resourceReferenceName)
 						}
 						return nil
 					},
@@ -371,7 +371,7 @@ func TestRapidRulesResource(t *testing.T) {
 					Config:        testutils.LoadFixtureString(t, "testdata/TestResRapidRules/create_rapid_rules_with_minimum_params.tf"),
 					ImportState:   true,
 					ImportStateId: "111111:2222_333333",
-					ResourceName:  resourceName,
+					ResourceName:  resourceReferenceName,
 					ImportStateCheck: test.NewImportChecker().
 						CheckEqual("id", "111111:2222_333333").
 						CheckEqual("config_id", "111111").
@@ -389,7 +389,7 @@ func TestRapidRulesResource(t *testing.T) {
 					Config:             testutils.LoadFixtureString(t, "testdata/TestResRapidRules/create_rapid_rules_with_minimum_params.tf"),
 					ImportState:        true,
 					ImportStateId:      "12345",
-					ResourceName:       resourceName,
+					ResourceName:       resourceReferenceName,
 					ExpectError:        regexp.MustCompile("Error: ID '12345' incorrectly formatted: should be 'CONFIG_ID:SECURITY_POLICY_ID'"),
 					ImportStatePersist: true,
 				},
@@ -401,7 +401,7 @@ func TestRapidRulesResource(t *testing.T) {
 					Config:             testutils.LoadFixtureString(t, "testdata/TestResRapidRules/create_rapid_rules_with_minimum_params.tf"),
 					ImportState:        true,
 					ImportStateId:      "123:",
-					ResourceName:       resourceName,
+					ResourceName:       resourceReferenceName,
 					ExpectError:        regexp.MustCompile("Error: invalid security policy id ''"),
 					ImportStatePersist: true,
 				},
@@ -600,7 +600,7 @@ func toDefinitionsJSON(file string) string {
 	return string(data)
 }
 
-var resourceName = "akamai_appsec_rapid_rules.test"
+var resourceReferenceName = "akamai_appsec_rapid_rules.test"
 
 var serverError = appsec.Error{
 	Type:       "internal_error",

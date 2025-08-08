@@ -63,6 +63,14 @@
 
 * APPSEC
   * Fixed an issue in the `resource_akamai_appsec_rapid_rules` resource attribute does not accept values from variables.
+  * Fixed an issue in the `resource_akamai_appsec_rapid_rules` resource modification does not create new version of security configuration if current is read-only.
+
+
+
+
+
+
+
 
 * Datastream
   * Fixed handling of `2051` data field  in `resource_akamai_datastream` when `collect_midgress` is set to `true` ([I#671](https://github.com/akamai/terraform-provider-akamai/issues/671))
