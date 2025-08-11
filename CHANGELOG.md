@@ -78,6 +78,8 @@
 * PAPI 
   * Added support for the new rule format `v2025-05-30`. The list of changes can be found [here](https://techdocs.akamai.com/terraform/docs/rule-format-changes#v2025-05-30).
   * Added support for the new rule format `v2025-07-07`. The list of changes can be found [here](https://techdocs.akamai.com/terraform/docs/rule-format-changes#v2025-07-07).
+* IAM
+  * Fixed handling of unknown values in resource `akamai_iam_api_client` causing "Value Conversion Error" when set conditionally ([I#678](https://github.com/akamai/terraform-provider-akamai/issues/678)) (Beta).
 
 ## 8.0.0 (May 28, 2025)
 
