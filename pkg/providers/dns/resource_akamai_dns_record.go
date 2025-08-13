@@ -480,7 +480,9 @@ func diffQuotedDNSRecord(oldTargetList []string, newTargetList []string, o strin
 		compList = oldTargetList
 	} else {
 		baseVal = o
-		baseVal = strings.Trim(baseVal, backslashQuote)
+		if recordType != RRTypeTxt {
+			baseVal = strings.Trim(baseVal, backslashQuote)
+		}
 		baseVal = strings.ReplaceAll(baseVal, backslashQuote, singleQuote)
 		compList = newTargetList
 	}
@@ -530,6 +532,21 @@ func diffQuotedDNSRecord(oldTargetList []string, newTargetList []string, o strin
 			compval = strings.TrimRight(compval, ".")
 			logger.Debugf("updated baseVal: %v", baseVal)
 			logger.Debugf("compval: %v", compval)
+			if baseVal == compval {
+				return true
+			}
+		}
+		return false
+	}
+
+	if recordType == RRTypeTxt {
+		for _, compval := range compList {
+			if compTrim && strings.Contains(compval, backslashQuote) {
+				compval = strings.ReplaceAll(compval, backslashQuote, singleQuote)
+			}
+			logger.Debugf("diffQuotedDNSRecord Suppress. baseVal: %v", baseVal)
+			logger.Debugf("diffQuotedDNSRecord Suppress. compval: [%v]", compval)
+			
 			if baseVal == compval {
 				return true
 			}
