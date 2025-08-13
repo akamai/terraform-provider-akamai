@@ -24,7 +24,7 @@ var (
 	// PollForChangeStatusInterval defines retry interval for getting status of a pending change.
 	PollForChangeStatusInterval = 10 * time.Second
 	// PollForGetEnrollmentInterval defines retry interval for getting enrollment.
-	PollForGetEnrollmentInterval = 10 * time.Second
+	PollForGetEnrollmentInterval = 30 * time.Second
 )
 
 func resourceCPSDVEnrollment() *schema.Resource {
@@ -235,7 +235,7 @@ func resourceCPSDVEnrollment() *schema.Resource {
 				return nil
 			}),
 		Timeouts: &schema.ResourceTimeout{
-			Default: &timeouts.SDKDefaultTimeout,
+			Default: &DefaultEnrollmentTimeout,
 		},
 	}
 }

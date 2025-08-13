@@ -28,12 +28,14 @@
 
 #### FEATURES/ENHANCEMENTS:
 
+* CPS
+  * Increased default timeout for `akamai_cps_third_party_enrollment` and `akamai_cps_dv_enrollment` resources from 20 minutes to 1 hour to avoid erroring out during deletion. It is not recommended to use timeout values lower than 1 hour.
+
 * Appsec
   * Added a new data source:
     * data_akamai_appsec_advanced_settings_ase_penalty_box
   * Added a new resource:
     * resource_akamai_appsec_advanced_settings_ase_penalty_box
-
 * [IMPORTANT] API Definitions
   * Added new resource:
     * `akamai_apidefinitions_api` - create, read, update, delete and import API configuration

@@ -389,15 +389,9 @@ func enrollmentDelete(ctx context.Context, d *schema.ResourceData, m interface{}
 		return nil
 	}
 
-	const getTimeout = 120 * time.Minute
-	deleteDeadline := time.Now().Add(getTimeout)
-
 	for {
 		select {
 		case <-time.After(PollForGetEnrollmentInterval):
-			if time.Now().After(deleteDeadline) {
-				return diag.Errorf("timed out waiting for enrollment deletion after %v", getTimeout)
-			}
 			_, err = client.GetEnrollment(ctx, cps.GetEnrollmentRequest{EnrollmentID: enrollmentID})
 			if errors.Is(err, cps.ErrEnrollmentNotFound) {
 				logger.Debugf("Enrollment %d successfully deleted", enrollmentID)
@@ -408,7 +402,7 @@ func enrollmentDelete(ctx context.Context, d *schema.ResourceData, m interface{}
 			}
 
 		case <-ctx.Done():
-			return diag.Errorf("get enrollment context terminated: %s", ctx.Err())
+			return diag.Errorf("timed out waiting for enrollment deletion: %s", ctx.Err())
 		}
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/cps"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/session"
@@ -20,8 +21,11 @@ import (
 )
 
 var (
-	// ErrWarningsCannotBeApproved is returned when some warnings cannot be auto approved
+	// ErrWarningsCannotBeApproved is returned when some warnings cannot be auto approved.
 	ErrWarningsCannotBeApproved = errors.New("warnings cannot be approved")
+
+	// DefaultEnrollmentTimeout is the default timeout for enrollment operations.
+	DefaultEnrollmentTimeout = time.Hour
 )
 
 func resourceCPSThirdPartyEnrollment() *schema.Resource {
@@ -176,7 +180,7 @@ func resourceCPSThirdPartyEnrollment() *schema.Resource {
 				return nil
 			}),
 		Timeouts: &schema.ResourceTimeout{
-			Default: &timeouts.SDKDefaultTimeout,
+			Default: &DefaultEnrollmentTimeout,
 		},
 	}
 }
