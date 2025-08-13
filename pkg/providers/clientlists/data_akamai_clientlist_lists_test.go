@@ -67,6 +67,26 @@ func TestDataClientLists(t *testing.T) {
 				},
 			},
 		},
+		"happy path - user type lists": {
+			init: func(m *clientlists.Mock) {
+				mockGetClientLists(m, allListsResponse, clientlists.GetClientListsRequest{
+					Name: "test",
+					Type: []clientlists.ClientListType{clientlists.USER},
+				}, 3)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testData/TestDSClientList/user_type.tf"),
+					Check: baseChecker.
+						CheckEqual("name", "test").
+						CheckEqual("type.#", "1").
+						CheckEqual("type.0", string(clientlists.USER)).
+						CheckEqual("list_ids.#", "10").
+						CheckEqual("lists.#", "10").
+						Build(),
+				},
+			},
+		},
 		"happy path - empty content list": {
 			init: func(m *clientlists.Mock) {
 				mockGetClientLists(m, emptyListsResponse, clientlists.GetClientListsRequest{}, 3)

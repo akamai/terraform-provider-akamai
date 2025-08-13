@@ -11,6 +11,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/clientlists"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
+	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -122,12 +123,12 @@ func resourceClientListRead(ctx context.Context, d *schema.ResourceData, m inter
 	logger := meta.Log("CLIENTLIST", "resourceClientListRead")
 	logger.Debug("Reading client list")
 
-	getCLientList := clientlists.GetClientListRequest{
+	getClientListReq := clientlists.GetClientListRequest{
 		ListID:       d.Id(),
 		IncludeItems: true,
 	}
 
-	list, err := client.GetClientList(ctx, getCLientList)
+	list, err := client.GetClientList(ctx, getClientListReq)
 	if e, ok := err.(*clientlists.Error); ok && e.StatusCode == http.StatusNotFound || (list != nil && list.Deprecated) {
 		d.SetId("")
 		return nil
@@ -136,16 +137,22 @@ func resourceClientListRead(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.FromErr(err)
 	}
 
-	items := make([]interface{}, 0, len(list.Items))
-	for _, v := range list.Items {
-		i := map[string]interface{}{
-			"value":           v.Value,
-			"description":     v.Description,
-			"expiration_date": v.ExpirationDate,
-			"tags":            v.Tags,
+	if list.Type == clientlists.USER {
+		getClientListItems := clientlists.GetClientListItemsRequest{
+			ListID: list.ListID,
 		}
+		items, err := client.GetClientListItems(ctx, getClientListItems)
+		if err != nil {
+			logger.Errorf("calling 'GetClientListItems': %s", err.Error())
+			return diag.FromErr(err)
+		} else if len(items.Items) > 0 {
+			list.Items = items.Items
+		}
+	}
 
-		items = append(items, i)
+	items, diags := extractItems(ctx, d, client, list)
+	if diags.HasError() {
+		return diags
 	}
 
 	fields := map[string]interface{}{
@@ -174,8 +181,9 @@ func resourceClientListCreate(ctx context.Context, d *schema.ResourceData, m int
 	logger := meta.Log("CLIENTLIST", "resourceClientListCreate")
 	logger.Debug("Creating client list")
 
-	if err := validateItemsUniqueness(d); err != nil {
-		return diag.FromErr(err)
+	diags := validateItemsUniqueness(ctx, d, client)
+	if diags.HasError() {
+		return diags
 	}
 
 	listAttrs, err := getClientListAttr(d)
@@ -210,8 +218,9 @@ func resourceClientListUpdate(ctx context.Context, d *schema.ResourceData, m int
 	logger := meta.Log("CLIENTLIST", "resourceClientListUpdate")
 	logger.Debug("Updating client list")
 
-	if err := validateItemsUniqueness(d); err != nil {
-		return diag.FromErr(err)
+	diags := validateItemsUniqueness(ctx, d, client)
+	if diags.HasError() {
+		return diags
 	}
 
 	if d.HasChange("items") {
@@ -434,19 +443,33 @@ func isEqualTags(t1, t2 []string) bool {
 	return reflect.DeepEqual(a, b)
 }
 
-func validateItemsUniqueness(d *schema.ResourceData) error {
+func validateItemsUniqueness(ctx context.Context, d *schema.ResourceData, client clientlists.ClientLists) diag.Diagnostics {
 	itemsSet, err := tf.GetSetValue("items", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
-		return err
+		return diag.FromErr(err)
+	}
+
+	listType := d.Get("type").(string)
+	translatedUsernames, diags := translateUsernames(ctx, d, client)
+	if diags.HasError() {
+		return diags
 	}
 
 	values := map[string]interface{}{}
 	for _, v := range itemsSet.List() {
 		itemMap := v.(map[string]interface{})
 		value := itemMap["value"].(string)
+		originalValue := value
+
+		if listType == string(clientlists.USER) && translatedUsernames != nil && len(translatedUsernames) > 0 {
+			userID := translatedUsernames[value]
+			if userID != "" {
+				value = userID
+			}
+		}
 
 		if _, ok := values[value]; ok {
-			return fmt.Errorf("'Items' collection contains duplicate values for 'value' field. Duplicate value: %s", value)
+			return diag.FromErr(fmt.Errorf("'Items' collection contains duplicate values for 'value' field. Duplicate value: %s", originalValue))
 		}
 		values[value] = itemMap
 	}
@@ -520,4 +543,108 @@ func mapExpirationDateToValue(items *schema.Set) map[string]string {
 	}
 
 	return res
+}
+
+func createTranslateUsernamesRequest(d *schema.ResourceData) (clientlists.TranslateUsernamesRequest, error) {
+	itemsSet, err := tf.GetSetValue("items", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return nil, err
+	}
+	usernames := make(clientlists.TranslateUsernamesRequest, 0, itemsSet.Len())
+	for _, v := range itemsSet.List() {
+		itemMap := v.(map[string]interface{})
+		if isUserID(itemMap["value"].(string)) {
+			continue
+		}
+		usernames = append(usernames, itemMap["value"].(string))
+	}
+	return usernames, nil
+}
+
+func translateValueToUsername(m clientlists.TranslateUsernamesResponse, value string) string {
+	for k, v := range m {
+		if v == value {
+			return k
+		}
+	}
+	return ""
+}
+
+func isUserID(s string) bool {
+	u, err := uuid.Parse(s)
+	if err != nil {
+		return false
+	}
+	return u.Version() == uuid.Version(4)
+}
+
+func shouldUseUsername(d *schema.ResourceData, value string) bool {
+	items := d.Get("items").(*schema.Set).List()
+
+	if len(items) == 0 {
+		return true
+	}
+
+	for _, item := range items {
+		v := item.(map[string]interface{})["value"].(string)
+		if value == v && !isUserID(v) {
+			return true
+		}
+	}
+	return false
+}
+
+func extractItems(ctx context.Context, d *schema.ResourceData, client clientlists.ClientLists, list *clientlists.GetClientListResponse) ([]interface{}, diag.Diagnostics) {
+	items := make([]interface{}, 0, len(list.Items))
+	translatedUsernames, diags := translateUsernames(ctx, d, client)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	for _, v := range list.Items {
+		if list.Type == clientlists.USER {
+			if v.Username != "" && shouldUseUsername(d, v.Username) {
+				v.Value = v.Username
+			} else if len(translatedUsernames) > 0 {
+				username := translateValueToUsername(translatedUsernames, v.Value)
+				if username != "" && shouldUseUsername(d, username) {
+					v.Value = username
+				}
+			}
+		}
+
+		i := map[string]interface{}{
+			"value":           v.Value,
+			"description":     v.Description,
+			"expiration_date": v.ExpirationDate,
+			"tags":            v.Tags,
+		}
+
+		items = append(items, i)
+	}
+	return items, nil
+}
+
+func translateUsernames(ctx context.Context, d *schema.ResourceData, client clientlists.ClientLists) (clientlists.TranslateUsernamesResponse, diag.Diagnostics) {
+	listType := d.Get("type").(string)
+	items := d.Get("items").(*schema.Set).List()
+
+	if len(items) == 0 || listType != string(clientlists.USER) {
+		return nil, nil
+	}
+
+	translationRequest, err := createTranslateUsernamesRequest(d)
+	if err != nil {
+		return nil, diag.FromErr(err)
+	}
+
+	if len(translationRequest) == 0 {
+		return clientlists.TranslateUsernamesResponse{}, nil
+	}
+
+	translatedUsernames, err := client.TranslateUsernames(ctx, translationRequest)
+	if err != nil {
+		return nil, diag.FromErr(err)
+	}
+	return *translatedUsernames, nil
 }

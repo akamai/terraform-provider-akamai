@@ -35,6 +35,11 @@
     * `block_action` field to block the request with a 'deny' or a 'custom_deny' action in IP/GEO except from the allowedLists in 'allow' mode. If no action is specified, by default its value will be det to 'deny'.
     *  Changed the Type to `TypeSet` to allow only distinct values for `exception_ip_network_lists`
 
+* ClientLists
+  * Added support for USER type client lists in the `data_akamai_clientlist_lists` datasource
+    and `resource_akamai_clientlists_list` resource.
+  * Added new data source `data_akamai_clientlist_list` – get specific client list details.
+  * Increased timeout for 'resource_akamai_clientlists_list_activation' resource to 30 minutes.
 
 
 

@@ -1,0 +1,32 @@
+{
+  "content": [
+    {
+      "value": "8728690e-cd6c-42d1-94e8-6a9a9f326cb5",
+      "tags": [],
+      "description": "",
+      "expirationDate": "",
+      "createDate": "2025-08-04T09:54:08.838+00:00",
+      "createdBy": "vpareika",
+      "createdVersion": 0,
+      "productionStatus": "INACTIVE",
+      "stagingStatus": "INACTIVE",
+      "type": "USER_ID",
+      "updateDate": "2025-08-04T09:54:08.838+00:00",
+      "updatedBy": "vpareika"
+    },
+    {
+      "value": "e00b5827-7105-4366-bc24-aa735fc18e4c",
+      "tags": [],
+      "description": "",
+      "expirationDate": "",
+      "createDate": "2025-08-04T09:58:47.715+00:00",
+      "createdBy": "fyly4ujzxw45cn6e",
+      "createdVersion": 0,
+      "productionStatus": "INACTIVE",
+      "stagingStatus": "INACTIVE",
+      "type": "USER_ID",
+      "updateDate": "2025-08-04T09:58:47.715+00:00",
+      "updatedBy": "fyly4ujzxw45cn6e"
+    }
+  ]
+}

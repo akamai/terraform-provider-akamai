@@ -25,8 +25,9 @@ func TestResourceClientList(t *testing.T) {
 	const testDir = "testData/TestResClientList"
 
 	var (
-		updateAPIError = "{\n      \"type\": \"https://problems.luna.akamaiapis.net/client-list-api/error-types/INVALID-INPUT-ERROR\",\n       \"status\": 400,\n       \"title\": \"Invalid Input Error\",\n       \"detail\": \"Validation failed: tags: tags exceeds max size of 5 entries\",\n       \"instance\": \"https://problems.luna.akamaiapis.net/client-list-api/error-instances/9ff3649993cb002b\",\n       \"\n }\n"
-		getAPIError    = "{\n      \"status\": \"403\",\n       \n }\n"
+		updateAPIError         = "{\n      \"type\": \"https://problems.luna.akamaiapis.net/client-list-api/error-types/INVALID-INPUT-ERROR\",\n       \"status\": 400,\n       \"title\": \"Invalid Input Error\",\n       \"detail\": \"Validation failed: tags: tags exceeds max size of 5 entries\",\n       \"instance\": \"https://problems.luna.akamaiapis.net/client-list-api/error-instances/9ff3649993cb002b\",\n       \"\n }\n"
+		getAPIError            = "{\n      \"status\": \"403\",\n       \n }\n"
+		cannotUseUserTypeError = "{\n    \"type\": \"https://problems.luna.akamaiapis.net/client-list/error-types/FORBIDDEN-OPERATION\",\n    \"status\": 403,\n    \"title\": \"This operation is invalid\",\n    \"detail\": \"You can't use user type.\",\n    \"instance\": \"https://problems.luna.akamaiapis.net/client-list/error-instances/b05836b02f8d74f2\"\n}"
 
 		mapItemsPayloadToContent = func(items []clientlists.ListItemPayload) []clientlists.ListItemContent {
 			result := make([]clientlists.ListItemContent, 0, len(items))
@@ -61,6 +62,10 @@ func TestResourceClientList(t *testing.T) {
 
 			client.On("CreateClientList", testutils.MockContext, req).Return(&createResponse, nil).Once()
 			return &createResponse
+		}
+		expectAPIErrorWithCreateList = func(client *clientlists.Mock, req clientlists.CreateClientListRequest) {
+			err := errors.New(cannotUseUserTypeError)
+			client.On("CreateClientList", testutils.MockContext, req).Return(nil, err).Once()
 		}
 
 		expectUpdateList = func(client *clientlists.Mock, listType clientlists.ClientListType, itemsCount int64, req clientlists.UpdateClientListRequest) *clientlists.UpdateClientListResponse {
@@ -135,6 +140,23 @@ func TestResourceClientList(t *testing.T) {
 			client.On("GetClientList", testutils.MockContext, clientListGetReq).Return(&clientList, nil).Times(callTimes)
 		}
 
+		expectReadItems = func(client *clientlists.Mock, list clientlists.ListContent, items []clientlists.ListItemContent, callTimes int) {
+			clientListItemsGetReq := clientlists.GetClientListItemsRequest{
+				ListID: list.ListID,
+			}
+
+			clientList := clientlists.GetClientListItemsResponse{
+				Items: items,
+			}
+			client.On("GetClientListItems", testutils.MockContext, clientListItemsGetReq).Return(&clientList, nil).Times(callTimes)
+		}
+
+		expectTranslateUsernames = func(client *clientlists.Mock, usernames []string, usernamesToID map[string]string, callTimes int) {
+			request := clientlists.TranslateUsernamesRequest(usernames)
+			response := clientlists.TranslateUsernamesResponse(usernamesToID)
+			client.On("TranslateUsernames", testutils.MockContext, request).Return(&response, nil).Times(callTimes)
+		}
+
 		expectDeleteList = func(client *clientlists.Mock, list clientlists.ListContent) {
 			clientListDeleteReq := clientlists.DeleteClientListRequest{
 				ListID: list.ListID,
@@ -168,6 +190,24 @@ func TestResourceClientList(t *testing.T) {
 			}
 
 			return resource.ComposeAggregateTestCheckFunc(checks...)
+		}
+
+		item3WithUserID = clientlists.ListItemPayload{
+			Value:       "e164394a-5ae1-4208-8487-1ac0f368ecf3",
+			Description: "Item 3 Desc",
+			Tags:        []string{"item3Tag2", "item3Tag1"},
+		}
+
+		item2WithUserID = clientlists.ListItemPayload{
+			Value:          "07e29045-7739-4bd9-8cfb-9f118e000337",
+			ExpirationDate: "2026-12-26T01:00:00+00:00",
+			Tags:           []string{},
+		}
+
+		item1WithUserID = clientlists.ListItemPayload{
+			Value:       "3a453537-faa8-4525-b5db-022447bbbf2a",
+			Description: "Item 1 Desc",
+			Tags:        []string{"item1Tag2", "item1Tag1"},
 		}
 	)
 
@@ -855,6 +895,366 @@ func TestResourceClientList(t *testing.T) {
 						ImportStateVerify: true,
 						ImportStateId:     "1_AB",
 						ResourceName:      "akamai_clientlist_list.test_list",
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+
+	t.Run("Create a new USER type client list without items - no username translation", func(t *testing.T) {
+		client := new(clientlists.Mock)
+		clientList := expectCreateList(client, clientlists.CreateClientListRequest{
+			Name:       "List Name",
+			Notes:      "List Notes",
+			Tags:       []string{"a", "b"},
+			Type:       clientlists.USER,
+			ContractID: "12_ABC",
+			GroupID:    12,
+			Items:      []clientlists.ListItemPayload{},
+		})
+		expectReadList(client, clientList.ListContent, []clientlists.ListItemContent{}, 2)
+		expectReadItems(client, clientList.ListContent, []clientlists.ListItemContent{}, 2)
+		expectDeleteList(client, clientList.ListContent)
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/user_type_list_create.tf", testDir)),
+						Check: checkAttributes(listAttributes{
+							ListID:     clientList.ListID,
+							Name:       "List Name",
+							Notes:      "List Notes",
+							Tags:       []string{"a", "b"},
+							Type:       "USER_ID",
+							ContractID: "12_ABC",
+							GroupID:    12,
+							Version:    1,
+							ItemsCount: 0,
+							Items:      []clientlists.ListItemPayload{},
+						}),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+
+	t.Run("Create a new USER type client list with items - Username as value, require username translation", func(t *testing.T) {
+		client := new(clientlists.Mock)
+		items := append([]clientlists.ListItemPayload{},
+			clientlists.ListItemPayload{
+				Value:       "user3",
+				Description: "Item 3 Desc",
+				Tags:        []string{"item3Tag2", "item3Tag1"},
+			},
+			clientlists.ListItemPayload{
+				Value:       "user1",
+				Description: "Item 1 Desc",
+				Tags:        []string{"item1Tag2", "item1Tag1"},
+			},
+			clientlists.ListItemPayload{
+				Value:          "user2",
+				ExpirationDate: "2026-12-26T01:00:00+00:00",
+				Tags:           []string{},
+			})
+
+		itemsWithUserIDValues := append([]clientlists.ListItemPayload{},
+			item3WithUserID,
+			item1WithUserID,
+			item2WithUserID)
+
+		clientList := expectCreateList(client, clientlists.CreateClientListRequest{
+			Name:       "List Name",
+			Notes:      "List Notes",
+			Tags:       []string{"a", "b"},
+			Type:       clientlists.USER,
+			ContractID: "12_ABC",
+			GroupID:    12,
+			Items:      items,
+		})
+		expectReadList(client, clientList.ListContent, mapItemsPayloadToContent(itemsWithUserIDValues), 2)
+		expectReadItems(client, clientList.ListContent, []clientlists.ListItemContent{}, 2)
+		expectTranslateUsernames(client, []string{"user3", "user1", "user2"},
+			map[string]string{
+				"user1": "3a453537-faa8-4525-b5db-022447bbbf2a",
+				"user2": "07e29045-7739-4bd9-8cfb-9f118e000337",
+				"user3": "e164394a-5ae1-4208-8487-1ac0f368ecf3",
+			}, 3)
+		expectDeleteList(client, clientList.ListContent)
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/user_type_list_and_items_create.tf", testDir)),
+						Check: checkAttributes(listAttributes{
+							ListID:     clientList.ListID,
+							Name:       "List Name",
+							Notes:      "List Notes",
+							Tags:       []string{"a", "b"},
+							Type:       "USER_ID",
+							ContractID: "12_ABC",
+							GroupID:    12,
+							Version:    1,
+							ItemsCount: len(items),
+							Items:      items,
+						}),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+
+	t.Run("Create a new USER type client list with items - UserID as value, no username translation", func(t *testing.T) {
+		client := new(clientlists.Mock)
+		items := append([]clientlists.ListItemPayload{},
+			item3WithUserID,
+			item2WithUserID,
+			item1WithUserID)
+
+		itemsWithUserIDValues := append([]clientlists.ListItemPayload{},
+			item3WithUserID,
+			item2WithUserID,
+			item1WithUserID)
+
+		clientList := expectCreateList(client, clientlists.CreateClientListRequest{
+			Name:       "List Name",
+			Notes:      "List Notes",
+			Tags:       []string{"a", "b"},
+			Type:       clientlists.USER,
+			ContractID: "12_ABC",
+			GroupID:    12,
+			Items:      items,
+		})
+		expectReadList(client, clientList.ListContent, mapItemsPayloadToContent(itemsWithUserIDValues), 2)
+		expectReadItems(client, clientList.ListContent, []clientlists.ListItemContent{}, 2)
+		expectDeleteList(client, clientList.ListContent)
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/user_type_list_and_items_user_id_create.tf", testDir)),
+						Check: checkAttributes(listAttributes{
+							ListID:     clientList.ListID,
+							Name:       "List Name",
+							Notes:      "List Notes",
+							Tags:       []string{"a", "b"},
+							Type:       "USER_ID",
+							ContractID: "12_ABC",
+							GroupID:    12,
+							Version:    1,
+							ItemsCount: len(items),
+							Items:      items,
+						}),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+	t.Run("Create a new USER type client list with items - mix UserID, Username as value, require username translation", func(t *testing.T) {
+		client := new(clientlists.Mock)
+		items := append([]clientlists.ListItemPayload{},
+			clientlists.ListItemPayload{
+				Value:       "user3",
+				Description: "Item 3 Desc",
+				Tags:        []string{"item3Tag2", "item3Tag1"},
+			},
+			item2WithUserID,
+			item1WithUserID)
+
+		itemsWithUserIDValues := append([]clientlists.ListItemPayload{},
+			item3WithUserID,
+			item2WithUserID,
+			item1WithUserID)
+
+		clientList := expectCreateList(client, clientlists.CreateClientListRequest{
+			Name:       "List Name",
+			Notes:      "List Notes",
+			Tags:       []string{"a", "b"},
+			Type:       clientlists.USER,
+			ContractID: "12_ABC",
+			GroupID:    12,
+			Items:      items,
+		})
+		expectReadList(client, clientList.ListContent, mapItemsPayloadToContent(itemsWithUserIDValues), 2)
+		expectReadItems(client, clientList.ListContent, []clientlists.ListItemContent{}, 2)
+		expectTranslateUsernames(client, []string{"user3"},
+			map[string]string{
+				"user3": "e164394a-5ae1-4208-8487-1ac0f368ecf3",
+			}, 3)
+		expectDeleteList(client, clientList.ListContent)
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/user_type_list_and_items_mix_username_user_id_create.tf", testDir)),
+						Check: checkAttributes(listAttributes{
+							ListID:     clientList.ListID,
+							Name:       "List Name",
+							Notes:      "List Notes",
+							Tags:       []string{"a", "b"},
+							Type:       "USER_ID",
+							ContractID: "12_ABC",
+							GroupID:    12,
+							Version:    1,
+							ItemsCount: len(items),
+							Items:      items,
+						}),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+
+	t.Run("Update USER type client list items and list - mix UserID, Username as value, require username translation", func(t *testing.T) {
+		client := new(clientlists.Mock)
+		items := append([]clientlists.ListItemPayload{},
+			clientlists.ListItemPayload{
+				Value:       "user3",
+				Description: "Item 3 Desc",
+				Tags:        []string{"item3Tag2", "item3Tag1"},
+			},
+			item2WithUserID,
+			item1WithUserID)
+		updatedItems := append([]clientlists.ListItemPayload{},
+			clientlists.ListItemPayload{
+				Value:       "user3",
+				Description: "Item 3 Desc Updated",
+				Tags:        []string{"item3Tag2", "item3Tag1"},
+			},
+			item2WithUserID,
+			clientlists.ListItemPayload{
+				Value:       "sales@ubs.com",
+				Description: "Item 1 Desc",
+				Tags:        []string{"item1Tag2", "item1Tag1"},
+			})
+
+		clientList := expectCreateList(client, clientlists.CreateClientListRequest{
+			Name:       "List Name",
+			Notes:      "List Notes",
+			Tags:       []string{"a", "b"},
+			Type:       clientlists.USER,
+			ContractID: "12_ABC",
+			GroupID:    12,
+			Items:      items,
+		})
+		expectReadList(client, clientList.ListContent, mapItemsPayloadToContent(items), 4)
+		expectReadItems(client, clientList.ListContent, []clientlists.ListItemContent{}, 5)
+		expectTranslateUsernames(client, []string{"user3"},
+			map[string]string{
+				"user3": "e164394a-5ae1-4208-8487-1ac0f368ecf3",
+			}, 4)
+
+		updateResponse := expectUpdateList(client, clientlists.USER, 3, clientlists.UpdateClientListRequest{
+			UpdateClientList: clientlists.UpdateClientList{
+				Name:  "List Name Updated",
+				Notes: "List Notes Updated",
+				Tags:  []string{"a", "c", "d"},
+			},
+			ListID: clientList.ListID,
+		})
+		expectUpdateListItems(client, clientlists.UpdateClientListItemsRequest{
+			ListID: clientList.ListID,
+			UpdateClientListItems: clientlists.UpdateClientListItems{
+				Append: []clientlists.ListItemPayload{
+					{
+						Value:       "sales@ubs.com",
+						Description: "Item 1 Desc",
+						Tags:        []string{"item1Tag2", "item1Tag1"},
+					},
+				},
+				Update: []clientlists.ListItemPayload{
+					{
+						Value:       "user3",
+						Description: "Item 3 Desc Updated",
+						Tags:        []string{"item3Tag2", "item3Tag1"},
+					},
+				},
+				Delete: []clientlists.ListItemPayload{
+					{
+						Value: "3a453537-faa8-4525-b5db-022447bbbf2a",
+					},
+				},
+			},
+		})
+		expectReadList(client, updateResponse.ListContent, mapItemsPayloadToContent(updatedItems), 2)
+		expectTranslateUsernames(client, []string{"sales@ubs.com", "user3"},
+			map[string]string{
+				"sales@ubs.com": "c99dddc8-ef8f-46d5-93ee-e85f7aeb0b9a",
+				"user3":         "e164394a-5ae1-4208-8487-1ac0f368ecf3",
+			}, 3)
+		expectDeleteList(client, clientList.ListContent)
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/user_type_list_and_items_mix_username_user_id_create.tf", testDir)),
+						Check: checkAttributes(listAttributes{
+							ListID:     clientList.ListID,
+							Name:       "List Name",
+							Notes:      "List Notes",
+							Tags:       []string{"a", "b"},
+							Type:       "USER_ID",
+							ContractID: "12_ABC",
+							GroupID:    12,
+							Version:    1,
+							ItemsCount: len(items),
+							Items:      items,
+						}),
+					},
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/user_type_list_and_items_mix_username_user_id_update.tf", testDir)),
+						Check: checkAttributes(listAttributes{
+							ListID:     clientList.ListID,
+							Name:       "List Name Updated",
+							Notes:      "List Notes Updated",
+							Tags:       []string{"a", "c", "d"},
+							Type:       "USER_ID",
+							ContractID: "12_ABC",
+							GroupID:    12,
+							Version:    1,
+							ItemsCount: 3,
+							Items:      updatedItems,
+						}),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+
+	t.Run("Create a new USER type client list without permission - returns an 403 API error", func(t *testing.T) {
+		client := new(clientlists.Mock)
+		expectAPIErrorWithCreateList(client, clientlists.CreateClientListRequest{
+			Name:       "List Name",
+			Notes:      "List Notes",
+			Tags:       []string{"a", "b"},
+			Type:       clientlists.USER,
+			ContractID: "12_ABC",
+			GroupID:    12,
+			Items:      []clientlists.ListItemPayload{},
+		})
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config:      loadFixtureString(fmt.Sprintf("%s/user_type_list_create.tf", testDir)),
+						ExpectError: regexp.MustCompile(cannotUseUserTypeError),
 					},
 				},
 			})

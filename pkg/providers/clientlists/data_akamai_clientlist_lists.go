@@ -291,5 +291,6 @@ func getValidListTypes() []string {
 		string(clientlists.ASN),
 		string(clientlists.TLSFingerprint),
 		string(clientlists.FileHash),
+		string(clientlists.USER),
 	}
 }

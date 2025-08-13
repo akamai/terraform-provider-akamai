@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	waitActivationCompletionTimeout = 10 * time.Minute
+	waitActivationCompletionTimeout = 30 * time.Minute
 	activationRetryMaxAttempts      = 3
 	activationRetryTimeout          = 45 * time.Second
 )

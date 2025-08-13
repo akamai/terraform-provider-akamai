@@ -1,0 +1,62 @@
+{
+  "name": "SECKSD-28365_File hash_Kona QA AAP1 B-V-3VO1V8A updated",
+  "type": "FILE_HASH",
+  "notes": "File hash updated",
+  "tags": [
+    "green",
+    "listTag1",
+    "red"
+  ],
+  "listId": "164579_SECKSD28365FILEHASHKONA",
+  "version": 1,
+  "itemsCount": 2,
+  "createDate": "2024-09-30T13:45:54.384+00:00",
+  "createdBy": "akamai",
+  "updateDate": "2024-10-01T07:56:10.682+00:00",
+  "updatedBy": "akamai",
+  "productionActivationStatus": "ACTIVE",
+  "stagingActivationStatus": "ACTIVE",
+  "productionActiveVersion": 1,
+  "stagingActiveVersion": 1,
+  "listType": "CL",
+  "shared": true,
+  "readOnly": true,
+  "deprecated": false,
+  "contractId": "",
+  "groupId": 0,
+  "groupName": "",
+  "items": [
+    {
+      "value": "65d860160bdc9b98abf72407e14ca40b609417de7939897d3b58d55787aaef69",
+      "tags": [
+        "green"
+      ],
+      "description": "File hash",
+      "expirationDate": "",
+      "createDate": "2024-09-30T13:45:54.396+00:00",
+      "createdBy": "yy7cek7ovjwshve3",
+      "createdVersion": 0,
+      "productionStatus": "ACTIVE",
+      "stagingStatus": "ACTIVE",
+      "type": "FILE_HASH",
+      "updateDate": "2024-09-30T13:45:54.396+00:00",
+      "updatedBy": "yy7cek7ovjwshve3"
+    },
+    {
+      "value": "f0456d7aed088e791e4610c3c2ad63afe46e2e777988fdbc9270f15ec9711b42",
+      "tags": [
+        "red"
+      ],
+      "description": "File hash",
+      "expirationDate": "2025-09-30T13:45:53.889+00:00",
+      "createDate": "2024-09-30T13:45:54.396+00:00",
+      "createdBy": "yy7cek7ovjwshve3",
+      "createdVersion": 0,
+      "productionStatus": "ACTIVE",
+      "stagingStatus": "ACTIVE",
+      "type": "FILE_HASH",
+      "updateDate": "2024-09-30T13:45:54.396+00:00",
+      "updatedBy": "yy7cek7ovjwshve3"
+    }
+  ]
+}

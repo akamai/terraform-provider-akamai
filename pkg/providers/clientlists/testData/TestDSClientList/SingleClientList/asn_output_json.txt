@@ -1,0 +1,109 @@
+{
+  "name": "SECKSD-28365_ASN_Kona QA AAP1 B-V-3VO1V8A",
+  "type": "ASN",
+  "notes": "ASN updated",
+  "tags": [
+    "green",
+    "listTag1",
+    "red"
+  ],
+  "listId": "164730_SECKSD28365ASNKONAQAAA",
+  "version": 4,
+  "itemsCount": 5,
+  "createDate": "2024-10-01T09:25:29.344+00:00",
+  "createdBy": "akamai",
+  "updateDate": "2024-10-01T13:42:15.550+00:00",
+  "updatedBy": "akamai",
+  "productionActivationStatus": "ACTIVE",
+  "stagingActivationStatus": "ACTIVE",
+  "productionActiveVersion": 4,
+  "stagingActiveVersion": 4,
+  "listType": "CL",
+  "shared": true,
+  "readOnly": true,
+  "deprecated": false,
+  "contractId": "",
+  "groupId": 0,
+  "groupName": "",
+  "items": [
+    {
+      "value": "1001",
+      "tags": [
+        "green"
+      ],
+      "description": "ASN",
+      "expirationDate": "2025-10-01T09:25:27.517+00:00",
+      "createDate": "2024-10-01T09:25:29.355+00:00",
+      "createdBy": "yy7cek7ovjwshve3",
+      "createdVersion": 0,
+      "productionStatus": "ACTIVE",
+      "stagingStatus": "ACTIVE",
+      "type": "ASN",
+      "updateDate": "2024-10-01T09:25:29.355+00:00",
+      "updatedBy": "yy7cek7ovjwshve3"
+    },
+    {
+      "value": "2002",
+      "tags": [
+        "red"
+      ],
+      "description": "ASN",
+      "expirationDate": "",
+      "createDate": "2024-10-01T09:25:29.355+00:00",
+      "createdBy": "yy7cek7ovjwshve3",
+      "createdVersion": 0,
+      "productionStatus": "ACTIVE",
+      "stagingStatus": "ACTIVE",
+      "type": "ASN",
+      "updateDate": "2024-10-01T09:25:29.355+00:00",
+      "updatedBy": "yy7cek7ovjwshve3"
+    },
+    {
+      "value": "3003",
+      "tags": [
+        "red"
+      ],
+      "description": "ASN (bump version 2)",
+      "expirationDate": "",
+      "createDate": "2024-10-01T12:16:32.687+00:00",
+      "createdBy": "ccare2",
+      "createdVersion": 0,
+      "productionStatus": "ACTIVE",
+      "stagingStatus": "ACTIVE",
+      "type": "ASN",
+      "updateDate": "2024-10-01T12:16:32.687+00:00",
+      "updatedBy": "ccare2"
+    },
+    {
+      "value": "4004",
+      "tags": [
+        "red",
+        "green"
+      ],
+      "description": "ASN (bump version 3)",
+      "expirationDate": "",
+      "createDate": "2024-10-01T13:33:00.458+00:00",
+      "createdBy": "ccare2",
+      "createdVersion": 0,
+      "productionStatus": "ACTIVE",
+      "stagingStatus": "ACTIVE",
+      "type": "ASN",
+      "updateDate": "2024-10-01T13:33:00.458+00:00",
+      "updatedBy": "ccare2"
+    },
+    {
+      "value": "5005",
+      "tags": [],
+      "description": "\nASN (bump version 4)",
+      "expirationDate": "",
+      "createDate": "2024-10-01T13:42:15.443+00:00",
+      "createdBy": "ccare2",
+      "createdVersion": 0,
+      "productionStatus": "ACTIVE",
+      "stagingStatus": "ACTIVE",
+      "type": "ASN",
+      "updateDate": "2024-10-01T13:42:15.443+00:00",
+      "updatedBy": "ccare2"
+    }
+  ]
+}
