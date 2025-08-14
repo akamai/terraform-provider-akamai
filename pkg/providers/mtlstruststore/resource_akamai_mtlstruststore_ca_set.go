@@ -857,12 +857,28 @@ func (r *caSetResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 		return
 	}
 
-	// initiate deletion process
-	if err := client.DeleteCASet(ctx, mtlstruststore.DeleteCASetRequest{
+	caSet, err := client.GetCASet(ctx, mtlstruststore.GetCASetRequest{
 		CASetID: state.ID.ValueString(),
-	}); err != nil {
-		resp.Diagnostics.AddError(fmt.Sprintf("delete ca set %s failed", state.ID), err.Error())
+	})
+	if err != nil {
+		resp.Diagnostics.AddError(fmt.Sprintf("get ca set %s failed", state.ID.ValueString()), err.Error())
 		return
+	}
+
+	if caSet.CASetStatus == mtlstruststore.CASetStatusDeleted {
+		tflog.Debug(ctx, fmt.Sprintf("CA set %s is already deleted", state.ID.ValueString()))
+		return
+	}
+
+	// Send DeleteCASet only if the CA Set status is NOT_DELETED.
+	if caSet.CASetStatus == mtlstruststore.CASetStatusNotDeleted {
+		// initiate deletion process
+		if err := client.DeleteCASet(ctx, mtlstruststore.DeleteCASetRequest{
+			CASetID: state.ID.ValueString(),
+		}); err != nil {
+			resp.Diagnostics.AddError(fmt.Sprintf("delete ca set %s failed", state.ID.ValueString()), err.Error())
+			return
+		}
 	}
 
 	deleteTimeout, diags := state.Timeouts.Delete(ctx, r.deleteTimeout)
@@ -893,7 +909,7 @@ func (r *caSetResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 			case mtlstruststore.DeletionStatusComplete:
 				deleteInProgress = false
 			case mtlstruststore.DeletionStatusInProgress:
-				tflog.Debug(ctx, fmt.Sprintf("delete ca set %s in progress", state.ID))
+				tflog.Debug(ctx, fmt.Sprintf("delete ca set %s in progress", state.ID.ValueString()))
 				if !status.RetryAfter.IsZero() {
 					CASetDeleteStatusPollInterval = time.Until(status.RetryAfter)
 				} else {
@@ -907,7 +923,7 @@ func (r *caSetResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 					reason = *status.FailureReason
 				}
 
-				resp.Diagnostics.AddError(fmt.Sprintf("delete ca set %s failed", state.ID), "contact support team to resolve the issue. "+reason)
+				resp.Diagnostics.AddError(fmt.Sprintf("delete ca set %s failed", state.ID.ValueString()), "contact support team to resolve the issue. "+reason)
 				return
 			}
 		case <-ctx.Done():

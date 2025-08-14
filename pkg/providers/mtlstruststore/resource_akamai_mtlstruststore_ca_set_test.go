@@ -38,6 +38,7 @@ type commonDataForResource struct {
 	allowInsecureSHA1  bool
 	properties         []mtlstruststore.AssociationProperty
 	enrollments        []mtlstruststore.AssociationEnrollment
+	caSetStatus        string
 }
 
 func TestCASetResource(t *testing.T) {
@@ -65,6 +66,7 @@ func TestCASetResource(t *testing.T) {
 		versionDescription: ptr.To("Initial version for testing"),
 		stagingVersion:     nil,
 		stagingStatus:      "INACTIVE",
+		caSetStatus:        "NOT_DELETED",
 	}
 	baseCheck := test.NewStateChecker("akamai_mtlstruststore_ca_set.test").
 		CheckEqual("name", "set-1").
@@ -116,6 +118,7 @@ func TestCASetResource(t *testing.T) {
 				mockListCASetActivations(m, resourceData, false).Times(2)
 				// delete
 				mockListCASetAssociations(m, resourceData).Times(2)
+				mockGetCASet(m, resourceData).Once()
 				mockDeleteCASet(m, resourceData).Times(1)
 				mockGetCASetDeletionStatus(m, resourceData, "IN_PROGRESS", "IN_PROGRESS", "COMPLETED").Times(1)
 				mockGetCASetDeletionStatus(m, resourceData, "COMPLETE", "COMPLETE", "COMPLETE").Times(1)
@@ -141,6 +144,7 @@ func TestCASetResource(t *testing.T) {
 				mockListCASetActivations(m, resourceData, false).Times(2)
 				// delete
 				mockListCASetAssociations(m, resourceData).Times(2)
+				mockGetCASet(m, resourceData).Once()
 				mockDeleteCASet(m, resourceData).Times(1)
 				mockGetCASetDeletionStatus(m, resourceData, "IN_PROGRESS", "IN_PROGRESS", "COMPLETED").Times(1)
 				mockGetCASetDeletionStatus(m, resourceData, "COMPLETE", "COMPLETE", "COMPLETE").Times(1)
@@ -183,6 +187,7 @@ func TestCASetResource(t *testing.T) {
 				mockListCASetActivations(m, resourceData, false).Times(2)
 				// delete
 				mockListCASetAssociations(m, resourceData).Times(2)
+				mockGetCASet(m, resourceData).Once()
 				mockDeleteCASet(m, resourceData).Times(1)
 				mockGetCASetDeletionStatus(m, resourceData, "IN_PROGRESS", "IN_PROGRESS", "COMPLETED").Times(1)
 				mockGetCASetDeletionStatus(m, resourceData, "COMPLETE", "COMPLETE", "COMPLETE").Times(1)
@@ -197,6 +202,60 @@ func TestCASetResource(t *testing.T) {
 						CheckMissing("version_description").
 						CheckMissing("certificates.0.description").
 						Build(),
+				},
+			},
+		},
+		"create a ca set, but ca set deletion is already in progress in Delete": {
+			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
+				// create
+				mockValidateCertificates(m, resourceData, nil).Times(5)
+				mockCreateCASet(m, resourceData).Times(1)
+				mockCreateCASetVersion(m, resourceData).Times(1)
+				mockGetCASet(m, resourceData).Times(1)
+				// read
+				mockGetCASet(m, resourceData).Times(1)
+				mockGetCASetVersion(m, resourceData).Times(1)
+				mockListCASetActivations(m, resourceData, false).Times(2)
+				// delete
+				mockListCASetAssociations(m, resourceData).Times(2)
+				// mock that the deletion of the ca set is already in progress.
+				// No delete ca set call is made.
+				resourceData.caSetStatus = "DELETING"
+				mockGetCASet(m, resourceData).Once()
+				mockGetCASetDeletionStatus(m, resourceData, "IN_PROGRESS", "IN_PROGRESS", "COMPLETED").Times(1)
+				mockGetCASetDeletionStatus(m, resourceData, "COMPLETE", "COMPLETE", "COMPLETE").Times(1)
+			},
+			mockData: createData,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/create.tf"),
+					Check:  check.Build(),
+				},
+			},
+		},
+		"create a ca set, but ca set deletion is already completed in Delete": {
+			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
+				// create
+				mockValidateCertificates(m, resourceData, nil).Times(5)
+				mockCreateCASet(m, resourceData).Times(1)
+				mockCreateCASetVersion(m, resourceData).Times(1)
+				mockGetCASet(m, resourceData).Times(1)
+				// read
+				mockGetCASet(m, resourceData).Times(1)
+				mockGetCASetVersion(m, resourceData).Times(1)
+				mockListCASetActivations(m, resourceData, false).Times(2)
+				// delete
+				mockListCASetAssociations(m, resourceData).Times(2)
+				// mock that the deletion of the ca set is already completed.
+				// No delete ca set call is made.
+				resourceData.caSetStatus = "DELETED"
+				mockGetCASet(m, resourceData).Once()
+			},
+			mockData: createData,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/create.tf"),
+					Check:  check.Build(),
 				},
 			},
 		},
@@ -225,6 +284,7 @@ func TestCASetResource(t *testing.T) {
 
 				// delete
 				mockListCASetAssociations(m, resourceData).Times(1)
+				mockGetCASet(m, resourceData).Once()
 				mockDeleteCASet(m, resourceData).Times(1)
 				mockGetCASetDeletionStatus(m, resourceData, "IN_PROGRESS", "IN_PROGRESS", "COMPLETED").Times(1)
 				mockGetCASetDeletionStatus(m, resourceData, "COMPLETE", "COMPLETE", "COMPLETE").Times(1)
@@ -242,6 +302,7 @@ func TestCASetResource(t *testing.T) {
 
 				// delete
 				mockListCASetAssociations(m, resourceData).Times(2)
+				mockGetCASet(m, resourceData).Once()
 				mockDeleteCASet(m, resourceData).Times(1)
 				mockGetCASetDeletionStatus(m, resourceData, "IN_PROGRESS", "IN_PROGRESS", "COMPLETED").Times(1)
 				mockGetCASetDeletionStatus(m, resourceData, "COMPLETE", "COMPLETE", "COMPLETE").Times(1)
@@ -319,6 +380,7 @@ func TestCASetResource(t *testing.T) {
 				mockGetCASet(m, resourceData).Times(1)
 				mockGetCASetVersion(m, resourceData).Times(1)
 				mockListCASetAssociations(m, resourceData).Times(2)
+				mockGetCASet(m, resourceData).Once()
 				mockDeleteCASet(m, resourceData).Times(1)
 				mockGetCASetDeletionStatus(m, resourceData, "IN_PROGRESS", "IN_PROGRESS", "FAILED").Times(1)
 				mockGetCASetDeletionStatus(m, resourceData, "FAILED", "COMPLETE", "FAILED").Times(1)
@@ -328,6 +390,7 @@ func TestCASetResource(t *testing.T) {
 				mockGetCASet(m, resourceData).Times(1)
 				mockGetCASetVersion(m, resourceData).Times(1)
 				mockListCASetAssociations(m, resourceData).Times(2)
+				mockGetCASet(m, resourceData).Once()
 				mockDeleteCASet(m, resourceData).Times(1)
 				mockGetCASetDeletionStatus(m, resourceData, "COMPLETE", "COMPLETE", "COMPLETE").Times(1)
 			},
@@ -372,6 +435,7 @@ func TestCASetResource(t *testing.T) {
 				mockGetCASetVersion(m, resourceData).Times(1)
 				resourceData.properties = []mtlstruststore.AssociationProperty{}
 				mockListCASetAssociations(m, resourceData).Times(2)
+				mockGetCASet(m, resourceData).Once()
 				mockDeleteCASet(m, resourceData).Times(1)
 				mockGetCASetDeletionStatus(m, resourceData, "COMPLETE", "COMPLETE", "COMPLETE").Times(1)
 			},
@@ -417,6 +481,7 @@ func TestCASetResource(t *testing.T) {
 				mockGetCASetVersion(m, resourceData).Times(1)
 				resourceData.enrollments = []mtlstruststore.AssociationEnrollment{}
 				mockListCASetAssociations(m, resourceData).Times(2)
+				mockGetCASet(m, resourceData).Once()
 				mockDeleteCASet(m, resourceData).Times(1)
 				mockGetCASetDeletionStatus(m, resourceData, "COMPLETE", "COMPLETE", "COMPLETE").Times(1)
 			},
@@ -465,6 +530,7 @@ func TestCASetResource(t *testing.T) {
 
 				// delete
 				mockListCASetAssociations(m, updateData).Times(2)
+				mockGetCASet(m, resourceData).Once()
 				mockDeleteCASet(m, updateData).Times(1)
 				mockGetCASetDeletionStatus(m, updateData, "IN_PROGRESS", "IN_PROGRESS", "COMPLETED").Times(1)
 				mockGetCASetDeletionStatus(m, updateData, "COMPLETE", "COMPLETE", "COMPLETE").Times(1)
@@ -587,6 +653,7 @@ func TestCASetResource(t *testing.T) {
 				mockListCASetActivations(m, resourceData, false).Times(4)
 				// delete
 				mockListCASetAssociations(m, updateData).Times(2)
+				mockGetCASet(m, resourceData).Once()
 				mockDeleteCASet(m, updateData).Times(1)
 				mockGetCASetDeletionStatus(m, updateData, "IN_PROGRESS", "IN_PROGRESS", "COMPLETED").Times(1)
 				mockGetCASetDeletionStatus(m, updateData, "COMPLETE", "COMPLETE", "COMPLETE").Times(1)
@@ -645,6 +712,7 @@ func TestCASetResource(t *testing.T) {
 				mockListCASetActivations(m, resourceData, false).Times(4)
 				// delete
 				mockListCASetAssociations(m, updateData).Times(2)
+				mockGetCASet(m, resourceData).Once()
 				mockDeleteCASet(m, updateData).Times(1)
 				mockGetCASetDeletionStatus(m, updateData, "IN_PROGRESS", "IN_PROGRESS", "COMPLETED").Times(1)
 				mockGetCASetDeletionStatus(m, updateData, "COMPLETE", "COMPLETE", "COMPLETE").Times(1)
@@ -701,12 +769,9 @@ func TestCASetResource(t *testing.T) {
 
 				// update
 				updateData := resourceData
-				//updateData.version = 1
-				//mockListCASetActivations(m, updateData, false).Times(1)
 				mockGetCASet(m, updateData).Times(1)
 				mockGetCASetVersion(m, updateData).Times(1)
 				mockValidateCertificates(m, updateData, nil).Times(4)
-				//mockUpdateCASetVersion(m, updateData).Times(1)
 				// read
 				mockGetCASet(m, updateData).Times(1)
 				mockGetCASetVersion(m, updateData).Times(1)
@@ -714,6 +779,7 @@ func TestCASetResource(t *testing.T) {
 
 				// delete
 				mockListCASetAssociations(m, updateData).Times(2)
+				mockGetCASet(m, resourceData).Once()
 				mockDeleteCASet(m, updateData).Times(1)
 				mockGetCASetDeletionStatus(m, updateData, "IN_PROGRESS", "IN_PROGRESS", "COMPLETED").Times(1)
 				mockGetCASetDeletionStatus(m, updateData, "COMPLETE", "COMPLETE", "COMPLETE").Times(1)
@@ -768,6 +834,7 @@ func TestCASetResource(t *testing.T) {
 
 				// delete
 				mockListCASetAssociations(m, updateData).Times(2)
+				mockGetCASet(m, resourceData).Once()
 				mockDeleteCASet(m, updateData).Times(1)
 				mockGetCASetDeletionStatus(m, updateData, "IN_PROGRESS", "IN_PROGRESS", "COMPLETED").Times(1)
 				mockGetCASetDeletionStatus(m, updateData, "COMPLETE", "COMPLETE", "COMPLETE").Times(1)
@@ -824,6 +891,7 @@ func TestCASetResource(t *testing.T) {
 
 				// delete
 				mockListCASetAssociations(m, updateData).Times(2)
+				mockGetCASet(m, resourceData).Once()
 				mockDeleteCASet(m, updateData).Times(1)
 				mockGetCASetDeletionStatus(m, updateData, "IN_PROGRESS", "IN_PROGRESS", "COMPLETED").Times(1)
 				mockGetCASetDeletionStatus(m, updateData, "COMPLETE", "COMPLETE", "COMPLETE").Times(1)
@@ -884,6 +952,7 @@ func TestCASetResource(t *testing.T) {
 
 				// delete
 				mockListCASetAssociations(m, updateData).Times(2)
+				mockGetCASet(m, resourceData).Once()
 				mockDeleteCASet(m, updateData).Times(1)
 				mockGetCASetDeletionStatus(m, updateData, "IN_PROGRESS", "IN_PROGRESS", "COMPLETED").Times(1)
 				mockGetCASetDeletionStatus(m, updateData, "COMPLETE", "COMPLETE", "COMPLETE").Times(1)
@@ -977,6 +1046,7 @@ func TestCASetResource(t *testing.T) {
 
 				// delete
 				mockListCASetAssociations(m, updateData).Times(2)
+				mockGetCASet(m, resourceData).Once()
 				mockDeleteCASet(m, updateData).Times(1)
 				mockGetCASetDeletionStatus(m, updateData, "IN_PROGRESS", "IN_PROGRESS", "COMPLETED").Times(1)
 				mockGetCASetDeletionStatus(m, updateData, "COMPLETE", "COMPLETE", "COMPLETE").Times(1)
@@ -1062,6 +1132,7 @@ func TestCASetResource(t *testing.T) {
 
 				// delete
 				mockListCASetAssociations(m, updateData).Times(2)
+				mockGetCASet(m, resourceData).Once()
 				mockDeleteCASet(m, updateData).Times(1)
 				mockGetCASetDeletionStatus(m, updateData, "IN_PROGRESS", "IN_PROGRESS", "COMPLETED").Times(1)
 				mockGetCASetDeletionStatus(m, updateData, "COMPLETE", "COMPLETE", "COMPLETE").Times(1)
@@ -1112,12 +1183,9 @@ func TestCASetResource(t *testing.T) {
 
 				// update
 				updateData := resourceData
-				//updateData.version = 1
-				//mockListCASetActivations(m, updateData, false).Times(1)
 				mockGetCASet(m, updateData).Times(1)
 				mockGetCASetVersion(m, updateData).Times(1)
 				mockValidateCertificates(m, updateData, nil).Times(4)
-				//mockUpdateCASetVersion(m, updateData).Times(1)
 				// read
 				mockGetCASet(m, updateData).Times(1)
 				mockGetCASetVersion(m, updateData).Times(1)
@@ -1125,6 +1193,7 @@ func TestCASetResource(t *testing.T) {
 
 				// delete
 				mockListCASetAssociations(m, updateData).Times(2)
+				mockGetCASet(m, resourceData).Once()
 				mockDeleteCASet(m, updateData).Times(1)
 				mockGetCASetDeletionStatus(m, updateData, "IN_PROGRESS", "IN_PROGRESS", "COMPLETED").Times(1)
 				mockGetCASetDeletionStatus(m, updateData, "COMPLETE", "COMPLETE", "COMPLETE").Times(1)
@@ -1193,6 +1262,7 @@ func TestCASetResource(t *testing.T) {
 
 				// delete
 				mockListCASetAssociations(m, updateData).Times(2)
+				mockGetCASet(m, resourceData).Once()
 				mockDeleteCASet(m, updateData).Times(1)
 				mockGetCASetDeletionStatus(m, updateData, "IN_PROGRESS", "IN_PROGRESS", "COMPLETED").Times(1)
 				mockGetCASetDeletionStatus(m, updateData, "COMPLETE", "COMPLETE", "COMPLETE").Times(1)
@@ -1256,6 +1326,7 @@ func TestCASetResource(t *testing.T) {
 
 				// delete
 				mockListCASetAssociations(m, updateData).Times(2)
+				mockGetCASet(m, updateData).Once()
 				mockDeleteCASet(m, updateData).Times(1)
 				mockGetCASetDeletionStatus(m, updateData, "IN_PROGRESS", "IN_PROGRESS", "COMPLETED").Times(1)
 				mockGetCASetDeletionStatus(m, updateData, "COMPLETE", "COMPLETE", "COMPLETE").Times(1)
@@ -1290,6 +1361,7 @@ func TestCASetResource(t *testing.T) {
 				mockGetCASetVersion(m, resourceData).Times(2)
 				// delete
 				mockListCASetAssociations(m, resourceData).Times(2)
+				mockGetCASet(m, resourceData).Once()
 				mockDeleteCASet(m, resourceData).Times(1)
 				mockGetCASetDeletionStatus(m, resourceData, "IN_PROGRESS", "IN_PROGRESS", "COMPLETED").Times(1)
 				mockGetCASetDeletionStatus(m, resourceData, "COMPLETE", "COMPLETE", "COMPLETE").Times(1)
@@ -1339,6 +1411,7 @@ func TestCASetResource(t *testing.T) {
 
 				// delete
 				mockListCASetAssociations(m, resourceData).Times(2)
+				mockGetCASet(m, resourceData).Once()
 				mockDeleteCASet(m, resourceData).Times(1)
 				mockGetCASetDeletionStatus(m, resourceData, "IN_PROGRESS", "IN_PROGRESS", "COMPLETED").Times(1)
 				mockGetCASetDeletionStatus(m, resourceData, "COMPLETE", "COMPLETE", "COMPLETE").Times(1)
@@ -1603,7 +1676,7 @@ func mockGetCASet(client *mtlstruststore.Mock, testData commonDataForResource) *
 			CASetName:             testData.name,
 			AccountID:             "ACC-123456",
 			CASetLink:             "",
-			CASetStatus:           "NOT_DELETED",
+			CASetStatus:           testData.caSetStatus,
 			Description:           testData.description,
 			LatestVersionLink:     nil,
 			LatestVersion:         version,
