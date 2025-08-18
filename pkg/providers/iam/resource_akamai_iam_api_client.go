@@ -162,6 +162,13 @@ func (r *apiClientResource) Metadata(_ context.Context, _ resource.MetadataReque
 }
 
 func (r *apiClientResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+  authorized_users_validations = []validator.List{
+    listvalidator.SizeAtLeast(1),
+    listvalidator.ValueStringsAre(stringvalidator.LengthAtLeast(1)),
+  }
+  if (r.ClientType == "USER_CLIENT" || r.ClientType == "CLIENT") {
+		authorized_users_validations = append(authorized_users_validations, listvalidator.SizeAtMost(1))
+	}
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"allow_account_switch": schema.BoolAttribute{
@@ -185,11 +192,7 @@ func (r *apiClientResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 				Required:    true,
 				ElementType: types.StringType,
 				Description: "The API client's valid users. When the 'client_type' is either 'CLIENT' or 'USER_CLIENT', you need to specify a single username in an array.",
-				Validators: []validator.List{
-					listvalidator.SizeAtLeast(1),
-					listvalidator.SizeAtMost(1),
-					listvalidator.ValueStringsAre(stringvalidator.LengthAtLeast(1)),
-				},
+				Validators: authorized_users_validations,
 			},
 			"can_auto_create_credential": schema.BoolAttribute{
 				Optional:    true,
