@@ -2,6 +2,7 @@ package mtlstruststore
 
 import (
 	"fmt"
+	"net/http"
 	"regexp"
 	"slices"
 	"testing"
@@ -320,35 +321,44 @@ func TestCASetResource(t *testing.T) {
 			},
 		},
 		"expect error - create a ca set with expired certificate": {
-			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
-				err := &mtlstruststore.Error{
-					Type:        "/mtls-edge-truststore/v2/error-types/certificate-validation-failure",
-					Title:       "Certificates have failed validation.",
-					Detail:      "",
-					Status:      400,
-					ContextInfo: nil,
-					Instance:    "/mtls-edge-truststore/v2/error-types/certificate-validation-failure/13afd387bc6d5453",
-					Errors: []mtlstruststore.ErrorItem{
+			init: func(m *mtlstruststore.Mock, _ commonDataForResource) {
+				mockValidateCertificates(m, commonDataForResource{
+					certificates: []mtlstruststore.CertificateResponse{
 						{
-							Detail:  "The certificate with subject CN=www.test.com, OU=x, O=x, L=x, ST=x, C=PL and fingerprint 11f06a77d5b0bff563e0b6c1e8929c758f3f74e5b29835324ed8f8a2bb6eb7 has expired. Expiry date is 2025-04-24T18:00:09Z. The check was performed on 2025-05-23T12:47:09Z.",
-							Pointer: "/certificates/0",
-							ContextInfo: map[string]any{
-								"checkDate":   "2025-05-23T12:47:09Z",
-								"description": "Test certificate",
-								"expiryDate":  "2025-04-24T18:00:09Z",
-								"fingerprint": "11f06a77d5b0bff563e0b6c1e8929c758f3f74e5b29835324ed8f8a2bb6eb7",
-								"subject":     "CN=www.test.com, OU=x, O=x, L=x, ST=x, C=PL",
-							},
+							CertificatePEM: "-----BEGIN CERTIFICATE-----\nMIIC3jCCAcagAwIBAgIBATANBgkqhkiG9w0BAQsFADAAMB4XDTI0MDcwMTAwMDAwMFoXDTI1MDcwMjEwNDcxNlowADCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAL1xDWbGQoeGrUimkp7KUnlj1w0+aHNs9QH9sXygMxxis9cNZeBewJv9fL7n2MmFSkgmsAxJ8/90G19cyfWzNnPtO9PF9kBVarPU79CUVPx9D3hJBPIlDKozrbZYy2H4HRbQ41xM9DF4DjXIqX3Lk8YslTf8SOSxgIpQLKVrdvIxSTY3uH+u0E67dtcTcz6Ytop1Z0u4Q7GesC6iUoqWYNNPRGTETN++kTZ1XqVXWoVWML4ffeHpqUqHm/ITY0OKeXcIMTD/lg0zFdMqMYY01Y76Vddgts5utqmgt7qJ6mWlETHpVXNiIn/ooukxCsAgxgfqS/iXEyOvWrmCT/O4rqECAwEAAaNjMGEwHQYDVR0OBBYEFNG9BugMXYKr404m1c4nIIuCbB6VMB8GA1UdIwQYMBaAFNG9BugMXYKr404m1c4nIIuCbB6VMA8GA1UdEwEB/wQFMAMBAf8wDgYDVR0PAQH/BAQDAgGGMA0GCSqGSIb3DQEBCwUAA4IBAQB+0lz3a78X+Eg0QqLBUJBtNzuVwNMb2Yq3in0s+91QOMymfc5uVl55S/8RxInbTdwD51jkW9akAl3fpQu2PBRwLPJPpewHnWZJgVK/xws0TDJYHe0iWPpNTfQRU5QuciTAp5lwhyyzpamZK2uE76lYTwZ8y6ZHblPDp1JCu6k2soH0YkvTzrKSUJUki70jhVajEFEUZ8S19PQ8+UeEycxn6c629ZPgw87aej8SEbPiY60J1vq+o4px/9HpW9pGeZNMilIvvY9ezDtqERmC4mKbYPNzSFwkYJ5mqG4yUlafITpl6/nvPi9rihMcf06rEhhPye+nztQrscMYcvr7qaDh\n-----END CERTIFICATE-----\n",
+							Description:    ptr.To("Test certificate"),
 						},
 					},
-				}
-				mockValidateCertificates(m, resourceData, err).Times(1)
+				},
+					&mtlstruststore.Error{
+						Type:     "/mtls-edge-truststore/error-types/certificate-validation-failure",
+						Title:    "Certificates have failed validation.",
+						Status:   400,
+						Instance: "/mtls-edge-truststore/error-types/certificate-validation-failure/85817ae44a4fc762",
+						Errors: []mtlstruststore.ErrorItem{
+							{
+								Detail:  "The certificate with subject  and fingerprint 69ecacc778efa8564ffbaf81200667e30fdf8ed59d9887c80591d4889dc86275 has expired. Expiry date is 2025-07-02T10:47:16.000000Z. The check was performed on 2025-08-13T13:07:06.000000Z.",
+								Pointer: "/certificates/0",
+								Title:   "The certificate has expired.",
+								Type:    "/mtls-edge-truststore/error-types/expired-certificate",
+								ContextInfo: map[string]any{
+									"certificatePem": "-----BEGIN CERTIFICATE-----\nMIIC3jCCAcagAwIBAgIBATANBgkqhkiG9w0BAQsFADAAMB4XDTI0MDcwMTAwMDAwMFoXDTI1MDcwMjEwNDcxNlowADCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAL1xDWbGQoeGrUimkp7KUnlj1w0+aHNs9QH9sXygMxxis9cNZeBewJv9fL7n2MmFSkgmsAxJ8/90G19cyfWzNnPtO9PF9kBVarPU79CUVPx9D3hJBPIlDKozrbZYy2H4HRbQ41xM9DF4DjXIqX3Lk8YslTf8SOSxgIpQLKVrdvIxSTY3uH+u0E67dtcTcz6Ytop1Z0u4Q7GesC6iUoqWYNNPRGTETN++kTZ1XqVXWoVWML4ffeHpqUqHm/ITY0OKeXcIMTD/lg0zFdMqMYY01Y76Vddgts5utqmgt7qJ6mWlETHpVXNiIn/ooukxCsAgxgfqS/iXEyOvWrmCT/O4rqECAwEAAaNjMGEwHQYDVR0OBBYEFNG9BugMXYKr404m1c4nIIuCbB6VMB8GA1UdIwQYMBaAFNG9BugMXYKr404m1c4nIIuCbB6VMA8GA1UdEwEB/wQFMAMBAf8wDgYDVR0PAQH/BAQDAgGGMA0GCSqGSIb3DQEBCwUAA4IBAQB+0lz3a78X+Eg0QqLBUJBtNzuVwNMb2Yq3in0s+91QOMymfc5uVl55S/8RxInbTdwD51jkW9akAl3fpQu2PBRwLPJPpewHnWZJgVK/xws0TDJYHe0iWPpNTfQRU5QuciTAp5lwhyyzpamZK2uE76lYTwZ8y6ZHblPDp1JCu6k2soH0YkvTzrKSUJUki70jhVajEFEUZ8S19PQ8+UeEycxn6c629ZPgw87aej8SEbPiY60J1vq+o4px/9HpW9pGeZNMilIvvY9ezDtqERmC4mKbYPNzSFwkYJ5mqG4yUlafITpl6/nvPi9rihMcf06rEhhPye+nztQrscMYcvr7qaDh\n-----END CERTIFICATE-----\n",
+									"checkDate":      "2025-08-13T13:07:06.000000Z",
+									"description":    nil,
+									"expiryDate":     "2025-07-02T10:47:16.000000Z",
+									"fingerprint":    "69ecacc778efa8564ffbaf81200667e30fdf8ed59d9887c80591d4889dc86275",
+									"subject":        "",
+								},
+							},
+						},
+					})
 			},
 			mockData: createData,
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, "testdata/TestResCASet/create.tf"),
-					ExpectError: regexp.MustCompile("Error: Certificate is invalid(\n|.)+29: MIIDXTCCAkWgAwIBAgIJALa6Rz1u5z2OMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV(\n|.)+The certificate with subject"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/create_expired_cert.tf"),
+					ExpectError: regexp.MustCompile(`Certificates validation failed - The certificate has expired.` +
+						`\n[\s\S]*?-----BEGIN CERTIFICATE-----\nMIIC3jCCAcagAwIBAgIBATANBgkqhkiG9w0BAQsFADAAMB4XDTI0MDcwMTAwMDAwMFoXDTI1MDcwMjEwNDcxNlowADCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAL1xDWbGQoeGrUimkp7KUnlj1w0\+aHNs9QH9sXygMxxis9cNZeBewJv9fL7n2MmFSkgmsAxJ8/90G19cyfWzNnPtO9PF9kBVarPU79CUVPx9D3hJBPIlDKozrbZYy2H4HRbQ41xM9DF4DjXIqX3Lk8YslTf8SOSxgIpQLKVrdvIxSTY3uH\+u0E67dtcTcz6Ytop1Z0u4Q7GesC6iUoqWYNNPRGTETN\+\+kTZ1XqVXWoVWML4ffeHpqUqHm/ITY0OKeXcIMTD/lg0zFdMqMYY01Y76Vddgts5utqmgt7qJ6mWlETHpVXNiIn/ooukxCsAgxgfqS/iXEyOvWrmCT/O4rqECAwEAAaNjMGEwHQYDVR0OBBYEFNG9BugMXYKr404m1c4nIIuCbB6VMB8GA1UdIwQYMBaAFNG9BugMXYKr404m1c4nIIuCbB6VMA8GA1UdEwEB/wQFMAMBAf8wDgYDVR0PAQH/BAQDAgGGMA0GCSqGSIb3DQEBCwUAA4IBAQB\+0lz3a78X\+Eg0QqLBUJBtNzuVwNMb2Yq3in0s\+91QOMymfc5uVl55S/8RxInbTdwD51jkW9akAl3fpQu2PBRwLPJPpewHnWZJgVK/xws0TDJYHe0iWPpNTfQRU5QuciTAp5lwhyyzpamZK2uE76lYTwZ8y6ZHblPDp1JCu6k2soH0YkvTzrKSUJUki70jhVajEFEUZ8S19PQ8\+UeEycxn6c629ZPgw87aej8SEbPiY60J1vq\+o4px/9HpW9pGeZNMilIvvY9ezDtqERmC4mKbYPNzSFwkYJ5mqG4yUlafITpl6/nvPi9rihMcf06rEhhPye\+nztQrscMYcvr7qaDh\n-----END CERTIFICATE-----\n`),
 				},
 			},
 		},
@@ -495,6 +505,146 @@ func TestCASetResource(t *testing.T) {
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResCASet/create.tf"),
 					Destroy:     true,
 					ExpectError: regexp.MustCompile(`CA set is in use by 1 enrollments: some.example.com(\n|\s)+\(10430\)`),
+				},
+			},
+		},
+		"expect a few errors with the same title - create a ca set": {
+			init: func(m *mtlstruststore.Mock, _ commonDataForResource) {
+				mockValidateCertificates(m, commonDataForResource{
+					certificates: []mtlstruststore.CertificateResponse{
+						{
+							CertificatePEM: "-----BEGIN CERTIFICATE-----\nMIIDXTCCAkWgAwIBAgIJALa6Rz1u5z2OMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV\n-----END CERTIFICATE-----\n",
+							Description:    ptr.To("Incorrect PEM format"),
+						},
+						{
+							CertificatePEM: "-----BEGIN CERTIFICATE-----\nMIIE8jCCAtqgAwIBAgICB+kwDQYJKoZIhvcNAQELBQAwPDEPMA0GA1UECgwGQWth\nbWFpMQswCQYDVQQGEwJVUzELMAkGA1UECAwCTlkxDzANBgNVBAcMBkJvc3RvbjAe\nFw0yNTA2MDkxMjMzMzNaFw0yNjA2MDkxMjMzMzNaMDwxDzANBgNVBAoMBkFrYW1h\naTELMAkGA1UEBhMCVVMxCzAJBgNVBAgMAk5ZMQ8wDQYDVQQHDAZCb3N0b24wggIi\nMA0GCSqGSIb3DQEBAQUAA4ICDwAwggIKAoICAQChcMd+fNC6Kw9ZWLvZT+ftsOM1\n6IyEf7PbfX/4aiHT/iZug30AXZb1gOXXyQ04KlTtML9FKs2ZGb+0wNXy/hl4cKDQ\nVvrBC+/YFq38RTGSMOgtxjWRgFUltiXMBL/8V2HAbZauyEk+u76Lb190DTdrZZ86\nn0sYi3sBWrDzNRvAq8P7SLj8uu4CtETRk3j/mvH88PWjXuMZBd9JihRejqZWIEcj\ndJ/0CmH5f4/9/bsKGHiZKIKx5uHlzA5rLaB+cm12tqC5/8hrKJst9lfF0XELVjbJ\nqjlqxyvwzMIuqTwdzXY/6sO2DGtDJCHlXeIpR5kmfBYXflPQUQXgj04+GEhtc5WS\nYR0tCSMEphcxz00FntIA7/Eb88tPGsu7zqbj8YjEQ3vEK8fBwqhQpRkODL3LG26V\nVCU/4vuBKgddeH5BJpP3oL6kEiBDN4ZQvxtVt3st1FGsXjBh/NyV9QsK5ya1C7If\nW9GUew43YBpDW/5ZJ8bj74wIRP2XCcyP/5fETKwCtsySGK3fW5MwXpE6vrAOzfXt\n4+vCIVI+25L4AhyU5Q4QEA6WKgz/1YcXJW3/kEofAY9HMRuutLe2HjyfxPSxC6DE\n2MeeRiCoJjDfVg1zlQMHkxgZhSkahS4ln8IPvyTFUthgNqIm43K7s/eXl0qrmVF6\nH/V55bKO7WxcrHqkPwIDAQABMA0GCSqGSIb3DQEBCwUAA4ICAQCN0BD6S7t2jzD9\n/c8BLziTrKFVel4Q6aYEFH8PvWhffDR814+zBF1+FHMCttNr+hjX/WGGv7T0wFDj\nL+TKNDQETE7lErGbdFYByKyuqjxL8SRVIkRdTxgyoZghPt8qMmyHmQAis1B4xA4d\n1TAQBoQ4gp74ehJGaLC2a+FeEq6ta9ts3rjjGAMVZX7S2SX6+wz9BF/1c5d88vSC\nt3dINAJXj14eZnAlEk2cpZjVF1P+G7ydnC6l32idjFoMKqZ0ChRX2O+4qFEjzszA\n+W0eIzkklvRvAzFgvPPoUHQZk8tVD9oei/0G0fCSpcFw7z20GxwRwmQ1/cJeKWm3\ngR1TEjRS12iZhJJTTZLPONJu/hBSwPKPpqf9SlxHy3wtG2qIJjYXcF1t5k1KJf3K\nvKGA7AtN57lqrgCxklc+1GxoDFrFouhs238a6qvkp3xT4ytETZXMIf0J/xwO4koh\nMHZS0hF0M2/r6G2v5XQ5lStZ8MRuwec01c6F21yGm+EH/MhSQRQFzQg6ZbCWbLhG\nmyLkOJRWmO7YYrlGn1Oaqewm8a8x5M2Sa0bLEQZAbJSmQ7KBcJPbR7ZqAaYvg1PD\nHu3ea2zMgNP90Hxja068RHWNIliXLfU9NtqoiCKQZ5OfT2lK088PIw1lnptzSwcr\nJupDTFbp/p2GavKA7VC/3sLifWs7Vg==\n-----END CERTIFICATE-----",
+							Description:    ptr.To("Test Certificate"),
+						},
+						{
+							CertificatePEM: "-----BEGIN CERTIFICATE-----\nMIIE8jCCAtqgAwIBAgICB+kwDQYJKoZIhvcNAQELBQAwPDEPMA0GA1UECgwGQWth\nbWFpMQswCQYDVQQGEwJVUzELMAkGA1UECAwCTlkxDzANBgNVBAcMBkJvc3RvbjAe\nFw0yNTA2MDkxMjMzMzNaFw0yNjA2MDkxMjMzMzNaMDwxDzANBgNVBAoMBkFrYW1h\naTELMAkGA1UEBhMCVVMxCzAJBgNVBAgMAk5ZMQ8wDQYDVQQHDAZCb3N0b24wggIi\nMA0GCSqGSIb3DQEBAQUAA4ICDwAwggIKAoICAQCx8wl0DoQEHjXBbOjyxINUDhf0\nWm4o3oLe/yYtx3jWx/Alg3eRk4Koi02TJTvp56KSihDV53vV8iZsr88ZaN8fKjPt\nur/eMqyIbrqyjqQacD4Z+cNYX8Csko5Bxst0Gh7pqxJeSYlOIuwtfx3BZxfOvqss\n9hzCR6YrKABlqL1pOq75sc5Lsc4w8Jyi8dNhGfiHXVagfLo3kz4utmyDQntJSmBs\nIw0QeRdXqPvA1f07cF2pv2Lq6Smr+4pKuMB+mp5cOxrawFrpKqmWUYXsVFPHwiVY\n+8wIaH2ywfnOaFWLh0ts5om3szFRlzrDistdc+mk06ofO3oN7t0iX23zVP71/jMW\nnnXHZdZ2UpgwCfX0XI7Gn579r5qAn6SfCc6D7XbShLvViAXzM67uDFKZbZkdZziy\nY8vFbwQ7VjytYotdwJxH6dRlg0/jM/nkQJxV3gtnotN7pIZduV9xQwalermVqsWL\nm/9M7FldY0GjzdEMKc3fCK+VJ9lBtuvw0NtSqUbnyV7srNmmYCWkEISjipb0/Dwp\nbng4NU5edgfS463UgwIvmJt7Nkx/Mz4N+uKUhkYyvMtnJgS03ZxwfFjA3ttn/fk+\nDVl0LhaAyGE0hfa6/u2sdhK01K9ZIYlz/11OqNoYWmfYqHPGnudXwj6ZRqzBqis0\nazfIMGwpkI/OvsuUgQIDAQABMA0GCSqGSIb3DQEBCwUAA4ICAQB5dIwvNQuXsF68\nSB9QleUqkIAdSllJg+RApAMeD3w0/6+yBIYOBeaTt/VOIa7mu1aOb0f0elvEIHaa\nfRVGoOv7ZpCmi+s1fkZqlGuV6aSy2HaGLToApru2Bml5Uy5CoRg1XVD23Eo5rKve\n5DOkeL50b0rBXobPxCkvsuQGf5wfVNsipR05QRy4m3SjVanQGVyhRGjo35CWfjzQ\nGIXY+eN6fP/1v+apNEHwj4suuftRlg9h+ZJnmAGDtznfSFzr4pBveyEv9ztbGO97\nHsBlobYOH9K/InKuu6QD17bCZuGFhgqfgXqQ0Q7rQLe410wotVT+1Q9xOyXIKnwX\nZ2sqmpB8Y74hZucAiGxv7yQonTwG6PJjMlOHiBPu66iLHnWFEI6d5frhnDwILxTc\negVlxl0FhcW9ZescC5+N6MoHARpQmYzKmeSAErOAxNihTkz87tYozffDw2thkOVu\nHGZFUxCKnYve3JKX0GKR9NVo4yFYH/rTfZy8pLFEmHeTx+98KnhZvNszVtsIa/kb\nnsM5bu0BTYTWEHvnWWnzPSOa1l324+4LGUBtilJot1573F1H1RJ71cYVEsqqNiOA\nZCDqgZG6hbrTSxhkC6YnHPYWZueX33IIsAqFPjmnzwf1w76gdD3NLEV7hBtkdI/Y\n9u9Gex1D2e718dr4lgnceYug3A6mJQ==\n-----END CERTIFICATE-----",
+							Description:    ptr.To("Test Certificate"),
+						},
+						{
+							CertificatePEM: "-----BEGIN CERTIFICATE-----\nMjUxODA1MTBTBkFrYW1haTEUMBIGaFw0yNjA1MjUxODA1MTBaMCcxDzANBgNVBAo\nAQDc/kIqoeeZozLtDfR3uCt5UvkxXrz+5Y/w2KlKWJwyMv5GcKbYhmeYZxF93+ys\n7AKuWq3Wga2D3XIlNQeurrnY/2/hWjjzfXI9fKd3eIMw29ALcheDRpnJyrrwXdYj\nNZ24gVLcy0Xp0tkj9SABzjJyBxyulbayPXnRVhOBsifAN65d+HlV9+gQXiX7M70U\nSXv27A3roeg6M9BiOxrc+x7GtzSRWB1/vGYLn0zHolEDrzBq0kRlH53YRnsYzGpG\n8UGs5cFKGmAw2zkpEKvoQKCrYXNQaoDo+qQ7kzdf72xVUm9EcVR4i1bFVvIvPQWk\ndCURqs/A0+jN0JDhvUnpDopXAgMBAAGjQjBAMA4GA1UdDwEB/wQEAwIBpjAPBgNV\nHRMBAf8EBTADAQH/MB0GA1UdDgQWBBRsC7RVcqVK/tLQmGMYl58af6DL2DANBgkq\nhkiG9w0BAQsFAAOCAQEAJtLx39c2rVNA0oGrpeg50QN1oAT6uXMvnLud+lVgu9Wi\nG7wrqMFZNnrlO7Ke91jJM7JEjAJCb7sd9yrfpq2D3MSinfFYSkrJppoUqYQnCMIP\nDNyaPuj7DgMbduiOX3f67FNSnndndPPR2MwNyvdT3UMR05itzsxUQK29cgSWwVhz\n-----END CERTIFICATE-----",
+							Description:    ptr.To("Incorrect PEM format"),
+						},
+					},
+				},
+					&mtlstruststore.Error{
+						Errors: []mtlstruststore.ErrorItem{
+							{
+								ContextInfo: map[string]any{
+									"certificatePem": "-----BEGIN CERTIFICATE-----\nMIIDXTCCAkWgAwIBAgIJALa6Rz1u5z2OMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV\n-----END CERTIFICATE-----",
+									"description":    "Incorrect PEM format",
+								},
+								Detail:  "The certificate is not in a properly encoded PEM format. It cannot be parsed.",
+								Pointer: "/certificates/0",
+								Title:   "The certificate is malformed. It cannot be parsed.",
+								Type:    "/mtls-edge-truststore/error-types/malformed-certificate",
+							},
+							{
+								ContextInfo: map[string]any{
+									"certificatePem": "-----BEGIN CERTIFICATE-----\nMjUxODA1MTBTBkFrYW1haTEUMBIGaFw0yNjA1MjUxODA1MTBaMCcxDzANBgNVBAo\nAQDc/kIqoeeZozLtDfR3uCt5UvkxXrz+5Y/w2KlKWJwyMv5GcKbYhmeYZxF93+ys\n7AKuWq3Wga2D3XIlNQeurrnY/2/hWjjzfXI9fKd3eIMw29ALcheDRpnJyrrwXdYj\nNZ24gVLcy0Xp0tkj9SABzjJyBxyulbayPXnRVhOBsifAN65d+HlV9+gQXiX7M70U\nSXv27A3roeg6M9BiOxrc+x7GtzSRWB1/vGYLn0zHolEDrzBq0kRlH53YRnsYzGpG\n8UGs5cFKGmAw2zkpEKvoQKCrYXNQaoDo+qQ7kzdf72xVUm9EcVR4i1bFVvIvPQWk\ndCURqs/A0+jN0JDhvUnpDopXAgMBAAGjQjBAMA4GA1UdDwEB/wQEAwIBpjAPBgNV\nHRMBAf8EBTADAQH/MB0GA1UdDgQWBBRsC7RVcqVK/tLQmGMYl58af6DL2DANBgkq\nhkiG9w0BAQsFAAOCAQEAJtLx39c2rVNA0oGrpeg50QN1oAT6uXMvnLud+lVgu9Wi\nG7wrqMFZNnrlO7Ke91jJM7JEjAJCb7sd9yrfpq2D3MSinfFYSkrJppoUqYQnCMIP\nDNyaPuj7DgMbduiOX3f67FNSnndndPPR2MwNyvdT3UMR05itzsxUQK29cgSWwVhz\n-----END CERTIFICATE-----",
+									"description":    "Incorrect PEM format",
+								},
+								Detail:  "The certificate is not in a properly encoded PEM format. It cannot be parsed.",
+								Pointer: "/certificates/3",
+								Title:   "The certificate is malformed. It cannot be parsed.",
+								Type:    "/mtls-edge-truststore/error-types/malformed-certificate",
+							},
+						},
+						Instance: "/mtls-edge-truststore/error-types/certificate-validation-failure/56e1f179ad2d5b20",
+						Status:   http.StatusBadRequest,
+						Title:    "Certificates have failed validation.",
+						Type:     "/mtls-edge-truststore/error-types/certificate-validation-failure",
+					})
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/create_invalid_certificates.tf"),
+					ExpectError: regexp.MustCompile(`Certificates validation failed - The certificate is malformed. It cannot be parsed.` +
+						`\n[\s\S]*?Incorrect PEM format\n-----BEGIN CERTIFICATE-----\nMIIDXTCCAkWgAwIBAgIJALa6Rz1u5z2OMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV\n-----END CERTIFICATE-----\n\n\n` +
+						`Incorrect PEM format\n-----BEGIN CERTIFICATE-----\nMjUxODA1MTBTBkFrYW1haTEUMBIGaFw0yNjA1MjUxODA1MTBaMCcxDzANBgNVBAo\nAQDc/kIqoeeZozLtDfR3uCt5UvkxXrz\+5Y/w2KlKWJwyMv5GcKbYhmeYZxF93\+ys\n7AKuWq3Wga2D3XIlNQeurrnY/2/hWjjzfXI9fKd3eIMw29ALcheDRpnJyrrwXdYj\nNZ24gVLcy0Xp0tkj9SABzjJyBxyulbayPXnRVhOBsifAN65d\+HlV9\+gQXiX7M70U\nSXv27A3roeg6M9BiOxrc\+x7GtzSRWB1/vGYLn0zHolEDrzBq0kRlH53YRnsYzGpG\n8UGs5cFKGmAw2zkpEKvoQKCrYXNQaoDo\+qQ7kzdf72xVUm9EcVR4i1bFVvIvPQWk\ndCURqs/A0\+jN0JDhvUnpDopXAgMBAAGjQjBAMA4GA1UdDwEB/wQEAwIBpjAPBgNV\nHRMBAf8EBTADAQH/MB0GA1UdDgQWBBRsC7RVcqVK/tLQmGMYl58af6DL2DANBgkq\nhkiG9w0BAQsFAAOCAQEAJtLx39c2rVNA0oGrpeg50QN1oAT6uXMvnLud\+lVgu9Wi\nG7wrqMFZNnrlO7Ke91jJM7JEjAJCb7sd9yrfpq2D3MSinfFYSkrJppoUqYQnCMIP\nDNyaPuj7DgMbduiOX3f67FNSnndndPPR2MwNyvdT3UMR05itzsxUQK29cgSWwVhz\n-----END CERTIFICATE-----`),
+				},
+			},
+		},
+		"expect a few errors with different title - create a ca set": {
+			init: func(m *mtlstruststore.Mock, _ commonDataForResource) {
+				mockValidateCertificates(m, commonDataForResource{
+					certificates: []mtlstruststore.CertificateResponse{
+						{
+							CertificatePEM: "-----BEGIN CERTIFICATE-----\nMIIDXTCCAkWgAwIBAgIJALa6Rz1u5z2OMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV123\n-----END CERTIFICATE-----",
+							Description:    ptr.To("Incorrect PEM format first group"),
+						},
+						{
+							CertificatePEM: "-----BEGIN CERTIFICATE-----\nMIIDXTCCAkWgAwIBAgIJALa6Rz1u5z2OMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV345\n-----END CERTIFICATE-----",
+							Description:    ptr.To("Incorrect PEM format first group"),
+						},
+						{
+							CertificatePEM: "-----BEGIN CERTIFICATE-----\nMIIDXTCCAkWgAwIBAgIJALa6Rz1u5z2OMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV567\n-----END CERTIFICATE-----",
+							Description:    ptr.To("Incorrect PEM format second group"),
+						},
+						{
+							CertificatePEM: "-----BEGIN CERTIFICATE-----\nMIIDXTCCAkWgAwIBAgIJALa6Rz1u5z2OMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV789\n-----END CERTIFICATE-----",
+							Description:    ptr.To("Incorrect PEM format second group"),
+						},
+					},
+				},
+					&mtlstruststore.Error{
+						Errors: []mtlstruststore.ErrorItem{
+							{
+								ContextInfo: map[string]any{
+									"certificatePem": "-----BEGIN CERTIFICATE-----MIIDXTCCAkWgAwIBAgIJALa6Rz1u5z2OMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV123-----END CERTIFICATE-----",
+									"description":    "Incorrect PEM format first group",
+								},
+								Detail:  "The certificate is not in a properly encoded PEM format. It cannot be parsed.",
+								Pointer: "/certificates/0",
+								Title:   "The certificate is malformed. It cannot be parsed.",
+								Type:    "/mtls-edge-truststore/error-types/malformed-certificate",
+							},
+							{
+								ContextInfo: map[string]any{
+									"certificatePem": "-----BEGIN CERTIFICATE-----MIIDXTCCAkWgAwIBAgIJALa6Rz1u5z2OMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV345-----END CERTIFICATE-----",
+									"description":    "Incorrect PEM format first group",
+								},
+								Detail:  "The certificate is not in a properly encoded PEM format. It cannot be parsed.",
+								Pointer: "/certificates/1",
+								Title:   "The certificate is malformed. It cannot be parsed.",
+								Type:    "/mtls-edge-truststore/error-types/malformed-certificate",
+							},
+							{
+								ContextInfo: map[string]any{
+									"certificatePem": "-----BEGIN CERTIFICATE-----MIIDXTCCAkWgAwIBAgIJALa6Rz1u5z2OMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV567-----END CERTIFICATE-----",
+									"description":    "Incorrect PEM format second group",
+								},
+								Detail:  "The certificate with subject  and fingerprint 69ecacc778efa8564ffbaf81200667e30fdf8ed59d9887c80591d4889dc86275 has expired. Expiry date is 2025-07-02T10:47:16.000000Z. The check was performed on 2025-08-13T13:07:06.000000Z.",
+								Pointer: "/certificates/2",
+								Title:   "The certificate has expired.",
+								Type:    "/mtls-edge-truststore/error-types/expired-certificate",
+							},
+							{
+								ContextInfo: map[string]any{
+									"certificatePem": "-----BEGIN CERTIFICATE-----MIIDXTCCAkWgAwIBAgIJALa6Rz1u5z2OMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV789-----END CERTIFICATE-----",
+									"description":    "Incorrect PEM format second group",
+								},
+								Detail:  "The certificate with subject  and fingerprint 69ecacc778efa8564ffbaf81200667e30fdf8ed59d9887c80591d4889dc86275 has expired. Expiry date is 2025-07-02T10:47:16.000000Z. The check was performed on 2025-08-13T13:07:06.000000Z.",
+								Pointer: "/certificates/3",
+								Title:   "The certificate has expired.",
+								Type:    "/mtls-edge-truststore/error-types/expired-certificate",
+							},
+						},
+						Instance: "/mtls-edge-truststore/error-types/certificate-validation-failure/0e0bc044ebda5a16",
+						Status:   http.StatusBadRequest,
+						Title:    "Certificates have failed validation.",
+						Type:     "/mtls-edge-truststore/error-types/certificate-validation-failure",
+					})
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/create_invalid_certificates_with_different_titles.tf"),
+					ExpectError: regexp.MustCompile(`Certificates validation failed - The certificate is malformed. It cannot be parsed.` +
+						`\n[\s\S]*?Incorrect PEM format first group\n[\s\S]*?MIIDXTCCAkWgAwIBAgIJALa6Rz1u5z2OMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV123` +
+						`\n[\s\S]*?Incorrect PEM format first group\n[\s\S]*?MIIDXTCCAkWgAwIBAgIJALa6Rz1u5z2OMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV345`),
 				},
 			},
 		},
@@ -1536,21 +1686,29 @@ func mockValidateCertificates(client *mtlstruststore.Mock, testData commonDataFo
 			Description:    c.Description,
 		})
 	}
-	var certificatesResponse []mtlstruststore.ValidateCertificateResponse
-	for _, c := range testData.certificates {
-		certificatesResponse = append(certificatesResponse, mtlstruststore.ValidateCertificateResponse{
-			// Certificates are trimmed in the API, so we do it here too
-			CertificatePEM: text.TrimRightWhitespace(c.CertificatePEM),
-			Description:    c.Description,
-		})
+
+	if err != nil {
+		var certificatesResponse []mtlstruststore.ValidateCertificateResponse
+		for _, c := range testData.certificates {
+			certificatesResponse = append(certificatesResponse, mtlstruststore.ValidateCertificateResponse{
+				// Certificates are trimmed in the API, so we do it here too
+				CertificatePEM: text.TrimRightWhitespace(c.CertificatePEM),
+				Description:    c.Description,
+			})
+		}
+		return client.On("ValidateCertificates", testutils.MockContext, mtlstruststore.ValidateCertificatesRequest{
+			AllowInsecureSHA1: testData.allowInsecureSHA1,
+			Certificates:      certificates}).
+			Return(&mtlstruststore.ValidateCertificatesResponse{
+				AllowInsecureSHA1: testData.allowInsecureSHA1,
+				Certificates:      certificatesResponse,
+			}, err).Once()
 	}
 	return client.On("ValidateCertificates", testutils.MockContext, mtlstruststore.ValidateCertificatesRequest{
 		AllowInsecureSHA1: testData.allowInsecureSHA1,
-		Certificates:      certificates}).
-		Return(&mtlstruststore.ValidateCertificatesResponse{
-			AllowInsecureSHA1: testData.allowInsecureSHA1,
-			Certificates:      certificatesResponse,
-		}, err).Once()
+		Certificates:      certificates,
+	}).
+		Return(nil, err).Once()
 }
 
 func mockCreateCASet(client *mtlstruststore.Mock, testData commonDataForResource) *mock.Call {

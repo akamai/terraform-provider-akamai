@@ -298,23 +298,52 @@ func (r *caSetResource) ValidateConfig(ctx context.Context, req resource.Validat
 	}
 }
 
-func generateDiagnosticForValidationErrors(err error) diag.Diagnostics {
-	var diags diag.Diagnostics
+func generateDiagnosticForValidationErrors(err error, certs []mtlstruststore.ValidateCertificate) diag.Diagnostics {
+	diags := diag.Diagnostics{}
 	var e *mtlstruststore.Error
+
 	if errors.As(err, &e) {
-		// If there are no details on every certificate, we can just add the general error.
+		// If there are no detailed errors, add the general error
 		if len(e.Errors) == 0 {
 			diags.AddAttributeError(path.Root("certificates"), "Certificates are invalid", e.Title)
 			return diags
 		}
+
+		// Group errors by Title
+		errorGroups := make(map[string][]struct {
+			certPEM     string
+			description string
+		})
+
 		for _, ee := range e.Errors {
-			index, err := strconv.Atoi(strings.TrimPrefix(ee.Pointer, "/certificates/"))
-			// If we cannot parse the index, we can just add the general error
-			if err != nil {
-				diags.AddAttributeError(path.Root("certificates"), "Certificates are invalid. Unknown pointer: "+ee.Pointer, err.Error())
-			} else {
-				diags.AddAttributeError(path.Root("certificates").AtListIndex(index), "Certificate is invalid", ee.Detail)
+			index, errParsed := strconv.Atoi(strings.TrimPrefix(ee.Pointer, "/certificates/"))
+			if errParsed != nil || index < 0 || index >= len(certs) {
+				diags.AddAttributeError(path.Root("certificates"), "Certificates are invalid. Unknown pointer: "+ee.Pointer, errParsed.Error())
+				continue
 			}
+			certInfo := struct {
+				certPEM     string
+				description string
+			}{
+				certPEM:     certs[index].CertificatePEM,
+				description: *certs[index].Description,
+			}
+
+			errorGroups[ee.Title] = append(errorGroups[ee.Title], certInfo)
+		}
+
+		// Add one diagnostic per error title, summarizing all affected certs
+		for title, certInfos := range errorGroups {
+			var certsSummary strings.Builder
+			for _, info := range certInfos {
+				if len(info.description) > 0 {
+					certsSummary.WriteString(fmt.Sprintf("%s\n%s\n\n", info.description, info.certPEM))
+				} else {
+					certsSummary.WriteString(fmt.Sprintf("%s\n\n", info.certPEM))
+				}
+
+			}
+			diags.AddError(fmt.Sprintf("Certificates validation failed - %s", title), certsSummary.String())
 		}
 	} else {
 		diags.AddAttributeError(path.Root("certificates"), "Certificates are invalid", err.Error())
@@ -528,7 +557,7 @@ func validateCerts(ctx context.Context, client mtlstruststore.MTLSTruststore, co
 		Certificates:      certs,
 	})
 	if err != nil {
-		return generateDiagnosticForValidationErrors(err)
+		return generateDiagnosticForValidationErrors(err, certs)
 	}
 	tflog.Debug(ctx, "Validation succeeded", map[string]any{
 		"response": res,
