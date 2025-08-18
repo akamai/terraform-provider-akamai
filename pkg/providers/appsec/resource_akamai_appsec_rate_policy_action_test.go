@@ -34,6 +34,14 @@ func TestAkamaiRatePolicyAction_res_basic(t *testing.T) {
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResRatePolicyAction/AllActionsAfterUpdate.json"), &allActionsAfterUpdate)
 		require.NoError(t, err)
 
+		actionAfterChallengeUpdate := appsec.UpdateRatePolicyActionResponse{}
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResRatePolicyAction/ActionAfterChallengeUpdate.json"), &actionAfterChallengeUpdate)
+		require.NoError(t, err)
+
+		allActionsAfterChallengeUpdate := appsec.GetRatePolicyActionsResponse{}
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResRatePolicyAction/AllActionsAfterChallengeUpdate.json"), &allActionsAfterChallengeUpdate)
+		require.NoError(t, err)
+
 		actionAfterDelete := appsec.UpdateRatePolicyActionResponse{}
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResRatePolicyAction/ActionAfterDelete.json"), &actionAfterDelete)
 		require.NoError(t, err)
@@ -85,6 +93,30 @@ func TestAkamaiRatePolicyAction_res_basic(t *testing.T) {
 			appsec.GetRatePolicyActionsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
 		).Return(&allActionsAfterUpdate, nil).Once()
 
+		// Read called by TF to determine whether Update will be called (diff check), returns ("alert", "deny") for this policy
+		client.On("GetRatePolicyActions",
+			testutils.MockContext,
+			appsec.GetRatePolicyActionsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
+		).Return(&allActionsAfterUpdate, nil).Once()
+
+		// Update with ("challenge_1234", "challenge_5678")
+		client.On("UpdateRatePolicyAction",
+			testutils.MockContext,
+			appsec.UpdateRatePolicyActionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", RatePolicyID: 135355, Ipv4Action: "challenge_1234", Ipv6Action: "challenge_5678"},
+		).Return(&actionAfterChallengeUpdate, nil).Once()
+
+		// Read called from Update, returns ("challenge_1234", "challenge_5678") for this policy
+		client.On("GetRatePolicyActions",
+			testutils.MockContext,
+			appsec.GetRatePolicyActionsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
+		).Return(&allActionsAfterChallengeUpdate, nil).Once()
+
+		// Read called for TestStep 3, returns ("challenge_1234", "challenge_5678") for this policy
+		client.On("GetRatePolicyActions",
+			testutils.MockContext,
+			appsec.GetRatePolicyActionsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
+		).Return(&allActionsAfterChallengeUpdate, nil).Once()
+
 		// Delete, returns ("none", "none") and does NOT generate a Read
 		client.On("UpdateRatePolicyAction",
 			testutils.MockContext,
@@ -110,6 +142,14 @@ func TestAkamaiRatePolicyAction_res_basic(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_appsec_rate_policy_action.test", "id", "43253:AAAA_81230:135355"),
 							resource.TestCheckResourceAttr("akamai_appsec_rate_policy_action.test", "ipv4_action", "alert"),
 							resource.TestCheckResourceAttr("akamai_appsec_rate_policy_action.test", "ipv6_action", "deny"),
+						),
+					},
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResRatePolicyAction/update-challenge_action.tf"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("akamai_appsec_rate_policy_action.test", "id", "43253:AAAA_81230:135355"),
+							resource.TestCheckResourceAttr("akamai_appsec_rate_policy_action.test", "ipv4_action", "challenge_1234"),
+							resource.TestCheckResourceAttr("akamai_appsec_rate_policy_action.test", "ipv6_action", "challenge_5678"),
 						),
 					},
 				},

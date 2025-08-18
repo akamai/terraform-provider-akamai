@@ -28,6 +28,8 @@
 
 #### FEATURES/ENHANCEMENTS:
 
+* APPSEC
+  * Added support for challenge actions in Rate Policy `resource_akamai_appsec_rate_policy_action` resource.
 
 
 * Appsec
