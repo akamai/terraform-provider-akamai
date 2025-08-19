@@ -21,6 +21,9 @@ type StateChecker struct {
 	attributes   map[string]checkData
 }
 
+// AttributeBatch is a type that allows to gather a group of unprefixed attributes with their values
+type AttributeBatch map[string]string
+
 // NewStateChecker creates a new instance of a StateChecker that checks attributes for a resource with provided name.
 func NewStateChecker(resourceName string) StateChecker {
 	return StateChecker{
@@ -60,6 +63,17 @@ func (c StateChecker) CheckEqual(attr, val string) StateChecker {
 		value: val,
 	}
 	return copied
+}
+
+// CheckEqualBatch adds checks for a batch of attributes with their values.
+// Prefix parameter defines that all attributes in the batch should have common prefix.
+// Usually common prefix is needed for all attributes that are part of a nested structure or list.
+func (c StateChecker) CheckEqualBatch(prefix string, batch AttributeBatch) StateChecker {
+	checker := c
+	for attr, val := range batch {
+		checker = checker.CheckEqual(prefix+attr, val)
+	}
+	return checker
 }
 
 // CheckMissing adds a check for a provided attribute name to not be present in the state.

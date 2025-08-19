@@ -8,7 +8,10 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/mtlstruststore"
 	"github.com/akamai/terraform-provider-akamai/v8/internal/customtypes"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
+	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -20,8 +23,9 @@ import (
 )
 
 var (
-	_ datasource.DataSource              = &caSetCertificatesDataSource{}
-	_ datasource.DataSourceWithConfigure = &caSetCertificatesDataSource{}
+	_ datasource.DataSource                   = &caSetCertificatesDataSource{}
+	_ datasource.DataSourceWithConfigure      = &caSetCertificatesDataSource{}
+	_ datasource.DataSourceWithValidateConfig = &caSetCertificatesDataSource{}
 )
 
 type (
@@ -34,10 +38,57 @@ type (
 		Name                  types.String       `tfsdk:"name"`
 		Version               types.Int64        `tfsdk:"version"`
 		Certificates          []certificateModel `tfsdk:"certificates"`
-		Expired               types.Bool         `tfsdk:"expired"`
-		ExpiryThresholdInDays types.Int64        `tfsdk:"expiry_threshold_in_days"`
+		IncludeActive         types.Bool         `tfsdk:"include_active"`
+		IncludeExpired        types.Bool         `tfsdk:"include_expired"`
+		IncludeExpiringInDays types.Int64        `tfsdk:"include_expiring_in_days"`
+		IncludeExpiringByDate types.String       `tfsdk:"include_expiring_by_date"`
 	}
 )
+
+func (d *caSetCertificatesDataSource) ValidateConfig(ctx context.Context, req datasource.ValidateConfigRequest, resp *datasource.ValidateConfigResponse) {
+	tflog.Debug(ctx, "MTLS TrustStore CA Set Certificates DataSource ValidateConfig")
+	var data caSetCertificatesDataSourceModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if !data.IncludeActive.IsUnknown() && !data.IncludeExpired.IsUnknown() &&
+		!data.IncludeExpiringInDays.IsUnknown() && !data.IncludeExpiringByDate.IsUnknown() {
+		nulledExpiring := data.IncludeExpiringInDays.IsNull() && data.IncludeExpiringByDate.IsNull()
+		includeActive := !data.IncludeActive.IsNull() && data.IncludeActive.ValueBool()
+		includeExpired := !data.IncludeExpired.IsNull() && data.IncludeExpired.ValueBool()
+		if !includeActive && !includeExpired && nulledExpiring {
+			resp.Diagnostics.AddError(
+				"At least one include option must be set",
+				"At least one attribute out of 'include_active', 'include_expired', 'include_expiring_in_days', or 'include_expiring_by_date' must be specified with 'true' value for booleans, or some value for the rest")
+			return
+		}
+	}
+
+	if tf.IsKnown(data.IncludeExpiringByDate) {
+		timestamp := data.IncludeExpiringByDate.ValueString()
+		parsedTimestamp, err := parseExpiringTimestamp(timestamp)
+		if err != nil {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("include_expiring_by_date"),
+				"Invalid expiring timestamp",
+				fmt.Sprintf("The provided expiring timestamp '%s' is not a valid RFC3339 or RFC3339Nano formatted date", timestamp),
+			)
+		}
+		if parsedTimestamp.Before(time.Now()) {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("include_expiring_by_date"),
+				"Invalid expiring timestamp",
+				fmt.Sprintf("The provided expiring threshold timestamp '%s' cannot be in the past", timestamp),
+			)
+		}
+	}
+}
+
+func parseExpiringTimestamp(timestamp string) (time.Time, error) {
+	return time.Parse(time.RFC3339Nano, timestamp)
+}
 
 // NewCASetCertificatesDataSource returns a new mtls truststore ca set certificates data source.
 func NewCASetCertificatesDataSource() datasource.DataSource {
@@ -91,16 +142,30 @@ func (d *caSetCertificatesDataSource) Schema(_ context.Context, _ datasource.Sch
 				Optional:    true,
 				Computed:    true,
 			},
-			"expired": schema.BoolAttribute{
-				Description: "When true, returns certificates that expired within the past N days, where N is from the `expiry_threshold_in_days` (if provided). If `expiry_threshold_in_days` is not set, all expired certificates are returned.",
+			"include_active": schema.BoolAttribute{
+				Description: "When true, returns all active (not expired) certificates.",
+				Optional:    true,
+				Validators: []validator.Bool{
+					boolvalidator.ConflictsWith(
+						path.MatchRoot("include_expiring_in_days"),
+						path.MatchRoot("include_expiring_by_date")),
+				},
+			},
+			"include_expired": schema.BoolAttribute{
+				Description: "When true, returns all expired certificates.",
 				Optional:    true,
 			},
-			"expiry_threshold_in_days": schema.Int64Attribute{
-				Description: "When provided it filters certificates that will expire within the specified number of days. If `expired` is also set, it returns certificates that expired within the past specified number of days.",
+			"include_expiring_in_days": schema.Int64Attribute{
+				Description: "When provided it returns certificates that will expire within the specified number of days.",
 				Optional:    true,
 				Validators: []validator.Int64{
-					int64validator.AtLeast(0),
+					int64validator.AtLeast(1),
+					int64validator.ConflictsWith(path.MatchRoot("include_expiring_by_date")),
 				},
+			},
+			"include_expiring_by_date": schema.StringAttribute{
+				Description: "When provided it returns certificates that will expire by the specified date.",
+				Optional:    true,
 			},
 			"certificates": schema.ListNestedAttribute{
 				Description: "The CA certificates.",
@@ -221,41 +286,88 @@ func (data *caSetCertificatesDataSourceModel) resolveDefaults(ctx context.Contex
 }
 
 func (data *caSetCertificatesDataSourceModel) getCertificates(ctx context.Context, client mtlstruststore.MTLSTruststore) (*mtlstruststore.GetCASetVersionCertificatesResponse, error) {
-	var (
-		expiryThresholdInDays *int
-		certificateStatus     *mtlstruststore.CertificateStatus
-	)
-
-	hasExpiry := !data.ExpiryThresholdInDays.IsNull()
-	hasExpired := !data.Expired.IsNull() && data.Expired.ValueBool()
-
-	switch {
-	case hasExpired && hasExpiry:
-		days := int(data.ExpiryThresholdInDays.ValueInt64())
-		expiryThresholdInDays = &days
-		status := mtlstruststore.ExpiredOrExpiringCert
-		certificateStatus = &status
-	case hasExpired:
-		status := mtlstruststore.ExpiredCert
-		certificateStatus = &status
-	case hasExpiry:
-		days := int(data.ExpiryThresholdInDays.ValueInt64())
-		expiryThresholdInDays = &days
-		status := mtlstruststore.ExpiringCert
-		certificateStatus = &status
-	}
-
-	certificates, err := client.GetCASetVersionCertificates(ctx, mtlstruststore.GetCASetVersionCertificatesRequest{
-		CASetID:               data.ID.ValueString(),
-		Version:               data.Version.ValueInt64(),
-		ExpiryThresholdInDays: expiryThresholdInDays,
-		CertificateStatus:     certificateStatus,
-	})
+	requests, err := prepareGetCertificatesRequests(data)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch CA set version certificates: %w", err)
+		return nil, err
+	}
+	var certificateResponses []*mtlstruststore.GetCASetVersionCertificatesResponse
+	for _, req := range requests {
+		certificates, err := client.GetCASetVersionCertificates(ctx, req)
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch CA set version certificates: %w", err)
+		}
+		certificateResponses = append(certificateResponses, certificates)
 	}
 
-	return certificates, nil
+	return repackCertsToSingleResponse(certificateResponses)
+}
+
+func repackCertsToSingleResponse(responses []*mtlstruststore.GetCASetVersionCertificatesResponse) (*mtlstruststore.GetCASetVersionCertificatesResponse, error) {
+	var allCerts []mtlstruststore.CertificateResponse
+
+	if len(responses) == 0 {
+		return nil, fmt.Errorf("no responses received for CA set version certificates; please report this issue to the provider developers")
+	}
+
+	for _, response := range responses {
+		allCerts = append(allCerts, response.Certificates...)
+	}
+
+	responses[0].Certificates = allCerts
+	return responses[0], nil
+}
+
+func prepareGetCertificatesRequests(data *caSetCertificatesDataSourceModel) ([]mtlstruststore.GetCASetVersionCertificatesRequest, error) {
+	var requests []mtlstruststore.GetCASetVersionCertificatesRequest
+
+	if tf.IsKnown(data.IncludeExpiringInDays) || tf.IsKnown(data.IncludeExpiringByDate) {
+		var expiringTimestamp time.Time
+		if tf.IsKnown(data.IncludeExpiringByDate) {
+			var err error
+			expiringTimestamp, err = parseExpiringTimestamp(data.IncludeExpiringByDate.ValueString())
+			if err != nil {
+				return nil, fmt.Errorf("invalid expiring timestamp: %w", err)
+			}
+		}
+
+		var expiringInDays *int
+		if tf.IsKnown(data.IncludeExpiringInDays) {
+			expiringInDays = ptr.To(int(data.IncludeExpiringInDays.ValueInt64()))
+		}
+
+		requests = append(requests, mtlstruststore.GetCASetVersionCertificatesRequest{
+			CASetID:                  data.ID.ValueString(),
+			Version:                  data.Version.ValueInt64(),
+			ExpiryThresholdInDays:    expiringInDays,
+			ExpiryThresholdTimestamp: expiringTimestamp,
+			CertificateStatus:        ptr.To(mtlstruststore.ExpiringCert),
+		})
+	}
+
+	includeActive := !data.IncludeActive.IsNull() && data.IncludeActive.ValueBool()
+	includeExpired := !data.IncludeExpired.IsNull() && data.IncludeExpired.ValueBool()
+	if includeExpired || includeActive {
+		requests = append(requests, mtlstruststore.GetCASetVersionCertificatesRequest{
+			CASetID:           data.ID.ValueString(),
+			Version:           data.Version.ValueInt64(),
+			CertificateStatus: ptr.To(calculateNotExpiringCertificateStatus(data)),
+		})
+	}
+
+	return requests, nil
+}
+
+func calculateNotExpiringCertificateStatus(data *caSetCertificatesDataSourceModel) mtlstruststore.CertificateStatus {
+	includeActive := !data.IncludeActive.IsNull() && data.IncludeActive.ValueBool()
+	includeExpired := !data.IncludeExpired.IsNull() && data.IncludeExpired.ValueBool()
+	if includeActive && includeExpired {
+		return mtlstruststore.ActiveOrExpiredCert
+	}
+	if includeActive {
+		return mtlstruststore.ActiveCert
+	}
+	// Both includeActive and includeExpired as false are blocked by the schema validation.
+	return mtlstruststore.ExpiredCert
 }
 
 func mapCertificatesResponseToModel(certificatesResp *mtlstruststore.GetCASetVersionCertificatesResponse) caSetCertificatesDataSourceModel {

@@ -14,25 +14,117 @@ import (
 )
 
 func TestCASetCertificatesDataSource(t *testing.T) {
+	getGetCASetVersionCertificatesRequest := func(certificateStatus *mtlstruststore.CertificateStatus) mtlstruststore.GetCASetVersionCertificatesRequest {
+		return mtlstruststore.GetCASetVersionCertificatesRequest{
+			CASetID:           "12345",
+			Version:           1,
+			CertificateStatus: certificateStatus,
+		}
+	}
+
+	getGetCASetVersionCertificatesResponse := func(certificates []mtlstruststore.CertificateResponse) *mtlstruststore.GetCASetVersionCertificatesResponse {
+		return &mtlstruststore.GetCASetVersionCertificatesResponse{
+			CASetID:      "12345",
+			CASetName:    "example-ca-set",
+			Version:      1,
+			Certificates: certificates,
+		}
+	}
+
+	var (
+		expiredCertificate = mtlstruststore.CertificateResponse{
+			Subject:            "CN=example.com, O=Example Org, C=US",
+			Issuer:             "CN=Example CA, O=Example Org, C=US",
+			StartDate:          time.Date(2023, 6, 1, 0, 0, 0, 0, time.UTC),
+			EndDate:            time.Date(2025, 6, 1, 0, 0, 0, 0, time.UTC),
+			Fingerprint:        "AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD",
+			CertificatePEM:     "-----BEGIN CERTIFICATE-----\nMIID...FAKE...CERT==\n-----END CERTIFICATE-----",
+			SerialNumber:       "1234567890ABCDEF",
+			SignatureAlgorithm: "SHA256WITHRSA",
+			CreatedDate:        time.Date(2023, 5, 20, 12, 34, 56, 0, time.UTC),
+			CreatedBy:          "admin@example.com",
+			Description:        ptr.To("Test certificate for example.com"),
+		}
+
+		activeCertificate = mtlstruststore.CertificateResponse{
+			Subject:            "CN=api.example.org, O=Example Org, C=US",
+			Issuer:             "CN=Example CA, O=Example Org, C=US",
+			StartDate:          time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC),
+			EndDate:            time.Date(3026, 1, 10, 0, 0, 0, 0, time.UTC),
+			Fingerprint:        "11:22:33:44:55:66:77:88:99:00:AA:BB:CC:DD:EE:FF:11:22:33:44",
+			CertificatePEM:     "-----BEGIN CERTIFICATE-----\nMIID...FAKE...API==\n-----END CERTIFICATE-----",
+			SerialNumber:       "ABCDEF1234567890",
+			SignatureAlgorithm: "SHA384WITHRSA",
+			CreatedDate:        time.Date(2024, 1, 1, 9, 0, 0, 0, time.UTC),
+			CreatedBy:          "system@example.org",
+			Description:        ptr.To("API certificate for internal usage"),
+		}
+
+		expiringCertificate = mtlstruststore.CertificateResponse{
+			CertificatePEM:     "-----BEGIN CERTIFICATE-----...",
+			Description:        ptr.To("Example Certificate Expired"),
+			CreatedBy:          "example user",
+			CreatedDate:        tst.NewTimeFromStringMust("2024-11-05T12:08:34.099457Z"),
+			StartDate:          tst.NewTimeFromStringMust("2024-11-05T12:08:34.099457Z"),
+			EndDate:            tst.NewTimeFromStringMust("2525-07-20T12:08:34.099457Z"),
+			Fingerprint:        "AB:CD:EF:12:34:56:78:90",
+			Issuer:             "CN=Example CA, O=Example Org, C=US",
+			SerialNumber:       "ABCDEF1234567890",
+			SignatureAlgorithm: "SHA256WITHRSA",
+			Subject:            "CN=example.com, O=Example Org, C=US",
+		}
+	)
+
 	t.Parallel()
+	expiredCertChecker := test.AttributeBatch{
+		"subject":             "CN=example.com, O=Example Org, C=US",
+		"issuer":              "CN=Example CA, O=Example Org, C=US",
+		"fingerprint":         "AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD",
+		"certificate_pem":     "-----BEGIN CERTIFICATE-----\nMIID...FAKE...CERT==\n-----END CERTIFICATE-----",
+		"serial_number":       "1234567890ABCDEF",
+		"signature_algorithm": "SHA256WITHRSA",
+		"created_by":          "admin@example.com",
+		"created_date":        "2023-05-20T12:34:56Z",
+		"start_date":          "2023-06-01T00:00:00Z",
+		"end_date":            "2025-06-01T00:00:00Z",
+		"description":         "Test certificate for example.com",
+	}
+
+	activeCertChecker := test.AttributeBatch{
+		"subject":             "CN=api.example.org, O=Example Org, C=US",
+		"issuer":              "CN=Example CA, O=Example Org, C=US",
+		"start_date":          "2024-01-10T00:00:00Z",
+		"end_date":            "3026-01-10T00:00:00Z",
+		"fingerprint":         "11:22:33:44:55:66:77:88:99:00:AA:BB:CC:DD:EE:FF:11:22:33:44",
+		"certificate_pem":     "-----BEGIN CERTIFICATE-----\nMIID...FAKE...API==\n-----END CERTIFICATE-----",
+		"serial_number":       "ABCDEF1234567890",
+		"signature_algorithm": "SHA384WITHRSA",
+		"created_date":        "2024-01-01T09:00:00Z",
+		"created_by":          "system@example.org",
+		"description":         "API certificate for internal usage",
+	}
+
+	expiringCertChecker := test.AttributeBatch{
+		"certificate_pem":     "-----BEGIN CERTIFICATE-----...",
+		"description":         "Example Certificate Expired",
+		"created_by":          "example user",
+		"created_date":        "2024-11-05T12:08:34Z",
+		"start_date":          "2024-11-05T12:08:34Z",
+		"end_date":            "2525-07-20T12:08:34Z",
+		"fingerprint":         "AB:CD:EF:12:34:56:78:90",
+		"issuer":              "CN=Example CA, O=Example Org, C=US",
+		"serial_number":       "ABCDEF1234567890",
+		"signature_algorithm": "SHA256WITHRSA",
+		"subject":             "CN=example.com, O=Example Org, C=US",
+	}
+
 	commonStateChecker := test.NewStateChecker("data.akamai_mtlstruststore_ca_set_certificates.test").
 		CheckEqual("id", "12345").
 		CheckEqual("version", "1").
-		CheckEqual("certificates.#", "2").
-		CheckEqual("certificates.0.subject", "CN=example.com, O=Example Org, C=US").
-		CheckEqual("certificates.0.issuer", "CN=Example CA, O=Example Org, C=US").
-		CheckEqual("certificates.0.fingerprint", "AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD").
-		CheckEqual("certificates.0.certificate_pem", "-----BEGIN CERTIFICATE-----\nMIID...FAKE...CERT==\n-----END CERTIFICATE-----").
-		CheckEqual("certificates.0.serial_number", "1234567890ABCDEF").
-		CheckEqual("certificates.0.signature_algorithm", "SHA256WITHRSA").
-		CheckEqual("certificates.0.created_by", "admin@example.com").
-		CheckEqual("certificates.0.created_date", "2023-05-20T12:34:56Z").
-		CheckEqual("certificates.0.start_date", "2023-06-01T00:00:00Z").
-		CheckEqual("certificates.0.end_date", "2025-06-01T00:00:00Z").
-		CheckEqual("certificates.0.description", "Test certificate for example.com").
-		CheckEqual("certificates.1.subject", "CN=api.example.org, O=Example Org, C=US").
-		CheckEqual("certificates.1.issuer", "CN=Example CA, O=Example Org, C=US").
-		CheckEqual("certificates.1.serial_number", "ABCDEF1234567890")
+		CheckEqual("certificates.#", "3").
+		CheckEqualBatch("certificates.0.", expiredCertChecker).
+		CheckEqualBatch("certificates.1.", activeCertChecker).
+		CheckEqualBatch("certificates.2.", expiringCertChecker)
 
 	tests := map[string]struct {
 		init     func(*mtlstruststore.Mock, caSetTestData)
@@ -42,7 +134,7 @@ func TestCASetCertificatesDataSource(t *testing.T) {
 	}{
 		"read successful": {
 			init: func(m *mtlstruststore.Mock, _ caSetTestData) {
-				mockGetCASetVersionCertificates(m)
+				mockGetCASetVersionCertificates(m, getGetCASetVersionCertificatesRequest(ptr.To(mtlstruststore.ActiveOrExpiredCert)), getGetCASetVersionCertificatesResponse([]mtlstruststore.CertificateResponse{expiredCertificate, activeCertificate, expiringCertificate}))
 			},
 			steps: []resource.TestStep{
 				{
@@ -54,6 +146,8 @@ func TestCASetCertificatesDataSource(t *testing.T) {
 						data "akamai_mtlstruststore_ca_set_certificates" "test" {
 						  id = 12345
 						  version = 1
+						  include_active = true
+						  include_expired = true
 						}`,
 					Check: commonStateChecker.Build(),
 				},
@@ -73,7 +167,7 @@ func TestCASetCertificatesDataSource(t *testing.T) {
 						},
 					},
 				}, nil)
-				mockGetCASetVersionCertificates(m)
+				mockGetCASetVersionCertificates(m, getGetCASetVersionCertificatesRequest(ptr.To(mtlstruststore.ActiveOrExpiredCert)), getGetCASetVersionCertificatesResponse([]mtlstruststore.CertificateResponse{expiredCertificate, activeCertificate, expiringCertificate}))
 			},
 
 			steps: []resource.TestStep{
@@ -86,6 +180,8 @@ func TestCASetCertificatesDataSource(t *testing.T) {
 						data "akamai_mtlstruststore_ca_set_certificates" "test" {
 						  name = "example-ca-set"
 						  version = 1
+						  include_active = true
+						  include_expired = true
 						}`,
 					Check: commonStateChecker.Build(),
 				},
@@ -96,7 +192,7 @@ func TestCASetCertificatesDataSource(t *testing.T) {
 				m.On("GetCASet", testutils.MockContext, mtlstruststore.GetCASetRequest{
 					CASetID: testData.caSetID,
 				}).Return(&testData.caSetResponse, nil).Times(3)
-				mockGetCASetVersionCertificates(m)
+				mockGetCASetVersionCertificates(m, getGetCASetVersionCertificatesRequest(ptr.To(mtlstruststore.ActiveOrExpiredCert)), getGetCASetVersionCertificatesResponse([]mtlstruststore.CertificateResponse{expiredCertificate, activeCertificate, expiringCertificate}))
 			},
 			testData: mockCASetData,
 			steps: []resource.TestStep{
@@ -108,6 +204,8 @@ func TestCASetCertificatesDataSource(t *testing.T) {
 
 						data "akamai_mtlstruststore_ca_set_certificates" "test" {
 						  id = 12345
+						  include_active = true
+						  include_expired = true
 						}`,
 					Check: commonStateChecker.Build(),
 				},
@@ -115,32 +213,7 @@ func TestCASetCertificatesDataSource(t *testing.T) {
 		},
 		"read successful - only expired certificates": {
 			init: func(m *mtlstruststore.Mock, _ caSetTestData) {
-				expiredCert := mtlstruststore.ExpiredCert
-				getResponse := &mtlstruststore.GetCASetVersionCertificatesResponse{
-					CASetID:   "12345",
-					CASetName: "example-ca-set",
-					Version:   1,
-					Certificates: []mtlstruststore.CertificateResponse{
-						{
-							CertificatePEM:     "-----BEGIN CERTIFICATE-----...",
-							Description:        ptr.To("Example Certificate"),
-							CreatedBy:          "example user",
-							CreatedDate:        tst.NewTimeFromStringMust("2023-04-16T12:08:34Z"),
-							StartDate:          tst.NewTimeFromStringMust("2023-04-16T12:08:34Z"),
-							EndDate:            tst.NewTimeFromStringMust("2024-04-16T12:08:34Z"),
-							Fingerprint:        "AB:CD:EF:12:34:56:78:90",
-							Issuer:             "CN=Example CA, O=Example Org, C=US",
-							SerialNumber:       "1234567890ABCDEF",
-							SignatureAlgorithm: "SHA256WITHRSA",
-							Subject:            "CN=example.com, O=Example Org, C=US",
-						},
-					},
-				}
-				m.On("GetCASetVersionCertificates", testutils.MockContext, mtlstruststore.GetCASetVersionCertificatesRequest{
-					CASetID:           "12345",
-					Version:           1,
-					CertificateStatus: &expiredCert,
-				}).Return(getResponse, nil).Times(3)
+				mockGetCASetVersionCertificates(m, getGetCASetVersionCertificatesRequest(ptr.To(mtlstruststore.ExpiredCert)), getGetCASetVersionCertificatesResponse([]mtlstruststore.CertificateResponse{expiredCertificate}))
 			},
 			steps: []resource.TestStep{
 				{
@@ -152,62 +225,21 @@ func TestCASetCertificatesDataSource(t *testing.T) {
 						data "akamai_mtlstruststore_ca_set_certificates" "test" {
 						  id = 12345
 						  version = 1
-		                  expired = true
+						  include_expired = true
 						}`,
 					Check: resource.ComposeTestCheckFunc(
 						test.NewStateChecker("data.akamai_mtlstruststore_ca_set_certificates.test").
 							CheckEqual("id", "12345").
 							CheckEqual("version", "1").
 							CheckEqual("certificates.#", "1").
-							CheckEqual("certificates.0.created_date", "2023-04-16T12:08:34Z").
-							CheckEqual("certificates.0.start_date", "2023-04-16T12:08:34Z").
-							CheckEqual("certificates.0.end_date", "2024-04-16T12:08:34Z").Build(),
+							CheckEqualBatch("certificates.0.", expiredCertChecker).Build(),
 					),
 				},
 			},
 		},
-		"read successful - with expired and expiry_threshold_in_days": {
+		"read successful - only active certificates": {
 			init: func(m *mtlstruststore.Mock, _ caSetTestData) {
-				expiredCert := mtlstruststore.ExpiredOrExpiringCert
-				getResponse := &mtlstruststore.GetCASetVersionCertificatesResponse{
-					CASetID:   "12345",
-					CASetName: "example-ca-set",
-					Version:   1,
-					Certificates: []mtlstruststore.CertificateResponse{
-						{
-							CertificatePEM:     "-----BEGIN CERTIFICATE-----...",
-							Description:        ptr.To("Example Certificate Expired"),
-							CreatedBy:          "example user",
-							CreatedDate:        tst.NewTimeFromStringMust("2024-11-05T12:08:34.099457Z"),
-							StartDate:          tst.NewTimeFromStringMust("2024-11-05T12:08:34.099457Z"),
-							EndDate:            tst.NewTimeFromStringMust("2025-07-20T12:08:34.099457Z"),
-							Fingerprint:        "AB:CD:EF:12:34:56:78:90",
-							Issuer:             "CN=Example CA, O=Example Org, C=US",
-							SerialNumber:       "ABCDEF1234567890",
-							SignatureAlgorithm: "SHA256WITHRSA",
-							Subject:            "CN=example.com, O=Example Org, C=US",
-						},
-						{
-							CertificatePEM:     "-----BEGIN CERTIFICATE-----...",
-							Description:        ptr.To("Example Certificate Expiring"),
-							CreatedBy:          "example user",
-							CreatedDate:        tst.NewTimeFromStringMust("2025-01-01T12:08:34.099457Z"),
-							StartDate:          tst.NewTimeFromStringMust("2025-01-01T12:08:34.099457Z"),
-							EndDate:            tst.NewTimeFromStringMust("2025-07-10T12:08:34.099457Z"),
-							Fingerprint:        "AB:CD:EF:12:34:56:78:90",
-							Issuer:             "CN=Example CA, O=Example Org, C=US",
-							SerialNumber:       "1234567890ABCDEF",
-							SignatureAlgorithm: "SHA256WITHRSA",
-							Subject:            "CN=example.com, O=Example Org, C=US",
-						},
-					},
-				}
-				m.On("GetCASetVersionCertificates", testutils.MockContext, mtlstruststore.GetCASetVersionCertificatesRequest{
-					CASetID:               "12345",
-					Version:               1,
-					CertificateStatus:     &expiredCert,
-					ExpiryThresholdInDays: ptr.To(20),
-				}).Return(getResponse, nil).Times(3)
+				mockGetCASetVersionCertificates(m, getGetCASetVersionCertificatesRequest(ptr.To(mtlstruststore.ActiveCert)), getGetCASetVersionCertificatesResponse([]mtlstruststore.CertificateResponse{activeCertificate}))
 			},
 			steps: []resource.TestStep{
 				{
@@ -219,72 +251,25 @@ func TestCASetCertificatesDataSource(t *testing.T) {
 						data "akamai_mtlstruststore_ca_set_certificates" "test" {
 						  id = 12345
 						  version = 1
-		                  expired = true
-						  expiry_threshold_in_days= "20"
+						  include_active = true
 						}`,
 					Check: resource.ComposeTestCheckFunc(
 						test.NewStateChecker("data.akamai_mtlstruststore_ca_set_certificates.test").
 							CheckEqual("id", "12345").
 							CheckEqual("version", "1").
-							CheckEqual("certificates.#", "2").
-							CheckEqual("certificates.0.created_date", "2024-11-05T12:08:34Z").
-							CheckEqual("certificates.0.start_date", "2024-11-05T12:08:34Z").
-							CheckEqual("certificates.0.end_date", "2025-07-20T12:08:34Z").
-							CheckEqual("certificates.0.created_by", "example user").
-							CheckEqual("certificates.0.description", "Example Certificate Expired").
-							CheckEqual("certificates.0.serial_number", "ABCDEF1234567890").
-							CheckEqual("certificates.1.created_date", "2025-01-01T12:08:34Z").
-							CheckEqual("certificates.1.start_date", "2025-01-01T12:08:34Z").
-							CheckEqual("certificates.1.end_date", "2025-07-10T12:08:34Z").
-							CheckEqual("certificates.1.created_by", "example user").
-							CheckEqual("certificates.1.description", "Example Certificate Expiring").
-							CheckEqual("certificates.1.serial_number", "1234567890ABCDEF").Build(),
+							CheckEqual("certificates.#", "1").
+							CheckEqualBatch("certificates.0.", activeCertChecker).Build(),
 					),
 				},
 			},
 		},
-		"read successful - with only expiry_threshold_in_days": {
+		"read successful - with expired and include_expiring_in_days": {
 			init: func(m *mtlstruststore.Mock, _ caSetTestData) {
-				expiringCert := mtlstruststore.ExpiringCert
-				getResponse := &mtlstruststore.GetCASetVersionCertificatesResponse{
-					CASetID:   "12345",
-					CASetName: "example-ca-set",
-					Version:   1,
-					Certificates: []mtlstruststore.CertificateResponse{
-						{
-							CertificatePEM:     "-----BEGIN CERTIFICATE-----...",
-							Description:        ptr.To("Example Certificate Expired"),
-							CreatedBy:          "example user",
-							CreatedDate:        tst.NewTimeFromStringMust("2024-11-05T12:08:34.099457Z"),
-							StartDate:          tst.NewTimeFromStringMust("2024-11-05T12:08:34.099457Z"),
-							EndDate:            tst.NewTimeFromStringMust("2025-08-01T12:08:34.099457Z"),
-							Fingerprint:        "AB:CD:EF:12:34:56:78:90",
-							Issuer:             "CN=Example CA, O=Example Org, C=US",
-							SerialNumber:       "ABCDEF1234567890",
-							SignatureAlgorithm: "SHA256WITHRSA",
-							Subject:            "CN=example.com, O=Example Org, C=US",
-						},
-						{
-							CertificatePEM:     "-----BEGIN CERTIFICATE-----...",
-							Description:        ptr.To("Example Certificate Expiring"),
-							CreatedBy:          "example user",
-							CreatedDate:        tst.NewTimeFromStringMust("2025-01-01T12:08:34.099457Z"),
-							StartDate:          tst.NewTimeFromStringMust("2025-01-01T12:08:34.099457Z"),
-							EndDate:            tst.NewTimeFromStringMust("2025-07-10T12:08:34.099457Z"),
-							Fingerprint:        "AB:CD:EF:12:34:56:78:90",
-							Issuer:             "CN=Example CA, O=Example Org, C=US",
-							SerialNumber:       "1234567890ABCDEF",
-							SignatureAlgorithm: "SHA256WITHRSA",
-							Subject:            "CN=example.com, O=Example Org, C=US",
-						},
-					},
-				}
-				m.On("GetCASetVersionCertificates", testutils.MockContext, mtlstruststore.GetCASetVersionCertificatesRequest{
-					CASetID:               "12345",
-					Version:               1,
-					CertificateStatus:     &expiringCert,
-					ExpiryThresholdInDays: ptr.To(30),
-				}).Return(getResponse, nil).Times(3)
+				expiringRequest := getGetCASetVersionCertificatesRequest(ptr.To(mtlstruststore.ExpiringCert))
+				expiringRequest.ExpiryThresholdInDays = ptr.To(20)
+				mockGetCASetVersionCertificates(m, expiringRequest, getGetCASetVersionCertificatesResponse([]mtlstruststore.CertificateResponse{expiringCertificate}))
+
+				mockGetCASetVersionCertificates(m, getGetCASetVersionCertificatesRequest(ptr.To(mtlstruststore.ExpiredCert)), getGetCASetVersionCertificatesResponse([]mtlstruststore.CertificateResponse{expiredCertificate}))
 			},
 			steps: []resource.TestStep{
 				{
@@ -296,26 +281,164 @@ func TestCASetCertificatesDataSource(t *testing.T) {
 						data "akamai_mtlstruststore_ca_set_certificates" "test" {
 						  id = 12345
 						  version = 1
-						  expiry_threshold_in_days= "30"
+		                  include_expired = true
+						  include_expiring_in_days = 20
 						}`,
 					Check: resource.ComposeTestCheckFunc(
 						test.NewStateChecker("data.akamai_mtlstruststore_ca_set_certificates.test").
 							CheckEqual("id", "12345").
 							CheckEqual("version", "1").
 							CheckEqual("certificates.#", "2").
-							CheckEqual("certificates.0.created_date", "2024-11-05T12:08:34Z").
-							CheckEqual("certificates.0.start_date", "2024-11-05T12:08:34Z").
-							CheckEqual("certificates.0.end_date", "2025-08-01T12:08:34Z").
-							CheckEqual("certificates.0.created_by", "example user").
-							CheckEqual("certificates.0.description", "Example Certificate Expired").
-							CheckEqual("certificates.0.serial_number", "ABCDEF1234567890").
-							CheckEqual("certificates.1.created_date", "2025-01-01T12:08:34Z").
-							CheckEqual("certificates.1.start_date", "2025-01-01T12:08:34Z").
-							CheckEqual("certificates.1.end_date", "2025-07-10T12:08:34Z").
-							CheckEqual("certificates.1.created_by", "example user").
-							CheckEqual("certificates.1.description", "Example Certificate Expiring").
-							CheckEqual("certificates.1.serial_number", "1234567890ABCDEF").Build(),
+							CheckEqualBatch("certificates.0.", expiringCertChecker).
+							CheckEqualBatch("certificates.1.", expiredCertChecker).Build(),
 					),
+				},
+			},
+		},
+		"read successful - with expired and include_expiring_by_date": {
+			init: func(m *mtlstruststore.Mock, _ caSetTestData) {
+				expiringRequest := getGetCASetVersionCertificatesRequest(ptr.To(mtlstruststore.ExpiringCert))
+				expiringRequest.ExpiryThresholdTimestamp = tst.NewTimeFromString(t, "2625-07-01T12:00:00Z")
+				mockGetCASetVersionCertificates(m, expiringRequest, getGetCASetVersionCertificatesResponse([]mtlstruststore.CertificateResponse{expiringCertificate}))
+
+				mockGetCASetVersionCertificates(m, getGetCASetVersionCertificatesRequest(ptr.To(mtlstruststore.ExpiredCert)), getGetCASetVersionCertificatesResponse([]mtlstruststore.CertificateResponse{expiredCertificate}))
+			},
+			steps: []resource.TestStep{
+				{
+					Config: `
+						provider "akamai" {
+						  edgerc = "../../common/testutils/edgerc"
+						}
+
+						data "akamai_mtlstruststore_ca_set_certificates" "test" {
+						  id = 12345
+						  version = 1
+		                  include_expired = true
+						  include_expiring_by_date = "2625-07-01T12:00:00Z"
+						}`,
+					Check: resource.ComposeTestCheckFunc(
+						test.NewStateChecker("data.akamai_mtlstruststore_ca_set_certificates.test").
+							CheckEqual("id", "12345").
+							CheckEqual("version", "1").
+							CheckEqual("certificates.#", "2").
+							CheckEqualBatch("certificates.0.", expiringCertChecker).
+							CheckEqualBatch("certificates.1.", expiredCertChecker).Build(),
+					),
+				},
+			},
+		},
+		"read successful - with only include_expiring_in_days": {
+			init: func(m *mtlstruststore.Mock, _ caSetTestData) {
+				expiringRequest := getGetCASetVersionCertificatesRequest(ptr.To(mtlstruststore.ExpiringCert))
+				expiringRequest.ExpiryThresholdInDays = ptr.To(30)
+				mockGetCASetVersionCertificates(m, expiringRequest, getGetCASetVersionCertificatesResponse([]mtlstruststore.CertificateResponse{expiringCertificate}))
+			},
+			steps: []resource.TestStep{
+				{
+					Config: `
+						provider "akamai" {
+						  edgerc = "../../common/testutils/edgerc"
+						}
+
+						data "akamai_mtlstruststore_ca_set_certificates" "test" {
+						  id = 12345
+						  version = 1
+						  include_expiring_in_days = 30
+						}`,
+					Check: resource.ComposeTestCheckFunc(
+						test.NewStateChecker("data.akamai_mtlstruststore_ca_set_certificates.test").
+							CheckEqual("id", "12345").
+							CheckEqual("version", "1").
+							CheckEqual("certificates.#", "1").
+							CheckEqualBatch("certificates.0.", expiringCertChecker).Build(),
+					),
+				},
+			},
+		},
+		"read successful - with only include_expiring_by_date": {
+			init: func(m *mtlstruststore.Mock, _ caSetTestData) {
+				expiringRequest := getGetCASetVersionCertificatesRequest(ptr.To(mtlstruststore.ExpiringCert))
+				expiringRequest.ExpiryThresholdTimestamp = tst.NewTimeFromString(t, "2625-07-01T12:00:00Z")
+				mockGetCASetVersionCertificates(m, expiringRequest, getGetCASetVersionCertificatesResponse([]mtlstruststore.CertificateResponse{expiringCertificate}))
+			},
+			steps: []resource.TestStep{
+				{
+					Config: `
+						provider "akamai" {
+						  edgerc = "../../common/testutils/edgerc"
+						}
+
+						data "akamai_mtlstruststore_ca_set_certificates" "test" {
+						  id = 12345
+						  version = 1
+						  include_expiring_by_date = "2625-07-01T12:00:00Z"
+						}`,
+					Check: resource.ComposeTestCheckFunc(
+						test.NewStateChecker("data.akamai_mtlstruststore_ca_set_certificates.test").
+							CheckEqual("id", "12345").
+							CheckEqual("version", "1").
+							CheckEqual("certificates.#", "1").
+							CheckEqualBatch("certificates.0.", expiringCertChecker).Build(),
+					),
+				},
+			},
+		},
+		"read successful - with include_expiring_by_date as RFC3339Nano": {
+			init: func(m *mtlstruststore.Mock, _ caSetTestData) {
+				expiringRequest := getGetCASetVersionCertificatesRequest(ptr.To(mtlstruststore.ExpiringCert))
+				expiringRequest.ExpiryThresholdTimestamp = tst.NewTimeFromString(t, "2625-07-01T12:00:06.825235Z")
+				mockGetCASetVersionCertificates(m, expiringRequest, getGetCASetVersionCertificatesResponse([]mtlstruststore.CertificateResponse{expiringCertificate}))
+			},
+			steps: []resource.TestStep{
+				{
+					Config: `
+						provider "akamai" {
+						  edgerc = "../../common/testutils/edgerc"
+						}
+
+						data "akamai_mtlstruststore_ca_set_certificates" "test" {
+						  id = 12345
+						  version = 1
+						  include_expiring_by_date = "2625-07-01T12:00:06.825235Z"
+						}`,
+					Check: resource.ComposeTestCheckFunc(
+						test.NewStateChecker("data.akamai_mtlstruststore_ca_set_certificates.test").
+							CheckEqual("id", "12345").
+							CheckEqual("version", "1").
+							CheckEqual("certificates.#", "1").
+							CheckEqualBatch("certificates.0.", expiringCertChecker).Build(),
+					),
+				},
+			},
+		},
+		"read successful - with include_active and include_expired provided externally": {
+			init: func(m *mtlstruststore.Mock, _ caSetTestData) {
+				mockGetCASetVersionCertificates(m, getGetCASetVersionCertificatesRequest(ptr.To(mtlstruststore.ActiveOrExpiredCert)), getGetCASetVersionCertificatesResponse([]mtlstruststore.CertificateResponse{expiredCertificate, activeCertificate, expiringCertificate}))
+			},
+			steps: []resource.TestStep{
+				{
+					Config: `
+						provider "akamai" {
+						  edgerc = "../../common/testutils/edgerc"
+						}
+
+						variable "isActive" {
+							type    = bool
+							default = true
+						}
+
+						variable "isExpired" {
+							type    = bool
+							default = true
+						}
+
+						data "akamai_mtlstruststore_ca_set_certificates" "test" {
+						  id = 12345
+						  version = 1
+						  include_active = var.isActive
+						  include_expired = var.isExpired
+						}`,
+					Check: commonStateChecker.Build(),
 				},
 			},
 		},
@@ -339,7 +462,7 @@ func TestCASetCertificatesDataSource(t *testing.T) {
 						data "akamai_mtlstruststore_ca_set_certificates" "test" {
 						  name = "example-ca-set"
 						  version = 1
-		                  expired = true
+		                  include_expired = true
 						}`,
 					ExpectError: regexp.MustCompile("failed to find CA set by name 'example-ca-set': no CA set found with name"),
 				},
@@ -361,6 +484,8 @@ func TestCASetCertificatesDataSource(t *testing.T) {
 
 						data "akamai_mtlstruststore_ca_set_certificates" "test" {
 						  id = 12345
+						  include_active = true
+						  include_expired = true
 						}`,
 					ExpectError: regexp.MustCompile("no version provided and CA set has no latest version available"),
 				},
@@ -416,7 +541,7 @@ func TestCASetCertificatesDataSource(t *testing.T) {
 				},
 			},
 		},
-		"validation error - invalid value for `expiry_threshold_in_days`": {
+		"validation error - invalid value for `include_expiring_in_days`": {
 			init: func(_ *mtlstruststore.Mock, _ caSetTestData) {},
 			steps: []resource.TestStep{
 				{
@@ -428,10 +553,158 @@ func TestCASetCertificatesDataSource(t *testing.T) {
 						data "akamai_mtlstruststore_ca_set_certificates" "test" {
 						  id = 12345
 						  version = 1
-		                  expired = true
-						  expiry_threshold_in_days = "-20"
+		                  include_expired = true
+						  include_expiring_in_days = -20
 						}`,
-					ExpectError: regexp.MustCompile(`Attribute expiry_threshold_in_days value must be at least 0, got: -20`),
+					ExpectError: regexp.MustCompile(`Attribute include_expiring_in_days value must be at least 1, got: -20`),
+				},
+			},
+		},
+		"validation error - both `include_expiring_in_days` and `include_expiring_by_date` provided": {
+			init: func(_ *mtlstruststore.Mock, _ caSetTestData) {},
+			steps: []resource.TestStep{
+				{
+					Config: `
+						provider "akamai" {
+						  edgerc = "../../common/testutils/edgerc"
+						}
+
+						data "akamai_mtlstruststore_ca_set_certificates" "test" {
+						  id = 12345
+						  version = 1
+		                  include_expired = true
+						  include_expiring_in_days = 20
+						  include_expiring_by_date = "2625-01-01T00:00:00Z"
+						}`,
+					ExpectError: regexp.MustCompile(`Attribute "include_expiring_by_date" cannot be specified when\n.*"include_expiring_in_days" is specified`),
+				},
+			},
+		},
+		"validation error - `include_expiring_by_date` provided with incorrect value": {
+			init: func(_ *mtlstruststore.Mock, _ caSetTestData) {},
+			steps: []resource.TestStep{
+				{
+					Config: `
+						provider "akamai" {
+						  edgerc = "../../common/testutils/edgerc"
+						}
+
+						data "akamai_mtlstruststore_ca_set_certificates" "test" {
+						  id = 12345
+						  version = 1
+		                  include_expired = true
+						  include_expiring_by_date = "yesterday"
+						}`,
+					ExpectError: regexp.MustCompile(`The provided expiring timestamp 'yesterday' is not a valid RFC3339 or\n.*RFC3339Nano formatted date`),
+				},
+			},
+		},
+		"validation error - scope of listing not provided": {
+			init: func(_ *mtlstruststore.Mock, _ caSetTestData) {},
+			steps: []resource.TestStep{
+				{
+					Config: `
+						provider "akamai" {
+						  edgerc = "../../common/testutils/edgerc"
+						}
+
+						data "akamai_mtlstruststore_ca_set_certificates" "test" {
+						  id = 12345
+						  version = 1
+						}`,
+					ExpectError: regexp.MustCompile(`At least one attribute out of 'include_active', 'include_expired',\n.*'include_expiring_in_days', or 'include_expiring_by_date' must be specified\n.*with 'true' value for booleans, or some value for the rest`),
+				},
+			},
+		},
+		"validation error - scope of listing failed - only include_active = false": {
+			init: func(_ *mtlstruststore.Mock, _ caSetTestData) {},
+			steps: []resource.TestStep{
+				{
+					Config: `
+						provider "akamai" {
+						  edgerc = "../../common/testutils/edgerc"
+						}
+
+						data "akamai_mtlstruststore_ca_set_certificates" "test" {
+						  id = 12345
+						  version = 1
+						  include_active = false
+						}`,
+					ExpectError: regexp.MustCompile(`At least one attribute out of 'include_active', 'include_expired',\n.*'include_expiring_in_days', or 'include_expiring_by_date' must be specified\n.*with 'true' value for booleans, or some value for the rest`),
+				},
+			},
+		},
+		"validation error - scope of listing failed - only include_expired = false": {
+			init: func(_ *mtlstruststore.Mock, _ caSetTestData) {},
+			steps: []resource.TestStep{
+				{
+					Config: `
+						provider "akamai" {
+						  edgerc = "../../common/testutils/edgerc"
+						}
+
+						data "akamai_mtlstruststore_ca_set_certificates" "test" {
+						  id = 12345
+						  version = 1
+						  include_expired = false
+						}`,
+					ExpectError: regexp.MustCompile(`At least one attribute out of 'include_active', 'include_expired',\n.*'include_expiring_in_days', or 'include_expiring_by_date' must be specified\n.*with 'true' value for booleans, or some value for the rest`),
+				},
+			},
+		},
+		"validation error - `include_active` and `include_expiring_in_days` provided": {
+			init: func(_ *mtlstruststore.Mock, _ caSetTestData) {},
+			steps: []resource.TestStep{
+				{
+					Config: `
+						provider "akamai" {
+						  edgerc = "../../common/testutils/edgerc"
+						}
+
+						data "akamai_mtlstruststore_ca_set_certificates" "test" {
+						  id = 12345
+						  version = 1
+						  include_active = true
+						  include_expiring_in_days = 20
+						}`,
+					ExpectError: regexp.MustCompile(`Attribute "include_expiring_in_days" cannot be specified when\n.*"include_active" is specified`),
+				},
+			},
+		},
+		"validation error - `include_active` and `include_expiring_by_date` provided": {
+			init: func(_ *mtlstruststore.Mock, _ caSetTestData) {},
+			steps: []resource.TestStep{
+				{
+					Config: `
+						provider "akamai" {
+						  edgerc = "../../common/testutils/edgerc"
+						}
+
+						data "akamai_mtlstruststore_ca_set_certificates" "test" {
+						  id = 12345
+						  version = 1
+						  include_active = true
+						  include_expiring_by_date = "2625-07-01T12:00:00Z"
+						}`,
+					ExpectError: regexp.MustCompile(`Attribute "include_expiring_by_date" cannot be specified when\n.*"include_active" is specified`),
+				},
+			},
+		},
+		"validation error - `include_expiring_by_date` with old date": {
+			init: func(_ *mtlstruststore.Mock, _ caSetTestData) {},
+			steps: []resource.TestStep{
+				{
+					Config: `
+						provider "akamai" {
+						  edgerc = "../../common/testutils/edgerc"
+						}
+
+						data "akamai_mtlstruststore_ca_set_certificates" "test" {
+						  id = 12345
+						  version = 1
+						  include_expiring_by_date = "2024-07-01T12:00:00Z"
+						}`,
+					ExpectError: regexp.MustCompile(`The provided expiring threshold timestamp '2024-07-01T12:00:00Z' cannot be in\n.*the past`),
 				},
 			},
 		},
@@ -454,46 +727,6 @@ func TestCASetCertificatesDataSource(t *testing.T) {
 			client.AssertExpectations(t)
 		})
 	}
-}
-
-func mockGetCASetVersionCertificates(m *mtlstruststore.Mock) {
-	getResponse := &mtlstruststore.GetCASetVersionCertificatesResponse{
-		CASetID:   "12345",
-		CASetName: "example-ca-set",
-		Version:   1,
-		Certificates: []mtlstruststore.CertificateResponse{
-			{
-				Subject:            "CN=example.com, O=Example Org, C=US",
-				Issuer:             "CN=Example CA, O=Example Org, C=US",
-				StartDate:          time.Date(2023, 6, 1, 0, 0, 0, 0, time.UTC),
-				EndDate:            time.Date(2025, 6, 1, 0, 0, 0, 0, time.UTC),
-				Fingerprint:        "AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD",
-				CertificatePEM:     "-----BEGIN CERTIFICATE-----\nMIID...FAKE...CERT==\n-----END CERTIFICATE-----",
-				SerialNumber:       "1234567890ABCDEF",
-				SignatureAlgorithm: "SHA256WITHRSA",
-				CreatedDate:        time.Date(2023, 5, 20, 12, 34, 56, 0, time.UTC),
-				CreatedBy:          "admin@example.com",
-				Description:        ptr.To("Test certificate for example.com"),
-			},
-			{
-				Subject:            "CN=api.example.org, O=Example Org, C=US",
-				Issuer:             "CN=Example CA, O=Example Org, C=US",
-				StartDate:          time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC),
-				EndDate:            time.Date(2026, 1, 10, 0, 0, 0, 0, time.UTC),
-				Fingerprint:        "11:22:33:44:55:66:77:88:99:00:AA:BB:CC:DD:EE:FF:11:22:33:44",
-				CertificatePEM:     "-----BEGIN CERTIFICATE-----\nMIID...FAKE...API==\n-----END CERTIFICATE-----",
-				SerialNumber:       "ABCDEF1234567890",
-				SignatureAlgorithm: "SHA384WITHRSA",
-				CreatedDate:        time.Date(2024, 1, 1, 9, 0, 0, 0, time.UTC),
-				CreatedBy:          "system@example.org",
-				Description:        ptr.To("API certificate for internal usage"),
-			},
-		},
-	}
-	m.On("GetCASetVersionCertificates", testutils.MockContext, mtlstruststore.GetCASetVersionCertificatesRequest{
-		CASetID: "12345",
-		Version: 1,
-	}).Return(getResponse, nil).Times(3)
 }
 
 var mockCASetData = caSetTestData{
@@ -541,4 +774,8 @@ var mockCASetData = caSetTestData{
 			CASetStatus: "NOT_DELETED",
 		},
 	},
+}
+
+func mockGetCASetVersionCertificates(m *mtlstruststore.Mock, req mtlstruststore.GetCASetVersionCertificatesRequest, resp *mtlstruststore.GetCASetVersionCertificatesResponse) {
+	m.On("GetCASetVersionCertificates", testutils.MockContext, req).Return(resp, nil).Times(3)
 }
