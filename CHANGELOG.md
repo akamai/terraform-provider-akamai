@@ -44,6 +44,8 @@
   * Increased timeout for 'resource_akamai_clientlists_list_activation' resource to 30 minutes.
 
 
+* Appsec
+  * Added `include_expiry_details` attribute to the `akamai_appsec_rapid_rules` data source to fetch expiration information for rapid rules by filling out the `expired` and `expire_in_days` attributes.
 
 
 
