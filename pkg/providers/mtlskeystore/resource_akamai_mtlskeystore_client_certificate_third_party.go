@@ -52,6 +52,8 @@ type (
 		CertificateName    types.String `tfsdk:"certificate_name"`
 		CertificateID      types.Int64  `tfsdk:"certificate_id"`
 		ContractID         types.String `tfsdk:"contract_id"`
+		CreatedBy          types.String `tfsdk:"created_by"`
+		CreatedDate        types.String `tfsdk:"created_date"`
 		Geography          types.String `tfsdk:"geography"`
 		GroupID            types.Int64  `tfsdk:"group_id"`
 		KeyAlgorithm       types.String `tfsdk:"key_algorithm"`
@@ -154,6 +156,14 @@ func (r *clientCertificateThirdPartyResource) Schema(_ context.Context, _ resour
 				PlanModifiers: []planmodifier.Int64{
 					int64planmodifier.UseStateForUnknown(),
 				},
+			},
+			"created_by": schema.StringAttribute{
+				Computed:    true,
+				Description: "The user who created the client certificate.",
+			},
+			"created_date": schema.StringAttribute{
+				Computed:    true,
+				Description: "An ISO 8601 timestamp indicating when the client certificate was created.",
 			},
 			"contract_id": schema.StringAttribute{
 				Required:    true,
@@ -1021,6 +1031,8 @@ func (m *clientCertificateThirdPartyResourceModel) setVersionsData(ctx context.C
 func (m *clientCertificateThirdPartyResourceModel) setClientCertificateData(ctx context.Context, clientCertificate *mtlskeystore.GetClientCertificateResponse) diag.Diagnostics {
 	m.CertificateName = types.StringValue(clientCertificate.CertificateName)
 	m.CertificateID = types.Int64Value(clientCertificate.CertificateID)
+	m.CreatedBy = types.StringValue(clientCertificate.CreatedBy)
+	m.CreatedDate = fdate.TimeRFC3339Value(clientCertificate.CreatedDate)
 	m.Geography = types.StringValue(clientCertificate.Geography)
 	m.KeyAlgorithm = types.StringValue(clientCertificate.KeyAlgorithm)
 	m.SecureNetwork = types.StringValue(clientCertificate.SecureNetwork)

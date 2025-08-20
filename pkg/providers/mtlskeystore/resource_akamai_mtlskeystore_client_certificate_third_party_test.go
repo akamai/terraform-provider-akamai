@@ -20,6 +20,8 @@ type (
 	commonDataForResource struct {
 		certificateName    string
 		certificateID      int64
+		createdBy          string
+		createdDate        string
 		contractID         string
 		geography          string
 		groupID            int64
@@ -69,6 +71,8 @@ var (
 	testFiveVersions = commonDataForResource{
 		certificateName: "test-certificate",
 		certificateID:   12345,
+		createdBy:       "jkowalski",
+		createdDate:     "2023-01-01T00:00:00Z",
 		contractID:      "ctr_12345",
 		geography:       "CORE",
 		groupID:         1234,
@@ -163,6 +167,8 @@ var (
 		return commonDataForResource{
 			certificateName: "test-certificate",
 			certificateID:   12345,
+			createdBy:       "jkowalski",
+			createdDate:     "2023-01-01T00:00:00Z",
 			contractID:      "ctr_12345",
 			geography:       "CORE",
 			groupID:         1234,
@@ -233,6 +239,8 @@ var (
 		return commonDataForResource{
 			certificateName: "test-certificate",
 			certificateID:   12345,
+			createdBy:       "jkowalski",
+			createdDate:     "2023-01-01T00:00:00Z",
 			contractID:      "ctr_12345",
 			geography:       "CORE",
 			groupID:         1234,
@@ -275,6 +283,8 @@ var (
 	testOneVersionWithSubject = commonDataForResource{
 		certificateName: "test-certificate",
 		certificateID:   12345,
+		createdBy:       "jkowalski",
+		createdDate:     "2023-01-01T00:00:00Z",
 		contractID:      "ctr_12345",
 		geography:       "CORE",
 		groupID:         1234,
@@ -317,6 +327,8 @@ var (
 	testUpdateNotificationEmailsAndCertificateName = commonDataForResource{
 		certificateName: "updated-certificate-name",
 		certificateID:   12345,
+		createdBy:       "jkowalski",
+		createdDate:     "2023-01-01T00:00:00Z",
 		contractID:      "ctr_12345",
 		geography:       "CORE",
 		groupID:         1234,
@@ -359,6 +371,8 @@ var (
 	testUpdateNotificationEmails = commonDataForResource{
 		certificateName: "test-certificate",
 		certificateID:   12345,
+		createdBy:       "jkowalski",
+		createdDate:     "2023-01-01T00:00:00Z",
 		contractID:      "ctr_12345",
 		geography:       "CORE",
 		groupID:         1234,
@@ -401,6 +415,8 @@ var (
 	testUpdateCertificateName = commonDataForResource{
 		certificateName: "updated-certificate-name",
 		certificateID:   12345,
+		createdBy:       "jkowalski",
+		createdDate:     "2023-01-01T00:00:00Z",
 		contractID:      "ctr_12345",
 		geography:       "CORE",
 		groupID:         1234,
@@ -442,6 +458,8 @@ var (
 	testClientCertificateMissedContractAndGroupInSubjectTP = commonDataForResource{
 		certificateName: "test-certificate",
 		certificateID:   12345,
+		createdBy:       "jkowalski",
+		createdDate:     "2023-01-01T00:00:00Z",
 		contractID:      "G-12RS3N4",
 		geography:       "CORE",
 		groupID:         123456,
@@ -487,6 +505,8 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 	baseChecker := test.NewStateChecker("akamai_mtlskeystore_client_certificate_third_party.test").
 		CheckEqual("certificate_id", "12345").
 		CheckEqual("certificate_name", "test-certificate").
+		CheckEqual("created_by", "jkowalski").
+		CheckEqual("created_date", "2023-01-01T00:00:00Z").
 		CheckEqual("contract_id", "ctr_12345").
 		CheckEqual("geography", "CORE").
 		CheckEqual("group_id", "1234").
@@ -553,10 +573,10 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockCreateClientCertificate(m, testData)
 				// Default subject is returned.
 				testData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS 12345 1234/CN=test-certificate/"
-				mockGetClientCertificate(m, testData)
+				mockGetClientCertificate(t, m, testData)
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID)
 				// Read
-				mockGetClientCertificate(m, testData)
+				mockGetClientCertificate(t, m, testData)
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID)
 				// Delete
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID)
@@ -576,10 +596,10 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockCreateClientCertificate(m, testData)
 				// Default subject is returned.
 				testData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS 12345 1234/CN=test-certificate/"
-				mockGetClientCertificate(m, testData)
+				mockGetClientCertificate(t, m, testData)
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID)
 				// Read
-				mockGetClientCertificate(m, testData)
+				mockGetClientCertificate(t, m, testData)
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID)
 				// Delete
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID)
@@ -601,10 +621,10 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockCreateClientCertificate(m, testData)
 				// Rotate version
 				mockRotateClientCertificateVersion(t, m, testData.versions, testData.certificateID, "v2")
-				mockGetClientCertificate(m, testData)
+				mockGetClientCertificate(t, m, testData)
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID)
 				// Read
-				mockGetClientCertificate(m, testData)
+				mockGetClientCertificate(t, m, testData)
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID)
 				// Delete
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID)
@@ -627,19 +647,19 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockCreateClientCertificate(m, testCreateData)
 				// Default subject is returned.
 				testCreateData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS 12345 1234/CN=test-certificate/"
-				mockGetClientCertificate(m, testCreateData)
+				mockGetClientCertificate(t, m, testCreateData)
 				mockListClientCertificateVersions(t, m, testCreateData.versions, testCreateData.certificateID)
 				// Read x2
-				mockGetClientCertificate(m, testCreateData).Twice()
+				mockGetClientCertificate(t, m, testCreateData).Twice()
 				mockListClientCertificateVersions(t, m, testCreateData.versions, testCreateData.certificateID).Twice()
 				// Update
 				mockPatchClientCertificate(m, 12345, nil, []string{"jkowalski@akamai.com", "jsmith-new@akamai.com", "test@akamai.com"})
 				// Default subject is returned.
 				testUpdateData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS 12345 1234/CN=test-certificate/"
-				mockGetClientCertificate(m, testUpdateData)
+				mockGetClientCertificate(t, m, testUpdateData)
 				mockListClientCertificateVersions(t, m, testUpdateData.versions, testUpdateData.certificateID)
 				// Read
-				mockGetClientCertificate(m, testUpdateData)
+				mockGetClientCertificate(t, m, testUpdateData)
 				mockListClientCertificateVersions(t, m, testUpdateData.versions, testUpdateData.certificateID)
 				// Delete
 				mockListClientCertificateVersions(t, m, testUpdateData.versions, testUpdateData.certificateID)
@@ -669,16 +689,16 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockCreateClientCertificate(m, testCreateData)
 				// Default subject is returned.
 				testCreateData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS 12345 1234/CN=test-certificate/"
-				mockGetClientCertificate(m, testCreateData)
+				mockGetClientCertificate(t, m, testCreateData)
 				mockListClientCertificateVersions(t, m, testCreateData.versions, testCreateData.certificateID)
 				// Read x2
-				mockGetClientCertificate(m, testCreateData).Twice()
+				mockGetClientCertificate(t, m, testCreateData).Twice()
 				mockListClientCertificateVersions(t, m, testCreateData.versions, testCreateData.certificateID).Twice()
 				// Update
 				mockPatchClientCertificate(m, 12345, ptr.To("updated-certificate-name"), nil)
 				// Default subject is returned.
 				testUpdateData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS 12345 1234/CN=test-certificate/"
-				mockGetClientCertificate(m, testUpdateData).Twice()
+				mockGetClientCertificate(t, m, testUpdateData).Twice()
 				mockListClientCertificateVersions(t, m, testUpdateData.versions, testUpdateData.certificateID).Twice()
 				// Delete
 				mockListClientCertificateVersions(t, m, testUpdateData.versions, testUpdateData.certificateID)
@@ -705,19 +725,19 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockCreateClientCertificate(m, testCreateData)
 				// Default subject is returned.
 				testCreateData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS 12345 1234/CN=test-certificate/"
-				mockGetClientCertificate(m, testCreateData)
+				mockGetClientCertificate(t, m, testCreateData)
 				mockListClientCertificateVersions(t, m, testCreateData.versions, testCreateData.certificateID)
 				// Read x2
-				mockGetClientCertificate(m, testCreateData).Twice()
+				mockGetClientCertificate(t, m, testCreateData).Twice()
 				mockListClientCertificateVersions(t, m, testCreateData.versions, testCreateData.certificateID).Twice()
 				// Update
 				mockPatchClientCertificate(m, 12345, ptr.To("updated-certificate-name"), []string{"jkowalski@akamai.com", "jsmith-new@akamai.com", "test@akamai.com"})
 				// Default subject is returned.
 				testUpdateData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS 12345 1234/CN=test-certificate/"
-				mockGetClientCertificate(m, testUpdateData)
+				mockGetClientCertificate(t, m, testUpdateData)
 				mockListClientCertificateVersions(t, m, testUpdateData.versions, testUpdateData.certificateID)
 				// Read
-				mockGetClientCertificate(m, testUpdateData)
+				mockGetClientCertificate(t, m, testUpdateData)
 				mockListClientCertificateVersions(t, m, testUpdateData.versions, testUpdateData.certificateID)
 				// Delete
 				mockListClientCertificateVersions(t, m, testUpdateData.versions, testUpdateData.certificateID)
@@ -802,18 +822,18 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockCreateClientCertificate(m, testCreateData)
 				// Rotate version
 				mockRotateClientCertificateVersion(t, m, testCreateData.versions, testCreateData.certificateID, "v2")
-				mockGetClientCertificate(m, testCreateData)
+				mockGetClientCertificate(t, m, testCreateData)
 				mockListClientCertificateVersions(t, m, testCreateData.versions, testCreateData.certificateID)
 				// Read x2
-				mockGetClientCertificate(m, testCreateData).Twice()
+				mockGetClientCertificate(t, m, testCreateData).Twice()
 				mockListClientCertificateVersions(t, m, testCreateData.versions, testCreateData.certificateID).Twice()
 				// Update: Add new versions (Rotate)
 				mockRotateClientCertificateVersion(t, m, newVersions, testCreateData.certificateID, "v3")
 				mockRotateClientCertificateVersion(t, m, newVersions, testCreateData.certificateID, "v4")
-				mockGetClientCertificate(m, testCreateData)
+				mockGetClientCertificate(t, m, testCreateData)
 				mockListClientCertificateVersions(t, m, newVersions, testCreateData.certificateID)
 				// Read
-				mockGetClientCertificate(m, testCreateData)
+				mockGetClientCertificate(t, m, testCreateData)
 				mockListClientCertificateVersions(t, m, newVersions, testCreateData.certificateID)
 				// Delete
 				mockListClientCertificateVersions(t, m, newVersions, testCreateData.certificateID)
@@ -884,20 +904,20 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockCreateClientCertificate(m, testCreateData)
 				// Rotate version
 				mockRotateClientCertificateVersion(t, m, testCreateData.versions, testCreateData.certificateID, "v2")
-				mockGetClientCertificate(m, testCreateData)
+				mockGetClientCertificate(t, m, testCreateData)
 				mockListClientCertificateVersions(t, m, testCreateData.versions, testCreateData.certificateID)
 				// Read x2
-				mockGetClientCertificate(m, testCreateData).Twice()
+				mockGetClientCertificate(t, m, testCreateData).Twice()
 				mockListClientCertificateVersions(t, m, testCreateData.versions, testCreateData.certificateID).Twice()
 				// Update (delete version)
 				mockListClientCertificateVersions(t, m, testCreateData.versions, testCreateData.certificateID).Twice()
 				mockDeleteClientCertificateVersion(m, testCreateData.versions, testCreateData.certificateID, "v2")
 				// Modify update test data so the custom subject is returned.
 				testUpdateData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS/CN=test-certificate/"
-				mockGetClientCertificate(m, testUpdateData)
+				mockGetClientCertificate(t, m, testUpdateData)
 				mockListClientCertificateVersions(t, m, testUpdateData.versions, testUpdateData.certificateID)
 				// Read
-				mockGetClientCertificate(m, testUpdateData)
+				mockGetClientCertificate(t, m, testUpdateData)
 				mockListClientCertificateVersions(t, m, testUpdateData.versions, testUpdateData.certificateID)
 				// Delete
 				mockListClientCertificateVersions(t, m, testUpdateData.versions, testUpdateData.certificateID)
@@ -954,19 +974,19 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockCreateClientCertificate(m, testCreateData)
 				// Rotate version
 				mockRotateClientCertificateVersion(t, m, testCreateData.versions, testCreateData.certificateID, "v2")
-				mockGetClientCertificate(m, testCreateData)
+				mockGetClientCertificate(t, m, testCreateData)
 				mockListClientCertificateVersions(t, m, testCreateData.versions, testCreateData.certificateID)
 				// Read
-				mockGetClientCertificate(m, testCreateData).Twice()
+				mockGetClientCertificate(t, m, testCreateData).Twice()
 				mockListClientCertificateVersions(t, m, testCreateData.versions, testCreateData.certificateID).Twice()
 				// Update (delete version + add new version)
 				mockListClientCertificateVersions(t, m, testCreateData.versions, testCreateData.certificateID).Twice()
 				mockDeleteClientCertificateVersion(m, testCreateData.versions, testCreateData.certificateID, "v2")
 				mockRotateClientCertificateVersion(t, m, newVersions, testCreateData.certificateID, "v3")
-				mockGetClientCertificate(m, testCreateData)
+				mockGetClientCertificate(t, m, testCreateData)
 				mockListClientCertificateVersions(t, m, newVersions, testCreateData.certificateID)
 				// Read
-				mockGetClientCertificate(m, testCreateData)
+				mockGetClientCertificate(t, m, testCreateData)
 				mockListClientCertificateVersions(t, m, newVersions, testCreateData.certificateID)
 				// Delete
 				mockListClientCertificateVersions(t, m, newVersions, testCreateData.certificateID)
@@ -1067,10 +1087,10 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockCreateClientCertificate(m, testCreateData)
 				// Rotate version
 				mockRotateClientCertificateVersion(t, m, testCreateData.versions, testCreateData.certificateID, "v2")
-				mockGetClientCertificate(m, testCreateData)
+				mockGetClientCertificate(t, m, testCreateData)
 				mockListClientCertificateVersions(t, m, testCreateData.versions, testCreateData.certificateID)
 				// Read x2
-				mockGetClientCertificate(m, testCreateData).Twice()
+				mockGetClientCertificate(t, m, testCreateData).Twice()
 				mockListClientCertificateVersions(t, m, testCreateData.versions, testCreateData.certificateID).Twice()
 				// Update (delete all versions + add new versions)
 				mockListClientCertificateVersions(t, m, testCreateData.versions, testCreateData.certificateID).Twice()
@@ -1078,10 +1098,10 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockRotateClientCertificateVersion(t, m, newVersions, testCreateData.certificateID, "v3")
 				mockDeleteClientCertificateVersion(m, testCreateData.versions, testCreateData.certificateID, "v1")
 				mockRotateClientCertificateVersion(t, m, newVersions, testCreateData.certificateID, "v4")
-				mockGetClientCertificate(m, testCreateData)
+				mockGetClientCertificate(t, m, testCreateData)
 				mockListClientCertificateVersions(t, m, newVersions, testCreateData.certificateID)
 				// Read
-				mockGetClientCertificate(m, testCreateData)
+				mockGetClientCertificate(t, m, testCreateData)
 				mockListClientCertificateVersions(t, m, newVersions, testCreateData.certificateID)
 				// Delete
 				mockListClientCertificateVersions(t, m, newVersions, testCreateData.certificateID)
@@ -1291,10 +1311,10 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockRotateClientCertificateVersion(t, m, testCreateData.versions, testCreateData.certificateID, "v3")
 				mockRotateClientCertificateVersion(t, m, testCreateData.versions, testCreateData.certificateID, "v4")
 				mockRotateClientCertificateVersion(t, m, testCreateData.versions, testCreateData.certificateID, "v5")
-				mockGetClientCertificate(m, testCreateData)
+				mockGetClientCertificate(t, m, testCreateData)
 				mockListClientCertificateVersions(t, m, testCreateData.versions, testCreateData.certificateID)
 				// Read x2
-				mockGetClientCertificate(m, testCreateData).Twice()
+				mockGetClientCertificate(t, m, testCreateData).Twice()
 				mockListClientCertificateVersions(t, m, testCreateData.versions, testCreateData.certificateID).Twice()
 				// Update (delete all versions + add new versions)
 				mockListClientCertificateVersions(t, m, testCreateData.versions, testCreateData.certificateID).Twice()
@@ -1308,10 +1328,10 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockRotateClientCertificateVersion(t, m, newFiveVersions, testCreateData.certificateID, "v3a")
 				mockRotateClientCertificateVersion(t, m, newFiveVersions, testCreateData.certificateID, "v4a")
 				mockRotateClientCertificateVersion(t, m, newFiveVersions, testCreateData.certificateID, "v5a")
-				mockGetClientCertificate(m, testCreateData)
+				mockGetClientCertificate(t, m, testCreateData)
 				mockListClientCertificateVersions(t, m, newFiveVersions, testCreateData.certificateID)
 				// Read
-				mockGetClientCertificate(m, testCreateData)
+				mockGetClientCertificate(t, m, testCreateData)
 				mockListClientCertificateVersions(t, m, newFiveVersions, testCreateData.certificateID)
 				// Delete
 				mockListClientCertificateVersions(t, m, newFiveVersions, testCreateData.certificateID)
@@ -1411,17 +1431,17 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockCreateClientCertificate(m, testCreateData)
 				// Rotate version
 				mockRotateClientCertificateVersion(t, m, testCreateData.versions, testCreateData.certificateID, "v2")
-				mockGetClientCertificate(m, testCreateData)
+				mockGetClientCertificate(t, m, testCreateData)
 				mockListClientCertificateVersions(t, m, testCreateData.versions, testCreateData.certificateID)
 				// Read
-				mockGetClientCertificate(m, testCreateData)
+				mockGetClientCertificate(t, m, testCreateData)
 				mockListClientCertificateVersions(t, m, testCreateData.versions, testCreateData.certificateID)
 				// Step 2
 				// Read - mock that the new version was created outside terraform
-				mockGetClientCertificate(m, testCreateData)
+				mockGetClientCertificate(t, m, testCreateData)
 				mockListClientCertificateVersions(t, m, newVersions, testCreateData.certificateID)
 				// Read
-				mockGetClientCertificate(m, testCreateData)
+				mockGetClientCertificate(t, m, testCreateData)
 				mockListClientCertificateVersions(t, m, newVersions, testCreateData.certificateID)
 				// Delete previous versions to allow delete
 				mockListClientCertificateVersions(t, m, testCreateData.versions, testCreateData.certificateID).Twice()
@@ -1476,17 +1496,17 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockCreateClientCertificate(m, testCreateData)
 				// Rotate version
 				mockRotateClientCertificateVersion(t, m, testCreateData.versions, testCreateData.certificateID, "v2")
-				mockGetClientCertificate(m, testCreateData)
+				mockGetClientCertificate(t, m, testCreateData)
 				mockListClientCertificateVersions(t, m, testCreateData.versions, testCreateData.certificateID)
 				// Read
-				mockGetClientCertificate(m, testCreateData)
+				mockGetClientCertificate(t, m, testCreateData)
 				mockListClientCertificateVersions(t, m, testCreateData.versions, testCreateData.certificateID)
 				// Step 2
 				// Read - mock that the version was removed outside terraform
-				mockGetClientCertificate(m, testCreateData)
+				mockGetClientCertificate(t, m, testCreateData)
 				mockListClientCertificateVersions(t, m, versionsWithoutV2, testCreateData.certificateID)
 				// Read
-				mockGetClientCertificate(m, testCreateData)
+				mockGetClientCertificate(t, m, testCreateData)
 				mockListClientCertificateVersions(t, m, versionsWithoutV2, testCreateData.certificateID)
 				// Delete previous versions to allow delete
 				mockListClientCertificateVersions(t, m, versionsWithoutV2, testCreateData.certificateID)
@@ -1535,6 +1555,8 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				newCertificateNameAndEmails := commonDataForResource{
 					certificateID:   12345,
 					certificateName: "updated-certificate",
+					createdBy:       "jkowalski",
+					createdDate:     "2023-01-01T00:00:00Z",
 					contractID:      "ctr_12345",
 					geography:       "CORE",
 					groupID:         1234,
@@ -1552,17 +1574,17 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockCreateClientCertificate(m, testCreateData)
 				// Rotate version
 				mockRotateClientCertificateVersion(t, m, testCreateData.versions, testCreateData.certificateID, "v2")
-				mockGetClientCertificate(m, testCreateData)
+				mockGetClientCertificate(t, m, testCreateData)
 				mockListClientCertificateVersions(t, m, testCreateData.versions, testCreateData.certificateID)
 				// Read
-				mockGetClientCertificate(m, testCreateData)
+				mockGetClientCertificate(t, m, testCreateData)
 				mockListClientCertificateVersions(t, m, testCreateData.versions, testCreateData.certificateID)
 				// Step 2
 				// Read - mock that the version was removed outside terraform
-				mockGetClientCertificate(m, newCertificateNameAndEmails)
+				mockGetClientCertificate(t, m, newCertificateNameAndEmails)
 				mockListClientCertificateVersions(t, m, newCertificateNameAndEmails.versions, testCreateData.certificateID)
 				// Read
-				mockGetClientCertificate(m, newCertificateNameAndEmails)
+				mockGetClientCertificate(t, m, newCertificateNameAndEmails)
 				mockListClientCertificateVersions(t, m, newCertificateNameAndEmails.versions, testCreateData.certificateID)
 				// Delete previous versions to allow delete
 				mockListClientCertificateVersions(t, m, newCertificateNameAndEmails.versions, testCreateData.certificateID)
@@ -1636,10 +1658,10 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockCreateClientCertificate(m, testCreateData)
 				// Rotate version
 				mockRotateClientCertificateVersion(t, m, testCreateData.versions, testCreateData.certificateID, "v2")
-				mockGetClientCertificate(m, testCreateData)
+				mockGetClientCertificate(t, m, testCreateData)
 				mockListClientCertificateVersions(t, m, testCreateData.versions, testCreateData.certificateID)
 				// Read
-				mockGetClientCertificate(m, testCreateData).Twice()
+				mockGetClientCertificate(t, m, testCreateData).Twice()
 				mockListClientCertificateVersions(t, m, testCreateData.versions, testCreateData.certificateID).Twice()
 				// Update (delete version + add new version)
 				mockListClientCertificateVersions(t, m, testCreateData.versions, testCreateData.certificateID).Twice()
@@ -1670,10 +1692,10 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockCreateClientCertificate(m, testData)
 				// Default subject is returned.
 				testData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS 12345 1234/CN=test-certificate/"
-				mockGetClientCertificate(m, testData)
+				mockGetClientCertificate(t, m, testData)
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID)
 				// Read
-				mockGetClientCertificate(m, testData).Twice()
+				mockGetClientCertificate(t, m, testData).Twice()
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID).Twice()
 				// Delete
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID)
@@ -1697,10 +1719,10 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockCreateClientCertificate(m, testData)
 				// Default subject is returned.
 				testData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS 12345 1234/CN=test-certificate/"
-				mockGetClientCertificate(m, testData)
+				mockGetClientCertificate(t, m, testData)
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID)
 				// Read
-				mockGetClientCertificate(m, testData).Twice()
+				mockGetClientCertificate(t, m, testData).Twice()
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID).Twice()
 				// Delete
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID)
@@ -1724,10 +1746,10 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockCreateClientCertificate(m, testData)
 				// Default subject is returned.
 				testData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS 12345 1234/CN=test-certificate/"
-				mockGetClientCertificate(m, testData)
+				mockGetClientCertificate(t, m, testData)
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID)
 				// Read
-				mockGetClientCertificate(m, testData).Twice()
+				mockGetClientCertificate(t, m, testData).Twice()
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID).Twice()
 				// Delete
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID)
@@ -1751,10 +1773,10 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockCreateClientCertificate(m, testData)
 				// Default subject is returned.
 				testData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS 12345 1234/CN=test-certificate/"
-				mockGetClientCertificate(m, testData)
+				mockGetClientCertificate(t, m, testData)
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID)
 				// Read
-				mockGetClientCertificate(m, testData).Twice()
+				mockGetClientCertificate(t, m, testData).Twice()
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID).Twice()
 				// Delete
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID)
@@ -1778,10 +1800,10 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockCreateClientCertificate(m, testData)
 				// Rotate version
 				mockRotateClientCertificateVersion(t, m, testData.versions, testData.certificateID, "v2")
-				mockGetClientCertificate(m, testData)
+				mockGetClientCertificate(t, m, testData)
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID)
 				// Read x2
-				mockGetClientCertificate(m, testData).Twice()
+				mockGetClientCertificate(t, m, testData).Twice()
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID).Twice()
 				// Delete
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID)
@@ -1808,10 +1830,10 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 				mockCreateClientCertificate(m, testData)
 				// Default subject is returned.
 				testData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Akamai mTLS 12345 1234/CN=test-certificate/"
-				mockGetClientCertificate(m, testData)
+				mockGetClientCertificate(t, m, testData)
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID)
 				// Read x2
-				mockGetClientCertificate(m, testData).Twice()
+				mockGetClientCertificate(t, m, testData).Twice()
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID).Twice()
 				// Delete
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID)
@@ -1833,10 +1855,10 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 			init: func(m *mtlskeystore.Mock, testData, _ commonDataForResource) {
 				// Create
 				mockCreateClientCertificate(m, testData)
-				mockGetClientCertificate(m, testData)
+				mockGetClientCertificate(t, m, testData)
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID)
 				// Read x2
-				mockGetClientCertificate(m, testData).Twice()
+				mockGetClientCertificate(t, m, testData).Twice()
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID).Twice()
 				// Delete
 				mockListClientCertificateVersions(t, m, testData.versions, testData.certificateID)
@@ -1946,10 +1968,10 @@ func TestClientCertificateThirdPartyResource_Import(t *testing.T) {
 				// Import
 				// modify mock data to return default subject that allows to parse contract and group
 				testImportData.subject = "/C=US/O=Akamai Technologies, Inc./OU=17471 12345 1234/CN=test.example.com"
-				mockGetClientCertificate(m, testImportData)
+				mockGetClientCertificate(t, m, testImportData)
 				mockListClientCertificateVersions(t, m, testImportData.versions, testImportData.certificateID)
 				// Read
-				mockGetClientCertificate(m, testImportData)
+				mockGetClientCertificate(t, m, testImportData)
 				mockListClientCertificateVersions(t, m, testImportData.versions, testImportData.certificateID)
 			},
 			importData: testOneVersion(),
@@ -1969,10 +1991,10 @@ func TestClientCertificateThirdPartyResource_Import(t *testing.T) {
 				// Import
 				// modify mock data to return default subject that allows to parse contract and group.
 				testImportData.subject = "/C=US/O=Akamai Technologies, Inc./OU=17471 12345 1234/CN=test.example.com"
-				mockGetClientCertificate(m, testImportData)
+				mockGetClientCertificate(t, m, testImportData)
 				mockListClientCertificateVersions(t, m, testImportData.versions, testImportData.certificateID)
 				// Read
-				mockGetClientCertificate(m, testImportData)
+				mockGetClientCertificate(t, m, testImportData)
 				mockListClientCertificateVersions(t, m, testImportData.versions, testImportData.certificateID)
 			},
 			importData: testTwoVersionsWithOptionalParams(),
@@ -1995,10 +2017,10 @@ func TestClientCertificateThirdPartyResource_Import(t *testing.T) {
 				v1 := testImportData.versions["v1"]
 				v1.status = "DELETE_PENDING"
 				testImportData.versions["v1"] = v1
-				mockGetClientCertificate(m, testImportData)
+				mockGetClientCertificate(t, m, testImportData)
 				mockListClientCertificateVersions(t, m, testImportData.versions, testImportData.certificateID)
 				// Read
-				mockGetClientCertificate(m, testImportData)
+				mockGetClientCertificate(t, m, testImportData)
 				mockListClientCertificateVersions(t, m, testImportData.versions, testImportData.certificateID)
 			},
 			importData: testTwoVersionsWithOptionalParams(),
@@ -2016,10 +2038,10 @@ func TestClientCertificateThirdPartyResource_Import(t *testing.T) {
 			importID: "12345,123456,G-12RS3N4",
 			init: func(m *mtlskeystore.Mock, testImportData commonDataForResource) {
 				// Import
-				mockGetClientCertificate(m, testImportData)
+				mockGetClientCertificate(t, m, testImportData)
 				mockListClientCertificateVersions(t, m, testImportData.versions, testImportData.certificateID)
 				// Read
-				mockGetClientCertificate(m, testImportData)
+				mockGetClientCertificate(t, m, testImportData)
 				mockListClientCertificateVersions(t, m, testImportData.versions, testImportData.certificateID)
 			},
 			importData: testClientCertificateMissedContractAndGroupInSubjectTP,
@@ -2055,7 +2077,7 @@ func TestClientCertificateThirdPartyResource_Import(t *testing.T) {
 				// Import
 				// modify mock data to return custom subject that cannot be parsed.
 				testImportData.subject = "some custom subject cannot parse contract and group/CN=test.example.com"
-				mockGetClientCertificate(m, testImportData)
+				mockGetClientCertificate(t, m, testImportData)
 			},
 			importData:  testOneVersion(),
 			expectError: regexp.MustCompile(`get failed`),
@@ -2073,7 +2095,7 @@ func TestClientCertificateThirdPartyResource_Import(t *testing.T) {
 			importID: "12345",
 			init: func(m *mtlskeystore.Mock, testImportData commonDataForResource) {
 				// Import
-				mockGetClientCertificate(m, testImportData).Return(nil, fmt.Errorf("get failed"))
+				mockGetClientCertificate(t, m, testImportData).Return(nil, fmt.Errorf("get failed"))
 			},
 			importData:  testOneVersion(),
 			expectError: regexp.MustCompile(`get failed`),
@@ -2096,7 +2118,7 @@ func TestClientCertificateThirdPartyResource_Import(t *testing.T) {
 				v1 := testImportData.versions["v1"]
 				v1.status = "DELETE_PENDING"
 				testImportData.versions["v1"] = v1
-				mockGetClientCertificate(m, testImportData)
+				mockGetClientCertificate(t, m, testImportData)
 				mockListClientCertificateVersions(t, m, testImportData.versions, testImportData.certificateID)
 			},
 			importData: testOneVersion(),
@@ -2116,10 +2138,10 @@ func TestClientCertificateThirdPartyResource_Import(t *testing.T) {
 				// Import
 				// modify mock data to return default subject that allows to parse contract and group
 				testImportData.subject = "/C=US/O=Akamai Technologies, Inc./OU=17471 12345 1234/CN=test.example.com"
-				mockGetClientCertificate(m, testImportData)
+				mockGetClientCertificate(t, m, testImportData)
 				mockListClientCertificateVersions(t, m, testImportData.versions, testImportData.certificateID)
 				// Read
-				mockGetClientCertificate(m, testImportData)
+				mockGetClientCertificate(t, m, testImportData)
 				mockListClientCertificateVersions(t, m, testImportData.versions, testImportData.certificateID).Return(nil, fmt.Errorf("list failed"))
 			},
 			importData:  testOneVersion(),
@@ -2137,7 +2159,7 @@ func TestClientCertificateThirdPartyResource_Import(t *testing.T) {
 		"error - no group and contract in certificate subject": {
 			importID: "12345",
 			init: func(m *mtlskeystore.Mock, testImportData commonDataForResource) {
-				mockGetClientCertificate(m, testImportData)
+				mockGetClientCertificate(t, m, testImportData)
 			},
 			importData:  testClientCertificateMissedContractAndGroupInSubjectTP,
 			expectError: regexp.MustCompile(`list failed`),
@@ -2390,12 +2412,14 @@ func mockDeleteClientCertificateVersion(m *mtlskeystore.Mock, versions map[strin
 	}).Return(nil, nil).Once()
 }
 
-func mockGetClientCertificate(m *mtlskeystore.Mock, testData commonDataForResource) *mock.Call {
+func mockGetClientCertificate(t *testing.T, m *mtlskeystore.Mock, testData commonDataForResource) *mock.Call {
 	return m.On("GetClientCertificate", testutils.MockContext, mtlskeystore.GetClientCertificateRequest{
 		CertificateID: testData.certificateID,
 	}).Return(&mtlskeystore.GetClientCertificateResponse{
 		CertificateID:      testData.certificateID,
 		CertificateName:    testData.certificateName,
+		CreatedBy:          testData.createdBy,
+		CreatedDate:        tst.NewTimeFromString(t, testData.createdDate),
 		Geography:          testData.geography,
 		KeyAlgorithm:       testData.keyAlgorithm,
 		NotificationEmails: testData.notificationEmails,

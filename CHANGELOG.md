@@ -33,6 +33,13 @@
 
 
 
+* mTLS Keystore:
+  * Added fields: `created_by` and `created_date` to the `akamai_mtlskeystore_client_certificate_third_party` resource.
+
+
+
+
+
 
 
 
