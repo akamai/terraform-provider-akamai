@@ -48,8 +48,9 @@
 
 
 
-
-
+* PAPI
+  * Fixed an issue in the `akamai_edge_hostname` resource where the resource was successfully created in the backend, 
+  but the Terraform Provider returned errors such as "inconsistent result after apply" or "unable to find an edgehostname" ([I#658](https://github.com/akamai/terraform-provider-akamai/issues/658)) and ([I#681](https://github.com/akamai/terraform-provider-akamai/issues/681)).
 
 
 

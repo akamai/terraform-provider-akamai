@@ -17,7 +17,6 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/timeouts"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/log"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -39,6 +38,15 @@ const (
 var (
 	// EgdeHostnamePollInterval is the interval for polling an edgehostname creation or deletion
 	EgdeHostnamePollInterval = time.Minute
+
+	// GetEdgeHostnamePollInterval is the interval for polling an edgehostname after creation.
+	GetEdgeHostnamePollInterval = time.Second * 10
+
+	// errContextTerminatedError is returned when the context is terminated while waiting for an edge hostname to be ready.
+	errContextTerminatedError = errors.New("get edge hostname context terminated")
+
+	// EdgeHostnameReadTimeout is the timeout for fetching an edge hostname in the Read context.
+	EdgeHostnameReadTimeout = time.Minute * 1
 
 	// domainPrefixPatterns maps domain suffixes to their respective regex patterns for validating domain prefixes
 	domainPrefixPatterns = map[string]*regexp.Regexp{
@@ -237,6 +245,17 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	edgeHostnameKey := edgeHostnameKey{
+		edgeHostnameID: hostname.EdgeHostnameID,
+		contractID:     contractID,
+		groupID:        groupID,
+	}
+
+	if _, err := waitUntilEdgeHostnameReady(ctx, meta, client, edgeHostnameKey); err != nil {
+		return diag.FromErr(err)
+	}
+
 	if d.HasChange("ttl") {
 		edgeHostnameID, err := strconv.Atoi(strings.TrimPrefix(hostname.EdgeHostnameID, "ehn_"))
 		if err != nil {
@@ -265,6 +284,46 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 
 	d.SetId(hostname.EdgeHostnameID)
 	return resourceSecureEdgeHostNameRead(ctx, d, meta)
+}
+
+type edgeHostnameKey struct {
+	edgeHostnameID string
+	contractID     string
+	groupID        string
+}
+
+// waitUntilEdgeHostnameReady waits until the edge hostname is available in the GetEdgeHostname response.
+// Note: After creation, the edge hostname can be in one of three states: missing (not yet available even though creation was successful), CREATED or PENDING.
+// This function waits only if the edge hostname is present in the GetEdgeHostname response, it does not matter if it is in CREATED or PENDING status.
+func waitUntilEdgeHostnameReady(ctx context.Context, meta meta.Meta, client papi.PAPI, edgeHostnameKey edgeHostnameKey) (*papi.GetEdgeHostnamesResponse, error) {
+	logger := meta.Log("PAPI", "waitUntilEdgeHostnameReady")
+
+	for {
+		resp, err := client.GetEdgeHostname(ctx, papi.GetEdgeHostnameRequest{
+			EdgeHostnameID: edgeHostnameKey.edgeHostnameID,
+			ContractID:     edgeHostnameKey.contractID,
+			GroupID:        edgeHostnameKey.groupID,
+		})
+		if err == nil {
+			logger.Debugf("edge hostname %s is now available in GetEdgeHostname response: %v, continuing", edgeHostnameKey.edgeHostnameID, resp)
+			return resp, nil
+		}
+
+		if !errors.Is(err, papi.ErrNotFound) {
+			logger.Debugf("received unexpected error while getting edge hostname %s: %v", edgeHostnameKey.edgeHostnameID, err.Error())
+			return nil, err
+		}
+
+		logger.Debugf("edge hostname is %s not found yet, waiting %s before retrying", edgeHostnameKey.edgeHostnameID, GetEdgeHostnamePollInterval)
+
+		select {
+		case <-time.After(GetEdgeHostnamePollInterval):
+			logger.Debugf("retrying check for edge hostname %s", edgeHostnameKey.edgeHostnameID)
+		case <-ctx.Done():
+			logger.Debugf("context terminated while waiting for the edge hostname %s to appear in the response: %s", edgeHostnameKey.edgeHostnameID, ctx.Err())
+			return nil, fmt.Errorf("%w: %s", errContextTerminatedError, ctx.Err())
+		}
+	}
 }
 
 func validateDomainPrefix(edgeHostname string) diag.Diagnostics {
@@ -334,29 +393,42 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 	logger.Debugf("Edgehostnames GROUP = %v", groupID)
 	logger.Debugf("Edgehostnames CONTRACT = %v", contractID)
 
-	edgeHostnames, err := client.GetEdgeHostnames(ctx, papi.GetEdgeHostnamesRequest{
-		ContractID: contractID,
-		GroupID:    groupID,
+	edgeHostnameResp, err := client.GetEdgeHostname(ctx, papi.GetEdgeHostnameRequest{
+		EdgeHostnameID: d.Id(),
+		ContractID:     contractID,
+		GroupID:        groupID,
 	})
 	if err != nil {
-		return diag.FromErr(err)
+		if errors.Is(err, papi.ErrNotFound) {
+			logger.Debugf("edge hostname %s not found in read", d.Id())
+			// If the edge hostname is not found in Read, poll for one minute to see if it appears in the response.
+			ctx, cancel := context.WithTimeout(ctx, EdgeHostnameReadTimeout)
+			defer cancel()
+
+			edgeHostnameResp, err = waitUntilEdgeHostnameReady(ctx, meta, client, edgeHostnameKey{
+				edgeHostnameID: d.Id(),
+				contractID:     contractID,
+				groupID:        groupID,
+			})
+			if err != nil {
+				// If after one minute the edge hostname is still not found, remove it from the state,
+				// as most probably it was deleted outside of terraform.
+				if errors.Is(err, errContextTerminatedError) {
+					logger.Info("edge hostname was deleted outside of terraform")
+					d.SetId("")
+					return nil
+				}
+				return diag.FromErr(fmt.Errorf("error waiting for edge hostname %s to be ready: %w", d.Id(), err))
+			}
+			// If the edge hostname is returned within one minute, continue processing.
+			logger.Debugf("edge hostname %s recovered after receiving 404", d.Id())
+		} else {
+			// Return any other error as is.
+			return diag.FromErr(err)
+		}
 	}
 
-	var edgeHostname string
-	if got, ok := d.GetOk("edge_hostname"); ok {
-		edgeHostname = got.(string)
-	}
-
-	foundEdgeHostname, err := findEdgeHostname(edgeHostnames.EdgeHostnames, edgeHostname)
-	if err != nil && errors.Is(err, ErrEdgeHostnameNotFound) {
-		logger.Info("edge hostname was deleted outside of terraform")
-		d.SetId("")
-		return nil
-	}
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
+	foundEdgeHostname := edgeHostnameResp.EdgeHostname
 	useCasesJSON, err := useCases2JSON(foundEdgeHostname.UseCases)
 	if err != nil {
 		return diag.FromErr(err)
@@ -800,28 +872,6 @@ func appendDefaultSuffixToEdgeHostname(i interface{}) string {
 		name = fmt.Sprintf("%s.edgesuite.net", name)
 	}
 	return name
-}
-
-func findEdgeHostname(edgeHostnames papi.EdgeHostnameItems, domain string) (*papi.EdgeHostnameGetItem, error) {
-	suffix := "edgesuite.net"
-	domain = strings.ToLower(domain)
-	if domain != "" {
-		if strings.HasSuffix(domain, "edgekey.net") {
-			suffix = "edgekey.net"
-		}
-		if strings.HasSuffix(domain, "akamaized.net") {
-			suffix = "akamaized.net"
-		}
-		prefix := strings.TrimSuffix(domain, "."+suffix)
-
-		for _, eHn := range edgeHostnames.Items {
-			if eHn.DomainPrefix == prefix && eHn.DomainSuffix == suffix {
-				return &eHn, nil
-			}
-		}
-	}
-
-	return nil, fmt.Errorf("%w: %s", ErrEdgeHostnameNotFound, domain)
 }
 
 func useCases2JSON(useCases []papi.UseCase) ([]byte, error) {
