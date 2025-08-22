@@ -298,6 +298,16 @@ func (r *caSetResource) ValidateConfig(ctx context.Context, req resource.Validat
 	}
 }
 
+type certificate struct {
+	certificatePEM string
+	description    *string
+}
+
+type certIssue struct {
+	title   string
+	pointer string
+}
+
 func generateDiagnosticForValidationErrors(err error, certs []mtlstruststore.ValidateCertificate) diag.Diagnostics {
 	diags := diag.Diagnostics{}
 	var e *mtlstruststore.Error
@@ -309,45 +319,75 @@ func generateDiagnosticForValidationErrors(err error, certs []mtlstruststore.Val
 			return diags
 		}
 
-		// Group errors by Title
-		errorGroups := make(map[string][]struct {
-			certPEM     string
-			description string
-		})
-
+		var certIssues []certIssue
 		for _, ee := range e.Errors {
-			index, errParsed := strconv.Atoi(strings.TrimPrefix(ee.Pointer, "/certificates/"))
-			if errParsed != nil || index < 0 || index >= len(certs) {
-				diags.AddAttributeError(path.Root("certificates"), "Certificates are invalid. Unknown pointer: "+ee.Pointer, errParsed.Error())
-				continue
-			}
-			certInfo := struct {
-				certPEM     string
-				description string
-			}{
-				certPEM:     certs[index].CertificatePEM,
-				description: *certs[index].Description,
-			}
-
-			errorGroups[ee.Title] = append(errorGroups[ee.Title], certInfo)
+			certIssues = append(certIssues, certIssue{
+				title:   ee.Title,
+				pointer: ee.Pointer,
+			})
 		}
-
+		// Group errors by Title, identify certificate PEM based on the pointer from response and the request content
+		certIssuesGroups, d := groupCertIssuesByTitle(certIssues, certs)
+		diags = append(diags, d...)
 		// Add one diagnostic per error title, summarizing all affected certs
-		for title, certInfos := range errorGroups {
-			var certsSummary strings.Builder
-			for _, info := range certInfos {
-				if len(info.description) > 0 {
-					certsSummary.WriteString(fmt.Sprintf("%s\n%s\n\n", info.description, info.certPEM))
-				} else {
-					certsSummary.WriteString(fmt.Sprintf("%s\n\n", info.certPEM))
-				}
-
-			}
-			diags.AddError(fmt.Sprintf("Certificates validation failed - %s", title), certsSummary.String())
-		}
+		diags = append(diags, generateCertIssuesDiags(certIssuesGroups)...)
 	} else {
 		diags.AddAttributeError(path.Root("certificates"), "Certificates are invalid", err.Error())
 	}
+	return diags
+}
+
+func generateCertIssuesDiags(certIssuesGroups map[string][]certificate) diag.Diagnostics {
+	var diags diag.Diagnostics
+	for title, certIssueGroup := range certIssuesGroups {
+		var summary strings.Builder
+		for _, info := range certIssueGroup {
+			if info.description != nil && len(*info.description) > 0 {
+				summary.WriteString(fmt.Sprintf("%s\n%s\n\n", *info.description, info.certificatePEM))
+			} else {
+				summary.WriteString(fmt.Sprintf("%s\n\n", info.certificatePEM))
+			}
+		}
+		diags.AddError(fmt.Sprintf("Certificates validation failed - %s", title), summary.String())
+	}
+	return diags
+}
+
+func groupCertIssuesByTitle(certIssues []certIssue, certs []mtlstruststore.ValidateCertificate) (map[string][]certificate, diag.Diagnostics) {
+	diags := diag.Diagnostics{}
+	certificateGroups := make(map[string][]certificate)
+	for _, ci := range certIssues {
+		index, err := strconv.Atoi(strings.TrimPrefix(ci.pointer, "/certificates/"))
+		if err != nil {
+			diags.AddAttributeError(path.Root("certificates"), "Certificates are invalid. Unknown pointer: "+ci.pointer, err.Error())
+			continue
+		}
+		if index < 0 || index >= len(certs) {
+			diags.AddAttributeError(path.Root("certificates"), "Certificates are invalid. Invalid pointer: "+ci.pointer, "index out of range")
+			continue
+		}
+		certInfo := certificate{
+			certificatePEM: certs[index].CertificatePEM,
+			description:    certs[index].Description,
+		}
+
+		certificateGroups[ci.title] = append(certificateGroups[ci.title], certInfo)
+	}
+	return certificateGroups, diags
+}
+
+func generateDiagnosticForValidationWarnings(validation mtlstruststore.Validation, certs []mtlstruststore.ValidateCertificate) diag.Diagnostics {
+	var certIssues []certIssue
+	for _, warning := range validation.Warnings {
+		certIssues = append(certIssues, certIssue{
+			title:   warning.Title,
+			pointer: warning.Pointer,
+		})
+	}
+	// Group errors by Title
+	certificateGroups, diags := groupCertIssuesByTitle(certIssues, certs)
+	// Add one diagnostic per error title, summarizing all affected certs
+	diags = append(diags, generateCertIssuesDiags(certificateGroups)...)
 	return diags
 }
 
@@ -548,7 +588,7 @@ func validateCerts(ctx context.Context, client mtlstruststore.MTLSTruststore, co
 		}
 	}
 
-	// If there are no certificates, we can skip validation
+	// If there are no known certificates, we can skip validation
 	if len(certs) == 0 {
 		return nil
 	}
@@ -558,6 +598,13 @@ func validateCerts(ctx context.Context, client mtlstruststore.MTLSTruststore, co
 	})
 	if err != nil {
 		return generateDiagnosticForValidationErrors(err, certs)
+	}
+	if len(res.Validation.Warnings) > 0 {
+		tflog.Warn(ctx, "CA set validation has warnings", map[string]any{
+			"warnings": res.Validation.Warnings,
+		})
+		// In the known cases, validation warnings are like errors, i.e. duplicate certificates
+		return generateDiagnosticForValidationWarnings(res.Validation, certs)
 	}
 	tflog.Debug(ctx, "Validation succeeded", map[string]any{
 		"response": res,
@@ -828,6 +875,11 @@ func (r *caSetResource) update(ctx context.Context, plan, state *caSetResourceMo
 		})
 		if err != nil {
 			return diag.Diagnostics{diag.NewErrorDiagnostic("clone ca set version failed", err.Error())}
+		}
+		if clonedCASetVersionResp.Validation != nil && len(clonedCASetVersionResp.Validation.Warnings) > 0 {
+			tflog.Warn(ctx, "CA set version cloning has warnings", map[string]any{
+				"warnings": clonedCASetVersionResp.Validation.Warnings,
+			})
 		}
 		plan.LatestVersion = types.Int64Value(clonedCASetVersionResp.Version)
 		tflog.Debug(ctx, "Current version is or was activated on staging or production, creating a new version by cloning current one.", map[string]interface{}{

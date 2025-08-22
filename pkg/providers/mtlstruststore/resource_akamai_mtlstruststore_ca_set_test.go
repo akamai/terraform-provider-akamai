@@ -25,21 +25,23 @@ import (
 )
 
 type commonDataForResource struct {
-	description        *string
-	name               string
-	certificates       []mtlstruststore.CertificateResponse
-	caSetID            string
-	versionDescription *string
-	version            int64
-	stagingVersion     *int64
-	stagingStatus      string
-	productionVersion  *int64
-	productionStatus   string
-	newVersion         int64
-	allowInsecureSHA1  bool
-	properties         []mtlstruststore.AssociationProperty
-	enrollments        []mtlstruststore.AssociationEnrollment
-	caSetStatus        string
+	description             *string
+	name                    string
+	certificates            []mtlstruststore.CertificateResponse
+	certificatesForResponse []mtlstruststore.CertificateResponse // populate only if different from certificates
+	caSetID                 string
+	versionDescription      *string
+	version                 int64
+	stagingVersion          *int64
+	stagingStatus           string
+	productionVersion       *int64
+	productionStatus        string
+	newVersion              int64
+	allowInsecureSHA1       bool
+	properties              []mtlstruststore.AssociationProperty
+	enrollments             []mtlstruststore.AssociationEnrollment
+	caSetStatus             string
+	validation              mtlstruststore.Validation
 }
 
 func TestCASetResource(t *testing.T) {
@@ -129,6 +131,52 @@ func TestCASetResource(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/create.tf"),
 					Check:  check.Build(),
+				},
+			},
+		},
+		"create a ca set with duplicated certificates": {
+			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
+				// create
+				resourceData1 := resourceData
+				resourceData1.certificates = []mtlstruststore.CertificateResponse{
+					{
+						CertificatePEM: "-----BEGIN CERTIFICATE-----\nMIIDXTCCAkWgAwIBAgIJALa6Rz1u5z2OMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV\n-----END CERTIFICATE-----\n",
+						Description:    ptr.To("Test certificate"),
+					},
+					{
+						CertificatePEM: "-----BEGIN CERTIFICATE-----\nMIIDXTCCAkWgAwIBAgIJALa6Rz1u5z2OMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV\n-----END CERTIFICATE-----\n",
+					},
+				}
+				resourceData1.certificatesForResponse = []mtlstruststore.CertificateResponse{
+					{
+						CertificatePEM: "-----BEGIN CERTIFICATE-----\nMIIDXTCCAkWgAwIBAgIJALa6Rz1u5z2OMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV\n-----END CERTIFICATE-----\n",
+						Description:    ptr.To("Test certificate"),
+					},
+				}
+				resourceData1.validation = mtlstruststore.Validation{
+					Warnings: []mtlstruststore.Warning{
+						{
+							ContextInfo: map[string]any{
+								"description": ptr.To("m3d"),
+								"fingerprint": "aa7b651c620ac2afba6ee4afa9b9ca09adbcab62f3fbdd0597fba9d6c5047cc5",
+							},
+							Detail:  "The certificate with the fingerprint aa7b651c620ac2afba6ee4afa9b9ca09adbcab62f3fbdd0597fba9d6c5047cc5 has been submitted more than once. Duplicate certificates are not allowed.",
+							Pointer: "/certificates/1",
+							Title:   "Duplicate certificate has been submitted in the certificates.",
+							Type:    "/mtls-edge-truststore/error-types/duplicate-certificate",
+						},
+					},
+				}
+				mockValidateCertificates(m, resourceData1, nil).Times(1)
+			},
+			mockData: createData,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/create_duplicated_certs.tf"),
+					ExpectError: regexp.MustCompile("Error: Certificates validation failed - Duplicate certificate has been submitted in the certificates.(\n|.)+" +
+						"-----BEGIN CERTIFICATE-----(\\n|.)+" +
+						"MIIDXTCCAkWgAwIBAgIJALa6Rz1u5z2OMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV(\\n|.)+" +
+						"-----END CERTIFICATE-----"),
 				},
 			},
 		},
@@ -645,6 +693,79 @@ func TestCASetResource(t *testing.T) {
 					ExpectError: regexp.MustCompile(`Certificates validation failed - The certificate is malformed. It cannot be parsed.` +
 						`\n[\s\S]*?Incorrect PEM format first group\n[\s\S]*?MIIDXTCCAkWgAwIBAgIJALa6Rz1u5z2OMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV123` +
 						`\n[\s\S]*?Incorrect PEM format first group\n[\s\S]*?MIIDXTCCAkWgAwIBAgIJALa6Rz1u5z2OMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV345`),
+				},
+			},
+		},
+		"expect error - update an activated ca set on staging, but still updated config contains certificates which have expired": {
+			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
+				// create
+				mockValidateCertificates(m, resourceData, nil).Times(5)
+				mockCreateCASet(m, resourceData).Times(1)
+				mockCreateCASetVersion(m, resourceData).Times(1)
+				mockGetCASet(m, resourceData).Times(1)
+				// read
+				mockGetCASet(m, resourceData).Times(1)
+				mockGetCASetVersion(m, resourceData).Times(1)
+				mockListCASetActivations(m, resourceData, true).Times(2)
+
+				// update
+				var one int64 = 1
+				updateData := resourceData
+				updateData.version = one
+				updateData.stagingVersion = ptr.To(one)
+				updateData.stagingStatus = "ACTIVE"
+				mockGetCASet(m, updateData).Times(1)
+				mockGetCASetVersion(m, updateData).Times(1)
+				updateData.certificates = slices.Insert(updateData.certificates, 0, mtlstruststore.CertificateResponse{
+					CertificatePEM: "-----BEGIN CERTIFICATE-----\nFOO\n-----END CERTIFICATE-----\n",
+					Description:    ptr.To("second cert"),
+				})
+				updateData.versionDescription = ptr.To("Second version for testing")
+				mockValidateCertificates(m, updateData,
+					&mtlstruststore.Error{
+						Type:        "/mtls-edge-truststore/error-types/certificate-validation-failure",
+						Detail:      "Certificates have failed validation.",
+						Status:      400,
+						ContextInfo: nil,
+						Instance:    "/mtls-edge-truststore/error-types/certificate-validation-failure/f0490e43aa97d24b",
+						Errors: []mtlstruststore.ErrorItem{
+							{
+								ContextInfo: map[string]any{
+									"checkDate":   "2025-08-04T08:52:16.000000Z",
+									"description": nil,
+									"expiryDate":  "2024-10-30T17:07:04.000000Z",
+									"fingerprint": "81bd3e1660199559a8513b5efa9c95f93fb7e6a61bd283b87f6e5c128178d9b9",
+									"subject":     "CN=cert100",
+								},
+								Detail:  "The certificate with subject CN=cert100 and fingerprint 81bd3e1660199559a8513b5efa9c95f93fb7e6a61bd283b87f6e5c128178d9b9 has expired. Expiry date is 2024-10-30T17:07:04.000000Z. The check was performed on 2025-08-04T08:52:16.000000Z.",
+								Pointer: "/certificates/0",
+								Title:   "The certificate has expired.",
+								Type:    "/mtls-edge-truststore/error-types/expired-certificate",
+							},
+						},
+					},
+				).Times(1)
+
+				// delete
+				mockListCASetAssociations(m, updateData).Times(2)
+				mockGetCASet(m, resourceData).Once()
+				mockDeleteCASet(m, updateData).Times(1)
+				mockGetCASetDeletionStatus(m, updateData, "IN_PROGRESS", "IN_PROGRESS", "COMPLETED").Times(1)
+				mockGetCASetDeletionStatus(m, updateData, "COMPLETE", "COMPLETE", "COMPLETE").Times(1)
+			},
+			mockData: createData,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/create.tf"),
+					Check:  check.Build(),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/update.tf"),
+					ExpectError: regexp.MustCompile("Error: Certificates validation failed - The certificate has expired.(\n|.)+" +
+						"second cert(\n|.)+" +
+						"-----BEGIN CERTIFICATE-----(\n|.)+" +
+						"FOO(\n|.)+" +
+						"-----END CERTIFICATE-----"),
 				},
 			},
 		},
@@ -1249,6 +1370,135 @@ func TestCASetResource(t *testing.T) {
 				},
 			},
 		},
+		"update an activated ca set on staging, original certificates have expired (from create), but new one are correct": {
+			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
+				// create
+				mockValidateCertificates(m, resourceData, nil).Times(5)
+				mockCreateCASet(m, resourceData).Times(1)
+				mockCreateCASetVersion(m, resourceData).Times(1)
+				mockGetCASet(m, resourceData).Times(1)
+				// read
+				mockGetCASet(m, resourceData).Times(1)
+				mockGetCASetVersion(m, resourceData).Times(1)
+				mockListCASetActivations(m, resourceData, true).Times(3)
+
+				// update
+				var one int64 = 1
+				updateData := resourceData
+				updateData.version = one
+				updateData.stagingVersion = ptr.To(one)
+				updateData.stagingStatus = "ACTIVE"
+				mockGetCASet(m, updateData).Times(1)
+				mockGetCASetVersion(m, updateData).Times(1)
+				updateData.certificates = []mtlstruststore.CertificateResponse{
+					{
+						CertificatePEM:     "-----BEGIN CERTIFICATE-----\nFOO\n-----END CERTIFICATE-----\n",
+						Description:        ptr.To("second cert"),
+						CreatedBy:          "johndoe",
+						CreatedDate:        tst.NewTimeFromStringMust("2025-04-16T16:01:02.555444Z"),
+						EndDate:            tst.NewTimeFromStringMust("2026-04-16T16:01:02.555444Z"),
+						Fingerprint:        "999567890abcdef1234567890abcdef",
+						Issuer:             "CN=Dummy CA",
+						SerialNumber:       "999654321fedcba987654321fedcba",
+						SignatureAlgorithm: "SHA256WITHRSA",
+						StartDate:          tst.NewTimeFromStringMust("2025-04-17T16:01:02.555444Z"),
+						Subject:            "CN=Dummy CA test",
+					},
+					{
+						CertificatePEM:     "-----BEGIN CERTIFICATE-----\nUPDATED\n-----END CERTIFICATE-----\n",
+						Description:        ptr.To("Test certificate"),
+						CreatedBy:          "johndoe",
+						CreatedDate:        tst.NewTimeFromStringMust("2025-03-16T16:01:02.555444Z"),
+						EndDate:            tst.NewTimeFromStringMust("2026-03-16T16:01:02.555444Z"),
+						Fingerprint:        "777567890abcdef1234567890abcdef",
+						Issuer:             "CN=Dummy CA",
+						SerialNumber:       "777654321fedcba987654321fedcba",
+						SignatureAlgorithm: "SHA256WITHRSA",
+						StartDate:          tst.NewTimeFromStringMust("2025-03-17T16:01:02.555444Z"),
+						Subject:            "CN=Dummy CA test",
+					},
+				}
+				updateData.versionDescription = ptr.To("Second version for testing")
+				mockValidateCertificates(m, updateData, nil).Times(5)
+				updateData.newVersion = 2
+				updateData.validation.Warnings = []mtlstruststore.Warning{
+					{
+						ContextInfo: map[string]any{
+							"checkDate":   "2025-08-01T09:34:53.000000Z",
+							"description": nil,
+							"expiryDate":  "2024-10-30T17:07:04.000000Z",
+							"fingerprint": "1234567890abcdef1234567890abcdef",
+							"subject":     "CN=cert100",
+						},
+						Detail: "The certificate with subject CN=cert100 and fingerprint 1234567890abcdef1234567890abcdef has expired. Expiry date is 2024-10-30T17:07:04.000000Z. The check was performed on 2025-08-01T09:34:53.000000Z.",
+						Title:  "The certificate has expired.",
+						Type:   "/mtls-edge-truststore/error-types/expired-certificate",
+					},
+				}
+
+				mockCloneCASetVersion(m, updateData).Times(1)
+				updateData.version = 2
+				mockUpdateCASetVersion(m, updateData).Times(1)
+				// read
+				mockGetCASet(m, updateData).Times(1)
+				mockGetCASetVersion(m, updateData).Times(1)
+				mockListCASetActivations(m, resourceData, true).Times(4)
+
+				// delete
+				mockListCASetAssociations(m, updateData).Times(2)
+				mockGetCASet(m, updateData).Once()
+				mockDeleteCASet(m, updateData).Times(1)
+				mockGetCASetDeletionStatus(m, updateData, "IN_PROGRESS", "IN_PROGRESS", "COMPLETED").Times(1)
+				mockGetCASetDeletionStatus(m, updateData, "COMPLETE", "COMPLETE", "COMPLETE").Times(1)
+			},
+			mockData: createData,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/create.tf"),
+					Check:  check.Build(),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/update_expired.tf"),
+					Check: baseCheck.
+						CheckEqual("version_description", "Second version for testing").
+						CheckEqual("version_modified_by", "someone").
+						CheckEqual("version_modified_date", "2025-04-18T12:18:34Z").
+						CheckEqual("certificates.#", "2").
+						CheckEqual("certificates.0.certificate_pem", "-----BEGIN CERTIFICATE-----\nFOO\n-----END CERTIFICATE-----\n").
+						CheckEqual("certificates.0.description", "second cert").
+						CheckEqual("certificates.1.certificate_pem", "-----BEGIN CERTIFICATE-----\nUPDATED\n-----END CERTIFICATE-----\n").
+						CheckEqual("certificates.1.description", "Test certificate").
+						CheckEqual("certificates.1.created_by", "johndoe").
+						CheckEqual("certificates.1.created_date", "2025-03-16T16:01:02.555444Z").
+						CheckEqual("certificates.1.end_date", "2026-03-16T16:01:02.555444Z").
+						CheckEqual("certificates.1.fingerprint", "777567890abcdef1234567890abcdef").
+						CheckEqual("certificates.1.issuer", "CN=Dummy CA").
+						CheckEqual("certificates.1.serial_number", "777654321fedcba987654321fedcba").
+						CheckEqual("certificates.1.signature_algorithm", "SHA256WITHRSA").
+						CheckEqual("certificates.1.start_date", "2025-03-17T16:01:02.555444Z").
+						CheckEqual("certificates.1.subject", "CN=Dummy CA test").
+						CheckEqual("latest_version", "2").
+						CheckEqual("staging_version", "1").
+						CheckMissing("production_version").
+						CheckEqual("timeouts.delete", "5m").
+						Build(),
+					ConfigPlanChecks: resource.ConfigPlanChecks{
+						PreApply: []plancheck.PlanCheck{
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("timeouts").AtMapKey("delete"), knownvalue.StringExact("5m")),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("staging_version"), knownvalue.Int64Exact(1)),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("production_version"), knownvalue.Null()),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("description"), knownvalue.StringExact("Test CA Set for validation")),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_description"), knownvalue.StringExact("Second version for testing")),
+							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("latest_version")),
+							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_created_by")),
+							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_created_date")),
+							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_modified_by")),
+							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_modified_date")),
+						},
+					},
+				},
+			},
+		},
 		"update an activated ca set on staging, changing only allow_insecure_sha1 should also create a new version": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
 				// create
@@ -1687,28 +1937,28 @@ func mockValidateCertificates(client *mtlstruststore.Mock, testData commonDataFo
 		})
 	}
 
+	var certificatesResponse []mtlstruststore.ValidateCertificateResponse
+	for _, c := range testData.certificates {
+		certificatesResponse = append(certificatesResponse, mtlstruststore.ValidateCertificateResponse{
+			// Certificates are trimmed in the API, so we do it here too
+			CertificatePEM: text.TrimRightWhitespace(c.CertificatePEM),
+			Description:    c.Description,
+		})
+	}
 	if err != nil {
-		var certificatesResponse []mtlstruststore.ValidateCertificateResponse
-		for _, c := range testData.certificates {
-			certificatesResponse = append(certificatesResponse, mtlstruststore.ValidateCertificateResponse{
-				// Certificates are trimmed in the API, so we do it here too
-				CertificatePEM: text.TrimRightWhitespace(c.CertificatePEM),
-				Description:    c.Description,
-			})
-		}
 		return client.On("ValidateCertificates", testutils.MockContext, mtlstruststore.ValidateCertificatesRequest{
 			AllowInsecureSHA1: testData.allowInsecureSHA1,
 			Certificates:      certificates}).
-			Return(&mtlstruststore.ValidateCertificatesResponse{
-				AllowInsecureSHA1: testData.allowInsecureSHA1,
-				Certificates:      certificatesResponse,
-			}, err).Once()
+			Return(nil, err).Once()
 	}
 	return client.On("ValidateCertificates", testutils.MockContext, mtlstruststore.ValidateCertificatesRequest{
 		AllowInsecureSHA1: testData.allowInsecureSHA1,
-		Certificates:      certificates,
-	}).
-		Return(nil, err).Once()
+		Certificates:      certificates}).
+		Return(&mtlstruststore.ValidateCertificatesResponse{
+			AllowInsecureSHA1: testData.allowInsecureSHA1,
+			Certificates:      certificatesResponse,
+			Validation:        testData.validation,
+		}, nil).Once()
 }
 
 func mockCreateCASet(client *mtlstruststore.Mock, testData commonDataForResource) *mock.Call {
@@ -1858,8 +2108,14 @@ func mockCreateCASetVersion(client *mtlstruststore.Mock, testData commonDataForR
 			Description:    c.Description,
 		})
 	}
+	var certificates []mtlstruststore.CertificateResponse
+	if testData.certificatesForResponse != nil {
+		certificates = testData.certificatesForResponse
+	} else {
+		certificates = testData.certificates
+	}
 	var certificateResponse []mtlstruststore.CertificateResponse
-	for _, c := range testData.certificates {
+	for _, c := range certificates {
 		certificateResponse = append(certificateResponse, mtlstruststore.CertificateResponse{
 			// Certificates are trimmed in the API, so we do it here too
 			CertificatePEM:     text.TrimRightWhitespace(c.CertificatePEM),
@@ -1897,6 +2153,7 @@ func mockCreateCASetVersion(client *mtlstruststore.Mock, testData commonDataForR
 			ModifiedDate:      nil,
 			ModifiedBy:        nil,
 			Certificates:      certificateResponse,
+			Validation:        &testData.validation,
 		}, nil)
 }
 
