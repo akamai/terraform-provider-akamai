@@ -6,6 +6,7 @@ import (
 	v0 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/apidefinitions/v0"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/ptr"
 	"github.com/stretchr/testify/assert"
+	orderedmap "github.com/wk8/go-ordered-map/v2"
 )
 
 func TestCheckSemanticEquality_BasePath(t *testing.T) {
@@ -14,7 +15,7 @@ func TestCheckSemanticEquality_BasePath(t *testing.T) {
 
 	before.BasePath = ptr.To("")
 
-	assert.Equal(t, []string(nil), checkSemanticEquality(before, after))
+	assert.Equal(t, "", checkSemanticEquality(before, after))
 }
 
 func TestCheckSemanticEquality_ConsumeType(t *testing.T) {
@@ -33,7 +34,7 @@ func TestCheckSemanticEquality_ConsumeType(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, []string(nil), checkSemanticEquality(before, after))
+	assert.Equal(t, "", checkSemanticEquality(before, after))
 }
 
 func TestCheckSemanticEquality_Hostnames(t *testing.T) {
@@ -43,7 +44,7 @@ func TestCheckSemanticEquality_Hostnames(t *testing.T) {
 	before.Hostnames = []string{"host2.com", "host1.com"}
 	after.Hostnames = []string{"host1.com", "host2.com"}
 
-	assert.Equal(t, []string(nil), checkSemanticEquality(before, after))
+	assert.Equal(t, "", checkSemanticEquality(before, after))
 }
 
 func TestCheckSemanticEquality_Tags(t *testing.T) {
@@ -53,7 +54,69 @@ func TestCheckSemanticEquality_Tags(t *testing.T) {
 	before.Tags = []string{"tag2", "tag1"}
 	after.Tags = []string{"tag1", "tag2"}
 
-	assert.Equal(t, []string(nil), checkSemanticEquality(before, after))
+	assert.Equal(t, "", checkSemanticEquality(before, after))
+}
+
+func TestCheckSemanticEquality_ResourcesAndMethodsSame(t *testing.T) {
+	var before = base()
+	var after = base()
+
+	body := orderedmap.New[string, v0.Property]()
+	body.Set("json", v0.Property{Name: "json body"})
+
+	getMethod := &v0.Method{
+		RequestBody: body,
+	}
+
+	before.Resources = orderedmap.New[string, v0.Resource]()
+	before.Resources.Set("/one", v0.Resource{Name: "/one", Get: getMethod})
+
+	after.Resources = orderedmap.New[string, v0.Resource]()
+	after.Resources.Set("/one", v0.Resource{Name: "/one", Get: getMethod})
+
+	assert.Equal(t, "", checkSemanticEquality(before, after))
+}
+
+func TestCheckSemanticEquality_ResourcesDifferentOrder(t *testing.T) {
+	var before = base()
+	var after = base()
+
+	before.Resources = orderedmap.New[string, v0.Resource]()
+	before.Resources.Set("/one", v0.Resource{Name: "/one"})
+	before.Resources.Set("/two", v0.Resource{Name: "/two"})
+
+	after.Resources = orderedmap.New[string, v0.Resource]()
+	after.Resources.Set("/two", v0.Resource{Name: "/two"})
+	after.Resources.Set("/one", v0.Resource{Name: "/one"})
+
+	assert.Equal(t, "", checkSemanticEquality(before, after))
+}
+
+func TestCheckSemanticEquality_ResourceAdded(t *testing.T) {
+	var before = base()
+	var after = base()
+
+	before.Resources = orderedmap.New[string, v0.Resource]()
+	before.Resources.Set("/one", v0.Resource{Name: "/one"})
+
+	after.Resources = orderedmap.New[string, v0.Resource]()
+	after.Resources.Set("/one", v0.Resource{Name: "/one"})
+	after.Resources.Set("/two", v0.Resource{Name: "/two"})
+
+	assert.Contains(t, checkSemanticEquality(before, after), "\"/two\": &{")
+}
+
+func TestCheckSemanticEquality_ResourceModified(t *testing.T) {
+	var before = base()
+	var after = base()
+
+	before.Resources = orderedmap.New[string, v0.Resource]()
+	before.Resources.Set("/one", v0.Resource{Name: "/one", Description: ptr.To("description one")})
+
+	after.Resources = orderedmap.New[string, v0.Resource]()
+	after.Resources.Set("/one", v0.Resource{Name: "/one", Description: ptr.To("description two")})
+
+	assert.Contains(t, checkSemanticEquality(before, after), "Value: v0.Resource{Name: \"/one\",")
 }
 
 func base() v0.APIAttributes {

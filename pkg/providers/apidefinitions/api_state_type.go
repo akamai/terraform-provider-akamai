@@ -3,16 +3,17 @@ package apidefinitions
 import (
 	"context"
 	"fmt"
-	"strings"
+	"reflect"
 
 	v0 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/apidefinitions/v0"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/ptr"
-	"github.com/go-test/deep"
+	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+	orderedmap "github.com/wk8/go-ordered-map/v2"
 	"golang.org/x/exp/slices"
 )
 
@@ -108,14 +109,14 @@ func (v apiStateValue) StringSemanticEquals(ctx context.Context, valuable basety
 		diags.AddError("Unable to deserialize API state", err.Error())
 	}
 
-	if diff := checkSemanticEquality(*user, *state); diff != nil {
-		tflog.Error(ctx, strings.ReplaceAll(strings.Join(diff, "\n "), ",", "\n"))
+	if diff := checkSemanticEquality(*user, *state); diff != "" {
+		tflog.Error(ctx, fmt.Sprintf("API state mismatch: \n%s", diff))
 		return false, nil
 	}
 	return true, nil
 }
 
-func checkSemanticEquality(before v0.APIAttributes, after v0.APIAttributes) []string {
+func checkSemanticEquality(before v0.APIAttributes, after v0.APIAttributes) string {
 	if before.BasePath != nil && *before.BasePath == "" && after.BasePath == nil {
 		after.BasePath = ptr.To("")
 	}
@@ -127,7 +128,7 @@ func checkSemanticEquality(before v0.APIAttributes, after v0.APIAttributes) []st
 	sortTags(before)
 	sortTags(after)
 
-	return deep.Equal(before, after)
+	return cmp.Diff(before, after, orderedMapComparer())
 }
 
 func sortConsumeTypes(state v0.APIAttributes) {
@@ -145,4 +146,66 @@ func sortHosts(state v0.APIAttributes) {
 	if state.Hostnames != nil {
 		slices.Sort(state.Hostnames)
 	}
+}
+
+func orderedMapComparer() cmp.Option {
+	return cmp.FilterValues(func(x, y any) bool {
+		_, ok1 := x.(*orderedmap.OrderedMap[string, v0.Resource])
+		_, ok2 := y.(*orderedmap.OrderedMap[string, v0.Resource])
+		if ok1 && ok2 {
+			return true
+		}
+		_, ok1 = x.(*orderedmap.OrderedMap[string, v0.Property])
+		_, ok2 = y.(*orderedmap.OrderedMap[string, v0.Property])
+		if ok1 && ok2 {
+			return true
+		}
+		return false
+	}, cmp.Comparer(func(x, y any) bool {
+
+		vx := reflect.ValueOf(x)
+		vy := reflect.ValueOf(y)
+
+		if vx.Type() != vy.Type() {
+			return false
+		}
+		if vx.IsNil() && vy.IsNil() {
+			return true
+		}
+		if vx.IsNil() || vy.IsNil() {
+			return false
+		}
+
+		mx, okx := x.(interface{ Len() int })
+		my, oky := y.(interface{ Len() int })
+		if !okx || !oky {
+			return false
+		}
+
+		if mx.Len() != my.Len() {
+			return false
+		}
+
+		switch m := x.(type) {
+		case *orderedmap.OrderedMap[string, v0.Resource]:
+			m2 := y.(*orderedmap.OrderedMap[string, v0.Resource])
+			for pair := m.Oldest(); pair != nil; pair = pair.Next() {
+				val2, ok := m2.Get(pair.Key)
+				if !ok || cmp.Diff(pair.Value, val2, orderedMapComparer()) != "" {
+					return false
+				}
+			}
+			return true
+		case *orderedmap.OrderedMap[string, v0.Property]:
+			m2 := y.(*orderedmap.OrderedMap[string, v0.Property])
+			for pair := m.Oldest(); pair != nil; pair = pair.Next() {
+				val2, ok := m2.Get(pair.Key)
+				if !ok || cmp.Diff(pair.Value, val2, orderedMapComparer()) != "" {
+					return false
+				}
+			}
+			return true
+		}
+		return false
+	}))
 }
