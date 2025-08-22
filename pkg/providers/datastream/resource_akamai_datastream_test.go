@@ -770,8 +770,12 @@ func TestResourceStreamErrors(t *testing.T) {
 			tfFile:    "testdata/TestResourceStream/errors/invalid_email/invalid_email.tf",
 			withError: regexp.MustCompile("must be a valid email address"),
 		},
-		"2051 midgress field manually specified": {
+		"2051 midgress field manually specified - json - splunk": {
 			tfFile:    "testdata/TestResourceStream/errors/invalid_dataset/json_config_midgress.tf",
+			withError: regexp.MustCompile(`dataset field 2051 \(midgress\) cannot be manually specified in dataset_fields\. Use collect_midgress = true to enable midgress data collection`),
+		},
+		"2051 midgress field manually specified - structured - s3": {
+			tfFile:    "testdata/TestResourceStream/errors/invalid_dataset/structured_config_midgress.tf",
 			withError: regexp.MustCompile(`dataset field 2051 \(midgress\) cannot be manually specified in dataset_fields\. Use collect_midgress = true to enable midgress data collection`),
 		},
 	}

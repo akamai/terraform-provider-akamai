@@ -1480,6 +1480,21 @@ func isOrderDifferent(_, oldIDValue, newIDValue string, d *schema.ResourceData) 
 }
 
 func validateConfig(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
+	// Validate that users don't manually specify midgress dataset field (2051)
+	datasetFieldsResource, exists := d.GetOkExists("dataset_fields")
+	if exists {
+		datasetFieldsList, ok := datasetFieldsResource.([]interface{})
+		if ok {
+			for _, field := range datasetFieldsList {
+				if fieldID, ok := field.(int); ok && fieldID == MidgressDatasetField {
+					return fmt.Errorf("dataset field %d (midgress) cannot be manually specified in dataset_fields. Use collect_midgress = true to enable midgress data collection", MidgressDatasetField)
+				}
+			}
+		} else {
+			return fmt.Errorf("dataset_fields has unexpected type, expected []interface{} but got %T", datasetFieldsResource)
+		}
+	}
+	// Validate that upload_file_prefix and upload_file_suffix are not set when using connectors that do not support them
 	connectorName := ""
 	for _, k := range ConnectorsWithoutFilenameOptionsConfig {
 		connectorResource, exists := d.GetOkExists(k)
@@ -1514,21 +1529,6 @@ func validateConfig(_ context.Context, d *schema.ResourceDiff, _ interface{}) er
 
 	if prefixValue.(string) != DefaultUploadFilePrefix || suffixValue.(string) != DefaultUploadFileSuffix {
 		return fmt.Errorf("upload_file_prefix (%s) / upload_file_suffix (%s) cannot be used with %s", prefixValue, suffixValue, connectorName)
-	}
-
-	// Validate that users don't manually specify midgress dataset field (2051)
-	datasetFieldsResource, exists := d.GetOkExists("dataset_fields")
-	if exists {
-		datasetFieldsList, ok := datasetFieldsResource.([]interface{})
-		if ok {
-			for _, field := range datasetFieldsList {
-				if fieldID, ok := field.(int); ok && fieldID == MidgressDatasetField {
-					return fmt.Errorf("dataset field %d (midgress) cannot be manually specified in dataset_fields. Use collect_midgress = true to enable midgress data collection", MidgressDatasetField)
-				}
-			}
-		} else {
-			return fmt.Errorf("dataset_fields has unexpected type, expected []interface{} but got %T", datasetFieldsResource)
-		}
 	}
 
 	return nil
