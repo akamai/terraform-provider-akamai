@@ -98,7 +98,7 @@ func TestCASetActivationResource(t *testing.T) {
 		mockData commonDataForResource
 		steps    []resource.TestStep
 	}{
-		// Create
+		// create.
 		"create ca set activation - successful": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
 				mockGetCASetVersion(m, resourceData).Once()
@@ -132,7 +132,7 @@ func TestCASetActivationResource(t *testing.T) {
 				mockGetCASetVersion(m, resourceData).Once()
 				mockListCASetActivations(m, resourceData, true)
 				mockActivateCASetVersion(m, resourceData, 1, "STAGING")
-				// Simulate delay in activation response by returning "IN_PROGRESS" status
+				// Simulate delay in activation response by returning "IN_PROGRESS" status.
 				mockGetCASetVersionActivation(m, resourceData, 1, "IN_PROGRESS", "ACTIVATE", 15)
 				mockGetCASetVersionActivation(m, resourceData, 1, "COMPLETE", "ACTIVATE", 1)
 				resourceData.stagingStatus = "ACTIVE"
@@ -177,7 +177,7 @@ func TestCASetActivationResource(t *testing.T) {
 					ModifiedBy:       ptr.To("user2"),
 					ModifiedDate:     ptr.To(time.Date(2023, time.January, 1, 0, 0, 0, 0, time.UTC)),
 				}, nil).Run(func(_ mock.Arguments) {
-					time.Sleep(30 * time.Millisecond) // Simulate delay in response - create time out is set to 20ms in the config
+					time.Sleep(30 * time.Millisecond) // Simulate delay in response - create time out is set to 20ms in the config.
 				}).Maybe()
 			},
 			mockData: createActivationData,
@@ -342,7 +342,7 @@ func TestCASetActivationResource(t *testing.T) {
 			},
 		},
 
-		// Validation
+		// validation.
 		"create ca set activation - without `ca_set_id`": {
 			mockData: createActivationData,
 			steps: []resource.TestStep{
@@ -371,22 +371,22 @@ func TestCASetActivationResource(t *testing.T) {
 			},
 		},
 
-		// Drift Handling
-		// current version in the state is now deactivated and later the same version was newly activated outside terraform
+		// Drift Handling.
+		// current version in the state is now deactivated and later the same version was newly activated outside terraform.
 		"update ca set activation - same version reactivated outside terraform": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
-				// create
+				// create.
 				mockGetCASetVersion(m, resourceData).Once()
 				mockListCASetActivations(m, resourceData, true).Once()
 				mockActivateCASetVersion(m, resourceData, 1, "STAGING")
 				mockGetCASetVersionActivation(m, resourceData, 1, "COMPLETE", "ACTIVATE", 1)
 				resourceData.stagingStatus = "ACTIVE"
 
-				//read
+				// read.
 				mockGetCASet(m, resourceData).Twice()
 				mockListCASetVersionActivationsDrift(m, resourceData, true).Once()
 
-				//read
+				// read.
 				resourceData.stagingVersion = ptr.To(int64(1))
 				mockGetCASet(m, resourceData).Once()
 				m.On("ListCASetVersionActivations", testutils.MockContext, mtlstruststore.ListCASetVersionActivationsRequest{
@@ -409,7 +409,7 @@ func TestCASetActivationResource(t *testing.T) {
 					},
 				}, nil)
 
-				// Delete
+				// delete.
 				resourceData.stagingStatus = "ACTIVE"
 				mockGetCASetVersion(m, resourceData).Once()
 				mockListCASetAssociations(m, resourceData).Once()
@@ -443,26 +443,26 @@ func TestCASetActivationResource(t *testing.T) {
 				},
 			},
 		},
-		// current version in the state is now deactivated and new version was newly activated outside terraform
+		// current version in the state is now deactivated and new version was newly activated outside terraform.
 		"update ca set activation - new version activated outside terraform": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
-				// create
+				// create.
 				mockGetCASetVersion(m, resourceData).Once()
 				mockListCASetActivations(m, resourceData, true).Once()
 				mockActivateCASetVersion(m, resourceData, 1, "STAGING")
 				mockGetCASetVersionActivation(m, resourceData, 1, "COMPLETE", "ACTIVATE", 1)
 				resourceData.stagingStatus = "ACTIVE"
 
-				//read
+				// read.
 				mockGetCASet(m, resourceData).Once()
 				mockListCASetVersionActivationsDrift(m, resourceData, true).Once()
 
-				//read
+				// read.
 				resourceData.stagingVersion = ptr.To(int64(2))
 				mockGetCASet(m, resourceData).Once()
 				mockListCASetVersionActivationsDrift(m, resourceData, false).Once()
 
-				//Update
+				// update.
 				resourceData.stagingStatus = "INACTIVE"
 				resourceData.version = 1
 				mockGetCASetVersion(m, resourceData).Once()
@@ -501,7 +501,7 @@ func TestCASetActivationResource(t *testing.T) {
 					ModifiedDate:     ptr.To(time.Date(2025, time.January, 1, 0, 0, 0, 0, time.UTC)),
 				}, nil).Once()
 
-				//read
+				// read.
 				mockGetCASet(m, resourceData).Once()
 				m.On("ListCASetVersionActivations", testutils.MockContext, mtlstruststore.ListCASetVersionActivationsRequest{
 					CASetID: resourceData.caSetID,
@@ -523,7 +523,7 @@ func TestCASetActivationResource(t *testing.T) {
 					},
 				}, nil)
 
-				// Delete
+				// delete.
 				resourceData.stagingStatus = "INACTIVE"
 				m.On("ListCASetActivations", testutils.MockContext, mtlstruststore.ListCASetActivationsRequest{
 					CASetID: resourceData.caSetID,
@@ -573,21 +573,21 @@ func TestCASetActivationResource(t *testing.T) {
 				},
 			},
 		},
-		// ca-set is removed outside terraform during the update - since not found it clears the state
+		// ca-set is removed outside terraform during the update - since not found it clears the state.
 		"update ca set activation - ca set dropped outside terraform": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
-				// create
+				// create.
 				mockGetCASetVersion(m, resourceData).Once()
 				mockListCASetActivations(m, resourceData, true).Once()
 				mockActivateCASetVersion(m, resourceData, 1, "STAGING")
 				mockGetCASetVersionActivation(m, resourceData, 1, "COMPLETE", "ACTIVATE", 1)
 				resourceData.stagingStatus = "ACTIVE"
 
-				//read
+				// read.
 				mockGetCASet(m, resourceData).Once()
 				mockListCASetVersionActivationsDrift(m, resourceData, true).Once()
 
-				//read
+				// read.
 				resourceData.stagingVersion = ptr.To(int64(2))
 				m.On("GetCASet", testutils.MockContext, mtlstruststore.GetCASetRequest{
 					CASetID: resourceData.caSetID,
@@ -616,21 +616,21 @@ func TestCASetActivationResource(t *testing.T) {
 					ExpectError: regexp.MustCompile("activation failed")},
 			},
 		},
-		// Update
+		// update.
 		"update ca set activation - successful": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
-				// create
+				// create.
 				mockGetCASetVersion(m, resourceData).Once()
 				mockListCASetActivations(m, resourceData, true).Once()
 				mockActivateCASetVersion(m, resourceData, 1, "STAGING")
 				mockGetCASetVersionActivation(m, resourceData, 1, "COMPLETE", "ACTIVATE", 1)
 				resourceData.stagingStatus = "ACTIVE"
 
-				//read
+				// read.
 				mockGetCASet(m, resourceData).Twice()
 				mockListCASetVersionActivations(m, resourceData, true)
 
-				// update
+				// update.
 				updateActivationData := resourceData
 				updateActivationData.version = 2
 				updateActivationData.stagingStatus = "INACTIVE"
@@ -639,11 +639,11 @@ func TestCASetActivationResource(t *testing.T) {
 				mockActivateCASetVersion(m, updateActivationData, 2, "STAGING")
 				mockGetCASetVersionActivation(m, updateActivationData, 2, "COMPLETE", "ACTIVATE", 1)
 
-				//read
+				// read.
 				mockGetCASet(m, updateActivationData).Once()
 				mockListCASetVersionActivations(m, updateActivationData, true)
 
-				// delete
+				// delete.
 				mockListCASetActivations(m, updateActivationData, true)
 				mockGetCASetVersion(m, updateActivationData).Once()
 				mockGetCASetVersionActivation(m, updateActivationData, 1, "COMPLETE", "DEACTIVATE", 1)
@@ -675,7 +675,7 @@ func TestCASetActivationResource(t *testing.T) {
 		},
 		"update ca set activation - updating `timeout` only ": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
-				//create
+				// create.
 				mockGetCASetVersion(m, resourceData).Once()
 				mockListCASetActivations(m, resourceData, true)
 				mockActivateCASetVersion(m, resourceData, 1, "STAGING")
@@ -684,7 +684,7 @@ func TestCASetActivationResource(t *testing.T) {
 				mockGetCASet(m, resourceData).Times(3)
 				mockListCASetVersionActivations(m, resourceData, true)
 
-				// Delete
+				// delete.
 				resourceData.stagingStatus = "ACTIVE"
 				mockListCASetActivations(m, resourceData, true)
 				mockGetCASetVersion(m, resourceData).Once()
@@ -722,7 +722,7 @@ func TestCASetActivationResource(t *testing.T) {
 		},
 		"update ca set activation - failed": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
-				//create
+				// create.
 				mockGetCASetVersion(m, resourceData).Once()
 				mockListCASetActivations(m, resourceData, true)
 				mockActivateCASetVersion(m, resourceData, 1, "STAGING")
@@ -730,7 +730,7 @@ func TestCASetActivationResource(t *testing.T) {
 				resourceData.stagingStatus = "ACTIVE"
 				mockGetCASet(m, resourceData).Twice()
 				mockListCASetVersionActivations(m, resourceData, true)
-				//update
+				// update.
 				resourceData.stagingStatus = "INACTIVE"
 				updateActivationData := resourceData
 				updateActivationData.version = 2
@@ -745,7 +745,7 @@ func TestCASetActivationResource(t *testing.T) {
 					Title:  "Activation Error",
 					Type:   "/mtls-edge-truststore/error-types/activation-failed"})
 
-				// Delete
+				// delete.
 				resourceData.stagingStatus = "ACTIVE"
 				mockGetCASetVersion(m, resourceData).Once()
 				mockListCASetAssociations(m, resourceData).Once()
@@ -774,7 +774,7 @@ func TestCASetActivationResource(t *testing.T) {
 		},
 		"update ca set activation - failed - updating field `ca_set_id` is not possible ": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
-				//create
+				// create.
 				mockGetCASetVersion(m, resourceData).Once()
 				mockListCASetActivations(m, resourceData, true)
 				mockActivateCASetVersion(m, resourceData, 1, "STAGING")
@@ -783,7 +783,7 @@ func TestCASetActivationResource(t *testing.T) {
 				mockGetCASet(m, resourceData).Times(2)
 				mockListCASetVersionActivations(m, resourceData, true)
 
-				// Delete
+				// delete.
 				resourceData.stagingStatus = "ACTIVE"
 				mockListCASetActivations(m, resourceData, true)
 				mockGetCASetVersion(m, resourceData).Once()
@@ -812,7 +812,7 @@ func TestCASetActivationResource(t *testing.T) {
 		},
 		"update ca set activation - failed - updating field `network` is not possible ": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
-				//create
+				// create.
 				mockGetCASetVersion(m, resourceData).Once()
 				mockListCASetActivations(m, resourceData, true)
 				mockActivateCASetVersion(m, resourceData, 1, "STAGING")
@@ -821,7 +821,7 @@ func TestCASetActivationResource(t *testing.T) {
 				mockGetCASet(m, resourceData).Times(2)
 				mockListCASetVersionActivations(m, resourceData, true)
 
-				// Delete
+				// delete.
 				resourceData.stagingStatus = "ACTIVE"
 				mockListCASetActivations(m, resourceData, true)
 				mockGetCASetVersion(m, resourceData).Once()
@@ -849,17 +849,17 @@ func TestCASetActivationResource(t *testing.T) {
 			},
 		},
 
-		// Import
+		// import.
 		"import ca set activation - successful": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
-				// import
+				// import.
 				mockListCASetActivations(m, resourceData, true)
-				// read
+				// read.
 				resourceData.stagingStatus = "ACTIVE"
 				mockGetCASet(m, resourceData).Once()
 				mockListCASetVersionActivations(m, resourceData, true)
 
-				// delete
+				// delete.
 				mockListCASetActivations(m, resourceData, true)
 				mockGetCASetVersion(m, resourceData).Once()
 				mockListCASetAssociations(m, resourceData).Once()
@@ -880,7 +880,7 @@ func TestCASetActivationResource(t *testing.T) {
 		},
 		"import ca set activation - failed - version not active": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
-				// import
+				// import.
 				m.On("ListCASetActivations", testutils.MockContext, mtlstruststore.ListCASetActivationsRequest{
 					CASetID: resourceData.caSetID,
 				}).
@@ -916,7 +916,7 @@ func TestCASetActivationResource(t *testing.T) {
 		},
 		"import ca set activation - failed - version activation In-Progress": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
-				// import
+				// import.
 				m.On("ListCASetActivations", testutils.MockContext, mtlstruststore.ListCASetActivationsRequest{
 					CASetID: resourceData.caSetID,
 				}).
@@ -994,7 +994,7 @@ func TestCASetActivationResource(t *testing.T) {
 		},
 		"import ca set activation - failed - ca_set not found": {
 			init: func(m *mtlstruststore.Mock, _ commonDataForResource) {
-				// import
+				// import.
 				m.On("ListCASetActivations", testutils.MockContext, mtlstruststore.ListCASetActivationsRequest{
 					CASetID: createActivationData.caSetID,
 				}).Return(nil, mtlstruststore.ErrGetCASetNotFound)
@@ -1141,7 +1141,7 @@ func mockListCASetVersionActivationsDrift(client *mtlstruststore.Mock, testData 
 				ModifiedDate:     ptr.To(time.Date(2023, time.January, 1, 0, 0, 0, 0, time.UTC)),
 			},
 		}
-	} else { //after Drift
+	} else { //after drift.
 		activations = []mtlstruststore.ActivateCASetVersionResponse{
 			{
 				ActivationID:     1,

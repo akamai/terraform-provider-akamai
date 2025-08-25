@@ -160,7 +160,7 @@ func (d *caSetActivitiesDataSource) Schema(_ context.Context, _ datasource.Schem
 	}
 }
 
-// Read is called when the provider must read data source values in order to update state
+// Read is called when the provider must read data source values in order to update state.
 func (d *caSetActivitiesDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	tflog.Debug(ctx, "MTLS TrustStore CA Set Activities DataSource Read")
 

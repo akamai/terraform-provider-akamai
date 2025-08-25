@@ -258,18 +258,18 @@ func (c *caSetActivationResource) upsert(ctx context.Context, plan *caSetActivat
 		switch ongoingActivation.ActivationType {
 		case "ACTIVATE":
 			if ongoingActivation.Version == version {
-				// Fetch ongoing activation for the same version
+				// Fetch ongoing activation for the same version.
 				activation = ongoingActivation
 			} else {
-				// Return error for different version activation in progress
+				// Return error for different version activation in progress.
 				return fmt.Errorf("activation already in progress for version %d", ongoingActivation.Version)
 			}
 		case "DEACTIVATE":
-			// Return error for ongoing deactivation
+			// Return error for ongoing deactivation.
 			return fmt.Errorf("deactivation in progress for version %d, cannot activate", ongoingActivation.Version)
 		}
 	} else {
-		// Create a new activation request
+		// Create a new activation request.
 		activation, err = client.ActivateCASetVersion(ctx, mtlstruststore.ActivateCASetVersionRequest{
 			CASetID: caSetID,
 			Version: version,
@@ -411,20 +411,20 @@ func (c *caSetActivationResource) Delete(ctx context.Context, req resource.Delet
 		switch ongoingOperation.ActivationType {
 		case "DEACTIVATE":
 			if ongoingOperation.Version == version {
-				// fetch ongoing deactivation for the same version
+				// Fetch ongoing deactivation for the same version.
 				deactivation = (*mtlstruststore.DeactivateCASetVersionResponse)(ongoingOperation)
 			} else {
-				// Return error for different version deactivation in progress
+				// Return error for different version deactivation in progress.
 				resp.Diagnostics.AddError("Deactivation Error", fmt.Sprintf("deactivation already in progress for version %d", ongoingOperation.Version))
 				return
 			}
 		case "ACTIVATE":
-			// Return error for ongoing activation
+			// Return error for ongoing activation.
 			resp.Diagnostics.AddError("Deactivation Error", fmt.Sprintf("activation in progress for version %d, cannot deactivate", ongoingOperation.Version))
 			return
 		}
 	} else {
-		// Create a new deactivation request
+		// Create a new deactivation request.
 		deactivation, err = client.DeactivateCASetVersion(ctx, mtlstruststore.DeactivateCASetVersionRequest{
 			CASetID: caSetID,
 			Version: version,

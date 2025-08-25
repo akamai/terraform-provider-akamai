@@ -28,7 +28,7 @@ type commonDataForResource struct {
 	description             *string
 	name                    string
 	certificates            []mtlstruststore.CertificateResponse
-	certificatesForResponse []mtlstruststore.CertificateResponse // populate only if different from certificates
+	certificatesForResponse []mtlstruststore.CertificateResponse // populate only if different from certificates.
 	caSetID                 string
 	versionDescription      *string
 	version                 int64
@@ -110,16 +110,16 @@ func TestCASetResource(t *testing.T) {
 	}{
 		"create a ca set": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
-				// create
+				// create.
 				mockValidateCertificates(m, resourceData, nil).Times(5)
 				mockCreateCASet(m, resourceData).Times(1)
 				mockCreateCASetVersion(m, resourceData).Times(1)
 				mockGetCASet(m, resourceData).Times(1)
-				// read
+				// read.
 				mockGetCASet(m, resourceData).Times(1)
 				mockGetCASetVersion(m, resourceData).Times(1)
 				mockListCASetActivations(m, resourceData, false).Times(2)
-				// delete
+				// delete.
 				mockListCASetAssociations(m, resourceData).Times(2)
 				mockGetCASet(m, resourceData).Once()
 				mockDeleteCASet(m, resourceData).Times(1)
@@ -136,7 +136,7 @@ func TestCASetResource(t *testing.T) {
 		},
 		"create a ca set with duplicated certificates": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
-				// create
+				// create.
 				resourceData1 := resourceData
 				resourceData1.certificates = []mtlstruststore.CertificateResponse{
 					{
@@ -182,16 +182,16 @@ func TestCASetResource(t *testing.T) {
 		},
 		"create a ca set with cert provided by another resource": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
-				// create
-				mockValidateCertificates(m, resourceData, nil).Times(4) // one less because cert is unknown during planning phase
+				// create.
+				mockValidateCertificates(m, resourceData, nil).Times(4) // one less because cert is unknown during planning phase.
 				mockCreateCASet(m, resourceData).Times(1)
 				mockCreateCASetVersion(m, resourceData).Times(1)
 				mockGetCASet(m, resourceData).Times(1)
-				// read
+				// read.
 				mockGetCASet(m, resourceData).Times(1)
 				mockGetCASetVersion(m, resourceData).Times(1)
 				mockListCASetActivations(m, resourceData, false).Times(2)
-				// delete
+				// delete.
 				mockListCASetAssociations(m, resourceData).Times(2)
 				mockGetCASet(m, resourceData).Once()
 				mockDeleteCASet(m, resourceData).Times(1)
@@ -208,7 +208,7 @@ func TestCASetResource(t *testing.T) {
 		},
 		"create a ca set with no description and allow insecure SHA1": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
-				// create
+				// create.
 				resourceData.description = nil
 				resourceData.versionDescription = nil
 				resourceData.allowInsecureSHA1 = true
@@ -230,11 +230,11 @@ func TestCASetResource(t *testing.T) {
 				mockCreateCASet(m, resourceData).Times(1)
 				mockCreateCASetVersion(m, resourceData).Times(1)
 				mockGetCASet(m, resourceData).Times(1)
-				// read
+				// read.
 				mockGetCASet(m, resourceData).Times(1)
 				mockGetCASetVersion(m, resourceData).Times(1)
 				mockListCASetActivations(m, resourceData, false).Times(2)
-				// delete
+				// delete.
 				mockListCASetAssociations(m, resourceData).Times(2)
 				mockGetCASet(m, resourceData).Once()
 				mockDeleteCASet(m, resourceData).Times(1)
@@ -256,16 +256,16 @@ func TestCASetResource(t *testing.T) {
 		},
 		"create a ca set, but ca set deletion is already in progress in Delete": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
-				// create
+				// create.
 				mockValidateCertificates(m, resourceData, nil).Times(5)
 				mockCreateCASet(m, resourceData).Times(1)
 				mockCreateCASetVersion(m, resourceData).Times(1)
 				mockGetCASet(m, resourceData).Times(1)
-				// read
+				// read.
 				mockGetCASet(m, resourceData).Times(1)
 				mockGetCASetVersion(m, resourceData).Times(1)
 				mockListCASetActivations(m, resourceData, false).Times(2)
-				// delete
+				// delete.
 				mockListCASetAssociations(m, resourceData).Times(2)
 				// mock that the deletion of the ca set is already in progress.
 				// No delete ca set call is made.
@@ -284,16 +284,16 @@ func TestCASetResource(t *testing.T) {
 		},
 		"create a ca set, but ca set deletion is already completed in Delete": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
-				// create
+				// create.
 				mockValidateCertificates(m, resourceData, nil).Times(5)
 				mockCreateCASet(m, resourceData).Times(1)
 				mockCreateCASetVersion(m, resourceData).Times(1)
 				mockGetCASet(m, resourceData).Times(1)
-				// read
+				// read.
 				mockGetCASet(m, resourceData).Times(1)
 				mockGetCASetVersion(m, resourceData).Times(1)
 				mockListCASetActivations(m, resourceData, false).Times(2)
-				// delete
+				// delete.
 				mockListCASetAssociations(m, resourceData).Times(2)
 				// mock that the deletion of the ca set is already completed.
 				// No delete ca set call is made.
@@ -310,7 +310,7 @@ func TestCASetResource(t *testing.T) {
 		},
 		"create a ca set - when version creation fails - taint the resource for next apply": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
-				// create
+				// create.
 				mockValidateCertificates(m, resourceData, nil).Times(4)
 				mockCreateCASet(m, resourceData).Times(1)
 				m.On("CreateCASetVersion", testutils.MockContext, mtlstruststore.CreateCASetVersionRequest{
@@ -327,29 +327,29 @@ func TestCASetResource(t *testing.T) {
 					},
 				}).Return(nil, fmt.Errorf("error creating CA set version")).Times(1)
 
-				// read
+				// read.
 				mockGetCASet(m, resourceData).Times(1)
 				mockGetCASetVersion(m, resourceData).Times(1)
 
-				// delete
+				// delete.
 				mockListCASetAssociations(m, resourceData).Times(1)
 				mockGetCASet(m, resourceData).Once()
 				mockDeleteCASet(m, resourceData).Times(1)
 				mockGetCASetDeletionStatus(m, resourceData, "IN_PROGRESS", "IN_PROGRESS", "COMPLETED").Times(1)
 				mockGetCASetDeletionStatus(m, resourceData, "COMPLETE", "COMPLETE", "COMPLETE").Times(1)
 
-				// create
+				// create.
 				mockValidateCertificates(m, resourceData, nil).Times(4)
 				mockCreateCASet(m, resourceData).Times(1)
 				mockCreateCASetVersion(m, resourceData).Times(1)
 				mockGetCASet(m, resourceData).Times(1)
 
-				// read
+				// read.
 				mockGetCASet(m, resourceData).Times(1)
 				mockGetCASetVersion(m, resourceData).Times(1)
 				mockListCASetActivations(m, resourceData, false).Times(2)
 
-				// delete
+				// delete.
 				mockListCASetAssociations(m, resourceData).Times(2)
 				mockGetCASet(m, resourceData).Once()
 				mockDeleteCASet(m, resourceData).Times(1)
@@ -442,7 +442,7 @@ func TestCASetResource(t *testing.T) {
 				mockCreateCASetVersion(m, resourceData).Times(1)
 				mockGetCASet(m, resourceData).Times(1)
 				mockListCASetActivations(m, resourceData, false).Times(3)
-				// First attempt to delete failed
+				// First attempt to delete failed.
 				mockGetCASet(m, resourceData).Times(1)
 				mockGetCASetVersion(m, resourceData).Times(1)
 				mockListCASetAssociations(m, resourceData).Times(2)
@@ -451,7 +451,7 @@ func TestCASetResource(t *testing.T) {
 				mockGetCASetDeletionStatus(m, resourceData, "IN_PROGRESS", "IN_PROGRESS", "FAILED").Times(1)
 				mockGetCASetDeletionStatus(m, resourceData, "FAILED", "COMPLETE", "FAILED").Times(1)
 
-				// Fake second attempt to delete to fulfill tests cleanup requirements
+				// Fake second attempt to delete to fulfill tests cleanup requirements.
 				mockValidateCertificates(m, resourceData, nil).Times(1)
 				mockGetCASet(m, resourceData).Times(1)
 				mockGetCASetVersion(m, resourceData).Times(1)
@@ -480,7 +480,7 @@ func TestCASetResource(t *testing.T) {
 				mockCreateCASetVersion(m, resourceData).Times(1)
 				mockGetCASet(m, resourceData).Times(1)
 				mockListCASetActivations(m, resourceData, false).Times(3)
-				// Delete
+				// delete.
 				mockGetCASet(m, resourceData).Times(1)
 				mockGetCASetVersion(m, resourceData).Times(1)
 				resourceData.properties = []mtlstruststore.AssociationProperty{
@@ -495,7 +495,7 @@ func TestCASetResource(t *testing.T) {
 				}
 				mockListCASetAssociations(m, resourceData).Times(2)
 
-				// Fake second attempt to delete to fulfill tests cleanup requirements
+				// Fake second attempt to delete to fulfill tests cleanup requirements.
 				mockValidateCertificates(m, resourceData, nil).Times(1)
 				mockGetCASet(m, resourceData).Times(1)
 				mockGetCASetVersion(m, resourceData).Times(1)
@@ -520,14 +520,14 @@ func TestCASetResource(t *testing.T) {
 		},
 		"expect error - create a ca set, delete with associated enrollments should fail": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
-				// Create
+				// create.
 				mockValidateCertificates(m, resourceData, nil).Times(5)
 				mockListCASetActivations(m, resourceData, false).Times(2)
 				mockCreateCASet(m, resourceData).Times(1)
 				mockCreateCASetVersion(m, resourceData).Times(1)
 				mockGetCASet(m, resourceData).Times(1)
 				mockListCASetActivations(m, resourceData, false).Times(1)
-				// Delete
+				// delete.
 				mockGetCASet(m, resourceData).Times(1)
 				mockGetCASetVersion(m, resourceData).Times(1)
 				resourceData.enrollments = []mtlstruststore.AssociationEnrollment{
@@ -541,7 +541,7 @@ func TestCASetResource(t *testing.T) {
 				}
 				mockListCASetAssociations(m, resourceData).Times(2)
 
-				// Fake second attempt to delete to fulfill tests cleanup requirements
+				// Fake second attempt to delete to fulfill tests cleanup requirements.
 				mockValidateCertificates(m, resourceData, nil).Times(1)
 				mockGetCASet(m, resourceData).Times(1)
 				mockGetCASetVersion(m, resourceData).Times(1)
@@ -830,17 +830,17 @@ func TestCASetResource(t *testing.T) {
 		},
 		"expect error - update an activated ca set on staging, but still updated config contains certificates which have expired": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
-				// create
+				// create.
 				mockValidateCertificates(m, resourceData, nil).Times(5)
 				mockCreateCASet(m, resourceData).Times(1)
 				mockCreateCASetVersion(m, resourceData).Times(1)
 				mockGetCASet(m, resourceData).Times(1)
-				// read
+				// read.
 				mockGetCASet(m, resourceData).Times(1)
 				mockGetCASetVersion(m, resourceData).Times(1)
 				mockListCASetActivations(m, resourceData, true).Times(2)
 
-				// update
+				// update.
 				var one int64 = 1
 				updateData := resourceData
 				updateData.version = one
@@ -878,7 +878,7 @@ func TestCASetResource(t *testing.T) {
 					},
 				).Times(1)
 
-				// delete
+				// delete.
 				mockListCASetAssociations(m, updateData).Times(2)
 				mockGetCASet(m, resourceData).Once()
 				mockDeleteCASet(m, updateData).Times(1)
@@ -903,16 +903,16 @@ func TestCASetResource(t *testing.T) {
 		},
 		"update a non activated ca set": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
-				// create
+				// create.
 				mockValidateCertificates(m, resourceData, nil).Times(5)
 				mockCreateCASet(m, resourceData).Times(1)
 				mockCreateCASetVersion(m, resourceData).Times(1)
 				mockGetCASet(m, resourceData).Times(1)
-				// read
+				// read.
 				mockGetCASet(m, resourceData).Times(1)
 				mockGetCASetVersion(m, resourceData).Times(1)
 				mockListCASetActivations(m, resourceData, false).Times(3)
-				// update
+				// update.
 				updateData := resourceData
 				updateData.version = 1
 				mockListCASetActivations(m, updateData, false).Times(1)
@@ -926,12 +926,12 @@ func TestCASetResource(t *testing.T) {
 				mockValidateCertificates(m, updateData, nil).Times(5)
 				mockUpdateCASetVersion(m, updateData).Times(1)
 
-				// read
+				// read.
 				mockGetCASet(m, updateData).Times(1)
 				mockGetCASetVersion(m, updateData).Times(1)
 				mockListCASetActivations(m, resourceData, false).Times(3)
 
-				// delete
+				// delete.
 				mockListCASetAssociations(m, updateData).Times(2)
 				mockGetCASet(m, resourceData).Once()
 				mockDeleteCASet(m, updateData).Times(1)
@@ -974,8 +974,8 @@ func TestCASetResource(t *testing.T) {
 							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_modified_by")),
 							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_modified_date")),
 
-							// The added certificate will be the first in the state
-							// We expect all computed attributes to be unknown except the description
+							// The added certificate will be the first in the state.
+							// We expect all computed attributes to be unknown except the description.
 							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test",
 								tfjsonpath.New("certificates").AtSliceIndex(0).AtMapKey("certificate_pem"),
 								knownvalue.StringExact("-----BEGIN CERTIFICATE-----\nFOO\n-----END CERTIFICATE-----\n")),
@@ -1001,7 +1001,7 @@ func TestCASetResource(t *testing.T) {
 							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test",
 								tfjsonpath.New("certificates").AtSliceIndex(0).AtMapKey("subject")),
 
-							// The existing certificate must be completely known at the plan phase
+							// The existing certificate must be completely known at the plan phase.
 							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test",
 								tfjsonpath.New("certificates").AtSliceIndex(1).AtMapKey("certificate_pem"),
 								knownvalue.StringExact("-----BEGIN CERTIFICATE-----\nMIIDXTCCAkWgAwIBAgIJALa6Rz1u5z2OMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV\n-----END CERTIFICATE-----\n")),
@@ -1033,16 +1033,16 @@ func TestCASetResource(t *testing.T) {
 		},
 		"update a non activated ca set, changing only allow_insecure_sha1": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
-				// create
+				// create.
 				mockValidateCertificates(m, resourceData, nil).Times(5)
 				mockCreateCASet(m, resourceData).Times(1)
 				mockCreateCASetVersion(m, resourceData).Times(1)
 				mockGetCASet(m, resourceData).Times(1)
-				// read
+				// read.
 				mockGetCASet(m, resourceData).Times(1)
 				mockGetCASetVersion(m, resourceData).Times(1)
 				mockListCASetActivations(m, resourceData, false).Times(3)
-				// update
+				// update.
 				updateData := resourceData
 				updateData.version = 1
 				mockGetCASet(m, updateData).Times(1)
@@ -1050,11 +1050,11 @@ func TestCASetResource(t *testing.T) {
 				updateData.allowInsecureSHA1 = true
 				mockValidateCertificates(m, updateData, nil).Times(5)
 				mockUpdateCASetVersion(m, updateData).Times(1)
-				// read
+				// read.
 				mockGetCASet(m, updateData).Times(1)
 				mockGetCASetVersion(m, updateData).Times(1)
 				mockListCASetActivations(m, resourceData, false).Times(4)
-				// delete
+				// delete.
 				mockListCASetAssociations(m, updateData).Times(2)
 				mockGetCASet(m, resourceData).Once()
 				mockDeleteCASet(m, updateData).Times(1)
@@ -1181,22 +1181,22 @@ func TestCASetResource(t *testing.T) {
 				},
 			},
 		},
-		// This case tests whether unknown config value for `description` and `version description`
+		// This case tests whether unknown config value for `description` and `version description`.
 		// is properly set to null in both create and update phases.
 		"update a non activated ca set with no description and version description, changing only allow_insecure_sha1": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
 				resourceData.description = nil
 				resourceData.versionDescription = nil
-				// create
+				// create.
 				mockValidateCertificates(m, resourceData, nil).Times(5)
 				mockCreateCASet(m, resourceData).Times(1)
 				mockCreateCASetVersion(m, resourceData).Times(1)
 				mockGetCASet(m, resourceData).Times(1)
-				// read
+				// read.
 				mockGetCASet(m, resourceData).Times(1)
 				mockGetCASetVersion(m, resourceData).Times(1)
 				mockListCASetActivations(m, resourceData, false).Times(3)
-				// update
+				// update.
 				updateData := resourceData
 				updateData.version = 1
 				mockGetCASet(m, updateData).Times(1)
@@ -1204,11 +1204,11 @@ func TestCASetResource(t *testing.T) {
 				updateData.allowInsecureSHA1 = true
 				mockValidateCertificates(m, updateData, nil).Times(5)
 				mockUpdateCASetVersion(m, updateData).Times(1)
-				// read
+				// read.
 				mockGetCASet(m, updateData).Times(1)
 				mockGetCASetVersion(m, updateData).Times(1)
 				mockListCASetActivations(m, resourceData, false).Times(4)
-				// delete
+				// delete.
 				mockListCASetAssociations(m, updateData).Times(2)
 				mockGetCASet(m, resourceData).Once()
 				mockDeleteCASet(m, updateData).Times(1)
@@ -1255,27 +1255,27 @@ func TestCASetResource(t *testing.T) {
 		},
 		"update only timeout should do nothing (from default to some value)": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
-				// create
+				// create.
 				mockValidateCertificates(m, resourceData, nil).Times(5)
 				mockCreateCASet(m, resourceData).Times(1)
 				mockCreateCASetVersion(m, resourceData).Times(1)
 				mockGetCASet(m, resourceData).Times(1)
-				// read
+				// read.
 				mockGetCASet(m, resourceData).Times(1)
 				mockGetCASetVersion(m, resourceData).Times(1)
 				mockListCASetActivations(m, resourceData, false).Times(2)
 
-				// update
+				// update.
 				updateData := resourceData
 				mockGetCASet(m, updateData).Times(1)
 				mockGetCASetVersion(m, updateData).Times(1)
 				mockValidateCertificates(m, updateData, nil).Times(4)
-				// read
+				// read.
 				mockGetCASet(m, updateData).Times(1)
 				mockGetCASetVersion(m, updateData).Times(1)
 				mockListCASetActivations(m, resourceData, false).Times(4)
 
-				// delete
+				// delete.
 				mockListCASetAssociations(m, updateData).Times(2)
 				mockGetCASet(m, resourceData).Once()
 				mockDeleteCASet(m, updateData).Times(1)
@@ -1310,27 +1310,27 @@ func TestCASetResource(t *testing.T) {
 		},
 		"update only timeout should do nothing (from some value to default)": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
-				// create
+				// create.
 				mockValidateCertificates(m, resourceData, nil).Times(5)
 				mockCreateCASet(m, resourceData).Times(1)
 				mockCreateCASetVersion(m, resourceData).Times(1)
 				mockGetCASet(m, resourceData).Times(1)
-				// read
+				// read.
 				mockGetCASet(m, resourceData).Times(1)
 				mockGetCASetVersion(m, resourceData).Times(1)
 				mockListCASetActivations(m, resourceData, false).Times(2)
 
-				// update
+				// update.
 				updateData := resourceData
 				mockGetCASet(m, updateData).Times(1)
 				mockGetCASetVersion(m, updateData).Times(1)
 				mockValidateCertificates(m, updateData, nil).Times(4)
-				// read
+				// read.
 				mockGetCASet(m, updateData).Times(1)
 				mockGetCASetVersion(m, updateData).Times(1)
 				mockListCASetActivations(m, resourceData, false).Times(4)
 
-				// delete
+				// delete.
 				mockListCASetAssociations(m, updateData).Times(2)
 				mockGetCASet(m, resourceData).Once()
 				mockDeleteCASet(m, updateData).Times(1)
@@ -1367,27 +1367,27 @@ func TestCASetResource(t *testing.T) {
 		},
 		"update only timeout should do nothing (from some value to other value)": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
-				// create
+				// create.
 				mockValidateCertificates(m, resourceData, nil).Times(5)
 				mockCreateCASet(m, resourceData).Times(1)
 				mockCreateCASetVersion(m, resourceData).Times(1)
 				mockGetCASet(m, resourceData).Times(1)
-				// read
+				// read.
 				mockGetCASet(m, resourceData).Times(1)
 				mockGetCASetVersion(m, resourceData).Times(1)
 				mockListCASetActivations(m, resourceData, false).Times(2)
 
-				// update
+				// update.
 				updateData := resourceData
 				mockGetCASet(m, updateData).Times(1)
 				mockGetCASetVersion(m, updateData).Times(1)
 				mockValidateCertificates(m, updateData, nil).Times(4)
-				// read
+				// read.
 				mockGetCASet(m, updateData).Times(1)
 				mockGetCASetVersion(m, updateData).Times(1)
 				mockListCASetActivations(m, resourceData, false).Times(4)
 
-				// delete
+				// delete.
 				mockListCASetAssociations(m, updateData).Times(2)
 				mockGetCASet(m, resourceData).Once()
 				mockDeleteCASet(m, updateData).Times(1)
@@ -1424,7 +1424,7 @@ func TestCASetResource(t *testing.T) {
 		},
 		"update a non activated ca set with only order change in the config": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
-				// create
+				// create.
 				resourceData.certificates = slices.Insert(resourceData.certificates, 0, mtlstruststore.CertificateResponse{
 					CertificatePEM: "-----BEGIN CERTIFICATE-----\nFOO\n-----END CERTIFICATE-----\n",
 					Description:    ptr.To("second cert"),
@@ -1433,22 +1433,22 @@ func TestCASetResource(t *testing.T) {
 				mockCreateCASet(m, resourceData).Times(1)
 				mockCreateCASetVersion(m, resourceData).Times(1)
 				mockGetCASet(m, resourceData).Times(1)
-				// read
+				// read.
 				mockGetCASet(m, resourceData).Times(1)
 				mockGetCASetVersion(m, resourceData).Times(1)
 				mockListCASetActivations(m, resourceData, false).Times(2)
 
-				// update
+				// update.
 				updateData := resourceData
 				mockGetCASet(m, updateData).Times(1)
 				mockGetCASetVersion(m, updateData).Times(1)
 				mockValidateCertificates(m, updateData, nil).Times(3)
-				// read
+				// read.
 				mockGetCASet(m, updateData).Times(1)
 				mockGetCASetVersion(m, updateData).Times(1)
 				mockListCASetActivations(m, resourceData, false).Times(3)
 
-				// delete
+				// delete.
 				mockListCASetAssociations(m, updateData).Times(2)
 				mockGetCASet(m, resourceData).Once()
 				mockDeleteCASet(m, updateData).Times(1)
@@ -1509,17 +1509,17 @@ func TestCASetResource(t *testing.T) {
 		},
 		"update an activated ca set on staging": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
-				// create
+				// create.
 				mockValidateCertificates(m, resourceData, nil).Times(5)
 				mockCreateCASet(m, resourceData).Times(1)
 				mockCreateCASetVersion(m, resourceData).Times(1)
 				mockGetCASet(m, resourceData).Times(1)
-				// read
+				// read.
 				mockGetCASet(m, resourceData).Times(1)
 				mockGetCASetVersion(m, resourceData).Times(1)
 				mockListCASetActivations(m, resourceData, true).Times(3)
 
-				// update
+				// update.
 				var one int64 = 1
 				updateData := resourceData
 				updateData.version = one
@@ -1537,12 +1537,12 @@ func TestCASetResource(t *testing.T) {
 				mockCloneCASetVersion(m, updateData).Times(1)
 				updateData.version = 2
 				mockUpdateCASetVersion(m, updateData).Times(1)
-				// read
+				// read.
 				mockGetCASet(m, updateData).Times(1)
 				mockGetCASetVersion(m, updateData).Times(1)
 				mockListCASetActivations(m, resourceData, true).Times(4)
 
-				// delete
+				// delete.
 				mockListCASetAssociations(m, updateData).Times(2)
 				mockGetCASet(m, resourceData).Once()
 				mockDeleteCASet(m, updateData).Times(1)
@@ -1599,17 +1599,17 @@ func TestCASetResource(t *testing.T) {
 		},
 		"update an activated ca set on staging, original certificates have expired (from create), but new one are correct": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
-				// create
+				// create.
 				mockValidateCertificates(m, resourceData, nil).Times(5)
 				mockCreateCASet(m, resourceData).Times(1)
 				mockCreateCASetVersion(m, resourceData).Times(1)
 				mockGetCASet(m, resourceData).Times(1)
-				// read
+				// read.
 				mockGetCASet(m, resourceData).Times(1)
 				mockGetCASetVersion(m, resourceData).Times(1)
 				mockListCASetActivations(m, resourceData, true).Times(3)
 
-				// update
+				// update.
 				var one int64 = 1
 				updateData := resourceData
 				updateData.version = one
@@ -1666,12 +1666,12 @@ func TestCASetResource(t *testing.T) {
 				mockCloneCASetVersion(m, updateData).Times(1)
 				updateData.version = 2
 				mockUpdateCASetVersion(m, updateData).Times(1)
-				// read
+				// read.
 				mockGetCASet(m, updateData).Times(1)
 				mockGetCASetVersion(m, updateData).Times(1)
 				mockListCASetActivations(m, resourceData, true).Times(4)
 
-				// delete
+				// delete.
 				mockListCASetAssociations(m, updateData).Times(2)
 				mockGetCASet(m, updateData).Once()
 				mockDeleteCASet(m, updateData).Times(1)
@@ -1728,16 +1728,16 @@ func TestCASetResource(t *testing.T) {
 		},
 		"update an activated ca set on staging, changing only allow_insecure_sha1 should also create a new version": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
-				// create
+				// create.
 				mockValidateCertificates(m, resourceData, nil).Times(5)
 				mockCreateCASet(m, resourceData).Times(1)
 				mockCreateCASetVersion(m, resourceData).Times(1)
 				mockGetCASet(m, resourceData).Times(1)
-				// read
+				// read.
 				mockGetCASet(m, resourceData).Times(1)
 				mockGetCASetVersion(m, resourceData).Times(1)
 				mockListCASetActivations(m, resourceData, true).Times(2)
-				// update
+				// update.
 				var one int64 = 1
 				updateData := resourceData
 				updateData.version = one
@@ -1752,12 +1752,12 @@ func TestCASetResource(t *testing.T) {
 				mockCloneCASetVersion(m, updateData).Times(1)
 				updateData.version = 2
 				mockUpdateCASetVersion(m, updateData).Times(1)
-				// read
+				// read.
 				mockGetCASet(m, updateData).Times(1)
 				mockGetCASetVersion(m, updateData).Times(1)
 				mockListCASetActivations(m, resourceData, true).Times(4)
 
-				// delete
+				// delete.
 				mockListCASetAssociations(m, updateData).Times(2)
 				mockGetCASet(m, resourceData).Once()
 				mockDeleteCASet(m, updateData).Times(1)
@@ -1798,27 +1798,27 @@ func TestCASetResource(t *testing.T) {
 		},
 		"update only timeout should do nothing, also when activated on staging (from default to some value)": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
-				// create
+				// create.
 				mockValidateCertificates(m, resourceData, nil).Times(5)
 				mockCreateCASet(m, resourceData).Times(1)
 				mockCreateCASetVersion(m, resourceData).Times(1)
 				mockGetCASet(m, resourceData).Times(1)
-				// read
+				// read.
 				mockGetCASet(m, resourceData).Times(1)
 				mockGetCASetVersion(m, resourceData).Times(1)
 				mockListCASetActivations(m, resourceData, true).Times(2)
 
-				// update
+				// update.
 				updateData := resourceData
 				mockGetCASet(m, updateData).Times(1)
 				mockGetCASetVersion(m, updateData).Times(1)
 				mockValidateCertificates(m, updateData, nil).Times(4)
-				// read
+				// read.
 				mockGetCASet(m, updateData).Times(1)
 				mockGetCASetVersion(m, updateData).Times(1)
 				mockListCASetActivations(m, resourceData, true).Times(4)
 
-				// delete
+				// delete.
 				mockListCASetAssociations(m, updateData).Times(2)
 				mockGetCASet(m, resourceData).Once()
 				mockDeleteCASet(m, updateData).Times(1)
@@ -1853,17 +1853,17 @@ func TestCASetResource(t *testing.T) {
 		},
 		"update an activated ca set on production": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
-				// create
+				// create.
 				mockValidateCertificates(m, resourceData, nil).Times(5)
 				mockCreateCASet(m, resourceData).Times(1)
 				mockCreateCASetVersion(m, resourceData).Times(1)
 				mockGetCASet(m, resourceData).Times(1)
-				// read
+				// read.
 				mockGetCASet(m, resourceData).Times(1)
 				mockGetCASetVersion(m, resourceData).Times(1)
 				mockListCASetActivations(m, resourceData, true).Times(2)
 
-				// update
+				// update.
 				var one int64 = 1
 				updateData := resourceData
 				updateData.version = one
@@ -1882,12 +1882,12 @@ func TestCASetResource(t *testing.T) {
 				mockCloneCASetVersion(m, updateData).Times(1)
 				updateData.version = 2
 				mockUpdateCASetVersion(m, updateData).Times(1)
-				// read
+				// read.
 				mockGetCASet(m, updateData).Times(1)
 				mockGetCASetVersion(m, updateData).Times(1)
 				mockListCASetActivations(m, resourceData, true).Times(4)
 
-				// delete
+				// delete.
 				mockListCASetAssociations(m, updateData).Times(2)
 				mockGetCASet(m, resourceData).Once()
 				mockDeleteCASet(m, updateData).Times(1)
@@ -1921,20 +1921,20 @@ func TestCASetResource(t *testing.T) {
 		},
 		"update ca set which was removed outside Terraform should remove resource and create a new one": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
-				// create
+				// create.
 				mockValidateCertificates(m, resourceData, nil).Times(5)
 				mockCreateCASet(m, resourceData).Times(1)
 				mockCreateCASetVersion(m, resourceData).Times(1)
 				mockGetCASet(m, resourceData).Times(1)
-				// read
+				// read.
 				mockGetCASet(m, resourceData).Times(1)
 				mockGetCASetVersion(m, resourceData).Times(1)
 				mockListCASetActivations(m, resourceData, false).Times(2)
 
-				// attempt to update, but the CA Set was removed outside Terraform
+				// attempt to update, but the CA Set was removed outside Terraform.
 				mockGetCASet(m, resourceData).Return(nil, mtlstruststore.ErrGetCASetNotFound).Times(1)
 
-				// create a new resource, as the old one was removed outside Terraform
+				// create a new resource, as the old one was removed outside Terraform.
 				updateData := resourceData
 				updateData.caSetID = "777"
 				updateData.versionDescription = ptr.To("Second version for testing")
@@ -1946,12 +1946,12 @@ func TestCASetResource(t *testing.T) {
 				mockCreateCASet(m, updateData).Times(1)
 				mockCreateCASetVersion(m, updateData).Times(1)
 				mockGetCASet(m, updateData).Times(1)
-				// read
+				// read.
 				mockGetCASet(m, updateData).Times(1)
 				mockGetCASetVersion(m, updateData).Times(1)
 				mockListCASetActivations(m, updateData, false).Times(2)
 
-				// delete
+				// delete.
 				mockListCASetAssociations(m, updateData).Times(2)
 				mockGetCASet(m, updateData).Once()
 				mockDeleteCASet(m, updateData).Times(1)
@@ -1981,12 +1981,12 @@ func TestCASetResource(t *testing.T) {
 		},
 		"import": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
-				// import
+				// import.
 				mockGetCASet(m, resourceData).Times(1)
-				// read
+				// read.
 				mockGetCASet(m, resourceData).Times(1)
 				mockGetCASetVersion(m, resourceData).Times(2)
-				// delete
+				// delete.
 				mockListCASetAssociations(m, resourceData).Times(2)
 				mockGetCASet(m, resourceData).Once()
 				mockDeleteCASet(m, resourceData).Times(1)
@@ -2021,22 +2021,22 @@ func TestCASetResource(t *testing.T) {
 		},
 		"import with certs order change": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
-				// import
+				// import.
 				resourceData.certificates = slices.Insert(resourceData.certificates, 0, mtlstruststore.CertificateResponse{
 					CertificatePEM: "-----BEGIN CERTIFICATE-----\nFOO\n-----END CERTIFICATE-----\n",
 					Description:    ptr.To("second cert"),
 				})
 				mockGetCASet(m, resourceData).Times(1)
-				// read
+				// read.
 				mockGetCASet(m, resourceData).Times(1)
 				mockGetCASetVersion(m, resourceData).Times(1)
 				mockListCASetActivations(m, resourceData, false).Times(3)
-				// update
+				// update.
 				mockGetCASet(m, resourceData).Times(2)
 				mockGetCASetVersion(m, resourceData).Times(3)
 				mockValidateCertificates(m, resourceData, nil).Times(3)
 
-				// delete
+				// delete.
 				mockListCASetAssociations(m, resourceData).Times(2)
 				mockGetCASet(m, resourceData).Once()
 				mockDeleteCASet(m, resourceData).Times(1)
@@ -2092,7 +2092,7 @@ func TestCASetResource(t *testing.T) {
 		},
 		"expect error - import ca set without version": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
-				// import
+				// import.
 				resourceData.version = 0
 				mockGetCASet(m, resourceData).Times(1)
 			},
@@ -2167,7 +2167,7 @@ func mockValidateCertificates(client *mtlstruststore.Mock, testData commonDataFo
 	var certificatesResponse []mtlstruststore.ValidateCertificateResponse
 	for _, c := range testData.certificates {
 		certificatesResponse = append(certificatesResponse, mtlstruststore.ValidateCertificateResponse{
-			// Certificates are trimmed in the API, so we do it here too
+			// Certificates are trimmed in the API, so we do it here too.
 			CertificatePEM: text.TrimRightWhitespace(c.CertificatePEM),
 			Description:    c.Description,
 		})
@@ -2226,7 +2226,7 @@ func mockUpdateCASetVersion(client *mtlstruststore.Mock, testData commonDataForR
 	var certificateResponse []mtlstruststore.CertificateResponse
 	for _, c := range testData.certificates {
 		certificateResponse = append(certificateResponse, mtlstruststore.CertificateResponse{
-			// Certificates are trimmed in the API, so we do it here too
+			// Certificates are trimmed in the API, so we do it here too.
 			CertificatePEM:     text.TrimRightWhitespace(c.CertificatePEM),
 			Description:        c.Description,
 			CreatedBy:          c.CreatedBy,
@@ -2270,7 +2270,7 @@ func mockCloneCASetVersion(client *mtlstruststore.Mock, testData commonDataForRe
 	var certificateResponse []mtlstruststore.CertificateResponse
 	for _, c := range testData.certificates {
 		certificateResponse = append(certificateResponse, mtlstruststore.CertificateResponse{
-			// Certificates are trimmed in the API, so we do it here too
+			// Certificates are trimmed in the API, so we do it here too.
 			CertificatePEM: text.TrimRightWhitespace(c.CertificatePEM),
 			Description:    c.Description,
 		})
@@ -2344,7 +2344,7 @@ func mockCreateCASetVersion(client *mtlstruststore.Mock, testData commonDataForR
 	var certificateResponse []mtlstruststore.CertificateResponse
 	for _, c := range certificates {
 		certificateResponse = append(certificateResponse, mtlstruststore.CertificateResponse{
-			// Certificates are trimmed in the API, so we do it here too
+			// Certificates are trimmed in the API, so we do it here too.
 			CertificatePEM:     text.TrimRightWhitespace(c.CertificatePEM),
 			Description:        c.Description,
 			CreatedBy:          c.CreatedBy,
@@ -2388,7 +2388,7 @@ func mockGetCASetVersion(client *mtlstruststore.Mock, testData commonDataForReso
 	var certificateResponse []mtlstruststore.CertificateResponse
 	for _, c := range testData.certificates {
 		certificateResponse = append(certificateResponse, mtlstruststore.CertificateResponse{
-			// Certificates are trimmed in the API, so we do it here too
+			// Certificates are trimmed in the API, so we do it here too.
 			CertificatePEM:     text.TrimRightWhitespace(c.CertificatePEM),
 			Description:        c.Description,
 			CreatedBy:          c.CreatedBy,

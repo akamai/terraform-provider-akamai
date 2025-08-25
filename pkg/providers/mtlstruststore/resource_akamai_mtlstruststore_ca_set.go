@@ -257,7 +257,7 @@ func certificatesSchema() schema.SetNestedAttribute {
 
 func (r *caSetResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
-		// ProviderData is nil when Configure is run first time as part of ValidateDataSourceConfig in framework provider
+		// ProviderData is nil when Configure is run first time as part of ValidateDataSourceConfig in framework provider.
 		return
 	}
 
@@ -312,7 +312,7 @@ func generateDiagnosticForValidationErrors(err error, certs []mtlstruststore.Val
 	var e *mtlstruststore.Error
 
 	if errors.As(err, &e) {
-		// If there are no detailed errors, add the general error
+		// If there are no detailed errors, add the general error.
 		if len(e.Errors) == 0 {
 			diags.AddAttributeError(path.Root("certificates"), "Certificates are invalid", e.Title)
 			return diags
@@ -325,10 +325,10 @@ func generateDiagnosticForValidationErrors(err error, certs []mtlstruststore.Val
 				pointer: ee.Pointer,
 			})
 		}
-		// Group errors by Title, identify certificate PEM based on the pointer from response and the request content
+		// Group errors by Title, identify certificate PEM based on the pointer from response and the request content.
 		certIssuesGroups, d := groupCertIssuesByTitle(certIssues, certs)
 		diags = append(diags, d...)
-		// Add one diagnostic per error title, summarizing all affected certs
+		// Add one diagnostic per error title, summarizing all affected certs.
 		diags = append(diags, generateCertIssuesDiags(certIssuesGroups)...)
 	} else {
 		diags.AddAttributeError(path.Root("certificates"), "Certificates are invalid", err.Error())
@@ -383,9 +383,9 @@ func generateDiagnosticForValidationWarnings(validation mtlstruststore.Validatio
 			pointer: warning.Pointer,
 		})
 	}
-	// Group errors by Title
+	// Group errors by Title.
 	certificateGroups, diags := groupCertIssuesByTitle(certIssues, certs)
-	// Add one diagnostic per error title, summarizing all affected certs
+	// Add one diagnostic per error title, summarizing all affected certs.
 	diags = append(diags, generateCertIssuesDiags(certificateGroups)...)
 	return diags
 }
@@ -486,7 +486,7 @@ func (r *caSetResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanR
 		equalContent := state.hasEqualContent(plan)
 
 		if !isActivationForLatestVersion || equalContent {
-			// Current version is not activated in staging or production, so we can just update the current version
+			// Current version is not activated in staging or production, so we can just update the current version.
 			// Following fields will not change then.
 			// They also will not change if the content has not changed at all.
 			plan.LatestVersion = state.LatestVersion
@@ -577,7 +577,7 @@ func validateCerts(ctx context.Context, client mtlstruststore.MTLSTruststore, co
 	}
 	var certs []mtlstruststore.ValidateCertificate
 	for _, cert := range certificates {
-		// Certificate content can be provided from external sources and may not be known at plan time
+		// Certificate content can be provided from external sources and may not be known at plan time.
 		if !cert.CertificatePEM.IsUnknown() && !cert.CertificatePEM.IsNull() {
 			certs = append(certs, mtlstruststore.ValidateCertificate{
 				CertificatePEM: cert.CertificatePEM.ValueString(),
@@ -586,7 +586,7 @@ func validateCerts(ctx context.Context, client mtlstruststore.MTLSTruststore, co
 		}
 	}
 
-	// If there are no known certificates, we can skip validation
+	// If there are no known certificates, we can skip validation.
 	if len(certs) == 0 {
 		return nil
 	}
@@ -601,7 +601,7 @@ func validateCerts(ctx context.Context, client mtlstruststore.MTLSTruststore, co
 		tflog.Warn(ctx, "CA set validation has warnings", map[string]any{
 			"warnings": res.Validation.Warnings,
 		})
-		// In the known cases, validation warnings are like errors, i.e. duplicate certificates
+		// In the known cases, validation warnings are like errors, i.e. duplicate certificates.
 		return generateDiagnosticForValidationWarnings(res.Validation, certs)
 	}
 	tflog.Debug(ctx, "Validation succeeded", map[string]any{
@@ -614,7 +614,7 @@ func (r *caSetResource) Create(ctx context.Context, req resource.CreateRequest, 
 	tflog.Debug(ctx, "Creating CA set resource")
 	var plan caSetResourceModel
 
-	// Read Terraform plan data into the model
+	// Read Terraform plan data into the mode.
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -628,7 +628,7 @@ func (r *caSetResource) Create(ctx context.Context, req resource.CreateRequest, 
 
 	createResp, diags := r.create(ctx, &plan)
 	if diags.HasError() {
-		// On failure, save partial state if available
+		// On failure, save partial state if available.
 		if createResp != nil && createResp.caSet != nil {
 			plan.setCASetData((*mtlstruststore.CASetResponse)(createResp.caSet))
 			if diags := populateDefaultVersionStateFromPlan(&plan); diags.HasError() {
@@ -859,14 +859,14 @@ func (r *caSetResource) update(ctx context.Context, plan, state *caSetResourceMo
 	}
 
 	if !isActivationForLatestVersion {
-		// Current version is not activated in staging or production, so we can just update the current version
+		// Current version is not activated in staging or production, so we can just update the current version.
 		tflog.Debug(ctx, "Current version is not activated in staging or production, updating the current version.", map[string]interface{}{
 			"ca_set_id":       state.ID.ValueString(),
 			"current_version": strconv.FormatInt(state.LatestVersion.ValueInt64(), 10),
 		})
 		plan.LatestVersion = state.LatestVersion
 	} else {
-		// Current version is/was already activated in staging or production, so we need to create a new version by cloning the current one
+		// Current version is/was already activated in staging or production, so we need to create a new version by cloning the current one.
 		clonedCASetVersionResp, err := client.CloneCASetVersion(ctx, mtlstruststore.CloneCASetVersionRequest{
 			CASetID: state.ID.ValueString(),
 			Version: state.LatestVersion.ValueInt64(),
@@ -919,7 +919,7 @@ func (r *caSetResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 	}
 
 	client = Client(r.meta)
-	// Check if the CA set is in use before deleting
+	// Check if the CA set is in use before deleting.
 	associationsResponse, err := client.ListCASetAssociations(ctx, mtlstruststore.ListCASetAssociationsRequest{
 		CASetID: state.ID.ValueString(),
 	})
@@ -951,7 +951,7 @@ func (r *caSetResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 
 	// Send DeleteCASet only if the CA Set status is NOT_DELETED.
 	if caSet.CASetStatus == mtlstruststore.CASetStatusNotDeleted {
-		// initiate deletion process
+		// initiate deletion process.
 		if err := client.DeleteCASet(ctx, mtlstruststore.DeleteCASetRequest{
 			CASetID: state.ID.ValueString(),
 		}); err != nil {
@@ -968,10 +968,10 @@ func (r *caSetResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 	ctx, cancel := context.WithTimeout(ctx, deleteTimeout)
 	defer cancel()
 
-	// Initial value, to be changed based on the response from GetCASetDeletionStatus later
+	// Initial value, to be changed based on the response from GetCASetDeletionStatus later.
 	const initialInterval = 10 * time.Millisecond
 	const defaultInterval = 10 * time.Second
-	// get status as soon as possible
+	// get status as soon as possible.
 	var CASetDeleteStatusPollInterval = initialInterval
 	for deleteInProgress := true; deleteInProgress; {
 		select {
@@ -995,8 +995,8 @@ func (r *caSetResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 					CASetDeleteStatusPollInterval = defaultInterval
 				}
 			case mtlstruststore.DeletionStatusFailed:
-				// In case of the failure, there is no point to retry deletion, we can just return the error
-				// Any failure has to be handled manually by the support team
+				// In case of the failure, there is no point to retry deletion, we can just return the error.
+				// Any failure has to be handled manually by the support team.
 				var reason string
 				if status.FailureReason != nil {
 					reason = *status.FailureReason

@@ -1,4 +1,4 @@
-// Package mtlstruststore contains implementation for Akamai Terraform sub-provider responsible for MTLS Truststore
+// Package mtlstruststore contains implementation for Akamai Terraform sub-provider responsible for MTLS Truststore.
 package mtlstruststore
 
 import (
@@ -11,7 +11,7 @@ import (
 )
 
 type (
-	// Subprovider gathers MTLS Truststore resources and data sources
+	// Subprovider gathers MTLS Truststore resources and data sources.
 	Subprovider struct{}
 )
 
@@ -20,12 +20,12 @@ var (
 	client mtlstruststore.MTLSTruststore
 )
 
-// NewSubprovider returns a new MTLS Truststore subprovider
+// NewSubprovider returns a new MTLS Truststore subprovider.
 func NewSubprovider() *Subprovider {
 	return &Subprovider{}
 }
 
-// Client returns the MTLS Truststore interface
+// Client returns the MTLS Truststore interface.
 func Client(meta meta.Meta) mtlstruststore.MTLSTruststore {
 	if client != nil {
 		return client
@@ -33,17 +33,17 @@ func Client(meta meta.Meta) mtlstruststore.MTLSTruststore {
 	return mtlstruststore.Client(meta.Session())
 }
 
-// SDKResources returns the MTLS Truststore resources implemented using terraform-plugin-sdk
+// SDKResources returns the MTLS Truststore resources implemented using terraform-plugin-sdk.
 func (p *Subprovider) SDKResources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{}
 }
 
-// SDKDataSources returns the MTLS Truststore data sources implemented using terraform-plugin-sdk
+// SDKDataSources returns the MTLS Truststore data sources implemented using terraform-plugin-sdk.
 func (p *Subprovider) SDKDataSources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{}
 }
 
-// FrameworkResources returns the MTLS Truststore resources implemented using terraform-plugin-framework
+// FrameworkResources returns the MTLS Truststore resources implemented using terraform-plugin-framework.
 func (p *Subprovider) FrameworkResources() []func() resource.Resource {
 	return []func() resource.Resource{
 		NewCASetActivationResource,
@@ -51,7 +51,7 @@ func (p *Subprovider) FrameworkResources() []func() resource.Resource {
 	}
 }
 
-// FrameworkDataSources returns the MTLS Truststore data sources implemented using terraform-plugin-framework
+// FrameworkDataSources returns the MTLS Truststore data sources implemented using terraform-plugin-framework.
 func (p *Subprovider) FrameworkDataSources() []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewCASetActivationDataSource,

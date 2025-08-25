@@ -12,10 +12,10 @@ func TestMain(m *testing.M) {
 	testutils.TestRunner(m)
 }
 
-// Only allow one test at a time to patch the client via useClient()
+// Only allow one test at a time to patch the client via useClient().
 var clientLock sync.Mutex
 
-// useClient swaps out the client on the global instance for the duration of the given func
+// useClient swaps out the client on the global instance for the duration of the given func.
 func useClient(mtlsTruststoreClient mtlstruststore.MTLSTruststore, f func()) {
 	clientLock.Lock()
 	orig := client
