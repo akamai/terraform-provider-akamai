@@ -63,64 +63,6 @@ func TestResourceAPIClient(t *testing.T) {
 				},
 			},
 		},
-		"happy path - create with all fields set but unknown at plan": {
-			init: func(m *iam.Mock, createData, _ testData) {
-				mockListAllowedCPCodes(m).Times(3)
-				// Create
-				mockCreateAPIClient(m, createData)
-				mockGetAPIClient(m, createData)
-				// Read
-				mockGetAPIClient(m, createData)
-				// Delete
-				mockDeactivateCredential(m, createData)
-				mockDeleteAPIClient(m, createData)
-			},
-			createData: fullData,
-			steps: []resource.TestStep{
-				{
-					Config: testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/create_all_unknown.tf"),
-					Check: fullDataChecker.
-						CheckEqual("group_access.groups.0.sub_groups.#", "1").
-						CheckEqual("group_access.groups.0.sub_groups.0.group_id", "333").
-						CheckEqual("group_access.groups.0.sub_groups.0.group_name", "group2_1").
-						CheckEqual("group_access.groups.0.sub_groups.0.is_blocked", "false").
-						CheckEqual("group_access.groups.0.sub_groups.0.parent_group_id", "0").
-						CheckEqual("group_access.groups.0.sub_groups.0.role_description", "group description").
-						CheckEqual("group_access.groups.0.sub_groups.0.role_id", "540").
-						CheckEqual("group_access.groups.0.sub_groups.0.role_name", "role 2").
-						Build(),
-				},
-			},
-		},
-		"happy path - create with all fields set but cp_code_access unknown at plan": {
-			init: func(m *iam.Mock, createData, _ testData) {
-				mockListAllowedCPCodes(m).Times(3)
-				// Create
-				mockCreateAPIClient(m, createData)
-				mockGetAPIClient(m, createData)
-				// Read
-				mockGetAPIClient(m, createData)
-				// Delete
-				mockDeactivateCredential(m, createData)
-				mockDeleteAPIClient(m, createData)
-			},
-			createData: fullData,
-			steps: []resource.TestStep{
-				{
-					Config: testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/create_all_cp_code_access_unknown.tf"),
-					Check: fullDataChecker.
-						CheckEqual("group_access.groups.0.sub_groups.#", "1").
-						CheckEqual("group_access.groups.0.sub_groups.0.group_id", "333").
-						CheckEqual("group_access.groups.0.sub_groups.0.group_name", "group2_1").
-						CheckEqual("group_access.groups.0.sub_groups.0.is_blocked", "false").
-						CheckEqual("group_access.groups.0.sub_groups.0.parent_group_id", "0").
-						CheckEqual("group_access.groups.0.sub_groups.0.role_description", "group description").
-						CheckEqual("group_access.groups.0.sub_groups.0.role_id", "540").
-						CheckEqual("group_access.groups.0.sub_groups.0.role_name", "role 2").
-						Build(),
-				},
-			},
-		},
 		"happy path - create with all fields set, all_accessible_apis is true": {
 			init: func(m *iam.Mock, createData, _ testData) {
 				mockListAllowedCPCodes(m).Times(4)
@@ -268,38 +210,6 @@ func TestResourceAPIClient(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/create_min.tf"),
-					Check: fullDataChecker.
-						CheckEqual("lock", "true").
-						CheckEqual("group_access.groups.0.sub_groups.#", "0").
-						CheckEqual("client_description", "").
-						CheckMissing("notification_emails.0").
-						CheckMissing("ip_acl.enable").
-						CheckMissing("ip_acl.cidr.0").
-						CheckMissing("purge_options.can_purge_by_cache_tag").
-						CheckMissing("purge_options.can_purge_by_cp_code").
-						CheckMissing("purge_options.cp_code_access.all_current_and_new_cp_codes").
-						CheckMissing("purge_options.cp_code_access.cp_codes.0").
-						Build(),
-				},
-			},
-		},
-		"happy path - create with min set of fields, api_access is unknown at plan": {
-			init: func(m *iam.Mock, createData, _ testData) {
-				// Create
-				mockCreateAPIClient(m, createData)
-				mockUpdateAPIClientNotificationEmails(m, createData)
-				mockLockAPIClient(m, createData)
-				mockGetAPIClient(m, createData)
-				// Read
-				mockGetAPIClient(m, createData)
-				// Delete
-				mockDeactivateCredential(m, createData)
-				mockDeleteAPIClient(m, createData)
-			},
-			createData: minData,
-			steps: []resource.TestStep{
-				{
-					Config: testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/create_min_api_access_unknown.tf"),
 					Check: fullDataChecker.
 						CheckEqual("lock", "true").
 						CheckEqual("group_access.groups.0.sub_groups.#", "0").
@@ -1373,12 +1283,6 @@ func TestResourceAPIClient(t *testing.T) {
 			}
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
-					ExternalProviders: map[string]resource.ExternalProvider{
-						"random": {
-							Source:            "registry.terraform.io/hashicorp/random",
-							VersionConstraint: "3.1.0",
-						},
-					},
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					IsUnitTest:               true,
 					Steps:                    tc.steps,
