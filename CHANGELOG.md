@@ -56,13 +56,6 @@
         * `akamai_apr_general_settings`
         * `akamai_apr_user_risk_response_strategy`
         * `akamai_apr_user_allow_list`  
-
-* [IMPORTANT] mTLS TrustStore:
-  * Added new resources:
-    * `akamai_mtlstruststore_ca_set` - manages lifecycle of CA set and its version.
-    * `akamai_mtlstruststore_ca_set_activation` - manages lifecycle of CA set version activation.
-
-
   * Appsec
     * Added a new data source:
       * `data_akamai_appsec_advanced_settings_ja4_fingerprint`
@@ -72,13 +65,20 @@
       * `include_ja4_fingerprint_to_siem`
 
 
-
-
-* [IMPORTANT] mTLS TrustStore:
+* [IMPORTANT] mTLS TrustStore (Beta):
+  * Added new resources:
+    * `akamai_mtlstruststore_ca_set` - manages lifecycle of CA set and its version.
+    * `akamai_mtlstruststore_ca_set_activation` - manages lifecycle of CA set version activation.
   * Added new data sources:
+    * `akamai_mtlstruststore_ca_set` - reads a CA set.
+    * `akamai_mtlstruststore_ca_set_activation` - reads activation for a CA Set.
+    * `akamai_mtlstruststore_ca_set_activations` - reads CA set activations.
     * `akamai_mtlstruststore_ca_set_activities` - lists CA set activities.
-    * `akamai_mtlstruststore_ca_set_versions` - lists CA set versions.
+    * `akamai_mtlstruststore_ca_set_associations` - reads list of properties and enrollments using CA Set.
     * `akamai_mtlstruststore_ca_set_certificates` - retrieves the list of CA set certificates for a specified version, or for the latest version if none is provided.
+    * `akamai_mtlstruststore_ca_set_versions` - lists CA set versions.
+    * `akamai_mtlstruststore_ca_sets` - reads CA sets.
+
 * APPSEC
   * Added support for challenge actions in Rate Policy `resource_akamai_appsec_rate_policy_action` resource.
 
@@ -113,46 +113,6 @@
 
 
 
-
-
-
-
-* mTLS TrustStore:
-  * Added new data source:
-    * `akamai_mtlstruststore_ca_sets` - reads CA sets.
-
-
-* mTLS TrustStore:
-  * Added new data source:
-    * `akamai_mtlstruststore_ca_set_associations` - reads list of properties and enrollments using CA Set.
-
-
-
-
-
-
-* mTLS TrustStore:
-  * Added new data source:
-    * `akamai_mtlstruststore_ca_set_activations` - reads CA set activations.
-
-
-
-
-
-
-
-
-* mTLS TrustStore:
-  * Added new data source:
-    * `akamai_mtlstruststore_ca_set` - reads CA set.
-
-
-
-
-
-* mTLS TrustStore:
-  * Added new data source:
-    * `akamai_mtlstruststore_ca_set_activation` - reads activation for a CA Set.
 
 #### BUG FIXES:
 
