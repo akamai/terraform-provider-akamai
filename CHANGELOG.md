@@ -28,6 +28,17 @@
 
 #### FEATURES/ENHANCEMENTS:
 
+* Appsec
+  * Added a new data source:
+    * data_akamai_appsec_advanced_settings_ase_penalty_box
+  * Added a new resource:
+    * resource_akamai_appsec_advanced_settings_ase_penalty_box
+
+
+
+
+
+
   * Appsec
     * Added a new data source:
       * `data_akamai_appsec_advanced_settings_ja4_fingerprint`

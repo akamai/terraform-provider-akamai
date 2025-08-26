@@ -55,6 +55,7 @@ func (p *Subprovider) SDKResources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
 		"akamai_appsec_aap_selected_hostnames":                   resourceAAPSelectedHostnames(),
 		"akamai_appsec_activations":                              resourceActivations(),
+		"akamai_appsec_advanced_settings_ase_penalty_box":        resourceAdvancedSettingsAsePenaltyBox(),
 		"akamai_appsec_advanced_settings_attack_payload_logging": resourceAdvancedSettingsAttackPayloadLogging(),
 		"akamai_appsec_advanced_settings_evasive_path_match":     resourceAdvancedSettingsEvasivePathMatch(),
 		"akamai_appsec_advanced_settings_logging":                resourceAdvancedSettingsLogging(),
@@ -113,6 +114,7 @@ func (p *Subprovider) SDKResources() map[string]*schema.Resource {
 func (p *Subprovider) SDKDataSources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
 		"akamai_appsec_aap_selected_hostnames":                   dataSourceAAPSelectedHostnames(),
+		"akamai_appsec_advanced_settings_ase_penalty_box":        dataSourceAdvancedSettingsAsePenaltyBox(),
 		"akamai_appsec_advanced_settings_attack_payload_logging": dataSourceAdvancedSettingsAttackPayloadLogging(),
 		"akamai_appsec_advanced_settings_evasive_path_match":     dataSourceAdvancedSettingsEvasivePathMatch(),
 		"akamai_appsec_advanced_settings_logging":                dataSourceAdvancedSettingsLogging(),
