@@ -1,0 +1,12 @@
+[
+  {
+    "api_id":503130,
+    "api_resource_id":3143802,
+    "api_resource_logic_id":122202,
+    "id":"123a567b-fe5c-4d52-9cc9-a9cd870f0829",
+    "name":"Form Data",
+    "purpose":"ACCOUNT_VERIFICATION",
+    "resource_path":"/index.php",
+    "resource_name":"Login Form Data"
+  }
+]

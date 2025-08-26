@@ -40,6 +40,8 @@
     * `akamai_apidefinitions_activation` - activate and import API configuration activation
     * `akamai_apidefinitions_resource_operations` - create, read, update, delete and import API resource operations
   * Added new data source:
+    * `akamai_apidefinitions_api` - reads API configuration
+    * `akamai_apidefinitions_resource_operations` - reads API resource operations configuration
     * `akamai_apidefinitions_openapi` - maps OpenAPI/Swagger file to API configuration
 * ACCOUNT_PROTECTION
     * Added following data sources:

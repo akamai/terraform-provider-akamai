@@ -97,14 +97,14 @@ func (r *apiResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(1),
 				},
-				Description: "The unique identifier for the contract (without the 'ctr_' prefix) assigned to the access key.",
+				Description: "The unique identifier for the contract (without the 'ctr_' prefix) assigned to the API.",
 			},
 			"group_id": schema.Int64Attribute{
 				Required: true,
 				PlanModifiers: []planmodifier.Int64{
 					modifiers.PreventInt64Update(),
 				},
-				Description: "The unique identifier for the group (without the 'grp_' prefix) assigned to the access key.",
+				Description: "The unique identifier for the group (without the 'grp_' prefix) assigned to the API.",
 			},
 			"id": schema.Int64Attribute{
 				Computed: true,

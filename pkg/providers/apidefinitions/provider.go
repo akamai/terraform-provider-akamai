@@ -63,5 +63,7 @@ func (p *SubProvider) SDKDataSources() map[string]*schema.Resource {
 func (p *SubProvider) FrameworkDataSources() []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewOpenAPIDataSource,
+		NewResourceOperationsDataSource,
+		NewAPIDataSource,
 	}
 }

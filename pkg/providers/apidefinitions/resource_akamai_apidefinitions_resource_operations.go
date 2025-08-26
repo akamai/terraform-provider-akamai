@@ -23,9 +23,9 @@ import (
 type apiResourceOperation struct{}
 
 type apiResourceOperationModel struct {
-	APIID              types.Int64   `tfsdk:"api_id"`
-	Version            types.Int64   `tfsdk:"version"`
-	ResourceOperations apiStateValue `tfsdk:"resource_operations"`
+	APIID              types.Int64          `tfsdk:"api_id"`
+	Version            types.Int64          `tfsdk:"version"`
+	ResourceOperations operationsStateValue `tfsdk:"resource_operations"`
 }
 
 // NewAPIResourceOperationResource returns new api resource operations
@@ -75,10 +75,11 @@ func (r *apiResourceOperation) Schema(_ context.Context, _ resource.SchemaReques
 				Description: "Version of the endpoint",
 			},
 			"resource_operations": schema.StringAttribute{
-				CustomType: apiStateType{},
+				CustomType: operationsStateType{},
 				Required:   true,
 				Validators: []validator.String{
 					validators.NotEmptyString(),
+					OperationsStateValidator(),
 				},
 				Description: "JSON-formatted information about the API configuration",
 			},
@@ -161,7 +162,7 @@ func (r *apiResourceOperation) upsert(ctx context.Context, data *apiResourceOper
 		return diags
 	}
 
-	data.ResourceOperations = apiStateValue{types.StringValue(*operationsContent)}
+	data.ResourceOperations = operationsStateValue{types.StringValue(*operationsContent)}
 	data.APIID = types.Int64Value(data.APIID.ValueInt64())
 	data.Version = types.Int64Value(latestVersionNumber)
 	return diags
@@ -204,7 +205,7 @@ func (r *apiResourceOperation) read(ctx context.Context, data *apiResourceOperat
 		return diags
 	}
 
-	data.ResourceOperations = apiStateValue{types.StringValue(*operationsContent)}
+	data.ResourceOperations = operationsStateValue{types.StringValue(*operationsContent)}
 	data.APIID = types.Int64Value(data.APIID.ValueInt64())
 
 	return diags

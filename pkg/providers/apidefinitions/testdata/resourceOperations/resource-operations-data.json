@@ -1,0 +1,357 @@
+{
+  "apiEndPoints": [
+    {
+      "apiEndPointHosts": [
+        "www.bot-staging.net",
+        "www.botman-test1.com",
+        "www.botman-test.com",
+        "www.test-login.com"
+      ],
+      "apiEndPointId": 503130,
+      "apiEndPointName": "E2ETest",
+      "basePath": "/login",
+      "caseSensitive": true,
+      "link": "/api-definitions/v2/endpoints/503130/versions/4",
+      "productionVersion": {
+        "status": "ACTIVE",
+        "timestamp": "2019-10-02T16:04:14+0000",
+        "versionNumber": 4
+      },
+      "stagingVersion": {
+        "status": "ACTIVE",
+        "timestamp": "2019-10-02T15:59:07+0000",
+        "versionNumber": 4
+      }
+    },
+    {
+      "apiEndPointHosts": [
+        "www.staging-activated.com"
+      ],
+      "apiEndPointId": 464125,
+      "apiEndPointName": "Activated",
+      "basePath": "/staging",
+      "caseSensitive": true,
+      "link": "/api-definitions/v2/endpoints/464125/versions/2",
+      "productionVersion": {},
+      "stagingVersion": {
+        "status": "ACTIVE",
+        "timestamp": "2020-03-04T15:28:25+0000",
+        "versionNumber": 2
+      }
+    },
+    {
+      "apiEndPointHosts": [
+        "*.vtest.com",
+        "www.test.com"
+      ],
+      "apiEndPointId": 502216,
+      "apiEndPointName": "Account protections",
+      "basePath": "/webinline",
+      "caseSensitive": true,
+      "link": "/api-definitions/v2/endpoints/502216/versions/2",
+      "productionVersion": {},
+      "stagingVersion": {
+        "status": "ACTIVE",
+        "timestamp": "2019-09-24T03:03:05+0000",
+        "versionNumber": 2
+      }
+    },
+    {
+      "apiEndPointHosts": [
+        "test.tony.com"
+      ],
+      "apiEndPointId": 291184,
+      "apiEndPointName": "test",
+      "basePath": "/",
+      "caseSensitive": true,
+      "link": "/api-definitions/v2/endpoints/291184/versions/2",
+      "productionVersion": {
+        "status": "ACTIVE",
+        "timestamp": "2018-07-06T16:06:19+0000",
+        "versionNumber": 1
+      },
+      "stagingVersion": {
+        "status": "ACTIVE",
+        "timestamp": "2019-04-09T03:39:18+0000",
+        "versionNumber": 2
+      }
+    }
+  ],
+  "operations": [
+    {
+      "apiEndPointId": 503130,
+      "apiResourceId": 3143802,
+      "apiResourceLogicId": 122202,
+      "conditions": [
+        {
+          "apiParameterId": 1636906,
+          "value": "cors/form-login"
+        }
+      ],
+      "link": "/api-definitions/v2/endpoints/503130/versions/4/resources/3143802/operations/123a567b-fe5c-4d52-9cc9-a9cd870f0829",
+      "metadata": {
+        "isActive": true
+      },
+      "method": "POST",
+      "operationId": "123a567b-fe5c-4d52-9cc9-a9cd870f0829",
+      "operationName": "Form Data",
+      "operationPurpose": "ACCOUNT_VERIFICATION"
+    },
+    {
+      "apiEndPointId": 503130,
+      "apiResourceId": 3143802,
+      "apiResourceLogicId": 122202,
+      "conditions": [
+        {
+          "apiParameterId": 1636906,
+          "value": "cors/form-login"
+        }
+      ],
+      "link": "/api-definitions/v2/endpoints/503130/versions/4/resources/3143802/operations/123a567b-fe5c-4d52-9cc9-a9cd870f0829",
+      "metadata": {
+        "isActive": false
+      },
+      "method": "POST",
+      "operationId": "123a567b-fe5c-4d52-9cc9-a9cd870f0829",
+      "operationName": "Form Data 2",
+      "operationPurpose": "ACCOUNT_VERIFICATION"
+    },
+    {
+      "apiEndPointId": 493213,
+      "apiResourceId": 3055228,
+      "apiResourceLogicId": 118374,
+      "link": "/api-definitions/v2/endpoints/493213/versions/1/resources/3055228/operations/123a567b-5f82-44e8-95cd-cdcff189a1f2",
+      "metadata": {
+        "isActive": true
+      },
+      "method": "GET",
+      "operationId": "123a567b-5f82-44e8-95cd-cdcff189a1f2",
+      "operationName": "ProtectedPurpose2",
+      "operationPurpose": "LOYALTY_POINTS"
+    },
+    {
+      "apiEndPointId": 464125,
+      "apiResourceId": 3545852,
+      "apiResourceLogicId": 106953,
+      "link": "/api-definitions/v2/endpoints/464125/versions/2/resources/3545852/operations/ea603927-99a6-4c25-bd18-b51db7bbff25",
+      "metadata": {
+        "isActive": true
+      },
+      "method": "GET",
+      "operationId": "ea603927-99a6-4c25-bd18-b51db7bbff25",
+      "operationName": "Purpose1",
+      "operationPurpose": "ACCOUNT_VERIFICATION"
+    },
+    {
+      "apiEndPointId": 291184,
+      "apiResourceId": 1234567,
+      "apiResourceLogicId": 11737,
+      "conditions": [
+        {
+          "apiParameterId": 1014208
+        }
+      ],
+      "link": "/api-definitions/v2/endpoints/291184/versions/2/resources/1234567/operations/c00009d1-64bb-49e5-a492-a81e9aeed1b7",
+      "metadata": {
+        "isActive": true
+      },
+      "method": "POST",
+      "operationId": "c00009d1-64bb-49e5-a492-a81e9aeed1b7",
+      "operationName": "login",
+      "operationParameter": {
+        "username": {
+          "parameterId": 1014209,
+          "usedForLogin": null
+        }
+      },
+      "operationPurpose": "LOGIN"
+    }
+  ],
+  "resources": [
+    {
+      "apiEndPointId": 503130,
+      "apiResourceId": 3143802,
+      "apiResourceLogicId": 122202,
+      "apiResourceMethods": [
+        {
+          "apiParameters": [
+            {
+              "apiChildParameters": [],
+              "apiParamLogicId": 778229,
+              "apiParameterId": 1636906,
+              "apiParameterLocation": "query",
+              "apiParameterName": "route",
+              "apiParameterNotes": null,
+              "apiParameterRequired": true,
+              "apiParameterRestriction": null,
+              "apiParameterType": "string",
+              "apiResourceMethParamId": 572570,
+              "array": false,
+              "pathParamLocationId": null,
+              "response": false
+            }
+          ],
+          "apiResourceMethod": "POST",
+          "apiResourceMethodId": 365993,
+          "apiResourceMethodLogicId": 170106,
+          "methodRestrictions": null
+        }
+      ],
+      "apiResourceName": "Login Form Data",
+      "createDate": "2019-10-02T15:39:03+0000",
+      "createdBy": "jsmith",
+      "link": "/api-definitions/v2/endpoints/503130/versions/4/resources/3143802",
+      "lockVersion": 0,
+      "metadata": {
+        "methodsEnabled": 1,
+        "methodsWithOperations": 1,
+        "operationCount": 3
+      },
+      "resourcePath": "/index.php",
+      "updateDate": "2019-10-02T15:39:03+0000",
+      "updatedBy": "jsmith"
+    },
+    {
+      "apiEndPointId": 463140,
+      "apiResourceId": 3545900,
+      "apiResourceLogicId": 106954,
+      "apiResourceMethods": [
+        {
+          "apiParameters": [],
+          "apiResourceMethod": "POST",
+          "apiResourceMethodId": 474030,
+          "apiResourceMethodLogicId": 147694,
+          "methodRestrictions": null
+        },
+        {
+          "apiParameters": [],
+          "apiResourceMethod": "GET",
+          "apiResourceMethodId": 474029,
+          "apiResourceMethodLogicId": 147693,
+          "methodRestrictions": null
+        }
+      ],
+      "apiResourceName": "Resource1",
+      "createDate": "2020-03-04T15:24:36+0000",
+      "createdBy": "user1",
+      "link": "/api-definitions/v2/endpoints/463140/versions/4/resources/3545900",
+      "lockVersion": 0,
+      "metadata": {
+        "methodsEnabled": 2,
+        "methodsWithOperations": 1,
+        "operationCount": 1
+      },
+      "resourcePath": "/index.php",
+      "updateDate": "2020-03-04T15:24:36+0000",
+      "updatedBy": "afero"
+    },
+    {
+      "apiEndPointId": 464125,
+      "apiResourceId": 3545852,
+      "apiResourceLogicId": 106953,
+      "apiResourceMethods": [
+        {
+          "apiParameters": [],
+          "apiResourceMethod": "GET",
+          "apiResourceMethodId": 474019,
+          "apiResourceMethodLogicId": 147691,
+          "methodRestrictions": null
+        },
+        {
+          "apiParameters": [],
+          "apiResourceMethod": "POST",
+          "apiResourceMethodId": 474020,
+          "apiResourceMethodLogicId": 147692,
+          "methodRestrictions": null
+        }
+      ],
+      "apiResourceName": "Resource1",
+      "createDate": "2020-03-04T15:23:59+0000",
+      "createdBy": "jdupont",
+      "link": "/api-definitions/v2/endpoints/464125/versions/2/resources/3545852",
+      "lockVersion": 0,
+      "metadata": {
+        "methodsEnabled": 2,
+        "methodsWithOperations": 1,
+        "operationCount": 1
+      },
+      "resourcePath": "/index.php",
+      "updateDate": "2020-03-04T15:23:59+0000",
+      "updatedBy": "szhang"
+    },
+    {
+      "apiEndPointId": 291184,
+      "apiResourceId": 1234567,
+      "apiResourceLogicId": 11737,
+      "apiResourceMethods": [
+        {
+          "apiParameters": [
+            {
+              "apiChildParameters": [
+                {
+                  "apiChildParameters": [],
+                  "apiParamLogicId": 56167,
+                  "apiParameterId": 1014208,
+                  "apiParameterLocation": "body",
+                  "apiParameterName": "j_password",
+                  "apiParameterNotes": null,
+                  "apiParameterRequired": false,
+                  "apiParameterRestriction": null,
+                  "apiParameterType": "string",
+                  "apiResourceMethParamId": null,
+                  "array": false,
+                  "pathParamLocationId": null,
+                  "response": false
+                },
+                {
+                  "apiChildParameters": [],
+                  "apiParamLogicId": 56168,
+                  "apiParameterId": 1014209,
+                  "apiParameterLocation": "body",
+                  "apiParameterName": "j_username",
+                  "apiParameterNotes": null,
+                  "apiParameterRequired": false,
+                  "apiParameterRestriction": null,
+                  "apiParameterType": "string",
+                  "apiResourceMethParamId": null,
+                  "array": false,
+                  "pathParamLocationId": null,
+                  "response": false
+                }
+              ],
+              "apiParamLogicId": 56166,
+              "apiParameterId": 1014207,
+              "apiParameterLocation": "body",
+              "apiParameterName": "root",
+              "apiParameterNotes": null,
+              "apiParameterRequired": false,
+              "apiParameterRestriction": null,
+              "apiParameterType": "json/xml",
+              "apiResourceMethParamId": 412851,
+              "array": false,
+              "pathParamLocationId": null,
+              "response": false
+            }
+          ],
+          "apiResourceMethod": "POST",
+          "apiResourceMethodId": 268261,
+          "apiResourceMethodLogicId": 15869,
+          "methodRestrictions": null
+        }
+      ],
+      "apiResourceName": "test",
+      "createDate": "2019-04-09T03:01:10+0000",
+      "createdBy": "user1",
+      "link": "/api-definitions/v2/endpoints/291184/versions/2/resources/1234567",
+      "lockVersion": 0,
+      "metadata": {
+        "methodsEnabled": 1,
+        "methodsWithOperations": 1,
+        "operationCount": 1
+      },
+      "resourcePath": "/base",
+      "updateDate": "2019-04-09T03:01:10+0000",
+      "updatedBy": "jdupont"
+    }
+  ]
+}
