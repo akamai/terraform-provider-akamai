@@ -2131,11 +2131,11 @@ func TestCASetResource(t *testing.T) {
 		},
 	}
 
-	for name, test := range tests {
+	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := &mtlstruststore.Mock{}
-			if test.init != nil {
-				test.init(client, test.mockData)
+			if tc.init != nil {
+				tc.init(client, tc.mockData)
 			}
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
@@ -2147,7 +2147,7 @@ func TestCASetResource(t *testing.T) {
 					},
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider(), testprovider.NewMockSubprovider()),
 					IsUnitTest:               true,
-					Steps:                    test.steps,
+					Steps:                    tc.steps,
 				})
 			})
 			client.AssertExpectations(t)

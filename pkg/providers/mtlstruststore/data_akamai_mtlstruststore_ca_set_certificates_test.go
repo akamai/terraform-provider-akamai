@@ -710,18 +710,18 @@ func TestCASetCertificatesDataSource(t *testing.T) {
 		},
 	}
 
-	for name, test := range tests {
+	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			client := &mtlstruststore.Mock{}
-			if test.init != nil {
-				test.init(client, test.testData)
+			if tc.init != nil {
+				tc.init(client, tc.testData)
 			}
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					IsUnitTest:               true,
-					Steps:                    test.steps,
+					Steps:                    tc.steps,
 				})
 			})
 			client.AssertExpectations(t)
