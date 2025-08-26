@@ -28,6 +28,19 @@
 
 #### FEATURES/ENHANCEMENTS:
 
+  * Appsec
+    * Added a new data source:
+      * `data_akamai_appsec_advanced_settings_ja4_fingerprint`
+    * Added a new resource:
+      * `resource_akamai_appsec_advanced_settings_ja4_fingerprint`
+    * Added a new field to the `resource_akamai_appsec_siem_settings`:
+      * `include_ja4_fingerprint_to_siem`
+
+
+
+
+
+
 * APPSEC
   * Added support for challenge actions in Rate Policy `resource_akamai_appsec_rate_policy_action` resource.
 

@@ -2,6 +2,7 @@
     "enableForAllPolicies": false,
     "enableSiem": true,
     "enabledBotmanSiemEvents": true,
+    "includeJA4FingerprintToSiem": true,
     "siemDefinitionId": 1,
     "firewallPolicyIds": ["12345"]
 }

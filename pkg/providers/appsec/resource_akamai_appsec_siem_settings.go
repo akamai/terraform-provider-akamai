@@ -57,6 +57,11 @@ func resourceSiemSettings() *schema.Resource {
 				Optional:    true,
 				Description: "Whether Bot Manager events should be included in SIEM events",
 			},
+			"include_ja4_fingerprint_to_siem": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "Whether JA4 Fingerprint should be included in SIEM events",
+			},
 			"siem_id": {
 				Type:        schema.TypeInt,
 				Required:    true,
@@ -216,6 +221,14 @@ func resourceSiemSettingsCreate(ctx context.Context, d *schema.ResourceData, m i
 		createSiemSettings.EnabledBotmanSiemEvents = ptr.To(enableBotmanSiem)
 	}
 
+	includeJa4ToSiem, err := tf.GetBoolValue("include_ja4_fingerprint_to_siem", tf.NewRawConfig(d))
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	if !errors.Is(err, tf.ErrNotFound) {
+		createSiemSettings.IncludeJA4FingerprintToSiem = ptr.To(includeJa4ToSiem)
+	}
+
 	_, err = client.UpdateSiemSettings(ctx, createSiemSettings)
 	if err != nil {
 		logger.Errorf("calling 'createSiemSettings': %s", err.Error())
@@ -266,6 +279,9 @@ func resourceSiemSettingsRead(ctx context.Context, d *schema.ResourceData, m int
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("enable_botman_siem", siemsettings.EnabledBotmanSiemEvents); err != nil {
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+	}
+	if err := d.Set("include_ja4_fingerprint_to_siem", siemsettings.IncludeJA4FingerprintToSiem); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("siem_id", siemsettings.SiemDefinitionID); err != nil {
@@ -336,6 +352,14 @@ func resourceSiemSettingsUpdate(ctx context.Context, d *schema.ResourceData, m i
 	}
 	if !errors.Is(err, tf.ErrNotFound) {
 		updateSiemSettings.EnabledBotmanSiemEvents = ptr.To(enableBotmanSiem)
+	}
+
+	includeJa4ToSiem, err := tf.GetBoolValue("include_ja4_fingerprint_to_siem", tf.NewRawConfig(d))
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	if !errors.Is(err, tf.ErrNotFound) {
+		updateSiemSettings.IncludeJA4FingerprintToSiem = ptr.To(includeJa4ToSiem)
 	}
 
 	_, err = client.UpdateSiemSettings(ctx, updateSiemSettings)
