@@ -910,7 +910,7 @@ func TestCASetActivationResource(t *testing.T) {
 					ResourceName:                         "akamai_mtlstruststore_ca_set_activation.test",
 					ImportStateVerifyIdentifierAttribute: "id",
 					ImportStatePersist:                   true,
-					ExpectError:                          regexp.MustCompile("CA set ID 12345 is not active in STAGING network. Can only import completed"),
+					ExpectError:                          regexp.MustCompile(`CA set with ID 12345 is not active in the STAGING network. Only completed(\s|\n)+activations can be imported.`),
 				},
 			},
 		},
@@ -962,7 +962,7 @@ func TestCASetActivationResource(t *testing.T) {
 					ResourceName:                         "akamai_mtlstruststore_ca_set_activation.test",
 					ImportStateVerifyIdentifierAttribute: "id",
 					ImportStatePersist:                   true,
-					ExpectError:                          regexp.MustCompile("Error: Invalid Import ID Format"),
+					ExpectError:                          regexp.MustCompile("Error: Invalid import ID format"),
 				},
 			},
 		},
@@ -975,7 +975,7 @@ func TestCASetActivationResource(t *testing.T) {
 					ResourceName:                         "akamai_mtlstruststore_ca_set_activation.test",
 					ImportStateVerifyIdentifierAttribute: "id",
 					ImportStatePersist:                   true,
-					ExpectError:                          regexp.MustCompile("Error: Invalid Network"),
+					ExpectError:                          regexp.MustCompile("Error: Invalid network"),
 				},
 			},
 		},
@@ -988,7 +988,7 @@ func TestCASetActivationResource(t *testing.T) {
 					ResourceName:                         "akamai_mtlstruststore_ca_set_activation.test",
 					ImportStateVerifyIdentifierAttribute: "id",
 					ImportStatePersist:                   true,
-					ExpectError:                          regexp.MustCompile("Error: Invalid CA Set ID"),
+					ExpectError:                          regexp.MustCompile("Error: Invalid CA set ID"),
 				},
 			},
 		},
@@ -1141,7 +1141,7 @@ func mockListCASetVersionActivationsDrift(client *mtlstruststore.Mock, testData 
 				ModifiedDate:     ptr.To(time.Date(2023, time.January, 1, 0, 0, 0, 0, time.UTC)),
 			},
 		}
-	} else { //after drift.
+	} else { // after drift.
 		activations = []mtlstruststore.ActivateCASetVersionResponse{
 			{
 				ActivationID:     1,

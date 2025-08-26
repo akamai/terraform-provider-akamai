@@ -276,7 +276,7 @@ func TestCASetActivationsDataSource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestDataCASetActivations/id_name.tf"),
-					ExpectError: regexp.MustCompile(`2 attributes specified when one \(and only one\) of \[ca_set_name,ca_set_id\] is\nrequired`),
+					ExpectError: regexp.MustCompile(`2 attributes specified when one \(and only one\) of \[ca_set_name,ca_set_id] is\nrequired`),
 				},
 			},
 		},

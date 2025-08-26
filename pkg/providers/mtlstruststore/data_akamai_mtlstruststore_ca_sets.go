@@ -3,9 +3,9 @@ package mtlstruststore
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/mtlstruststore"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/framework/date"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -60,7 +60,7 @@ func (d *caSetsDataSource) Schema(_ context.Context, _ datasource.SchemaRequest,
 				Optional:    true,
 			},
 			"activated_on": schema.StringAttribute{
-				Description: "When provided it filters where CA sets were activated `INACTIVE`, `STAGING`, `PRODUCTION`, `STAGING+PRODUCTION`, `PRODUCTION+STAGING`, `STAGING,PRODUCTION`, `PRODUCTION,STAGING` network.",
+				Description: "When provided it filters where CA sets were activated 'INACTIVE', 'STAGING', 'PRODUCTION', 'STAGING+PRODUCTION', 'PRODUCTION+STAGING', 'STAGING,PRODUCTION', 'PRODUCTION,STAGING' network.",
 				Optional:    true,
 				Validators:  []validator.String{stringvalidator.OneOf("INACTIVE", "STAGING", "PRODUCTION", "STAGING+PRODUCTION", "PRODUCTION+STAGING", "STAGING,PRODUCTION", "PRODUCTION,STAGING", "")},
 			},
@@ -102,7 +102,7 @@ func (d *caSetsDataSource) Schema(_ context.Context, _ datasource.SchemaRequest,
 							Computed:    true,
 						},
 						"status": schema.StringAttribute{
-							Description: "Indicates if the CA set was deleted.",
+							Description: "Indicates if the CA set was deleted, either 'NOT_DELETED', 'DELETING', or 'DELETED'.",
 							Computed:    true,
 						},
 						"latest_version": schema.Int64Attribute{
@@ -110,11 +110,11 @@ func (d *caSetsDataSource) Schema(_ context.Context, _ datasource.SchemaRequest,
 							Computed:    true,
 						},
 						"production_version": schema.Int64Attribute{
-							Description: "The CA set version activated on the `PRODUCTION` network.",
+							Description: "The CA set version activated on the 'PRODUCTION' network.",
 							Computed:    true,
 						},
 						"staging_version": schema.Int64Attribute{
-							Description: "The CA set version activated on the `STAGING` network.",
+							Description: "The CA set version activated on the 'STAGING' network.",
 							Computed:    true,
 						},
 					},
@@ -165,22 +165,19 @@ func (d *caSetsDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 
 func (m *caSetsDataSourceModel) convertCASetsToModel(caSets mtlstruststore.ListCASetsResponse) {
 	for _, caSet := range caSets.CASets {
-		caSetModel := caSetModel{
+		m.CASets = append(m.CASets, caSetModel{
 			AccountID:         types.StringValue(caSet.AccountID),
 			ID:                types.StringValue(caSet.CASetID),
 			Name:              types.StringValue(caSet.CASetName),
 			CreatedBy:         types.StringValue(caSet.CreatedBy),
-			CreatedDate:       types.StringValue(caSet.CreatedDate.Format(time.RFC3339Nano)),
+			CreatedDate:       date.TimeRFC3339NanoValue(caSet.CreatedDate),
 			Description:       types.StringPointerValue(caSet.Description),
 			Status:            types.StringValue(caSet.CASetStatus),
 			DeletedBy:         types.StringPointerValue(caSet.DeletedBy),
+			DeletedDate:       date.TimeRFC3339NanoPointerValue(caSet.DeletedDate),
 			LatestVersion:     types.Int64PointerValue(caSet.LatestVersion),
 			StagingVersion:    types.Int64PointerValue(caSet.StagingVersion),
 			ProductionVersion: types.Int64PointerValue(caSet.ProductionVersion),
-		}
-		if caSet.DeletedDate != nil {
-			caSetModel.DeletedDate = types.StringValue(caSet.DeletedDate.Format(time.RFC3339Nano))
-		}
-		m.CASets = append(m.CASets, caSetModel)
+		})
 	}
 }

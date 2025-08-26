@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/mtlstruststore"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/framework/date"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -81,7 +82,7 @@ func (d *caSetActivitiesDataSource) Schema(_ context.Context, _ datasource.Schem
 		Description: "Retrieve activities for a specific MTLS Truststore CA Set.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				Description: "Identifies each CA set. Either `id` or `name` must be provided.",
+				Description: "Identifies each CA set. Either 'id' or 'name' must be provided.",
 				Optional:    true,
 				Computed:    true,
 				Validators: []validator.String{
@@ -90,7 +91,7 @@ func (d *caSetActivitiesDataSource) Schema(_ context.Context, _ datasource.Schem
 				},
 			},
 			"name": schema.StringAttribute{
-				Description: "The name of the CA set. Either `id` or `name` must be provided.",
+				Description: "The name of the CA set. Either 'id' or 'name' must be provided.",
 				Optional:    true,
 				Computed:    true,
 				Validators: []validator.String{
@@ -223,30 +224,25 @@ func convertDataToModel(activities mtlstruststore.ListCASetActivitiesResponse) c
 	data := caSetActivitiesDataSourceModel{
 		ID:          types.StringValue(activities.CASetID),
 		Name:        types.StringValue(activities.CASetName),
-		CreatedDate: types.StringValue(activities.CreatedDate.Format(time.RFC3339Nano)),
+		CreatedDate: date.TimeRFC3339NanoValue(activities.CreatedDate),
 		CreatedBy:   types.StringValue(activities.CreatedBy),
 		Status:      types.StringValue(activities.CASetStatus),
 		DeletedBy:   types.StringPointerValue(activities.DeletedBy),
+		DeletedDate: date.TimeRFC3339NanoPointerValue(activities.DeletedDate),
 	}
 
-	if activities.DeletedDate != nil {
-		data.DeletedDate = types.StringValue(activities.DeletedDate.Format(time.RFC3339Nano))
-	}
-
-	activitiesModel := make([]activityModel, len(activities.Activities))
-	for i, activity := range activities.Activities {
-		am := activityModel{
+	activitiesModel := make([]activityModel, 0, len(activities.Activities))
+	for _, activity := range activities.Activities {
+		activitiesModel = append(activitiesModel, activityModel{
 			Type:         types.StringValue(activity.Type),
-			ActivityDate: types.StringValue(activity.ActivityDate.Format(time.RFC3339Nano)),
+			ActivityDate: date.TimeRFC3339NanoValue(activity.ActivityDate),
 			ActivityBy:   types.StringValue(activity.ActivityBy),
 			Network:      types.StringPointerValue(activity.Network),
 			Version:      types.Int64PointerValue(activity.Version),
-		}
-		activitiesModel[i] = am
+		})
 	}
 
 	data.Activities = activitiesModel
-
 	return data
 }
 
@@ -291,7 +287,7 @@ func findNotDeletedCASet(ctx context.Context, client mtlstruststore.MTLSTruststo
 		CASetNamePrefix: caSetName,
 	})
 	if err != nil {
-		return mtlstruststore.CASetResponse{}, fmt.Errorf("could not find CA Set ID for the given CA Set Name '%s', API error: %w", caSetName, err)
+		return mtlstruststore.CASetResponse{}, fmt.Errorf("could not find CA Set ID for the given CA set name '%s', API error: %w", caSetName, err)
 	}
 
 	var matchingSets []mtlstruststore.CASetResponse

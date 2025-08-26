@@ -12,6 +12,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/mtlstruststore"
 	"github.com/akamai/terraform-provider-akamai/v8/internal/customtypes"
 	"github.com/akamai/terraform-provider-akamai/v8/internal/text"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/framework/date"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/framework/modifiers"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/framework/schema/nullstringdefault"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
@@ -102,19 +103,21 @@ func (r *caSetResource) Schema(ctx context.Context, _ resource.SchemaRequest, re
 				Required:    true,
 				Description: "The name of the CA set.",
 				Validators: []validator.String{
-					stringvalidator.LengthAtLeast(3),
+					stringvalidator.RegexMatches(regexp.MustCompile(`\S{3,}`), "must not be empty or only whitespace"),
 					stringvalidator.LengthAtMost(64),
 					stringvalidator.RegexMatches(regexp.MustCompile(mtlstruststore.CASetNamePattern), "allowed characters are alphanumerics (a-z, A-Z, 0-9), underscore (_), hyphen (-), percent (%) and period (.)"),
 				},
 				PlanModifiers: []planmodifier.String{modifiers.PreventStringUpdate()},
 			},
 			"description": schema.StringAttribute{
-				Optional:      true,
-				Computed:      true,
-				Validators:    []validator.String{stringvalidator.LengthAtMost(255)},
-				PlanModifiers: []planmodifier.String{modifiers.PreventStringUpdate()},
-				Default:       nullstringdefault.NullString(),
-				Description:   "Any additional comments you can add to the CA set.",
+				Optional:   true,
+				Computed:   true,
+				Validators: []validator.String{stringvalidator.LengthAtMost(255)},
+				PlanModifiers: []planmodifier.String{
+					modifiers.PreventStringUpdate(),
+				},
+				Default:     nullstringdefault.NullString(),
+				Description: "Any additional comments you can add to the CA set.",
 			},
 			"account_id": schema.StringAttribute{
 				Computed: true,
@@ -166,9 +169,11 @@ func (r *caSetResource) Schema(ctx context.Context, _ resource.SchemaRequest, re
 				Description: "Allows certificates with SHA-1 signatures if enabled.",
 			},
 			"version_description": schema.StringAttribute{
-				Optional:    true,
-				Computed:    true,
-				Validators:  []validator.String{stringvalidator.LengthAtMost(255)},
+				Optional: true,
+				Computed: true,
+				Validators: []validator.String{
+					stringvalidator.LengthAtMost(255),
+				},
 				Default:     nullstringdefault.NullString(),
 				Description: "Additional description for the CA set version.",
 			},
@@ -189,7 +194,7 @@ func (r *caSetResource) Schema(ctx context.Context, _ resource.SchemaRequest, re
 		Blocks: map[string]schema.Block{
 			"timeouts": timeouts.Block(ctx, timeouts.Opts{
 				Delete:            true,
-				DeleteDescription: "Optional configurable resource delete timeout. By default it's 1h with 15m polling interval.",
+				DeleteDescription: "Optional configurable resource delete timeout. By default it's 1h.",
 			}),
 		},
 	}
@@ -197,8 +202,10 @@ func (r *caSetResource) Schema(ctx context.Context, _ resource.SchemaRequest, re
 
 func certificatesSchema() schema.SetNestedAttribute {
 	return schema.SetNestedAttribute{
-		Required:    true,
-		Validators:  []validator.Set{setvalidator.SizeBetween(1, 300)},
+		Required: true,
+		Validators: []validator.Set{
+			setvalidator.SizeBetween(1, 300),
+		},
 		Description: "The certificates that are valid, non-expired, root, or intermediate.",
 		NestedObject: schema.NestedAttributeObject{
 			Attributes: map[string]schema.Attribute{
@@ -289,8 +296,8 @@ func (r *caSetResource) ValidateConfig(ctx context.Context, req resource.Validat
 		resp.Diagnostics.AddAttributeError(path.Root("name"), "Invalid CA set name", "CA set name cannot contain three consecutive periods (...)")
 		return
 	}
-	client = Client(r.meta)
 
+	client = Client(r.meta)
 	if diags := validateCerts(ctx, client, &config); diags.HasError() {
 		resp.Diagnostics.Append(diags...)
 		return
@@ -393,7 +400,7 @@ func generateDiagnosticForValidationWarnings(validation mtlstruststore.Validatio
 //nolint:gocyclo
 func (r *caSetResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
 	if modifiers.IsDelete(req) {
-		// Verify if ca set is in use before deleting.
+		// Verify if CA set is in use before deleting.
 		var state *caSetResourceModel
 		resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 		if resp.Diagnostics.HasError() {
@@ -410,7 +417,7 @@ func (r *caSetResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanR
 				tflog.Debug(ctx, "CA set is not found, we can mark the resource as deleted")
 				return
 			}
-			resp.Diagnostics.AddError("ca set resource ModifyPlan failed", err.Error())
+			resp.Diagnostics.AddError("CA set resource ModifyPlan failed", err.Error())
 			return
 		}
 		if len(associationsResponse.Associations.Enrollments) > 0 || len(associationsResponse.Associations.Properties) > 0 {
@@ -519,7 +526,7 @@ func isActivationForVersion(ctx context.Context, client mtlstruststore.MTLSTrust
 		CASetID: caSetID,
 	})
 	if err != nil {
-		return false, fmt.Errorf("list ca set activations failed: %w", err)
+		return false, fmt.Errorf("list CA set activations failed: %w", err)
 	}
 	for _, activation := range activations.Activations {
 		if activation.Version == version {
@@ -537,7 +544,7 @@ func getAssociationDetails(associationsResponse *mtlstruststore.ListCASetAssocia
 			if i > 0 {
 				details += ", "
 			}
-			details += fmt.Sprintf("%s (%d)", enrollment.CN, enrollment.EnrollmentID)
+			details += fmt.Sprintf("'%s' (%d)", enrollment.CN, enrollment.EnrollmentID)
 		}
 		details += "\n"
 	} else {
@@ -550,7 +557,7 @@ func getAssociationDetails(associationsResponse *mtlstruststore.ListCASetAssocia
 			if property.PropertyName != nil {
 				propertyName = *property.PropertyName
 			}
-			details += fmt.Sprintf("%s (%s)", propertyName, property.PropertyID)
+			details += fmt.Sprintf("'%s' (%s)", propertyName, property.PropertyID)
 		}
 	}
 	return details
@@ -660,7 +667,7 @@ func (r *caSetResource) create(ctx context.Context, plan *caSetResourceModel) (*
 		Description: plan.Description.ValueStringPointer(),
 	})
 	if err != nil {
-		return nil, diag.Diagnostics{diag.NewErrorDiagnostic("create ca set failed", err.Error())}
+		return nil, diag.Diagnostics{diag.NewErrorDiagnostic("create CA set failed", err.Error())}
 	}
 
 	result.caSet = createCASetResponse
@@ -681,7 +688,7 @@ func (r *caSetResource) create(ctx context.Context, plan *caSetResourceModel) (*
 		},
 	})
 	if err != nil {
-		return &result, diag.Diagnostics{diag.NewErrorDiagnostic("create ca set version failed", err.Error())}
+		return &result, diag.Diagnostics{diag.NewErrorDiagnostic("create CA set version failed", err.Error())}
 	}
 
 	result.caSetVersion = createCASetVersionResponse
@@ -695,7 +702,7 @@ func (r *caSetResource) create(ctx context.Context, plan *caSetResourceModel) (*
 		CASetID: createCASetResponse.CASetID,
 	})
 	if err != nil {
-		return &result, diag.Diagnostics{diag.NewErrorDiagnostic("get ca set failed", err.Error())}
+		return &result, diag.Diagnostics{diag.NewErrorDiagnostic("get CA set failed", err.Error())}
 	}
 
 	result.caSet = (*mtlstruststore.CreateCASetResponse)(getCASetResponse)
@@ -773,7 +780,7 @@ func (r *caSetResource) Read(ctx context.Context, req resource.ReadRequest, resp
 			resp.State.RemoveResource(ctx)
 			return
 		}
-		resp.Diagnostics.AddError("read ca set error", err.Error())
+		resp.Diagnostics.AddError("read CA set error", err.Error())
 		return
 	}
 	state.setCASetData((*mtlstruststore.CASetResponse)(caSetResp))
@@ -798,7 +805,7 @@ func (r *caSetResource) Read(ctx context.Context, req resource.ReadRequest, resp
 			resp.State.RemoveResource(ctx)
 			return
 		}
-		resp.Diagnostics.AddError("read ca set error", err.Error())
+		resp.Diagnostics.AddError("read CA set error", err.Error())
 		return
 	}
 
@@ -872,7 +879,7 @@ func (r *caSetResource) update(ctx context.Context, plan, state *caSetResourceMo
 			Version: state.LatestVersion.ValueInt64(),
 		})
 		if err != nil {
-			return diag.Diagnostics{diag.NewErrorDiagnostic("clone ca set version failed", err.Error())}
+			return diag.Diagnostics{diag.NewErrorDiagnostic("clone CA set version failed", err.Error())}
 		}
 		if clonedCASetVersionResp.Validation != nil && len(clonedCASetVersionResp.Validation.Warnings) > 0 {
 			tflog.Warn(ctx, "CA set version cloning has warnings", map[string]any{
@@ -901,7 +908,7 @@ func (r *caSetResource) update(ctx context.Context, plan, state *caSetResourceMo
 		},
 	})
 	if err != nil {
-		return diag.Diagnostics{diag.NewErrorDiagnostic("update ca set version failed", err.Error())}
+		return diag.Diagnostics{diag.NewErrorDiagnostic("update CA set version failed", err.Error())}
 	}
 
 	plan.StagingVersion = state.StagingVersion
@@ -928,7 +935,7 @@ func (r *caSetResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 			tflog.Debug(ctx, "CA set is not found, we can mark the resource as deleted")
 			return
 		}
-		resp.Diagnostics.AddError("delete ca set resource failed", err.Error())
+		resp.Diagnostics.AddError("delete CA set resource failed", err.Error())
 		return
 	}
 	if len(associationsResponse.Associations.Enrollments) > 0 || len(associationsResponse.Associations.Properties) > 0 {
@@ -940,7 +947,7 @@ func (r *caSetResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 		CASetID: state.ID.ValueString(),
 	})
 	if err != nil {
-		resp.Diagnostics.AddError(fmt.Sprintf("get ca set %s failed", state.ID.ValueString()), err.Error())
+		resp.Diagnostics.AddError(fmt.Sprintf("get CA set %s failed", state.ID.ValueString()), err.Error())
 		return
 	}
 
@@ -955,7 +962,7 @@ func (r *caSetResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 		if err := client.DeleteCASet(ctx, mtlstruststore.DeleteCASetRequest{
 			CASetID: state.ID.ValueString(),
 		}); err != nil {
-			resp.Diagnostics.AddError(fmt.Sprintf("delete ca set %s failed", state.ID.ValueString()), err.Error())
+			resp.Diagnostics.AddError(fmt.Sprintf("delete CA set %s failed", state.ID.ValueString()), err.Error())
 			return
 		}
 	}
@@ -980,7 +987,7 @@ func (r *caSetResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 				CASetID: state.ID.ValueString(),
 			})
 			if err != nil {
-				resp.Diagnostics.AddError(fmt.Sprintf("get ca set %s deletion status failed", state.ID.ValueString()), err.Error())
+				resp.Diagnostics.AddError(fmt.Sprintf("get CA set %s deletion status failed", state.ID.ValueString()), err.Error())
 				return
 			}
 
@@ -988,7 +995,7 @@ func (r *caSetResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 			case mtlstruststore.DeletionStatusComplete:
 				deleteInProgress = false
 			case mtlstruststore.DeletionStatusInProgress:
-				tflog.Debug(ctx, fmt.Sprintf("delete ca set %s in progress", state.ID.ValueString()))
+				tflog.Debug(ctx, fmt.Sprintf("delete CA set %s in progress", state.ID.ValueString()))
 				if !status.RetryAfter.IsZero() {
 					CASetDeleteStatusPollInterval = time.Until(status.RetryAfter)
 				} else {
@@ -1002,11 +1009,11 @@ func (r *caSetResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 					reason = *status.FailureReason
 				}
 
-				resp.Diagnostics.AddError(fmt.Sprintf("delete ca set %s failed", state.ID.ValueString()), "contact support team to resolve the issue. "+reason)
+				resp.Diagnostics.AddError(fmt.Sprintf("delete CA set %s failed", state.ID.ValueString()), "contact support team to resolve the issue. "+reason)
 				return
 			}
 		case <-ctx.Done():
-			resp.Diagnostics.AddError("delete ca set context terminated", ctx.Err().Error())
+			resp.Diagnostics.AddError("delete CA set context terminated", ctx.Err().Error())
 			return
 		}
 	}
@@ -1026,11 +1033,11 @@ func (r *caSetResource) ImportState(ctx context.Context, req resource.ImportStat
 		CASetID: caSetID,
 	})
 	if err != nil {
-		resp.Diagnostics.AddError("import ca set resource failed", err.Error())
+		resp.Diagnostics.AddError("import CA set resource failed", err.Error())
 		return
 	}
 	if caSetResp.LatestVersion == nil {
-		resp.Diagnostics.AddError("It is not possible to import ca set without version", "The CA set does not have any version")
+		resp.Diagnostics.AddError("It is not possible to import CA set without version", "The CA set does not have any version")
 		return
 	}
 
@@ -1039,7 +1046,7 @@ func (r *caSetResource) ImportState(ctx context.Context, req resource.ImportStat
 		Version: *caSetResp.LatestVersion,
 	})
 	if err != nil {
-		resp.Diagnostics.AddError("read ca set version error", err.Error())
+		resp.Diagnostics.AddError("read CA set version error", err.Error())
 		return
 	}
 
@@ -1074,7 +1081,7 @@ func (m *caSetResourceModel) setCASetData(caSetResp *mtlstruststore.CASetRespons
 	m.ID = types.StringValue(caSetResp.CASetID)
 	m.Name = types.StringValue(caSetResp.CASetName)
 	m.CreatedBy = types.StringValue(caSetResp.CreatedBy)
-	m.CreatedDate = types.StringValue(caSetResp.CreatedDate.Format(time.RFC3339Nano))
+	m.CreatedDate = date.TimeRFC3339NanoValue(caSetResp.CreatedDate)
 	m.AccountID = types.StringValue(caSetResp.AccountID)
 	m.Description = types.StringPointerValue(caSetResp.Description)
 	m.LatestVersion = types.Int64PointerValue(caSetResp.LatestVersion)
@@ -1086,13 +1093,9 @@ func (m *caSetResourceModel) setCASetVersionData(ctx context.Context, caSetVersi
 	m.AllowInsecureSHA1 = types.BoolValue(caSetVersionResp.AllowInsecureSHA1)
 	m.VersionDescription = types.StringPointerValue(caSetVersionResp.Description)
 	m.VersionModifiedBy = types.StringPointerValue(caSetVersionResp.ModifiedBy)
-	if caSetVersionResp.ModifiedDate == nil {
-		m.VersionModifiedDate = types.StringNull()
-	} else {
-		m.VersionModifiedDate = types.StringValue(caSetVersionResp.ModifiedDate.Format(time.RFC3339Nano))
-	}
+	m.VersionModifiedDate = date.TimeRFC3339NanoPointerValue(caSetVersionResp.ModifiedDate)
 	m.VersionCreatedBy = types.StringValue(caSetVersionResp.CreatedBy)
-	m.VersionCreatedDate = types.StringValue(caSetVersionResp.CreatedDate.Format(time.RFC3339Nano))
+	m.VersionCreatedDate = date.TimeRFC3339NanoValue(caSetVersionResp.CreatedDate)
 
 	return m.setCertificates(ctx, caSetVersionResp, nil)
 }
@@ -1109,9 +1112,9 @@ func (m *caSetResourceModel) setCertificates(ctx context.Context, caSetVersion *
 			CertificatePEM:     customtypes.NewIgnoreTrailingWhitespaceValue(pem),
 			Description:        types.StringPointerValue(cert.Description),
 			CreatedBy:          types.StringValue(cert.CreatedBy),
-			CreatedDate:        types.StringValue(cert.CreatedDate.Format(time.RFC3339Nano)),
-			StartDate:          types.StringValue(cert.StartDate.Format(time.RFC3339Nano)),
-			EndDate:            types.StringValue(cert.EndDate.Format(time.RFC3339Nano)),
+			CreatedDate:        date.TimeRFC3339NanoValue(cert.CreatedDate),
+			StartDate:          date.TimeRFC3339NanoValue(cert.StartDate),
+			EndDate:            date.TimeRFC3339NanoValue(cert.EndDate),
 			Fingerprint:        types.StringValue(cert.Fingerprint),
 			Issuer:             types.StringValue(cert.Issuer),
 			SerialNumber:       types.StringValue(cert.SerialNumber),

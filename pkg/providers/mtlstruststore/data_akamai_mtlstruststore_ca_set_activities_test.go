@@ -188,7 +188,7 @@ func TestCASetActivitiesDataSource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, testDir+"no_fields.tf"),
-					ExpectError: regexp.MustCompile(`No attribute specified when one \(and only one\) of \[id,name\] is\s+required`),
+					ExpectError: regexp.MustCompile(`No attribute specified when one \(and only one\) of \[id,name] is\s+required`),
 				},
 			},
 		},
@@ -196,7 +196,7 @@ func TestCASetActivitiesDataSource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, testDir+"id_name.tf"),
-					ExpectError: regexp.MustCompile(`2 attributes specified when one \(and only one\) of \[name,id\] is\s+required`),
+					ExpectError: regexp.MustCompile(`2 attributes specified when one \(and only one\) of \[name,id] is\s+required`),
 				},
 			},
 		},

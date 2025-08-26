@@ -420,7 +420,7 @@ func TestCASetVersionsDataSource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestDataCASetVersions/empty_name.tf"),
-					ExpectError: regexp.MustCompile("Attribute name string length must be at least 1, got: 0"),
+					ExpectError: regexp.MustCompile(`Attribute name must not be empty or only whitespace`),
 				},
 			},
 		},
@@ -450,7 +450,7 @@ func TestCASetVersionsDataSource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestDataCASetVersions/empty.tf"),
-					ExpectError: regexp.MustCompile(`No attribute specified when one \(and only one\) of \[id,name\] is\s+required`),
+					ExpectError: regexp.MustCompile(`No attribute specified when one \(and only one\) of \[id,name] is\s+required`),
 				},
 			},
 		},
@@ -458,7 +458,7 @@ func TestCASetVersionsDataSource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestDataCASetVersions/id_name.tf"),
-					ExpectError: regexp.MustCompile(`2 attributes specified when one \(and only one\) of \[name,id\] is\s+required`),
+					ExpectError: regexp.MustCompile(`2 attributes specified when one \(and only one\) of \[name,id] is\s+required`),
 				},
 			},
 		},

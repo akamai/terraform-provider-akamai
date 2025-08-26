@@ -3,10 +3,11 @@ package mtlstruststore
 import (
 	"context"
 	"fmt"
-	"time"
+	"regexp"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/mtlstruststore"
 	"github.com/akamai/terraform-provider-akamai/v8/internal/customtypes"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/framework/date"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -95,11 +96,11 @@ func (d *caSetDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, 
 				Computed:    true,
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(path.MatchRoot("id"), path.MatchRoot("name")),
-					stringvalidator.LengthAtLeast(1),
+					stringvalidator.RegexMatches(regexp.MustCompile(`\S{3,}`), "must not be empty or only whitespace"),
 				},
 			},
 			"version": schema.Int64Attribute{
-				Description: "When provided, it defines which version's details to provide. If not, the latest version is used",
+				Description: "When provided, it defines which version's details to provide. If not, the latest version is used.",
 				Optional:    true,
 				Computed:    true,
 			},
@@ -156,7 +157,7 @@ func (d *caSetDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, 
 				Computed:    true,
 			},
 			"production_version": schema.Int64Attribute{
-				Description: "Version  of the CA set that is active on production.",
+				Description: "Version number of the CA set that is active on production.",
 				Computed:    true,
 			},
 			"certificates": schema.ListNestedAttribute{
@@ -283,17 +284,12 @@ func convertCASetDataToModel(caSet *mtlstruststore.GetCASetResponse, caSetVersio
 		Description:       types.StringPointerValue(caSet.Description),
 		AccountID:         types.StringValue(caSet.AccountID),
 		CreatedBy:         types.StringValue(caSet.CreatedBy),
-		CreatedDate:       types.StringValue(caSet.CreatedDate.Format(time.RFC3339Nano)),
+		CreatedDate:       date.TimeRFC3339NanoValue(caSet.CreatedDate),
 		Version:           types.Int64PointerValue(caSet.LatestVersion),
 		StagingVersion:    types.Int64PointerValue(caSet.StagingVersion),
 		ProductionVersion: types.Int64PointerValue(caSet.ProductionVersion),
 		DeletedBy:         types.StringPointerValue(caSet.DeletedBy),
-	}
-
-	if caSet.DeletedDate != nil {
-		model.DeletedDate = types.StringValue(caSet.DeletedDate.Format(time.RFC3339Nano))
-	} else {
-		model.DeletedDate = types.StringNull()
+		DeletedDate:       date.TimeRFC3339NanoPointerValue(caSet.DeletedDate),
 	}
 
 	if caSetVersion != nil {
@@ -307,14 +303,9 @@ func (m *caSetDataSourceModel) setCASetVersionData(v *mtlstruststore.GetCASetVer
 	m.AllowInsecureSHA1 = types.BoolValue(v.AllowInsecureSHA1)
 	m.VersionDescription = types.StringPointerValue(v.Description)
 	m.VersionCreatedBy = types.StringValue(v.CreatedBy)
-	m.VersionCreatedDate = types.StringValue(v.CreatedDate.Format(time.RFC3339Nano))
+	m.VersionCreatedDate = date.TimeRFC3339NanoValue(v.CreatedDate)
 	m.VersionModifiedBy = types.StringPointerValue(v.ModifiedBy)
-
-	if v.ModifiedDate != nil {
-		m.VersionModifiedDate = types.StringValue(v.ModifiedDate.Format(time.RFC3339Nano))
-	} else {
-		m.VersionModifiedDate = types.StringNull()
-	}
+	m.VersionModifiedDate = date.TimeRFC3339NanoPointerValue(v.ModifiedDate)
 
 	certificates := make([]certificateModel, len(v.Certificates))
 	for i, cert := range v.Certificates {
@@ -322,9 +313,9 @@ func (m *caSetDataSourceModel) setCASetVersionData(v *mtlstruststore.GetCASetVer
 			CertificatePEM:     customtypes.NewIgnoreTrailingWhitespaceValue(cert.CertificatePEM),
 			Description:        types.StringPointerValue(cert.Description),
 			CreatedBy:          types.StringValue(cert.CreatedBy),
-			CreatedDate:        types.StringValue(cert.CreatedDate.Format(time.RFC3339Nano)),
-			StartDate:          types.StringValue(cert.StartDate.Format(time.RFC3339Nano)),
-			EndDate:            types.StringValue(cert.EndDate.Format(time.RFC3339Nano)),
+			CreatedDate:        date.TimeRFC3339NanoValue(cert.CreatedDate),
+			StartDate:          date.TimeRFC3339NanoValue(cert.StartDate),
+			EndDate:            date.TimeRFC3339NanoValue(cert.EndDate),
 			Fingerprint:        types.StringValue(cert.Fingerprint),
 			Issuer:             types.StringValue(cert.Issuer),
 			SerialNumber:       types.StringValue(cert.SerialNumber),

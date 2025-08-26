@@ -3,10 +3,11 @@ package mtlstruststore
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strings"
-	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/mtlstruststore"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/framework/date"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -84,7 +85,7 @@ func (d *caSetActivationsDataSource) Schema(_ context.Context, _ datasource.Sche
 			"ca_set_id": schema.StringAttribute{
 				Optional:    true,
 				Computed:    true,
-				Description: "CA set identifier that filters out the activations or deactivations. Either `ca_set_id` or `ca_set_name` must be provided.",
+				Description: "CA set identifier that filters out the activations or deactivations. Either 'ca_set_id' or 'ca_set_name' must be provided.",
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(path.MatchRoot("ca_set_name"), path.MatchRoot("ca_set_id")),
 					stringvalidator.LengthAtLeast(1),
@@ -93,10 +94,10 @@ func (d *caSetActivationsDataSource) Schema(_ context.Context, _ datasource.Sche
 			"ca_set_name": schema.StringAttribute{
 				Optional:    true,
 				Computed:    true,
-				Description: "The name of the CA set. Either `ca_set_id` or `ca_set_name` must be provided.",
+				Description: "The name of the CA set. Either 'ca_set_id' or 'ca_set_name' must be provided.",
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(path.MatchRoot("ca_set_name"), path.MatchRoot("ca_set_id")),
-					stringvalidator.LengthAtLeast(1),
+					stringvalidator.RegexMatches(regexp.MustCompile(`\S{3,}`), "must not be empty or only whitespace"),
 				},
 			},
 			"network": schema.StringAttribute{
@@ -215,23 +216,17 @@ func (d *caSetActivationsDataSource) Read(ctx context.Context, req datasource.Re
 }
 
 func convertCASetActivationDataToModel(act mtlstruststore.ActivateCASetVersionResponse) activationModel {
-	actModel := activationModel{
-		ID:          types.Int64Value(act.ActivationID),
-		Version:     types.Int64Value(act.Version),
-		Network:     types.StringValue(act.Network),
-		CreatedBy:   types.StringValue(act.CreatedBy),
-		CreatedDate: types.StringValue(act.CreatedDate.Format(time.RFC3339Nano)),
-		ModifiedBy:  types.StringPointerValue(act.ModifiedBy),
-		Status:      types.StringValue(act.ActivationStatus),
-		Type:        types.StringValue(act.ActivationType),
+	return activationModel{
+		ID:           types.Int64Value(act.ActivationID),
+		Version:      types.Int64Value(act.Version),
+		Network:      types.StringValue(act.Network),
+		CreatedBy:    types.StringValue(act.CreatedBy),
+		CreatedDate:  date.TimeRFC3339NanoValue(act.CreatedDate),
+		ModifiedBy:   types.StringPointerValue(act.ModifiedBy),
+		ModifiedDate: date.TimeRFC3339NanoPointerValue(act.ModifiedDate),
+		Status:       types.StringValue(act.ActivationStatus),
+		Type:         types.StringValue(act.ActivationType),
 	}
-	if act.ModifiedDate != nil {
-		actModel.ModifiedDate = types.StringValue(act.ModifiedDate.Format(time.RFC3339Nano))
-	} else {
-		actModel.ModifiedDate = types.StringNull()
-	}
-
-	return actModel
 }
 
 type activationFilter struct {

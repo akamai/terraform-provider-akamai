@@ -241,7 +241,7 @@ func TestCASetDataSource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, testDir+"id_name.tf"),
-					ExpectError: regexp.MustCompile(`2 attributes specified when one \(and only one\) of \[id,name\] is required`),
+					ExpectError: regexp.MustCompile(`2 attributes specified when one \(and only one\) of \[id,name] is required`),
 				},
 			},
 		},

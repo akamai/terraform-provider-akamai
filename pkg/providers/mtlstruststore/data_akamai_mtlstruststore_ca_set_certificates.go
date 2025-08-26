@@ -75,6 +75,7 @@ func (d *caSetCertificatesDataSource) ValidateConfig(ctx context.Context, req da
 				"Invalid expiring timestamp",
 				fmt.Sprintf("The provided expiring timestamp '%s' is not a valid RFC3339 or RFC3339Nano formatted date", timestamp),
 			)
+			return
 		}
 		if parsedTimestamp.Before(time.Now()) {
 			resp.Diagnostics.AddAttributeError(
@@ -120,7 +121,7 @@ func (d *caSetCertificatesDataSource) Schema(_ context.Context, _ datasource.Sch
 		Description: "Retrieve CA certificates for a specific MTLS Truststore CA Set version.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				Description: "Identifies each CA set.",
+				Description: "Identifies each CA set. Either 'id' or 'name' must be provided.",
 				Optional:    true,
 				Computed:    true,
 				Validators: []validator.String{
@@ -129,12 +130,12 @@ func (d *caSetCertificatesDataSource) Schema(_ context.Context, _ datasource.Sch
 				},
 			},
 			"name": schema.StringAttribute{
-				Description: "The name of the CA set.",
+				Description: "The name of the CA set. Either 'id' or 'name' must be provided.",
 				Optional:    true,
 				Computed:    true,
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(path.MatchRoot("id"), path.MatchRoot("name")),
-					stringvalidator.RegexMatches(regexp.MustCompile(`\S`), "must not be empty or only whitespace"),
+					stringvalidator.RegexMatches(regexp.MustCompile(`\S{3,}`), "must not be empty or only whitespace"),
 				},
 			},
 			"version": schema.Int64Attribute{
@@ -377,9 +378,9 @@ func mapCertificatesResponseToModel(certificatesResp *mtlstruststore.GetCASetVer
 		Version: types.Int64Value(certificatesResp.Version),
 	}
 
-	certs := make([]certificateModel, len(certificatesResp.Certificates))
-	for i, cert := range certificatesResp.Certificates {
-		certs[i] = certificateModel{
+	certs := make([]certificateModel, 0, len(certificatesResp.Certificates))
+	for _, cert := range certificatesResp.Certificates {
+		certs = append(certs, certificateModel{
 			CertificatePEM:     customtypes.NewIgnoreTrailingWhitespaceValue(cert.CertificatePEM),
 			CreatedBy:          types.StringValue(cert.CreatedBy),
 			CreatedDate:        types.StringValue(cert.CreatedDate.Format(time.RFC3339)),
@@ -391,7 +392,7 @@ func mapCertificatesResponseToModel(certificatesResp *mtlstruststore.GetCASetVer
 			SignatureAlgorithm: types.StringValue(cert.SignatureAlgorithm),
 			StartDate:          types.StringValue(cert.StartDate.Format(time.RFC3339)),
 			Subject:            types.StringValue(cert.Subject),
-		}
+		})
 	}
 
 	data.Certificates = certs

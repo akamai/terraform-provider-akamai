@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/mtlstruststore"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/framework/date"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/framework/modifiers"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
@@ -62,7 +63,7 @@ type caSetActivationResourceModel struct {
 	Timeouts     timeouts.Value `tfsdk:"timeouts"`
 }
 
-type cASetActivationInfo struct {
+type caSetActivationInfo struct {
 	ExpectedType string
 	Label        string
 	CASetID      string
@@ -92,7 +93,7 @@ func (c *caSetActivationResource) Schema(ctx context.Context, _ resource.SchemaR
 			},
 			"network": schema.StringAttribute{
 				Required:      true,
-				Description:   "Indicates the network for any activation-related activities, either `STAGING` or `PRODUCTION`.",
+				Description:   "Indicates the network for any activation-related activities, either 'STAGING' or 'PRODUCTION'.",
 				PlanModifiers: []planmodifier.String{modifiers.PreventStringUpdate()},
 				Validators: []validator.String{
 					stringvalidator.OneOf("STAGING", "PRODUCTION"),
@@ -128,9 +129,9 @@ func (c *caSetActivationResource) Schema(ctx context.Context, _ resource.SchemaR
 				Delete:            true,
 				Update:            true,
 				Create:            true,
-				CreateDescription: "Optional configurable resource create timeout. By default it's 1h with 5s polling interval.",
-				DeleteDescription: "Optional configurable resource delete timeout. By default it's 1h with 5s polling interval.",
-				UpdateDescription: "Optional configurable resource update timeout. By default it's 1h with 5s polling interval.",
+				CreateDescription: "Optional configurable resource create timeout. By default it's 1h.",
+				DeleteDescription: "Optional configurable resource delete timeout. By default it's 1h.",
+				UpdateDescription: "Optional configurable resource update timeout. By default it's 1h.",
 			}),
 		},
 	}
@@ -170,7 +171,7 @@ func (c *caSetActivationResource) Create(ctx context.Context, req resource.Creat
 	}
 
 	if err := c.upsert(ctx, &plan, activationTimeout); err != nil {
-		resp.Diagnostics.AddError("create ca set activation failed", err.Error())
+		resp.Diagnostics.AddError("create CA set activation failed", err.Error())
 		return
 	}
 
@@ -206,7 +207,7 @@ func (c *caSetActivationResource) Update(ctx context.Context, req resource.Updat
 	}
 
 	if err := c.upsert(ctx, &plan, activationTimeout); err != nil {
-		resp.Diagnostics.AddError("update a ca set activation failed", err.Error())
+		resp.Diagnostics.AddError("update a CA set activation failed", err.Error())
 		return
 	}
 
@@ -267,6 +268,8 @@ func (c *caSetActivationResource) upsert(ctx context.Context, plan *caSetActivat
 		case "DEACTIVATE":
 			// Return error for ongoing deactivation.
 			return fmt.Errorf("deactivation in progress for version %d, cannot activate", ongoingActivation.Version)
+		default:
+			return fmt.Errorf("unsupported activation type %s", ongoingActivation.ActivationType)
 		}
 	} else {
 		// Create a new activation request.
@@ -280,7 +283,7 @@ func (c *caSetActivationResource) upsert(ctx context.Context, plan *caSetActivat
 		}
 	}
 
-	activationInfo := cASetActivationInfo{
+	activationInfo := caSetActivationInfo{
 		ExpectedType: "ACTIVATE",
 		Label:        "activation",
 		CASetID:      activation.CASetID,
@@ -310,7 +313,7 @@ func (c *caSetActivationResource) Read(ctx context.Context, req resource.ReadReq
 
 	shouldRemove, err := c.read(ctx, &state)
 	if err != nil {
-		resp.Diagnostics.AddError("read ca set activation failed", err.Error())
+		resp.Diagnostics.AddError("read CA set activation failed", err.Error())
 		return
 	}
 
@@ -422,6 +425,9 @@ func (c *caSetActivationResource) Delete(ctx context.Context, req resource.Delet
 			// Return error for ongoing activation.
 			resp.Diagnostics.AddError("Deactivation Error", fmt.Sprintf("activation in progress for version %d, cannot deactivate", ongoingOperation.Version))
 			return
+		default:
+			resp.Diagnostics.AddError("Deactivation Error", fmt.Sprintf("unsupported activation type %s", ongoingOperation.ActivationType))
+			return
 		}
 	} else {
 		// Create a new deactivation request.
@@ -436,7 +442,7 @@ func (c *caSetActivationResource) Delete(ctx context.Context, req resource.Delet
 		}
 	}
 
-	deactivationInfo := cASetActivationInfo{
+	deactivationInfo := caSetActivationInfo{
 		ExpectedType: "DEACTIVATE",
 		Label:        "deactivation",
 		CASetID:      caSetID,
@@ -489,7 +495,7 @@ func checkOngoingCASetOperation(ctx context.Context, client mtlstruststore.MTLST
 	return nil, nil
 }
 
-func waitForActivationOrDeactivation(ctx context.Context, timeout time.Duration, client mtlstruststore.MTLSTruststore, activation cASetActivationInfo) (*mtlstruststore.GetCASetVersionActivationResponse, error) {
+func waitForActivationOrDeactivation(ctx context.Context, timeout time.Duration, client mtlstruststore.MTLSTruststore, activation caSetActivationInfo) (*mtlstruststore.GetCASetVersionActivationResponse, error) {
 
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
@@ -541,7 +547,7 @@ func (c *caSetActivationResource) ImportState(ctx context.Context, req resource.
 	parts := strings.Split(req.ID, ":")
 	if len(parts) != 2 {
 		resp.Diagnostics.AddError(
-			"Invalid Import ID Format",
+			"Invalid import ID format",
 			fmt.Sprintf("Expected format: 'caSetID:network', got: %q", req.ID),
 		)
 		return
@@ -550,12 +556,12 @@ func (c *caSetActivationResource) ImportState(ctx context.Context, req resource.
 	caSetID, network := parts[0], parts[1]
 
 	if caSetID == "" {
-		resp.Diagnostics.AddError("Invalid CA Set ID", "CA Set ID cannot be empty.")
+		resp.Diagnostics.AddError("Invalid CA set ID", "CA set ID cannot be empty.")
 		return
 	}
 
 	if network != "STAGING" && network != "PRODUCTION" {
-		resp.Diagnostics.AddError("Invalid Network", fmt.Sprintf("Network must be 'STAGING' or 'PRODUCTION', got: %s", network))
+		resp.Diagnostics.AddError("Invalid network", fmt.Sprintf("Network must be 'STAGING' or 'PRODUCTION', got: %s", network))
 		return
 	}
 
@@ -591,7 +597,7 @@ func (c *caSetActivationResource) ImportState(ctx context.Context, req resource.
 	}
 
 	if activatedVersion == nil {
-		resp.Diagnostics.AddError("No Active CA Set", fmt.Sprintf("CA set ID %s is not active in %s network. Can only import completed activations.", caSetID, network))
+		resp.Diagnostics.AddError("No active CA set", fmt.Sprintf("CA set with ID %s is not active in the %s network. Only completed activations can be imported.", caSetID, network))
 		return
 	}
 
@@ -625,9 +631,9 @@ func (m *caSetActivationResourceModel) setActivateCASetActivationData(resp *mtls
 	m.ID = types.Int64Value(resp.ActivationID)
 	m.Version = types.Int64Value(resp.Version)
 	m.CreatedBy = types.StringValue(resp.CreatedBy)
-	m.CreatedDate = types.StringValue(resp.CreatedDate.Format(time.RFC3339Nano))
+	m.CreatedDate = date.TimeRFC3339NanoValue(resp.CreatedDate)
 	m.ModifiedBy = types.StringPointerValue(resp.ModifiedBy)
-	m.ModifiedDate = types.StringValue(resp.ModifiedDate.Format(time.RFC3339Nano))
+	m.ModifiedDate = date.TimeRFC3339NanoPointerValue(resp.ModifiedDate)
 }
 
 func (m *caSetActivationResourceModel) setCASetActivationData(resp *mtlstruststore.GetCASetVersionActivationResponse) {
@@ -635,14 +641,14 @@ func (m *caSetActivationResourceModel) setCASetActivationData(resp *mtlstruststo
 	m.ID = types.Int64Value(resp.ActivationID)
 	m.Version = types.Int64Value(resp.Version)
 	m.CreatedBy = types.StringValue(resp.CreatedBy)
-	m.CreatedDate = types.StringValue(resp.CreatedDate.Format(time.RFC3339Nano))
+	m.CreatedDate = date.TimeRFC3339NanoValue(resp.CreatedDate)
 	m.ModifiedBy = types.StringPointerValue(resp.ModifiedBy)
-	m.ModifiedDate = types.StringValue(resp.ModifiedDate.Format(time.RFC3339Nano))
+	m.ModifiedDate = date.TimeRFC3339NanoPointerValue(resp.ModifiedDate)
 }
 
 func (c *caSetActivationResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
 	if modifiers.IsDelete(req) {
-		// Verify if ca set version is active and is in use before deleting.
+		// Verify if CA set version is active and is in use before deleting.
 		var state caSetActivationResourceModel
 		resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 		if resp.Diagnostics.HasError() {

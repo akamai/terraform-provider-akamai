@@ -19,3 +19,16 @@ func TimeRFC3339PointerValue(t *time.Time) types.String {
 	}
 	return TimeRFC3339Value(*t)
 }
+
+// TimeRFC3339NanoValue returns a types.String representation of the given time.Time in RFC3339Nano format.
+func TimeRFC3339NanoValue(t time.Time) types.String {
+	return types.StringValue(date.FormatRFC3339Nano(t))
+}
+
+// TimeRFC3339NanoPointerValue returns a types.String representation of the given *time.Time in RFC3339Nano format.
+func TimeRFC3339NanoPointerValue(t *time.Time) types.String {
+	if t == nil {
+		return types.StringNull()
+	}
+	return TimeRFC3339NanoValue(*t)
+}

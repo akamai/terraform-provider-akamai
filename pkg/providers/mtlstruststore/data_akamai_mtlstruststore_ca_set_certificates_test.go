@@ -503,7 +503,7 @@ func TestCASetCertificatesDataSource(t *testing.T) {
 						data "akamai_mtlstruststore_ca_set_certificates" "test" {
 						  version = 1
 						}`,
-					ExpectError: regexp.MustCompile(`No attribute specified when one \(and only one\) of \[(id,name|name,id)\] is required`),
+					ExpectError: regexp.MustCompile(`No attribute specified when one \(and only one\) of \[(id,name|name,id)] is required`),
 				},
 			},
 		},

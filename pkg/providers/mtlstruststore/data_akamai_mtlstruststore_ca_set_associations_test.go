@@ -275,7 +275,7 @@ data "akamai_mtlstruststore_ca_set_associations" "test" {
   name   = ""
 }
 `,
-					ExpectError: regexp.MustCompile(`Attribute name string length must be at least 1, got: 0`),
+					ExpectError: regexp.MustCompile(`Attribute name must not be empty or only whitespace`),
 				},
 			},
 		},
@@ -288,7 +288,7 @@ data "akamai_mtlstruststore_ca_set_associations" "test" {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, testDir+"id.tf"),
-					ExpectError: regexp.MustCompile(`Error: Could not fetch CA Set`),
+					ExpectError: regexp.MustCompile(`Error: Could not fetch CA set`),
 				},
 			},
 		},
@@ -307,7 +307,7 @@ data "akamai_mtlstruststore_ca_set_associations" "test" {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, testDir+"name.tf"),
-					ExpectError: regexp.MustCompile(`Error: Could not fetch CA Set ID for provided name`),
+					ExpectError: regexp.MustCompile(`Error: Could not fetch CA set ID for provided name`),
 				},
 			},
 		},
@@ -324,7 +324,7 @@ data "akamai_mtlstruststore_ca_set_associations" "test" {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, testDir+"name.tf"),
-					ExpectError: regexp.MustCompile(`Error: Could not fetch CA Set ID for provided name`),
+					ExpectError: regexp.MustCompile(`Error: Could not fetch CA set ID for provided name`),
 				},
 			},
 		},

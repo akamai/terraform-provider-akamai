@@ -3,10 +3,11 @@ package mtlstruststore
 import (
 	"context"
 	"fmt"
-	"time"
+	"regexp"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/mtlstruststore"
 	"github.com/akamai/terraform-provider-akamai/v8/internal/customtypes"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/framework/date"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -82,7 +83,7 @@ func (d *caSetVersionsDataSource) Schema(_ context.Context, _ datasource.SchemaR
 		Description: "Retrieve versions for a specific MTLS Truststore CA Set.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				Description: "Identifies each CA set. Either `id` or `name` must be provided.",
+				Description: "Identifies each CA set. Either 'id' or 'name' must be provided.",
 				Optional:    true,
 				Computed:    true,
 				Validators: []validator.String{
@@ -91,12 +92,12 @@ func (d *caSetVersionsDataSource) Schema(_ context.Context, _ datasource.SchemaR
 				},
 			},
 			"name": schema.StringAttribute{
-				Description: "The name of the CA set. Either `id` or `name` must be provided.",
+				Description: "The name of the CA set. Either 'id' or 'name' must be provided.",
 				Optional:    true,
 				Computed:    true,
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(path.MatchRoot("id"), path.MatchRoot("name")),
-					stringvalidator.LengthAtLeast(1),
+					stringvalidator.RegexMatches(regexp.MustCompile(`\S{3,}`), "must not be empty or only whitespace"),
 				},
 			},
 			"include_certificates": schema.BoolAttribute{
@@ -141,11 +142,11 @@ func (d *caSetVersionsDataSource) Schema(_ context.Context, _ datasource.SchemaR
 							Computed:    true,
 						},
 						"production_status": schema.StringAttribute{
-							Description: "The CA set version's status on the production network, either `ACTIVE` or `INACTIVE`.",
+							Description: "The CA set version's status on the production network, either 'ACTIVE' or 'INACTIVE'.",
 							Computed:    true,
 						},
 						"staging_status": schema.StringAttribute{
-							Description: "The CA set version's status on the staging network, either `ACTIVE` or `INACTIVE`.",
+							Description: "The CA set version's status on the staging network, either 'ACTIVE' or 'INACTIVE'.",
 							Computed:    true,
 						},
 						"certificates": schema.ListNestedAttribute{
@@ -273,35 +274,30 @@ func convertCASetVersionsDataToModel(versions mtlstruststore.ListCASetVersionsRe
 			certModel = append(certModel, certificateModel{
 				CertificatePEM:     customtypes.NewIgnoreTrailingWhitespaceValue(cert.CertificatePEM),
 				CreatedBy:          types.StringValue(cert.CreatedBy),
-				CreatedDate:        types.StringValue(cert.CreatedDate.Format(time.RFC3339Nano)),
-				EndDate:            types.StringValue(cert.EndDate.Format(time.RFC3339Nano)),
+				CreatedDate:        date.TimeRFC3339NanoValue(cert.CreatedDate),
+				EndDate:            date.TimeRFC3339NanoValue(cert.EndDate),
 				Fingerprint:        types.StringValue(cert.Fingerprint),
 				Issuer:             types.StringValue(cert.Issuer),
 				SerialNumber:       types.StringValue(cert.SerialNumber),
 				SignatureAlgorithm: types.StringValue(cert.SignatureAlgorithm),
-				StartDate:          types.StringValue(cert.StartDate.Format(time.RFC3339Nano)),
+				StartDate:          date.TimeRFC3339NanoValue(cert.StartDate),
 				Subject:            types.StringValue(cert.Subject),
 				Description:        types.StringPointerValue(cert.Description),
 			})
 		}
 
-		versionModel := versionModel{
+		model.Versions = append(model.Versions, versionModel{
 			Version:            types.Int64Value(version.Version),
 			AllowInsecureSHA1:  types.BoolValue(version.AllowInsecureSHA1),
 			VersionDescription: types.StringPointerValue(version.Description),
 			CreatedBy:          types.StringValue(version.CreatedBy),
-			CreatedDate:        types.StringValue(version.CreatedDate.Format(time.RFC3339Nano)),
+			CreatedDate:        date.TimeRFC3339NanoValue(version.CreatedDate),
 			ProductionStatus:   types.StringValue(version.ProductionStatus),
 			StagingStatus:      types.StringValue(version.StagingStatus),
 			ModifiedBy:         types.StringPointerValue(version.ModifiedBy),
+			ModifiedDate:       date.TimeRFC3339NanoPointerValue(version.ModifiedDate),
 			Certificates:       certModel,
-		}
-
-		if version.ModifiedDate != nil {
-			versionModel.ModifiedDate = types.StringValue(version.ModifiedDate.Format(time.RFC3339Nano))
-		}
-
-		model.Versions = append(model.Versions, versionModel)
+		})
 	}
 
 	return model

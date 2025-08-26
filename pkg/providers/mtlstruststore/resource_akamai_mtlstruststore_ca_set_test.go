@@ -514,7 +514,7 @@ func TestCASetResource(t *testing.T) {
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResCASet/create.tf"),
 					Destroy:     true,
-					ExpectError: regexp.MustCompile(`CA set is in use by 1 properties:\s+\(2\)`),
+					ExpectError: regexp.MustCompile(`CA set is in use by 1 properties:\s+'' \(2\)`),
 				},
 			},
 		},
@@ -560,7 +560,7 @@ func TestCASetResource(t *testing.T) {
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResCASet/create.tf"),
 					Destroy:     true,
-					ExpectError: regexp.MustCompile(`CA set is in use by 1 enrollments: some.example.com(\n|\s)+\(10430\)`),
+					ExpectError: regexp.MustCompile(`CA set is in use by 1 enrollments:(\n|\s)+'some.example.com' \(10430\)`),
 				},
 			},
 		},

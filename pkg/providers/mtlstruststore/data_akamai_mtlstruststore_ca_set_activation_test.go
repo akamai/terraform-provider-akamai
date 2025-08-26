@@ -201,7 +201,7 @@ func TestCASetActivationDataSource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, testDir+"ca_set_name.tf"),
-					ExpectError: regexp.MustCompile(`multiple CA sets IDs found with name 'test name': map\[123: 1234:\]. Use the ID\nto fetch a specific CA set`),
+					ExpectError: regexp.MustCompile(`multiple CA sets IDs found with name 'test name': map\[123: 1234:]. Use the ID\nto fetch a specific CA set`),
 				},
 			},
 		},
@@ -236,7 +236,7 @@ func TestCASetActivationDataSource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, testDir+"no_ca_set_name_and_ca_set_id.tf"),
-					ExpectError: regexp.MustCompile(`No attribute specified when one \(and only one\) of \[ca_set_id,ca_set_name\] is\nrequired`),
+					ExpectError: regexp.MustCompile(`No attribute specified when one \(and only one\) of \[ca_set_id,ca_set_name] is\nrequired`),
 				},
 			},
 		},
@@ -244,7 +244,15 @@ func TestCASetActivationDataSource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, testDir+"empty_name.tf"),
-					ExpectError: regexp.MustCompile("Attribute ca_set_name string length must be at least 1, got: 0"),
+					ExpectError: regexp.MustCompile(`Attribute ca_set_name must not be empty or only whitespace`),
+				},
+			},
+		},
+		"validation error - too short ca_set_name": {
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, testDir+"short_name.tf"),
+					ExpectError: regexp.MustCompile(`Attribute ca_set_name must not be empty or only whitespace`),
 				},
 			},
 		},

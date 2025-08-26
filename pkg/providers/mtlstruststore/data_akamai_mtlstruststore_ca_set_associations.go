@@ -3,6 +3,7 @@ package mtlstruststore
 import (
 	"context"
 	"fmt"
+	"regexp"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/mtlstruststore"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
@@ -87,7 +88,7 @@ func (d *caSetAssociationsDataSource) Schema(_ context.Context, _ datasource.Sch
 		Description: "Retrieves a list of the properties and/or enrollments where a given ca set is used.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				Description: "ID is a unique identifier representing the CA set. Either `id` or `name` must be provided.",
+				Description: "ID is a unique identifier representing the CA set. Either 'id' or 'name' must be provided.",
 				Optional:    true,
 				Computed:    true,
 				Validators: []validator.String{
@@ -96,12 +97,12 @@ func (d *caSetAssociationsDataSource) Schema(_ context.Context, _ datasource.Sch
 				},
 			},
 			"name": schema.StringAttribute{
-				Description: "The name of the CA set. Either `id` or `name` must be provided.",
+				Description: "The name of the CA set. Either 'id' or 'name' must be provided.",
 				Optional:    true,
 				Computed:    true,
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(path.MatchRoot("id"), path.MatchRoot("name")),
-					stringvalidator.LengthAtLeast(1),
+					stringvalidator.RegexMatches(regexp.MustCompile(`\S{3,}`), "must not be empty or only whitespace"),
 				},
 			},
 			"properties": schema.ListNestedAttribute{
@@ -110,36 +111,36 @@ func (d *caSetAssociationsDataSource) Schema(_ context.Context, _ datasource.Sch
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"property_id": schema.StringAttribute{
-							Description: "PropertyID is a unique identifier for the property.",
+							Description: "A unique identifier for the property.",
 							Computed:    true,
 						},
 						"property_name": schema.StringAttribute{
-							Description: "PropertyName is a unique, descriptive name for the property.",
+							Description: "A unique, descriptive name for the property.",
 							Computed:    true,
 						},
 						"asset_id": schema.Int64Attribute{
-							Description: "AssetID is an alternative identifier for the property.",
+							Description: "An alternative identifier for the property.",
 							Computed:    true,
 						},
 						"group_id": schema.Int64Attribute{
-							Description: "GroupID identifies the group to which the property is assigned.",
+							Description: "Identifies the group to which the property is assigned.",
 							Computed:    true,
 						},
 						"hostnames": schema.ListNestedAttribute{
-							Description: "Hostnames contain details about associated hostnames.",
+							Description: "Contains details about associated hostnames.",
 							Computed:    true,
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: map[string]schema.Attribute{
 									"hostname": schema.StringAttribute{
-										Description: "Hostname is the name of the device.",
+										Description: "The name of the device.",
 										Computed:    true,
 									},
 									"network": schema.StringAttribute{
-										Description: "Network indicates the network on which CA set to hostname association is formed/removed/in progress. The values for this are 'STAGING', 'PRODUCTION'.",
+										Description: "The network on which CA set to hostname association is formed/removed/in progress. The values for this are 'STAGING', 'PRODUCTION'.",
 										Computed:    true,
 									},
 									"status": schema.StringAttribute{
-										Description: "Status indicates the status of CA set to hostname association. The values for it are - 'ATTACHING', 'DETACHING', 'ATTACHED'.",
+										Description: "The status of CA set to hostname association. The values for it are - 'ATTACHING', 'DETACHING', 'ATTACHED'.",
 										Computed:    true,
 									},
 								},
@@ -154,21 +155,21 @@ func (d *caSetAssociationsDataSource) Schema(_ context.Context, _ datasource.Sch
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"enrollment_id": schema.Int64Attribute{
-							Description: "EnrollmentID is a unique identifier for the enrollment.",
+							Description: "A unique identifier for the enrollment.",
 							Computed:    true,
 						},
 						"staging_slots": schema.ListAttribute{
-							Description: "StagingSlots are slots where the certificate is deployed on the staging network.",
+							Description: "Slots where the certificate is deployed on the staging network.",
 							Computed:    true,
 							ElementType: types.Int64Type,
 						},
 						"production_slots": schema.ListAttribute{
-							Description: "ProductionSlots are slots where the certificate is deployed on the production network.",
+							Description: "Slots where the certificate is deployed on the production network.",
 							Computed:    true,
 							ElementType: types.Int64Type,
 						},
 						"cn": schema.StringAttribute{
-							Description: "CN is the domain name to use for the certificate, also known as the common name.",
+							Description: "The domain name to use for the certificate, also known as the common name.",
 							Computed:    true,
 						},
 					},
@@ -192,14 +193,14 @@ func (d *caSetAssociationsDataSource) Read(ctx context.Context, req datasource.R
 	if !data.Name.IsNull() {
 		setID, err := findCASetID(ctx, client, data.Name.ValueString())
 		if err != nil {
-			resp.Diagnostics.AddError("Could not fetch CA Set ID for provided name", err.Error())
+			resp.Diagnostics.AddError("Could not fetch CA set ID for provided name", err.Error())
 			return
 		}
 		data.ID = types.StringValue(setID)
 	} else {
 		caSet, err := client.GetCASet(ctx, mtlstruststore.GetCASetRequest{CASetID: data.ID.ValueString()})
 		if err != nil {
-			resp.Diagnostics.AddError("Could not fetch CA Set", err.Error())
+			resp.Diagnostics.AddError("Could not fetch CA set", err.Error())
 			return
 		}
 		data.Name = types.StringValue(caSet.CASetName)

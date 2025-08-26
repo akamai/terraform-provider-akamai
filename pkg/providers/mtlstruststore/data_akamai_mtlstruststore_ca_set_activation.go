@@ -3,9 +3,10 @@ package mtlstruststore
 import (
 	"context"
 	"fmt"
-	"time"
+	"regexp"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/mtlstruststore"
+	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/framework/date"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -77,7 +78,7 @@ func (d *caSetActivationDataSource) Schema(_ context.Context, _ datasource.Schem
 				Required:    true,
 			},
 			"ca_set_id": schema.StringAttribute{
-				Description: "CA set identifier that filters out the activations or deactivations. Either `ca_set_id` or `ca_set_name` must be provided.",
+				Description: "CA set identifier that filters out the activations or deactivations. Either 'ca_set_id' or 'ca_set_name' must be provided.",
 				Optional:    true,
 				Computed:    true,
 				Validators: []validator.String{
@@ -86,12 +87,12 @@ func (d *caSetActivationDataSource) Schema(_ context.Context, _ datasource.Schem
 				},
 			},
 			"ca_set_name": schema.StringAttribute{
-				Description: "The name of the CA set. Either `ca_set_id` or `ca_set_name` must be provided.",
+				Description: "The name of the CA set. Either 'ca_set_id' or 'ca_set_name' must be provided.",
 				Optional:    true,
 				Computed:    true,
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(path.MatchRoot("ca_set_id"), path.MatchRoot("ca_set_name")),
-					stringvalidator.LengthAtLeast(1),
+					stringvalidator.RegexMatches(regexp.MustCompile(`\S{3,}`), "must not be empty or only whitespace"),
 				},
 			},
 			"version": schema.Int64Attribute{
@@ -99,7 +100,7 @@ func (d *caSetActivationDataSource) Schema(_ context.Context, _ datasource.Schem
 				Computed:    true,
 			},
 			"network": schema.StringAttribute{
-				Description: "Indicates the network for any activation-related activities, either STAGING or PRODUCTION.",
+				Description: "Indicates the network for any activation-related activities, either 'STAGING' or 'PRODUCTION'.",
 				Computed:    true,
 			},
 			"created_by": schema.StringAttribute{
@@ -168,8 +169,8 @@ func (d *caSetActivationDataSource) Read(ctx context.Context, req datasource.Rea
 	resp.Diagnostics.Append(resp.State.Set(ctx, data)...)
 }
 
-func findActivationByID(acitvations []mtlstruststore.ActivateCASetVersionResponse, id int64) (mtlstruststore.ActivateCASetVersionResponse, error) {
-	for _, a := range acitvations {
+func findActivationByID(activations []mtlstruststore.ActivateCASetVersionResponse, id int64) (mtlstruststore.ActivateCASetVersionResponse, error) {
+	for _, a := range activations {
 		if a.ActivationID == id {
 			return a, nil
 		}
@@ -184,13 +185,9 @@ func (m *caSetActivationDataSourceModel) setFromActivationResponse(act mtlstrust
 	m.Version = types.Int64Value(act.Version)
 	m.Network = types.StringValue(act.Network)
 	m.CreatedBy = types.StringValue(act.CreatedBy)
-	m.CreatedDate = types.StringValue(act.CreatedDate.Format(time.RFC3339Nano))
+	m.CreatedDate = date.TimeRFC3339NanoValue(act.CreatedDate)
 	m.ModifiedBy = types.StringPointerValue(act.ModifiedBy)
+	m.ModifiedDate = date.TimeRFC3339NanoPointerValue(act.ModifiedDate)
 	m.Status = types.StringValue(act.ActivationStatus)
 	m.Type = types.StringValue(act.ActivationType)
-	if act.ModifiedDate != nil {
-		m.ModifiedDate = types.StringValue(act.ModifiedDate.Format(time.RFC3339Nano))
-	} else {
-		m.ModifiedDate = types.StringNull()
-	}
 }
