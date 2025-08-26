@@ -641,9 +641,7 @@ func (m *caSetActivationResourceModel) setCASetActivationData(resp *mtlstruststo
 }
 
 func (c *caSetActivationResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
-
-	// If the entire plan is null, the resource is planned for destruction.
-	if req.Plan.Raw.IsNull() {
+	if modifiers.IsDelete(req) {
 		// Verify if ca set version is active and is in use before deleting.
 		var state caSetActivationResourceModel
 		resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
@@ -698,8 +696,7 @@ func (c *caSetActivationResource) ModifyPlan(ctx context.Context, req resource.M
 		}
 	}
 
-	// Update
-	if !req.Plan.Raw.IsNull() && !req.State.Raw.IsNull() {
+	if modifiers.IsUpdate(req) {
 		var state, plan caSetActivationResourceModel
 		resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 		if resp.Diagnostics.HasError() {

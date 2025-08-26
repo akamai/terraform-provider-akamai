@@ -211,8 +211,7 @@ func certificatesSchema() schema.SetNestedAttribute {
 				},
 				"description": schema.StringAttribute{
 					Optional:    true,
-					Computed:    true,
-					Validators:  []validator.String{stringvalidator.LengthAtMost(255)},
+					Validators:  []validator.String{stringvalidator.LengthBetween(1, 255)},
 					Description: "Optional description for the certificate.",
 				},
 				"created_by": schema.StringAttribute{
@@ -393,8 +392,7 @@ func generateDiagnosticForValidationWarnings(validation mtlstruststore.Validatio
 
 //nolint:gocyclo
 func (r *caSetResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
-	// If the entire plan is null, the resource is planned for destruction.
-	if req.Plan.Raw.IsNull() {
+	if modifiers.IsDelete(req) {
 		// Verify if ca set is in use before deleting.
 		var state *caSetResourceModel
 		resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
@@ -425,8 +423,8 @@ func (r *caSetResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanR
 			return
 		}
 	}
-	// Empty state means that the resource is being created.
-	if req.State.Raw.IsNull() {
+
+	if modifiers.IsCreate(req) {
 		var plan, config caSetResourceModel
 		resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 		if resp.Diagnostics.HasError() {
@@ -465,8 +463,8 @@ func (r *caSetResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanR
 			return
 		}
 	}
-	// Update
-	if !req.Plan.Raw.IsNull() && !req.State.Raw.IsNull() {
+
+	if modifiers.IsUpdate(req) {
 		var state, plan *caSetResourceModel
 		resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 		if resp.Diagnostics.HasError() {

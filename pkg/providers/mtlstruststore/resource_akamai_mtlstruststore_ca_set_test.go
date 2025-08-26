@@ -427,6 +427,14 @@ func TestCASetResource(t *testing.T) {
 				},
 			},
 		},
+		"expect error - create a ca set with empty certificates description": {
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResCASet/create_empty_cert_description.tf"),
+					ExpectError: regexp.MustCompile("description\nstring length must be between 1 and 255, got: 0"),
+				},
+			},
+		},
 		"expect error - create a ca set, first attempt to delete failed, there is no retry logic": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
 				mockValidateCertificates(m, resourceData, nil).Times(5)
@@ -553,6 +561,130 @@ func TestCASetResource(t *testing.T) {
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResCASet/create.tf"),
 					Destroy:     true,
 					ExpectError: regexp.MustCompile(`CA set is in use by 1 enrollments: some.example.com(\n|\s)+\(10430\)`),
+				},
+			},
+		},
+		"expect error - name update": {
+			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
+				// create
+				mockValidateCertificates(m, resourceData, nil).Times(5)
+				mockCreateCASet(m, resourceData).Times(1)
+				mockCreateCASetVersion(m, resourceData).Times(1)
+				mockGetCASet(m, resourceData).Times(1)
+
+				// read
+				mockGetCASet(m, resourceData).Times(1)
+				mockGetCASetVersion(m, resourceData).Times(1)
+				mockListCASetActivations(m, resourceData, false).Times(2)
+
+				// update
+				mockGetCASet(m, resourceData).Times(1)
+				mockGetCASetVersion(m, resourceData).Times(1)
+				mockValidateCertificates(m, resourceData, nil).Times(1)
+
+				// delete
+				mockListCASetAssociations(m, resourceData).Times(2)
+				mockGetCASet(m, resourceData).Once()
+				mockDeleteCASet(m, resourceData).Times(1)
+				mockGetCASetDeletionStatus(m, resourceData, "IN_PROGRESS", "IN_PROGRESS", "COMPLETED").Times(1)
+				mockGetCASetDeletionStatus(m, resourceData, "COMPLETE", "COMPLETE", "COMPLETE").Times(1)
+
+			},
+			mockData: createData,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/create.tf"),
+					Check:  check.Build(),
+				},
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResCASet/update_name.tf"),
+					ExpectError: regexp.MustCompile("updating field `name` is not possible"),
+				},
+			},
+		},
+		"expect error - description update": {
+			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
+				// create
+				mockValidateCertificates(m, resourceData, nil).Times(5)
+				mockCreateCASet(m, resourceData).Times(1)
+				mockCreateCASetVersion(m, resourceData).Times(1)
+				mockGetCASet(m, resourceData).Times(1)
+
+				// read
+				mockGetCASet(m, resourceData).Times(1)
+				mockGetCASetVersion(m, resourceData).Times(1)
+				mockListCASetActivations(m, resourceData, false).Times(2)
+
+				// update
+				mockGetCASet(m, resourceData).Times(1)
+				mockGetCASetVersion(m, resourceData).Times(1)
+				mockValidateCertificates(m, resourceData, nil).Times(1)
+
+				// delete
+				mockListCASetAssociations(m, resourceData).Times(2)
+				mockGetCASet(m, resourceData).Once()
+				mockDeleteCASet(m, resourceData).Times(1)
+				mockGetCASetDeletionStatus(m, resourceData, "IN_PROGRESS", "IN_PROGRESS", "COMPLETED").Times(1)
+				mockGetCASetDeletionStatus(m, resourceData, "COMPLETE", "COMPLETE", "COMPLETE").Times(1)
+
+			},
+			mockData: createData,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/create.tf"),
+					Check:  check.Build(),
+				},
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResCASet/update_description.tf"),
+					ExpectError: regexp.MustCompile("updating field `description` is not possible"),
+				},
+			},
+		},
+		"expect error - null description update": {
+			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
+				// create
+				resourceData.description = nil
+				resourceData.versionDescription = nil
+				mockValidateCertificates(m, resourceData, nil).Times(5)
+				mockCreateCASet(m, resourceData).Times(1)
+				mockCreateCASetVersion(m, resourceData).Times(1)
+				mockGetCASet(m, resourceData).Times(1)
+
+				// read
+				mockGetCASet(m, resourceData).Times(1)
+				mockGetCASetVersion(m, resourceData).Times(1)
+				mockListCASetActivations(m, resourceData, false).Times(2)
+
+				// update
+				mockGetCASet(m, resourceData).Times(1)
+				mockGetCASetVersion(m, resourceData).Times(1)
+				mockValidateCertificates(m, resourceData, nil).Times(1)
+
+				// delete
+				mockListCASetAssociations(m, resourceData).Times(2)
+				mockGetCASet(m, resourceData).Once()
+				mockDeleteCASet(m, resourceData).Times(1)
+				mockGetCASetDeletionStatus(m, resourceData, "IN_PROGRESS", "IN_PROGRESS", "COMPLETED").Times(1)
+				mockGetCASetDeletionStatus(m, resourceData, "COMPLETE", "COMPLETE", "COMPLETE").Times(1)
+
+			},
+			mockData: createData,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/create_no_descriptions.tf"),
+					Check: check.
+						CheckMissing("description").
+						CheckMissing("version_description").
+						Build(),
+					ConfigPlanChecks: resource.ConfigPlanChecks{
+						PreApply: []plancheck.PlanCheck{
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("description"), knownvalue.Null()),
+						},
+					},
+				},
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResCASet/update_description.tf"),
+					ExpectError: regexp.MustCompile("updating field `description` is not possible"),
 				},
 			},
 		},
@@ -949,6 +1081,101 @@ func TestCASetResource(t *testing.T) {
 							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("latest_version"), knownvalue.Int64Exact(1)),
 							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_modified_by")),
 							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_modified_date")),
+						},
+					},
+				},
+			},
+		},
+		"update a non activated ca set, removing certificates description": {
+			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
+				// create
+				mockValidateCertificates(m, resourceData, nil).Times(5)
+				mockCreateCASet(m, resourceData).Times(1)
+				mockCreateCASetVersion(m, resourceData).Times(1)
+				mockGetCASet(m, resourceData).Times(1)
+				// read
+				mockGetCASet(m, resourceData).Times(1)
+				mockGetCASetVersion(m, resourceData).Times(1)
+				mockListCASetActivations(m, resourceData, false).Times(3)
+				// update
+				updateData := resourceData
+				updateData.version = 1
+				mockGetCASet(m, updateData).Times(1)
+				mockGetCASetVersion(m, updateData).Times(1)
+				updateData.certificates = []mtlstruststore.CertificateResponse{
+					{
+						CertificatePEM:     "-----BEGIN CERTIFICATE-----\nMIIDXTCCAkWgAwIBAgIJALa6Rz1u5z2OMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV\n-----END CERTIFICATE-----\n",
+						Description:        nil,
+						CreatedBy:          "johndoe",
+						CreatedDate:        tst.NewTimeFromStringMust("2025-04-16T16:01:02.555444Z"),
+						EndDate:            tst.NewTimeFromStringMust("2026-04-16T16:01:02.555444Z"),
+						Fingerprint:        "1234567890abcdef1234567890abcdef",
+						Issuer:             "CN=Dummy CA",
+						SerialNumber:       "987654321fedcba987654321fedcba",
+						SignatureAlgorithm: "SHA256WITHRSA",
+						StartDate:          tst.NewTimeFromStringMust("2025-04-17T16:01:02.555444Z"),
+						Subject:            "CN=Dummy CA test",
+					},
+				}
+				mockValidateCertificates(m, updateData, nil).Times(5)
+				mockUpdateCASetVersion(m, updateData).Times(1)
+				// read
+				mockGetCASet(m, updateData).Times(1)
+				mockGetCASetVersion(m, updateData).Times(1)
+				mockListCASetActivations(m, resourceData, false).Times(4)
+				// delete
+				mockListCASetAssociations(m, updateData).Times(2)
+				mockGetCASet(m, resourceData).Once()
+				mockDeleteCASet(m, updateData).Times(1)
+				mockGetCASetDeletionStatus(m, updateData, "IN_PROGRESS", "IN_PROGRESS", "COMPLETED").Times(1)
+				mockGetCASetDeletionStatus(m, updateData, "COMPLETE", "COMPLETE", "COMPLETE").Times(1)
+			},
+			mockData: createData,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/create.tf"),
+					Check:  check.Build(),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/update_no_cert_description.tf"),
+					Check: check.
+						CheckMissing("certificates.0.description").
+						CheckEqual("version_modified_by", "someone").
+						CheckEqual("version_modified_date", "2025-04-18T12:18:34Z").
+						Build(),
+					ConfigPlanChecks: resource.ConfigPlanChecks{
+						PreApply: []plancheck.PlanCheck{
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("staging_version"), knownvalue.Null()),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("production_version"), knownvalue.Null()),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("latest_version"), knownvalue.Int64Exact(1)),
+							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_modified_by")),
+							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_modified_date")),
+
+							// We expect all computed attributes to be unknown
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test",
+								tfjsonpath.New("certificates").AtSliceIndex(0).AtMapKey("certificate_pem"),
+								knownvalue.StringExact("-----BEGIN CERTIFICATE-----\nMIIDXTCCAkWgAwIBAgIJALa6Rz1u5z2OMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV\n-----END CERTIFICATE-----\n")),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test",
+								tfjsonpath.New("certificates").AtSliceIndex(0).AtMapKey("description"),
+								knownvalue.Null()),
+							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test",
+								tfjsonpath.New("certificates").AtSliceIndex(0).AtMapKey("created_by")),
+							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test",
+								tfjsonpath.New("certificates").AtSliceIndex(0).AtMapKey("created_date")),
+							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test",
+								tfjsonpath.New("certificates").AtSliceIndex(0).AtMapKey("end_date")),
+							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test",
+								tfjsonpath.New("certificates").AtSliceIndex(0).AtMapKey("fingerprint")),
+							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test",
+								tfjsonpath.New("certificates").AtSliceIndex(0).AtMapKey("issuer")),
+							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test",
+								tfjsonpath.New("certificates").AtSliceIndex(0).AtMapKey("serial_number")),
+							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test",
+								tfjsonpath.New("certificates").AtSliceIndex(0).AtMapKey("signature_algorithm")),
+							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test",
+								tfjsonpath.New("certificates").AtSliceIndex(0).AtMapKey("start_date")),
+							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test",
+								tfjsonpath.New("certificates").AtSliceIndex(0).AtMapKey("subject")),
 						},
 					},
 				},
