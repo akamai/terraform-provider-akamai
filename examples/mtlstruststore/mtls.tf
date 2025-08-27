@@ -11,7 +11,7 @@ terraform {
   required_providers {
     akamai = {
       source  = "akamai/akamai"
-      version = ">= 8.2.0"
+      version = ">= 9.0.0"
     }
     tls = {
       source  = "hashicorp/tls"
