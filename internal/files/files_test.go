@@ -3,7 +3,7 @@ package files
 import (
 	"testing"
 
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
 	"github.com/stretchr/testify/assert"
 )
 

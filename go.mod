@@ -1,4 +1,4 @@
-module github.com/akamai/terraform-provider-akamai/v8
+module github.com/akamai/terraform-provider-akamai/v9
 
 go 1.23.6
 
@@ -26,6 +26,7 @@ require (
 	github.com/jinzhu/copier v0.3.2
 	github.com/spf13/cast v1.7.0
 	github.com/stretchr/testify v1.10.0
+	github.com/wk8/go-ordered-map/v2 v2.1.8
 	golang.org/x/exp v0.0.0-20241204233417-43b7b7cde48d
 	golang.org/x/net v0.39.0
 	golang.org/x/sync v0.14.0
@@ -75,7 +76,6 @@ require (
 	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
-	github.com/wk8/go-ordered-map/v2 v2.1.8 // indirect
 	github.com/zclconf/go-cty v1.15.1 // indirect
 	go.uber.org/ratelimit v0.3.1 // indirect
 	golang.org/x/crypto v0.37.0 // indirect

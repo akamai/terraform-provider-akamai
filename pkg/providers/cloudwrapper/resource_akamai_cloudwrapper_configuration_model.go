@@ -10,8 +10,8 @@ import (
 	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudwrapper"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/framework/modifiers"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/framework/replacer"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/framework/modifiers"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/framework/replacer"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"

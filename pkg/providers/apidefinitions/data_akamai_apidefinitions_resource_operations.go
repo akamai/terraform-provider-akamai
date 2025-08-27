@@ -8,9 +8,9 @@ import (
 	"sync"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/apidefinitions"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/cache"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/tf/validators"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/cache"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/tf/validators"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"

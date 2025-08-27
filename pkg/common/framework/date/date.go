@@ -3,7 +3,7 @@ package date
 import (
 	"time"
 
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/date"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/date"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 

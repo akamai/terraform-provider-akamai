@@ -8,8 +8,8 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudlets"
 	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudlets/v3"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/subprovider"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/subprovider"
 )
 
 type (

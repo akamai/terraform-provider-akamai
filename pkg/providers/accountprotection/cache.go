@@ -8,8 +8,8 @@ import (
 
 	apr "github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/accountprotection"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/log"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/cache"
-	akameta "github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/cache"
+	akameta "github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
 )
 
 var (

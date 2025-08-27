@@ -7,7 +7,7 @@ import (
 
 	akalog "github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/log"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/log"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/log"
 	"github.com/hashicorp/go-hclog"
 )
 

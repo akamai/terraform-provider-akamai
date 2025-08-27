@@ -5,8 +5,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/akamai"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/subprovider"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/akamai"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/subprovider"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	dataschema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"

@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/date"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/testutils"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/date"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
