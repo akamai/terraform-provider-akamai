@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/apidefinitions"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/apidefinitions"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/cache"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/tf/validators"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"

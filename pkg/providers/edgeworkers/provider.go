@@ -4,7 +4,7 @@ package edgeworkers
 import (
 	"sync"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/edgeworkers"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/edgeworkers"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/subprovider"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"

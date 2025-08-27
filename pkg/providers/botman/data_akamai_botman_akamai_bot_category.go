@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/botman"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/botman"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/hash"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"

@@ -7,7 +7,7 @@ import (
 	"io"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/edgeworkers"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/edgeworkers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

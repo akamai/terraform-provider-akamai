@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/mtlstruststore"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/mtlstruststore"
 	"github.com/akamai/terraform-provider-akamai/v8/internal/customtypes"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/tf"

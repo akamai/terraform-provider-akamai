@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/mtlstruststore"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/ptr"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/mtlstruststore"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/ptr"
 	tst "github.com/akamai/terraform-provider-akamai/v8/internal/test"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/testutils"

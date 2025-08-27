@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/cps"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cps"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"

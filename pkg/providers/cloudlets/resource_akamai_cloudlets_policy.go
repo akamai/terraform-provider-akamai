@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/cloudlets"
-	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/cloudlets/v3"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudlets"
+	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudlets/v3"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/str"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/tf"

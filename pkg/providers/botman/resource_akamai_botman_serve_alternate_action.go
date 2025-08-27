@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/botman"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/botman"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/id"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/str"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/tf"

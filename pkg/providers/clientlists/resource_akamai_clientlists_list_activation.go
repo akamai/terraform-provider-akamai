@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/clientlists"
-	akalog "github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/log"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/clientlists"
+	akalog "github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/log"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"

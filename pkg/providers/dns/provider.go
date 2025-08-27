@@ -4,7 +4,7 @@ package dns
 import (
 	"sync"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/dns"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/dns"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v8/pkg/subprovider"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
