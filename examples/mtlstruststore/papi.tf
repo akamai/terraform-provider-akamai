@@ -5,6 +5,7 @@
 # A successful operation creates an edge hostname, CP code, and property with the mTLS Truststore behavior enabled, and activates that property on `STAGING` and `PRODUCTION` environments.
 
 resource "akamai_edge_hostname" "aka_edgehost" {
+  depends_on    = [akamai_cps_third_party_enrollment.enrollment]
   contract_id   = "C-0N7RAC7"
   group_id      = "grp_123"
   product_id    = "prd_Site_Accel"
