@@ -1,6 +1,6 @@
 # RELEASE NOTES
 
-## 9.0.0 (Sep 03, 2025)
+## 9.0.0 (Sep 04, 2025)
 
 #### BREAKING CHANGES:
 

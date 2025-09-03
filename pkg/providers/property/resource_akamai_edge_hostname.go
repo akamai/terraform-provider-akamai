@@ -42,8 +42,8 @@ var (
 	// GetEdgeHostnamePollInterval is the interval for polling an edgehostname after creation.
 	GetEdgeHostnamePollInterval = time.Second * 10
 
-	// errContextTerminatedError is returned when the context is terminated while waiting for an edge hostname to be ready.
-	errContextTerminatedError = errors.New("get edge hostname context terminated")
+	// errContextTerminated is returned when the context is terminated while waiting for an edge hostname to be ready.
+	errContextTerminated = errors.New("get edge hostname context terminated")
 
 	// EdgeHostnameReadTimeout is the timeout for fetching an edge hostname in the Read context.
 	EdgeHostnameReadTimeout = time.Minute * 1
@@ -309,6 +309,12 @@ func waitUntilEdgeHostnameReady(ctx context.Context, meta meta.Meta, client papi
 			return resp, nil
 		}
 
+		// Retries called from GetEdgeHostname may detect timeout exceeded which was still not in the ctx.Done check below.
+		if ctx.Err() != nil {
+			logger.Debugf("context terminated while waiting for the edge hostname %s to appear in the response: %s", edgeHostnameKey.edgeHostnameID, ctx.Err())
+			return nil, fmt.Errorf("%w: %s", errContextTerminated, ctx.Err())
+		}
+
 		if !errors.Is(err, papi.ErrNotFound) {
 			logger.Debugf("received unexpected error while getting edge hostname %s: %v", edgeHostnameKey.edgeHostnameID, err.Error())
 			return nil, err
@@ -321,7 +327,7 @@ func waitUntilEdgeHostnameReady(ctx context.Context, meta meta.Meta, client papi
 			logger.Debugf("retrying check for edge hostname %s", edgeHostnameKey.edgeHostnameID)
 		case <-ctx.Done():
 			logger.Debugf("context terminated while waiting for the edge hostname %s to appear in the response: %s", edgeHostnameKey.edgeHostnameID, ctx.Err())
-			return nil, fmt.Errorf("%w: %s", errContextTerminatedError, ctx.Err())
+			return nil, fmt.Errorf("%w: %s", errContextTerminated, ctx.Err())
 		}
 	}
 }
@@ -401,7 +407,7 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 	if err != nil {
 		if errors.Is(err, papi.ErrNotFound) {
 			logger.Debugf("edge hostname %s not found in read", d.Id())
-			// If the edge hostname is not found in Read, poll for one minute to see if it appears in the response.
+			// If the edge hostname is not found in Read, wait one minute to check if it's a problem with database inconsistency on API side.
 			ctx, cancel := context.WithTimeout(ctx, EdgeHostnameReadTimeout)
 			defer cancel()
 
@@ -413,7 +419,7 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 			if err != nil {
 				// If after one minute the edge hostname is still not found, remove it from the state,
 				// as most probably it was deleted outside of terraform.
-				if errors.Is(err, errContextTerminatedError) {
+				if errors.Is(err, errContextTerminated) {
 					logger.Info("edge hostname was deleted outside of terraform")
 					d.SetId("")
 					return nil
