@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
@@ -48,8 +48,8 @@ func validateWithBotManActions(v interface{}, path cty.Path) diag.Diagnostics {
 
 	m := map[string]struct{}{"alert": {}, "delay": {}, "deny": {}, "monitor": {}, "none": {}, "slow": {}, "tarpit": {}}
 	_, ok = m[value]
-	if !(ok || strings.Contains(value, "deny_custom_") || strings.Contains(value, "cond_action_") || strings.Contains(value, "serve_alt_")) {
-		return diag.Errorf("%q may only contain alert, cond_action_{action_id}, delay, deny, deny_custom_{action_id}, monitor, none, serve_alt_{action_id}, slow, tarpit", schemaFieldName)
+	if !(ok || strings.Contains(value, "deny_custom_") || strings.Contains(value, "cond_action_") || strings.Contains(value, "serve_alt_") || strings.Contains(value, "challenge_")) {
+		return diag.Errorf("%q may only contain alert, cond_action_{action_id}, delay, deny, deny_custom_{action_id}, monitor, none, serve_alt_{action_id}, slow, tarpit, challenge_{action_id}", schemaFieldName)
 	}
 
 	return nil

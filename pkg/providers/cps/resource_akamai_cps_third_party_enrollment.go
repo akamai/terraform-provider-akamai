@@ -6,22 +6,26 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/cps"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/timeouts"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
-	cpstools "github.com/akamai/terraform-provider-akamai/v8/pkg/providers/cps/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cps"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/timeouts"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
+	cpstools "github.com/akamai/terraform-provider-akamai/v9/pkg/providers/cps/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 var (
-	// ErrWarningsCannotBeApproved is returned when some warnings cannot be auto approved
+	// ErrWarningsCannotBeApproved is returned when some warnings cannot be auto approved.
 	ErrWarningsCannotBeApproved = errors.New("warnings cannot be approved")
+
+	// DefaultEnrollmentTimeout is the default timeout for enrollment operations.
+	DefaultEnrollmentTimeout = time.Hour
 )
 
 func resourceCPSThirdPartyEnrollment() *schema.Resource {
@@ -176,7 +180,7 @@ func resourceCPSThirdPartyEnrollment() *schema.Resource {
 				return nil
 			}),
 		Timeouts: &schema.ResourceTimeout{
-			Default: &timeouts.SDKDefaultTimeout,
+			Default: &DefaultEnrollmentTimeout,
 		},
 	}
 }
@@ -291,9 +295,6 @@ func resourceCPSThirdPartyEnrollmentRead(ctx context.Context, d *schema.Resource
 	attrs["change_management"] = enrollment.ChangeManagement
 
 	if err = tf.SetAttrs(d, attrs); err != nil {
-		return diag.FromErr(err)
-	}
-	if err != nil {
 		return diag.FromErr(err)
 	}
 	return nil

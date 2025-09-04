@@ -5,9 +5,9 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/iam"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 

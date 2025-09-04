@@ -9,13 +9,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/cps"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/log"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
-	cpstools "github.com/akamai/terraform-provider-akamai/v8/pkg/providers/cps/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cps"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/log"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
+	cpstools "github.com/akamai/terraform-provider-akamai/v9/pkg/providers/cps/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -382,7 +382,29 @@ func enrollmentDelete(ctx context.Context, d *schema.ResourceData, m interface{}
 	if _, err = client.RemoveEnrollment(ctx, req); err != nil {
 		return diag.FromErr(err)
 	}
-	return nil
+
+	_, err = client.GetEnrollment(ctx, cps.GetEnrollmentRequest{EnrollmentID: enrollmentID})
+	if errors.Is(err, cps.ErrEnrollmentNotFound) {
+		logger.Debugf("Enrollment %d successfully deleted", enrollmentID)
+		return nil
+	}
+
+	for {
+		select {
+		case <-time.After(PollForGetEnrollmentInterval):
+			_, err = client.GetEnrollment(ctx, cps.GetEnrollmentRequest{EnrollmentID: enrollmentID})
+			if errors.Is(err, cps.ErrEnrollmentNotFound) {
+				logger.Debugf("Enrollment %d successfully deleted", enrollmentID)
+				return nil
+			}
+			if err != nil {
+				return diag.Errorf("error checking enrollment deletion: %v", err)
+			}
+
+		case <-ctx.Done():
+			return diag.Errorf("timed out waiting for enrollment deletion: %s", ctx.Err())
+		}
+	}
 }
 
 func readAttrs(enrollment *cps.GetEnrollmentResponse, d *schema.ResourceData) (map[string]interface{}, error) {

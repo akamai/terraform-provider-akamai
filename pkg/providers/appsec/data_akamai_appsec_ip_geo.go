@@ -4,9 +4,9 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -30,23 +30,62 @@ func dataSourceIPGeo() *schema.Resource {
 				Computed:    true,
 				Description: "IPGeo mode",
 			},
-			"asn_network_lists": {
-				Type:        schema.TypeSet,
-				Computed:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				Description: "List of unique identifiers of available ASN network lists",
+			"asn_controls": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"asn_network_lists": {
+							Type:        schema.TypeSet,
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Computed:    true,
+							Description: "List of IDs of ASN network list to be blocked.",
+						},
+						"action": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Action set for ASN Controls",
+						},
+					},
+				},
 			},
-			"geo_network_lists": {
-				Type:        schema.TypeSet,
-				Computed:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				Description: "List of unique identifiers of available GEO network lists",
+			"geo_controls": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"geo_network_lists": {
+							Type:        schema.TypeSet,
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Computed:    true,
+							Description: "List of IDs of geographic network list to be blocked.",
+						},
+						"action": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Action set for GEO Controls.",
+						},
+					},
+				},
 			},
-			"ip_network_lists": {
-				Type:        schema.TypeSet,
-				Computed:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				Description: "List of unique identifiers of available IP network lists",
+			"ip_controls": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"ip_network_lists": {
+							Type:        schema.TypeSet,
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Computed:    true,
+							Description: "List of IDs of IP network list to be blocked.",
+						},
+						"action": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Action set for IP Controls.",
+						},
+					},
+				},
 			},
 			"exception_ip_network_lists": {
 				Type:        schema.TypeSet,
@@ -58,6 +97,11 @@ func dataSourceIPGeo() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Action set for Ukraine geo control",
+			},
+			"block_action": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Specifies the action set for BLOCK Mode blocking all the traffic except from lists identified in exception_ip_network_lists",
 			},
 			"output_text": {
 				Type:        schema.TypeString,
@@ -123,14 +167,9 @@ func setAttributes(d *schema.ResourceData, ipgeo *appsec.GetIPGeoResponse) diag.
 		if err := d.Set("mode", Allow); err != nil {
 			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
-		if ipgeo.IPControls != nil && ipgeo.IPControls.AllowedIPNetworkLists != nil && ipgeo.IPControls.AllowedIPNetworkLists.NetworkList != nil {
-			if err := d.Set("exception_ip_network_lists", ipgeo.IPControls.AllowedIPNetworkLists.NetworkList); err != nil {
-				return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
-			}
-		} else {
-			if err := d.Set("exception_ip_network_lists", []string{}); err != nil {
-				return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
-			}
+
+		if err := d.Set("block_action", ipgeo.BlockAllAction); err != nil {
+			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
 	}
 
@@ -138,38 +177,66 @@ func setAttributes(d *schema.ResourceData, ipgeo *appsec.GetIPGeoResponse) diag.
 		if err := d.Set("mode", Block); err != nil {
 			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
-		if ipgeo.ASNControls != nil && ipgeo.ASNControls.BlockedIPNetworkLists != nil && ipgeo.ASNControls.BlockedIPNetworkLists.NetworkList != nil {
-			if err := d.Set("asn_network_lists", ipgeo.ASNControls.BlockedIPNetworkLists.NetworkList); err != nil {
-				return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
-			}
-		} else {
-			if err := d.Set("asn_network_lists", []string{}); err != nil {
-				return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+
+		asnControls := map[string]interface{}{
+			"asn_network_lists": []string{},
+			"action":            "",
+		}
+
+		if ipgeo.ASNControls != nil {
+			if ipgeo.ASNControls.BlockedIPNetworkLists != nil && ipgeo.ASNControls.BlockedIPNetworkLists.NetworkList != nil {
+				asnControls["asn_network_lists"] = ipgeo.ASNControls.BlockedIPNetworkLists.NetworkList
+				asnControls["action"] = ipgeo.ASNControls.BlockedIPNetworkLists.Action
 			}
 		}
-		if ipgeo.GeoControls != nil && ipgeo.GeoControls.BlockedIPNetworkLists != nil && ipgeo.GeoControls.BlockedIPNetworkLists.NetworkList != nil {
-			if err := d.Set("geo_network_lists", ipgeo.GeoControls.BlockedIPNetworkLists.NetworkList); err != nil {
-				return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
-			}
-		} else {
-			if err := d.Set("geo_network_lists", []string{}); err != nil {
-				return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+		if err := d.Set("asn_controls", []interface{}{asnControls}); err != nil {
+			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+		}
+
+		geoControls := map[string]interface{}{
+			"geo_network_lists": []string{},
+			"action":            "",
+		}
+		if ipgeo.GeoControls != nil {
+			if ipgeo.GeoControls.BlockedIPNetworkLists != nil && ipgeo.GeoControls.BlockedIPNetworkLists.NetworkList != nil {
+				geoControls["geo_network_lists"] = ipgeo.GeoControls.BlockedIPNetworkLists.NetworkList
+				geoControls["action"] = ipgeo.GeoControls.BlockedIPNetworkLists.Action
 			}
 		}
-		if ipgeo.IPControls != nil && ipgeo.IPControls.BlockedIPNetworkLists != nil && ipgeo.IPControls.BlockedIPNetworkLists.NetworkList != nil {
-			if err := d.Set("ip_network_lists", ipgeo.IPControls.BlockedIPNetworkLists.NetworkList); err != nil {
-				return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
-			}
-		} else {
-			if err := d.Set("ip_network_lists", []string{}); err != nil {
-				return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+		if err := d.Set("geo_controls", []interface{}{geoControls}); err != nil {
+			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+		}
+
+		ipControls := map[string]interface{}{
+			"ip_network_lists": []string{},
+			"action":           "",
+		}
+		if ipgeo.IPControls != nil {
+			if ipgeo.IPControls.BlockedIPNetworkLists != nil && ipgeo.IPControls.BlockedIPNetworkLists.NetworkList != nil {
+				ipControls["ip_network_lists"] = ipgeo.IPControls.BlockedIPNetworkLists.NetworkList
+				ipControls["action"] = ipgeo.IPControls.BlockedIPNetworkLists.Action
 			}
 		}
+		if err := d.Set("ip_controls", []interface{}{ipControls}); err != nil {
+			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+		}
+
 		if ipgeo.UkraineGeoControls != nil && ipgeo.UkraineGeoControls.Action != "" {
 			if err := d.Set("ukraine_geo_control_action", ipgeo.UkraineGeoControls.Action); err != nil {
 				return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 			}
 		}
 	}
+
+	if ipgeo.IPControls != nil && ipgeo.IPControls.AllowedIPNetworkLists != nil && ipgeo.IPControls.AllowedIPNetworkLists.NetworkList != nil {
+		if err := d.Set("exception_ip_network_lists", ipgeo.IPControls.AllowedIPNetworkLists.NetworkList); err != nil {
+			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+		}
+	} else {
+		if err := d.Set("exception_ip_network_lists", []string{}); err != nil {
+			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+		}
+	}
+
 	return nil
 }

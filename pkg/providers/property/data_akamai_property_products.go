@@ -5,11 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/papi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/hash"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/hash"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )

@@ -27,7 +27,7 @@ func (m preventStringUpdateModifier) MarkdownDescription(ctx context.Context) st
 
 // PlanModifyString implements the plan modification logic.
 func (m preventStringUpdateModifier) PlanModifyString(_ context.Context, req planmodifier.StringRequest, resp *planmodifier.StringResponse) {
-	if req.StateValue.IsNull() {
+	if req.State.Raw.IsNull() {
 		return
 	}
 	if req.PlanValue != req.StateValue {

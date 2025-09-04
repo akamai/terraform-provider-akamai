@@ -1,0 +1,14 @@
+provider "akamai" {
+  edgerc = "../../common/testutils/edgerc"
+}
+
+resource "akamai_mtlstruststore_ca_set_activation" "test" {
+  ca_set_id = "12345"
+  version   = 1
+  network   = "STAGING"
+  timeouts = {
+    create = "2m"
+    update = "2m"
+    delete = "1m"
+  }
+}

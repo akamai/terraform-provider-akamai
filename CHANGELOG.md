@@ -1,5 +1,98 @@
 # RELEASE NOTES
 
+## 9.0.0 (Sep 04, 2025)
+
+#### BREAKING CHANGES:
+
+* Appsec
+  * Made the following changes in the `akamai_appsec_ip_geo` data source and resource:
+    * Replaced the `ip_network_lists` field with the `ip_controls` object containing `action` and `ip_network_lists`.
+      The `action` blocks requests from a specified IP with a `deny` or `custom_deny` action in `block` mode. If no `action` is specified, it defaults to `deny`.
+    * Replaced the `geo_network_lists` field with the `geo_controls` object containing `action` and `geo_network_lists`.
+      The `action` blocks requests from a specified Geo with a `deny` or `custom_deny` action in `block` mode. If no `action` is specified, it defaults to `deny`.
+    * Replaced the `asn_network_lists` field with the `asn_controls` object containing `action` and `asn_network_lists`.
+      The `action` blocks requests from a specified ASN with a `deny` or `custom_deny` action in `block` mode. If no `action` is specified, it defaults to `deny`.
+
+* DNS
+  * Updated the `akamai_dns_record_set` data source and fixed an issue with the swapped `host` and `name` attributes.
+
+#### FEATURES/ENHANCEMENTS:
+
+* [IMPORTANT] Account Protection (Beta):
+  * Added new data sources:
+    * `akamai_apr_protected_operations`
+    * `akamai_apr_general_settings`
+    * `akamai_apr_user_risk_response_strategy`
+    * `akamai_apr_user_allow_list`
+  * Added new resources:
+    * `akamai_apr_protected_operations`
+    * `akamai_apr_general_settings`
+    * `akamai_apr_user_risk_response_strategy`
+    * `akamai_apr_user_allow_list`  
+
+* [IMPORTANT] API Definitions (Beta):
+  * Added new resources:
+    * `akamai_apidefinitions_api` - creates, reads, updates, deletes, and imports API configuration.
+    * `akamai_apidefinitions_activation` - activates and imports API activation configuration.
+    * `akamai_apidefinitions_resource_operations` - creates, reads, updates, deletes, and imports API resource operations.
+  * Added new data sources:
+    * `akamai_apidefinitions_api` - reads API configuration.
+    * `akamai_apidefinitions_resource_operations` - reads API resource operations configuration.
+    * `akamai_apidefinitions_openapi` - maps an OpenAPI/Swagger file to API configuration.
+
+* Appsec
+  * Added new data sources:
+    * `data_akamai_appsec_advanced_settings_ase_penalty_box`
+    * `data_akamai_appsec_advanced_settings_ja4_fingerprint`
+  * Added new resources:
+    * `resource_akamai_appsec_advanced_settings_ase_penalty_box`
+    * `resource_akamai_appsec_advanced_settings_ja4_fingerprint`
+  * Added a new field `include_ja4_fingerprint_to_siem` to the `resource_akamai_appsec_siem_settings`.
+  * Added support for challenge actions in the `resource_akamai_appsec_rate_policy_action` resource.
+  * Made the following changes in the `akamai_appsec_ip_geo` data source and resource:
+    * Added the `block_action` field to block requests with a 'deny' or 'custom_deny' action in IP/GEO except from the `allowedLists` in 'allow' mode. If no action is specified, it defaults to 'deny'.
+    *  Changed the `Type` to `TypeSet` to allow only distinct values for `exception_ip_network_lists`.
+  * Added the `include_expiry_details` attribute to the `akamai_appsec_rapid_rules` data source to fetch expiration information for rapid rules. If a rapid rules has an expiry date set, it fills out the `expired` and `expire_in_days` attributes with appropriate values.
+
+* ClientLists
+  * Added support for `USER` type client lists in the `data_akamai_clientlist_lists` data source and `resource_akamai_clientlists_list` resource.
+  * Added a new data source `data_akamai_clientlist_list` – gets specific client list details.
+  * Increased timeout for the `resource_akamai_clientlists_list_activation` resource to 30 minutes.
+
+* CPS
+  * Increased default timeout for `akamai_cps_third_party_enrollment` and `akamai_cps_dv_enrollment` resources from 20 minutes to 1 hour to avoid erroring out during deletion. It is not recommended to use timeout values lower than 1 hour.
+
+* mTLS Keystore:
+  * Added the `created_by` and `created_date` fields to the `akamai_mtlskeystore_client_certificate_third_party` resource.
+
+* [IMPORTANT] mTLS Truststore (Beta):
+  * Added new resources:
+    * `akamai_mtlstruststore_ca_set` - manages lifecycle of a CA set and its version.
+    * `akamai_mtlstruststore_ca_set_activation` - manages lifecycle of a CA set version activation.
+  * Added new data sources:
+    * `akamai_mtlstruststore_ca_set` - reads a CA set.
+    * `akamai_mtlstruststore_ca_set_activation` - reads an activation for a CA set.
+    * `akamai_mtlstruststore_ca_set_activations` - reads CA set activations.
+    * `akamai_mtlstruststore_ca_set_activities` - lists CA set activities.
+    * `akamai_mtlstruststore_ca_set_associations` - reads a list of properties and enrollments using a CA set.
+    * `akamai_mtlstruststore_ca_set_certificates` - retrieves the list of CA set certificates for a specified version, or for the latest version if none is provided.
+    * `akamai_mtlstruststore_ca_set_versions` - lists CA set versions.
+    * `akamai_mtlstruststore_ca_sets` - reads CA sets.
+
+#### BUG FIXES:
+
+* Appsec
+  * Fixed an issue in the `resource_akamai_appsec_rapid_rules` resource attribute related to not accepting values from variables.
+  * Fixed an issue in the `resource_akamai_appsec_rapid_rules` resource where modifications did not create a new version of the security configuration if the current configuration was read-only.
+
+* Datastream
+  * Fixed handling of the `2051` data field in `resource_akamai_datastream` when `collect_midgress` is set to `true` ([I#671](https://github.com/akamai/terraform-provider-akamai/issues/671)).
+  * Fixed a discrepancy of computed fields (`stream_version`, `latest_version`, `modified_by`, `modified_date`) when updating them in the output after apply.
+
+* PAPI
+  * Fixed an issue in the `akamai_edge_hostname` resource where the resource was successfully created in the backend, 
+  but the Terraform Provider returned errors such as "inconsistent result after apply" or "unable to find an edgehostname" ([I#658](https://github.com/akamai/terraform-provider-akamai/issues/658)) and ([I#681](https://github.com/akamai/terraform-provider-akamai/issues/681)).
+
 ## 8.1.0 (Aug 06, 2025)
 
 #### FEATURES/ENHANCEMENTS:
@@ -14,7 +107,7 @@
 * GTM
   * Added new optional parameters to the `akamai_gtm_domain` resource's import ID. It allows specifying the imported domain's contract and group and save them in the state ([I#631](https://github.com/akamai/terraform-provider-akamai/issues/631)).
 
-* mTLS Keystore:
+* mTLS Keystore (Beta):
     * Added new data sources:
         * `akamai_mtlskeystore_account_ca_certificates` - lists CA certificates under the account.
         * `akamai_mtlskeystore_client_certificate` - reads client certificate with its versions.

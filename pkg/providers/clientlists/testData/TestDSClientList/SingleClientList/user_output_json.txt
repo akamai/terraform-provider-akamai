@@ -1,0 +1,120 @@
+{
+  "name": "vp_user_type_client_list_usernames_tf",
+  "type": "USER_ID",
+  "notes": "Client list creation",
+  "tags": [
+    "black",
+    "blue",
+    "green",
+    "red",
+    "yellow"
+  ],
+  "listId": "193203_VPUSERTYPECLIENTLISTUS",
+  "version": 5,
+  "itemsCount": 5,
+  "createDate": "2025-08-05T13:29:15.817+00:00",
+  "createdBy": "ugy6o5athxtnfiml",
+  "updateDate": "2025-08-07T19:28:47.134+00:00",
+  "updatedBy": "ugy6o5athxtnfiml",
+  "productionActivationStatus": "INACTIVE",
+  "stagingActivationStatus": "INACTIVE",
+  "productionActiveVersion": 0,
+  "stagingActiveVersion": 0,
+  "listType": "CL",
+  "shared": false,
+  "readOnly": false,
+  "deprecated": false,
+  "contractId": "G-3HTINIE",
+  "groupId": 384919,
+  "groupName": "cpc_qa",
+  "items": [
+    {
+      "value": "03c9fa81-f3af-4e3f-a15a-93bf49407d5f (user4)",
+      "tags": [
+        "green",
+        "blue"
+      ],
+      "description": "Item four",
+      "expirationDate": "",
+      "createDate": "2025-08-07T19:28:47.118+00:00",
+      "createdBy": "ugy6o5athxtnfiml",
+      "createdVersion": 0,
+      "productionStatus": "INACTIVE",
+      "stagingStatus": "INACTIVE",
+      "type": "USER_ID",
+      "updateDate": "2025-08-07T19:28:47.118+00:00",
+      "updatedBy": "ugy6o5athxtnfiml"
+    },
+    {
+      "value": "672a43b0-2841-42f1-aeee-e13569c31524 (user1)",
+      "tags": [
+        "red",
+        "blue"
+      ],
+      "description": "User one",
+      "expirationDate": "2025-09-06T15:58:39.225+00:00",
+      "createDate": "2025-08-07T19:28:47.118+00:00",
+      "createdBy": "ugy6o5athxtnfiml",
+      "createdVersion": 0,
+      "productionStatus": "INACTIVE",
+      "stagingStatus": "INACTIVE",
+      "type": "USER_ID",
+      "updateDate": "2025-08-07T19:28:47.118+00:00",
+      "updatedBy": "ugy6o5athxtnfiml"
+    },
+    {
+      "value": "7340cbfc-3dad-4c52-a653-7874bc2a79dc (sales@ubs.com)",
+      "tags": [
+        "green",
+        "blue"
+      ],
+      "description": "UBS sales user",
+      "expirationDate": "",
+      "createDate": "2025-08-07T19:28:47.118+00:00",
+      "createdBy": "ugy6o5athxtnfiml",
+      "createdVersion": 0,
+      "productionStatus": "INACTIVE",
+      "stagingStatus": "INACTIVE",
+      "type": "USER_ID",
+      "updateDate": "2025-08-07T19:28:47.118+00:00",
+      "updatedBy": "ugy6o5athxtnfiml"
+    },
+    {
+      "value": "8894f428-bedc-4ca2-8258-fa24d7740709 (user2)",
+      "tags": [
+        "green",
+        "blue",
+        "redd",
+        "yellow",
+        "blackKKKK"
+      ],
+      "description": "User two",
+      "expirationDate": "",
+      "createDate": "2025-08-07T19:28:47.118+00:00",
+      "createdBy": "ugy6o5athxtnfiml",
+      "createdVersion": 0,
+      "productionStatus": "INACTIVE",
+      "stagingStatus": "INACTIVE",
+      "type": "USER_ID",
+      "updateDate": "2025-08-07T19:28:47.118+00:00",
+      "updatedBy": "ugy6o5athxtnfiml"
+    },
+    {
+      "value": "d7505c0f-b1f6-4c02-93bf-a601577f5641 (user3)",
+      "tags": [
+        "green",
+        "blue"
+      ],
+      "description": "User three",
+      "expirationDate": "",
+      "createDate": "2025-08-07T19:28:47.118+00:00",
+      "createdBy": "ugy6o5athxtnfiml",
+      "createdVersion": 0,
+      "productionStatus": "INACTIVE",
+      "stagingStatus": "INACTIVE",
+      "type": "USER_ID",
+      "updateDate": "2025-08-07T19:28:47.118+00:00",
+      "updatedBy": "ugy6o5athxtnfiml"
+    }
+  ]
+}

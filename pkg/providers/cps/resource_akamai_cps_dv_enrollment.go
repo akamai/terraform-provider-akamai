@@ -8,21 +8,23 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/cps"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/timeouts"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
-	cpstools "github.com/akamai/terraform-provider-akamai/v8/pkg/providers/cps/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cps"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/timeouts"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
+	cpstools "github.com/akamai/terraform-provider-akamai/v9/pkg/providers/cps/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 var (
-	// PollForChangeStatusInterval defines retry interval for getting status of a pending change
+	// PollForChangeStatusInterval defines retry interval for getting status of a pending change.
 	PollForChangeStatusInterval = 10 * time.Second
+	// PollForGetEnrollmentInterval defines retry interval for getting enrollment.
+	PollForGetEnrollmentInterval = 30 * time.Second
 )
 
 func resourceCPSDVEnrollment() *schema.Resource {
@@ -233,7 +235,7 @@ func resourceCPSDVEnrollment() *schema.Resource {
 				return nil
 			}),
 		Timeouts: &schema.ResourceTimeout{
-			Default: &timeouts.SDKDefaultTimeout,
+			Default: &DefaultEnrollmentTimeout,
 		},
 	}
 }

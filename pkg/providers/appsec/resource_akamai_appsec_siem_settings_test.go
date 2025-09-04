@@ -5,9 +5,9 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/require"
 )
@@ -44,7 +44,7 @@ func TestAkamaiSiemSettings_res_basic(t *testing.T) {
 
 		client.On("UpdateSiemSettings",
 			testutils.MockContext,
-			appsec.UpdateSiemSettingsRequest{ConfigID: 43253, Version: 7, EnableForAllPolicies: false, EnableSiem: true, EnabledBotmanSiemEvents: ptr.To(true), SiemDefinitionID: 1, FirewallPolicyIDs: []string{"12345"}, Exceptions: []appsec.Exception{}},
+			appsec.UpdateSiemSettingsRequest{ConfigID: 43253, Version: 7, EnableForAllPolicies: false, EnableSiem: true, EnabledBotmanSiemEvents: ptr.To(true), IncludeJA4FingerprintToSiem: ptr.To(true), SiemDefinitionID: 1, FirewallPolicyIDs: []string{"12345"}, Exceptions: []appsec.Exception{}},
 		).Return(&updateSiemSettingsResponse, nil)
 
 		client.On("RemoveSiemSettings",
@@ -210,7 +210,7 @@ func TestAkamaiSiemSettings_res_basic(t *testing.T) {
 
 		client.On("UpdateSiemSettings",
 			testutils.MockContext,
-			appsec.UpdateSiemSettingsRequest{ConfigID: 43253, Version: 7, EnableForAllPolicies: false, EnableSiem: true, EnabledBotmanSiemEvents: ptr.To(true), SiemDefinitionID: 1, FirewallPolicyIDs: []string{"12345"}, Exceptions: []appsec.Exception{}},
+			appsec.UpdateSiemSettingsRequest{ConfigID: 43253, Version: 7, EnableForAllPolicies: false, EnableSiem: true, EnabledBotmanSiemEvents: ptr.To(true), IncludeJA4FingerprintToSiem: ptr.To(true), SiemDefinitionID: 1, FirewallPolicyIDs: []string{"12345"}, Exceptions: []appsec.Exception{}},
 		).Return(&updateSiemSettingsResponseNoExceptions, nil).Times(1)
 
 		client.On("GetSiemSettings",

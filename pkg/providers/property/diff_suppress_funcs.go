@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"sort"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/log"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 

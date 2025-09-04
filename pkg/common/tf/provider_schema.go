@@ -390,3 +390,22 @@ func GetExactlyOneOf(rd ResourceDataFetcher, keys []string) (foundKey string, va
 	}
 	return "", nil, ErrNotFound
 }
+
+// GetSetAsListValue retrieves a schema.TypeSet from Terraform resource data and returns its elements as a slice of interface{}.
+// It performs key validation and type assertion, returning detailed errors for invalid or missing data.
+func GetSetAsListValue(key string, rd ResourceDataFetcher) ([]interface{}, error) {
+	if key == "" {
+		return nil, fmt.Errorf("%w: %s", ErrEmptyKey, key)
+	}
+	value, ok := rd.GetOk(key)
+	if value == nil || !ok {
+		return nil, fmt.Errorf("%w: %s", ErrNotFound, key)
+	}
+
+	set, ok := value.(*schema.Set)
+	if !ok {
+		return nil, fmt.Errorf("%w: %s, expected *schema.Set", ErrInvalidType, key)
+	}
+
+	return set.List(), nil
+}

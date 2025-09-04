@@ -1,0 +1,11 @@
+{
+  "unknown": {
+    "/index.php*": {
+      "testPurpose": {
+        "method": "POST",
+        "purpose": "login",
+        "unknown": "login"
+      }
+    }
+  }
+}

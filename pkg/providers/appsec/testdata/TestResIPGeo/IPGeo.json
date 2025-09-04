@@ -2,6 +2,7 @@
     "block": "blockSpecificIPGeo",
     "asnControls": {
         "blockedIPNetworkLists": {
+            "action": "deny",
             "networkList": [
                 "40721_ASNLIST1","44811_ASNLIST2"
             ]
@@ -9,6 +10,7 @@
     },
     "geoControls": {
         "blockedIPNetworkLists": {
+            "action": "deny",
             "networkList": [
                 "40731_BMROLLOUTGEO","44831_ECSCGEOBLACKLIST"
             ]
@@ -16,6 +18,7 @@
     },
     "ipControls": {
         "blockedIPNetworkLists": {
+            "action": "deny",
             "networkList": [
                 "49181_ADTIPBLACKLIST","49185_ADTWAFBYPASSLIST"
             ]

@@ -55,3 +55,11 @@ func ToString(value time.Time) (string, error) {
 
 	return string(bytes), nil
 }
+
+// CapDuration limits a given duration to a maximum value
+func CapDuration(t, tMax time.Duration) time.Duration {
+	if t > tMax {
+		return tMax
+	}
+	return t
+}

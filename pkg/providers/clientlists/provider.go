@@ -4,8 +4,8 @@ package clientlists
 import (
 	"sync"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/clientlists"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/clientlists"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -75,6 +75,7 @@ func (p *Subprovider) FrameworkResources() []func() resource.Resource {
 // FrameworkDataSources returns the clientlists data sources implemented using terraform-plugin-framework
 func (p *Subprovider) FrameworkDataSources() []func() datasource.DataSource {
 	return []func() datasource.DataSource{
+		NewClientListDataSource,
 		NewClientListsDataSource,
 	}
 }

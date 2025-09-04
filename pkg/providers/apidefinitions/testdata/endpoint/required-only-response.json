@@ -1,0 +1,14 @@
+{
+  "id": 1,
+  "name": "Pet Store",
+  "contractId": "Contract-1",
+  "groupId": 1,
+  "hostnames": [
+    "akamai.com"
+  ],
+  "matchPathSegmentParam": false,
+  "caseSensitive": false,
+  "apiGatewayEnabled": false,
+  "graphQl": false,
+  "recordVersion": 1
+}

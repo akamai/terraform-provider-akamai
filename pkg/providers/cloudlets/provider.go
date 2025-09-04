@@ -6,10 +6,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/cloudlets"
-	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/cloudlets/v3"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/subprovider"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudlets"
+	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudlets/v3"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/subprovider"
 )
 
 type (

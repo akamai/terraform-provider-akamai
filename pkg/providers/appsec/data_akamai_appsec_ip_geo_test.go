@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/require"
 )
@@ -41,9 +41,9 @@ func TestAkamaiIPGeo_data_basic(t *testing.T) {
 						Config: testutils.LoadFixtureString(t, "testdata/TestDSIPGeo/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("data.akamai_appsec_ip_geo.test", "id", "43253"),
-							resource.TestCheckResourceAttr("data.akamai_appsec_ip_geo.test", "asn_network_lists.#", "1"),
-							resource.TestCheckResourceAttr("data.akamai_appsec_ip_geo.test", "geo_network_lists.#", "1"),
-							resource.TestCheckResourceAttr("data.akamai_appsec_ip_geo.test", "ip_network_lists.#", "1"),
+							resource.TestCheckResourceAttr("data.akamai_appsec_ip_geo.test", "asn_controls.#", "1"),
+							resource.TestCheckResourceAttr("data.akamai_appsec_ip_geo.test", "geo_controls.#", "1"),
+							resource.TestCheckResourceAttr("data.akamai_appsec_ip_geo.test", "ip_controls.#", "1"),
 						),
 					},
 				},

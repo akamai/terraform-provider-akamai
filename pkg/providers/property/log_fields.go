@@ -3,8 +3,8 @@ package property
 import (
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/log"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/log"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
 )
 
 // Get loggable fields from given arguments

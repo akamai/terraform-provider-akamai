@@ -1,0 +1,59 @@
+{
+  "operations": {
+    "/index.php*": {
+      "onlineshop": {
+        "purpose": "account_verification",
+        "method": "POST",
+        "parameters": {
+          "username": {
+            "path": [
+              "root123",
+              "email"
+            ],
+            "location": "request_body"
+          }
+        },
+        "successConditions": [
+          {
+            "headerName": "X-Success",
+            "positiveMatch": true,
+            "suppressFromClientResponse": false,
+            "type": "header_value",
+            "valueCase": false,
+            "valueWildcard": false,
+            "values": [
+              "201"
+            ]
+          }
+        ]
+      },
+      "onlineshop-get": {
+        "purpose": "search",
+        "method": "GET",
+        "successConditions": [
+          {
+            "headerName": "X-Success",
+            "positiveMatch": true,
+            "suppressFromClientResponse": false,
+            "type": "header_value",
+            "valueCase": false,
+            "valueWildcard": false,
+            "values": [
+              "201"
+            ]
+          }
+        ]
+      }
+    },
+    "/login": {
+      "purposeLoginGET": {
+        "purpose": "account_verification",
+        "method": "GET"
+      },
+      "purposeLoginPOST": {
+        "purpose": "account_verification",
+        "method": "POST"
+      }
+    }
+  }
+}

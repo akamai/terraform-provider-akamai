@@ -12,11 +12,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/edgegrid"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/papi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v8/internal/test"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/retryablehttp"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/edgegrid"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v9/internal/test"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/retryablehttp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

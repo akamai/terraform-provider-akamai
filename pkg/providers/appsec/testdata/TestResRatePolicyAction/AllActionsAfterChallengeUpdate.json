@@ -1,0 +1,19 @@
+{
+    "ratePolicyActions": [
+        {
+            "id": 135355,
+            "ipv4Action": "challenge_1234",
+            "ipv6Action": "challenge_5678"
+        },
+        {
+            "id": 102719,
+            "ipv4Action": "none",
+            "ipv6Action": "none"
+        },
+        {
+            "id": 102720,
+            "ipv4Action": "none",
+            "ipv6Action": "none"
+        }
+    ]
+}

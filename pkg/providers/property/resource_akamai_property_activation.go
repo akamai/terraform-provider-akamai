@@ -10,14 +10,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/log"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/papi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/date"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/str"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/timeouts"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/log"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/date"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/str"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/timeouts"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -1041,7 +1041,7 @@ func createActivation(ctx context.Context, client papi.PAPI, request papi.Create
 
 		select {
 		case <-time.After(createActivationRetry):
-			createActivationRetry = capDuration(createActivationRetry*2, 5*time.Minute)
+			createActivationRetry = date.CapDuration(createActivationRetry*2, 5*time.Minute)
 			continue
 
 		case <-ctx.Done():
@@ -1053,13 +1053,6 @@ func createActivation(ctx context.Context, client papi.PAPI, request papi.Create
 			return "", diag.FromErr(fmt.Errorf("activation context terminated: %w", ctx.Err()))
 		}
 	}
-}
-
-func capDuration(t time.Duration, tMax time.Duration) time.Duration {
-	if t > tMax {
-		return tMax
-	}
-	return t
 }
 
 func isCreateActivationErrorRetryable(err error) bool {

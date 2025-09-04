@@ -5,10 +5,10 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/test"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/test"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -30,6 +30,10 @@ func TestDataRapidRules(t *testing.T) {
 
 	getAttackGroupsResponse := appsec.GetAttackGroupsResponse{}
 	err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestDSRapidRules/AttackGroups.json"), &getAttackGroupsResponse)
+	require.NoError(t, err)
+
+	getRapidRulesWithExpiry := appsec.GetRapidRulesResponse{}
+	err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestDSRapidRules/RapidRulesWithExpiry.json"), &getRapidRulesWithExpiry)
 	require.NoError(t, err)
 
 	baseChecker := test.NewStateChecker("data.akamai_appsec_rapid_rules.test").
@@ -74,6 +78,8 @@ func TestDataRapidRules(t *testing.T) {
 						CheckEqual("rapid_rules.0.id", "300050014").
 						CheckEqual("rapid_rules.0.lock", "false").
 						CheckEqual("rapid_rules.0.name", "Local File Inclusion (LFI) Attack on Linux files").
+						CheckMissing("rapid_rules.0.expired").
+						CheckMissing("rapid_rules.0.expire_in_days").
 						CheckEqual("rapid_rules.1.action", "alert").
 						CheckEqual("rapid_rules.1.attack_group", "PLATFORM").
 						CheckEqual("rapid_rules.1.attack_group_exception", "{}").
@@ -111,6 +117,8 @@ func TestDataRapidRules(t *testing.T) {
 						CheckEqual("rapid_rules.0.id", "999997").
 						CheckEqual("rapid_rules.0.lock", "false").
 						CheckEqual("rapid_rules.0.name", "Cross-site Scripting (XSS) Attack - Dummy test rule").
+						CheckMissing("rapid_rules.0.expired").
+						CheckMissing("rapid_rules.0.expire_in_days").
 						Build(),
 				},
 			},
@@ -196,6 +204,47 @@ func TestDataRapidRules(t *testing.T) {
 				},
 			},
 		},
+		"happy path – include_expiry_details = true": {
+			init: func(m *appsec.Mock) {
+				mockGetConfiguration(m, 3)
+				mockGetRapidRulesStatus(m, true, 3)
+				mockGetRapidRulesWithExpiry(m, getRapidRulesWithExpiry, 3) // flag = true
+				mockGetRapidRulesDefaultAction(m, "alert", 3)
+				mockGetAttackGroups(m, getAttackGroupsResponse, 3)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t,
+						"testdata/TestDSRapidRules/rapid_rules_with_expiry.tf"),
+					Check: baseChecker.
+						CheckEqual("include_expiry_details", "true").
+						CheckEqual("rapid_rules.0.expired", "true").
+						CheckMissing("rapid_rules.0.expire_in_days").
+						CheckEqual("rapid_rules.1.expire_in_days", "5").
+						Build(),
+				},
+			},
+		},
+		"include_expiry_details = true but rapid rules disabled": {
+			init: func(m *appsec.Mock) {
+				mockGetConfiguration(m, 3)
+				mockGetRapidRulesStatus(m, false, 3) // disabled ⇒ provider never calls GetRapidRules
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t,
+						"testdata/TestDSRapidRules/rapid_rules_with_expiry.tf"),
+					Check: baseChecker.
+						CheckEqual("enabled", "false").
+						CheckEqual("default_action", "No default action. Rapid rules is turned off.").
+						CheckEqual("output_text", "Rapid rules is turned off.").
+						CheckEqual("include_expiry_details", "true").
+						CheckMissing("rapid_rules.0.expired").
+						CheckMissing("rapid_rules.0.expire_in_days").
+						Build(),
+				},
+			},
+		},
 	}
 
 	for name, test := range tests {
@@ -236,6 +285,11 @@ func mockGetAttackGroups(m *appsec.Mock, response appsec.GetAttackGroupsResponse
 func mockGetAttackGroupsFailure(m *appsec.Mock) {
 	m.On("GetAttackGroups", mock.Anything, appsec.GetAttackGroupsRequest{ConfigID: 111111, Version: 2, PolicyID: "2222_333333"}).
 		Return(nil, &serverError).Once()
+}
+
+func mockGetRapidRulesWithExpiry(m *appsec.Mock, resp appsec.GetRapidRulesResponse, times int) {
+	m.On("GetRapidRules", mock.Anything, appsec.GetRapidRulesRequest{ConfigID: 111111, Version: 2, PolicyID: "2222_333333", IncludeExpiryDetails: true, RuleID: nil}).
+		Return(&resp, nil).Times(times)
 }
 
 // indentJSON converts json file to a JSON-encoded string with Indent

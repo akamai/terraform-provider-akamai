@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/datastream"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/datastream"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -770,6 +770,14 @@ func TestResourceStreamErrors(t *testing.T) {
 			tfFile:    "testdata/TestResourceStream/errors/invalid_email/invalid_email.tf",
 			withError: regexp.MustCompile("must be a valid email address"),
 		},
+		"2051 midgress field manually specified - json - splunk": {
+			tfFile:    "testdata/TestResourceStream/errors/invalid_dataset/json_config_midgress.tf",
+			withError: regexp.MustCompile(`dataset field 2051 \(midgress\) cannot be manually specified in dataset_fields\. Use collect_midgress = true to enable midgress data collection`),
+		},
+		"2051 midgress field manually specified - structured - s3": {
+			tfFile:    "testdata/TestResourceStream/errors/invalid_dataset/structured_config_midgress.tf",
+			withError: regexp.MustCompile(`dataset field 2051 \(midgress\) cannot be manually specified in dataset_fields\. Use collect_midgress = true to enable midgress data collection`),
+		},
 	}
 
 	for name, test := range tests {
@@ -1062,6 +1070,19 @@ func TestDatasetIDsDiff(t *testing.T) {
 			format:                datastream.FormatTypeJson,
 			expectNonEmptyPlan:    true,
 		},
+		"2051 only from server side response - should be ignored - json": {
+			preConfig: "testdata/TestResourceStream/dataset_ids_diff/json_config_midgress.tf",
+			fileDatasetIDsOrder: []datastream.DatasetFieldID{
+				{
+					DatasetFieldID: 1001,
+				}, {
+					DatasetFieldID: 1002,
+				},
+			},
+			serverDatasetIDsOrder: []int{2051, 1002, 1001},
+			format:                datastream.FormatTypeJson,
+			expectNonEmptyPlan:    false, // Should not expect plan changes since 2051 is filtered out
+		},
 		"duplicates in incoming json config": {
 			preConfig: "testdata/TestResourceStream/dataset_ids_diff/json_config_duplicates.tf",
 			fileDatasetIDsOrder: []datastream.DatasetFieldID{
@@ -1100,6 +1121,19 @@ func TestDatasetIDsDiff(t *testing.T) {
 			serverDatasetIDsOrder: []int{1002, 1003},
 			format:                datastream.FormatTypeStructured,
 			expectNonEmptyPlan:    true,
+		},
+		"2051 only from server side response - should be ignored - structured": {
+			preConfig: "testdata/TestResourceStream/dataset_ids_diff/structured_config_midgress.tf",
+			fileDatasetIDsOrder: []datastream.DatasetFieldID{
+				{
+					DatasetFieldID: 1001,
+				}, {
+					DatasetFieldID: 1002,
+				},
+			},
+			serverDatasetIDsOrder: []int{2051, 1001, 1002},
+			format:                datastream.FormatTypeStructured,
+			expectNonEmptyPlan:    false, // Should not expect plan changes since 2051 is filtered out
 		},
 	}
 
@@ -1150,6 +1184,14 @@ func TestDatasetIDsDiff(t *testing.T) {
 			StreamID: streamID,
 		}
 
+		// Build DatasetFields based on serverDatasetIDsOrder
+		var datasetFields []datastream.DataSetField
+		for _, fieldID := range test.serverDatasetIDsOrder {
+			datasetFields = append(datasetFields, datastream.DataSetField{
+				DatasetFieldID: fieldID,
+			})
+		}
+
 		getStreamResponse := &datastream.DetailedStreamVersion{
 			StreamStatus:          datastream.StreamStatusInactive,
 			DeliveryConfiguration: streamConfiguration.DeliveryConfiguration,
@@ -1159,16 +1201,9 @@ func TestDatasetIDsDiff(t *testing.T) {
 				DisplayName:     "splunk_test_connector_name",
 				Endpoint:        "splunk_url",
 			},
-			ContractID: streamConfiguration.ContractID,
-			DatasetFields: []datastream.DataSetField{
-				{
-					DatasetFieldID: test.serverDatasetIDsOrder[0],
-				},
-				{
-					DatasetFieldID: test.serverDatasetIDsOrder[1],
-				},
-			},
-			GroupID: streamConfiguration.GroupID,
+			ContractID:    streamConfiguration.ContractID,
+			DatasetFields: datasetFields,
+			GroupID:       streamConfiguration.GroupID,
 			Properties: []datastream.Property{
 				{
 					PropertyID:   1,
@@ -1204,9 +1239,27 @@ func TestDatasetIDsDiff(t *testing.T) {
 							Config:             testutils.LoadFixtureString(t, test.preConfig),
 							ExpectNonEmptyPlan: test.expectNonEmptyPlan,
 							Check: resource.ComposeTestCheckFunc(
-								resource.TestCheckResourceAttr("akamai_datastream.splunk_stream", "dataset_fields.#", "2"),
-								resource.TestCheckResourceAttr("akamai_datastream.splunk_stream", "dataset_fields.0", strconv.Itoa(test.serverDatasetIDsOrder[0])),
-								resource.TestCheckResourceAttr("akamai_datastream.splunk_stream", "dataset_fields.1", strconv.Itoa(test.serverDatasetIDsOrder[1])),
+								// Build expectations based on what should be visible after filtering
+								func() resource.TestCheckFunc {
+									// Filter out field 2051 from expectations
+									var filteredFields []int
+									for _, fieldID := range test.serverDatasetIDsOrder {
+										if fieldID != 2051 {
+											filteredFields = append(filteredFields, fieldID)
+										}
+									}
+
+									checkFuncs := []resource.TestCheckFunc{
+										resource.TestCheckResourceAttr("akamai_datastream.splunk_stream", "dataset_fields.#", strconv.Itoa(len(filteredFields))),
+									}
+
+									for i, fieldID := range filteredFields {
+										checkFuncs = append(checkFuncs,
+											resource.TestCheckResourceAttr("akamai_datastream.splunk_stream", fmt.Sprintf("dataset_fields.%d", i), strconv.Itoa(fieldID)))
+									}
+
+									return resource.ComposeTestCheckFunc(checkFuncs...)
+								}(),
 							),
 						},
 					},

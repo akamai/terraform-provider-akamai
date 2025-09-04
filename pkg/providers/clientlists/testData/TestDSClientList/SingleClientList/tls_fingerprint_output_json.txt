@@ -1,0 +1,57 @@
+{
+  "name": "Test list Dipesh",
+  "type": "TLS_FINGERPRINT",
+  "notes": "",
+  "tags": [],
+  "listId": "183799_TESTLISTDIPESH",
+  "version": 2,
+  "itemsCount": 2,
+  "createDate": "2025-03-25T16:23:19.015+00:00",
+  "createdBy": "disharma",
+  "updateDate": "2025-08-07T12:55:16.182+00:00",
+  "updatedBy": "vpareika",
+  "productionActivationStatus": "INACTIVE",
+  "stagingActivationStatus": "INACTIVE",
+  "productionActiveVersion": 0,
+  "stagingActiveVersion": 0,
+  "listType": "CL",
+  "shared": false,
+  "readOnly": false,
+  "deprecated": false,
+  "contractId": "G-3HTINIE",
+  "groupId": 182286,
+  "groupName": "Kona BMP QA-G-3HTINIE",
+  "items": [
+    {
+      "value": "c18eaddafe6a3bba",
+      "tags": [],
+      "description": "firefoxtlsh",
+      "expirationDate": "",
+      "createDate": "2025-03-25T16:23:19.024+00:00",
+      "createdBy": "disharma",
+      "createdVersion": 0,
+      "productionStatus": "INACTIVE",
+      "stagingStatus": "INACTIVE",
+      "type": "TLS_FINGERPRINT",
+      "updateDate": "2025-03-25T16:23:19.024+00:00",
+      "updatedBy": "disharma"
+    },
+    {
+      "value": "cd08e31494f9531f560d64c695473da9",
+      "tags": [
+        "red",
+        "red flag"
+      ],
+      "description": "",
+      "expirationDate": "",
+      "createDate": "2025-08-07T12:55:16.152+00:00",
+      "createdBy": "vpareika",
+      "createdVersion": 0,
+      "productionStatus": "INACTIVE",
+      "stagingStatus": "INACTIVE",
+      "type": "TLS_FINGERPRINT",
+      "updateDate": "2025-08-07T16:24:33.811+00:00",
+      "updatedBy": "vpareika"
+    }
+  ]
+}

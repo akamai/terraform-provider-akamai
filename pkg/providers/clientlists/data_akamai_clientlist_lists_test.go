@@ -6,9 +6,9 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/clientlists"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/test"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/clientlists"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/test"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -61,6 +61,26 @@ func TestDataClientLists(t *testing.T) {
 						CheckEqual("type.#", "2").
 						CheckEqual("type.0", "GEO").
 						CheckEqual("type.1", "IP").
+						CheckEqual("list_ids.#", "10").
+						CheckEqual("lists.#", "10").
+						Build(),
+				},
+			},
+		},
+		"happy path - user type lists": {
+			init: func(m *clientlists.Mock) {
+				mockGetClientLists(m, allListsResponse, clientlists.GetClientListsRequest{
+					Name: "test",
+					Type: []clientlists.ClientListType{clientlists.USER},
+				}, 3)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testData/TestDSClientList/user_type.tf"),
+					Check: baseChecker.
+						CheckEqual("name", "test").
+						CheckEqual("type.#", "1").
+						CheckEqual("type.0", string(clientlists.USER)).
 						CheckEqual("list_ids.#", "10").
 						CheckEqual("lists.#", "10").
 						Build(),

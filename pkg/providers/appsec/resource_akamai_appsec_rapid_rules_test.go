@@ -8,10 +8,10 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/test"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/test"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/stretchr/testify/mock"
@@ -33,12 +33,32 @@ func TestRapidRulesResource(t *testing.T) {
 	err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResRapidRules/ConditionException.json"), &ruleConditionException)
 	require.NoError(t, err)
 
-	baseChecker := test.NewStateChecker(resourceName).
+	baseChecker := test.NewStateChecker(resourceReferenceName).
 		CheckEqual("id", "111111:2222_333333").
 		CheckEqual("config_id", "111111").
 		CheckEqual("security_policy_id", "2222_333333").
 		CheckEqual("default_action", "akamai_managed").
 		CheckEqual("rule_definitions", "null")
+
+	createRapidRulesInit := func(m *appsec.Mock) {
+		mockGetConfiguration(m, 3)
+		mockUpdateRapidRulesStatus(m, true, 1)
+		mockUpdateRapidRulesDefaultAction(m, "deny")
+		mockGetRapidRules(m, rapidRulesPriorState, 1)
+		mockUpdateRapidRuleActionLock(m, 3000214, false, 2)
+		mockUpdateRapidRuleAction(m, 3000214, "deny_custom_858380")
+		mockUpdateRapidRuleException(m, 3000214, ruleConditionException)
+
+		mockGetRapidRulesStatus(m, true, 1)
+		mockGetRapidRulesDefaultAction(m, "deny", 1)
+		mockGetRapidRules(m, rapidRulesUpdatedState, 1)
+		mockUpdateRapidRulesStatus(m, false, 1)
+	}
+
+	createRapidRulesStateChecker := baseChecker.
+		CheckEqual("default_action", "deny").
+		CheckEqual("rule_definitions", toDefinitionsJSON("RuleDefinitions.json")).
+		Build()
 
 	var tests = map[string]struct {
 		init  func(*appsec.Mock)
@@ -142,27 +162,20 @@ func TestRapidRulesResource(t *testing.T) {
 			},
 		},
 		"create rapid rules": {
-			init: func(m *appsec.Mock) {
-				mockGetConfiguration(m, 3)
-				mockUpdateRapidRulesStatus(m, true, 1)
-				mockUpdateRapidRulesDefaultAction(m, "deny")
-				mockGetRapidRules(m, rapidRulesPriorState, 1)
-				mockUpdateRapidRuleActionLock(m, 3000214, false, 2)
-				mockUpdateRapidRuleAction(m, 3000214, "deny_custom_858380")
-				mockUpdateRapidRuleException(m, 3000214, ruleConditionException)
-
-				mockGetRapidRulesStatus(m, true, 1)
-				mockGetRapidRulesDefaultAction(m, "deny", 1)
-				mockGetRapidRules(m, rapidRulesUpdatedState, 1)
-				mockUpdateRapidRulesStatus(m, false, 1)
-			},
+			init: createRapidRulesInit,
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResRapidRules/create_rapid_rules.tf"),
-					Check: baseChecker.
-						CheckEqual("default_action", "deny").
-						CheckEqual("rule_definitions", toDefinitionsJSON("RuleDefinitions.json")).
-						Build(),
+					Check:  createRapidRulesStateChecker,
+				},
+			},
+		},
+		"create rapid rules - attribute accept values from variables": {
+			init: createRapidRulesInit,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResRapidRules/create_rapid_rules_use_vars.tf"),
+					Check:  createRapidRulesStateChecker,
 				},
 			},
 		},
@@ -334,9 +347,9 @@ func TestRapidRulesResource(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResRapidRules/delete_rapid_rules.tf"),
 					Check: func(s *terraform.State) error {
-						_, ok := s.RootModule().Resources[resourceName]
+						_, ok := s.RootModule().Resources[resourceReferenceName]
 						if ok {
-							return fmt.Errorf("resource %s is still present in the Terraform state", resourceName)
+							return fmt.Errorf("resource %s is still present in the Terraform state", resourceReferenceName)
 						}
 						return nil
 					},
@@ -358,7 +371,7 @@ func TestRapidRulesResource(t *testing.T) {
 					Config:        testutils.LoadFixtureString(t, "testdata/TestResRapidRules/create_rapid_rules_with_minimum_params.tf"),
 					ImportState:   true,
 					ImportStateId: "111111:2222_333333",
-					ResourceName:  resourceName,
+					ResourceName:  resourceReferenceName,
 					ImportStateCheck: test.NewImportChecker().
 						CheckEqual("id", "111111:2222_333333").
 						CheckEqual("config_id", "111111").
@@ -376,7 +389,7 @@ func TestRapidRulesResource(t *testing.T) {
 					Config:             testutils.LoadFixtureString(t, "testdata/TestResRapidRules/create_rapid_rules_with_minimum_params.tf"),
 					ImportState:        true,
 					ImportStateId:      "12345",
-					ResourceName:       resourceName,
+					ResourceName:       resourceReferenceName,
 					ExpectError:        regexp.MustCompile("Error: ID '12345' incorrectly formatted: should be 'CONFIG_ID:SECURITY_POLICY_ID'"),
 					ImportStatePersist: true,
 				},
@@ -388,7 +401,7 @@ func TestRapidRulesResource(t *testing.T) {
 					Config:             testutils.LoadFixtureString(t, "testdata/TestResRapidRules/create_rapid_rules_with_minimum_params.tf"),
 					ImportState:        true,
 					ImportStateId:      "123:",
-					ResourceName:       resourceName,
+					ResourceName:       resourceReferenceName,
 					ExpectError:        regexp.MustCompile("Error: invalid security policy id ''"),
 					ImportStatePersist: true,
 				},
@@ -587,7 +600,7 @@ func toDefinitionsJSON(file string) string {
 	return string(data)
 }
 
-var resourceName = "akamai_appsec_rapid_rules.test"
+var resourceReferenceName = "akamai_appsec_rapid_rules.test"
 
 var serverError = appsec.Error{
 	Type:       "internal_error",

@@ -6,10 +6,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/str"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/log"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/str"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/log"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
 )
 
 func getGroup(ctx context.Context, client papi.PAPI, groupID string) (*papi.Group, error) {

@@ -4,9 +4,9 @@ package appsec
 import (
 	"sync"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/subprovider"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/subprovider"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -55,6 +55,7 @@ func (p *Subprovider) SDKResources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
 		"akamai_appsec_aap_selected_hostnames":                   resourceAAPSelectedHostnames(),
 		"akamai_appsec_activations":                              resourceActivations(),
+		"akamai_appsec_advanced_settings_ase_penalty_box":        resourceAdvancedSettingsAsePenaltyBox(),
 		"akamai_appsec_advanced_settings_attack_payload_logging": resourceAdvancedSettingsAttackPayloadLogging(),
 		"akamai_appsec_advanced_settings_evasive_path_match":     resourceAdvancedSettingsEvasivePathMatch(),
 		"akamai_appsec_advanced_settings_logging":                resourceAdvancedSettingsLogging(),
@@ -62,6 +63,7 @@ func (p *Subprovider) SDKResources() map[string]*schema.Resource {
 		"akamai_appsec_advanced_settings_pragma_header":          resourceAdvancedSettingsPragmaHeader(),
 		"akamai_appsec_advanced_settings_prefetch":               resourceAdvancedSettingsPrefetch(),
 		"akamai_appsec_advanced_settings_request_body":           resourceAdvancedSettingsRequestBody(),
+		"akamai_appsec_advanced_settings_ja4_fingerprint":        resourceAdvancedSettingsJA4Fingerprint(),
 		"akamai_appsec_api_constraints_protection":               resourceAPIConstraintsProtection(),
 		"akamai_appsec_api_request_constraints":                  resourceAPIRequestConstraints(),
 		"akamai_appsec_attack_group":                             resourceAttackGroup(),
@@ -112,6 +114,7 @@ func (p *Subprovider) SDKResources() map[string]*schema.Resource {
 func (p *Subprovider) SDKDataSources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
 		"akamai_appsec_aap_selected_hostnames":                   dataSourceAAPSelectedHostnames(),
+		"akamai_appsec_advanced_settings_ase_penalty_box":        dataSourceAdvancedSettingsAsePenaltyBox(),
 		"akamai_appsec_advanced_settings_attack_payload_logging": dataSourceAdvancedSettingsAttackPayloadLogging(),
 		"akamai_appsec_advanced_settings_evasive_path_match":     dataSourceAdvancedSettingsEvasivePathMatch(),
 		"akamai_appsec_advanced_settings_logging":                dataSourceAdvancedSettingsLogging(),
@@ -119,6 +122,7 @@ func (p *Subprovider) SDKDataSources() map[string]*schema.Resource {
 		"akamai_appsec_advanced_settings_pragma_header":          dataSourceAdvancedSettingsPragmaHeader(),
 		"akamai_appsec_advanced_settings_prefetch":               dataSourceAdvancedSettingsPrefetch(),
 		"akamai_appsec_advanced_settings_request_body":           dataSourceAdvancedSettingsRequestBody(),
+		"akamai_appsec_advanced_settings_ja4_fingerprint":        dataSourceAdvancedSettingsJA4Fingerprint(),
 		"akamai_appsec_api_endpoints":                            dataSourceAPIEndpoints(),
 		"akamai_appsec_api_request_constraints":                  dataSourceAPIRequestConstraints(),
 		"akamai_appsec_attack_groups":                            dataSourceAttackGroups(),

@@ -9,13 +9,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/cps"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/log"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/timeouts"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
-	cpstools "github.com/akamai/terraform-provider-akamai/v8/pkg/providers/cps/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cps"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/log"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/timeouts"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
+	cpstools "github.com/akamai/terraform-provider-akamai/v9/pkg/providers/cps/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -324,10 +324,10 @@ func upsertUploadCertificate(ctx context.Context, d *schema.ResourceData, m inte
 		return diag.Errorf("could not get an enrollment: %s", err)
 	}
 	changeID, err := cpstools.GetChangeIDFromPendingChanges(enrollment.PendingChanges)
-	if err != nil {
-		return diag.Errorf("could not get change ID: %s", err)
-	} else if err != nil && errors.Is(err, cpstools.ErrNoPendingChanges) {
+	if err != nil && errors.Is(err, cpstools.ErrNoPendingChanges) {
 		return diag.Errorf("provided enrollment has no pending changes")
+	} else if err != nil {
+		return diag.Errorf("could not get change ID: %s", err)
 	}
 
 	certs := wrapCertificatesToUpload(attrs.certificateECDSA, attrs.trustChainECDSA, attrs.certificateRSA, attrs.trustChainRSA)

@@ -3,8 +3,8 @@ package property
 import (
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/ptr"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
 	"github.com/stretchr/testify/assert"
 )
 

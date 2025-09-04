@@ -4,7 +4,7 @@ package akamai
 import (
 	"fmt"
 
-	"github.com/akamai/terraform-provider-akamai/v8/version"
+	"github.com/akamai/terraform-provider-akamai/v9/version"
 )
 
 const (

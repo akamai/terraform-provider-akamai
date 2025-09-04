@@ -8,13 +8,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/datastream"
-	akalog "github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/log"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/collections"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/log"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/datastream"
+	akalog "github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/log"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/collections"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/log"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -61,6 +61,9 @@ const (
 
 	// DefaultUploadFileSuffix specifies default upload file suffix for supported connectors
 	DefaultUploadFileSuffix = "ds"
+
+	// MidgressDatasetField is the dataset field ID that gets automatically added/removed based on collect_midgress setting
+	MidgressDatasetField = 2051
 )
 
 func resourceDatastream() *schema.Resource {
@@ -74,6 +77,7 @@ func resourceDatastream() *schema.Resource {
 		},
 		CustomizeDiff: customdiff.All(
 			validateConfig,
+			enforceComputedFieldsChange,
 		),
 		Schema: datastreamResourceSchema,
 		Importer: &schema.ResourceImporter{
@@ -1012,7 +1016,19 @@ func resourceDatastreamRead(ctx context.Context, d *schema.ResourceData, m inter
 	attrs["contract_id"] = streamDetails.ContractID
 	attrs["created_by"] = streamDetails.CreatedBy
 	attrs["created_date"] = streamDetails.CreatedDate
-	attrs["dataset_fields"] = DataSetFieldsToList(streamDetails.DatasetFields)
+
+	// Filter out midgress field (2051) from dataset_fields when storing in state
+	// since it's controlled by collect_midgress setting, not by user configuration
+	rawDatasetFieldsList := DataSetFieldsToList(streamDetails.DatasetFields)
+
+	// Convert []int to []interface{} for filtering
+	datasetFieldsInterface := make([]interface{}, len(rawDatasetFieldsList))
+	for i, field := range rawDatasetFieldsList {
+		datasetFieldsInterface[i] = field
+	}
+	filteredDatasetFields := filterMidgressDatasetField(datasetFieldsInterface)
+
+	attrs["dataset_fields"] = filteredDatasetFields
 	attrs["contract_id"] = streamDetails.ContractID
 	attrs["notification_emails"] = streamDetails.NotificationEmails
 	attrs["latest_version"] = streamDetails.LatestVersion
@@ -1464,6 +1480,21 @@ func isOrderDifferent(_, oldIDValue, newIDValue string, d *schema.ResourceData) 
 }
 
 func validateConfig(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
+	// Validate that users don't manually specify midgress dataset field (2051)
+	datasetFieldsResource, exists := d.GetOkExists("dataset_fields")
+	if exists {
+		datasetFieldsList, ok := datasetFieldsResource.([]interface{})
+		if ok {
+			for _, field := range datasetFieldsList {
+				if fieldID, ok := field.(int); ok && fieldID == MidgressDatasetField {
+					return fmt.Errorf("dataset field %d (midgress) cannot be manually specified in dataset_fields. Use collect_midgress = true to enable midgress data collection", MidgressDatasetField)
+				}
+			}
+		} else {
+			return fmt.Errorf("dataset_fields has unexpected type, expected []interface{} but got %T", datasetFieldsResource)
+		}
+	}
+	// Validate that upload_file_prefix and upload_file_suffix are not set when using connectors that do not support them
 	connectorName := ""
 	for _, k := range ConnectorsWithoutFilenameOptionsConfig {
 		connectorResource, exists := d.GetOkExists(k)
@@ -1501,4 +1532,50 @@ func validateConfig(_ context.Context, d *schema.ResourceDiff, _ interface{}) er
 	}
 
 	return nil
+}
+
+func enforceComputedFieldsChange(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
+	// List of computed fields to reset
+	computedFields := []string{
+		"stream_version",
+		"latest_version",
+		"modified_by",
+		"modified_date",
+	}
+
+	// Get all changed keys
+	changedKeys := d.GetChangedKeysPrefix("")
+
+	// Remove "active" from changedKeys
+	filteredKeys := make([]string, 0, len(changedKeys))
+	for _, k := range changedKeys {
+		if k != "active" {
+			filteredKeys = append(filteredKeys, k)
+		}
+	}
+
+	// Only reset computed fields if there are changes (excluding "active")
+	if len(filteredKeys) > 0 {
+		for _, f := range computedFields {
+			if err := d.SetNewComputed(f); err != nil {
+				return fmt.Errorf("cannot set new computed for '%s': %s", f, err)
+			}
+		}
+	}
+
+	return nil
+}
+
+// filterMidgressDatasetField removes the midgress dataset field (2051) from a list
+func filterMidgressDatasetField(list []interface{}) []interface{} {
+	filtered := make([]interface{}, 0, len(list))
+
+	for _, item := range list {
+		if intVal, ok := item.(int); ok && intVal == MidgressDatasetField {
+			continue // Skip midgress field
+		}
+		filtered = append(filtered, item)
+	}
+
+	return filtered
 }

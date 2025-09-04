@@ -2,6 +2,7 @@
     "block": "blockSpecificIPGeo",
     "asnControls": {
         "blockedIPNetworkLists": {
+            "action": "deny",
             "networkList": [
                 "89871_TEST1"
             ]
@@ -9,6 +10,7 @@
     },
     "geoControls": {
         "blockedIPNetworkLists": {
+            "action": "deny",
             "networkList": [
                 "72138_TEST1"
             ]
@@ -21,6 +23,7 @@
             ]
         },
         "blockedIPNetworkLists": {
+            "action": "deny",
             "networkList": [
                 "53712_TESTLIST123"
             ]

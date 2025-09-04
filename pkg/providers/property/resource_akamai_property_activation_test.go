@@ -5,9 +5,9 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v11/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/test"
-	"github.com/akamai/terraform-provider-akamai/v8/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/test"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -1064,7 +1064,6 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "auto_acknowledge_rule_warnings", "false"),
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "warnings", ""),
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "rule_errors.#", "0"),
-						resource.TestCheckNoResourceAttr("akamai_property_activation.test", "rule_warnings"),
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "errors", ""),
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "activation_id", "atv_activation1"),
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "status", "ACTIVE"),
@@ -1111,7 +1110,6 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "auto_acknowledge_rule_warnings", "false"),
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "warnings", ""),
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "rule_errors.#", "0"),
-						resource.TestCheckNoResourceAttr("akamai_property_activation.test", "rule_warnings"),
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "errors", ""),
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "activation_id", "atv_activation1"),
 						resource.TestCheckResourceAttr("akamai_property_activation.test", "status", "ACTIVE"),
