@@ -1,6 +1,6 @@
 # RELEASE NOTES
 
-## X.X.X (X X, X)
+## 9.1.0 (Sep 09, 2025)
 
 #### FEATURES/ENHANCEMENTS:
 
@@ -73,7 +73,8 @@
 #### BUG FIXES:
 
 
-
+* General
+    * Updated various dependencies to resolve Provider GetResourceIdentitySchemas Not Implemented issue [I#694](https://github.com/akamai/terraform-provider-akamai/issues/694).
 
 
 
