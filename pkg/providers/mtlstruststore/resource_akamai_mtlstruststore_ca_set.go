@@ -499,6 +499,9 @@ func (r *caSetResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanR
 			plan.LatestVersion = state.LatestVersion
 			plan.VersionCreatedBy = state.VersionCreatedBy
 			plan.VersionCreatedDate = state.VersionCreatedDate
+		} else if state.LatestVersion.ValueInt64() >= 100 {
+			resp.Diagnostics.AddError("Cannot update CA set", "Cannot create more than 100 versions for a CA Set.")
+			return
 		}
 
 		// If the content has not changed at all, the modification metadata will not change as well.

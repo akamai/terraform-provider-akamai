@@ -65,7 +65,8 @@
 
 
 
-
+* mTLS Truststore (Beta):
+    * Fixed validation in `akamai_mtlstruststore_ca_set` resource to not create more than 100 versions.
 
 
 
