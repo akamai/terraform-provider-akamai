@@ -26,6 +26,7 @@ type (
 		groupID            int64
 		keyAlgorithm       string
 		notificationEmails []string
+		preferredCA        string
 		secureNetwork      string
 		subject            string
 		createdBy          string
@@ -94,6 +95,47 @@ var (
 	}
 
 	testClientCertificateWithOptionals = func() clientCertificateData {
+		return clientCertificateData{
+			certificateName: "test-certificate",
+			certificateID:   123456789,
+			contractID:      "123456789",
+			geography:       "CORE",
+			groupID:         987654321,
+			keyAlgorithm:    "RSA",
+			notificationEmails: []string{
+				"testemail1@example.com",
+				"testemail2@example.com",
+			},
+			preferredCA:   "Example CA",
+			secureNetwork: "STANDARD_TLS",
+			createdBy:     "joeDoe",
+			createdDate:   "2023-01-01T12:00:00Z",
+			subject:       "/C=US/O=Akamai Technologies, Inc./OU=Example 123456789 987654321/CN=test-certificate/",
+			versions: []clientCertificateVersionData{
+				{
+					version:            1,
+					status:             "DEPLOYED",
+					expiryDate:         "2024-12-31T23:59:59Z",
+					issuer:             "Example Issuer",
+					keyAlgorithm:       "RSA",
+					createdBy:          "joeDoe",
+					createdDate:        "2023-01-01T12:00:00Z",
+					deployedDate:       "2023-01-02T12:00:00Z",
+					issuedDate:         "2023-01-01T12:00:00Z",
+					keySizeInBytes:     "2048",
+					subject:            "/C=US/O=Akamai Technologies, Inc./OU=Example 123456789 987654321/CN=test-certificate/",
+					versionGUID:        "test_identifier_1-1",
+					signatureAlgorithm: "SHA256_WITH_RSA",
+					certificateBlock: certificateBlock{
+						certificate: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+						trustChain:  "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+					},
+				},
+			},
+		}
+	}
+
+	testClientCertificateWithoutPreferredCA = func() clientCertificateData {
 		return clientCertificateData{
 			certificateName: "test-certificate",
 			certificateID:   123456789,
@@ -478,12 +520,12 @@ func TestClientCertificateAkamaiResource(t *testing.T) {
 		"happy path - create client certificate without optionals": {
 			init: func(m *mtlskeystore.Mock, testData clientCertificateData, _ clientCertificateData) {
 				mockCreateClientCertificateAkamai(m, testData)
-				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Once()
+				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
 				// subject is set after creation
 				testData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Example 123456789 987654321/CN=test-certificate/"
 				// Read
-				mockGetClientCertificateAkamai(m, testData).Once()
-				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Once()
+				mockGetClientCertificateAkamai(m, testData)
+				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
 				// Delete
 				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
 				mockDeleteClientCertificateAkamaiVersion(m, testData.versions, testData.certificateID, 1)
@@ -500,10 +542,10 @@ func TestClientCertificateAkamaiResource(t *testing.T) {
 		"happy path - create client certificate with optionals": {
 			init: func(m *mtlskeystore.Mock, testData clientCertificateData, _ clientCertificateData) {
 				mockCreateClientCertificateAkamai(m, testData)
-				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Once()
+				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
 				// Read
-				mockGetClientCertificateAkamai(m, testData).Once()
-				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Once()
+				mockGetClientCertificateAkamai(m, testData)
+				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
 				// Delete
 				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
 				mockDeleteClientCertificateAkamaiVersion(m, testData.versions, testData.certificateID, 1)
@@ -520,10 +562,10 @@ func TestClientCertificateAkamaiResource(t *testing.T) {
 		"happy path - create client certificate with prefix on contract_id": {
 			init: func(m *mtlskeystore.Mock, testData clientCertificateData, _ clientCertificateData) {
 				mockCreateClientCertificateAkamai(m, testData)
-				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Once()
+				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
 				// Read
-				mockGetClientCertificateAkamai(m, testData).Once()
-				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Once()
+				mockGetClientCertificateAkamai(m, testData)
+				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
 				// Delete
 				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
 				mockDeleteClientCertificateAkamaiVersion(m, testData.versions, testData.certificateID, 1)
@@ -541,7 +583,7 @@ func TestClientCertificateAkamaiResource(t *testing.T) {
 		"happy path - update client certificate notification e-mails only": {
 			init: func(m *mtlskeystore.Mock, testData clientCertificateData, _ clientCertificateData) {
 				mockCreateClientCertificateAkamai(m, testData)
-				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Once()
+				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
 				// subject is set after creation, key algorithm is set as RSA if not provided in create request
 				testData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Example 123456789 987654321/CN=test-certificate/"
 				testData.keyAlgorithm = "RSA"
@@ -549,12 +591,12 @@ func TestClientCertificateAkamaiResource(t *testing.T) {
 				mockGetClientCertificateAkamai(m, testData).Twice()
 				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Twice()
 				//Update - only emails changed
-				mockPatchClientCertificateAkamai(m, testData, nil, []string{"testemail1@example.com", "testemail2@example.com", "testemail3@example.com"}).Once()
+				mockPatchClientCertificateAkamai(m, testData, nil, []string{"testemail1@example.com", "testemail2@example.com", "testemail3@example.com"})
 				testData.notificationEmails = []string{"testemail1@example.com", "testemail2@example.com", "testemail3@example.com"}
-				mockGetClientCertificateAkamai(m, testData).Once()
+				mockGetClientCertificateAkamai(m, testData)
 				// Read after Emails update
-				mockGetClientCertificateAkamai(m, testData).Once()
-				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Once()
+				mockGetClientCertificateAkamai(m, testData)
+				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
 				// Delete
 				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
 				mockDeleteClientCertificateAkamaiVersion(m, testData.versions, testData.certificateID, 1)
@@ -581,7 +623,7 @@ func TestClientCertificateAkamaiResource(t *testing.T) {
 			// Default subject is returned.
 			init: func(m *mtlskeystore.Mock, testData clientCertificateData, _ clientCertificateData) {
 				mockCreateClientCertificateAkamai(m, testData)
-				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Once()
+				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
 				// subject is set after creation, key algorithm is set as RSA if not provided in create request
 				testData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Example 123456789 987654321/CN=test-certificate/"
 				testData.keyAlgorithm = "RSA"
@@ -589,12 +631,12 @@ func TestClientCertificateAkamaiResource(t *testing.T) {
 				mockGetClientCertificateAkamai(m, testData).Twice()
 				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Twice()
 				//Update - only name changed
-				mockPatchClientCertificateAkamai(m, testData, ptr.To("test-certificate-changed-name"), testData.notificationEmails).Once()
+				mockPatchClientCertificateAkamai(m, testData, ptr.To("test-certificate-changed-name"), testData.notificationEmails)
 				testData.certificateName = "test-certificate-changed-name"
-				mockGetClientCertificateAkamai(m, testData).Once()
+				mockGetClientCertificateAkamai(m, testData)
 				// Read after name update
-				mockGetClientCertificateAkamai(m, testData).Once()
-				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Once()
+				mockGetClientCertificateAkamai(m, testData)
+				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
 				// Delete
 				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
 				mockDeleteClientCertificateAkamaiVersion(m, testData.versions, testData.certificateID, 1)
@@ -617,7 +659,7 @@ func TestClientCertificateAkamaiResource(t *testing.T) {
 		"happy path - update client certificate name update and e-mails": {
 			init: func(m *mtlskeystore.Mock, testData clientCertificateData, _ clientCertificateData) {
 				mockCreateClientCertificateAkamai(m, testData)
-				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Once()
+				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
 				// subject is set after creation, key algorithm is set as RSA if not provided in create request
 				testData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Example 123456789 987654321/CN=test-certificate/"
 				testData.keyAlgorithm = "RSA"
@@ -625,13 +667,13 @@ func TestClientCertificateAkamaiResource(t *testing.T) {
 				mockGetClientCertificateAkamai(m, testData).Twice()
 				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Twice()
 				//Update - name and e-mails changed
-				mockPatchClientCertificateAkamai(m, testData, ptr.To("test-certificate-changed-name"), []string{"testemail1@example.com", "testemail2@example.com", "testemail3@example.com"}).Once()
+				mockPatchClientCertificateAkamai(m, testData, ptr.To("test-certificate-changed-name"), []string{"testemail1@example.com", "testemail2@example.com", "testemail3@example.com"})
 				testData.certificateName = "test-certificate-changed-name"
 				testData.notificationEmails = []string{"testemail1@example.com", "testemail2@example.com", "testemail3@example.com"}
-				mockGetClientCertificateAkamai(m, testData).Once()
+				mockGetClientCertificateAkamai(m, testData)
 				// Read after name update
-				mockGetClientCertificateAkamai(m, testData).Once()
-				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Once()
+				mockGetClientCertificateAkamai(m, testData)
+				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
 				// Delete
 				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
 				mockDeleteClientCertificateAkamaiVersion(m, testData.versions, testData.certificateID, 1)
@@ -658,13 +700,13 @@ func TestClientCertificateAkamaiResource(t *testing.T) {
 		"happy path - 1 version created, second added during automatic rotation ": {
 			init: func(m *mtlskeystore.Mock, testData clientCertificateData, testUpdateData clientCertificateData) {
 				mockCreateClientCertificateAkamai(m, testData)
-				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Once()
+				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
 				// subject is set after creation
 				testData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Example 123456789 987654321/CN=test-certificate/"
 				testData.keyAlgorithm = "RSA"
 				// Read
-				mockGetClientCertificateAkamai(m, testData).Once()
-				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Once()
+				mockGetClientCertificateAkamai(m, testData)
+				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
 				// Read after rotation
 				// subject is set after automatic rotation
 				testUpdateData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Example 123456789 987654321/CN=test-certificate/"
@@ -672,9 +714,9 @@ func TestClientCertificateAkamaiResource(t *testing.T) {
 				mockGetClientCertificateAkamai(m, testUpdateData).Twice()
 				mockListClientCertificateAkamaiVersions(t, m, testUpdateData.versions, testUpdateData.certificateID).Twice()
 				// Delete
-				mockListClientCertificateAkamaiVersions(t, m, testUpdateData.versions, testUpdateData.certificateID).Once()
-				mockDeleteClientCertificateAkamaiVersion(m, testUpdateData.versions, testUpdateData.certificateID, 2).Once()
-				mockDeleteClientCertificateAkamaiVersion(m, testUpdateData.versions, testUpdateData.certificateID, 1).Once()
+				mockListClientCertificateAkamaiVersions(t, m, testUpdateData.versions, testUpdateData.certificateID)
+				mockDeleteClientCertificateAkamaiVersion(m, testUpdateData.versions, testUpdateData.certificateID, 2)
+				mockDeleteClientCertificateAkamaiVersion(m, testUpdateData.versions, testUpdateData.certificateID, 1)
 			},
 			mockData:       testClientCertificateWithoutSubject,
 			mockUpdateData: testClientCertificateWith2Versions(),
@@ -695,13 +737,13 @@ func TestClientCertificateAkamaiResource(t *testing.T) {
 		"happy path - 1 version created, both versions automatically rotated": {
 			init: func(m *mtlskeystore.Mock, testData clientCertificateData, testUpdateData clientCertificateData) {
 				mockCreateClientCertificateAkamai(m, testData)
-				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Once()
+				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
 				// subject is set after creation
 				testData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Example 123456789 987654321/CN=test-certificate/"
 				testData.keyAlgorithm = "RSA"
 				// Read
-				mockGetClientCertificateAkamai(m, testData).Once()
-				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Once()
+				mockGetClientCertificateAkamai(m, testData)
+				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
 				// Read after rotation
 				// subject is set after automatic rotation
 				testUpdateData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Example 123456789 987654321/CN=test-certificate/"
@@ -709,9 +751,9 @@ func TestClientCertificateAkamaiResource(t *testing.T) {
 				mockGetClientCertificateAkamai(m, testUpdateData).Twice()
 				mockListClientCertificateAkamaiVersions(t, m, testUpdateData.versions, testUpdateData.certificateID).Twice()
 				// Delete
-				mockListClientCertificateAkamaiVersions(t, m, testUpdateData.versions, testUpdateData.certificateID).Once()
-				mockDeleteClientCertificateAkamaiVersion(m, testUpdateData.versions, testUpdateData.certificateID, 2).Once()
-				mockDeleteClientCertificateAkamaiVersion(m, testUpdateData.versions, testUpdateData.certificateID, 1).Once()
+				mockListClientCertificateAkamaiVersions(t, m, testUpdateData.versions, testUpdateData.certificateID)
+				mockDeleteClientCertificateAkamaiVersion(m, testUpdateData.versions, testUpdateData.certificateID, 2)
+				mockDeleteClientCertificateAkamaiVersion(m, testUpdateData.versions, testUpdateData.certificateID, 1)
 			},
 			mockData:       testClientCertificateWithoutSubject,
 			mockUpdateData: testClientCertificateWith2RotatedVersions,
@@ -732,13 +774,13 @@ func TestClientCertificateAkamaiResource(t *testing.T) {
 		"happy path - drift on name and e-mails": {
 			init: func(m *mtlskeystore.Mock, testData clientCertificateData, testUpdateData clientCertificateData) {
 				mockCreateClientCertificateAkamai(m, testData)
-				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Once()
+				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
 				// subject is set after creation
 				testData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Example 123456789 987654321/CN=test-certificate/"
 				testData.keyAlgorithm = "RSA"
 				// Read
-				mockGetClientCertificateAkamai(m, testData).Once()
-				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Once()
+				mockGetClientCertificateAkamai(m, testData)
+				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
 				// Read after rotation
 				// subject is set after automatic rotation
 				testUpdateData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Example 123456789 987654321/CN=test-certificate/"
@@ -746,8 +788,8 @@ func TestClientCertificateAkamaiResource(t *testing.T) {
 				mockGetClientCertificateAkamai(m, testUpdateData).Twice()
 				mockListClientCertificateAkamaiVersions(t, m, testUpdateData.versions, testUpdateData.certificateID).Twice()
 				// Delete
-				mockListClientCertificateAkamaiVersions(t, m, testUpdateData.versions, testUpdateData.certificateID).Once()
-				mockDeleteClientCertificateAkamaiVersion(m, testUpdateData.versions, testUpdateData.certificateID, 1).Once()
+				mockListClientCertificateAkamaiVersions(t, m, testUpdateData.versions, testUpdateData.certificateID)
+				mockDeleteClientCertificateAkamaiVersion(m, testUpdateData.versions, testUpdateData.certificateID, 1)
 			},
 			mockData:       testClientCertificateWithoutSubject,
 			mockUpdateData: testClientCertificateDriftNameAndEmails,
@@ -775,15 +817,15 @@ func TestClientCertificateAkamaiResource(t *testing.T) {
 				mockCreateClientCertificateAkamai(m, testData)
 				// first tick of polling mechanism
 				testData.versions[0].status = "DEPLOYMENT_PENDING"
-				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Once()
+				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
 				// second tick of polling mechanism
 				testData.versions[0].status = "DEPLOYED"
-				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Once()
+				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
 				// subject is set after creation
 				testData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Example 123456789 987654321/CN=test-certificate/"
 				// Read
-				mockGetClientCertificateAkamai(m, testData).Once()
-				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Once()
+				mockGetClientCertificateAkamai(m, testData)
+				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
 				// Delete
 				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
 				mockDeleteClientCertificateAkamaiVersion(m, testData.versions, testData.certificateID, 1)
@@ -800,7 +842,7 @@ func TestClientCertificateAkamaiResource(t *testing.T) {
 		"error - fail on update contract": {
 			init: func(m *mtlskeystore.Mock, testData clientCertificateData, _ clientCertificateData) {
 				mockCreateClientCertificateAkamai(m, testData)
-				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Once()
+				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
 				// subject is set after creation
 				testData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Example 123456789 987654321/CN=test-certificate/"
 				// Read
@@ -826,7 +868,7 @@ func TestClientCertificateAkamaiResource(t *testing.T) {
 		"error - fail on update group": {
 			init: func(m *mtlskeystore.Mock, testData clientCertificateData, _ clientCertificateData) {
 				mockCreateClientCertificateAkamai(m, testData)
-				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Once()
+				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
 				// subject is set after creation
 				testData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Example 123456789 987654321/CN=test-certificate/"
 				// Read
@@ -852,7 +894,7 @@ func TestClientCertificateAkamaiResource(t *testing.T) {
 		"error - fail on update geography": {
 			init: func(m *mtlskeystore.Mock, testData clientCertificateData, _ clientCertificateData) {
 				mockCreateClientCertificateAkamai(m, testData)
-				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Once()
+				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
 				// subject is set after creation
 				testData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Example 123456789 987654321/CN=test-certificate/"
 				// Read
@@ -878,7 +920,7 @@ func TestClientCertificateAkamaiResource(t *testing.T) {
 		"error - fail on update subject": {
 			init: func(m *mtlskeystore.Mock, testData clientCertificateData, _ clientCertificateData) {
 				mockCreateClientCertificateAkamai(m, testData)
-				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Once()
+				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
 				// Read
 				mockGetClientCertificateAkamai(m, testData).Times(2)
 				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Times(2)
@@ -899,10 +941,58 @@ func TestClientCertificateAkamaiResource(t *testing.T) {
 				},
 			},
 		},
+		"error - fails on update when preferred_ca is added, if not set initially during create": {
+			init: func(m *mtlskeystore.Mock, testData clientCertificateData, _ clientCertificateData) {
+				mockCreateClientCertificateAkamai(m, testData)
+				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
+				// Read
+				mockGetClientCertificateAkamai(m, testData).Times(2)
+				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Times(2)
+				// Delete
+				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
+				mockDeleteClientCertificateAkamaiVersion(m, testData.versions, testData.certificateID, 1)
+			},
+			mockData: testClientCertificateWithoutPreferredCA(),
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateAkamai/create_without_preferred_ca.tf"),
+					Check: baseChecker.
+						Build(),
+				},
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResClientCertificateAkamai/error_update_preferred_ca.tf"),
+					ExpectError: regexp.MustCompile("Error: Update not Supported"),
+				},
+			},
+		},
+		"error - fail on update preferred_ca": {
+			init: func(m *mtlskeystore.Mock, testData clientCertificateData, _ clientCertificateData) {
+				mockCreateClientCertificateAkamai(m, testData)
+				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
+				// Read
+				mockGetClientCertificateAkamai(m, testData).Times(2)
+				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Times(2)
+				// Delete
+				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
+				mockDeleteClientCertificateAkamaiVersion(m, testData.versions, testData.certificateID, 1)
+			},
+			mockData: testClientCertificateWithOptionals(),
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResClientCertificateAkamai/create_with_optionals.tf"),
+					Check: baseChecker.
+						Build(),
+				},
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResClientCertificateAkamai/error_update_preferred_ca.tf"),
+					ExpectError: regexp.MustCompile("updating field `preferred_ca` is not possible"),
+				},
+			},
+		},
 		"error - fail on update key_algorithm": {
 			init: func(m *mtlskeystore.Mock, testData clientCertificateData, _ clientCertificateData) {
 				mockCreateClientCertificateAkamai(m, testData)
-				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Once()
+				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
 				// Read
 				mockGetClientCertificateAkamai(m, testData).Times(2)
 				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Times(2)
@@ -926,7 +1016,7 @@ func TestClientCertificateAkamaiResource(t *testing.T) {
 		"error - fail on update secure_network": {
 			init: func(m *mtlskeystore.Mock, testData clientCertificateData, _ clientCertificateData) {
 				mockCreateClientCertificateAkamai(m, testData)
-				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Once()
+				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
 				// subject is set after creation
 				testData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Example 123456789 987654321/CN=test-certificate/"
 				// Read
@@ -1063,11 +1153,11 @@ func TestClientCertificateAkamaiResource_ImportState(t *testing.T) {
 				// subject is set after creation
 				testData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Example 123456789 987654321/CN=test-certificate/"
 				testData.keyAlgorithm = "RSA"
-				mockGetClientCertificateAkamai(m, testData).Once()
-				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Once()
+				mockGetClientCertificateAkamai(m, testData)
+				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
 				// Read
-				mockGetClientCertificateAkamai(m, testData).Once()
-				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Once()
+				mockGetClientCertificateAkamai(m, testData)
+				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
 			},
 			mockData: testClientCertificateWithOptionals(),
 			steps: []resource.TestStep{
@@ -1087,11 +1177,11 @@ func TestClientCertificateAkamaiResource_ImportState(t *testing.T) {
 				// subject is set after creation
 				testData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Example 123456789 987654321/CN=test-certificate/"
 				testData.keyAlgorithm = "RSA"
-				mockGetClientCertificateAkamai(m, testData).Once()
-				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Once()
+				mockGetClientCertificateAkamai(m, testData)
+				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
 				// Read
-				mockGetClientCertificateAkamai(m, testData).Once()
-				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Once()
+				mockGetClientCertificateAkamai(m, testData)
+				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
 			},
 			mockData: testClientCertificateWith2Versions(),
 			steps: []resource.TestStep{
@@ -1108,11 +1198,11 @@ func TestClientCertificateAkamaiResource_ImportState(t *testing.T) {
 			// Default subject is returned.
 			init: func(m *mtlskeystore.Mock, testData clientCertificateData) {
 				// Import
-				mockGetClientCertificateAkamai(m, testData).Once()
-				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Once()
+				mockGetClientCertificateAkamai(m, testData)
+				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
 				// Read
-				mockGetClientCertificateAkamai(m, testData).Once()
-				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Once()
+				mockGetClientCertificateAkamai(m, testData)
+				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
 			},
 			mockData: testClientCertificateMissedContractAndGroupInSubject,
 			steps: []resource.TestStep{
@@ -1136,11 +1226,11 @@ func TestClientCertificateAkamaiResource_ImportState(t *testing.T) {
 				testData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Example 123456789 987654321/CN=test-certificate/"
 				testData.keyAlgorithm = "RSA"
 				testData.versions[0].status = "DELETE_PENDING"
-				mockGetClientCertificateAkamai(m, testData).Once()
-				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Once()
+				mockGetClientCertificateAkamai(m, testData)
+				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
 				// Read
-				mockGetClientCertificateAkamai(m, testData).Once()
-				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Once()
+				mockGetClientCertificateAkamai(m, testData)
+				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
 			},
 			mockData: testClientCertificateWith2Versions(),
 			steps: []resource.TestStep{
@@ -1160,7 +1250,7 @@ func TestClientCertificateAkamaiResource_ImportState(t *testing.T) {
 				// subject is set after creation
 				testData.subject = "/CN=NON-PARSABLE SUBJECT"
 				testData.keyAlgorithm = "RSA"
-				mockGetClientCertificateAkamai(m, testData).Once()
+				mockGetClientCertificateAkamai(m, testData)
 			},
 			mockData: testClientCertificateWithOptionals(),
 			error:    regexp.MustCompile(`parsing subject "/CN=NON-PARSABLE SUBJECT": invalid subject format`),
@@ -1201,7 +1291,7 @@ func TestClientCertificateAkamaiResource_ImportState(t *testing.T) {
 		},
 		"error - no group and contract in certificate subject": {
 			init: func(m *mtlskeystore.Mock, testData clientCertificateData) {
-				mockGetClientCertificateAkamai(m, testData).Once()
+				mockGetClientCertificateAkamai(m, testData)
 			},
 			mockData: testClientCertificateMissedContractAndGroupInSubject,
 			steps: []resource.TestStep{
@@ -1234,8 +1324,8 @@ func TestClientCertificateAkamaiResource_ImportState(t *testing.T) {
 				testData.subject = "/C=US/O=Akamai Technologies, Inc./OU=Example 123456789 987654321/CN=test-certificate/"
 				testData.keyAlgorithm = "RSA"
 				testData.versions[0].status = "DELETE_PENDING"
-				mockGetClientCertificateAkamai(m, testData).Once()
-				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Once()
+				mockGetClientCertificateAkamai(m, testData)
+				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID)
 			},
 			mockData: testClientCertificateWithOptionals(),
 			steps: []resource.TestStep{
@@ -1303,6 +1393,10 @@ func mockCreateClientCertificateAkamai(m *mtlskeystore.Mock, testData clientCert
 		Subject:            testData.subject,
 		CreatedBy:          testData.createdBy,
 		CreatedDate:        test.NewTimeFromStringMust(testData.createdDate),
+	}
+
+	if testData.preferredCA != "" {
+		request.PreferredCA = &testData.preferredCA
 	}
 
 	if testData.subject == "" {

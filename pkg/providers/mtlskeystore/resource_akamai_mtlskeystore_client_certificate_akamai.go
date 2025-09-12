@@ -51,6 +51,7 @@ type clientCertificateAkamaiResourceModel struct {
 	GroupID            types.Int64  `tfsdk:"group_id"`
 	KeyAlgorithm       types.String `tfsdk:"key_algorithm"`
 	NotificationEmails types.List   `tfsdk:"notification_emails"`
+	PreferredCA        types.String `tfsdk:"preferred_ca"`
 	SecureNetwork      types.String `tfsdk:"secure_network"`
 	Subject            types.String `tfsdk:"subject"`
 	CreatedBy          types.String `tfsdk:"created_by"`
@@ -214,6 +215,14 @@ func (c *clientCertificateAkamaiResource) Schema(_ context.Context, _ resource.S
 					modifiers.PreventStringUpdate(),
 				},
 			},
+			"preferred_ca": schema.StringAttribute{
+				Optional:    true,
+				Description: "The common name of the account CA certificate selected to sign the client certificate.",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+					modifiers.PreventStringUpdate(),
+				},
+			},
 			"subject": schema.StringAttribute{
 				Optional:    true,
 				Computed:    true,
@@ -360,6 +369,8 @@ func (c *clientCertificateAkamaiResource) Create(ctx context.Context, req resour
 		return
 	}
 
+	plan.PreferredCA = types.StringPointerValue(clientCertificateRequest.PreferredCA)
+
 	version, err := plan.waitUntilVersionDeployed(ctx, client)
 	if err != nil {
 		resp.Diagnostics.AddError("Error waiting for client certificate version deployment", err.Error())
@@ -393,6 +404,11 @@ func createClientCertificateRequest(ctx context.Context, plan *clientCertificate
 	if plan.KeyAlgorithm.ValueString() != "" {
 		req.KeyAlgorithm = (*mtlskeystore.CryptographicAlgorithm)(plan.KeyAlgorithm.ValueStringPointer())
 	}
+
+	if !plan.PreferredCA.IsNull() {
+		req.PreferredCA = plan.PreferredCA.ValueStringPointer()
+	}
+
 	return &req, nil
 }
 
@@ -526,6 +542,7 @@ func (c *clientCertificateAkamaiResource) ImportState(ctx context.Context, req r
 		NotificationEmails: types.ListUnknown(types.StringType),
 		SecureNetwork:      types.StringUnknown(),
 		Versions:           types.ListUnknown(versionObjectType),
+		PreferredCA:        types.StringNull(),
 	}
 
 	// API call is needed to populate subject from server, and extract contract and group ID from it

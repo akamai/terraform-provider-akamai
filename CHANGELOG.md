@@ -58,6 +58,8 @@
 
 #### FEATURES/ENHANCEMENTS:
 
+* mTLS Keystore:
+    * Added support for `preferred_ca` in the `akamai_mtlskeystore_client_certificate_akamai` resource.
 
 
 

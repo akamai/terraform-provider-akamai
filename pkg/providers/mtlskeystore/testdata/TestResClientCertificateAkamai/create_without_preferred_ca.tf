@@ -8,8 +8,7 @@ resource "akamai_mtlskeystore_client_certificate_akamai" "test" {
   geography           = "CORE"
   group_id            = 987654321
   notification_emails = ["testemail1@example.com", "testemail2@example.com"]
-  preferred_ca        = "Example CA"
   secure_network      = "STANDARD_TLS"
   key_algorithm       = "RSA"
-  subject             = "/C=US/O=AAAA/EEEE/CCCC/DDD"
+  subject             = "/C=US/O=Akamai Technologies, Inc./OU=Example 123456789 987654321/CN=test-certificate/"
 }
