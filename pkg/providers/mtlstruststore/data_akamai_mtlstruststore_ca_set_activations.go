@@ -3,7 +3,6 @@ package mtlstruststore
 import (
 	"context"
 	"fmt"
-	"regexp"
 	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/mtlstruststore"
@@ -97,11 +96,15 @@ func (d *caSetActivationsDataSource) Schema(_ context.Context, _ datasource.Sche
 				Description: "The name of the CA set. Either 'ca_set_id' or 'ca_set_name' must be provided.",
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(path.MatchRoot("ca_set_name"), path.MatchRoot("ca_set_id")),
-					stringvalidator.RegexMatches(regexp.MustCompile(`\S{3,}`), "must not be empty or only whitespace"),
+					stringvalidator.LengthBetween(3, 64),
+					stringvalidator.RegexMatches(mtlstruststore.CASetNameRegex, mtlstruststore.CASetNameDescription),
 				},
 			},
 			"network": schema.StringAttribute{
-				Optional:    true,
+				Optional: true,
+				Validators: []validator.String{
+					stringvalidator.OneOf("STAGING", "PRODUCTION"),
+				},
 				Description: "If provided, filters the results to return only activations or deactivations from the specified network, either 'STAGING' or 'PRODUCTION'.",
 			},
 			"version": schema.Int64Attribute{
@@ -112,11 +115,17 @@ func (d *caSetActivationsDataSource) Schema(_ context.Context, _ datasource.Sche
 				},
 			},
 			"status": schema.StringAttribute{
-				Optional:    true,
+				Optional: true,
+				Validators: []validator.String{
+					stringvalidator.OneOf("IN_PROGRESS", "COMPLETE", "FAILED"),
+				},
 				Description: "If provided, filters the results to return only activities with the specified status, either 'IN_PROGRESS', 'COMPLETE', or 'FAILED'.",
 			},
 			"type": schema.StringAttribute{
-				Optional:    true,
+				Optional: true,
+				Validators: []validator.String{
+					stringvalidator.OneOf("ACTIVATE", "DEACTIVATE", "DELETE"),
+				},
 				Description: "If provided, filters the results to return only activities of the specified type, either 'ACTIVATE', 'DEACTIVATE', or 'DELETE'.",
 			},
 			"activations": schema.ListNestedAttribute{

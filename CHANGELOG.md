@@ -70,7 +70,31 @@
 
 
 
-
+* mTLS Truststore (Beta):
+  * Enhanced validation rules for some fields.
+    * Datasource `akamai_mtlstruststore_ca_set_activation`
+      * Field `ca_set_name` allows only letters, numbers, hyphens, percents, dots and underscores and must be between 3 and 64 characters long.
+    * Datasource `akamai_mtlstruststore_ca_set_activations`
+      * Field `ca_set_name` allows only letters, numbers, hyphens, percents, dots and underscores and must be between 3 and 64 characters long.
+      * Field `network` allows only `STAGING` or `PRODUCTION`.
+      * Field `status` allows only `IN_PROGRESS`, `COMPLETE`, `FAILED`.
+      * Field `type` allows only `ACTIVATE`, `DEACTIVATE`, `DELETE`.
+    * Datasource `akamai_mtlstruststore_ca_set_activities`
+      * Field `name` allows only letters, numbers, hyphens, percents, dots and underscores and must be between 3 and 64 characters long.
+    * Datasource `akamai_mtlstruststore_ca_set_associations`
+      * Field `name` allows only letters, numbers, hyphens, percents, dots and underscores and must be between 3 and 64 characters long.
+    * Datasource `akamai_mtlstruststore_ca_set_certificates`
+      * Field `name` allows only letters, numbers, hyphens, percents, dots and underscores and must be between 3 and 64 characters long.
+    * Datasource `akamai_mtlstruststore_ca_set_versions`
+      * Field `name` allows only letters, numbers, hyphens, percents, dots and underscores and must be between 3 and 64 characters long.
+    * Datasource `akamai_mtlstruststore_ca_set`
+      * Field `name` allows only letters, numbers, hyphens, percents, dots and underscores and must be between 3 and 64 characters long.
+    * Datasource `akamai_mtlstruststore_ca_sets`
+      * Field `name_prefix` when specified, allows only letters, numbers, hyphens, percents, dots and underscores and can be between 1 and 64 characters long.
+    * Resource `akamai_mtlstruststore_ca_set`
+        * Field `name` allows only letters, numbers, hyphens, percents, dots and underscores and must be between 3 and 64 characters long.
+        * Field `description` when specified, must be  between 1 and 255 characters long.
+        * Field `version_description` when specified, must be between 1 and 255 characters long.
 
 
 

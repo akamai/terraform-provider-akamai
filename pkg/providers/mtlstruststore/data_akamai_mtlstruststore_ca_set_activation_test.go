@@ -131,15 +131,15 @@ func TestCASetActivationDataSource(t *testing.T) {
 		"happy path - ca_set_name provided": {
 			testData: caSetTestData{
 				caSetID:   "123",
-				caSetName: "test name",
+				caSetName: "test_name",
 				caSets: []mtlstruststore.CASetResponse{
 					{
 						CASetID:   "123",
-						CASetName: "test name",
+						CASetName: "test_name",
 					},
 					{
 						CASetID:   "1234",
-						CASetName: "test name 2",
+						CASetName: "test_name_2",
 					},
 				},
 				caSetActivations: twoActivations,
@@ -158,7 +158,7 @@ func TestCASetActivationDataSource(t *testing.T) {
 		"API error: ListCASets failed": {
 			init: func(m *mtlstruststore.Mock, _ caSetTestData) {
 				m.On("ListCASets", testutils.MockContext, mtlstruststore.ListCASetsRequest{
-					CASetNamePrefix: "test name",
+					CASetNamePrefix: "test_name",
 				}).Return(nil, fmt.Errorf("API error: ListCASets failed")).Once()
 			},
 			steps: []resource.TestStep{
@@ -184,16 +184,16 @@ func TestCASetActivationDataSource(t *testing.T) {
 		"error: multiple ca sets with the same name": {
 			init: func(m *mtlstruststore.Mock, _ caSetTestData) {
 				m.On("ListCASets", testutils.MockContext, mtlstruststore.ListCASetsRequest{
-					CASetNamePrefix: "test name",
+					CASetNamePrefix: "test_name",
 				}).Return(&mtlstruststore.ListCASetsResponse{
 					CASets: []mtlstruststore.CASetResponse{
 						{
 							CASetID:   "123",
-							CASetName: "test name",
+							CASetName: "test_name",
 						},
 						{
 							CASetID:   "1234",
-							CASetName: "test name",
+							CASetName: "test_name",
 						},
 					},
 				}, nil).Once()
@@ -201,7 +201,7 @@ func TestCASetActivationDataSource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, testDir+"ca_set_name.tf"),
-					ExpectError: regexp.MustCompile(`multiple CA sets IDs found with name 'test name': map\[123: 1234:]. Use the ID\nto fetch a specific CA set`),
+					ExpectError: regexp.MustCompile(`multiple CA sets IDs found with name 'test_name': map\[123: 1234:]. Use the ID\nto fetch a specific CA set`),
 				},
 			},
 		},
@@ -244,7 +244,7 @@ func TestCASetActivationDataSource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, testDir+"empty_name.tf"),
-					ExpectError: regexp.MustCompile(`Attribute ca_set_name must not be empty or only whitespace`),
+					ExpectError: regexp.MustCompile(`Attribute ca_set_name string length must be between 3 and 64, got: 0`),
 				},
 			},
 		},
@@ -252,7 +252,7 @@ func TestCASetActivationDataSource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, testDir+"short_name.tf"),
-					ExpectError: regexp.MustCompile(`Attribute ca_set_name must not be empty or only whitespace`),
+					ExpectError: regexp.MustCompile(`Attribute ca_set_name string length must be between 3 and 64, got: 2`),
 				},
 			},
 		},

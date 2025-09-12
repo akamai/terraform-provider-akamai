@@ -435,6 +435,22 @@ func TestCASetResource(t *testing.T) {
 				},
 			},
 		},
+		"expect error - create a ca set with empty description": {
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResCASet/create_empty_description.tf"),
+					ExpectError: regexp.MustCompile("description string length must be between 1 and 255, got: 0"),
+				},
+			},
+		},
+		"expect error - create a ca set with empty version description": {
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResCASet/create_empty_version_description.tf"),
+					ExpectError: regexp.MustCompile("version_description string length must be between 1 and 255, got: 0"),
+				},
+			},
+		},
 		"expect error - create a ca set, first attempt to delete failed, there is no retry logic": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
 				mockValidateCertificates(m, resourceData, nil).Times(5)
@@ -1291,9 +1307,13 @@ func TestCASetResource(t *testing.T) {
 		// This case tests whether unknown config value for `description` and `version description`.
 		// is properly set to null in both create and update phases.
 		"update a non activated ca set with no description and version description, changing only allow_insecure_sha1": {
-			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
+			init: func(m *mtlstruststore.Mock, resourceDataIn commonDataForResource) {
+				resourceData := resourceDataIn
 				resourceData.description = nil
 				resourceData.versionDescription = nil
+				certs := append([]mtlstruststore.CertificateResponse(nil), resourceData.certificates...)
+				certs[0].Description = nil
+				resourceData.certificates = certs
 				// create.
 				mockValidateCertificates(m, resourceData, nil).Times(5)
 				mockCreateCASet(m, resourceData).Times(1)
@@ -1325,10 +1345,11 @@ func TestCASetResource(t *testing.T) {
 			mockData: createData,
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/create_no_descriptions.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/create_no_all_descriptions.tf"),
 					Check: check.
 						CheckMissing("description").
 						CheckMissing("version_description").
+						CheckMissing("certificates.0.description").
 						Build(),
 					ConfigPlanChecks: resource.ConfigPlanChecks{
 						PreApply: []plancheck.PlanCheck{
@@ -1342,6 +1363,7 @@ func TestCASetResource(t *testing.T) {
 					Check: check.
 						CheckMissing("description").
 						CheckMissing("version_description").
+						CheckMissing("certificates.0.description").
 						CheckEqual("allow_insecure_sha1", "true").
 						CheckEqual("version_modified_by", "someone").
 						CheckEqual("version_modified_date", "2025-04-18T12:18:34Z").

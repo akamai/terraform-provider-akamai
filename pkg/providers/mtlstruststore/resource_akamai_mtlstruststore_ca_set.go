@@ -103,16 +103,15 @@ func (r *caSetResource) Schema(ctx context.Context, _ resource.SchemaRequest, re
 				Required:    true,
 				Description: "The name of the CA set.",
 				Validators: []validator.String{
-					stringvalidator.RegexMatches(regexp.MustCompile(`\S{3,}`), "must not be empty or only whitespace"),
-					stringvalidator.LengthAtMost(64),
-					stringvalidator.RegexMatches(regexp.MustCompile(mtlstruststore.CASetNamePattern), "allowed characters are alphanumerics (a-z, A-Z, 0-9), underscore (_), hyphen (-), percent (%) and period (.)"),
+					stringvalidator.LengthBetween(3, 64),
+					stringvalidator.RegexMatches(mtlstruststore.CASetNameRegex, mtlstruststore.CASetNameDescription),
 				},
 				PlanModifiers: []planmodifier.String{modifiers.PreventStringUpdate()},
 			},
 			"description": schema.StringAttribute{
 				Optional:   true,
 				Computed:   true,
-				Validators: []validator.String{stringvalidator.LengthAtMost(255)},
+				Validators: []validator.String{stringvalidator.LengthBetween(1, 255)},
 				PlanModifiers: []planmodifier.String{
 					modifiers.PreventStringUpdate(),
 				},
@@ -172,7 +171,7 @@ func (r *caSetResource) Schema(ctx context.Context, _ resource.SchemaRequest, re
 				Optional: true,
 				Computed: true,
 				Validators: []validator.String{
-					stringvalidator.LengthAtMost(255),
+					stringvalidator.LengthBetween(1, 255),
 				},
 				Default:     nullstringdefault.NullString(),
 				Description: "Additional description for the CA set version.",

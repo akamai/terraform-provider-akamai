@@ -4,7 +4,8 @@ provider "akamai" {
 
 resource "akamai_mtlstruststore_ca_set" "test" {
   name                = "set-1"
-  allow_insecure_sha1 = true
+  allow_insecure_sha1 = false
+  version_description = ""
 
   certificates = [
     {

@@ -58,6 +58,10 @@ func (d *caSetsDataSource) Schema(_ context.Context, _ datasource.SchemaRequest,
 			"name_prefix": schema.StringAttribute{
 				Description: "The name prefix for CA sets filtering or empty to return all CA sets.",
 				Optional:    true,
+				Validators: []validator.String{
+					stringvalidator.LengthBetween(0, 64),
+					stringvalidator.RegexMatches(mtlstruststore.CASetNameRegex, mtlstruststore.CASetNameDescription),
+				},
 			},
 			"activated_on": schema.StringAttribute{
 				Description: "When provided it filters where CA sets were activated 'INACTIVE', 'STAGING', 'PRODUCTION', 'STAGING+PRODUCTION', 'PRODUCTION+STAGING', 'STAGING,PRODUCTION', 'PRODUCTION,STAGING' network.",

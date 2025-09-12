@@ -275,7 +275,7 @@ data "akamai_mtlstruststore_ca_set_associations" "test" {
   name   = ""
 }
 `,
-					ExpectError: regexp.MustCompile(`Attribute name must not be empty or only whitespace`),
+					ExpectError: regexp.MustCompile(`Attribute name string length must be between 3 and 64, got: 0`),
 				},
 			},
 		},

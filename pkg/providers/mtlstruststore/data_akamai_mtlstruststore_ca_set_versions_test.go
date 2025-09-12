@@ -420,7 +420,7 @@ func TestCASetVersionsDataSource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestDataCASetVersions/empty_name.tf"),
-					ExpectError: regexp.MustCompile(`Attribute name must not be empty or only whitespace`),
+					ExpectError: regexp.MustCompile(`Attribute name string length must be between 3 and 64, got: 0`),
 				},
 			},
 		},

@@ -280,6 +280,51 @@ func TestCASetActivationsDataSource(t *testing.T) {
 				},
 			},
 		},
+		"expect error: wrong network provided": {
+			init: func(_ *mtlstruststore.Mock, _ caSetTestData) {},
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDataCASetActivations/wrong_network.tf"),
+					ExpectError: regexp.MustCompile(`Attribute network value must be one of: \["STAGING" "PRODUCTION"], got: "foo"`),
+				},
+			},
+		},
+		"expect error: wrong status provided": {
+			init: func(_ *mtlstruststore.Mock, _ caSetTestData) {},
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDataCASetActivations/wrong_status.tf"),
+					ExpectError: regexp.MustCompile(`Attribute status value must be one of: \["IN_PROGRESS" "COMPLETE" "FAILED"],\ngot: "foo"`),
+				},
+			},
+		},
+		"expect error: wrong type provided": {
+			init: func(_ *mtlstruststore.Mock, _ caSetTestData) {},
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDataCASetActivations/wrong_type.tf"),
+					ExpectError: regexp.MustCompile(`Attribute type value must be one of: \["ACTIVATE" "DEACTIVATE" "DELETE"], got:\n"foo"`),
+				},
+			},
+		},
+		"expect error: too short name provided": {
+			init: func(_ *mtlstruststore.Mock, _ caSetTestData) {},
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDataCASetActivations/short_name.tf"),
+					ExpectError: regexp.MustCompile(`Attribute ca_set_name string length must be between 3 and 64, got: 2`),
+				},
+			},
+		},
+		"expect error: invalid name provided": {
+			init: func(_ *mtlstruststore.Mock, _ caSetTestData) {},
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDataCASetActivations/invalid_name.tf"),
+					ExpectError: regexp.MustCompile(`Attribute ca_set_name allowed characters are alphanumerics \(a-z, A-Z, 0-9\),\nunderscore \(_\), hyphen \(-\), percent \(%\) and period \(\.\), got: ###`),
+				},
+			},
+		},
 		"expect error: could not find ca set by name": {
 			testData: caSetTestData{
 				caSetName: "example-ca-set",
