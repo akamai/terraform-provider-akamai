@@ -62,6 +62,9 @@
     * Added support for `preferred_ca` in the `akamai_mtlskeystore_client_certificate_akamai` resource.
 
 
+* mTLS Keystore:
+    * `akamai_mtlskeystore_client_certificate_akamai` - add support for manual rotation.
+
 
 
 

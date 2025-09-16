@@ -5,14 +5,17 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/mtlskeystore"
+	"github.com/akamai/terraform-provider-akamai/v9/internal/slicesets"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/framework/date"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/framework/modifiers"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -22,7 +25,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -44,21 +46,23 @@ type clientCertificateAkamaiResource struct {
 }
 
 type clientCertificateAkamaiResourceModel struct {
-	CertificateName    types.String `tfsdk:"certificate_name"`
-	CertificateID      types.Int64  `tfsdk:"certificate_id"`
-	ContractID         types.String `tfsdk:"contract_id"`
-	Geography          types.String `tfsdk:"geography"`
-	GroupID            types.Int64  `tfsdk:"group_id"`
-	KeyAlgorithm       types.String `tfsdk:"key_algorithm"`
-	NotificationEmails types.List   `tfsdk:"notification_emails"`
-	PreferredCA        types.String `tfsdk:"preferred_ca"`
-	SecureNetwork      types.String `tfsdk:"secure_network"`
-	Subject            types.String `tfsdk:"subject"`
-	CreatedBy          types.String `tfsdk:"created_by"`
-	CreatedDate        types.String `tfsdk:"created_date"`
-	Versions           types.List   `tfsdk:"versions"`
-	CurrentGUID        types.String `tfsdk:"current_guid"`
-	PreviousGUID       types.String `tfsdk:"previous_guid"`
+	CertificateName    types.String   `tfsdk:"certificate_name"`
+	CertificateID      types.Int64    `tfsdk:"certificate_id"`
+	ContractID         types.String   `tfsdk:"contract_id"`
+	Geography          types.String   `tfsdk:"geography"`
+	GroupID            types.Int64    `tfsdk:"group_id"`
+	KeyAlgorithm       types.String   `tfsdk:"key_algorithm"`
+	NotificationEmails types.List     `tfsdk:"notification_emails"`
+	PreferredCA        types.String   `tfsdk:"preferred_ca"`
+	SecureNetwork      types.String   `tfsdk:"secure_network"`
+	Subject            types.String   `tfsdk:"subject"`
+	CreatedBy          types.String   `tfsdk:"created_by"`
+	CreatedDate        types.String   `tfsdk:"created_date"`
+	Versions           types.List     `tfsdk:"versions"`
+	CurrentGUID        types.String   `tfsdk:"current_guid"`
+	PreviousGUID       types.String   `tfsdk:"previous_guid"`
+	RevokedVersions    types.Set      `tfsdk:"revoked_versions"`
+	Timeouts           timeouts.Value `tfsdk:"timeouts"`
 }
 
 type clientCertificateAkamaiVersionModel struct {
@@ -112,7 +116,8 @@ var (
 		},
 	}
 
-	pollingDuration = 30 * time.Second
+	pollingDuration                 = 30 * time.Second
+	akamaiCertificateDefaultTimeout = 30 * time.Minute
 )
 
 // NewClientCertificateAkamaiResource returns a new mtls keystore client certificate akamai resource.
@@ -143,7 +148,7 @@ func (c *clientCertificateAkamaiResource) Configure(_ context.Context, req resou
 	c.meta = meta.Must(req.ProviderData)
 }
 
-func (c *clientCertificateAkamaiResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (c *clientCertificateAkamaiResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"certificate_name": schema.StringAttribute{
@@ -267,6 +272,17 @@ func (c *clientCertificateAkamaiResource) Schema(_ context.Context, _ resource.S
 				// Once GUID is established for the previous version by API, it should not change.
 			},
 			"versions": versionSchema(),
+			"revoked_versions": schema.SetAttribute{
+				Optional:    true,
+				ElementType: types.Int64Type,
+				Description: "A set of client certificate versions that should be revoked.",
+			},
+			"timeouts": timeouts.Attributes(ctx, timeouts.Opts{
+				Create:            true,
+				CreateDescription: "Optional configurable resource create timeout. By default it's 30m.",
+				Update:            true,
+				UpdateDescription: "Optional configurable resource update timeout. By default it's 30m.",
+			}),
 		},
 	}
 }
@@ -275,9 +291,6 @@ func versionSchema() schema.ListNestedAttribute {
 	return schema.ListNestedAttribute{
 		Description: "A list of client certificate versions. Each version represents a specific iteration of the client certificate.",
 		Computed:    true,
-		PlanModifiers: []planmodifier.List{
-			listplanmodifier.UseStateForUnknown(),
-		},
 		NestedObject: schema.NestedAttributeObject{
 			Attributes: map[string]schema.Attribute{
 				"version": schema.Int64Attribute{
@@ -368,18 +381,24 @@ func (c *clientCertificateAkamaiResource) Create(ctx context.Context, req resour
 	if resp.Diagnostics.Append(plan.populateCertModelFromResponse(ctx, mtlskeystore.Certificate(*certificate))...); resp.Diagnostics.HasError() {
 		return
 	}
+	timeout, diag := plan.Timeouts.Create(ctx, akamaiCertificateDefaultTimeout)
+	if diag.HasError() {
+		resp.Diagnostics.Append(diag...)
+		return
+	}
 
 	plan.PreferredCA = types.StringPointerValue(clientCertificateRequest.PreferredCA)
 
-	version, err := plan.waitUntilVersionDeployed(ctx, client)
+	// During creation process it is expected to versions slice contain only one element
+	versions, err := waitUntilVersionDeployed(ctx, client, plan.CertificateID.ValueInt64(), timeout)
 	if err != nil {
 		resp.Diagnostics.AddError("Error waiting for client certificate version deployment", err.Error())
 		return
 	}
-	if resp.Diagnostics.Append(plan.populateVersionModelFromResponse(ctx, []mtlskeystore.ClientCertificateVersion{*version})...); resp.Diagnostics.HasError() {
+	if resp.Diagnostics.Append(plan.populateVersionModelFromResponse(ctx, versions)...); resp.Diagnostics.HasError() {
 		return
 	}
-	plan.CurrentGUID = types.StringValue(version.VersionGUID)
+	plan.CurrentGUID = types.StringValue(versions[0].VersionGUID)
 	plan.PreviousGUID = types.StringNull()
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
@@ -465,6 +484,7 @@ func (c *clientCertificateAkamaiResource) Read(ctx context.Context, req resource
 func (c *clientCertificateAkamaiResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	tflog.Debug(ctx, "MTLS Keystore Client Certificate Akamai Resource Update")
 	var plan, state clientCertificateAkamaiResourceModel
+
 	if resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...); resp.Diagnostics.HasError() {
 		return
 	}
@@ -472,9 +492,9 @@ func (c *clientCertificateAkamaiResource) Update(ctx context.Context, req resour
 		return
 	}
 
+	client := Client(c.meta)
 	isCertNameChanged := !plan.CertificateName.Equal(state.CertificateName)
 	areNotificationEmailsChanged := !plan.NotificationEmails.Equal(state.NotificationEmails)
-
 	if isCertNameChanged || areNotificationEmailsChanged {
 		updateRequest := mtlskeystore.PatchClientCertificateRequest{
 			CertificateID: state.CertificateID.ValueInt64(),
@@ -494,7 +514,6 @@ func (c *clientCertificateAkamaiResource) Update(ctx context.Context, req resour
 			updateRequest.Body.NotificationEmails = planEmails
 		}
 
-		client := Client(c.meta)
 		err := client.PatchClientCertificate(ctx, updateRequest)
 		if err != nil {
 			resp.Diagnostics.AddError("Unable to Patch Client Certificate", err.Error())
@@ -515,7 +534,103 @@ func (c *clientCertificateAkamaiResource) Update(ctx context.Context, req resour
 
 		tflog.Debug(ctx, "Client Certificate Name or Notification Emails updated successfully")
 	}
+
+	var diags diag.Diagnostics
+	needsRevoke, diags := needsRevokeCurrentVersion(ctx, plan, state)
+	if diags.HasError() {
+		resp.Diagnostics.Append(diags...)
+		return
+	}
+
+	if needsRevoke {
+		diags = rotateCertificate(ctx, client, plan.CertificateID.ValueInt64())
+		if diags.HasError() {
+			resp.Diagnostics.Append(diags...)
+			return
+		}
+
+		timeout, diags := plan.Timeouts.Update(ctx, akamaiCertificateDefaultTimeout)
+		if diags.HasError() {
+			resp.Diagnostics.Append(diags...)
+			return
+		}
+
+		versions, err := waitUntilVersionDeployed(ctx, client, plan.CertificateID.ValueInt64(), timeout)
+		if err != nil {
+			resp.Diagnostics.AddError("Error waiting for client certificate version deployment", err.Error())
+			return
+		}
+
+		resp.Diagnostics.Append(plan.populateVersionModelFromResponse(ctx, versions)...)
+		if diags.HasError() {
+			return
+		}
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
+}
+
+func rotateCertificate(ctx context.Context, client mtlskeystore.MTLSKeystore, certificateID int64) diag.Diagnostics {
+	var diags diag.Diagnostics
+	tflog.Debug(ctx, "Rotating Current Client Certificate Version")
+	_, err := client.RotateClientCertificateVersion(ctx, mtlskeystore.RotateClientCertificateVersionRequest{
+		CertificateID: certificateID,
+	})
+	if err != nil {
+		diags.AddError("Unable to Rotate Client Certificate", err.Error())
+		return diags
+	}
+
+	return diags
+}
+
+func needsRevokeCurrentVersion(ctx context.Context, plan, state clientCertificateAkamaiResourceModel) (bool, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	var planRevokedVersions []int64
+	var stateRevokedVersions []int64
+	if !plan.RevokedVersions.IsNull() {
+		diags.Append(plan.RevokedVersions.ElementsAs(ctx, &planRevokedVersions, false)...)
+		if diags.HasError() {
+			return false, diags
+		}
+	}
+
+	if !state.RevokedVersions.IsNull() {
+		diags.Append(state.RevokedVersions.ElementsAs(ctx, &stateRevokedVersions, false)...)
+		if diags.HasError() {
+			return false, diags
+		}
+	}
+
+	versionsToRevoke := slicesets.Subtract(planRevokedVersions, stateRevokedVersions)
+	if len(versionsToRevoke) == 0 {
+		return false, diags
+	}
+	if len(versionsToRevoke) > 1 {
+		diags.AddError(
+			`Only one version can be revoked`,
+			fmt.Sprintf(`Only one, current version can be revoked at a time. Current configuration contains versions %v to be revoked.`, strings.Join(strings.Split(fmt.Sprint(versionsToRevoke), " "), ", ")))
+		return false, diags
+	}
+
+	var stateVersionsModels []clientCertificateAkamaiVersionModel
+
+	diags.Append(state.Versions.ElementsAs(ctx, &stateVersionsModels, false)...)
+	if diags.HasError() {
+		return false, diags
+	}
+	var stateVersions []int64
+	for _, v := range stateVersionsModels {
+		stateVersions = append(stateVersions, v.Version.ValueInt64())
+	}
+
+	if versionsToRevoke[0] != slices.Max(stateVersions) {
+		diags.AddError("Invalid Version to Revoke",
+			fmt.Sprintf("Version %d is not the current version of the client certificate (Recent versions: %s). Revoking only current version is supported.", versionsToRevoke[0], strings.Join(strings.Split(fmt.Sprint(stateVersions), " "), ", ")))
+		return false, diags
+	}
+
+	return true, diags
 }
 
 func (c *clientCertificateAkamaiResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
@@ -543,6 +658,12 @@ func (c *clientCertificateAkamaiResource) ImportState(ctx context.Context, req r
 		SecureNetwork:      types.StringUnknown(),
 		Versions:           types.ListUnknown(versionObjectType),
 		PreferredCA:        types.StringNull(),
+		Timeouts: timeouts.Value{
+			Object: types.ObjectNull(map[string]attr.Type{
+				"create": types.StringType,
+				"update": types.StringType,
+			}),
+		},
 	}
 
 	// API call is needed to populate subject from server, and extract contract and group ID from it
@@ -580,6 +701,7 @@ func (c *clientCertificateAkamaiResource) ImportState(ctx context.Context, req r
 		resp.Diagnostics.AddError("Certificate in Delete Pending State", fmt.Sprintf("The client certificate %d has only one version and it's in `DELETE_PENDING` state. In order to import this resource, rotate this client certificate first", certificateID))
 		return
 	}
+	data.RevokedVersions = types.SetNull(types.Int64Type)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -656,6 +778,15 @@ func (c *clientCertificateAkamaiResource) ModifyPlan(ctx context.Context, req re
 			return
 		}
 
+		needsRevoke, diags := needsRevokeCurrentVersion(ctx, plan, state)
+		if diags.HasError() {
+			resp.Diagnostics.Append(diags...)
+			return
+		}
+		if !needsRevoke {
+			plan.Versions = state.Versions
+		}
+
 		// PreviousGUID is null in state after create, and stays null until the first automatic rotation.
 		// Therefore we need to copy the state value also for null.
 		if plan.PreviousGUID.IsUnknown() {
@@ -727,25 +858,20 @@ func (m *clientCertificateAkamaiResourceModel) populateVersionModelFromResponse(
 	return nil
 }
 
-func (m *clientCertificateAkamaiResourceModel) waitUntilVersionDeployed(
-	ctx context.Context, client mtlskeystore.MTLSKeystore) (*mtlskeystore.ClientCertificateVersion, error) {
+func waitUntilVersionDeployed(ctx context.Context, client mtlskeystore.MTLSKeystore, certificateID int64, timeout time.Duration) ([]mtlskeystore.ClientCertificateVersion, error) {
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
 
 	for {
 		versions, err := client.ListClientCertificateVersions(ctx, mtlskeystore.ListClientCertificateVersionsRequest{
-			CertificateID: m.CertificateID.ValueInt64(),
+			CertificateID: certificateID,
 		})
 		if err != nil {
 			return nil,
 				fmt.Errorf("error getting client certificate versions: %w", err)
 		}
-		if len(versions.Versions) == 1 {
-			tflog.Debug(ctx, fmt.Sprintf("Client Certificate Version status: %s", versions.Versions[0].Status))
-			if versions.Versions[0].Status == string(mtlskeystore.CertificateVersionStatusDeployed) {
-				return &versions.Versions[0], nil
-			}
-		} else {
-			return nil,
-				fmt.Errorf("unexpected number of client certificate versions: %d", len(versions.Versions))
+		if len(versions.Versions) > 0 && checkIfAllVersionsAreDeployed(versions.Versions) {
+			return versions.Versions, nil
 		}
 
 		select {
@@ -753,9 +879,18 @@ func (m *clientCertificateAkamaiResourceModel) waitUntilVersionDeployed(
 			continue
 		case <-ctx.Done():
 			return nil,
-				fmt.Errorf("context cancelled while waiting for client certificate version deployment: %w", ctx.Err())
+				fmt.Errorf("timeout %s waiting for client certificate deployment exeeded specified limit", timeout.String())
 		}
 	}
+}
+
+func checkIfAllVersionsAreDeployed(versions []mtlskeystore.ClientCertificateVersion) bool {
+	for _, version := range versions {
+		if version.Status != string(mtlskeystore.CertificateVersionStatusDeployed) {
+			return false
+		}
+	}
+	return true
 }
 
 func parseCertificateID(idStr string) (int64, error) {
