@@ -113,6 +113,15 @@
 
 
 
+* mTLS Truststore (Beta):
+  * Added new optional parameter `association_type` to `akamai_mtlstruststore_ca_set_associations` datasource. It allows filtering associations by type. 
+    Possible values are `enrollemnts` or `properties`. If not specified, both types of associations are returned.
+
+
+
+
+
+
 
 
 
