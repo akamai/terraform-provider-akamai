@@ -823,4 +823,245 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 
 	})
 
+	t.Run("notification_emails not suppressed when removing notification email from the list", func(t *testing.T) {
+		// Mock TF lifecycle
+		client := &appsec.Mock{}
+
+		removeActivationsResponse := appsec.RemoveActivationsResponse{}
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/ActivationsDelete.json"), &removeActivationsResponse)
+		require.NoError(t, err)
+
+		getActivationsResponse := appsec.GetActivationsResponse{}
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/Activations.json"), &getActivationsResponse)
+		require.NoError(t, err)
+
+		getActivationsResponseDelete := appsec.GetActivationsResponse{}
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/ActivationsDelete.json"), &getActivationsResponseDelete)
+		require.NoError(t, err)
+
+		createActivationsResponse := appsec.CreateActivationsResponse{}
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/Activations.json"), &createActivationsResponse)
+		require.NoError(t, err)
+
+		createActivationsUpdatedResponse := appsec.CreateActivationsResponse{}
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/Activations_Production.json"), &createActivationsUpdatedResponse)
+		require.NoError(t, err)
+
+		removeActivationsUpdatedResponse := appsec.RemoveActivationsResponse{}
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/Deactivations_Production.json"), &removeActivationsUpdatedResponse)
+		require.NoError(t, err)
+
+		getActivationsUpdatedResponse := appsec.GetActivationsResponse{}
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/Activations_Production.json"), &getActivationsUpdatedResponse)
+		require.NoError(t, err)
+
+		getActivationsResponseDeleteUpdated := appsec.GetActivationsResponse{}
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/Deactivations_Production.json"), &getActivationsResponseDeleteUpdated)
+		require.NoError(t, err)
+
+		client.On("GetActivations",
+			testutils.MockContext,
+			appsec.GetActivationsRequest{ActivationID: 547694},
+		).Return(&getActivationsResponse, nil).Times(3)
+
+		client.On("CreateActivations",
+			testutils.MockContext,
+			appsec.CreateActivationsRequest{
+				Action:             "ACTIVATE",
+				Network:            "STAGING",
+				Note:               "Test Notes",
+				NotificationEmails: []string{"user1@example.com", "user2@example.com"},
+				ActivationConfigs: []struct {
+					ConfigID      int `json:"configId"`
+					ConfigVersion int `json:"configVersion"`
+				}{{ConfigID: 43253, ConfigVersion: 7}}},
+		).Return(&createActivationsResponse, nil).Once()
+
+		client.On("CreateActivations",
+			testutils.MockContext,
+			appsec.CreateActivationsRequest{
+				Action:             "ACTIVATE",
+				Network:            "STAGING",
+				Note:               "Test Notes",
+				NotificationEmails: []string{"user1@example.com"},
+				ActivationConfigs: []struct {
+					ConfigID      int `json:"configId"`
+					ConfigVersion int `json:"configVersion"`
+				}{{ConfigID: 43253, ConfigVersion: 8}}},
+		).Return(&createActivationsUpdatedResponse, nil).Once()
+
+		client.On("GetActivations",
+			testutils.MockContext,
+			appsec.GetActivationsRequest{ActivationID: 547694},
+		).Return(&getActivationsUpdatedResponse, nil).Times(3)
+
+		client.On("GetActivations",
+			testutils.MockContext,
+			appsec.GetActivationsRequest{ActivationID: 547694},
+		).Return(&getActivationsResponseDeleteUpdated, nil)
+
+		client.On("RemoveActivations",
+			testutils.MockContext,
+			appsec.RemoveActivationsRequest{
+				ActivationID:       547694,
+				Action:             "DEACTIVATE",
+				Network:            "STAGING",
+				Note:               "Test Notes",
+				NotificationEmails: []string{"user1@example.com"},
+				ActivationConfigs: []struct {
+					ConfigID      int `json:"configId"`
+					ConfigVersion int `json:"configVersion"`
+				}{{ConfigID: 43253, ConfigVersion: 8}}},
+		).Return(&removeActivationsUpdatedResponse, nil)
+
+		client.On("GetActivations",
+			testutils.MockContext,
+			appsec.GetActivationsRequest{ActivationID: 547695},
+		).Return(&getActivationsResponseDelete, nil)
+
+		client.On("GetActivations",
+			testutils.MockContext,
+			appsec.GetActivationsRequest{ActivationID: 547695},
+		).Return(&removeActivationsUpdatedResponse, nil)
+
+		// Verify notification_emails field change is NOT suppressed when removing an email from the list
+
+		useClient(client, func() {
+			resource.Test(t, resource.TestCase{
+				IsUnitTest:               true,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResActivations/match_by_id_multiple_emails.tf"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "config_id", "43253"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "network", "STAGING"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "note", "Test Notes"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "version", "7"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "notification_emails.#", "2"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "notification_emails.0", "user1@example.com"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "notification_emails.1", "user2@example.com"),
+						),
+					},
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResActivations/update_notification_emails_remove_and_network.tf"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "config_id", "43253"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "network", "STAGING"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "note", "Test Notes"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "version", "8"),
+							// Since version and notification_emails change, there is an update to the notification_emails
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "notification_emails.#", "1"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "notification_emails.0", "user1@example.com"),
+						),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("notification_emails change suppressed when removing email from list and other fields are not changed", func(t *testing.T) {
+		// Mock TF lifecycle
+		client := &appsec.Mock{}
+
+		removeActivationsResponse := appsec.RemoveActivationsResponse{}
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/ActivationsDelete.json"), &removeActivationsResponse)
+		require.NoError(t, err)
+
+		getActivationsResponse := appsec.GetActivationsResponse{}
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/Activations.json"), &getActivationsResponse)
+		require.NoError(t, err)
+
+		getActivationsResponseDelete := appsec.GetActivationsResponse{}
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/ActivationsDelete.json"), &getActivationsResponseDelete)
+		require.NoError(t, err)
+
+		createActivationsResponse := appsec.CreateActivationsResponse{}
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/Activations.json"), &createActivationsResponse)
+		require.NoError(t, err)
+
+		client.On("GetActivations",
+			testutils.MockContext,
+			appsec.GetActivationsRequest{ActivationID: 547694},
+		).Return(&getActivationsResponse, nil).Times(3)
+
+		client.On("CreateActivations",
+			testutils.MockContext,
+			appsec.CreateActivationsRequest{
+				Action:             "ACTIVATE",
+				Network:            "STAGING",
+				Note:               "Test Notes",
+				NotificationEmails: []string{"user1@example.com", "user2@example.com"},
+				ActivationConfigs: []struct {
+					ConfigID      int `json:"configId"`
+					ConfigVersion int `json:"configVersion"`
+				}{{ConfigID: 43253, ConfigVersion: 7}}},
+		).Return(&createActivationsResponse, nil)
+
+		client.On("GetActivations",
+			testutils.MockContext,
+			appsec.GetActivationsRequest{ActivationID: 547694},
+		).Return(&getActivationsResponseDelete, nil)
+
+		client.On("RemoveActivations",
+			testutils.MockContext,
+			appsec.RemoveActivationsRequest{
+				ActivationID:       547694,
+				Action:             "DEACTIVATE",
+				Network:            "STAGING",
+				Note:               "Test Notes",
+				NotificationEmails: []string{"user1@example.com", "user2@example.com"},
+				ActivationConfigs: []struct {
+					ConfigID      int `json:"configId"`
+					ConfigVersion int `json:"configVersion"`
+				}{{ConfigID: 43253, ConfigVersion: 7}}},
+		).Return(&removeActivationsResponse, nil)
+
+		client.On("GetActivations",
+			testutils.MockContext,
+			appsec.GetActivationsRequest{ActivationID: 547695},
+		).Return(&getActivationsResponseDelete, nil)
+
+		// Verify notification_emails field change is suppressed when only removing an email but keeping other fields the same
+
+		useClient(client, func() {
+			resource.Test(t, resource.TestCase{
+				IsUnitTest:               true,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResActivations/match_by_id_multiple_emails.tf"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "config_id", "43253"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "network", "STAGING"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "note", "Test Notes"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "version", "7"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "notification_emails.#", "2"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "notification_emails.0", "user1@example.com"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "notification_emails.1", "user2@example.com"),
+						),
+					},
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResActivations/update_notification_emails_remove_only.tf"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "config_id", "43253"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "network", "STAGING"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "note", "Test Notes"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "version", "7"),
+							// Even when an email is removed from notification_emails, since nothing else changes,
+							// the change should be suppressed and the original emails should remain
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "notification_emails.#", "2"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "notification_emails.0", "user1@example.com"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "notification_emails.1", "user2@example.com"),
+						),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
 }

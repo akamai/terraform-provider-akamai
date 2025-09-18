@@ -470,6 +470,14 @@ func suppressFieldsForAppSecActivation(_, oldValue, newValue string, d *schema.R
 	return true
 }
 
+func suppressActivationEmailFieldForAppSecActivation(_, _, _ string, d *schema.ResourceData) bool {
+	// Suppress notification_emails changes only if core fields didn't change.
+	if d.HasChange("notification_emails") {
+		return !d.HasChanges("config_id", "version", "network")
+	}
+	return true
+}
+
 func suppressFieldForPrefixedGroupID(_, oldValue, newValue string, d *schema.ResourceData) bool {
 	// oldValue: load from DataSource - which can also be freshly Instantiated (to be populated with Inputs);
 	// newValue: from Input (eg. 'grp_12345' ) vs. '12345' Loaded from existing ('old' and 'new' are the same)

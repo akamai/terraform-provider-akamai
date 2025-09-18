@@ -61,7 +61,7 @@ func resourceActivations() *schema.Resource {
 				Required:         true,
 				Elem:             &schema.Schema{Type: schema.TypeString},
 				Description:      "List of email addresses to be notified with the results of the activation",
-				DiffSuppressFunc: suppressFieldsForAppSecActivation,
+				DiffSuppressFunc: suppressActivationEmailFieldForAppSecActivation,
 			},
 			"status": {
 				Type:        schema.TypeString,
