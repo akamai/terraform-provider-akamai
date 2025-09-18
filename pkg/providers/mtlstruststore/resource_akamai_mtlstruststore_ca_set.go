@@ -425,7 +425,18 @@ func (r *caSetResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanR
 				"enrollments": len(associationsResponse.Associations.Enrollments),
 				"properties":  len(associationsResponse.Associations.Properties),
 			})
-			resp.Diagnostics.AddWarning("CA set is in use and cannot be deleted", getAssociationDetails(associationsResponse))
+			resp.Diagnostics.AddWarning(
+				"CA set has active associations",
+				fmt.Sprintf(`CA set %s is still associated.
+If those associations will be removed in the same terraform apply,
+this warning can be safely ignored.
+
+Details:
+%s`,
+					state.ID.ValueString(),
+					getAssociationDetails(associationsResponse),
+				),
+			)
 			return
 		}
 	}

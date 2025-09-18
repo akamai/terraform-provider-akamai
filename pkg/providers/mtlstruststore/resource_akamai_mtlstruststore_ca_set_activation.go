@@ -673,7 +673,7 @@ func (c *caSetActivationResource) ModifyPlan(ctx context.Context, req resource.M
 			isActive := (network == "STAGING" && versionResp.StagingStatus == "ACTIVE") ||
 				(network == "PRODUCTION" && versionResp.ProductionStatus == "ACTIVE")
 			if isActive {
-				caSetAssociations, err := client.ListCASetAssociations(ctx, mtlstruststore.ListCASetAssociationsRequest{
+				associationsResponse, err := client.ListCASetAssociations(ctx, mtlstruststore.ListCASetAssociationsRequest{
 					CASetID: state.CASetID.ValueString(),
 				})
 				if err != nil {
@@ -681,19 +681,23 @@ func (c *caSetActivationResource) ModifyPlan(ctx context.Context, req resource.M
 					return
 				}
 
-				if len(caSetAssociations.Associations.Enrollments) > 0 || len(caSetAssociations.Associations.Properties) > 0 {
+				if len(associationsResponse.Associations.Enrollments) > 0 || len(associationsResponse.Associations.Properties) > 0 {
 					tflog.Warn(ctx, "CA set with current version is in use and cannot be deleted", map[string]interface{}{
 						"ca_set_id":   state.CASetID.ValueString(),
 						"version":     state.Version.ValueInt64(),
-						"enrollments": len(caSetAssociations.Associations.Enrollments),
-						"properties":  len(caSetAssociations.Associations.Properties),
+						"enrollments": len(associationsResponse.Associations.Enrollments),
+						"properties":  len(associationsResponse.Associations.Properties),
 					})
 					resp.Diagnostics.AddWarning(
-						"CA Set in Use",
-						fmt.Sprintf("The CA set with ID %s and version %d is still associated with one or more enrollments or properties and cannot be deleted. Details: %s",
+						"CA set has active associations",
+						fmt.Sprintf(`CA set %s is still associated.
+If those associations will be removed in the same terraform apply,
+this warning can be safely ignored.
+
+Details:
+%s`,
 							state.CASetID.ValueString(),
-							state.Version.ValueInt64(),
-							getAssociationDetails(caSetAssociations),
+							getAssociationDetails(associationsResponse),
 						),
 					)
 					return
