@@ -22,7 +22,95 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #### FEATURES/ENHANCEMENTS:
+
+* mTLS Keystore:
+    * Added support for `preferred_ca` in the `akamai_mtlskeystore_client_certificate_akamai` resource.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+* DomainOwnership:
+    * Added new data sources:
+        * `akamai_domainownership_search_domains` - allows searching for domains details.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
