@@ -91,6 +91,8 @@
 
 
 
+* CCM
+    * Added new `akamai_ccm_certificate` resource.
 
 
 

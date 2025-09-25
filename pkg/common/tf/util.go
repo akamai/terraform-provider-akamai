@@ -3,6 +3,7 @@ package tf
 import (
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -48,4 +49,12 @@ func StringFieldHasChangesWithStateFunc(d *schema.ResourceData, key string, stat
 	}
 	oldValue, newValue := d.GetChange(key)
 	return oldValue.(string) != stateFunc(newValue)
+}
+
+// StringValueOrNullIfEmpty returns types.StringNull() if the input string is empty, otherwise returns types.StringValue(s).
+func StringValueOrNullIfEmpty(s string) types.String {
+	if s == "" {
+		return types.StringNull()
+	}
+	return types.StringValue(s)
 }
