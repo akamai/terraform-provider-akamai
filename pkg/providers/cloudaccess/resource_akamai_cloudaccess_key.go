@@ -150,12 +150,12 @@ func (r *KeyResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp
 			},
 			"authentication_method": schema.StringAttribute{
 				Required:    true,
-				Description: "The type of cloud provider signing process used to authenticate API requests. Two options are available: \"AWS4_HMAC_SHA256\" or \"GOOG4_HMAC_SHA256\".",
+				Description: "The type of cloud provider signing process used to authenticate API requests. Three options are available: \"AWS4_HMAC_SHA256\", \"GOOG4_HMAC_SHA256\" or \"AOS4_HMAC_SHA256\".",
 				PlanModifiers: []planmodifier.String{
 					modifiers.PreventStringUpdate(),
 				},
 				Validators: []validator.String{
-					stringvalidator.OneOf(string(cloudaccess.AuthAWS), string(cloudaccess.AuthGOOG)),
+					stringvalidator.OneOf(string(cloudaccess.AuthAWS), string(cloudaccess.AuthGOOG), string(cloudaccess.AuthAOS)),
 				},
 			},
 			"contract_id": schema.StringAttribute{

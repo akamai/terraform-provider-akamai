@@ -1725,7 +1725,7 @@ func TestAccessKeyResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResAccessKey/wrong_additional_cdn.tf"),
-					ExpectError: regexp.MustCompile(`Invalid Attribute Value Match`),
+					ExpectError: regexp.MustCompile(`Attribute network_configuration.additional_cdn value must be one of:\s*\["CHINA_CDN" "RUSSIA_CDN"], got: "TEST"`),
 				},
 			},
 		},
@@ -1733,15 +1733,15 @@ func TestAccessKeyResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResAccessKey/wrong_security_network.tf"),
-					ExpectError: regexp.MustCompile(`Invalid Attribute Value Match`),
+					ExpectError: regexp.MustCompile(`Attribute network_configuration.security_network value must be one of:\s*\["STANDARD_TLS" "ENHANCED_TLS"], got: "TEST"`),
 				},
 			},
 		},
 		"fail on creation - not proper authentication method": {
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, "testdata/TestResAccessKey/wrong_security_network.tf"),
-					ExpectError: regexp.MustCompile(`Invalid Attribute Value Match`),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResAccessKey/wrong_authentication_method.tf"),
+					ExpectError: regexp.MustCompile(`Attribute authentication_method value must be one of: \["AWS4_HMAC_SHA256"\s*"GOOG4_HMAC_SHA256" "AOS4_HMAC_SHA256"], got: "TEST"`),
 				},
 			},
 		},
