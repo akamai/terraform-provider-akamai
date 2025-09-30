@@ -1,0 +1,373 @@
+{
+  "_ruleFormat_": "rules_v2025_09_09",
+  "rules": {
+    "advancedOverride": "test",
+    "behaviors": [
+      {
+        "name": "contentCharacteristicsAMD",
+        "options": {
+          "catalogSize": "SMALL",
+          "contentType": "ULTRA_HD",
+          "dash": true,
+          "hds": true,
+          "hls": true,
+          "popularityDistribution": "UNKNOWN",
+          "segmentDurationDASH": "SEGMENT_DURATION_10S",
+          "segmentDurationDASHCustom": 100,
+          "segmentDurationHDS": "SEGMENT_DURATION_2S",
+          "segmentDurationHDSCustom": 100,
+          "segmentDurationHLS": "SEGMENT_DURATION_4S",
+          "segmentDurationHLSCustom": 3.14,
+          "segmentDurationSmooth": "SEGMENT_DURATION_8S",
+          "segmentDurationSmoothCustom": 3.14,
+          "segmentSizeDASH": "GREATER_THAN_100MB",
+          "segmentSizeHDS": "TEN_MB_TO_100_MB",
+          "segmentSizeHLS": "GREATER_THAN_100MB",
+          "segmentSizeSmooth": "UNKNOWN",
+          "smooth": true
+        }
+      },
+      {
+        "name": "origin",
+        "options": {
+          "cacheKeyHostname": "ORIGIN_HOSTNAME",
+          "compress": true,
+          "customCertificates": [
+            {
+              "canBeCA": false,
+              "canBeLeaf": true,
+              "issuerRDNs": {
+                "C": "US",
+                "CN": "DigiCert TLS RSA SHA256 2020 CA1",
+                "O": "DigiCert Inc"
+              }
+            }
+          ],
+          "enableTrueClientIp": true,
+          "forwardHostHeader": "REQUEST_HOST_HEADER",
+          "httpPort": 80,
+          "httpsPort": 443,
+          "originSni": true,
+          "originType": "CUSTOMER",
+          "trueClientIpClientSetting": false,
+          "trueClientIpHeader": "True-Client-IP",
+          "useUniqueCacheKey": false,
+          "verificationMode": "PLATFORM_SETTINGS"
+        }
+      },
+      {
+        "name": "adScalerCircuitBreaker",
+        "options": {
+          "returnErrorResponseCodeBased": 502
+        }
+      },
+      {
+        "name": "applicationLoadBalancer",
+        "options": {
+          "allDownNetStorage": {
+            "cpCode": 123,
+            "downloadDomainName": "test"
+          },
+          "failoverOriginMap": [
+            {
+              "fromOriginId": "123"
+            }
+          ]
+        }
+      },
+      {
+        "name": "apiPrioritization",
+        "options": {
+          "cloudletPolicy": {
+            "id": 1337,
+            "name": "test"
+          }
+        }
+      },
+      {
+        "name": "caching",
+        "options": {
+          "behavior": "NO_STORE"
+        }
+      },
+      {
+        "name": "sureRoute",
+        "options": {
+          "enabled": true,
+          "forceSslForward": false,
+          "raceStatTtl": "30m",
+          "toHostStatus": "INCOMING_HH",
+          "type": "PERFORMANCE"
+        }
+      },
+      {
+        "name": "tieredDistribution",
+        "options": {
+          "enabled": true,
+          "tieredDistributionMap": "CH2"
+        }
+      },
+      {
+        "name": "prefetch",
+        "options": {
+          "enabled": true
+        }
+      },
+      {
+        "name": "allowPost",
+        "options": {
+          "allowWithoutContentLength": false,
+          "enabled": true
+        }
+      },
+      {
+        "name": "cpCode",
+        "options": {
+          "value": {
+            "createdDate": 1678276597000,
+            "description": "papi.declarativ.test.ipqa",
+            "id": 1048126,
+            "name": "papi.declarativ.test.ipqa",
+            "products": [
+              "Fresca"
+            ]
+          }
+        }
+      },
+      {
+        "name": "report",
+        "options": {
+          "logAcceptLanguage": false,
+          "logCookies": "OFF",
+          "logCustomLogField": false,
+          "logEdgeIP": false,
+          "logHost": false,
+          "logReferer": false,
+          "logUserAgent": true,
+          "logXForwardedFor": false
+        }
+      },
+      {
+        "name": "mPulse",
+        "options": {
+          "apiKey": "",
+          "bufferSize": "",
+          "configOverride": "\n",
+          "enabled": true,
+          "loaderVersion": "V12",
+          "requirePci": false
+        }
+      }
+    ],
+    "children": [
+      {
+        "behaviors": [
+          {
+            "name": "cpCode",
+            "options": {
+              "value": {
+                "cpCodeLimits": {
+                  "currentCapacity": -143,
+                  "limit": 100,
+                  "limitType": "global"
+                },
+                "createdDate": 1678276597000,
+                "description": "papi.declarativ.test.ipqa",
+                "id": 1048126,
+                "name": "papi.declarativ.test.ipqa",
+                "products": [
+                  "Fresca"
+                ]
+              }
+            }
+          },
+          {
+            "name": "gzipResponse",
+            "options": {
+              "behavior": "ALWAYS"
+            }
+          }
+        ],
+        "criteria": [
+          {
+            "name": "contentType",
+            "options": {
+              "matchCaseSensitive": false,
+              "matchOperator": "IS_ONE_OF",
+              "matchWildcard": true,
+              "values": [
+                "text/*",
+                "application/javascript",
+                "application/x-javascript",
+                "application/x-javascript*",
+                "application/json",
+                "application/x-json",
+                "application/*+json",
+                "application/*+xml",
+                "application/text",
+                "application/vnd.microsoft.icon",
+                "application/vnd-ms-fontobject",
+                "application/x-font-ttf",
+                "application/x-font-opentype",
+                "application/x-font-truetype",
+                "application/xmlfont/eot",
+                "application/xml",
+                "font/opentype",
+                "font/otf",
+                "font/eot",
+                "image/svg+xml",
+                "image/vnd.microsoft.icon"
+              ]
+            }
+          }
+        ],
+        "name": "Content Compression",
+        "options": {},
+        "criteriaMustSatisfy": "all"
+      },
+      {
+        "behaviors": [
+          {
+            "name": "caching",
+            "options": {
+              "behavior": "MAX_AGE",
+              "mustRevalidate": false,
+              "ttl": "1d"
+            }
+          },
+          {
+            "name": "prefetch",
+            "options": {
+              "enabled": false
+            }
+          },
+          {
+            "name": "prefetchable",
+            "options": {
+              "enabled": true
+            }
+          }
+        ],
+        "criteria": [
+          {
+            "name": "fileExtension",
+            "options": {
+              "matchCaseSensitive": false,
+              "matchOperator": "IS_ONE_OF",
+              "values": [
+                "aif",
+                "aiff",
+                "au",
+                "avi",
+                "bin",
+                "bmp",
+                "cab",
+                "carb",
+                "cct",
+                "cdf",
+                "class",
+                "css",
+                "doc",
+                "dcr",
+                "dtd",
+                "exe",
+                "flv",
+                "gcf",
+                "gff",
+                "gif",
+                "grv",
+                "hdml",
+                "hqx",
+                "ico",
+                "ini",
+                "jpeg",
+                "jpg",
+                "js",
+                "mov",
+                "mp3",
+                "nc",
+                "pct",
+                "pdf",
+                "png",
+                "ppc",
+                "pws",
+                "swa",
+                "swf",
+                "txt",
+                "vbs",
+                "w32",
+                "wav",
+                "wbmp",
+                "wml",
+                "wmlc",
+                "wmls",
+                "wmlsc",
+                "xsd",
+                "zip",
+                "webp",
+                "jxr",
+                "hdp",
+                "wdp",
+                "pict",
+                "tif",
+                "tiff",
+                "mid",
+                "midi",
+                "ttf",
+                "eot",
+                "woff",
+                "woff2",
+                "otf",
+                "svg",
+                "svgz",
+                "webp",
+                "jxr",
+                "jar",
+                "jp2"
+              ]
+            }
+          }
+        ],
+        "name": "Static Content",
+        "options": {},
+        "criteriaMustSatisfy": "all"
+      },
+      {
+        "behaviors": [
+          {
+            "name": "downstreamCache",
+            "options": {
+              "behavior": "TUNNEL_ORIGIN"
+            }
+          },
+          {
+            "name": "restrictObjectCaching",
+            "options": {}
+          }
+        ],
+        "criteria": [
+          {
+            "name": "cacheability",
+            "options": {
+              "matchOperator": "IS_NOT",
+              "value": "CACHEABLE"
+            }
+          }
+        ],
+        "name": "Dynamic Content",
+        "options": {},
+        "criteriaMustSatisfy": "all"
+      }
+    ],
+    "comments": "test",
+    "customOverride": {
+      "name": "test",
+      "overrideId": "test"
+    },
+    "name": "default",
+    "options": {},
+    "uuid": "test",
+    "templateUuid": "test",
+    "templateLink": "test"
+  }
+}
