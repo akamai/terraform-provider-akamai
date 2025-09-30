@@ -188,7 +188,8 @@
 
 
 
-
+* APPSEC
+  * Fixed a bug where TF provider doesn't create new config version but tries to update in place ([I#653](https://github.com/akamai/terraform-provider-akamai/issues/653)).
 
 
 

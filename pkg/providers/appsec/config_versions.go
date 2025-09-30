@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/appsec"
+	akalog "github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/log"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/cache"
 	akameta "github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
 )
@@ -32,10 +33,11 @@ var (
 
 // getModifiableConfigVersion returns the number of the latest editable version
 // of the given security configuration. If the most recent version is not editable
-// (because it is active in staging or production) a new version is cloned and the
-// new version's number is returned. API calls are made using the supplied context
-// and the API client obtained from m. Log messages are written to m's logger. A
-// mutex prevents calls made by multiple resources from creating unnecessary clones.
+// (because it is active or was previously active in staging or production) a new
+// version is cloned and the new version's number is returned. API calls are made
+// using the supplied context and the API client obtained from m. Log messages are
+// written to m's logger. A mutex prevents calls made by multiple resources from
+// creating unnecessary clones.
 func getModifiableConfigVersion(ctx context.Context, configID int, resource string, m interface{}) (int, error) {
 	meta := akameta.Must(m)
 	client := inst.Client(meta)
@@ -80,7 +82,12 @@ func getModifiableConfigVersion(ctx context.Context, configID int, resource stri
 	latestVersion := configuration.LatestVersion
 	stagingVersion := configuration.StagingVersion
 	productionVersion := configuration.ProductionVersion
-	if latestVersion != stagingVersion && latestVersion != productionVersion {
+
+	// Check if the latest version is modifiable (not currently active and not previously active)
+	isModifiable, reason := checkIfVersionIsModifiable(ctx, client, configID, latestVersion, stagingVersion, productionVersion, logger)
+
+	if isModifiable {
+		// Latest version is modifiable, cache and return it
 		if err := cache.Set(cache.BucketName(SubproviderName), cacheKey, configuration); err != nil {
 			if !errors.Is(err, cache.ErrDisabled) {
 				logger.Errorf("unable to set latestVersion %d into cache")
@@ -91,8 +98,8 @@ func getModifiableConfigVersion(ctx context.Context, configID int, resource stri
 		return latestVersion, nil
 	}
 
-	// Latest version is active, so need to clone a new version
-	logger.Debugf("Resource %s cloning configuration version %d", resource, latestVersion)
+	// Latest version is not modifiable, need to clone a new version
+	logger.Debugf("Resource %s cloning configuration version %d (%s)", resource, latestVersion, reason)
 	ccr, err := client.CreateConfigurationVersionClone(ctx, appsec.CreateConfigurationVersionCloneRequest{
 		ConfigID:          configID,
 		CreateFromVersion: latestVersion,
@@ -179,4 +186,42 @@ func getActiveConfigVersions(ctx context.Context, configID int, m interface{}) (
 		configuration.ID, configuration.StagingVersion, configuration.ProductionVersion)
 
 	return configuration.StagingVersion, configuration.ProductionVersion, nil
+}
+
+// checkIfVersionIsModifiable checks if a version can be modified by checking:
+// 1. If it's currently active in staging or production
+// 2. If it was previously active (has "Deactivated" status)
+// Returns true if modifiable, false if not, along with a reason string
+func checkIfVersionIsModifiable(ctx context.Context, client appsec.APPSEC, configID, versionToCheck, stagingVersion, productionVersion int, logger akalog.Interface) (bool, string) {
+	// First check if version is currently active
+	if versionToCheck == stagingVersion || versionToCheck == productionVersion {
+		return false, "version is active in staging or production"
+	}
+
+	// Version is not currently active, check if it was previously active
+	getConfigVersionRequest := appsec.GetConfigurationVersionRequest{
+		ConfigID: configID,
+		Version:  versionToCheck,
+	}
+
+	configVersion, err := client.GetConfigurationVersion(ctx, getConfigVersionRequest)
+	if err != nil {
+		logger.Warnf("Could not get configuration version for previous activity check: %v", err)
+		// If we can't check previous activity, assume it's modifiable to avoid blocking
+		return true, ""
+	}
+
+	// Check if the specific version has "Deactivated" status in staging or production
+	stagingStatus := configVersion.Staging.Status
+	productionStatus := configVersion.Production.Status
+
+	// Check for "Deactivated" status which indicates the version was previously active
+	if stagingStatus == "Deactivated" || productionStatus == "Deactivated" {
+		logger.Debugf("Version %d has 'Deactivated' status (staging: %s, production: %s) - was previously active",
+			versionToCheck, stagingStatus, productionStatus)
+		return false, "version was previously active but is now deactivated"
+	}
+
+	logger.Debugf("Version %d is modifiable (not currently active and not previously active)", versionToCheck)
+	return true, ""
 }

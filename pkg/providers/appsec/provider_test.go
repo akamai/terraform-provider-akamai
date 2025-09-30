@@ -6,6 +6,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestMain(m *testing.M) {
@@ -19,6 +20,20 @@ var clientLock sync.Mutex
 func useClient(client appsec.APPSEC, f func()) {
 	clientLock.Lock()
 	orig := inst.client
+
+	// If client is a mock, add default GetConfigurationVersion response for the new method
+	if mockClient, ok := client.(*appsec.Mock); ok {
+		// Create a simple response that works for most tests
+		defaultVersionResp := &appsec.GetConfigurationVersionResponse{
+			ConfigID:   43253,
+			ConfigName: "Akamai Tools",
+			Version:    7,
+			Production: appsec.EnvironmentStatus{Status: "Inactive"},
+			Staging:    appsec.EnvironmentStatus{Status: "Inactive"},
+		}
+		mockClient.On("GetConfigurationVersion", mock.Anything, mock.Anything).Return(defaultVersionResp, nil).Maybe()
+	}
+
 	inst.client = client
 
 	defer func() {

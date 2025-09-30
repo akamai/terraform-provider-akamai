@@ -1,0 +1,28 @@
+{
+    "configId": 12345,
+    "configName": "Default Mock Config",
+    "lastCreatedVersion": 2,
+    "totalSize": 2,
+    "versionList": [
+        {
+            "configId": 12345,
+            "production": {
+                "status": "Inactive"
+            },
+            "staging": {
+                "status": "Inactive"
+            },
+            "version": 1
+        },
+        {
+            "configId": 12345,
+            "production": {
+                "status": "Inactive"
+            },
+            "staging": {
+                "status": "Inactive"
+            },
+            "version": 2
+        }
+    ]
+}
