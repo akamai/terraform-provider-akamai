@@ -906,6 +906,30 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 				},
 			},
 		},
+		"expect error - import - duplicated domains with and without validation scope - with first": {
+			init: func(_ *domainownership.Mock, _ validationTestData) {},
+			steps: []resource.TestStep{
+				{
+					Config:        testutils.LoadFixtureString(t, "testdata/TestResDOMValidation/create.tf"),
+					ImportStateId: "test1.example.com:HOST,test1.example.com",
+					ImportState:   true,
+					ResourceName:  "akamai_property_domainownership_validation.test",
+					ExpectError:   regexp.MustCompile(`(?s)Error parsing import ID.+domain 'test1.example.com' was already provided in the importID with.+validation scope: HOST - such combination is not allowed. Please remove.+duplicate domain entries`),
+				},
+			},
+		},
+		"expect error - import - duplicated domains with and without validation scope - without first": {
+			init: func(_ *domainownership.Mock, _ validationTestData) {},
+			steps: []resource.TestStep{
+				{
+					Config:        testutils.LoadFixtureString(t, "testdata/TestResDOMValidation/create.tf"),
+					ImportStateId: "test1.example.com,test1.example.com:HOST",
+					ImportState:   true,
+					ResourceName:  "akamai_property_domainownership_validation.test",
+					ExpectError:   regexp.MustCompile(`(?s)Error parsing import ID.+domain 'test1.example.com' with validation scope 'HOST' was already provided.+in the importID without validation scope - such combination is not allowed..+Please remove duplicate domain entries`),
+				},
+			},
+		},
 		"expect error - import - invalid validation scope": {
 			init: func(_ *domainownership.Mock, _ validationTestData) {},
 			steps: []resource.TestStep{
@@ -1184,6 +1208,39 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 					ImportState:   true,
 					ResourceName:  "akamai_property_domainownership_validation.test",
 					ExpectError:   regexp.MustCompile(`API error`),
+				},
+			},
+		},
+		"expect error - import - too long importID with validationScopes": {
+			steps: []resource.TestStep{
+				{
+					Config:        testutils.LoadFixtureString(t, "testdata/TestResDOMValidation/too_many_domains.tf"),
+					ImportStateId: generateLongImportID("HOST"),
+					ImportState:   true,
+					ResourceName:  "akamai_property_domainownership_validation.test",
+					ExpectError:   regexp.MustCompile(`the maximum number of domains that can be imported is 1000, got 1001`),
+				},
+			},
+		},
+		"expect error - import - too long importID without validationScopes": {
+			steps: []resource.TestStep{
+				{
+					Config:        testutils.LoadFixtureString(t, "testdata/TestResDOMValidation/too_many_domains_without_validation_scope.tf"),
+					ImportStateId: generateLongImportID(""),
+					ImportState:   true,
+					ResourceName:  "akamai_property_domainownership_validation.test",
+					ExpectError:   regexp.MustCompile(`the maximum number of domains that can be imported is 1000, got 1001`),
+				},
+			},
+		},
+		"expect error - import - too long importID with mixed validationScopes": {
+			steps: []resource.TestStep{
+				{
+					Config:        testutils.LoadFixtureString(t, "testdata/TestResDOMValidation/too_many_domains_with_mixed_validation_scope.tf"),
+					ImportStateId: generateLongImportID("") + ":HOST",
+					ImportState:   true,
+					ResourceName:  "akamai_property_domainownership_validation.test",
+					ExpectError:   regexp.MustCompile(`the maximum number of domains that can be imported is 1000, got 1001`),
 				},
 			},
 		},

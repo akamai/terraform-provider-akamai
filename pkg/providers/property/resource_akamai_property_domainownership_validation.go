@@ -93,7 +93,7 @@ func (d *DomainOwnershipValidationResource) Configure(_ context.Context, req res
 func (d *DomainOwnershipValidationResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
-			"domains": domainsSchema(),
+			"domains": validateDomainsSchema(),
 		},
 		Blocks: map[string]schema.Block{
 			"timeouts": timeouts.Block(ctx, timeouts.Opts{
@@ -106,11 +106,11 @@ func (d *DomainOwnershipValidationResource) Schema(ctx context.Context, _ resour
 	}
 }
 
-func domainsType() types.ObjectType {
-	return domainsSchema().NestedObject.Type().(types.ObjectType)
+func validateDomainsType() types.ObjectType {
+	return validateDomainsSchema().NestedObject.Type().(types.ObjectType)
 }
 
-func domainsSchema() schema.SetNestedAttribute {
+func validateDomainsSchema() schema.SetNestedAttribute {
 	return schema.SetNestedAttribute{
 		Required:    true,
 		Description: "List of domains to be validated.",
@@ -298,7 +298,7 @@ func (d *DomainOwnershipValidationResource) Read(ctx context.Context, req resour
 		"refreshed_state_domains": refreshedStateDomains,
 	})
 
-	domainsSet, diags := types.SetValueFrom(ctx, domainsType(), refreshedStateDomains)
+	domainsSet, diags := types.SetValueFrom(ctx, validateDomainsType(), refreshedStateDomains)
 	if diags.HasError() {
 		resp.Diagnostics.Append(diags...)
 		return
@@ -488,7 +488,7 @@ func (d *DomainOwnershipValidationResource) ImportState(ctx context.Context, req
 	tflog.Debug(ctx, fmt.Sprintf("importID: %s", id))
 
 	client := DomainOwnershipClient(d.meta)
-	domains, diags := parseDomains(ctx, client, id)
+	domains, diags := parseDomains(ctx, client, id, true)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -501,7 +501,7 @@ func (d *DomainOwnershipValidationResource) ImportState(ctx context.Context, req
 			ValidationScope: types.StringValue(string(domain.ValidationScope)),
 		})
 	}
-	domainsModel, diags := types.SetValueFrom(ctx, domainsType(), domainModels)
+	domainsModel, diags := types.SetValueFrom(ctx, validateDomainsType(), domainModels)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -520,18 +520,22 @@ func (d *DomainOwnershipValidationResource) ImportState(ctx context.Context, req
 	}
 }
 
-func parseDomains(ctx context.Context, client domainownership.DomainOwnership, importID string) ([]domainownership.Domain, diag.Diagnostics) {
+func parseDomains(ctx context.Context, client domainownership.DomainOwnership, importID string, validateStatus bool) ([]domainownership.Domain, diag.Diagnostics) {
 	diags := diag.Diagnostics{}
 	domainsToImport, err := importIDToDomains(importID)
 	if err != nil {
 		diags.AddError("Error parsing import ID", err.Error())
 		return nil, diags
 	}
+	if len(domainsToImport) > 1000 {
+		diags.AddError("Error parsing import ID", fmt.Sprintf("the maximum number of domains that can be imported is 1000, got %d", len(domainsToImport)))
+		return nil, diags
+	}
 	tflog.Debug(ctx, "calculated domains to import", map[string]any{
 		"domains": domainsToImport,
 	})
 
-	finalDomains, err := verifyDomainsToImport(ctx, client, domainsToImport)
+	finalDomains, err := verifyDomainsToImport(ctx, client, domainsToImport, validateStatus)
 	if err != nil {
 		diags.AddError("Error verifying domains", err.Error())
 		return nil, diags
@@ -542,13 +546,18 @@ func parseDomains(ctx context.Context, client domainownership.DomainOwnership, i
 
 func importIDToDomains(importID string) (map[domainKey]domainDetails, error) {
 	domainsToImport := make(map[domainKey]domainDetails)
-	splittedImportID := strings.Split(importID, ",")
-	for _, domain := range splittedImportID {
+	splitImportID := strings.Split(importID, ",")
+	for _, domain := range splitImportID {
 		domainParts := strings.Split(domain, ":")
 		switch len(domainParts) {
 		case 1:
 			if _, ok := domainsToImport[domainKey{domainName: domainParts[0], validationScope: ""}]; ok {
 				return nil, fmt.Errorf("domain '%s' was already provided in the importID. Please remove duplicate domain entries", domainParts[0])
+			}
+			for _, scope := range []string{"HOST", "WILDCARD", "DOMAIN"} {
+				if _, ok := domainsToImport[domainKey{domainName: domainParts[0], validationScope: scope}]; ok {
+					return nil, fmt.Errorf("domain '%s' was already provided in the importID with validation scope: %s - such combination is not allowed. Please remove duplicate domain entries", domainParts[0], scope)
+				}
 			}
 			domainsToImport[domainKey{
 				domainName:      domainParts[0],
@@ -557,6 +566,9 @@ func importIDToDomains(importID string) (map[domainKey]domainDetails, error) {
 		case 2:
 			if _, ok := domainsToImport[domainKey{domainName: domainParts[0], validationScope: domainParts[1]}]; ok {
 				return nil, fmt.Errorf("domain '%s' with validation scope '%s' was already provided in the importID. Please remove duplicate domain entries", domainParts[0], domainParts[1])
+			}
+			if _, ok := domainsToImport[domainKey{domainName: domainParts[0], validationScope: ""}]; ok {
+				return nil, fmt.Errorf("domain '%s' with validation scope '%s' was already provided in the importID without validation scope - such combination is not allowed. Please remove duplicate domain entries", domainParts[0], domainParts[1])
 			}
 			if domainParts[1] == "HOST" || domainParts[1] == "WILDCARD" || domainParts[1] == "DOMAIN" {
 				domainsToImport[domainKey{
@@ -574,7 +586,7 @@ func importIDToDomains(importID string) (map[domainKey]domainDetails, error) {
 	return domainsToImport, nil
 }
 
-func verifyDomainsToImport(ctx context.Context, client domainownership.DomainOwnership, domains map[domainKey]domainDetails) ([]domainownership.Domain, error) {
+func verifyDomainsToImport(ctx context.Context, client domainownership.DomainOwnership, domains map[domainKey]domainDetails, validateStatus bool) ([]domainownership.Domain, error) {
 	var searchDomainsBody []domainownership.Domain
 	for d := range domains {
 		if d.validationScope != "" {
@@ -626,11 +638,11 @@ func verifyDomainsToImport(ctx context.Context, client domainownership.DomainOwn
 				}
 			}
 			if counter == 0 {
-				return nil, fmt.Errorf("the domain '%s' was not found", d.domainName)
+				return nil, fmt.Errorf("the domain '%s' was not found or it was found only without FQDN validationLevel", d.domainName)
 			} else if counter > 1 {
 				return nil, fmt.Errorf("the domain '%s' exists with multiple validation scopes. Please re-import specifying the validation scope for the domain", d.domainName)
 			}
-			if candidateDomainStatus != "VALIDATED" {
+			if validateStatus && candidateDomainStatus != "VALIDATED" {
 				return nil, fmt.Errorf("the domain '%s' is in '%s' status and cannot be imported", d.domainName, candidateDomainStatus)
 			}
 			finalDomains = append(finalDomains, candidateDomain)
@@ -642,7 +654,7 @@ func verifyDomainsToImport(ctx context.Context, client domainownership.DomainOwn
 			// ROOT/WILDCARD, which can be found without prior explicit submitting,
 			// so we don't import those as they are part of the WILDCARD or DOMAIN domain.
 			if apiDomainDetails, ok := apiDomainsMap[d]; ok {
-				if apiDomainDetails.validationStatus != "VALIDATED" {
+				if validateStatus && apiDomainDetails.validationStatus != "VALIDATED" {
 					return nil, fmt.Errorf("the domain '%s' with validation scope '%s' is in '%s' status and cannot be imported", d.domainName, d.validationScope, apiDomainDetails.validationStatus)
 				}
 				if apiDomainDetails.validationLevel == "FQDN" {

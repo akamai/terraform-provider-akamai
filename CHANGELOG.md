@@ -83,6 +83,9 @@
 
 
 
+* PAPI Domain Ownership Validation (Beta)
+  * Added new resource:
+    * `akamai_property_domainownership_domains` - adds and deletes ownership claims for given domains.
 
 
 

@@ -107,78 +107,82 @@ func (d domainsDataSource) Schema(_ context.Context, _ datasource.SchemaRequest,
 							Computed:    true,
 							Description: "Timestamp of completing the validation.",
 						},
-						"validation_challenge": schema.SingleNestedAttribute{
-							Computed:    true,
-							Description: "Validation challenge of the domain.",
-							Attributes: map[string]schema.Attribute{
-								"cname_record": schema.SingleNestedAttribute{
-									Computed:    true,
-									Description: "CNAME record details for domain validation.",
-									Attributes: map[string]schema.Attribute{
-										"name": schema.StringAttribute{
-											Computed:    true,
-											Description: "The name of the CNAME record.",
-										},
-										"target": schema.StringAttribute{
-											Computed:    true,
-											Description: "The target value of the CNAME record.",
-										},
-									},
-								},
-								"txt_record": schema.SingleNestedAttribute{
-									Computed:    true,
-									Description: "TXT record details for domain validation.",
-									Attributes: map[string]schema.Attribute{
-										"name": schema.StringAttribute{
-											Computed:    true,
-											Description: "The name of the TXT record.",
-										},
-										"value": schema.StringAttribute{
-											Computed:    true,
-											Description: "The value of the TXT record.",
-										},
-									},
-								},
-								"http_file": schema.SingleNestedAttribute{
-									Computed:    true,
-									Description: "HTTP file details for domain validation.",
-									Attributes: map[string]schema.Attribute{
-										"path": schema.StringAttribute{
-											Computed:    true,
-											Description: "The path where the file should be accessible.",
-										},
-										"content": schema.StringAttribute{
-											Computed:    true,
-											Description: "The content of the file.",
-										},
-										"content_type": schema.StringAttribute{
-											Computed:    true,
-											Description: "The content type of the file.",
-										},
-									},
-								},
-								"http_redirect": schema.SingleNestedAttribute{
-									Computed:    true,
-									Description: "HTTP redirect details for domain validation.",
-									Attributes: map[string]schema.Attribute{
-										"from": schema.StringAttribute{
-											Computed:    true,
-											Description: "HTTP URL for checking the challenge token during HTTP validation.",
-										},
-										"to": schema.StringAttribute{
-											Computed:    true,
-											Description: "HTTP redirect URL for HTTP validation.",
-										},
-									},
-								},
-								"expiration_date": schema.StringAttribute{
-									Computed:    true,
-									Description: "The ISO 8601 timestamp indicating when the validation challenge expires.",
-								},
-							},
-						},
+						"validation_challenge": validationChallengeSchema(),
 					},
 				},
+			},
+		},
+	}
+}
+
+func validationChallengeSchema() schema.SingleNestedAttribute {
+	return schema.SingleNestedAttribute{
+		Computed:    true,
+		Description: "Validation challenge of the domain.",
+		Attributes: map[string]schema.Attribute{
+			"cname_record": schema.SingleNestedAttribute{
+				Computed:    true,
+				Description: "CNAME record details for domain validation.",
+				Attributes: map[string]schema.Attribute{
+					"name": schema.StringAttribute{
+						Computed:    true,
+						Description: "The name of the CNAME record.",
+					},
+					"target": schema.StringAttribute{
+						Computed:    true,
+						Description: "The target value of the CNAME record.",
+					},
+				},
+			},
+			"txt_record": schema.SingleNestedAttribute{
+				Computed:    true,
+				Description: "TXT record details for domain validation.",
+				Attributes: map[string]schema.Attribute{
+					"name": schema.StringAttribute{
+						Computed:    true,
+						Description: "The name of the TXT record.",
+					},
+					"value": schema.StringAttribute{
+						Computed:    true,
+						Description: "The value of the TXT record.",
+					},
+				},
+			},
+			"http_file": schema.SingleNestedAttribute{
+				Computed:    true,
+				Description: "HTTP file details for domain validation.",
+				Attributes: map[string]schema.Attribute{
+					"path": schema.StringAttribute{
+						Computed:    true,
+						Description: "The path where the file should be accessible.",
+					},
+					"content": schema.StringAttribute{
+						Computed:    true,
+						Description: "The content of the file.",
+					},
+					"content_type": schema.StringAttribute{
+						Computed:    true,
+						Description: "The content type of the file.",
+					},
+				},
+			},
+			"http_redirect": schema.SingleNestedAttribute{
+				Computed:    true,
+				Description: "HTTP redirect details for domain validation.",
+				Attributes: map[string]schema.Attribute{
+					"from": schema.StringAttribute{
+						Computed:    true,
+						Description: "HTTP URL for checking the challenge token during HTTP validation.",
+					},
+					"to": schema.StringAttribute{
+						Computed:    true,
+						Description: "HTTP redirect URL for HTTP validation.",
+					},
+				},
+			},
+			"expiration_date": schema.StringAttribute{
+				Computed:    true,
+				Description: "The ISO 8601 timestamp indicating when the validation challenge expires.",
 			},
 		},
 	}
