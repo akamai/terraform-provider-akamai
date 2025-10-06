@@ -106,6 +106,10 @@
   * Added a warning when deleting a CA set activation if the version is already deleted.
 
 
+* Appsec
+    * Added new data source:
+        * `data_akamai_appsec_custom_rules_usage`
+    * Prevent deletion of custom rule that are active or in use by security policies in `resource_akamai_appsec_custom_rule`.
 
 
 

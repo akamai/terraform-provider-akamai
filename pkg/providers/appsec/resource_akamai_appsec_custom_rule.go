@@ -202,32 +202,48 @@ func resourceCustomRuleDelete(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 
-	getCustomRules := appsec.GetCustomRulesRequest{
+	version, err := getLatestConfigVersion(ctx, configID, m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	getCustomRuleUsage := appsec.GetCustomRulesUsageRequest{
+		ConfigID: int64(configID),
+		Version:  version,
+		RequestBody: appsec.RuleIDs{
+			IDs: []int64{int64(customRuleID)},
+		},
+	}
+
+	customRulesUsages, err := client.GetCustomRulesUsage(ctx, getCustomRuleUsage)
+	if err != nil {
+		logger.Errorf("calling 'GetCustomRuleUsage': %s", err.Error())
+		return diag.FromErr(err)
+	}
+
+	if len(customRulesUsages.Rules) > 0 {
+		policyIDsStr := getPolicyIDs(customRulesUsages)
+		return diag.Errorf("custom rule with ID: %d cannot be deleted, it is either active or in use in the security policies with IDs: %s", customRuleID, policyIDsStr)
+	}
+
+	removeCustomRule := appsec.RemoveCustomRuleRequest{
 		ConfigID: configID,
 		ID:       customRuleID,
 	}
 
-	customrules, err := client.GetCustomRules(ctx, getCustomRules)
+	_, err = client.RemoveCustomRule(ctx, removeCustomRule)
 	if err != nil {
-		logger.Errorf("calling 'getCustomRules': %s", err.Error())
+		logger.Errorf("calling 'removeCustomRule': %s", err.Error())
 		return diag.FromErr(err)
 	}
-
-	var status = customrules.CustomRules[0].Status
-	if strings.Compare(status, "unused") == 0 {
-
-		removeCustomRule := appsec.RemoveCustomRuleRequest{
-			ConfigID: configID,
-			ID:       customRuleID,
-		}
-
-		_, err = client.RemoveCustomRule(ctx, removeCustomRule)
-		if err != nil {
-			logger.Errorf("calling 'removeCustomRule': %s", err.Error())
-			return diag.FromErr(err)
-		}
-	} else {
-		return diag.Errorf("custom rule %d cannot be deleted, it is either active or in use", customRuleID)
-	}
 	return nil
+}
+
+func getPolicyIDs(customRulesUsages *appsec.GetCustomRulesUsageResponse) string {
+	var policyIDs []string
+	for _, policy := range customRulesUsages.Rules[0].Policies {
+		policyIDs = append(policyIDs, policy.PolicyID)
+	}
+	policyIDsStr := strings.Join(policyIDs, ", ")
+	return policyIDsStr
 }

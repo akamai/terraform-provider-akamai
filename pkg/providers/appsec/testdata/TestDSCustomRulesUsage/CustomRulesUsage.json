@@ -1,0 +1,22 @@
+{
+  "rules": [
+    {
+      "ruleId": 12345,
+      "policies": [
+        {
+          "policyId": "POLICY_1",
+          "policyName": "Policy One"
+        }
+      ]
+    },
+    {
+      "ruleId": 67890,
+      "policies": [
+        {
+          "policyId": "POLICY_2",
+          "policyName": "Policy Two"
+        }
+      ]
+    }
+  ]
+}
