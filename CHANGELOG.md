@@ -102,7 +102,8 @@
 
 
 
-
+* mTLS Truststore (Beta)
+  * Added a warning when deleting a CA set activation if the version is already deleted.
 
 
 

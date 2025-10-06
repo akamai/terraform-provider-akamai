@@ -437,6 +437,11 @@ func (c *caSetActivationResource) Delete(ctx context.Context, req resource.Delet
 			Network: mtlstruststore.ActivationNetwork(network),
 		})
 		if err != nil {
+			if errors.Is(err, mtlstruststore.ErrCASetVersionNotActiveOnNetworkCannotBeDeactivated) {
+				resp.Diagnostics.AddWarning("Resource Already Deactivated", fmt.Sprintf("CA set ID %s (version %d) is already in a deactivated state. No action taken.", caSetID, version))
+				resp.State.RemoveResource(ctx)
+				return
+			}
 			resp.Diagnostics.AddError(fmt.Sprintf("Failed to deactivate CA set ID %s version %d", state.CASetID.ValueString(), state.Version.ValueInt64()), err.Error())
 			return
 		}
@@ -459,7 +464,7 @@ func (c *caSetActivationResource) Delete(ctx context.Context, req resource.Delet
 
 	_, err = waitForActivationOrDeactivation(ctx, timeout, client, deactivationInfo)
 	if err != nil {
-		resp.Diagnostics.AddError("Failed to deactivate CA set version %d", err.Error())
+		resp.Diagnostics.AddError(fmt.Sprintf("Failed to deactivate CA set ID %s version %d", caSetID, version), err.Error())
 		return
 	}
 
