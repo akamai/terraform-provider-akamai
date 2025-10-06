@@ -36,25 +36,25 @@ func useClient(papiCli papi.PAPI, hapiCli hapi.HAPI, f func()) {
 	f()
 }
 
+func useDomainOwnership(domainownershipCli domainownership.DomainOwnership, f func()) {
+	clientLock.Lock()
+	origClient := domainOwnershipClient
+	domainOwnershipClient = domainownershipCli
+
+	defer func() {
+		domainOwnershipClient = origClient
+		clientLock.Unlock()
+	}()
+
+	f()
+}
+
 func useIam(iamCli iam.IAM, f func()) {
 	origIam := iamClient
 	iamClient = iamCli
 
 	defer func() {
 		iamClient = origIam
-	}()
-
-	f()
-}
-
-func useDomainOwnership(domainownershipCli domainownership.DomainOwnership, f func()) {
-	clientLock.Lock()
-	origClient := domainownershipClient
-	domainownershipClient = domainownershipCli
-
-	defer func() {
-		domainownershipClient = origClient
-		clientLock.Unlock()
 	}()
 
 	f()
