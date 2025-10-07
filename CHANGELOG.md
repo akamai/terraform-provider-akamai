@@ -180,8 +180,7 @@
 
 * APPSEC
   * Fixed a bug where updating `notification_emails` along with other activation fields caused a `notification_emails not found` error in the `akamai_appsec_activations` resource.
-
-
+  * Modified the `akamai_appsec_ip_geo` resource - Fix For Empty Lists in the ip_controls, geo_controls and asn_controls [I#697](https://github.com/akamai/terraform-provider-akamai/issues/697).
 
 
 
