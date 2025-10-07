@@ -132,6 +132,7 @@
 
 * PAPI
     * Added support for the new rule format `v2025-09-09`. The list of changes can be found [here](https://techdocs.akamai.com/terraform/docs/rule-format-changes#v2025-09-09).
+    * Increased the default `timeout_for_activation` in `akamai_property_hostname_bucket` to 120 minutes.
 
 
 

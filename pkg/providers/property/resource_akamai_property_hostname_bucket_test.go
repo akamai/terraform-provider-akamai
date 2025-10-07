@@ -28,7 +28,7 @@ var basicChecker = test.NewStateChecker("akamai_property_hostname_bucket.test").
 	CheckEqual("notify_emails.#", "1").
 	CheckEqual("notify_emails.0", "nomail@akamai.com").
 	CheckEqual("activation_id", "act_0").
-	CheckEqual("timeout_for_activation", "50").
+	CheckEqual("timeout_for_activation", "120").
 	CheckEqual("id", "prp_111:STAGING").
 	CheckEqual("hostname_count", "1").
 	CheckEqual("pending_default_certs", "0").
@@ -1109,7 +1109,7 @@ func TestHostnameBucketResource_Import(t *testing.T) {
 		CheckEqual("notify_emails.#", "1").
 		CheckEqual("notify_emails.0", "nomail@akamai.com").
 		CheckEqual("activation_id", "act_0").
-		CheckEqual("timeout_for_activation", "50").
+		CheckEqual("timeout_for_activation", "120").
 		CheckEqual("hostname_count", "100").
 		CheckEqual("pending_default_certs", "0").
 		CheckEqual("hostnames.www.test.hostname.0.com.edgesuite.net.edge_hostname_id", "ehn_444").
