@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/botman"
@@ -53,6 +54,8 @@ func resourceAkamaiBotCategoryAction() *schema.Resource {
 	}
 }
 
+var matchAkamaiBotCategoryActionExpRegex = regexp.MustCompile(`(Akamai Bot Category with id \[[-\w]+] does not exist|AkamaiBotCategoryAction with id: [-\w]+ does not exist)`)
+
 func resourceAkamaiBotCategoryActionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	client := inst.Client(meta)
@@ -93,8 +96,10 @@ func resourceAkamaiBotCategoryActionCreate(ctx context.Context, d *schema.Resour
 	}
 
 	_, err = client.UpdateAkamaiBotCategoryAction(ctx, request)
+
 	if err != nil {
-		logger.Errorf("calling 'UpdateAkamaiBotCategoryAction': %s", err.Error())
+		errVal := err.Error()
+		logger.Errorf("calling 'UpdateAkamaiBotCategoryAction': %s", errVal)
 		return diag.FromErr(err)
 	}
 
@@ -144,11 +149,25 @@ func akamaiBotCategoryActionRead(ctx context.Context, d *schema.ResourceData, m 
 	if readFromCache {
 		response, err = getAkamaiBotCategoryAction(ctx, request, m)
 		if err != nil {
+
+			matched := matchAkamaiBotCategoryActionExpRegex.MatchString(err.Error())
+			if matched {
+				d.SetId("")
+				logger.Info("AkamaiBotCategoryAction with id: " + categoryID + " does not exist, It may have been deleted outside of Terraform - resource will only be removed from state")
+				return nil
+			}
+			logger.Errorf("calling 'GetAkamaiBotCategoryAction': %s", err.Error())
 			return diag.FromErr(err)
 		}
 	} else {
 		response, err = client.GetAkamaiBotCategoryAction(ctx, request)
 		if err != nil {
+			matched := matchAkamaiBotCategoryActionExpRegex.MatchString(err.Error())
+			if matched {
+				d.SetId("")
+				logger.Info("AkamaiBotCategoryAction with id: " + categoryID + " does not exist, It may have been deleted outside of Terraform - resource will only be removed from state")
+				return nil
+			}
 			logger.Errorf("calling 'GetAkamaiBotCategoryAction': %s", err.Error())
 			return diag.FromErr(err)
 		}

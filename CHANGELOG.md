@@ -5,7 +5,11 @@
 #### BREAKING CHANGES:
 
 
-
+FEATURES/ENHANCEMENTS:
+* Appsec
+    * Botman
+        * Added support for `akamai-bot-category-action` and `akamai_botman_bot_detection_action` to handle scenario when resource is deleted in the backend but still exists in the state file.
+          
 
 
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -53,6 +54,8 @@ func resourceBotDetectionAction() *schema.Resource {
 		},
 	}
 }
+
+var matchBotDetectionActionExpRegex = regexp.MustCompile(`(Bot detection with id \[[-\w]+] does not exist|BotDetectionAction with id: [-\w]+ does not exist)`)
 
 func resourceBotDetectionActionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
@@ -143,11 +146,24 @@ func botDetectionActionRead(ctx context.Context, d *schema.ResourceData, m inter
 	if readFromCache {
 		response, err = getBotDetectionAction(ctx, getBotDetectionActionRequest, m)
 		if err != nil {
+			matched := matchBotDetectionActionExpRegex.MatchString(err.Error())
+			if matched {
+				d.SetId("")
+				logger.Info("BotDetectionAction with id: " + detectionID + " does not exist, It may have been deleted outside of Terraform - resource will only be removed from state")
+				return nil
+			}
+			logger.Errorf("calling 'GetBotDetectionAction': %s", err.Error())
 			return diag.FromErr(err)
 		}
 	} else {
 		response, err = client.GetBotDetectionAction(ctx, getBotDetectionActionRequest)
 		if err != nil {
+			matched := matchBotDetectionActionExpRegex.MatchString(err.Error())
+			if matched {
+				d.SetId("")
+				logger.Info("BotDetectionAction with id: " + detectionID + " does not exist, It may have been deleted outside of Terraform - resource will only be removed from state")
+				return nil
+			}
 			logger.Errorf("calling 'GetBotDetectionAction': %s", err.Error())
 			return diag.FromErr(err)
 		}
