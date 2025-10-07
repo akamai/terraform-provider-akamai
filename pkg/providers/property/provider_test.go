@@ -47,12 +47,14 @@ func useIam(iamCli iam.IAM, f func()) {
 	f()
 }
 
-func useDomainOwnership(client domainownership.DomainOwnership, f func()) {
-	origClient := client
-	domainownershipClient = client
+func useDomainOwnership(domainownershipCli domainownership.DomainOwnership, f func()) {
+	clientLock.Lock()
+	origClient := domainownershipClient
+	domainownershipClient = domainownershipCli
 
 	defer func() {
 		domainownershipClient = origClient
+		clientLock.Unlock()
 	}()
 
 	f()
