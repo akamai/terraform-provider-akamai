@@ -12,6 +12,8 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -60,9 +62,9 @@ var (
 		certificateStatus: "CSR_READY",
 		accountID:         "act_789",
 		createdBy:         "test_user",
-		createdDate:       "2025-01-01T00:00:00Z",
+		createdDate:       "2025-01-01T00:00:00.168262Z",
 		modifiedBy:        "test_user",
-		modifiedDate:      "2025-01-01T00:00:00Z",
+		modifiedDate:      "2025-01-01T00:00:00.616267Z",
 		csrExpirationDate: "2027-01-01T00:00:00Z",
 		csrPEM:            "-----BEGIN CERTIFICATE REQUEST-----\nTEST-CSR-PEM\n-----END CERTIFICATE REQUEST-----\n",
 	}
@@ -83,9 +85,9 @@ var (
 		certificateStatus: "CSR_READY",
 		accountID:         "act_789",
 		createdBy:         "test_user",
-		createdDate:       "2025-01-01T00:00:00Z",
+		createdDate:       "2025-01-01T00:00:00.168262Z",
 		modifiedBy:        "test_user",
-		modifiedDate:      "2025-01-01T00:00:00Z",
+		modifiedDate:      "2025-01-01T00:00:00.616267Z",
 		csrExpirationDate: "2027-01-01T00:00:00Z",
 		csrPEM:            "-----BEGIN CERTIFICATE REQUEST-----\nTEST-CSR-PEM\n-----END CERTIFICATE REQUEST-----\n",
 	}
@@ -114,9 +116,9 @@ var (
 		certificateStatus: "CSR_READY",
 		accountID:         "act_789",
 		createdBy:         "test_user",
-		createdDate:       "2025-01-01T00:00:00Z",
+		createdDate:       "2025-01-01T00:00:00.168262Z",
 		modifiedBy:        "test_user",
-		modifiedDate:      "2025-01-01T00:00:00Z",
+		modifiedDate:      "2025-01-01T00:00:00.616267Z",
 		csrExpirationDate: "2027-01-01T00:00:00Z",
 		csrPEM:            "-----BEGIN CERTIFICATE REQUEST-----\nTEST-CSR-PEM\n-----END CERTIFICATE REQUEST-----\n",
 	}
@@ -145,9 +147,9 @@ var (
 		certificateStatus: "CSR_READY",
 		accountID:         "act_789",
 		createdBy:         "test_user",
-		createdDate:       "2025-01-01T00:00:00Z",
+		createdDate:       "2025-01-01T00:00:00.168262Z",
 		modifiedBy:        "test_user-updated",
-		modifiedDate:      "2025-05-01T00:00:00Z",
+		modifiedDate:      "2025-05-01T00:00:00.616267Z",
 		csrExpirationDate: "2027-01-01T00:00:00Z",
 		csrPEM:            "-----BEGIN CERTIFICATE REQUEST-----\nTEST-CSR-PEM\n-----END CERTIFICATE REQUEST-----\n",
 	}
@@ -173,9 +175,9 @@ var (
 		certificateStatus: "CSR_READY",
 		accountID:         "act_789",
 		createdBy:         "test_user",
-		createdDate:       "2025-01-01T00:00:00Z",
+		createdDate:       "2025-01-01T00:00:00.168262Z",
 		modifiedBy:        "test_user",
-		modifiedDate:      "2025-01-01T00:00:00Z",
+		modifiedDate:      "2025-01-01T00:00:00.616267Z",
 		csrExpirationDate: "2027-01-01T00:00:00Z",
 		csrPEM:            "-----BEGIN CERTIFICATE REQUEST-----\nTEST-CSR-PEM\n-----END CERTIFICATE REQUEST-----\n",
 	}
@@ -198,9 +200,9 @@ func TestCertificateResource(t *testing.T) {
 		CheckEqual("name", "test.example.com1234567890").
 		CheckEqual("account_id", "act_789").
 		CheckEqual("created_by", "test_user").
-		CheckEqual("created_date", "2025-01-01T00:00:00Z").
+		CheckEqual("created_date", "2025-01-01T00:00:00.168262Z").
 		CheckEqual("modified_by", "test_user").
-		CheckEqual("modified_date", "2025-01-01T00:00:00Z").
+		CheckEqual("modified_date", "2025-01-01T00:00:00.616267Z").
 		CheckEqual("csr_expiration_date", "2027-01-01T00:00:00Z").
 		CheckEqual("csr_pem", "-----BEGIN CERTIFICATE REQUEST-----\nTEST-CSR-PEM\n-----END CERTIFICATE REQUEST-----\n").
 		CheckMissing("base_name")
@@ -231,9 +233,9 @@ func TestCertificateResource(t *testing.T) {
 		CheckEqual("base_name", "test.example.com1234567890").
 		CheckEqual("account_id", "act_789").
 		CheckEqual("created_by", "test_user").
-		CheckEqual("created_date", "2025-01-01T00:00:00Z").
+		CheckEqual("created_date", "2025-01-01T00:00:00.168262Z").
 		CheckEqual("modified_by", "test_user").
-		CheckEqual("modified_date", "2025-01-01T00:00:00Z").
+		CheckEqual("modified_date", "2025-01-01T00:00:00.616267Z").
 		CheckEqual("csr_expiration_date", "2027-01-01T00:00:00Z").
 		CheckEqual("csr_pem", "-----BEGIN CERTIFICATE REQUEST-----\nTEST-CSR-PEM\n-----END CERTIFICATE REQUEST-----\n")
 
@@ -350,7 +352,7 @@ func TestCertificateResource(t *testing.T) {
 					Check: fullCertChecker.
 						CheckEqual("base_name", "test-name-updated").
 						CheckEqual("name", "test-name-updated").
-						CheckEqual("modified_date", "2025-05-01T00:00:00Z").
+						CheckEqual("modified_date", "2025-05-01T00:00:00.616267Z").
 						CheckEqual("modified_by", "test_user-updated").
 						Build(),
 				},
@@ -385,9 +387,15 @@ func TestCertificateResource(t *testing.T) {
 					Check: fullCertChecker.
 						CheckMissing("base_name").
 						CheckEqual("name", "generated-name12345").
-						CheckEqual("modified_date", "2025-05-01T00:00:00Z").
+						CheckEqual("modified_date", "2025-05-01T00:00:00.616267Z").
 						CheckEqual("modified_by", "test_user-updated").
 						Build(),
+					ConfigPlanChecks: resource.ConfigPlanChecks{
+						PreApply: []plancheck.PlanCheck{
+							plancheck.ExpectUnknownValue("akamai_cloudcertificates_certificate.test", tfjsonpath.New("modified_date")),
+							plancheck.ExpectUnknownValue("akamai_cloudcertificates_certificate.test", tfjsonpath.New("modified_by")),
+						},
+					},
 				},
 			},
 		},
@@ -547,7 +555,7 @@ func TestCertificateResource(t *testing.T) {
 					ResourceName:  "akamai_cloudcertificates_certificate.test",
 					Config:        testutils.LoadFixtureString(t, "testdata/TestResCertificate/create/min.tf"),
 					ExpectError: regexp.MustCompile(`Error: Incorrect import ID:(\n|.)+` +
-						`invalid number of importID parts: '3'; you need to provide an importID in the\nformat 'certificateID\[,groupID]'`),
+						`invalid number of importID parts: 3; you need to provide an importID in the\nformat 'certificateID\[,groupID]'`),
 				},
 			},
 		},

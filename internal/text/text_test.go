@@ -1,8 +1,9 @@
 package text
 
 import (
-	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestTrimRightWhitespace(t *testing.T) {
@@ -56,49 +57,73 @@ func TestImportIDSplitter(t *testing.T) {
 		formatHint      string
 		acceptedLengths []int
 		expectedParts   []string
-		expectError     error
+		expectError     string
 	}{
-		"valid single part": {
-			input:           "part1",
-			formatHint:      "part1",
+		"accepting one part": {
+			input:           "12345",
+			formatHint:      "resourceID",
 			acceptedLengths: []int{1},
-			expectedParts:   []string{"part1"},
-			expectError:     nil,
+			expectedParts:   []string{"12345"},
 		},
-		"valid two parts": {
-			input:           "part1,part2",
-			formatHint:      "part1,part2",
+		"accepting two parts": {
+			input:           "12345,grp_234",
+			formatHint:      "resourceID,groupID",
 			acceptedLengths: []int{2},
-			expectedParts:   []string{"part1", "part2"},
-			expectError:     nil,
+			expectedParts:   []string{"12345", "grp_234"},
+		},
+		"accepting one or two parts - one provided": {
+			input:           "12345",
+			formatHint:      "resourceID[,groupID]",
+			acceptedLengths: []int{1, 2},
+			expectedParts:   []string{"12345"},
+		},
+		"accepting one or two parts - two provided": {
+			input:           "12345,678",
+			formatHint:      "resourceID[,groupID]",
+			acceptedLengths: []int{1, 2},
+			expectedParts:   []string{"12345", "678"},
 		},
 		"valid three parts with spaces": {
-			input:           " part1 , part2 , part3 ",
-			formatHint:      "part1,part2,part3",
+			input:           " 555 , 321 , false ",
+			formatHint:      "resourceID,groupID,flag",
 			acceptedLengths: []int{3},
-			expectedParts:   []string{"part1", "part2", "part3"},
-			expectError:     nil,
+			expectedParts:   []string{"555", "321", "false"},
 		},
-		"invalid empty input": {
+		"error - invalid empty input": {
 			input:           "",
-			formatHint:      "part1,part2",
+			formatHint:      "resourceID,groupID",
 			acceptedLengths: []int{2},
-			expectedParts:   nil,
-			expectError:     fmt.Errorf("importID cannot be empty; you need to provide an importID in the format 'part1,part2'"),
+			expectError:     "importID cannot be empty; you need to provide an importID in the format 'resourceID,groupID'",
 		},
-		"invalid length": {
-			input:           "part1,part2,part3",
-			formatHint:      "part1,part2",
+		"error - invalid whitespace-only input": {
+			input:           "   \t\r\n",
+			formatHint:      "resourceID,groupID",
 			acceptedLengths: []int{2},
-			expectedParts:   nil,
-			expectError:     fmt.Errorf("invalid number of importID parts: '3'; you need to provide an importID in the format 'part1,part2'"),
+			expectError:     "importID cannot be empty; you need to provide an importID in the format 'resourceID,groupID'",
 		},
-		"no accepted lengths defined": {
-			input:           "part1",
-			formatHint:      "part1",
+		"error - accepting two parts but three provided": {
+			input:           "123,456,789",
+			formatHint:      "resourceID,groupID",
+			acceptedLengths: []int{2},
+			expectError:     "invalid number of importID parts: 3; you need to provide an importID in the format 'resourceID,groupID'",
+		},
+		"error - accepting one or two parts but three provided": {
+			input:           "12345,678,true",
+			formatHint:      "resourceID[,groupID]",
+			acceptedLengths: []int{1, 2},
+			expectError:     "invalid number of importID parts: 3; you need to provide an importID in the format 'resourceID[,groupID]'",
+		},
+		"error - no format hint": {
+			input:           "12345,grp_234",
+			formatHint:      "",
+			acceptedLengths: []int{2},
+			expectError:     "no format hint defined for importID; you need to provide a format hint using ImportIDSplitter method",
+		},
+		"error - no accepted lengths defined": {
+			input:           "12345,grp_234",
+			formatHint:      "resourceID,groupID",
 			acceptedLengths: []int{},
-			expectedParts:   nil,
-			expectError:     fmt.Errorf("no accepted lengths defined for importID; you need to provide at least one accepted length using AcceptLen method"),
+			expectError:     "no accepted lengths defined for importID; you need to provide at least one accepted length using AcceptLen method",
 		},
 	}
 
@@ -109,23 +134,11 @@ func TestImportIDSplitter(t *testing.T) {
 				splitter = splitter.AcceptLen(length)
 			}
 			parts, err := splitter.Split(test.input)
-			if test.expectError != nil {
-				if err == nil || err.Error() != test.expectError.Error() {
-					t.Errorf("expected error '%v', got '%v'", test.expectError, err)
-				}
+			if test.expectError != "" {
+				assert.EqualError(t, err, test.expectError)
 			} else {
-				if err != nil {
-					t.Errorf("unexpected error: %v", err)
-				} else if len(parts) != len(test.expectedParts) {
-					t.Errorf("expected parts '%v', got '%v'", test.expectedParts, parts)
-				} else {
-					for i := range parts {
-						if parts[i] != test.expectedParts[i] {
-							t.Errorf("expected parts '%v', got '%v'", test.expectedParts, parts)
-							break
-						}
-					}
-				}
+				assert.NoError(t, err)
+				assert.Equal(t, test.expectedParts, parts)
 			}
 		})
 	}

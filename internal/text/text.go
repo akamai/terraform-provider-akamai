@@ -34,10 +34,15 @@ func (p IDSplitter) AcceptLen(length int) IDSplitter {
 
 // Split splits the given ID by commas and validates the number of parts.
 func (p IDSplitter) Split(id string) ([]string, error) {
+	if p.FormatHint == "" {
+		return nil, fmt.Errorf("no format hint defined for importID; you need to provide a format hint using ImportIDSplitter method")
+	}
+
 	if len(p.AcceptedLengths) == 0 {
 		return nil, fmt.Errorf("no accepted lengths defined for importID; you need to provide at least one accepted length using AcceptLen method")
 	}
 
+	id = strings.TrimSpace(id)
 	if id == "" {
 		return nil, fmt.Errorf("importID cannot be empty; you need to provide an importID in the format '%s'",
 			p.FormatHint)
@@ -46,7 +51,7 @@ func (p IDSplitter) Split(id string) ([]string, error) {
 	parts := strings.Split(id, ",")
 
 	if !slices.Contains(p.AcceptedLengths, len(parts)) {
-		return nil, fmt.Errorf("invalid number of importID parts: '%d'; you need to provide an importID in the format '%s'",
+		return nil, fmt.Errorf("invalid number of importID parts: %d; you need to provide an importID in the format '%s'",
 			len(parts), p.FormatHint)
 	}
 

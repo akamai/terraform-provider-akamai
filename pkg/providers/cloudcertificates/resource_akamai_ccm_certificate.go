@@ -163,9 +163,9 @@ func (m *certificateResourceModel) populateCertificateFields(ctx context.Context
 	m.CertificateStatus = types.StringValue(cert.CertificateStatus)
 	m.CertificateType = types.StringValue(cert.CertificateType)
 	m.CreatedBy = types.StringValue(cert.CreatedBy)
-	m.CreatedDate = date.TimeRFC3339Value(cert.CreatedDate)
+	m.CreatedDate = date.TimeRFC3339NanoValue(cert.CreatedDate)
 	m.ModifiedBy = types.StringValue(cert.ModifiedBy)
-	m.ModifiedDate = date.TimeRFC3339Value(cert.ModifiedDate)
+	m.ModifiedDate = date.TimeRFC3339NanoValue(cert.ModifiedDate)
 	m.CSRExpirationDate = date.TimeRFC3339Value(cert.CSRExpirationDate)
 	m.CSRPEM = types.StringPointerValue(cert.CSRPEM)
 

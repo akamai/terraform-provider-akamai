@@ -58,9 +58,10 @@
 
 #### FEATURES/ENHANCEMENTS:
 
+* CCM
+  * Added new `akamai_cloudcertificates_upload_signed_certificate` resource.
 
-    
-    
+
 
     
 
