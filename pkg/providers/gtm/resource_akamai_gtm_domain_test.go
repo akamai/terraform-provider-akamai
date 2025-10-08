@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/gtm"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
@@ -17,6 +18,9 @@ import (
 const testDomainName = "gtm_terra_testdomain.akadns.net"
 
 func TestResGTMDomain(t *testing.T) {
+	sleepInterval = 5 * time.Millisecond
+	defaultInterval = 5 * time.Millisecond
+
 	const resourceName = "akamai_gtm_domain.testdomain"
 
 	t.Run("create domain", func(t *testing.T) {
@@ -320,6 +324,9 @@ func TestResGTMDomain(t *testing.T) {
 }
 
 func TestGTMDomainOrder(t *testing.T) {
+	sleepInterval = 5 * time.Millisecond
+	defaultInterval = 5 * time.Millisecond
+
 	tests := map[string]struct {
 		pathForUpdate string
 		nonEmptyPlan  bool

@@ -24,6 +24,13 @@ import (
 
 const propertyAlreadyExistsError = "Property with provided `name` for specific `domain` already exists. Please import specific property using following command: terraform import akamai_gtm_property.<your_resource_name> \"%s:%s\""
 
+var (
+	// Initial backoff interval
+	retryInterval = time.Second * 10
+	// Maximum retry interval
+	maxRetryTimeout = time.Minute * 10
+)
+
 func resourceGTMv1Property() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceGTMv1PropertyCreate,
@@ -588,11 +595,6 @@ func validatePropertyTypeForTrafficTarget(d *schema.ResourceData, logger akalog.
 }
 
 func createPropertyWithRetry(ctx context.Context, meta meta.Meta, logger akalog.Interface, createPropertyRequest gtm.CreatePropertyRequest) (*gtm.CreatePropertyResponse, error) {
-	// Initial backoff interval
-	retryInterval := time.Second * 10
-	// Maximum retry interval
-	maxRetryTimeout := time.Minute * 10
-
 	for {
 		// Attempt to create the property
 		cStatus, err := Client(meta).CreateProperty(ctx, createPropertyRequest)

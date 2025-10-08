@@ -734,9 +734,9 @@ func TestCASetActivationResource(t *testing.T) {
 						CheckEqual("version", "1").
 						CheckEqual("network", "STAGING").
 						CheckEqual("created_by", "user1").
-						CheckEqual("timeouts.create", "2m").
-						CheckEqual("timeouts.update", "2m").
-						CheckEqual("timeouts.delete", "1m").
+						CheckEqual("timeouts.create", "200ms").
+						CheckEqual("timeouts.update", "200ms").
+						CheckEqual("timeouts.delete", "100ms").
 						CheckEqual("modified_by", "user2").Build(),
 				},
 				{

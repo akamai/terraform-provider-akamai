@@ -3,6 +3,7 @@ package networklists
 import (
 	"encoding/json"
 	"testing"
+	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/networklists"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
@@ -11,6 +12,8 @@ import (
 )
 
 func TestAccAkamaiActivations_res_basic(t *testing.T) {
+	CreateActivationRetry = 1 * time.Millisecond
+
 	t.Run("create and update notes and network field in activations resource", func(t *testing.T) {
 		client := &networklists.Mock{}
 

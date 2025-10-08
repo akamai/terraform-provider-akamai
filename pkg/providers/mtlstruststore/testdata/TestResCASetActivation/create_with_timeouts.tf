@@ -7,8 +7,8 @@ resource "akamai_mtlstruststore_ca_set_activation" "test" {
   version   = 1
   network   = "STAGING"
   timeouts = {
-    create = "2m"
-    update = "2m"
-    delete = "1m"
+    create = "200ms"
+    update = "200ms"
+    delete = "100ms"
   }
 }

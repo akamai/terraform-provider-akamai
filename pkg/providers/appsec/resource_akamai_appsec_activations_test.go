@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
@@ -543,6 +544,8 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 	})
 
 	t.Run("Retry create activation on 500x error", func(t *testing.T) {
+
+		CreateActivationRetry = 10 * time.Millisecond
 
 		err500x := &appsec.Error{StatusCode: 502}
 

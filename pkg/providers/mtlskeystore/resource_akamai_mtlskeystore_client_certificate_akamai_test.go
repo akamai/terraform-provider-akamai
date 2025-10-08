@@ -934,7 +934,7 @@ func TestClientCertificateAkamaiResource(t *testing.T) {
 		},
 		"happy path - check poling mechanism": {
 			init: func(m *mtlskeystore.Mock, testData clientCertificateData, _ clientCertificateData) {
-				pollingDuration = 1 * time.Second
+				pollingDuration = 1 * time.Millisecond
 				mockCreateClientCertificateAkamai(m, testData)
 				// first tick of polling mechanism
 				testData.versions[0].status = "DEPLOYMENT_PENDING"
@@ -962,6 +962,7 @@ func TestClientCertificateAkamaiResource(t *testing.T) {
 		},
 		"happy path - create client certificate with delayed propagation of versions ": {
 			init: func(m *mtlskeystore.Mock, testData clientCertificateData, _ clientCertificateData) {
+				pollingDuration = 101 * time.Millisecond
 				mockCreateClientCertificateAkamai(m, testData)
 				// first tick of polling mechanism - no versions yet
 				mockListClientCertificateAkamaiVersions(t, m, []clientCertificateVersionData{}, testData.certificateID)
@@ -1072,10 +1073,10 @@ func TestClientCertificateAkamaiResource(t *testing.T) {
 		},
 		"error - create client certificate timeout exceeded": {
 			init: func(m *mtlskeystore.Mock, testData clientCertificateData, _ clientCertificateData) {
-				pollingDuration = 5 * time.Second
+				pollingDuration = 10 * time.Millisecond
 				mockCreateClientCertificateAkamai(m, testData)
 				testData.versions[0].status = "DEPLOYMENT_PENDING"
-				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Once()
+				mockListClientCertificateAkamaiVersions(t, m, testData.versions, testData.certificateID).Times(0)
 
 			},
 			mockData: testClientCertificateWithoutSubject(),
@@ -1100,10 +1101,9 @@ func TestClientCertificateAkamaiResource(t *testing.T) {
 				mockRotateClientCertificateAkamai(m, testData.certificateID).Once()
 				testUpdateData.versions[0].status = "DEPLOYMENT_PENDING"
 				mockListClientCertificateAkamaiVersions(t, m, testUpdateData.versions, testUpdateData.certificateID).Once()
-				pollingDuration = 5 * time.Second
+				pollingDuration = 1 * time.Second
 				// Delete
-				// Delete
-				mockListClientCertificateAkamaiVersions(t, m, testUpdateData.versions, testUpdateData.certificateID).Once()
+				mockListClientCertificateAkamaiVersions(t, m, testUpdateData.versions, testUpdateData.certificateID).Times(0)
 				mockDeleteClientCertificateAkamaiVersion(m, testUpdateData.versions, testUpdateData.certificateID, 2).Once()
 				mockDeleteClientCertificateAkamaiVersion(m, testUpdateData.versions, testUpdateData.certificateID, 1).Once()
 
