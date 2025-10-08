@@ -2,5 +2,5 @@ provider "akamai" {
   edgerc = "../../common/testutils/edgerc"
 }
 
-data "akamai_domainownership_domains" "test" {
+data "akamai_property_domainownership_domains" "test" {
 }

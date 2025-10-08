@@ -2,7 +2,7 @@ provider "akamai" {
   edgerc = "../../common/testutils/edgerc"
 }
 
-data "akamai_domainownership_search_domains" "test" {
+data "akamai_property_domainownership_search_domains" "test" {
   domains = [
     {
       domain_name      = "dom1.test"

@@ -37,10 +37,10 @@ var (
 )
 
 var (
-	domainOwnershipClient domainownership.DomainOwnership
 	client                papi.PAPI
 	hapiClient            hapi.HAPI
 	iamClient             iam.IAM
+	domainownershipClient domainownership.DomainOwnership
 )
 
 // NewSubprovider returns a new property subprovider
@@ -54,14 +54,6 @@ func NewSubprovider(opts ...option) *Subprovider {
 	})
 
 	return inst
-}
-
-// DomainOwnershipClient returns the DomainOwnership interface
-func DomainOwnershipClient(meta meta.Meta) domainownership.DomainOwnership {
-	if domainOwnershipClient != nil {
-		return domainOwnershipClient
-	}
-	return domainownership.Client(meta.Session())
 }
 
 // Client returns the PAPI interface
@@ -86,6 +78,14 @@ func IAMClient(meta meta.Meta) iam.IAM {
 		return iamClient
 	}
 	return iam.Client(meta.Session())
+}
+
+// DomainOwnershipClient returns the DomainOwnership interface
+func DomainOwnershipClient(meta meta.Meta) domainownership.DomainOwnership {
+	if domainownershipClient != nil {
+		return domainownershipClient
+	}
+	return domainownership.Client(meta.Session())
 }
 
 // SDKResources returns the property resources implemented using terraform-plugin-sdk

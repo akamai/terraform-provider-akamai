@@ -59,9 +59,9 @@
 #### FEATURES/ENHANCEMENTS:
 
 
-* DomainOwnership:
+* Domain Ownership:
   * Added new data sources:
-    * `akamai_domainownership_domains` - reads details for all the domains.
+    * `akamai_property_domainownership_domains` - reads details for all the domains.
     
 
 * mTLS Keystore:
@@ -88,7 +88,7 @@
 
 * DomainOwnership:
     * Added new data sources:
-        * `akamai_domainownership_search_domains` - allows searching for domains details.
+        * `akamai_property_domainownership_search_domains` - allows searching for domains details.
 
 
 

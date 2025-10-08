@@ -21,7 +21,7 @@ func TestDomainOwnershipSearchDomains(t *testing.T) {
 		return client.On("SearchDomains", testutils.MockContext, req).Return(resp, nil)
 	}
 
-	defaultStateChecker := test.NewStateChecker("data.akamai_domainownership_search_domains.test").
+	defaultStateChecker := test.NewStateChecker("data.akamai_property_domainownership_search_domains.test").
 		CheckEqual("domains.#", "3").
 		CheckEqual("domains.0.domain_name", "dom1.test").
 		CheckEqual("domains.0.validation_scope", "HOST").
@@ -32,11 +32,16 @@ func TestDomainOwnershipSearchDomains(t *testing.T) {
 		CheckEqual("domains.0.validation_requested_by", "someuser").
 		CheckEqual("domains.0.validation_requested_date", "2025-08-04T13:27:19Z").
 		CheckMissing("domains.0.validation_completed_date").
-		CheckEqual("domains.0.validation_challenge.dns_cname", "ac.abababababababababababababababab.dom1.test.validate-akdv.net").
-		CheckEqual("domains.0.validation_challenge.challenge_token", "t0ken1").
-		CheckEqual("domains.0.validation_challenge.challenge_token_expires_date", "2025-08-05T13:27:19Z").
-		CheckEqual("domains.0.validation_challenge.http_redirect_from", "https://dom1.test/.well-known/akamai/akamai-challenge/r4dirFrom1").
-		CheckEqual("domains.0.validation_challenge.http_redirect_to", "https://validation.akamai.com/.well-known/akamai/akamai-challenge/t0ken1").
+		CheckEqual("domains.0.validation_challenge.cname_record.name", "cname-name-1").
+		CheckEqual("domains.0.validation_challenge.cname_record.target", "cname-target-1").
+		CheckEqual("domains.0.validation_challenge.txt_record.name", "txt-name-1").
+		CheckEqual("domains.0.validation_challenge.txt_record.value", "txt-value-1").
+		CheckEqual("domains.0.validation_challenge.http_file.path", "http-file-path-1").
+		CheckEqual("domains.0.validation_challenge.http_file.content", "http-file-content-1").
+		CheckEqual("domains.0.validation_challenge.http_file.content_type", "text/plain").
+		CheckEqual("domains.0.validation_challenge.http_redirect.from", "http-redirect-from-1").
+		CheckEqual("domains.0.validation_challenge.http_redirect.to", "http-redirect-to-1").
+		CheckEqual("domains.0.validation_challenge.expiration_date", "2025-08-05T13:27:19Z").
 		CheckEqual("domains.1.domain_name", "dom2.test").
 		CheckEqual("domains.1.validation_scope", "HOST").
 		CheckEqual("domains.1.account_id", "1-ACCOUN").
@@ -46,11 +51,16 @@ func TestDomainOwnershipSearchDomains(t *testing.T) {
 		CheckEqual("domains.1.validation_requested_by", "someuser").
 		CheckEqual("domains.1.validation_requested_date", "2025-08-04T13:27:19Z").
 		CheckEqual("domains.1.validation_completed_date", "2025-08-05T11:56:07Z").
-		CheckMissing("domains.1.validation_challenge.dns_cname").
-		CheckMissing("domains.1.validation_challenge.challenge_token").
-		CheckMissing("domains.1.validation_challenge.challenge_token_expires_date").
-		CheckMissing("domains.1.validation_challenge.http_redirect_from").
-		CheckMissing("domains.1.validation_challenge.http_redirect_to").
+		CheckMissing("domains.1.validation_challenge.cname_record.name").
+		CheckMissing("domains.1.validation_challenge.cname_record.target").
+		CheckMissing("domains.1.validation_challenge.txt_record.name").
+		CheckMissing("domains.1.validation_challenge.txt_record.value").
+		CheckMissing("domains.1.validation_challenge.http_file.path").
+		CheckMissing("domains.1.validation_challenge.http_file.content").
+		CheckMissing("domains.1.validation_challenge.http_file.content_type").
+		CheckMissing("domains.1.validation_challenge.http_redirect.from").
+		CheckMissing("domains.1.validation_challenge.http_redirect.to").
+		CheckMissing("domains.1.validation_challenge.expiration_date").
 		CheckEqual("domains.2.domain_name", "dom3.test").
 		CheckEqual("domains.2.validation_scope", "HOST").
 		CheckEqual("domains.2.account_id", "1-ACCOUN").
@@ -60,11 +70,16 @@ func TestDomainOwnershipSearchDomains(t *testing.T) {
 		CheckEqual("domains.2.validation_requested_by", "someuser").
 		CheckEqual("domains.2.validation_requested_date", "2025-08-04T13:27:19Z").
 		CheckMissing("domains.2.validation_completed_date").
-		CheckEqual("domains.2.validation_challenge.dns_cname", "ac.abababababababababababababababab.dom3.test.validate-akdv.net").
-		CheckEqual("domains.2.validation_challenge.challenge_token", "t0ken1").
-		CheckEqual("domains.2.validation_challenge.challenge_token_expires_date", "2025-08-05T13:27:19Z").
-		CheckMissing("domains.2.validation_challenge.http_redirect_from").
-		CheckMissing("domains.2.validation_challenge.http_redirect_to")
+		CheckEqual("domains.2.validation_challenge.cname_record.name", "cname-name-3").
+		CheckEqual("domains.2.validation_challenge.cname_record.target", "cname-target-3").
+		CheckEqual("domains.2.validation_challenge.txt_record.name", "txt-name-3").
+		CheckEqual("domains.2.validation_challenge.txt_record.value", "txt-value-3").
+		CheckMissing("domains.2.validation_challenge.http_file.path").
+		CheckMissing("domains.2.validation_challenge.http_file.content").
+		CheckMissing("domains.2.validation_challenge.http_file.content_type").
+		CheckMissing("domains.2.validation_challenge.http_redirect.from").
+		CheckMissing("domains.2.validation_challenge.http_redirect.to").
+		CheckEqual("domains.2.validation_challenge.expiration_date", "2025-08-05T13:27:19Z")
 
 	request := domainownership.SearchDomainsRequest{
 		IncludeAll: true,
@@ -100,11 +115,24 @@ func TestDomainOwnershipSearchDomains(t *testing.T) {
 							ValidationRequestedBy:   ptr.To("someuser"),
 							ValidationRequestedDate: ptr.To(tst.NewTimeFromString(t, "2025-08-04T13:27:19Z")),
 							ValidationChallenge: &domainownership.ValidationChallenge{
-								DNSCname:                  "ac.abababababababababababababababab.dom1.test.validate-akdv.net",
-								ChallengeToken:            "t0ken1",
-								ChallengeTokenExpiresDate: tst.NewTimeFromString(t, "2025-08-05T13:27:19Z"),
-								HTTPRedirectFrom:          ptr.To("https://dom1.test/.well-known/akamai/akamai-challenge/r4dirFrom1"),
-								HTTPRedirectTo:            ptr.To("https://validation.akamai.com/.well-known/akamai/akamai-challenge/t0ken1"),
+								CNAMERecord: domainownership.CNAMERecord{
+									Name:   "cname-name-1",
+									Target: "cname-target-1",
+								},
+								TXTRecord: domainownership.TXTRecord{
+									Name:  "txt-name-1",
+									Value: "txt-value-1",
+								},
+								HTTPFile: &domainownership.HTTPFile{
+									Path:        "http-file-path-1",
+									Content:     "http-file-content-1",
+									ContentType: "text/plain",
+								},
+								HTTPRedirect: &domainownership.HTTPRedirect{
+									From: "http-redirect-from-1",
+									To:   "http-redirect-to-1",
+								},
+								ExpirationDate: tst.NewTimeFromString(t, "2025-08-05T13:27:19Z"),
 							},
 						},
 						{
@@ -128,9 +156,15 @@ func TestDomainOwnershipSearchDomains(t *testing.T) {
 							ValidationRequestedBy:   ptr.To("someuser"),
 							ValidationRequestedDate: ptr.To(tst.NewTimeFromString(t, "2025-08-04T13:27:19Z")),
 							ValidationChallenge: &domainownership.ValidationChallenge{
-								DNSCname:                  "ac.abababababababababababababababab.dom3.test.validate-akdv.net",
-								ChallengeToken:            "t0ken1",
-								ChallengeTokenExpiresDate: tst.NewTimeFromString(t, "2025-08-05T13:27:19Z"),
+								CNAMERecord: domainownership.CNAMERecord{
+									Name:   "cname-name-3",
+									Target: "cname-target-3",
+								},
+								TXTRecord: domainownership.TXTRecord{
+									Name:  "txt-name-3",
+									Value: "txt-value-3",
+								},
+								ExpirationDate: tst.NewTimeFromString(t, "2025-08-05T13:27:19Z"),
 							},
 						},
 					},
@@ -151,7 +185,7 @@ func TestDomainOwnershipSearchDomains(t *testing.T) {
 						 edgerc = "../../common/testutils/edgerc"
 						}
 						
-						data "akamai_domainownership_search_domains" "test" {
+						data "akamai_property_domainownership_search_domains" "test" {
 						}`,
 					ExpectError: regexp.MustCompile(`The argument "domains" is required, but no definition was found.`),
 				},
@@ -165,7 +199,7 @@ func TestDomainOwnershipSearchDomains(t *testing.T) {
 						 edgerc = "../../common/testutils/edgerc"
 						}
 						
-						data "akamai_domainownership_search_domains" "test" {
+						data "akamai_property_domainownership_search_domains" "test" {
 						  domains = []
 						}`,
 					ExpectError: regexp.MustCompile(`Attribute domains set must contain at least 1 elements, got: 0`),
@@ -180,7 +214,7 @@ func TestDomainOwnershipSearchDomains(t *testing.T) {
 						 edgerc = "../../common/testutils/edgerc"
 						}
 						
-						data "akamai_domainownership_search_domains" "test" {
+						data "akamai_property_domainownership_search_domains" "test" {
 						  domains = [
 							{
 							}
@@ -198,7 +232,7 @@ func TestDomainOwnershipSearchDomains(t *testing.T) {
 						 edgerc = "../../common/testutils/edgerc"
 						}
 						
-						data "akamai_domainownership_search_domains" "test" {
+						data "akamai_property_domainownership_search_domains" "test" {
 						  domains = [
 							{
 							  validation_scope = "HOST"
@@ -217,7 +251,7 @@ func TestDomainOwnershipSearchDomains(t *testing.T) {
 						 edgerc = "../../common/testutils/edgerc"
 						}
 						
-						data "akamai_domainownership_search_domains" "test" {
+						data "akamai_property_domainownership_search_domains" "test" {
 						  domains = [
 							{
 							  domain_name      = ""
@@ -237,7 +271,7 @@ func TestDomainOwnershipSearchDomains(t *testing.T) {
 						 edgerc = "../../common/testutils/edgerc"
 						}
 						
-						data "akamai_domainownership_search_domains" "test" {
+						data "akamai_property_domainownership_search_domains" "test" {
 						  domains = [
 							{
 							  domain_name      = "a1234567890a1234567890a1234567890a1234567890a1234567890a1234567890a1234567890a1234567890a1234567890a1234567890a1234567890a1234567890a1234567890a1234567890a1234567890a1234567890a1234567890a1234567890a1234567890a1234567890a1234567890a1234567890a1234567890a1234567890"
@@ -257,7 +291,7 @@ func TestDomainOwnershipSearchDomains(t *testing.T) {
 						 edgerc = "../../common/testutils/edgerc"
 						}
 						
-						data "akamai_domainownership_search_domains" "test" {
+						data "akamai_property_domainownership_search_domains" "test" {
 						  domains = [
 							{
 							  domain_name      = "test.com"
@@ -276,7 +310,7 @@ func TestDomainOwnershipSearchDomains(t *testing.T) {
 						 edgerc = "../../common/testutils/edgerc"
 						}
 						
-						data "akamai_domainownership_search_domains" "test" {
+						data "akamai_property_domainownership_search_domains" "test" {
 						  domains = [
 							{
 							  domain_name      = "test.com"

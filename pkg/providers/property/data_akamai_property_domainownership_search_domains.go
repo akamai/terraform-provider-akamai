@@ -36,30 +36,21 @@ type domainOwnershipSearchDomainsModel struct {
 
 // domainOwnershipDomainModel models each domain in the domains set.
 type domainOwnershipDomainModel struct {
-	DomainName              types.String                             `tfsdk:"domain_name"`
-	ValidationScope         types.String                             `tfsdk:"validation_scope"`
-	AccountID               types.String                             `tfsdk:"account_id"`
-	DomainStatus            types.String                             `tfsdk:"domain_status"`
-	ValidationLevel         types.String                             `tfsdk:"validation_level"`
-	ValidationMethod        types.String                             `tfsdk:"validation_method"`
-	ValidationRequestedBy   types.String                             `tfsdk:"validation_requested_by"`
-	ValidationRequestedDate types.String                             `tfsdk:"validation_requested_date"`
-	ValidationCompletedDate types.String                             `tfsdk:"validation_completed_date"`
-	ValidationChallenge     *domainOwnershipValidationChallengeModel `tfsdk:"validation_challenge"`
-}
-
-// domainOwnershipValidationChallengeModel models the nested validation_challenge attribute.
-type domainOwnershipValidationChallengeModel struct {
-	DNSCName                  types.String `tfsdk:"dns_cname"`
-	ChallengeToken            types.String `tfsdk:"challenge_token"`
-	ChallengeTokenExpiresDate types.String `tfsdk:"challenge_token_expires_date"`
-	HTTPRedirectFrom          types.String `tfsdk:"http_redirect_from"`
-	HTTPRedirectTo            types.String `tfsdk:"http_redirect_to"`
+	DomainName              types.String              `tfsdk:"domain_name"`
+	ValidationScope         types.String              `tfsdk:"validation_scope"`
+	AccountID               types.String              `tfsdk:"account_id"`
+	DomainStatus            types.String              `tfsdk:"domain_status"`
+	ValidationLevel         types.String              `tfsdk:"validation_level"`
+	ValidationMethod        types.String              `tfsdk:"validation_method"`
+	ValidationRequestedBy   types.String              `tfsdk:"validation_requested_by"`
+	ValidationRequestedDate types.String              `tfsdk:"validation_requested_date"`
+	ValidationCompletedDate types.String              `tfsdk:"validation_completed_date"`
+	ValidationChallenge     *validationChallengeModel `tfsdk:"validation_challenge"`
 }
 
 // Metadata configures data source's meta information
 func (d *domainOwnershipSearchDomains) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
-	resp.TypeName = "akamai_domainownership_search_domains"
+	resp.TypeName = "akamai_property_domainownership_search_domains"
 }
 
 // Schema is used to define data source's terraform schema
@@ -121,25 +112,69 @@ func (d *domainOwnershipSearchDomains) Schema(_ context.Context, _ datasource.Sc
 							Computed:    true,
 							Description: "Validation challenge of the domain.",
 							Attributes: map[string]schema.Attribute{
-								"dns_cname": schema.StringAttribute{
+								"cname_record": schema.SingleNestedAttribute{
 									Computed:    true,
-									Description: "DNS CNAME you need to use for DNS CNAME domain validation.",
+									Description: "CNAME record details for domain validation.",
+									Attributes: map[string]schema.Attribute{
+										"name": schema.StringAttribute{
+											Computed:    true,
+											Description: "The name of the CNAME record.",
+										},
+										"target": schema.StringAttribute{
+											Computed:    true,
+											Description: "The target value of the CNAME record.",
+										},
+									},
 								},
-								"challenge_token": schema.StringAttribute{
+								"txt_record": schema.SingleNestedAttribute{
 									Computed:    true,
-									Description: "Challenge token you need to use for domain validation.",
+									Description: "TXT record details for domain validation.",
+									Attributes: map[string]schema.Attribute{
+										"name": schema.StringAttribute{
+											Computed:    true,
+											Description: "The name of the TXT record.",
+										},
+										"value": schema.StringAttribute{
+											Computed:    true,
+											Description: "The value of the TXT record.",
+										},
+									},
 								},
-								"challenge_token_expires_date": schema.StringAttribute{
+								"http_file": schema.SingleNestedAttribute{
 									Computed:    true,
-									Description: "An ISO 8601 timestamp indicating when the domain validation token expires.",
+									Description: "HTTP file details for domain validation.",
+									Attributes: map[string]schema.Attribute{
+										"path": schema.StringAttribute{
+											Computed:    true,
+											Description: "The path where the file should be accessible.",
+										},
+										"content": schema.StringAttribute{
+											Computed:    true,
+											Description: "The content of the file.",
+										},
+										"content_type": schema.StringAttribute{
+											Computed:    true,
+											Description: "The content type of the file.",
+										},
+									},
 								},
-								"http_redirect_from": schema.StringAttribute{
+								"http_redirect": schema.SingleNestedAttribute{
 									Computed:    true,
-									Description: "HTTP URL for checking the challenge token during HTTP validation.",
+									Description: "HTTP redirect details for domain validation.",
+									Attributes: map[string]schema.Attribute{
+										"from": schema.StringAttribute{
+											Computed:    true,
+											Description: "HTTP URL for checking the challenge token during HTTP validation.",
+										},
+										"to": schema.StringAttribute{
+											Computed:    true,
+											Description: "HTTP redirect URL for HTTP validation.",
+										},
+									},
 								},
-								"http_redirect_to": schema.StringAttribute{
+								"expiration_date": schema.StringAttribute{
 									Computed:    true,
-									Description: "HTTP redirect URL for HTTP validation.",
+									Description: "The ISO 8601 timestamp indicating when the validation challenge expires.",
 								},
 							},
 						},
@@ -211,13 +246,37 @@ func (d *domainOwnershipSearchDomains) Read(ctx context.Context, req datasource.
 			ValidationCompletedDate: date.TimeRFC3339PointerValue(domain.ValidationCompletedDate),
 		}
 		if domain.ValidationChallenge != nil {
-			dm.ValidationChallenge = &domainOwnershipValidationChallengeModel{
-				DNSCName:                  types.StringValue(domain.ValidationChallenge.DNSCname),
-				ChallengeToken:            types.StringValue(domain.ValidationChallenge.ChallengeToken),
-				ChallengeTokenExpiresDate: date.TimeRFC3339Value(domain.ValidationChallenge.ChallengeTokenExpiresDate),
-				HTTPRedirectFrom:          types.StringPointerValue(domain.ValidationChallenge.HTTPRedirectFrom),
-				HTTPRedirectTo:            types.StringPointerValue(domain.ValidationChallenge.HTTPRedirectTo),
+			challenge := domain.ValidationChallenge
+			challengeModel := &validationChallengeModel{}
+
+			challengeModel.CNAMERecord = CNAMERecord{
+				Name:   types.StringValue(challenge.CNAMERecord.Name),
+				Target: types.StringValue(challenge.CNAMERecord.Target),
 			}
+
+			challengeModel.TXTRecord = TXTRecord{
+				Name:  types.StringValue(challenge.TXTRecord.Name),
+				Value: types.StringValue(challenge.TXTRecord.Value),
+			}
+
+			if challenge.HTTPFile != nil {
+				challengeModel.HTTPFile = &HTTPFile{
+					Path:        types.StringValue(challenge.HTTPFile.Path),
+					Content:     types.StringValue(challenge.HTTPFile.Content),
+					ContentType: types.StringValue(challenge.HTTPFile.ContentType),
+				}
+			}
+
+			if challenge.HTTPRedirect != nil {
+				challengeModel.HTTPRedirect = &HTTPRedirect{
+					From: types.StringValue(challenge.HTTPRedirect.From),
+					To:   types.StringValue(challenge.HTTPRedirect.To),
+				}
+			}
+
+			challengeModel.ExpirationDate = date.TimeRFC3339NanoValue(challenge.ExpirationDate)
+
+			dm.ValidationChallenge = challengeModel
 		}
 		data.Domains = append(data.Domains, dm)
 	}
