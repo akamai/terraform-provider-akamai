@@ -93,4 +93,8 @@ require (
 
 replace gopkg.in/yaml.v2 v2.2.2 => gopkg.in/yaml.v2 v2.4.0 // Fix security vulnerability
 
+// go-jose/v4 v4.0.4 has a reported vulnerability
+// Force upgrade to v4.1.2 until upstream (terraform-plugin-testing) bumps it
+replace github.com/go-jose/go-jose/v4 => github.com/go-jose/go-jose/v4 v4.1.2
+
 // replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v12 => ../AkamaiOPEN-edgegrid-golang

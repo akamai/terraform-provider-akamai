@@ -4,6 +4,9 @@
 
 #### FEATURES/ENHANCEMENTS:
 
+* General
+  * Updated transitive dependency `github.com/go-jose/go-jose/v4 to v4.1.2` to address a reported security vulnerability.
+
 * Appsec
   * Added a new data source:
     * `data_akamai_appsec_custom_rules_usage`
@@ -48,7 +51,7 @@
 
 * Appsec
   * Fixed a bug where updating `notification_emails` along with other activation fields caused a `notification_emails not found` error in the `akamai_appsec_activations` resource.
-  * Fixed a bug where the Terraform provider doesn't create a new config version but tries to update it([I#653](https://github.com/akamai/terraform-provider-akamai/issues/653)).
+  * Fixed a bug where the Terraform provider doesn't create a new config version but tries to update it ([I#653](https://github.com/akamai/terraform-provider-akamai/issues/653)).
   * Modified the `akamai_appsec_ip_geo` resource to fix empty lists in the `ip_controls`, `geo_controls`, and `asn_controls` fields ([I#697](https://github.com/akamai/terraform-provider-akamai/issues/697)).
 
 ## 9.0.1 (Sep 08, 2025)
@@ -56,8 +59,8 @@
 #### BUG FIXES:
 
 * General
-  * Updated various dependencies to resolve Provider GetResourceIdentitySchemas Not Implemented issue ([I#694](https://github.com/akamai/terraform-provider-akamai/issues/694)).
-
+  * Updated various dependencies to resolve an issue with retrieving the configuration schema from the Terraform provider ([I#694](https://github.com/akamai/terraform-provider-akamai/issues/694)).
+  
 ## 9.0.0 (Sep 04, 2025)
 
 #### BREAKING CHANGES:
