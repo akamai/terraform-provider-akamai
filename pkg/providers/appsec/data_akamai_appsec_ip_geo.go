@@ -178,47 +178,55 @@ func setAttributes(d *schema.ResourceData, ipgeo *appsec.GetIPGeoResponse) diag.
 			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
 
-		asnControls := map[string]interface{}{
-			"asn_network_lists": []string{},
-			"action":            "",
-		}
-
-		if ipgeo.ASNControls != nil {
-			if ipgeo.ASNControls.BlockedIPNetworkLists != nil && ipgeo.ASNControls.BlockedIPNetworkLists.NetworkList != nil {
-				asnControls["asn_network_lists"] = ipgeo.ASNControls.BlockedIPNetworkLists.NetworkList
-				asnControls["action"] = ipgeo.ASNControls.BlockedIPNetworkLists.Action
+		if ipgeo.ASNControls != nil && ipgeo.ASNControls.BlockedIPNetworkLists != nil && ipgeo.ASNControls.BlockedIPNetworkLists.NetworkList != nil {
+			asnControls := map[string]interface{}{
+				"asn_network_lists": nil,
+				"action":            nil,
+			}
+			asnControls["asn_network_lists"] = ipgeo.ASNControls.BlockedIPNetworkLists.NetworkList
+			asnControls["action"] = ipgeo.ASNControls.BlockedIPNetworkLists.Action
+			if err := d.Set("asn_controls", []interface{}{asnControls}); err != nil {
+				return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+			}
+		} else {
+			// clear the field if the API returned nil.
+			if err := d.Set("asn_controls", nil); err != nil {
+				return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 			}
 		}
-		if err := d.Set("asn_controls", []interface{}{asnControls}); err != nil {
-			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
-		}
 
-		geoControls := map[string]interface{}{
-			"geo_network_lists": []string{},
-			"action":            "",
-		}
-		if ipgeo.GeoControls != nil {
-			if ipgeo.GeoControls.BlockedIPNetworkLists != nil && ipgeo.GeoControls.BlockedIPNetworkLists.NetworkList != nil {
-				geoControls["geo_network_lists"] = ipgeo.GeoControls.BlockedIPNetworkLists.NetworkList
-				geoControls["action"] = ipgeo.GeoControls.BlockedIPNetworkLists.Action
+		if ipgeo.GeoControls != nil && ipgeo.GeoControls.BlockedIPNetworkLists != nil && ipgeo.GeoControls.BlockedIPNetworkLists.NetworkList != nil {
+			geoControls := map[string]interface{}{
+				"geo_network_lists": nil,
+				"action":            nil,
+			}
+			geoControls["geo_network_lists"] = ipgeo.GeoControls.BlockedIPNetworkLists.NetworkList
+			geoControls["action"] = ipgeo.GeoControls.BlockedIPNetworkLists.Action
+			if err := d.Set("geo_controls", []interface{}{geoControls}); err != nil {
+				return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+			}
+		} else {
+			// clear the field if the API returned nil.
+			if err := d.Set("geo_controls", nil); err != nil {
+				return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 			}
 		}
-		if err := d.Set("geo_controls", []interface{}{geoControls}); err != nil {
-			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
-		}
 
-		ipControls := map[string]interface{}{
-			"ip_network_lists": []string{},
-			"action":           "",
-		}
-		if ipgeo.IPControls != nil {
-			if ipgeo.IPControls.BlockedIPNetworkLists != nil && ipgeo.IPControls.BlockedIPNetworkLists.NetworkList != nil {
-				ipControls["ip_network_lists"] = ipgeo.IPControls.BlockedIPNetworkLists.NetworkList
-				ipControls["action"] = ipgeo.IPControls.BlockedIPNetworkLists.Action
+		if ipgeo.IPControls != nil && ipgeo.IPControls.BlockedIPNetworkLists != nil && ipgeo.IPControls.BlockedIPNetworkLists.NetworkList != nil {
+			ipControls := map[string]interface{}{
+				"ip_network_lists": nil,
+				"action":           nil,
 			}
-		}
-		if err := d.Set("ip_controls", []interface{}{ipControls}); err != nil {
-			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+			ipControls["ip_network_lists"] = ipgeo.IPControls.BlockedIPNetworkLists.NetworkList
+			ipControls["action"] = ipgeo.IPControls.BlockedIPNetworkLists.Action
+			if err := d.Set("ip_controls", []interface{}{ipControls}); err != nil {
+				return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+			}
+		} else {
+			// clear the field if the API returned nil.
+			if err := d.Set("ip_controls", nil); err != nil {
+				return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+			}
 		}
 
 		if ipgeo.UkraineGeoControls != nil && ipgeo.UkraineGeoControls.Action != "" {

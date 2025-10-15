@@ -96,7 +96,8 @@ func (d *caSetActivitiesDataSource) Schema(_ context.Context, _ datasource.Schem
 				Computed:    true,
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(path.MatchRoot("id"), path.MatchRoot("name")),
-					stringvalidator.LengthAtLeast(1),
+					stringvalidator.LengthBetween(3, 64),
+					stringvalidator.RegexMatches(mtlstruststore.CASetNameRegex, mtlstruststore.CASetNameDescription),
 				},
 			},
 			"start": schema.StringAttribute{

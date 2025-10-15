@@ -30,10 +30,14 @@ func TestCASetAssociationsDataSource(t *testing.T) {
 			Return(resp, err).Times(3)
 	}
 
-	mockListCASetAssociations := func(client *mtlstruststore.Mock, resp *mtlstruststore.ListCASetAssociationsResponse, err error) *mock.Call {
-		return client.On("ListCASetAssociations", testutils.MockContext, mtlstruststore.ListCASetAssociationsRequest{
+	mockListCASetAssociations := func(client *mtlstruststore.Mock, resp *mtlstruststore.ListCASetAssociationsResponse, associationType *string, err error) *mock.Call {
+		req := mtlstruststore.ListCASetAssociationsRequest{
 			CASetID: "123",
-		}).Return(resp, err).Times(3)
+		}
+		if associationType != nil {
+			req.AssociationType = mtlstruststore.AssociationType(*associationType)
+		}
+		return client.On("ListCASetAssociations", testutils.MockContext, req).Return(resp, err).Times(3)
 	}
 
 	defaultStateChecker := test.NewStateChecker("data.akamai_mtlstruststore_ca_set_associations.test").
@@ -54,7 +58,7 @@ func TestCASetAssociationsDataSource(t *testing.T) {
 						Properties:  nil,
 						Enrollments: []mtlstruststore.AssociationEnrollment{},
 					},
-				}, nil)
+				}, nil, nil)
 			},
 			steps: []resource.TestStep{
 				{
@@ -85,7 +89,7 @@ func TestCASetAssociationsDataSource(t *testing.T) {
 						Properties:  nil,
 						Enrollments: []mtlstruststore.AssociationEnrollment{},
 					},
-				}, nil)
+				}, nil, nil)
 			},
 			steps: []resource.TestStep{
 				{
@@ -111,7 +115,7 @@ func TestCASetAssociationsDataSource(t *testing.T) {
 								},
 							},
 						}},
-				}, nil)
+				}, nil, nil)
 			},
 			steps: []resource.TestStep{
 				{
@@ -130,7 +134,7 @@ func TestCASetAssociationsDataSource(t *testing.T) {
 				},
 			},
 		},
-		"associated to navigable property": {
+		"associated to navigable property with association_type value set to properties": {
 			init: func(client *mtlstruststore.Mock) {
 				mockGetCASet(client)
 				mockListCASetAssociations(client, &mtlstruststore.ListCASetAssociationsResponse{
@@ -151,13 +155,14 @@ func TestCASetAssociationsDataSource(t *testing.T) {
 							},
 						},
 					},
-				}, nil)
+				}, ptr.To("properties"), nil)
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, testDir+"id.tf"),
+					Config: testutils.LoadFixtureString(t, testDir+"association_type_properties.tf"),
 					Check: defaultStateChecker.
 						CheckEqual("properties.#", "1").
+						CheckEqual("association_type", "properties").
 						CheckEqual("properties.0.property_id", "123").
 						CheckEqual("properties.0.property_name", "test-prp-name").
 						CheckEqual("properties.0.asset_id", "123456").
@@ -170,7 +175,7 @@ func TestCASetAssociationsDataSource(t *testing.T) {
 				},
 			},
 		},
-		"associated to enrollments": {
+		"associated to enrollments with association_type value set to enrollments": {
 			init: func(client *mtlstruststore.Mock) {
 				mockGetCASet(client)
 				mockListCASetAssociations(client, &mtlstruststore.ListCASetAssociationsResponse{
@@ -191,12 +196,13 @@ func TestCASetAssociationsDataSource(t *testing.T) {
 								CN:              "example2.com",
 							},
 						}},
-				}, nil)
+				}, ptr.To("enrollments"), nil)
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, testDir+"id.tf"),
+					Config: testutils.LoadFixtureString(t, testDir+"association_type_enrollments.tf"),
 					Check: defaultStateChecker.
+						CheckEqual("association_type", "enrollments").
 						CheckEqual("enrollments.#", "2").
 						CheckEqual("enrollments.0.enrollment_id", "123456").
 						CheckEqual("enrollments.0.staging_slots.#", "1").
@@ -275,7 +281,24 @@ data "akamai_mtlstruststore_ca_set_associations" "test" {
   name   = ""
 }
 `,
-					ExpectError: regexp.MustCompile(`Attribute name must not be empty or only whitespace`),
+					ExpectError: regexp.MustCompile(`Attribute name string length must be between 3 and 64, got: 0`),
+				},
+			},
+		},
+		"validation error - invalid association_type provided": {
+			steps: []resource.TestStep{
+				{
+					Config: `
+provider "akamai" {
+  edgerc = "../../common/testutils/edgerc"
+}
+
+data "akamai_mtlstruststore_ca_set_associations" "test" {
+  id               = "123"
+  association_type = "invalid"
+}
+`,
+					ExpectError: regexp.MustCompile(`Attribute association_type value must be one of: \["enrollments"\n"properties"], got: "invalid"`),
 				},
 			},
 		},
@@ -331,7 +354,7 @@ data "akamai_mtlstruststore_ca_set_associations" "test" {
 		"api error - fetching associations fails": {
 			init: func(client *mtlstruststore.Mock) {
 				mockGetCASet(client).Once()
-				mockListCASetAssociations(client, nil, &mtlstruststore.Error{
+				mockListCASetAssociations(client, nil, nil, &mtlstruststore.Error{
 					Type:     "internal-server-error",
 					Title:    "Internal Server Error",
 					Detail:   "Error processing request",

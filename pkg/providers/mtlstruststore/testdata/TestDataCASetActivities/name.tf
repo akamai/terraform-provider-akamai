@@ -3,5 +3,5 @@ provider "akamai" {
 }
 
 data "akamai_mtlstruststore_ca_set_activities" "test" {
-  name = "test name"
+  name = "test_name"
 }

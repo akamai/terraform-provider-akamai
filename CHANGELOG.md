@@ -1,12 +1,66 @@
 # RELEASE NOTES
 
+## 9.1.0 (Oct 15, 2025)
+
+#### FEATURES/ENHANCEMENTS:
+
+* General
+  * Updated transitive dependency `github.com/go-jose/go-jose/v4 to v4.1.2` to address a reported security vulnerability.
+
+* Appsec
+  * Added a new data source:
+    * `data_akamai_appsec_custom_rules_usage`
+  * Improved the functionality of the `akamai_appsec_custom_rule` by preventing the deletion of a custom rule that is active or in use by security policies.
+
+* Botman
+  * Improved the functionality of the `akamai_bot_category_action` and `akamai_botman_bot_detection_action` resources to handle a scenario when a resource is deleted in the backend but still exists in the state file.
+  
+* Cloud Access
+  * Added support for the new authentication method, Akamai Object Storage (`AOS4_HMAC_SHA256`), in the `akamai_cloudaccess_key` resource.
+
+* mTLS Keystore (Beta):
+  * Added support for the `preferred_ca` in the `akamai_mtlskeystore_client_certificate_akamai` resource.
+  * Added support for the manual rotation of client certificates in the `akamai_mtlskeystore_client_certificate_akamai` resource.
+
+* mTLS Truststore (Beta):
+  * Added the new optional `association_type` parameter to the `akamai_mtlstruststore_ca_set_associations` datasource. It allows filtering associations by type.
+   Possible values are `enrollments` or `properties`. If not specified, both types of associations are returned.
+  * Added a warning when deleting a CA set activation if the version is already deleted.
+  * Enhanced validation rules for specific fields across data sources and resources:
+    * The `name` field allows only letters, numbers, hyphens, percents, dots, and underscores, and must be between 3 and 64 characters long. It applies to the `akamai_mtlstruststore_ca_set` resource and these data sources:
+      * `akamai_mtlstruststore_ca_set_activities`
+      * `akamai_mtlstruststore_ca_set_associations`
+      * `akamai_mtlstruststore_ca_set_certificates`
+      * `akamai_mtlstruststore_ca_set_versions`
+      * `akamai_mtlstruststore_ca_set`
+      * `akamai_mtlstruststore_ca_sets`
+    * The `ca_set_name` field allows only letters, numbers, hyphens, percents, dots, and underscores, and must be between 3 and 64 characters long. It applies to the `akamai_mtlstruststore_ca_set_activation` and `akamai_mtlstruststore_ca_set_activations` data sources.
+    * The `name_prefix` field, when specified in the `akamai_mtlstruststore_ca_sets` data source, allows only letters, numbers, hyphens, percents, dots, and underscores, and can be between 1 and 64 characters long.
+    * The `description` and `version_description` fields, when specified in the `akamai_mtlstruststore_ca_set` resource, must be between 1 and 255 characters long.
+    * Additional validations for the fields in the `akamai_mtlstruststore_ca_set_activations` data source:
+      * The `network` field allows only `STAGING` or `PRODUCTION`.
+      * The `status` field allows only `IN_PROGRESS`, `COMPLETE`, or `FAILED`.
+      * The `type` field allows only `ACTIVATE`, `DEACTIVATE`, or `DELETE`.
+ * Fixed validation in the `akamai_mtlstruststore_ca_set` resource to not create more than 100 versions.
+
+* PAPI
+  * Added support for the new rule format [`v2025-09-09`](https://techdocs.akamai.com/terraform/docs/rule-format-changes#v2025-09-09).
+  * Increased the default `timeout_for_activation` in the `akamai_property_hostname_bucket` resource from 50 minutes to 120 minutes.
+
+#### BUG FIXES:
+
+* Appsec
+  * Fixed a bug where updating `notification_emails` along with other activation fields caused a `notification_emails not found` error in the `akamai_appsec_activations` resource.
+  * Fixed a bug where the Terraform provider doesn't create a new config version but tries to update it ([I#653](https://github.com/akamai/terraform-provider-akamai/issues/653)).
+  * Modified the `akamai_appsec_ip_geo` resource to fix empty lists in the `ip_controls`, `geo_controls`, and `asn_controls` fields ([I#697](https://github.com/akamai/terraform-provider-akamai/issues/697)).
+
 ## 9.0.1 (Sep 08, 2025)
 
 #### BUG FIXES:
 
 * General
-    * Updated various dependencies to resolve Provider GetResourceIdentitySchemas Not Implemented issue [I#694](https://github.com/akamai/terraform-provider-akamai/issues/694).
-
+  * Updated various dependencies to resolve an issue with retrieving the configuration schema from the Terraform provider ([I#694](https://github.com/akamai/terraform-provider-akamai/issues/694)).
+  
 ## 9.0.0 (Sep 04, 2025)
 
 #### BREAKING CHANGES:
@@ -69,7 +123,7 @@
 * CPS
   * Increased default timeout for `akamai_cps_third_party_enrollment` and `akamai_cps_dv_enrollment` resources from 20 minutes to 1 hour to avoid erroring out during deletion. It is not recommended to use timeout values lower than 1 hour.
 
-* mTLS Keystore:
+* mTLS Keystore (Beta):
   * Added the `created_by` and `created_date` fields to the `akamai_mtlskeystore_client_certificate_third_party` resource.
 
 * [IMPORTANT] mTLS Truststore (Beta):

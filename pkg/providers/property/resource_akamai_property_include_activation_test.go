@@ -33,6 +33,8 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 	// lower down the timeouts for testing purposes
 	activationPollInterval = time.Microsecond
 	getActivationInterval = time.Microsecond
+	CreateActivationRetry = 10 * time.Millisecond
+	ActivationPollInterval = 10 * time.Millisecond
 
 	type attrs struct {
 		includeID, contractID, groupID, network, note string

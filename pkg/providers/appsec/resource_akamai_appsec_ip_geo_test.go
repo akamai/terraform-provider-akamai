@@ -386,6 +386,17 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 	t.Run("block with empty lists", func(t *testing.T) {
 
 		client := &appsec.Mock{}
+		configVersion(43253, client)
+
+		updateRequest := appsec.UpdateIPGeoRequest{
+			ConfigID: 43253,
+			Version:  7,
+			PolicyID: "AAAA_81230",
+			Block:    "blockSpecificIPGeo",
+		}
+		getIPGeoResponse(43253, 7, "AAAA_81230", "testdata/TestResIPGeo/IPGeoBlockOnly.json", client)
+		updateIPGeoResponse("testdata/TestResIPGeo/IPGeoBlockOnly.json", updateRequest, client)
+		updateIPGeoProtectionResponseAllProtectionsFalse(43253, 7, "AAAA_81230", "testdata/TestResIPGeoProtection/PolicyProtections.json", client)
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
 				IsUnitTest:               true,
@@ -396,7 +407,6 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_ip_geo.test", "id", "43253:AAAA_81230"),
 						),
-						ExpectError: regexp.MustCompile(`(?s)Error: Missing required argument*`),
 					},
 				},
 			})

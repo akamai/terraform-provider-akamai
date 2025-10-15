@@ -73,12 +73,12 @@ func TestCASetActivitiesDataSource(t *testing.T) {
 		"happy path - find by ca set name and filter dates": {
 			init: func(m *mtlstruststore.Mock) {
 				m.On("ListCASets", testutils.MockContext, mtlstruststore.ListCASetsRequest{
-					CASetNamePrefix: "test name",
+					CASetNamePrefix: "test_name",
 				}).Return(&mtlstruststore.ListCASetsResponse{
 					CASets: []mtlstruststore.CASetResponse{
 						{
 							CASetID:     "12345",
-							CASetName:   "test name",
+							CASetName:   "test_name",
 							CASetStatus: "NOT_DELETED",
 						},
 					},
@@ -95,22 +95,22 @@ func TestCASetActivitiesDataSource(t *testing.T) {
 		"happy path - find by ca set name for non-unique prefix": {
 			init: func(m *mtlstruststore.Mock) {
 				m.On("ListCASets", testutils.MockContext, mtlstruststore.ListCASetsRequest{
-					CASetNamePrefix: "test name",
+					CASetNamePrefix: "test_name",
 				}).Return(&mtlstruststore.ListCASetsResponse{
 					CASets: []mtlstruststore.CASetResponse{
 						{
 							CASetID:     "01234",
-							CASetName:   "test name foo",
+							CASetName:   "test_name_foo",
 							CASetStatus: "NOT_DELETED",
 						},
 						{
 							CASetID:     "12345",
-							CASetName:   "test name",
+							CASetName:   "test_name",
 							CASetStatus: "NOT_DELETED",
 						},
 						{
 							CASetID:     "67890",
-							CASetName:   "test name bar",
+							CASetName:   "test_name_bar",
 							CASetStatus: "NOT_DELETED",
 						},
 					},
@@ -127,17 +127,17 @@ func TestCASetActivitiesDataSource(t *testing.T) {
 		"error: could not find by ca set name": {
 			init: func(m *mtlstruststore.Mock) {
 				m.On("ListCASets", testutils.MockContext, mtlstruststore.ListCASetsRequest{
-					CASetNamePrefix: "test name",
+					CASetNamePrefix: "test_name",
 				}).Return(&mtlstruststore.ListCASetsResponse{
 					CASets: []mtlstruststore.CASetResponse{
 						{
 							CASetID:     "01234",
-							CASetName:   "test name foo",
+							CASetName:   "test_name_foo",
 							CASetStatus: "NOT_DELETED",
 						},
 						{
 							CASetID:     "12345",
-							CASetName:   "test name bar",
+							CASetName:   "test_name_bar",
 							CASetStatus: "DELETED",
 						},
 					},
@@ -146,20 +146,20 @@ func TestCASetActivitiesDataSource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, testDir+"name.tf"),
-					ExpectError: regexp.MustCompile(`no CA set found with name 'test name'`),
+					ExpectError: regexp.MustCompile(`no CA set found with name 'test_name'`),
 				},
 			},
 		},
 		"error: failed to list CA sets": {
 			init: func(m *mtlstruststore.Mock) {
 				m.On("ListCASets", testutils.MockContext, mtlstruststore.ListCASetsRequest{
-					CASetNamePrefix: "test name",
+					CASetNamePrefix: "test_name",
 				}).Return(nil, fmt.Errorf("listing error")).Once()
 			},
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, testDir+"name.tf"),
-					ExpectError: regexp.MustCompile(`could not find CA Set ID for the given CA Set Name 'test name', API error:\nlisting error`),
+					ExpectError: regexp.MustCompile(`could not find CA Set ID for the given CA Set Name 'test_name', API error:\nlisting error`),
 				},
 			},
 		},
@@ -167,7 +167,7 @@ func TestCASetActivitiesDataSource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, testDir+"empty_name.tf"),
-					ExpectError: regexp.MustCompile("Attribute name string length must be at least 1, got: 0"),
+					ExpectError: regexp.MustCompile("Attribute name string length must be between 3 and 64, got: 0"),
 				},
 			},
 		},

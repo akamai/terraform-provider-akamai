@@ -103,16 +103,15 @@ func (r *caSetResource) Schema(ctx context.Context, _ resource.SchemaRequest, re
 				Required:    true,
 				Description: "The name of the CA set.",
 				Validators: []validator.String{
-					stringvalidator.RegexMatches(regexp.MustCompile(`\S{3,}`), "must not be empty or only whitespace"),
-					stringvalidator.LengthAtMost(64),
-					stringvalidator.RegexMatches(regexp.MustCompile(mtlstruststore.CASetNamePattern), "allowed characters are alphanumerics (a-z, A-Z, 0-9), underscore (_), hyphen (-), percent (%) and period (.)"),
+					stringvalidator.LengthBetween(3, 64),
+					stringvalidator.RegexMatches(mtlstruststore.CASetNameRegex, mtlstruststore.CASetNameDescription),
 				},
 				PlanModifiers: []planmodifier.String{modifiers.PreventStringUpdate()},
 			},
 			"description": schema.StringAttribute{
 				Optional:   true,
 				Computed:   true,
-				Validators: []validator.String{stringvalidator.LengthAtMost(255)},
+				Validators: []validator.String{stringvalidator.LengthBetween(1, 255)},
 				PlanModifiers: []planmodifier.String{
 					modifiers.PreventStringUpdate(),
 				},
@@ -172,7 +171,7 @@ func (r *caSetResource) Schema(ctx context.Context, _ resource.SchemaRequest, re
 				Optional: true,
 				Computed: true,
 				Validators: []validator.String{
-					stringvalidator.LengthAtMost(255),
+					stringvalidator.LengthBetween(1, 255),
 				},
 				Default:     nullstringdefault.NullString(),
 				Description: "Additional description for the CA set version.",
@@ -426,7 +425,18 @@ func (r *caSetResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanR
 				"enrollments": len(associationsResponse.Associations.Enrollments),
 				"properties":  len(associationsResponse.Associations.Properties),
 			})
-			resp.Diagnostics.AddWarning("CA set is in use and cannot be deleted", getAssociationDetails(associationsResponse))
+			resp.Diagnostics.AddWarning(
+				"CA set has active associations",
+				fmt.Sprintf(`CA set %s is still associated.
+If those associations will be removed in the same terraform apply,
+this warning can be safely ignored.
+
+Details:
+%s`,
+					state.ID.ValueString(),
+					getAssociationDetails(associationsResponse),
+				),
+			)
 			return
 		}
 	}
@@ -499,6 +509,9 @@ func (r *caSetResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanR
 			plan.LatestVersion = state.LatestVersion
 			plan.VersionCreatedBy = state.VersionCreatedBy
 			plan.VersionCreatedDate = state.VersionCreatedDate
+		} else if state.LatestVersion.ValueInt64() >= 100 {
+			resp.Diagnostics.AddError("Cannot update CA set", "Cannot create more than 100 versions for a CA Set.")
+			return
 		}
 
 		// If the content has not changed at all, the modification metadata will not change as well.

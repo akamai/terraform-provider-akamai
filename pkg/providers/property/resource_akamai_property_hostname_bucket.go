@@ -178,7 +178,7 @@ const (
 	// maxHostnamesNumber is the maximum amount of hostnames that can be configured for a hostname bucket.
 	maxHostnamesNumber int = 99999
 	// activationTimeout is the default timeout value for the hostname activation.
-	activationTimeout int64 = 50
+	activationTimeout int64 = 120
 )
 
 // NewHostnameBucketResource returns new property hostname bucket resource.
@@ -281,8 +281,8 @@ func (h *HostnameBucketResource) Schema(_ context.Context, _ resource.SchemaRequ
 				Optional: true,
 				Computed: true,
 				Default:  int64default.StaticInt64(activationTimeout),
-				Description: "The timeout value in minutes after which a single hostname activation will be canceled. " +
-					"Defaults to 50 minutes.",
+				Description: fmt.Sprintf("The timeout value in minutes after which a single hostname activation "+
+					"will be canceled. Defaults to %d minutes.", activationTimeout),
 			},
 			"id": schema.StringAttribute{
 				Computed: true,
@@ -731,7 +731,7 @@ func (h *HostnameBucketResource) ImportState(ctx context.Context, req resource.I
 		NotifyEmails:         types.ListUnknown(types.StringType),
 		ID:                   types.StringValue(fmt.Sprintf("%s:%s", prpID, net)),
 		Hostnames:            types.MapNull(hostnameObjectType),
-		TimeoutForActivation: types.Int64Value(50),
+		TimeoutForActivation: types.Int64Value(activationTimeout),
 		PendingDefaultCerts:  types.Int64Unknown(),
 	}
 	if ctrID != "" && grpID != "" {

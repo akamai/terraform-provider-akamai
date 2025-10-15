@@ -1,6 +1,6 @@
 # testing and custom build code
 .terraform/*
-!pkg/providers/property/testdata/TestDSRulesTemplate/.terraform/*
+/pkg/providers/**/test_tmp/**
 
 .build/
 terraform-provider-akamai

@@ -20,6 +20,8 @@ import (
 
 // HashiAcc is Hack for Hashicorp Acceptance Tests
 var HashiAcc = false
+var sleepInterval = 5 * time.Second
+var defaultInterval = 5 * time.Second
 
 const domainMapAlreadyExistsError = "Domain with provided `name` already exists. Please import specific domain using following command: terraform import akamai_gtm_domain.<your_resource_name> \"%s\""
 
@@ -525,7 +527,6 @@ func resourceGTMv1DomainDelete(ctx context.Context, d *schema.ResourceData, m in
 func waitForDeletion(ctx context.Context, requestID string, meta meta.Meta) (*gtm.DeleteDomainsStatusResponse, error) {
 	logger := meta.Log("Akamai GTM", "waitForDeletion")
 
-	const sleepInterval = 5 * time.Second
 	const timeoutDuration = 300 * time.Second
 
 	ctx, cancel := context.WithTimeout(ctx, timeoutDuration)
@@ -921,7 +922,6 @@ func waitForCompletion(ctx context.Context, domain string, m interface{}) (bool,
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTMv1", "waitForCompletion")
 
-	var defaultInterval = 5 * time.Second
 	var defaultTimeout = 300 * time.Second
 	var sleepInterval = defaultInterval // seconds. TODO:Should be configurable by user ...
 	var sleepTimeout = defaultTimeout   // seconds. TODO: Should be configurable by user ...

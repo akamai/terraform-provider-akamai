@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/gtm"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
@@ -22,6 +23,8 @@ const (
 
 func TestResGTMProperty(t *testing.T) {
 	const propertyResourceName = "akamai_gtm_property.tfexample_prop_1"
+	retryInterval = 10 * time.Millisecond
+
 	tests := map[string]struct {
 		property *gtm.Property
 		init     func(*gtm.Mock)

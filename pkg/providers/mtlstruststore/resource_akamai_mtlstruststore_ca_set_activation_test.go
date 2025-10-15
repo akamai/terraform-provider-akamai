@@ -244,6 +244,39 @@ func TestCASetActivationResource(t *testing.T) {
 				},
 			},
 		},
+		// Terraform warnings cannot be tested using unit tests. However, in the full workflow here, deactivation is not triggered.
+		"delete ca set activation - CA set version was deactivated outside terraform": {
+			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
+				// create.
+				mockGetCASetVersion(m, resourceData).Once()
+				mockListCASetActivations(m, resourceData, true).Once()
+				mockActivateCASetVersion(m, resourceData, 1, "STAGING")
+				mockGetCASetVersionActivation(m, resourceData, 1, "COMPLETE", "ACTIVATE", 1)
+
+				// read.
+				resourceData.stagingStatus = "ACTIVE"
+				mockGetCASet(m, resourceData).Once()
+				mockListCASetVersionActivations(m, resourceData, true).Once()
+				mockGetCASetVersion(m, resourceData).Once()
+				mockListCASetAssociations(m, resourceData).Once()
+
+				// delete.
+				mockListCASetActivations(m, resourceData, true).Once()
+				m.On("DeactivateCASetVersion", testutils.MockContext, mtlstruststore.DeactivateCASetVersionRequest{
+					CASetID: resourceData.caSetID,
+					Version: resourceData.version,
+					Network: mtlstruststore.ActivationNetworkStaging,
+				}).Return(nil, mtlstruststore.ErrCASetVersionNotActiveOnNetworkCannotBeDeactivated).Once()
+			},
+			mockData: createActivationData,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCASetActivation/create.tf"),
+					Check: test.NewStateChecker("akamai_mtlstruststore_ca_set_activation.test").
+						CheckEqual("ca_set_id", "12345").Build(),
+				},
+			},
+		},
 		"create ca set activation - error - CA set not found": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
 				m.On("GetCASetVersion", testutils.MockContext, mtlstruststore.GetCASetVersionRequest{
@@ -701,9 +734,9 @@ func TestCASetActivationResource(t *testing.T) {
 						CheckEqual("version", "1").
 						CheckEqual("network", "STAGING").
 						CheckEqual("created_by", "user1").
-						CheckEqual("timeouts.create", "2m").
-						CheckEqual("timeouts.update", "2m").
-						CheckEqual("timeouts.delete", "1m").
+						CheckEqual("timeouts.create", "200ms").
+						CheckEqual("timeouts.update", "200ms").
+						CheckEqual("timeouts.delete", "100ms").
 						CheckEqual("modified_by", "user2").Build(),
 				},
 				{

@@ -651,7 +651,7 @@ resource "akamai_mtlskeystore_client_certificate_upload" "client_certificate_upl
 		},
 	}
 	pollingInterval = 1 * time.Millisecond
-	defaultTimeout = 5 * time.Second
+	defaultTimeout = 50 * time.Millisecond
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()

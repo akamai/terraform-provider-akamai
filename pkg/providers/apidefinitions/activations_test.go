@@ -3,12 +3,14 @@ package apidefinitions
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/apidefinitions"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestStartActivation_shouldRetry(t *testing.T) {
+	activationRetry = time.Millisecond * 10
 	mock := &apidefinitions.Mock{}
 	client = mock
 	mockActivateVersionFail(mock)
@@ -23,6 +25,7 @@ func TestStartActivation_shouldRetry(t *testing.T) {
 }
 
 func TestStartDeactivation_shouldRetry(t *testing.T) {
+	activationRetry = time.Millisecond * 10
 	mock := &apidefinitions.Mock{}
 	client = mock
 	mockDeactivateVersionFail(mock)

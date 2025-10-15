@@ -13,7 +13,6 @@ resource "akamai_mtlstruststore_ca_set" "test" {
 MIIDXTCCAkWgAwIBAgIJALa6Rz1u5z2OMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV
 -----END CERTIFICATE-----
 EOT
-      description     = "Test certificate"
     }
   ]
 }

@@ -435,6 +435,22 @@ func TestCASetResource(t *testing.T) {
 				},
 			},
 		},
+		"expect error - create a ca set with empty description": {
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResCASet/create_empty_description.tf"),
+					ExpectError: regexp.MustCompile("description string length must be between 1 and 255, got: 0"),
+				},
+			},
+		},
+		"expect error - create a ca set with empty version description": {
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResCASet/create_empty_version_description.tf"),
+					ExpectError: regexp.MustCompile("version_description string length must be between 1 and 255, got: 0"),
+				},
+			},
+		},
 		"expect error - create a ca set, first attempt to delete failed, there is no retry logic": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
 				mockValidateCertificates(m, resourceData, nil).Times(5)
@@ -901,6 +917,113 @@ func TestCASetResource(t *testing.T) {
 				},
 			},
 		},
+		"expect error - update an activated ca set on staging when there are already 100 versions": {
+			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
+				// create.
+				mockValidateCertificates(m, resourceData, nil).Times(5)
+				mockCreateCASet(m, resourceData).Times(1)
+				mockCreateCASetVersion(m, resourceData).Times(1)
+				mockGetCASet(m, resourceData).Times(1)
+				// read.
+				mockGetCASet(m, resourceData).Times(1)
+				mockGetCASetVersion(m, resourceData).Times(1)
+				mockListCASetActivations(m, resourceData, true).Times(3)
+
+				// update right to version 100.
+				var currentVersion int64 = 1
+				var newVersion int64 = 100
+				updateData := resourceData
+				updateData.version = currentVersion
+				updateData.stagingVersion = ptr.To(currentVersion)
+				updateData.stagingStatus = "ACTIVE"
+				mockGetCASet(m, updateData).Times(1)
+				mockGetCASetVersion(m, updateData).Times(1)
+				updateData.certificates = slices.Insert(updateData.certificates, 0, mtlstruststore.CertificateResponse{
+					CertificatePEM: "-----BEGIN CERTIFICATE-----\nFOO\n-----END CERTIFICATE-----\n",
+					Description:    ptr.To("second cert"),
+				})
+				updateData.versionDescription = ptr.To("Second version for testing")
+				mockValidateCertificates(m, updateData, nil).Times(5)
+				updateData.newVersion = newVersion
+				mockCloneCASetVersion(m, updateData).Times(1)
+				updateData.version = newVersion
+				mockUpdateCASetVersion(m, updateData).Times(1)
+				// read.
+				mockGetCASet(m, updateData).Times(1)
+				mockGetCASetVersion(m, updateData).Times(1)
+				mockListCASetActivations(m, resourceData, true).Times(4)
+
+				// try to update again - expect error now.
+				currentVersion = 100
+				updateData2 := resourceData
+				updateData2.version = currentVersion
+				updateData2.stagingVersion = ptr.To(currentVersion)
+				updateData2.stagingStatus = "ACTIVE"
+				mockListCASetActivations(m, updateData2, true).Times(1)
+				mockGetCASet(m, updateData2).Times(1)
+				mockGetCASetVersion(m, updateData2).Times(1)
+				updateData2.allowInsecureSHA1 = true
+				mockValidateCertificates(m, updateData2, nil).Times(1)
+
+				// delete.
+				mockListCASetAssociations(m, updateData2).Times(2)
+				mockGetCASet(m, updateData2).Once()
+				mockDeleteCASet(m, updateData2).Times(1)
+				mockGetCASetDeletionStatus(m, updateData2, "IN_PROGRESS", "IN_PROGRESS", "COMPLETED").Times(1)
+				mockGetCASetDeletionStatus(m, updateData2, "COMPLETE", "COMPLETE", "COMPLETE").Times(1)
+			},
+			mockData: createData,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/create.tf"),
+					Check:  check.Build(),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/update.tf"),
+					Check: baseCheck.
+						CheckEqual("version_description", "Second version for testing").
+						CheckEqual("version_modified_by", "someone").
+						CheckEqual("version_modified_date", "2025-04-18T12:18:34Z").
+						CheckEqual("certificates.#", "2").
+						CheckEqual("certificates.0.certificate_pem", "-----BEGIN CERTIFICATE-----\nFOO\n-----END CERTIFICATE-----\n").
+						CheckEqual("certificates.0.description", "second cert").
+						CheckEqual("certificates.1.certificate_pem", "-----BEGIN CERTIFICATE-----\nMIIDXTCCAkWgAwIBAgIJALa6Rz1u5z2OMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV\n-----END CERTIFICATE-----\n").
+						CheckEqual("certificates.1.description", "Test certificate").
+						CheckEqual("certificates.1.created_by", "johndoe").
+						CheckEqual("certificates.1.created_date", "2025-04-16T16:01:02.555444Z").
+						CheckEqual("certificates.1.end_date", "2026-04-16T16:01:02.555444Z").
+						CheckEqual("certificates.1.fingerprint", "1234567890abcdef1234567890abcdef").
+						CheckEqual("certificates.1.issuer", "CN=Dummy CA").
+						CheckEqual("certificates.1.serial_number", "987654321fedcba987654321fedcba").
+						CheckEqual("certificates.1.signature_algorithm", "SHA256WITHRSA").
+						CheckEqual("certificates.1.start_date", "2025-04-17T16:01:02.555444Z").
+						CheckEqual("certificates.1.subject", "CN=Dummy CA test").
+						CheckEqual("latest_version", "100").
+						CheckEqual("staging_version", "1").
+						CheckMissing("production_version").
+						CheckEqual("timeouts.delete", "5m").
+						Build(),
+					ConfigPlanChecks: resource.ConfigPlanChecks{
+						PreApply: []plancheck.PlanCheck{
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("timeouts").AtMapKey("delete"), knownvalue.StringExact("5m")),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("staging_version"), knownvalue.Int64Exact(1)),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("production_version"), knownvalue.Null()),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("description"), knownvalue.StringExact("Test CA Set for validation")),
+							plancheck.ExpectKnownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_description"), knownvalue.StringExact("Second version for testing")),
+							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("latest_version")),
+							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_created_by")),
+							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_created_date")),
+							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_modified_by")),
+							plancheck.ExpectUnknownValue("akamai_mtlstruststore_ca_set.test", tfjsonpath.New("version_modified_date")),
+						},
+					},
+				},
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResCASet/update_allow_insecure_sha1.tf"),
+					ExpectError: regexp.MustCompile("Cannot create more than 100 versions for a CA Set."),
+				},
+			},
+		},
 		"update a non activated ca set": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
 				// create.
@@ -1184,9 +1307,13 @@ func TestCASetResource(t *testing.T) {
 		// This case tests whether unknown config value for `description` and `version description`.
 		// is properly set to null in both create and update phases.
 		"update a non activated ca set with no description and version description, changing only allow_insecure_sha1": {
-			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
+			init: func(m *mtlstruststore.Mock, resourceDataIn commonDataForResource) {
+				resourceData := resourceDataIn
 				resourceData.description = nil
 				resourceData.versionDescription = nil
+				certs := append([]mtlstruststore.CertificateResponse(nil), resourceData.certificates...)
+				certs[0].Description = nil
+				resourceData.certificates = certs
 				// create.
 				mockValidateCertificates(m, resourceData, nil).Times(5)
 				mockCreateCASet(m, resourceData).Times(1)
@@ -1218,10 +1345,11 @@ func TestCASetResource(t *testing.T) {
 			mockData: createData,
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/create_no_descriptions.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCASet/create_no_all_descriptions.tf"),
 					Check: check.
 						CheckMissing("description").
 						CheckMissing("version_description").
+						CheckMissing("certificates.0.description").
 						Build(),
 					ConfigPlanChecks: resource.ConfigPlanChecks{
 						PreApply: []plancheck.PlanCheck{
@@ -1235,6 +1363,7 @@ func TestCASetResource(t *testing.T) {
 					Check: check.
 						CheckMissing("description").
 						CheckMissing("version_description").
+						CheckMissing("certificates.0.description").
 						CheckEqual("allow_insecure_sha1", "true").
 						CheckEqual("version_modified_by", "someone").
 						CheckEqual("version_modified_date", "2025-04-18T12:18:34Z").

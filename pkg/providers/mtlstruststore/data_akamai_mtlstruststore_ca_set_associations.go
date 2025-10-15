@@ -3,7 +3,6 @@ package mtlstruststore
 import (
 	"context"
 	"fmt"
-	"regexp"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/mtlstruststore"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
@@ -28,10 +27,11 @@ type (
 	}
 
 	caSetAssociationsModel struct {
-		ID          types.String                 `tfsdk:"id"`
-		Name        types.String                 `tfsdk:"name"`
-		Properties  []propertyAssociationModel   `tfsdk:"properties"`
-		Enrollments []enrollmentAssociationModel `tfsdk:"enrollments"`
+		ID              types.String                 `tfsdk:"id"`
+		Name            types.String                 `tfsdk:"name"`
+		AssociationType types.String                 `tfsdk:"association_type"`
+		Properties      []propertyAssociationModel   `tfsdk:"properties"`
+		Enrollments     []enrollmentAssociationModel `tfsdk:"enrollments"`
 	}
 
 	propertyAssociationModel struct {
@@ -102,7 +102,17 @@ func (d *caSetAssociationsDataSource) Schema(_ context.Context, _ datasource.Sch
 				Computed:    true,
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(path.MatchRoot("id"), path.MatchRoot("name")),
-					stringvalidator.RegexMatches(regexp.MustCompile(`\S{3,}`), "must not be empty or only whitespace"),
+					stringvalidator.LengthBetween(3, 64),
+					stringvalidator.RegexMatches(mtlstruststore.CASetNameRegex, mtlstruststore.CASetNameDescription),
+				},
+			},
+			"association_type": schema.StringAttribute{
+				Description: "Type of associations to retrieve. Possible values are 'enrollments' or 'properties'. If not specified, both types of associations are returned.",
+				Optional:    true,
+				Validators: []validator.String{
+					stringvalidator.OneOf(
+						string(mtlstruststore.AssociationTypeEnrollments),
+						string(mtlstruststore.AssociationTypeProperties)),
 				},
 			},
 			"properties": schema.ListNestedAttribute{
@@ -206,7 +216,10 @@ func (d *caSetAssociationsDataSource) Read(ctx context.Context, req datasource.R
 		data.Name = types.StringValue(caSet.CASetName)
 	}
 
-	associations, err := client.ListCASetAssociations(ctx, mtlstruststore.ListCASetAssociationsRequest{CASetID: data.ID.ValueString()})
+	associations, err := client.ListCASetAssociations(ctx, mtlstruststore.ListCASetAssociationsRequest{
+		CASetID:         data.ID.ValueString(),
+		AssociationType: mtlstruststore.AssociationType(data.AssociationType.ValueString()),
+	})
 	if err != nil {
 		resp.Diagnostics.AddError("Error fetching CA set associations", err.Error())
 		return

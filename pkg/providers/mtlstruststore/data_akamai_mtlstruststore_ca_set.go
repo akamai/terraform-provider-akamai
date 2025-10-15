@@ -3,7 +3,6 @@ package mtlstruststore
 import (
 	"context"
 	"fmt"
-	"regexp"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/mtlstruststore"
 	"github.com/akamai/terraform-provider-akamai/v9/internal/customtypes"
@@ -96,7 +95,8 @@ func (d *caSetDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, 
 				Computed:    true,
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(path.MatchRoot("id"), path.MatchRoot("name")),
-					stringvalidator.RegexMatches(regexp.MustCompile(`\S{3,}`), "must not be empty or only whitespace"),
+					stringvalidator.LengthBetween(3, 64),
+					stringvalidator.RegexMatches(mtlstruststore.CASetNameRegex, mtlstruststore.CASetNameDescription),
 				},
 			},
 			"version": schema.Int64Attribute{

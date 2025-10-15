@@ -1646,7 +1646,7 @@ func getBehaviorsSchemaV20230920() map[string]*schema.Schema {
 		"cache_error": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Caches the origin's error responses to decrease server load. Applies for 10 seconds by default to the following HTTP codes: `204`, `305`, `404`, `405`, `501`, `502`, `503`, `504`, and `505`. This behavior can be used in includes.",
+			Description: "With the `caching` behavior also enabled, this caches the origin's error responses to decrease server load. It applies for 10 seconds by default to the following HTTP codes: `204`, `305`, `404`, `405`, `501`, `502`, `503`, `504`, and `505`. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -7705,7 +7705,7 @@ func getBehaviorsSchemaV20230920() map[string]*schema.Schema {
 		"media_acceleration_quic_optout": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "When enabled, disables use of QUIC protocol for this set of accelerated media content. This behavior cannot be used in includes.",
+			Description: "This behavior is deprecated. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -10850,7 +10850,7 @@ func getBehaviorsSchemaV20230920() map[string]*schema.Schema {
 		"quic_beta": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "For a share of responses, includes an `Alt-Svc` header for compatible clients to initiate subsequent sessions using the QUIC protocol. This behavior cannot be used in includes.",
+			Description: "This behavior is deprecated. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -13210,17 +13210,17 @@ func getBehaviorsSchemaV20230920() map[string]*schema.Schema {
 					},
 					"referrer": {
 						Optional:    true,
-						Description: "Sets subcustomers' referrer whitelists or blacklist.",
+						Description: "Sets subcustomers' referrer allowlists or blocklists.",
 						Type:        schema.TypeBool,
 					},
 					"ip": {
 						Optional:    true,
-						Description: "Sets subcustomers' IP whitelists or blacklists.",
+						Description: "Sets subcustomers' IP allowlists or blocklists.",
 						Type:        schema.TypeBool,
 					},
 					"geo_location": {
 						Optional:    true,
-						Description: "Sets subcustomers' location-based whitelists or blacklists.",
+						Description: "Sets subcustomers' location-based allowlists or blocklists.",
 						Type:        schema.TypeBool,
 					},
 					"refresh_content": {

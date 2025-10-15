@@ -13,7 +13,7 @@ import (
 )
 
 func TestResDNSZone(t *testing.T) {
-	zone := &dns.GetZoneResponse{
+	zone := dns.GetZoneResponse{
 		ContractID:      "ctr1",
 		Zone:            "primaryexampleterraform.io",
 		Type:            "primary",
@@ -22,7 +22,7 @@ func TestResDNSZone(t *testing.T) {
 		ActivationState: "PENDING",
 	}
 
-	upperCaseZone := &dns.GetZoneResponse{
+	upperCaseZone := dns.GetZoneResponse{
 		ContractID:      "ctr1",
 		Zone:            "PRIMARYEXAMPLETERRAFORM.io",
 		Type:            "primary",
@@ -30,7 +30,8 @@ func TestResDNSZone(t *testing.T) {
 		SignAndServe:    false,
 		ActivationState: "PENDING",
 	}
-	secondaryZone := &dns.GetZoneResponse{
+
+	secondaryZone := dns.GetZoneResponse{
 		ContractID:      "ctr1",
 		Zone:            "secondaryexampleterraform.io",
 		Type:            "secondary",
@@ -130,19 +131,22 @@ func TestResDNSZone(t *testing.T) {
 			mock.AnythingOfType("dns.ListGroupRequest"),
 		).Return(groupListResponse, nil)
 
-		getCall := client.On("GetZone",
+		client.On("GetZone",
 			testutils.MockContext,
 			mock.AnythingOfType("dns.GetZoneRequest"),
 		).Return(nil, &dns.Error{
 			StatusCode: http.StatusNotFound,
-		})
+		}).Once()
 
 		client.On("CreateZone",
 			testutils.MockContext,
 			mock.AnythingOfType("dns.CreateZoneRequest"),
-		).Return(nil).Run(func(_ mock.Arguments) {
-			getCall.ReturnArguments = mock.Arguments{zone, nil}
-		})
+		).Return(nil)
+
+		client.On("GetZone",
+			testutils.MockContext,
+			mock.AnythingOfType("dns.GetZoneRequest"),
+		).Return(&zone, nil)
 
 		client.On("SaveChangeList",
 			testutils.MockContext,
@@ -243,22 +247,24 @@ func TestResDNSZone(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 	t.Run("error - failed to submit bulk delete zone", func(t *testing.T) {
-
 		client := &dns.Mock{}
 
-		getCall := client.On("GetZone",
+		client.On("GetZone",
 			testutils.MockContext,
 			mock.AnythingOfType("dns.GetZoneRequest"),
 		).Return(nil, &dns.Error{
 			StatusCode: http.StatusNotFound,
-		})
+		}).Once()
 
 		client.On("CreateZone",
 			testutils.MockContext,
 			mock.AnythingOfType("dns.CreateZoneRequest"),
-		).Return(nil).Run(func(_ mock.Arguments) {
-			getCall.ReturnArguments = mock.Arguments{zone, nil}
-		})
+		).Return(nil)
+
+		client.On("GetZone",
+			testutils.MockContext,
+			mock.AnythingOfType("dns.GetZoneRequest"),
+		).Return(&zone, nil)
 
 		client.On("SaveChangeList",
 			testutils.MockContext,
@@ -331,19 +337,22 @@ func TestResDNSZone(t *testing.T) {
 	t.Run("error - delete status failed", func(t *testing.T) {
 		client := &dns.Mock{}
 
-		getCall := client.On("GetZone",
+		client.On("GetZone",
 			testutils.MockContext,
 			mock.AnythingOfType("dns.GetZoneRequest"),
 		).Return(nil, &dns.Error{
 			StatusCode: http.StatusNotFound,
-		})
+		}).Once()
 
 		client.On("CreateZone",
 			testutils.MockContext,
 			mock.AnythingOfType("dns.CreateZoneRequest"),
-		).Return(nil).Run(func(_ mock.Arguments) {
-			getCall.ReturnArguments = mock.Arguments{zone, nil}
-		})
+		).Return(nil)
+
+		client.On("GetZone",
+			testutils.MockContext,
+			mock.AnythingOfType("dns.GetZoneRequest"),
+		).Return(&zone, nil)
 
 		client.On("SaveChangeList",
 			testutils.MockContext,
@@ -412,19 +421,22 @@ func TestResDNSZone(t *testing.T) {
 	t.Run("error - delete result failed", func(t *testing.T) {
 		client := &dns.Mock{}
 
-		getCall := client.On("GetZone",
+		client.On("GetZone",
 			testutils.MockContext,
 			mock.AnythingOfType("dns.GetZoneRequest"),
 		).Return(nil, &dns.Error{
 			StatusCode: http.StatusNotFound,
-		})
+		}).Once()
 
 		client.On("CreateZone",
 			testutils.MockContext,
 			mock.AnythingOfType("dns.CreateZoneRequest"),
-		).Return(nil).Run(func(_ mock.Arguments) {
-			getCall.ReturnArguments = mock.Arguments{zone, nil}
-		})
+		).Return(nil)
+
+		client.On("GetZone",
+			testutils.MockContext,
+			mock.AnythingOfType("dns.GetZoneRequest"),
+		).Return(&zone, nil)
 
 		client.On("SaveChangeList",
 			testutils.MockContext,
@@ -492,19 +504,22 @@ func TestResDNSZone(t *testing.T) {
 	t.Run("lifecycle test with delete upper case zone", func(t *testing.T) {
 		client := &dns.Mock{}
 
-		getCall := client.On("GetZone",
+		client.On("GetZone",
 			testutils.MockContext,
 			mock.AnythingOfType("dns.GetZoneRequest"),
 		).Return(nil, &dns.Error{
 			StatusCode: http.StatusNotFound,
-		})
+		}).Once()
 
 		client.On("CreateZone",
 			testutils.MockContext,
 			mock.AnythingOfType("dns.CreateZoneRequest"),
-		).Return(nil).Run(func(_ mock.Arguments) {
-			getCall.ReturnArguments = mock.Arguments{upperCaseZone, nil}
-		})
+		).Return(nil)
+
+		client.On("GetZone",
+			testutils.MockContext,
+			mock.AnythingOfType("dns.GetZoneRequest"),
+		).Return(&upperCaseZone, nil)
 
 		client.On("SaveChangeList",
 			testutils.MockContext,
@@ -563,19 +578,23 @@ func TestResDNSZone(t *testing.T) {
 	t.Run("lifecycle test with group", func(t *testing.T) {
 		client := &dns.Mock{}
 
-		getCall := client.On("GetZone",
+		zone := zone
+		client.On("GetZone",
 			testutils.MockContext,
 			mock.AnythingOfType("dns.GetZoneRequest"),
 		).Return(nil, &dns.Error{
 			StatusCode: http.StatusNotFound,
-		})
+		}).Times(1)
 
 		client.On("CreateZone",
 			testutils.MockContext,
 			mock.AnythingOfType("dns.CreateZoneRequest"),
-		).Return(nil).Run(func(_ mock.Arguments) {
-			getCall.ReturnArguments = mock.Arguments{zone, nil}
-		})
+		).Return(nil)
+
+		client.On("GetZone",
+			testutils.MockContext,
+			mock.AnythingOfType("dns.GetZoneRequest"),
+		).Return(&zone, nil)
 
 		client.On("UpdateZone",
 			testutils.MockContext,
@@ -647,7 +666,7 @@ func TestResDNSZone(t *testing.T) {
 	t.Run("lifecycle test with group and secondary type", func(t *testing.T) {
 		client := &dns.Mock{}
 
-		getCall := client.On("GetZone",
+		client.On("GetZone",
 			testutils.MockContext,
 			mock.AnythingOfType("dns.GetZoneRequest"),
 		).Return(nil, &dns.Error{
@@ -685,14 +704,12 @@ func TestResDNSZone(t *testing.T) {
 				},
 				ClearConn: []bool{true},
 			},
-		).Return(nil).Run(func(_ mock.Arguments) {
-			getCall.ReturnArguments = mock.Arguments{secondaryZone, nil}
-		})
+		).Return(nil)
 
 		client.On("GetZone",
 			testutils.MockContext,
 			mock.AnythingOfType("dns.GetZoneRequest"),
-		).Return(secondaryZone, nil).Times(4)
+		).Return(&secondaryZone, nil).Times(4)
 
 		client.On("UpdateZone",
 			testutils.MockContext,
@@ -704,7 +721,7 @@ func TestResDNSZone(t *testing.T) {
 		client.On("GetZone",
 			testutils.MockContext,
 			mock.AnythingOfType("dns.GetZoneRequest"),
-		).Return(secondaryZone, nil).Times(3)
+		).Return(&secondaryZone, nil).Times(3)
 
 		resourceName := "akamai_dns_zone.secondary_test_zone"
 

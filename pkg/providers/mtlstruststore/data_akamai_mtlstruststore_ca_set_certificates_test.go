@@ -520,7 +520,7 @@ func TestCASetCertificatesDataSource(t *testing.T) {
 						  version = 1
                           name = ""
 						}`,
-					ExpectError: regexp.MustCompile(`Attribute name must not be empty or only whitespace`),
+					ExpectError: regexp.MustCompile(`Attribute name string length must be between 3 and 64, got: 0`),
 				},
 			},
 		},
