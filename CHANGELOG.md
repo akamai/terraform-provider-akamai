@@ -18,7 +18,7 @@
 * Cloud Access
   * Added support for the new authentication method, Akamai Object Storage (`AOS4_HMAC_SHA256`), in the `akamai_cloudaccess_key` resource.
 
-* mTLS Keystore:
+* mTLS Keystore (Beta):
   * Added support for the `preferred_ca` in the `akamai_mtlskeystore_client_certificate_akamai` resource.
   * Added support for the manual rotation of client certificates in the `akamai_mtlskeystore_client_certificate_akamai` resource.
 
@@ -123,7 +123,7 @@
 * CPS
   * Increased default timeout for `akamai_cps_third_party_enrollment` and `akamai_cps_dv_enrollment` resources from 20 minutes to 1 hour to avoid erroring out during deletion. It is not recommended to use timeout values lower than 1 hour.
 
-* mTLS Keystore:
+* mTLS Keystore (Beta):
   * Added the `created_by` and `created_date` fields to the `akamai_mtlskeystore_client_certificate_third_party` resource.
 
 * [IMPORTANT] mTLS Truststore (Beta):
