@@ -37,39 +37,6 @@ type (
 		ValidationCompletedDate types.String              `tfsdk:"validation_completed_date"`
 		ValidationChallenge     *validationChallengeModel `tfsdk:"validation_challenge"`
 	}
-
-	validationChallengeModel struct {
-		CNAMERecord    CNAMERecord   `tfsdk:"cname_record"`
-		TXTRecord      TXTRecord     `tfsdk:"txt_record"`
-		HTTPFile       *HTTPFile     `tfsdk:"http_file"`
-		HTTPRedirect   *HTTPRedirect `tfsdk:"http_redirect"`
-		ExpirationDate types.String  `tfsdk:"expiration_date"`
-	}
-
-	// CNAMERecord represents a CNAME record for domain validation CNAMERecord
-	CNAMERecord struct {
-		Name   types.String `tfsdk:"name"`
-		Target types.String `tfsdk:"target"`
-	}
-
-	// TXTRecord represents a TXT record for domain validation TXTRecord.
-	TXTRecord struct {
-		Name  types.String `tfsdk:"name"`
-		Value types.String `tfsdk:"value"`
-	}
-
-	// HTTPFile represents an HTTP file for domain validation HTTPFile.
-	HTTPFile struct {
-		Path        types.String `tfsdk:"path"`
-		Content     types.String `tfsdk:"content"`
-		ContentType types.String `tfsdk:"content_type"`
-	}
-
-	// HTTPRedirect represents an HTTP redirect for domain validation HTTPRedirect.
-	HTTPRedirect struct {
-		From types.String `tfsdk:"from"`
-		To   types.String `tfsdk:"to"`
-	}
 )
 
 // NewDomainOwnershipDomainsDataSource returns a new domainDataSource.

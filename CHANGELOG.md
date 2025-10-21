@@ -64,6 +64,17 @@
     * `akamai_property_domainownership_domains` - reads details for all the domains.
     
 
+    
+* Domain Ownership:
+  * Added new data sources:
+    * `akamai_property_domainownership_domain` - reads details of a given domain.
+
+
+
+
+
+
+
 * mTLS Keystore:
     * Added support for `preferred_ca` in the `akamai_mtlskeystore_client_certificate_akamai` resource.
 
