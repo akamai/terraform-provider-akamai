@@ -62,6 +62,12 @@
 
 
 
+* PAPI
+  * Fixed a bug where the Terraform Provider crashed when trying to update a property activation with empty contact ([I#707](https://github.com/akamai/terraform-provider-akamai/issues/707)).
+
+
+
+
 ## 9.1.0 (Oct 15, 2025)
 
 #### FEATURES/ENHANCEMENTS:

@@ -112,6 +112,7 @@ var akamaiPropertyActivationSchema = map[string]*schema.Schema{
 	"contact": {
 		Type:             schema.TypeSet,
 		Required:         true,
+		MinItems:         1,
 		Elem:             &schema.Schema{Type: schema.TypeString},
 		DiffSuppressFunc: suppressDiffIfNoPropertyReactivation,
 		Description:      "One or more email addresses to which to send activation status changes.",
