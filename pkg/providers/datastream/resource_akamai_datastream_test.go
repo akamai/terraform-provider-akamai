@@ -778,6 +778,58 @@ func TestResourceStreamErrors(t *testing.T) {
 			tfFile:    "testdata/TestResourceStream/errors/invalid_dataset/structured_config_midgress.tf",
 			withError: regexp.MustCompile(`dataset field 2051 \(midgress\) cannot be manually specified in dataset_fields\. Use collect_midgress = true to enable midgress data collection`),
 		},
+		"Only JSON supporting destination with STRUCTURED log format - TrafficPeak": {
+			tfFile:    "testdata/TestResourceStream/errors/invalid_log_format/trafficpeak_structured.tf",
+			withError: regexp.MustCompile(`\'trafficpeak_connector\' supports only JSON log format`),
+		},
+		"Only JSON supporting destination with STRUCTURED log format - Dynatrace": {
+			tfFile:    "testdata/TestResourceStream/errors/invalid_log_format/dynatrace_structured.tf",
+			withError: regexp.MustCompile(`\'dynatrace_connector\' supports only JSON log format`),
+		},
+		"Only JSON supporting destination with STRUCTURED log format - NewRelic": {
+			tfFile:    "testdata/TestResourceStream/errors/invalid_log_format/newrelic_structured.tf",
+			withError: regexp.MustCompile(`\'new_relic_connector\' supports only JSON log format`),
+		},
+		"Only JSON supporting destination with STRUCTURED log format - Elasticsearch": {
+			tfFile:    "testdata/TestResourceStream/errors/invalid_log_format/elasticsearch_structured.tf",
+			withError: regexp.MustCompile(`\'elasticsearch_connector\' supports only JSON log format`),
+		},
+		"missing required parameter in dynatrace connector": {
+			tfFile:    "testdata/TestResourceStream/errors/missing_required_argument/dynatrace_missing_parameter.tf",
+			withError: regexp.MustCompile(`The argument \"api_token\" is required, but no definition was found.`),
+		},
+		"missing required parameter in trafficpeak connector": {
+			tfFile:    "testdata/TestResourceStream/errors/missing_required_argument/trafficpeak_missing_parameter.tf",
+			withError: regexp.MustCompile(`The argument "content_type" is required, but no definition was found.`),
+		},
+		"missing required parameter in s3 compatible connector": {
+			tfFile:    "testdata/TestResourceStream/errors/missing_required_argument/s3_compatible_missing_parameter.tf",
+			withError: regexp.MustCompile(`The argument \"endpoint\" is required, but no definition was found.`),
+		},
+		"invalid custom header name format in trafficpeak": {
+			tfFile:    "testdata/TestResourceStream/errors/invalid_custom_header/invalid_custom_header_trafficpeak.tf",
+			withError: regexp.MustCompile(`Error: invalid value for custom_header_name \(custom_header_name must contain only alphanumeric characters, dashes, and underscores\)`),
+		},
+		"invalid custom header name format in dynatrace": {
+			tfFile:    "testdata/TestResourceStream/errors/invalid_custom_header/invalid_custom_header_dynatrace.tf",
+			withError: regexp.MustCompile(`Error: invalid value for custom_header_name \(custom_header_name must contain only alphanumeric characters, dashes, and underscores\)`),
+		},
+		"invalid endpoint format in dynatrace destination": {
+			tfFile:    "testdata/TestResourceStream/errors/invalid_field_format/dynatrace_invalid_endpoint.tf",
+			withError: regexp.MustCompile(`Error: invalid value for endpoint \(endpoint must be in the format https://{dynatrace-environment-id}.live.dynatrace.com/api/v2/logs/ingest\)`),
+		},
+		"invalid endpoint format in trafficpeak destination": {
+			tfFile:    "testdata/TestResourceStream/errors/invalid_field_format/trafficpeak_invalid_endpoint.tf",
+			withError: regexp.MustCompile(`Error: invalid value for endpoint \(endpoint must be in the format https://<host>/ingest/event\?table=<tablename>&token=<token>\)`),
+		},
+		"invalid content type in trafficpeak destination": {
+			tfFile:    "testdata/TestResourceStream/errors/invalid_field_format/invalid_trafficpeak_content_type.tf",
+			withError: regexp.MustCompile(`Error: expected content_type to be one of \["application/json" "application/json; charset=utf-8"\], got content_type`),
+		},
+		"invalid authentication type in trafficpeak destination": {
+			tfFile:    "testdata/TestResourceStream/errors/invalid_field_format/invalid_trafficpeak_authentication_type.tf",
+			withError: regexp.MustCompile(`Error: expected authentication_type to be one of \["BASIC"\], got NONE`),
+		},
 	}
 
 	for name, test := range tests {
@@ -2101,6 +2153,54 @@ func TestUrlSuppressor(t *testing.T) {
 	}
 }*/
 
+// getConnectorTypeName returns the connector type name based on the connector instance
+func getConnectorTypeName(connector datastream.AbstractConnector) string {
+	switch connector.(type) {
+	case *datastream.DynatraceConnector:
+		return "dynatrace_connector"
+	case *datastream.DatadogConnector:
+		return "datadog_connector"
+	case *datastream.ElasticsearchConnector:
+		return "elasticsearch_connector"
+	case *datastream.CustomHTTPSConnector:
+		return "https_connector"
+	case *datastream.LogglyConnector:
+		return "loggly_connector"
+	case *datastream.NewRelicConnector:
+		return "new_relic_connector"
+	case *datastream.SplunkConnector:
+		return "splunk_connector"
+	case *datastream.SumoLogicConnector:
+		return "sumologic_connector"
+	case *datastream.TrafficPeakConnector:
+		return "trafficpeak_connector"
+	default:
+		return ""
+	}
+}
+
+// isConnectorWithoutFilenameOptions checks if a connector type doesn't support filename options
+func isConnectorWithoutFilenameOptions(connectorType string) bool {
+	connectorsWithoutFilenameOptions := []string{
+		"datadog_connector",
+		"elasticsearch_connector",
+		"https_connector",
+		"loggly_connector",
+		"new_relic_connector",
+		"splunk_connector",
+		"sumologic_connector",
+		"trafficpeak_connector",
+		"dynatrace_connector",
+	}
+
+	for _, c := range connectorsWithoutFilenameOptions {
+		if c == connectorType {
+			return true
+		}
+	}
+	return false
+}
+
 func TestConnectors(t *testing.T) {
 	streamConfiguration := datastream.StreamConfiguration{
 		DeliveryConfiguration: datastream.DeliveryConfiguration{
@@ -2129,6 +2229,14 @@ func TestConnectors(t *testing.T) {
 	createStreamRequestFactory := func(connector datastream.AbstractConnector) datastream.CreateStreamRequest {
 		streamConfigurationWithConnector := streamConfiguration
 		streamConfigurationWithConnector.Destination = connector
+
+		// For connectors that don't support filename options, set prefix/suffix to empty
+		connectorType := getConnectorTypeName(connector)
+		if isConnectorWithoutFilenameOptions(connectorType) {
+			streamConfigurationWithConnector.DeliveryConfiguration.UploadFilePrefix = ""
+			streamConfigurationWithConnector.DeliveryConfiguration.UploadFileSuffix = ""
+		}
+
 		return datastream.CreateStreamRequest{
 			StreamConfiguration: streamConfigurationWithConnector,
 			Activate:            false,
@@ -2227,6 +2335,91 @@ func TestConnectors(t *testing.T) {
 				resource.TestCheckResourceAttr("akamai_datastream.s", "gcs_connector.0.path", "path"),
 				resource.TestCheckResourceAttr("akamai_datastream.s", "gcs_connector.0.project_id", "project_id"),
 				resource.TestCheckResourceAttr("akamai_datastream.s", "gcs_connector.0.service_account_name", "service_account_name"),
+			},
+		},
+		"dynatrace": {
+			Filename: "dynatrace.tf",
+			Connector: &datastream.DynatraceConnector{
+				Endpoint:          "https://abc.live.dynatrace.com/api/v2/logs/ingest",
+				DisplayName:       "display_name",
+				AuthToken:         "api_token",
+				CustomHeaderName:  "custom_header_name",
+				CustomHeaderValue: "custom_header_value",
+			},
+			Response: datastream.Destination{
+				DestinationType:   datastream.DestinationTypeDynatrace,
+				Endpoint:          "https://abc.live.dynatrace.com/api/v2/logs/ingest",
+				DisplayName:       "display_name",
+				CustomHeaderName:  "custom_header_name",
+				CustomHeaderValue: "custom_header_value",
+			},
+			TestChecks: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttr("akamai_datastream.s", "dynatrace_connector.#", "1"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "dynatrace_connector.0.endpoint", "https://abc.live.dynatrace.com/api/v2/logs/ingest"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "dynatrace_connector.0.api_token", "api_token"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "dynatrace_connector.0.custom_header_name", "custom_header_name"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "dynatrace_connector.0.custom_header_value", "custom_header_value"),
+			},
+		},
+		"trafficpeak": {
+			Filename: "trafficpeak.tf",
+			Connector: &datastream.TrafficPeakConnector{
+				AuthenticationType: datastream.AuthenticationTypeBasic,
+				CompressLogs:       true,
+				DisplayName:        "display_name",
+				Endpoint:           "https://demo.trafficpeak.live/ingest/event?table=ABC&token=123",
+				Password:           "password",
+				UserName:           "user_name",
+				ContentType:        "application/json",
+				CustomHeaderName:   "custom_header_name",
+				CustomHeaderValue:  "custom_header_value",
+			},
+			Response: datastream.Destination{
+				DestinationType:    datastream.DestinationTypeTrafficPeak,
+				AuthenticationType: datastream.AuthenticationTypeBasic,
+				CompressLogs:       true,
+				DisplayName:        "display_name",
+				Endpoint:           "https://demo.trafficpeak.live/ingest/event?table=ABC&token=123",
+				ContentType:        "application/json",
+				CustomHeaderName:   "custom_header_name",
+				CustomHeaderValue:  "custom_header_value",
+			},
+			TestChecks: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttr("akamai_datastream.s", "trafficpeak_connector.#", "1"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "trafficpeak_connector.0.endpoint", "https://demo.trafficpeak.live/ingest/event?table=ABC&token=123"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "trafficpeak_connector.0.user_name", "user_name"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "trafficpeak_connector.0.password", "password"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "trafficpeak_connector.0.content_type", "application/json"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "trafficpeak_connector.0.custom_header_name", "custom_header_name"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "trafficpeak_connector.0.custom_header_value", "custom_header_value"),
+			},
+		},
+		"s3_compatible": {
+			Filename: "s3_compatible.tf",
+			Connector: &datastream.S3CompatibleConnector{
+				AccessKey:       "access_key",
+				Bucket:          "bucket",
+				DisplayName:     "display_name",
+				Path:            "path",
+				Region:          "region",
+				SecretAccessKey: "secret_access_key",
+				Endpoint:        "endpoint",
+			},
+			Response: datastream.Destination{
+				DestinationType: datastream.DestinationTypeS3Compatible,
+				Bucket:          "bucket",
+				DisplayName:     "display_name",
+				Path:            "path",
+				Region:          "region",
+				Endpoint:        "endpoint",
+			},
+			TestChecks: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttr("akamai_datastream.s", "s3_compatible_connector.#", "1"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "s3_compatible_connector.0.bucket", "bucket"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "s3_compatible_connector.0.display_name", "display_name"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "s3_compatible_connector.0.path", "path"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "s3_compatible_connector.0.region", "region"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "s3_compatible_connector.0.endpoint", "endpoint"),
 			},
 		},
 	}

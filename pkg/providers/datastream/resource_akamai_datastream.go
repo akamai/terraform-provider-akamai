@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -38,6 +39,9 @@ var (
 		"s3_connector",
 		"splunk_connector",
 		"sumologic_connector",
+		"s3_compatible_connector",
+		"trafficpeak_connector",
+		"dynatrace_connector",
 	}
 
 	// ConnectorsWithoutFilenameOptionsConfig defines connectors without option to configure prefix and suffix
@@ -49,6 +53,16 @@ var (
 		"new_relic_connector",
 		"splunk_connector",
 		"sumologic_connector",
+		"trafficpeak_connector",
+		"dynatrace_connector",
+	}
+
+	// ConnectorsSupportOnlyJSONLogFormat defines connectors that support only JSON log format
+	ConnectorsSupportOnlyJSONLogFormat = []string{
+		"new_relic_connector",
+		"elasticsearch_connector",
+		"trafficpeak_connector",
+		"dynatrace_connector",
 	}
 
 	// DatastreamResourceTimeout is the default timeout for the resource operations (max activation time + polling interval)
@@ -193,7 +207,7 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 		Type:         schema.TypeSet,
 		MaxItems:     1,
 		ExactlyOneOf: ExactlyOneConnectorRule,
-		Optional:     true, //To DO it should be mandatory
+		Optional:     true,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"access_key": {
@@ -801,6 +815,176 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 					Type:        schema.TypeBool,
 					Computed:    true,
 					Description: "Indicates whether mTLS is enabled or not.",
+				},
+			},
+		},
+	},
+	"s3_compatible_connector": {
+		Type:         schema.TypeSet,
+		MaxItems:     1,
+		ExactlyOneOf: ExactlyOneConnectorRule,
+		Optional:     true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"access_key": {
+					Type:        schema.TypeString,
+					Required:    true,
+					Sensitive:   true,
+					Description: "The access key identifier of the S3-compatible object storage bucket.",
+				},
+				"bucket": {
+					Type:        schema.TypeString,
+					Required:    true,
+					Description: "The name of the S3-compatible object storage bucket.",
+				},
+				"compress_logs": {
+					Type:        schema.TypeBool,
+					Computed:    true,
+					Description: "Enables gzip compression for a log file sent to a destination. This value is always true for this destination type.",
+				},
+				"display_name": {
+					Type:        schema.TypeString,
+					Required:    true,
+					Description: "The name of the destination.",
+				},
+				"path": {
+					Type:        schema.TypeString,
+					Default:     "",
+					Optional:    true,
+					Description: "The path to the folder within your S3-compatible object storage bucket where you want to store logs. Optional field.",
+				},
+				"region": {
+					Type:        schema.TypeString,
+					Required:    true,
+					Description: "The physical storage location of your S3-compatible object storage bucket.",
+				},
+				"secret_access_key": {
+					Type:        schema.TypeString,
+					Required:    true,
+					Sensitive:   true,
+					Description: "The secret access key identifier of the S3-compatible object storage bucket.",
+				},
+				"endpoint": {
+					Type:        schema.TypeString,
+					Required:    true,
+					Description: "The scheme-qualified host of your S3-compatible object storage bucket.",
+				},
+			},
+		},
+	},
+	"trafficpeak_connector": {
+		Type:         schema.TypeSet,
+		MaxItems:     1,
+		ExactlyOneOf: ExactlyOneConnectorRule,
+		Optional:     true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"authentication_type": {
+					Type:        schema.TypeString,
+					Required:    true,
+					Description: "Only BASIC authentication is supported for TrafficPeak destination.",
+					ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{
+						string(datastream.AuthenticationTypeBasic),
+					}, false)),
+				},
+				"compress_logs": {
+					Type:        schema.TypeBool,
+					Default:     true,
+					Optional:    true,
+					Description: "Enables gzip compression for a log file sent to a destination. The value is true by default.",
+				},
+				"display_name": {
+					Type:        schema.TypeString,
+					Required:    true,
+					Description: "The destination's name.",
+				},
+				"content_type": {
+					Type:        schema.TypeString,
+					Required:    true,
+					Description: "The type of the resource passed in the request's custom header. - Supported headers: `application/json` or `application/json; charset=utf-8`.",
+					ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{
+						string(datastream.TrafficPeakContentTypeJSON),
+						string(datastream.TrafficPeakContentTypeJSONUTF8),
+					}, false)),
+				},
+				"custom_header_name": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "A human-readable name for the request's custom header, containing only alphanumeric, dash, and underscore characters. Optional field.",
+					ValidateDiagFunc: validation.ToDiagFunc(validation.StringMatch(
+						regexp.MustCompile(`^[A-Za-z0-9_-]+$`),
+						"custom_header_name must contain only alphanumeric characters, dashes, and underscores",
+					)),
+				},
+				"custom_header_value": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "The custom header's contents passed with the request that contains information about the client connection. Optional field.",
+				},
+				"password": {
+					Type:        schema.TypeString,
+					Required:    true,
+					Sensitive:   true,
+					Description: "Enter the password you set in your TrafficPeak endpoint for authentication.",
+				},
+				"endpoint": {
+					Type:        schema.TypeString,
+					Required:    true,
+					Description: "Enter the Hydrolix endpoint URL in the https://<host>/ingest/event?table=<tablename>&token=<token> format, where the token is the HTTP streaming ingest token, and the tablename is the Hydrolix data set table name.",
+					ValidateDiagFunc: validation.ToDiagFunc(validation.StringMatch(
+						regexp.MustCompile(`^https://[^/]+/ingest/event\?table=[^&]+&token=.+$`),
+						"endpoint must be in the format https://<host>/ingest/event?table=<tablename>&token=<token>",
+					)),
+				},
+				"user_name": {
+					Type:        schema.TypeString,
+					Required:    true,
+					Sensitive:   true,
+					Description: "Enter the valid username you set in your TrafficPeak endpoint for authentication.",
+				},
+			},
+		},
+	},
+	"dynatrace_connector": {
+		Type:         schema.TypeSet,
+		MaxItems:     1,
+		ExactlyOneOf: ExactlyOneConnectorRule,
+		Optional:     true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"display_name": {
+					Type:        schema.TypeString,
+					Required:    true,
+					Description: "The destination's name.",
+				},
+				"endpoint": {
+					Type:        schema.TypeString,
+					Required:    true,
+					Description: "The Dynatrace Ingestion API endpoint URL in the https://{dynatrace-environment-id}.live.dynatrace.com/api/v2/logs/ingest format.",
+					ValidateDiagFunc: validation.ToDiagFunc(validation.StringMatch(
+						regexp.MustCompile(`^https://[^/]+\.live\.dynatrace\.com/api/v2/logs/ingest$`),
+						"endpoint must be in the format https://{dynatrace-environment-id}.live.dynatrace.com/api/v2/logs/ingest",
+					)),
+				},
+				"api_token": {
+					Type:        schema.TypeString,
+					Required:    true,
+					Sensitive:   true,
+					Description: "The Dynatrace Log Ingest access token.",
+				},
+				"custom_header_name": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "A human-readable name for the request's custom header, containing only alphanumeric, dash, and underscore characters. For details, see Additional options in the DataStream user guide.",
+					ValidateDiagFunc: validation.ToDiagFunc(validation.StringMatch(
+						regexp.MustCompile(`^[A-Za-z0-9_-]+$`),
+						"custom_header_name must contain only alphanumeric characters, dashes, and underscores",
+					)),
+				},
+				"custom_header_value": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "The custom header's contents passed with the request that contains information about the client connection. For details, see Additional options in the DataStream user guide.",
 				},
 			},
 		},
@@ -1509,7 +1693,21 @@ func validateConfig(_ context.Context, d *schema.ResourceDiff, _ interface{}) er
 		}
 	}
 
-	if connectorName == "" {
+	connectorNameForLogFormatCheck := ""
+	for _, c := range ConnectorsSupportOnlyJSONLogFormat {
+		connectorResourceForLogFormatCheck, exists := d.GetOkExists(c)
+		if !exists {
+			continue
+		}
+
+		connectorSetForLogFormatCheck := connectorResourceForLogFormatCheck.(*schema.Set)
+		if connectorSetForLogFormatCheck.Len() > 0 {
+			connectorNameForLogFormatCheck = c
+			break
+		}
+	}
+
+	if connectorName == "" && connectorNameForLogFormatCheck == "" {
 		return nil
 	}
 
@@ -1526,9 +1724,14 @@ func validateConfig(_ context.Context, d *schema.ResourceDiff, _ interface{}) er
 	config := configSet.List()[0].(map[string]interface{})
 	prefixValue := config["upload_file_prefix"]
 	suffixValue := config["upload_file_suffix"]
+	logFormatValue := config["format"]
 
 	if prefixValue.(string) != DefaultUploadFilePrefix || suffixValue.(string) != DefaultUploadFileSuffix {
 		return fmt.Errorf("upload_file_prefix (%s) / upload_file_suffix (%s) cannot be used with %s", prefixValue, suffixValue, connectorName)
+	}
+
+	if connectorNameForLogFormatCheck != "" && logFormatValue != "JSON" {
+		return fmt.Errorf("'%s' supports only JSON log format", connectorNameForLogFormatCheck)
 	}
 
 	return nil
