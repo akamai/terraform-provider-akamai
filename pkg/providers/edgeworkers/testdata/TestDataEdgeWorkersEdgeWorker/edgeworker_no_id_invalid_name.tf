@@ -3,5 +3,6 @@ provider "akamai" {
 }
 
 data "akamai_edgeworker" "test" {
-  local_bundle = "test_tmp/no_edgeworker_id.tgz"
+  name         = ""
+  local_bundle = "test_tmp/TestDataEdgeWorkersEdgeWorker/bundles/no_versions.tgz"
 }

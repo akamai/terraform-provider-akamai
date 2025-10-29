@@ -39,6 +39,9 @@
 
 
 
+* Edgeworkers
+  * Added possibility to fetch an `EdgeWorker` by name ([I#679](https://github.com/akamai/terraform-provider-akamai/issues/679)).
+
 
 
 
