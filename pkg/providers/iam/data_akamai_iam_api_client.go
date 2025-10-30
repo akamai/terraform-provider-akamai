@@ -437,7 +437,7 @@ func (m *clientModel) read(ctx context.Context, res *iam.GetAPIClientResponse) d
 	apis := make([]apiClientAPIModel, 0, len(res.APIAccess.APIs))
 	for _, api := range res.APIAccess.APIs {
 		apis = append(apis, apiClientAPIModel{
-			AccessLevel:      types.StringValue(string(api.AccessLevel)),
+			AccessLevel:      types.StringValue(api.AccessLevel),
 			APIID:            types.Int64Value(api.APIID),
 			APIName:          types.StringValue(api.APIName),
 			Description:      types.StringValue(api.Description),
@@ -471,13 +471,19 @@ func (m *clientModel) read(ctx context.Context, res *iam.GetAPIClientResponse) d
 		if diags.HasError() {
 			return diags
 		}
+		cpCodeAccess := cpCodeAccessModel{
+			AllCurrentAndNewCPCodes: types.BoolValue(res.PurgeOptions.CPCodeAccess.AllCurrentAndNewCPCodes),
+			CPCodes:                 cpCodes,
+		}
+		cpCodesAccessObject, diags := types.ObjectValueFrom(ctx, cpCodeAccessType(), cpCodeAccess)
+		if diags.HasError() {
+			return diags
+		}
+
 		m.PurgeOptions = &purgeOptionsModel{
 			CanPurgeByCacheTag: types.BoolValue(res.PurgeOptions.CanPurgeByCacheTag),
 			CanPurgeByCPCode:   types.BoolValue(res.PurgeOptions.CanPurgeByCPCode),
-			CPCodeAccess: cpCodeAccessModel{
-				AllCurrentAndNewCPCodes: types.BoolValue(res.PurgeOptions.CPCodeAccess.AllCurrentAndNewCPCodes),
-				CPCodes:                 cpCodes,
-			},
+			CPCodeAccess:       cpCodesAccessObject,
 		}
 	}
 

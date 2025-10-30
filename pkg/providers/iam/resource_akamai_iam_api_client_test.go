@@ -37,6 +37,7 @@ func TestResourceAPIClient(t *testing.T) {
 		"happy path - create with all fields set": {
 			init: func(m *iam.Mock, createData, _ testData) {
 				mockListAllowedCPCodes(m).Times(4)
+				mockListAllowedAPIs(m, createData).Times(4)
 				// Create
 				mockCreateAPIClient(m, createData)
 				mockGetAPIClient(m, createData)
@@ -50,6 +51,66 @@ func TestResourceAPIClient(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/create_all.tf"),
+					Check: fullDataChecker.
+						CheckEqual("group_access.groups.0.sub_groups.#", "1").
+						CheckEqual("group_access.groups.0.sub_groups.0.group_id", "333").
+						CheckEqual("group_access.groups.0.sub_groups.0.group_name", "group2_1").
+						CheckEqual("group_access.groups.0.sub_groups.0.is_blocked", "false").
+						CheckEqual("group_access.groups.0.sub_groups.0.parent_group_id", "0").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_description", "group description").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_id", "540").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_name", "role 2").
+						Build(),
+				},
+			},
+		},
+		"happy path - create with all fields set but unknown at plan": {
+			init: func(m *iam.Mock, createData, _ testData) {
+				mockListAllowedCPCodes(m).Times(3)
+				mockListAllowedAPIs(m, createData).Times(4)
+				// Create
+				mockCreateAPIClient(m, createData)
+				mockGetAPIClient(m, createData)
+				// Read
+				mockGetAPIClient(m, createData)
+				// Delete
+				mockDeactivateCredential(m, createData)
+				mockDeleteAPIClient(m, createData)
+			},
+			createData: fullData,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/create_all_unknown.tf"),
+					Check: fullDataChecker.
+						CheckEqual("group_access.groups.0.sub_groups.#", "1").
+						CheckEqual("group_access.groups.0.sub_groups.0.group_id", "333").
+						CheckEqual("group_access.groups.0.sub_groups.0.group_name", "group2_1").
+						CheckEqual("group_access.groups.0.sub_groups.0.is_blocked", "false").
+						CheckEqual("group_access.groups.0.sub_groups.0.parent_group_id", "0").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_description", "group description").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_id", "540").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_name", "role 2").
+						Build(),
+				},
+			},
+		},
+		"happy path - create with all fields set but cp_code_access unknown at plan": {
+			init: func(m *iam.Mock, createData, _ testData) {
+				mockListAllowedCPCodes(m).Times(3)
+				mockListAllowedAPIs(m, createData).Times(4)
+				// Create
+				mockCreateAPIClient(m, createData)
+				mockGetAPIClient(m, createData)
+				// Read
+				mockGetAPIClient(m, createData)
+				// Delete
+				mockDeactivateCredential(m, createData)
+				mockDeleteAPIClient(m, createData)
+			},
+			createData: fullData,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/create_all_cp_code_access_unknown.tf"),
 					Check: fullDataChecker.
 						CheckEqual("group_access.groups.0.sub_groups.#", "1").
 						CheckEqual("group_access.groups.0.sub_groups.0.group_id", "333").
@@ -131,6 +192,7 @@ func TestResourceAPIClient(t *testing.T) {
 				createData.createAPIClientRequest.PurgeOptions = &purgeOptionsNoCPCodes
 				createData.createAPIClientResponse.PurgeOptions = &purgeOptionsNoCPCodes
 				createData.getAPIClientResponse.PurgeOptions = &purgeOptionsNoCPCodes
+				mockListAllowedAPIs(m, createData).Times(4)
 				// Create
 				mockCreateAPIClient(m, createData)
 				mockGetAPIClient(m, createData)
@@ -165,6 +227,7 @@ func TestResourceAPIClient(t *testing.T) {
 				createData.createAPIClientRequest.PurgeOptions = &purgeOptionsNoCPCodes
 				createData.createAPIClientResponse.PurgeOptions = &purgeOptionsNoCPCodes
 				createData.getAPIClientResponse.PurgeOptions = &purgeOptionsNoCPCodes
+				mockListAllowedAPIs(m, createData).Times(4)
 				// Create
 				mockCreateAPIClient(m, createData)
 				mockGetAPIClient(m, createData)
@@ -225,9 +288,42 @@ func TestResourceAPIClient(t *testing.T) {
 				},
 			},
 		},
+		"happy path - create with min set of fields, api_access is unknown at plan": {
+			init: func(m *iam.Mock, createData, _ testData) {
+				// Create
+				mockCreateAPIClient(m, createData)
+				mockUpdateAPIClientNotificationEmails(m, createData)
+				mockLockAPIClient(m, createData)
+				mockGetAPIClient(m, createData)
+				// Read
+				mockGetAPIClient(m, createData)
+				// Delete
+				mockDeactivateCredential(m, createData)
+				mockDeleteAPIClient(m, createData)
+			},
+			createData: minData,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/create_min_api_access_unknown.tf"),
+					Check: fullDataChecker.
+						CheckEqual("lock", "true").
+						CheckEqual("group_access.groups.0.sub_groups.#", "0").
+						CheckEqual("client_description", "").
+						CheckMissing("notification_emails.0").
+						CheckMissing("ip_acl.enable").
+						CheckMissing("ip_acl.cidr.0").
+						CheckMissing("purge_options.can_purge_by_cache_tag").
+						CheckMissing("purge_options.can_purge_by_cp_code").
+						CheckMissing("purge_options.cp_code_access.all_current_and_new_cp_codes").
+						CheckMissing("purge_options.cp_code_access.cp_codes.0").
+						Build(),
+				},
+			},
+		},
 		"happy path - create with all fields set and custom credential details": {
 			init: func(m *iam.Mock, createData, _ testData) {
 				mockListAllowedCPCodes(m).Times(4)
+				mockListAllowedAPIs(m, createData).Times(4)
 				// Create
 				mockCreateAPIClient(m, createData)
 				mockUpdateCredential(m, createData)
@@ -260,6 +356,7 @@ func TestResourceAPIClient(t *testing.T) {
 		"happy path - create with all fields set and credential inactive status": {
 			init: func(m *iam.Mock, createData, _ testData) {
 				mockListAllowedCPCodes(m).Times(4)
+				mockListAllowedAPIs(m, createData).Times(4)
 				// Create
 				mockCreateAPIClient(m, createData)
 				mockUpdateCredential(m, createData)
@@ -296,6 +393,7 @@ func TestResourceAPIClient(t *testing.T) {
 		"happy path - create with credential, encounter diff in read which returns credential as DELETED": {
 			init: func(m *iam.Mock, createData, _ testData) {
 				mockListAllowedCPCodes(m).Times(4)
+				mockListAllowedAPIs(m, createData).Times(4)
 				// Create
 				mockCreateAPIClient(m, createData)
 				mockUpdateCredential(m, createData)
@@ -334,6 +432,7 @@ func TestResourceAPIClient(t *testing.T) {
 		"happy path - create without credential, update by changing description and expires_on": {
 			init: func(m *iam.Mock, createData, updateData testData) {
 				mockListAllowedCPCodes(m).Times(8)
+				mockListAllowedAPIs(m, createData).Times(8)
 				// Create
 				mockCreateAPIClient(m, createData)
 				mockGetAPIClient(m, createData)
@@ -385,6 +484,7 @@ func TestResourceAPIClient(t *testing.T) {
 		"happy path - create without credential, update by changing description, expires_on and status": {
 			init: func(m *iam.Mock, createData, updateData testData) {
 				mockListAllowedCPCodes(m).Times(8)
+				mockListAllowedAPIs(m, createData).Times(8)
 				// Create
 				mockCreateAPIClient(m, createData)
 				mockGetAPIClient(m, createData)
@@ -440,6 +540,7 @@ func TestResourceAPIClient(t *testing.T) {
 		"happy path - create with credential, update by changing description and expires_on": {
 			init: func(m *iam.Mock, createData, updateData testData) {
 				mockListAllowedCPCodes(m).Times(8)
+				mockListAllowedAPIs(m, createData).Times(8)
 				// Create
 				mockCreateAPIClient(m, createData)
 				mockUpdateCredential(m, createData)
@@ -494,6 +595,7 @@ func TestResourceAPIClient(t *testing.T) {
 		"happy path - create with credential, update by changing description, expires_on and status": {
 			init: func(m *iam.Mock, createData, updateData testData) {
 				mockListAllowedCPCodes(m).Times(8)
+				mockListAllowedAPIs(m, createData).Times(8)
 				// Create
 				mockCreateAPIClient(m, createData)
 				mockUpdateCredential(m, createData)
@@ -552,6 +654,7 @@ func TestResourceAPIClient(t *testing.T) {
 		"happy path - create with credential, update by changing description, expires_on and api client description - expect update credential and api client": {
 			init: func(m *iam.Mock, createData, updateData testData) {
 				mockListAllowedCPCodes(m).Times(8)
+				mockListAllowedAPIs(m, createData).Times(8)
 				// Create
 				mockCreateAPIClient(m, createData)
 				mockUpdateCredential(m, createData)
@@ -600,32 +703,6 @@ func TestResourceAPIClient(t *testing.T) {
 						CheckEqual("credential.description", "Test API Client Credential 2").
 						CheckEqual("credential.expires_on", "2027-06-13T14:48:07Z").
 						CheckEqual("client_description", "Test API Client 2").
-						Build(),
-				},
-			},
-		},
-		"happy path - create with all fields set but `ip_acl.enable` as false no `cidr`": {
-			init: func(m *iam.Mock, createData, _ testData) {
-				mockListAllowedCPCodes(m).Times(4)
-				createData.createAPIClientRequest.IPACL = &ipACLNoCidr
-				createData.createAPIClientResponse.IPACL = &ipACLNoCidr
-				createData.getAPIClientResponse.IPACL = &ipACLNoCidr
-				// Create
-				mockCreateAPIClient(m, createData)
-				mockGetAPIClient(m, createData)
-				// Read
-				mockGetAPIClient(m, createData)
-				// Delete
-				mockDeactivateCredential(m, createData)
-				mockDeleteAPIClient(m, createData)
-			},
-			createData: fullData,
-			steps: []resource.TestStep{
-				{
-					Config: testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/create_no_cidr.tf"),
-					Check: fullDataChecker.
-						CheckMissing("ip_acl.cidr.0").
-						CheckEqual("ip_acl.enable", "false").
 						Build(),
 				},
 			},
@@ -700,6 +777,7 @@ func TestResourceAPIClient(t *testing.T) {
 		"happy path - update from min to full and from locked to unlocked": {
 			init: func(m *iam.Mock, createData, updateData testData) {
 				mockListAllowedCPCodes(m).Times(4)
+				mockListAllowedAPIs(m, createData).Times(4)
 				createData.getAPIClientResponse.IsLocked = true
 				createData.getAPIClientResponse.Actions = &lockedClientActions
 				createData.createAPIClientResponse.IsLocked = true
@@ -1063,6 +1141,7 @@ func TestResourceAPIClient(t *testing.T) {
 		"happy path - update from min to full and from unlocked to locked": {
 			init: func(m *iam.Mock, createData, updateData testData) {
 				mockListAllowedCPCodes(m).Times(4)
+				mockListAllowedAPIs(m, createData).Times(4)
 				createData.getAPIClientResponse.IsLocked = false
 				createData.getAPIClientResponse.Actions = &unlockedClientActions
 				createData.createAPIClientResponse.IsLocked = false
@@ -1196,6 +1275,36 @@ func TestResourceAPIClient(t *testing.T) {
 				},
 			},
 		},
+		"happy path - 'purge_options' supplied for CCU API endpoints and 'all_accessible_apis' is false": {
+			init: func(m *iam.Mock, createData, _ testData) {
+				mockListAllowedCPCodes(m).Times(4)
+				mockListAllowedAPIs(m, createData).Times(4)
+				// Create
+				mockCreateAPIClient(m, createData)
+				mockGetAPIClient(m, createData)
+				// Read
+				mockGetAPIClient(m, createData)
+				// Delete
+				mockDeactivateCredential(m, createData)
+				mockDeleteAPIClient(m, createData)
+			},
+			createData: fullData,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/purge_options_provided_for_ccu_apis_and_all_accessible_apis_is_set_false.tf"),
+					Check: fullDataChecker.
+						CheckEqual("group_access.groups.0.sub_groups.#", "1").
+						CheckEqual("group_access.groups.0.sub_groups.0.group_id", "333").
+						CheckEqual("group_access.groups.0.sub_groups.0.group_name", "group2_1").
+						CheckEqual("group_access.groups.0.sub_groups.0.is_blocked", "false").
+						CheckEqual("group_access.groups.0.sub_groups.0.parent_group_id", "0").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_description", "group description").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_id", "540").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_name", "role 2").
+						Build(),
+				},
+			},
+		},
 		"validation error - 'groups' should be provided when 'clone_authorized_user_groups' is true": {
 			steps: []resource.TestStep{
 				{
@@ -1252,11 +1361,11 @@ func TestResourceAPIClient(t *testing.T) {
 				},
 			},
 		},
-		"validation error - 'ip_acl.cidr' must not be empty when `ip_acl.enable` is true": {
+		"validation error - 'ip_acl.cidr' is a required field when `ip_acl` block is supplied": {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/missing_cidr.tf"),
-					ExpectError: regexp.MustCompile(`You should specify 'cidr' when 'enable' is true`),
+					ExpectError: regexp.MustCompile(`Inappropriate value for attribute "ip_acl": attribute "cidr" is required.`),
 				},
 			},
 		},
@@ -1272,6 +1381,44 @@ func TestResourceAPIClient(t *testing.T) {
 				},
 			},
 		},
+		"expect error - configured API not present in the allowedAPI list when 'purge_options' supplied and 'all_accessible_apis' is false": {
+			init: func(m *iam.Mock, createData, _ testData) {
+				mockListAllowedAPIs(m, createData).Once()
+			},
+			createData: fullData,
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/purge_options_provided_for_ccu_apis_with_invalid_apis_and_all_accessible_apis_is_set_false.tf"),
+					ExpectError: regexp.MustCompile(`Could not verify APIs due to an unexpected error: the following API IDs are\s+configured but not allowed for the user 'mw\+2': 111333, 5803341`),
+				},
+			},
+		},
+		"expect error - error occurs when fetching the list of allowed APIs if purge_options is provided for non-CCU API endpoints and all_accessible_apis is set to false": {
+			init: func(m *iam.Mock, _, _ testData) {
+				m.On("ListAllowedAPIs", testutils.MockContext, iam.ListAllowedAPIsRequest{
+					UserName:   "mw+2",
+					ClientType: "CLIENT",
+				}).Return(nil, fmt.Errorf("error occurred while listing allowed APIs")).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/purge_options_provided_for_non_ccu_apis_and_all_accessible_apis_is_set_false.tf"),
+					ExpectError: regexp.MustCompile(`Could not verify APIs due to an unexpected error: failed to list allowed\nAPIs: error occurred while listing allowed APIs`),
+				},
+			},
+		},
+		"expect error - 'purge_options' supplied for non CCU API endpoints and 'all_accessible_apis' is false": {
+			init: func(m *iam.Mock, _, _ testData) {
+				mockListAllowedAPIs(m, minData).Once()
+			},
+			createData: minData,
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/purge_options_provided_for_non_ccu_apis_and_all_accessible_apis_is_set_false.tf"),
+					ExpectError: regexp.MustCompile(`'purge_options' can only be specified when either 'all_accessible_apis' is\nset to true or the 'apis' list contains CCU API.`),
+				},
+			},
+		},
 	}
 
 	for name, tc := range tests {
@@ -1283,6 +1430,12 @@ func TestResourceAPIClient(t *testing.T) {
 			}
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
+					ExternalProviders: map[string]resource.ExternalProvider{
+						"random": {
+							Source:            "registry.terraform.io/hashicorp/random",
+							VersionConstraint: "3.1.0",
+						},
+					},
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 					IsUnitTest:               true,
 					Steps:                    tc.steps,
@@ -1395,6 +1548,90 @@ func TestImportAPIClientResource(t *testing.T) {
 					ImportState:      true,
 					ResourceName:     "akamai_iam_api_client.test",
 					Config:           testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/importable.tf"),
+				},
+			},
+		},
+		"happy path with import id, but no ipacl, actions and purgeoptions": {
+			importID: "c1ien41d",
+			importData: testData{
+				getAPIClientRequest:  getAPIClientRequest,
+				getAPIClientResponse: getAPIClientResponse,
+			},
+			init: func(m *iam.Mock, data1, _ testData) {
+				data := data1
+				data.getAPIClientResponse.IPACL = nil
+				data.getAPIClientResponse.PurgeOptions = nil
+				data.getAPIClientResponse.Actions = nil
+				// Import
+				mockGetAPIClient(m, data)
+				// Read
+				mockGetAPIClient(m, data)
+			},
+			steps: []resource.TestStep{
+				{
+					ImportStateCheck: tst.NewImportChecker().
+						CheckEqual("access_token", "access_token").
+						CheckMissing("actions").
+						CheckEqual("active_credential_count", "1").
+						CheckEqual("allow_account_switch", "false").
+						CheckEqual("api_access.all_accessible_apis", "false").
+						CheckEqual("api_access.apis.#", "2").
+						CheckEqual("api_access.apis.0.access_level", "READ-ONLY").
+						CheckEqual("api_access.apis.0.api_id", "5580").
+						CheckEqual("api_access.apis.0.api_name", "Search Data Feed").
+						CheckEqual("api_access.apis.0.description", "Search Data Feed").
+						CheckEqual("api_access.apis.0.documentation_url", "/").
+						CheckEqual("api_access.apis.0.endpoint", "/search-portal-data-feed-api/").
+						CheckEqual("api_access.apis.1.access_level", "READ-WRITE").
+						CheckEqual("api_access.apis.1.api_id", "5801").
+						CheckEqual("api_access.apis.1.api_name", "EdgeWorkers").
+						CheckEqual("api_access.apis.1.description", "EdgeWorkers").
+						CheckEqual("api_access.apis.1.documentation_url", "https://developer.akamai.com/api/web_performance/edgeworkers/v1.html").
+						CheckEqual("api_access.apis.1.endpoint", "/edgeworkers/").
+						CheckEqual("authorized_users.0", "mw+2").
+						CheckEqual("base_url", "base_url").
+						CheckEqual("can_auto_create_credential", "false").
+						CheckEqual("client_description", "Test API Client").
+						CheckEqual("client_id", "c1ien41d").
+						CheckEqual("client_name", "mw+2_1").
+						CheckEqual("client_type", "CLIENT").
+						CheckEqual("created_by", "someuser").
+						CheckEqual("created_date", "2024-06-13T14:48:07Z").
+						CheckEqual("credential.description", "Update this credential").
+						CheckEqual("credential.status", "ACTIVE").
+						CheckEqual("credential.expires_on", "2025-06-13T14:48:08Z").
+						CheckEqual("credential.actions.deactivate", "true").
+						CheckEqual("credential.actions.activate", "false").
+						CheckEqual("credential.actions.delete", "false").
+						CheckEqual("credential.actions.edit_expiration", "true").
+						CheckEqual("credential.actions.edit_description", "true").
+						CheckEqual("group_access.clone_authorized_user_groups", "false").
+						CheckEqual("group_access.groups.#", "1").
+						CheckEqual("group_access.groups.0.group_id", "123").
+						CheckEqual("group_access.groups.0.group_name", "group2").
+						CheckEqual("group_access.groups.0.is_blocked", "false").
+						CheckEqual("group_access.groups.0.parent_group_id", "0").
+						CheckEqual("group_access.groups.0.role_description", "group description").
+						CheckEqual("group_access.groups.0.role_id", "340").
+						CheckEqual("group_access.groups.0.role_name", "role").
+						CheckEqual("group_access.groups.0.sub_groups.#", "1").
+						CheckEqual("group_access.groups.0.sub_groups.0.group_id", "333").
+						CheckEqual("group_access.groups.0.sub_groups.0.group_name", "group2_1").
+						CheckEqual("group_access.groups.0.sub_groups.0.is_blocked", "false").
+						CheckEqual("group_access.groups.0.sub_groups.0.parent_group_id", "0").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_description", "group description").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_id", "540").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_name", "role 2").
+						CheckEqual("id", "c1ien41d").
+						CheckMissing("ip_acl").
+						CheckEqual("lock", "false").
+						CheckEqual("notification_emails.0", "mw+2@example.com").
+						CheckMissing("purge_options").
+						Build(),
+					ImportStateId: "c1ien41d",
+					ImportState:   true,
+					ResourceName:  "akamai_iam_api_client.test",
+					Config:        testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/importable_no_ipacl_actions_purgeoptions.tf"),
 				},
 			},
 		},
@@ -1676,6 +1913,55 @@ func mockListAllowedCPCodes(m *iam.Mock) *mock.Call {
 	}, nil).Once()
 }
 
+func mockListAllowedAPIs(m *iam.Mock, testData testData) *mock.Call {
+	return m.On("ListAllowedAPIs", testutils.MockContext, iam.ListAllowedAPIsRequest{
+		UserName:           "mw+2",
+		ClientType:         "CLIENT",
+		AllowAccountSwitch: testData.createAPIClientRequest.AllowAccountSwitch,
+	}).Return(iam.ListAllowedAPIsResponse{
+		{
+			AccessLevels:      []iam.AccessLevel{iam.ReadOnlyLevel},
+			APIID:             5580,
+			APIName:           "Test",
+			Description:       "Test",
+			DocumentationURL:  "",
+			Endpoint:          "/ccu-content-control-utility",
+			HasAccess:         true,
+			ServiceProviderID: 1,
+		},
+		{
+			AccessLevels:      []iam.AccessLevel{iam.ReadWriteLevel},
+			APIID:             5801,
+			APIName:           "Test",
+			Description:       "Test",
+			DocumentationURL:  "",
+			Endpoint:          "/ccu",
+			HasAccess:         true,
+			ServiceProviderID: 1,
+		},
+		{
+			AccessLevels:      []iam.AccessLevel{iam.ReadWriteLevel},
+			APIID:             5802,
+			APIName:           "Test",
+			Description:       "Test",
+			DocumentationURL:  "",
+			Endpoint:          "/test",
+			HasAccess:         true,
+			ServiceProviderID: 1,
+		},
+		{
+			AccessLevels:      []iam.AccessLevel{iam.ReadWriteLevel},
+			APIID:             5583,
+			APIName:           "Test",
+			Description:       "Test",
+			DocumentationURL:  "",
+			Endpoint:          "/test",
+			HasAccess:         true,
+			ServiceProviderID: 1,
+		},
+	}, nil).Once()
+}
+
 func mockLockAPIClient(m *iam.Mock, data testData) *mock.Call {
 	return m.On("LockAPIClient", testutils.MockContext, iam.LockAPIClientRequest{
 		ClientID: data.createAPIClientResponse.ClientID,
@@ -1811,10 +2097,6 @@ var (
 	ipACL = iam.IPACL{
 		CIDR:   []string{"128.5.6.5/24"},
 		Enable: true,
-	}
-
-	ipACLNoCidr = iam.IPACL{
-		Enable: false,
 	}
 
 	unlockedClientActions = iam.APIClientActions{

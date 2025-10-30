@@ -38,7 +38,6 @@
 
 
 
-
 * Edgeworkers
   * Added possibility to fetch an `EdgeWorker` by name ([I#679](https://github.com/akamai/terraform-provider-akamai/issues/679)).
 
@@ -47,6 +46,9 @@
 
 #### BUG FIXES:
 
+
+* IAM
+  * Fixed handling of unknown values in resource `akamai_iam_api_client` causing "Value Conversion Error" when set conditionally ([I#678](https://github.com/akamai/terraform-provider-akamai/issues/678)).
 
 
 
