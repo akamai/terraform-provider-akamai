@@ -53,5 +53,7 @@ func (p *Subprovider) FrameworkResources() []func() resource.Resource {
 
 // FrameworkDataSources returns the CloudCertificates data sources implemented using terraform-plugin-framework.
 func (p *Subprovider) FrameworkDataSources() []func() datasource.DataSource {
-	return []func() datasource.DataSource{}
+	return []func() datasource.DataSource{
+		NewCloudCertificatesHostnameBindingsDataSource,
+	}
 }

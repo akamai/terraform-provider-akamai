@@ -69,7 +69,8 @@
 
 
 
-
+* CCM
+  * Added new `akamai_cloudcertificates_hostname_bindings` data source.
 
 
 
