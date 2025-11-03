@@ -90,7 +90,7 @@ func (d *domainOwnershipSearchDomains) Schema(_ context.Context, _ datasource.Sc
 						},
 						"validation_level": schema.StringAttribute{
 							Computed:    true,
-							Description: "Level of the domain validation, either FQDN or WILDCARD.",
+							Description: "Level of the domain validation, either FQDN or ROOT/WILDCARD.",
 						},
 						"validation_method": schema.StringAttribute{
 							Computed:    true,
@@ -206,7 +206,7 @@ func (d *domainOwnershipSearchDomains) Configure(_ context.Context, req datasour
 
 // Read is called when the provider must read data source values in order to update state
 func (d *domainOwnershipSearchDomains) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	tflog.Debug(ctx, "DomainOwnershipSearchDomains Read")
+	tflog.Debug(ctx, "Domain Ownership SearchDomains Read")
 
 	var data domainOwnershipSearchDomainsModel
 	if resp.Diagnostics.Append(req.Config.Get(ctx, &data)...); resp.Diagnostics.HasError() {
@@ -249,18 +249,18 @@ func (d *domainOwnershipSearchDomains) Read(ctx context.Context, req datasource.
 			challenge := domain.ValidationChallenge
 			challengeModel := &validationChallengeModel{}
 
-			challengeModel.CNAMERecord = CNAMERecord{
-				Name:   types.StringValue(challenge.CNAMERecord.Name),
-				Target: types.StringValue(challenge.CNAMERecord.Target),
+			challengeModel.CnameRecord = cnameRecordModel{
+				Name:   types.StringValue(challenge.CnameRecord.Name),
+				Target: types.StringValue(challenge.CnameRecord.Target),
 			}
 
-			challengeModel.TXTRecord = TXTRecord{
+			challengeModel.TXTRecord = txtRecordModel{
 				Name:  types.StringValue(challenge.TXTRecord.Name),
 				Value: types.StringValue(challenge.TXTRecord.Value),
 			}
 
 			if challenge.HTTPFile != nil {
-				challengeModel.HTTPFile = &HTTPFile{
+				challengeModel.HTTPFile = &httpFileModel{
 					Path:        types.StringValue(challenge.HTTPFile.Path),
 					Content:     types.StringValue(challenge.HTTPFile.Content),
 					ContentType: types.StringValue(challenge.HTTPFile.ContentType),
@@ -268,7 +268,7 @@ func (d *domainOwnershipSearchDomains) Read(ctx context.Context, req datasource.
 			}
 
 			if challenge.HTTPRedirect != nil {
-				challengeModel.HTTPRedirect = &HTTPRedirect{
+				challengeModel.HTTPRedirect = &httpRedirectModel{
 					From: types.StringValue(challenge.HTTPRedirect.From),
 					To:   types.StringValue(challenge.HTTPRedirect.To),
 				}

@@ -491,24 +491,24 @@ func getDomainsModelForSearch(ctx context.Context, domains []domainownership.Sea
 
 		if domain.ValidationChallenge != nil {
 			validationModel := validationChallengeModel{
-				CNAMERecord: CNAMERecord{
-					Name:   types.StringValue(domain.ValidationChallenge.CNAMERecord.Name),
-					Target: types.StringValue(domain.ValidationChallenge.CNAMERecord.Target),
+				CnameRecord: cnameRecordModel{
+					Name:   types.StringValue(domain.ValidationChallenge.CnameRecord.Name),
+					Target: types.StringValue(domain.ValidationChallenge.CnameRecord.Target),
 				},
-				TXTRecord: TXTRecord{
+				TXTRecord: txtRecordModel{
 					Name:  types.StringValue(domain.ValidationChallenge.TXTRecord.Name),
 					Value: types.StringValue(domain.ValidationChallenge.TXTRecord.Value),
 				},
 				ExpirationDate: date.TimeRFC3339Value(domain.ValidationChallenge.ExpirationDate),
 			}
 			if domain.ValidationChallenge.HTTPRedirect != nil {
-				validationModel.HTTPRedirect = &HTTPRedirect{
+				validationModel.HTTPRedirect = &httpRedirectModel{
 					From: types.StringValue(domain.ValidationChallenge.HTTPRedirect.From),
 					To:   types.StringValue(domain.ValidationChallenge.HTTPRedirect.To),
 				}
 			}
 			if domain.ValidationChallenge.HTTPFile != nil {
-				validationModel.HTTPFile = &HTTPFile{
+				validationModel.HTTPFile = &httpFileModel{
 					Path:        types.StringValue(domain.ValidationChallenge.HTTPFile.Path),
 					Content:     types.StringValue(domain.ValidationChallenge.HTTPFile.Content),
 					ContentType: types.StringValue(domain.ValidationChallenge.HTTPFile.ContentType),

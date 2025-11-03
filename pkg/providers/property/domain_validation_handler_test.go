@@ -27,7 +27,7 @@ func TestValidationHandler_CalculateAndBuildValidateRequest(t *testing.T) {
 			},
 			expectedReq: []domainownership.ValidateDomainsRequest{
 				{
-					Domains: []domainownership.ValidateDomainRequest{
+					Domains: []domainownership.ValidateDomain{
 						{
 							DomainName:      "test.com",
 							ValidationScope: "HOST",
@@ -85,7 +85,7 @@ func TestValidationHandler_CalculateAndBuildValidateRequest(t *testing.T) {
 			},
 			expectedReq: []domainownership.ValidateDomainsRequest{
 				{
-					Domains: []domainownership.ValidateDomainRequest{
+					Domains: []domainownership.ValidateDomain{
 						{
 							DomainName:      "another.com",
 							ValidationScope: "DOMAIN",

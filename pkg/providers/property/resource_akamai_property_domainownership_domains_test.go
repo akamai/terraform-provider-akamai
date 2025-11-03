@@ -2217,7 +2217,7 @@ func getSearchDomainItem(t *testing.T, domainName, validationScope, domainStatus
 		ValidationRequestedBy:   ptr.To("someone"),
 		ValidationRequestedDate: ptr.To(tst.NewTimeFromString(t, "2024-01-01T00:00:00Z")),
 		ValidationChallenge: &domainownership.ValidationChallenge{
-			CNAMERecord: domainownership.CNAMERecord{
+			CnameRecord: domainownership.CnameRecord{
 				Name:   fmt.Sprintf("challenge_%s", domainName),
 				Target: fmt.Sprintf("target_%s", domainName),
 			},

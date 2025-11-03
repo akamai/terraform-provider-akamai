@@ -39,34 +39,34 @@ type (
 	}
 
 	validationChallengeModel struct {
-		CNAMERecord    CNAMERecord   `tfsdk:"cname_record"`
-		TXTRecord      TXTRecord     `tfsdk:"txt_record"`
-		HTTPFile       *HTTPFile     `tfsdk:"http_file"`
-		HTTPRedirect   *HTTPRedirect `tfsdk:"http_redirect"`
-		ExpirationDate types.String  `tfsdk:"expiration_date"`
+		CnameRecord    cnameRecordModel   `tfsdk:"cname_record"`
+		TXTRecord      txtRecordModel     `tfsdk:"txt_record"`
+		HTTPFile       *httpFileModel     `tfsdk:"http_file"`
+		HTTPRedirect   *httpRedirectModel `tfsdk:"http_redirect"`
+		ExpirationDate types.String       `tfsdk:"expiration_date"`
 	}
 
-	// CNAMERecord represents a CNAME record for domain validation CNAMERecord.
-	CNAMERecord struct {
+	// cnameRecordModel represents a CNAME record for domain validation cnameRecordModel.
+	cnameRecordModel struct {
 		Name   types.String `tfsdk:"name"`
 		Target types.String `tfsdk:"target"`
 	}
 
-	// TXTRecord represents a TXT record for domain validation TXTRecord.
-	TXTRecord struct {
+	// txtRecordModel represents a TXT record for domain validation txtRecordModel.
+	txtRecordModel struct {
 		Name  types.String `tfsdk:"name"`
 		Value types.String `tfsdk:"value"`
 	}
 
-	// HTTPFile represents an HTTP file for domain validation HTTPFile.
-	HTTPFile struct {
+	// httpFileModel represents an HTTP file for domain validation httpFileModel.
+	httpFileModel struct {
 		Path        types.String `tfsdk:"path"`
 		Content     types.String `tfsdk:"content"`
 		ContentType types.String `tfsdk:"content_type"`
 	}
 
-	// HTTPRedirect represents an HTTP redirect for domain validation HTTPRedirect.
-	HTTPRedirect struct {
+	// httpRedirectModel represents an HTTP redirect for domain validation httpRedirectModel.
+	httpRedirectModel struct {
 		From types.String `tfsdk:"from"`
 		To   types.String `tfsdk:"to"`
 	}
@@ -247,7 +247,7 @@ func (d *domainDataSource) Schema(_ context.Context, _ datasource.SchemaRequest,
 
 // Read is called when the provider must read data source values in order to update state.
 func (d *domainDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	tflog.Debug(ctx, "DomainOwnership Domain DataSource Read")
+	tflog.Debug(ctx, "Domain Ownership Domain DataSource Read")
 
 	var data domainDataSourceModel
 	if resp.Diagnostics.Append(req.Config.Get(ctx, &data)...); resp.Diagnostics.HasError() {
@@ -261,7 +261,7 @@ func (d *domainDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		IncludeDomainStatusHistory: true,
 	})
 	if err != nil {
-		resp.Diagnostics.AddError("Read DomainOwnership Domain failed", err.Error())
+		resp.Diagnostics.AddError("Read Domain Ownership Domain failed", err.Error())
 		return
 	}
 
@@ -284,18 +284,18 @@ func (m *domainDataSourceModel) convertDomainToModel(domain domainownership.GetD
 		challenge := domain.ValidationChallenge
 		challengeModel := &validationChallengeModel{}
 
-		challengeModel.CNAMERecord = CNAMERecord{
-			Name:   types.StringValue(challenge.CNAMERecord.Name),
-			Target: types.StringValue(challenge.CNAMERecord.Target),
+		challengeModel.CnameRecord = cnameRecordModel{
+			Name:   types.StringValue(challenge.CnameRecord.Name),
+			Target: types.StringValue(challenge.CnameRecord.Target),
 		}
 
-		challengeModel.TXTRecord = TXTRecord{
+		challengeModel.TXTRecord = txtRecordModel{
 			Name:  types.StringValue(challenge.TXTRecord.Name),
 			Value: types.StringValue(challenge.TXTRecord.Value),
 		}
 
 		if challenge.HTTPFile != nil {
-			challengeModel.HTTPFile = &HTTPFile{
+			challengeModel.HTTPFile = &httpFileModel{
 				Path:        types.StringValue(challenge.HTTPFile.Path),
 				Content:     types.StringValue(challenge.HTTPFile.Content),
 				ContentType: types.StringValue(challenge.HTTPFile.ContentType),
@@ -303,7 +303,7 @@ func (m *domainDataSourceModel) convertDomainToModel(domain domainownership.GetD
 		}
 
 		if challenge.HTTPRedirect != nil {
-			challengeModel.HTTPRedirect = &HTTPRedirect{
+			challengeModel.HTTPRedirect = &httpRedirectModel{
 				From: types.StringValue(challenge.HTTPRedirect.From),
 				To:   types.StringValue(challenge.HTTPRedirect.To),
 			}

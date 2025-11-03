@@ -85,9 +85,9 @@ func (v *validationHandler) calculateDomainsToValidate() (*validationHandler, er
 }
 
 func (v *validationHandler) buildValidateRequests() []domainownership.ValidateDomainsRequest {
-	var domainsToValidateSlice []domainownership.ValidateDomainRequest
+	var domainsToValidateSlice []domainownership.ValidateDomain
 	for domainKey, domainDetails := range v.domainsToValidate {
-		r := domainownership.ValidateDomainRequest{
+		r := domainownership.ValidateDomain{
 			DomainName:      domainKey.domainName,
 			ValidationScope: domainownership.ValidationScope(domainKey.validationScope),
 		}

@@ -66,7 +66,7 @@ func TestDomainOwnershipDataSource(t *testing.T) {
 					ValidationRequestedDate: tst.NewTimeFromStringMust("2023-01-03T00:00:00Z"),
 					ValidationCompletedDate: ptr.To(tst.NewTimeFromStringMust("2023-01-03T00:00:00Z")),
 					ValidationChallenge: &domainownership.ValidationChallenge{
-						CNAMERecord: domainownership.CNAMERecord{
+						CnameRecord: domainownership.CnameRecord{
 							Name:   "cname-name-1",
 							Target: "cname-target-1",
 						},

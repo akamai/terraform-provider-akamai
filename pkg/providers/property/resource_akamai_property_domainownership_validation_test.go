@@ -1599,7 +1599,7 @@ func mockSearchDomains(m *domainownership.Mock, domains map[domainKey]domainDeta
 }
 
 func mockValidateDomains(m *domainownership.Mock, domainsToValidate map[domainKey]domainDetails, responseDomains map[domainKey]domainDetails) {
-	var validateDomainsBody []domainownership.ValidateDomainRequest
+	var validateDomainsBody []domainownership.ValidateDomain
 	var validateDomainResponse []domainownership.ValidateDomainResponse
 	for k, v := range domainsToValidate {
 		if v.validationStatus == "REQUEST_ACCEPTED" {
@@ -1607,7 +1607,7 @@ func mockValidateDomains(m *domainownership.Mock, domainsToValidate map[domainKe
 			if v.validationMethod != nil {
 				validationMethod = ptr.To(domainownership.ValidationMethod(*v.validationMethod))
 			}
-			validateDomainsBody = append(validateDomainsBody, domainownership.ValidateDomainRequest{
+			validateDomainsBody = append(validateDomainsBody, domainownership.ValidateDomain{
 				DomainName:       k.domainName,
 				ValidationScope:  domainownership.ValidationScope(k.validationScope),
 				ValidationMethod: validationMethod,

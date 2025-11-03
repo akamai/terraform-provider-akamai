@@ -45,7 +45,7 @@ func NewDomainOwnershipDomainsDataSource() datasource.DataSource {
 }
 
 // Metadata configures data source's meta information.
-func (d domainsDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+func (d *domainsDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "akamai_property_domainownership_domains"
 }
 
@@ -66,7 +66,7 @@ func (d *domainsDataSource) Configure(_ context.Context, req datasource.Configur
 }
 
 // Schema is used to define data source's terraform schema.
-func (d domainsDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (d *domainsDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: "Retrieve details of Domains.",
 		Attributes: map[string]schema.Attribute{
@@ -189,7 +189,7 @@ func validationChallengeSchema() schema.SingleNestedAttribute {
 }
 
 func (d *domainsDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	tflog.Debug(ctx, "DomainOwnership Domains DataSource Read")
+	tflog.Debug(ctx, "Domain Ownership Domains DataSource Read")
 	var data domainsDataSourceModel
 	if resp.Diagnostics.Append(req.Config.Get(ctx, &data)...); resp.Diagnostics.HasError() {
 		return
@@ -213,7 +213,7 @@ func (d *domainsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		})
 
 		if err != nil {
-			resp.Diagnostics.AddError("Read DomainOwnership Domains failed", err.Error())
+			resp.Diagnostics.AddError("Read Domain Ownership Domains failed", err.Error())
 			return
 		}
 
@@ -249,18 +249,18 @@ func (m *domainsDataSourceModel) convertDomainsToModel(domains domainownership.L
 			challenge := domain.ValidationChallenge
 			challengeModel := &validationChallengeModel{}
 
-			challengeModel.CNAMERecord = CNAMERecord{
-				Name:   types.StringValue(challenge.CNAMERecord.Name),
-				Target: types.StringValue(challenge.CNAMERecord.Target),
+			challengeModel.CnameRecord = cnameRecordModel{
+				Name:   types.StringValue(challenge.CnameRecord.Name),
+				Target: types.StringValue(challenge.CnameRecord.Target),
 			}
 
-			challengeModel.TXTRecord = TXTRecord{
+			challengeModel.TXTRecord = txtRecordModel{
 				Name:  types.StringValue(challenge.TXTRecord.Name),
 				Value: types.StringValue(challenge.TXTRecord.Value),
 			}
 
 			if challenge.HTTPFile != nil {
-				challengeModel.HTTPFile = &HTTPFile{
+				challengeModel.HTTPFile = &httpFileModel{
 					Path:        types.StringValue(challenge.HTTPFile.Path),
 					Content:     types.StringValue(challenge.HTTPFile.Content),
 					ContentType: types.StringValue(challenge.HTTPFile.ContentType),
@@ -268,7 +268,7 @@ func (m *domainsDataSourceModel) convertDomainsToModel(domains domainownership.L
 			}
 
 			if challenge.HTTPRedirect != nil {
-				challengeModel.HTTPRedirect = &HTTPRedirect{
+				challengeModel.HTTPRedirect = &httpRedirectModel{
 					From: types.StringValue(challenge.HTTPRedirect.From),
 					To:   types.StringValue(challenge.HTTPRedirect.To),
 				}

@@ -100,7 +100,7 @@ func TestDomainOwnershipDomainsDataSource(t *testing.T) {
 							ValidationRequestedBy:   "user1@example.com",
 							ValidationRequestedDate: tst.NewTimeFromStringMust("2024-12-10T10:15:30Z"),
 							ValidationChallenge: &domainownership.ValidationChallenge{
-								CNAMERecord: domainownership.CNAMERecord{
+								CnameRecord: domainownership.CnameRecord{
 									Name:   "cname-name-1",
 									Target: "cname-target-1",
 								},
@@ -138,7 +138,7 @@ func TestDomainOwnershipDomainsDataSource(t *testing.T) {
 							ValidationRequestedBy:   "user1@example.com",
 							ValidationRequestedDate: tst.NewTimeFromStringMust("2024-12-10T10:15:30Z"),
 							ValidationChallenge: &domainownership.ValidationChallenge{
-								CNAMERecord: domainownership.CNAMERecord{
+								CnameRecord: domainownership.CnameRecord{
 									Name:   "cname-name-3",
 									Target: "cname-target-3",
 								},
@@ -176,7 +176,7 @@ func TestDomainOwnershipDomainsDataSource(t *testing.T) {
 							ValidationRequestedDate: tst.NewTimeFromStringMust("2024-12-11T09:45:10Z"),
 							ValidationCompletedDate: ptr.To(tst.NewTimeFromStringMust("2024-12-12T10:00:00Z")),
 							ValidationChallenge: &domainownership.ValidationChallenge{
-								CNAMERecord: domainownership.CNAMERecord{
+								CnameRecord: domainownership.CnameRecord{
 									Name:   "cname-name-4",
 									Target: "cname-target-4",
 								},
