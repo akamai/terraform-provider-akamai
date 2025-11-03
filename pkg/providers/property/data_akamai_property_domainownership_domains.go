@@ -208,8 +208,8 @@ func (d *domainsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 
 		domainsResp, err := client.ListDomains(ctx, domainownership.ListDomainsRequest{
 			Paginate: &paginate,
-			Page:     &page,
-			PageSize: &pageSize,
+			Page:     page,
+			PageSize: pageSize,
 		})
 
 		if err != nil {

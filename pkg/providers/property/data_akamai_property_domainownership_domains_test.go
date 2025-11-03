@@ -212,14 +212,14 @@ func TestDomainOwnershipDomainsDataSource(t *testing.T) {
 
 				m.On("ListDomains", mock.Anything, domainownership.ListDomainsRequest{
 					Paginate: ptr.To(true),
-					Page:     ptr.To(int64(1)),
-					PageSize: ptr.To(int64(1000)),
+					Page:     1,
+					PageSize: 1000,
 				}).Return(page1, nil).Times(3)
 
 				m.On("ListDomains", mock.Anything, domainownership.ListDomainsRequest{
 					Paginate: ptr.To(true),
-					Page:     ptr.To(int64(2)),
-					PageSize: ptr.To(int64(1000)),
+					Page:     2,
+					PageSize: 1000,
 				}).Return(page2, nil).Times(3)
 			},
 			steps: []resource.TestStep{
@@ -241,8 +241,8 @@ func TestDomainOwnershipDomainsDataSource(t *testing.T) {
 
 				m.On("ListDomains", mock.Anything, domainownership.ListDomainsRequest{
 					Paginate: ptr.To(true),
-					Page:     ptr.To(int64(1)),
-					PageSize: ptr.To(int64(1000)),
+					Page:     1,
+					PageSize: 1000,
 				}).Return(emptyResponse, nil).Times(3)
 			},
 			steps: []resource.TestStep{
@@ -258,8 +258,8 @@ func TestDomainOwnershipDomainsDataSource(t *testing.T) {
 			init: func(m *domainownership.Mock) {
 				m.On("ListDomains", mock.Anything, domainownership.ListDomainsRequest{
 					Paginate: ptr.To(true),
-					Page:     ptr.To(int64(1)),
-					PageSize: ptr.To(int64(1000)),
+					Page:     1,
+					PageSize: 1000,
 				}).Return(nil, &domainownership.Error{
 					Status: 500,
 					Detail: "oops",
@@ -294,14 +294,14 @@ func TestDomainOwnershipDomainsDataSource(t *testing.T) {
 
 				m.On("ListDomains", mock.Anything, domainownership.ListDomainsRequest{
 					Paginate: ptr.To(true),
-					Page:     ptr.To(int64(1)),
-					PageSize: ptr.To(int64(1000)),
+					Page:     1,
+					PageSize: 1000,
 				}).Return(page1, nil).Times(1)
 
 				m.On("ListDomains", mock.Anything, domainownership.ListDomainsRequest{
 					Paginate: ptr.To(true),
-					Page:     ptr.To(int64(2)),
-					PageSize: ptr.To(int64(1000)),
+					Page:     2,
+					PageSize: 1000,
 				}).Return(nil, &domainownership.Error{
 					Status: 500,
 					Detail: "error on second page"}).Times(1)
