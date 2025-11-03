@@ -65,6 +65,9 @@
 
     
 
+* CCM
+  * Added new `akamai_cloudcertificates_certificate` data source.
+
 
 
 
