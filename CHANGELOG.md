@@ -97,7 +97,7 @@
 
 
 * CCM
-    * Added new `akamai_ccm_certificate` resource.
+  * Added new `akamai_cloudcertificates_certificate` resource.
 
 
 
@@ -108,6 +108,18 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+* CCM
+  * Added new `akamai_cloudcertificates_certificates` data source.
 
 
 

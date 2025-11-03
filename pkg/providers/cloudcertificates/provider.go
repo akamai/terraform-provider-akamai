@@ -55,6 +55,7 @@ func (p *Subprovider) FrameworkResources() []func() resource.Resource {
 func (p *Subprovider) FrameworkDataSources() []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewCertificateDataSource,
+		NewCertificatesDataSource,
 		NewCloudCertificatesHostnameBindingsDataSource,
 	}
 }
