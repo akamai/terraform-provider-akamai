@@ -130,6 +130,46 @@ var complianceRecordSchema = &schema.Resource{
 	},
 }
 
+var ccmCertificatesSchema = &schema.Resource{
+	Schema: map[string]*schema.Schema{
+		"rsa_cert_id": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "Certificate ID for RSA.",
+		},
+		"ecdsa_cert_id": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "Certificate ID for ECDSA.",
+		},
+	},
+}
+
+var ccmCertificateStatusSchema = &schema.Resource{
+	Schema: map[string]*schema.Schema{
+		"rsa_staging_status": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Status of the RSA certificate on staging network.",
+		},
+		"rsa_production_status": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Status of the RSA certificate on production network.",
+		},
+		"ecdsa_staging_status": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Status of the ECDSA certificate on staging network.",
+		},
+		"ecdsa_production_status": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Status of the ECDSA certificate on production network.",
+		},
+	},
+}
+
 // Convert given hostnames to the map form that can be stored in a schema.ResourceData
 // Setting only statuses for default certs if they exist
 func flattenHostnames(Hostnames []papi.Hostname) []map[string]interface{} {
@@ -145,6 +185,48 @@ func flattenHostnames(Hostnames []papi.Hostname) []map[string]interface{} {
 		res = append(res, m)
 	}
 	return res
+}
+
+// TODO: remove this when updating akamai_property_hostnames datasource
+// and use flattenHostnames instead
+func flattenHostnamesCCM(Hostnames []papi.Hostname) []map[string]interface{} {
+	var res []map[string]interface{}
+	for _, hn := range Hostnames {
+		m := map[string]interface{}{}
+		m["cname_from"] = hn.CnameFrom
+		m["cname_to"] = hn.CnameTo
+		m["cert_provisioning_type"] = hn.CertProvisioningType
+		m["edge_hostname_id"] = hn.EdgeHostnameID
+		m["cname_type"] = hn.CnameType
+		m["cert_status"] = []map[string]any{flattenCertType(&hn.CertStatus)}
+		m["ccm_certificates"] = flattenCCMCertificates(hn.CCMCertificates)
+		m["ccm_cert_status"] = flattenCCMCertificateStatus(hn.CCMCertStatus)
+		res = append(res, m)
+	}
+	return res
+}
+
+func flattenCCMCertificateStatus(status *papi.CCMCertStatus) []map[string]string {
+	if status == nil {
+		return nil
+	}
+	m := map[string]string{}
+	m["rsa_staging_status"] = status.RSAStagingStatus
+	m["rsa_production_status"] = status.RSAProductionStatus
+	m["ecdsa_staging_status"] = status.ECDSAStagingStatus
+	m["ecdsa_production_status"] = status.ECDSAProductionStatus
+
+	return []map[string]string{m}
+}
+
+func flattenCCMCertificates(certificates *papi.CCMCertificates) []map[string]string {
+	if certificates == nil {
+		return nil
+	}
+	m := map[string]string{}
+	m["rsa_cert_id"] = certificates.RSACertID
+	m["ecdsa_cert_id"] = certificates.ECDSACertID
+	return []map[string]string{m}
 }
 
 func flattenBucketHostnames(hostnames []papi.HostnameItem) []map[string]any {

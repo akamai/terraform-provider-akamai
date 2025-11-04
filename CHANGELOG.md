@@ -105,7 +105,9 @@
 
 
 
-
+* CCM
+  * Added support for hostnames bound to CCM certificates (`cert_provisioning_type` = `CCM`)
+    in the `akamai_property` resource.
 
 
 
