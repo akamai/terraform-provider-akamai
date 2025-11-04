@@ -23,10 +23,10 @@ type (
 		meta meta.Meta
 	}
 	domainsDataSourceModel struct {
-		Domains []domainDetails `tfsdk:"domains"`
+		Domains []domainDetailsModel `tfsdk:"domains"`
 	}
 
-	domainDetails struct {
+	domainDetailsModel struct {
 		Name                    types.String              `tfsdk:"domain_name"`
 		ValidationScope         types.String              `tfsdk:"validation_scope"`
 		AccountID               types.String              `tfsdk:"account_id"`
@@ -227,9 +227,9 @@ func (d *domainsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 }
 
 func (m *domainsDataSourceModel) convertDomainsToModel(domains domainownership.ListDomainsResponse) {
-	m.Domains = make([]domainDetails, len(domains.Domains))
+	m.Domains = make([]domainDetailsModel, len(domains.Domains))
 	for i, domain := range domains.Domains {
-		currentDomain := domainDetails{
+		currentDomain := domainDetailsModel{
 			AccountID:               types.StringValue(domain.AccountID),
 			DomainStatus:            types.StringValue(domain.DomainStatus),
 			Name:                    types.StringValue(domain.DomainName),

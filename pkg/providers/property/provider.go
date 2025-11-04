@@ -130,6 +130,7 @@ func (p *Subprovider) FrameworkResources() []func() resource.Resource {
 	return []func() resource.Resource{
 		NewBootstrapResource,
 		NewHostnameBucketResource,
+		NewDomainOwnershipValidationResource,
 	}
 }
 

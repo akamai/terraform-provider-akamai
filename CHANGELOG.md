@@ -141,7 +141,9 @@
   * Support for `S3-Compatible`, `TrafficPeak`, and `Dynatrace` destinations has been added.
   * Migrated Datastream APIs from `V2` to `V3` for `CDN` log types. Other log types available in `V3` APIs (`eDNS`, `GTM` and `Edgeworkers`) are not yet supported.
 
-
+* PAPI:
+    * Added new resource:
+        * `akamai_property_domainownership_validation` - validates or invalidates domains.
 
 
 
