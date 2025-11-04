@@ -97,7 +97,7 @@ func domainsSchema() schema.SetNestedAttribute {
 				},
 				"domain_status": schema.StringAttribute{
 					Computed:    true,
-					Description: "Domain status. It is REQUEST_ACCEPTED or VALIDATION_IN_PROGRESS or VALIDATED or TOKEN_EXPIRED or INVALIDATED or VALIDATION_EXPIRED.",
+					Description: "Domain status. It is REQUEST_ACCEPTED or VALIDATION_IN_PROGRESS or VALIDATED or TOKEN_EXPIRED or INVALIDATED.",
 				},
 				"validation_method": schema.StringAttribute{
 					Computed:    true,
@@ -173,14 +173,16 @@ func (r *DomainsResource) ModifyPlan(ctx context.Context, req resource.ModifyPla
 			return
 		}
 		plan.Domains = domains
-		resp.Diagnostics.Append(resp.Plan.Set(ctx, &plan)...)
+		if resp.Diagnostics.Append(resp.Plan.Set(ctx, &plan)...); resp.Diagnostics.HasError() {
+			return
+		}
 
 		planMap := map[domainKey]domainResourceModel{}
 		for _, domain := range domainsFromPlan {
 			planMap[domainKey{domainName: domain.DomainName.ValueString(), validationScope: domain.ValidationScope.ValueString()}] = domain
 		}
 		domainsToRemove := buildRemoveDomainsRequest(domainsFromState, planMap)
-		warnAboutDroppingValidatedDomains(domainsToRemove, domainsFromState, resp)
+		resp.Diagnostics.Append(warnAboutDroppingValidatedDomains(domainsToRemove, domainsFromState)...)
 	}
 
 	if modifiers.IsDelete(req) {
@@ -202,11 +204,11 @@ func (r *DomainsResource) ModifyPlan(ctx context.Context, req resource.ModifyPla
 				ValidationScope: domainownership.ValidationScope(domain.ValidationScope.ValueString()),
 			})
 		}
-		warnAboutDroppingValidatedDomains(domainsToRemove, domainsFromState, resp)
+		resp.Diagnostics.Append(warnAboutDroppingValidatedDomains(domainsToRemove, domainsFromState)...)
 	}
 }
 
-func warnAboutDroppingValidatedDomains(domainsToRemove []domainownership.Domain, domainsFromState []domainResourceModel, resp *resource.ModifyPlanResponse) {
+func warnAboutDroppingValidatedDomains(domainsToRemove []domainownership.Domain, domainsFromState []domainResourceModel) diag.Diagnostics {
 	if len(domainsToRemove) > 0 {
 		validatedDomains := calculateValidatedDomains(domainsToRemove, domainsFromState)
 		if len(validatedDomains) > 0 {
@@ -214,9 +216,12 @@ func warnAboutDroppingValidatedDomains(domainsToRemove []domainownership.Domain,
 			for _, domain := range validatedDomains {
 				listOfDomains = append(listOfDomains, fmt.Sprintf("%s:%s", domain.DomainName, domain.ValidationScope))
 			}
-			resp.Diagnostics.AddWarning("VALIDATED domains are planned for removal", fmt.Sprintf("The following VALIDATED domains are planned for removal. They will be invalidated during the apply phase before removal: [%s]", strings.Join(listOfDomains, ",")))
+			diags := diag.Diagnostics{}
+			diags.AddWarning("VALIDATED domains are planned for removal", fmt.Sprintf("The following VALIDATED domains are planned for removal. They will be invalidated during the apply phase before removal: [%s]", strings.Join(listOfDomains, ",")))
+			return diags
 		}
 	}
+	return nil
 }
 
 // useStateForUnknownForDomains handles setting the computed attributes. We cannot use library one because of there are nullable fields which cause problems there.
@@ -244,7 +249,7 @@ func useStateForUnknownForDomains(ctx context.Context, domainsFromPlan, domainsF
 
 // Create implements resource's Create method.
 func (r *DomainsResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	tflog.Debug(ctx, "Creating DomainOwnershipDomains Resource")
+	tflog.Debug(ctx, "Creating Domain Ownership Domains Resource")
 	var data domainsResourceModel
 
 	if resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...); resp.Diagnostics.HasError() {
@@ -461,13 +466,11 @@ func formatErrorMessageForAddDomains(addedDomains *domainownership.AddDomainsRes
 func (m *domainsResourceModel) setDomains(ctx context.Context, domains []domainownership.SearchDomainItem) diag.Diagnostics {
 	diags := diag.Diagnostics{}
 	domainModels, d := getDomainsModelForSearch(ctx, domains)
-	diags.Append(d...)
-	if diags.HasError() {
+	if diags.Append(d...); diags.HasError() {
 		return diags
 	}
 	domainsModel, d := types.SetValueFrom(ctx, domainsType(), domainModels)
-	diags.Append(d...)
-	if diags.HasError() {
+	if diags.Append(d...); diags.HasError() {
 		return diags
 	}
 	m.Domains = domainsModel
@@ -532,7 +535,7 @@ func getDomainsModelForSearch(ctx context.Context, domains []domainownership.Sea
 
 // Read implements resource's Read method.
 func (r *DomainsResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	tflog.Debug(ctx, "Reading DomainOwnershipDomains Resource")
+	tflog.Debug(ctx, "Reading Domain Ownership Domains Resource")
 	var data domainsResourceModel
 
 	if resp.Diagnostics.Append(req.State.Get(ctx, &data)...); resp.Diagnostics.HasError() {
@@ -590,7 +593,7 @@ func (r *DomainsResource) Read(ctx context.Context, req resource.ReadRequest, re
 
 // Update implements resource's Update method.
 func (r *DomainsResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	tflog.Debug(ctx, "Updating DomainOwnershipDomains Resource")
+	tflog.Debug(ctx, "Updating Domain Ownership Domains Resource")
 	var plan, state domainsResourceModel
 
 	if resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...); resp.Diagnostics.HasError() {

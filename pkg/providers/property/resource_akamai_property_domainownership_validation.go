@@ -197,8 +197,7 @@ func (d *DomainOwnershipValidationResource) Create(ctx context.Context, req reso
 	}
 
 	createTimeout, diags := plan.Timeouts.Create(ctx, defaultPollTimeout)
-	if diags.HasError() {
-		resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.Append(diags...); resp.Diagnostics.HasError() {
 		return
 	}
 
@@ -299,8 +298,7 @@ func (d *DomainOwnershipValidationResource) Read(ctx context.Context, req resour
 	})
 
 	domainsSet, diags := types.SetValueFrom(ctx, validateDomainsType(), refreshedStateDomains)
-	if diags.HasError() {
-		resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.Append(diags...); resp.Diagnostics.HasError() {
 		return
 	}
 	state.Domains = domainsSet
@@ -327,14 +325,12 @@ func (d *DomainOwnershipValidationResource) Update(ctx context.Context, req reso
 	}
 
 	var planDomains []domainModel
-	if diags := plan.Domains.ElementsAs(ctx, &planDomains, false); diags.HasError() {
-		resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.Append(plan.Domains.ElementsAs(ctx, &planDomains, false)...); resp.Diagnostics.HasError() {
 		return
 	}
 
 	var stateDomains []domainModel
-	if diags := state.Domains.ElementsAs(ctx, &stateDomains, false); diags.HasError() {
-		resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.Append(state.Domains.ElementsAs(ctx, &stateDomains, false)...); resp.Diagnostics.HasError() {
 		return
 	}
 	tflog.Debug(ctx, "read state and plan domains", map[string]any{
@@ -403,8 +399,7 @@ func (d *DomainOwnershipValidationResource) Update(ctx context.Context, req reso
 	}
 
 	updateTimeout, diags := plan.Timeouts.Update(ctx, defaultPollTimeout)
-	if diags.HasError() {
-		resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.Append(diags...); resp.Diagnostics.HasError() {
 		return
 	}
 
@@ -441,8 +436,7 @@ func (d *DomainOwnershipValidationResource) Delete(ctx context.Context, req reso
 	}
 
 	var stateDomains []domainModel
-	if diags := state.Domains.ElementsAs(ctx, &stateDomains, false); diags.HasError() {
-		resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.Append(state.Domains.ElementsAs(ctx, &stateDomains, false)...); resp.Diagnostics.HasError() {
 		return
 	}
 	tflog.Debug(ctx, "state domains", map[string]any{
@@ -489,8 +483,7 @@ func (d *DomainOwnershipValidationResource) ImportState(ctx context.Context, req
 
 	client := DomainOwnershipClient(d.meta)
 	domains, diags := parseDomains(ctx, client, id, true)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
+	if resp.Diagnostics.Append(diags...); resp.Diagnostics.HasError() {
 		return
 	}
 
@@ -502,8 +495,7 @@ func (d *DomainOwnershipValidationResource) ImportState(ctx context.Context, req
 		})
 	}
 	domainsModel, diags := types.SetValueFrom(ctx, validateDomainsType(), domainModels)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
+	if resp.Diagnostics.Append(diags...); resp.Diagnostics.HasError() {
 		return
 	}
 
