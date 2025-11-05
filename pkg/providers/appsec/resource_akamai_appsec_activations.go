@@ -126,20 +126,10 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 	}
 	notificationEmails := tf.SetToStringSlice(notificationEmailsSet)
 
-	createActivationRequest := appsec.CreateActivationsRequest{
-		Action:             string(appsec.ActivationTypeActivate),
-		Network:            network,
-		Note:               note,
-		NotificationEmails: notificationEmails,
-	}
-	createActivationRequest.ActivationConfigs = append(createActivationRequest.ActivationConfigs, appsec.ActivationConfigs{
-		ConfigID:      configID,
-		ConfigVersion: version,
-	})
-
-	activationResp, err := createActivation(ctx, client, createActivationRequest)
-	if err != nil {
-		return diag.FromErr(err)
+	// Handle host move validation and activation
+	activationResp, hostMoveValidation, diags := createActivationWithValidation(ctx, client, configID, version, network, note, notificationEmails)
+	if diags != nil {
+		return diags
 	}
 
 	d.SetId(strconv.Itoa(activationResp.ActivationID))
@@ -159,7 +149,18 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 	if err = pollActivation(ctx, client, activation.Status, getActivationRequest); err != nil {
 		return diag.FromErr(err)
 	}
-	return resourceActivationsRead(ctx, d, m)
+
+	// Collect warnings for host move operations
+	var warnings diag.Diagnostics
+	if hostMoveValidation != nil && len(hostMoveValidation.HostsToMove) > 0 {
+		if warning := generateHostMoveWarning(hostMoveValidation.HostsToMove, configID); warning.Summary != "" {
+			warnings = append(warnings, warning)
+		}
+	}
+
+	// Read the resource state and append any warnings
+	readDiags := resourceActivationsRead(ctx, d, m)
+	return append(readDiags, warnings...)
 }
 
 func resourceActivationsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -237,20 +238,10 @@ func resourceActivationsUpdate(ctx context.Context, d *schema.ResourceData, m in
 	}
 	notificationEmails := tf.SetToStringSlice(notificationEmailsSet)
 
-	createActivationRequest := appsec.CreateActivationsRequest{
-		Action:             string(appsec.ActivationTypeActivate),
-		Network:            network,
-		Note:               note,
-		NotificationEmails: notificationEmails,
-	}
-	createActivationRequest.ActivationConfigs = append(createActivationRequest.ActivationConfigs, appsec.ActivationConfigs{
-		ConfigID:      configID,
-		ConfigVersion: version,
-	})
-
-	activationResp, err := createActivation(ctx, client, createActivationRequest)
-	if err != nil {
-		return diag.FromErr(err)
+	// Handle host move validation and activation
+	activationResp, hostMoveValidation, diags := createActivationWithValidation(ctx, client, configID, version, network, note, notificationEmails)
+	if diags != nil {
+		return diags
 	}
 
 	d.SetId(strconv.Itoa(activationResp.ActivationID))
@@ -271,7 +262,17 @@ func resourceActivationsUpdate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 
-	return resourceActivationsRead(ctx, d, m)
+	// Collect warnings for host move operations
+	var warnings diag.Diagnostics
+	if hostMoveValidation != nil && len(hostMoveValidation.HostsToMove) > 0 {
+		if warning := generateHostMoveWarning(hostMoveValidation.HostsToMove, configID); warning.Summary != "" {
+			warnings = append(warnings, warning)
+		}
+	}
+
+	// Read the resource state and append any warnings
+	readDiags := resourceActivationsRead(ctx, d, m)
+	return append(readDiags, warnings...)
 }
 
 func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -448,9 +449,40 @@ func defaultActivationNote(deactivating bool) (string, error) {
 	return fmt.Sprintf("Activation request %s", formattedTime), nil
 }
 
-func createActivation(ctx context.Context, client appsec.APPSEC, request appsec.CreateActivationsRequest) (*appsec.CreateActivationsResponse, error) {
+// retryActivationRequest executes an activation API call with exponential backoff retry logic
+func retryActivationRequest(
+	ctx context.Context,
+	errMsg string,
+	apiCall func() error,
+) error {
 	log := hclog.FromContext(ctx)
+	retryDelay := CreateActivationRetry
 
+	for {
+		log.Debug("attempting activation request")
+		err := apiCall()
+
+		if err == nil {
+			return nil
+		}
+		log.Debug("%s: retrying: %w", errMsg, err)
+
+		if !isCreateActivationErrorRetryable(err) {
+			return fmt.Errorf("%s: %s", errMsg, err)
+		}
+
+		select {
+		case <-time.After(retryDelay):
+			retryDelay = date.CapDuration(retryDelay*2, 5*time.Minute)
+			continue
+
+		case <-ctx.Done():
+			return fmt.Errorf("activation context terminated: %w", ctx.Err())
+		}
+	}
+}
+
+func createActivation(ctx context.Context, client appsec.APPSEC, request appsec.CreateActivationsRequest) (*appsec.CreateActivationsResponse, error) {
 	errMsg := "create failed"
 	switch request.Action {
 	case string(appsec.ActivationTypeActivate):
@@ -459,31 +491,16 @@ func createActivation(ctx context.Context, client appsec.APPSEC, request appsec.
 		errMsg = "create deactivation failed"
 	}
 
-	createActivationRetry := CreateActivationRetry
-
-	for {
-		log.Debug("creating activation")
+	var result *appsec.CreateActivationsResponse
+	err := retryActivationRequest(ctx, errMsg, func() error {
 		create, err := client.CreateActivations(ctx, request, true)
-
 		if err == nil {
-			return create, nil
+			result = create
 		}
-		log.Debug("%s: retrying: %w", errMsg, err)
+		return err
+	})
 
-		if !isCreateActivationErrorRetryable(err) {
-			return nil, fmt.Errorf("%s: %s", errMsg, err)
-		}
-
-		select {
-		case <-time.After(createActivationRetry):
-			createActivationRetry = date.CapDuration(createActivationRetry*2, 5*time.Minute)
-			continue
-
-		case <-ctx.Done():
-			return nil, fmt.Errorf("activation context terminated: %w", ctx.Err())
-		}
-	}
-
+	return result, err
 }
 
 func pollActivation(ctx context.Context, client appsec.APPSEC, activationStatus appsec.StatusValue, getActivationRequest appsec.GetActivationsRequest) error {
@@ -528,4 +545,164 @@ func isCreateActivationErrorRetryable(err error) bool {
 		return false
 	}
 	return true
+}
+
+// generateHostMoveWarning creates a warning message for host move operations
+func generateHostMoveWarning(hostsToMove []appsec.HostToMove, currentConfigID int) diag.Diagnostic {
+	if len(hostsToMove) == 0 {
+		return diag.Diagnostic{}
+	}
+
+	var hostnames []string
+	var sourceConfigID int
+
+	for _, host := range hostsToMove {
+		hostnames = append(hostnames, host.Host)
+		sourceConfigID = host.FromConfig.ConfigID // All hosts are from same config due to validation
+	}
+
+	var hostnamesStr string
+	if len(hostnames) == 1 {
+		hostnamesStr = fmt.Sprintf("Hostname %s was", hostnames[0])
+	} else {
+		hostnamesStr = fmt.Sprintf("Hostnames %v were", hostnames)
+	}
+
+	message := fmt.Sprintf("%s moved from config %d to config %d. Refresh the source config %d resource(s) to update state.",
+		hostnamesStr, sourceConfigID, currentConfigID, sourceConfigID)
+
+	return diag.Diagnostic{
+		Severity: diag.Warning,
+		Summary:  "Host Move Detected",
+		Detail:   message,
+	}
+}
+
+// createActivationWithValidation validates and creates activation with host move if needed
+// Returns the activation response, host move validation result, and any diagnostics
+func createActivationWithValidation(
+	ctx context.Context,
+	client appsec.APPSEC,
+	configID int,
+	version int,
+	network string,
+	note string,
+	notificationEmails []string,
+) (*appsec.CreateActivationsResponse, *appsec.GetHostMoveValidationResponse, diag.Diagnostics) {
+	// Check for host move validation before creating activation
+	hostMoveValidationRequest := appsec.GetHostMoveValidationRequest{
+		ConfigID:      configID,
+		ConfigVersion: version,
+		Network:       appsec.NetworkValue(network),
+	}
+
+	hostMoveValidation, err := client.GetHostMoveValidation(ctx, hostMoveValidationRequest)
+	if err != nil {
+		return nil, nil, diag.Errorf("calling 'GetHostMoveValidation': %s", err.Error())
+	}
+
+	// Validate that all hosts are from the same source config
+	if hostMoveValidation != nil && len(hostMoveValidation.HostsToMove) > 0 {
+		if err := validateSingleSourceConfig(hostMoveValidation.HostsToMove); err != nil {
+			return nil, hostMoveValidation, diag.FromErr(err)
+		}
+	}
+
+	// Choose activation path based on whether host move is needed
+	var activationResp *appsec.CreateActivationsResponse
+
+	if hostMoveValidation != nil && len(hostMoveValidation.HostsToMove) > 0 {
+		// Use host move activation path
+		activationResp, err = activateWithHostMove(ctx, client, configID, version, network, note, notificationEmails, hostMoveValidation.HostsToMove)
+		if err != nil {
+			return nil, hostMoveValidation, diag.FromErr(err)
+		}
+	} else {
+		// Use regular activation path
+		activationResp, err = activate(ctx, client, configID, version, network, note, notificationEmails)
+		if err != nil {
+			return nil, hostMoveValidation, diag.FromErr(err)
+		}
+	}
+
+	return activationResp, hostMoveValidation, nil
+}
+
+// activateWithHostMove creates an activation using the host move API
+func activateWithHostMove(
+	ctx context.Context,
+	client appsec.APPSEC,
+	configID int,
+	version int,
+	network string,
+	note string,
+	notificationEmails []string,
+	hostsToMove []appsec.HostToMove,
+) (*appsec.CreateActivationsResponse, error) {
+	createActivationWithHostMoveRequest := appsec.CreateActivationsWithHostMoveRequest{
+		ConfigID:           configID,
+		ConfigVersion:      version,
+		Action:             string(appsec.ActivationTypeActivate),
+		Network:            appsec.NetworkValue(network),
+		Note:               note,
+		NotificationEmails: notificationEmails,
+		HostsToMove:        hostsToMove,
+	}
+
+	errMsg := "create activation with host move failed"
+	var result *appsec.CreateActivationsResponse
+
+	err := retryActivationRequest(ctx, errMsg, func() error {
+		hostMoveActivationResp, err := client.CreateActivationsWithHostMove(ctx, createActivationWithHostMoveRequest)
+		if err == nil {
+			// Convert to standard response format
+			result = &appsec.CreateActivationsResponse{
+				ActivationID: hostMoveActivationResp.ActivationID,
+				Status:       appsec.StatusValue(hostMoveActivationResp.Status),
+				Network:      appsec.NetworkValue(hostMoveActivationResp.Network),
+			}
+		}
+		return err
+	})
+
+	return result, err
+}
+
+// activate creates a standard activation without host move
+func activate(
+	ctx context.Context,
+	client appsec.APPSEC,
+	configID int,
+	version int,
+	network string,
+	note string,
+	notificationEmails []string,
+) (*appsec.CreateActivationsResponse, error) {
+	createActivationRequest := appsec.CreateActivationsRequest{
+		Action:             string(appsec.ActivationTypeActivate),
+		Network:            network,
+		Note:               note,
+		NotificationEmails: notificationEmails,
+	}
+	createActivationRequest.ActivationConfigs = append(createActivationRequest.ActivationConfigs, appsec.ActivationConfigs{
+		ConfigID:      configID,
+		ConfigVersion: version,
+	})
+
+	return createActivation(ctx, client, createActivationRequest)
+}
+
+// validateSingleSourceConfig checks that all hosts are from the same source config
+func validateSingleSourceConfig(hostsToMove []appsec.HostToMove) error {
+	if len(hostsToMove) <= 1 {
+		return nil
+	}
+
+	firstConfigID := hostsToMove[0].FromConfig.ConfigID
+	for _, host := range hostsToMove[1:] {
+		if host.FromConfig.ConfigID != firstConfigID {
+			return fmt.Errorf("you can't move hostnames from more than one security configuration at a time. Instead, make successive updates, one for each source security configuration")
+		}
+	}
+	return nil
 }

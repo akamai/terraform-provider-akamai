@@ -32,6 +32,19 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/Activations.json"), &createActivationsResponse)
 		require.NoError(t, err)
 
+		// Mock GetHostMoveValidation to return no hosts to move (standard activation)
+		getHostMoveValidationResponse := appsec.GetHostMoveValidationResponse{
+			HostsToMove: []appsec.HostToMove{},
+		}
+		client.On("GetHostMoveValidation",
+			testutils.MockContext,
+			appsec.GetHostMoveValidationRequest{
+				ConfigID:      43253,
+				ConfigVersion: 7,
+				Network:       appsec.NetworkValue("STAGING"),
+			},
+		).Return(&getHostMoveValidationResponse, nil).Once()
+
 		client.On("GetActivations",
 			testutils.MockContext,
 			appsec.GetActivationsRequest{ActivationID: 547694},
@@ -112,6 +125,19 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		createActivationsResponse := appsec.CreateActivationsResponse{}
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/Activations.json"), &createActivationsResponse)
 		require.NoError(t, err)
+
+		// Mock GetHostMoveValidation to return no hosts to move (standard activation)
+		getHostMoveValidationResponse := appsec.GetHostMoveValidationResponse{
+			HostsToMove: []appsec.HostToMove{}, // Empty slice means no host move needed
+		}
+		client.On("GetHostMoveValidation",
+			testutils.MockContext,
+			appsec.GetHostMoveValidationRequest{
+				ConfigID:      43253,
+				ConfigVersion: 7,
+				Network:       appsec.NetworkValue("STAGING"),
+			},
+		).Return(&getHostMoveValidationResponse, nil).Once()
 
 		client.On("GetActivations",
 			testutils.MockContext,
@@ -220,6 +246,32 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		getActivationsResponseDeleteUpdated := appsec.GetActivationsResponse{}
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/Deactivations_Production.json"), &getActivationsResponseDeleteUpdated)
 		require.NoError(t, err)
+
+		// Mock GetHostMoveValidation for STAGING activation
+		getHostMoveValidationResponseStaging := appsec.GetHostMoveValidationResponse{
+			HostsToMove: []appsec.HostToMove{},
+		}
+		client.On("GetHostMoveValidation",
+			testutils.MockContext,
+			appsec.GetHostMoveValidationRequest{
+				ConfigID:      43253,
+				ConfigVersion: 7,
+				Network:       appsec.NetworkValue("STAGING"),
+			},
+		).Return(&getHostMoveValidationResponseStaging, nil).Once()
+
+		// Mock GetHostMoveValidation for PRODUCTION activation (called during update)
+		getHostMoveValidationResponseProduction := appsec.GetHostMoveValidationResponse{
+			HostsToMove: []appsec.HostToMove{},
+		}
+		client.On("GetHostMoveValidation",
+			testutils.MockContext,
+			appsec.GetHostMoveValidationRequest{
+				ConfigID:      43253,
+				ConfigVersion: 7,
+				Network:       appsec.NetworkValue("PRODUCTION"),
+			},
+		).Return(&getHostMoveValidationResponseProduction, nil).Once()
 
 		client.On("GetActivations",
 			testutils.MockContext,
@@ -334,6 +386,19 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/Activations.json"), &createActivationsResponse)
 		require.NoError(t, err)
 
+		// Mock GetHostMoveValidation for STAGING activation
+		getHostMoveValidationResponse := appsec.GetHostMoveValidationResponse{
+			HostsToMove: []appsec.HostToMove{}, // Empty slice means no host move needed
+		}
+		client.On("GetHostMoveValidation",
+			testutils.MockContext,
+			appsec.GetHostMoveValidationRequest{
+				ConfigID:      43253,
+				ConfigVersion: 7,
+				Network:       appsec.NetworkValue("STAGING"),
+			},
+		).Return(&getHostMoveValidationResponse, nil).Once()
+
 		client.On("GetActivations",
 			testutils.MockContext,
 			appsec.GetActivationsRequest{ActivationID: 547694},
@@ -350,7 +415,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 					ConfigID      int `json:"configId"`
 					ConfigVersion int `json:"configVersion"`
 				}{{ConfigID: 43253, ConfigVersion: 7}}},
-		).Return(&createActivationsResponse, nil)
+		).Return(&createActivationsResponse, nil).Once()
 
 		client.On("GetActivations",
 			testutils.MockContext,
@@ -445,6 +510,31 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/Deactivations_Production.json"), &getActivationsResponseDeleteUpdated)
 		require.NoError(t, err)
 
+		// Mock GetHostMoveValidation for STAGING activation
+		getHostMoveValidationResponseStaging := appsec.GetHostMoveValidationResponse{
+			HostsToMove: []appsec.HostToMove{}, // Empty slice means no host move needed
+		}
+		client.On("GetHostMoveValidation",
+			testutils.MockContext,
+			appsec.GetHostMoveValidationRequest{
+				ConfigID:      43253,
+				ConfigVersion: 7,
+				Network:       appsec.NetworkValue("STAGING"),
+			},
+		).Return(&getHostMoveValidationResponseStaging, nil).Maybe()
+
+		getHostMoveValidationResponseProduction := appsec.GetHostMoveValidationResponse{
+			HostsToMove: []appsec.HostToMove{}, // Empty slice means no host move needed
+		}
+		client.On("GetHostMoveValidation",
+			testutils.MockContext,
+			appsec.GetHostMoveValidationRequest{
+				ConfigID:      43253,
+				ConfigVersion: 7,
+				Network:       appsec.NetworkValue("PRODUCTION"),
+			},
+		).Return(&getHostMoveValidationResponseProduction, nil).Maybe()
+
 		client.On("GetActivations",
 			testutils.MockContext,
 			appsec.GetActivationsRequest{ActivationID: 547694},
@@ -530,9 +620,10 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 						Config: testutils.LoadFixtureString(t, "testdata/TestResActivations/update_notification_emails_and_network.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "config_id", "43253"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "version", "7"),
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "network", "PRODUCTION"),
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "note", "Test Notes"),
-							// Since network and notification_emails changes, there is an update to the notification_emails
+							// Since version and notification_emails changes, there is an update to the notification_emails
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "notification_emails.0", "user1@example.com"),
 						),
 					},
@@ -566,6 +657,19 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		createActivationsResponse := appsec.CreateActivationsResponse{}
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/Activations.json"), &createActivationsResponse)
 		require.NoError(t, err)
+
+		// Mock GetHostMoveValidation for STAGING activation
+		getHostMoveValidationResponse := appsec.GetHostMoveValidationResponse{
+			HostsToMove: []appsec.HostToMove{}, // Empty slice means no host move needed
+		}
+		client.On("GetHostMoveValidation",
+			testutils.MockContext,
+			appsec.GetHostMoveValidationRequest{
+				ConfigID:      43253,
+				ConfigVersion: 7,
+				Network:       appsec.NetworkValue("STAGING"),
+			},
+		).Return(&getHostMoveValidationResponse, nil).Once()
 
 		client.On("GetActivations",
 			testutils.MockContext,
@@ -674,6 +778,18 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/Manual_Deactivate.json"), &getActivationsResponseDeactivated)
 		require.NoError(t, err)
 
+		// Mock GetHostMoveValidation for STAGING activation (called twice: initial create and reactivate)
+		getHostMoveValidationResponse := appsec.GetHostMoveValidationResponse{
+			HostsToMove: []appsec.HostToMove{}, // Empty slice means no host move needed
+		}
+		client.On("GetHostMoveValidation",
+			testutils.MockContext,
+			appsec.GetHostMoveValidationRequest{
+				ConfigID:      43253,
+				ConfigVersion: 7,
+				Network:       appsec.NetworkValue("STAGING"),
+			},
+		).Return(&getHostMoveValidationResponse, nil).Times(2)
 		// First step - create and read
 
 		client.On("CreateActivations",
@@ -788,6 +904,19 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/Activations.json"), &createActivationsResponse)
 		require.NoError(t, err)
 
+		// Mock GetHostMoveValidation (called once before failed CreateActivations)
+		getHostMoveValidationResponse := appsec.GetHostMoveValidationResponse{
+			HostsToMove: []appsec.HostToMove{}, // Empty slice means no host move needed
+		}
+		client.On("GetHostMoveValidation",
+			testutils.MockContext,
+			appsec.GetHostMoveValidationRequest{
+				ConfigID:      43253,
+				ConfigVersion: 7,
+				Network:       appsec.NetworkValue("STAGING"),
+			},
+		).Return(&getHostMoveValidationResponse, nil).Once()
+
 		client.On("CreateActivations",
 			testutils.MockContext,
 			appsec.CreateActivationsRequest{
@@ -858,6 +987,28 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		getActivationsResponseDeleteUpdated := appsec.GetActivationsResponse{}
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/Deactivations_Production.json"), &getActivationsResponseDeleteUpdated)
 		require.NoError(t, err)
+
+		// Mock GetHostMoveValidation for STAGING activation (called for both create and update steps)
+		getHostMoveValidationResponse := appsec.GetHostMoveValidationResponse{
+			HostsToMove: []appsec.HostToMove{}, // Empty slice means no host move needed
+		}
+		client.On("GetHostMoveValidation",
+			testutils.MockContext,
+			appsec.GetHostMoveValidationRequest{
+				ConfigID:      43253,
+				ConfigVersion: 7,
+				Network:       appsec.NetworkValue("STAGING"),
+			},
+		).Return(&getHostMoveValidationResponse, nil).Once()
+
+		client.On("GetHostMoveValidation",
+			testutils.MockContext,
+			appsec.GetHostMoveValidationRequest{
+				ConfigID:      43253,
+				ConfigVersion: 8,
+				Network:       appsec.NetworkValue("STAGING"),
+			},
+		).Return(&getHostMoveValidationResponse, nil).Once()
 
 		client.On("GetActivations",
 			testutils.MockContext,
@@ -982,6 +1133,19 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/Activations.json"), &createActivationsResponse)
 		require.NoError(t, err)
 
+		// Mock GetHostMoveValidation for STAGING activation
+		getHostMoveValidationResponse := appsec.GetHostMoveValidationResponse{
+			HostsToMove: []appsec.HostToMove{}, // Empty slice means no host move needed
+		}
+		client.On("GetHostMoveValidation",
+			testutils.MockContext,
+			appsec.GetHostMoveValidationRequest{
+				ConfigID:      43253,
+				ConfigVersion: 7,
+				Network:       appsec.NetworkValue("STAGING"),
+			},
+		).Return(&getHostMoveValidationResponse, nil).Once()
+
 		client.On("GetActivations",
 			testutils.MockContext,
 			appsec.GetActivationsRequest{ActivationID: 547694},
@@ -1062,6 +1226,381 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		})
 
 		client.AssertExpectations(t)
+	})
+
+	t.Run("host move activation with single host", func(t *testing.T) {
+		client := &appsec.Mock{}
+
+		removeActivationsResponse := appsec.RemoveActivationsResponse{}
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/ActivationsDelete.json"), &removeActivationsResponse)
+		require.NoError(t, err)
+
+		getActivationsResponse := appsec.GetActivationsResponse{}
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/Activations.json"), &getActivationsResponse)
+		require.NoError(t, err)
+
+		getActivationsDeleteResponse := appsec.GetActivationsResponse{}
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/ActivationsDelete.json"), &getActivationsDeleteResponse)
+		require.NoError(t, err)
+
+		createActivationsWithHostMoveResponse := appsec.CreateActivationsWithHostMoveResponse{
+			ActivationID: 547694,
+			Status:       "ACTIVATED",
+		}
+
+		// Mock GetHostMoveValidation to return hosts that need to be moved
+		getHostMoveValidationResponse := appsec.GetHostMoveValidationResponse{
+			HostsToMove: []appsec.HostToMove{
+				{
+					Host: "example.com",
+					FromConfig: appsec.ConfigInfo{
+						ConfigID: 12345,
+					},
+				},
+			},
+		}
+		client.On("GetHostMoveValidation",
+			testutils.MockContext,
+			appsec.GetHostMoveValidationRequest{
+				ConfigID:      43253,
+				ConfigVersion: 7,
+				Network:       appsec.NetworkValue("STAGING"),
+			},
+		).Return(&getHostMoveValidationResponse, nil).Once()
+
+		client.On("CreateActivationsWithHostMove",
+			testutils.MockContext,
+			appsec.CreateActivationsWithHostMoveRequest{
+				ConfigID:           43253,
+				ConfigVersion:      7,
+				Action:             "ACTIVATE",
+				Network:            "STAGING",
+				Note:               "Test Notes",
+				NotificationEmails: []string{"user@example.com"},
+				HostsToMove: []appsec.HostToMove{
+					{
+						Host: "example.com",
+						FromConfig: appsec.ConfigInfo{
+							ConfigID: 12345,
+						},
+					},
+				},
+			},
+		).Return(&createActivationsWithHostMoveResponse, nil).Once()
+
+		client.On("GetActivations",
+			testutils.MockContext,
+			appsec.GetActivationsRequest{ActivationID: 547694},
+		).Return(&getActivationsResponse, nil).Times(3)
+
+		client.On("RemoveActivations",
+			testutils.MockContext,
+			appsec.RemoveActivationsRequest{
+				ActivationID:       547694,
+				Action:             "DEACTIVATE",
+				Network:            "STAGING",
+				Note:               "Test Notes",
+				NotificationEmails: []string{"user@example.com"},
+				ActivationConfigs: []struct {
+					ConfigID      int `json:"configId"`
+					ConfigVersion int `json:"configVersion"`
+				}{{ConfigID: 43253, ConfigVersion: 7}}},
+		).Return(&removeActivationsResponse, nil)
+
+		client.On("GetActivations",
+			testutils.MockContext,
+			appsec.GetActivationsRequest{ActivationID: 547695},
+		).Return(&getActivationsDeleteResponse, nil)
+
+		useClient(client, func() {
+			resource.Test(t, resource.TestCase{
+				IsUnitTest:               true,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResActivations/match_by_id.tf"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "config_id", "43253"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "network", "STAGING"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "version", "7"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "note", "Test Notes"),
+						),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("host move activation fails with multiple source configs", func(t *testing.T) {
+		client := &appsec.Mock{}
+
+		// Mock GetHostMoveValidation to return hosts from different configs (should fail)
+		getHostMoveValidationResponse := appsec.GetHostMoveValidationResponse{
+			HostsToMove: []appsec.HostToMove{
+				{
+					Host: "example.com",
+					FromConfig: appsec.ConfigInfo{
+						ConfigID: 12345,
+					},
+				},
+				{
+					Host: "test.com",
+					FromConfig: appsec.ConfigInfo{
+						ConfigID: 67890, // Different config ID
+					},
+				},
+			},
+		}
+		client.On("GetHostMoveValidation",
+			testutils.MockContext,
+			appsec.GetHostMoveValidationRequest{
+				ConfigID:      43253,
+				ConfigVersion: 7,
+				Network:       appsec.NetworkValue("STAGING"),
+			},
+		).Return(&getHostMoveValidationResponse, nil).Once()
+
+		useClient(client, func() {
+			resource.Test(t, resource.TestCase{
+				IsUnitTest:               true,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResActivations/match_by_id.tf"),
+						ExpectError: regexp.MustCompile("you can't move hostnames from more than one security configuration at a time"),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("host move update activation", func(t *testing.T) {
+		client := &appsec.Mock{}
+
+		removeActivationsResponse := appsec.RemoveActivationsResponse{}
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/ActivationsDelete.json"), &removeActivationsResponse)
+		require.NoError(t, err)
+
+		getActivationsResponse := appsec.GetActivationsResponse{}
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/Activations.json"), &getActivationsResponse)
+		require.NoError(t, err)
+
+		getActivationsDeleteResponse := appsec.GetActivationsResponse{}
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/ActivationsDelete.json"), &getActivationsDeleteResponse)
+		require.NoError(t, err)
+
+		createActivationsResponse := appsec.CreateActivationsResponse{}
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/Activations.json"), &createActivationsResponse)
+		require.NoError(t, err)
+
+		createActivationsWithHostMoveResponse := appsec.CreateActivationsWithHostMoveResponse{
+			ActivationID: 547694,
+			Status:       "ACTIVATED",
+		}
+
+		// First activation: no host move
+		getHostMoveValidationResponseNoMove := appsec.GetHostMoveValidationResponse{
+			HostsToMove: []appsec.HostToMove{},
+		}
+		client.On("GetHostMoveValidation",
+			testutils.MockContext,
+			appsec.GetHostMoveValidationRequest{
+				ConfigID:      43253,
+				ConfigVersion: 7,
+				Network:       appsec.NetworkValue("STAGING"),
+			},
+		).Return(&getHostMoveValidationResponseNoMove, nil).Once()
+
+		client.On("CreateActivations",
+			testutils.MockContext,
+			appsec.CreateActivationsRequest{
+				Action:             "ACTIVATE",
+				Network:            "STAGING",
+				Note:               "Test Notes",
+				NotificationEmails: []string{"user@example.com"},
+				ActivationConfigs: []struct {
+					ConfigID      int `json:"configId"`
+					ConfigVersion int `json:"configVersion"`
+				}{{ConfigID: 43253, ConfigVersion: 7}}},
+		).Return(&createActivationsResponse, nil).Once()
+
+		// Second activation (update): host move required
+		getHostMoveValidationResponseWithMove := appsec.GetHostMoveValidationResponse{
+			HostsToMove: []appsec.HostToMove{
+				{
+					Host: "example.com",
+					FromConfig: appsec.ConfigInfo{
+						ConfigID: 12345,
+					},
+				},
+			},
+		}
+		client.On("GetHostMoveValidation",
+			testutils.MockContext,
+			appsec.GetHostMoveValidationRequest{
+				ConfigID:      43253,
+				ConfigVersion: 8,
+				Network:       appsec.NetworkValue("STAGING"),
+			},
+		).Return(&getHostMoveValidationResponseWithMove, nil).Once()
+
+		client.On("CreateActivationsWithHostMove",
+			testutils.MockContext,
+			appsec.CreateActivationsWithHostMoveRequest{
+				ConfigID:           43253,
+				ConfigVersion:      8,
+				Action:             "ACTIVATE",
+				Network:            "STAGING",
+				Note:               "Updated Notes",
+				NotificationEmails: []string{"user@example.com"},
+				HostsToMove: []appsec.HostToMove{
+					{
+						Host: "example.com",
+						FromConfig: appsec.ConfigInfo{
+							ConfigID: 12345,
+						},
+					},
+				},
+			},
+		).Return(&createActivationsWithHostMoveResponse, nil).Once()
+
+		client.On("GetActivations",
+			testutils.MockContext,
+			appsec.GetActivationsRequest{ActivationID: 547694},
+		).Return(&getActivationsResponse, nil).Times(7)
+
+		client.On("RemoveActivations",
+			testutils.MockContext,
+			appsec.RemoveActivationsRequest{
+				ActivationID:       547694,
+				Action:             "DEACTIVATE",
+				Network:            "STAGING",
+				Note:               "Updated Notes",
+				NotificationEmails: []string{"user@example.com"},
+				ActivationConfigs: []struct {
+					ConfigID      int `json:"configId"`
+					ConfigVersion int `json:"configVersion"`
+				}{{ConfigID: 43253, ConfigVersion: 8}}},
+		).Return(&removeActivationsResponse, nil)
+
+		client.On("GetActivations",
+			testutils.MockContext,
+			appsec.GetActivationsRequest{ActivationID: 547695},
+		).Return(&getActivationsDeleteResponse, nil)
+
+		useClient(client, func() {
+			resource.Test(t, resource.TestCase{
+				IsUnitTest:               true,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResActivations/match_by_id.tf"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "config_id", "43253"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "network", "STAGING"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "note", "Test Notes"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "version", "7"),
+						),
+					},
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResActivations/update_version_and_note.tf"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "config_id", "43253"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "network", "STAGING"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "note", "Updated Notes"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "version", "8"),
+						),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("Do not retry on 409 error for host move activation", func(t *testing.T) {
+
+		err409 := &appsec.Error{StatusCode: 409}
+
+		client := &appsec.Mock{}
+
+		removeActivationsResponse := appsec.RemoveActivationsResponse{}
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/ActivationsDelete.json"), &removeActivationsResponse)
+		require.NoError(t, err)
+
+		getActivationsResponse := appsec.GetActivationsResponse{}
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/Activations.json"), &getActivationsResponse)
+		require.NoError(t, err)
+
+		getActivationsDeleteResponse := appsec.GetActivationsResponse{}
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/ActivationsDelete.json"), &getActivationsDeleteResponse)
+		require.NoError(t, err)
+
+		// Mock GetHostMoveValidation to return hosts that need to be moved
+		getHostMoveValidationResponse := appsec.GetHostMoveValidationResponse{
+			HostsToMove: []appsec.HostToMove{
+				{
+					Host: "example.com",
+					FromConfig: appsec.ConfigInfo{
+						ConfigID: 12345,
+					},
+				},
+			},
+		}
+		client.On("GetHostMoveValidation",
+			testutils.MockContext,
+			appsec.GetHostMoveValidationRequest{
+				ConfigID:      43253,
+				ConfigVersion: 7,
+				Network:       appsec.NetworkValue("STAGING"),
+			},
+		).Return(&getHostMoveValidationResponse, nil).Once()
+
+		// Mock CreateActivationsWithHostMove to return 409 error
+		client.On("CreateActivationsWithHostMove",
+			testutils.MockContext,
+			appsec.CreateActivationsWithHostMoveRequest{
+				ConfigID:           43253,
+				ConfigVersion:      7,
+				Action:             "ACTIVATE",
+				Network:            "STAGING",
+				Note:               "Test Notes",
+				NotificationEmails: []string{"user@example.com"},
+				HostsToMove: []appsec.HostToMove{
+					{
+						Host: "example.com",
+						FromConfig: appsec.ConfigInfo{
+							ConfigID: 12345,
+						},
+					},
+				},
+			},
+		).Return(nil, err409).Once()
+
+		useClient(client, func() {
+			resource.Test(t, resource.TestCase{
+				IsUnitTest:               true,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResActivations/match_by_id.tf"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "config_id", "43253"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "network", "STAGING"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "note", "Test Notes"),
+						),
+						ExpectError: regexp.MustCompile("Error: create activation with host move failed"),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+
 	})
 
 }
