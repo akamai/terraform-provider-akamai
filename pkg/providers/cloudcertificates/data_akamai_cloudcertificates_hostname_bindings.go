@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/ccm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudcertificates"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/tf/validators"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
@@ -144,13 +144,13 @@ func (d *hostnameBindingsDataSource) Read(ctx context.Context, req datasource.Re
 	}
 	client := Client(d.meta)
 
-	var bindings []ccm.CertificateBinding
+	var bindings []cloudcertificates.CertificateBinding
 	for page := int64(1); ; page++ {
-		res, err := client.ListBindings(ctx, ccm.ListBindingsRequest{
+		res, err := client.ListBindings(ctx, cloudcertificates.ListBindingsRequest{
 			ContractID:     data.ContractID.ValueString(),
 			GroupID:        data.GroupID.ValueString(),
 			Domain:         data.Domain.ValueString(),
-			Network:        ccm.Network(data.Network.ValueString()),
+			Network:        cloudcertificates.Network(data.Network.ValueString()),
 			ExpiringInDays: data.ExpiringInDays.ValueInt64Pointer(),
 			Page:           page,
 			PageSize:       pageSize,
@@ -170,7 +170,7 @@ func (d *hostnameBindingsDataSource) Read(ctx context.Context, req datasource.Re
 	resp.Diagnostics.Append(resp.State.Set(ctx, data)...)
 }
 
-func (m *hostnameBindingsDataSourceModel) setData(bindings []ccm.CertificateBinding) {
+func (m *hostnameBindingsDataSourceModel) setData(bindings []cloudcertificates.CertificateBinding) {
 	m.Bindings = make([]bindingModel, len(bindings))
 	for i, binding := range bindings {
 		m.Bindings[i] = bindingModel{

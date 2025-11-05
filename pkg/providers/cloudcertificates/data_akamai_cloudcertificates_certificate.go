@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/ccm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudcertificates"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/framework/date"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -59,7 +59,7 @@ type (
 
 const defaultPageSize int64 = 100
 
-// NewCertificateDataSource returns a new cloud certificate data source.
+// NewCertificateDataSource returns a new CloudCertificates Certificate data source.
 func NewCertificateDataSource() datasource.DataSource {
 	return &certificateDataSource{}
 }
@@ -253,11 +253,11 @@ func (d *certificateDataSource) Read(ctx context.Context, req datasource.ReadReq
 
 	client := Client(d.meta)
 
-	cert, err := client.GetCertificate(ctx, ccm.GetCertificateRequest{
+	cert, err := client.GetCertificate(ctx, cloudcertificates.GetCertificateRequest{
 		CertificateID: data.CertificateID.ValueString(),
 	})
 	if err != nil {
-		if errors.Is(err, ccm.ErrCertificateNotFound) {
+		if errors.Is(err, cloudcertificates.ErrCertificateNotFound) {
 			resp.Diagnostics.AddError("Certificate Not Found", fmt.Sprintf("No certificate found with ID: %s", data.CertificateID.ValueString()))
 		} else {
 			resp.Diagnostics.AddError("Failed to retrieve certificate", err.Error())
@@ -283,7 +283,7 @@ func (d *certificateDataSource) Read(ctx context.Context, req datasource.ReadReq
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (m *certificateDataSourceModel) convertBindingsToModel(bindings []ccm.CertificateBinding) {
+func (m *certificateDataSourceModel) convertBindingsToModel(bindings []cloudcertificates.CertificateBinding) {
 	m.Bindings = make([]bindingModel, len(bindings))
 	for i, b := range bindings {
 		m.Bindings[i] = bindingModel{
@@ -295,14 +295,14 @@ func (m *certificateDataSourceModel) convertBindingsToModel(bindings []ccm.Certi
 	}
 }
 
-func getAllBindings(ctx context.Context, client ccm.CCM, certificateID string) ([]ccm.CertificateBinding, error) {
+func getAllBindings(ctx context.Context, client cloudcertificates.CloudCertificates, certificateID string) ([]cloudcertificates.CertificateBinding, error) {
 	pageSize := defaultPageSize
 	var page int64 = 1
-	var allBindings []ccm.CertificateBinding
+	var allBindings []cloudcertificates.CertificateBinding
 
 	for {
 		tflog.Debug(ctx, fmt.Sprintf("Fetching bindings page %d with size %d", page, pageSize))
-		bindingsResp, err := client.ListCertificateBindings(ctx, ccm.ListCertificateBindingsRequest{
+		bindingsResp, err := client.ListCertificateBindings(ctx, cloudcertificates.ListCertificateBindingsRequest{
 			CertificateID: certificateID,
 			PageSize:      pageSize,
 			Page:          page,
@@ -320,7 +320,7 @@ func getAllBindings(ctx context.Context, client ccm.CCM, certificateID string) (
 	return allBindings, nil
 }
 
-func (m *certificateDataSourceModel) convertCertificateToModel(ctx context.Context, certificate ccm.GetCertificateResponse) diag.Diagnostics {
+func (m *certificateDataSourceModel) convertCertificateToModel(ctx context.Context, certificate cloudcertificates.GetCertificateResponse) diag.Diagnostics {
 	m.AccountID = types.StringValue(certificate.Certificate.AccountID)
 	m.ContractID = types.StringValue(certificate.Certificate.ContractID)
 	m.CertificateName = types.StringValue(certificate.Certificate.CertificateName)
@@ -329,7 +329,7 @@ func (m *certificateDataSourceModel) convertCertificateToModel(ctx context.Conte
 	m.CreatedDate = date.TimeRFC3339NanoValue(certificate.Certificate.CreatedDate)
 	m.CreatedBy = types.StringValue(certificate.Certificate.CreatedBy)
 	m.CSRExpirationDate = date.TimeRFC3339Value(certificate.Certificate.CSRExpirationDate)
-	m.CSRPEM = types.StringPointerValue(certificate.Certificate.CSRPEM)
+	m.CSRPEM = types.StringValue(certificate.Certificate.CSRPEM)
 	m.KeyType = types.StringValue(string(certificate.Certificate.KeyType))
 	m.KeySize = types.StringValue(string(certificate.Certificate.KeySize))
 	m.SecureNetwork = types.StringValue(certificate.Certificate.SecureNetwork)

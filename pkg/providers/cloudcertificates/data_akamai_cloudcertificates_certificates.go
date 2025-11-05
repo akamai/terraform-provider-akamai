@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/ccm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudcertificates"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/framework/date"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
@@ -70,9 +70,6 @@ type (
 		TrustChainPEM                       types.String  `tfsdk:"trust_chain_pem"`
 	}
 )
-
-// ccmCertificatesPageSize defines the maximum number of items to be retrieved per page from the CCM API.
-const ccmCertificatesPageSize int64 = 100
 
 // NewCertificatesDataSource returns a new CloudCertificates Certificates data source.
 func NewCertificatesDataSource() datasource.DataSource {
@@ -175,7 +172,7 @@ func (d *certificatesDataSource) Schema(_ context.Context, _ datasource.SchemaRe
 					"By default, results are sorted by `modifiedDate` in descending order.",
 				Optional: true,
 				Validators: []validator.String{
-					stringvalidator.RegexMatches(regexp.MustCompile(`^`+ccm.SortFieldPat+`(,`+ccm.SortFieldPat+
+					stringvalidator.RegexMatches(regexp.MustCompile(`^`+cloudcertificates.SortFieldPat+`(,`+cloudcertificates.SortFieldPat+
 						`)*$`), "must be a comma-separated list of fields with optional '+' or '-' prefix. "+
 						"Valid fields are \"certificateName\", \"createdDate\", \"expirationDate\", and \"modifiedDate\""),
 				},
@@ -321,7 +318,7 @@ func (d *certificatesDataSource) Read(ctx context.Context, req datasource.ReadRe
 
 	client := Client(d.meta)
 
-	request := ccm.ListCertificatesRequest{}
+	request := cloudcertificates.ListCertificatesRequest{}
 
 	if !data.ContractID.IsNull() {
 		request.ContractID = data.ContractID.ValueString()
@@ -330,7 +327,7 @@ func (d *certificatesDataSource) Read(ctx context.Context, req datasource.ReadRe
 		request.GroupID = data.GroupID.ValueString()
 	}
 	if !data.CertificateStatus.IsNull() {
-		var statusList []ccm.CertificateStatus
+		var statusList []cloudcertificates.CertificateStatus
 		data.CertificateStatus.ElementsAs(ctx, &statusList, false)
 		request.CertificateStatus = statusList
 	}
@@ -341,7 +338,7 @@ func (d *certificatesDataSource) Read(ctx context.Context, req datasource.ReadRe
 		request.CertificateName = data.CertificateName.ValueString()
 	}
 	if !data.KeyType.IsNull() {
-		request.KeyType = ccm.CryptographicAlgorithm(data.KeyType.ValueString())
+		request.KeyType = cloudcertificates.CryptographicAlgorithm(data.KeyType.ValueString())
 	}
 	if !data.Issuer.IsNull() {
 		request.Issuer = data.Issuer.ValueString()
@@ -371,10 +368,10 @@ func (d *certificatesDataSource) Read(ctx context.Context, req datasource.ReadRe
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func getAllCertificates(ctx context.Context, client ccm.CCM, request ccm.ListCertificatesRequest) (*ccm.ListCertificatesResponse, error) {
-	var allCertificates ccm.ListCertificatesResponse
+func getAllCertificates(ctx context.Context, client cloudcertificates.CloudCertificates, request cloudcertificates.ListCertificatesRequest) (*cloudcertificates.ListCertificatesResponse, error) {
+	var allCertificates cloudcertificates.ListCertificatesResponse
 
-	request.PageSize = ccmCertificatesPageSize
+	request.PageSize = defaultPageSize
 	request.Page = 1
 
 	for {
@@ -394,7 +391,7 @@ func getAllCertificates(ctx context.Context, client ccm.CCM, request ccm.ListCer
 	return &allCertificates, nil
 }
 
-func certificatesToModels(ctx context.Context, certificates *ccm.ListCertificatesResponse) ([]certificateModel, diag.Diagnostics) {
+func certificatesToModels(ctx context.Context, certificates *cloudcertificates.ListCertificatesResponse) ([]certificateModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var certs []certificateModel
@@ -413,7 +410,7 @@ func certificatesToModels(ctx context.Context, certificates *ccm.ListCertificate
 			ModifiedDate:                        date.TimeRFC3339NanoValue(cert.ModifiedDate),
 			ModifiedBy:                          types.StringValue(cert.ModifiedBy),
 			CertificateStatus:                   types.StringValue(cert.CertificateStatus),
-			CSRPEM:                              types.StringPointerValue(cert.CSRPEM),
+			CSRPEM:                              types.StringValue(cert.CSRPEM),
 			CSRExpirationDate:                   date.TimeRFC3339NanoValue(cert.CSRExpirationDate),
 			SignedCertificatePEM:                types.StringPointerValue(cert.SignedCertificatePEM),
 			SignedCertificateNotValidAfterDate:  date.TimeRFC3339NanoPointerValue(cert.SignedCertificateNotValidAfterDate),

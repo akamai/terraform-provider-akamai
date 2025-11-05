@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/ccm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudcertificates"
 	tst "github.com/akamai/terraform-provider-akamai/v9/internal/test"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/test"
@@ -26,13 +26,13 @@ const (
 
 var mockCerts = mockCertificates{
 	minimumCertificate: mockCertificate{
-		cert: ccm.Certificate{
+		cert: cloudcertificates.Certificate{
 			CertificateID:     "12345",
 			CertificateStatus: "CSR_READY",
 		},
 	},
 	signedCertificate: mockCertificate{
-		cert: ccm.Certificate{
+		cert: cloudcertificates.Certificate{
 			CertificateID:                       "12345",
 			ModifiedDate:                        tst.NewTimeFromStringMust("2025-09-23T07:26:30.616267Z"),
 			ModifiedBy:                          "jsmith",
@@ -46,13 +46,13 @@ var mockCerts = mockCertificates{
 		},
 	},
 	minimumRenewedCertificate: mockCertificate{
-		cert: ccm.Certificate{
+		cert: cloudcertificates.Certificate{
 			CertificateID:     "23456",
 			CertificateStatus: "CSR_READY",
 		},
 	},
 	renewedCertificate: mockCertificate{
-		cert: ccm.Certificate{
+		cert: cloudcertificates.Certificate{
 			CertificateID:                       "23456",
 			ModifiedDate:                        tst.NewTimeFromStringMust("2025-10-23T07:26:30.616267Z"),
 			ModifiedBy:                          "janesmith",
@@ -110,11 +110,11 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 	t.Parallel()
 
 	tests := map[string]struct {
-		init  func(*ccm.Mock, mockCertificates)
+		init  func(*cloudcertificates.Mock, mockCertificates)
 		steps []resource.TestStep
 	}{
 		"happy path - upload signed certificate PEM": {
-			init: func(m *ccm.Mock, mc mockCertificates) {
+			init: func(m *cloudcertificates.Mock, mc mockCertificates) {
 				// Plan x 2
 				mc.minimumCertificate.mockGet(m).Twice()
 				// Create
@@ -136,7 +136,7 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 			},
 		},
 		"happy path - upload signed certificate PEM and trustchain": {
-			init: func(m *ccm.Mock, mc mockCertificates) {
+			init: func(m *cloudcertificates.Mock, mc mockCertificates) {
 				// Plan x 2
 				mc.minimumCertificate.mockGet(m).Twice()
 				// Create
@@ -159,7 +159,7 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 			},
 		},
 		"happy path - upload signed certificate with acknowledge_warnings enabled": {
-			init: func(m *ccm.Mock, mc mockCertificates) {
+			init: func(m *cloudcertificates.Mock, mc mockCertificates) {
 				// Plan x 2
 				mc.minimumCertificate.mockGet(m).Twice()
 				// Create
@@ -183,7 +183,7 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 			},
 		},
 		"happy path - certificate renewal": {
-			init: func(m *ccm.Mock, mc mockCertificates) {
+			init: func(m *cloudcertificates.Mock, mc mockCertificates) {
 				// Plan x 2
 				mc.minimumCertificate.mockGet(m).Twice()
 				// Create
@@ -225,7 +225,7 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 			},
 		},
 		"happy path - upload signed certificate PEM with params provided by another resource": {
-			init: func(m *ccm.Mock, mc mockCertificates) {
+			init: func(m *cloudcertificates.Mock, mc mockCertificates) {
 				// Plan
 				mc.minimumCertificate.mockGet(m)
 				// Create
@@ -250,7 +250,7 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 			},
 		},
 		"import a signed certificate": {
-			init: func(m *ccm.Mock, mc mockCertificates) {
+			init: func(m *cloudcertificates.Mock, mc mockCertificates) {
 				// Import
 				mc.signedCertificate.mockGet(m)
 				// Read
@@ -282,7 +282,7 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 			},
 		},
 		"import a signed certificate with trustchain": {
-			init: func(m *ccm.Mock, mc mockCertificates) {
+			init: func(m *cloudcertificates.Mock, mc mockCertificates) {
 				mc.signedCertificate.cert.TrustChainPEM = ptr.To(testTrustChainPEM)
 				// Import
 				mc.signedCertificate.mockGet(m)
@@ -315,7 +315,7 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 			},
 		},
 		"import a signed certificate with acknowledge_warnings": {
-			init: func(m *ccm.Mock, mc mockCertificates) {
+			init: func(m *cloudcertificates.Mock, mc mockCertificates) {
 				// Import
 				mc.signedCertificate.mockGet(m)
 				// Read
@@ -348,7 +348,7 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 			},
 		},
 		"error - certificate already in state READY_FOR_USE": {
-			init: func(m *ccm.Mock, mc mockCertificates) {
+			init: func(m *cloudcertificates.Mock, mc mockCertificates) {
 				// Plan x 1
 				mc.signedCertificate.mockGet(m)
 			},
@@ -360,7 +360,7 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 			},
 		},
 		"error - trying to update signed certificate PEM": {
-			init: func(m *ccm.Mock, mc mockCertificates) {
+			init: func(m *cloudcertificates.Mock, mc mockCertificates) {
 				// Plan x 2
 				mc.minimumCertificate.mockGet(m).Twice()
 				// Create
@@ -392,7 +392,7 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 			},
 		},
 		"error - trying to change only acknowledge_warnings": {
-			init: func(m *ccm.Mock, mc mockCertificates) {
+			init: func(m *cloudcertificates.Mock, mc mockCertificates) {
 				// Plan x 2
 				mc.minimumCertificate.mockGet(m).Twice()
 				// Create
@@ -424,9 +424,9 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 			},
 		},
 		"error - 404 certificate not found in plan": {
-			init: func(m *ccm.Mock, mc mockCertificates) {
+			init: func(m *cloudcertificates.Mock, mc mockCertificates) {
 				// Plan x 1
-				mc.minimumCertificate.err = &ccm.Error{
+				mc.minimumCertificate.err = &cloudcertificates.Error{
 					Type:  "/error-types/certificate-not-found",
 					Title: "Certificate subscription is not found.",
 				}
@@ -444,7 +444,7 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 			},
 		},
 		"error - GetCertificate fails generally in plan": {
-			init: func(m *ccm.Mock, mc mockCertificates) {
+			init: func(m *cloudcertificates.Mock, mc mockCertificates) {
 				// Plan x 1
 				mc.minimumCertificate.err = fmt.Errorf("API failed")
 				mc.minimumCertificate.mockGet(m)
@@ -458,7 +458,7 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 			},
 		},
 		"error - PatchCertificate fails in create": {
-			init: func(m *ccm.Mock, mc mockCertificates) {
+			init: func(m *cloudcertificates.Mock, mc mockCertificates) {
 				// Plan x 2
 				mc.minimumCertificate.mockGet(m).Twice()
 				// Create
@@ -473,7 +473,7 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 			},
 		},
 		"error - GetCertificate fails in read": {
-			init: func(m *ccm.Mock, mc mockCertificates) {
+			init: func(m *cloudcertificates.Mock, mc mockCertificates) {
 				// Plan x 2
 				mc.minimumCertificate.mockGet(m).Twice()
 				// Create
@@ -493,7 +493,7 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 			},
 		},
 		"error - PatchCertificate fails in update": {
-			init: func(m *ccm.Mock, mc mockCertificates) {
+			init: func(m *cloudcertificates.Mock, mc mockCertificates) {
 				// Plan x 2
 				mc.minimumCertificate.mockGet(m).Twice()
 				// Create
@@ -568,7 +568,7 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 			},
 		},
 		"error - trying to import for cert where PEM was never uploaded": {
-			init: func(m *ccm.Mock, mc mockCertificates) {
+			init: func(m *cloudcertificates.Mock, mc mockCertificates) {
 				// Read
 				mc.minimumCertificate.mockGet(m)
 			},
@@ -586,9 +586,9 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 			},
 		},
 		"error - 404 cert not found in import": {
-			init: func(m *ccm.Mock, mc mockCertificates) {
+			init: func(m *cloudcertificates.Mock, mc mockCertificates) {
 				// Read
-				mc.signedCertificate.err = &ccm.Error{
+				mc.signedCertificate.err = &cloudcertificates.Error{
 					Type:  "/error-types/certificate-not-found",
 					Title: "Certificate subscription is not found.",
 				}
@@ -609,7 +609,7 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 			},
 		},
 		"error - GetCertificate fails generally in import": {
-			init: func(m *ccm.Mock, mc mockCertificates) {
+			init: func(m *cloudcertificates.Mock, mc mockCertificates) {
 				// Read
 				mc.signedCertificate.err = fmt.Errorf("API failed")
 				mc.signedCertificate.mockGet(m)
@@ -668,7 +668,7 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			client := &ccm.Mock{}
+			client := &cloudcertificates.Mock{}
 
 			if tc.init != nil {
 				tc.init(client, mockCerts)
@@ -687,28 +687,28 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 }
 
 type mockCertificate struct {
-	cert                ccm.Certificate
+	cert                cloudcertificates.Certificate
 	AcknowledgeWarnings bool
 	err                 error
 }
 
-func (c mockCertificate) mockGet(m *ccm.Mock) *mock.Call {
-	return m.On("GetCertificate", testutils.MockContext, ccm.GetCertificateRequest{
+func (c mockCertificate) mockGet(m *cloudcertificates.Mock) *mock.Call {
+	return m.On("GetCertificate", testutils.MockContext, cloudcertificates.GetCertificateRequest{
 		CertificateID: c.cert.CertificateID,
-	}).Return(&ccm.GetCertificateResponse{Certificate: c.cert}, c.err).Once()
+	}).Return(&cloudcertificates.GetCertificateResponse{Certificate: c.cert}, c.err).Once()
 }
 
-func (c mockCertificate) mockPatch(m *ccm.Mock) *mock.Call {
+func (c mockCertificate) mockPatch(m *cloudcertificates.Mock) *mock.Call {
 	var trustChainPEM string
 	if c.cert.TrustChainPEM != nil {
 		trustChainPEM = *c.cert.TrustChainPEM
 	}
-	return m.On("PatchCertificate", testutils.MockContext, ccm.PatchCertificateRequest{
+	return m.On("PatchCertificate", testutils.MockContext, cloudcertificates.PatchCertificateRequest{
 		CertificateID:        c.cert.CertificateID,
 		SignedCertificatePEM: *c.cert.SignedCertificatePEM,
 		TrustChainPEM:        trustChainPEM,
 		AcknowledgeWarnings:  c.AcknowledgeWarnings,
-	}).Return(&ccm.PatchCertificateResponse{Certificate: c.cert}, c.err).Once()
+	}).Return(&cloudcertificates.PatchCertificateResponse{Certificate: c.cert}, c.err).Once()
 }
 
 type mockCertificates struct {

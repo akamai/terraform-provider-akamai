@@ -4,7 +4,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/ccm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudcertificates"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
 )
 
@@ -16,10 +16,10 @@ func TestMain(m *testing.M) {
 var clientLock sync.Mutex
 
 // useClient swaps out the client on the global instance for the duration of the given func.
-func useClient(ccmClient ccm.CCM, f func()) {
+func useClient(cloudCertificatesClient cloudcertificates.CloudCertificates, f func()) {
 	clientLock.Lock()
 	orig := client
-	client = ccmClient
+	client = cloudCertificatesClient
 
 	defer func() {
 		client = orig

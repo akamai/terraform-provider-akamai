@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/ccm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudcertificates"
 	"github.com/akamai/terraform-provider-akamai/v9/internal/text"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/framework/date"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/framework/modifiers"
@@ -60,7 +60,7 @@ type certificateResourceModel struct {
 	SecureNetwork types.String `tfsdk:"secure_network"`
 	SANs          types.Set    `tfsdk:"sans"`
 	Subject       types.Object `tfsdk:"subject"`
-	// TODO: For next story - implement renew_before_expiration_days logic.
+	// TODO: implement renew_before_expiration_days logic.
 	// RenewBeforeExpirationDays types.Int64  `tfsdk:"renew_before_expiration_days"`
 	// NeedsRenewal              types.Bool   `tfsdk:"needs_renewal"`
 	CertificateID     types.String `tfsdk:"certificate_id"`
@@ -151,7 +151,7 @@ func (m *certificateResourceModel) validateSubjectAndSANs(ctx context.Context) d
 	return diags
 }
 
-func (m *certificateResourceModel) populateCertificateFields(ctx context.Context, cert ccm.Certificate, setContractID bool) diag.Diagnostics {
+func (m *certificateResourceModel) populateCertificateFields(ctx context.Context, cert cloudcertificates.Certificate, setContractID bool) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	m.KeySize = types.StringValue(string(cert.KeySize))
@@ -167,7 +167,7 @@ func (m *certificateResourceModel) populateCertificateFields(ctx context.Context
 	m.ModifiedBy = types.StringValue(cert.ModifiedBy)
 	m.ModifiedDate = date.TimeRFC3339NanoValue(cert.ModifiedDate)
 	m.CSRExpirationDate = date.TimeRFC3339Value(cert.CSRExpirationDate)
-	m.CSRPEM = types.StringPointerValue(cert.CSRPEM)
+	m.CSRPEM = types.StringValue(cert.CSRPEM)
 
 	sans, dd := types.SetValueFrom(ctx, types.StringType, cert.SANs)
 	diags.Append(dd...)
@@ -362,7 +362,7 @@ func (c *certificateResource) Schema(_ context.Context, _ resource.SchemaRequest
 				},
 			},
 			"subject": subjectSchema(),
-			// TODO: For next story - implement renew_before_expiration_days logic.
+			// TODO: implement renew_before_expiration_days logic.
 			// "renew_before_expiration_days": schema.Int64Attribute{
 			// 	Optional:    true,
 			// },
@@ -509,14 +509,14 @@ func (c *certificateResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
-	createReq := ccm.CreateCertificateRequest{
+	createReq := cloudcertificates.CreateCertificateRequest{
 		ContractID: strings.TrimPrefix(plan.ContractID.ValueString(), "ctr_"),
 		GroupID:    strings.TrimPrefix(plan.GroupID.ValueString(), "grp_"),
-		Body: ccm.CreateCertificateRequestBody{
+		Body: cloudcertificates.CreateCertificateRequestBody{
 			CertificateName: plan.BaseName.ValueString(),
-			KeyType:         ccm.CryptographicAlgorithm(plan.KeyType.ValueString()),
-			KeySize:         ccm.KeySize(plan.KeySize.ValueString()),
-			SecureNetwork:   ccm.SecureNetwork(plan.SecureNetwork.ValueString()),
+			KeyType:         cloudcertificates.CryptographicAlgorithm(plan.KeyType.ValueString()),
+			KeySize:         cloudcertificates.KeySize(plan.KeySize.ValueString()),
+			SecureNetwork:   cloudcertificates.SecureNetwork(plan.SecureNetwork.ValueString()),
 			SANs:            sans,
 		},
 	}
@@ -527,7 +527,7 @@ func (c *certificateResource) Create(ctx context.Context, req resource.CreateReq
 		if resp.Diagnostics.HasError() {
 			return
 		}
-		createReq.Body.Subject = &ccm.Subject{
+		createReq.Body.Subject = &cloudcertificates.Subject{
 			CommonName:   subject.CommonName.ValueString(),
 			Organization: subject.Organization.ValueString(),
 			Country:      subject.Country.ValueString(),
@@ -564,10 +564,10 @@ func (c *certificateResource) Read(ctx context.Context, req resource.ReadRequest
 	ctx = tflog.SetField(ctx, "certificate_id", state.CertificateID.ValueString())
 
 	client := Client(c.meta)
-	cert, err := client.GetCertificate(ctx, ccm.GetCertificateRequest{
+	cert, err := client.GetCertificate(ctx, cloudcertificates.GetCertificateRequest{
 		CertificateID: state.CertificateID.ValueString(),
 	})
-	if err != nil && errors.Is(err, ccm.ErrCertificateNotFound) {
+	if err != nil && errors.Is(err, cloudcertificates.ErrCertificateNotFound) {
 		tflog.Debug(ctx, fmt.Sprintf("CCM Certificate with ID %s not found, removing from state",
 			state.CertificateID.ValueString()))
 		resp.Diagnostics.AddWarning("Certificate not found",
@@ -598,11 +598,11 @@ func (c *certificateResource) Update(ctx context.Context, req resource.UpdateReq
 
 	ctx = tflog.SetField(ctx, "certificate_id", plan.CertificateID.ValueString())
 
-	// TODO: For next story - update only if 'renew_before_expiration_days' is false.
+	// TODO: update only if 'renew_before_expiration_days' is false.
 	// Add support for 'renew_before_expiration_days' logic.
 	tflog.Debug(ctx, "'base_name' change detected, updating the certificate name")
 	client := Client(c.meta)
-	cert, err := client.PatchCertificate(ctx, ccm.PatchCertificateRequest{
+	cert, err := client.PatchCertificate(ctx, cloudcertificates.PatchCertificateRequest{
 		CertificateID: plan.CertificateID.ValueString(),
 		// If base_name is Null, it must be used as empty string to reset the name to the default value.
 		CertificateName: ptr.To(plan.BaseName.ValueString()),
@@ -634,7 +634,7 @@ func (c *certificateResource) Delete(ctx context.Context, req resource.DeleteReq
 	ctx = tflog.SetField(ctx, "certificate_id", state.CertificateID.ValueString())
 
 	client := Client(c.meta)
-	if _, err := client.DeleteCertificate(ctx, ccm.DeleteCertificateRequest{
+	if _, err := client.DeleteCertificate(ctx, cloudcertificates.DeleteCertificateRequest{
 		CertificateID: state.CertificateID.ValueString(),
 	}); err != nil {
 		resp.Diagnostics.AddError("Unable to delete CCM Certificate", err.Error())
@@ -660,10 +660,10 @@ func (c *certificateResource) ImportState(ctx context.Context, req resource.Impo
 	certificateID := parts[0]
 
 	client := Client(c.meta)
-	cert, err := client.GetCertificate(ctx, ccm.GetCertificateRequest{
+	cert, err := client.GetCertificate(ctx, cloudcertificates.GetCertificateRequest{
 		CertificateID: certificateID,
 	})
-	if err != nil && errors.Is(err, ccm.ErrCertificateNotFound) {
+	if err != nil && errors.Is(err, cloudcertificates.ErrCertificateNotFound) {
 		tflog.Debug(ctx, fmt.Sprintf("CCM Certificate with ID %s not found, cannot be imported", certificateID))
 		resp.Diagnostics.AddError("Cannot import non-existent remote object",
 			"The certificate was not found on the server. Please verify the Certificate ID is correct.")
@@ -705,7 +705,7 @@ func extractBaseName(name string) string {
 	return name
 }
 
-func isEmptySubject(subject ccm.Subject) bool {
+func isEmptySubject(subject cloudcertificates.Subject) bool {
 	return subject.CommonName == "" && subject.Organization == "" && subject.Country == "" &&
 		subject.State == "" && subject.Locality == ""
 }

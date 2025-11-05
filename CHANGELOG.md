@@ -58,22 +58,23 @@
 
 #### FEATURES/ENHANCEMENTS:
 
-* CCM
-  * Added new `akamai_cloudcertificates_upload_signed_certificate` resource.
+* [IMPORTANT] CloudCertificates (Beta)
+  * Added new resources:
+    * `akamai_cloudcertificates_certificate` - manages lifecycle of a cloud certificate.
+    * `akamai_cloudcertificates_upload_signed_certificate` - uploads a PEM-encoded signed certificate and optionally a trust chain for a cloud certificate.
+  * Added new data sources:
+    * `akamai_cloudcertificates_certificate` - reads a cloud certificate.
+    * `akamai_cloudcertificates_certificates` - lists cloud certificates.
+    * `akamai_cloudcertificates_hostname_bindings` - lists hostname bindings for available cloud certificates.
 
 
 
-    
-
-* CCM
-  * Added new `akamai_cloudcertificates_certificate` data source.
 
 
 
 
 
-* CCM
-  * Added new `akamai_cloudcertificates_hostname_bindings` data source.
+
 
 
 
@@ -103,8 +104,6 @@
 
 
 
-* CCM
-  * Added new `akamai_cloudcertificates_certificate` resource.
 
 
 
@@ -127,8 +126,6 @@
 
 
 
-* CCM
-  * Added new `akamai_cloudcertificates_certificates` data source.
 
 
 

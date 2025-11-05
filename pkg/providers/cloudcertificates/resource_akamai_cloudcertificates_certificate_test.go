@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/ccm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudcertificates"
 	tst "github.com/akamai/terraform-provider-akamai/v9/internal/test"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/test"
@@ -24,11 +24,11 @@ type (
 		contractID    string
 		groupID       string
 		baseName      string
-		keyType       ccm.CryptographicAlgorithm
-		keySize       ccm.KeySize
-		secureNetwork ccm.SecureNetwork
+		keyType       cloudcertificates.CryptographicAlgorithm
+		keySize       cloudcertificates.KeySize
+		secureNetwork cloudcertificates.SecureNetwork
 		sans          []string
-		subject       *ccm.Subject
+		subject       *cloudcertificates.Subject
 
 		// output data
 		certificateID     string
@@ -101,7 +101,7 @@ var (
 		keySize:       "2048",
 		secureNetwork: "ENHANCED_TLS",
 		sans:          []string{"test.example.com", "test.example2.com"},
-		subject: &ccm.Subject{
+		subject: &cloudcertificates.Subject{
 			CommonName:   "test.example.com",
 			Country:      "US",
 			Organization: "Test Org",
@@ -132,7 +132,7 @@ var (
 		keySize:       "2048",
 		secureNetwork: "ENHANCED_TLS",
 		sans:          []string{"test.example.com", "test.example2.com"},
-		subject: &ccm.Subject{
+		subject: &cloudcertificates.Subject{
 			CommonName:   "test.example.com",
 			Country:      "US",
 			Organization: "Test Org",
@@ -163,7 +163,7 @@ var (
 		keySize:       "P-256",
 		secureNetwork: "ENHANCED_TLS",
 		sans:          []string{"test.example.com", "test.example2.com"},
-		subject: &ccm.Subject{
+		subject: &cloudcertificates.Subject{
 			State:    "CA",
 			Locality: "Test City",
 		},
@@ -240,13 +240,13 @@ func TestCertificateResource(t *testing.T) {
 		CheckEqual("csr_pem", "-----BEGIN CERTIFICATE REQUEST-----\nTEST-CSR-PEM\n-----END CERTIFICATE REQUEST-----\n")
 
 	tests := map[string]struct {
-		init           func(*ccm.Mock, certificateTestData, certificateTestData)
+		init           func(*cloudcertificates.Mock, certificateTestData, certificateTestData)
 		createMockData certificateTestData
 		updateMockData certificateTestData
 		steps          []resource.TestStep
 	}{
 		"happy path - create certificate without optionals": {
-			init: func(m *ccm.Mock, createData certificateTestData, _ certificateTestData) {
+			init: func(m *cloudcertificates.Mock, createData certificateTestData, _ certificateTestData) {
 				// Create
 				mockCreateCertificate(m, createData)
 				// Read before destroy
@@ -265,7 +265,7 @@ func TestCertificateResource(t *testing.T) {
 			},
 		},
 		"happy path - create certificate with prefixes and without optionals": {
-			init: func(m *ccm.Mock, createData certificateTestData, _ certificateTestData) {
+			init: func(m *cloudcertificates.Mock, createData certificateTestData, _ certificateTestData) {
 				// Create
 				mockCreateCertificate(m, createData)
 				// Read before destroy
@@ -286,7 +286,7 @@ func TestCertificateResource(t *testing.T) {
 			},
 		},
 		"happy path - create certificate with all optional attributes": {
-			init: func(m *ccm.Mock, createData certificateTestData, _ certificateTestData) {
+			init: func(m *cloudcertificates.Mock, createData certificateTestData, _ certificateTestData) {
 				// Create
 				mockCreateCertificate(m, createData)
 				// Read before destroy
@@ -303,7 +303,7 @@ func TestCertificateResource(t *testing.T) {
 			},
 		},
 		"happy path - create certificate with optional attributes, different key type, some missing subject fields": {
-			init: func(m *ccm.Mock, createData certificateTestData, _ certificateTestData) {
+			init: func(m *cloudcertificates.Mock, createData certificateTestData, _ certificateTestData) {
 				// Create
 				mockCreateCertificate(m, createData)
 				// Read before destroy
@@ -326,7 +326,7 @@ func TestCertificateResource(t *testing.T) {
 			},
 		},
 		"happy path - create certificate, update name": {
-			init: func(m *ccm.Mock, createData certificateTestData, updateData certificateTestData) {
+			init: func(m *cloudcertificates.Mock, createData certificateTestData, updateData certificateTestData) {
 				// Create
 				mockCreateCertificate(m, createData)
 				// Read before update
@@ -359,7 +359,7 @@ func TestCertificateResource(t *testing.T) {
 			},
 		},
 		"happy path - create certificate, reset name": {
-			init: func(m *ccm.Mock, createData certificateTestData, updateData certificateTestData) {
+			init: func(m *cloudcertificates.Mock, createData certificateTestData, updateData certificateTestData) {
 				// Create
 				mockCreateCertificate(m, createData)
 				// Read before update
@@ -400,7 +400,7 @@ func TestCertificateResource(t *testing.T) {
 			},
 		},
 		"happy path - create certificate, change order of SANs - no diff": {
-			init: func(m *ccm.Mock, createData certificateTestData, _ certificateTestData) {
+			init: func(m *cloudcertificates.Mock, createData certificateTestData, _ certificateTestData) {
 				// Create
 				mockCreateCertificate(m, createData)
 				// Read x2
@@ -424,15 +424,15 @@ func TestCertificateResource(t *testing.T) {
 			},
 		},
 		"happy path - create certificate, remove outside terraform": {
-			init: func(m *ccm.Mock, createData certificateTestData, _ certificateTestData) {
+			init: func(m *cloudcertificates.Mock, createData certificateTestData, _ certificateTestData) {
 				// Create
 				mockCreateCertificate(m, createData)
 				// Read before refresh
 				mockGetCertificate(m, createData)
 				// Read from refresh step
-				m.On("GetCertificate", testutils.MockContext, ccm.GetCertificateRequest{
+				m.On("GetCertificate", testutils.MockContext, cloudcertificates.GetCertificateRequest{
 					CertificateID: createData.certificateID,
-				}).Return(nil, ccm.ErrCertificateNotFound).Once()
+				}).Return(nil, cloudcertificates.ErrCertificateNotFound).Once()
 			},
 			createMockData: minCertificate,
 			steps: []resource.TestStep{
@@ -449,7 +449,7 @@ func TestCertificateResource(t *testing.T) {
 			},
 		},
 		"import - not renewed certificate": {
-			init: func(m *ccm.Mock, data certificateTestData, _ certificateTestData) {
+			init: func(m *cloudcertificates.Mock, data certificateTestData, _ certificateTestData) {
 				// Import
 				mockGetCertificate(m, data)
 				// Read
@@ -474,7 +474,7 @@ func TestCertificateResource(t *testing.T) {
 			},
 		},
 		"import - renewed certificate": {
-			init: func(m *ccm.Mock, data certificateTestData, _ certificateTestData) {
+			init: func(m *cloudcertificates.Mock, data certificateTestData, _ certificateTestData) {
 				data.name = "test-certificate.renewed.2025-05-01"
 				// Import
 				mockGetCertificate(m, data)
@@ -503,7 +503,7 @@ func TestCertificateResource(t *testing.T) {
 			},
 		},
 		"import - with optional group_id": {
-			init: func(m *ccm.Mock, data certificateTestData, _ certificateTestData) {
+			init: func(m *cloudcertificates.Mock, data certificateTestData, _ certificateTestData) {
 				// Import
 				mockGetCertificate(m, data)
 				// Read
@@ -530,11 +530,11 @@ func TestCertificateResource(t *testing.T) {
 			},
 		},
 		"import - expect error - wrong ID: ErrCertificateNotFound - remove state": {
-			init: func(m *ccm.Mock, _ certificateTestData, _ certificateTestData) {
+			init: func(m *cloudcertificates.Mock, _ certificateTestData, _ certificateTestData) {
 				// Import
-				m.On("GetCertificate", testutils.MockContext, ccm.GetCertificateRequest{
+				m.On("GetCertificate", testutils.MockContext, cloudcertificates.GetCertificateRequest{
 					CertificateID: "12345abc-wrong",
-				}).Return(nil, ccm.ErrCertificateNotFound).Once()
+				}).Return(nil, cloudcertificates.ErrCertificateNotFound).Once()
 			},
 			createMockData: minCertificate,
 			steps: []resource.TestStep{
@@ -560,7 +560,7 @@ func TestCertificateResource(t *testing.T) {
 			},
 		},
 		"expect error - imported without group_id, but config has group_id": {
-			init: func(m *ccm.Mock, data certificateTestData, _ certificateTestData) {
+			init: func(m *cloudcertificates.Mock, data certificateTestData, _ certificateTestData) {
 				data.groupID = ""
 				// Import
 				mockGetCertificate(m, data)
@@ -588,12 +588,12 @@ func TestCertificateResource(t *testing.T) {
 			},
 		},
 		"expect error - CreateCertificate fails": {
-			init: func(m *ccm.Mock, createData certificateTestData, _ certificateTestData) {
+			init: func(m *cloudcertificates.Mock, createData certificateTestData, _ certificateTestData) {
 				// Create
-				m.On("CreateCertificate", testutils.MockContext, ccm.CreateCertificateRequest{
+				m.On("CreateCertificate", testutils.MockContext, cloudcertificates.CreateCertificateRequest{
 					ContractID: createData.contractID,
 					GroupID:    createData.groupID,
-					Body: ccm.CreateCertificateRequestBody{
+					Body: cloudcertificates.CreateCertificateRequestBody{
 						CertificateName: createData.baseName,
 						KeyType:         createData.keyType,
 						KeySize:         createData.keySize,
@@ -611,11 +611,11 @@ func TestCertificateResource(t *testing.T) {
 			},
 		},
 		"expect error - GetCertificate fails": {
-			init: func(m *ccm.Mock, createData certificateTestData, _ certificateTestData) {
+			init: func(m *cloudcertificates.Mock, createData certificateTestData, _ certificateTestData) {
 				// Create
 				mockCreateCertificate(m, createData)
 				// Read before destroy
-				m.On("GetCertificate", testutils.MockContext, ccm.GetCertificateRequest{
+				m.On("GetCertificate", testutils.MockContext, cloudcertificates.GetCertificateRequest{
 					CertificateID: createData.certificateID,
 				}).Return(nil, fmt.Errorf("API failed")).Once()
 				// Delete
@@ -630,13 +630,13 @@ func TestCertificateResource(t *testing.T) {
 			},
 		},
 		"expect error - PatchCertificate fails": {
-			init: func(m *ccm.Mock, createData certificateTestData, updateData certificateTestData) {
+			init: func(m *cloudcertificates.Mock, createData certificateTestData, updateData certificateTestData) {
 				// Create
 				mockCreateCertificate(m, createData)
 				// Read before update
 				mockGetCertificate(m, createData)
 				// Update
-				m.On("PatchCertificate", testutils.MockContext, ccm.PatchCertificateRequest{
+				m.On("PatchCertificate", testutils.MockContext, cloudcertificates.PatchCertificateRequest{
 					CertificateID:   updateData.certificateID,
 					CertificateName: ptr.To(updateData.baseName),
 				}).Return(nil, fmt.Errorf("API failed")).Once()
@@ -670,7 +670,7 @@ func TestCertificateResource(t *testing.T) {
 			},
 		},
 		"expect error - missing contract": {
-			init:           func(_ *ccm.Mock, _ certificateTestData, _ certificateTestData) {},
+			init:           func(_ *cloudcertificates.Mock, _ certificateTestData, _ certificateTestData) {},
 			createMockData: minCertificate,
 			steps: []resource.TestStep{
 				{
@@ -680,7 +680,7 @@ func TestCertificateResource(t *testing.T) {
 			},
 		},
 		"expect error - missing group": {
-			init:           func(_ *ccm.Mock, _ certificateTestData, _ certificateTestData) {},
+			init:           func(_ *cloudcertificates.Mock, _ certificateTestData, _ certificateTestData) {},
 			createMockData: minCertificate,
 			steps: []resource.TestStep{
 				{
@@ -690,7 +690,7 @@ func TestCertificateResource(t *testing.T) {
 			},
 		},
 		"expect error - missing key_size": {
-			init:           func(_ *ccm.Mock, _ certificateTestData, _ certificateTestData) {},
+			init:           func(_ *cloudcertificates.Mock, _ certificateTestData, _ certificateTestData) {},
 			createMockData: minCertificate,
 			steps: []resource.TestStep{
 				{
@@ -700,7 +700,7 @@ func TestCertificateResource(t *testing.T) {
 			},
 		},
 		"expect error - missing key_type": {
-			init:           func(_ *ccm.Mock, _ certificateTestData, _ certificateTestData) {},
+			init:           func(_ *cloudcertificates.Mock, _ certificateTestData, _ certificateTestData) {},
 			createMockData: minCertificate,
 			steps: []resource.TestStep{
 				{
@@ -710,7 +710,7 @@ func TestCertificateResource(t *testing.T) {
 			},
 		},
 		"expect error - missing secure_network": {
-			init:           func(_ *ccm.Mock, _ certificateTestData, _ certificateTestData) {},
+			init:           func(_ *cloudcertificates.Mock, _ certificateTestData, _ certificateTestData) {},
 			createMockData: minCertificate,
 			steps: []resource.TestStep{
 				{
@@ -720,7 +720,7 @@ func TestCertificateResource(t *testing.T) {
 			},
 		},
 		"expect error - missing sans": {
-			init:           func(_ *ccm.Mock, _ certificateTestData, _ certificateTestData) {},
+			init:           func(_ *cloudcertificates.Mock, _ certificateTestData, _ certificateTestData) {},
 			createMockData: minCertificate,
 			steps: []resource.TestStep{
 				{
@@ -730,7 +730,7 @@ func TestCertificateResource(t *testing.T) {
 			},
 		},
 		"expect error - empty sans": {
-			init:           func(_ *ccm.Mock, _ certificateTestData, _ certificateTestData) {},
+			init:           func(_ *cloudcertificates.Mock, _ certificateTestData, _ certificateTestData) {},
 			createMockData: minCertificate,
 			steps: []resource.TestStep{
 				{
@@ -740,7 +740,7 @@ func TestCertificateResource(t *testing.T) {
 			},
 		},
 		"expect error - more than 100 sans provided": {
-			init:           func(_ *ccm.Mock, _ certificateTestData, _ certificateTestData) {},
+			init:           func(_ *cloudcertificates.Mock, _ certificateTestData, _ certificateTestData) {},
 			createMockData: minCertificate,
 			steps: []resource.TestStep{
 				{
@@ -750,7 +750,7 @@ func TestCertificateResource(t *testing.T) {
 			},
 		},
 		"expect error - one of sans is not a valid domain name": {
-			init:           func(_ *ccm.Mock, _ certificateTestData, _ certificateTestData) {},
+			init:           func(_ *cloudcertificates.Mock, _ certificateTestData, _ certificateTestData) {},
 			createMockData: minCertificate,
 			steps: []resource.TestStep{
 				{
@@ -760,7 +760,7 @@ func TestCertificateResource(t *testing.T) {
 			},
 		},
 		"expect error - one of sans contains uppercase letters": {
-			init:           func(_ *ccm.Mock, _ certificateTestData, _ certificateTestData) {},
+			init:           func(_ *cloudcertificates.Mock, _ certificateTestData, _ certificateTestData) {},
 			createMockData: minCertificate,
 			steps: []resource.TestStep{
 				{
@@ -770,7 +770,7 @@ func TestCertificateResource(t *testing.T) {
 			},
 		},
 		"expect error - empty base_name": {
-			init:           func(_ *ccm.Mock, _ certificateTestData, _ certificateTestData) {},
+			init:           func(_ *cloudcertificates.Mock, _ certificateTestData, _ certificateTestData) {},
 			createMockData: minCertificate,
 			steps: []resource.TestStep{
 				{
@@ -780,7 +780,7 @@ func TestCertificateResource(t *testing.T) {
 			},
 		},
 		"expect error - wrong key_size for RSA": {
-			init:           func(_ *ccm.Mock, _ certificateTestData, _ certificateTestData) {},
+			init:           func(_ *cloudcertificates.Mock, _ certificateTestData, _ certificateTestData) {},
 			createMockData: minCertificate,
 			steps: []resource.TestStep{
 				{
@@ -790,7 +790,7 @@ func TestCertificateResource(t *testing.T) {
 			},
 		},
 		"expect error - wrong key_size for ECDSA": {
-			init:           func(_ *ccm.Mock, _ certificateTestData, _ certificateTestData) {},
+			init:           func(_ *cloudcertificates.Mock, _ certificateTestData, _ certificateTestData) {},
 			createMockData: minCertificate,
 			steps: []resource.TestStep{
 				{
@@ -800,7 +800,7 @@ func TestCertificateResource(t *testing.T) {
 			},
 		},
 		"expect error - wrong key_type": {
-			init:           func(_ *ccm.Mock, _ certificateTestData, _ certificateTestData) {},
+			init:           func(_ *cloudcertificates.Mock, _ certificateTestData, _ certificateTestData) {},
 			createMockData: minCertificate,
 			steps: []resource.TestStep{
 				{
@@ -810,7 +810,7 @@ func TestCertificateResource(t *testing.T) {
 			},
 		},
 		"expect error - wrong secure_network": {
-			init:           func(_ *ccm.Mock, _ certificateTestData, _ certificateTestData) {},
+			init:           func(_ *cloudcertificates.Mock, _ certificateTestData, _ certificateTestData) {},
 			createMockData: minCertificate,
 			steps: []resource.TestStep{
 				{
@@ -820,7 +820,7 @@ func TestCertificateResource(t *testing.T) {
 			},
 		},
 		"expect error - empty subject": {
-			init:           func(_ *ccm.Mock, _ certificateTestData, _ certificateTestData) {},
+			init:           func(_ *cloudcertificates.Mock, _ certificateTestData, _ certificateTestData) {},
 			createMockData: minCertificate,
 			steps: []resource.TestStep{
 				{
@@ -830,7 +830,7 @@ func TestCertificateResource(t *testing.T) {
 			},
 		},
 		"expect error - common_name not present in sans": {
-			init:           func(_ *ccm.Mock, _ certificateTestData, _ certificateTestData) {},
+			init:           func(_ *cloudcertificates.Mock, _ certificateTestData, _ certificateTestData) {},
 			createMockData: minCertificate,
 			steps: []resource.TestStep{
 				{
@@ -840,7 +840,7 @@ func TestCertificateResource(t *testing.T) {
 			},
 		},
 		"expect error - common_name is not a valid domain name": {
-			init:           func(_ *ccm.Mock, _ certificateTestData, _ certificateTestData) {},
+			init:           func(_ *cloudcertificates.Mock, _ certificateTestData, _ certificateTestData) {},
 			createMockData: minCertificate,
 			steps: []resource.TestStep{
 				{
@@ -850,7 +850,7 @@ func TestCertificateResource(t *testing.T) {
 			},
 		},
 		"expect error - common_name contains uppercase letters": {
-			init:           func(_ *ccm.Mock, _ certificateTestData, _ certificateTestData) {},
+			init:           func(_ *cloudcertificates.Mock, _ certificateTestData, _ certificateTestData) {},
 			createMockData: minCertificate,
 			steps: []resource.TestStep{
 				{
@@ -860,7 +860,7 @@ func TestCertificateResource(t *testing.T) {
 			},
 		},
 		"expect error - empty organization": {
-			init:           func(_ *ccm.Mock, _ certificateTestData, _ certificateTestData) {},
+			init:           func(_ *cloudcertificates.Mock, _ certificateTestData, _ certificateTestData) {},
 			createMockData: minCertificate,
 			steps: []resource.TestStep{
 				{
@@ -870,7 +870,7 @@ func TestCertificateResource(t *testing.T) {
 			},
 		},
 		"expect error - country too long": {
-			init:           func(_ *ccm.Mock, _ certificateTestData, _ certificateTestData) {},
+			init:           func(_ *cloudcertificates.Mock, _ certificateTestData, _ certificateTestData) {},
 			createMockData: minCertificate,
 			steps: []resource.TestStep{
 				{
@@ -880,7 +880,7 @@ func TestCertificateResource(t *testing.T) {
 			},
 		},
 		"expect error - empty state": {
-			init:           func(_ *ccm.Mock, _ certificateTestData, _ certificateTestData) {},
+			init:           func(_ *cloudcertificates.Mock, _ certificateTestData, _ certificateTestData) {},
 			createMockData: minCertificate,
 			steps: []resource.TestStep{
 				{
@@ -890,7 +890,7 @@ func TestCertificateResource(t *testing.T) {
 			},
 		},
 		"expect error - empty locality": {
-			init:           func(_ *ccm.Mock, _ certificateTestData, _ certificateTestData) {},
+			init:           func(_ *cloudcertificates.Mock, _ certificateTestData, _ certificateTestData) {},
 			createMockData: minCertificate,
 			steps: []resource.TestStep{
 				{
@@ -900,7 +900,7 @@ func TestCertificateResource(t *testing.T) {
 			},
 		},
 		"expect error - organization with only spaces": {
-			init:           func(_ *ccm.Mock, _ certificateTestData, _ certificateTestData) {},
+			init:           func(_ *cloudcertificates.Mock, _ certificateTestData, _ certificateTestData) {},
 			createMockData: minCertificate,
 			steps: []resource.TestStep{
 				{
@@ -910,7 +910,7 @@ func TestCertificateResource(t *testing.T) {
 			},
 		},
 		"expect error - update contract": {
-			init: func(m *ccm.Mock, createData certificateTestData, _ certificateTestData) {
+			init: func(m *cloudcertificates.Mock, createData certificateTestData, _ certificateTestData) {
 				// Create
 				mockCreateCertificate(m, createData)
 				// Read before update
@@ -933,7 +933,7 @@ func TestCertificateResource(t *testing.T) {
 			},
 		},
 		"expect error - update group": {
-			init: func(m *ccm.Mock, createData certificateTestData, _ certificateTestData) {
+			init: func(m *cloudcertificates.Mock, createData certificateTestData, _ certificateTestData) {
 				// Create
 				mockCreateCertificate(m, createData)
 				// Read before update
@@ -956,7 +956,7 @@ func TestCertificateResource(t *testing.T) {
 			},
 		},
 		"expect error - update sans": {
-			init: func(m *ccm.Mock, createData certificateTestData, _ certificateTestData) {
+			init: func(m *cloudcertificates.Mock, createData certificateTestData, _ certificateTestData) {
 				// Create
 				mockCreateCertificate(m, createData)
 				// Read before update
@@ -979,7 +979,7 @@ func TestCertificateResource(t *testing.T) {
 			},
 		},
 		"expect error - update subject": {
-			init: func(m *ccm.Mock, createData certificateTestData, _ certificateTestData) {
+			init: func(m *cloudcertificates.Mock, createData certificateTestData, _ certificateTestData) {
 				// Create
 				mockCreateCertificate(m, createData)
 				// Read before update
@@ -1003,7 +1003,7 @@ func TestCertificateResource(t *testing.T) {
 			},
 		},
 		"expect error - no subject for create, but subject present in update": {
-			init: func(m *ccm.Mock, createData certificateTestData, _ certificateTestData) {
+			init: func(m *cloudcertificates.Mock, createData certificateTestData, _ certificateTestData) {
 				// Create
 				mockCreateCertificate(m, createData)
 				// Read before update
@@ -1026,8 +1026,8 @@ func TestCertificateResource(t *testing.T) {
 			},
 		},
 		"expect error - create with subject, update by removing subject": {
-			init: func(m *ccm.Mock, createData certificateTestData, _ certificateTestData) {
-				createData.subject = &ccm.Subject{
+			init: func(m *cloudcertificates.Mock, createData certificateTestData, _ certificateTestData) {
+				createData.subject = &cloudcertificates.Subject{
 					CommonName:   "test.example.com",
 					Country:      "US",
 					Organization: "Test Org - updated",
@@ -1061,7 +1061,7 @@ func TestCertificateResource(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			client := &ccm.Mock{}
+			client := &cloudcertificates.Mock{}
 
 			if tc.init != nil {
 				tc.init(client, tc.createMockData, tc.updateMockData)
@@ -1080,10 +1080,10 @@ func TestCertificateResource(t *testing.T) {
 
 }
 
-func mockCreateCertificate(m *ccm.Mock, data certificateTestData) *mock.Call {
-	var reqSubject *ccm.Subject
+func mockCreateCertificate(m *cloudcertificates.Mock, data certificateTestData) *mock.Call {
+	var reqSubject *cloudcertificates.Subject
 	if data.subject != nil {
-		reqSubject = &ccm.Subject{
+		reqSubject = &cloudcertificates.Subject{
 			CommonName:   data.subject.CommonName,
 			Country:      data.subject.Country,
 			Organization: data.subject.Organization,
@@ -1091,10 +1091,10 @@ func mockCreateCertificate(m *ccm.Mock, data certificateTestData) *mock.Call {
 			Locality:     data.subject.Locality,
 		}
 	}
-	return m.On("CreateCertificate", testutils.MockContext, ccm.CreateCertificateRequest{
+	return m.On("CreateCertificate", testutils.MockContext, cloudcertificates.CreateCertificateRequest{
 		ContractID: strings.TrimPrefix(data.contractID, "ctr_"),
 		GroupID:    strings.TrimPrefix(data.groupID, "grp_"),
-		Body: ccm.CreateCertificateRequestBody{
+		Body: cloudcertificates.CreateCertificateRequestBody{
 			CertificateName: data.baseName,
 			KeyType:         data.keyType,
 			KeySize:         data.keySize,
@@ -1102,8 +1102,8 @@ func mockCreateCertificate(m *ccm.Mock, data certificateTestData) *mock.Call {
 			SANs:            data.sans,
 			Subject:         reqSubject,
 		},
-	}).Return(&ccm.CreateCertificateResponse{
-		Certificate: ccm.Certificate{
+	}).Return(&cloudcertificates.CreateCertificateResponse{
+		Certificate: cloudcertificates.Certificate{
 			AccountID:         data.accountID,
 			CertificateID:     data.certificateID,
 			CertificateName:   data.name,
@@ -1115,7 +1115,7 @@ func mockCreateCertificate(m *ccm.Mock, data certificateTestData) *mock.Call {
 			ModifiedBy:        data.modifiedBy,
 			ModifiedDate:      tst.NewTimeFromStringMust(data.modifiedDate),
 			CSRExpirationDate: tst.NewTimeFromStringMust(data.csrExpirationDate),
-			CSRPEM:            ptr.To(data.csrPEM),
+			CSRPEM:            data.csrPEM,
 			KeyType:           data.keyType,
 			KeySize:           data.keySize,
 			SecureNetwork:     string(data.secureNetwork),
@@ -1125,10 +1125,10 @@ func mockCreateCertificate(m *ccm.Mock, data certificateTestData) *mock.Call {
 	}, nil).Once()
 }
 
-func mockGetCertificate(m *ccm.Mock, data certificateTestData) *mock.Call {
-	var subject *ccm.Subject
+func mockGetCertificate(m *cloudcertificates.Mock, data certificateTestData) *mock.Call {
+	var subject *cloudcertificates.Subject
 	if data.subject != nil {
-		subject = &ccm.Subject{
+		subject = &cloudcertificates.Subject{
 			CommonName:   data.subject.CommonName,
 			Country:      data.subject.Country,
 			Organization: data.subject.Organization,
@@ -1136,10 +1136,10 @@ func mockGetCertificate(m *ccm.Mock, data certificateTestData) *mock.Call {
 			Locality:     data.subject.Locality,
 		}
 	}
-	return m.On("GetCertificate", testutils.MockContext, ccm.GetCertificateRequest{
+	return m.On("GetCertificate", testutils.MockContext, cloudcertificates.GetCertificateRequest{
 		CertificateID: data.certificateID,
-	}).Return(&ccm.GetCertificateResponse{
-		Certificate: ccm.Certificate{
+	}).Return(&cloudcertificates.GetCertificateResponse{
+		Certificate: cloudcertificates.Certificate{
 			AccountID:         data.accountID,
 			CertificateID:     data.certificateID,
 			CertificateName:   data.name,
@@ -1151,7 +1151,7 @@ func mockGetCertificate(m *ccm.Mock, data certificateTestData) *mock.Call {
 			ModifiedBy:        data.modifiedBy,
 			ModifiedDate:      tst.NewTimeFromStringMust(data.modifiedDate),
 			CSRExpirationDate: tst.NewTimeFromStringMust(data.csrExpirationDate),
-			CSRPEM:            ptr.To(data.csrPEM),
+			CSRPEM:            data.csrPEM,
 			KeyType:           data.keyType,
 			KeySize:           data.keySize,
 			SecureNetwork:     string(data.secureNetwork),
@@ -1161,16 +1161,16 @@ func mockGetCertificate(m *ccm.Mock, data certificateTestData) *mock.Call {
 	}, nil).Once()
 }
 
-func mockDeleteCertificate(m *ccm.Mock, data certificateTestData) *mock.Call {
-	return m.On("DeleteCertificate", testutils.MockContext, ccm.DeleteCertificateRequest{
+func mockDeleteCertificate(m *cloudcertificates.Mock, data certificateTestData) *mock.Call {
+	return m.On("DeleteCertificate", testutils.MockContext, cloudcertificates.DeleteCertificateRequest{
 		CertificateID: data.certificateID,
 	}).Return(nil, nil).Once()
 }
 
-func mockPatchCertificate(m *ccm.Mock, data certificateTestData) *mock.Call {
-	var subject *ccm.Subject
+func mockPatchCertificate(m *cloudcertificates.Mock, data certificateTestData) *mock.Call {
+	var subject *cloudcertificates.Subject
 	if data.subject != nil {
-		subject = &ccm.Subject{
+		subject = &cloudcertificates.Subject{
 			CommonName:   data.subject.CommonName,
 			Country:      data.subject.Country,
 			Organization: data.subject.Organization,
@@ -1178,11 +1178,11 @@ func mockPatchCertificate(m *ccm.Mock, data certificateTestData) *mock.Call {
 			Locality:     data.subject.Locality,
 		}
 	}
-	return m.On("PatchCertificate", testutils.MockContext, ccm.PatchCertificateRequest{
+	return m.On("PatchCertificate", testutils.MockContext, cloudcertificates.PatchCertificateRequest{
 		CertificateID:   data.certificateID,
 		CertificateName: ptr.To(data.baseName),
-	}).Return(&ccm.PatchCertificateResponse{
-		Certificate: ccm.Certificate{
+	}).Return(&cloudcertificates.PatchCertificateResponse{
+		Certificate: cloudcertificates.Certificate{
 			AccountID:         data.accountID,
 			CertificateID:     data.certificateID,
 			CertificateName:   data.name,
@@ -1194,7 +1194,7 @@ func mockPatchCertificate(m *ccm.Mock, data certificateTestData) *mock.Call {
 			ModifiedBy:        data.modifiedBy,
 			ModifiedDate:      tst.NewTimeFromStringMust(data.modifiedDate),
 			CSRExpirationDate: tst.NewTimeFromStringMust(data.csrExpirationDate),
-			CSRPEM:            ptr.To(data.csrPEM),
+			CSRPEM:            data.csrPEM,
 			KeyType:           data.keyType,
 			KeySize:           data.keySize,
 			SecureNetwork:     string(data.secureNetwork),

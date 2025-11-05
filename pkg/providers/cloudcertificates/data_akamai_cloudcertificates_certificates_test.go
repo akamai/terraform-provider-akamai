@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/ccm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudcertificates"
 	tst "github.com/akamai/terraform-provider-akamai/v9/internal/test"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/test"
@@ -19,6 +19,7 @@ func TestClientCertificateDataSource(t *testing.T) {
 		CheckEqual("certificates.#", "1").
 		CheckEqual("certificates.0.certificate_id", "cert1_1234").
 		CheckEqual("certificates.0.certificate_name", "test_certificate1").
+		CheckEqual("certificates.0.csr_pem", "").
 		CheckEqual("certificates.0.sans.#", "1").
 		CheckEqual("certificates.0.sans.0", "test1.example.com").
 		CheckEqual("certificates.0.subject.common_name", "test1.example.com").
@@ -43,19 +44,18 @@ func TestClientCertificateDataSource(t *testing.T) {
 		CheckEqual("certificates.0.signed_certificate_not_valid_before_date", "2025-09-23T07:19:47Z")
 
 	baseCheckerMissingCertMaterials := baseChecker.
-		CheckMissing("certificates.0.csr_pem").
 		CheckMissing("certificates.0.signed_certificate_pem").
 		CheckMissing("certificates.0.signed_certificate_serial_number").
 		CheckMissing("certificates.0.signed_certificate_sha256_fingerprint").
 		CheckMissing("certificates.0.trust_chain_pem")
 
-	baseResponse := &ccm.ListCertificatesResponse{
-		Certificates: []ccm.Certificate{
+	baseResponse := &cloudcertificates.ListCertificatesResponse{
+		Certificates: []cloudcertificates.Certificate{
 			{
 				CertificateID:   "cert1_1234",
 				CertificateName: "test_certificate1",
 				SANs:            []string{"test1.example.com"},
-				Subject: &ccm.Subject{
+				Subject: &cloudcertificates.Subject{
 					CommonName:   "test1.example.com",
 					Country:      "US",
 					Organization: "Test Org1",
@@ -63,16 +63,16 @@ func TestClientCertificateDataSource(t *testing.T) {
 					Locality:     "Test City",
 				},
 				CertificateType:                     "THIRD_PARTY",
-				KeyType:                             ccm.CryptographicAlgorithmRSA,
-				KeySize:                             ccm.KeySize2048,
-				SecureNetwork:                       string(ccm.SecureNetworkEnhancedTLS),
+				KeyType:                             cloudcertificates.CryptographicAlgorithmRSA,
+				KeySize:                             cloudcertificates.KeySize2048,
+				SecureNetwork:                       string(cloudcertificates.SecureNetworkEnhancedTLS),
 				ContractID:                          "A-123",
 				AccountID:                           "act_789",
 				CreatedDate:                         tst.NewTimeFromStringMust("2024-01-01T12:00:00Z"),
 				CreatedBy:                           "test_user",
 				ModifiedDate:                        tst.NewTimeFromStringMust("2024-05-01T12:00:00Z"),
 				ModifiedBy:                          "test_user2",
-				CertificateStatus:                   string(ccm.StatusActive),
+				CertificateStatus:                   string(cloudcertificates.StatusActive),
 				CSRExpirationDate:                   tst.NewTimeFromStringMust("2027-01-01T00:00:00Z"),
 				SignedCertificateIssuer:             ptr.To("O=Test Org1,L=Test City,ST=CA,C=US"),
 				SignedCertificateNotValidAfterDate:  ptr.To(tst.NewTimeFromStringMust("2027-12-23T08:19:47Z")),
@@ -82,7 +82,7 @@ func TestClientCertificateDataSource(t *testing.T) {
 				CertificateID:   "cert2_1234",
 				CertificateName: "test_certificate2",
 				SANs:            []string{"test2.example.com"},
-				Subject: &ccm.Subject{
+				Subject: &cloudcertificates.Subject{
 					CommonName:   "test2.example.com",
 					Country:      "US",
 					Organization: "Test Org2",
@@ -90,16 +90,16 @@ func TestClientCertificateDataSource(t *testing.T) {
 					Locality:     "Test City",
 				},
 				CertificateType:                     "THIRD_PARTY",
-				KeyType:                             ccm.CryptographicAlgorithmECDSA,
-				KeySize:                             ccm.KeySizeP256,
-				SecureNetwork:                       string(ccm.SecureNetworkEnhancedTLS),
+				KeyType:                             cloudcertificates.CryptographicAlgorithmECDSA,
+				KeySize:                             cloudcertificates.KeySizeP256,
+				SecureNetwork:                       string(cloudcertificates.SecureNetworkEnhancedTLS),
 				ContractID:                          "A-123",
 				AccountID:                           "act_789",
 				CreatedDate:                         tst.NewTimeFromStringMust("2024-05-01T12:00:00Z"),
 				CreatedBy:                           "test_user",
 				ModifiedDate:                        tst.NewTimeFromStringMust("2024-07-01T12:00:00Z"),
 				ModifiedBy:                          "test_user2",
-				CertificateStatus:                   string(ccm.StatusReadyForUse),
+				CertificateStatus:                   string(cloudcertificates.StatusReadyForUse),
 				CSRExpirationDate:                   tst.NewTimeFromStringMust("2027-05-01T00:00:00Z"),
 				SignedCertificateIssuer:             ptr.To("O=Test Org2,L=Test City,ST=CA,C=US"),
 				SignedCertificateNotValidAfterDate:  ptr.To(tst.NewTimeFromStringMust("2027-11-15T10:30:00Z")),
@@ -109,7 +109,7 @@ func TestClientCertificateDataSource(t *testing.T) {
 				CertificateID:   "cert3_1234",
 				CertificateName: "test_certificate3",
 				SANs:            []string{"test3.example.com"},
-				Subject: &ccm.Subject{
+				Subject: &cloudcertificates.Subject{
 					CommonName:   "test3.example.com",
 					Country:      "US",
 					Organization: "Test Org3",
@@ -117,33 +117,33 @@ func TestClientCertificateDataSource(t *testing.T) {
 					Locality:     "Test City",
 				},
 				CertificateType:   "THIRD_PARTY",
-				KeyType:           ccm.CryptographicAlgorithmRSA,
-				KeySize:           ccm.KeySize2048,
-				SecureNetwork:     string(ccm.SecureNetworkEnhancedTLS),
+				KeyType:           cloudcertificates.CryptographicAlgorithmRSA,
+				KeySize:           cloudcertificates.KeySize2048,
+				SecureNetwork:     string(cloudcertificates.SecureNetworkEnhancedTLS),
 				ContractID:        "A-123",
 				AccountID:         "act_789",
 				CreatedDate:       tst.NewTimeFromStringMust("2024-12-01T12:00:00Z"),
 				CreatedBy:         "test_user",
 				ModifiedDate:      tst.NewTimeFromStringMust("2025-01-01T12:00:00Z"),
 				ModifiedBy:        "test_user2",
-				CertificateStatus: string(ccm.StatusCSRReady),
+				CertificateStatus: string(cloudcertificates.StatusCSRReady),
 				CSRExpirationDate: tst.NewTimeFromStringMust("2027-12-01T00:00:00Z"),
 			},
 		},
-		Links: ccm.Links{
+		Links: cloudcertificates.Links{
 			Self:     "/ccm/v1/certificates?page=1&pageSize=100",
 			Next:     nil,
 			Previous: nil,
 		},
 	}
 
-	certificates101 := make([]ccm.Certificate, 101)
+	certificates101 := make([]cloudcertificates.Certificate, 101)
 	for i := 0; i < 101; i++ {
-		certificates101[i] = ccm.Certificate{
+		certificates101[i] = cloudcertificates.Certificate{
 			CertificateID:   fmt.Sprintf("cert_%d_1234", i+1),
 			CertificateName: fmt.Sprintf("test_certificate_%d", i+1),
 			SANs:            []string{fmt.Sprintf("test%d.example.com", i+1)},
-			Subject: &ccm.Subject{
+			Subject: &cloudcertificates.Subject{
 				CommonName:   fmt.Sprintf("test%d.example.com", i+1),
 				Country:      "US",
 				Organization: fmt.Sprintf("Test Org%d", i+1),
@@ -151,16 +151,16 @@ func TestClientCertificateDataSource(t *testing.T) {
 				Locality:     "Test City",
 			},
 			CertificateType:                     "THIRD_PARTY",
-			KeyType:                             ccm.CryptographicAlgorithmRSA,
-			KeySize:                             ccm.KeySize2048,
-			SecureNetwork:                       string(ccm.SecureNetworkEnhancedTLS),
+			KeyType:                             cloudcertificates.CryptographicAlgorithmRSA,
+			KeySize:                             cloudcertificates.KeySize2048,
+			SecureNetwork:                       string(cloudcertificates.SecureNetworkEnhancedTLS),
 			ContractID:                          "A-123",
 			AccountID:                           "act_789",
 			CreatedDate:                         tst.NewTimeFromStringMust("2024-01-01T12:00:00Z"),
 			CreatedBy:                           "test_user",
 			ModifiedDate:                        tst.NewTimeFromStringMust("2024-05-01T12:00:00Z"),
 			ModifiedBy:                          "test_user2",
-			CertificateStatus:                   string(ccm.StatusActive),
+			CertificateStatus:                   string(cloudcertificates.StatusActive),
 			CSRExpirationDate:                   tst.NewTimeFromStringMust("2027-01-01T00:00:00Z"),
 			SignedCertificateIssuer:             ptr.To(fmt.Sprintf("O=Test Org%d,L=Test City,ST=CA,C=US", i+1)),
 			SignedCertificateNotValidAfterDate:  ptr.To(tst.NewTimeFromStringMust("2027-12-23T08:19:47Z")),
@@ -169,12 +169,12 @@ func TestClientCertificateDataSource(t *testing.T) {
 	}
 
 	tests := map[string]struct {
-		init  func(*ccm.Mock)
+		init  func(*cloudcertificates.Mock)
 		steps []resource.TestStep
 	}{
 		"happy path without optional params": {
-			init: func(m *ccm.Mock) {
-				mockListCertificates(m, ccm.ListCertificatesRequest{
+			init: func(m *cloudcertificates.Mock) {
+				mockListCertificates(m, cloudcertificates.ListCertificatesRequest{
 					PageSize: 100,
 					Page:     1,
 				}, baseResponse, nil)
@@ -247,14 +247,14 @@ func TestClientCertificateDataSource(t *testing.T) {
 			},
 		},
 		"happy path with null subject": {
-			init: func(m *ccm.Mock) {
+			init: func(m *cloudcertificates.Mock) {
 				certWithNullSubject := baseResponse.Certificates[0]
 				certWithNullSubject.Subject = nil
-				mockListCertificates(m, ccm.ListCertificatesRequest{
+				mockListCertificates(m, cloudcertificates.ListCertificatesRequest{
 					PageSize: 100,
 					Page:     1,
-				}, &ccm.ListCertificatesResponse{
-					Certificates: []ccm.Certificate{certWithNullSubject},
+				}, &cloudcertificates.ListCertificatesResponse{
+					Certificates: []cloudcertificates.Certificate{certWithNullSubject},
 				}, nil)
 			},
 			steps: []resource.TestStep{
@@ -273,14 +273,14 @@ func TestClientCertificateDataSource(t *testing.T) {
 			},
 		},
 		"happy path with certificate_name and certificate_status": {
-			init: func(m *ccm.Mock) {
-				mockListCertificates(m, ccm.ListCertificatesRequest{
+			init: func(m *cloudcertificates.Mock) {
+				mockListCertificates(m, cloudcertificates.ListCertificatesRequest{
 					CertificateName:   "test_certificate1",
-					CertificateStatus: []ccm.CertificateStatus{ccm.StatusActive, ccm.StatusReadyForUse},
+					CertificateStatus: []cloudcertificates.CertificateStatus{cloudcertificates.StatusActive, cloudcertificates.StatusReadyForUse},
 					PageSize:          100,
 					Page:              1,
-				}, &ccm.ListCertificatesResponse{
-					Certificates: []ccm.Certificate{baseResponse.Certificates[0]},
+				}, &cloudcertificates.ListCertificatesResponse{
+					Certificates: []cloudcertificates.Certificate{baseResponse.Certificates[0]},
 				}, nil)
 			},
 			steps: []resource.TestStep{
@@ -304,15 +304,15 @@ func TestClientCertificateDataSource(t *testing.T) {
 			},
 		},
 		"happy path with contract_id, group_id and domain": {
-			init: func(m *ccm.Mock) {
-				mockListCertificates(m, ccm.ListCertificatesRequest{
+			init: func(m *cloudcertificates.Mock) {
+				mockListCertificates(m, cloudcertificates.ListCertificatesRequest{
 					ContractID: "A-123",
 					GroupID:    "1234",
 					Domain:     "test2.example.com",
 					PageSize:   100,
 					Page:       1,
-				}, &ccm.ListCertificatesResponse{
-					Certificates: []ccm.Certificate{baseResponse.Certificates[1]},
+				}, &cloudcertificates.ListCertificatesResponse{
+					Certificates: []cloudcertificates.Certificate{baseResponse.Certificates[1]},
 				}, nil)
 			},
 			steps: []resource.TestStep{
@@ -359,20 +359,20 @@ func TestClientCertificateDataSource(t *testing.T) {
 			},
 		},
 		"happy path with issuer and include_certificate_materials set to true": {
-			init: func(m *ccm.Mock) {
+			init: func(m *cloudcertificates.Mock) {
 				filteredCertificate := baseResponse.Certificates[0]
-				filteredCertificate.CSRPEM = ptr.To("-----BEGIN CERTIFICATE REQUEST-----\nTEST-CSR-PEM\n-----END CERTIFICATE REQUEST-----\n")
+				filteredCertificate.CSRPEM = "-----BEGIN CERTIFICATE REQUEST-----\nTEST-CSR-PEM\n-----END CERTIFICATE REQUEST-----\n"
 				filteredCertificate.SignedCertificatePEM = ptr.To(testSignedCertificatePEM)
 				filteredCertificate.SignedCertificateSerialNumber = ptr.To("12:34:56:78:90:AB:CD:EF:12:34:56:78:90:AB:CD:EF")
 				filteredCertificate.SignedCertificateSHA256Fingerprint = ptr.To("FE:DC:BA:98:76:54:32:10:FE:DC:BA:98:76:54:32:10:FE:DC:BA:98:76:54:32:10:FE:DC:BA:98:76:54:32:10")
 				filteredCertificate.TrustChainPEM = ptr.To(testTrustChainPEM)
-				mockListCertificates(m, ccm.ListCertificatesRequest{
+				mockListCertificates(m, cloudcertificates.ListCertificatesRequest{
 					IncludeCertificateMaterials: true,
 					Issuer:                      "Test Org1",
 					PageSize:                    100,
 					Page:                        1,
-				}, &ccm.ListCertificatesResponse{
-					Certificates: []ccm.Certificate{filteredCertificate},
+				}, &cloudcertificates.ListCertificatesResponse{
+					Certificates: []cloudcertificates.Certificate{filteredCertificate},
 				}, nil)
 			},
 			steps: []resource.TestStep{
@@ -399,14 +399,14 @@ func TestClientCertificateDataSource(t *testing.T) {
 			},
 		},
 		"happy path with expiring_in_days set to positive value": {
-			init: func(m *ccm.Mock) {
+			init: func(m *cloudcertificates.Mock) {
 				// Set dates to ensure the certificate is expiring within 980 days from modified date
-				mockListCertificates(m, ccm.ListCertificatesRequest{
+				mockListCertificates(m, cloudcertificates.ListCertificatesRequest{
 					ExpiringInDays: ptr.To[int64](980),
 					PageSize:       100,
 					Page:           1,
-				}, &ccm.ListCertificatesResponse{
-					Certificates: []ccm.Certificate{baseResponse.Certificates[0]},
+				}, &cloudcertificates.ListCertificatesResponse{
+					Certificates: []cloudcertificates.Certificate{baseResponse.Certificates[0]},
 				}, nil)
 			},
 			steps: []resource.TestStep{
@@ -428,17 +428,17 @@ func TestClientCertificateDataSource(t *testing.T) {
 			},
 		},
 		"happy path with expiring_in_days set to 0 value": {
-			init: func(m *ccm.Mock) {
+			init: func(m *cloudcertificates.Mock) {
 				expiredCertificate := baseResponse.Certificates[0]
 				expiredCertificate.CreatedDate = tst.NewTimeFromStringMust("2020-01-01T12:00:00Z")
 				expiredCertificate.ModifiedDate = tst.NewTimeFromStringMust("2020-05-01T12:00:00Z")
 				expiredCertificate.CSRExpirationDate = tst.NewTimeFromStringMust("2023-01-01T12:00:00Z")
-				mockListCertificates(m, ccm.ListCertificatesRequest{
+				mockListCertificates(m, cloudcertificates.ListCertificatesRequest{
 					ExpiringInDays: ptr.To[int64](0),
 					PageSize:       100,
 					Page:           1,
-				}, &ccm.ListCertificatesResponse{
-					Certificates: []ccm.Certificate{expiredCertificate},
+				}, &cloudcertificates.ListCertificatesResponse{
+					Certificates: []cloudcertificates.Certificate{expiredCertificate},
 				}, nil)
 			},
 			steps: []resource.TestStep{
@@ -463,14 +463,14 @@ func TestClientCertificateDataSource(t *testing.T) {
 			},
 		},
 		"happy path with key_type and and sorting by createdDate": {
-			init: func(m *ccm.Mock) {
-				mockListCertificates(m, ccm.ListCertificatesRequest{
-					KeyType:  ccm.CryptographicAlgorithmRSA,
+			init: func(m *cloudcertificates.Mock) {
+				mockListCertificates(m, cloudcertificates.ListCertificatesRequest{
+					KeyType:  cloudcertificates.CryptographicAlgorithmRSA,
 					Sort:     "-createdDate",
 					PageSize: 100,
 					Page:     1,
-				}, &ccm.ListCertificatesResponse{
-					Certificates: []ccm.Certificate{baseResponse.Certificates[2], baseResponse.Certificates[0]},
+				}, &cloudcertificates.ListCertificatesResponse{
+					Certificates: []cloudcertificates.Certificate{baseResponse.Certificates[2], baseResponse.Certificates[0]},
 				}, nil)
 			},
 			steps: []resource.TestStep{
@@ -537,7 +537,6 @@ func TestClientCertificateDataSource(t *testing.T) {
 						CheckEqual("certificates.1.signed_certificate_issuer", "O=Test Org1,L=Test City,ST=CA,C=US").
 						CheckEqual("certificates.1.signed_certificate_not_valid_after_date", "2027-12-23T08:19:47Z").
 						CheckEqual("certificates.1.signed_certificate_not_valid_before_date", "2025-09-23T07:19:47Z").
-						CheckMissing("certificates.1.csr_pem").
 						CheckMissing("certificates.1.signed_certificate_pem").
 						CheckMissing("certificates.1.signed_certificate_serial_number").
 						CheckMissing("certificates.1.signed_certificate_sha256_fingerprint").
@@ -547,24 +546,24 @@ func TestClientCertificateDataSource(t *testing.T) {
 			},
 		},
 		"happy path with more than 100 certificates": {
-			init: func(m *ccm.Mock) {
-				mockListCertificates(m, ccm.ListCertificatesRequest{
+			init: func(m *cloudcertificates.Mock) {
+				mockListCertificates(m, cloudcertificates.ListCertificatesRequest{
 					PageSize: 100,
 					Page:     1,
-				}, &ccm.ListCertificatesResponse{
+				}, &cloudcertificates.ListCertificatesResponse{
 					Certificates: certificates101[:100],
-					Links: ccm.Links{
+					Links: cloudcertificates.Links{
 						Self:     "/ccm/v1/certificates?page=1&pageSize=100",
 						Next:     ptr.To("/ccm/v1/certificates?page=2&pageSize=100"),
 						Previous: nil,
 					},
 				}, nil)
-				mockListCertificates(m, ccm.ListCertificatesRequest{
+				mockListCertificates(m, cloudcertificates.ListCertificatesRequest{
 					PageSize: 100,
 					Page:     2,
-				}, &ccm.ListCertificatesResponse{
+				}, &cloudcertificates.ListCertificatesResponse{
 					Certificates: certificates101[100:],
-					Links: ccm.Links{
+					Links: cloudcertificates.Links{
 						Self:     "/ccm/v1/certificates?page=2&pageSize=100",
 						Next:     nil,
 						Previous: ptr.To("/ccm/v1/certificates?page=1&pageSize=100"),
@@ -605,11 +604,11 @@ func TestClientCertificateDataSource(t *testing.T) {
 			},
 		},
 		"error response from ListCertificates": {
-			init: func(m *ccm.Mock) {
-				mockListCertificates(m, ccm.ListCertificatesRequest{
+			init: func(m *cloudcertificates.Mock) {
+				mockListCertificates(m, cloudcertificates.ListCertificatesRequest{
 					PageSize: 100,
 					Page:     1,
-				}, &ccm.ListCertificatesResponse{}, fmt.Errorf("oops"))
+				}, &cloudcertificates.ListCertificatesResponse{}, fmt.Errorf("oops"))
 			},
 			steps: []resource.TestStep{
 				{
@@ -662,7 +661,7 @@ func TestClientCertificateDataSource(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			client := &ccm.Mock{}
+			client := &cloudcertificates.Mock{}
 			if tc.init != nil {
 				tc.init(client)
 			}
@@ -678,7 +677,7 @@ func TestClientCertificateDataSource(t *testing.T) {
 	}
 }
 
-func mockListCertificates(m *ccm.Mock, req ccm.ListCertificatesRequest, certificates *ccm.ListCertificatesResponse, err error) {
+func mockListCertificates(m *cloudcertificates.Mock, req cloudcertificates.ListCertificatesRequest, certificates *cloudcertificates.ListCertificatesResponse, err error) {
 	if err != nil {
 		m.On("ListCertificates", testutils.MockContext, req).Return(nil, err).Once()
 		return

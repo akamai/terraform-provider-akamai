@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/ccm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudcertificates"
 	tst "github.com/akamai/terraform-provider-akamai/v9/internal/test"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/test"
@@ -14,9 +14,9 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func defaultCertResp() *ccm.GetCertificateResponse {
-	return &ccm.GetCertificateResponse{
-		Certificate: ccm.Certificate{
+func defaultCertResp() *cloudcertificates.GetCertificateResponse {
+	return &cloudcertificates.GetCertificateResponse{
+		Certificate: cloudcertificates.Certificate{
 			AccountID:                           "test_account",
 			CertificateName:                     "example-cert",
 			CertificateStatus:                   "ACTIVE",
@@ -25,7 +25,7 @@ func defaultCertResp() *ccm.GetCertificateResponse {
 			CreatedBy:                           "user1",
 			CreatedDate:                         tst.NewTimeFromStringMust("2023-11-01T02:40:20Z"),
 			CSRExpirationDate:                   tst.NewTimeFromStringMust("2025-01-03T00:00:00Z"),
-			CSRPEM:                              ptr.To("-----BEGIN CERTIFICATE REQUEST-----\ntest-csr\n-----END CERTIFICATE REQUEST-----"),
+			CSRPEM:                              "-----BEGIN CERTIFICATE REQUEST-----\ntest-csr\n-----END CERTIFICATE REQUEST-----",
 			KeySize:                             "2048",
 			KeyType:                             "RSA",
 			ModifiedBy:                          "user2",
@@ -39,7 +39,7 @@ func defaultCertResp() *ccm.GetCertificateResponse {
 			SignedCertificateSerialNumber:       ptr.To("123456789"),
 			SignedCertificateSHA256Fingerprint:  ptr.To("aa:bb:cc:dd:ee:ff"),
 			TrustChainPEM:                       ptr.To("-----BEGIN CERTIFICATE-----\ntrust-chain\n-----END CERTIFICATE-----"),
-			Subject: &ccm.Subject{
+			Subject: &cloudcertificates.Subject{
 				CommonName:   "example.com",
 				Organization: "Example Org",
 				Country:      "US",
@@ -93,13 +93,13 @@ func TestCertificateDataSource(t *testing.T) {
 		CheckEqual("bindings.1.resource_type", "CDN_HOSTNAME")
 
 	tests := map[string]struct {
-		init  func(*ccm.Mock)
+		init  func(*cloudcertificates.Mock)
 		steps []resource.TestStep
 		error *regexp.Regexp
 	}{
 		"happy path - get certificate without bindings": {
-			init: func(m *ccm.Mock) {
-				certReq := ccm.GetCertificateRequest{
+			init: func(m *cloudcertificates.Mock) {
+				certReq := cloudcertificates.GetCertificateRequest{
 					CertificateID: "12345",
 				}
 
@@ -121,22 +121,22 @@ func TestCertificateDataSource(t *testing.T) {
 			},
 		},
 		"happy path - get certificate with bindings": {
-			init: func(m *ccm.Mock) {
-				certReq := ccm.GetCertificateRequest{
+			init: func(m *cloudcertificates.Mock) {
+				certReq := cloudcertificates.GetCertificateRequest{
 					CertificateID: "12345",
 				}
 
 				certResp := defaultCertResp()
 				certResp.Certificate.SANs = []string{"example.com", "www.example.com"}
 
-				bindingsReq := ccm.ListCertificateBindingsRequest{
+				bindingsReq := cloudcertificates.ListCertificateBindingsRequest{
 					CertificateID: "12345",
 					PageSize:      100,
 					Page:          1,
 				}
 
-				bindingsResp := &ccm.ListCertificateBindingsResponse{
-					Bindings: []ccm.CertificateBinding{
+				bindingsResp := &cloudcertificates.ListCertificateBindingsResponse{
+					Bindings: []cloudcertificates.CertificateBinding{
 						{
 							CertificateID: "12345",
 							Hostname:      "www.example.com",
@@ -150,7 +150,7 @@ func TestCertificateDataSource(t *testing.T) {
 							ResourceType:  "CDN_HOSTNAME",
 						},
 					},
-					Links: ccm.Links{
+					Links: cloudcertificates.Links{
 						Next: nil,
 					},
 				}
@@ -166,21 +166,21 @@ func TestCertificateDataSource(t *testing.T) {
 			},
 		},
 		"happy path - get certificate with pagination": {
-			init: func(m *ccm.Mock) {
-				certReq := ccm.GetCertificateRequest{
+			init: func(m *cloudcertificates.Mock) {
+				certReq := cloudcertificates.GetCertificateRequest{
 					CertificateID: "12345",
 				}
 
 				certResp := defaultCertResp()
 
-				bindingsReqPage1 := ccm.ListCertificateBindingsRequest{
+				bindingsReqPage1 := cloudcertificates.ListCertificateBindingsRequest{
 					CertificateID: "12345",
 					PageSize:      100, // "Even though we request 100 items in each API call, the mock returns only 1 item here for testing pagination.
 					Page:          1,
 				}
 
-				bindingsRespPage1 := &ccm.ListCertificateBindingsResponse{
-					Bindings: []ccm.CertificateBinding{
+				bindingsRespPage1 := &cloudcertificates.ListCertificateBindingsResponse{
+					Bindings: []cloudcertificates.CertificateBinding{
 						{
 							CertificateID: "12345",
 							Hostname:      "www1.example.com",
@@ -188,19 +188,19 @@ func TestCertificateDataSource(t *testing.T) {
 							ResourceType:  "CDN_HOSTNAME",
 						},
 					},
-					Links: ccm.Links{
+					Links: cloudcertificates.Links{
 						Next: ptr.To("next-page-url"),
 					},
 				}
 
-				bindingsReqPage2 := ccm.ListCertificateBindingsRequest{
+				bindingsReqPage2 := cloudcertificates.ListCertificateBindingsRequest{
 					CertificateID: "12345",
 					PageSize:      100, // "Even though we request 100 items in each API call, the mock returns only 1 item here for testing pagination.
 					Page:          2,
 				}
 
-				bindingsRespPage2 := &ccm.ListCertificateBindingsResponse{
-					Bindings: []ccm.CertificateBinding{
+				bindingsRespPage2 := &cloudcertificates.ListCertificateBindingsResponse{
+					Bindings: []cloudcertificates.CertificateBinding{
 						{
 							CertificateID: "12345",
 							Hostname:      "www2.example.com",
@@ -208,7 +208,7 @@ func TestCertificateDataSource(t *testing.T) {
 							ResourceType:  "CDN_HOSTNAME",
 						},
 					},
-					Links: ccm.Links{
+					Links: cloudcertificates.Links{
 						Next: nil,
 					},
 				}
@@ -230,8 +230,8 @@ func TestCertificateDataSource(t *testing.T) {
 			},
 		},
 		"happy path - get certificate with null subject": {
-			init: func(m *ccm.Mock) {
-				certReq := ccm.GetCertificateRequest{
+			init: func(m *cloudcertificates.Mock) {
+				certReq := cloudcertificates.GetCertificateRequest{
 					CertificateID: "12345",
 				}
 
@@ -251,11 +251,11 @@ func TestCertificateDataSource(t *testing.T) {
 			},
 		},
 		"error - certificate not found": {
-			init: func(m *ccm.Mock) {
-				certReq := ccm.GetCertificateRequest{
+			init: func(m *cloudcertificates.Mock) {
+				certReq := cloudcertificates.GetCertificateRequest{
 					CertificateID: "12345",
 				}
-				m.On("GetCertificate", mock.Anything, certReq).Return((*ccm.GetCertificateResponse)(nil), ccm.ErrCertificateNotFound).Once()
+				m.On("GetCertificate", mock.Anything, certReq).Return((*cloudcertificates.GetCertificateResponse)(nil), cloudcertificates.ErrCertificateNotFound).Once()
 			},
 			steps: []resource.TestStep{
 				{
@@ -265,11 +265,11 @@ func TestCertificateDataSource(t *testing.T) {
 			},
 		},
 		"error - API error on get certificate": {
-			init: func(m *ccm.Mock) {
-				certReq := ccm.GetCertificateRequest{
+			init: func(m *cloudcertificates.Mock) {
+				certReq := cloudcertificates.GetCertificateRequest{
 					CertificateID: "12345",
 				}
-				m.On("GetCertificate", mock.Anything, certReq).Return((*ccm.GetCertificateResponse)(nil), fmt.Errorf("oops")).Once()
+				m.On("GetCertificate", mock.Anything, certReq).Return((*cloudcertificates.GetCertificateResponse)(nil), fmt.Errorf("oops")).Once()
 			},
 			steps: []resource.TestStep{
 				{
@@ -279,13 +279,13 @@ func TestCertificateDataSource(t *testing.T) {
 			},
 		},
 		"error - API error on list bindings": {
-			init: func(m *ccm.Mock) {
-				certReq := ccm.GetCertificateRequest{
+			init: func(m *cloudcertificates.Mock) {
+				certReq := cloudcertificates.GetCertificateRequest{
 					CertificateID: "12345",
 				}
 
-				certResp := &ccm.GetCertificateResponse{
-					Certificate: ccm.Certificate{
+				certResp := &cloudcertificates.GetCertificateResponse{
+					Certificate: cloudcertificates.Certificate{
 						AccountID:         "test_account",
 						CertificateName:   "example-cert",
 						CertificateStatus: "ACTIVE",
@@ -300,20 +300,20 @@ func TestCertificateDataSource(t *testing.T) {
 						ModifiedDate:      tst.NewTimeFromStringMust("2023-06-01T00:00:00Z"),
 						SANs:              []string{"example.com"},
 						SecureNetwork:     "STANDARD_TLS",
-						Subject: &ccm.Subject{
+						Subject: &cloudcertificates.Subject{
 							CommonName: "example.com",
 						},
 					},
 				}
 
-				bindingsReq := ccm.ListCertificateBindingsRequest{
+				bindingsReq := cloudcertificates.ListCertificateBindingsRequest{
 					CertificateID: "12345",
 					PageSize:      100,
 					Page:          1,
 				}
 
 				m.On("GetCertificate", mock.Anything, certReq).Return(certResp, nil).Once()
-				m.On("ListCertificateBindings", mock.Anything, bindingsReq).Return((*ccm.ListCertificateBindingsResponse)(nil), fmt.Errorf("bindings error")).Once()
+				m.On("ListCertificateBindings", mock.Anything, bindingsReq).Return((*cloudcertificates.ListCertificateBindingsResponse)(nil), fmt.Errorf("bindings error")).Once()
 			},
 			steps: []resource.TestStep{
 				{
@@ -323,7 +323,7 @@ func TestCertificateDataSource(t *testing.T) {
 			},
 		},
 		"validation error - certificate_id missing": {
-			init: func(_ *ccm.Mock) {},
+			init: func(_ *cloudcertificates.Mock) {},
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, testDir+"certificate_id_is_missing.tf"),
@@ -332,7 +332,7 @@ func TestCertificateDataSource(t *testing.T) {
 			},
 		},
 		"validation error - certificate_id empty": {
-			init: func(_ *ccm.Mock) {},
+			init: func(_ *cloudcertificates.Mock) {},
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, testDir+"certificate_id_is_empty.tf"),
@@ -344,7 +344,7 @@ func TestCertificateDataSource(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &ccm.Mock{}
+			client := &cloudcertificates.Mock{}
 			if tc.init != nil {
 				tc.init(client)
 			}

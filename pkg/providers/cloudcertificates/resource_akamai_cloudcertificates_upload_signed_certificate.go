@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/ccm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudcertificates"
 	"github.com/akamai/terraform-provider-akamai/v9/internal/text"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/framework/date"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/framework/modifiers"
@@ -159,12 +159,12 @@ func (c *uploadSignedCertificateResource) Read(ctx context.Context, req resource
 	ctx = tflog.SetField(ctx, "certificate_id", state.CertificateID.ValueString())
 
 	client := Client(c.meta)
-	cert, err := client.GetCertificate(ctx, ccm.GetCertificateRequest{
+	cert, err := client.GetCertificate(ctx, cloudcertificates.GetCertificateRequest{
 		CertificateID: state.CertificateID.ValueString(),
 	})
 
 	if err != nil {
-		if errors.Is(err, ccm.ErrCertificateNotFound) {
+		if errors.Is(err, cloudcertificates.ErrCertificateNotFound) {
 			resp.Diagnostics.AddError("CCM Certificate not found",
 				fmt.Sprintf("The certificate '%s' was not found on the server: %s",
 					state.CertificateID.ValueString(), err.Error()))
@@ -234,11 +234,11 @@ func (c *uploadSignedCertificateResource) ImportState(ctx context.Context, req r
 	}
 
 	client := Client(c.meta)
-	cert, err := client.GetCertificate(ctx, ccm.GetCertificateRequest{
+	cert, err := client.GetCertificate(ctx, cloudcertificates.GetCertificateRequest{
 		CertificateID: certificateID,
 	})
 	if err != nil {
-		if errors.Is(err, ccm.ErrCertificateNotFound) {
+		if errors.Is(err, cloudcertificates.ErrCertificateNotFound) {
 			resp.Diagnostics.AddError("CCM Certificate for import not found",
 				fmt.Sprintf("The certificate '%s' was not found on the server: %s",
 					state.CertificateID.ValueString(), err.Error()))
@@ -250,7 +250,7 @@ func (c *uploadSignedCertificateResource) ImportState(ctx context.Context, req r
 		return
 	}
 
-	if cert.Certificate.CertificateStatus == string(ccm.StatusCSRReady) {
+	if cert.Certificate.CertificateStatus == string(cloudcertificates.StatusCSRReady) {
 		resp.Diagnostics.AddError("Cannot import CCM Certificate in 'CSR_READY' status",
 			fmt.Sprintf("The certificate '%s' has status '%s' and does not support importing "+
 				"as the signed certificate PEM has not been uploaded yet.",
@@ -286,11 +286,11 @@ func (c *uploadSignedCertificateResource) ModifyPlan(ctx context.Context, req re
 	// Note that during creation, the state will be empty, so we decided to always fetch
 	// the status from the API for simplicity and up-to-date information.
 	client := Client(c.meta)
-	cert, err := client.GetCertificate(ctx, ccm.GetCertificateRequest{
+	cert, err := client.GetCertificate(ctx, cloudcertificates.GetCertificateRequest{
 		CertificateID: plan.CertificateID.ValueString(),
 	})
 	if err != nil {
-		if errors.Is(err, ccm.ErrCertificateNotFound) {
+		if errors.Is(err, cloudcertificates.ErrCertificateNotFound) {
 			resp.Diagnostics.AddAttributeError(
 				path.Root("certificate_id"),
 				"Cannot upload signed certificate to a non-existent CCM Certificate object",
@@ -305,8 +305,8 @@ func (c *uploadSignedCertificateResource) ModifyPlan(ctx context.Context, req re
 		return
 	}
 
-	if cert.Certificate.CertificateStatus == string(ccm.StatusReadyForUse) ||
-		cert.Certificate.CertificateStatus == string(ccm.StatusActive) {
+	if cert.Certificate.CertificateStatus == string(cloudcertificates.StatusReadyForUse) ||
+		cert.Certificate.CertificateStatus == string(cloudcertificates.StatusActive) {
 		// Use pointer - state can be null if resource is being created
 		var state *uploadSignedCertificateResourceModel
 		resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
@@ -325,7 +325,7 @@ func (c *uploadSignedCertificateResource) ModifyPlan(ctx context.Context, req re
 func (c *uploadSignedCertificateResource) uploadSignedCertificate(ctx context.Context,
 	m uploadSignedCertificateResourceModel) (uploadSignedCertificateResourceModel, error) {
 
-	patchReq := ccm.PatchCertificateRequest{
+	patchReq := cloudcertificates.PatchCertificateRequest{
 		CertificateID:        m.CertificateID.ValueString(),
 		SignedCertificatePEM: m.SignedCertificatePEM.ValueString(),
 		TrustChainPEM:        m.TrustChainPEM.ValueString(),
@@ -356,7 +356,7 @@ type uploadSignedCertificateResourceModel struct {
 	SignedCertificateIssuer             types.String `tfsdk:"signed_certificate_issuer"`
 }
 
-func (m *uploadSignedCertificateResourceModel) populateCertFields(cert ccm.Certificate) {
+func (m *uploadSignedCertificateResourceModel) populateCertFields(cert cloudcertificates.Certificate) {
 	m.SignedCertificatePEM = types.StringPointerValue(cert.SignedCertificatePEM)
 	m.TrustChainPEM = types.StringPointerValue(cert.TrustChainPEM)
 	m.ModifiedDate = date.TimeRFC3339NanoValue(cert.ModifiedDate)

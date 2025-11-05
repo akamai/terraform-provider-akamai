@@ -2,7 +2,7 @@
 package cloudcertificates
 
 import (
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/ccm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudcertificates"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/subprovider"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -17,7 +17,7 @@ type (
 
 var (
 	_      subprovider.Subprovider = &Subprovider{}
-	client ccm.CCM
+	client cloudcertificates.CloudCertificates
 )
 
 // NewSubprovider returns a new CloudCertificates subprovider.
@@ -25,12 +25,12 @@ func NewSubprovider() *Subprovider {
 	return &Subprovider{}
 }
 
-// Client returns the CCM interface.
-func Client(meta meta.Meta) ccm.CCM {
+// Client returns the CloudCertificates interface.
+func Client(meta meta.Meta) cloudcertificates.CloudCertificates {
 	if client != nil {
 		return client
 	}
-	return ccm.Client(meta.Session())
+	return cloudcertificates.Client(meta.Session())
 }
 
 // SDKResources returns the CloudCertificates resources implemented using terraform-plugin-sdk.

@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/ccm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudcertificates"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
@@ -16,7 +16,7 @@ func TestCloudCertificatesHostnameBindingsDataSource(t *testing.T) {
 	t.Parallel()
 	pageSize = 3
 
-	mockListBindings := func(m *ccm.Mock, testData listBindingsTestData) {
+	mockListBindings := func(m *cloudcertificates.Mock, testData listBindingsTestData) {
 		m.On("ListBindings", testutils.MockContext, testData.request).Return(&testData.response, nil).Times(3)
 	}
 
@@ -53,20 +53,20 @@ func TestCloudCertificatesHostnameBindingsDataSource(t *testing.T) {
 		CheckEqual("bindings.0.resource_type", "CDN_HOSTNAME")
 
 	tests := map[string]struct {
-		init  func(*ccm.Mock)
+		init  func(*cloudcertificates.Mock)
 		steps []resource.TestStep
 		error *regexp.Regexp
 	}{
 		"no filtering options": {
-			init: func(m *ccm.Mock) {
+			init: func(m *cloudcertificates.Mock) {
 				testData := listBindingsTestData{
-					request: ccm.ListBindingsRequest{
+					request: cloudcertificates.ListBindingsRequest{
 						ExpiringInDays: nil,
 						PageSize:       3,
 						Page:           1,
 					},
-					response: ccm.ListBindingsResponse{
-						Bindings: []ccm.CertificateBinding{
+					response: cloudcertificates.ListBindingsResponse{
+						Bindings: []cloudcertificates.CertificateBinding{
 							{
 								CertificateID: "cert-123",
 								Hostname:      "example.com",
@@ -86,7 +86,7 @@ func TestCloudCertificatesHostnameBindingsDataSource(t *testing.T) {
 								ResourceType:  "CDN_HOSTNAME",
 							},
 						},
-						Links: ccm.Links{
+						Links: cloudcertificates.Links{
 							Next: nil,
 						},
 					},
@@ -101,16 +101,16 @@ func TestCloudCertificatesHostnameBindingsDataSource(t *testing.T) {
 			},
 		},
 		"no filtering options, but with API paging": {
-			init: func(m *ccm.Mock) {
+			init: func(m *cloudcertificates.Mock) {
 				// First page
 				testData := listBindingsTestData{
-					request: ccm.ListBindingsRequest{
+					request: cloudcertificates.ListBindingsRequest{
 						ExpiringInDays: nil,
 						PageSize:       3,
 						Page:           1,
 					},
-					response: ccm.ListBindingsResponse{
-						Bindings: []ccm.CertificateBinding{
+					response: cloudcertificates.ListBindingsResponse{
+						Bindings: []cloudcertificates.CertificateBinding{
 							{
 								CertificateID: "cert-123",
 								Hostname:      "example.com",
@@ -130,7 +130,7 @@ func TestCloudCertificatesHostnameBindingsDataSource(t *testing.T) {
 								ResourceType:  "CDN_HOSTNAME",
 							},
 						},
-						Links: ccm.Links{
+						Links: cloudcertificates.Links{
 							Next: ptr.To("/ccm/v2/bindings?page=2&pageSize=2"),
 						},
 					},
@@ -138,13 +138,13 @@ func TestCloudCertificatesHostnameBindingsDataSource(t *testing.T) {
 				mockListBindings(m, testData)
 				// Second page
 				testData = listBindingsTestData{
-					request: ccm.ListBindingsRequest{
+					request: cloudcertificates.ListBindingsRequest{
 						ExpiringInDays: nil,
 						PageSize:       3,
 						Page:           2,
 					},
-					response: ccm.ListBindingsResponse{
-						Bindings: []ccm.CertificateBinding{
+					response: cloudcertificates.ListBindingsResponse{
+						Bindings: []cloudcertificates.CertificateBinding{
 							{
 								CertificateID: "cert-777",
 								Hostname:      "foo.example.com",
@@ -152,7 +152,7 @@ func TestCloudCertificatesHostnameBindingsDataSource(t *testing.T) {
 								ResourceType:  "CDN_HOSTNAME",
 							},
 						},
-						Links: ccm.Links{
+						Links: cloudcertificates.Links{
 							Next: nil,
 						},
 					},
@@ -168,15 +168,15 @@ func TestCloudCertificatesHostnameBindingsDataSource(t *testing.T) {
 			},
 		},
 		"single filtering option - domain": {
-			init: func(m *ccm.Mock) {
+			init: func(m *cloudcertificates.Mock) {
 				testData := listBindingsTestData{
-					request: ccm.ListBindingsRequest{
+					request: cloudcertificates.ListBindingsRequest{
 						ExpiringInDays: nil,
 						PageSize:       3,
 						Page:           1,
 					},
-					response: ccm.ListBindingsResponse{
-						Bindings: []ccm.CertificateBinding{
+					response: cloudcertificates.ListBindingsResponse{
+						Bindings: []cloudcertificates.CertificateBinding{
 							{
 								CertificateID: "cert-123",
 								Hostname:      "example.com",
@@ -196,7 +196,7 @@ func TestCloudCertificatesHostnameBindingsDataSource(t *testing.T) {
 								ResourceType:  "CDN_HOSTNAME",
 							},
 						},
-						Links: ccm.Links{
+						Links: cloudcertificates.Links{
 							Next: nil,
 						},
 					},
@@ -211,9 +211,9 @@ func TestCloudCertificatesHostnameBindingsDataSource(t *testing.T) {
 			},
 		},
 		"all filtering options": {
-			init: func(m *ccm.Mock) {
+			init: func(m *cloudcertificates.Mock) {
 				testData := listBindingsTestData{
-					request: ccm.ListBindingsRequest{
+					request: cloudcertificates.ListBindingsRequest{
 						ContractID:     "K-0N7RAK71",
 						GroupID:        "123456",
 						Domain:         "example.com",
@@ -222,8 +222,8 @@ func TestCloudCertificatesHostnameBindingsDataSource(t *testing.T) {
 						PageSize:       3,
 						Page:           1,
 					},
-					response: ccm.ListBindingsResponse{
-						Bindings: []ccm.CertificateBinding{
+					response: cloudcertificates.ListBindingsResponse{
+						Bindings: []cloudcertificates.CertificateBinding{
 							{
 								CertificateID: "cert-123",
 								Hostname:      "example.com",
@@ -231,7 +231,7 @@ func TestCloudCertificatesHostnameBindingsDataSource(t *testing.T) {
 								ResourceType:  "CDN_HOSTNAME",
 							},
 						},
-						Links: ccm.Links{
+						Links: cloudcertificates.Links{
 							Next: nil,
 						},
 					},
@@ -246,9 +246,9 @@ func TestCloudCertificatesHostnameBindingsDataSource(t *testing.T) {
 			},
 		},
 		"all filtering options - no data returned": {
-			init: func(m *ccm.Mock) {
+			init: func(m *cloudcertificates.Mock) {
 				testData := listBindingsTestData{
-					request: ccm.ListBindingsRequest{
+					request: cloudcertificates.ListBindingsRequest{
 						ContractID:     "K-0N7RAK71",
 						GroupID:        "123456",
 						Domain:         "example.com",
@@ -257,9 +257,9 @@ func TestCloudCertificatesHostnameBindingsDataSource(t *testing.T) {
 						PageSize:       3,
 						Page:           1,
 					},
-					response: ccm.ListBindingsResponse{
-						Bindings: []ccm.CertificateBinding{},
-						Links: ccm.Links{
+					response: cloudcertificates.ListBindingsResponse{
+						Bindings: []cloudcertificates.CertificateBinding{},
+						Links: cloudcertificates.Links{
 							Next: nil,
 						},
 					},
@@ -280,9 +280,9 @@ func TestCloudCertificatesHostnameBindingsDataSource(t *testing.T) {
 			},
 		},
 		"expect error: API returns error": {
-			init: func(m *ccm.Mock) {
+			init: func(m *cloudcertificates.Mock) {
 				testData := listBindingsTestData{
-					request: ccm.ListBindingsRequest{
+					request: cloudcertificates.ListBindingsRequest{
 						ContractID:     "K-0N7RAK71",
 						GroupID:        "123456",
 						Domain:         "example.com",
@@ -302,7 +302,7 @@ func TestCloudCertificatesHostnameBindingsDataSource(t *testing.T) {
 			},
 		},
 		"invalid network": {
-			init: func(_ *ccm.Mock) {
+			init: func(_ *cloudcertificates.Mock) {
 			},
 			steps: []resource.TestStep{
 				{
@@ -316,7 +316,7 @@ func TestCloudCertificatesHostnameBindingsDataSource(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			client := &ccm.Mock{}
+			client := &cloudcertificates.Mock{}
 			if tc.init != nil {
 				tc.init(client)
 			}
@@ -333,6 +333,6 @@ func TestCloudCertificatesHostnameBindingsDataSource(t *testing.T) {
 }
 
 type listBindingsTestData struct {
-	request  ccm.ListBindingsRequest
-	response ccm.ListBindingsResponse
+	request  cloudcertificates.ListBindingsRequest
+	response cloudcertificates.ListBindingsResponse
 }

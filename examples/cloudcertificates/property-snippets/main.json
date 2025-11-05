@@ -1,0 +1,62 @@
+{
+  "accountId": "A-123456",
+  "contractId": "C-0N7RAC7",
+  "groupId": "grp_123",
+  "propertyId": "prp_1234",
+  "propertyVersion": 1,
+  "etag": "testetag123",
+  "ruleFormat": "v2025-07-07",
+  "rules": {
+    "name": "default",
+    "behaviors": [
+      {
+        "name": "origin",
+        "options": {
+          "cacheKeyHostname": "REQUEST_HOST_HEADER",
+          "compress": true,
+          "enableTrueClientIp": true,
+          "forwardHostHeader": "REQUEST_HOST_HEADER",
+          "hostname": "origin-www.example.com",
+          "httpPort": 80,
+          "httpsPort": 443,
+          "ipVersion": "IPV4",
+          "minTlsVersion": "DYNAMIC",
+          "originCertificate": "",
+          "originSni": true,
+          "originType": "CUSTOMER",
+          "ports": "",
+          "tlsVersionTitle": "",
+          "trueClientIpClientSetting": false,
+          "trueClientIpHeader": "True-Client-IP",
+          "verificationMode": "PLATFORM_SETTINGS"
+        }
+      },
+      {
+        "name": "caching",
+        "options": {
+          "behavior": "MAX_AGE",
+          "mustRevalidate": false,
+          "ttl": "0s"
+        }
+      },
+      {
+        "name": "cpCode",
+        "options": {
+          "value": {
+            "id": 789
+          }
+        }
+      },
+      {
+        "name": "autoDomainValidation",
+        "options": {
+          "autodv": ""
+        }
+      }
+    ],
+    "comments": "The Default Rule template contains all the necessary and recommended behaviors. Rules are evaluated from top to bottom and the last matching rule wins.",
+    "options": {
+      "is_secure": true
+    }
+  }
+}

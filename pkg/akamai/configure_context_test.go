@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/ccm"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudcertificates"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/session"
@@ -509,8 +509,8 @@ func TestAkamaiRateLimitGet(t *testing.T) {
 	}))
 	defer mockServer.Close()
 
-	client := ccm.Client(mockSession(t, mockServer))
-	result, err := client.GetCertificate(context.Background(), ccm.GetCertificateRequest{
+	client := cloudcertificates.Client(mockSession(t, mockServer))
+	result, err := client.GetCertificate(context.Background(), cloudcertificates.GetCertificateRequest{
 		CertificateID: "123",
 	})
 	require.NoError(t, err)
@@ -566,11 +566,11 @@ func TestAkamaiRateLimitPost(t *testing.T) {
 	}))
 	defer mockServer.Close()
 
-	client := ccm.Client(mockSession(t, mockServer))
-	result, err := client.CreateCertificate(context.Background(), ccm.CreateCertificateRequest{
+	client := cloudcertificates.Client(mockSession(t, mockServer))
+	result, err := client.CreateCertificate(context.Background(), cloudcertificates.CreateCertificateRequest{
 		ContractID: "111",
 		GroupID:    "222",
-		Body: ccm.CreateCertificateRequestBody{
+		Body: cloudcertificates.CreateCertificateRequestBody{
 			CertificateName: "test-cert",
 			SANs:            []string{"example.com", "www.example.com"},
 			SecureNetwork:   "ENHANCED_TLS",
