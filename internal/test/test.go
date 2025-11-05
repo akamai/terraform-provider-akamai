@@ -30,11 +30,11 @@ func NewTimeFromStringMust(s string) time.Time {
 	return parsedTime
 }
 
-// XRateLimitHTTPHandler first returns status 429 with the X-RateLimit-Next header set to
-// time.Now() plus a random value between 1 and 5 milliseconds. It keeps sending 429 until the
-// X-RateLimit-Next point in time. Then it starts to return SuccessCode and SuccessBody
+// RateLimitHTTPHandler first returns status 429 with the Akamai-RateLimit-Next or X-RateLimit-Next headers set to
+// time.Now() plus a random value between 1 and 5 milliseconds. It keeps sending 429 until the Akamai-RateLimit-Next
+// or X-RateLimit-Next point in time. Then it starts to return SuccessCode and SuccessBody
 // indefinitely.
-type XRateLimitHTTPHandler struct {
+type RateLimitHTTPHandler struct {
 	T           *testing.T
 	SuccessCode int
 	SuccessBody string
@@ -45,19 +45,19 @@ type XRateLimitHTTPHandler struct {
 	returnTimes   []time.Time
 }
 
-func (h *XRateLimitHTTPHandler) ServeHTTP(w http.ResponseWriter, _ *http.Request) {
+func (h *RateLimitHTTPHandler) ServeHTTP(w http.ResponseWriter, _ *http.Request, header string) {
 	av := h.AvailableAt()
 
 	if av.IsZero() {
 		busyInterval := time.Duration(1+rand.Intn(4)) * time.Millisecond
 		h.setAvailableAt(time.Now().Add(busyInterval))
-		h.setTooManyRequests(w)
+		h.setTooManyRequests(w, header)
 		return
 	}
 
 	now := time.Now()
 	if now.Before(av) {
-		h.setTooManyRequests(w)
+		h.setTooManyRequests(w, header)
 	} else {
 		h.setStatusCode(w, h.SuccessCode)
 		_, err := w.Write([]byte(h.SuccessBody))
@@ -66,14 +66,14 @@ func (h *XRateLimitHTTPHandler) ServeHTTP(w http.ResponseWriter, _ *http.Request
 }
 
 // AvailableAt returns the point in time at which the handler stops returning status code 429
-func (h *XRateLimitHTTPHandler) AvailableAt() time.Time {
+func (h *RateLimitHTTPHandler) AvailableAt() time.Time {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
 	return h.availableAt
 }
 
 // ReturnedCodes returns a list of status codes from subsequent handler responses
-func (h *XRateLimitHTTPHandler) ReturnedCodes() []int {
+func (h *RateLimitHTTPHandler) ReturnedCodes() []int {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
 	res := make([]int, len(h.returnedCodes))
@@ -82,7 +82,7 @@ func (h *XRateLimitHTTPHandler) ReturnedCodes() []int {
 }
 
 // ReturnTimes returns a list of times at which subsequent responses were written
-func (h *XRateLimitHTTPHandler) ReturnTimes() []time.Time {
+func (h *RateLimitHTTPHandler) ReturnTimes() []time.Time {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
 	res := make([]time.Time, len(h.returnTimes))
@@ -90,10 +90,10 @@ func (h *XRateLimitHTTPHandler) ReturnTimes() []time.Time {
 	return res
 }
 
-func (h *XRateLimitHTTPHandler) setTooManyRequests(w http.ResponseWriter) {
-	// Do not use Add() to avoid canonicalization to X-Ratelimit-Next
+func (h *RateLimitHTTPHandler) setTooManyRequests(w http.ResponseWriter, header string) {
+	// Do not use Add() to avoid canonicalization to Akamai-RateLimit-Next or X-RateLimit-Next
 	nextStr := h.availableAt.Format(time.RFC3339Nano)
-	w.Header()["X-RateLimit-Next"] = []string{nextStr}
+	w.Header()[header] = []string{nextStr}
 	h.setStatusCode(w, http.StatusTooManyRequests)
 	body := "Your request did not succeed as this operation has reached the limit " +
 		"for your account. Please try after " + nextStr
@@ -101,7 +101,7 @@ func (h *XRateLimitHTTPHandler) setTooManyRequests(w http.ResponseWriter) {
 	assert.NoError(h.T, err)
 }
 
-func (h *XRateLimitHTTPHandler) setStatusCode(w http.ResponseWriter, statusCode int) {
+func (h *RateLimitHTTPHandler) setStatusCode(w http.ResponseWriter, statusCode int) {
 	w.WriteHeader(statusCode)
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
@@ -109,7 +109,7 @@ func (h *XRateLimitHTTPHandler) setStatusCode(w http.ResponseWriter, statusCode 
 	h.returnTimes = append(h.returnTimes, time.Now())
 }
 
-func (h *XRateLimitHTTPHandler) setAvailableAt(availableAt time.Time) {
+func (h *RateLimitHTTPHandler) setAvailableAt(availableAt time.Time) {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
 	h.availableAt = availableAt

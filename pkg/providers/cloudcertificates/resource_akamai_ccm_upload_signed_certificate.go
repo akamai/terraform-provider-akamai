@@ -176,7 +176,7 @@ func (c *uploadSignedCertificateResource) Read(ctx context.Context, req resource
 		return
 	}
 
-	state.populateCertFields(*cert)
+	state.populateCertFields(cert.Certificate)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
@@ -250,11 +250,11 @@ func (c *uploadSignedCertificateResource) ImportState(ctx context.Context, req r
 		return
 	}
 
-	if cert.CertificateStatus == string(ccm.StatusCSRReady) {
+	if cert.Certificate.CertificateStatus == string(ccm.StatusCSRReady) {
 		resp.Diagnostics.AddError("Cannot import CCM Certificate in 'CSR_READY' status",
 			fmt.Sprintf("The certificate '%s' has status '%s' and does not support importing "+
 				"as the signed certificate PEM has not been uploaded yet.",
-				state.CertificateID.ValueString(), cert.CertificateStatus))
+				state.CertificateID.ValueString(), cert.Certificate.CertificateStatus))
 		return
 	}
 
@@ -305,8 +305,8 @@ func (c *uploadSignedCertificateResource) ModifyPlan(ctx context.Context, req re
 		return
 	}
 
-	if cert.CertificateStatus == string(ccm.StatusReadyForUse) ||
-		cert.CertificateStatus == string(ccm.StatusActive) {
+	if cert.Certificate.CertificateStatus == string(ccm.StatusReadyForUse) ||
+		cert.Certificate.CertificateStatus == string(ccm.StatusActive) {
 		// Use pointer - state can be null if resource is being created
 		var state *uploadSignedCertificateResourceModel
 		resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
@@ -317,7 +317,7 @@ func (c *uploadSignedCertificateResource) ModifyPlan(ctx context.Context, req re
 		if state == nil || plan.hasDifferentInput(*state) {
 			resp.Diagnostics.AddError("Cannot upload signed certificate",
 				fmt.Sprintf("The certificate '%s' has status '%s' and does not support uploading a signed certificate "+
-					"as it has been already uploaded.", cert.CertificateID, cert.CertificateStatus))
+					"as it has been already uploaded.", cert.Certificate.CertificateID, cert.Certificate.CertificateStatus))
 		}
 	}
 }
@@ -337,7 +337,7 @@ func (c *uploadSignedCertificateResource) uploadSignedCertificate(ctx context.Co
 	if err != nil {
 		return uploadSignedCertificateResourceModel{}, err
 	}
-	m.populateCertFields(*cert)
+	m.populateCertFields(cert.Certificate)
 	return m, nil
 }
 

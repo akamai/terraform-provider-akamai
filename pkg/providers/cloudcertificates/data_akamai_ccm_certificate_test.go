@@ -16,34 +16,36 @@ import (
 
 func defaultCertResp() *ccm.GetCertificateResponse {
 	return &ccm.GetCertificateResponse{
-		AccountID:                           "test_account",
-		CertificateName:                     "example-cert",
-		CertificateStatus:                   "ACTIVE",
-		CertificateType:                     "THIRD_PARTY",
-		ContractID:                          "test_contract",
-		CreatedBy:                           "user1",
-		CreatedDate:                         tst.NewTimeFromStringMust("2023-11-01T02:40:20Z"),
-		CSRExpirationDate:                   tst.NewTimeFromStringMust("2025-01-03T00:00:00Z"),
-		CSRPEM:                              ptr.To("-----BEGIN CERTIFICATE REQUEST-----\ntest-csr\n-----END CERTIFICATE REQUEST-----"),
-		KeySize:                             "2048",
-		KeyType:                             "RSA",
-		ModifiedBy:                          "user2",
-		ModifiedDate:                        tst.NewTimeFromStringMust("2024-06-02T05:06:08Z"),
-		SANs:                                []string{"example.com"},
-		SecureNetwork:                       "STANDARD_TLS",
-		SignedCertificatePEM:                ptr.To("-----BEGIN CERTIFICATE-----\ntest-cert\n-----END CERTIFICATE-----"),
-		SignedCertificateIssuer:             ptr.To("Test CA"),
-		SignedCertificateNotValidBeforeDate: ptr.To(tst.NewTimeFromStringMust("2023-01-02T00:00:00Z")),
-		SignedCertificateNotValidAfterDate:  ptr.To(tst.NewTimeFromStringMust("2025-01-02T00:00:00Z")),
-		SignedCertificateSerialNumber:       ptr.To("123456789"),
-		SignedCertificateSHA256Fingerprint:  ptr.To("aa:bb:cc:dd:ee:ff"),
-		TrustChainPEM:                       ptr.To("-----BEGIN CERTIFICATE-----\ntrust-chain\n-----END CERTIFICATE-----"),
-		Subject: &ccm.Subject{
-			CommonName:   "example.com",
-			Organization: "Example Org",
-			Country:      "US",
-			State:        "California",
-			Locality:     "San Francisco",
+		Certificate: ccm.Certificate{
+			AccountID:                           "test_account",
+			CertificateName:                     "example-cert",
+			CertificateStatus:                   "ACTIVE",
+			CertificateType:                     "THIRD_PARTY",
+			ContractID:                          "test_contract",
+			CreatedBy:                           "user1",
+			CreatedDate:                         tst.NewTimeFromStringMust("2023-11-01T02:40:20Z"),
+			CSRExpirationDate:                   tst.NewTimeFromStringMust("2025-01-03T00:00:00Z"),
+			CSRPEM:                              ptr.To("-----BEGIN CERTIFICATE REQUEST-----\ntest-csr\n-----END CERTIFICATE REQUEST-----"),
+			KeySize:                             "2048",
+			KeyType:                             "RSA",
+			ModifiedBy:                          "user2",
+			ModifiedDate:                        tst.NewTimeFromStringMust("2024-06-02T05:06:08Z"),
+			SANs:                                []string{"example.com"},
+			SecureNetwork:                       "STANDARD_TLS",
+			SignedCertificatePEM:                ptr.To("-----BEGIN CERTIFICATE-----\ntest-cert\n-----END CERTIFICATE-----"),
+			SignedCertificateIssuer:             ptr.To("Test CA"),
+			SignedCertificateNotValidBeforeDate: ptr.To(tst.NewTimeFromStringMust("2023-01-02T00:00:00Z")),
+			SignedCertificateNotValidAfterDate:  ptr.To(tst.NewTimeFromStringMust("2025-01-02T00:00:00Z")),
+			SignedCertificateSerialNumber:       ptr.To("123456789"),
+			SignedCertificateSHA256Fingerprint:  ptr.To("aa:bb:cc:dd:ee:ff"),
+			TrustChainPEM:                       ptr.To("-----BEGIN CERTIFICATE-----\ntrust-chain\n-----END CERTIFICATE-----"),
+			Subject: &ccm.Subject{
+				CommonName:   "example.com",
+				Organization: "Example Org",
+				Country:      "US",
+				State:        "California",
+				Locality:     "San Francisco",
+			},
 		},
 	}
 }
@@ -102,7 +104,7 @@ func TestCertificateDataSource(t *testing.T) {
 				}
 
 				certResp := defaultCertResp()
-				certResp.SANs = []string{"example.com"}
+				certResp.Certificate.SANs = []string{"example.com"}
 
 				m.On("GetCertificate", mock.Anything, certReq).Return(certResp, nil).Times(3)
 			},
@@ -125,7 +127,7 @@ func TestCertificateDataSource(t *testing.T) {
 				}
 
 				certResp := defaultCertResp()
-				certResp.SANs = []string{"example.com", "www.example.com"}
+				certResp.Certificate.SANs = []string{"example.com", "www.example.com"}
 
 				bindingsReq := ccm.ListCertificateBindingsRequest{
 					CertificateID: "12345",
@@ -234,7 +236,7 @@ func TestCertificateDataSource(t *testing.T) {
 				}
 
 				certResp := defaultCertResp()
-				certResp.Subject = nil
+				certResp.Certificate.Subject = nil
 
 				m.On("GetCertificate", mock.Anything, certReq).Return(certResp, nil).Times(3)
 			},
@@ -283,22 +285,24 @@ func TestCertificateDataSource(t *testing.T) {
 				}
 
 				certResp := &ccm.GetCertificateResponse{
-					AccountID:         "test_account",
-					CertificateName:   "example-cert",
-					CertificateStatus: "ACTIVE",
-					CertificateType:   "THIRD_PARTY",
-					ContractID:        "test_contract",
-					CreatedBy:         "user1",
-					CreatedDate:       tst.NewTimeFromStringMust("2023-01-01T00:00:00Z"),
-					CSRExpirationDate: tst.NewTimeFromStringMust("2025-01-01T00:00:00Z"),
-					KeySize:           "2048",
-					KeyType:           "RSA",
-					ModifiedBy:        "user2",
-					ModifiedDate:      tst.NewTimeFromStringMust("2023-06-01T00:00:00Z"),
-					SANs:              []string{"example.com"},
-					SecureNetwork:     "STANDARD_TLS",
-					Subject: &ccm.Subject{
-						CommonName: "example.com",
+					Certificate: ccm.Certificate{
+						AccountID:         "test_account",
+						CertificateName:   "example-cert",
+						CertificateStatus: "ACTIVE",
+						CertificateType:   "THIRD_PARTY",
+						ContractID:        "test_contract",
+						CreatedBy:         "user1",
+						CreatedDate:       tst.NewTimeFromStringMust("2023-01-01T00:00:00Z"),
+						CSRExpirationDate: tst.NewTimeFromStringMust("2025-01-01T00:00:00Z"),
+						KeySize:           "2048",
+						KeyType:           "RSA",
+						ModifiedBy:        "user2",
+						ModifiedDate:      tst.NewTimeFromStringMust("2023-06-01T00:00:00Z"),
+						SANs:              []string{"example.com"},
+						SecureNetwork:     "STANDARD_TLS",
+						Subject: &ccm.Subject{
+							CommonName: "example.com",
+						},
 					},
 				}
 

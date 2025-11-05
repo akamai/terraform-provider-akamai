@@ -80,6 +80,13 @@
 
 
 
+* CCM
+  * Added support for the `Akamai-RateLimit-Next` header when the status is `429 Too Many Requests`.
+
+
+
+
+
 
 
 

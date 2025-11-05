@@ -1139,30 +1139,32 @@ func mockGetCertificate(m *ccm.Mock, data certificateTestData) *mock.Call {
 	return m.On("GetCertificate", testutils.MockContext, ccm.GetCertificateRequest{
 		CertificateID: data.certificateID,
 	}).Return(&ccm.GetCertificateResponse{
-		AccountID:         data.accountID,
-		CertificateID:     data.certificateID,
-		CertificateName:   data.name,
-		CertificateStatus: data.certificateStatus,
-		CertificateType:   data.certificateType,
-		ContractID:        strings.TrimPrefix(data.contractID, "ctr_"),
-		CreatedBy:         data.createdBy,
-		CreatedDate:       tst.NewTimeFromStringMust(data.createdDate),
-		ModifiedBy:        data.modifiedBy,
-		ModifiedDate:      tst.NewTimeFromStringMust(data.modifiedDate),
-		CSRExpirationDate: tst.NewTimeFromStringMust(data.csrExpirationDate),
-		CSRPEM:            ptr.To(data.csrPEM),
-		KeyType:           data.keyType,
-		KeySize:           data.keySize,
-		SecureNetwork:     string(data.secureNetwork),
-		SANs:              data.sans,
-		Subject:           subject,
+		Certificate: ccm.Certificate{
+			AccountID:         data.accountID,
+			CertificateID:     data.certificateID,
+			CertificateName:   data.name,
+			CertificateStatus: data.certificateStatus,
+			CertificateType:   data.certificateType,
+			ContractID:        strings.TrimPrefix(data.contractID, "ctr_"),
+			CreatedBy:         data.createdBy,
+			CreatedDate:       tst.NewTimeFromStringMust(data.createdDate),
+			ModifiedBy:        data.modifiedBy,
+			ModifiedDate:      tst.NewTimeFromStringMust(data.modifiedDate),
+			CSRExpirationDate: tst.NewTimeFromStringMust(data.csrExpirationDate),
+			CSRPEM:            ptr.To(data.csrPEM),
+			KeyType:           data.keyType,
+			KeySize:           data.keySize,
+			SecureNetwork:     string(data.secureNetwork),
+			SANs:              data.sans,
+			Subject:           subject,
+		},
 	}, nil).Once()
 }
 
 func mockDeleteCertificate(m *ccm.Mock, data certificateTestData) *mock.Call {
 	return m.On("DeleteCertificate", testutils.MockContext, ccm.DeleteCertificateRequest{
 		CertificateID: data.certificateID,
-	}).Return(nil).Once()
+	}).Return(nil, nil).Once()
 }
 
 func mockPatchCertificate(m *ccm.Mock, data certificateTestData) *mock.Call {
@@ -1180,23 +1182,25 @@ func mockPatchCertificate(m *ccm.Mock, data certificateTestData) *mock.Call {
 		CertificateID:   data.certificateID,
 		CertificateName: ptr.To(data.baseName),
 	}).Return(&ccm.PatchCertificateResponse{
-		AccountID:         data.accountID,
-		CertificateID:     data.certificateID,
-		CertificateName:   data.name,
-		CertificateStatus: data.certificateStatus,
-		CertificateType:   data.certificateType,
-		ContractID:        strings.TrimPrefix(data.contractID, "ctr_"),
-		CreatedBy:         data.createdBy,
-		CreatedDate:       tst.NewTimeFromStringMust(data.createdDate),
-		ModifiedBy:        data.modifiedBy,
-		ModifiedDate:      tst.NewTimeFromStringMust(data.modifiedDate),
-		CSRExpirationDate: tst.NewTimeFromStringMust(data.csrExpirationDate),
-		CSRPEM:            ptr.To(data.csrPEM),
-		KeyType:           data.keyType,
-		KeySize:           data.keySize,
-		SecureNetwork:     string(data.secureNetwork),
-		SANs:              data.sans,
-		Subject:           subject,
+		Certificate: ccm.Certificate{
+			AccountID:         data.accountID,
+			CertificateID:     data.certificateID,
+			CertificateName:   data.name,
+			CertificateStatus: data.certificateStatus,
+			CertificateType:   data.certificateType,
+			ContractID:        strings.TrimPrefix(data.contractID, "ctr_"),
+			CreatedBy:         data.createdBy,
+			CreatedDate:       tst.NewTimeFromStringMust(data.createdDate),
+			ModifiedBy:        data.modifiedBy,
+			ModifiedDate:      tst.NewTimeFromStringMust(data.modifiedDate),
+			CSRExpirationDate: tst.NewTimeFromStringMust(data.csrExpirationDate),
+			CSRPEM:            ptr.To(data.csrPEM),
+			KeyType:           data.keyType,
+			KeySize:           data.keySize,
+			SecureNetwork:     string(data.secureNetwork),
+			SANs:              data.sans,
+			Subject:           subject,
+		},
 	}, nil).Once()
 }
 

@@ -579,7 +579,7 @@ func (c *certificateResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
-	resp.Diagnostics.Append(state.populateCertificateFields(ctx, *cert, true)...)
+	resp.Diagnostics.Append(state.populateCertificateFields(ctx, cert.Certificate, true)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -614,7 +614,7 @@ func (c *certificateResource) Update(ctx context.Context, req resource.UpdateReq
 
 	tflog.Debug(ctx, "'base_name' updated to "+plan.BaseName.ValueString())
 
-	resp.Diagnostics.Append(plan.populateCertificateFields(ctx, *cert, true)...)
+	resp.Diagnostics.Append(plan.populateCertificateFields(ctx, cert.Certificate, true)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -634,7 +634,7 @@ func (c *certificateResource) Delete(ctx context.Context, req resource.DeleteReq
 	ctx = tflog.SetField(ctx, "certificate_id", state.CertificateID.ValueString())
 
 	client := Client(c.meta)
-	if err := client.DeleteCertificate(ctx, ccm.DeleteCertificateRequest{
+	if _, err := client.DeleteCertificate(ctx, ccm.DeleteCertificateRequest{
 		CertificateID: state.CertificateID.ValueString(),
 	}); err != nil {
 		resp.Diagnostics.AddError("Unable to delete CCM Certificate", err.Error())
@@ -675,7 +675,7 @@ func (c *certificateResource) ImportState(ctx context.Context, req resource.Impo
 
 	// Check if CertificateName has a suffix of format ".rotated.{YYYY-MM-DD}".
 	// If so, strip that part to set the base_name.
-	baseName := extractBaseName(cert.CertificateName)
+	baseName := extractBaseName(cert.Certificate.CertificateName)
 	tflog.Debug(ctx, fmt.Sprintf("Setting base_name to %s", baseName))
 
 	state := certificateResourceModel{

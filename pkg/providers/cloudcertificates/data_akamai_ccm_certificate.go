@@ -321,40 +321,40 @@ func getAllBindings(ctx context.Context, client ccm.CCM, certificateID string) (
 }
 
 func (m *certificateDataSourceModel) convertCertificateToModel(ctx context.Context, certificate ccm.GetCertificateResponse) diag.Diagnostics {
-	m.AccountID = types.StringValue(certificate.AccountID)
-	m.ContractID = types.StringValue(certificate.ContractID)
-	m.CertificateName = types.StringValue(certificate.CertificateName)
-	m.CertificateStatus = types.StringValue(certificate.CertificateStatus)
-	m.CertificateType = types.StringValue(certificate.CertificateType)
-	m.CreatedDate = date.TimeRFC3339NanoValue(certificate.CreatedDate)
-	m.CreatedBy = types.StringValue(certificate.CreatedBy)
-	m.CSRExpirationDate = date.TimeRFC3339Value(certificate.CSRExpirationDate)
-	m.CSRPEM = types.StringPointerValue(certificate.CSRPEM)
-	m.KeyType = types.StringValue(string(certificate.KeyType))
-	m.KeySize = types.StringValue(string(certificate.KeySize))
-	m.SecureNetwork = types.StringValue(certificate.SecureNetwork)
-	m.SignedCertificatePEM = types.StringPointerValue(certificate.SignedCertificatePEM)
-	m.SignedCertificateIssuer = types.StringPointerValue(certificate.SignedCertificateIssuer)
-	m.SignedCertificateNotValidBeforeDate = date.TimeRFC3339NanoPointerValue(certificate.SignedCertificateNotValidBeforeDate)
-	m.SignedCertificateNotValidAfterDate = date.TimeRFC3339NanoPointerValue(certificate.SignedCertificateNotValidAfterDate)
-	m.SignedCertificateSerialNumber = types.StringPointerValue(certificate.SignedCertificateSerialNumber)
-	m.SignedCertificateSHA256Fingerprint = types.StringPointerValue(certificate.SignedCertificateSHA256Fingerprint)
-	m.TrustChainPEM = types.StringPointerValue(certificate.TrustChainPEM)
-	m.ModifiedDate = date.TimeRFC3339NanoValue(certificate.ModifiedDate)
-	m.ModifiedBy = types.StringValue(certificate.ModifiedBy)
+	m.AccountID = types.StringValue(certificate.Certificate.AccountID)
+	m.ContractID = types.StringValue(certificate.Certificate.ContractID)
+	m.CertificateName = types.StringValue(certificate.Certificate.CertificateName)
+	m.CertificateStatus = types.StringValue(certificate.Certificate.CertificateStatus)
+	m.CertificateType = types.StringValue(certificate.Certificate.CertificateType)
+	m.CreatedDate = date.TimeRFC3339NanoValue(certificate.Certificate.CreatedDate)
+	m.CreatedBy = types.StringValue(certificate.Certificate.CreatedBy)
+	m.CSRExpirationDate = date.TimeRFC3339Value(certificate.Certificate.CSRExpirationDate)
+	m.CSRPEM = types.StringPointerValue(certificate.Certificate.CSRPEM)
+	m.KeyType = types.StringValue(string(certificate.Certificate.KeyType))
+	m.KeySize = types.StringValue(string(certificate.Certificate.KeySize))
+	m.SecureNetwork = types.StringValue(certificate.Certificate.SecureNetwork)
+	m.SignedCertificatePEM = types.StringPointerValue(certificate.Certificate.SignedCertificatePEM)
+	m.SignedCertificateIssuer = types.StringPointerValue(certificate.Certificate.SignedCertificateIssuer)
+	m.SignedCertificateNotValidBeforeDate = date.TimeRFC3339NanoPointerValue(certificate.Certificate.SignedCertificateNotValidBeforeDate)
+	m.SignedCertificateNotValidAfterDate = date.TimeRFC3339NanoPointerValue(certificate.Certificate.SignedCertificateNotValidAfterDate)
+	m.SignedCertificateSerialNumber = types.StringPointerValue(certificate.Certificate.SignedCertificateSerialNumber)
+	m.SignedCertificateSHA256Fingerprint = types.StringPointerValue(certificate.Certificate.SignedCertificateSHA256Fingerprint)
+	m.TrustChainPEM = types.StringPointerValue(certificate.Certificate.TrustChainPEM)
+	m.ModifiedDate = date.TimeRFC3339NanoValue(certificate.Certificate.ModifiedDate)
+	m.ModifiedBy = types.StringValue(certificate.Certificate.ModifiedBy)
 
-	if certificate.Subject != nil {
+	if certificate.Certificate.Subject != nil {
 		m.Subject = &subjectModel{
-			CommonName:   types.StringValue(certificate.Subject.CommonName),
-			Organization: types.StringValue(certificate.Subject.Organization),
-			Country:      types.StringValue(certificate.Subject.Country),
-			State:        types.StringValue(certificate.Subject.State),
-			Locality:     types.StringValue(certificate.Subject.Locality),
+			CommonName:   types.StringValue(certificate.Certificate.Subject.CommonName),
+			Organization: types.StringValue(certificate.Certificate.Subject.Organization),
+			Country:      types.StringValue(certificate.Certificate.Subject.Country),
+			State:        types.StringValue(certificate.Certificate.Subject.State),
+			Locality:     types.StringValue(certificate.Certificate.Subject.Locality),
 		}
 	}
 
 	var diags diag.Diagnostics
-	sans, sanDiags := types.SetValueFrom(ctx, types.StringType, certificate.SANs)
+	sans, sanDiags := types.SetValueFrom(ctx, types.StringType, certificate.Certificate.SANs)
 	diags.Append(sanDiags...)
 	if !diags.HasError() {
 		m.SANs = sans

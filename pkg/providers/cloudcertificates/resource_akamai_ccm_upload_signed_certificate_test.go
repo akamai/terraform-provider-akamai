@@ -695,7 +695,7 @@ type mockCertificate struct {
 func (c mockCertificate) mockGet(m *ccm.Mock) *mock.Call {
 	return m.On("GetCertificate", testutils.MockContext, ccm.GetCertificateRequest{
 		CertificateID: c.cert.CertificateID,
-	}).Return(&c.cert, c.err).Once()
+	}).Return(&ccm.GetCertificateResponse{Certificate: c.cert}, c.err).Once()
 }
 
 func (c mockCertificate) mockPatch(m *ccm.Mock) *mock.Call {
@@ -708,7 +708,7 @@ func (c mockCertificate) mockPatch(m *ccm.Mock) *mock.Call {
 		SignedCertificatePEM: *c.cert.SignedCertificatePEM,
 		TrustChainPEM:        trustChainPEM,
 		AcknowledgeWarnings:  c.AcknowledgeWarnings,
-	}).Return(&c.cert, c.err).Once()
+	}).Return(&ccm.PatchCertificateResponse{Certificate: c.cert}, c.err).Once()
 }
 
 type mockCertificates struct {

@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/ccm"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/session"
@@ -159,6 +160,30 @@ func TestOverrideRetryPolicy(t *testing.T) {
 			},
 			expectedResult: false,
 		},
+		"should retry for CCM GET with status 429": {
+			ctx: context.Background(),
+			resp: &http.Response{
+				Request:    newRequest(t, http.MethodGet, "/ccm/v1/sth"),
+				StatusCode: http.StatusTooManyRequests,
+			},
+			expectedResult: true,
+		},
+		"should retry for CCM POST with status 429": {
+			ctx: context.Background(),
+			resp: &http.Response{
+				Request:    newRequest(t, http.MethodPost, "/ccm/v1/sth"),
+				StatusCode: http.StatusTooManyRequests,
+			},
+			expectedResult: true,
+		},
+		"should not retry for CCM POST with other 4xx status": {
+			ctx: context.Background(),
+			resp: &http.Response{
+				Request:    newRequest(t, http.MethodPost, "/ccm/v1/sth"),
+				StatusCode: http.StatusBadRequest,
+			},
+			expectedResult: false,
+		},
 		"should retry for GET with status 409 conflict": {
 			ctx: context.Background(),
 			resp: &http.Response{
@@ -244,7 +269,7 @@ func TestOverrideRetryPolicy(t *testing.T) {
 	}
 }
 
-func stat429ResponseWaiting(wait time.Duration) *http.Response {
+func stat429ResponseWaiting(wait time.Duration, header string) *http.Response {
 	res := http.Response{
 		StatusCode: http.StatusTooManyRequests,
 		Header:     http.Header{},
@@ -254,8 +279,8 @@ func stat429ResponseWaiting(wait time.Duration) *http.Response {
 	date := strings.Replace(now.Format(time.RFC1123), "UTC", "GMT", 1)
 	res.Header.Add("Date", date)
 	if wait != 0 {
-		// Add: allow to canonicalize to X-Ratelimit-Next or the header won't be recognized
-		res.Header.Add("X-RateLimit-Next", now.Add(wait).Format(time.RFC3339Nano))
+		// Add: allow to canonicalize to X-RateLimit-Next and Akamai-RateLimit-Next or the header won't be recognized
+		res.Header.Add(header, now.Add(wait).Format(time.RFC3339Nano))
 	}
 	return &res
 }
@@ -272,20 +297,24 @@ func Test_overrideBackoff(t *testing.T) {
 		expectedResult time.Duration
 	}{
 		"correctly calculates backoff from X-RateLimit-Next": {
-			resp:           stat429ResponseWaiting(time.Duration(5729) * time.Millisecond),
+			resp:           stat429ResponseWaiting(time.Duration(5729)*time.Millisecond, "X-RateLimit-Next"),
+			expectedResult: time.Duration(5729) * time.Millisecond,
+		},
+		"correctly calculates backoff from Akamai-RateLimit-Next": {
+			resp:           stat429ResponseWaiting(time.Duration(5729)*time.Millisecond, "Akamai-RateLimit-Next"),
 			expectedResult: time.Duration(5729) * time.Millisecond,
 		},
 		"falls back for next in the past": {
-			resp:           stat429ResponseWaiting(-time.Duration(5729) * time.Millisecond),
+			resp:           stat429ResponseWaiting(-time.Duration(5729)*time.Millisecond, "X-RateLimit-Next"),
 			expectedResult: baseWait,
 		},
 		"falls back for no X-RateLimit-Next header": {
-			resp:           stat429ResponseWaiting(0),
+			resp:           stat429ResponseWaiting(0, "X-RateLimit-Next"),
 			expectedResult: baseWait,
 		},
 		"falls back for invalid X-RateLimit-Next header": {
 			resp: func() *http.Response {
-				r := stat429ResponseWaiting(time.Duration(5729) * time.Millisecond)
+				r := stat429ResponseWaiting(time.Duration(5729)*time.Millisecond, "X-RateLimit-Next")
 				r.Header.Set("X-RateLimit-Next", "2024-07-01T14:32:28.645???")
 				return r
 			}(),
@@ -293,7 +322,7 @@ func Test_overrideBackoff(t *testing.T) {
 		},
 		"falls back for no Date header": {
 			resp: func() *http.Response {
-				r := stat429ResponseWaiting(time.Duration(5729) * time.Millisecond)
+				r := stat429ResponseWaiting(time.Duration(5729)*time.Millisecond, "X-RateLimit-Next")
 				r.Header.Del("Date")
 				return r
 			}(),
@@ -301,7 +330,7 @@ func Test_overrideBackoff(t *testing.T) {
 		},
 		"falls back for invalid Date header": {
 			resp: func() *http.Response {
-				r := stat429ResponseWaiting(time.Duration(5729) * time.Millisecond)
+				r := stat429ResponseWaiting(time.Duration(5729)*time.Millisecond, "X-RateLimit-Next")
 				r.Header.Set("Date", "Mon, 01 Jul 2024 99:99:99 GMT")
 				return r
 			}(),
@@ -340,7 +369,7 @@ func mockSession(t *testing.T, mockServer *httptest.Server) session.Session {
 }
 
 func TestXRateLimitGet(t *testing.T) {
-	xrlHandler := test.XRateLimitHTTPHandler{
+	xrlHandler := test.RateLimitHTTPHandler{
 		T:           t,
 		SuccessCode: http.StatusOK,
 		SuccessBody: `
@@ -366,7 +395,7 @@ func TestXRateLimitGet(t *testing.T) {
 	mockServer := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, "/papi/v1/properties/prp_test1?contractId=ctr_test1&groupId=grp_test1", r.URL.String())
 		assert.Equal(t, http.MethodGet, r.Method)
-		xrlHandler.ServeHTTP(w, r)
+		xrlHandler.ServeHTTP(w, r, "X-RateLimit-Next")
 	}))
 	defer mockServer.Close()
 
@@ -388,7 +417,7 @@ func TestXRateLimitGet(t *testing.T) {
 }
 
 func TestXRateLimitPost(t *testing.T) {
-	xrlHandler := test.XRateLimitHTTPHandler{
+	xrlHandler := test.RateLimitHTTPHandler{
 		T:           t,
 		SuccessCode: http.StatusCreated,
 		SuccessBody: `
@@ -400,7 +429,7 @@ func TestXRateLimitPost(t *testing.T) {
 	mockServer := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, "/papi/v1/properties/prp_12345/activations?contractId=ctr_test1&groupId=grp_test1", r.URL.String())
 		assert.Equal(t, http.MethodPost, r.Method)
-		xrlHandler.ServeHTTP(w, r)
+		xrlHandler.ServeHTTP(w, r, "X-RateLimit-Next")
 	}))
 	defer mockServer.Close()
 
@@ -429,4 +458,133 @@ func TestXRateLimitPost(t *testing.T) {
 	assert.Less(t,
 		xrlHandler.ReturnTimes()[1],
 		xrlHandler.AvailableAt().Add(time.Duration(time.Millisecond)*1100))
+}
+
+func TestAkamaiRateLimitGet(t *testing.T) {
+	arlHandler := test.RateLimitHTTPHandler{
+		T:           t,
+		SuccessCode: http.StatusOK,
+		SuccessBody: `
+			{
+				"accountId": "A-CCT7890",
+				"certificateId": "123",
+				"certificateName": "test-cert",
+				"certificateStatus": "CSR_READY",
+				"certificateType": "THIRD_PARTY",
+				"contractId": "C-0N7RAC7",
+				"createdBy": "jsmith",
+				"createdDate": "2025-09-01T06:16:05.952613Z",
+				"csrExpirationDate": "2026-11-03T06:16:07Z",
+				"csrPem": "-----BEGIN CERTIFICATE REQUEST-----\nexample-PEM\n-----END CERTIFICATE REQUEST-----\n",
+				"keySize": "2048",
+				"keyType": "RSA",
+				"modifiedBy": "jsmith",
+				"modifiedDate": "2025-09-02T06:16:05.952613Z",
+				"sans": [
+					"example.com",
+					"www.example.com"
+				],
+				"secureNetwork": "ENHANCED_TLS",
+				"signedCertificateIssuer": null,
+				"signedCertificateNotValidAfterDate": null,
+				"signedCertificateNotValidBeforeDate": null,
+				"signedCertificatePem": null,
+				"signedCertificateSHA256Fingerprint": null,
+				"signedCertificateSerialNumber": null,
+				"subject": {
+					"commonName": "example.com",
+					"country": "US",
+					"locality": "Cambridge",
+					"organization": "ExampleOrg",
+					"state": "Massachusetts"
+				},
+				"trustChainPem": null
+			}`,
+	}
+
+	mockServer := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "/ccm/v1/certificates/123", r.URL.String())
+		assert.Equal(t, http.MethodGet, r.Method)
+		arlHandler.ServeHTTP(w, r, "Akamai-RateLimit-Next")
+	}))
+	defer mockServer.Close()
+
+	client := ccm.Client(mockSession(t, mockServer))
+	result, err := client.GetCertificate(context.Background(), ccm.GetCertificateRequest{
+		CertificateID: "123",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "test-cert", result.Certificate.CertificateName)
+	// We expect exactly two requests to the server:
+	// - the first resulting in code 429
+	// - the second after a proper backoff, resulting in status 200
+	assert.Equal(t, []int{http.StatusTooManyRequests, http.StatusOK}, arlHandler.ReturnedCodes())
+	assert.Less(t,
+		arlHandler.ReturnTimes()[1],
+		arlHandler.AvailableAt().Add(time.Duration(time.Millisecond)*1100))
+}
+
+func TestAkamaiRateLimitPost(t *testing.T) {
+	arlHandler := test.RateLimitHTTPHandler{
+		T:           t,
+		SuccessCode: http.StatusCreated,
+		SuccessBody: `
+			{
+				"accountId": "A-CCT7890",
+				"certificateId": "123",
+				"certificateName": "test-cert",
+				"certificateStatus": "CSR_READY",
+				"certificateType": "THIRD_PARTY",
+				"contractId": "C-0N7RAC7",
+				"createdBy": "jsmith",
+				"createdDate": "2025-09-01T06:16:05.952613Z",
+				"csrExpirationDate": "2026-11-03T06:16:07Z",
+				"csrPem": "-----BEGIN CERTIFICATE REQUEST-----\nexample-PEM\n-----END CERTIFICATE REQUEST-----\n",
+				"keySize": "2048",
+				"keyType": "RSA",
+				"modifiedBy": "jsmith",
+				"modifiedDate": "2025-09-02T06:16:05.952613Z",
+				"sans": [
+					"example.com",
+					"www.example.com"
+				],
+				"secureNetwork": "ENHANCED_TLS",
+				"signedCertificateIssuer": null,
+				"signedCertificateNotValidAfterDate": null,
+				"signedCertificateNotValidBeforeDate": null,
+				"signedCertificatePem": null,
+				"signedCertificateSHA256Fingerprint": null,
+				"signedCertificateSerialNumber": null,
+				"trustChainPem": null
+			}`,
+	}
+
+	mockServer := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "/ccm/v1/certificates?contractId=111&groupId=222", r.URL.String())
+		assert.Equal(t, http.MethodPost, r.Method)
+		arlHandler.ServeHTTP(w, r, "Akamai-RateLimit-Next")
+	}))
+	defer mockServer.Close()
+
+	client := ccm.Client(mockSession(t, mockServer))
+	result, err := client.CreateCertificate(context.Background(), ccm.CreateCertificateRequest{
+		ContractID: "111",
+		GroupID:    "222",
+		Body: ccm.CreateCertificateRequestBody{
+			CertificateName: "test-cert",
+			SANs:            []string{"example.com", "www.example.com"},
+			SecureNetwork:   "ENHANCED_TLS",
+			KeyType:         "RSA",
+			KeySize:         "2048",
+		},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "123", result.Certificate.CertificateID)
+	// We expect exactly two requests to the server:
+	// - the first resulting in code 429
+	// - the second after a proper backoff, resulting in status 201
+	assert.Equal(t, []int{http.StatusTooManyRequests, http.StatusCreated}, arlHandler.ReturnedCodes())
+	assert.Less(t,
+		arlHandler.ReturnTimes()[1],
+		arlHandler.AvailableAt().Add(time.Duration(time.Millisecond)*1100))
 }
