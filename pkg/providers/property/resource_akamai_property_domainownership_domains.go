@@ -82,38 +82,51 @@ func domainsSchema() schema.SetNestedAttribute {
 			Attributes: map[string]schema.Attribute{
 				"domain_name": schema.StringAttribute{
 					Required:    true,
-					Description: "Name of the domain.",
+					Description: "Your domain's name.",
 				},
 				"validation_scope": schema.StringAttribute{
-					Required:    true,
-					Description: "Validation scope of the domain. For HOST, the scope is only the exactly specified domain. For WILDCARD, the scope covers any hostname within one subdomain level. For DOMAIN, the scope covers any hostnames under the domain, regardless of the level of subdomains.",
+					Required: true,
+					MarkdownDescription: "Your domain's validation scope. Possible values are: \n" +
+						"* `HOST` - The scope is only the exactly specified domain.\n" +
+						"* `WILDCARD` - The scope covers any hostname within one subdomain level.\n" +
+						"* `DOMAIN` - The scope covers any hostnames under the domain, regardless of the level of subdomains.",
 					Validators: []validator.String{
 						stringvalidator.OneOf("HOST", "WILDCARD", "DOMAIN"),
 					},
 				},
 				"account_id": schema.StringAttribute{
 					Computed:    true,
-					Description: "ID of an account.",
+					Description: "Your account's ID.",
 				},
 				"domain_status": schema.StringAttribute{
-					Computed:    true,
-					Description: "Domain status. It is REQUEST_ACCEPTED or VALIDATION_IN_PROGRESS or VALIDATED or TOKEN_EXPIRED or INVALIDATED.",
+					Computed: true,
+					MarkdownDescription: "The domain's validation status. Possible values are: \n" +
+						"* `REQUEST_ACCEPTED` - When you successfully submit the domain for validation.\n" +
+						"* `VALIDATION_IN_PROGRESS` - When the DOM background jobs are trying to validate the domain.\n" +
+						"* `VALIDATED` - When the validation is completed successfully. Akamai recognizes you as the domain owner.\n" +
+						"* `TOKEN_EXPIRED` - When you haven't completed the validation in the requested time frame and the challenge token is not valid anymore. You need to generate new validation challenges for the domain.\n" +
+						"* `INVALIDATED` - When the domain was invalidated and Akamai doesn't recognize you as its owner.",
 				},
 				"validation_method": schema.StringAttribute{
-					Computed:    true,
-					Description: "Method of the domain validation, either DNS_CNAME or DNS_TXT or HTTP or SYSTEM or MANUAL.",
+					Computed: true,
+					MarkdownDescription: "The method used to validate the domain. Possible values are: \n" +
+						"* `DNS_CNAME` - For this method, Akamai generates a `cname_record` that you copy as the `target` to a `CNAME` record of your DNS configuration. The record's name needs to be in the `_acme-challenge.domain-name` format.\n" +
+						"* `DNS_TXT` - For this method, Akamai generates a `txt_record` with a token `value` that you copy as the `target` to a `TXT` record of your DNS configuration. The record's name needs to be in the `_akamai-{host|wildcard|domain}-challenge.domainName` format based on the validation scope.\n" +
+						"* `HTTP` - Applies only to domains with the `HOST` validation scope. For this method, you create the file containing a token and place it on your HTTP server in the location specified by the `validation_challenge.http_file.path` or use a redirect to the `validation_challenge.http_redirect.to` with the token.\n" +
+						"* `SYSTEM` - This method refers to domains that were automatically validated before Domain Validation Manager (DOM) was introduced.\n" +
+						"* `MANUAL` - For this method, the DOM team manually performed the validation.",
 				},
 				"validation_requested_by": schema.StringAttribute{
 					Computed:    true,
-					Description: "Name of the user who requested the domain validation.",
+					Description: "The name of the user who requested the domain validation.",
 				},
 				"validation_requested_date": schema.StringAttribute{
 					Computed:    true,
-					Description: "Timestamp of the request.",
+					Description: "The timestamp indicating when the domain validation was requested.",
 				},
 				"validation_completed_date": schema.StringAttribute{
 					Computed:    true,
-					Description: "Timestamp of completing the validation.",
+					Description: "The timestamp indicating when the domain validation was completed.",
 				},
 				"validation_challenge": validationChallengeSchema(),
 			},

@@ -121,11 +121,14 @@ func validateDomainsSchema() schema.SetNestedAttribute {
 			Attributes: map[string]schema.Attribute{
 				"domain_name": schema.StringAttribute{
 					Required:    true,
-					Description: "Name of the domain.",
+					Description: "Your domain's name.",
 				},
 				"validation_scope": schema.StringAttribute{
-					Required:    true,
-					Description: "Scope of the domain validation, either 'HOST', 'WILDCARD', or 'DOMAIN'.",
+					Required: true,
+					MarkdownDescription: "Your domain's validation scope. Possible values are: \n" +
+						"* `HOST` - The scope is only the exactly specified domain.\n" +
+						"* `WILDCARD` - The scope covers any hostname within one subdomain level.\n" +
+						"* `DOMAIN` - The scope covers any hostnames under the domain, regardless of the level of subdomains.",
 					Validators: []validator.String{
 						stringvalidator.OneOf(
 							string(domainownership.ValidationScopeHost),
@@ -134,8 +137,11 @@ func validateDomainsSchema() schema.SetNestedAttribute {
 					},
 				},
 				"validation_method": schema.StringAttribute{
-					Optional:    true,
-					Description: "If it is not provided, the default validation method will be used.",
+					Optional: true,
+					MarkdownDescription: "The method used to validate the domain. Possible values are: \n" +
+						"* `DNS_CNAME` - For this method, Akamai generates a `cname_record` that you copy as the `target` to a `CNAME` record of your DNS configuration. The record's name needs to be in the `_acme-challenge.domain-name` format.\n" +
+						"* `DNS_TXT` - For this method, Akamai generates a `txt_record` with a token `value` that you copy as the `target` to a `TXT` record of your DNS configuration. The record's name needs to be in the `_akamai-{host|wildcard|domain}-challenge.domainName` format based on the validation scope.\n" +
+						"* `HTTP` - Applies only to domains with the `HOST` validation scope. For this method, you create the file containing a token and place it on your HTTP server in the location specified by the `validation_challenge.http_file.path` or use a redirect to the `validation_challenge.http_redirect.to` with the token.",
 					Validators: []validator.String{
 						stringvalidator.OneOf(
 							string(domainownership.ValidationMethodDNSCNAME),
