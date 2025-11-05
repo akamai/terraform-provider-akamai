@@ -59,15 +59,10 @@
 #### FEATURES/ENHANCEMENTS:
 
 
-* Domain Ownership:
-  * Added new data sources:
-    * `akamai_property_domainownership_domains` - reads details for all the domains.
+    
     
 
     
-* Domain Ownership:
-  * Added new data sources:
-    * `akamai_property_domainownership_domain` - reads details of a given domain.
 
 
 
@@ -75,8 +70,10 @@
 
 
 
-* mTLS Keystore:
-    * Added support for `preferred_ca` in the `akamai_mtlskeystore_client_certificate_akamai` resource.
+
+
+
+
 
 
 
@@ -84,8 +81,13 @@
 
 
 * PAPI Domain Ownership Validation (Beta)
-  * Added new resource:
+  * Added new resources:
     * `akamai_property_domainownership_domains` - adds and deletes ownership claims for given domains.
+    * `akamai_property_domainownership_validation` - validates or invalidates domains.
+  * Added new data sources:
+    * `akamai_property_domainownership_domain` - reads details of a given domain.
+    * `akamai_property_domainownership_domains` - reads details for all the domains.
+    * `akamai_property_domainownership_search_domains` - allows searching for domains details.
 
 
 
@@ -100,9 +102,6 @@
 
 
 
-* DomainOwnership:
-    * Added new data sources:
-        * `akamai_property_domainownership_search_domains` - allows searching for domains details.
 
 
 
@@ -144,9 +143,6 @@
   * Support for `S3-Compatible`, `TrafficPeak`, and `Dynatrace` destinations has been added.
   * Migrated Datastream APIs from `V2` to `V3` for `CDN` log types. Other log types available in `V3` APIs (`eDNS`, `GTM` and `Edgeworkers`) are not yet supported.
 
-* PAPI:
-    * Added new resource:
-        * `akamai_property_domainownership_validation` - validates or invalidates domains.
 
 
 
