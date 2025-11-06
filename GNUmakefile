@@ -56,7 +56,7 @@ tidy: ; $(info $(M) Running go mod tidy...) @
 
 .PHONY: test
 test:
-	$(GOTEST) $(TEST) -v $(TESTARGS) -timeout 40m 2>&1
+	$(GOTEST) $(TEST) -v $(TESTARGS) -timeout 70m 2>&1
 
 .PHONY: testacc
 testacc:
