@@ -1,0 +1,44 @@
+{
+    "activationHistory": [
+        {
+            "activationId": 547706,
+            "version": 7,
+            "network": "STAGING",
+            "status": "ACTIVATED",
+            "notes": "Activated on STAGING",
+            "notificationEmails": ["user@example.com"],
+            "createDate": "2020-10-06T12:30:49Z",
+            "createdBy": "lap2lreucgguhekn"
+        },
+        {
+            "activationId": 547706,
+            "version": 7,
+            "network": "STAGING",
+            "status": "DEACTIVATED",
+            "notes": "Activated on STAGING",
+            "notificationEmails": ["user@example.com"],
+            "createDate": "2020-10-06T12:32:49Z",
+            "createdBy": "lap2lreucgguhekn"
+        },
+        {
+            "activationId": 547706,
+            "version": 7,
+            "network": "STAGING",
+            "status": "ACTIVATED",
+            "notes": "Activated on STAGING",
+            "notificationEmails": ["user@example.com"],
+            "createDate": "2020-10-07T12:30:49Z",
+            "createdBy": "lap2lreucgguhekn"
+        },
+        {
+            "activationId": 547707,
+            "version": 7,
+            "network": "STAGING",
+            "status": "PENDING_ACTIVATION",
+            "notes": "Pending activation",
+            "notificationEmails": ["user@example.com"],
+            "createDate": "2020-10-06T12:30:49Z",
+            "createdBy": "lap2lreucgguhekn"
+        }
+    ]
+}

@@ -57,6 +57,9 @@
   * Fixed handling of unknown values in resource `akamai_iam_api_client` causing "Value Conversion Error" when set conditionally ([I#678](https://github.com/akamai/terraform-provider-akamai/issues/678)).
 
 
+* Appsec
+  *  Added logic in resource `akamai_appsec_activations` to skip creating or updating activation resource if the version is already active or is pending activation.
+
 
 
 

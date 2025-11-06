@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/appsec"
+	akalog "github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/log"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/date"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/id"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/tf"
@@ -80,6 +81,17 @@ const (
 	ActivationPollMinimum = time.Minute
 )
 
+// activationParams contains the parameters for activation and deactivation operations, used by helper methods
+type activationParams struct {
+	ConfigID           int
+	Version            int
+	Network            string
+	Note               string
+	NotificationEmails []string
+	ResourceData       *schema.ResourceData
+	Logger             akalog.Interface
+}
+
 var (
 	// ActivationPollInterval is the interval for polling an activation status on creation
 	ActivationPollInterval = ActivationPollMinimum
@@ -126,41 +138,18 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 	}
 	notificationEmails := tf.SetToStringSlice(notificationEmailsSet)
 
-	// Handle host move validation and activation
-	activationResp, hostMoveValidation, diags := createActivationWithValidation(ctx, client, configID, version, network, note, notificationEmails)
-	if diags != nil {
-		return diags
+	// Create activation params
+	params := activationParams{
+		ConfigID:           configID,
+		Version:            version,
+		Network:            network,
+		Note:               note,
+		NotificationEmails: notificationEmails,
+		ResourceData:       d,
+		Logger:             logger,
 	}
 
-	d.SetId(strconv.Itoa(activationResp.ActivationID))
-
-	if err := d.Set("status", activationResp.Status); err != nil {
-		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
-	}
-
-	getActivationRequest := appsec.GetActivationsRequest{
-		ActivationID: activationResp.ActivationID,
-	}
-
-	activation, err := lookupActivation(ctx, client, getActivationRequest)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	if err = pollActivation(ctx, client, activation.Status, getActivationRequest); err != nil {
-		return diag.FromErr(err)
-	}
-
-	// Collect warnings for host move operations
-	var warnings diag.Diagnostics
-	if hostMoveValidation != nil && len(hostMoveValidation.HostsToMove) > 0 {
-		if warning := generateHostMoveWarning(hostMoveValidation.HostsToMove, configID); warning.Summary != "" {
-			warnings = append(warnings, warning)
-		}
-	}
-
-	// Read the resource state and append any warnings
-	readDiags := resourceActivationsRead(ctx, d, m)
-	return append(readDiags, warnings...)
+	return activateVersion(ctx, client, params)
 }
 
 func resourceActivationsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -169,34 +158,46 @@ func resourceActivationsRead(ctx context.Context, d *schema.ResourceData, m inte
 	logger := meta.Log("APPSEC", "resourceActivationsRead")
 	logger.Debug("in resourceActivationsRead")
 
-	activationID, err := strconv.Atoi(d.Id())
+	// Get config ID and network from resource state
+	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
-	getActivations := appsec.GetActivationsRequest{
-		ActivationID: activationID,
-	}
-
-	activations, err := client.GetActivations(ctx, getActivations)
-	if err != nil {
-		logger.Errorf("calling 'getActivations': %s", err.Error())
-		return diag.FromErr(err)
-	}
-
 	network, err := tf.GetStringValue("network", d)
-	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	if activations.Action == string(appsec.ActivationTypeActivate) &&
-		activations.Status == appsec.StatusDeactivated &&
-		(string(activations.Network) == network) {
+	// Find the currently active version for this config and network
+	currentActiveVersion, err := findCurrentActiveVersion(ctx, client, configID, network)
+	if err != nil {
+		logger.Errorf("calling 'findCurrentActiveVersion': %s", err.Error())
+		return diag.FromErr(err)
+	}
+
+	// If no active version found, mark as destroyed
+	if currentActiveVersion == nil {
 		d.SetId("")
 		return nil
 	}
 
-	if err := d.Set("status", activations.Status); err != nil {
+	// Set the state values from the current active activation
+	if err := d.Set("config_id", configID); err != nil {
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+	}
+	if err := d.Set("network", network); err != nil {
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+	}
+	if err := d.Set("version", currentActiveVersion.Version); err != nil {
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+	}
+	if err := d.Set("note", currentActiveVersion.Notes); err != nil {
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+	}
+	if err := d.Set("notification_emails", currentActiveVersion.NotificationEmails); err != nil {
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+	}
+	if err := d.Set("status", currentActiveVersion.Status); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
@@ -238,41 +239,18 @@ func resourceActivationsUpdate(ctx context.Context, d *schema.ResourceData, m in
 	}
 	notificationEmails := tf.SetToStringSlice(notificationEmailsSet)
 
-	// Handle host move validation and activation
-	activationResp, hostMoveValidation, diags := createActivationWithValidation(ctx, client, configID, version, network, note, notificationEmails)
-	if diags != nil {
-		return diags
+	// Create activation params
+	params := activationParams{
+		ConfigID:           configID,
+		Version:            version,
+		Network:            network,
+		Note:               note,
+		NotificationEmails: notificationEmails,
+		ResourceData:       d,
+		Logger:             logger,
 	}
 
-	d.SetId(strconv.Itoa(activationResp.ActivationID))
-
-	if err := d.Set("status", activationResp.Status); err != nil {
-		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
-	}
-
-	getActivationRequest := appsec.GetActivationsRequest{
-		ActivationID: activationResp.ActivationID,
-	}
-
-	activation, err := lookupActivation(ctx, client, getActivationRequest)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	if err = pollActivation(ctx, client, activation.Status, getActivationRequest); err != nil {
-		return diag.FromErr(err)
-	}
-
-	// Collect warnings for host move operations
-	var warnings diag.Diagnostics
-	if hostMoveValidation != nil && len(hostMoveValidation.HostsToMove) > 0 {
-		if warning := generateHostMoveWarning(hostMoveValidation.HostsToMove, configID); warning.Summary != "" {
-			warnings = append(warnings, warning)
-		}
-	}
-
-	// Read the resource state and append any warnings
-	readDiags := resourceActivationsRead(ctx, d, m)
-	return append(readDiags, warnings...)
+	return activateVersion(ctx, client, params)
 }
 
 func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -281,21 +259,19 @@ func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m in
 	logger := meta.Log("APPSEC", "resourceActivationsRemove")
 	logger.Debug("in resourceActivationsDelete")
 
-	activationID, err := strconv.Atoi(d.Id())
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
+	// Get the config values from state
 	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
 	version, err := tf.GetIntValue("version", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
 	network, err := tf.GetStringValue("network", d)
-	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+	if err != nil {
 		return diag.FromErr(err)
 	}
 	var note string
@@ -315,57 +291,18 @@ func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m in
 	}
 	notificationEmails := tf.SetToStringSlice(notificationEmailsSet)
 
-	removeActivationRequest := appsec.RemoveActivationsRequest{
-		ActivationID:       activationID,
-		Action:             string(appsec.ActivationTypeDeactivate),
+	// Create deactivation params
+	params := activationParams{
+		ConfigID:           configID,
+		Version:            version,
 		Network:            network,
 		Note:               note,
 		NotificationEmails: notificationEmails,
-	}
-	removeActivationRequest.ActivationConfigs = append(removeActivationRequest.ActivationConfigs, appsec.ActivationConfigs{
-		ConfigID:      configID,
-		ConfigVersion: version,
-	})
-
-	postresp, err := client.RemoveActivations(ctx, removeActivationRequest)
-	if err != nil {
-		logger.Errorf("calling 'removeActivations': %s", err.Error())
-		return diag.FromErr(err)
+		ResourceData:       d,
+		Logger:             logger,
 	}
 
-	d.SetId(strconv.Itoa(postresp.ActivationID))
-
-	if err := d.Set("status", postresp.Status); err != nil {
-		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
-	}
-
-	getActivationRequest := appsec.GetActivationsRequest{
-		ActivationID: postresp.ActivationID,
-	}
-
-	activation, err := lookupActivation(ctx, client, getActivationRequest)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	for activation.Status != appsec.StatusDeactivated && activation.Status != appsec.StatusAborted && activation.Status != appsec.StatusFailed {
-		select {
-		case <-time.After(tf.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
-			act, err := client.GetActivations(ctx, getActivationRequest)
-
-			if err != nil {
-				return diag.FromErr(err)
-			}
-			activation = act
-
-		case <-ctx.Done():
-			return diag.Errorf("activation context terminated: %s", ctx.Err())
-		}
-	}
-
-	if err := d.Set("status", activation.Status); err != nil {
-		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
-	}
-	return nil
+	return deactivateVersion(ctx, client, params)
 }
 
 func resourceImporter(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
@@ -503,14 +440,14 @@ func createActivation(ctx context.Context, client appsec.APPSEC, request appsec.
 	return result, err
 }
 
-func pollActivation(ctx context.Context, client appsec.APPSEC, activationStatus appsec.StatusValue, getActivationRequest appsec.GetActivationsRequest) error {
+func pollActivation(ctx context.Context, client appsec.APPSEC, activationStatus appsec.StatusValue, getActivationsRequest appsec.GetActivationsRequest) error {
 	retriesMax := 5
 	retries5xx := 0
 
 	for activationStatus != appsec.StatusActive && activationStatus != appsec.StatusAborted && activationStatus != appsec.StatusFailed {
 		select {
 		case <-time.After(tf.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
-			act, err := client.GetActivations(ctx, getActivationRequest)
+			act, err := client.GetActivations(ctx, getActivationsRequest)
 			if err != nil {
 				var target = &appsec.Error{}
 				if !errors.As(err, &target) {
@@ -665,10 +602,13 @@ func activateWithHostMove(
 		return err
 	})
 
-	return result, err
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
-// activate creates a standard activation without host move
+// activate creates a regular activation (without host move)
 func activate(
 	ctx context.Context,
 	client appsec.APPSEC,
@@ -692,17 +632,341 @@ func activate(
 	return createActivation(ctx, client, createActivationRequest)
 }
 
-// validateSingleSourceConfig checks that all hosts are from the same source config
+// validateSingleSourceConfig ensures all hosts to move come from the same source config
 func validateSingleSourceConfig(hostsToMove []appsec.HostToMove) error {
-	if len(hostsToMove) <= 1 {
+	if len(hostsToMove) == 0 {
 		return nil
 	}
 
 	firstConfigID := hostsToMove[0].FromConfig.ConfigID
-	for _, host := range hostsToMove[1:] {
+	for _, host := range hostsToMove {
 		if host.FromConfig.ConfigID != firstConfigID {
 			return fmt.Errorf("you can't move hostnames from more than one security configuration at a time. Instead, make successive updates, one for each source security configuration")
 		}
+	}
+	return nil
+}
+
+// findCurrentActiveVersion finds the currently active version for a config and network
+func findCurrentActiveVersion(ctx context.Context, client appsec.APPSEC, configID int, network string) (*appsec.Activation, error) {
+	request := appsec.GetActivationHistoryRequest{
+		ConfigID: configID,
+	}
+
+	response, err := client.GetActivationHistory(ctx, request)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get activation history for config %d: %w", configID, err)
+	}
+
+	// Find the most recent activation with active status for the specified network
+	// The activation history should be ordered, but we'll look through all to find
+	// the most recent one with active status
+	var latestActiveActivation *appsec.Activation
+
+	for _, activation := range response.ActivationHistory {
+		if activation.Network == network &&
+			string(activation.Status) == string(appsec.StatusActive) {
+			// Since we want the most recent, we'll take the first active one we find
+			// as the history should be in reverse chronological order
+			latestActiveActivation = &activation
+			break
+		}
+	}
+
+	return latestActiveActivation, nil
+}
+
+// findCurrentActiveOrPendingVersion finds the currently active or pending version for a config and network
+func findCurrentActiveOrPendingVersion(ctx context.Context, client appsec.APPSEC, configID int, network string) (*appsec.Activation, error) {
+	request := appsec.GetActivationHistoryRequest{
+		ConfigID: configID,
+	}
+
+	response, err := client.GetActivationHistory(ctx, request)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get activation history for config %d: %w", configID, err)
+	}
+
+	// Look for active OR pending activations for the specified network
+	for _, activation := range response.ActivationHistory {
+		if activation.Network == network {
+			status := string(activation.Status)
+
+			// Return active versions immediately (highest priority)
+			if status == string(appsec.StatusActive) {
+				return &activation, nil
+			}
+
+			// Also return pending activations for handling
+			if status == string(appsec.StatusPending) ||
+				status == string(appsec.StatusInProgress) ||
+				status == string(appsec.StatusNew) {
+				return &activation, nil
+			}
+		}
+	}
+
+	return nil, nil
+}
+
+// findCurrentActiveOrPendingDeactivation finds active versions or pending deactivations for a config and network
+func findCurrentActiveOrPendingDeactivation(ctx context.Context, client appsec.APPSEC, configID int, network string, logger akalog.Interface) (*appsec.Activation, error) {
+	request := appsec.GetActivationHistoryRequest{
+		ConfigID: configID,
+	}
+
+	response, err := client.GetActivationHistory(ctx, request)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get activation history for config %d: %w", configID, err)
+	}
+
+	// Look for active versions OR pending deactivations for the specified network
+	for _, activation := range response.ActivationHistory {
+		if activation.Network == network {
+			status := string(activation.Status)
+
+			// Return pending deactivations first (highest priority for delete operation)
+			if isPendingDeactivation(status) {
+				logger.Debugf("found pending deactivation for version %d on %s (status: %s)", activation.Version, network, status)
+				return &activation, nil
+			}
+
+			// Return active versions
+			if status == string(appsec.StatusActive) {
+				logger.Debugf("found active version %d on %s", activation.Version, network)
+				return &activation, nil
+			}
+		}
+	}
+
+	return nil, nil
+}
+
+// isPendingDeactivation checks if the status represents a pending/in-progress deactivation
+func isPendingDeactivation(status string) bool {
+	return status == "PENDING_DEACTIVATION" ||
+		status == "DEACTIVATION_IN_PROGRESS" ||
+		status == "DEACTIVATION_PENDING"
+}
+
+// activateVersion orchestrates the activation of a configuration version
+func activateVersion(ctx context.Context, client appsec.APPSEC, params activationParams) diag.Diagnostics {
+	// Check if there's already an active or pending version for this config and network
+	currentVersion, err := findCurrentActiveOrPendingVersion(ctx, client, params.ConfigID, params.Network)
+	if err != nil {
+		params.Logger.Warnf("unable to check current version: %s", err.Error())
+		// Continue with activation since this is not a critical error
+	} else if currentVersion != nil {
+		diags := handleCurrentVersion(ctx, client, currentVersion, params)
+		if diags != nil {
+			return diags
+		}
+		// If handleCurrentVersion returns nil, it means we should proceed with activation
+		// (this happens when current version is different and active)
+		if currentVersion.Version == params.Version {
+			// Same version handling was completed, return
+			return nil
+		}
+	}
+
+	// Proceed with creating a new activation
+	return performActivation(ctx, client, params)
+}
+
+// handleCurrentVersion determines how to handle an existing activation
+func handleCurrentVersion(ctx context.Context, client appsec.APPSEC, currentVersion *appsec.Activation, params activationParams) diag.Diagnostics {
+	if currentVersion.Version == params.Version {
+		return handleSameVersion(ctx, client, currentVersion, params)
+	}
+	return handleDifferentVersion(currentVersion, params)
+}
+
+// handleSameVersion handles the case where the requested version is already active or pending
+func handleSameVersion(ctx context.Context, client appsec.APPSEC, currentVersion *appsec.Activation, params activationParams) diag.Diagnostics {
+	status := string(currentVersion.Status)
+	params.ResourceData.SetId(strconv.Itoa(currentVersion.ActivationID))
+
+	if status == string(appsec.StatusActive) {
+		params.Logger.Infof("version %d is already active on %s for config %d, using existing activation", params.Version, params.Network, params.ConfigID)
+		return nil
+	}
+
+	// Same version is already being activated - wait for completion
+	params.Logger.Infof("version %d is already being activated on %s for config %d (status: %s), waiting for completion", params.Version, params.Network, params.ConfigID, status)
+
+	getActivationsRequest := appsec.GetActivationsRequest{
+		ActivationID: currentVersion.ActivationID,
+	}
+	if err := pollActivation(ctx, client, appsec.StatusValue(currentVersion.Status), getActivationsRequest); err != nil {
+		return diag.FromErr(err)
+	}
+
+	return nil
+}
+
+// handleDifferentVersion handles the case where a different version is currently active or pending
+func handleDifferentVersion(currentVersion *appsec.Activation, params activationParams) diag.Diagnostics {
+	status := string(currentVersion.Status)
+
+	if status == string(appsec.StatusActive) {
+		params.Logger.Infof("current active version on %s for config %d is %d, will activate version %d", params.Network, params.ConfigID, currentVersion.Version, params.Version)
+		return nil
+	}
+
+	// Different version is pending - this is problematic
+	return diag.Errorf("cannot activate version %d while version %d is %s on %s for config %d",
+		params.Version, currentVersion.Version, status, params.Network, params.ConfigID)
+}
+
+// performActivation creates and polls a new activation with host move support
+func performActivation(ctx context.Context, client appsec.APPSEC, params activationParams) diag.Diagnostics {
+	// Handle host move validation and activation
+	activationResp, hostMoveValidation, diags := createActivationWithValidation(ctx, client,
+		params.ConfigID, params.Version, params.Network, params.Note, params.NotificationEmails)
+	if diags != nil {
+		return diags
+	}
+
+	params.ResourceData.SetId(strconv.Itoa(activationResp.ActivationID))
+
+	if err := params.ResourceData.Set("status", activationResp.Status); err != nil {
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+	}
+
+	getActivationsRequest := appsec.GetActivationsRequest{
+		ActivationID: activationResp.ActivationID,
+	}
+
+	activation, err := lookupActivation(ctx, client, getActivationsRequest)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err = pollActivation(ctx, client, activation.Status, getActivationsRequest); err != nil {
+		return diag.FromErr(err)
+	}
+
+	// Collect warnings for host move operations
+	var warnings diag.Diagnostics
+	if hostMoveValidation != nil && len(hostMoveValidation.HostsToMove) > 0 {
+		if warning := generateHostMoveWarning(hostMoveValidation.HostsToMove, params.ConfigID); warning.Summary != "" {
+			warnings = append(warnings, warning)
+		}
+	}
+
+	return warnings
+}
+
+// deactivateVersion orchestrates the deactivation of a configuration version
+func deactivateVersion(ctx context.Context, client appsec.APPSEC, params activationParams) diag.Diagnostics {
+	// Check if there's already a pending deactivation for this version
+	currentVersion, err := findCurrentActiveOrPendingDeactivation(ctx, client, params.ConfigID, params.Network, params.Logger)
+	if err != nil {
+		params.Logger.Errorf("unable to check current version status: %s", err.Error())
+		return diag.FromErr(err)
+	}
+
+	// If deactivation is already in progress, wait for it
+	if currentVersion != nil && isPendingDeactivation(currentVersion.Status) {
+		return waitForDeactivation(ctx, client, currentVersion, params)
+	}
+
+	// If no active version exists, nothing to deactivate
+	if currentVersion == nil {
+		params.Logger.Infof("no active version found for config %d on %s, nothing to deactivate", params.ConfigID, params.Network)
+		return nil
+	}
+
+	// Proceed with creating a new deactivation request
+	return performDeactivation(ctx, client, currentVersion.ActivationID, params)
+}
+
+// waitForDeactivation waits for an existing pending deactivation to complete
+func waitForDeactivation(ctx context.Context, client appsec.APPSEC, currentVersion *appsec.Activation, params activationParams) diag.Diagnostics {
+	params.Logger.Infof("deactivation already in progress for version %d on %s (status: %s), waiting for completion",
+		currentVersion.Version, params.Network, currentVersion.Status)
+	params.ResourceData.SetId(strconv.Itoa(currentVersion.ActivationID))
+
+	getActivationsRequest := appsec.GetActivationsRequest{
+		ActivationID: currentVersion.ActivationID,
+	}
+
+	// Poll until deactivation completes
+	activation, err := lookupActivation(ctx, client, getActivationsRequest)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	for activation.Status != appsec.StatusDeactivated && activation.Status != appsec.StatusAborted && activation.Status != appsec.StatusFailed {
+		select {
+		case <-time.After(tf.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
+			act, err := client.GetActivations(ctx, getActivationsRequest)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			activation = act
+
+		case <-ctx.Done():
+			return diag.Errorf("deactivation context terminated: %s", ctx.Err())
+		}
+	}
+
+	if err := params.ResourceData.Set("status", activation.Status); err != nil {
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+	}
+	return nil
+}
+
+// performDeactivation creates and polls a new deactivation request
+func performDeactivation(ctx context.Context, client appsec.APPSEC, activationID int, params activationParams) diag.Diagnostics {
+	removeActivationRequest := appsec.RemoveActivationsRequest{
+		ActivationID:       activationID,
+		Action:             string(appsec.ActivationTypeDeactivate),
+		Network:            params.Network,
+		Note:               params.Note,
+		NotificationEmails: params.NotificationEmails,
+	}
+	removeActivationRequest.ActivationConfigs = append(removeActivationRequest.ActivationConfigs, appsec.ActivationConfigs{
+		ConfigID:      params.ConfigID,
+		ConfigVersion: params.Version,
+	})
+
+	postResp, err := client.RemoveActivations(ctx, removeActivationRequest)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	params.ResourceData.SetId(strconv.Itoa(postResp.ActivationID))
+
+	if err := params.ResourceData.Set("status", postResp.Status); err != nil {
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+	}
+
+	getActivationsRequest := appsec.GetActivationsRequest{
+		ActivationID: postResp.ActivationID,
+	}
+
+	activation, err := lookupActivation(ctx, client, getActivationsRequest)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	for activation.Status != appsec.StatusDeactivated && activation.Status != appsec.StatusAborted && activation.Status != appsec.StatusFailed {
+		select {
+		case <-time.After(tf.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
+			act, err := client.GetActivations(ctx, getActivationsRequest)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			activation = act
+
+		case <-ctx.Done():
+			return diag.Errorf("activation context terminated: %s", ctx.Err())
+		}
+	}
+
+	if err := params.ResourceData.Set("status", activation.Status); err != nil {
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	return nil
 }

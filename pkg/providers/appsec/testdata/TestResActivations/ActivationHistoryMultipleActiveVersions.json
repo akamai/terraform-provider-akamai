@@ -1,0 +1,34 @@
+{
+    "activationHistory": [
+        {
+            "activationId": 547702,
+            "version": 8,
+            "network": "STAGING",
+            "status": "ACTIVATED",
+            "notes": "Latest activation v8",
+            "notificationEmails": ["user@example.com"],
+            "createDate": "2020-10-09T12:30:49Z",
+            "createdBy": "lap2lreucgguhekn"
+        },
+        {
+            "activationId": 547700,
+            "version": 7,
+            "network": "STAGING",
+            "status": "DEACTIVATED",
+            "notes": "Previous activation v6",
+            "notificationEmails": ["user@example.com"],
+            "createDate": "2020-10-07T12:50:49Z",
+            "createdBy": "lap2lreucgguhekn"
+        },
+        {
+            "activationId": 547700,
+            "version": 7,
+            "network": "STAGING",
+            "status": "ACTIVATED",
+            "notes": "Previous activation v7",
+            "notificationEmails": ["user@example.com"],
+            "createDate": "2020-10-07T12:30:49Z",
+            "createdBy": "lap2lreucgguhekn"
+        }
+    ]
+}
