@@ -2,6 +2,7 @@ package property
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"testing"
@@ -323,10 +324,11 @@ func TestCreateActivation(t *testing.T) {
 
 		m.On("CreateActivation", testutils.MockContext, createReq).Return(&papi.CreateActivationResponse{
 			ActivationID: "atv_123",
-		}, nil)
+		}, nil).Once()
 
 		ctx := context.Background()
 		actID, diagErr := createActivation(ctx, m, createReq)
+		m.AssertExpectations(t)
 		assert.Nil(t, diagErr)
 		assert.Equal(t, "atv_123", actID)
 
@@ -356,6 +358,7 @@ func TestCreateActivation(t *testing.T) {
 
 		ctx := context.Background()
 		actID, diagErr := createActivation(ctx, m, createReq)
+		m.AssertExpectations(t)
 		assert.Nil(t, diagErr)
 		assert.Equal(t, "atv_123", actID)
 	})
@@ -367,7 +370,191 @@ func TestCreateActivation(t *testing.T) {
 
 		ctx := context.Background()
 		actID, diagErr := createActivation(ctx, m, createReq)
+		m.AssertExpectations(t)
 		assert.NotNil(t, diagErr)
+		assert.Equal(t, "", actID)
+	})
+
+	t.Run("create activation returns 400 unauthorized CCM cert, retry succeeds", func(t *testing.T) {
+		m := &papi.Mock{}
+
+		// In this scenario, we request an activation of the second version of a property,
+		// in which we updated the CCM certificate id with the id of a newly created certificate.
+		// In such case, PAPI may return a 400 error with "unauthorized CCM certificate" message
+		// as the newly created certificate may not yet appear in the /domains API response.
+		req := papi.CreateActivationRequest{
+			PropertyID: propID,
+			Activation: papi.Activation{
+				ActivationType:  papi.ActivationTypeActivate,
+				PropertyID:      "someID",
+				PropertyVersion: 2,
+				Network:         papi.ActivationNetworkProduction,
+			},
+		}
+
+		var activateErr papi.Error
+		errBody := `
+			{
+				"type": "https://problems.luna.akamaiapis.net/papi/v0/activation/errors",
+				"detail": "",
+				"instance": "https://foo.akamaiapis.net/papi/v1/properties/prp_123456/activations#fedcba9876543210",
+				"statusCode": 400,
+				"errors": [
+					{
+						"type": "https://problems.luna.akamaiapis.net/papi/v0/activation/unauthorized_third_party_cert_for_hostname",
+						"detail": "You selected an unauthorized CCM certificate for the example.net hostname.",
+						"messageId": "msg_1234567890abcdef1234567890abcdef12345678"
+					}
+				]
+			}`
+		assert.NoError(t, json.Unmarshal([]byte(errBody), &activateErr))
+
+		m.On("CreateActivation", testutils.MockContext, req).Return(nil, &activateErr).Once()
+
+		// There is an existing activation for version 1 which is ignored by the retry logic
+		m.On("GetActivations", testutils.MockContext, papi.GetActivationsRequest{
+			PropertyID: propID,
+		}).Return(&papi.GetActivationsResponse{
+			Activations: papi.ActivationsItems{
+				Items: []*papi.Activation{
+					{
+						ActivationID:    "atv_123",
+						ActivationType:  papi.ActivationTypeActivate,
+						PropertyID:      propID,
+						PropertyVersion: 1,
+						Network:         papi.ActivationNetworkProduction,
+						Status:          papi.ActivationStatusActive,
+						UpdateDate:      "2023-11-28T13:24:29Z",
+					},
+				},
+			},
+		}, nil).Once()
+
+		// For the second time, the CreateActivation call succeeds
+		m.On("CreateActivation", testutils.MockContext, req).Return(&papi.CreateActivationResponse{
+			ActivationID: "atv_123",
+		}, nil).Once()
+
+		ctx := context.Background()
+		actID, diagErr := createActivation(ctx, m, req)
+		m.AssertExpectations(t)
+		assert.False(t, diagErr.HasError())
+		assert.Equal(t, "atv_123", actID)
+	})
+
+	t.Run("create activation returns 400 unauthorized CCM cert, giving up after 4 retries", func(t *testing.T) {
+		m := &papi.Mock{}
+
+		// In this scenario, as above, we request an activation of the second version of a property,
+		// in which we updated the CCM certificate id with the id of a newly created certificate.
+		// But this time PAPI will be returning a 400 error with "unauthorized CCM certificate" message
+		// constantly as the new certificate is actually invalid.
+		req := papi.CreateActivationRequest{
+			PropertyID: propID,
+			Activation: papi.Activation{
+				ActivationType:  papi.ActivationTypeActivate,
+				PropertyID:      "someID",
+				PropertyVersion: 2,
+				Network:         papi.ActivationNetworkProduction,
+			},
+		}
+
+		var activateErr papi.Error
+		errBody := `
+			{
+				"type": "https://problems.luna.akamaiapis.net/papi/v0/activation/errors",
+				"detail": "",
+				"instance": "https://foo.akamaiapis.net/papi/v1/properties/prp_123456/activations#fedcba9876543210",
+				"statusCode": 400,
+				"errors": [
+					{
+						"type": "https://problems.luna.akamaiapis.net/papi/v0/activation/unauthorized_third_party_cert_for_hostname",
+						"detail": "You selected an unauthorized CCM certificate for the example.net hostname.",
+						"messageId": "msg_1234567890abcdef1234567890abcdef12345678"
+					}
+				]
+			}`
+		assert.NoError(t, json.Unmarshal([]byte(errBody), &activateErr))
+
+		m.On("CreateActivation", testutils.MockContext, req).Return(nil, &activateErr).Times(5)
+
+		// There is an existing activation for version 1 which is ignored by the retry logic
+		m.On("GetActivations", testutils.MockContext, papi.GetActivationsRequest{
+			PropertyID: propID,
+		}).Return(&papi.GetActivationsResponse{
+			Activations: papi.ActivationsItems{
+				Items: []*papi.Activation{
+					{
+						ActivationID:    "atv_123",
+						ActivationType:  papi.ActivationTypeActivate,
+						PropertyID:      propID,
+						PropertyVersion: 1,
+						Network:         papi.ActivationNetworkProduction,
+						Status:          papi.ActivationStatusActive,
+						UpdateDate:      "2023-11-28T13:24:29Z",
+					},
+				},
+			},
+		}, nil).Times(4)
+
+		ctx := context.Background()
+		actID, diags := createActivation(ctx, m, req)
+		m.AssertExpectations(t)
+		assert.True(t, diags.HasError())
+		assert.Contains(t, diags[0].Summary, "You selected an unauthorized CCM certificate for the example.net hostname.")
+		assert.Equal(t, "", actID)
+	})
+
+	t.Run("create activation returns 400 but no CCM error type - no retries", func(t *testing.T) {
+		m := &papi.Mock{}
+
+		var activateErr papi.Error
+		errBody := `
+			{
+				"type": "https://problems.luna.akamaiapis.net/papi/v0/activation/errors",
+				"detail": "",
+				"instance": "https://foo.akamaiapis.net/papi/v1/properties/prp_123456/activations#fedcba9876543210",
+				"statusCode": 400,
+				"errors": [
+					{
+						"type": "https://problems.luna.akamaiapis.net/papi/v0/activation/some_other_error",
+						"detail": "You did something wrong.",
+						"messageId": "msg_1234567890abcdef1234567890abcdef12345678"
+					}
+				]
+			}`
+		assert.NoError(t, json.Unmarshal([]byte(errBody), &activateErr))
+
+		m.On("CreateActivation", testutils.MockContext, createReq).Return(nil, &activateErr).Once()
+
+		ctx := context.Background()
+		actID, diags := createActivation(ctx, m, createReq)
+		m.AssertExpectations(t)
+		assert.True(t, diags.HasError())
+		assert.Contains(t, diags[0].Summary, "You did something wrong.")
+		assert.Equal(t, "", actID)
+	})
+
+	t.Run("create activation returns 400 but no errors field - CCM test returns false - no retries", func(t *testing.T) {
+		m := &papi.Mock{}
+
+		var activateErr papi.Error
+		errBody := `
+			{
+				"type": "https://problems.luna.akamaiapis.net/papi/v0/activation/errors",
+				"detail": "",
+				"instance": "https://foo.akamaiapis.net/papi/v1/properties/prp_123456/activations#fedcba9876543210",
+				"statusCode": 400
+			}`
+		assert.NoError(t, json.Unmarshal([]byte(errBody), &activateErr))
+
+		m.On("CreateActivation", testutils.MockContext, createReq).Return(nil, &activateErr).Once()
+
+		ctx := context.Background()
+		actID, diags := createActivation(ctx, m, createReq)
+		m.AssertExpectations(t)
+		assert.True(t, diags.HasError())
+		assert.Contains(t, diags[0].Summary, "https://foo.akamaiapis.net/papi/v1/properties/prp_123456/activations#fedcba9876543210")
 		assert.Equal(t, "", actID)
 	})
 
@@ -404,6 +591,7 @@ func TestCreateActivation(t *testing.T) {
 
 		ctx := context.Background()
 		actID, diagErr := createActivation(ctx, m, createReq)
+		m.AssertExpectations(t)
 		assert.Nil(t, diagErr)
 		assert.Equal(t, "atv_123", actID)
 	})
@@ -459,6 +647,7 @@ func TestCreateActivation(t *testing.T) {
 
 		ctx := context.Background()
 		actID, diagErr := createActivation(ctx, m, createReq)
+		m.AssertExpectations(t)
 		assert.Nil(t, diagErr)
 		assert.Equal(t, "atv_123", actID)
 
@@ -488,6 +677,7 @@ func TestCreateActivation(t *testing.T) {
 
 		ctx := context.Background()
 		actID, diagErr := createActivation(ctx, m, createReq)
+		m.AssertExpectations(t)
 		assert.Nil(t, diagErr)
 		assert.Equal(t, "atv_123", actID)
 	})
@@ -516,6 +706,7 @@ func TestCreateActivation(t *testing.T) {
 
 		ctx := context.Background()
 		actID, diagErr := createActivation(ctx, m, createReq)
+		m.AssertExpectations(t)
 		assert.Nil(t, diagErr)
 		assert.Equal(t, "atv_123", actID)
 	})
@@ -528,6 +719,7 @@ func TestCreateActivation(t *testing.T) {
 
 		ctx := context.Background()
 		actID, diagErr := createActivation(ctx, m, createReq)
+		m.AssertExpectations(t)
 		assert.NotEmpty(t, diagErr)
 		assert.Contains(t, diagErr[0].Summary, expectedError.Error())
 		assert.Equal(t, "", actID)
@@ -584,6 +776,7 @@ func TestCreateActivation(t *testing.T) {
 
 		ctx := context.Background()
 		actID, diagErr := createActivation(ctx, m, createReq)
+		m.AssertExpectations(t)
 		assert.Nil(t, diagErr)
 		assert.Equal(t, "atv_000", actID)
 	})
@@ -641,6 +834,7 @@ func TestCreateActivation(t *testing.T) {
 
 		ctx := context.Background()
 		actID, diagErr := createActivation(ctx, m, createReq)
+		m.AssertExpectations(t)
 		assert.Nil(t, diagErr)
 		assert.Equal(t, "atv_000", actID)
 	})
@@ -697,6 +891,7 @@ func TestCreateActivation(t *testing.T) {
 
 		ctx := context.Background()
 		actID, diagErr := createActivation(ctx, m, createReq)
+		m.AssertExpectations(t)
 		assert.Nil(t, diagErr)
 		assert.Equal(t, "atv_123", actID)
 	})
@@ -752,6 +947,7 @@ func TestCreateActivation(t *testing.T) {
 
 		ctx := context.Background()
 		actID, diagErr := createActivation(ctx, m, createReq)
+		m.AssertExpectations(t)
 		assert.Nil(t, diagErr)
 		assert.Equal(t, "atv_123", actID)
 	})
@@ -847,6 +1043,7 @@ func TestCreateActivation(t *testing.T) {
 
 		ctx := context.Background()
 		actID, diagErr := createActivation(ctx, m, createReq)
+		m.AssertExpectations(t)
 		assert.Nil(t, diagErr)
 		assert.Equal(t, "atv_123", actID)
 	})
