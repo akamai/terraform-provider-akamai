@@ -1389,7 +1389,7 @@ func TestResourceAPIClient(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/purge_options_provided_for_ccu_apis_with_invalid_apis_and_all_accessible_apis_is_set_false.tf"),
-					ExpectError: regexp.MustCompile(`Could not verify APIs due to an unexpected error: the following API IDs are\s+configured but not allowed for the user 'mw\+2': 111333, 5803341`),
+					ExpectError: regexp.MustCompile(`Could not verify APIs due to an unexpected error: the following API IDs are\s+configured but not allowed for the user 'mw\+2': (111333, 5803341|5803341, 111333)`),
 				},
 			},
 		},
