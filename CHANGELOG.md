@@ -4,12 +4,12 @@
 
 #### FEATURES/ENHANCEMENTS:
 
-* Appsec
-    * Updated the `akamai_appsec_activations` resource to support moving hostnames between security configurations during activation.
+* AppSec
+  * Updated the `akamai_appsec_activations` resource to support moving hostnames between security configurations during activation.
 
-* [IMPORTANT] CloudCertificates (Beta)
+* [IMPORTANT] Cloud Certificates (Beta)
   * Added new resources:
-    * `akamai_cloudcertificates_certificate` - manages lifecycle of a cloud certificate.
+    * `akamai_cloudcertificates_certificate` - manages the lifecycle of a cloud certificate.
     * `akamai_cloudcertificates_upload_signed_certificate` - uploads a PEM-encoded signed certificate and optionally a trust chain for a cloud certificate.
   * Added new data sources:
     * `akamai_cloudcertificates_certificate` - reads a cloud certificate.
@@ -17,12 +17,12 @@
     * `akamai_cloudcertificates_hostname_bindings` - lists hostname bindings for available cloud certificates.
   * Added support for the `Akamai-RateLimit-Next` header when the status is `429 Too Many Requests`.
 
-* Datastream
-    * Support for `S3-Compatible`, `TrafficPeak`, and `Dynatrace` destinations has been added.
-    * Migrated Datastream APIs from `V2` to `V3` for `CDN` log types. Other log types available in `V3` APIs (`eDNS`, `GTM` and `Edgeworkers`) are not yet supported.
+* DataStream
+  * Added support for the `S3-Compatible`, `TrafficPeak`, and `Dynatrace` destinations.
+  * Migrated the DataStream API from `V2` to `V3` for `CDN` log types. Other log types available in the `V3` API (`eDNS`, `GTM`, and `Edgeworkers`) are not yet supported.
 
 * Edgeworkers
-    * Added possibility to fetch an `EdgeWorker` by name ([I#679](https://github.com/akamai/terraform-provider-akamai/issues/679)).
+  * Added the possibility to fetch an `EdgeWorker` by name ([I#679](https://github.com/akamai/terraform-provider-akamai/issues/679)).
 
 * [IMPORTANT] PAPI Domain Ownership Validation (Beta)
   * Added new resources:
@@ -31,7 +31,7 @@
   * Added new data sources:
     * `akamai_property_domainownership_domain` - reads details of a given domain.
     * `akamai_property_domainownership_domains` - reads details for all the domains.
-    * `akamai_property_domainownership_search_domains` - allows searching for domains details.
+    * `akamai_property_domainownership_search_domains` - searches for domains details.
   
 * PAPI
   * Added support for the new rule format `v2025-10-16`. The list of changes can be found [here](https://techdocs.akamai.com/terraform/docs/rule-format-changes#v2025-10-16).
@@ -39,14 +39,14 @@
 
 #### BUG FIXES:
 
-* Appsec
-  *  Added logic in resource `akamai_appsec_activations` to skip creating or updating activation resource if the version is already active or is pending activation.
+* AppSec
+  * Added logic in the `akamai_appsec_activations` resource to skip creating or updating the activation resource if the version is already active or is pending activation.
 
 * IAM
-  * Fixed handling of unknown values in resource `akamai_iam_api_client` causing "Value Conversion Error" when set conditionally ([I#678](https://github.com/akamai/terraform-provider-akamai/issues/678)).
+  * Fixed handling of unknown values in the `akamai_iam_api_client` resource causing "Value Conversion Error" when set conditionally ([I#678](https://github.com/akamai/terraform-provider-akamai/issues/678)).
 
 * PAPI
-  * Fixed a bug where the Terraform Provider crashed when trying to update a property activation with empty contact ([I#707](https://github.com/akamai/terraform-provider-akamai/issues/707)).
+  * Fixed a bug where the Terraform provider crashed when trying to update a property activation with an empty contact ([I#707](https://github.com/akamai/terraform-provider-akamai/issues/707)).
 
 ## 9.1.0 (Oct 15, 2025)
 
