@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudcertificates"
 	tst "github.com/akamai/terraform-provider-akamai/v9/internal/test"
@@ -107,8 +108,10 @@ var signedCertImportChecker = test.NewImportChecker().
 	CheckEqual("signed_certificate_issuer", "CN=Test Issuer, O=Test Org, C=US")
 
 func TestUploadSignedCertificateResource(t *testing.T) {
-	t.Parallel()
-
+	pollingInterval = 1 * time.Millisecond
+	defer func() {
+		pollingInterval = 10 * time.Second
+	}()
 	tests := map[string]struct {
 		init  func(*cloudcertificates.Mock, mockCertificates)
 		steps []resource.TestStep
@@ -120,11 +123,11 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 				// Create
 				mc.signedCertificate.mockPatch(m)
 				// Plan
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 				// Read
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 				// Plan
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 			},
 			steps: []resource.TestStep{
 				{
@@ -143,11 +146,11 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 				mc.signedCertificate.cert.TrustChainPEM = ptr.To(testTrustChainPEM)
 				mc.signedCertificate.mockPatch(m)
 				// Plan
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 				// Read
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 				// Plan
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 			},
 			steps: []resource.TestStep{
 				{
@@ -166,11 +169,11 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 				mc.signedCertificate.AcknowledgeWarnings = true
 				mc.signedCertificate.mockPatch(m)
 				// Plan
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 				// Read
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 				// Plan
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 			},
 			steps: []resource.TestStep{
 				{
@@ -182,6 +185,120 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 				},
 			},
 		},
+		"happy path - certificate not found in plan triggers polling, cert found on next call": {
+			init: func(m *cloudcertificates.Mock, mc mockCertificates) {
+				// Plan x 1
+				mc.minimumCertificate.err = &cloudcertificates.Error{
+					Type:  "/error-types/certificate-not-found",
+					Title: "Certificate subscription is not found.",
+				}
+				// First plan - error
+				mc.minimumCertificate.mockGet(m).Once()
+				mc.minimumCertificate.err = nil
+				// GET from polling - success
+				mc.minimumCertificate.mockGet(m).Once()
+
+				// Second plan - ok
+				mc.minimumCertificate.mockGet(m).Once()
+
+				// Create
+				mc.signedCertificate.mockPatch(m)
+				// Plan
+				mc.signedCertificate.mockGet(m).Once()
+				// Read
+				mc.signedCertificate.mockGet(m).Once()
+				// Plan
+				mc.signedCertificate.mockGet(m).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResUploadSignedCertificate/basic.tf"),
+					Check: signedCertChecker.
+						CheckMissing("trust_chain_pem").
+						Build(),
+				},
+			},
+		},
+		"happy path - certificate resource not found (different error type) in plan triggers polling, cert found on next call": {
+			init: func(m *cloudcertificates.Mock, mc mockCertificates) {
+				// Plan x 1
+				mc.minimumCertificate.err = &cloudcertificates.Error{
+					Type:  "/error-types/certificate-resource-not-found",
+					Title: "Certificate is not found.",
+				}
+				// First plan - error
+				mc.minimumCertificate.mockGet(m).Once()
+				mc.minimumCertificate.err = nil
+				// GET from polling - success
+				mc.minimumCertificate.mockGet(m).Once()
+
+				// Second plan - ok
+				mc.minimumCertificate.mockGet(m).Once()
+
+				// Create
+				mc.signedCertificate.mockPatch(m)
+				// Plan
+				mc.signedCertificate.mockGet(m).Once()
+				// Read
+				mc.signedCertificate.mockGet(m).Once()
+				// Plan
+				mc.signedCertificate.mockGet(m).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResUploadSignedCertificate/basic.tf"),
+					Check: signedCertChecker.
+						CheckMissing("trust_chain_pem").
+						Build(),
+				},
+			},
+		},
+		"happy path - upload signed certificate PEM, PATCH does not return all certificate details, enters polling and successfully waits until certificate is ready": {
+			init: func(m *cloudcertificates.Mock, mc mockCertificates) {
+				// Plan x 2
+				mc.minimumCertificate.mockGet(m).Twice()
+				// Create
+				// PATCH response is missing details, triggering polling.
+				m.On("PatchCertificate", testutils.MockContext, cloudcertificates.PatchCertificateRequest{
+					CertificateID:        mc.signedCertificate.cert.CertificateID,
+					SignedCertificatePEM: *mc.signedCertificate.cert.SignedCertificatePEM,
+					AcknowledgeWarnings:  mc.signedCertificate.AcknowledgeWarnings,
+				}).Return(&cloudcertificates.PatchCertificateResponse{Certificate: cloudcertificates.Certificate{
+					CertificateID:   mc.signedCertificate.cert.CertificateID,
+					CertificateName: mc.signedCertificate.cert.CertificateName,
+					SANs:            mc.signedCertificate.cert.SANs,
+					Subject:         mc.signedCertificate.cert.Subject,
+					CertificateType: mc.signedCertificate.cert.CertificateType,
+					KeyType:         mc.signedCertificate.cert.KeyType,
+					KeySize:         mc.signedCertificate.cert.KeySize,
+					SecureNetwork:   mc.signedCertificate.cert.SecureNetwork,
+					ContractID:      mc.signedCertificate.cert.ContractID,
+					AccountID:       mc.signedCertificate.cert.AccountID,
+					CreatedDate:     mc.signedCertificate.cert.CreatedDate,
+					CreatedBy:       mc.signedCertificate.cert.CreatedBy,
+					ModifiedDate:    mc.signedCertificate.cert.ModifiedDate,
+					ModifiedBy:      mc.signedCertificate.cert.ModifiedBy,
+					// No SignedCertificatePEM, SignedCertificateSerialNumber, SignedCertificateSHA256Fingerprint.
+				},
+				}, nil).Once()
+				// Next Get call returns full certificate details, ending the polling.
+				mc.signedCertificate.mockGet(m).Once()
+				// Plan
+				mc.signedCertificate.mockGet(m).Once()
+				// Read
+				mc.signedCertificate.mockGet(m).Once()
+				// Plan
+				mc.signedCertificate.mockGet(m).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResUploadSignedCertificate/basic.tf"),
+					Check: signedCertChecker.
+						CheckMissing("trust_chain_pem").
+						Build(),
+				},
+			},
+		},
 		"happy path - certificate renewal": {
 			init: func(m *cloudcertificates.Mock, mc mockCertificates) {
 				// Plan x 2
@@ -189,25 +306,25 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 				// Create
 				mc.signedCertificate.mockPatch(m)
 				// Plan
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 				// Read
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 				// Plan
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 
 				// UPDATE
 				// Read
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 				// Plan x 2
 				mc.minimumRenewedCertificate.mockGet(m).Twice()
 				// Update
 				mc.renewedCertificate.mockPatch(m)
 				// Plan
-				mc.renewedCertificate.mockGet(m)
+				mc.renewedCertificate.mockGet(m).Once()
 				// Read
-				mc.renewedCertificate.mockGet(m)
+				mc.renewedCertificate.mockGet(m).Once()
 				// Plan
-				mc.renewedCertificate.mockGet(m)
+				mc.renewedCertificate.mockGet(m).Once()
 			},
 			steps: []resource.TestStep{
 				{
@@ -227,17 +344,17 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 		"happy path - upload signed certificate PEM with params provided by another resource": {
 			init: func(m *cloudcertificates.Mock, mc mockCertificates) {
 				// Plan
-				mc.minimumCertificate.mockGet(m)
+				mc.minimumCertificate.mockGet(m).Once()
 				// Create
 				mc.signedCertificate.cert.TrustChainPEM = ptr.To(testTrustChainPEM)
 				mc.signedCertificate.AcknowledgeWarnings = true
 				mc.signedCertificate.mockPatch(m)
 				// Plan
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 				// Read
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 				// Plan
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 			},
 			steps: []resource.TestStep{
 				{
@@ -252,16 +369,16 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 		"import a signed certificate": {
 			init: func(m *cloudcertificates.Mock, mc mockCertificates) {
 				// Import
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 				// Read
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 
 				// Plan
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 				// Read
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 				// Plan
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 			},
 			steps: []resource.TestStep{
 				{
@@ -285,16 +402,16 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 			init: func(m *cloudcertificates.Mock, mc mockCertificates) {
 				mc.signedCertificate.cert.TrustChainPEM = ptr.To(testTrustChainPEM)
 				// Import
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 				// Read
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 
 				// Plan
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 				// Read
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 				// Plan
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 			},
 			steps: []resource.TestStep{
 				{
@@ -317,16 +434,16 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 		"import a signed certificate with acknowledge_warnings": {
 			init: func(m *cloudcertificates.Mock, mc mockCertificates) {
 				// Import
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 				// Read
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 
 				// Plan
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 				// Read
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 				// Plan
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 			},
 			steps: []resource.TestStep{
 				{
@@ -350,7 +467,7 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 		"error - certificate already in state READY_FOR_USE": {
 			init: func(m *cloudcertificates.Mock, mc mockCertificates) {
 				// Plan x 1
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 			},
 			steps: []resource.TestStep{
 				{
@@ -366,17 +483,17 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 				// Create
 				mc.signedCertificate.mockPatch(m)
 				// Plan
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 				// Read
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 				// Plan
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 
 				// UPDATE
 				// Read
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 				// Plan
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 			},
 			steps: []resource.TestStep{
 				{
@@ -391,6 +508,47 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 				},
 			},
 		},
+		"error - upload signed certificate PEM, PATCH does not return all certificate details, enters polling and times out": {
+			init: func(m *cloudcertificates.Mock, mc mockCertificates) {
+				pollingTimeout = 1 * time.Millisecond
+
+				// Plan x 2
+				mc.minimumCertificate.mockGet(m).Twice()
+				// Create
+				// PATCH response is missing details, triggering polling, which times out.
+				m.On("PatchCertificate", testutils.MockContext, cloudcertificates.PatchCertificateRequest{
+					CertificateID:        mc.signedCertificate.cert.CertificateID,
+					SignedCertificatePEM: *mc.signedCertificate.cert.SignedCertificatePEM,
+					AcknowledgeWarnings:  mc.signedCertificate.AcknowledgeWarnings,
+				}).Return(&cloudcertificates.PatchCertificateResponse{Certificate: cloudcertificates.Certificate{
+					CertificateID:   mc.signedCertificate.cert.CertificateID,
+					CertificateName: mc.signedCertificate.cert.CertificateName,
+					SANs:            mc.signedCertificate.cert.SANs,
+					Subject:         mc.signedCertificate.cert.Subject,
+					CertificateType: mc.signedCertificate.cert.CertificateType,
+					KeyType:         mc.signedCertificate.cert.KeyType,
+					KeySize:         mc.signedCertificate.cert.KeySize,
+					SecureNetwork:   mc.signedCertificate.cert.SecureNetwork,
+					ContractID:      mc.signedCertificate.cert.ContractID,
+					AccountID:       mc.signedCertificate.cert.AccountID,
+					CreatedDate:     mc.signedCertificate.cert.CreatedDate,
+					CreatedBy:       mc.signedCertificate.cert.CreatedBy,
+					ModifiedDate:    mc.signedCertificate.cert.ModifiedDate,
+					ModifiedBy:      mc.signedCertificate.cert.ModifiedBy,
+					// No SignedCertificatePEM, SignedCertificateSerialNumber, SignedCertificateSHA256Fingerprint.
+				},
+				}, nil).Once()
+				mc.minimumCertificate.mockGet(m).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResUploadSignedCertificate/basic.tf"),
+					ExpectError: regexp.MustCompile(
+						`(?s)context terminated while waiting for signed certificate details to be.+` +
+							`available for certificateID 12345`),
+				},
+			},
+		},
 		"error - trying to change only acknowledge_warnings": {
 			init: func(m *cloudcertificates.Mock, mc mockCertificates) {
 				// Plan x 2
@@ -398,17 +556,17 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 				// Create
 				mc.signedCertificate.mockPatch(m)
 				// Plan
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 				// Read
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 				// Plan
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 
 				// UPDATE
 				// Read
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 				// Plan
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 			},
 			steps: []resource.TestStep{
 				{
@@ -425,6 +583,9 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 		},
 		"error - 404 certificate not found in plan": {
 			init: func(m *cloudcertificates.Mock, mc mockCertificates) {
+				// Lower polling timeout to speed up the test.
+				pollingTimeout = 1 * time.Millisecond
+
 				// Plan x 1
 				mc.minimumCertificate.err = &cloudcertificates.Error{
 					Type:  "/error-types/certificate-not-found",
@@ -436,10 +597,9 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResUploadSignedCertificate/basic.tf"),
 					ExpectError: regexp.MustCompile(
-						`(?s)Cannot upload signed certificate to a non-existent CCM Certificate object.+` +
-							`The certificate '12345' was not found on the server.+` +
-							`API error:.+` +
-							`Certificate subscription is not found.`),
+						`(?s)Error polling for CCM Certificate object.+` +
+							`the certificate '12345' was not found on the server. Please verify.+` +
+							`certificate_id is correct.+`),
 				},
 			},
 		},
@@ -447,7 +607,7 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 			init: func(m *cloudcertificates.Mock, mc mockCertificates) {
 				// Plan x 1
 				mc.minimumCertificate.err = fmt.Errorf("API failed")
-				mc.minimumCertificate.mockGet(m)
+				mc.minimumCertificate.mockGet(m).Once()
 			},
 			steps: []resource.TestStep{
 				{
@@ -479,10 +639,10 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 				// Create
 				mc.signedCertificate.mockPatch(m)
 				// Plan
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 				// Read
 				mc.signedCertificate.err = fmt.Errorf("API failed")
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 			},
 			steps: []resource.TestStep{
 				{
@@ -499,15 +659,15 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 				// Create
 				mc.signedCertificate.mockPatch(m)
 				// Plan
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 				// Read
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 				// Plan
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 
 				// UPDATE
 				// Read
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 				// Plan x 2
 				mc.minimumRenewedCertificate.mockGet(m).Twice()
 				// Update
@@ -570,7 +730,7 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 		"error - trying to import for cert where PEM was never uploaded": {
 			init: func(m *cloudcertificates.Mock, mc mockCertificates) {
 				// Read
-				mc.minimumCertificate.mockGet(m)
+				mc.minimumCertificate.mockGet(m).Once()
 			},
 			steps: []resource.TestStep{
 				{
@@ -612,7 +772,7 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 			init: func(m *cloudcertificates.Mock, mc mockCertificates) {
 				// Read
 				mc.signedCertificate.err = fmt.Errorf("API failed")
-				mc.signedCertificate.mockGet(m)
+				mc.signedCertificate.mockGet(m).Once()
 			},
 			steps: []resource.TestStep{
 				{
@@ -667,7 +827,6 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			t.Parallel()
 			client := &cloudcertificates.Mock{}
 
 			if tc.init != nil {
@@ -681,6 +840,7 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 					Steps: tc.steps,
 				})
 			})
+			pollingTimeout = 1 * time.Minute
 			client.AssertExpectations(t)
 		})
 	}
@@ -695,7 +855,7 @@ type mockCertificate struct {
 func (c mockCertificate) mockGet(m *cloudcertificates.Mock) *mock.Call {
 	return m.On("GetCertificate", testutils.MockContext, cloudcertificates.GetCertificateRequest{
 		CertificateID: c.cert.CertificateID,
-	}).Return(&cloudcertificates.GetCertificateResponse{Certificate: c.cert}, c.err).Once()
+	}).Return(&cloudcertificates.GetCertificateResponse{Certificate: c.cert}, c.err)
 }
 
 func (c mockCertificate) mockPatch(m *cloudcertificates.Mock) *mock.Call {
