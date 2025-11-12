@@ -197,7 +197,7 @@ func resourceActivationsRead(ctx context.Context, d *schema.ResourceData, m inte
 	if err := d.Set("notification_emails", currentActiveVersion.NotificationEmails); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
-	if err := d.Set("status", currentActiveVersion.Status); err != nil {
+	if err := d.Set("status", string(currentActiveVersion.Status)); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
@@ -440,7 +440,7 @@ func createActivation(ctx context.Context, client appsec.APPSEC, request appsec.
 	return result, err
 }
 
-func pollActivation(ctx context.Context, client appsec.APPSEC, activationStatus appsec.StatusValue, getActivationsRequest appsec.GetActivationsRequest) error {
+func pollActivation(ctx context.Context, client appsec.APPSEC, activationStatus appsec.StatusValue, getActivationsRequest appsec.GetActivationsRequest) (appsec.StatusValue, error) {
 	retriesMax := 5
 	retries5xx := 0
 
@@ -451,25 +451,25 @@ func pollActivation(ctx context.Context, client appsec.APPSEC, activationStatus 
 			if err != nil {
 				var target = &appsec.Error{}
 				if !errors.As(err, &target) {
-					return fmt.Errorf("error has unexpected type: %T", err)
+					return "", fmt.Errorf("error has unexpected type: %T", err)
 				}
 				if isCreateActivationErrorRetryable(target) {
 					retries5xx = retries5xx + 1
 					if retries5xx > retriesMax {
-						return fmt.Errorf("reached max number of 5xx retries: %d", retries5xx)
+						return "", fmt.Errorf("reached max number of 5xx retries: %d", retries5xx)
 					}
 					continue
 				}
-				return err
+				return "", err
 			}
 			retries5xx = 0
 			activationStatus = act.Status
 
 		case <-ctx.Done():
-			return fmt.Errorf("activation context terminated: %s", ctx.Err())
+			return "", fmt.Errorf("activation context terminated: %s", ctx.Err())
 		}
 	}
-	return nil
+	return activationStatus, nil
 }
 
 func isCreateActivationErrorRetryable(err error) bool {
@@ -788,6 +788,12 @@ func handleSameVersion(ctx context.Context, client appsec.APPSEC, currentVersion
 
 	if status == string(appsec.StatusActive) {
 		params.Logger.Infof("version %d is already active on %s for config %d, using existing activation", params.Version, params.Network, params.ConfigID)
+
+		// Set the status field since the version is already active
+		if err := params.ResourceData.Set("status", status); err != nil {
+			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+		}
+
 		return nil
 	}
 
@@ -797,8 +803,14 @@ func handleSameVersion(ctx context.Context, client appsec.APPSEC, currentVersion
 	getActivationsRequest := appsec.GetActivationsRequest{
 		ActivationID: currentVersion.ActivationID,
 	}
-	if err := pollActivation(ctx, client, appsec.StatusValue(currentVersion.Status), getActivationsRequest); err != nil {
+	finalStatus, err := pollActivation(ctx, client, appsec.StatusValue(currentVersion.Status), getActivationsRequest)
+	if err != nil {
 		return diag.FromErr(err)
+	}
+
+	// Set the final status after successful polling
+	if err := params.ResourceData.Set("status", string(finalStatus)); err != nil {
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	return nil
@@ -842,8 +854,14 @@ func performActivation(ctx context.Context, client appsec.APPSEC, params activat
 		return diag.FromErr(err)
 	}
 
-	if err = pollActivation(ctx, client, activation.Status, getActivationsRequest); err != nil {
+	finalStatus, err := pollActivation(ctx, client, activation.Status, getActivationsRequest)
+	if err != nil {
 		return diag.FromErr(err)
+	}
+
+	// Set the final status after successful polling
+	if err := params.ResourceData.Set("status", string(finalStatus)); err != nil {
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	// Collect warnings for host move operations

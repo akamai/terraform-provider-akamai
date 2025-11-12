@@ -147,6 +147,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "config_id", "43253"),
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "network", "STAGING"),
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "note", "Test Notes"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "status", "ACTIVATED"),
 						),
 					},
 				},
@@ -265,6 +266,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "config_id", "43253"),
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "network", "STAGING"),
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "note", "Test Notes"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "status", "ACTIVATED"),
 						),
 					},
 					{
@@ -274,6 +276,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "config_id", "43253"),
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "network", "STAGING"),
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "note", "Test Notes"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "status", "ACTIVATED"),
 						),
 					},
 				},
@@ -446,6 +449,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "config_id", "43253"),
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "network", "STAGING"),
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "note", "Test Notes"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "status", "ACTIVATED"),
 						),
 					},
 					{
@@ -455,6 +459,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "config_id", "43253"),
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "network", "PRODUCTION"),
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "note", "Test Notes update"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "status", "ACTIVATED"),
 						),
 					},
 				},
@@ -569,6 +574,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "network", "STAGING"),
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "note", "Test Notes"),
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "notification_emails.0", "user@example.com"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "status", "ACTIVATED"),
 						),
 					},
 					{
@@ -580,6 +586,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "note", "Test Notes"),
 							// Even when notification_emails changes, there is nothing to update
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "notification_emails.0", "user@example.com"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "status", "ACTIVATED"),
 						),
 					},
 				},
@@ -761,6 +768,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "network", "STAGING"),
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "note", "Test Notes"),
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "notification_emails.0", "user@example.com"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "status", "ACTIVATED"),
 						),
 					},
 					{
@@ -772,6 +780,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "note", "Test Notes"),
 							// Since network and notification_emails changes, there is an update to the notification_emails
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "notification_emails.0", "user1@example.com"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "status", "ACTIVATED"),
 						),
 					},
 				},
@@ -902,6 +911,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "config_id", "43253"),
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "network", "STAGING"),
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "note", "Test Notes"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "status", "ACTIVATED"),
 						),
 					},
 				},
@@ -1074,6 +1084,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "config_id", "43253"),
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "note", "Test Notes"),
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "version", "7"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "status", "ACTIVATED"),
 						),
 					},
 					{
@@ -1083,6 +1094,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "config_id", "43253"),
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "note", "Test Notes"),
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "version", "7"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "status", "ACTIVATED"),
 						),
 					},
 				},
@@ -1350,6 +1362,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "notification_emails.#", "2"),
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "notification_emails.0", "user1@example.com"),
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "notification_emails.1", "user2@example.com"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "status", "ACTIVATED"),
 						),
 					},
 					{
@@ -1363,6 +1376,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 							// Since version and notification_emails change, there is an update to the notification_emails
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "notification_emails.#", "1"),
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "notification_emails.0", "user1@example.com"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "status", "ACTIVATED"),
 						),
 					},
 				},
@@ -1480,6 +1494,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "notification_emails.#", "2"),
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "notification_emails.0", "user1@example.com"),
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "notification_emails.1", "user2@example.com"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "status", "ACTIVATED"),
 						),
 					},
 					{
@@ -1495,6 +1510,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "notification_emails.#", "2"),
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "notification_emails.0", "user1@example.com"),
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "notification_emails.1", "user2@example.com"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "status", "ACTIVATED"),
 						),
 					},
 				},
@@ -1567,6 +1583,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "version", "7"),
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "notification_emails.#", "1"),
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "notification_emails.0", "user@example.com"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "status", "ACTIVATED"),
 						),
 					},
 				},
@@ -1725,6 +1742,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "network", "STAGING"),
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "note", "Test Notes"),
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "version", "7"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "status", "ACTIVATED"),
 						),
 					},
 					{
@@ -1736,6 +1754,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "network", "STAGING"),
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "note", "Test Notes"),
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "version", "7"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "status", "ACTIVATED"),
 						),
 					},
 				},
