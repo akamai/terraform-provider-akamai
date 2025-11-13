@@ -23,6 +23,9 @@ var (
 		datastream.DestinationTypeS3:            "s3_connector",
 		datastream.DestinationTypeSplunk:        "splunk_connector",
 		datastream.DestinationTypeSumoLogic:     "sumologic_connector",
+		datastream.DestinationTypeS3Compatible:  "s3_compatible_connector",
+		datastream.DestinationTypeTrafficPeak:   "trafficpeak_connector",
+		datastream.DestinationTypeDynatrace:     "dynatrace_connector",
 	}
 
 	connectorMappers = map[datastream.DestinationType]func(datastream.Destination, map[string]interface{}) map[string]interface{}{
@@ -37,6 +40,9 @@ var (
 		datastream.DestinationTypeS3:            MapS3Connector,
 		datastream.DestinationTypeSplunk:        MapSplunkConnector,
 		datastream.DestinationTypeSumoLogic:     MapSumoLogicConnector,
+		datastream.DestinationTypeS3Compatible:  MapS3CompatibleConnector,
+		datastream.DestinationTypeTrafficPeak:   MapTrafficPeakConnector,
+		datastream.DestinationTypeDynatrace:     MapDynatraceConnector,
 	}
 
 	connectorGetters = map[string]func(map[string]interface{}) datastream.AbstractConnector{
@@ -51,6 +57,9 @@ var (
 		"s3_connector":            GetS3Connector,
 		"splunk_connector":        GetSplunkConnector,
 		"sumologic_connector":     GetSumoLogicConnector,
+		"s3_compatible_connector": GetS3CompatibleConnector,
+		"trafficpeak_connector":   GetTrafficPeakConnector,
+		"dynatrace_connector":     GetDynatraceConnector,
 	}
 )
 
@@ -452,6 +461,91 @@ func MapElasticsearchConnector(c datastream.Destination, state map[string]interf
 		rv["m_tls"] = true
 	}
 	setNonNilItemsFromState(state, rv, "user_name", "password", "ca_cert", "client_cert", "client_key")
+	return rv
+}
+
+// GetS3CompatibleConnector builds S3CompatibleConnector structure
+func GetS3CompatibleConnector(props map[string]interface{}) datastream.AbstractConnector {
+	return &datastream.S3CompatibleConnector{
+		AccessKey:       props["access_key"].(string),
+		Bucket:          props["bucket"].(string),
+		DisplayName:     props["display_name"].(string),
+		Path:            props["path"].(string),
+		Region:          props["region"].(string),
+		SecretAccessKey: props["secret_access_key"].(string),
+		Endpoint:        props["endpoint"].(string),
+	}
+}
+
+// MapS3CompatibleConnector selects fields needed for S3CompatibleConnector
+func MapS3CompatibleConnector(c datastream.Destination, state map[string]interface{}) map[string]interface{} {
+	rv := map[string]interface{}{
+		"access_key":        "",
+		"bucket":            c.Bucket,
+		"compress_logs":     c.CompressLogs,
+		"display_name":      c.DisplayName,
+		"path":              c.Path,
+		"region":            c.Region,
+		"secret_access_key": "",
+		"endpoint":          c.Endpoint,
+	}
+	setNonNilItemsFromState(state, rv, "access_key", "secret_access_key")
+	return rv
+}
+
+// GetTrafficPeakConnector builds TrafficPeakConnector structure
+func GetTrafficPeakConnector(props map[string]interface{}) datastream.AbstractConnector {
+	return &datastream.TrafficPeakConnector{
+		AuthenticationType: datastream.AuthenticationType(props["authentication_type"].(string)),
+		CompressLogs:       props["compress_logs"].(bool),
+		DisplayName:        props["display_name"].(string),
+		ContentType:        datastream.TrafficPeakContentType(props["content_type"].(string)),
+		CustomHeaderName:   props["custom_header_name"].(string),
+		CustomHeaderValue:  props["custom_header_value"].(string),
+		Password:           props["password"].(string),
+		Endpoint:           props["endpoint"].(string),
+		UserName:           props["user_name"].(string),
+	}
+}
+
+// MapTrafficPeakConnector selects fields needed for TrafficPeakConnector
+func MapTrafficPeakConnector(c datastream.Destination, state map[string]interface{}) map[string]interface{} {
+	rv := map[string]interface{}{
+		"authentication_type": c.AuthenticationType,
+		"compress_logs":       c.CompressLogs,
+		"display_name":        c.DisplayName,
+		"content_type":        c.ContentType,
+		"custom_header_name":  c.CustomHeaderName,
+		"custom_header_value": c.CustomHeaderValue,
+		"password":            "",
+		"endpoint":            c.Endpoint,
+		"user_name":           "",
+	}
+	setNonNilItemsFromState(state, rv, "password", "user_name")
+	return rv
+}
+
+// GetDynatraceConnector builds DynatraceConnector structure
+func GetDynatraceConnector(props map[string]interface{}) datastream.AbstractConnector {
+	return &datastream.DynatraceConnector{
+		AuthToken:         props["api_token"].(string),
+		DisplayName:       props["display_name"].(string),
+		Endpoint:          props["endpoint"].(string),
+		CustomHeaderName:  props["custom_header_name"].(string),
+		CustomHeaderValue: props["custom_header_value"].(string),
+	}
+}
+
+// MapDynatraceConnector selects fields needed for DynatraceConnector
+func MapDynatraceConnector(c datastream.Destination, state map[string]interface{}) map[string]interface{} {
+	rv := map[string]interface{}{
+		"api_token":           "",
+		"display_name":        c.DisplayName,
+		"endpoint":            c.Endpoint,
+		"custom_header_name":  c.CustomHeaderName,
+		"custom_header_value": c.CustomHeaderValue,
+	}
+	setNonNilItemsFromState(state, rv, "api_token")
 	return rv
 }
 

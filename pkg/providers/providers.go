@@ -9,6 +9,7 @@ import (
 	_ "github.com/akamai/terraform-provider-akamai/v9/pkg/providers/botman"
 	_ "github.com/akamai/terraform-provider-akamai/v9/pkg/providers/clientlists"
 	_ "github.com/akamai/terraform-provider-akamai/v9/pkg/providers/cloudaccess"
+	_ "github.com/akamai/terraform-provider-akamai/v9/pkg/providers/cloudcertificates"
 	_ "github.com/akamai/terraform-provider-akamai/v9/pkg/providers/cloudlets"
 	_ "github.com/akamai/terraform-provider-akamai/v9/pkg/providers/cloudwrapper"
 	_ "github.com/akamai/terraform-provider-akamai/v9/pkg/providers/cps"

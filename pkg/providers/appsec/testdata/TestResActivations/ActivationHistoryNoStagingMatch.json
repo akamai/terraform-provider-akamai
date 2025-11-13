@@ -1,0 +1,14 @@
+{
+    "activationHistory": [
+        {
+            "activationId": 547703,
+            "version": 7,
+            "network": "PRODUCTION",
+            "status": "ACTIVATED",
+            "notes": "Production only",
+            "notificationEmails": ["user@example.com"],
+            "createDate": "2020-10-07T12:30:49Z",
+            "createdBy": "lap2lreucgguhekn"
+        }
+    ]
+}

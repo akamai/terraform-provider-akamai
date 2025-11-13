@@ -3,6 +3,7 @@ package edgeworkers
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -16,6 +17,7 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func dataSourceEdgeWorker() *schema.Resource {
@@ -24,9 +26,11 @@ func dataSourceEdgeWorker() *schema.Resource {
 		ReadContext: dataEdgeWorkerRead,
 		Schema: map[string]*schema.Schema{
 			"edgeworker_id": {
-				Type:        schema.TypeInt,
-				Required:    true,
-				Description: "The unique identifier of the EdgeWorker",
+				Type:         schema.TypeInt,
+				Optional:     true,
+				Computed:     true,
+				Description:  "The unique identifier of the EdgeWorker",
+				AtLeastOneOf: []string{"edgeworker_id", "name"},
 			},
 			"local_bundle": {
 				Type:        schema.TypeString,
@@ -35,9 +39,12 @@ func dataSourceEdgeWorker() *schema.Resource {
 				Default:     filepath.Join(".", "/default_name.tgz"),
 			},
 			"name": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "The EdgeWorker name",
+				Type:             schema.TypeString,
+				Optional:         true,
+				Computed:         true,
+				Description:      "The EdgeWorker name",
+				AtLeastOneOf:     []string{"edgeworker_id", "name"},
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
 			},
 			"group_id": {
 				Type:        schema.TypeString,
@@ -82,15 +89,22 @@ func dataEdgeWorkerRead(ctx context.Context, d *schema.ResourceData, m interface
 	logger.Debug("Reading EdgeWorker")
 
 	edgeWorkerID, err := tf.GetIntValue("edgeworker_id", d)
-	if err != nil {
-		return diag.Errorf("could not get value: %s", err)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return diag.Errorf("could not read edgeworker ID: %s", err)
+	} else if err != nil {
+		edgeWorkerName, err := tf.GetStringValue("name", d)
+		if err != nil {
+			return diag.Errorf("could not get edgeworker name: %s", err)
+		}
+		edgeWorkerID, err = getEdgeWorkerIDByName(ctx, client, edgeWorkerName)
+		if err != nil {
+			return diag.Errorf("could not get edgeworker by name: %s", err)
+		}
 	}
 
-	edgeWorker, err := client.GetEdgeWorkerID(ctx, edgeworkers.GetEdgeWorkerIDRequest{
-		EdgeWorkerID: edgeWorkerID,
-	})
+	edgeWorker, err := getEdgeWorkerByID(ctx, client, edgeWorkerID)
 	if err != nil {
-		return diag.Errorf("could not get the edgeworker: %s", err)
+		return diag.Errorf("could not get edgeworker by ID: %d: %s", edgeWorkerID, err)
 	}
 
 	versions, err := client.ListEdgeWorkerVersions(ctx, edgeworkers.ListEdgeWorkerVersionsRequest{
@@ -182,6 +196,7 @@ func dataEdgeWorkerRead(ctx context.Context, d *schema.ResourceData, m interface
 func createAttrs(edgeworker *edgeworkers.EdgeWorkerID, version, bundleContentHash string, warnings []string, createAllAttrs bool) map[string]interface{} {
 	if createAllAttrs {
 		return map[string]interface{}{
+			"edgeworker_id":     edgeworker.EdgeWorkerID,
 			"name":              edgeworker.Name,
 			"group_id":          strconv.FormatInt(edgeworker.GroupID, 10),
 			"resource_tier_id":  edgeworker.ResourceTierID,
@@ -191,6 +206,7 @@ func createAttrs(edgeworker *edgeworkers.EdgeWorkerID, version, bundleContentHas
 		}
 	}
 	return map[string]interface{}{
+		"edgeworker_id":    edgeworker.EdgeWorkerID,
 		"name":             edgeworker.Name,
 		"group_id":         strconv.FormatInt(edgeworker.GroupID, 10),
 		"resource_tier_id": edgeworker.ResourceTierID,
@@ -213,4 +229,37 @@ func createFileFromPath(filePath string) (*os.File, error) {
 	}
 
 	return file, nil
+}
+
+func getEdgeWorkerByID(ctx context.Context, client edgeworkers.Edgeworkers, edgeWorkerID int) (*edgeworkers.EdgeWorkerID, error) {
+	edgeWorker, err := client.GetEdgeWorkerID(ctx, edgeworkers.GetEdgeWorkerIDRequest{
+		EdgeWorkerID: edgeWorkerID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return edgeWorker, nil
+}
+
+func getEdgeWorkerIDByName(ctx context.Context, client edgeworkers.Edgeworkers, edgeWorkerName string) (int, error) {
+	listEdgeWorkersIDResponse, err := client.ListEdgeWorkersID(ctx, edgeworkers.ListEdgeWorkersIDRequest{})
+	if err != nil {
+		return 0, err
+	}
+
+	edgeWorkersListFiltered := []edgeworkers.EdgeWorkerID{}
+	for _, ew := range listEdgeWorkersIDResponse.EdgeWorkers {
+		if ew.Name == edgeWorkerName {
+			edgeWorkersListFiltered = append(edgeWorkersListFiltered, ew)
+		}
+	}
+
+	switch len(edgeWorkersListFiltered) {
+	case 0:
+		return 0, fmt.Errorf("no edgeworkers found with the given name: %s", edgeWorkerName)
+	case 1:
+		return edgeWorkersListFiltered[0].EdgeWorkerID, nil
+	default:
+		return 0, fmt.Errorf("multiple edgeworkers found with the given name: %s. Try using the edgeworker ID instead", edgeWorkerName)
+	}
 }

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"sort"
 	"strings"
 	"time"
@@ -49,6 +50,12 @@ func resourcePropertyActivation() *schema.Resource {
 const (
 	// ActivationPollMinimum is the minimum polling interval for activation creation
 	ActivationPollMinimum = time.Minute
+
+	// CCMWorkaroundMaxRetries defines the maximum number of retries to activate a property
+	// in case of CCM "unauthorized cert" error. With the initial wait time of 10 seconds and
+	// binary exponential backoff, this results in a maximum wait time of 150 seconds before giving up
+	// (not including the time spent in the API calls themselves).
+	CCMWorkaroundMaxRetries = 4
 )
 
 var (
@@ -112,6 +119,7 @@ var akamaiPropertyActivationSchema = map[string]*schema.Schema{
 	"contact": {
 		Type:             schema.TypeSet,
 		Required:         true,
+		MinItems:         1,
 		Elem:             &schema.Schema{Type: schema.TypeString},
 		DiffSuppressFunc: suppressDiffIfNoPropertyReactivation,
 		Description:      "One or more email addresses to which to send activation status changes.",
@@ -1017,6 +1025,7 @@ func createActivation(ctx context.Context, client papi.PAPI, request papi.Create
 	}
 
 	createActivationRetry := CreateActivationRetry
+	var retries = 0
 
 	for {
 		log.Debug("creating activation")
@@ -1026,7 +1035,15 @@ func createActivation(ctx context.Context, client papi.PAPI, request papi.Create
 		}
 		log.Debug("%s: retrying: %w", errMsg, err)
 
-		if !isCreateActivationErrorRetryable(err) {
+		isRetryable := isCreateActivationErrorRetryable(err)
+		// Work around a race condition for CCM where newly created CCM certificates may not yet appear
+		// in the /domains API response, causing an immediate activation failure.
+		// We want to give up after a limited number of retries in case when the error
+		// is not transient and relates to some actual certificate issue.
+		retries++
+		isCCMWorkaround := retries <= CCMWorkaroundMaxRetries && isActivationErrorCCMUnauthorizedCert(err)
+
+		if !isRetryable && !isCCMWorkaround {
 			return "", diag.Errorf("%s: %s", errMsg, err)
 		}
 
@@ -1064,12 +1081,31 @@ func isCreateActivationErrorRetryable(err error) bool {
 	if !errors.As(err, &responseErr) {
 		return false
 	}
+
 	if responseErr.StatusCode < 500 &&
 		responseErr.StatusCode != 422 &&
 		responseErr.StatusCode != 409 {
 		return false
 	}
 	return true
+}
+
+func isActivationErrorCCMUnauthorizedCert(err error) bool {
+	var responseErr = &papi.Error{}
+	if !errors.As(err, &responseErr) {
+		return false
+	}
+
+	if responseErr.StatusCode != http.StatusBadRequest {
+		return false
+	}
+
+	bb, err := responseErr.Errors.MarshalJSON()
+	if err != nil {
+		return false
+	}
+	return strings.Contains(string(bb),
+		"/papi/v0/activation/unauthorized_third_party_cert_for_hostname")
 }
 
 type expectedActivation struct {

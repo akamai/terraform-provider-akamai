@@ -1,0 +1,14 @@
+{
+    "activationHistory": [
+        {
+            "activationId": 547704,
+            "version": 7,
+            "network": "STAGING",
+            "status": "PENDING_DEACTIVATION",
+            "notes": "Deactivating",
+            "notificationEmails": ["user@example.com"],
+            "createDate": "2020-10-07T12:30:49Z",
+            "createdBy": "lap2lreucgguhekn"
+        }
+    ]
+}

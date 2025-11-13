@@ -4,6 +4,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/domainownership"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/hapi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/iam"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
@@ -41,6 +42,19 @@ func useIam(iamCli iam.IAM, f func()) {
 
 	defer func() {
 		iamClient = origIam
+	}()
+
+	f()
+}
+
+func useDomainOwnership(domainownershipCli domainownership.DomainOwnership, f func()) {
+	clientLock.Lock()
+	origClient := domainownershipClient
+	domainownershipClient = domainownershipCli
+
+	defer func() {
+		domainownershipClient = origClient
+		clientLock.Unlock()
 	}()
 
 	f()

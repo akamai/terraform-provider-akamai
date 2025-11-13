@@ -1,0 +1,14 @@
+{
+    "activationHistory": [
+        {
+            "activationId": 547705,
+            "version": 7,
+            "network": "STAGING",
+            "status": "ACTIVATION_IN_PROGRESS",
+            "notes": "In progress activation",
+            "notificationEmails": ["user@example.com"],
+            "createDate": "2020-10-07T12:30:49Z",
+            "createdBy": "lap2lreucgguhekn"
+        }
+    ]
+}

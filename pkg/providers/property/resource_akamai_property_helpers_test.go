@@ -335,6 +335,17 @@ func (p *mockProperty) mockUpdatePropertyVersionHostnames(err ...error) *mock.Ca
 	for i := range requestHostnames {
 		requestHostnames[i].EdgeHostnameID = ""
 		requestHostnames[i].CertStatus = papi.CertStatusItem{}
+		// Links are used only for mocking responses
+		if requestHostnames[i].CCMCertificates != nil {
+			// copy on write
+			copyCerts := *requestHostnames[i].CCMCertificates
+			copyCerts.RSACertLink = ""
+			copyCerts.ECDSACertLink = ""
+			requestHostnames[i].CCMCertificates = &copyCerts
+		}
+		// CCMCertStatus is used only for mocking responses
+		requestHostnames[i].CCMCertStatus = nil
+
 	}
 
 	req := papi.UpdatePropertyVersionHostnamesRequest{
@@ -477,14 +488,16 @@ func (p *mockProperty) mockGetPropertyVersion() *mock.Call {
 			ProductionStatus: p.versions.Items[0].ProductionStatus,
 			Note:             p.versions.Items[0].Note,
 			PropertyVersion:  p.versions.Items[0].PropertyVersion,
+			ProductID:        p.productID,
 		}
 	}
 
 	resp := &papi.GetPropertyVersionsResponse{
-		PropertyID: p.propertyID,
-		GroupID:    p.groupID,
-		ContractID: p.contractID,
-		Version:    ver,
+		PropertyID:   p.propertyID,
+		PropertyName: p.propertyName,
+		GroupID:      p.groupID,
+		ContractID:   p.contractID,
+		Version:      ver,
 	}
 	return p.papiMock.On("GetPropertyVersion", testutils.MockContext, req).Return(resp, nil).Once()
 }

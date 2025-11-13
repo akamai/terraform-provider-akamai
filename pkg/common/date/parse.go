@@ -32,7 +32,7 @@ func ParseFormat(format, value string) (time.Time, error) {
 
 // FormatRFC3339 returns a textual representation of time formatted according to the RFC3339 standard.
 // RFC3339 is a subset of ISO 8601 producing the format "2006-01-02T15:04:05Z" (for a UTC time)
-// which is commonly used in the Edge API.
+// which is commonly used in Akamai Open API.
 func FormatRFC3339(t time.Time) string {
 	return t.Format(time.RFC3339)
 }

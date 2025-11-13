@@ -1,0 +1,24 @@
+{
+    "activationHistory": [
+        {
+            "activationId": 547701,
+            "version": 7,
+            "network": "PRODUCTION",
+            "status": "ACTIVATED",
+            "notes": "Production activation",
+            "notificationEmails": ["user@example.com"],
+            "createDate": "2020-10-08T12:30:49Z",
+            "createdBy": "lap2lreucgguhekn"
+        },
+        {
+            "activationId": 547700,
+            "version": 7,
+            "network": "STAGING",
+            "status": "ACTIVATED",
+            "notes": "Staging activation",
+            "notificationEmails": ["user@example.com"],
+            "createDate": "2020-10-07T12:30:49Z",
+            "createdBy": "lap2lreucgguhekn"
+        }
+    ]
+}

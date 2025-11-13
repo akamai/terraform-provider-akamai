@@ -26,7 +26,8 @@ resource "akamai_iam_api_client" "test" {
     ]
   }
   ip_acl = {
-    enable = false
+    enable = true
+    cidr   = ["128.5.6.5/24"]
   }
   api_access = {
     all_accessible_apis = false
@@ -37,6 +38,14 @@ resource "akamai_iam_api_client" "test" {
       },
       {
         api_id       = 5801
+        access_level = "READ-WRITE"
+      },
+      {
+        api_id       = 5803341
+        access_level = "READ-WRITE"
+      },
+      {
+        api_id       = 111333
         access_level = "READ-WRITE"
       }
     ]

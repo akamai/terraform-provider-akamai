@@ -85,9 +85,9 @@ type (
 	}
 
 	purgeOptionsModel struct {
-		CanPurgeByCacheTag types.Bool        `tfsdk:"can_purge_by_cache_tag"`
-		CanPurgeByCPCode   types.Bool        `tfsdk:"can_purge_by_cp_code"`
-		CPCodeAccess       cpCodeAccessModel `tfsdk:"cp_code_access"`
+		CanPurgeByCacheTag types.Bool   `tfsdk:"can_purge_by_cache_tag"`
+		CanPurgeByCPCode   types.Bool   `tfsdk:"can_purge_by_cp_code"`
+		CPCodeAccess       types.Object `tfsdk:"cp_code_access"`
 	}
 
 	cpCodeAccessModel struct {
@@ -134,27 +134,27 @@ type (
 	}
 
 	apiClientResourceModel struct {
-		AllowAccountSwitch      types.Bool         `tfsdk:"allow_account_switch"`
-		APIAccess               apiAccessModel     `tfsdk:"api_access"`
-		AuthorizedUsers         types.List         `tfsdk:"authorized_users"`
-		CanAutoCreateCredential types.Bool         `tfsdk:"can_auto_create_credential"`
-		ClientDescription       types.String       `tfsdk:"client_description"`
-		ClientName              types.String       `tfsdk:"client_name"`
-		ClientType              types.String       `tfsdk:"client_type"`
-		GroupAccess             *groupAccessModel  `tfsdk:"group_access"`
-		IPACL                   *ipACLModel        `tfsdk:"ip_acl"`
-		NotificationEmails      types.List         `tfsdk:"notification_emails"`
-		PurgeOptions            *purgeOptionsModel `tfsdk:"purge_options"`
-		Lock                    types.Bool         `tfsdk:"lock"`
-		AccessToken             types.String       `tfsdk:"access_token"`
-		Actions                 types.Object       `tfsdk:"actions"`
-		ActiveCredentialCount   types.Int64        `tfsdk:"active_credential_count"`
-		BaseURL                 types.String       `tfsdk:"base_url"`
-		ClientID                types.String       `tfsdk:"client_id"`
-		CreatedBy               types.String       `tfsdk:"created_by"`
-		CreatedDate             types.String       `tfsdk:"created_date"`
-		Credential              types.Object       `tfsdk:"credential"`
-		ID                      types.String       `tfsdk:"id"`
+		AllowAccountSwitch      types.Bool   `tfsdk:"allow_account_switch"`
+		APIAccess               types.Object `tfsdk:"api_access"`
+		AuthorizedUsers         types.List   `tfsdk:"authorized_users"`
+		CanAutoCreateCredential types.Bool   `tfsdk:"can_auto_create_credential"`
+		ClientDescription       types.String `tfsdk:"client_description"`
+		ClientName              types.String `tfsdk:"client_name"`
+		ClientType              types.String `tfsdk:"client_type"`
+		GroupAccess             types.Object `tfsdk:"group_access"`
+		IPACL                   types.Object `tfsdk:"ip_acl"`
+		NotificationEmails      types.List   `tfsdk:"notification_emails"`
+		PurgeOptions            types.Object `tfsdk:"purge_options"`
+		Lock                    types.Bool   `tfsdk:"lock"`
+		AccessToken             types.String `tfsdk:"access_token"`
+		Actions                 types.Object `tfsdk:"actions"`
+		ActiveCredentialCount   types.Int64  `tfsdk:"active_credential_count"`
+		BaseURL                 types.String `tfsdk:"base_url"`
+		ClientID                types.String `tfsdk:"client_id"`
+		CreatedBy               types.String `tfsdk:"created_by"`
+		CreatedDate             types.String `tfsdk:"created_date"`
+		Credential              types.Object `tfsdk:"credential"`
+		ID                      types.String `tfsdk:"id"`
 	}
 )
 
@@ -171,17 +171,7 @@ func (r *apiClientResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 				Default:     booldefault.StaticBool(false),
 				Description: "Enables the API client to manage more than one account.",
 			},
-			"api_access": schema.SingleNestedAttribute{
-				Required:    true,
-				Description: "The APIs the API client can access.",
-				Attributes: map[string]schema.Attribute{
-					"all_accessible_apis": schema.BoolAttribute{
-						Required:    true,
-						Description: "Enables the API client to access a full set of available APIs.",
-					},
-					"apis": apisSchema(),
-				},
-			},
+			"api_access": apiAccessSchema(),
 			"authorized_users": schema.ListAttribute{
 				Required:    true,
 				ElementType: types.StringType,
@@ -219,39 +209,8 @@ func (r *apiClientResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 					"'CLIENT' indicates the creator owns and manages the credentials. " +
 					"'USER_CLIENT' indicates another user owns the client and manages the credentials.",
 			},
-			"group_access": schema.SingleNestedAttribute{
-				Required:    true,
-				Description: "Specifies the API client's group access.",
-				PlanModifiers: []planmodifier.Object{
-					objectplanmodifier.UseStateForUnknown(),
-				},
-				Attributes: map[string]schema.Attribute{
-					"clone_authorized_user_groups": schema.BoolAttribute{
-						Required:    true,
-						Description: "Sets the API client's group access the same as the authorized user.",
-					},
-					"groups": groupsSchema(maxSupportedGroupNesting),
-				},
-			},
-			"ip_acl": schema.SingleNestedAttribute{
-				Optional:    true,
-				Description: "Specifies the API client's IP list restriction.",
-				Attributes: map[string]schema.Attribute{
-					"cidr": schema.ListAttribute{
-						ElementType: types.StringType,
-						Optional:    true,
-						Description: "IP addresses or CIDR blocks the API client can access.",
-						Validators: []validator.List{
-							listvalidator.SizeAtLeast(1),
-							listvalidator.ValueStringsAre(stringvalidator.LengthAtLeast(1)),
-						},
-					},
-					"enable": schema.BoolAttribute{
-						Required:    true,
-						Description: "Enables the API client to access the IP access control list (ACL).",
-					},
-				},
-			},
+			"group_access": groupAccessSchema(),
+			"ip_acl":       ipACLSchema(),
 			"notification_emails": schema.ListAttribute{
 				ElementType: types.StringType,
 				Optional:    true,
@@ -260,37 +219,7 @@ func (r *apiClientResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 					types.StringType, []attr.Value{})),
 				Description: "Email addresses to notify users when credentials expire.",
 			},
-			"purge_options": schema.SingleNestedAttribute{
-				Optional:    true,
-				Description: "Configures the API client to access the Fast Purge API. Provide it only if the `apis` attribute includes an `api_name` of `CCU API`.",
-				Attributes: map[string]schema.Attribute{
-					"can_purge_by_cache_tag": schema.BoolAttribute{
-						Required:    true,
-						Description: "Whether the API client can purge content by cache tag.",
-					},
-					"can_purge_by_cp_code": schema.BoolAttribute{
-						Required:    true,
-						Description: "Whether the API client can purge content by CP code.",
-					},
-					"cp_code_access": schema.SingleNestedAttribute{
-						Required:    true,
-						Description: "CP codes the API client can purge.",
-						Attributes: map[string]schema.Attribute{
-							"all_current_and_new_cp_codes": schema.BoolAttribute{
-								Required:    true,
-								Description: "Whether the API can purge content by all current and new CP codes.",
-							},
-							"cp_codes": schema.ListAttribute{
-								ElementType: types.Int64Type,
-								Optional:    true,
-								Computed:    true, // needed for default
-								Default:     listdefault.StaticValue(types.ListValueMust(types.Int64Type, []attr.Value{})),
-								Description: "CP codes the API client can purge.",
-							},
-						},
-					},
-				},
-			},
+			"purge_options": purgeOptionSchema(),
 			"lock": schema.BoolAttribute{
 				Optional:    true,
 				Computed:    true, // needed for default
@@ -350,6 +279,97 @@ func (r *apiClientResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
+		},
+	}
+}
+
+func groupAccessSchema() schema.SingleNestedAttribute {
+	return schema.SingleNestedAttribute{
+		Required:    true,
+		Description: "Specifies the API client's group access.",
+		PlanModifiers: []planmodifier.Object{
+			objectplanmodifier.UseStateForUnknown(),
+		},
+		Attributes: map[string]schema.Attribute{
+			"clone_authorized_user_groups": schema.BoolAttribute{
+				Required:    true,
+				Description: "Sets the API client's group access the same as the authorized user.",
+			},
+			"groups": groupsSchema(maxSupportedGroupNesting),
+		},
+	}
+}
+
+func ipACLSchema() schema.SingleNestedAttribute {
+	return schema.SingleNestedAttribute{
+		Optional:    true,
+		Description: "Specifies the API client's IP list restriction.",
+		Attributes: map[string]schema.Attribute{
+			"cidr": schema.ListAttribute{
+				ElementType: types.StringType,
+				Required:    true,
+				Description: "IP addresses or CIDR blocks the API client can access.",
+				Validators: []validator.List{
+					listvalidator.SizeAtLeast(1),
+					listvalidator.ValueStringsAre(stringvalidator.LengthAtLeast(1)),
+				},
+			},
+			"enable": schema.BoolAttribute{
+				Required:    true,
+				Description: "Enables the API client to access the IP access control list (ACL).",
+			},
+		},
+	}
+}
+
+func purgeOptionSchema() schema.SingleNestedAttribute {
+	return schema.SingleNestedAttribute{
+		Optional:    true,
+		Description: "Configures the API client to access the Fast Purge API. Provide it only if the `apis` attribute includes an `api_name` of `CCU API`.",
+		Attributes: map[string]schema.Attribute{
+			"can_purge_by_cache_tag": schema.BoolAttribute{
+				Required:    true,
+				Description: "Whether the API client can purge content by cache tag.",
+			},
+			"can_purge_by_cp_code": schema.BoolAttribute{
+				Required:    true,
+				Description: "Whether the API client can purge content by CP code.",
+			},
+			"cp_code_access": cpCodeAccessSchema(),
+		},
+	}
+}
+
+func cpCodeAccessSchema() schema.SingleNestedAttribute {
+	return schema.SingleNestedAttribute{
+		Required:    true,
+		Description: "CP codes the API client can purge.",
+		Attributes: map[string]schema.Attribute{
+			"all_current_and_new_cp_codes": schema.BoolAttribute{
+				Required:    true,
+				Description: "Whether the API can purge content by all current and new CP codes.",
+			},
+			"cp_codes": schema.ListAttribute{
+				ElementType: types.Int64Type,
+				Optional:    true,
+				Computed:    true, // needed for default
+				Default:     listdefault.StaticValue(types.ListValueMust(types.Int64Type, []attr.Value{})),
+				Description: "CP codes the API client can purge.",
+			},
+		},
+	}
+}
+
+func apiAccessSchema() schema.SingleNestedAttribute {
+	return schema.SingleNestedAttribute{
+		Required:    true,
+		Description: "The APIs the API client can access.",
+		Attributes: map[string]schema.Attribute{
+			"all_accessible_apis": schema.BoolAttribute{
+				Required:    true,
+				Description: "Enables the API client to access a full set of available APIs.",
+			},
+			"apis": apisSchema(),
 		},
 	}
 }
@@ -670,19 +690,40 @@ func (r *apiClientResource) validateCPCodes(ctx context.Context, plan *apiClient
 		return
 	}
 
+	var purgeOptions purgeOptionsModel
+	diags = plan.PurgeOptions.As(ctx, &purgeOptions, basetypes.ObjectAsOptions{})
+	if diags.HasError() {
+		response.Diagnostics.Append(diags...)
+		return
+	}
+
 	var plannedCPCodes []int64
-	diags = plan.PurgeOptions.CPCodeAccess.CPCodes.ElementsAs(ctx, &plannedCPCodes, false)
+	if tf.IsKnown(purgeOptions.CPCodeAccess) {
+		var purgeOptionsCPCodeAccess cpCodeAccessModel
+		diags = purgeOptions.CPCodeAccess.As(ctx, &purgeOptionsCPCodeAccess, basetypes.ObjectAsOptions{})
+		if diags.HasError() {
+			response.Diagnostics.Append(diags...)
+			return
+		}
+		diags = purgeOptionsCPCodeAccess.CPCodes.ElementsAs(ctx, &plannedCPCodes, false)
+		if diags.HasError() {
+			response.Diagnostics.Append(diags...)
+			return
+		}
+	}
+	var planGroupAccess groupAccessModel
+	if tf.IsKnown(plan.GroupAccess) {
+		diags = plan.GroupAccess.As(ctx, &planGroupAccess, basetypes.ObjectAsOptions{})
+		if diags.HasError() {
+			response.Diagnostics.Append(diags...)
+			return
+		}
+	}
+	groups, diags := getGroupsFromModel(ctx, planGroupAccess.Groups)
 	if diags.HasError() {
 		response.Diagnostics.Append(diags...)
 		return
 	}
-
-	groups, diags := getGroupsFromModel(ctx, plan.GroupAccess.Groups)
-	if diags.HasError() {
-		response.Diagnostics.Append(diags...)
-		return
-	}
-
 	client := inst.Client(r.meta)
 	allowedCPCodes, err := client.ListAllowedCPCodes(ctx, iam.ListAllowedCPCodesRequest{
 		UserName: authorizedUsers[0],
@@ -702,7 +743,81 @@ func (r *apiClientResource) validateCPCodes(ctx context.Context, plan *apiClient
 	}
 }
 
+func (r *apiClientResource) hasCCUAPI(ctx context.Context, plan *apiClientResourceModel, configuredAPIs []apiClientAPIModel) (bool, error) {
+	tflog.Debug(ctx, "Checking if one of the selected APIs is a CCU API")
+
+	if len(configuredAPIs) == 0 {
+		return false, nil
+	}
+
+	configuredAPIIDSet := make(map[int64]struct{}, len(configuredAPIs))
+	for _, api := range configuredAPIs {
+		configuredAPIIDSet[api.APIID.ValueInt64()] = struct{}{}
+	}
+
+	// Get authorized users
+	var authorizedUsers []string
+	if err := plan.AuthorizedUsers.ElementsAs(ctx, &authorizedUsers, false); err != nil {
+		return false, fmt.Errorf("failed to extract authorized users: %s", err)
+	}
+	if len(authorizedUsers) == 0 {
+		tflog.Debug(ctx, "No authorized users found")
+		return false, fmt.Errorf("no authorized users found")
+	}
+
+	client := inst.Client(r.meta)
+	allowedAPIs, err := client.ListAllowedAPIs(ctx, iam.ListAllowedAPIsRequest{
+		UserName:   authorizedUsers[0],
+		ClientType: iam.ClientType(plan.ClientType.ValueString()),
+	})
+	if err != nil {
+		tflog.Error(ctx, "ListAllowedAPIs failed", map[string]any{"error": err.Error()})
+		return false, fmt.Errorf("failed to list allowed APIs: %w", err)
+	}
+
+	allowedMap := make(map[int64]string, len(allowedAPIs))
+	for _, a := range allowedAPIs {
+		allowedMap[a.APIID] = a.Endpoint
+	}
+
+	missingAPIIDs := make([]int64, 0)
+	hasCCUAPI := false
+
+	// Check if any selected API is a CCU API
+	for apiID := range configuredAPIIDSet {
+		endpoint, ok := allowedMap[apiID]
+		if !ok {
+			missingAPIIDs = append(missingAPIIDs, apiID)
+			continue
+		}
+		if !hasCCUAPI && strings.HasPrefix(strings.ToLower(endpoint), "/ccu") {
+			tflog.Debug(ctx, "Found a valid CCU API", map[string]any{"api_id": apiID})
+			hasCCUAPI = true
+		}
+
+	}
+
+	// If there are any API ID missing from the allowed APIs List
+	if len(missingAPIIDs) > 0 {
+		ids := make([]string, len(missingAPIIDs))
+		for i, id := range missingAPIIDs {
+			ids[i] = fmt.Sprint(id)
+		}
+		return false, fmt.Errorf("the following API IDs are configured but not allowed for the user '%s': %s", authorizedUsers[0], strings.Join(ids, ", "))
+	}
+
+	if hasCCUAPI {
+		tflog.Debug(ctx, "CCU API found among the selected APIs")
+		return true, nil
+	}
+
+	tflog.Debug(ctx, "No CCU API found among the selected APIs")
+	return false, nil
+}
+
 // ModifyPlan performs plan modification on a resource level.
+//
+// nolint:gocyclo
 func (r *apiClientResource) ModifyPlan(ctx context.Context, request resource.ModifyPlanRequest, response *resource.ModifyPlanResponse) {
 	tflog.Debug(ctx, "Modifying plan for API Client Resource")
 	var state, plan *apiClientResourceModel
@@ -723,10 +838,32 @@ func (r *apiClientResource) ModifyPlan(ctx context.Context, request resource.Mod
 	// Otherwise, terraform will throw `.purge_options.cp_code_access.cp_codes: element 0 has vanished.` error,
 	// because in this case cp_codes are not preserved and in the API response cp_codes field is an empty list.
 	// This validation does not work if `clone_authorized_user_groups` is set to `true`.
-	if plan != nil && plan.PurgeOptions != nil && !plan.PurgeOptions.CPCodeAccess.CPCodes.IsNull() &&
-		!plan.GroupAccess.Groups.IsNull() &&
-		tf.IsKnown(plan.PurgeOptions.CPCodeAccess.CPCodes) && tf.IsKnown(plan.GroupAccess.Groups) {
-		r.validateCPCodes(ctx, plan, response)
+	if plan != nil && tf.IsKnown(plan.PurgeOptions) {
+		var planPurgeOptions purgeOptionsModel
+		diags := plan.PurgeOptions.As(ctx, &planPurgeOptions, basetypes.ObjectAsOptions{})
+		if diags.HasError() {
+			response.Diagnostics.Append(diags...)
+			return
+		}
+		var planGroupAccess groupAccessModel
+		if tf.IsKnown(plan.GroupAccess) {
+			diags = plan.GroupAccess.As(ctx, &planGroupAccess, basetypes.ObjectAsOptions{})
+			if diags.HasError() {
+				response.Diagnostics.Append(diags...)
+				return
+			}
+		}
+		if tf.IsKnown(planPurgeOptions.CPCodeAccess) {
+			var planCPCodeAccess cpCodeAccessModel
+			diags = planPurgeOptions.CPCodeAccess.As(ctx, &planCPCodeAccess, basetypes.ObjectAsOptions{})
+			if diags.HasError() {
+				response.Diagnostics.Append(diags...)
+				return
+			}
+			if tf.IsKnown(planCPCodeAccess.CPCodes) && tf.IsKnown(planGroupAccess.Groups) {
+				r.validateCPCodes(ctx, plan, response)
+			}
+		}
 	}
 
 	if request.Plan.Raw.IsNull() || request.State.Raw.IsNull() {
@@ -768,13 +905,23 @@ func (r *apiClientResource) ModifyPlan(ctx context.Context, request resource.Mod
 		return
 	}
 
+	var stateAPIAccess apiAccessModel
+	response.Diagnostics.Append(state.APIAccess.As(ctx, &stateAPIAccess, basetypes.ObjectAsOptions{})...)
+	if response.Diagnostics.HasError() {
+		return
+	}
+	var planAPIAccess apiAccessModel
+	response.Diagnostics.Append(plan.APIAccess.As(ctx, &planAPIAccess, basetypes.ObjectAsOptions{})...)
+	if response.Diagnostics.HasError() {
+		return
+	}
 	// If all_accessible_apis is true, we need to remove the apis from the plan
-	if tf.IsKnown(state.APIAccess.AllAccessibleAPIs) &&
-		tf.IsKnown(plan.APIAccess.AllAccessibleAPIs) &&
-		state.APIAccess.AllAccessibleAPIs.ValueBool() != plan.APIAccess.AllAccessibleAPIs.ValueBool() && plan.APIAccess.AllAccessibleAPIs.ValueBool() {
+	if tf.IsKnown(stateAPIAccess.AllAccessibleAPIs) &&
+		tf.IsKnown(planAPIAccess.AllAccessibleAPIs) &&
+		stateAPIAccess.AllAccessibleAPIs.ValueBool() != planAPIAccess.AllAccessibleAPIs.ValueBool() && planAPIAccess.AllAccessibleAPIs.ValueBool() {
 		tflog.Debug(ctx, "If 'all_accessible_apis' is true, we need to remove the 'apis' from the plan")
-		plan.APIAccess.APIs = types.SetUnknown(apiType())
-		response.Diagnostics.Append(response.Plan.SetAttribute(ctx, path.Root("api_access"), plan.APIAccess)...)
+		planAPIAccess.APIs = types.SetUnknown(apiType())
+		response.Diagnostics.Append(response.Plan.SetAttribute(ctx, path.Root("api_access"), planAPIAccess)...)
 		if response.Diagnostics.HasError() {
 			return
 		}
@@ -877,40 +1024,55 @@ func credentialObjectToModel(ctx context.Context, credentialObject types.Object)
 
 func modifyGroupAccess(ctx context.Context, state *apiClientResourceModel, plan *apiClientResourceModel, response *resource.ModifyPlanResponse) {
 	// If clone_authorized_user_groups is changed to false, we need to invalidate first element of `groups` from the plan
-	if tf.IsKnown(state.GroupAccess.CloneAuthorizedUserGroups) &&
-		tf.IsKnown(plan.GroupAccess.CloneAuthorizedUserGroups) &&
-		state.GroupAccess.CloneAuthorizedUserGroups.ValueBool() != plan.GroupAccess.CloneAuthorizedUserGroups.ValueBool() && !plan.GroupAccess.CloneAuthorizedUserGroups.ValueBool() {
-		tflog.Debug(ctx, "If 'clone_authorized_user_groups' is changed to false, we need to invalidate first element of 'groups' from the plan")
-		var groups []apiClientGroupModel
-		response.Diagnostics.Append(plan.GroupAccess.Groups.ElementsAs(ctx, &groups, false)...)
-		if response.Diagnostics.HasError() {
-			return
-		}
-		groups[0].RoleName = types.StringUnknown()
-		groups[0].RoleDescription = types.StringUnknown()
-		groups[0].GroupName = types.StringUnknown()
-		groups[0].ParentGroupID = types.Int64Unknown()
-
-		g, diags := types.ListValueFrom(ctx, groupsType(maxSupportedGroupNesting), groups)
+	if tf.IsKnown(state.GroupAccess) && tf.IsKnown(plan.GroupAccess) {
+		var stateGroupAccess groupAccessModel
+		diags := state.GroupAccess.As(ctx, &stateGroupAccess, basetypes.ObjectAsOptions{})
 		if diags.HasError() {
 			response.Diagnostics.Append(diags...)
 			return
 		}
-		plan.GroupAccess.Groups = g
-		response.Diagnostics.Append(response.Plan.SetAttribute(ctx, path.Root("group_access"), plan.GroupAccess)...)
-		if response.Diagnostics.HasError() {
+		var planGroupAccess groupAccessModel
+		diags = plan.GroupAccess.As(ctx, &planGroupAccess, basetypes.ObjectAsOptions{})
+		if diags.HasError() {
+			response.Diagnostics.Append(diags...)
 			return
 		}
-	}
-	// If clone_authorized_user_groups is changed to true, we need to invalidate all `groups` from the plan
-	if tf.IsKnown(state.GroupAccess.CloneAuthorizedUserGroups) &&
-		tf.IsKnown(plan.GroupAccess.CloneAuthorizedUserGroups) &&
-		state.GroupAccess.CloneAuthorizedUserGroups.ValueBool() != plan.GroupAccess.CloneAuthorizedUserGroups.ValueBool() && plan.GroupAccess.CloneAuthorizedUserGroups.ValueBool() {
-		tflog.Debug(ctx, "If 'clone_authorized_user_groups' is changed to true, we need to invalidate all 'groups' from the plan")
-		plan.GroupAccess.Groups = types.ListUnknown(groupsType(maxSupportedGroupNesting))
-		response.Diagnostics.Append(response.Plan.SetAttribute(ctx, path.Root("group_access"), plan.GroupAccess)...)
-		if response.Diagnostics.HasError() {
-			return
+
+		if tf.IsKnown(stateGroupAccess.CloneAuthorizedUserGroups) &&
+			tf.IsKnown(planGroupAccess.CloneAuthorizedUserGroups) &&
+			stateGroupAccess.CloneAuthorizedUserGroups.ValueBool() != planGroupAccess.CloneAuthorizedUserGroups.ValueBool() && !planGroupAccess.CloneAuthorizedUserGroups.ValueBool() {
+			tflog.Debug(ctx, "If 'clone_authorized_user_groups' is changed to false, we need to invalidate first element of 'groups' from the plan")
+			var groups []apiClientGroupModel
+			response.Diagnostics.Append(planGroupAccess.Groups.ElementsAs(ctx, &groups, false)...)
+			if response.Diagnostics.HasError() {
+				return
+			}
+			groups[0].RoleName = types.StringUnknown()
+			groups[0].RoleDescription = types.StringUnknown()
+			groups[0].GroupName = types.StringUnknown()
+			groups[0].ParentGroupID = types.Int64Unknown()
+
+			g, diags := types.ListValueFrom(ctx, groupsType(maxSupportedGroupNesting), groups)
+			if diags.HasError() {
+				response.Diagnostics.Append(diags...)
+				return
+			}
+			planGroupAccess.Groups = g
+			response.Diagnostics.Append(response.Plan.SetAttribute(ctx, path.Root("group_access"), planGroupAccess)...)
+			if response.Diagnostics.HasError() {
+				return
+			}
+		}
+		// If clone_authorized_user_groups is changed to true, we need to invalidate all `groups` from the plan
+		if tf.IsKnown(stateGroupAccess.CloneAuthorizedUserGroups) &&
+			tf.IsKnown(planGroupAccess.CloneAuthorizedUserGroups) &&
+			stateGroupAccess.CloneAuthorizedUserGroups.ValueBool() != planGroupAccess.CloneAuthorizedUserGroups.ValueBool() && planGroupAccess.CloneAuthorizedUserGroups.ValueBool() {
+			tflog.Debug(ctx, "If 'clone_authorized_user_groups' is changed to true, we need to invalidate all 'groups' from the plan")
+			planGroupAccess.Groups = types.ListUnknown(groupsType(maxSupportedGroupNesting))
+			response.Diagnostics.Append(response.Plan.SetAttribute(ctx, path.Root("group_access"), planGroupAccess)...)
+			if response.Diagnostics.HasError() {
+				return
+			}
 		}
 	}
 }
@@ -957,7 +1119,7 @@ func modifyActions(ctx context.Context, state *apiClientResourceModel, plan *api
 	// Set 'deactive_all' and 'delete' inside top-level 'actions' attribute
 	// to unknown if the credential status has been changed.
 	// Checking if state credential is not null is not needed, as the state is always
-	// pupulated with credential and before import, plan modification is not invoked.
+	// populated with credential and before import, plan modification is not invoked.
 	if !plan.Credential.IsUnknown() {
 		planCredentialModel, diags := credentialObjectToModel(ctx, plan.Credential)
 		if diags.HasError() {
@@ -988,6 +1150,8 @@ func modifyActions(ctx context.Context, state *apiClientResourceModel, plan *api
 }
 
 // ValidateConfig implements resource.ResourceWithValidateConfig.
+//
+// nolint:gocyclo
 func (r *apiClientResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
 	tflog.Debug(ctx, "Validating API Client Resource")
 	var data apiClientResourceModel
@@ -997,20 +1161,32 @@ func (r *apiClientResource) ValidateConfig(ctx context.Context, req resource.Val
 		return
 	}
 
-	var groups []apiClientGroupModel
-	resp.Diagnostics.Append(data.GroupAccess.Groups.ElementsAs(ctx, &groups, false)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	if tf.IsKnown(data.GroupAccess) {
+		var dataGroupAccess groupAccessModel
+		resp.Diagnostics.Append(data.GroupAccess.As(ctx, &dataGroupAccess, basetypes.ObjectAsOptions{})...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
 
-	if data.GroupAccess != nil && !data.GroupAccess.CloneAuthorizedUserGroups.ValueBool() && len(groups) == 0 {
-		resp.Diagnostics.AddAttributeError(path.Root("group_access"), invalidConfigurationAttribute, "You must specify at least one group when 'clone_authorized_user_groups' is false")
-		return
-	}
+		var groups []apiClientGroupModel
+		if tf.IsKnown(dataGroupAccess.Groups) {
+			resp.Diagnostics.Append(dataGroupAccess.Groups.ElementsAs(ctx, &groups, false)...)
+			if resp.Diagnostics.HasError() {
+				return
+			}
+		}
 
-	if data.GroupAccess != nil && data.GroupAccess.CloneAuthorizedUserGroups.ValueBool() && len(groups) != 0 {
-		resp.Diagnostics.AddAttributeError(path.Root("group_access"), invalidConfigurationAttribute, "You cannot specify any group when 'clone_authorized_user_groups' is true")
-		return
+		if tf.IsKnown(dataGroupAccess.CloneAuthorizedUserGroups) {
+			if !dataGroupAccess.CloneAuthorizedUserGroups.ValueBool() && len(groups) == 0 {
+				resp.Diagnostics.AddAttributeError(path.Root("group_access"), invalidConfigurationAttribute, "You must specify at least one group when 'clone_authorized_user_groups' is false")
+				return
+			}
+
+			if dataGroupAccess.CloneAuthorizedUserGroups.ValueBool() && len(groups) != 0 {
+				resp.Diagnostics.AddAttributeError(path.Root("group_access"), invalidConfigurationAttribute, "You cannot specify any group when 'clone_authorized_user_groups' is true")
+				return
+			}
+		}
 	}
 
 	apis, diags := data.apisFromModel(ctx)
@@ -1019,38 +1195,83 @@ func (r *apiClientResource) ValidateConfig(ctx context.Context, req resource.Val
 		return
 	}
 
-	if !data.APIAccess.AllAccessibleAPIs.ValueBool() && len(apis) == 0 {
-		resp.Diagnostics.AddAttributeError(path.Root("api_access"), invalidConfigurationAttribute, "You must specify at least one API when 'all_accessible_apis' is false")
-		return
-	}
-
-	if data.APIAccess.AllAccessibleAPIs.ValueBool() && len(apis) != 0 {
-		resp.Diagnostics.AddAttributeError(path.Root("api_access"), invalidConfigurationAttribute, "You cannot specify any API when 'all_accessible_apis' is true")
-		return
-	}
-
-	if data.APIAccess.AllAccessibleAPIs.ValueBool() && data.PurgeOptions == nil {
-		resp.Diagnostics.AddAttributeError(path.Root("api_access"), invalidConfigurationAttribute, "You must specify 'purge_options' when 'all_accessible_apis' is true")
-		return
-	}
-
-	var cpCodes []int64
-	if data.PurgeOptions != nil && tf.IsKnown(data.PurgeOptions.CPCodeAccess.CPCodes) {
-		resp.Diagnostics.Append(data.PurgeOptions.CPCodeAccess.CPCodes.ElementsAs(ctx, &cpCodes, false)...)
+	if tf.IsKnown(data.APIAccess) {
+		var apiAccess apiAccessModel
+		resp.Diagnostics.Append(data.APIAccess.As(ctx, &apiAccess, basetypes.ObjectAsOptions{})...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
+
+		if tf.IsKnown(apiAccess.AllAccessibleAPIs) {
+			if !apiAccess.AllAccessibleAPIs.ValueBool() && len(apis) == 0 {
+				resp.Diagnostics.AddAttributeError(path.Root("api_access"), invalidConfigurationAttribute, "You must specify at least one API when 'all_accessible_apis' is false")
+				return
+			}
+
+			if apiAccess.AllAccessibleAPIs.ValueBool() && len(apis) != 0 {
+				resp.Diagnostics.AddAttributeError(path.Root("api_access"), invalidConfigurationAttribute, "You cannot specify any API when 'all_accessible_apis' is true")
+				return
+			}
+
+			if apiAccess.AllAccessibleAPIs.ValueBool() && data.PurgeOptions.IsNull() {
+				resp.Diagnostics.AddAttributeError(path.Root("api_access"), invalidConfigurationAttribute, "You must specify 'purge_options' when 'all_accessible_apis' is true")
+				return
+			}
+
+			if r.meta != nil && !apiAccess.AllAccessibleAPIs.ValueBool() && !data.PurgeOptions.IsNull() {
+				var apiModel []apiClientAPIModel
+				diags := apiAccess.APIs.ElementsAs(ctx, &apiModel, false)
+				if diags.HasError() {
+					return
+				}
+
+				hasCCU, err := r.hasCCUAPI(ctx, &data, apiModel)
+				if err != nil {
+					resp.Diagnostics.AddAttributeError(
+						path.Root("api_access"),
+						"API Validation Error",
+						fmt.Sprintf("Could not verify APIs due to an unexpected error: %s", err.Error()),
+					)
+					return
+				}
+
+				if !hasCCU {
+					resp.Diagnostics.AddAttributeError(
+						path.Root("api_access"),
+						invalidConfigurationAttribute,
+						"'purge_options' can only be specified when either 'all_accessible_apis' is set to true or the 'apis' list contains CCU API.",
+					)
+					return
+				}
+			}
+		}
 	}
 
-	if data.PurgeOptions != nil && data.PurgeOptions.CPCodeAccess.AllCurrentAndNewCPCodes.ValueBool() && len(cpCodes) != 0 {
-		resp.Diagnostics.AddAttributeError(path.Root("purge_options"), invalidConfigurationAttribute, "You cannot specify any CP Code when 'all_current_and_new_cp_codes' is true")
-	}
+	if tf.IsKnown(data.PurgeOptions) {
+		var purgeOptions purgeOptionsModel
+		diags = data.PurgeOptions.As(ctx, &purgeOptions, basetypes.ObjectAsOptions{})
+		if diags.HasError() {
+			resp.Diagnostics.Append(diags...)
+			return
+		}
+		var cpCodes []int64
+		if tf.IsKnown(purgeOptions.CPCodeAccess) {
+			var cpCodeAccess cpCodeAccessModel
+			resp.Diagnostics.Append(purgeOptions.CPCodeAccess.As(ctx, &cpCodeAccess, basetypes.ObjectAsOptions{})...)
+			if resp.Diagnostics.HasError() {
+				return
+			}
 
-	if data.IPACL != nil && data.IPACL.Enable.ValueBool() {
-		if data.IPACL.CIDR.IsNull() || data.IPACL.CIDR.IsUnknown() || len(data.IPACL.CIDR.Elements()) == 0 {
-			resp.Diagnostics.AddAttributeError(
-				path.Root("ip_acl").AtName("cidr"), invalidConfigurationAttribute, "You should specify 'cidr' when 'enable' is true",
-			)
+			if tf.IsKnown(cpCodeAccess.CPCodes) {
+				resp.Diagnostics.Append(cpCodeAccess.CPCodes.ElementsAs(ctx, &cpCodes, false)...)
+				if resp.Diagnostics.HasError() {
+					return
+				}
+			}
+
+			if cpCodeAccess.AllCurrentAndNewCPCodes.ValueBool() && len(cpCodes) != 0 {
+				resp.Diagnostics.AddAttributeError(path.Root("purge_options"), invalidConfigurationAttribute, "You cannot specify any CP Code when 'all_current_and_new_cp_codes' is true")
+			}
 		}
 	}
 }
@@ -1081,7 +1302,14 @@ func (r *apiClientResource) create(ctx context.Context, plan *apiClientResourceM
 		}
 	}
 
-	groups, diags := getGroupsFromModel(ctx, plan.GroupAccess.Groups)
+	var planGroupAccess groupAccessModel
+	if tf.IsKnown(plan.GroupAccess) {
+		diags := plan.GroupAccess.As(ctx, &planGroupAccess, basetypes.ObjectAsOptions{})
+		if diags.HasError() {
+			return fmt.Errorf("failed to get groups: %v", diags)
+		}
+	}
+	groups, diags := getGroupsFromModel(ctx, planGroupAccess.Groups)
 	if diags.HasError() {
 		return fmt.Errorf("failed to get groups: %v", diags)
 	}
@@ -1116,7 +1344,7 @@ func (r *apiClientResource) create(ctx context.Context, plan *apiClientResourceM
 		ClientType:              iam.ClientType(plan.ClientType.ValueString()),
 		CreateCredential:        true,
 		GroupAccess: iam.GroupAccessRequest{
-			CloneAuthorizedUserGroups: plan.GroupAccess.CloneAuthorizedUserGroups.ValueBool(),
+			CloneAuthorizedUserGroups: planGroupAccess.CloneAuthorizedUserGroups.ValueBool(),
 			Groups:                    groups,
 		},
 		IPACL:              ipACL,
@@ -1140,15 +1368,15 @@ func (r *apiClientResource) create(ctx context.Context, plan *apiClientResourceM
 				CredentialID: createAPIClientResponse.Credentials[0].CredentialID,
 				ClientID:     createAPIClientResponse.ClientID,
 			}
-			if !credential.Description.IsNull() && !credential.Description.IsUnknown() {
+			if tf.IsKnown(credential.Description) {
 				updateCredentialReq.Body.Description = credential.Description.ValueString()
 			}
-			if !credential.Status.IsNull() && !credential.Status.IsUnknown() {
+			if tf.IsKnown(credential.Status) {
 				updateCredentialReq.Body.Status = iam.CredentialStatus(credential.Status.ValueString())
 			} else {
-				updateCredentialReq.Body.Status = iam.CredentialStatus(createAPIClientResponse.Credentials[0].Status)
+				updateCredentialReq.Body.Status = createAPIClientResponse.Credentials[0].Status
 			}
-			if !credential.ExpiresOn.IsNull() != credential.ExpiresOn.IsUnknown() {
+			if tf.IsKnown(credential.ExpiresOn) {
 				expiresOn, err := date.ParseFormat(time.RFC3339Nano, credential.ExpiresOn.ValueString())
 				if err != nil {
 					return fmt.Errorf("failed to parse expires on date: %v", err)
@@ -1177,7 +1405,7 @@ func (r *apiClientResource) create(ctx context.Context, plan *apiClientResourceM
 				AuthorizedUsers:    authorizedUsers,
 				ClientType:         iam.ClientType(plan.ClientType.ValueString()),
 				GroupAccess: iam.GroupAccessRequest{
-					CloneAuthorizedUserGroups: plan.GroupAccess.CloneAuthorizedUserGroups.ValueBool(),
+					CloneAuthorizedUserGroups: planGroupAccess.CloneAuthorizedUserGroups.ValueBool(),
 					Groups:                    groups,
 				},
 				AllowAccountSwitch:      plan.AllowAccountSwitch.ValueBool(),
@@ -1405,7 +1633,14 @@ func (r *apiClientResource) update(ctx context.Context, plan *apiClientResourceM
 		}
 	}
 
-	groups, diags := getGroupsFromModel(ctx, plan.GroupAccess.Groups)
+	var planGroupAccess groupAccessModel
+	if tf.IsKnown(plan.GroupAccess) {
+		diags := plan.GroupAccess.As(ctx, &planGroupAccess, basetypes.ObjectAsOptions{})
+		if diags.HasError() {
+			return fmt.Errorf("failed to get groups: %v", diags)
+		}
+	}
+	groups, diags := getGroupsFromModel(ctx, planGroupAccess.Groups)
 	if diags.HasError() {
 		return fmt.Errorf("failed to get groups: %v", diags)
 	}
@@ -1440,7 +1675,7 @@ func (r *apiClientResource) update(ctx context.Context, plan *apiClientResourceM
 			ClientName:              plan.ClientName.ValueString(),
 			ClientType:              iam.ClientType(plan.ClientType.ValueString()),
 			GroupAccess: iam.GroupAccessRequest{
-				CloneAuthorizedUserGroups: plan.GroupAccess.CloneAuthorizedUserGroups.ValueBool(),
+				CloneAuthorizedUserGroups: planGroupAccess.CloneAuthorizedUserGroups.ValueBool(),
 				Groups:                    groups,
 			},
 			IPACL:              ipACL,
@@ -1530,8 +1765,11 @@ func (r *apiClientResource) ImportState(ctx context.Context, req resource.Import
 	data.NotificationEmails = types.ListUnknown(types.StringType)
 	data.Credential = types.ObjectUnknown(credentialType())
 	data.Actions = types.ObjectUnknown(actionsType())
-	data.APIAccess.APIs = types.SetUnknown(apiType())
+	data.APIAccess = types.ObjectUnknown(apiAccessType())
+	data.PurgeOptions = types.ObjectUnknown(purgeOptionsType())
+	data.IPACL = types.ObjectUnknown(ipACLType())
 	data.AuthorizedUsers = types.ListUnknown(types.StringType)
+	data.GroupAccess = types.ObjectUnknown(groupAccessType())
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -1554,8 +1792,13 @@ func isUpdateNeeded(ctx context.Context, state *tfsdk.State, plan *tfsdk.Plan) b
 func (m *apiClientResourceModel) getAPIAccessRequest(ctx context.Context) (*iam.APIAccessRequest, diag.Diagnostics) {
 	var apiAccess iam.APIAccessRequest
 	var apis []iam.APIRequestItem
+	var planAPIAccess apiAccessModel
+	diags := m.APIAccess.As(ctx, &planAPIAccess, basetypes.ObjectAsOptions{})
+	if diags.HasError() {
+		return nil, diags
+	}
 	// we should modify the list of apis only when all_accessible_apis is false
-	if !m.APIAccess.AllAccessibleAPIs.ValueBool() {
+	if !planAPIAccess.AllAccessibleAPIs.ValueBool() {
 		var diags diag.Diagnostics
 		apis, diags = m.apisFromModel(ctx)
 		if diags.HasError() {
@@ -1563,7 +1806,7 @@ func (m *apiClientResourceModel) getAPIAccessRequest(ctx context.Context) (*iam.
 		}
 	}
 	apiAccess = iam.APIAccessRequest{
-		AllAccessibleAPIs: m.APIAccess.AllAccessibleAPIs.ValueBool(),
+		AllAccessibleAPIs: planAPIAccess.AllAccessibleAPIs.ValueBool(),
 		APIs:              apis,
 	}
 
@@ -1571,17 +1814,27 @@ func (m *apiClientResourceModel) getAPIAccessRequest(ctx context.Context) (*iam.
 }
 
 func (m *apiClientResourceModel) apisFromModel(ctx context.Context) ([]iam.APIRequestItem, diag.Diagnostics) {
-	var apis []iam.APIRequestItem
-
-	var apiModel []apiClientAPIModel
-	if tf.IsKnown(m.APIAccess.APIs) {
-		diags := m.APIAccess.APIs.ElementsAs(ctx, &apiModel, false)
-		if diags.HasError() {
-			return nil, diags
-		}
+	apis := make([]iam.APIRequestItem, 0)
+	if !tf.IsKnown(m.APIAccess) {
+		return apis, nil
 	}
 
-	apis = make([]iam.APIRequestItem, 0, len(apiModel))
+	var apiAccess apiAccessModel
+	diags := m.APIAccess.As(ctx, &apiAccess, basetypes.ObjectAsOptions{})
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	if !tf.IsKnown(apiAccess.APIs) {
+		return apis, nil
+	}
+
+	var apiModel []apiClientAPIModel
+	diags = apiAccess.APIs.ElementsAs(ctx, &apiModel, false)
+	if diags.HasError() {
+		return nil, diags
+	}
+
 	for _, api := range apiModel {
 		apis = append(apis, iam.APIRequestItem{
 			AccessLevel: iam.AccessLevel(api.AccessLevel.ValueString()),
@@ -1593,25 +1846,29 @@ func (m *apiClientResourceModel) apisFromModel(ctx context.Context) ([]iam.APIRe
 }
 
 func (m *apiClientResourceModel) getIPACL(ctx context.Context) (*iam.IPACL, diag.Diagnostics) {
-	var ipACL *iam.IPACL
-	if m.IPACL != nil {
-
-		var cidr []string
-		diags := m.IPACL.CIDR.ElementsAs(ctx, &cidr, false)
-		if diags.HasError() {
-			return nil, diags
-		}
-
-		ipACL = &iam.IPACL{
-			CIDR:   cidr,
-			Enable: m.IPACL.Enable.ValueBool(),
-		}
+	if !tf.IsKnown(m.IPACL) {
+		return nil, nil
 	}
-	return ipACL, nil
+	var ipACL ipACLModel
+	diags := m.IPACL.As(ctx, &ipACL, basetypes.ObjectAsOptions{})
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	var cidr []string
+	diags = ipACL.CIDR.ElementsAs(ctx, &cidr, false)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return &iam.IPACL{
+		CIDR:   cidr,
+		Enable: ipACL.Enable.ValueBool(),
+	}, nil
 }
 
 func getGroupsFromModel(ctx context.Context, groupModels types.List) ([]iam.ClientGroupRequestItem, diag.Diagnostics) {
-	if groupModels.IsNull() || groupModels.IsUnknown() {
+	if !tf.IsKnown(groupModels) {
 		return nil, nil
 	}
 
@@ -1640,29 +1897,43 @@ func getGroupsFromModel(ctx context.Context, groupModels types.List) ([]iam.Clie
 }
 
 func (m *apiClientResourceModel) getPurgeOptions(ctx context.Context) (*iam.PurgeOptions, diag.Diagnostics) {
-	var purgeOptions *iam.PurgeOptions
+	var result *iam.PurgeOptions
 
-	if m.PurgeOptions != nil {
+	if tf.IsKnown(m.PurgeOptions) {
+		var purgeOptions purgeOptionsModel
+		diags := m.PurgeOptions.As(ctx, &purgeOptions, basetypes.ObjectAsOptions{})
+		if diags.HasError() {
+			return nil, diags
+		}
+
 		var cpCodes []int64
-		if m.PurgeOptions != nil && tf.IsKnown(m.PurgeOptions.CPCodeAccess.CPCodes) {
-			diags := m.PurgeOptions.CPCodeAccess.CPCodes.ElementsAs(ctx, &cpCodes, false)
+		var cpCodeAccess cpCodeAccessModel
+		if tf.IsKnown(purgeOptions.CPCodeAccess) {
+			diags = purgeOptions.CPCodeAccess.As(ctx, &cpCodeAccess, basetypes.ObjectAsOptions{})
 			if diags.HasError() {
 				return nil, diags
 			}
-		}
 
-		purgeOptions = &iam.PurgeOptions{
-			CanPurgeByCacheTag: m.PurgeOptions.CanPurgeByCacheTag.ValueBool(),
-			CanPurgeByCPCode:   m.PurgeOptions.CanPurgeByCPCode.ValueBool(),
+			if tf.IsKnown(cpCodeAccess.CPCodes) {
+				diags := cpCodeAccess.CPCodes.ElementsAs(ctx, &cpCodes, false)
+				if diags.HasError() {
+					return nil, diags
+				}
+			}
+		}
+		result = &iam.PurgeOptions{
+			CanPurgeByCacheTag: purgeOptions.CanPurgeByCacheTag.ValueBool(),
+			CanPurgeByCPCode:   purgeOptions.CanPurgeByCPCode.ValueBool(),
 			CPCodeAccess: iam.CPCodeAccess{
-				AllCurrentAndNewCPCodes: m.PurgeOptions.CPCodeAccess.AllCurrentAndNewCPCodes.ValueBool(),
+				AllCurrentAndNewCPCodes: cpCodeAccess.AllCurrentAndNewCPCodes.ValueBool(),
 				CPCodes:                 cpCodes,
 			},
 		}
 	}
-	return purgeOptions, nil
+	return result, nil
 }
 
+// nolint:gocyclo
 func (m *apiClientResourceModel) setData(ctx context.Context, getResponse *iam.GetAPIClientResponse, createResponse *iam.CreateAPIClientResponse) diag.Diagnostics {
 	m.ClientID = types.StringValue(getResponse.ClientID)
 	m.ClientType = types.StringValue(string(getResponse.ClientType))
@@ -1688,14 +1959,26 @@ func (m *apiClientResourceModel) setData(ctx context.Context, getResponse *iam.G
 		if diags.HasError() {
 			return diags
 		}
-		m.PurgeOptions = &purgeOptionsModel{
+		cpCodeAccess := cpCodeAccessModel{
+			AllCurrentAndNewCPCodes: types.BoolValue(getResponse.PurgeOptions.CPCodeAccess.AllCurrentAndNewCPCodes),
+			CPCodes:                 cpCodes,
+		}
+		cpCodeAccessObject, diags := types.ObjectValueFrom(ctx, cpCodeAccessType(), cpCodeAccess)
+		if diags.HasError() {
+			return diags
+		}
+		purgeOptions := purgeOptionsModel{
 			CanPurgeByCacheTag: types.BoolValue(getResponse.PurgeOptions.CanPurgeByCacheTag),
 			CanPurgeByCPCode:   types.BoolValue(getResponse.PurgeOptions.CanPurgeByCPCode),
-			CPCodeAccess: cpCodeAccessModel{
-				AllCurrentAndNewCPCodes: types.BoolValue(getResponse.PurgeOptions.CPCodeAccess.AllCurrentAndNewCPCodes),
-				CPCodes:                 cpCodes,
-			},
+			CPCodeAccess:       cpCodeAccessObject,
 		}
+		purgeOptionsObject, diags := types.ObjectValueFrom(ctx, purgeOptionsType(), purgeOptions)
+		if diags.HasError() {
+			return diags
+		}
+		m.PurgeOptions = purgeOptionsObject
+	} else {
+		m.PurgeOptions = types.ObjectNull(purgeOptionsType())
 	}
 
 	notificationEmailsObject, diags := types.ListValueFrom(ctx, types.StringType, getResponse.NotificationEmails)
@@ -1710,20 +1993,32 @@ func (m *apiClientResourceModel) setData(ctx context.Context, getResponse *iam.G
 			return diags
 		}
 
-		m.IPACL = &ipACLModel{
+		ipACL := ipACLModel{
 			CIDR:   cidrObject,
 			Enable: types.BoolValue(getResponse.IPACL.Enable),
 		}
+		ipACLObject, diags := types.ObjectValueFrom(ctx, ipACLType(), ipACL)
+		if diags.HasError() {
+			return diags
+		}
+		m.IPACL = ipACLObject
+	} else {
+		m.IPACL = types.ObjectNull(ipACLType())
 	}
 
 	subGroups, diags := readGroups(ctx, getResponse.GroupAccess.Groups, maxSupportedGroupNesting)
 	if diags.HasError() {
 		return diags
 	}
-	m.GroupAccess = &groupAccessModel{
+	groupAccess := groupAccessModel{
 		CloneAuthorizedUserGroups: types.BoolValue(getResponse.GroupAccess.CloneAuthorizedUserGroups),
 		Groups:                    subGroups,
 	}
+	groupAccessObject, diags := types.ObjectValueFrom(ctx, groupAccessType(), groupAccess)
+	if diags.HasError() {
+		return diags
+	}
+	m.GroupAccess = groupAccessObject
 
 	var actions apiClientActionsModel
 	if getResponse.Actions != nil {
@@ -1746,6 +2041,8 @@ func (m *apiClientResourceModel) setData(ctx context.Context, getResponse *iam.G
 			return diags
 		}
 		m.Actions = actionsObject
+	} else {
+		m.Actions = types.ObjectNull(actionsType())
 	}
 
 	var credModel credentialsModel
@@ -1758,7 +2055,7 @@ func (m *apiClientResourceModel) setData(ctx context.Context, getResponse *iam.G
 		credential := createResponse.Credentials[0]
 
 		// Use Credential from GetResponse to populate state with the latest values
-		// of status, expires_on, description and actions attributes. In case of providing those fields during the create,
+		// of status, expires_on, description and actions attributes. In case of providing those fields during the create operation,
 		// create response will not contain them, but get response will.
 		var getResponseCredential iam.APIClientCredential
 		for _, cred := range getResponse.Credentials {
@@ -1827,7 +2124,7 @@ func (m *apiClientResourceModel) setData(ctx context.Context, getResponse *iam.G
 			// If m.Credential is not known or null, we need to get the oldest credential,
 			// as they would be created along the API client. If the response does not contain
 			// any credentials, credential attribute will be set to null.
-		} else if m.Credential.IsUnknown() || m.Credential.IsNull() {
+		} else if !tf.IsKnown(m.Credential) {
 			credentialsResponse := getResponse.Credentials
 			sort.Slice(credentialsResponse, func(i, j int) bool {
 				return credentialsResponse[i].CreatedOn.Before(credentialsResponse[j].CreatedOn)
@@ -1876,7 +2173,7 @@ func (m *apiClientResourceModel) setData(ctx context.Context, getResponse *iam.G
 	apis := make([]apiClientAPIModel, 0, len(getResponse.APIAccess.APIs))
 	for _, api := range getResponse.APIAccess.APIs {
 		apis = append(apis, apiClientAPIModel{
-			AccessLevel:      types.StringValue(string(api.AccessLevel)),
+			AccessLevel:      types.StringValue(api.AccessLevel),
 			APIID:            types.Int64Value(api.APIID),
 			APIName:          types.StringValue(api.APIName),
 			Description:      types.StringValue(api.Description),
@@ -1888,14 +2185,34 @@ func (m *apiClientResourceModel) setData(ctx context.Context, getResponse *iam.G
 	if diags.HasError() {
 		return diags
 	}
-	m.APIAccess = apiAccessModel{
+	APIAccess := apiAccessModel{
 		AllAccessibleAPIs: types.BoolValue(getResponse.APIAccess.AllAccessibleAPIs),
 		APIs:              apisObject,
 	}
-
+	apiAccessObject, diags := types.ObjectValueFrom(ctx, apiAccessType(), APIAccess)
+	if diags.HasError() {
+		return diags
+	}
+	m.APIAccess = apiAccessObject
 	m.ID = types.StringValue(getResponse.ClientID)
 
 	return nil
+}
+
+func cpCodeAccessType() map[string]attr.Type {
+	return cpCodeAccessSchema().GetType().(attr.TypeWithAttributeTypes).AttributeTypes()
+}
+
+func groupAccessType() map[string]attr.Type {
+	return groupAccessSchema().GetType().(attr.TypeWithAttributeTypes).AttributeTypes()
+}
+
+func ipACLType() map[string]attr.Type {
+	return ipACLSchema().GetType().(attr.TypeWithAttributeTypes).AttributeTypes()
+}
+
+func purgeOptionsType() map[string]attr.Type {
+	return purgeOptionSchema().GetType().(attr.TypeWithAttributeTypes).AttributeTypes()
 }
 
 func credentialActionsType() map[string]attr.Type {
@@ -1912,6 +2229,10 @@ func apiType() types.ObjectType {
 
 func credentialType() map[string]attr.Type {
 	return credentialSchema().GetType().(attr.TypeWithAttributeTypes).AttributeTypes()
+}
+
+func apiAccessType() map[string]attr.Type {
+	return apiAccessSchema().GetType().(attr.TypeWithAttributeTypes).AttributeTypes()
 }
 
 func groupsType(level int) types.ObjectType {

@@ -651,7 +651,7 @@ func (r *caSetResource) Create(ctx context.Context, req resource.CreateRequest, 
 		// On failure, save partial state if available.
 		if createResp != nil && createResp.caSet != nil {
 			plan.setCASetData((*mtlstruststore.CASetResponse)(createResp.caSet))
-			if diags := populateDefaultVersionStateFromPlan(&plan); diags.HasError() {
+			if diags := populateDefaultVersionStateFromPlan(ctx, &plan); diags.HasError() {
 				resp.Diagnostics.Append(diags...)
 				return
 			}
@@ -722,21 +722,21 @@ func (r *caSetResource) create(ctx context.Context, plan *caSetResourceModel) (*
 	return &result, diags
 }
 
-func populateDefaultVersionStateFromPlan(plan *caSetResourceModel) diag.Diagnostics {
+func populateDefaultVersionStateFromPlan(ctx context.Context, plan *caSetResourceModel) diag.Diagnostics {
 	plan.VersionCreatedBy = types.StringNull()
 	plan.VersionCreatedDate = types.StringNull()
 	plan.VersionModifiedBy = types.StringNull()
 	plan.VersionModifiedDate = types.StringNull()
 
 	var certs []certificateModel
-	diags := plan.Certificates.ElementsAs(context.Background(), &certs, false)
+	diags := plan.Certificates.ElementsAs(ctx, &certs, false)
 	if diags.HasError() {
 		return diags
 	}
 	for i := range certs {
 		certs[i] = defaultCertificateModelFromPlan(certs[i])
 	}
-	plan.Certificates, diags = types.SetValueFrom(context.Background(), certificatesType(), certs)
+	plan.Certificates, diags = types.SetValueFrom(ctx, certificatesType(), certs)
 	return diags
 }
 

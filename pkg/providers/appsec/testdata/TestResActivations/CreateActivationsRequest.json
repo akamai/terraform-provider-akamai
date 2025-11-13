@@ -1,0 +1,12 @@
+{
+    "action": "ACTIVATE",
+    "network": "STAGING",
+    "note": "Test Notes",
+    "notificationEmails": ["user@example.com"],
+    "activationConfigs": [
+        {
+            "configId": 43253,
+            "configVersion": 7
+        }
+    ]
+}

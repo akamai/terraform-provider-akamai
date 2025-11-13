@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/domainownership"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/hapi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/iam"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
@@ -36,9 +37,10 @@ var (
 )
 
 var (
-	client     papi.PAPI
-	hapiClient hapi.HAPI
-	iamClient  iam.IAM
+	client                papi.PAPI
+	hapiClient            hapi.HAPI
+	iamClient             iam.IAM
+	domainownershipClient domainownership.DomainOwnership
 )
 
 // NewSubprovider returns a new property subprovider
@@ -76,6 +78,14 @@ func IAMClient(meta meta.Meta) iam.IAM {
 		return iamClient
 	}
 	return iam.Client(meta.Session())
+}
+
+// DomainOwnershipClient returns the DomainOwnership interface
+func DomainOwnershipClient(meta meta.Meta) domainownership.DomainOwnership {
+	if domainownershipClient != nil {
+		return domainownershipClient
+	}
+	return domainownership.Client(meta.Session())
 }
 
 // SDKResources returns the property resources implemented using terraform-plugin-sdk
@@ -119,7 +129,9 @@ func (p *Subprovider) SDKDataSources() map[string]*schema.Resource {
 func (p *Subprovider) FrameworkResources() []func() resource.Resource {
 	return []func() resource.Resource{
 		NewBootstrapResource,
+		NewDomainsResource,
 		NewHostnameBucketResource,
+		NewDomainOwnershipValidationResource,
 	}
 }
 
@@ -127,6 +139,9 @@ func (p *Subprovider) FrameworkResources() []func() resource.Resource {
 func (p *Subprovider) FrameworkDataSources() []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewCPCodesDataSource,
+		NewDomainOwnershipDomainDataSource,
+		NewDomainOwnershipDomainsDataSource,
+		NewDomainOwnershipSearchDomains,
 		NewHostnameActivationDataSource,
 		NewHostnameActivationsDataSource,
 		NewHostnamesDiffDataSource,

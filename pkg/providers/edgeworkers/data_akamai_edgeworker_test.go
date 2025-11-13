@@ -105,6 +105,61 @@ var (
 		client.On("ListEdgeWorkerVersions", testutils.MockContext, edgeWorkerListVersionsReq).Return(&edgeWorkerListVersionsRes, nil).Times(timesToRun)
 	}
 
+	expectGetEdgeWorkerByUniqueName = func(client *edgeworkers.Mock, data testDataForEdgeWorker, timesToRun int) {
+		edgeWorker := edgeworkers.EdgeWorkerID{
+
+			EdgeWorkerID:   data.EdgeWorkerID,
+			Name:           data.Name,
+			GroupID:        data.GroupID,
+			ResourceTierID: data.ResourceTierID,
+		}
+
+		listEdgeWorkersIDresp := edgeworkers.ListEdgeWorkersIDResponse{
+			EdgeWorkers: []edgeworkers.EdgeWorkerID{
+				edgeWorker,
+				{
+					EdgeWorkerID:   2,
+					Name:           "Test Name2",
+					GroupID:        22,
+					ResourceTierID: 300,
+				},
+			},
+		}
+
+		var edgeWorkerVersions []edgeworkers.EdgeWorkerVersion
+		edgeWorkerListVersionsReq := edgeworkers.ListEdgeWorkerVersionsRequest{EdgeWorkerID: data.EdgeWorkerID}
+		edgeWorkerListVersionsRes := edgeworkers.ListEdgeWorkerVersionsResponse{
+			EdgeWorkerVersions: edgeWorkerVersions,
+		}
+
+		client.On("ListEdgeWorkersID", testutils.MockContext, mock.AnythingOfType("edgeworkers.ListEdgeWorkersIDRequest")).Return(&listEdgeWorkersIDresp, nil).Times(timesToRun)
+		client.On("GetEdgeWorkerID", testutils.MockContext, edgeworkers.GetEdgeWorkerIDRequest{
+			EdgeWorkerID: data.EdgeWorkerID,
+		}).Return(&edgeWorker, nil).Times(timesToRun)
+		client.On("ListEdgeWorkerVersions", testutils.MockContext, edgeWorkerListVersionsReq).Return(&edgeWorkerListVersionsRes, nil).Times(timesToRun)
+	}
+
+	expectGetEdgeWorkerByNotUniqueName = func(client *edgeworkers.Mock, data testDataForEdgeWorker) {
+		listEdgeWorkersIDresp := edgeworkers.ListEdgeWorkersIDResponse{
+			EdgeWorkers: []edgeworkers.EdgeWorkerID{
+				{
+					EdgeWorkerID:   data.EdgeWorkerID,
+					Name:           data.Name,
+					GroupID:        data.GroupID,
+					ResourceTierID: data.ResourceTierID,
+				},
+				{
+					EdgeWorkerID:   2,
+					Name:           data.Name,
+					GroupID:        22,
+					ResourceTierID: 300,
+				},
+			},
+		}
+
+		client.On("ListEdgeWorkersID", testutils.MockContext, mock.AnythingOfType("edgeworkers.ListEdgeWorkersIDRequest")).Return(&listEdgeWorkersIDresp, nil).Once()
+	}
+
 	oneVersionData = testDataForEdgeWorker{
 		EdgeWorkerID:       1,
 		GroupID:            11,
@@ -314,10 +369,30 @@ func TestDataEdgeWorkersEdgeWorker(t *testing.T) {
 			configPath: "testdata/TestDataEdgeWorkersEdgeWorker/edgeworker_one_version.tf",
 			error:      regexp.MustCompile("could not list edgeworker versions"),
 		},
-		"edgeworker_id not provided": {
+		"edgeworker_id and name not provided": {
 			mockData:   testDataForEdgeWorker{},
 			configPath: "testdata/TestDataEdgeWorkersEdgeWorker/edgeworker_no_edgeworker_id.tf",
-			error:      regexp.MustCompile("Missing required argument"),
+			error:      regexp.MustCompile("one of `edgeworker_id,name` must be specified"),
+		},
+		"edgeworker_id not provided, unique name provided": {
+			init: func(_ *testing.T, m *edgeworkers.Mock, data testDataForEdgeWorker) {
+				expectGetEdgeWorkerByUniqueName(m, data, 3)
+			},
+			mockData:   noVersionsData,
+			configPath: "testdata/TestDataEdgeWorkersEdgeWorker/edgeworker_no_id_but_name.tf",
+		},
+		"edgeworker_id not provided, name provided but multiple edgeworkers found": {
+			init: func(_ *testing.T, m *edgeworkers.Mock, data testDataForEdgeWorker) {
+				expectGetEdgeWorkerByNotUniqueName(m, data)
+			},
+			mockData:   noVersionsData,
+			configPath: "testdata/TestDataEdgeWorkersEdgeWorker/edgeworker_no_id_but_name.tf",
+			error:      regexp.MustCompile("multiple edgeworkers found with the given name:"),
+		},
+		"edgeworker_id not provided, name provided but invalid": {
+			mockData:   noVersionsData,
+			configPath: "testdata/TestDataEdgeWorkersEdgeWorker/edgeworker_no_id_invalid_name.tf",
+			error:      regexp.MustCompile(`expected "name" to not be an empty string`),
 		},
 	}
 

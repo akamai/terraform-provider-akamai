@@ -109,7 +109,7 @@ func getBehaviorsSchemaV20250707() map[string]*schema.Schema {
 					},
 					"source": {
 						Optional:    true,
-						Description: "The source Adaptive Acceleration uses to gather the real user monitoring timing data, either `mPulse` or `realUserMonitoring`. The recommended `mPulse` option supports all optimizations and requires the `mPulse` behavior added by default to new Ion properties. The classic `realUserMonitoring` method has been deprecated. If you set it as the data source, make sure you use it with the `realUserMonitoring` behavior.",
+						Description: "The source Adaptive Acceleration uses to gather the real user monitoring timing data, either `MPULSE` or `REAL_USER_MONITORING`.",
 						Type:        schema.TypeString,
 					},
 					"title_http2_server_push": {
@@ -8789,7 +8789,7 @@ func getBehaviorsSchemaV20250707() map[string]*schema.Schema {
 		"origin": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Specify the hostname and settings used to contact the origin once service begins. You can use your own origin, `NetStorage`, an Edge Load Balancing origin, or a SaaS dynamic origin. This behavior can be used in includes.",
+			Description: "Specify the hostname and settings used to contact the origin once service begins. You can use your own origin, `NetStorage`, `Media Services Live`, an Edge Load Balancing origin, Akamai `Object Storage`, or a SaaS dynamic origin. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -10021,7 +10021,7 @@ func getBehaviorsSchemaV20250707() map[string]*schema.Schema {
 					},
 					"http2_enabled": {
 						Optional:    true,
-						Description: "When enabled, the edge server sends multiple HTTP requests over a single HTTP/2 connection to the origin.",
+						Description: "Limited Availability. When enabled, the edge server sends multiple HTTP requests over a single HTTP/2 connection to the origin.",
 						Type:        schema.TypeBool,
 					},
 				},
@@ -10191,18 +10191,18 @@ func getBehaviorsSchemaV20250707() map[string]*schema.Schema {
 					"aos_hmac_key_access_id": {
 						ValidateDiagFunc: validateRegexOrVariable("^(?=.{1,128}$)[a-zA-Z0-9]+$"),
 						Optional:         true,
-						Description:      "",
+						Description:      "Specifies the active access ID linked to your Akamai account.",
 						Type:             schema.TypeString,
 					},
 					"aos_hmac_key_secret": {
 						ValidateDiagFunc: validateRegexOrVariable("^(?=.{1,1024}$)[a-zA-Z0-9+/=_-]+$"),
 						Optional:         true,
-						Description:      "",
+						Description:      "Specifies the secret linked to the access ID that you want to use to sign requests to Akamai `Object Storage`.",
 						Type:             schema.TypeString,
 					},
 					"aos_access_key_version_guid": {
 						Optional:    true,
-						Description: "",
+						Description: "Identifies the unique `aosAccessKeyVersionGuid` of the access key created in `Cloud Access Manager` for Akamai `Object Storage`.",
 						Type:        schema.TypeString,
 					},
 					"sort_query_params": {

@@ -1252,6 +1252,53 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 				},
 			},
 		},
+		"fail property activation create when empty contact": {
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestPropertyActivation/empty_contact/resource_property_activation_empty_contact.tf"),
+					PlanOnly:    true,
+					ExpectError: regexp.MustCompile("Not enough list items"),
+				},
+			},
+		},
+		"fail property activation update when empty contact": {
+			init: func(m *papi.Mock) {
+				// first step
+				// create
+				expectGetRuleTree(m, "prp_test", 1, ruleTreeResponseValid, nil).Once()
+				expectGetActivations(m, "prp_test", papi.GetActivationsResponse{}, nil).Once()
+				expectCreateActivation(m, "prp_test", papi.ActivationTypeActivate, 1, "STAGING",
+					[]string{"user@example.com"}, "property activation note for creating", "atv_activation1", true, nil).Once()
+				expectGetActivation(m, "prp_test", "atv_activation1", 1, "STAGING", papi.ActivationStatusActive, papi.ActivationTypeActivate, "property activation note for creating", []string{"user@example.com"}, nil).Once()
+				// read
+				expectGetActivations(m, "prp_test", generateActivationResponseMock("atv_activation1", "property activation note for creating", 1, papi.ActivationTypeActivate, "2020-10-28T15:04:05Z", []string{"user@example.com"}), nil).Once()
+
+				// second step
+				// read
+				expectGetActivations(m, "prp_test", generateActivationResponseMock("atv_activation1", "property activation note for creating", 1, papi.ActivationTypeActivate, "2020-10-28T15:04:05Z", []string{"user@example.com"}), nil).Once()
+				// error due to empty contact
+
+				// cleanup
+				expectGetActivations(m, "prp_test", generateActivationResponseMock("atv_activation1", "", 1, papi.ActivationTypeActivate, "2020-10-28T15:04:05Z", []string{"user@example.com"}), nil).Once()
+				expectCreateActivation(m, "prp_test", papi.ActivationTypeDeactivate, 1, "STAGING", []string{"user@example.com"}, "property activation note for creating", "atv_activation1", true, nil).Once()
+				expectGetActivation(m, "prp_test", "atv_activation1", 1, "STAGING", papi.ActivationStatusActive, papi.ActivationTypeDeactivate, "", []string{"user@example.com"}, nil).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "./testdata/TestPropertyActivation/empty_contact/resource_property_activation.tf"),
+					Check:  baseChecker.Build(),
+				},
+				{
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestPropertyActivation/empty_contact/resource_property_activation_empty_contact.tf"),
+					PlanOnly:    true,
+					ExpectError: regexp.MustCompile("Not enough list items"),
+				},
+				{
+					Config:   testutils.LoadFixtureString(t, "./testdata/TestPropertyActivation/empty_contact/resource_property_activation.tf"),
+					PlanOnly: true,
+				},
+			},
+		},
 	}
 
 	for name, test := range tests {
