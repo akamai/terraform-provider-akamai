@@ -1,12 +1,12 @@
 package property
 
 import (
+	"context"
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/net/context"
 )
 
 type requestStructure struct {

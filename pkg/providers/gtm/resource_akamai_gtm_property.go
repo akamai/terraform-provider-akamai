@@ -587,7 +587,7 @@ func validatePropertyTypeForTrafficTarget(d *schema.ResourceData, logger akalog.
 		logger.Errorf("Property %s create error. Static property cannot have traffic targets", propertyName)
 		return fmt.Errorf("property create error. Static property cannot have traffic targets")
 	}
-	if !strings.EqualFold(propertyType, "STATIC") && (err != nil || (traffTargList == nil || len(traffTargList) < 1)) {
+	if !strings.EqualFold(propertyType, "STATIC") && (err != nil || len(traffTargList) < 1) {
 		logger.Errorf("Property %s create error. Property must have one or more traffic targets", propertyName)
 		return fmt.Errorf("property create error. Property must have one or more traffic targets")
 	}

@@ -2,7 +2,7 @@ TEST ?= $$(go list ./... | grep -v retryablehttp)
 PKG_NAME = akamai
 
 GOIMPORTS_VERSION = v0.24.0
-GOLANGCI_LINT_VERSION = v1.63.4
+GOLANGCI_LINT_VERSION = v1.64.8
 
 # Local provider install parameters
 version = 0.11.0
@@ -100,7 +100,7 @@ tools: $(TOOLS)
 
 .PHONY: clean-tools
 clean-tools:
-	@rm -rf $(TOOLS_BIN_DIR)
+	@rm -rf $(BIN)
 
 .PHONY: init
 init: tools tools.terraform
