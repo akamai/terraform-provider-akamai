@@ -2,7 +2,6 @@ package cloudcertificates
 
 import (
 	"context"
-	"fmt"
 	"regexp"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudcertificates"
@@ -26,7 +25,7 @@ var (
 
 type (
 	certificatesDataSource struct {
-		meta meta.Meta
+		meta.DataSource
 	}
 
 	certificatesDataSourceModel struct {
@@ -79,22 +78,6 @@ func NewCertificatesDataSource() datasource.DataSource {
 // Metadata configures data source's meta information.
 func (d *certificatesDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "akamai_cloudcertificates_certificates"
-}
-
-// Configure configures data source at the beginning of the lifecycle.
-func (d *certificatesDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Data Source Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.",
-					req.ProviderData))
-		}
-	}()
-	d.meta = meta.Must(req.ProviderData)
 }
 
 func (d *certificatesDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
@@ -316,8 +299,6 @@ func (d *certificatesDataSource) Read(ctx context.Context, req datasource.ReadRe
 		return
 	}
 
-	client := Client(d.meta)
-
 	request := cloudcertificates.ListCertificatesRequest{}
 
 	if !data.ContractID.IsNull() {
@@ -351,7 +332,7 @@ func (d *certificatesDataSource) Read(ctx context.Context, req datasource.ReadRe
 	}
 	request.ExpiringInDays = data.ExpiringInDays.ValueInt64Pointer()
 
-	cert, err := getAllCertificates(ctx, client, request)
+	cert, err := d.getAllCertificates(ctx, request)
 	if err != nil {
 		resp.Diagnostics.AddError("Read Certificates failed", err.Error())
 		return
@@ -368,14 +349,14 @@ func (d *certificatesDataSource) Read(ctx context.Context, req datasource.ReadRe
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func getAllCertificates(ctx context.Context, client cloudcertificates.CloudCertificates, request cloudcertificates.ListCertificatesRequest) (*cloudcertificates.ListCertificatesResponse, error) {
+func (d *certificatesDataSource) getAllCertificates(ctx context.Context, request cloudcertificates.ListCertificatesRequest) (*cloudcertificates.ListCertificatesResponse, error) {
 	var allCertificates cloudcertificates.ListCertificatesResponse
 
 	request.PageSize = defaultPageSize
 	request.Page = 1
 
 	for {
-		certificatesResponse, err := client.ListCertificates(ctx, request)
+		certificatesResponse, err := d.Client.GetCloudCertificates().ListCertificates(ctx, request)
 		if err != nil {
 			return nil, err
 		}

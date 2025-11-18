@@ -24,7 +24,7 @@ var (
 
 type (
 	certificateDataSource struct {
-		meta meta.Meta
+		meta.DataSource
 	}
 
 	certificateDataSourceModel struct {
@@ -66,21 +66,6 @@ func NewCertificateDataSource() datasource.DataSource {
 
 func (d *certificateDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "akamai_cloudcertificates_certificate"
-}
-
-func (d *certificateDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Data Source Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.",
-					req.ProviderData))
-		}
-	}()
-	d.meta = meta.Must(req.ProviderData)
 }
 
 // Schema is used to define data source's terraform schema.
@@ -251,9 +236,7 @@ func (d *certificateDataSource) Read(ctx context.Context, req datasource.ReadReq
 		return
 	}
 
-	client := Client(d.meta)
-
-	cert, err := client.GetCertificate(ctx, cloudcertificates.GetCertificateRequest{
+	cert, err := d.Client.GetCloudCertificates().GetCertificate(ctx, cloudcertificates.GetCertificateRequest{
 		CertificateID: data.CertificateID.ValueString(),
 	})
 	if err != nil {
@@ -267,7 +250,7 @@ func (d *certificateDataSource) Read(ctx context.Context, req datasource.ReadReq
 
 	// IncludeHostnameBindings defaults to false - only include bindings if explicitly set to true
 	if data.IncludeHostnameBindings.ValueBool() {
-		allBindings, err := getAllBindings(ctx, client, data.CertificateID.ValueString())
+		allBindings, err := d.getAllBindings(ctx, data.CertificateID.ValueString())
 		if err != nil {
 			resp.Diagnostics.AddError("Failed to retrieve bindings", err.Error())
 			return
@@ -295,14 +278,14 @@ func (m *certificateDataSourceModel) convertBindingsToModel(bindings []cloudcert
 	}
 }
 
-func getAllBindings(ctx context.Context, client cloudcertificates.CloudCertificates, certificateID string) ([]cloudcertificates.CertificateBinding, error) {
+func (d *certificateDataSource) getAllBindings(ctx context.Context, certificateID string) ([]cloudcertificates.CertificateBinding, error) {
 	pageSize := defaultPageSize
 	var page int64 = 1
 	var allBindings []cloudcertificates.CertificateBinding
 
 	for {
 		tflog.Debug(ctx, fmt.Sprintf("Fetching bindings page %d with size %d", page, pageSize))
-		bindingsResp, err := client.ListCertificateBindings(ctx, cloudcertificates.ListCertificateBindingsRequest{
+		bindingsResp, err := d.Client.GetCloudCertificates().ListCertificateBindings(ctx, cloudcertificates.ListCertificateBindingsRequest{
 			CertificateID: certificateID,
 			PageSize:      pageSize,
 			Page:          page,

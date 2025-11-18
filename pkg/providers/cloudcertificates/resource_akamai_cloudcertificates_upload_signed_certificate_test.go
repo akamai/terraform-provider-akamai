@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudcertificates"
+	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
 	tst "github.com/akamai/terraform-provider-akamai/v9/internal/test"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/test"
@@ -108,13 +109,11 @@ var signedCertImportChecker = test.NewImportChecker().
 	CheckEqual("signed_certificate_issuer", "CN=Test Issuer, O=Test Org, C=US")
 
 func TestUploadSignedCertificateResource(t *testing.T) {
-	pollingInterval = 1 * time.Millisecond
-	defer func() {
-		pollingInterval = 10 * time.Second
-	}()
+	t.Parallel()
 	tests := map[string]struct {
-		init  func(*cloudcertificates.Mock, mockCertificates)
-		steps []resource.TestStep
+		init           func(*cloudcertificates.Mock, mockCertificates)
+		steps          []resource.TestStep
+		pollingTimeout time.Duration
 	}{
 		"happy path - upload signed certificate PEM": {
 			init: func(m *cloudcertificates.Mock, mc mockCertificates) {
@@ -509,9 +508,8 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 			},
 		},
 		"error - upload signed certificate PEM, PATCH does not return all certificate details, enters polling and times out": {
+			pollingTimeout: 5 * time.Millisecond, // Give enough time to at least one polling attempt.
 			init: func(m *cloudcertificates.Mock, mc mockCertificates) {
-				pollingTimeout = 1 * time.Millisecond
-
 				// Plan x 2
 				mc.minimumCertificate.mockGet(m).Twice()
 				// Create
@@ -538,7 +536,7 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 					// No SignedCertificatePEM, SignedCertificateSerialNumber, SignedCertificateSHA256Fingerprint.
 				},
 				}, nil).Once()
-				mc.minimumCertificate.mockGet(m).Once()
+				mc.minimumCertificate.mockGet(m) // There will be at least one polling attempt (with one millisecond interval).
 			},
 			steps: []resource.TestStep{
 				{
@@ -582,10 +580,9 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 			},
 		},
 		"error - 404 certificate not found in plan": {
+			// Lower polling timeout to speed up the test.
+			pollingTimeout: 1 * time.Millisecond,
 			init: func(m *cloudcertificates.Mock, mc mockCertificates) {
-				// Lower polling timeout to speed up the test.
-				pollingTimeout = 1 * time.Millisecond
-
 				// Plan x 1
 				mc.minimumCertificate.err = &cloudcertificates.Error{
 					Type:  "/error-types/certificate-not-found",
@@ -827,21 +824,24 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &cloudcertificates.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 
 			if tc.init != nil {
-				tc.init(client, mockCerts)
+				tc.init(client.CloudCertificates, mockCerts)
 			}
 
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(
-						NewSubprovider(), testprovider.NewMockSubprovider()),
-					Steps: tc.steps,
-				})
+			pollingTimeout := tc.pollingTimeout
+			if pollingTimeout == 0 {
+				pollingTimeout = 1 * time.Minute
+			}
+
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(
+					client, NewCustomPollingSubprovider(pollingTimeout), testprovider.NewMockSubprovider()),
+				Steps: tc.steps,
 			})
-			pollingTimeout = 1 * time.Minute
-			client.AssertExpectations(t)
+			client.CloudCertificates.AssertExpectations(t)
 		})
 	}
 }

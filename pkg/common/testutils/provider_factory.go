@@ -3,6 +3,7 @@ package testutils
 import (
 	"context"
 
+	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/akamai"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/subprovider"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
@@ -34,6 +35,16 @@ func NewProtoV6ProviderFactory(subproviders ...subprovider.Subprovider) map[stri
 			}
 
 			return muxServer.ProviderServer(), nil
+		},
+	}
+}
+
+// NewTestProtoV6ProviderFactory uses provided subproviders and client to create provider factory for test purposes
+func NewTestProtoV6ProviderFactory(client edgegrid.Client, subproviders ...subprovider.Subprovider) map[string]func() (tfprotov6.ProviderServer, error) {
+	providerFunc := akamai.NewTestFrameworkProvider(client, subproviders...)
+	return map[string]func() (tfprotov6.ProviderServer, error){
+		"akamai": func() (tfprotov6.ProviderServer, error) {
+			return providerserver.NewProtocol6(providerFunc())(), nil
 		},
 	}
 }

@@ -2,7 +2,6 @@ package cloudcertificates
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudcertificates"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/tf/validators"
@@ -23,7 +22,7 @@ var (
 
 type (
 	hostnameBindingsDataSource struct {
-		meta meta.Meta
+		meta.DataSource
 	}
 
 	hostnameBindingsDataSourceModel struct {
@@ -53,22 +52,6 @@ func NewCloudCertificatesHostnameBindingsDataSource() datasource.DataSource {
 // Metadata configures data source's meta information.
 func (d *hostnameBindingsDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "akamai_cloudcertificates_hostname_bindings"
-}
-
-// Configure configures data source at the beginning of the lifecycle.
-func (d *hostnameBindingsDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Data Source Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.",
-					req.ProviderData))
-		}
-	}()
-	d.meta = meta.Must(req.ProviderData)
 }
 
 // Schema is used to define data source's terraform schema.
@@ -142,11 +125,10 @@ func (d *hostnameBindingsDataSource) Read(ctx context.Context, req datasource.Re
 	if resp.Diagnostics.Append(req.Config.Get(ctx, &data)...); resp.Diagnostics.HasError() {
 		return
 	}
-	client := Client(d.meta)
 
 	var bindings []cloudcertificates.CertificateBinding
 	for page := int64(1); ; page++ {
-		res, err := client.ListBindings(ctx, cloudcertificates.ListBindingsRequest{
+		res, err := d.Client.GetCloudCertificates().ListBindings(ctx, cloudcertificates.ListBindingsRequest{
 			ContractID:     data.ContractID.ValueString(),
 			GroupID:        data.GroupID.ValueString(),
 			Domain:         data.Domain.ValueString(),

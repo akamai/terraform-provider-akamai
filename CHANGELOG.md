@@ -37,6 +37,9 @@
 
 
 
+* Cloud Certificates (Beta)
+  * Eliminated the global client variable and its synchronization logic, significantly reducing
+    unit test execution time.
 
 
 

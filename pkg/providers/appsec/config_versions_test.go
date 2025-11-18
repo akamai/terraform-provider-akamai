@@ -12,6 +12,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/appsec"
 	akalog "github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/log"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/cache"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/log"
 	akameta "github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
@@ -33,6 +34,10 @@ func (m *mockMeta) OperationID() string {
 }
 
 func (m *mockMeta) Session() session.Session {
+	return nil
+}
+
+func (m *mockMeta) Client() edgegrid.Client {
 	return nil
 }
 
