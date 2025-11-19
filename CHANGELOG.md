@@ -12,6 +12,10 @@
   * Removed the `secret_key` and `api_key` attributes from the `akamai_property_rule_formats` data source for the rule formats `v2025-05-30`, `v2025-07-07`, `v2025-09-09` and `v2025-10-16`.
 
 
+* AppSec
+    * Removed the `output_text` attribute from `akamai_appsec_ip_geo_protection` resource.
+
+
 
 
 
