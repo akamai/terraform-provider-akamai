@@ -1,6 +1,6 @@
 module github.com/akamai/terraform-provider-akamai/v9
 
-go 1.23.6
+go 1.24.0
 
 require (
 	github.com/akamai/AkamaiOPEN-edgegrid-golang/v12 v12.2.0
@@ -28,8 +28,8 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/wk8/go-ordered-map/v2 v2.1.8
 	golang.org/x/exp v0.0.0-20241204233417-43b7b7cde48d
-	golang.org/x/net v0.40.0
-	golang.org/x/sync v0.15.0
+	golang.org/x/net v0.47.0
+	golang.org/x/sync v0.18.0
 )
 
 require (
@@ -78,11 +78,11 @@ require (
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/zclconf/go-cty v1.16.3 // indirect
 	go.uber.org/ratelimit v0.3.1 // indirect
-	golang.org/x/crypto v0.39.0 // indirect
-	golang.org/x/mod v0.25.0 // indirect
-	golang.org/x/sys v0.33.0 // indirect
-	golang.org/x/text v0.26.0 // indirect
-	golang.org/x/tools v0.33.0 // indirect
+	golang.org/x/crypto v0.45.0 // indirect
+	golang.org/x/mod v0.29.0 // indirect
+	golang.org/x/sys v0.38.0 // indirect
+	golang.org/x/text v0.31.0 // indirect
+	golang.org/x/tools v0.38.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250324211829-b45e905df463 // indirect
 	google.golang.org/grpc v1.72.1 // indirect
