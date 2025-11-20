@@ -151,6 +151,8 @@
 
 
 
+* Appsec
+  * Added validation to `akamai_appsec_rule` resource to prevent `rule_action` from being set to "none" when a non-empty `condition_exception` is supplied.
 
 
 

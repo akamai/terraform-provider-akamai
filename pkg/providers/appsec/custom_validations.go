@@ -89,6 +89,16 @@ func VerifyIDUnchanged(_ context.Context, d *schema.ResourceDiff, m interface{})
 	return nil
 }
 
+func validateRuleActionAndConditionException(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
+	action := d.Get("rule_action").(string)
+	conditionException := d.Get("condition_exception").(string)
+
+	if action == "none" && conditionException != "" {
+		return fmt.Errorf("`rule_action` cannot be 'none' if non-empty `condition_exception` is supplied")
+	}
+	return nil
+}
+
 func validateActionAndConditionException(action, conditionexception string) error {
 	if action == "none" && conditionexception != "" {
 		return fmt.Errorf("action cannot be 'none' if non-empty condition/exception is supplied")
