@@ -34,7 +34,8 @@
 
 
 
-
+* Global
+  * Migrated Terraform to version 1.13.5.
 
 
 

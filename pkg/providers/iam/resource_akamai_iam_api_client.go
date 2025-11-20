@@ -24,7 +24,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
@@ -427,7 +426,7 @@ func groupsSchema(depth int) schema.ListNestedAttribute {
 		Computed:    true,
 		Description: "Groups the API client can access.",
 		PlanModifiers: []planmodifier.List{
-			listplanmodifier.UseStateForUnknown(),
+			modifiers.ListKeepNonNullState(),
 		},
 		NestedObject: schema.NestedAttributeObject{
 			Attributes: map[string]schema.Attribute{
@@ -438,7 +437,7 @@ func groupsSchema(depth int) schema.ListNestedAttribute {
 				"group_name": schema.StringAttribute{
 					Computed: true,
 					PlanModifiers: []planmodifier.String{
-						stringplanmodifier.UseStateForUnknown(),
+						modifiers.StringKeepNonNullState(),
 					},
 					Validators:  []validator.String{validators.NotEmptyString()},
 					Description: "A human-readable name for the group.",
@@ -446,21 +445,21 @@ func groupsSchema(depth int) schema.ListNestedAttribute {
 				"is_blocked": schema.BoolAttribute{
 					Computed: true,
 					PlanModifiers: []planmodifier.Bool{
-						boolplanmodifier.UseStateForUnknown(),
+						modifiers.BoolKeepNonNullState(),
 					},
 					Description: "Blocks the API client access to the group's child groups.",
 				},
 				"parent_group_id": schema.Int64Attribute{
 					Computed: true,
 					PlanModifiers: []planmodifier.Int64{
-						int64planmodifier.UseStateForUnknown(),
+						modifiers.Int64KeepNonNullState(),
 					},
 					Description: "A unique identifier for the parent group within the group tree. ",
 				},
 				"role_description": schema.StringAttribute{
 					Computed: true,
 					PlanModifiers: []planmodifier.String{
-						stringplanmodifier.UseStateForUnknown(),
+						modifiers.StringKeepNonNullState(),
 					},
 					Validators:  []validator.String{validators.NotEmptyString()},
 					Description: "A human-readable description for the role to convey its use.",
@@ -472,7 +471,7 @@ func groupsSchema(depth int) schema.ListNestedAttribute {
 				"role_name": schema.StringAttribute{
 					Computed: true,
 					PlanModifiers: []planmodifier.String{
-						stringplanmodifier.UseStateForUnknown(),
+						modifiers.StringKeepNonNullState(),
 					},
 					Validators:  []validator.String{validators.NotEmptyString()},
 					Description: "A human-readable name for the role.",
@@ -485,7 +484,7 @@ func groupsSchema(depth int) schema.ListNestedAttribute {
 						Attributes: map[string]schema.Attribute{},
 					},
 					PlanModifiers: []planmodifier.List{
-						listplanmodifier.UseStateForUnknown(),
+						modifiers.ListKeepNonNullState(),
 					},
 				},
 			},
