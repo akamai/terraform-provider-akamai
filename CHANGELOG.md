@@ -52,7 +52,8 @@
 #### BUG FIXES:
 
 
-
+* PAPI
+    * Relaxed too strict validation of edge hostname domain prefixes in the `akamai_edge_hostname` resource ([I#668](https://github.com/akamai/terraform-provider-akamai/issues/668)).
 
 
 

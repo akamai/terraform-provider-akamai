@@ -49,9 +49,10 @@ var (
 	EdgeHostnameReadTimeout = time.Minute * 1
 
 	// domainPrefixPatterns maps domain suffixes to their respective regex patterns for validating domain prefixes
+	// according to API validation rules.
 	domainPrefixPatterns = map[string]*regexp.Regexp{
-		"akamaized.net": regexp.MustCompile(`^[A-Za-z]([A-Za-z0-9-]*[A-Za-z0-9])?$`),
-		"default":       regexp.MustCompile(`^[A-Za-z]([A-Za-z0-9.-]*[A-Za-z0-9])?(\.)?$`),
+		"akamaized.net": regexp.MustCompile(papi.AkamaizedNetDomainRegexPattern),
+		"default":       regexp.MustCompile(papi.DefaultEHDomainRegexPattern),
 	}
 )
 
@@ -354,9 +355,9 @@ func validateDomainPrefix(edgeHostname string) diag.Diagnostics {
 
 	if !pattern.MatchString(domainPrefix) {
 		if domainSuffix == "akamaized.net" {
-			return diag.Errorf(`A prefix for the edge hostname with the "akamaized.net" suffix must begin with a letter, end with a letter or digit, and contain only letters, digits, and hyphens, for example, abc-def, or abc-123.`)
+			return diag.Errorf(`A prefix for the edge hostname with the "akamaized.net" suffix must begin and end with a letter or digit, and contain only letters, digits, and hyphens, for example, abc-def, or 1abc-123.`)
 		}
-		return diag.Errorf(`A prefix for the edge hostname with the "%s" suffix must begin with a letter, end with a letter, digit, or dot, and contain only letters, digits, dots, and hyphens, for example, abc-def.123.456., or abc.123-def.`, domainSuffix)
+		return diag.Errorf(`A prefix for the edge hostname with the "%s" suffix must begin with a letter or digit, end with a letter, digit, or dot, and contain only letters, digits, dots, and hyphens, for example, abc-def.123.456., or 1abc.123-def.`, domainSuffix)
 	}
 	return nil
 }

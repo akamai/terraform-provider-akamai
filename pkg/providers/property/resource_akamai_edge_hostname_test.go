@@ -2522,7 +2522,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureStringf(t, "%s/%s", testDir, "invalid_char_#_in_edgehostname_domainprefix.tf"),
-					ExpectError: regexp.MustCompile("A prefix for the edge hostname with the \"akamaized.net\" suffix must begin with a letter, end with a letter or digit, and contain only letters, digits, and hyphens, for example, abc-def, or abc-123"),
+					ExpectError: regexp.MustCompile("A prefix for the edge hostname with the \"akamaized.net\" suffix must begin and end with a letter or digit, and contain only letters, digits, and hyphens, for example, abc-def, or 1abc-123"),
 				},
 			},
 		},
@@ -2530,7 +2530,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureStringf(t, "%s/%s", testDir, "incorrect_edgehostname_domainprefix_3.tf"),
-					ExpectError: regexp.MustCompile("A prefix for the edge hostname with the \"akamaized.net\" suffix must begin with a letter, end with a letter or digit, and contain only letters, digits, and hyphens, for example, abc-def, or abc-123"),
+					ExpectError: regexp.MustCompile("A prefix for the edge hostname with the \"akamaized.net\" suffix must begin and end with a letter or digit, and contain only letters, digits, and hyphens, for example, abc-def, or 1abc-123"),
 				},
 			},
 		},
@@ -2538,7 +2538,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureStringf(t, "%s/%s", testDir, "edgehostname_domainprefix_ends_with_invalid_char_-.tf"),
-					ExpectError: regexp.MustCompile("A prefix for the edge hostname with the \"akamaized.net\" suffix must begin with a letter, end with a letter or digit, and contain only letters, digits, and hyphens, for example, abc-def, or abc-123"),
+					ExpectError: regexp.MustCompile("A prefix for the edge hostname with the \"akamaized.net\" suffix must begin and end with a letter or digit, and contain only letters, digits, and hyphens, for example, abc-def, or 1abc-123"),
 				},
 			},
 		},
@@ -2546,7 +2546,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureStringf(t, "%s/%s", testDir, "edgehostname_domainprefix_ends_with_consecutive_dots.tf"),
-					ExpectError: regexp.MustCompile("A prefix for the edge hostname with the \"edgesuite.net\" suffix must begin with a letter, end with a letter, digit, or dot, and contain only letters, digits, dots, and hyphens, for example, abc-def.123.456., or abc.123-def"),
+					ExpectError: regexp.MustCompile("A prefix for the edge hostname with the \"edgesuite.net\" suffix must begin with a letter or digit, end with a letter, digit, or dot, and contain only letters, digits, dots, and hyphens, for example, abc-def.123.456., or 1abc.123-def"),
 				},
 			},
 		},
