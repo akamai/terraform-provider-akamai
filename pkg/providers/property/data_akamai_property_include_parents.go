@@ -75,7 +75,6 @@ func dataSourcePropertyIncludeParents() *schema.Resource {
 
 func dataPropertyIncludeParentsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := Client(meta)
 	log := meta.Log("PAPI", "dataPropertyIncludeParentsRead")
 	log.Debug("Reading Property Include Parents")
 
@@ -94,7 +93,7 @@ func dataPropertyIncludeParentsRead(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 
-	resp, err := client.ListIncludeParents(ctx, papi.ListIncludeParentsRequest{
+	resp, err := meta.Client().GetPAPI().ListIncludeParents(ctx, papi.ListIncludeParentsRequest{
 		ContractID: contractID,
 		GroupID:    groupID,
 		IncludeID:  includeID,
@@ -123,12 +122,12 @@ func dataPropertyIncludeParentsRead(ctx context.Context, d *schema.ResourceData,
 		}
 		if stagingVersion != productionVersion && item.StagingVersion != nil && item.ProductionVersion != nil {
 			listRefIncReq.PropertyVersion = *item.StagingVersion
-			isIncUsedInStagingVer, err = isIncPresentInReferencedIncludes(ctx, client, listRefIncReq, includeID)
+			isIncUsedInStagingVer, err = isIncPresentInReferencedIncludes(ctx, meta.Client().GetPAPI(), listRefIncReq, includeID)
 			if err != nil {
 				return diag.FromErr(err)
 			}
 			listRefIncReq.PropertyVersion = *item.ProductionVersion
-			isIncUsedInProductionVer, err = isIncPresentInReferencedIncludes(ctx, client, listRefIncReq, includeID)
+			isIncUsedInProductionVer, err = isIncPresentInReferencedIncludes(ctx, meta.Client().GetPAPI(), listRefIncReq, includeID)
 			if err != nil {
 				return diag.FromErr(err)
 			}

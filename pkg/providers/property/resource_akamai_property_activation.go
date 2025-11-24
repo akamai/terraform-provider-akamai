@@ -174,7 +174,6 @@ func papiError() *schema.Resource {
 func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyActivationCreate")
-	client := Client(meta)
 
 	logger.Debug("resourcePropertyActivationCreate call")
 
@@ -201,7 +200,7 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	version, err := resolveVersion(ctx, d, client, propertyID, network)
+	version, err := resolveVersion(ctx, d, meta.Client().GetPAPI(), propertyID, network)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -209,7 +208,7 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 	acknowledgeRuleWarnings := d.Get("auto_acknowledge_rule_warnings").(bool)
 
 	// check to see if this tree has any issues
-	rules, err := client.GetRuleTree(ctx, papi.GetRuleTreeRequest{
+	rules, err := meta.Client().GetPAPI().GetRuleTree(ctx, papi.GetRuleTreeRequest{
 		PropertyID:      propertyID,
 		PropertyVersion: version,
 		ValidateRules:   true,
@@ -231,7 +230,7 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	activation, err := lookupActivation(ctx, client, lookupActivationRequest{
+	activation, err := lookupActivation(ctx, meta.Client().GetPAPI(), lookupActivationRequest{
 		propertyID: propertyID,
 		network:    network,
 		activationType: map[papi.ActivationType]struct{}{
@@ -272,13 +271,13 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 		}
 
 		logger.Debug("creating activation")
-		activationID, diagErr := createActivation(ctx, client, addPropertyComplianceRecord(complianceRecord, createActivationRequest))
+		activationID, diagErr := createActivation(ctx, meta.Client().GetPAPI(), addPropertyComplianceRecord(complianceRecord, createActivationRequest))
 		if diagErr != nil {
 			return diagErr
 		}
 
 		// query the activation to retrieve the initial status
-		act, err := client.GetActivation(ctx, papi.GetActivationRequest{
+		act, err := meta.Client().GetPAPI().GetActivation(ctx, papi.GetActivationRequest{
 			ActivationID: activationID,
 			PropertyID:   propertyID,
 		})
@@ -293,7 +292,7 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 		}
 	}
 
-	activation, diagErr := pollActivation(ctx, client, activation, propertyID)
+	activation, diagErr := pollActivation(ctx, meta.Client().GetPAPI(), activation, propertyID)
 	if diagErr != nil {
 		return diagErr
 	}
@@ -315,7 +314,6 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyActivationDelete")
-	client := Client(meta)
 
 	logger.Debug("resourcePropertyActivationDelete call")
 
@@ -338,7 +336,7 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
 
-	version, err := resolveVersion(ctx, d, client, propertyID, network)
+	version, err := resolveVersion(ctx, d, meta.Client().GetPAPI(), propertyID, network)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -351,7 +349,7 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 	// Schema guarantees these types
 	acknowledgeRuleWarnings := d.Get("auto_acknowledge_rule_warnings").(bool)
 
-	activation, err := lookupActivation(ctx, client, lookupActivationRequest{
+	activation, err := lookupActivation(ctx, meta.Client().GetPAPI(), lookupActivationRequest{
 		propertyID: propertyID,
 		version:    version,
 		network:    network,
@@ -390,7 +388,7 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 			},
 		}
 
-		deleteActivationID, diagErr := createActivation(ctx, client, addPropertyComplianceRecord(complianceRecord, deleteActivationRequest))
+		deleteActivationID, diagErr := createActivation(ctx, meta.Client().GetPAPI(), addPropertyComplianceRecord(complianceRecord, deleteActivationRequest))
 		if diagErr != nil {
 			return diagErr
 		}
@@ -398,7 +396,7 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 		d.SetId(deleteActivationID)
 
 		// query the activation to retrieve the initial status
-		act, err := client.GetActivation(ctx, papi.GetActivationRequest{
+		act, err := meta.Client().GetPAPI().GetActivation(ctx, papi.GetActivationRequest{
 			ActivationID: deleteActivationID,
 			PropertyID:   propertyID,
 		})
@@ -427,7 +425,7 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 		}
 		select {
 		case <-time.After(tf.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
-			act, err := client.GetActivation(ctx, papi.GetActivationRequest{
+			act, err := meta.Client().GetPAPI().GetActivation(ctx, papi.GetActivationRequest{
 				ActivationID: activation.ActivationID,
 				PropertyID:   propertyID,
 			})
@@ -462,7 +460,6 @@ func flattenErrorArray(errors []*papi.Error) string {
 func resourcePropertyActivationRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyActivationRead")
-	client := Client(meta)
 
 	logger.Debug("resourcePropertyActivationRead call")
 	// create a context with logging for api calls
@@ -483,7 +480,7 @@ func resourcePropertyActivationRead(ctx context.Context, d *schema.ResourceData,
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	resp, err := client.GetActivations(ctx, papi.GetActivationsRequest{
+	resp, err := meta.Client().GetPAPI().GetActivations(ctx, papi.GetActivationsRequest{
 		PropertyID: propertyID,
 	})
 	if err != nil {
@@ -572,7 +569,6 @@ func resolveVersion(ctx context.Context, d *schema.ResourceData, client papi.PAP
 func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyActivationUpdate")
-	client := Client(meta)
 
 	logger.Debug("resourcePropertyActivationUpdate call")
 	// create a context with logging for api calls
@@ -599,7 +595,7 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	version, err := resolveVersion(ctx, d, client, propertyID, network)
+	version, err := resolveVersion(ctx, d, meta.Client().GetPAPI(), propertyID, network)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -619,7 +615,7 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	// check to see if this tree has any issues
-	rules, err := client.GetRuleTree(ctx, papi.GetRuleTreeRequest{
+	rules, err := meta.Client().GetPAPI().GetRuleTree(ctx, papi.GetRuleTreeRequest{
 		PropertyID:      propertyID,
 		PropertyVersion: version,
 		ValidateRules:   true,
@@ -636,7 +632,7 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 		d.Partial(true)
 		return diags
 	}
-	propertyActivation, err := lookupActivation(ctx, client, lookupActivationRequest{
+	propertyActivation, err := lookupActivation(ctx, meta.Client().GetPAPI(), lookupActivationRequest{
 		propertyID: propertyID,
 		version:    version,
 		network:    network,
@@ -648,7 +644,7 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	versionStatus, err := resolveVersionStatus(ctx, client, propertyID, version, network)
+	versionStatus, err := resolveVersionStatus(ctx, meta.Client().GetPAPI(), propertyID, version, network)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -686,13 +682,13 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 			},
 		}
 
-		activationID, diagErr := createActivation(ctx, client, addPropertyComplianceRecord(complianceRecord, createActivationRequest))
+		activationID, diagErr := createActivation(ctx, meta.Client().GetPAPI(), addPropertyComplianceRecord(complianceRecord, createActivationRequest))
 		if diagErr != nil {
 			return diagErr
 		}
 
 		// query the activation to retrieve the initial status
-		act, err := client.GetActivation(ctx, papi.GetActivationRequest{
+		act, err := meta.Client().GetPAPI().GetActivation(ctx, papi.GetActivationRequest{
 			ActivationID: activationID,
 			PropertyID:   propertyID,
 		})
@@ -707,7 +703,7 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 		}
 	}
 
-	propertyActivation, diagErr := pollActivation(ctx, client, propertyActivation, propertyID)
+	propertyActivation, diagErr := pollActivation(ctx, meta.Client().GetPAPI(), propertyActivation, propertyID)
 	if diagErr != nil {
 		return diagErr
 	}

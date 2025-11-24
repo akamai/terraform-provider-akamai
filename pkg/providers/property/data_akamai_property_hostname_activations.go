@@ -2,7 +2,6 @@ package property
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
@@ -26,7 +25,7 @@ func NewHostnameActivationsDataSource() datasource.DataSource {
 
 // hostnameActivationsDataSource defines the data source implementation for fetching property hostname activations information.
 type hostnameActivationsDataSource struct {
-	meta meta.Meta
+	meta.DataSource
 }
 
 // hostnameActivationsDataSourceModel describes the data source data model for PropertyHostnameActivationsDataSource.
@@ -135,25 +134,6 @@ func (d *hostnameActivationsDataSource) Schema(_ context.Context, _ datasource.S
 	}
 }
 
-// Configure configures data source at the beginning of the lifecycle.
-func (d *hostnameActivationsDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		// ProviderData is nil when Configure is run first time as part of ValidateDataSourceConfig in framework provider
-		return
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Data Source Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-			)
-		}
-	}()
-
-	d.meta = meta.Must(req.ProviderData)
-}
-
 func getAllActivations(ctx context.Context, client papi.PAPI, contractID, groupID, propertyID, network string) (*papi.ListPropertyHostnameActivationsResponse, error) {
 	pageSize, offset := 999, 0
 	response := &papi.ListPropertyHostnameActivationsResponse{}
@@ -198,8 +178,7 @@ func (d *hostnameActivationsDataSource) Read(ctx context.Context, req datasource
 		return
 	}
 
-	client := Client(d.meta)
-	activations, err := getAllActivations(ctx, client, data.ContractID.ValueString(), data.GroupID.ValueString(), data.PropertyID.ValueString(), data.Network.ValueString())
+	activations, err := getAllActivations(ctx, d.Client.GetPAPI(), data.ContractID.ValueString(), data.GroupID.ValueString(), data.PropertyID.ValueString(), data.Network.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("fetching property hostname activations failed", err.Error())
 		return

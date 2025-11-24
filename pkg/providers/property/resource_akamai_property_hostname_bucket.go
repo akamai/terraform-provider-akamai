@@ -38,7 +38,7 @@ var (
 
 // HostnameBucketResource represents akamai_property_hostname_bucket resource.
 type HostnameBucketResource struct {
-	meta meta.Meta
+	meta.Resource
 }
 
 // HostnameBucketResourceModel is a model for akamai_property_hostname_bucket resource.
@@ -189,25 +189,6 @@ func NewHostnameBucketResource() resource.Resource {
 // Metadata implements resource.Resource.
 func (h *HostnameBucketResource) Metadata(_ context.Context, _ resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = "akamai_property_hostname_bucket"
-}
-
-// Configure implements resource.ResourceWithConfigure.
-func (h *HostnameBucketResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		// ProviderData is nil when Configure is run first time as part of ValidateDataSourceConfig in framework provider
-		return
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Resource Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-			)
-		}
-	}()
-
-	h.meta = meta.Must(req.ProviderData)
 }
 
 // Schema implements resource's Schema.
@@ -480,16 +461,14 @@ func (h *HostnameBucketResource) Create(ctx context.Context, req resource.Create
 		return
 	}
 
-	client := Client(h.meta)
-
 	// Send the PATCH requests to add the hostnames and wait for their activation.
-	if err := plan.sendRequests(ctx, client, requestsData.requests, waitForHostnameBucketActivation); err != nil {
+	if err := plan.sendRequests(ctx, h.Client.GetPAPI(), requestsData.requests, waitForHostnameBucketActivation); err != nil {
 		resp.Diagnostics.AddError("Create Property Hostname Bucket error", err.Error())
 		return
 	}
 
 	// After all PATCH requests, list the hostnames and fill the `cname_to` attributes.
-	responses, err := listHostnamesResponses(ctx, client, &plan)
+	responses, err := listHostnamesResponses(ctx, h.Client.GetPAPI(), &plan)
 	if err != nil {
 		resp.Diagnostics.AddError("Create Property Hostname Bucket error", err.Error())
 		return
@@ -533,9 +512,8 @@ func (h *HostnameBucketResource) Read(ctx context.Context, req resource.ReadRequ
 	}
 
 	ctx = tflog.SetField(ctx, "id", state.ID.ValueString())
-	client := Client(h.meta)
 
-	act, err := findCurrentActivation(ctx, client, &state)
+	act, err := findCurrentActivation(ctx, h.Client.GetPAPI(), &state)
 	if err != nil {
 		resp.Diagnostics.AddError("Read Property Hostname Bucket Resource error", err.Error())
 		return
@@ -548,7 +526,7 @@ func (h *HostnameBucketResource) Read(ctx context.Context, req resource.ReadRequ
 	}
 	state.NotifyEmails = emails
 
-	responses, err := listHostnamesResponses(ctx, client, &state)
+	responses, err := listHostnamesResponses(ctx, h.Client.GetPAPI(), &state)
 	if err != nil {
 		resp.Diagnostics.AddError("Read Property Hostname Bucket Resource error", err.Error())
 		return
@@ -636,15 +614,13 @@ func (h *HostnameBucketResource) Update(ctx context.Context, req resource.Update
 		return
 	}
 
-	client := Client(h.meta)
-
-	if err := plan.sendRequests(ctx, client, requestsData.requests, waitForHostnameBucketActivation); err != nil {
+	if err := plan.sendRequests(ctx, h.Client.GetPAPI(), requestsData.requests, waitForHostnameBucketActivation); err != nil {
 		resp.Diagnostics.AddError("Update Property Hostname Bucket error", err.Error())
 		return
 	}
 
 	// After all PATCH requests, list the hostnames and fill the `cname_to` attributes.
-	responses, err := listHostnamesResponses(ctx, client, &plan)
+	responses, err := listHostnamesResponses(ctx, h.Client.GetPAPI(), &plan)
 	if err != nil {
 		resp.Diagnostics.AddError("Update Property Hostname Bucket error", err.Error())
 		return
@@ -694,8 +670,7 @@ func (h *HostnameBucketResource) Delete(ctx context.Context, req resource.Delete
 		return
 	}
 
-	client := Client(h.meta)
-	if err := state.sendRequests(ctx, client, requestsData.requests, waitForHostnameBucketDeletion); err != nil {
+	if err := state.sendRequests(ctx, h.Client.GetPAPI(), requestsData.requests, waitForHostnameBucketDeletion); err != nil {
 		resp.Diagnostics.AddError("Delete Property Hostname Bucket Resource error", err.Error())
 		return
 	}

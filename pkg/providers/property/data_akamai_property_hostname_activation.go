@@ -2,7 +2,6 @@ package property
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/date"
@@ -24,7 +23,7 @@ func NewHostnameActivationDataSource() datasource.DataSource {
 
 // hostnameActivationDataSource defines the data source implementation for fetching property hostname activation information.
 type hostnameActivationDataSource struct {
-	meta meta.Meta
+	meta.DataSource
 }
 
 type hostnameModel struct {
@@ -55,24 +54,6 @@ type hostnameActivationDataSourceModel struct {
 
 func (p *hostnameActivationDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "akamai_property_hostname_activation"
-}
-
-func (p *hostnameActivationDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		// ProviderData is nil when Configure is run first time as part of ValidateDataSourceConfig in framework provider
-		return
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Data Source Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-			)
-		}
-	}()
-
-	p.meta = meta.Must(req.ProviderData)
 }
 
 func (p *hostnameActivationDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
@@ -183,8 +164,7 @@ func (p *hostnameActivationDataSource) Read(ctx context.Context, req datasource.
 		return
 	}
 
-	client := Client(p.meta)
-	activation, err := client.GetPropertyHostnameActivation(ctx, papi.GetPropertyHostnameActivationRequest{
+	activation, err := p.Client.GetPAPI().GetPropertyHostnameActivation(ctx, papi.GetPropertyHostnameActivationRequest{
 		PropertyID:           data.PropertyID.ValueString(),
 		HostnameActivationID: data.HostnameActivationID.ValueString(),
 		ContractID:           data.ContractID.ValueString(),

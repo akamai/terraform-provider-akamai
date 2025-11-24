@@ -175,7 +175,6 @@ func resourcePropertyIncludeCreate(ctx context.Context, rd *schema.ResourceData,
 	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyIncludeCreate")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := Client(meta)
 
 	logger.Debug("Creating property include")
 
@@ -212,7 +211,7 @@ func resourcePropertyIncludeCreate(ctx context.Context, rd *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 
-	createIncludeResp, err := client.CreateInclude(ctx, papi.CreateIncludeRequest{
+	createIncludeResp, err := meta.Client().GetPAPI().CreateInclude(ctx, papi.CreateIncludeRequest{
 		ContractID:  contractID,
 		GroupID:     groupID,
 		ProductID:   productID,
@@ -227,7 +226,7 @@ func resourcePropertyIncludeCreate(ctx context.Context, rd *schema.ResourceData,
 	rd.SetId(createIncludeResp.IncludeID)
 
 	postCreateVersion := 1
-	if err = updateRules(ctx, client, rd, postCreateVersion); err != nil {
+	if err = updateRules(ctx, meta.Client().GetPAPI(), rd, postCreateVersion); err != nil {
 		return diag.Errorf("%s update: %s", ErrPropertyInclude, err)
 	}
 
@@ -238,7 +237,6 @@ func resourcePropertyIncludeRead(ctx context.Context, rd *schema.ResourceData, m
 	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyIncludeRead")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := Client(meta)
 
 	logger.Debug("Reading property include")
 
@@ -254,7 +252,7 @@ func resourcePropertyIncludeRead(ctx context.Context, rd *schema.ResourceData, m
 		return diag.FromErr(err)
 	}
 
-	getIncludeResp, err := client.GetInclude(ctx, papi.GetIncludeRequest{
+	getIncludeResp, err := meta.Client().GetPAPI().GetInclude(ctx, papi.GetIncludeRequest{
 		GroupID:    groupID,
 		IncludeID:  includeID,
 		ContractID: contractID,
@@ -265,7 +263,7 @@ func resourcePropertyIncludeRead(ctx context.Context, rd *schema.ResourceData, m
 
 	include := getIncludeResp.Include
 
-	getIncludeRuleTreeResp, err := client.GetIncludeRuleTree(ctx, papi.GetIncludeRuleTreeRequest{
+	getIncludeRuleTreeResp, err := meta.Client().GetPAPI().GetIncludeRuleTree(ctx, papi.GetIncludeRuleTreeRequest{
 		GroupID:        groupID,
 		IncludeID:      includeID,
 		ContractID:     contractID,
@@ -276,7 +274,7 @@ func resourcePropertyIncludeRead(ctx context.Context, rd *schema.ResourceData, m
 		return diag.Errorf("%s read: %s", ErrPropertyInclude, err)
 	}
 
-	getIncludeVersionResp, err := client.GetIncludeVersion(ctx, papi.GetIncludeVersionRequest{
+	getIncludeVersionResp, err := meta.Client().GetPAPI().GetIncludeVersion(ctx, papi.GetIncludeVersionRequest{
 		IncludeID:  includeID,
 		Version:    include.LatestVersion,
 		ContractID: contractID,
@@ -354,7 +352,6 @@ func resourcePropertyIncludeUpdate(ctx context.Context, rd *schema.ResourceData,
 	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyIncludeUpdate")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := Client(meta)
 
 	logger.Debug("Updating property include")
 
@@ -375,7 +372,7 @@ func resourcePropertyIncludeUpdate(ctx context.Context, rd *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 
-	includeVersion, err := client.GetIncludeVersion(ctx, papi.GetIncludeVersionRequest{
+	includeVersion, err := meta.Client().GetPAPI().GetIncludeVersion(ctx, papi.GetIncludeVersionRequest{
 		Version:    latestVersion,
 		GroupID:    groupID,
 		IncludeID:  includeID,
@@ -387,7 +384,7 @@ func resourcePropertyIncludeUpdate(ctx context.Context, rd *schema.ResourceData,
 
 	version := latestVersion
 	if !isVersionEditable(includeVersion.IncludeVersion) {
-		createVersionResp, err := client.CreateIncludeVersion(ctx, papi.CreateIncludeVersionRequest{
+		createVersionResp, err := meta.Client().GetPAPI().CreateIncludeVersion(ctx, papi.CreateIncludeVersionRequest{
 			IncludeID: includeID,
 			IncludeVersionRequest: papi.IncludeVersionRequest{
 				CreateFromVersion: version,
@@ -399,7 +396,7 @@ func resourcePropertyIncludeUpdate(ctx context.Context, rd *schema.ResourceData,
 		version = createVersionResp.Version
 	}
 
-	if err = updateRules(ctx, client, rd, version); err != nil {
+	if err = updateRules(ctx, meta.Client().GetPAPI(), rd, version); err != nil {
 		return diag.Errorf("%s update: %s", ErrPropertyInclude, err)
 	}
 
@@ -410,7 +407,6 @@ func resourcePropertyIncludeDelete(ctx context.Context, rd *schema.ResourceData,
 	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyIncludeDelete")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := Client(meta)
 
 	logger.Debug("Deleting property include")
 
@@ -426,7 +422,7 @@ func resourcePropertyIncludeDelete(ctx context.Context, rd *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 
-	getIncludeResp, err := client.GetInclude(ctx, papi.GetIncludeRequest{
+	getIncludeResp, err := meta.Client().GetPAPI().GetInclude(ctx, papi.GetIncludeRequest{
 		GroupID:    groupID,
 		IncludeID:  includeID,
 		ContractID: contractID,
@@ -439,7 +435,7 @@ func resourcePropertyIncludeDelete(ctx context.Context, rd *schema.ResourceData,
 		return append(diag.Errorf("Include '%s' could not be deleted due to the following reason(s):", includeID), err...)
 	}
 
-	_, err = client.DeleteInclude(ctx, papi.DeleteIncludeRequest{
+	_, err = meta.Client().GetPAPI().DeleteInclude(ctx, papi.DeleteIncludeRequest{
 		ContractID: contractID,
 		IncludeID:  includeID,
 		GroupID:    groupID,

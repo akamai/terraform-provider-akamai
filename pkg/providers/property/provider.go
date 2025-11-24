@@ -7,12 +7,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/domainownership"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/hapi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/iam"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/str"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/subprovider"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -36,13 +31,6 @@ var (
 	_ subprovider.Subprovider = &Subprovider{}
 )
 
-var (
-	client                papi.PAPI
-	hapiClient            hapi.HAPI
-	iamClient             iam.IAM
-	domainownershipClient domainownership.DomainOwnership
-)
-
 // NewSubprovider returns a new property subprovider
 func NewSubprovider(opts ...option) *Subprovider {
 	once.Do(func() {
@@ -54,38 +42,6 @@ func NewSubprovider(opts ...option) *Subprovider {
 	})
 
 	return inst
-}
-
-// Client returns the PAPI interface
-func Client(meta meta.Meta) papi.PAPI {
-	if client != nil {
-		return client
-	}
-	return papi.Client(meta.Session())
-}
-
-// HapiClient returns the HAPI interface
-func HapiClient(meta meta.Meta) hapi.HAPI {
-	if hapiClient != nil {
-		return hapiClient
-	}
-	return hapi.Client(meta.Session())
-}
-
-// IAMClient returns the IAM interface
-func IAMClient(meta meta.Meta) iam.IAM {
-	if iamClient != nil {
-		return iamClient
-	}
-	return iam.Client(meta.Session())
-}
-
-// DomainOwnershipClient returns the DomainOwnership interface
-func DomainOwnershipClient(meta meta.Meta) domainownership.DomainOwnership {
-	if domainownershipClient != nil {
-		return domainownershipClient
-	}
-	return domainownership.Client(meta.Session())
 }
 
 // SDKResources returns the property resources implemented using terraform-plugin-sdk

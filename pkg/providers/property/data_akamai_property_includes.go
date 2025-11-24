@@ -110,7 +110,6 @@ type parentPropertyAttr struct {
 
 func dataPropertyIncludesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := Client(meta)
 	log := meta.Log("PAPI", "dataPropertyIncludesRead")
 	log.Debug("Reading property includes")
 
@@ -119,7 +118,7 @@ func dataPropertyIncludesRead(ctx context.Context, d *schema.ResourceData, m int
 		return diag.Errorf("failed to read attributes: %s", err)
 	}
 
-	includes, err := sendListIncludesRequest(ctx, client, attrs)
+	includes, err := sendListIncludesRequest(ctx, meta.Client().GetPAPI(), attrs)
 	if err != nil {
 		return diag.Errorf("sendListIncludesRequest error: %s", err)
 	}

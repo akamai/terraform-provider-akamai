@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -575,25 +576,23 @@ func TestHostnameBucketResource_Create(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			papiMock := &papi.Mock{}
+			client := edgegrid.NewTestClient()
 			mp := mockProperty{
-				papiMock: papiMock,
+				papiMock: client.PAPI,
 			}
 			tc.init(&mp)
 
-			useClient(papiMock, nil, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							Config:      testutils.LoadFixtureStringf(t, "testdata/TestResPropertyHostnameBucket/create/%s", tc.configFile),
-							Check:       tc.checksForCreate,
-							ExpectError: tc.expectError,
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureStringf(t, "testdata/TestResPropertyHostnameBucket/create/%s", tc.configFile),
+						Check:       tc.checksForCreate,
+						ExpectError: tc.expectError,
 					},
-				})
+				},
 			})
-			papiMock.AssertExpectations(t)
+			client.PAPI.AssertExpectations(t)
 		})
 	}
 }
@@ -1070,30 +1069,28 @@ func TestHostnameBucketResource_Update(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			papiMock := &papi.Mock{}
+			client := edgegrid.NewTestClient()
 			mp := mockProperty{
-				papiMock: papiMock,
+				papiMock: client.PAPI,
 			}
 			tc.init(&mp)
 
-			useClient(papiMock, nil, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							Config:      testutils.LoadFixtureStringf(t, "testdata/TestResPropertyHostnameBucket/create/%s", tc.createConfig),
-							Check:       tc.checksForCreate,
-							ExpectError: tc.createError,
-						},
-						{
-							Config:      testutils.LoadFixtureStringf(t, "testdata/TestResPropertyHostnameBucket/update/%s", tc.updateConfig),
-							Check:       tc.checksForUpdate,
-							ExpectError: tc.updateError,
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureStringf(t, "testdata/TestResPropertyHostnameBucket/create/%s", tc.createConfig),
+						Check:       tc.checksForCreate,
+						ExpectError: tc.createError,
 					},
-				})
+					{
+						Config:      testutils.LoadFixtureStringf(t, "testdata/TestResPropertyHostnameBucket/update/%s", tc.updateConfig),
+						Check:       tc.checksForUpdate,
+						ExpectError: tc.updateError,
+					},
+				},
 			})
-			papiMock.AssertExpectations(t)
+			client.PAPI.AssertExpectations(t)
 		})
 	}
 }
@@ -1369,28 +1366,26 @@ func TestHostnameBucketResource_Import(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			papiMock := &papi.Mock{}
+			client := edgegrid.NewTestClient()
 			mp := mockProperty{
-				papiMock: papiMock,
+				papiMock: client.PAPI,
 			}
 			tc.init(&mp)
 
-			useClient(papiMock, nil, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							ImportStateCheck: tc.stateCheck,
-							ImportStateId:    tc.importID,
-							ImportState:      true,
-							ResourceName:     "akamai_property_hostname_bucket.test",
-							Config:           testutils.LoadFixtureString(t, "testdata/TestResPropertyHostnameBucket/import/default.tf"),
-							ExpectError:      tc.expectError,
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						ImportStateCheck: tc.stateCheck,
+						ImportStateId:    tc.importID,
+						ImportState:      true,
+						ResourceName:     "akamai_property_hostname_bucket.test",
+						Config:           testutils.LoadFixtureString(t, "testdata/TestResPropertyHostnameBucket/import/default.tf"),
+						ExpectError:      tc.expectError,
 					},
-				})
+				},
 			})
-			papiMock.AssertExpectations(t)
+			client.PAPI.AssertExpectations(t)
 		})
 	}
 }
@@ -1608,19 +1603,17 @@ func TestHostnameBucketResource_ValidationErrors(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			papiMock := &papi.Mock{}
+			client := edgegrid.NewTestClient()
 			mp := mockProperty{
-				papiMock: papiMock,
+				papiMock: client.PAPI,
 			}
 			tc.init(&mp)
 
-			useClient(papiMock, nil, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps:                    tc.steps,
-				})
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				Steps:                    tc.steps,
 			})
-			papiMock.AssertExpectations(t)
+			client.PAPI.AssertExpectations(t)
 		})
 	}
 }
@@ -1867,19 +1860,17 @@ func TestHostnameBucketResource_Diff(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			papiMock := &papi.Mock{}
+			client := edgegrid.NewTestClient()
 			mp := mockProperty{
-				papiMock: papiMock,
+				papiMock: client.PAPI,
 			}
 			tc.init(&mp)
 
-			useClient(papiMock, nil, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps:                    tc.steps,
-				})
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				Steps:                    tc.steps,
 			})
-			papiMock.AssertExpectations(t)
+			client.PAPI.AssertExpectations(t)
 		})
 	}
 }

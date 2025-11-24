@@ -4,13 +4,12 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/str"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourcePropertyRules() *schema.Resource {
@@ -89,7 +88,6 @@ func isValidRuleFormat(ctx context.Context, client papi.PAPI, format string) (bo
 
 func dataPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := Client(meta)
 	logger := meta.Log("PAPI", "dataPropertyRulesRead")
 
 	var (
@@ -103,7 +101,7 @@ func dataPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m interf
 	groupID, _ = tf.GetStringValue("group_id", d)
 
 	ruleFormat, _ = tf.GetStringValue("rule_format", d)
-	ok, err := isValidRuleFormat(ctx, client, ruleFormat)
+	ok, err := isValidRuleFormat(ctx, meta.Client().GetPAPI(), ruleFormat)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -129,7 +127,7 @@ func dataPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	if version, err = tf.GetIntValue("version", d); err != nil {
-		latestVersion, err := client.GetLatestVersion(ctx, papi.GetLatestVersionRequest{
+		latestVersion, err := meta.Client().GetPAPI().GetLatestVersion(ctx, papi.GetLatestVersionRequest{
 			PropertyID: propertyID,
 			ContractID: contractID,
 			GroupID:    groupID,
@@ -147,7 +145,7 @@ func dataPropertyRulesRead(ctx context.Context, d *schema.ResourceData, m interf
 		}
 	}
 
-	getRuleTreeResponse, err := client.GetRuleTree(ctx, papi.GetRuleTreeRequest{
+	getRuleTreeResponse, err := meta.Client().GetPAPI().GetRuleTree(ctx, papi.GetRuleTreeRequest{
 		PropertyID:      propertyID,
 		PropertyVersion: version,
 		ContractID:      contractID,

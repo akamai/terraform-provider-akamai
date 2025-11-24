@@ -151,7 +151,6 @@ func dataSourcePropertyHostnames() *schema.Resource {
 
 func dataPropertyHostnamesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := Client(meta)
 	log := meta.Log("PAPI", "dataPropertyHostnamesRead")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -188,7 +187,7 @@ func dataPropertyHostnamesRead(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 
-	property, err := client.GetProperty(ctx, papi.GetPropertyRequest{ContractID: contractID, GroupID: groupID, PropertyID: propertyID})
+	property, err := meta.Client().GetPAPI().GetProperty(ctx, papi.GetPropertyRequest{ContractID: contractID, GroupID: groupID, PropertyID: propertyID})
 	if err != nil {
 		log.Error("could not fetch property", "error", err)
 		return diag.FromErr(err)
@@ -199,7 +198,7 @@ func dataPropertyHostnamesRead(ctx context.Context, d *schema.ResourceData, m in
 		if version != 0 {
 			diags = append(diags, diag.Diagnostic{Severity: diag.Warning, Summary: "provided `version` for HOSTNAME_BUCKET property, ignoring provided value"})
 		}
-		hostnames, err := getAllActivePropertyHostnames(ctx, client, contractID, groupID, propertyID, filterCerts)
+		hostnames, err := getAllActivePropertyHostnames(ctx, meta.Client().GetPAPI(), contractID, groupID, propertyID, filterCerts)
 		if err != nil {
 			return append(diags, diag.FromErr(err)...)
 		}
@@ -216,13 +215,13 @@ func dataPropertyHostnamesRead(ctx context.Context, d *schema.ResourceData, m in
 
 	var prpVersion *papi.GetPropertyVersionsResponse
 	if version == 0 {
-		prpVersion, err = client.GetLatestVersion(ctx, papi.GetLatestVersionRequest{
+		prpVersion, err = meta.Client().GetPAPI().GetLatestVersion(ctx, papi.GetLatestVersionRequest{
 			PropertyID: propertyID,
 			ContractID: contractID,
 			GroupID:    groupID,
 		})
 	} else {
-		prpVersion, err = client.GetPropertyVersion(ctx, papi.GetPropertyVersionRequest{
+		prpVersion, err = meta.Client().GetPAPI().GetPropertyVersion(ctx, papi.GetPropertyVersionRequest{
 			PropertyID:      propertyID,
 			PropertyVersion: version,
 			ContractID:      contractID,
@@ -250,7 +249,7 @@ func dataPropertyHostnamesRead(ctx context.Context, d *schema.ResourceData, m in
 	}
 
 	log.Debug("fetching property hostnames")
-	hostnamesResponse, err := client.GetPropertyVersionHostnames(ctx, hostNamesReq)
+	hostnamesResponse, err := meta.Client().GetPAPI().GetPropertyVersionHostnames(ctx, hostNamesReq)
 	if err != nil {
 		log.Error("could not fetch property hostnames", "error", err)
 		return diag.FromErr(err)

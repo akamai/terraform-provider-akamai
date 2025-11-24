@@ -5,12 +5,14 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func TestPropertyCCM(t *testing.T) {
+	t.Parallel()
 	commonPropertyAttrs := test.AttributeBatch{
 		"id":                  "prp_222222",
 		"name":                "test_property",
@@ -474,23 +476,22 @@ func TestPropertyCCM(t *testing.T) {
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			papiMock := &papi.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 			mp := mockProperty{
-				papiMock: papiMock,
+				papiMock: client.PAPI,
 			}
 			if test.init != nil {
 				test.init(&mp)
 			}
 
-			useClient(papiMock, nil, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps:                    test.steps,
-				})
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+				IsUnitTest:               true,
+				Steps:                    test.steps,
 			})
 
-			papiMock.AssertExpectations(t)
+			client.PAPI.AssertExpectations(t)
 		})
 	}
 }

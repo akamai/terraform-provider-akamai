@@ -7,12 +7,14 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestDataPropertyIncludeActivation(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		attrs      includeActivationTestAttributes
 		init       func(*papi.Mock, includeActivationTestAttributes)
@@ -25,7 +27,7 @@ func TestDataPropertyIncludeActivation(t *testing.T) {
 				groupID:             groupForTests,
 				includeID:           includeForTests,
 				network:             stagingNetwork,
-				activationsResponse: *createIncludeActivationsResponse(accountForTests, contractForTests, groupForTests, includeActivationsForTests),
+				activationsResponse: *createIncludeActivationsResponse(accountForTests, contractForTests, groupForTests, includeActivationsForTests()),
 			},
 			init: func(m *papi.Mock, attrs includeActivationTestAttributes) {
 				mockListIncludeActivation(m, attrs, 3)
@@ -38,7 +40,7 @@ func TestDataPropertyIncludeActivation(t *testing.T) {
 				groupID:             groupForTests,
 				includeID:           includeForTests,
 				network:             productionNetwork,
-				activationsResponse: *createIncludeActivationsResponse(accountForTests, contractForTests, groupForTests, includeActivationsForTests),
+				activationsResponse: *createIncludeActivationsResponse(accountForTests, contractForTests, groupForTests, includeActivationsForTests()),
 			},
 			init: func(m *papi.Mock, attrs includeActivationTestAttributes) {
 				mockListIncludeActivation(m, attrs, 3)
@@ -51,7 +53,7 @@ func TestDataPropertyIncludeActivation(t *testing.T) {
 				groupID:             groupForTests,
 				includeID:           includeForTests,
 				network:             productionNetwork,
-				activationsResponse: *createIncludeActivationsResponse(accountForTests, contractForTests, groupForTests, includeActivationsForTests[:2]),
+				activationsResponse: *createIncludeActivationsResponse(accountForTests, contractForTests, groupForTests, includeActivationsForTests()[:2]),
 			},
 			init: func(m *papi.Mock, attrs includeActivationTestAttributes) {
 				mockListIncludeActivation(m, attrs, 3)
@@ -77,7 +79,7 @@ func TestDataPropertyIncludeActivation(t *testing.T) {
 				groupID:             groupForTests,
 				includeID:           includeForTests,
 				network:             productionNetwork,
-				activationsResponse: *createIncludeActivationsResponse(accountForTests, contractForTests, groupForTests, includeActivationsForTests[:2]),
+				activationsResponse: *createIncludeActivationsResponse(accountForTests, contractForTests, groupForTests, includeActivationsForTests()[:2]),
 			},
 			init: func(m *papi.Mock, attrs includeActivationTestAttributes) {
 				mockListIncludeActivation(m, attrs, 3)
@@ -138,7 +140,7 @@ func TestDataPropertyIncludeActivation(t *testing.T) {
 				groupID:             groupForTests,
 				includeID:           includeForTests,
 				network:             stagingNetwork,
-				activationsResponse: *createIncludeActivationsResponse(accountForTests, contractForTests, groupForTests, includeActivationsForTests),
+				activationsResponse: *createIncludeActivationsResponse(accountForTests, contractForTests, groupForTests, includeActivationsForTests()),
 			},
 			init: func(m *papi.Mock, attrs includeActivationTestAttributes) {
 				m.On("ListIncludeActivations", testutils.MockContext, papi.ListIncludeActivationsRequest{
@@ -154,35 +156,36 @@ func TestDataPropertyIncludeActivation(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &papi.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 			if test.init != nil {
-				test.init(client, test.attrs)
+				test.init(client.PAPI, test.attrs)
 			}
-			useClient(client, nil, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps: []resource.TestStep{{
-						Config:      testutils.LoadFixtureString(t, test.configPath),
-						Check:       checkPropertyIncludeActivationAttrs(test.attrs),
-						ExpectError: test.error,
-					}},
-				})
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+				IsUnitTest:               true,
+				Steps: []resource.TestStep{{
+					Config:      testutils.LoadFixtureString(t, test.configPath),
+					Check:       checkPropertyIncludeActivationAttrs(test.attrs),
+					ExpectError: test.error,
+				}},
 			})
-			client.AssertExpectations(t)
+
+			client.PAPI.AssertExpectations(t)
 		})
 	}
 }
 
 func TestFilterActivations(t *testing.T) {
+	t.Parallel()
 	t.Run("test filterActivation - STAGING network", func(t *testing.T) {
-		stagingIncludes := filterIncludeActivationsByNetwork(includeActivationsForTests, stagingNetwork)
+		stagingIncludes := filterIncludeActivationsByNetwork(includeActivationsForTests(), stagingNetwork)
 		assert.Equal(t, 2, len(stagingIncludes))
 		assert.Equal(t, "1", stagingIncludes[0].IncludeID)
 		assert.Equal(t, "2", stagingIncludes[1].IncludeID)
 	})
 	t.Run("test filterActivation - PRODUCTION network", func(t *testing.T) {
-		productionIncludes := filterIncludeActivationsByNetwork(includeActivationsForTests, productionNetwork)
+		productionIncludes := filterIncludeActivationsByNetwork(includeActivationsForTests(), productionNetwork)
 		assert.Equal(t, 2, len(productionIncludes))
 		assert.Equal(t, "3", productionIncludes[0].IncludeID)
 		assert.Equal(t, "4", productionIncludes[1].IncludeID)
@@ -190,9 +193,11 @@ func TestFilterActivations(t *testing.T) {
 }
 
 func TestFindLatestActivation(t *testing.T) {
-	activationWithLatestDeactivate := append(includeActivationsForTests, includeActivationTypeDeactivate)
-	noActiveStatusActivations := includeActivationsForTests[:2]
-	manyActivations := append(includeActivationsForTests, createIncludeActivation(includeActivationData{
+	t.Parallel()
+	basicActivations := includeActivationsForTests()
+	activationWithLatestDeactivate := append(includeActivationsForTests(), includeActivationTypeDeactivate)
+	noActiveStatusActivations := includeActivationsForTests()[:2]
+	manyActivations := append(includeActivationsForTests(), createIncludeActivation(includeActivationData{
 		network:             stagingNetwork,
 		activationType:      activationTypeActivate,
 		activationID:        "6",
@@ -229,8 +234,8 @@ func TestFindLatestActivation(t *testing.T) {
 			actualLatestActivation: &manyActivations[0],
 		},
 		"oldest activation active": {
-			activations:            includeActivationsForTests,
-			actualLatestActivation: &includeActivationsForTests[2],
+			activations:            basicActivations,
+			actualLatestActivation: &basicActivations[2],
 		},
 		"activate and deactivate types with active status - the latest one `wins` (nil)": {
 			activations:            includeActivationsBothTypesActive,
@@ -316,7 +321,7 @@ var (
 
 	// includeActivationsWithLatestDeactivate is a slice of include activations, with the latest activation being of type
 	// `DEACTIVATE` with status `ACTIVE`
-	includeActivationsWithLatestDeactivate = append(includeActivationsForTests, includeActivationTypeDeactivate)
+	includeActivationsWithLatestDeactivate = append(includeActivationsForTests(), includeActivationTypeDeactivate)
 
 	// includeActivationsBothTypesActive is a slice of two includes, one being of type `ACTIVATE` and one being of type
 	// `DEACTIVATE` with both having status `ACTIVE`. The latest one is the one with the most recent updateDate.
@@ -338,60 +343,62 @@ var (
 		}),
 	}
 
-	// includeActivationsForTests is a slice of different include activations used in tests
-	includeActivationsForTests = []papi.IncludeActivation{
-		createIncludeActivation(includeActivationData{
-			network:             stagingNetwork,
-			activationType:      activationTypeActivate,
-			activationID:        "1",
-			status:              activationStatusInactive,
-			note:                "Note 1",
-			updateDate:          "2022-11-08T14:15:27Z",
-			includeID:           "1",
-			includeName:         "Name 1",
-			includeType:         includeTypeMicroServices,
-			includeVersion:      1,
-			includeActivationID: "1",
-		}),
-		createIncludeActivation(includeActivationData{
-			network:             stagingNetwork,
-			activationType:      activationTypeActivate,
-			activationID:        "2",
-			status:              activationStatusInactive,
-			note:                "Note 2",
-			updateDate:          "2022-11-09T14:15:27Z",
-			includeID:           "2",
-			includeName:         "Name 2",
-			includeType:         includeTypeMicroServices,
-			includeVersion:      2,
-			includeActivationID: "2",
-		}),
-		createIncludeActivation(includeActivationData{
-			network:             productionNetwork,
-			activationType:      activationTypeActivate,
-			activationID:        "3",
-			status:              activationStatusPending,
-			note:                "Note 3",
-			updateDate:          "2022-11-06T14:15:27Z",
-			includeID:           "3",
-			includeName:         "Name 3",
-			includeType:         includeTypeMicroServices,
-			includeVersion:      3,
-			includeActivationID: "3",
-		}),
-		createIncludeActivation(includeActivationData{
-			network:             productionNetwork,
-			activationType:      activationTypeActivate,
-			activationID:        "4",
-			status:              activationStatusActive,
-			note:                "Note 4",
-			updateDate:          "2022-11-07T14:15:27Z",
-			includeID:           "4",
-			includeName:         "Name 4",
-			includeType:         includeTypeMicroServices,
-			includeVersion:      4,
-			includeActivationID: "4",
-		}),
+	// includeActivationsForTests returns a slice of different include activations used in tests
+	includeActivationsForTests = func() []papi.IncludeActivation {
+		return []papi.IncludeActivation{
+			createIncludeActivation(includeActivationData{
+				network:             stagingNetwork,
+				activationType:      activationTypeActivate,
+				activationID:        "1",
+				status:              activationStatusInactive,
+				note:                "Note 1",
+				updateDate:          "2022-11-08T14:15:27Z",
+				includeID:           "1",
+				includeName:         "Name 1",
+				includeType:         includeTypeMicroServices,
+				includeVersion:      1,
+				includeActivationID: "1",
+			}),
+			createIncludeActivation(includeActivationData{
+				network:             stagingNetwork,
+				activationType:      activationTypeActivate,
+				activationID:        "2",
+				status:              activationStatusInactive,
+				note:                "Note 2",
+				updateDate:          "2022-11-09T14:15:27Z",
+				includeID:           "2",
+				includeName:         "Name 2",
+				includeType:         includeTypeMicroServices,
+				includeVersion:      2,
+				includeActivationID: "2",
+			}),
+			createIncludeActivation(includeActivationData{
+				network:             productionNetwork,
+				activationType:      activationTypeActivate,
+				activationID:        "3",
+				status:              activationStatusPending,
+				note:                "Note 3",
+				updateDate:          "2022-11-06T14:15:27Z",
+				includeID:           "3",
+				includeName:         "Name 3",
+				includeType:         includeTypeMicroServices,
+				includeVersion:      3,
+				includeActivationID: "3",
+			}),
+			createIncludeActivation(includeActivationData{
+				network:             productionNetwork,
+				activationType:      activationTypeActivate,
+				activationID:        "4",
+				status:              activationStatusActive,
+				note:                "Note 4",
+				updateDate:          "2022-11-07T14:15:27Z",
+				includeID:           "4",
+				includeName:         "Name 4",
+				includeType:         includeTypeMicroServices,
+				includeVersion:      4,
+				includeActivationID: "4",
+			}),
+		}
 	}
 
 	// mockListIncludeActivation mocks ListIncludeActivation call with provided parameters

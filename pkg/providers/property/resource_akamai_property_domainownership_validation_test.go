@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/domainownership"
+	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
@@ -166,6 +167,7 @@ func getMinCreateAddOneRemoveOne() validationTestData {
 }
 
 func TestDomainOwnershipValidationResource(t *testing.T) {
+	t.Parallel()
 	searchInterval = 1 * time.Millisecond
 
 	minCreateChecker := test.NewStateChecker("akamai_property_domainownership_validation.test").
@@ -1545,20 +1547,18 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &domainownership.Mock{}
+			client := edgegrid.NewTestClient()
 
 			if tc.init != nil {
-				tc.init(client, tc.mockData)
+				tc.init(client.DomainOwnership, tc.mockData)
 			}
 
-			useDomainOwnership(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps:                    tc.steps,
-				})
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				Steps:                    tc.steps,
 			})
 
-			client.AssertExpectations(t)
+			client.DomainOwnership.AssertExpectations(t)
 		})
 	}
 }

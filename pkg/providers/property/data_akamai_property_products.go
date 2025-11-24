@@ -45,8 +45,6 @@ func dataPropertyProductsRead(ctx context.Context, d *schema.ResourceData, m int
 	// create context with logging
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 
-	client := Client(meta)
-
 	contractID, err := tf.GetStringValue("contract_id", d)
 	if err != nil {
 		return diag.FromErr(err) // fixme kind of error
@@ -54,7 +52,7 @@ func dataPropertyProductsRead(ctx context.Context, d *schema.ResourceData, m int
 
 	logger.Debugf("[Akamai Property Products] Start searching for product records")
 
-	prdResp, err := client.GetProducts(ctx, papi.GetProductsRequest{ContractID: contractID})
+	prdResp, err := meta.Client().GetPAPI().GetProducts(ctx, papi.GetProductsRequest{ContractID: contractID})
 	if err != nil {
 		return diag.FromErr(err) // fixme kind of error
 	}

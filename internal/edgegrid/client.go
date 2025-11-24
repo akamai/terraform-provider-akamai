@@ -3,12 +3,24 @@ package edgegrid
 
 import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudcertificates"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/domainownership"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/hapi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/session"
 )
 
 // Client is the interface for the Akamai Edgegrid client.
 type Client interface {
 	GetCloudCertificates() cloudcertificates.CloudCertificates
+
+	GetDomainOwnership() domainownership.DomainOwnership
+
+	GetHAPI() hapi.HAPI
+
+	GetIAM() iam.IAM
+
+	GetPAPI() papi.PAPI
 }
 
 var (
@@ -30,4 +42,24 @@ func NewClientImpl(sess session.Session) *ClientImpl {
 // GetCloudCertificates returns the CCM client for managing cloud certificates.
 func (c *ClientImpl) GetCloudCertificates() cloudcertificates.CloudCertificates {
 	return cloudcertificates.Client(c.sess)
+}
+
+// GetDomainOwnership returns the Domain Ownership client for managing domain ownership.
+func (c *ClientImpl) GetDomainOwnership() domainownership.DomainOwnership {
+	return domainownership.Client(c.sess)
+}
+
+// GetHAPI returns the HAPI client for managing hostnames APIs.
+func (c *ClientImpl) GetHAPI() hapi.HAPI {
+	return hapi.Client(c.sess)
+}
+
+// GetIAM returns the IAM client for managing identity and access management.
+func (c *ClientImpl) GetIAM() iam.IAM {
+	return iam.Client(c.sess)
+}
+
+// GetPAPI returns the PAPI client for managing property APIs.
+func (c *ClientImpl) GetPAPI() papi.PAPI {
+	return papi.Client(c.sess)
 }

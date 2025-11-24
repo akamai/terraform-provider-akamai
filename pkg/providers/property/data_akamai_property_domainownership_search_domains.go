@@ -2,7 +2,6 @@ package property
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/domainownership"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/framework/date"
@@ -26,7 +25,7 @@ func NewDomainOwnershipSearchDomains() datasource.DataSource {
 
 // domainOwnershipSearchDomains defines the data source implementation for domain ownership search domains.
 type domainOwnershipSearchDomains struct {
-	meta meta.Meta
+	meta.DataSource
 }
 
 // domainOwnershipSearchDomainsModel describes the data source data model for PropertyDomainOwnershipSearchDomains.
@@ -198,25 +197,6 @@ func (d *domainOwnershipSearchDomains) Schema(_ context.Context, _ datasource.Sc
 	}
 }
 
-// Configure  configures data source at the beginning of the lifecycle
-func (d *domainOwnershipSearchDomains) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		// ProviderData is nil when Configure is run first time as part of ValidateDataSourceConfig in framework provider
-		return
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Data Source Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-			)
-		}
-	}()
-
-	d.meta = meta.Must(req.ProviderData)
-}
-
 // Read is called when the provider must read data source values in order to update state
 func (d *domainOwnershipSearchDomains) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	tflog.Debug(ctx, "Domain Ownership SearchDomains Read")
@@ -233,8 +213,7 @@ func (d *domainOwnershipSearchDomains) Read(ctx context.Context, req datasource.
 			ValidationScope: domainownership.ValidationScope(domain.ValidationScope.ValueString()),
 		})
 	}
-	client := DomainOwnershipClient(d.meta)
-	response, err := client.SearchDomains(ctx, domainownership.SearchDomainsRequest{
+	response, err := d.Client.GetDomainOwnership().SearchDomains(ctx, domainownership.SearchDomainsRequest{
 		IncludeAll: true,
 		Body: domainownership.SearchDomainsBody{
 			Domains: domains,

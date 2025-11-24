@@ -160,11 +160,10 @@ func resourcePropertyIncludeActivationCreate(ctx context.Context, d *schema.Reso
 	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyIncludeActivationCreate")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := Client(meta)
 
 	logger.Debug("Create property include activation")
 
-	err := resourcePropertyIncludeActivationUpsert(ctx, d, client)
+	err := resourcePropertyIncludeActivationUpsert(ctx, d, meta.Client().GetPAPI())
 	if err != nil {
 		return err
 	}
@@ -176,7 +175,6 @@ func resourcePropertyIncludeActivationRead(ctx context.Context, d *schema.Resour
 	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyIncludeActivationRead")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := Client(meta)
 	logger.Debug("Reading property include activation")
 
 	rd, err := parsePropertyIncludeActivationResourceID(d.Id())
@@ -184,7 +182,7 @@ func resourcePropertyIncludeActivationRead(ctx context.Context, d *schema.Resour
 		return diag.FromErr(err)
 	}
 
-	activation, err := getLatestActiveIncludeActivationResponseInNetwork(ctx, client, rd)
+	activation, err := getLatestActiveIncludeActivationResponseInNetwork(ctx, meta.Client().GetPAPI(), rd)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -228,7 +226,6 @@ func resourcePropertyIncludeActivationUpdate(ctx context.Context, d *schema.Reso
 	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyIncludeActivationUpdate")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := Client(meta)
 	logger.Debug("Updating property include activation")
 
 	if !d.HasChangesExcept("timeouts", "compliance_record") {
@@ -240,7 +237,7 @@ func resourcePropertyIncludeActivationUpdate(ctx context.Context, d *schema.Reso
 		return diag.Errorf("'auto_acknowledge_rule_warnings' attribute cannot be updated after resource creation without 'version' attribute modification")
 	}
 
-	err := resourcePropertyIncludeActivationUpsert(ctx, d, client)
+	err := resourcePropertyIncludeActivationUpsert(ctx, d, meta.Client().GetPAPI())
 	if err != nil {
 		return err
 	}
@@ -251,7 +248,6 @@ func resourcePropertyIncludeActivationDelete(ctx context.Context, d *schema.Reso
 	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyIncludeActivationDelete")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := Client(meta)
 	logger.Debug("Deactivating property include")
 
 	activationResourceData := propertyIncludeActivationData{}
@@ -269,11 +265,11 @@ func resourcePropertyIncludeActivationDelete(ctx context.Context, d *schema.Reso
 	activationResourceData.includeID = idParts[2]
 
 	logger.Debug("waiting for pending (de)activations")
-	if diagErr := waitUntilNoPendingActivationInNetwork(ctx, client, activationResourceData); diagErr != nil {
+	if diagErr := waitUntilNoPendingActivationInNetwork(ctx, meta.Client().GetPAPI(), activationResourceData); diagErr != nil {
 		return diagErr
 	}
 
-	expectedIsActive, err := isLatestActiveExpectedDeactivated(ctx, client, activationResourceData)
+	expectedIsActive, err := isLatestActiveExpectedDeactivated(ctx, meta.Client().GetPAPI(), activationResourceData)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -284,13 +280,13 @@ func resourcePropertyIncludeActivationDelete(ctx context.Context, d *schema.Reso
 	}
 
 	logger.Debug("creating new deactivation")
-	diagErr := createNewDeactivation(ctx, client, activationResourceData)
+	diagErr := createNewDeactivation(ctx, meta.Client().GetPAPI(), activationResourceData)
 	if diagErr != nil {
 		return diagErr
 	}
 
 	logger.Debug("waiting for pending deactivation")
-	return waitUntilNoPendingActivationInNetwork(ctx, client, activationResourceData)
+	return waitUntilNoPendingActivationInNetwork(ctx, meta.Client().GetPAPI(), activationResourceData)
 }
 
 func resourcePropertyIncludeActivationImport(_ context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {

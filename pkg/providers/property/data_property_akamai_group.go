@@ -150,7 +150,7 @@ func findGroupByName(name, contract string, groups *papi.GetGroupsResponse, isDe
 }
 
 func getGroups(ctx context.Context, meta akameta.Meta) (*papi.GetGroupsResponse, error) {
-	groups, err := Client(meta).GetGroups(ctx)
+	groups, err := meta.Client().GetPAPI().GetGroups(ctx)
 	if err != nil {
 		return nil, err
 	}

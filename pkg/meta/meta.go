@@ -26,6 +26,7 @@ type (
 		// Session returns the operation API session
 		Session() session.Session
 
+		// Client returns the edgegrid client
 		Client() edgegrid.Client
 	}
 

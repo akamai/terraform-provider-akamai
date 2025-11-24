@@ -525,7 +525,6 @@ func propertyVersionNotesDiffSuppress(_, _, _ string, rd *schema.ResourceData) b
 func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyCreate")
-	client := Client(meta)
 	ctx = log.NewContext(ctx, logger)
 
 	// Schema guarantees these types
@@ -567,7 +566,7 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 	}
 
 	if propertyID == "" {
-		propertyID, err = createProperty(ctx, client, papi.CreatePropertyRequest{
+		propertyID, err = createProperty(ctx, meta.Client().GetPAPI(), papi.CreatePropertyRequest{
 			ContractID: contractID,
 			GroupID:    groupID,
 			Property: papi.PropertyCreate{
@@ -578,7 +577,7 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 			},
 		})
 		if err != nil {
-			return interpretCreatePropertyError(ctx, err, client, groupID, contractID, productID)
+			return interpretCreatePropertyError(ctx, err, meta.Client().GetPAPI(), groupID, contractID, productID)
 		}
 	}
 	// Save minimum state BEFORE moving on
@@ -609,7 +608,7 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 	} else {
 		hostnames := mapToHostnames(hostnameVal.List())
 		if len(hostnames) > 0 {
-			if err := updatePropertyHostnames(ctx, client, property, hostnames); err != nil {
+			if err := updatePropertyHostnames(ctx, meta.Client().GetPAPI(), property, hostnames); err != nil {
 				return diag.FromErr(err)
 			}
 		}
@@ -624,7 +623,7 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 			return diag.FromErr(err)
 		}
 
-		if err := updatePropertyRules(ctx, client, property, rulesUpdate, ruleFormat); err != nil {
+		if err := updatePropertyRules(ctx, meta.Client().GetPAPI(), property, rulesUpdate, ruleFormat); err != nil {
 			d.Partial(true)
 			return diag.FromErr(err)
 		}
@@ -659,9 +658,9 @@ func interpretCreatePropertyError(ctx context.Context, err error, client papi.PA
 }
 
 func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	ctx = log.NewContext(ctx, meta.Must(m).Log("PAPI", "resourcePropertyRead"))
+	meta := meta.Must(m)
+	ctx = log.NewContext(ctx, meta.Log("PAPI", "resourcePropertyRead"))
 	logger := log.FromContext(ctx)
-	client := Client(meta.Must(m))
 
 	propertyID := d.Id()
 	contractID := str.AddPrefix(d.Get("contract_id").(string), "ctr_")
@@ -672,9 +671,9 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 	var err error
 	var v int
 	if readVersionID == 0 {
-		property, err = fetchLatestProperty(ctx, client, propertyID, groupID, contractID)
+		property, err = fetchLatestProperty(ctx, meta.Client().GetPAPI(), propertyID, groupID, contractID)
 	} else {
-		property, v, err = fetchProperty(ctx, client, propertyID, groupID, contractID, strconv.Itoa(readVersionID))
+		property, v, err = fetchProperty(ctx, meta.Client().GetPAPI(), propertyID, groupID, contractID, strconv.Itoa(readVersionID))
 	}
 	if err != nil {
 		return diag.FromErr(err)
@@ -698,12 +697,12 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 	useHostnameBucket := property.PropertyType != nil && *property.PropertyType == "HOSTNAME_BUCKET"
 	var hostnames []papi.Hostname
 	if !useHostnameBucket {
-		hostnames, err = fetchPropertyVersionHostnames(ctx, client, *property, v)
+		hostnames, err = fetchPropertyVersionHostnames(ctx, meta.Client().GetPAPI(), *property, v)
 		if err != nil {
 			return diag.FromErr(fmt.Errorf("error reading property: %w", err))
 		}
 	}
-	rules, ruleFormat, ruleErrors, ruleWarnings, err := fetchPropertyVersionRules(ctx, client, *property, v)
+	rules, ruleFormat, ruleErrors, ruleWarnings, err := fetchPropertyVersionRules(ctx, meta.Client().GetPAPI(), *property, v)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -733,7 +732,7 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 		}
 	}
 
-	res, err := fetchPropertyVersion(ctx, client, propertyID, groupID, contractID, v)
+	res, err := fetchPropertyVersion(ctx, meta.Client().GetPAPI(), propertyID, groupID, contractID, v)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -771,9 +770,9 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 }
 
 func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	ctx = log.NewContext(ctx, meta.Must(m).Log("PAPI", "resourcePropertyUpdate"))
+	meta := meta.Must(m)
+	ctx = log.NewContext(ctx, meta.Log("PAPI", "resourcePropertyUpdate"))
 	logger := log.FromContext(ctx)
-	client := Client(meta.Must(m))
 
 	diags := diag.Diagnostics{}
 
@@ -839,7 +838,7 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.FromErr(err)
 	}
 	if groupsDiffer {
-		hlp := helper{client, IAMClient(meta.Must(m))}
+		hlp := helper{meta.Client().GetPAPI(), meta.Client().GetIAM()}
 		key := papiKey{
 			propertyID: property.PropertyID,
 			groupID:    oldGroupID,
@@ -866,7 +865,7 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 		propertyVersion = property.LatestVersion
 	}
 
-	resp, err := fetchPropertyVersion(ctx, client, propertyID, property.GroupID, contractID, propertyVersion)
+	resp, err := fetchPropertyVersion(ctx, meta.Client().GetPAPI(), propertyID, property.GroupID, contractID, propertyVersion)
 	if err != nil {
 		d.Partial(true)
 		return diag.FromErr(err)
@@ -875,7 +874,7 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 	// if read_version is not the latest version or not editable then create a new version from it before proceeding
 	if (propertyVersion != property.LatestVersion) || (resp.Version.ProductionStatus != papi.VersionStatusInactive || resp.Version.StagingStatus != papi.VersionStatusInactive) {
 		// The latest version has been activated on either production or staging, so we need to create a new version to apply changes on
-		versionID, err := createPropertyVersion(ctx, client, property, propertyVersion)
+		versionID, err := createPropertyVersion(ctx, meta.Client().GetPAPI(), property, propertyVersion)
 		if err != nil {
 			d.Partial(true)
 			return diag.FromErr(err)
@@ -891,7 +890,7 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 		if err == nil {
 			hostnames := mapToHostnames(hostnamesVal.List())
 			if len(hostnames) > 0 {
-				if err := updatePropertyHostnames(ctx, client, property, hostnames); err != nil {
+				if err := updatePropertyHostnames(ctx, meta.Client().GetPAPI(), property, hostnames); err != nil {
 					d.Partial(true)
 					return diag.FromErr(err)
 				}
@@ -902,7 +901,7 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 	}
 
 	if shouldUpdateRuleTree(d) {
-		if err := updateRuleTree(ctx, client, property, d); err != nil {
+		if err := updateRuleTree(ctx, meta.Client().GetPAPI(), property, d); err != nil {
 			return diag.FromErr(err)
 		}
 	}
@@ -942,9 +941,9 @@ func updateRuleTree(ctx context.Context, client papi.PAPI, property papi.Propert
 }
 
 func resourcePropertyDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	ctx = log.NewContext(ctx, meta.Must(m).Log("PAPI", "resourcePropertyDelete"))
+	meta := meta.Must(m)
+	ctx = log.NewContext(ctx, meta.Log("PAPI", "resourcePropertyDelete"))
 	logger := log.FromContext(ctx)
-	client := Client(meta.Must(m))
 
 	propertyID, err := tf.GetStringValue("property_id", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
@@ -964,7 +963,7 @@ func resourcePropertyDelete(ctx context.Context, d *schema.ResourceData, m inter
 		oldGroupID.(string), newGroupID.(string))
 	groupID := str.AddPrefix(oldGroupID.(string), "grp_")
 
-	if err := removeProperty(ctx, client, propertyID, groupID, contractID); err != nil {
+	if err := removeProperty(ctx, meta.Client().GetPAPI(), propertyID, groupID, contractID); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -972,7 +971,8 @@ func resourcePropertyDelete(ctx context.Context, d *schema.ResourceData, m inter
 }
 
 func resourcePropertyImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	ctx = log.NewContext(ctx, meta.Must(m).Log("PAPI", "resourcePropertyImport"))
+	meta := meta.Must(m)
+	ctx = log.NewContext(ctx, meta.Log("PAPI", "resourcePropertyImport"))
 
 	// User-supplied import ID is a comma-separated list of propertyID[,groupID[,contractID]]
 	// contractID and groupID are optional as long as the propertyID is sufficient to fetch the property
@@ -1019,7 +1019,7 @@ func resourcePropertyImport(ctx context.Context, d *schema.ResourceData, m inter
 					return nil, ErrPropertyVersionNotFound
 				}
 				// if we ran validation, and we actually have a network name, we still need to fetch the desired version number
-				_, attrs["read_version"], err = fetchProperty(ctx, Client(meta.Must(m)), propertyID, groupID, contractID, version)
+				_, attrs["read_version"], err = fetchProperty(ctx, meta.Client().GetPAPI(), propertyID, groupID, contractID, version)
 				if err != nil {
 					return nil, err
 				}
@@ -1039,11 +1039,10 @@ func resourcePropertyImport(ctx context.Context, d *schema.ResourceData, m inter
 	var property *papi.Property
 	var err error
 	var v int
-	client = Client(meta.Must(m))
 	if !isDefaultVersion(version) {
-		property, v, err = fetchProperty(ctx, client, propertyID, groupID, contractID, version)
+		property, v, err = fetchProperty(ctx, meta.Client().GetPAPI(), propertyID, groupID, contractID, version)
 	} else {
-		property, err = fetchLatestProperty(ctx, client, propertyID, groupID, contractID)
+		property, err = fetchLatestProperty(ctx, meta.Client().GetPAPI(), propertyID, groupID, contractID)
 	}
 	if err != nil {
 		return nil, err

@@ -5,11 +5,13 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func Test_DSReadContract(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		init       func(*papi.Mock, testDataForPAPIGroups)
 		mockData   testDataForPAPIGroups
@@ -186,28 +188,27 @@ func Test_DSReadContract(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &papi.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 			if test.init != nil {
-				test.init(client, test.mockData)
+				test.init(client.PAPI, test.mockData)
 			}
-			useClient(client, nil, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps: []resource.TestStep{
-						{
-							Config: testutils.LoadFixtureString(t, test.configPath),
-							Check: resource.ComposeAggregateTestCheckFunc(
-								resource.TestCheckResourceAttr("data.akamai_contract.akacontract", "id", "ctr_1234"),
-								resource.TestCheckResourceAttr("data.akamai_contract.akacontract", "group_id", "grp_12345"),
-								resource.TestCheckResourceAttr("data.akamai_contract.akacontract", "group_name", "Example.com-1-1TJZH5"),
-							),
-							ExpectError: test.error,
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+				IsUnitTest:               true,
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, test.configPath),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("data.akamai_contract.akacontract", "id", "ctr_1234"),
+							resource.TestCheckResourceAttr("data.akamai_contract.akacontract", "group_id", "grp_12345"),
+							resource.TestCheckResourceAttr("data.akamai_contract.akacontract", "group_name", "Example.com-1-1TJZH5"),
+						),
+						ExpectError: test.error,
 					},
-				})
+				},
 			})
-			client.AssertExpectations(t)
+			client.PAPI.AssertExpectations(t)
 		})
 	}
 }

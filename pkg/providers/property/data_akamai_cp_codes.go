@@ -2,7 +2,6 @@ package property
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
@@ -21,7 +20,7 @@ var (
 
 type (
 	cpCodesDataSource struct {
-		meta meta.Meta
+		meta.DataSource
 	}
 	// cpCodesDataSourceModel provide whole model of CP Codes datasource
 	cpCodesDataSourceModel struct {
@@ -45,21 +44,6 @@ type (
 // NewCPCodesDataSource returns a new CP codes data source
 func NewCPCodesDataSource() datasource.DataSource {
 	return &cpCodesDataSource{}
-}
-
-func (c *cpCodesDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Data Source Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.",
-					req.ProviderData))
-		}
-	}()
-	c.meta = meta.Must(req.ProviderData)
 }
 
 func (c *cpCodesDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -127,8 +111,7 @@ func (c *cpCodesDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	if resp.Diagnostics.Append(req.Config.Get(ctx, &data)...); resp.Diagnostics.HasError() {
 		return
 	}
-	client := Client(c.meta)
-	cpCodes, err := client.GetCPCodes(ctx, papi.GetCPCodesRequest{
+	cpCodes, err := c.Client.GetPAPI().GetCPCodes(ctx, papi.GetCPCodesRequest{
 		ContractID: data.ContractID.ValueString(),
 		GroupID:    data.GroupID.ValueString(),
 	})

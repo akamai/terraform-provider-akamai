@@ -9,12 +9,14 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func TestDataPropertyIncludes(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		attrs      attributes
 		init       func(*papi.Mock, attributes)
@@ -270,22 +272,21 @@ func TestDataPropertyIncludes(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &papi.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 			if test.init != nil {
-				test.init(client, test.attrs)
+				test.init(client.PAPI, test.attrs)
 			}
-			useClient(client, nil, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps: []resource.TestStep{{
-						Config:      testutils.LoadFixtureString(t, test.configPath),
-						Check:       checkPropertyIncludesAttrs(test.attrs),
-						ExpectError: test.error,
-					}},
-				})
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+				IsUnitTest:               true,
+				Steps: []resource.TestStep{{
+					Config:      testutils.LoadFixtureString(t, test.configPath),
+					Check:       checkPropertyIncludesAttrs(test.attrs),
+					ExpectError: test.error,
+				}},
 			})
-			client.AssertExpectations(t)
+			client.PAPI.AssertExpectations(t)
 		})
 	}
 }

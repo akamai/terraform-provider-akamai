@@ -34,7 +34,7 @@ var (
 type (
 	// DomainOwnershipValidationResource represents akamai_domainownership_validation resource.
 	DomainOwnershipValidationResource struct {
-		meta meta.Meta
+		meta.Resource
 	}
 
 	domainOwnershipValidationResourceModel struct {
@@ -68,25 +68,6 @@ func NewDomainOwnershipValidationResource() resource.Resource {
 // Metadata implements resource.Resource.
 func (d *DomainOwnershipValidationResource) Metadata(_ context.Context, _ resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = "akamai_property_domainownership_validation"
-}
-
-// Configure implements resource.ResourceWithConfigure.
-func (d *DomainOwnershipValidationResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		// ProviderData is nil when Configure is run first time as part of ValidateDataSourceConfig in framework provider
-		return
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Resource Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-			)
-		}
-	}()
-
-	d.meta = meta.Must(req.ProviderData)
 }
 
 // Schema implements resource's Schema.
@@ -175,8 +156,7 @@ func (d *DomainOwnershipValidationResource) Create(ctx context.Context, req reso
 		"domains": planDomains,
 	})
 
-	client := DomainOwnershipClient(d.meta)
-	apiDomains, err := fetchDomainsFromAPI(ctx, client, planDomains)
+	apiDomains, err := fetchDomainsFromAPI(ctx, d.Client.GetDomainOwnership(), planDomains)
 	if err != nil {
 		resp.Diagnostics.AddError("Error Searching Domains", err.Error())
 		return
@@ -196,7 +176,7 @@ func (d *DomainOwnershipValidationResource) Create(ctx context.Context, req reso
 	}
 
 	requests := validationHandler.buildValidateRequests()
-	domainsToPoll, err := validateDomains(ctx, client, requests)
+	domainsToPoll, err := validateDomains(ctx, d.Client.GetDomainOwnership(), requests)
 	if err != nil {
 		resp.Diagnostics.AddError("Error Validating Domains", err.Error())
 		return
@@ -212,7 +192,7 @@ func (d *DomainOwnershipValidationResource) Create(ctx context.Context, req reso
 			"domains": domainsToPoll,
 			"timeout": createTimeout,
 		})
-		resp.Diagnostics.Append(waitForDomains(ctx, client, domainsToPoll, createTimeout)...)
+		resp.Diagnostics.Append(waitForDomains(ctx, d.Client.GetDomainOwnership(), domainsToPoll, createTimeout)...)
 		if resp.Diagnostics.HasError() {
 			resp.Diagnostics.AddWarning("Partial success of create",
 				"Some domains scheduled for validation may not have been validated. "+
@@ -254,8 +234,7 @@ func (d *DomainOwnershipValidationResource) Read(ctx context.Context, req resour
 		"state_domains_map": stateDomainsMap,
 	})
 
-	client := DomainOwnershipClient(d.meta)
-	apiDomains, err := fetchDomainsFromAPI(ctx, client, stateDomains)
+	apiDomains, err := fetchDomainsFromAPI(ctx, d.Client.GetDomainOwnership(), stateDomains)
 	if err != nil {
 		resp.Diagnostics.AddError("Error Searching Domains", err.Error())
 		return
@@ -364,8 +343,7 @@ func (d *DomainOwnershipValidationResource) Update(ctx context.Context, req reso
 		})
 	}
 
-	client := DomainOwnershipClient(d.meta)
-	apiDomains, err := fetchDomainsFromAPI(ctx, client, domainsToSearch)
+	apiDomains, err := fetchDomainsFromAPI(ctx, d.Client.GetDomainOwnership(), domainsToSearch)
 	if err != nil {
 		resp.Diagnostics.AddError("Error Searching Domains", err.Error())
 		return
@@ -381,7 +359,7 @@ func (d *DomainOwnershipValidationResource) Update(ctx context.Context, req reso
 		calculateDomainsToInvalidate().
 		buildInvalidateRequest()
 	if invalidateRequest != nil {
-		invalidateResponse, err := client.InvalidateDomains(ctx, *invalidateRequest)
+		invalidateResponse, err := d.Client.GetDomainOwnership().InvalidateDomains(ctx, *invalidateRequest)
 		if err != nil {
 			resp.Diagnostics.AddError("Error Invalidating Domains", err.Error())
 			return
@@ -398,7 +376,7 @@ func (d *DomainOwnershipValidationResource) Update(ctx context.Context, req reso
 	}
 
 	validateRequests := validationHandler.buildValidateRequests()
-	domainsToPoll, err := validateDomains(ctx, client, validateRequests)
+	domainsToPoll, err := validateDomains(ctx, d.Client.GetDomainOwnership(), validateRequests)
 	if err != nil {
 		resp.Diagnostics.AddError("Error Validating Domains", err.Error())
 		return
@@ -414,7 +392,7 @@ func (d *DomainOwnershipValidationResource) Update(ctx context.Context, req reso
 			"domains": domainsToPoll,
 			"timeout": updateTimeout,
 		})
-		resp.Diagnostics.Append(waitForDomains(ctx, client, domainsToPoll, updateTimeout)...)
+		resp.Diagnostics.Append(waitForDomains(ctx, d.Client.GetDomainOwnership(), domainsToPoll, updateTimeout)...)
 		if resp.Diagnostics.HasError() {
 			resp.Diagnostics.AddWarning("Partial success of update",
 				"Domains scheduled for invalidation have been successfully invalidated while "+
@@ -449,8 +427,7 @@ func (d *DomainOwnershipValidationResource) Delete(ctx context.Context, req reso
 		"domains": stateDomains,
 	})
 
-	client := DomainOwnershipClient(d.meta)
-	apiDomains, err := fetchDomainsFromAPI(ctx, client, stateDomains)
+	apiDomains, err := fetchDomainsFromAPI(ctx, d.Client.GetDomainOwnership(), stateDomains)
 	if err != nil {
 		resp.Diagnostics.AddError("Error Searching Domains", err.Error())
 		return
@@ -468,7 +445,7 @@ func (d *DomainOwnershipValidationResource) Delete(ctx context.Context, req reso
 		calculateDomainsToInvalidate().
 		buildInvalidateRequest()
 	if invalidateRequest != nil {
-		invalidateResponse, err := client.InvalidateDomains(ctx, *invalidateRequest)
+		invalidateResponse, err := d.Client.GetDomainOwnership().InvalidateDomains(ctx, *invalidateRequest)
 		if err != nil {
 			resp.Diagnostics.AddError("Error Invalidating Domains", err.Error())
 			return
@@ -487,8 +464,7 @@ func (d *DomainOwnershipValidationResource) ImportState(ctx context.Context, req
 	id := req.ID
 	tflog.Debug(ctx, fmt.Sprintf("importID: %s", id))
 
-	client := DomainOwnershipClient(d.meta)
-	domains, diags := parseDomains(ctx, client, id, true)
+	domains, diags := parseDomains(ctx, d.Client.GetDomainOwnership(), id, true)
 	if resp.Diagnostics.Append(diags...); resp.Diagnostics.HasError() {
 		return
 	}

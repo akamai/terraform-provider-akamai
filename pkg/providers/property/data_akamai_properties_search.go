@@ -4,12 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourcePropertiesSearch() *schema.Resource {
@@ -56,7 +55,6 @@ func dataSourcePropertiesSearch() *schema.Resource {
 
 func dataPropertiesSearchRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := Client(meta)
 
 	log := meta.Log("PAPI", "dataPropertiesSearchRead")
 
@@ -77,7 +75,7 @@ func dataPropertiesSearchRead(ctx context.Context, d *schema.ResourceData, m int
 		Value: value,
 	}
 
-	search, err := client.SearchProperties(ctx, request)
+	search, err := meta.Client().GetPAPI().SearchProperties(ctx, request)
 	if err != nil {
 		return diag.Errorf("could not load properties: %s", err)
 	}

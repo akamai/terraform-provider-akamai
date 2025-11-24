@@ -5,12 +5,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourceCPCode() *schema.Resource {
@@ -47,7 +46,6 @@ func dataSourceCPCode() *schema.Resource {
 
 func dataCPCodeRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := Client(meta)
 	log := meta.Log("PAPI", "dataCPCodeRead")
 	log.Debug("Read CP Code")
 
@@ -72,7 +70,7 @@ func dataCPCodeRead(ctx context.Context, d *schema.ResourceData, m interface{}) 
 		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 
-	cpCode, err := findCPCode(ctx, client, name, contractID, groupID)
+	cpCode, err := findCPCode(ctx, meta.Client().GetPAPI(), name, contractID, groupID)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("could not load CP codes: %w", err))
 	}

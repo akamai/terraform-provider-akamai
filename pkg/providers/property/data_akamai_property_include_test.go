@@ -6,12 +6,14 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func TestDataPropertyInclude(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		givenTF                   string
 		init                      func(*papi.Mock)
@@ -126,9 +128,10 @@ func TestDataPropertyInclude(t *testing.T) {
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &papi.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 			if test.init != nil {
-				test.init(client)
+				test.init(client.PAPI)
 			}
 			var checkFuncs []resource.TestCheckFunc
 			for k, v := range test.expectedAttributes {
@@ -137,18 +140,18 @@ func TestDataPropertyInclude(t *testing.T) {
 			for _, v := range test.expectedMissingAttributes {
 				checkFuncs = append(checkFuncs, resource.TestCheckNoResourceAttr("data.akamai_property_include.include", v))
 			}
-			useClient(client, nil, func() {
-				resource.Test(t, resource.TestCase{
-					IsUnitTest:               true,
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{{
-						Config:      testutils.LoadFixtureStringf(t, "testdata/TestDataPropertyInclude/%s", test.givenTF),
-						Check:       resource.ComposeAggregateTestCheckFunc(checkFuncs...),
-						ExpectError: test.expectError,
-					}},
-				})
+
+			resource.Test(t, resource.TestCase{
+				IsUnitTest:               true,
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				Steps: []resource.TestStep{{
+					Config:      testutils.LoadFixtureStringf(t, "testdata/TestDataPropertyInclude/%s", test.givenTF),
+					Check:       resource.ComposeAggregateTestCheckFunc(checkFuncs...),
+					ExpectError: test.expectError,
+				}},
 			})
-			client.AssertExpectations(t)
+
+			client.PAPI.AssertExpectations(t)
 		})
 	}
 }

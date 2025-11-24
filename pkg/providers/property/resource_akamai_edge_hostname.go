@@ -150,8 +150,6 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameCreate")
 
-	client := Client(meta)
-
 	edgeHostname, err := tf.GetStringValue("edge_hostname", d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -193,7 +191,7 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
 
-	edgeHostnames, err := client.GetEdgeHostnames(ctx, papi.GetEdgeHostnamesRequest{
+	edgeHostnames, err := meta.Client().GetPAPI().GetEdgeHostnames(ctx, papi.GetEdgeHostnamesRequest{
 		ContractID: contractID,
 		GroupID:    groupID,
 	})
@@ -238,7 +236,7 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	logger.Debugf("Creating new edge hostname: %#v", newHostname)
-	hostname, err := client.CreateEdgeHostname(ctx, papi.CreateEdgeHostnameRequest{
+	hostname, err := meta.Client().GetPAPI().CreateEdgeHostname(ctx, papi.CreateEdgeHostnameRequest{
 		EdgeHostname: newHostname,
 		ContractID:   contractID,
 		GroupID:      groupID,
@@ -253,7 +251,7 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 		groupID:        groupID,
 	}
 
-	if _, err := waitUntilEdgeHostnameReady(ctx, meta, client, edgeHostnameKey); err != nil {
+	if _, err := waitUntilEdgeHostnameReady(ctx, meta, edgeHostnameKey); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -262,8 +260,7 @@ func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceDat
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		hapiClient := HapiClient(meta)
-		_, err = waitForHAPIPropagation(ctx, hapiClient, edgeHostnameID)
+		_, err = waitForHAPIPropagation(ctx, meta.Client().GetHAPI(), edgeHostnameID)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -296,11 +293,11 @@ type edgeHostnameKey struct {
 // waitUntilEdgeHostnameReady waits until the edge hostname is available in the GetEdgeHostname response.
 // Note: After creation, the edge hostname can be in one of three states: missing (not yet available even though creation was successful), CREATED or PENDING.
 // This function waits only if the edge hostname is present in the GetEdgeHostname response, it does not matter if it is in CREATED or PENDING status.
-func waitUntilEdgeHostnameReady(ctx context.Context, meta meta.Meta, client papi.PAPI, edgeHostnameKey edgeHostnameKey) (*papi.GetEdgeHostnamesResponse, error) {
+func waitUntilEdgeHostnameReady(ctx context.Context, meta meta.Meta, edgeHostnameKey edgeHostnameKey) (*papi.GetEdgeHostnamesResponse, error) {
 	logger := meta.Log("PAPI", "waitUntilEdgeHostnameReady")
 
 	for {
-		resp, err := client.GetEdgeHostname(ctx, papi.GetEdgeHostnameRequest{
+		resp, err := meta.Client().GetPAPI().GetEdgeHostname(ctx, papi.GetEdgeHostnameRequest{
 			EdgeHostnameID: edgeHostnameKey.edgeHostnameID,
 			ContractID:     edgeHostnameKey.contractID,
 			GroupID:        edgeHostnameKey.groupID,
@@ -366,8 +363,6 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameRead")
 
-	client := Client(meta)
-
 	groupID, err := tf.GetStringValue("group_id", d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -400,7 +395,7 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 	logger.Debugf("Edgehostnames GROUP = %v", groupID)
 	logger.Debugf("Edgehostnames CONTRACT = %v", contractID)
 
-	edgeHostnameResp, err := client.GetEdgeHostname(ctx, papi.GetEdgeHostnameRequest{
+	edgeHostnameResp, err := meta.Client().GetPAPI().GetEdgeHostname(ctx, papi.GetEdgeHostnameRequest{
 		EdgeHostnameID: d.Id(),
 		ContractID:     contractID,
 		GroupID:        groupID,
@@ -412,7 +407,7 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 			ctx, cancel := context.WithTimeout(ctx, EdgeHostnameReadTimeout)
 			defer cancel()
 
-			edgeHostnameResp, err = waitUntilEdgeHostnameReady(ctx, meta, client, edgeHostnameKey{
+			edgeHostnameResp, err = waitUntilEdgeHostnameReady(ctx, meta, edgeHostnameKey{
 				edgeHostnameID: d.Id(),
 				contractID:     contractID,
 				groupID:        groupID,
@@ -462,13 +457,12 @@ func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData,
 			return diag.FromErr(err)
 		}
 
-		hapiClient := HapiClient(meta)
 		// in theory this call is redundant, added here as safeguard
-		_, err = waitForHAPIPropagation(ctx, hapiClient, edgeHostnameID)
+		_, err = waitForHAPIPropagation(ctx, meta.Client().GetHAPI(), edgeHostnameID)
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		hostname, err := hapiClient.GetEdgeHostname(ctx, edgeHostnameID)
+		hostname, err := meta.Client().GetHAPI().GetEdgeHostname(ctx, edgeHostnameID)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -586,12 +580,11 @@ func patchEdgeHostname(ctx context.Context, d *schema.ResourceData, meta meta.Me
 		req.StatusUpdateEmail = statusUpdateEmails
 	}
 
-	hapiClient := HapiClient(meta)
-	_, err = waitForHAPIPropagation(ctx, hapiClient, edgeHostnameID)
+	_, err = waitForHAPIPropagation(ctx, meta.Client().GetHAPI(), edgeHostnameID)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	resp, err := hapiClient.UpdateEdgeHostname(ctx, req)
+	resp, err := meta.Client().GetHAPI().UpdateEdgeHostname(ctx, req)
 	if err != nil {
 		if err2 := tf.RestoreOldValues(d, fields); err2 != nil {
 			return diag.Errorf(`%s failed. No changes were written to server: 
@@ -603,7 +596,7 @@ Failed to restore previous local schema values. The schema will remain in tainte
 		return diag.FromErr(err)
 	}
 
-	if err = waitForChange(ctx, hapiClient, resp.ChangeID); err != nil {
+	if err = waitForChange(ctx, meta.Client().GetHAPI(), resp.ChangeID); err != nil {
 		return diag.FromErr(err)
 	}
 	return nil
@@ -669,8 +662,7 @@ func resourceSecureEdgeHostNameDelete(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	hapiClient := HapiClient(meta)
-	hostname, err := waitForHAPIPropagation(ctx, hapiClient, edgeHostnameID)
+	hostname, err := waitForHAPIPropagation(ctx, meta.Client().GetHAPI(), edgeHostnameID)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -685,7 +677,7 @@ func resourceSecureEdgeHostNameDelete(ctx context.Context, d *schema.ResourceDat
 		statusUpdateEmail = append(statusUpdateEmail, email.(string))
 	}
 
-	deleteEdgeHostname, err := hapiClient.DeleteEdgeHostname(ctx, hapi.DeleteEdgeHostnameRequest{
+	deleteEdgeHostname, err := meta.Client().GetHAPI().DeleteEdgeHostname(ctx, hapi.DeleteEdgeHostnameRequest{
 		DNSZone:           hostname.DNSZone,
 		RecordName:        hostname.RecordName,
 		StatusUpdateEmail: statusUpdateEmail,
@@ -698,7 +690,7 @@ func resourceSecureEdgeHostNameDelete(ctx context.Context, d *schema.ResourceDat
 	for deleteInProgress := true; deleteInProgress; {
 		select {
 		case <-time.After(EgdeHostnamePollInterval):
-			deleteStatus, err := hapiClient.GetChangeRequest(ctx, hapi.GetChangeRequest{ChangeID: deleteEdgeHostname.ChangeID})
+			deleteStatus, err := meta.Client().GetHAPI().GetChangeRequest(ctx, hapi.GetChangeRequest{ChangeID: deleteEdgeHostname.ChangeID})
 			if err != nil {
 				return diag.FromErr(err)
 			}
@@ -733,7 +725,6 @@ func resourceSecureEdgeHostNameDelete(ctx context.Context, d *schema.ResourceDat
 // CLI tools).
 func resourceSecureEdgeHostNameImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	meta := meta.Must(m)
-	client := Client(meta)
 	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameImport")
 
 	parts := strings.Split(d.Id(), ",")
@@ -754,7 +745,7 @@ func resourceSecureEdgeHostNameImport(ctx context.Context, d *schema.ResourceDat
 	contractID := str.AddPrefix(parts[1], "ctr_")
 	groupID := str.AddPrefix(parts[2], "grp_")
 
-	edgehostnameDetails, err := client.GetEdgeHostname(ctx, papi.GetEdgeHostnameRequest{
+	edgehostnameDetails, err := meta.Client().GetPAPI().GetEdgeHostname(ctx, papi.GetEdgeHostnameRequest{
 		EdgeHostnameID: edgehostID,
 		ContractID:     contractID,
 		GroupID:        groupID,
@@ -779,19 +770,18 @@ func resourceSecureEdgeHostNameImport(ctx context.Context, d *schema.ResourceDat
 		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 
-	hapiClient := HapiClient(meta)
 	edgeHostnameID, err := str.GetIntID(edgehostID, "ehn_")
 	if err != nil {
 		return nil, err
 	}
-	edgeHostnameResp, err := hapiClient.GetEdgeHostname(ctx, edgeHostnameID)
+	edgeHostnameResp, err := meta.Client().GetHAPI().GetEdgeHostname(ctx, edgeHostnameID)
 	if err != nil {
 		return nil, fmt.Errorf("error getting edge hostname with id '%d': it may not be ready in HAPI yet: %s", edgeHostnameID, err)
 	}
 
 	// get certificate id when network is ENHANCED-TLS
 	if edgeHostnameResp.SecurityType == "ENHANCED-TLS" {
-		certificate, err := hapiClient.GetCertificate(ctx, hapi.GetCertificateRequest{
+		certificate, err := meta.Client().GetHAPI().GetCertificate(ctx, hapi.GetCertificateRequest{
 			DNSZone:    edgeHostnameResp.DNSZone,
 			RecordName: edgeHostnameResp.RecordName,
 		})

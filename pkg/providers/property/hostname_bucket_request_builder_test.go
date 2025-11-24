@@ -15,6 +15,7 @@ type requestStructure struct {
 }
 
 func TestHostnameRequestBuilder(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		plan                     map[string]Hostname
 		state                    map[string]Hostname
@@ -236,6 +237,7 @@ func TestHostnameRequestBuilder(t *testing.T) {
 }
 
 func TestSortHostnameOps(t *testing.T) {
+	t.Parallel()
 	ops := []hostnameOp{
 		{action: actionAdd, cnameFrom: "kilo.edgesuite.net"},
 		{action: actionRemove, cnameFrom: "foxtrot.edgesuite.net"},

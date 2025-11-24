@@ -31,7 +31,7 @@ var (
 
 // DomainsResource represents akamai_property_domainownership_domains resource.
 type DomainsResource struct {
-	meta meta.Meta
+	meta.Resource
 }
 
 type (
@@ -140,25 +140,6 @@ func validationChallengeType() map[string]attr.Type {
 
 func domainsType() types.ObjectType {
 	return domainsSchema().NestedObject.Type().(types.ObjectType)
-}
-
-// Configure implements resource.ResourceWithConfigure.
-func (r *DomainsResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		// ProviderData is nil when Configure is run first time as part of ValidateDataSourceConfig in framework provider
-		return
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Resource Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-			)
-		}
-	}()
-
-	r.meta = meta.Must(req.ProviderData)
 }
 
 // ModifyPlan is a plan modifier for domainownership_domains resource.
@@ -276,8 +257,7 @@ func (r *DomainsResource) Create(ctx context.Context, req resource.CreateRequest
 
 	sortDomainList(domainList)
 
-	client := DomainOwnershipClient(r.meta)
-	foundDomains, err := client.SearchDomains(ctx, buildSearchDomainsRequest(domainList))
+	foundDomains, err := r.Client.GetDomainOwnership().SearchDomains(ctx, buildSearchDomainsRequest(domainList))
 	if err != nil {
 		resp.Diagnostics.AddError("Error checking status of domains in configuration", err.Error())
 		return
@@ -288,12 +268,12 @@ func (r *DomainsResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 	if len(domainsToAdd) > 0 {
-		if resp.Diagnostics.Append(addDomains(ctx, client, domainsToAdd)...); resp.Diagnostics.HasError() {
+		if resp.Diagnostics.Append(addDomains(ctx, r.Client.GetDomainOwnership(), domainsToAdd)...); resp.Diagnostics.HasError() {
 			return
 		}
 	}
 	tflog.Debug(ctx, "Domains were successfully created; fetching necessary data")
-	foundDomains, err = client.SearchDomains(ctx, buildSearchDomainsRequest(domainList))
+	foundDomains, err = r.Client.GetDomainOwnership().SearchDomains(ctx, buildSearchDomainsRequest(domainList))
 	if err != nil {
 		resp.Diagnostics.AddError("Error getting status of added domains", err.Error())
 		return
@@ -555,7 +535,6 @@ func (r *DomainsResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
-	client := DomainOwnershipClient(r.meta)
 	var domainList []domainResourceModel
 	if resp.Diagnostics.Append(data.Domains.ElementsAs(ctx, &domainList, false)...); resp.Diagnostics.HasError() {
 		return
@@ -563,7 +542,7 @@ func (r *DomainsResource) Read(ctx context.Context, req resource.ReadRequest, re
 	sortDomainList(domainList)
 
 	searchDomainsRequest := buildSearchDomainsRequest(domainList)
-	foundDomains, err := client.SearchDomains(ctx, searchDomainsRequest)
+	foundDomains, err := r.Client.GetDomainOwnership().SearchDomains(ctx, searchDomainsRequest)
 	if err != nil {
 		resp.Diagnostics.AddError("Error fetching status of domains from state", err.Error())
 		return
@@ -616,7 +595,6 @@ func (r *DomainsResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	client := DomainOwnershipClient(r.meta)
 	var domainsFromPlan, domainsFromState []domainResourceModel
 	if resp.Diagnostics.Append(plan.Domains.ElementsAs(ctx, &domainsFromPlan, false)...); resp.Diagnostics.HasError() {
 		return
@@ -628,12 +606,12 @@ func (r *DomainsResource) Update(ctx context.Context, req resource.UpdateRequest
 	sortDomainList(domainsFromState)
 
 	// Domains status may have changed since the read
-	domainsFromState, diags := fetchLatestDomainsValue(ctx, client, buildSearchDomainsRequest(domainsFromState))
+	domainsFromState, diags := fetchLatestDomainsValue(ctx, r.Client.GetDomainOwnership(), buildSearchDomainsRequest(domainsFromState))
 	if resp.Diagnostics.Append(diags...); resp.Diagnostics.HasError() {
 		return
 	}
 
-	foundDomains, err := client.SearchDomains(ctx, buildSearchDomainsRequest(domainsFromPlan))
+	foundDomains, err := r.Client.GetDomainOwnership().SearchDomains(ctx, buildSearchDomainsRequest(domainsFromPlan))
 	if err != nil {
 		resp.Diagnostics.AddError("Error checking status of domains in configuration", err.Error())
 		return
@@ -644,26 +622,26 @@ func (r *DomainsResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 	if len(domainsToRemove) > 0 {
-		if err := invalidateDomainsToDelete(ctx, client, domainsToRemove, domainsFromState); err != nil {
+		if err := invalidateDomainsToDelete(ctx, r.Client.GetDomainOwnership(), domainsToRemove, domainsFromState); err != nil {
 			resp.Diagnostics.AddError("Error deleting domains", err.Error())
 			return
 		}
 	}
 	if len(domainsToAdd) > 0 {
-		if resp.Diagnostics.Append(addDomains(ctx, client, domainsToAdd)...); resp.Diagnostics.HasError() {
+		if resp.Diagnostics.Append(addDomains(ctx, r.Client.GetDomainOwnership(), domainsToAdd)...); resp.Diagnostics.HasError() {
 			return
 		}
 		tflog.Debug(ctx, "Domains were successfully added")
 	}
 	if len(domainsToRemove) > 0 {
-		if err := client.DeleteDomains(ctx, domainownership.DeleteDomainsRequest{Domains: domainsToRemove}); err != nil {
+		if err := r.Client.GetDomainOwnership().DeleteDomains(ctx, domainownership.DeleteDomainsRequest{Domains: domainsToRemove}); err != nil {
 			resp.Diagnostics.AddError("Error deleting domains", err.Error())
 			return
 		}
 		tflog.Debug(ctx, "Domains were successfully deleted")
 	}
 
-	foundDomains, err = client.SearchDomains(ctx, buildSearchDomainsRequest(domainsFromPlan))
+	foundDomains, err = r.Client.GetDomainOwnership().SearchDomains(ctx, buildSearchDomainsRequest(domainsFromPlan))
 	if err != nil {
 		resp.Diagnostics.AddError("Error getting status of added domains", err.Error())
 		return
@@ -692,10 +670,8 @@ func (r *DomainsResource) Delete(ctx context.Context, req resource.DeleteRequest
 	}
 	sortDomainList(domainList)
 
-	client := DomainOwnershipClient(r.meta)
-
 	// Domains status may have changed since the read
-	domainList, diags := fetchLatestDomainsValue(ctx, client, buildSearchDomainsRequest(domainList))
+	domainList, diags := fetchLatestDomainsValue(ctx, r.Client.GetDomainOwnership(), buildSearchDomainsRequest(domainList))
 	if resp.Diagnostics.Append(diags...); resp.Diagnostics.HasError() {
 		return
 	}
@@ -708,12 +684,12 @@ func (r *DomainsResource) Delete(ctx context.Context, req resource.DeleteRequest
 		})
 	}
 
-	if err := invalidateDomainsToDelete(ctx, client, domainsToRemove, domainList); err != nil {
+	if err := invalidateDomainsToDelete(ctx, r.Client.GetDomainOwnership(), domainsToRemove, domainList); err != nil {
 		resp.Diagnostics.AddError("Error deleting domains", err.Error())
 		return
 	}
 
-	if err := client.DeleteDomains(ctx, domainownership.DeleteDomainsRequest{Domains: domainsToRemove}); err != nil {
+	if err := r.Client.GetDomainOwnership().DeleteDomains(ctx, domainownership.DeleteDomainsRequest{Domains: domainsToRemove}); err != nil {
 		resp.Diagnostics.AddError("Error deleting domains", err.Error())
 		return
 	}
@@ -765,8 +741,7 @@ func calculateValidatedDomains(domainList []domainownership.Domain, allDomains [
 // ImportState implements resource's ImportState method.
 func (r *DomainsResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	id := req.ID
-	client := DomainOwnershipClient(r.meta)
-	domains, diags := parseDomains(ctx, client, id, false)
+	domains, diags := parseDomains(ctx, r.Client.GetDomainOwnership(), id, false)
 	if resp.Diagnostics.Append(diags...); resp.Diagnostics.HasError() {
 		return
 	}

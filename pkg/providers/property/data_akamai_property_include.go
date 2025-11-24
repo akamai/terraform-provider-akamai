@@ -2,15 +2,13 @@ package property
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
 )
 
 var _ datasource.DataSource = &includeDataSource{}
@@ -23,7 +21,7 @@ func NewIncludeDataSource() datasource.DataSource {
 
 // includeDataSource defines the data source implementation for fetching property include information.
 type includeDataSource struct {
-	meta meta.Meta
+	meta.DataSource
 }
 
 // includeDataSourceModel describes the data source data model for PropertyIncludeDataSource.
@@ -94,25 +92,6 @@ func (d *includeDataSource) Schema(_ context.Context, _ datasource.SchemaRequest
 	}
 }
 
-// Configure  configures data source at the beginning of the lifecycle
-func (d *includeDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		// ProviderData is nil when Configure is run first time as part of ValidateDataSourceConfig in framework provider
-		return
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Data Source Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-			)
-		}
-	}()
-
-	d.meta = meta.Must(req.ProviderData)
-}
-
 // Read is called when the provider must read data source values in order to update state
 func (d *includeDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	tflog.Debug(ctx, "PropertyIncludeDataSource Read")
@@ -122,8 +101,7 @@ func (d *includeDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		return
 	}
 
-	client := Client(d.meta)
-	getIncludeResp, err := client.GetInclude(ctx, papi.GetIncludeRequest{
+	getIncludeResp, err := d.Client.GetPAPI().GetInclude(ctx, papi.GetIncludeRequest{
 		ContractID: data.ContractID.ValueString(),
 		GroupID:    data.GroupID.ValueString(),
 		IncludeID:  data.IncludeID.ValueString(),
