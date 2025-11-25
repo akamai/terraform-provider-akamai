@@ -144,7 +144,8 @@
 
 
 
-
+* DNS
+    * Allowed setting the `ttl` field to `0` in the `akamai_dns_record` resource ([I#682](https://github.com/akamai/terraform-provider-akamai/issues/682)).
 
 
 
