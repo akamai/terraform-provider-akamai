@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -138,7 +139,7 @@ type Hostname struct {
 // To identify if two hostnames are the same, we need to compare the rest of required attributes, that being `edge_hostname_id`
 // and `cert_provisioning_type`.
 func (h Hostname) equal(other Hostname) bool {
-	return h.CertProvisioningType == other.CertProvisioningType && h.EdgeHostnameID == other.EdgeHostnameID
+	return h.CertProvisioningType == other.CertProvisioningType && strings.TrimPrefix(h.EdgeHostnameID.ValueString(), "ehn_") == strings.TrimPrefix(other.EdgeHostnameID.ValueString(), "ehn_")
 }
 
 func (h Hostname) toLog() map[string]any {
@@ -200,6 +201,12 @@ func (h *HostnameBucketResource) Schema(_ context.Context, _ resource.SchemaRequ
 				PlanModifiers: []planmodifier.String{
 					modifiers.StringUseStateIf(modifiers.EqualUpToPrefixFunc("prp_")),
 					modifiers.PreventStringUpdate(),
+				},
+				Validators: []validator.String{
+					stringvalidator.RegexMatches(
+						regexp.MustCompile(`^(prp_)?\d+$`),
+						"must start with 'prp_' prefix followed by digits, or be digits only",
+					),
 				},
 				Description: "The unique identifier for the property.",
 			},
@@ -297,6 +304,12 @@ func (h *HostnameBucketResource) Schema(_ context.Context, _ resource.SchemaRequ
 								modifiers.StringUseStateIf(modifiers.EqualUpToPrefixFunc("ehn_")),
 							},
 							Description: "Identifies the edge hostname you mapped your traffic to on the production network.",
+							Validators: []validator.String{
+								stringvalidator.RegexMatches(
+									regexp.MustCompile(`^(ehn_)?\d+$`),
+									"must start with 'ehn_' prefix followed by digits, or be digits only",
+								),
+							},
 						},
 						"cname_to": schema.StringAttribute{
 							Computed: true,

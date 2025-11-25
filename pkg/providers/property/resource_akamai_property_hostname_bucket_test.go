@@ -1064,6 +1064,25 @@ func TestHostnameBucketResource_Update(t *testing.T) {
 			createConfig: "5000.tf",
 			updateConfig: "update_1000_remove_4000.tf",
 		},
+		"create 1, update by removing ehn_ prefix from edge_hostname_id": {
+			init: func(p *mockProperty) {
+				// Set up initial data for the property and hostname bucket
+				setUpInitialData(p, true)
+				// Create
+				mockResourceHostnameBucketUpsert(p)
+				// Read x2
+				mockResourceHostnameBucketRead(p, 2)
+				// Update step - no upsert because prefix removal should not trigger changes
+				// Read - verifies that state remains unchanged
+				mockResourceHostnameBucketRead(p)
+				// Delete
+				mockResourceHostnameBucketDelete(p)
+			},
+			checksForCreate: basicChecker.Build(),
+			checksForUpdate: basicChecker.Build(),
+			createConfig:    "1.tf",
+			updateConfig:    "no_ehn_prefix_in_edge_hostname_id.tf",
+		},
 	}
 
 	for name, tc := range tests {
@@ -1595,6 +1614,24 @@ func TestHostnameBucketResource_ValidationErrors(t *testing.T) {
 					ResourceName:  "akamai_property_hostname_bucket.test",
 					Config:        testutils.LoadFixtureString(t, "testdata/TestResPropertyHostnameBucket/import/default.tf"),
 					ExpectError:   regexp.MustCompile(`network must have correct value of 'STAGING' or 'PRODUCTION'`),
+				},
+			},
+		},
+		"validation error - invalid edge_hostname_id": {
+			init: func(_ *mockProperty) {},
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureStringf(t, "testdata/TestResPropertyHostnameBucket/validation/invalid_edge_hostname_id.tf"),
+					ExpectError: regexp.MustCompile(`(?s)must start with 'ehn_' prefix followed by digits, or be digits only, got:.+` + `invalid_id`),
+				},
+			},
+		},
+		"validation error - invalid property_id": {
+			init: func(_ *mockProperty) {},
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureStringf(t, "testdata/TestResPropertyHostnameBucket/validation/invalid_property_id.tf"),
+					ExpectError: regexp.MustCompile(`(?s)must start with 'prp_' prefix followed by digits, or be.+` + `digits only, got: invalid_id`),
 				},
 			},
 		},

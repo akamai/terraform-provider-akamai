@@ -51,6 +51,14 @@
 
 
 
+
+
+
+
+* PAPI
+  * Added a validation for `edge_hostname_id` and `property_id` in `akamai_property_hostname_bucket`
+
+
 #### BUG FIXES:
 
 
@@ -69,6 +77,14 @@
 
 
 
+
+
+
+
+
+
+* PAPI
+  * Fixed a bug where the Terraform provider crashed when using `edge_hostname_id` without `ehn_` prefix in `akamai_property_hostname_bucket`
 
 
 
