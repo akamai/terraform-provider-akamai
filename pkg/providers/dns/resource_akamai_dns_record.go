@@ -639,7 +639,7 @@ func execFunc(ctx context.Context, meta meta.Meta, fn string, rec *dns.RecordBod
 		})
 
 	default:
-		e = fmt.Errorf("Invalid operation [%s]", fn)
+		e = fmt.Errorf("invalid operation [%s]", fn)
 
 	}
 	return e
@@ -1697,13 +1697,13 @@ func newRecordCreate(ctx context.Context, meta meta.Meta, d *schema.ResourceData
 			var targPri int
 			targParts := strings.Split(targEntry, " ") // need to support target entry with/without priority
 			if len(targParts) > 2 {
-				return dns.RecordBody{}, fmt.Errorf("Invalid MX Record format")
+				return dns.RecordBody{}, fmt.Errorf("invalid MX Record format")
 			}
 			if len(targParts) == 2 {
 				targHost = targParts[1]
 				targPri, err = strconv.Atoi(targParts[0])
 				if err != nil {
-					return dns.RecordBody{}, fmt.Errorf("Invalid MX Record format")
+					return dns.RecordBody{}, fmt.Errorf("invalid MX Record format")
 				}
 			} else {
 				targPri = priority
@@ -1735,10 +1735,7 @@ func newRecordCreate(ctx context.Context, meta meta.Meta, d *schema.ResourceData
 			// mismatch. host in EdgeDns. Not at current target position
 			logger.Debugf("Insert new target to records")
 			// append what ever is left ...
-			for {
-				if (r >= len(rdataTarget)) || (rdataTarget[r] == targHost) {
-					break
-				}
+			for r < len(rdataTarget) && rdataTarget[r] != targHost {
 				ntpri := rdataTargetMap[rdataTarget[r]]
 				records = append(records, strconv.Itoa(ntpri)+" "+rdataTarget[r])
 				delete(rdataTargetMap, rdataTarget[r])
@@ -1757,10 +1754,7 @@ func newRecordCreate(ctx context.Context, meta meta.Meta, d *schema.ResourceData
 		}
 		logger.Debugf("Appended new target to target array LEN %d %v", len(records), records)
 		// append what ever is left ...
-		for {
-			if r >= len(rdataTarget) {
-				break
-			}
+		for r < len(rdataTarget) {
 			ntpri := rdataTargetMap[rdataTarget[r]]
 			logger.Debugf("Appending target %v pri %v", rdataTarget[r], ntpri)
 			records = append(records, strconv.Itoa(ntpri)+" "+rdataTarget[r])
@@ -2341,7 +2335,7 @@ func checkDnskeyRecord(d *schema.ResourceData) error {
 		return err
 	}
 
-	if !(flags == 0 || flags == 256 || flags == 257) {
+	if flags != 0 && flags != 256 && flags != 257 {
 		return fmt.Errorf("configuration argument flags must not be %v for DNSKEY", flags)
 	}
 
@@ -2353,8 +2347,7 @@ func checkDnskeyRecord(d *schema.ResourceData) error {
 		return fmt.Errorf("configuration argument protocol must be set for DNSKEY")
 	}
 
-	// FIXME this logic seems to be flawed, assertion will fail only if algorithm == 10
-	if !((algorithm >= 1 && algorithm <= 8) || algorithm != 10) {
+	if algorithm == 10 {
 		return fmt.Errorf("configuration argument algorithm must not be %v for DNSKEY", algorithm)
 	}
 
@@ -2527,7 +2520,7 @@ func checkNsec3Record(d *schema.ResourceData) error {
 		return err
 	}
 
-	if !(flags == 0 || flags == 1) {
+	if flags != 0 && flags != 1 {
 		return fmt.Errorf("configuration argument flags must be set for NSEC3")
 	}
 
@@ -2572,7 +2565,7 @@ func checkNsec3ParamRecord(d *schema.ResourceData) error {
 		return err
 	}
 
-	if !(flags == 0 || flags == 1) {
+	if flags != 0 && flags != 1 {
 		return fmt.Errorf("configuration argument flags must be set for NSEC3PARAM")
 	}
 

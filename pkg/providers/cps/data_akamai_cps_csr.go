@@ -116,9 +116,10 @@ func createCSRAttrsFromChange(ctx context.Context, client cps.CPS, changeID int,
 		return nil, err
 	}
 	for _, csr := range csr.CSRs {
-		if csr.KeyAlgorithm == "ECDSA" {
+		switch csr.KeyAlgorithm {
+		case "ECDSA":
 			attrs["csr_ecdsa"] = csr.CSR
-		} else if csr.KeyAlgorithm == "RSA" {
+		case "RSA":
 			attrs["csr_rsa"] = csr.CSR
 		}
 	}
@@ -140,10 +141,11 @@ func createCSRAttrsFromHistory(ctx context.Context, client cps.CPS, enrollmentID
 		for _, change := range history.Changes {
 			certificateFound := false
 			for _, cert := range append(change.MultiStackedCertificates, change.PrimaryCertificate) {
-				if cert.KeyAlgorithm == "ECDSA" {
+				switch cert.KeyAlgorithm {
+				case "ECDSA":
 					attrs["csr_ecdsa"] = cert.CSR
 					certificateFound = true
-				} else if cert.KeyAlgorithm == "RSA" {
+				case "RSA":
 					attrs["csr_rsa"] = cert.CSR
 					certificateFound = true
 				}

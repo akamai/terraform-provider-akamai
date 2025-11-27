@@ -424,7 +424,7 @@ func toState(file string) *v0.API {
 
 func toStateJSON(file string) string {
 	data := toState(file)
-	json, _ := serializeIndent(data.RegisterAPIRequest.APIAttributes)
+	json, _ := serializeIndent(data.APIAttributes)
 	return *json
 }
 

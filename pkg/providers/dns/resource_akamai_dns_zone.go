@@ -444,7 +444,7 @@ func resourceDNSv2ZoneUpdate(ctx context.Context, d *schema.ResourceData, m inte
 		apiError, ok := e.(*dns.Error)
 		if !ok && apiError.StatusCode != http.StatusOK {
 			logger.Debugf("Zone Update read faiiled: %s", e.Error())
-			return diag.FromErr(fmt.Errorf("Update zone %s read failed: %w", hostname, e))
+			return diag.FromErr(fmt.Errorf("update zone %s read failed: %w", hostname, e))
 		}
 	}
 	// Create Zone Post obj and copy Received vals over
@@ -876,7 +876,7 @@ func checkZoneSOAandNSRecords(ctx context.Context, meta meta.Meta, zone *dns.Get
 		return err
 	}
 	if len(nameservers) < 1 {
-		return fmt.Errorf("No authoritative nameservers exist for zone %s contract ID", zone.Zone)
+		return fmt.Errorf("no authoritative nameservers exist for zone %s contract ID", zone.Zone)
 	}
 	rs := &dns.RecordSets{RecordSets: make([]dns.RecordSet, 0)}
 	rs.RecordSets = append(rs.RecordSets, createSOARecord(zone.Zone, nameservers, logger))

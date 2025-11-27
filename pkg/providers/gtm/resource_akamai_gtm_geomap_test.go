@@ -483,8 +483,8 @@ func getImportedGeoMap() *gtm.GeoMap {
 
 func getDefaultUpdatedGeomap() *gtm.GeoMap {
 	geomap := *getDefaultGeomap()
-	geomap.Assignments[0].DatacenterBase.DatacenterID = datacenterID3132
-	geomap.Assignments[0].DatacenterBase.Nickname = "tfexample_dc_2"
+	geomap.Assignments[0].DatacenterID = datacenterID3132
+	geomap.Assignments[0].Nickname = "tfexample_dc_2"
 	geomap.Assignments[0].Countries = []string{"US"}
 	return &geomap
 }

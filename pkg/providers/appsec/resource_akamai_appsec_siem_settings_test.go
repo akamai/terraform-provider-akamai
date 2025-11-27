@@ -266,7 +266,7 @@ func TestAkamaiSiemSettings_res_basic(t *testing.T) {
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestResSiemSettings/match_by_id_empty_exceptions_block.tf"),
-						ExpectError: regexp.MustCompile(`Error: Invalid exceptions configuration`),
+						ExpectError: regexp.MustCompile(`Error: invalid exceptions configuration`),
 					},
 				},
 			})

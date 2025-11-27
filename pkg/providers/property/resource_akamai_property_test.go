@@ -66,7 +66,7 @@ func TestPropertyCreate(t *testing.T) {
 			init: func(p *mockProperty) {
 				p.mockPropertyData = basicData
 				p.mockCreateProperty()
-				p.mockPropertyData.ruleTree.ruleFormat = "v2024-02-12"
+				p.ruleTree.ruleFormat = "v2024-02-12"
 				mockResourcePropertyRead(p, 2)
 				p.mockRemoveProperty()
 			},
@@ -76,9 +76,9 @@ func TestPropertyCreate(t *testing.T) {
 		"Create property with hostname bucket": {
 			init: func(p *mockProperty) {
 				p.mockPropertyData = basicData
-				p.mockPropertyData.useHostnameBucket = true
+				p.useHostnameBucket = true
 				p.mockCreateProperty()
-				p.mockPropertyData.ruleTree.ruleFormat = "v2024-02-12"
+				p.ruleTree.ruleFormat = "v2024-02-12"
 				p.mockGetProperty().Twice()
 				p.mockGetRuleTree().Times(2)
 				p.mockGetPropertyVersion().Times(2)
@@ -105,7 +105,7 @@ func TestPropertyCreate(t *testing.T) {
 				}
 
 				mockResourcePropertyCreateWithVersionHostnames(p)
-				p.mockPropertyData.ruleTree.ruleFormat = "v2024-02-12"
+				p.ruleTree.ruleFormat = "v2024-02-12"
 				mockResourcePropertyRead(p, 2)
 				p.mockRemoveProperty()
 			},

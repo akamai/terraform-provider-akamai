@@ -257,7 +257,7 @@ func (r *activationResource) ImportState(ctx context.Context, req resource.Impor
 	}
 
 	network := apidefinitions.NetworkType(parts[1])
-	if !(network == apidefinitions.ActivationNetworkStaging || network == apidefinitions.ActivationNetworkProduction) {
+	if network != apidefinitions.ActivationNetworkStaging && network != apidefinitions.ActivationNetworkProduction {
 		resp.Diagnostics.AddError(fmt.Sprintf("invalid network value %s; must be either %s or %s", parts[1], apidefinitions.ActivationNetworkStaging, apidefinitions.ActivationNetworkProduction), "")
 		return
 	}

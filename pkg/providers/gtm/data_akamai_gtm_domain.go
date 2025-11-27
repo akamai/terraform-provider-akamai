@@ -1552,13 +1552,13 @@ func getResources(resources []gtm.Resource) []domainResource {
 			for i, ri := range res.ResourceInstances {
 				resInstances[i] = resourceInstance{
 					LoadObject:           types.StringValue(ri.LoadObject.LoadObject),
-					LoadObjectPort:       types.Int64Value(int64(ri.LoadObject.LoadObjectPort)),
+					LoadObjectPort:       types.Int64Value(int64(ri.LoadObjectPort)),
 					DataCenterID:         types.Int64Value(int64(ri.DatacenterID)),
 					UseDefaultLoadObject: types.BoolValue(ri.UseDefaultLoadObject),
 				}
-				if ri.LoadObject.LoadServers != nil {
-					loadServers := make([]types.String, len(ri.LoadObject.LoadServers))
-					for i, s := range ri.LoadObject.LoadServers {
+				if ri.LoadServers != nil {
+					loadServers := make([]types.String, len(ri.LoadServers))
+					for i, s := range ri.LoadServers {
 						loadServers[i] = types.StringValue(s)
 					}
 					resInstances[i].LoadServers = loadServers
@@ -1697,8 +1697,8 @@ func populateGeographicMapAssignment(ctx context.Context, asg *gtm.GeoAssignment
 		result.Countries = countries
 	}
 
-	result.Nickname = types.StringValue(asg.DatacenterBase.Nickname)
-	result.DatacenterID = types.Int64Value(int64(asg.DatacenterBase.DatacenterID))
+	result.Nickname = types.StringValue(asg.Nickname)
+	result.DatacenterID = types.Int64Value(int64(asg.DatacenterID))
 
 	return result, nil
 }
@@ -1714,8 +1714,8 @@ func populateCIDRMapAssignment(ctx context.Context, asg *gtm.CIDRAssignment) (ci
 		result.Blocks = lstStr
 	}
 
-	result.Nickname = types.StringValue(asg.DatacenterBase.Nickname)
-	result.DatacenterID = types.Int64Value(int64(asg.DatacenterBase.DatacenterID))
+	result.Nickname = types.StringValue(asg.Nickname)
+	result.DatacenterID = types.Int64Value(int64(asg.DatacenterID))
 
 	return result, nil
 }
@@ -1731,8 +1731,8 @@ func populateASMapAssignment(asg *gtm.ASAssignment) asMapAssignment {
 		result.ASNumbers = asNumbers
 	}
 
-	result.Nickname = types.StringValue(asg.DatacenterBase.Nickname)
-	result.DatacenterID = types.Int64Value(int64(asg.DatacenterBase.DatacenterID))
+	result.Nickname = types.StringValue(asg.Nickname)
+	result.DatacenterID = types.Int64Value(int64(asg.DatacenterID))
 
 	return result
 }

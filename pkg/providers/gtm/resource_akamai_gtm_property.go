@@ -1627,15 +1627,16 @@ func livenessTestsDiffSuppress(_, _, _ string, d *schema.ResourceData) bool {
 	length := len(oldLivenessTest)
 	for i := 0; i < length; i++ {
 		for k, v := range oldLivenessTest[i].(map[string]any) {
-			if k == "http_header" {
+			switch k {
+			case "http_header":
 				if !httpHeadersEqual(v, newLivenessTest[i]) {
 					return false
 				}
-			} else if k == "alternate_ca_certificates" {
+			case "alternate_ca_certificates":
 				if !certificatesEqual(v, newLivenessTest[i]) {
 					return false
 				}
-			} else {
+			default:
 				if !reflect.DeepEqual(newLivenessTest[i].(map[string]any)[k], v) {
 					return false
 				}

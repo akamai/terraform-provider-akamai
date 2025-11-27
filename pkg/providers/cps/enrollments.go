@@ -343,9 +343,10 @@ func splitChallenges(challenges *cps.DVArray) ([]challengeHTTP, []challengeDNS) 
 			if challenge.Status != "pending" {
 				continue
 			}
-			if challenge.Type == "http-01" {
+			switch challenge.Type {
+			case "http-01":
 				httpChallenges = append(httpChallenges, challengeHTTP(newChallenge(&challenge, &dv)))
-			} else if challenge.Type == "dns-01" {
+			case "dns-01":
 				dnsChallenges = append(dnsChallenges, challengeDNS(newChallenge(&challenge, &dv)))
 			}
 		}

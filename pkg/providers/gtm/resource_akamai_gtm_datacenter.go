@@ -140,7 +140,7 @@ func parseDatacenterResourceID(id string) (string, int, error) {
 	parts := strings.SplitN(id, ":", 2)
 
 	if len(parts) != 2 || parts[0] == "" {
-		return "", -1, fmt.Errorf("Datacenter ID, %v, is invalid", id)
+		return "", -1, fmt.Errorf("datacenter ID, %v, is invalid", id)
 	}
 
 	domain := parts[0]
@@ -354,7 +354,7 @@ func resourceGTMv1DatacenterUpdate(ctx context.Context, d *schema.ResourceData, 
 				logger.Infof("Datacenter update pending")
 			} else {
 				logger.Errorf("Datacenter update error: %s", err.Error())
-				return diag.FromErr(fmt.Errorf("Datacenter update error: %s", err.Error()))
+				return diag.FromErr(fmt.Errorf("datacenter update error: %s", err.Error()))
 			}
 		}
 	}
@@ -376,7 +376,7 @@ func resourceGTMv1DatacenterImport(d *schema.ResourceData, m interface{}) ([]*sc
 	// retrieve the datacenter and domain
 	domain, dcID, err := parseDatacenterResourceID(d.Id())
 	if err != nil {
-		return nil, fmt.Errorf("Invalid Datacenter resource ID")
+		return nil, fmt.Errorf("invalid datacenter resource ID")
 	}
 	dc, err := Client(meta).GetDatacenter(ctx, gtm.GetDatacenterRequest{
 		DatacenterID: dcID,
@@ -509,7 +509,7 @@ func populateDatacenterObject(d *schema.ResourceData, dc *gtm.Datacenter, m inte
 	}
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateDataCenterObject() city failed: %v", err.Error())
-		return fmt.Errorf("Datacenter Object could not be populated: %v", err.Error())
+		return fmt.Errorf("datacenter object could not be populated: %v", err.Error())
 	}
 
 	vint, err := tf.GetIntValue("clone_of", d)
@@ -518,20 +518,20 @@ func populateDatacenterObject(d *schema.ResourceData, dc *gtm.Datacenter, m inte
 	}
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateDataCenterObject() clone_of failed: %v", err.Error())
-		return fmt.Errorf("Datacenter Object could not be populated: %v", err.Error())
+		return fmt.Errorf("datacenter object could not be populated: %v", err.Error())
 	}
 
 	cloudServerHostHeaderOverride, err := tf.GetBoolValue("cloud_server_host_header_override", d)
 	if err != nil {
 		logger.Errorf("populateDataCenterObject() failed: cloud_server_host_header_override not set: %v", err.Error())
-		return fmt.Errorf("Datacenter Object could not be populated: %v", err.Error())
+		return fmt.Errorf("datacenter object could not be populated: %v", err.Error())
 	}
 	dc.CloudServerHostHeaderOverride = cloudServerHostHeaderOverride
 
 	cloudServerTargeting, err := tf.GetBoolValue("cloud_server_targeting", d)
 	if err != nil {
 		logger.Errorf("cloud_server_targeting cloud_server_targeting not set: %s", err.Error())
-		return fmt.Errorf("Datacenter Object could not be populated: %v", err.Error())
+		return fmt.Errorf("datacenter object could not be populated: %v", err.Error())
 	}
 	dc.CloudServerTargeting = cloudServerTargeting
 
@@ -541,7 +541,7 @@ func populateDatacenterObject(d *schema.ResourceData, dc *gtm.Datacenter, m inte
 	}
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateDataCenterObject() continent failed: %v", err.Error())
-		return fmt.Errorf("Datacenter Object could not be populated: %v", err.Error())
+		return fmt.Errorf("datacenter object could not be populated: %v", err.Error())
 	}
 
 	vstr, err = tf.GetStringValue("country", d)
@@ -550,7 +550,7 @@ func populateDatacenterObject(d *schema.ResourceData, dc *gtm.Datacenter, m inte
 	}
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateDataCenterObject() country failed: %v", err.Error())
-		return fmt.Errorf("Datacenter Object could not be populated: %v", err.Error())
+		return fmt.Errorf("datacenter object could not be populated: %v", err.Error())
 	}
 
 	// pull apart Set
@@ -561,17 +561,17 @@ func populateDatacenterObject(d *schema.ResourceData, dc *gtm.Datacenter, m inte
 		dloMap, ok := dloList[0].(map[string]interface{})
 		if !ok {
 			logger.Errorf("populateDatacenterObject default_load_object failed")
-			return fmt.Errorf("Datacenter Object could not be populated: %v", err.Error())
+			return fmt.Errorf("datacenter object could not be populated: %v", err.Error())
 		}
 		dloObject.LoadObject, ok = dloMap["load_object"].(string)
 		if !ok {
 			logger.Errorf("populateDatacenterObject load_object failed, bad load_object format")
-			return fmt.Errorf("Datacenter Object could not be populated: %v", err.Error())
+			return fmt.Errorf("datacenter object could not be populated: %v", err.Error())
 		}
 		dloObject.LoadObjectPort, ok = dloMap["load_object_port"].(int)
 		if !ok {
 			logger.Errorf("populateDatacenterObject failed, bad load_object_port format")
-			return fmt.Errorf("Datacenter Object could not be populated: %v", err.Error())
+			return fmt.Errorf("datacenter object could not be populated: %v", err.Error())
 		}
 		loadServers, ok := dloMap["load_servers"]
 		if ok {
@@ -581,16 +581,16 @@ func populateDatacenterObject(d *schema.ResourceData, dc *gtm.Datacenter, m inte
 				for i, server := range servers {
 					if dloObject.LoadServers[i], ok = server.(string); !ok {
 						logger.Errorf("populateDatacenterObject failed, bad loadServer format: %s", server)
-						return fmt.Errorf("Datacenter Object could not be populated: %v", err.Error())
+						return fmt.Errorf("datacenter object could not be populated: %v", err.Error())
 					}
 				}
 			} else {
 				logger.Errorf("populateDatacenterObject failed, bad load_servers format: %s", loadServers)
-				return fmt.Errorf("Datacenter Object could not be populated: %v", err.Error())
+				return fmt.Errorf("datacenter object could not be populated: %v", err.Error())
 			}
 		} else {
 			logger.Errorf("populateDatacenterObject failed, load_servers not present")
-			return fmt.Errorf("Datacenter Object could not be populated: %v", err.Error())
+			return fmt.Errorf("datacenter object could not be populated: %v", err.Error())
 		}
 		dc.DefaultLoadObject = dloObject
 	}
@@ -601,7 +601,7 @@ func populateDatacenterObject(d *schema.ResourceData, dc *gtm.Datacenter, m inte
 	}
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateDataCenterObject() latitude failed: %v", err.Error())
-		return fmt.Errorf("Datacenter Object could not be populated: %v", err.Error())
+		return fmt.Errorf("datacenter object could not be populated: %v", err.Error())
 	}
 
 	vfloat, err = tf.GetFloat64Value("longitude", d)
@@ -610,7 +610,7 @@ func populateDatacenterObject(d *schema.ResourceData, dc *gtm.Datacenter, m inte
 	}
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateDataCenterObject() longitude failed: %v", err.Error())
-		return fmt.Errorf("Datacenter Object could not be populated: %v", err.Error())
+		return fmt.Errorf("datacenter object could not be populated: %v", err.Error())
 	}
 
 	vint, err = tf.GetIntValue("ping_interval", d)
@@ -656,7 +656,7 @@ func populateDatacenterObject(d *schema.ResourceData, dc *gtm.Datacenter, m inte
 	}
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Warnf("populateDataCenterObject() state_or_province failed: %v", err.Error())
-		return fmt.Errorf("Datacenter Object could not be populated: %v", err.Error())
+		return fmt.Errorf("datacenter object could not be populated: %v", err.Error())
 	}
 
 	virtual, err := tf.GetBoolValue("virtual", d)

@@ -1,70 +1,66 @@
+version: "2"
 linters:
-  disable-all: true
+  default: none
   enable:
     - errcheck
     - gocyclo
-    - gofmt
-    - goimports
     - govet
     - ineffassign
     - misspell
     - revive
-    - gosimple
     - staticcheck
     - unused
-
-output:
-  sort-results: true
-
+  settings:
+    revive:
+      severity: warning
+      rules:
+        - name: blank-imports
+        - name: context-as-argument
+        - name: context-keys-type
+        - name: dot-imports
+        - name: empty-block
+        - name: errorf
+        - name: error-return
+        - name: error-strings
+        - name: error-naming
+        - name: exported
+        - name: if-return
+        - name: increment-decrement
+        - name: indent-error-flow
+        - name: package-comments
+        - name: range
+        - name: receiver-naming
+        - name: redefines-builtin-id
+        - name: superfluous-else
+        - name: time-naming
+        - name: unexported-return
+        - name: unreachable-code
+        - name: unused-parameter
+        - name: var-declaration
+        - name: var-naming
+  exclusions:
+    rules:
+      - linters:
+          - errcheck
+          - gocyclo
+          - ineffassign
+          - revive
+        path: pkg/retryablehttp/.*\.go
+      - linters:
+          - gocyclo
+          - staticcheck
+          - unused
+        path: gen\.go
+      - linters:
+          - misspell
+        path: ruleformats/.*gen\.go
+      - linters:
+          - staticcheck
+        path: pkg/providers/dns/internal/txtrecord/jparse\.go
 issues:
-  exclude-use-default: false
   max-issues-per-linter: 0
   max-same-issues: 0
-  exclude-rules:
-    - path: pkg/retryablehttp/.*\.go
-      linters:
-        - errcheck
-        - revive
-        - gocyclo
-        - ineffassign
-    - path: gen\.go
-      linters:
-        - gocyclo
-        - gosimple
-        - unused
-    - path: ruleformats/.*gen\.go
-      linters:
-        - misspell
-
-linters-settings:
-  revive:
-    ignore-generated-header: true
-    severity: warning
-    rules:
-      - name: blank-imports
-      - name: context-as-argument
-      - name: context-keys-type
-      - name: dot-imports
-      - name: empty-block
-      - name: errorf
-      - name: error-return
-      - name: error-strings
-      - name: error-naming
-      - name: exported
-      - name: if-return
-      - name: increment-decrement
-      - name: indent-error-flow
-      - name: package-comments
-      - name: range
-      - name: receiver-naming
-      - name: redefines-builtin-id
-      - name: superfluous-else
-      - name: time-naming
-      - name: unexported-return
-      - name: unreachable-code
-      - name: unused-parameter
-      - name: var-declaration
-      - name: var-naming
-
-run:
-  timeout: 3m
+formatters:
+  enable:
+    - gofmt
+    - goimports

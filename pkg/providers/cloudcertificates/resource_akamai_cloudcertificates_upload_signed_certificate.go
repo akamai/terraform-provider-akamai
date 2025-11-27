@@ -390,7 +390,7 @@ func (c *uploadSignedCertificateResource) pollForCertificateAvailability(ctx con
 				return nil
 			}
 			if !errors.Is(err, cloudcertificates.ErrCertificateNotFound) && !errors.Is(err, cloudcertificates.ErrCertificateResourceNotFound) {
-				return fmt.Errorf("Error retrieving certificate '%s' in upload resource plan time check: %w", certificateID, err)
+				return fmt.Errorf("error retrieving certificate '%s' in upload resource plan time check: %w", certificateID, err)
 			}
 		}
 	}

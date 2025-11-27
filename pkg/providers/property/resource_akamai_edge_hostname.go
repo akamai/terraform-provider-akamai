@@ -820,8 +820,8 @@ func diffSuppressEdgeHostname(_, oldVal, newVal string, _ *schema.ResourceData) 
 		return true
 	}
 
-	if !(strings.HasSuffix(newVal, "edgekey.net") || strings.HasSuffix(newVal, "edgesuite.net") ||
-		strings.HasSuffix(newVal, "akamaized.net")) {
+	if !strings.HasSuffix(newVal, "edgekey.net") && !strings.HasSuffix(newVal, "edgesuite.net") &&
+		!strings.HasSuffix(newVal, "akamaized.net") {
 		return oldVal == fmt.Sprintf("%s.edgesuite.net", newVal)
 	}
 	return false
@@ -865,7 +865,7 @@ func suppressEdgeHostnameUseCases(_, oldVal, newVal string, _ *schema.ResourceDa
 // It is used in order to retain idempotency when "edge_hostname" value is used as output
 func appendDefaultSuffixToEdgeHostname(i interface{}) string {
 	name := strings.ToLower(i.(string))
-	if !(strings.HasSuffix(name, "edgekey.net") || strings.HasSuffix(name, "edgesuite.net") || strings.HasSuffix(name, "akamaized.net")) {
+	if !strings.HasSuffix(name, "edgekey.net") && !strings.HasSuffix(name, "edgesuite.net") && !strings.HasSuffix(name, "akamaized.net") {
 		name = fmt.Sprintf("%s.edgesuite.net", name)
 	}
 	return name

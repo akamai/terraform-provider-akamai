@@ -22,5 +22,5 @@ type T struct{ *testing.T }
 
 // Overrides testing.T.FailNow() so when a test mock fails an assertion, we see which test had failed before it hangs
 func (t T) FailNow() {
-	t.T.Fatalf("FAIL: %s", t.T.Name())
+	t.Fatalf("FAIL: %s", t.Name())
 }

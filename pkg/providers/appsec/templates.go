@@ -143,7 +143,7 @@ var (
 			return res
 		},
 
-		"replace": func(oldStr, newStr, src string) string { return strings.Replace(src, oldStr, newStr, -1) },
+		"replace": func(oldStr, newStr, src string) string { return strings.ReplaceAll(src, oldStr, newStr) },
 
 		"collectWAPHostnameInfo": func(exportconfiguration *appsec.GetExportConfigurationResponse) []wapHostnames {
 			hostnameListsByPolicy := make([]wapHostnames, 0)

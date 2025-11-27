@@ -140,7 +140,8 @@ func resourceEdgeKVCreate(ctx context.Context, rd *schema.ResourceData, m interf
 
 	// If the status is "UNINITIALIZED", we have to send initialization request and wait for "INITIALIZED" status. If the
 	// status is "PENDING" we have to wait. If the status is "INITIALIZED" we can proceed.
-	if status.AccountStatus == "UNINITIALIZED" {
+	switch status.AccountStatus {
+	case "UNINITIALIZED":
 		// initialize edgekv
 		logger.Debugf("Initializing EdgeKV...")
 		_, err = client.InitializeEdgeKV(ctx)
@@ -150,7 +151,7 @@ func resourceEdgeKVCreate(ctx context.Context, rd *schema.ResourceData, m interf
 		if err = waitForEdgeKVInitialization(ctx, client); err != nil {
 			return diag.FromErr(err)
 		}
-	} else if status.AccountStatus == "PENDING" {
+	case "PENDING":
 		if err = waitForEdgeKVInitialization(ctx, client); err != nil {
 			return diag.FromErr(err)
 		}

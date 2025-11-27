@@ -324,7 +324,7 @@ func resourceImporter(ctx context.Context, d *schema.ResourceData, m interface{}
 		return nil, err
 	}
 	network := iDParts[2]
-	if !(network == "STAGING" || network == "PRODUCTION") {
+	if network != "STAGING" && network != "PRODUCTION" {
 		return nil, fmt.Errorf("bad network value %s; must be either STAGING or PRODUCTION", network)
 
 	}

@@ -496,9 +496,10 @@ func checkAttrsForCPSCSR(data testDataForCPSCSR) resource.TestCheckFunc {
 	changeID, _ := tools.GetChangeIDFromPendingChanges(data.Enrollment.PendingChanges)
 	var csrECDSA, csrRSA string
 	for _, csr := range data.ThirdPartyCSRResponse.CSRs {
-		if csr.KeyAlgorithm == "RSA" {
+		switch csr.KeyAlgorithm {
+		case "RSA":
 			csrRSA = csr.CSR
-		} else if csr.KeyAlgorithm == "ECDSA" {
+		case "ECDSA":
 			csrECDSA = csr.CSR
 		}
 	}

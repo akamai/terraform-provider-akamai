@@ -2,7 +2,7 @@ TEST ?= $$(go list ./... | grep -v retryablehttp)
 PKG_NAME = akamai
 
 GOIMPORTS_VERSION = v0.24.0
-GOLANGCI_LINT_VERSION = v1.64.8
+GOLANGCI_LINT_VERSION = v2.6.1
 
 # Local provider install parameters
 version = 0.11.0

@@ -398,16 +398,16 @@ func getListItemsUpdateReq(list clientlists.GetClientListResponse, d *schema.Res
 	for _, configItem := range configItemsMap {
 		if listItem, ok := listItemsMap[configItem.Value]; ok {
 			if shouldUpdateItem(configItem, listItem) {
-				res.UpdateClientListItems.Update = append(res.UpdateClientListItems.Update, configItem)
+				res.Update = append(res.Update, configItem)
 			}
 		} else {
-			res.UpdateClientListItems.Append = append(res.UpdateClientListItems.Append, configItem)
+			res.Append = append(res.Append, configItem)
 		}
 	}
 
 	for _, listItem := range listItemsMap {
 		if _, ok := configItemsMap[listItem.Value]; !ok {
-			res.UpdateClientListItems.Delete = append(res.UpdateClientListItems.Delete, clientlists.ListItemPayload{
+			res.Delete = append(res.Delete, clientlists.ListItemPayload{
 				Value: listItem.Value,
 			})
 		}
