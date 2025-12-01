@@ -610,7 +610,7 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResUploadSignedCertificate/basic.tf"),
 					ExpectError: regexp.MustCompile(`(?s)Unable to get CCM Certificate for signed certificate upload.+` +
-						`Error retrieving certificate '12345': API failed`),
+						`not retrying due to non-retriable.+` + `error: API failed`),
 				},
 			},
 		},

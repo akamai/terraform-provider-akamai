@@ -76,7 +76,6 @@
 * PAPI
   * Added a validation for `edge_hostname_id` and `property_id` in `akamai_property_hostname_bucket`
 
-
 #### BUG FIXES:
 
 * PAPI

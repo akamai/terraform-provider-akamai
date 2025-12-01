@@ -2201,7 +2201,9 @@ func TestPropertyErrors(t *testing.T) {
 				p.mockGetActivations()               // no activation
 				p.mockCreateActivation()
 				p.mockGetActivation()
-
+				// GetPropertyVersionHostnames call differs from the same API call done in property resource,
+				// so separate mock is needed here.
+				expectGetPropertyVersionHostnames(p.papiMock, p.propertyID, p.latestVersion, p.hostnames.Items).Once()
 				activatedVersion := papi.PropertyVersionItems{
 					Items: []papi.PropertyVersionGetItem{
 						{
