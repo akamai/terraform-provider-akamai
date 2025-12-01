@@ -24,6 +24,9 @@
 
 #### FEATURES/ENHANCEMENTS:
 
+* CPS
+  * Use edgegrid.Client in cps subprovider
+
 * General
     * Migrated to Go `1.24`.
     * Updated various dependencies.

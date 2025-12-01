@@ -3,6 +3,7 @@ package edgegrid
 
 import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudcertificates"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cps"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/domainownership"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/hapi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/iam"
@@ -18,6 +19,8 @@ type Client interface {
 	GetDomainOwnership() domainownership.DomainOwnership
 
 	GetHAPI() hapi.HAPI
+
+	GetCPS() cps.CPS
 
 	GetIAM() iam.IAM
 
@@ -55,6 +58,11 @@ func (c *ClientImpl) GetDomainOwnership() domainownership.DomainOwnership {
 // GetHAPI returns the HAPI client for managing hostnames APIs.
 func (c *ClientImpl) GetHAPI() hapi.HAPI {
 	return hapi.Client(c.sess)
+}
+
+// GetCPS returns the CPS client for managing certificates.
+func (c *ClientImpl) GetCPS() cps.CPS {
+	return cps.Client(c.sess)
 }
 
 // GetIAM returns the IAM client for managing identity and access management.

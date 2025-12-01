@@ -292,7 +292,7 @@ func dataCPSEnrollmentsRead(ctx context.Context, d *schema.ResourceData, m inter
 	meta := meta.Must(m)
 	logger := meta.Log("CPS", "dataCPSEnrollmentsRead")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
+	client := meta.Client().GetCPS()
 
 	logger.Debug("Fetching enrollments")
 

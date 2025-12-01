@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cps"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/test"
@@ -72,27 +74,25 @@ func TestResourceCPSUploadCertificate(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &cps.Mock{}
-			test.init(client, test.enrollment, test.enrollmentID, test.changeID)
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps: []resource.TestStep{
-						{
-							Config:      testutils.LoadFixtureString(t, test.configPathForCreate),
-							Check:       test.checkFuncForCreate,
-							ExpectError: test.error,
-						},
-						{
-							Config:      testutils.LoadFixtureString(t, test.configPathForUpdate),
-							Check:       test.checkFuncForUpdate,
-							ExpectError: test.error,
-						},
+			client := edgegrid.NewTestClient()
+			test.init(client.CPS, test.enrollment, test.enrollmentID, test.changeID)
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+				IsUnitTest:               true,
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureString(t, test.configPathForCreate),
+						Check:       test.checkFuncForCreate,
+						ExpectError: test.error,
 					},
-				})
+					{
+						Config:      testutils.LoadFixtureString(t, test.configPathForUpdate),
+						Check:       test.checkFuncForUpdate,
+						ExpectError: test.error,
+					},
+				},
 			})
-			client.AssertExpectations(t)
+			client.CPS.AssertExpectations(t)
 		})
 	}
 }
@@ -176,22 +176,20 @@ func TestResourceCPSUploadCertificateWithThirdPartyEnrollmentDependency(t *testi
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &cps.Mock{}
-			test.init(client, &test.enrollment, test.enrollmentID, test.changeID)
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps: []resource.TestStep{
-						{
-							Config:      testutils.LoadFixtureString(t, test.configPath),
-							ExpectError: test.error,
-							Check:       test.checkFunc,
-						},
+			client := edgegrid.NewTestClient()
+			test.init(client.CPS, &test.enrollment, test.enrollmentID, test.changeID)
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+				IsUnitTest:               true,
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureString(t, test.configPath),
+						ExpectError: test.error,
+						Check:       test.checkFunc,
 					},
-				})
+				},
 			})
-			client.AssertExpectations(t)
+			client.CPS.AssertExpectations(t)
 		})
 	}
 }
@@ -272,32 +270,30 @@ func TestResourceCPSUploadCertificateLifecycle(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &cps.Mock{}
-			test.init(client, test.enrollment, test.enrollmentUpdated, test.enrollmentID, test.changeID, test.changeIDUpdated)
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps: []resource.TestStep{
-						{
-							Config:      testutils.LoadFixtureString(t, test.configPathForCreate),
-							Check:       test.checkFuncForCreate,
-							ExpectError: test.errorForCreate,
-						},
-						{
-							Config:      testutils.LoadFixtureString(t, test.configPathForUpdate),
-							Check:       test.checkFuncForUpdate,
-							ExpectError: test.errorForUpdate,
-						},
-						{
-							Config:      testutils.LoadFixtureString(t, test.configPathForSecondUpdate),
-							Check:       test.checkFuncForUpdate,
-							ExpectError: test.errorForSecondUpdate,
-						},
+			client := edgegrid.NewTestClient()
+			test.init(client.CPS, test.enrollment, test.enrollmentUpdated, test.enrollmentID, test.changeID, test.changeIDUpdated)
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+				IsUnitTest:               true,
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureString(t, test.configPathForCreate),
+						Check:       test.checkFuncForCreate,
+						ExpectError: test.errorForCreate,
 					},
-				})
+					{
+						Config:      testutils.LoadFixtureString(t, test.configPathForUpdate),
+						Check:       test.checkFuncForUpdate,
+						ExpectError: test.errorForUpdate,
+					},
+					{
+						Config:      testutils.LoadFixtureString(t, test.configPathForSecondUpdate),
+						Check:       test.checkFuncForUpdate,
+						ExpectError: test.errorForSecondUpdate,
+					},
+				},
 			})
-			client.AssertExpectations(t)
+			client.CPS.AssertExpectations(t)
 		})
 	}
 }
@@ -649,24 +645,22 @@ func TestCreateCPSUploadCertificate(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &cps.Mock{}
+			client := edgegrid.NewTestClient()
 			if test.init != nil {
-				test.init(client, test.enrollment, test.enrollmentID, test.changeID)
+				test.init(client.CPS, test.enrollment, test.enrollmentID, test.changeID)
 			}
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps: []resource.TestStep{
-						{
-							Config:      testutils.LoadFixtureString(t, test.configPath),
-							Check:       test.checkFunc,
-							ExpectError: test.error,
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+				IsUnitTest:               true,
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureString(t, test.configPath),
+						Check:       test.checkFunc,
+						ExpectError: test.error,
 					},
-				})
+				},
 			})
-			client.AssertExpectations(t)
+			client.CPS.AssertExpectations(t)
 		})
 	}
 }
@@ -743,22 +737,20 @@ func TestReadCPSUploadCertificate(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &cps.Mock{}
-			test.init(client, test.enrollment, test.enrollmentID, test.changeID)
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps: []resource.TestStep{
-						{
-							Config:      testutils.LoadFixtureString(t, test.configPath),
-							Check:       test.checkFunc,
-							ExpectError: test.error,
-						},
+			client := edgegrid.NewTestClient()
+			test.init(client.CPS, test.enrollment, test.enrollmentID, test.changeID)
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+				IsUnitTest:               true,
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureString(t, test.configPath),
+						Check:       test.checkFunc,
+						ExpectError: test.error,
 					},
-				})
+				},
 			})
-			client.AssertExpectations(t)
+			client.CPS.AssertExpectations(t)
 		})
 	}
 }
@@ -1108,27 +1100,25 @@ func TestUpdateCPSUploadCertificate(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &cps.Mock{}
-			test.init(client, test.enrollment, test.enrollmentUpdated, test.enrollmentID, test.changeID, test.changeIDUpdated)
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps: []resource.TestStep{
-						{
-							Config:      testutils.LoadFixtureString(t, test.configPathForCreate),
-							Check:       test.checkFuncForCreate,
-							ExpectError: test.errorForCreate,
-						},
-						{
-							Config:      testutils.LoadFixtureString(t, test.configPathForUpdate),
-							Check:       test.checkFuncForUpdate,
-							ExpectError: test.errorForUpdate,
-						},
+			client := edgegrid.NewTestClient()
+			test.init(client.CPS, test.enrollment, test.enrollmentUpdated, test.enrollmentID, test.changeID, test.changeIDUpdated)
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+				IsUnitTest:               true,
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureString(t, test.configPathForCreate),
+						Check:       test.checkFuncForCreate,
+						ExpectError: test.errorForCreate,
 					},
-				})
+					{
+						Config:      testutils.LoadFixtureString(t, test.configPathForUpdate),
+						Check:       test.checkFuncForUpdate,
+						ExpectError: test.errorForUpdate,
+					},
+				},
 			})
-			client.AssertExpectations(t)
+			client.CPS.AssertExpectations(t)
 		})
 	}
 }
@@ -1184,24 +1174,23 @@ func TestResourceUploadCertificateImport(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &cps.Mock{}
-			test.init(client)
+			client := edgegrid.NewTestClient()
+			test.init(client.CPS)
 
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							Config:           testutils.LoadFixtureString(t, "testdata/TestResCPSUploadCertificate/import/import_upload.tf"),
-							ImportState:      true,
-							ImportStateId:    fmt.Sprintf("%d", id),
-							ResourceName:     "akamai_cps_upload_certificate.import",
-							ImportStateCheck: test.stateCheck,
-							ExpectError:      test.expectedError,
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config:           testutils.LoadFixtureString(t, "testdata/TestResCPSUploadCertificate/import/import_upload.tf"),
+						ImportState:      true,
+						ImportStateId:    fmt.Sprintf("%d", id),
+						ResourceName:     "akamai_cps_upload_certificate.import",
+						ImportStateCheck: test.stateCheck,
+						ExpectError:      test.expectedError,
 					},
-				})
+				},
 			})
+			client.CPS.AssertExpectations(t)
 		})
 	}
 }

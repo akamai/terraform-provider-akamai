@@ -370,7 +370,7 @@ func enrollmentDelete(ctx context.Context, d *schema.ResourceData, m interface{}
 		ctx,
 		session.WithContextLog(logger),
 	)
-	client := inst.Client(meta)
+	client := meta.Client().GetCPS()
 	logger.Debug("Deleting enrollment")
 	enrollmentID, err := strconv.Atoi(d.Id())
 	if err != nil {

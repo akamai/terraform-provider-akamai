@@ -132,7 +132,7 @@ func resourceCPSUploadCertificateCreate(ctx context.Context, d *schema.ResourceD
 	meta := meta.Must(m)
 	logger := meta.Log("CPS", "resourceCPSUploadCertificateCreate")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
+	client := meta.Client().GetCPS()
 	logger.Debug("Creating upload certificate")
 	return upsertUploadCertificate(ctx, d, m, client, logger)
 }
@@ -141,7 +141,7 @@ func resourceCPSUploadCertificateRead(ctx context.Context, d *schema.ResourceDat
 	meta := meta.Must(m)
 	logger := meta.Log("CPS", "resourceCPSUploadCertificateRead")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
+	client := meta.Client().GetCPS()
 	logger.Debug("Reading upload certificate")
 
 	enrollmentID, err := strconv.Atoi(d.Id())
@@ -218,7 +218,7 @@ func resourceCPSUploadCertificateUpdate(ctx context.Context, d *schema.ResourceD
 	meta := meta.Must(m)
 	logger := meta.Log("CPS", "resourceCPSUploadCertificateUpdate")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
+	client := meta.Client().GetCPS()
 	logger.Debug("Updating upload certificate")
 	enrollmentID, err := tf.GetIntValue("enrollment_id", d)
 	if err != nil {
@@ -640,7 +640,7 @@ func resourceCPSUploadCertificateImport(ctx context.Context, d *schema.ResourceD
 		return nil, fmt.Errorf("enrollment ID must be a number: %s", err)
 	}
 
-	client := inst.Client(meta)
+	client := meta.Client().GetCPS()
 
 	enrollment, err := client.GetEnrollment(ctx, cps.GetEnrollmentRequest{EnrollmentID: enrollmentID})
 	if err != nil {

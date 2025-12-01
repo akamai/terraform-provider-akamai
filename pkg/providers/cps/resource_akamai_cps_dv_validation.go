@@ -82,7 +82,7 @@ func resourceCPSDVValidationCreate(ctx context.Context, d *schema.ResourceData, 
 		ctx,
 		session.WithContextLog(logger),
 	)
-	client := inst.Client(meta)
+	client := meta.Client().GetCPS()
 	logger.Debug("Creating dv validation")
 	enrollmentID, err := tf.GetIntValue("enrollment_id", d)
 	if err != nil {
@@ -185,7 +185,7 @@ func resourceCPSDVValidationRead(ctx context.Context, d *schema.ResourceData, m 
 		ctx,
 		session.WithContextLog(logger),
 	)
-	client := inst.Client(meta)
+	client := meta.Client().GetCPS()
 	logger.Debug("Reading dv validation")
 	enrollmentID, err := tf.GetIntValue("enrollment_id", d)
 	if err != nil {

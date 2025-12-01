@@ -43,7 +43,7 @@ func dataCPSCSRRead(ctx context.Context, d *schema.ResourceData, m interface{}) 
 	meta := meta.Must(m)
 	logger := meta.Log("CPS", "dataCPSCSRRead")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
+	client := meta.Client().GetCPS()
 
 	logger.Debug("Fetching a CSR")
 

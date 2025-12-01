@@ -248,7 +248,7 @@ func resourceCPSDVEnrollmentCreate(ctx context.Context, d *schema.ResourceData, 
 		ctx,
 		session.WithContextLog(logger),
 	)
-	client := inst.Client(meta)
+	client := meta.Client().GetCPS()
 	logger.Debug("Creating enrollment")
 
 	enrollmentReqBody := cps.EnrollmentRequestBody{
@@ -374,7 +374,7 @@ func resourceCPSDVEnrollmentRead(ctx context.Context, d *schema.ResourceData, m 
 		ctx,
 		session.WithContextLog(logger),
 	)
-	client := inst.Client(meta)
+	client := meta.Client().GetCPS()
 	logger.Debug("Reading enrollment")
 	enrollmentID, err := strconv.Atoi(d.Id())
 	if err != nil {
@@ -478,7 +478,7 @@ func resourceCPSDVEnrollmentUpdate(ctx context.Context, d *schema.ResourceData, 
 		ctx,
 		session.WithContextLog(logger),
 	)
-	client := inst.Client(meta)
+	client := meta.Client().GetCPS()
 	logger.Debug("Updating enrollment")
 
 	if !d.HasChangeExcept("timeouts") {
@@ -621,7 +621,7 @@ func resourceCPSDVEnrollmentImport(ctx context.Context, d *schema.ResourceData, 
 		return nil, fmt.Errorf("enrollment ID must be a number: %s", err)
 	}
 
-	client := inst.Client(meta)
+	client := meta.Client().GetCPS()
 	req := cps.GetEnrollmentRequest{EnrollmentID: eid}
 	enrollment, err := client.GetEnrollment(ctx, req)
 	if err != nil {

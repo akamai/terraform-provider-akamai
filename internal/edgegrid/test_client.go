@@ -2,6 +2,7 @@ package edgegrid
 
 import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudcertificates"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cps"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/domainownership"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/hapi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/iam"
@@ -16,6 +17,7 @@ var (
 // TestClient is a mock implementation of the Client interface for testing purposes.
 type TestClient struct {
 	CloudCertificates *cloudcertificates.Mock
+	CPS               *cps.Mock
 	DomainOwnership   *domainownership.Mock
 	HAPI              *hapi.Mock
 	IAM               *iam.Mock
@@ -27,6 +29,7 @@ type TestClient struct {
 func NewTestClient() *TestClient {
 	return &TestClient{
 		CloudCertificates: &cloudcertificates.Mock{},
+		CPS:               &cps.Mock{},
 		DomainOwnership:   &domainownership.Mock{},
 		HAPI:              &hapi.Mock{},
 		IAM:               &iam.Mock{},
@@ -48,6 +51,11 @@ func (c *TestClient) GetDomainOwnership() domainownership.DomainOwnership {
 // GetHAPI returns the mock HAPI client.
 func (c *TestClient) GetHAPI() hapi.HAPI {
 	return c.HAPI
+}
+
+// GetCPS returns the mock CPS client.
+func (c *TestClient) GetCPS() cps.CPS {
+	return c.CPS
 }
 
 // GetIAM returns the mock IAM client.

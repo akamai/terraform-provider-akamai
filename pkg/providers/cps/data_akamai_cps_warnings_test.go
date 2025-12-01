@@ -3,14 +3,17 @@ package cps
 import (
 	"testing"
 
+	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
+
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func TestDataWarnings(t *testing.T) {
 	t.Run("run warning datasource", func(t *testing.T) {
+		client := edgegrid.NewTestClient()
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
 			IsUnitTest:               true,
 			Steps: []resource.TestStep{
 				{

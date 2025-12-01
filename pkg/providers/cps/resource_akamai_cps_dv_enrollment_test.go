@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cps"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
@@ -19,7 +21,7 @@ import (
 func TestResourceDVEnrollment(t *testing.T) {
 	t.Run("lifecycle test", func(t *testing.T) {
 		PollForChangeStatusInterval = 1 * time.Millisecond
-		client := &cps.Mock{}
+		client := edgegrid.NewTestClient()
 		enrollment := cps.GetEnrollmentResponse{
 			AdminContact: &cps.Contact{
 				AddressLineOne:   "150 Broadway",
@@ -87,7 +89,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
-		client.On("CreateEnrollment",
+		client.CPS.On("CreateEnrollment",
 			testutils.MockContext,
 			cps.CreateEnrollmentRequest{
 				EnrollmentRequestBody: enrollmentReqBody,
@@ -106,11 +108,11 @@ func TestResourceDVEnrollment(t *testing.T) {
 				ChangeType: "new-certificate",
 			},
 		}
-		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Once()
 
 		// first verification loop, invalid status
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -122,7 +124,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// second verification loop, valid status, empty allowed input array
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -134,7 +136,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// final verification loop
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -145,10 +147,10 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Times(3)
 
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -159,7 +161,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}, nil).Times(3)
 
-		client.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
+		client.CPS.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.DVArray{DV: []cps.DV{
@@ -194,7 +196,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 
 		enrollmentUpdateReqBody := createEnrollmentReqBodyFromEnrollment(enrollmentUpdate)
 		allowCancel := true
-		client.On("UpdateEnrollment",
+		client.CPS.On("UpdateEnrollment",
 			testutils.MockContext,
 			cps.UpdateEnrollmentRequest{
 				EnrollmentRequestBody:     enrollmentUpdateReqBody,
@@ -214,10 +216,10 @@ func TestResourceDVEnrollment(t *testing.T) {
 				ChangeType: "new-certificate",
 			},
 		}
-		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentUpdate, nil).Times(3)
 
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -228,7 +230,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -238,7 +240,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 				Status: coodinateDomainValidation,
 			},
 		}, nil).Twice()
-		client.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
+		client.CPS.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.DVArray{DV: []cps.DV{
@@ -269,7 +271,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}}, nil).Twice()
 
-		client.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
+		client.CPS.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
 			EnrollmentID:              1,
 			AllowCancelPendingChanges: &allowCancel,
 		}).Return(&cps.RemoveEnrollmentResponse{
@@ -277,50 +279,48 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// Mock that the enrollment in not found after removal.
-		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/lifecycle/create_enrollment.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "contract_id", "ctr_1"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "certificate_type", "san"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "validation_type", "dv"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "registration_authority", "lets-encrypt"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "dns_challenges.#", "2"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "http_challenges.#", "2"),
-							resource.TestCheckOutput("domains_to_validate", "_acme-challenge.san.test.akamai.com,_acme-challenge.test.akamai.com"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "timeouts.#", "1"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "timeouts.0.default", "2h"),
-						),
-					},
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/lifecycle/update_enrollment.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "contract_id", "ctr_1"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "certificate_type", "san"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "validation_type", "dv"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "registration_authority", "lets-encrypt"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "dns_challenges.#", "3"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "http_challenges.#", "3"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "timeouts.#", "0"),
-							resource.TestCheckOutput("domains_to_validate", "_acme-challenge.san.test.akamai.com,_acme-challenge.san2.test.akamai.com,_acme-challenge.test.akamai.com"),
-						),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/lifecycle/create_enrollment.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "contract_id", "ctr_1"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "certificate_type", "san"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "validation_type", "dv"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "registration_authority", "lets-encrypt"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "dns_challenges.#", "2"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "http_challenges.#", "2"),
+						resource.TestCheckOutput("domains_to_validate", "_acme-challenge.san.test.akamai.com,_acme-challenge.test.akamai.com"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "timeouts.#", "1"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "timeouts.0.default", "2h"),
+					),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/lifecycle/update_enrollment.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "contract_id", "ctr_1"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "certificate_type", "san"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "validation_type", "dv"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "registration_authority", "lets-encrypt"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "dns_challenges.#", "3"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "http_challenges.#", "3"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "timeouts.#", "0"),
+						resource.TestCheckOutput("domains_to_validate", "_acme-challenge.san.test.akamai.com,_acme-challenge.san2.test.akamai.com,_acme-challenge.test.akamai.com"),
+					),
+				},
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.CPS.AssertExpectations(t)
 	})
 
 	t.Run("lifecycle test, remove san, returns 'wait-review-cert-warning' status", func(t *testing.T) {
 		PollForChangeStatusInterval = 1 * time.Millisecond
-		client := &cps.Mock{}
+		client := edgegrid.NewTestClient()
 		enrollment := cps.GetEnrollmentResponse{
 			AdminContact: &cps.Contact{
 				AddressLineOne:   "150 Broadway",
@@ -388,7 +388,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
-		client.On("CreateEnrollment",
+		client.CPS.On("CreateEnrollment",
 			testutils.MockContext,
 			cps.CreateEnrollmentRequest{
 				EnrollmentRequestBody: enrollmentReqBody,
@@ -407,11 +407,11 @@ func TestResourceDVEnrollment(t *testing.T) {
 				ChangeType: "new-certificate",
 			},
 		}
-		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Once()
 
 		// first verification loop, invalid status
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -423,7 +423,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// second verification loop, valid status, empty allowed input array
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -435,7 +435,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// final verification loop, everything in place
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -446,10 +446,10 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Times(3)
 
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -460,7 +460,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}, nil).Times(3)
 
-		client.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
+		client.CPS.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.DVArray{DV: []cps.DV{
@@ -495,7 +495,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 
 		enrollmentUpdateReqBody := createEnrollmentReqBodyFromEnrollment(enrollmentUpdate)
 		allowCancel := true
-		client.On("UpdateEnrollment",
+		client.CPS.On("UpdateEnrollment",
 			testutils.MockContext,
 			cps.UpdateEnrollmentRequest{
 				EnrollmentRequestBody:     enrollmentUpdateReqBody,
@@ -515,10 +515,10 @@ func TestResourceDVEnrollment(t *testing.T) {
 				ChangeType: "new-certificate",
 			},
 		}
-		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentUpdate, nil).Times(3)
 
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -529,7 +529,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -539,7 +539,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 				Status: waitReviewCertWarning,
 			},
 		}, nil).Twice()
-		client.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
+		client.CPS.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.DVArray{DV: []cps.DV{
@@ -554,7 +554,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}}, nil).Twice()
 
-		client.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
+		client.CPS.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
 			EnrollmentID:              1,
 			AllowCancelPendingChanges: &allowCancel,
 		}).Return(&cps.RemoveEnrollmentResponse{
@@ -562,50 +562,48 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// Mock that the enrollment in not found after removal.
-		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/lifecycle/create_enrollment.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "contract_id", "ctr_1"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "certificate_type", "san"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "validation_type", "dv"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "registration_authority", "lets-encrypt"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "dns_challenges.#", "2"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "http_challenges.#", "2"),
-							resource.TestCheckOutput("domains_to_validate", "_acme-challenge.san.test.akamai.com,_acme-challenge.test.akamai.com"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "timeouts.#", "1"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "timeouts.0.default", "2h"),
-						),
-					},
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/empty_sans/create_enrollment.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "contract_id", "ctr_1"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "certificate_type", "san"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "validation_type", "dv"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "registration_authority", "lets-encrypt"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "dns_challenges.#", "1"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "http_challenges.#", "1"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "timeouts.#", "0"),
-							resource.TestCheckOutput("domains_to_validate", "_acme-challenge.test.akamai.com"),
-						),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/lifecycle/create_enrollment.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "contract_id", "ctr_1"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "certificate_type", "san"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "validation_type", "dv"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "registration_authority", "lets-encrypt"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "dns_challenges.#", "2"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "http_challenges.#", "2"),
+						resource.TestCheckOutput("domains_to_validate", "_acme-challenge.san.test.akamai.com,_acme-challenge.test.akamai.com"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "timeouts.#", "1"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "timeouts.0.default", "2h"),
+					),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/empty_sans/create_enrollment.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "contract_id", "ctr_1"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "certificate_type", "san"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "validation_type", "dv"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "registration_authority", "lets-encrypt"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "dns_challenges.#", "1"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "http_challenges.#", "1"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "timeouts.#", "0"),
+						resource.TestCheckOutput("domains_to_validate", "_acme-challenge.test.akamai.com"),
+					),
+				},
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.CPS.AssertExpectations(t)
 	})
 
 	t.Run("create enrollment, empty sans", func(t *testing.T) {
 		PollForChangeStatusInterval = 1 * time.Millisecond
-		client := &cps.Mock{}
+		client := edgegrid.NewTestClient()
 		enrollment := cps.GetEnrollmentResponse{
 			AdminContact: &cps.Contact{
 				AddressLineOne:   "150 Broadway",
@@ -670,7 +668,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
-		client.On("CreateEnrollment",
+		client.CPS.On("CreateEnrollment",
 			testutils.MockContext,
 			cps.CreateEnrollmentRequest{
 				EnrollmentRequestBody: enrollmentReqBody,
@@ -692,11 +690,11 @@ func TestResourceDVEnrollment(t *testing.T) {
 		var enrollmentGet cps.GetEnrollmentResponse
 		require.NoError(t, copier.CopyWithOption(&enrollmentGet, enrollment, copier.Option{DeepCopy: true}))
 		enrollmentGet.CSR.SANS = []string{enrollment.CSR.CN}
-		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentGet, nil).Once()
 
 		// first verification loop, invalid status
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -708,7 +706,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// second verification loop, valid status, empty allowed input array
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -720,7 +718,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// final verification loop
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -731,10 +729,10 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentGet, nil).Times(2)
 
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -745,7 +743,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}, nil).Times(2)
 
-		client.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
+		client.CPS.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.DVArray{DV: []cps.DV{
@@ -761,7 +759,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 
 		allowCancel := true
 
-		client.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
+		client.CPS.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
 			EnrollmentID:              1,
 			AllowCancelPendingChanges: &allowCancel,
 		}).Return(&cps.RemoveEnrollmentResponse{
@@ -769,35 +767,32 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// Mock that the enrollment in not found after removal.
-		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/empty_sans/create_enrollment.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "contract_id", "ctr_1"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "certificate_type", "san"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "validation_type", "dv"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "registration_authority", "lets-encrypt"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "dns_challenges.#", "1"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "http_challenges.#", "1"),
-							resource.TestCheckOutput("domains_to_validate", "_acme-challenge.test.akamai.com"),
-						),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/empty_sans/create_enrollment.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "contract_id", "ctr_1"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "certificate_type", "san"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "validation_type", "dv"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "registration_authority", "lets-encrypt"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "dns_challenges.#", "1"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "http_challenges.#", "1"),
+						resource.TestCheckOutput("domains_to_validate", "_acme-challenge.test.akamai.com"),
+					),
 				},
-			})
+			},
 		})
-
-		client.AssertExpectations(t)
+		client.CPS.AssertExpectations(t)
 	})
 
 	t.Run("create enrollment with empty sans and waiting for deletion", func(t *testing.T) {
 		PollForChangeStatusInterval = 1 * time.Millisecond
-		client := &cps.Mock{}
+		client := edgegrid.NewTestClient()
 		enrollment := cps.GetEnrollmentResponse{
 			AdminContact: &cps.Contact{
 				AddressLineOne:   "150 Broadway",
@@ -862,7 +857,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
-		client.On("CreateEnrollment",
+		client.CPS.On("CreateEnrollment",
 			testutils.MockContext,
 			cps.CreateEnrollmentRequest{
 				EnrollmentRequestBody: enrollmentReqBody,
@@ -884,11 +879,11 @@ func TestResourceDVEnrollment(t *testing.T) {
 		var enrollmentGet cps.GetEnrollmentResponse
 		require.NoError(t, copier.CopyWithOption(&enrollmentGet, enrollment, copier.Option{DeepCopy: true}))
 		enrollmentGet.CSR.SANS = []string{enrollment.CSR.CN}
-		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentGet, nil).Once()
 
 		// first verification loop, invalid status
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -900,7 +895,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// second verification loop, valid status, empty allowed input array
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -912,7 +907,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// final verification loop
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -923,10 +918,10 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentGet, nil).Times(2)
 
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -937,7 +932,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}, nil).Times(2)
 
-		client.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
+		client.CPS.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.DVArray{DV: []cps.DV{
@@ -953,7 +948,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 
 		allowCancel := true
 
-		client.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
+		client.CPS.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
 			EnrollmentID:              1,
 			AllowCancelPendingChanges: &allowCancel,
 		}).Return(&cps.RemoveEnrollmentResponse{
@@ -961,39 +956,36 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// Mock that the first get enrollment call still returns the enrollment.
-		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentGet, nil).Once()
 
 		// Mock that the second get enrollment is not found after removal.
-		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/empty_sans/create_enrollment.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "contract_id", "ctr_1"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "certificate_type", "san"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "validation_type", "dv"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "registration_authority", "lets-encrypt"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "dns_challenges.#", "1"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "http_challenges.#", "1"),
-							resource.TestCheckOutput("domains_to_validate", "_acme-challenge.test.akamai.com"),
-						),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/empty_sans/create_enrollment.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "contract_id", "ctr_1"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "certificate_type", "san"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "validation_type", "dv"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "registration_authority", "lets-encrypt"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "dns_challenges.#", "1"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "http_challenges.#", "1"),
+						resource.TestCheckOutput("domains_to_validate", "_acme-challenge.test.akamai.com"),
+					),
 				},
-			})
+			},
 		})
-
-		client.AssertExpectations(t)
+		client.CPS.AssertExpectations(t)
 	})
 
 	t.Run("create enrollment, MTLS", func(t *testing.T) {
 		PollForChangeStatusInterval = 1 * time.Millisecond
-		client := &cps.Mock{}
+		client := edgegrid.NewTestClient()
 		enrollment := cps.GetEnrollmentResponse{
 			AdminContact: &cps.Contact{
 				AddressLineOne:   "150 Broadway",
@@ -1058,7 +1050,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
-		client.On("CreateEnrollment",
+		client.CPS.On("CreateEnrollment",
 			testutils.MockContext,
 			cps.CreateEnrollmentRequest{
 				EnrollmentRequestBody: enrollmentReqBody,
@@ -1083,7 +1075,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}
 		enrollmentUpdateReqBody := createEnrollmentReqBodyFromEnrollment(enrollmentUpdate)
 
-		client.On("UpdateEnrollment",
+		client.CPS.On("UpdateEnrollment",
 			testutils.MockContext,
 			cps.UpdateEnrollmentRequest{
 				EnrollmentID:              1,
@@ -1106,11 +1098,11 @@ func TestResourceDVEnrollment(t *testing.T) {
 		var enrollmentGet cps.GetEnrollmentResponse
 		require.NoError(t, copier.CopyWithOption(&enrollmentGet, enrollmentUpdate, copier.Option{DeepCopy: true}))
 		enrollmentGet.CSR.SANS = []string{enrollmentUpdate.CSR.CN}
-		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentGet, nil).Once()
 
 		// first verification loop, invalid status
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     3,
 		}).Return(&cps.Change{
@@ -1122,7 +1114,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// second verification loop, valid status, empty allowed input array
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     3,
 		}).Return(&cps.Change{
@@ -1134,7 +1126,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// final verification loop
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     3,
 		}).Return(&cps.Change{
@@ -1145,10 +1137,10 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentGet, nil).Times(2)
 
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     3,
 		}).Return(&cps.Change{
@@ -1159,7 +1151,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}, nil).Times(2)
 
-		client.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
+		client.CPS.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
 			EnrollmentID: 1,
 			ChangeID:     3,
 		}).Return(&cps.DVArray{DV: []cps.DV{
@@ -1175,7 +1167,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 
 		allowCancel := true
 
-		client.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
+		client.CPS.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
 			EnrollmentID:              1,
 			AllowCancelPendingChanges: &allowCancel,
 		}).Return(&cps.RemoveEnrollmentResponse{
@@ -1183,32 +1175,29 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// Mock that the enrollment in not found after removal.
-		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/client_mutual_auth/create_enrollment.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "contract_id", "ctr_1"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "network_configuration.0.client_mutual_authentication.0.set_id", "12345"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "network_configuration.0.client_mutual_authentication.0.ocsp_enabled", "true"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "network_configuration.0.client_mutual_authentication.0.send_ca_list_to_client", "false"),
-						),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/client_mutual_auth/create_enrollment.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "contract_id", "ctr_1"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "network_configuration.0.client_mutual_authentication.0.set_id", "12345"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "network_configuration.0.client_mutual_authentication.0.ocsp_enabled", "true"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "network_configuration.0.client_mutual_authentication.0.send_ca_list_to_client", "false"),
+					),
 				},
-			})
+			},
 		})
-
-		client.AssertExpectations(t)
+		client.CPS.AssertExpectations(t)
 	})
 
 	t.Run("lifecycle test with common name not empty, present in sans", func(t *testing.T) {
 		PollForChangeStatusInterval = 1 * time.Millisecond
-		client := &cps.Mock{}
+		client := edgegrid.NewTestClient()
 		commonName := "test.akamai.com"
 		enrollment := cps.GetEnrollmentResponse{
 			AdminContact: &cps.Contact{
@@ -1276,7 +1265,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
-		client.On("CreateEnrollment",
+		client.CPS.On("CreateEnrollment",
 			testutils.MockContext,
 			cps.CreateEnrollmentRequest{
 				EnrollmentRequestBody: enrollmentReqBody,
@@ -1295,11 +1284,11 @@ func TestResourceDVEnrollment(t *testing.T) {
 				ChangeType: "new-certificate",
 			},
 		}
-		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Once()
 
 		// first verification loop, invalid status
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1311,7 +1300,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// second verification loop, valid status, empty allowed input array
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1323,7 +1312,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// final verification loop
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1334,10 +1323,10 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Times(4)
 
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1348,7 +1337,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}, nil).Times(4)
 
-		client.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
+		client.CPS.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.DVArray{DV: []cps.DV{
@@ -1371,7 +1360,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}}, nil).Times(4)
 
 		allowCancel := true
-		client.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
+		client.CPS.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
 			EnrollmentID:              1,
 			AllowCancelPendingChanges: &allowCancel,
 		}).Return(&cps.RemoveEnrollmentResponse{
@@ -1379,46 +1368,43 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// Mock that the enrollment in not found after removal.
-		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/lifecycle_cn_in_sans/create_enrollment.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "contract_id", "ctr_1"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "certificate_type", "san"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "validation_type", "dv"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "registration_authority", "lets-encrypt"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "dns_challenges.#", "2"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "http_challenges.#", "2"),
-							resource.TestCheckOutput("domains_to_validate", "_acme-challenge.san.test.akamai.com,_acme-challenge.test.akamai.com"),
-						),
-					},
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/lifecycle_cn_in_sans/create_enrollment.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "contract_id", "ctr_1"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "certificate_type", "san"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "validation_type", "dv"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "registration_authority", "lets-encrypt"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "dns_challenges.#", "2"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "http_challenges.#", "2"),
-							resource.TestCheckOutput("domains_to_validate", "_acme-challenge.san.test.akamai.com,_acme-challenge.test.akamai.com"),
-						),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/lifecycle_cn_in_sans/create_enrollment.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "contract_id", "ctr_1"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "certificate_type", "san"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "validation_type", "dv"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "registration_authority", "lets-encrypt"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "dns_challenges.#", "2"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "http_challenges.#", "2"),
+						resource.TestCheckOutput("domains_to_validate", "_acme-challenge.san.test.akamai.com,_acme-challenge.test.akamai.com"),
+					),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/lifecycle_cn_in_sans/create_enrollment.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "contract_id", "ctr_1"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "certificate_type", "san"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "validation_type", "dv"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "registration_authority", "lets-encrypt"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "dns_challenges.#", "2"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "http_challenges.#", "2"),
+						resource.TestCheckOutput("domains_to_validate", "_acme-challenge.san.test.akamai.com,_acme-challenge.test.akamai.com"),
+					),
+				},
+			},
 		})
-
-		client.AssertExpectations(t)
+		client.CPS.AssertExpectations(t)
 	})
 
 	t.Run("set challenges arrays to empty if no allowedInput found", func(t *testing.T) {
-		client := &cps.Mock{}
+		client := edgegrid.NewTestClient()
 		enrollment := cps.GetEnrollmentResponse{
 			AdminContact: &cps.Contact{
 				AddressLineOne:   "150 Broadway",
@@ -1486,7 +1472,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
-		client.On("CreateEnrollment",
+		client.CPS.On("CreateEnrollment",
 			testutils.MockContext,
 			cps.CreateEnrollmentRequest{
 				EnrollmentRequestBody: enrollmentReqBody,
@@ -1505,10 +1491,10 @@ func TestResourceDVEnrollment(t *testing.T) {
 				ChangeType: "new-certificate",
 			},
 		}
-		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Once()
 
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1519,10 +1505,10 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Times(2)
 
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1534,7 +1520,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}, nil).Times(2)
 
 		allowCancel := true
-		client.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
+		client.CPS.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
 			EnrollmentID:              1,
 			AllowCancelPendingChanges: &allowCancel,
 		}).Return(&cps.RemoveEnrollmentResponse{
@@ -1542,33 +1528,30 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// Mock that the enrollment in not found after removal.
-		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/lifecycle/create_enrollment.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "contract_id", "ctr_1"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "certificate_type", "san"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "validation_type", "dv"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "registration_authority", "lets-encrypt"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "dns_challenges.#", "0"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "http_challenges.#", "0"),
-						),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/lifecycle/create_enrollment.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "contract_id", "ctr_1"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "certificate_type", "san"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "validation_type", "dv"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "registration_authority", "lets-encrypt"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "dns_challenges.#", "0"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "http_challenges.#", "0"),
+					),
 				},
-			})
+			},
 		})
-
-		client.AssertExpectations(t)
+		client.CPS.AssertExpectations(t)
 	})
 
 	t.Run("update with acknowledge warnings change, no enrollment update", func(t *testing.T) {
-		client := &cps.Mock{}
+		client := edgegrid.NewTestClient()
 		enrollment := cps.GetEnrollmentResponse{
 			AdminContact: &cps.Contact{
 				AddressLineOne:   "150 Broadway",
@@ -1631,7 +1614,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
-		client.On("CreateEnrollment",
+		client.CPS.On("CreateEnrollment",
 			testutils.MockContext,
 			cps.CreateEnrollmentRequest{
 				EnrollmentRequestBody: enrollmentReqBody,
@@ -1650,10 +1633,10 @@ func TestResourceDVEnrollment(t *testing.T) {
 				ChangeType: "new-certificate",
 			},
 		}
-		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Once()
 
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1664,10 +1647,10 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Times(3)
 
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1678,7 +1661,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}, nil).Times(3)
 
-		client.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
+		client.CPS.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.DVArray{DV: []cps.DV{
@@ -1700,10 +1683,10 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}}, nil).Times(3)
 
-		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Times(3)
 
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1714,7 +1697,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1724,7 +1707,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 				Status: coodinateDomainValidation,
 			},
 		}, nil).Twice()
-		client.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
+		client.CPS.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.DVArray{DV: []cps.DV{
@@ -1756,7 +1739,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}}, nil).Twice()
 
 		allowCancel := true
-		client.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
+		client.CPS.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
 			EnrollmentID:              1,
 			AllowCancelPendingChanges: &allowCancel,
 		}).Return(&cps.RemoveEnrollmentResponse{
@@ -1764,40 +1747,37 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// Mock that the enrollment in not found after removal.
-		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/no_acknowledge_warnings/create_enrollment.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "contract_id", "ctr_1"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "certificate_type", "san"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "validation_type", "dv"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "registration_authority", "lets-encrypt"),
-						),
-					},
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/acknowledge_warnings/create_enrollment.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "contract_id", "ctr_1"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "certificate_type", "san"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "validation_type", "dv"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "registration_authority", "lets-encrypt"),
-						),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/no_acknowledge_warnings/create_enrollment.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "contract_id", "ctr_1"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "certificate_type", "san"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "validation_type", "dv"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "registration_authority", "lets-encrypt"),
+					),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/acknowledge_warnings/create_enrollment.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "contract_id", "ctr_1"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "certificate_type", "san"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "validation_type", "dv"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "registration_authority", "lets-encrypt"),
+					),
+				},
+			},
 		})
-
-		client.AssertExpectations(t)
+		client.CPS.AssertExpectations(t)
 	})
 
 	t.Run("acknowledge warnings", func(t *testing.T) {
-		client := &cps.Mock{}
+		client := edgegrid.NewTestClient()
 		PollForChangeStatusInterval = 1 * time.Millisecond
 		enrollment := cps.GetEnrollmentResponse{
 			AdminContact: &cps.Contact{
@@ -1861,7 +1841,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
-		client.On("CreateEnrollment",
+		client.CPS.On("CreateEnrollment",
 			testutils.MockContext,
 			cps.CreateEnrollmentRequest{
 				EnrollmentRequestBody: enrollmentReqBody,
@@ -1880,10 +1860,10 @@ func TestResourceDVEnrollment(t *testing.T) {
 				ChangeType: "new-certificate",
 			},
 		}
-		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Once()
 
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1894,17 +1874,17 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}, nil).Twice()
 
-		client.On("GetChangePreVerificationWarnings", testutils.MockContext, cps.GetChangeRequest{
+		client.CPS.On("GetChangePreVerificationWarnings", testutils.MockContext, cps.GetChangeRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.PreVerificationWarnings{Warnings: "some warning"}, nil).Once()
-		client.On("AcknowledgePreVerificationWarnings", testutils.MockContext, cps.AcknowledgementRequest{
+		client.CPS.On("AcknowledgePreVerificationWarnings", testutils.MockContext, cps.AcknowledgementRequest{
 			EnrollmentID:    1,
 			ChangeID:        2,
 			Acknowledgement: cps.Acknowledgement{Acknowledgement: "acknowledge"},
 		}).Return(nil).Once()
 
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1914,7 +1894,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1925,10 +1905,10 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Twice()
 
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1939,7 +1919,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}, nil).Twice()
 
-		client.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
+		client.CPS.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.DVArray{DV: []cps.DV{
@@ -1954,7 +1934,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}}, nil).Twice()
 
 		allowCancel := true
-		client.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
+		client.CPS.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
 			EnrollmentID:              1,
 			AllowCancelPendingChanges: &allowCancel,
 		}).Return(&cps.RemoveEnrollmentResponse{
@@ -1962,33 +1942,30 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// Mock that the enrollment in not found after removal.
-		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/acknowledge_warnings/create_enrollment.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "contract_id", "ctr_1"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "certificate_type", "san"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "validation_type", "dv"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "dns_challenges.#", "1"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "http_challenges.#", "1"),
-						),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/acknowledge_warnings/create_enrollment.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "contract_id", "ctr_1"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "certificate_type", "san"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "validation_type", "dv"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "dns_challenges.#", "1"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "http_challenges.#", "1"),
+					),
 				},
-			})
+			},
 		})
-
-		client.AssertExpectations(t)
+		client.CPS.AssertExpectations(t)
 	})
 
 	t.Run("create enrollment, allow duplicate common name", func(t *testing.T) {
 		PollForChangeStatusInterval = 1 * time.Millisecond
-		client := &cps.Mock{}
+		client := edgegrid.NewTestClient()
 		enrollment := cps.GetEnrollmentResponse{
 			AdminContact: &cps.Contact{
 				AddressLineOne:   "150 Broadway",
@@ -2053,7 +2030,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
-		client.On("CreateEnrollment",
+		client.CPS.On("CreateEnrollment",
 			testutils.MockContext,
 			cps.CreateEnrollmentRequest{
 				EnrollmentRequestBody: enrollmentReqBody,
@@ -2076,11 +2053,11 @@ func TestResourceDVEnrollment(t *testing.T) {
 		var enrollmentGet cps.GetEnrollmentResponse
 		require.NoError(t, copier.CopyWithOption(&enrollmentGet, enrollment, copier.Option{DeepCopy: true}))
 		enrollmentGet.CSR.SANS = []string{enrollment.CSR.CN}
-		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentGet, nil).Once()
 
 		// first verification loop, invalid status
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -2092,7 +2069,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// second verification loop, valid status, empty allowed input array
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -2104,7 +2081,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// final verification loop
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -2115,10 +2092,10 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentGet, nil).Times(2)
 
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -2129,7 +2106,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}, nil).Times(2)
 
-		client.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
+		client.CPS.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.DVArray{DV: []cps.DV{
@@ -2145,7 +2122,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 
 		allowCancel := true
 
-		client.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
+		client.CPS.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
 			EnrollmentID:              1,
 			AllowCancelPendingChanges: &allowCancel,
 		}).Return(&cps.RemoveEnrollmentResponse{
@@ -2153,41 +2130,38 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// Mock that the enrollment in not found after removal.
-		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/allow_duplicate_cn/create_enrollment.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "contract_id", "ctr_1"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "certificate_type", "san"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "validation_type", "dv"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "registration_authority", "lets-encrypt"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "dns_challenges.#", "1"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "dns_challenges.0.domain", "test.akamai.com"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "dns_challenges.0.full_path", "_acme-challenge.test.akamai.com"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "dns_challenges.0.response_body", "dns"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "http_challenges.#", "1"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "http_challenges.0.domain", "test.akamai.com"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "http_challenges.0.full_path", "_acme-challenge.test.akamai.com"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "http_challenges.0.response_body", "http"),
-							resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "allow_duplicate_common_name", "true"),
-							resource.TestCheckOutput("domains_to_validate", "_acme-challenge.test.akamai.com"),
-						),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/allow_duplicate_cn/create_enrollment.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "contract_id", "ctr_1"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "certificate_type", "san"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "validation_type", "dv"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "registration_authority", "lets-encrypt"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "dns_challenges.#", "1"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "dns_challenges.0.domain", "test.akamai.com"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "dns_challenges.0.full_path", "_acme-challenge.test.akamai.com"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "dns_challenges.0.response_body", "dns"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "http_challenges.#", "1"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "http_challenges.0.domain", "test.akamai.com"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "http_challenges.0.full_path", "_acme-challenge.test.akamai.com"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "http_challenges.0.response_body", "http"),
+						resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "allow_duplicate_common_name", "true"),
+						resource.TestCheckOutput("domains_to_validate", "_acme-challenge.test.akamai.com"),
+					),
 				},
-			})
+			},
 		})
-
-		client.AssertExpectations(t)
+		client.CPS.AssertExpectations(t)
 	})
 
 	t.Run("verification failed with warnings, no acknowledgement", func(t *testing.T) {
-		client := &cps.Mock{}
+		client := edgegrid.NewTestClient()
 		PollForChangeStatusInterval = 1 * time.Millisecond
 		enrollment := cps.GetEnrollmentResponse{
 			AdminContact: &cps.Contact{
@@ -2251,7 +2225,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
-		client.On("CreateEnrollment",
+		client.CPS.On("CreateEnrollment",
 			testutils.MockContext,
 			cps.CreateEnrollmentRequest{
 				EnrollmentRequestBody: enrollmentReqBody,
@@ -2270,10 +2244,10 @@ func TestResourceDVEnrollment(t *testing.T) {
 				ChangeType: "new-certificate",
 			},
 		}
-		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Once()
 
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -2284,13 +2258,13 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		}, nil).Twice()
 
-		client.On("GetChangePreVerificationWarnings", testutils.MockContext, cps.GetChangeRequest{
+		client.CPS.On("GetChangePreVerificationWarnings", testutils.MockContext, cps.GetChangeRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.PreVerificationWarnings{Warnings: "some warning"}, nil).Once()
 
 		allowCancel := true
-		client.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
+		client.CPS.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
 			EnrollmentID:              1,
 			AllowCancelPendingChanges: &allowCancel,
 		}).Return(&cps.RemoveEnrollmentResponse{
@@ -2298,26 +2272,23 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// Mock that the enrollment in not found after removal.
-		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/no_acknowledge_warnings/create_enrollment.tf"),
-						ExpectError: regexp.MustCompile(`enrollment pre-verification returned warnings and the enrollment cannot be validated. Please fix the issues or set acknowledge_pre_verification_warnings flag to true then run 'terraform apply' again: some warning`),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/no_acknowledge_warnings/create_enrollment.tf"),
+					ExpectError: regexp.MustCompile(`enrollment pre-verification returned warnings and the enrollment cannot be validated. Please fix the issues or set acknowledge_pre_verification_warnings flag to true then run 'terraform apply' again: some warning`),
 				},
-			})
+			},
 		})
-
-		client.AssertExpectations(t)
+		client.CPS.AssertExpectations(t)
 	})
 
 	t.Run("create enrollment returns an error", func(t *testing.T) {
-		client := &cps.Mock{}
+		client := edgegrid.NewTestClient()
 		PollForChangeStatusInterval = 1 * time.Millisecond
 		enrollment := cps.GetEnrollmentResponse{
 			AdminContact: &cps.Contact{
@@ -2381,7 +2352,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		}
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
-		client.On("CreateEnrollment",
+		client.CPS.On("CreateEnrollment",
 			testutils.MockContext,
 			cps.CreateEnrollmentRequest{
 				EnrollmentRequestBody: enrollmentReqBody,
@@ -2389,25 +2360,22 @@ func TestResourceDVEnrollment(t *testing.T) {
 			},
 		).Return(nil, fmt.Errorf("error creating enrollment")).Once()
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/no_acknowledge_warnings/create_enrollment.tf"),
-						ExpectError: regexp.MustCompile(`error creating enrollment`),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/no_acknowledge_warnings/create_enrollment.tf"),
+					ExpectError: regexp.MustCompile(`error creating enrollment`),
 				},
-			})
+			},
 		})
-
-		client.AssertExpectations(t)
+		client.CPS.AssertExpectations(t)
 	})
 }
 
 func TestResourceDVEnrollmentImport(t *testing.T) {
 	t.Run("import", func(t *testing.T) {
-		client := &cps.Mock{}
+		client := edgegrid.NewTestClient()
 		id := "1,ctr_1"
 
 		enrollment := cps.GetEnrollmentResponse{
@@ -2473,7 +2441,7 @@ func TestResourceDVEnrollmentImport(t *testing.T) {
 		}
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
-		client.On("CreateEnrollment",
+		client.CPS.On("CreateEnrollment",
 			testutils.MockContext,
 			cps.CreateEnrollmentRequest{
 				EnrollmentRequestBody: enrollmentReqBody,
@@ -2492,10 +2460,10 @@ func TestResourceDVEnrollmentImport(t *testing.T) {
 				ChangeType: "new-certificate",
 			},
 		}
-		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Once()
 
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -2506,10 +2474,10 @@ func TestResourceDVEnrollmentImport(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Times(4)
 
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -2520,7 +2488,7 @@ func TestResourceDVEnrollmentImport(t *testing.T) {
 			},
 		}, nil).Times(3)
 
-		client.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
+		client.CPS.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.DVArray{DV: []cps.DV{
@@ -2543,7 +2511,7 @@ func TestResourceDVEnrollmentImport(t *testing.T) {
 		}}, nil).Times(3)
 		allowCancel := true
 
-		client.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
+		client.CPS.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
 			EnrollmentID:              1,
 			AllowCancelPendingChanges: &allowCancel,
 		}).Return(&cps.RemoveEnrollmentResponse{
@@ -2551,62 +2519,60 @@ func TestResourceDVEnrollmentImport(t *testing.T) {
 		}, nil).Once()
 
 		// Mock that the enrollment in not found after removal.
-		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/import/import_enrollment.tf"),
-					},
-					{
-						Config:            testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/import/import_enrollment.tf"),
-						ImportState:       true,
-						ImportStateId:     id,
-						ResourceName:      "akamai_cps_dv_enrollment.dv",
-						ImportStateVerify: true,
-						ImportStateCheck: func(s []*terraform.InstanceState) error {
-							assert.Len(t, s, 1)
-							rs := s[0]
-							assert.Equal(t, "ctr_1", rs.Attributes["contract_id"])
-							assert.Equal(t, "1", rs.Attributes["id"])
-							return nil
-						},
-						// It looks that there bug in SDK that values for bool optional fields are not persisted on create
-						ImportStateVerifyIgnore: []string{"network_configuration.0.clone_dns_names", "network_configuration.0.quic_enabled"},
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/import/import_enrollment.tf"),
 				},
-			})
+				{
+					Config:            testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/import/import_enrollment.tf"),
+					ImportState:       true,
+					ImportStateId:     id,
+					ResourceName:      "akamai_cps_dv_enrollment.dv",
+					ImportStateVerify: true,
+					ImportStateCheck: func(s []*terraform.InstanceState) error {
+						assert.Len(t, s, 1)
+						rs := s[0]
+						assert.Equal(t, "ctr_1", rs.Attributes["contract_id"])
+						assert.Equal(t, "1", rs.Attributes["id"])
+						return nil
+					},
+					// It looks that there bug in SDK that values for bool optional fields are not persisted on create
+					ImportStateVerifyIgnore: []string{"network_configuration.0.clone_dns_names", "network_configuration.0.quic_enabled"},
+				},
+			},
 		})
+		client.CPS.AssertExpectations(t)
 	})
 
 	t.Run("import error when validation type is not dv", func(t *testing.T) {
-		client := &cps.Mock{}
+		client := edgegrid.NewTestClient()
 		id := "1,ctr_1"
 
 		enrollment := cps.GetEnrollmentResponse{
 			ValidationType: "third-party",
 		}
 
-		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Times(1)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:        testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/import/import_enrollment.tf"),
-						ImportState:   true,
-						ImportStateId: id,
-						ResourceName:  "akamai_cps_dv_enrollment.dv",
-						ExpectError:   regexp.MustCompile("unable to import: wrong validation type: expected 'dv', got 'third-party'"),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config:        testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/import/import_enrollment.tf"),
+					ImportState:   true,
+					ImportStateId: id,
+					ResourceName:  "akamai_cps_dv_enrollment.dv",
+					ExpectError:   regexp.MustCompile("unable to import: wrong validation type: expected 'dv', got 'third-party'"),
 				},
-			})
+			},
 		})
+		client.CPS.AssertExpectations(t)
 	})
 }
 

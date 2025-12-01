@@ -200,7 +200,7 @@ func resourceCPSThirdPartyEnrollmentCreate(ctx context.Context, d *schema.Resour
 		ctx,
 		session.WithContextLog(logger),
 	)
-	client := inst.Client(meta)
+	client := meta.Client().GetCPS()
 	logger.Debug("Creating enrollment")
 
 	contractID, err := tf.GetStringValue("contract_id", d)
@@ -272,7 +272,7 @@ func resourceCPSThirdPartyEnrollmentRead(ctx context.Context, d *schema.Resource
 		ctx,
 		session.WithContextLog(logger),
 	)
-	client := inst.Client(meta)
+	client := meta.Client().GetCPS()
 	logger.Debug("Reading enrollment")
 	enrollmentID, err := strconv.Atoi(d.Id())
 	if err != nil {
@@ -307,7 +307,7 @@ func resourceCPSThirdPartyEnrollmentUpdate(ctx context.Context, d *schema.Resour
 		ctx,
 		session.WithContextLog(logger),
 	)
-	client := inst.Client(meta)
+	client := meta.Client().GetCPS()
 	logger.Debug("Updating enrollment")
 
 	if !d.HasChangeExcept("timeouts") {
@@ -468,7 +468,7 @@ func resourceCPSThirdPartyEnrollmentImport(ctx context.Context, d *schema.Resour
 		return nil, fmt.Errorf("enrollment ID must be a number: %s", err)
 	}
 
-	client := inst.Client(meta)
+	client := meta.Client().GetCPS()
 	req := cps.GetEnrollmentRequest{EnrollmentID: eid}
 	enrollment, err := client.GetEnrollment(ctx, req)
 	if err != nil {
