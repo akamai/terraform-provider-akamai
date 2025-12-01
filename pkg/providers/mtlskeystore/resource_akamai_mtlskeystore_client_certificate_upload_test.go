@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/mtlskeystore"
+	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
@@ -650,30 +651,27 @@ resource "akamai_mtlskeystore_client_certificate_upload" "client_certificate_upl
 			},
 		},
 	}
-	pollingInterval = 1 * time.Millisecond
-	defaultTimeout = 50 * time.Millisecond
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			client := &mtlskeystore.Mock{}
+			client := edgegrid.NewTestClient()
 			if tc.init != nil {
-				tc.init(client)
+				tc.init(client.MTLSKeystore)
 			}
 
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ExternalProviders: map[string]resource.ExternalProvider{
-						"random": {
-							Source:            "registry.terraform.io/hashicorp/random",
-							VersionConstraint: "3.1.0",
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"random": {
+						Source:            "registry.terraform.io/hashicorp/random",
+						VersionConstraint: "3.1.0",
 					},
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps:                    tc.steps,
-				})
+				},
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewCustomPollingSubprovider(1*time.Millisecond, 50*time.Millisecond)),
+				IsUnitTest:               true,
+				Steps:                    tc.steps,
 			})
-			client.AssertExpectations(t)
+
+			client.MTLSKeystore.AssertExpectations(t)
 		})
 	}
 }

@@ -22,19 +22,26 @@ var (
 	_ resource.Resource               = &clientCertificateUploadResource{}
 	_ resource.ResourceWithConfigure  = &clientCertificateUploadResource{}
 	_ resource.ResourceWithModifyPlan = &clientCertificateUploadResource{}
+)
 
-	pollingInterval = 1 * time.Minute
-	defaultTimeout  = 30 * time.Minute
+const (
+	defaultPollingInterval = 1 * time.Minute
+	defaultPollingTimeout  = 30 * time.Minute
 )
 
 // clientCertificateUploadResource represents akamai_mtlskeystore_client_certificate_upload resource.
 type clientCertificateUploadResource struct {
-	meta meta.Meta
+	meta.Resource
+	pollingInterval time.Duration
+	pollingTimeout  time.Duration
 }
 
 // NewClientCertificateUploadResource creates a new instance of the Akamai MTLS Keystore Client Certificate Upload resource.
 func NewClientCertificateUploadResource() resource.Resource {
-	return &clientCertificateUploadResource{}
+	return &clientCertificateUploadResource{
+		pollingInterval: defaultPollingInterval,
+		pollingTimeout:  defaultPollingTimeout,
+	}
 }
 
 // Metadata returns the type name for the Akamai MTLS Keystore Client Certificate Upload resource.
@@ -103,22 +110,6 @@ type clientCertificateUploadModel struct {
 	Timeouts                timeouts.Value `tfsdk:"timeouts"`
 }
 
-// Configure implements the resource.ResourceWithConfigure interface.
-func (r *clientCertificateUploadResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Resource Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.",
-					req.ProviderData))
-		}
-	}()
-	r.meta = meta.Must(req.ProviderData)
-}
-
 func (r *clientCertificateUploadResource) ModifyPlan(ctx context.Context, request resource.ModifyPlanRequest, response *resource.ModifyPlanResponse) {
 	tflog.Debug(ctx, "MTLS Keystore Client Certificate Upload ModifyPlan")
 
@@ -177,7 +168,7 @@ func (r *clientCertificateUploadResource) Create(ctx context.Context, req resour
 		return
 	}
 
-	client := Client(r.meta)
+	client := r.Client.GetMTLSKeystore()
 
 	err := plan.validateCertificateVersion(ctx, client)
 	if err != nil {
@@ -194,12 +185,12 @@ func (r *clientCertificateUploadResource) Create(ctx context.Context, req resour
 
 	// Wait for deployment if needed
 	if plan.WaitForDeployment.ValueBool() && (uploadedVersion.Status != string(mtlskeystore.CertificateVersionStatusDeployed)) {
-		timeout, diag := plan.Timeouts.Create(ctx, defaultTimeout)
+		timeout, diag := plan.Timeouts.Create(ctx, r.pollingTimeout)
 		if diag.HasError() {
 			resp.Diagnostics.Append(diag...)
 			return
 		}
-		if err = plan.waitForDeployment(ctx, client, timeout); err != nil {
+		if err = r.waitForDeployment(ctx, &plan, client, timeout); err != nil {
 			resp.Diagnostics.AddError("Error polling for client certificate deployment", err.Error())
 			return
 		}
@@ -217,7 +208,7 @@ func (r *clientCertificateUploadResource) Read(ctx context.Context, req resource
 		return
 	}
 
-	client := Client(r.meta)
+	client := r.Client.GetMTLSKeystore()
 	listVersionsRequest := mtlskeystore.ListClientCertificateVersionsRequest{
 		CertificateID: state.ClientCertificateID.ValueInt64(),
 	}
@@ -271,7 +262,7 @@ func (r *clientCertificateUploadResource) Update(ctx context.Context, req resour
 		return
 	}
 
-	client := Client(r.meta)
+	client := r.Client.GetMTLSKeystore()
 
 	err := plan.validateCertificateVersion(ctx, client)
 	if err != nil {
@@ -288,13 +279,13 @@ func (r *clientCertificateUploadResource) Update(ctx context.Context, req resour
 
 	// Wait for deployment if needed
 	if plan.WaitForDeployment.ValueBool() && (uploadedVersion.Status != string(mtlskeystore.CertificateVersionStatusDeployed)) {
-		timeout, diag := plan.Timeouts.Update(ctx, defaultTimeout)
+		timeout, diag := plan.Timeouts.Update(ctx, r.pollingTimeout)
 		if diag.HasError() {
 			resp.Diagnostics.Append(diag...)
 			return
 		}
-		if err = plan.waitForDeployment(ctx, client, timeout); err != nil {
-			resp.Diagnostics.AddError("Error waiting for client certificate deployment", err.Error())
+		if err = r.waitForDeployment(ctx, &plan, client, timeout); err != nil {
+			resp.Diagnostics.AddError("Error polling for client certificate deployment", err.Error())
 			return
 		}
 	}
@@ -362,7 +353,7 @@ func (data *clientCertificateUploadModel) validateCertificateVersion(ctx context
 	return fmt.Errorf("could not find client certificate version %d for certificate ID %d", data.VersionNumber.ValueInt64(), data.ClientCertificateID.ValueInt64())
 }
 
-func (data *clientCertificateUploadModel) waitForDeployment(ctx context.Context, client mtlskeystore.MTLSKeystore, timeout time.Duration) error {
+func (r *clientCertificateUploadResource) waitForDeployment(ctx context.Context, data *clientCertificateUploadModel, client mtlskeystore.MTLSKeystore, timeout time.Duration) error {
 	tflog.Debug(ctx, "Waiting for client certificate deployment")
 
 	ctx, cancel := context.WithTimeout(ctx, timeout)
@@ -370,7 +361,7 @@ func (data *clientCertificateUploadModel) waitForDeployment(ctx context.Context,
 
 	for {
 		select {
-		case <-time.After(pollingInterval):
+		case <-time.After(r.pollingInterval):
 			clientCertificateVersionsResp, err := client.ListClientCertificateVersions(ctx, mtlskeystore.ListClientCertificateVersionsRequest{
 				CertificateID: data.ClientCertificateID.ValueInt64(),
 			})

@@ -6,6 +6,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/domainownership"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/hapi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/mtlskeystore"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/session"
 )
@@ -19,6 +20,8 @@ type Client interface {
 	GetHAPI() hapi.HAPI
 
 	GetIAM() iam.IAM
+
+	GetMTLSKeystore() mtlskeystore.MTLSKeystore
 
 	GetPAPI() papi.PAPI
 }
@@ -57,6 +60,11 @@ func (c *ClientImpl) GetHAPI() hapi.HAPI {
 // GetIAM returns the IAM client for managing identity and access management.
 func (c *ClientImpl) GetIAM() iam.IAM {
 	return iam.Client(c.sess)
+}
+
+// GetMTLSKeystore returns the MTLS Keystore client for managing mTLS keystores.
+func (c *ClientImpl) GetMTLSKeystore() mtlskeystore.MTLSKeystore {
+	return mtlskeystore.Client(c.sess)
 }
 
 // GetPAPI returns the PAPI client for managing property APIs.

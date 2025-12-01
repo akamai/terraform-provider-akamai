@@ -2,8 +2,6 @@
 package mtlskeystore
 
 import (
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/mtlskeystore"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/subprovider"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -16,21 +14,12 @@ type (
 )
 
 var (
-	_      subprovider.Subprovider = &Subprovider{}
-	client mtlskeystore.MTLSKeystore
+	_ subprovider.Subprovider = &Subprovider{}
 )
 
 // NewSubprovider returns a new MTLS Keystore subprovider
 func NewSubprovider() *Subprovider {
 	return &Subprovider{}
-}
-
-// Client returns the MTLS Keystore interface
-func Client(meta meta.Meta) mtlskeystore.MTLSKeystore {
-	if client != nil {
-		return client
-	}
-	return mtlskeystore.Client(meta.Session())
 }
 
 // SDKResources returns the MTLS Keystore resources implemented using terraform-plugin-sdk

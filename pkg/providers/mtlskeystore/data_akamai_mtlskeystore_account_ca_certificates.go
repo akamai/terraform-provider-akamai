@@ -2,7 +2,6 @@ package mtlskeystore
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/mtlskeystore"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/framework/date"
@@ -24,7 +23,7 @@ var (
 
 type (
 	accountCACertificatesDataSource struct {
-		meta meta.Meta
+		meta.DataSource
 	}
 
 	accountCACertificatesDataSourceModel struct {
@@ -59,22 +58,6 @@ func NewAccountCACertificatesDataSource() datasource.DataSource {
 // Metadata configures data source's meta information.
 func (d *accountCACertificatesDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "akamai_mtlskeystore_account_ca_certificates"
-}
-
-// Configure configures data source at the beginning of the lifecycle.
-func (d *accountCACertificatesDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Data Source Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.",
-					req.ProviderData))
-		}
-	}()
-	d.meta = meta.Must(req.ProviderData)
 }
 
 // Schema is used to define data source's terraform schema.
@@ -176,7 +159,7 @@ func (d *accountCACertificatesDataSource) Read(ctx context.Context, req datasour
 	if resp.Diagnostics.Append(req.Config.Get(ctx, &data)...); resp.Diagnostics.HasError() {
 		return
 	}
-	client := Client(d.meta)
+	client := d.Client.GetMTLSKeystore()
 
 	var status []mtlskeystore.CertificateStatus
 	diags := data.Status.ElementsAs(ctx, &status, false)

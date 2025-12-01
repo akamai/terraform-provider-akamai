@@ -5,6 +5,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/domainownership"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/hapi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/mtlskeystore"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
 )
 
@@ -18,6 +19,7 @@ type TestClient struct {
 	DomainOwnership   *domainownership.Mock
 	HAPI              *hapi.Mock
 	IAM               *iam.Mock
+	MTLSKeystore      *mtlskeystore.Mock
 	PAPI              *papi.Mock
 }
 
@@ -28,6 +30,7 @@ func NewTestClient() *TestClient {
 		DomainOwnership:   &domainownership.Mock{},
 		HAPI:              &hapi.Mock{},
 		IAM:               &iam.Mock{},
+		MTLSKeystore:      &mtlskeystore.Mock{},
 		PAPI:              &papi.Mock{},
 	}
 }
@@ -50,6 +53,11 @@ func (c *TestClient) GetHAPI() hapi.HAPI {
 // GetIAM returns the mock IAM client.
 func (c *TestClient) GetIAM() iam.IAM {
 	return c.IAM
+}
+
+// GetMTLSKeystore returns the mock MTLS Keystore client.
+func (c *TestClient) GetMTLSKeystore() mtlskeystore.MTLSKeystore {
+	return c.MTLSKeystore
 }
 
 // GetPAPI returns the mock PAPI client.

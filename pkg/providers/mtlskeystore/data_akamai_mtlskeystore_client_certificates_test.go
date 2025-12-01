@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/mtlskeystore"
+	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
 	intTest "github.com/akamai/terraform-provider-akamai/v9/internal/test"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
@@ -123,19 +124,18 @@ func TestClientCertificatesDataSource(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			client := &mtlskeystore.Mock{}
+			client := edgegrid.NewTestClient()
 			if test.init != nil {
-				test.init(client)
+				test.init(client.MTLSKeystore)
 			}
 
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps:                    test.steps,
-				})
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				IsUnitTest:               true,
+				Steps:                    test.steps,
 			})
-			client.AssertExpectations(t)
+
+			client.MTLSKeystore.AssertExpectations(t)
 		})
 
 	}

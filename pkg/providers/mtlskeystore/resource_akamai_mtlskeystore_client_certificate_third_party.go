@@ -39,7 +39,7 @@ var (
 )
 
 type clientCertificateThirdPartyResource struct {
-	meta meta.Meta
+	meta.Resource
 }
 
 // NewClientCertificateThirdPartyResource returns new akamai_mtlskeystore_client_certificate_third_party resource.
@@ -367,24 +367,6 @@ func csrBlockSchema() schema.SingleNestedAttribute {
 	}
 }
 
-func (r *clientCertificateThirdPartyResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		// ProviderData is nil when Configure is run first time as part of ValidateDataSourceConfig in framework provider
-		return
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Resource Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-			)
-		}
-	}()
-
-	r.meta = meta.Must(req.ProviderData)
-}
-
 func (r *clientCertificateThirdPartyResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
 	tflog.Debug(ctx, "Modifying Client Certificate Third Party Resource Plan")
 	var state, plan *clientCertificateThirdPartyResourceModel
@@ -410,7 +392,7 @@ func (r *clientCertificateThirdPartyResource) ModifyPlan(ctx context.Context, re
 			versionsToRemove = append(versionsToRemove, version.Version.ValueInt64())
 		}
 
-		err := checkStatus(ctx, Client(r.meta), state.CertificateID.ValueInt64(), versionsToRemove)
+		err := checkStatus(ctx, r.Client.GetMTLSKeystore(), state.CertificateID.ValueInt64(), versionsToRemove)
 		if err != nil {
 			resp.Diagnostics.AddWarning("Versions deletion", err.Error())
 			return
@@ -461,7 +443,7 @@ func (r *clientCertificateThirdPartyResource) ModifyPlan(ctx context.Context, re
 			}
 		}
 		if len(versionsToRemove) > 0 {
-			err := checkStatus(ctx, Client(r.meta), state.CertificateID.ValueInt64(), versionsToRemove)
+			err := checkStatus(ctx, r.Client.GetMTLSKeystore(), state.CertificateID.ValueInt64(), versionsToRemove)
 			if err != nil {
 				resp.Diagnostics.AddWarning("Versions deletion", err.Error())
 				return
@@ -533,7 +515,7 @@ func (r *clientCertificateThirdPartyResource) Create(ctx context.Context, req re
 }
 
 func (r *clientCertificateThirdPartyResource) create(ctx context.Context, plan *clientCertificateThirdPartyResourceModel) error {
-	client := Client(r.meta)
+	client := r.Client.GetMTLSKeystore()
 
 	var notificationEmails []string
 	diags := plan.NotificationEmails.ElementsAs(ctx, &notificationEmails, false)
@@ -667,7 +649,7 @@ func (r *clientCertificateThirdPartyResource) Read(ctx context.Context, req reso
 }
 
 func (r *clientCertificateThirdPartyResource) read(ctx context.Context, data *clientCertificateThirdPartyResourceModel) error {
-	client := Client(r.meta)
+	client := r.Client.GetMTLSKeystore()
 	clientCertificate, err := client.GetClientCertificate(ctx, mtlskeystore.GetClientCertificateRequest{
 		CertificateID: data.CertificateID.ValueInt64(),
 	})
@@ -732,7 +714,7 @@ func (r *clientCertificateThirdPartyResource) Update(ctx context.Context, req re
 }
 
 func (r *clientCertificateThirdPartyResource) update(ctx context.Context, plan, oldState *clientCertificateThirdPartyResourceModel) error {
-	client := Client(r.meta)
+	client := r.Client.GetMTLSKeystore()
 
 	if oldState.hasNameChanged(plan) || oldState.haveNotificationEmailsChanged(plan) {
 		patchReq := mtlskeystore.PatchClientCertificateRequest{
@@ -897,7 +879,7 @@ func (r *clientCertificateThirdPartyResource) Delete(ctx context.Context, req re
 		return
 	}
 
-	client := Client(r.meta)
+	client := r.Client.GetMTLSKeystore()
 
 	var stateVersions map[string]clientCertificateVersionModel
 	diags := state.Versions.ElementsAs(ctx, &stateVersions, false)
@@ -956,7 +938,7 @@ func (r *clientCertificateThirdPartyResource) ImportState(ctx context.Context, r
 	}
 
 	// API call is needed to populate subject from server, and extract contract and group ID from it
-	client := Client(r.meta)
+	client := r.Client.GetMTLSKeystore()
 	certificate, err := client.GetClientCertificate(ctx, mtlskeystore.GetClientCertificateRequest{
 		CertificateID: certificateID,
 	})
