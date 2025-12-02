@@ -339,6 +339,7 @@ var (
 )
 
 func TestDataEnrollment(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		enrollment   *cps.GetEnrollmentResponse
 		enrollmentID int
@@ -500,6 +501,7 @@ func TestDataEnrollment(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			client := edgegrid.NewTestClient()
 			test.init(t, client.CPS)
 

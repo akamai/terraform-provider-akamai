@@ -13,7 +13,9 @@ import (
 )
 
 func TestDVValidation(t *testing.T) {
+	t.Parallel()
 	t.Run("lifecycle test", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&cps.GetEnrollmentResponse{PendingChanges: []cps.PendingChange{
@@ -132,6 +134,7 @@ func TestDVValidation(t *testing.T) {
 		client.CPS.AssertExpectations(t)
 	})
 	t.Run("lifecycle test with ack post verification warnings", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&cps.GetEnrollmentResponse{PendingChanges: []cps.PendingChange{
@@ -248,6 +251,7 @@ func TestDVValidation(t *testing.T) {
 		client.CPS.AssertExpectations(t)
 	})
 	t.Run("receive `wait-review-cert-warning` early", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&cps.GetEnrollmentResponse{PendingChanges: []cps.PendingChange{
@@ -303,6 +307,7 @@ func TestDVValidation(t *testing.T) {
 		client.CPS.AssertExpectations(t)
 	})
 	t.Run("retry acknowledgement", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&cps.GetEnrollmentResponse{PendingChanges: []cps.PendingChange{
@@ -366,6 +371,7 @@ func TestDVValidation(t *testing.T) {
 		client.CPS.AssertExpectations(t)
 	})
 	t.Run("retry acknowledgement with timeout", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&cps.GetEnrollmentResponse{PendingChanges: []cps.PendingChange{

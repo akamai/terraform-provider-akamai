@@ -10,6 +10,7 @@ import (
 )
 
 func TestGetContactInfo(t *testing.T) {
+	t.Parallel()
 	hashFunc := func(_ interface{}) int { return 0 }
 	tests := map[string]struct {
 		given     *schema.Set
@@ -54,6 +55,7 @@ func TestGetContactInfo(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			res, err := GetContactInfo(test.given)
 			if test.withError {
 				assert.Error(t, err)
@@ -66,6 +68,7 @@ func TestGetContactInfo(t *testing.T) {
 }
 
 func TestGetCSR(t *testing.T) {
+	t.Parallel()
 	resource := &schema.Resource{
 		Schema: map[string]*schema.Schema{
 			"common_name": {
@@ -187,6 +190,7 @@ func TestGetCSR(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			rd := resource.TestResourceData()
 			err := rd.Set("csr", test.givenCSR)
 			require.NoError(t, err)
@@ -207,6 +211,7 @@ func TestGetCSR(t *testing.T) {
 }
 
 func TestGetNetworkConfig(t *testing.T) {
+	t.Parallel()
 	resource := &schema.Resource{
 		Schema: map[string]*schema.Schema{
 			"network_configuration": {
@@ -366,6 +371,7 @@ func TestGetNetworkConfig(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			rd := resource.TestResourceData()
 			err := rd.Set("network_configuration", test.givenNetworkConfig)
 			require.NoError(t, err)
@@ -388,6 +394,7 @@ func TestGetNetworkConfig(t *testing.T) {
 }
 
 func TestGetOrg(t *testing.T) {
+	t.Parallel()
 	resource := &schema.Resource{
 		Schema: map[string]*schema.Schema{
 			"organization": {
@@ -464,6 +471,7 @@ func TestGetOrg(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			rd := resource.TestResourceData()
 			err := rd.Set("organization", test.givenOrg)
 			require.NoError(t, err)
@@ -475,6 +483,7 @@ func TestGetOrg(t *testing.T) {
 }
 
 func TestContactInfoToMap(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		given    cps.Contact
 		expected map[string]interface{}
@@ -512,6 +521,7 @@ func TestContactInfoToMap(t *testing.T) {
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			res := ContactInfoToMap(test.given)
 			assert.Equal(t, test.expected, res)
 		})
@@ -519,6 +529,7 @@ func TestContactInfoToMap(t *testing.T) {
 }
 
 func TestOrgToMap(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		given    cps.Org
 		expected map[string]interface{}
@@ -548,6 +559,7 @@ func TestOrgToMap(t *testing.T) {
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			res := OrgToMap(test.given)
 			assert.Equal(t, test.expected, res)
 		})
@@ -555,6 +567,7 @@ func TestOrgToMap(t *testing.T) {
 }
 
 func TestCSRToMap(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		given    cps.CSR
 		expected map[string]interface{}
@@ -580,6 +593,7 @@ func TestCSRToMap(t *testing.T) {
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			res := CSRToMap(test.given)
 			assert.Equal(t, test.expected, res)
 		})
@@ -587,6 +601,7 @@ func TestCSRToMap(t *testing.T) {
 }
 
 func TestNetworkConfigToMap(t *testing.T) {
+	t.Parallel()
 	truePtr := true
 	tests := map[string]struct {
 		given    cps.NetworkConfiguration
@@ -632,6 +647,7 @@ func TestNetworkConfigToMap(t *testing.T) {
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			res := NetworkConfigToMap(test.given)
 			assert.Equal(t, test.expected, res)
 		})
@@ -639,6 +655,7 @@ func TestNetworkConfigToMap(t *testing.T) {
 }
 
 func TestGetChangeIDFromPendingChanges(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		givenChanges []cps.PendingChange
 		expected     int
@@ -670,6 +687,7 @@ func TestGetChangeIDFromPendingChanges(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			res, err := GetChangeIDFromPendingChanges(test.givenChanges)
 			if test.withError {
 				assert.Error(t, err)
@@ -682,6 +700,7 @@ func TestGetChangeIDFromPendingChanges(t *testing.T) {
 }
 
 func TestGetEnrollmentID(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		givenLocation string
 		expected      int
@@ -699,6 +718,7 @@ func TestGetEnrollmentID(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			res, err := GetEnrollmentID(test.givenLocation)
 			if test.withError {
 				assert.Error(t, err)

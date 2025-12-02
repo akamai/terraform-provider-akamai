@@ -340,6 +340,7 @@ var (
 )
 
 func TestDataCPSCSR(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		init       func(*cps.Mock, testDataForCPSCSR)
 		mockData   testDataForCPSCSR
@@ -434,6 +435,7 @@ func TestDataCPSCSR(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			client := edgegrid.NewTestClient()
 			if test.init != nil {
 				test.init(client.CPS, test.mockData)

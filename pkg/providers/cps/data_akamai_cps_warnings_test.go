@@ -9,7 +9,9 @@ import (
 )
 
 func TestDataWarnings(t *testing.T) {
+	t.Parallel()
 	t.Run("run warning datasource", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		resource.UnitTest(t, resource.TestCase{
 			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),

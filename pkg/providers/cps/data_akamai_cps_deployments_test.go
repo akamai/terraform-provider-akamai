@@ -12,6 +12,7 @@ import (
 )
 
 func TestDataCPSDeployments(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		configPath     string
 		checkFunctions []resource.TestCheckFunc
@@ -236,6 +237,7 @@ func TestDataCPSDeployments(t *testing.T) {
 	}
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
+			t.Parallel()
 			client := edgegrid.NewTestClient()
 			test.init(client.CPS)
 			resource.UnitTest(t, resource.TestCase{

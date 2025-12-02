@@ -17,7 +17,9 @@ import (
 )
 
 func TestResourceDVEnrollment(t *testing.T) {
+	t.Parallel()
 	t.Run("lifecycle test", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		enrollment := cps.GetEnrollmentResponse{
 			AdminContact: &cps.Contact{
@@ -316,6 +318,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 	})
 
 	t.Run("lifecycle test, remove san, returns 'wait-review-cert-warning' status", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		enrollment := cps.GetEnrollmentResponse{
 			AdminContact: &cps.Contact{
@@ -598,6 +601,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 	})
 
 	t.Run("create enrollment, empty sans", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		enrollment := cps.GetEnrollmentResponse{
 			AdminContact: &cps.Contact{
@@ -786,6 +790,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 	})
 
 	t.Run("create enrollment with empty sans and waiting for deletion", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		enrollment := cps.GetEnrollmentResponse{
 			AdminContact: &cps.Contact{
@@ -978,6 +983,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 	})
 
 	t.Run("create enrollment, MTLS", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		enrollment := cps.GetEnrollmentResponse{
 			AdminContact: &cps.Contact{
@@ -1189,6 +1195,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 	})
 
 	t.Run("lifecycle test with common name not empty, present in sans", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		commonName := "test.akamai.com"
 		enrollment := cps.GetEnrollmentResponse{
@@ -1396,6 +1403,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 	})
 
 	t.Run("set challenges arrays to empty if no allowedInput found", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		enrollment := cps.GetEnrollmentResponse{
 			AdminContact: &cps.Contact{
@@ -1543,6 +1551,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 	})
 
 	t.Run("update with acknowledge warnings change, no enrollment update", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		enrollment := cps.GetEnrollmentResponse{
 			AdminContact: &cps.Contact{
@@ -1769,6 +1778,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 	})
 
 	t.Run("acknowledge warnings", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		enrollment := cps.GetEnrollmentResponse{
 			AdminContact: &cps.Contact{
@@ -1955,6 +1965,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 	})
 
 	t.Run("create enrollment, allow duplicate common name", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		enrollment := cps.GetEnrollmentResponse{
 			AdminContact: &cps.Contact{
@@ -2151,6 +2162,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 	})
 
 	t.Run("verification failed with warnings, no acknowledgement", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		enrollment := cps.GetEnrollmentResponse{
 			AdminContact: &cps.Contact{
@@ -2277,6 +2289,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 	})
 
 	t.Run("create enrollment returns an error", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		enrollment := cps.GetEnrollmentResponse{
 			AdminContact: &cps.Contact{
@@ -2362,7 +2375,9 @@ func TestResourceDVEnrollment(t *testing.T) {
 }
 
 func TestResourceDVEnrollmentImport(t *testing.T) {
+	t.Parallel()
 	t.Run("import", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		id := "1,ctr_1"
 
@@ -2538,6 +2553,7 @@ func TestResourceDVEnrollmentImport(t *testing.T) {
 	})
 
 	t.Run("import error when validation type is not dv", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		id := "1,ctr_1"
 

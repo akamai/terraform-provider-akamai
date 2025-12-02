@@ -16,6 +16,7 @@ import (
 )
 
 func TestResourceCPSUploadCertificate(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		init                func(*cps.Mock, *cps.GetEnrollmentResponse, int, int)
 		enrollment          *cps.GetEnrollmentResponse
@@ -73,6 +74,7 @@ func TestResourceCPSUploadCertificate(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			client := edgegrid.NewTestClient()
 			test.init(client.CPS, test.enrollment, test.enrollmentID, test.changeID)
 			resource.UnitTest(t, resource.TestCase{
@@ -97,6 +99,7 @@ func TestResourceCPSUploadCertificate(t *testing.T) {
 }
 
 func TestResourceCPSUploadCertificateWithThirdPartyEnrollmentDependency(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		init         func(*cps.Mock, *cps.GetEnrollmentResponse, int, int)
 		enrollment   cps.GetEnrollmentResponse
@@ -175,6 +178,7 @@ func TestResourceCPSUploadCertificateWithThirdPartyEnrollmentDependency(t *testi
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			client := edgegrid.NewTestClient()
 			test.init(client.CPS, &test.enrollment, test.enrollmentID, test.changeID)
 			resource.UnitTest(t, resource.TestCase{
@@ -194,6 +198,7 @@ func TestResourceCPSUploadCertificateWithThirdPartyEnrollmentDependency(t *testi
 }
 
 func TestResourceCPSUploadCertificateLifecycle(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		init                      func(*cps.Mock, *cps.GetEnrollmentResponse, *cps.GetEnrollmentResponse, int, int, int)
 		enrollment                *cps.GetEnrollmentResponse
@@ -269,6 +274,7 @@ func TestResourceCPSUploadCertificateLifecycle(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			client := edgegrid.NewTestClient()
 			test.init(client.CPS, test.enrollment, test.enrollmentUpdated, test.enrollmentID, test.changeID, test.changeIDUpdated)
 			resource.UnitTest(t, resource.TestCase{
@@ -298,6 +304,7 @@ func TestResourceCPSUploadCertificateLifecycle(t *testing.T) {
 }
 
 func TestCreateCPSUploadCertificate(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		init         func(*cps.Mock, *cps.GetEnrollmentResponse, int, int)
 		enrollment   *cps.GetEnrollmentResponse
@@ -644,6 +651,7 @@ func TestCreateCPSUploadCertificate(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			client := edgegrid.NewTestClient()
 			if test.init != nil {
 				test.init(client.CPS, test.enrollment, test.enrollmentID, test.changeID)
@@ -665,6 +673,7 @@ func TestCreateCPSUploadCertificate(t *testing.T) {
 }
 
 func TestReadCPSUploadCertificate(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		init         func(*cps.Mock, *cps.GetEnrollmentResponse, int, int)
 		enrollment   *cps.GetEnrollmentResponse
@@ -736,6 +745,7 @@ func TestReadCPSUploadCertificate(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			client := edgegrid.NewTestClient()
 			test.init(client.CPS, test.enrollment, test.enrollmentID, test.changeID)
 			resource.UnitTest(t, resource.TestCase{
@@ -755,6 +765,7 @@ func TestReadCPSUploadCertificate(t *testing.T) {
 }
 
 func TestUpdateCPSUploadCertificate(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		init                func(*cps.Mock, *cps.GetEnrollmentResponse, *cps.GetEnrollmentResponse, int, int, int)
 		enrollment          *cps.GetEnrollmentResponse
@@ -1099,6 +1110,7 @@ func TestUpdateCPSUploadCertificate(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			client := edgegrid.NewTestClient()
 			test.init(client.CPS, test.enrollment, test.enrollmentUpdated, test.enrollmentID, test.changeID, test.changeIDUpdated)
 			resource.UnitTest(t, resource.TestCase{
@@ -1123,6 +1135,7 @@ func TestUpdateCPSUploadCertificate(t *testing.T) {
 }
 
 func TestResourceUploadCertificateImport(t *testing.T) {
+	t.Parallel()
 	id := 1
 
 	checker := test.NewImportChecker().
@@ -1173,6 +1186,7 @@ func TestResourceUploadCertificateImport(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			client := edgegrid.NewTestClient()
 			test.init(client.CPS)
 

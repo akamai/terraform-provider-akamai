@@ -30,6 +30,7 @@ var (
 )
 
 func TestDataEnrollments(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		contractID  string
 		enrollments cps.ListEnrollmentsResponse
@@ -101,6 +102,7 @@ func TestDataEnrollments(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			client := edgegrid.NewTestClient()
 			test.init(t, client.CPS)
 			resource.UnitTest(t, resource.TestCase{
