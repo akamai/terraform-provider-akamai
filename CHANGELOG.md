@@ -61,6 +61,9 @@
 
 #### BUG FIXES:
 
+* Cloudlets
+    * Removed the `akaRuleId` and `location` fields from the `match_rules` JSON payload to avoid API validation errors when updating Akamai Cloudlets policies ([I#688](https://github.com/akamai/terraform-provider-akamai/issues/688)).
+
 
 * PAPI
     * Relaxed too strict validation of edge hostname domain prefixes in the `akamai_edge_hostname` resource ([I#668](https://github.com/akamai/terraform-provider-akamai/issues/668)).

@@ -328,6 +328,11 @@ func resourcePolicyCreate(ctx context.Context, d *schema.ResourceData, m any) di
 		}
 	}
 
+	matchRulesJSON, err = sanitizeMatchRules(matchRulesJSON)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	err, updateError := executionStrategy.updatePolicyVersion(ctx, d, policyID, 1, description, matchRulesJSON, !executionStrategy.isFirstVersionCreated())
 	if err != nil {
 		return diag.FromErr(err)
@@ -437,6 +442,12 @@ func resourcePolicyUpdate(ctx context.Context, d *schema.ResourceData, m any) di
 				if err != nil && !errors.Is(err, tf.ErrNotFound) {
 					return diag.FromErr(err)
 				}
+
+				matchRulesJSON, err = sanitizeMatchRules(matchRulesJSON)
+				if err != nil {
+					return diag.FromErr(err)
+				}
+
 				err, updateVersionErr := executionStrategy.updatePolicyVersion(ctx, d, policyID, int64(version), description, matchRulesJSON, isNewVersionNeeded)
 				if err != nil {
 					return diag.FromErr(err)
@@ -497,6 +508,11 @@ func updatePolicyVersion(ctx context.Context, d *schema.ResourceData, m any, exe
 	}
 	description, err := tf.GetStringValue("description", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+
+	matchRulesJSON, err = sanitizeMatchRules(matchRulesJSON)
+	if err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -584,6 +600,29 @@ func resourcePolicyImport(ctx context.Context, d *schema.ResourceData, m any) ([
 	return []*schema.ResourceData{d}, nil
 }
 
+func sanitizeMatchRules(matchRulesJSON string) (string, error) {
+	if matchRulesJSON == "" {
+		return "", nil
+	}
+
+	var rules []map[string]interface{}
+	if err := json.Unmarshal([]byte(matchRulesJSON), &rules); err != nil {
+		return "", fmt.Errorf("unable to unmarshal match rules: %w", err)
+	}
+
+	for _, rule := range rules {
+		delete(rule, "location")
+		delete(rule, "akaRuleId")
+	}
+
+	sanitized, err := json.Marshal(rules)
+	if err != nil {
+		return "", fmt.Errorf("unable to marshal sanitized match rules: %w", err)
+	}
+
+	return string(sanitized), nil
+}
+
 func diffSuppressGroupID(_, o, n string, _ *schema.ResourceData) bool {
 	return strings.TrimPrefix(o, "grp_") == strings.TrimPrefix(n, "grp_")
 }
@@ -615,6 +654,10 @@ func diffMatchRules(o, n string) bool {
 	}
 
 	for _, rule := range oldRules {
+		delete(rule, "location")
+		delete(rule, "akaRuleId")
+	}
+	for _, rule := range newRules {
 		delete(rule, "location")
 		delete(rule, "akaRuleId")
 	}
