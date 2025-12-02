@@ -43,6 +43,11 @@ func (c *TestClient) GetCloudCertificates() cloudcertificates.CloudCertificates 
 	return c.CloudCertificates
 }
 
+// GetCPS returns the mock CPS client.
+func (c *TestClient) GetCPS() cps.CPS {
+	return c.CPS
+}
+
 // GetDomainOwnership returns the mock Domain Ownership client.
 func (c *TestClient) GetDomainOwnership() domainownership.DomainOwnership {
 	return c.DomainOwnership
@@ -51,11 +56,6 @@ func (c *TestClient) GetDomainOwnership() domainownership.DomainOwnership {
 // GetHAPI returns the mock HAPI client.
 func (c *TestClient) GetHAPI() hapi.HAPI {
 	return c.HAPI
-}
-
-// GetCPS returns the mock CPS client.
-func (c *TestClient) GetCPS() cps.CPS {
-	return c.CPS
 }
 
 // GetIAM returns the mock IAM client.

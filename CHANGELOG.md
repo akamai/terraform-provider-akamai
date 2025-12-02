@@ -25,7 +25,8 @@
 #### FEATURES/ENHANCEMENTS:
 
 * CPS
-  * Use edgegrid.Client in cps subprovider
+    * Eliminated the global client variable and its synchronization logic, significantly reducing
+      unit test execution time.
 
 * General
     * Migrated to Go `1.24`.

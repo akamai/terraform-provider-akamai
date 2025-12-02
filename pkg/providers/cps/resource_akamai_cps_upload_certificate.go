@@ -20,15 +20,23 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func resourceCPSUploadCertificate() *schema.Resource {
+// uploadCertificateResource represents the akamai_cps_upload_certificate resource with configurable polling intervals.
+type uploadCertificateResource struct {
+	pollChangeStatusInterval time.Duration
+}
+
+func resourceCPSUploadCertificate(pollChangeStatusInterval time.Duration) *schema.Resource {
+	res := &uploadCertificateResource{
+		pollChangeStatusInterval: pollChangeStatusInterval,
+	}
 	return &schema.Resource{
 		Description:   "Enables to upload a certificates and trust-chains for third-party enrollment",
-		CreateContext: resourceCPSUploadCertificateCreate,
-		ReadContext:   resourceCPSUploadCertificateRead,
-		UpdateContext: resourceCPSUploadCertificateUpdate,
-		DeleteContext: resourceCPSUploadCertificateDelete,
+		CreateContext: res.create,
+		ReadContext:   res.read,
+		UpdateContext: res.update,
+		DeleteContext: res.delete,
 		Importer: &schema.ResourceImporter{
-			StateContext: resourceCPSUploadCertificateImport,
+			StateContext: res.importState,
 		},
 		Timeouts: &schema.ResourceTimeout{
 			Default: &defaultTimeout,
@@ -128,16 +136,18 @@ var (
 	}
 )
 
-func resourceCPSUploadCertificateCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+// Wrapper functions that inject polling intervals - DEPRECATED, replaced by struct-based methods
+
+func (r *uploadCertificateResource) create(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("CPS", "resourceCPSUploadCertificateCreate")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 	client := meta.Client().GetCPS()
 	logger.Debug("Creating upload certificate")
-	return upsertUploadCertificate(ctx, d, m, client, logger)
+	return r.upsert(ctx, d, m, client, logger)
 }
 
-func resourceCPSUploadCertificateRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (r *uploadCertificateResource) read(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("CPS", "resourceCPSUploadCertificateRead")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
@@ -182,7 +192,7 @@ func resourceCPSUploadCertificateRead(ctx context.Context, d *schema.ResourceDat
 				if !ackChangeManagement && enrollment.ChangeManagement {
 					statusToWaitFor = waitAckChangeManagement
 				}
-				if _, err = waitForChangeStatus(ctx, client, enrollmentID, changeID, statusToWaitFor); err != nil {
+				if _, err = waitForChangeStatus(ctx, client, enrollmentID, changeID, r.pollChangeStatusInterval, statusToWaitFor); err != nil {
 					return diag.FromErr(err)
 				}
 			}
@@ -214,7 +224,7 @@ func resourceCPSUploadCertificateRead(ctx context.Context, d *schema.ResourceDat
 	return diags
 }
 
-func resourceCPSUploadCertificateUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (r *uploadCertificateResource) update(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("CPS", "resourceCPSUploadCertificateUpdate")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
@@ -249,7 +259,7 @@ func resourceCPSUploadCertificateUpdate(ctx context.Context, d *schema.ResourceD
 		}
 
 		if changeStatus.StatusInfo.Status == waitReviewThirdPartyCert || changeStatus.StatusInfo.Status == waitUploadThirdParty {
-			return upsertUploadCertificate(ctx, d, m, client, logger)
+			return r.upsert(ctx, d, m, client, logger)
 		}
 
 		if d.HasChanges("acknowledge_post_verification_warnings") || d.HasChanges("auto_approve_warnings") {
@@ -269,7 +279,7 @@ func resourceCPSUploadCertificateUpdate(ctx context.Context, d *schema.ResourceD
 				return nil
 			}
 
-			if _, err = waitForChangeStatus(ctx, client, enrollmentID, changeID, waitAckChangeManagement); err != nil {
+			if _, err = waitForChangeStatus(ctx, client, enrollmentID, changeID, r.pollChangeStatusInterval, waitAckChangeManagement); err != nil {
 				return diag.FromErr(err)
 			}
 
@@ -277,7 +287,7 @@ func resourceCPSUploadCertificateUpdate(ctx context.Context, d *schema.ResourceD
 				return diag.Errorf("could not acknowledge change management: %s", err)
 			}
 		}
-		return resourceCPSUploadCertificateRead(ctx, d, m)
+		return r.read(ctx, d, m)
 	}
 
 	if len(enrollment.PendingChanges) != 0 {
@@ -291,7 +301,7 @@ func resourceCPSUploadCertificateUpdate(ctx context.Context, d *schema.ResourceD
 		}
 
 		if changeStatus.StatusInfo.Status == waitUploadThirdParty || changeStatus.StatusInfo.Status == waitReviewThirdPartyCert {
-			return upsertUploadCertificate(ctx, d, m, client, logger)
+			return r.upsert(ctx, d, m, client, logger)
 		}
 
 		return diag.Errorf("cannot make changes to the certificate with current status: %s", changeStatus.StatusInfo.Status)
@@ -300,7 +310,7 @@ func resourceCPSUploadCertificateUpdate(ctx context.Context, d *schema.ResourceD
 	return diag.Errorf("cannot make changes to certificate that is already on staging and/or production network, need to create new enrollment")
 }
 
-func resourceCPSUploadCertificateDelete(_ context.Context, _ *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (r *uploadCertificateResource) delete(_ context.Context, _ *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("CPS", "resourceCPSUploadCertificateDelete")
 	logger.Debug("Deleting CPS upload certificate configuration")
@@ -308,7 +318,7 @@ func resourceCPSUploadCertificateDelete(_ context.Context, _ *schema.ResourceDat
 	return nil
 }
 
-func upsertUploadCertificate(ctx context.Context, d *schema.ResourceData, m interface{}, client cps.CPS, logger log.Interface) diag.Diagnostics {
+func (r *uploadCertificateResource) upsert(ctx context.Context, d *schema.ResourceData, m interface{}, client cps.CPS, logger log.Interface) diag.Diagnostics {
 	attrs, err := getCPSUploadCertificateAttrs(d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -341,19 +351,19 @@ func upsertUploadCertificate(ctx context.Context, d *schema.ResourceData, m inte
 		return diag.Errorf("could not upload third party certificate and trust chain: %s", err)
 	}
 
-	status, err := waitUntilStatusPasses(ctx, client, attrs.enrollmentID, changeID, verifyThirdPartyCert)
+	status, err := waitUntilStatusPasses(ctx, client, attrs.enrollmentID, changeID, verifyThirdPartyCert, r.pollChangeStatusInterval)
 	if err != nil {
 		return diag.Errorf("incorrect status of a change: %s", err)
 	}
 
 	if status == waitReviewThirdPartyCert {
-		if err = processPostVerificationWarnings(ctx, client, d, attrs.enrollmentID, changeID, logger); err != nil {
+		if err = processPostVerificationWarnings(ctx, client, d, attrs.enrollmentID, changeID, logger, r.pollChangeStatusInterval); err != nil {
 			return diag.Errorf("could not process post verification warnings: %s", err)
 		}
 	}
 
 	if enrollment.ChangeManagement && (attrs.ackChangeManagement || attrs.waitForDeployment) {
-		if _, err = waitForChangeStatus(ctx, client, attrs.enrollmentID, changeID, waitAckChangeManagement); err != nil {
+		if _, err = waitForChangeStatus(ctx, client, attrs.enrollmentID, changeID, r.pollChangeStatusInterval, waitAckChangeManagement); err != nil {
 			return diag.FromErr(err)
 		}
 
@@ -365,7 +375,7 @@ func upsertUploadCertificate(ctx context.Context, d *schema.ResourceData, m inte
 	}
 	d.SetId(strconv.Itoa(attrs.enrollmentID))
 
-	return resourceCPSUploadCertificateRead(ctx, d, m)
+	return r.read(ctx, d, m)
 }
 
 // checkForTrustChainWithoutCert validates if user provided trustChain without certificate and fails processing if so
@@ -381,7 +391,7 @@ func checkForTrustChainWithoutCert(attrs *attributes) error {
 }
 
 // waitForChangeStatus waits for provided status
-func waitForChangeStatus(ctx context.Context, client cps.CPS, enrollmentID, changeID int, statuses ...string) (*cps.Change, error) {
+func waitForChangeStatus(ctx context.Context, client cps.CPS, enrollmentID, changeID int, pollChangeStatusInterval time.Duration, statuses ...string) (*cps.Change, error) {
 	change, err := sendGetChangeStatusReq(ctx, client, enrollmentID, changeID)
 	if err != nil {
 		return nil, fmt.Errorf("could not get change status: %s", err)
@@ -389,7 +399,7 @@ func waitForChangeStatus(ctx context.Context, client cps.CPS, enrollmentID, chan
 
 	for !slices.Contains(statuses, change.StatusInfo.Status) {
 		select {
-		case <-time.After(PollForChangeStatusInterval):
+		case <-time.After(pollChangeStatusInterval):
 			change, err = sendGetChangeStatusReq(ctx, client, enrollmentID, changeID)
 			if err != nil {
 				return nil, fmt.Errorf("could not get change status: %s", err)
@@ -406,7 +416,7 @@ func waitForChangeStatus(ctx context.Context, client cps.CPS, enrollmentID, chan
 }
 
 // waitUntilStatusPasses waits until the status provided as parameter passes and returns a new one
-func waitUntilStatusPasses(ctx context.Context, client cps.CPS, enrollmentID, changeID int, status string) (string, error) {
+func waitUntilStatusPasses(ctx context.Context, client cps.CPS, enrollmentID, changeID int, status string, pollChangeStatusInterval time.Duration) (string, error) {
 	change, err := sendGetChangeStatusReq(ctx, client, enrollmentID, changeID)
 	if err != nil {
 		return "", fmt.Errorf("could not get change status: %s", err)
@@ -414,7 +424,7 @@ func waitUntilStatusPasses(ctx context.Context, client cps.CPS, enrollmentID, ch
 
 	for change.StatusInfo.Status == status {
 		select {
-		case <-time.After(PollForChangeStatusInterval):
+		case <-time.After(pollChangeStatusInterval):
 			change, err = sendGetChangeStatusReq(ctx, client, enrollmentID, changeID)
 			if err != nil {
 				return "", fmt.Errorf("could not get change status: %s", err)
@@ -450,7 +460,7 @@ func wrapCertificatesToUpload(certificateECDSA, trustChainECDSA, certificateRSA,
 }
 
 // processPostVerificationWarnings is responsible for comparison of user-accepted warnings and required warnings
-func processPostVerificationWarnings(ctx context.Context, client cps.CPS, d *schema.ResourceData, enrollmentID, changeID int, logger log.Interface) error {
+func processPostVerificationWarnings(ctx context.Context, client cps.CPS, d *schema.ResourceData, enrollmentID, changeID int, logger log.Interface, pollChangeStatusInterval time.Duration) error {
 	warnings, err := client.GetChangePostVerificationWarnings(ctx, cps.GetChangeRequest{
 		EnrollmentID: enrollmentID,
 		ChangeID:     changeID,
@@ -479,7 +489,7 @@ func processPostVerificationWarnings(ctx context.Context, client cps.CPS, d *sch
 			if err = sendACKPostVerificationWarnings(ctx, client, enrollmentID, changeID); err != nil {
 				return fmt.Errorf("could not acknowledge post verification warnings: %s", err)
 			}
-			_, err := waitUntilStatusPasses(ctx, client, enrollmentID, changeID, waitReviewThirdPartyCert)
+			_, err := waitUntilStatusPasses(ctx, client, enrollmentID, changeID, waitReviewThirdPartyCert, pollChangeStatusInterval)
 			if err != nil {
 				return fmt.Errorf("status %s did not pass: %s", waitReviewThirdPartyCert, err)
 			}
@@ -623,7 +633,7 @@ func getCPSUploadCertificateAttrs(d *schema.ResourceData) (*attributes, error) {
 	}, nil
 }
 
-func resourceCPSUploadCertificateImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+func (r *uploadCertificateResource) importState(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	meta := meta.Must(m)
 	logger := meta.Log("CPS", "resourceCPSUploadCertificateImport")
 	ctx = session.ContextWithOptions(

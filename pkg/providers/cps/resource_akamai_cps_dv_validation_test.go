@@ -5,11 +5,9 @@ import (
 	"regexp"
 	"strconv"
 	"testing"
-	"time"
-
-	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cps"
+	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
@@ -17,7 +15,6 @@ import (
 func TestDVValidation(t *testing.T) {
 	t.Run("lifecycle test", func(t *testing.T) {
 		client := edgegrid.NewTestClient()
-		PollForChangeStatusInterval = 1 * time.Millisecond
 		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&cps.GetEnrollmentResponse{PendingChanges: []cps.PendingChange{
 				{
@@ -109,7 +106,7 @@ func TestDVValidation(t *testing.T) {
 			}}, nil).Twice()
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResDVValidation/create_validation.tf"),
@@ -136,7 +133,6 @@ func TestDVValidation(t *testing.T) {
 	})
 	t.Run("lifecycle test with ack post verification warnings", func(t *testing.T) {
 		client := edgegrid.NewTestClient()
-		PollForChangeStatusInterval = 1 * time.Millisecond
 		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&cps.GetEnrollmentResponse{PendingChanges: []cps.PendingChange{
 				{
@@ -224,7 +220,7 @@ func TestDVValidation(t *testing.T) {
 			}}, nil).Twice()
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResDVValidation/create_validation_with_ack_post_verification.tf"),
@@ -253,7 +249,6 @@ func TestDVValidation(t *testing.T) {
 	})
 	t.Run("receive `wait-review-cert-warning` early", func(t *testing.T) {
 		client := edgegrid.NewTestClient()
-		PollForChangeStatusInterval = 1 * time.Millisecond
 		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&cps.GetEnrollmentResponse{PendingChanges: []cps.PendingChange{
 				{
@@ -291,7 +286,7 @@ func TestDVValidation(t *testing.T) {
 			}}, nil).Times(2)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResDVValidation/create_validation_with_ack_post_verification.tf"),
@@ -309,7 +304,6 @@ func TestDVValidation(t *testing.T) {
 	})
 	t.Run("retry acknowledgement", func(t *testing.T) {
 		client := edgegrid.NewTestClient()
-		changeAckRetryInterval = 1 * time.Millisecond
 		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&cps.GetEnrollmentResponse{PendingChanges: []cps.PendingChange{
 				{
@@ -357,7 +351,7 @@ func TestDVValidation(t *testing.T) {
 			}}, nil).Twice()
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResDVValidation/create_validation.tf"),
@@ -373,7 +367,6 @@ func TestDVValidation(t *testing.T) {
 	})
 	t.Run("retry acknowledgement with timeout", func(t *testing.T) {
 		client := edgegrid.NewTestClient()
-		changeAckRetryInterval = 1 * time.Millisecond
 		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&cps.GetEnrollmentResponse{PendingChanges: []cps.PendingChange{
 				{
@@ -395,7 +388,7 @@ func TestDVValidation(t *testing.T) {
 		}).Return(fmt.Errorf("oops"))
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResDVValidation/create_validation_with_timeout.tf"),

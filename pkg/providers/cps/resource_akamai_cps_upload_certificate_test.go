@@ -6,9 +6,8 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
-
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cps"
+	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
@@ -77,7 +76,7 @@ func TestResourceCPSUploadCertificate(t *testing.T) {
 			client := edgegrid.NewTestClient()
 			test.init(client.CPS, test.enrollment, test.enrollmentID, test.changeID)
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
 				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
@@ -179,7 +178,7 @@ func TestResourceCPSUploadCertificateWithThirdPartyEnrollmentDependency(t *testi
 			client := edgegrid.NewTestClient()
 			test.init(client.CPS, &test.enrollment, test.enrollmentID, test.changeID)
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
 				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
@@ -273,7 +272,7 @@ func TestResourceCPSUploadCertificateLifecycle(t *testing.T) {
 			client := edgegrid.NewTestClient()
 			test.init(client.CPS, test.enrollment, test.enrollmentUpdated, test.enrollmentID, test.changeID, test.changeIDUpdated)
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
 				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
@@ -650,7 +649,7 @@ func TestCreateCPSUploadCertificate(t *testing.T) {
 				test.init(client.CPS, test.enrollment, test.enrollmentID, test.changeID)
 			}
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
 				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
@@ -740,7 +739,7 @@ func TestReadCPSUploadCertificate(t *testing.T) {
 			client := edgegrid.NewTestClient()
 			test.init(client.CPS, test.enrollment, test.enrollmentID, test.changeID)
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
 				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
@@ -1103,7 +1102,7 @@ func TestUpdateCPSUploadCertificate(t *testing.T) {
 			client := edgegrid.NewTestClient()
 			test.init(client.CPS, test.enrollment, test.enrollmentUpdated, test.enrollmentID, test.changeID, test.changeIDUpdated)
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
 				IsUnitTest:               true,
 				Steps: []resource.TestStep{
 					{
@@ -1178,7 +1177,7 @@ func TestResourceUploadCertificateImport(t *testing.T) {
 			test.init(client.CPS)
 
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
 				Steps: []resource.TestStep{
 					{
 						Config:           testutils.LoadFixtureString(t, "testdata/TestResCPSUploadCertificate/import/import_upload.tf"),

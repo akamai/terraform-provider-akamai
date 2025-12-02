@@ -28,14 +28,24 @@ var (
 	DefaultEnrollmentTimeout = time.Hour
 )
 
-func resourceCPSThirdPartyEnrollment() *schema.Resource {
+// thirdPartyEnrollmentResource represents the akamai_cps_third_party_enrollment resource with configurable polling intervals.
+type thirdPartyEnrollmentResource struct {
+	pollChangeStatusInterval  time.Duration
+	pollGetEnrollmentInterval time.Duration
+}
+
+func resourceCPSThirdPartyEnrollment(pollChangeStatusInterval, pollGetEnrollmentInterval time.Duration) *schema.Resource {
+	res := &thirdPartyEnrollmentResource{
+		pollChangeStatusInterval:  pollChangeStatusInterval,
+		pollGetEnrollmentInterval: pollGetEnrollmentInterval,
+	}
 	return &schema.Resource{
-		CreateContext: resourceCPSThirdPartyEnrollmentCreate,
-		ReadContext:   resourceCPSThirdPartyEnrollmentRead,
-		UpdateContext: resourceCPSThirdPartyEnrollmentUpdate,
-		DeleteContext: resourceCPSThirdPartyEnrollmentDelete,
+		CreateContext: res.create,
+		ReadContext:   res.read,
+		UpdateContext: res.update,
+		DeleteContext: res.delete,
 		Importer: &schema.ResourceImporter{
-			StateContext: resourceCPSThirdPartyEnrollmentImport,
+			StateContext: res.importState,
 		},
 		Schema: map[string]*schema.Schema{
 			"common_name": {
@@ -192,7 +202,7 @@ func supressSignatureAlgorithm(_ string, oldValue, newValue string, d *schema.Re
 	return oldValue == newValue
 }
 
-func resourceCPSThirdPartyEnrollmentCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (r *thirdPartyEnrollmentResource) create(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("CPS", "resourceCPSThirdPartyEnrollmentCreate")
 	// create a context with logging for api calls
@@ -258,13 +268,13 @@ func resourceCPSThirdPartyEnrollmentCreate(ctx context.Context, d *schema.Resour
 	}
 	autoApproveWarningsAsString := convertUserWarningsToStringSlice(autoApproveWarnings.List())
 
-	if err = waitForVerification(ctx, logger, client, res.ID, acknowledgeWarnings, autoApproveWarningsAsString); err != nil {
+	if err = waitForVerification(ctx, logger, client, res.ID, acknowledgeWarnings, autoApproveWarningsAsString, r.pollChangeStatusInterval); err != nil {
 		return diag.FromErr(err)
 	}
-	return resourceCPSThirdPartyEnrollmentRead(ctx, d, m)
+	return r.read(ctx, d, m)
 }
 
-func resourceCPSThirdPartyEnrollmentRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (r *thirdPartyEnrollmentResource) read(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("CPS", "resourceCPSThirdPartyEnrollmentRead")
 	// create a context with logging for api calls
@@ -300,7 +310,7 @@ func resourceCPSThirdPartyEnrollmentRead(ctx context.Context, d *schema.Resource
 	return nil
 }
 
-func resourceCPSThirdPartyEnrollmentUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (r *thirdPartyEnrollmentResource) update(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("CPS", "resourceCPSThirdPartyEnrollmentUpdate")
 	ctx = session.ContextWithOptions(
@@ -341,10 +351,10 @@ func resourceCPSThirdPartyEnrollmentUpdate(ctx context.Context, d *schema.Resour
 		"exclude_sans",
 	) {
 		logger.Debug("Enrollment does not have to be updated. Verifying status.")
-		if err = waitForVerification(ctx, logger, client, enrollmentID, acknowledgeWarnings, autoApproveWarningsAsString); err != nil {
+		if err = waitForVerification(ctx, logger, client, enrollmentID, acknowledgeWarnings, autoApproveWarningsAsString, r.pollChangeStatusInterval); err != nil {
 			return diag.FromErr(err)
 		}
-		return resourceCPSThirdPartyEnrollmentRead(ctx, d, m)
+		return r.read(ctx, d, m)
 	}
 	enrollmentReqBody, err := prepareThirdPartyEnrollment(d)
 	if err != nil {
@@ -363,10 +373,10 @@ func resourceCPSThirdPartyEnrollmentUpdate(ctx context.Context, d *schema.Resour
 	}
 	d.SetId(strconv.Itoa(enrollmentID))
 
-	if err = waitForVerification(ctx, logger, client, enrollmentID, acknowledgeWarnings, autoApproveWarningsAsString); err != nil {
+	if err = waitForVerification(ctx, logger, client, enrollmentID, acknowledgeWarnings, autoApproveWarningsAsString, r.pollChangeStatusInterval); err != nil {
 		return diag.FromErr(err)
 	}
-	return resourceCPSThirdPartyEnrollmentRead(ctx, d, m)
+	return r.read(ctx, d, m)
 }
 
 func prepareThirdPartyEnrollment(d *schema.ResourceData) (*cps.EnrollmentRequestBody, error) {
@@ -441,11 +451,11 @@ func prepareThirdPartyEnrollment(d *schema.ResourceData) (*cps.EnrollmentRequest
 	return &enrollmentReqBody, nil
 }
 
-func resourceCPSThirdPartyEnrollmentDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	return enrollmentDelete(ctx, d, m, "resourceCPSThirdPartyEnrollmentDelete")
+func (r *thirdPartyEnrollmentResource) delete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	return enrollmentDelete(ctx, d, m, "resourceCPSThirdPartyEnrollmentDelete", r.pollGetEnrollmentInterval)
 }
 
-func resourceCPSThirdPartyEnrollmentImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+func (r *thirdPartyEnrollmentResource) importState(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	meta := meta.Must(m)
 	logger := meta.Log("CPS", "resourceCPSThirdPartyEnrollmentImport")
 	// create a context with logging for api calls

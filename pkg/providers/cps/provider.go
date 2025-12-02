@@ -2,6 +2,8 @@
 package cps
 
 import (
+	"time"
+
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -16,6 +18,12 @@ type (
 
 var _ subprovider.Subprovider = &Subprovider{}
 
+const (
+	// Default polling intervals
+	defaultPollChangeStatusInterval  = 10 * time.Second
+	defaultPollGetEnrollmentInterval = 30 * time.Second
+)
+
 // NewSubprovider returns a new CPS subprovider
 func NewSubprovider() *Subprovider {
 	return &Subprovider{}
@@ -24,10 +32,10 @@ func NewSubprovider() *Subprovider {
 // SDKResources returns the CPS resources implemented using terraform-plugin-sdk
 func (p *Subprovider) SDKResources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
-		"akamai_cps_dv_enrollment":          resourceCPSDVEnrollment(),
-		"akamai_cps_dv_validation":          resourceCPSDVValidation(),
-		"akamai_cps_third_party_enrollment": resourceCPSThirdPartyEnrollment(),
-		"akamai_cps_upload_certificate":     resourceCPSUploadCertificate(),
+		"akamai_cps_dv_enrollment":          resourceCPSDVEnrollment(defaultPollChangeStatusInterval, defaultPollGetEnrollmentInterval),
+		"akamai_cps_dv_validation":          resourceCPSDVValidation(defaultPollChangeStatusInterval),
+		"akamai_cps_third_party_enrollment": resourceCPSThirdPartyEnrollment(defaultPollChangeStatusInterval, defaultPollGetEnrollmentInterval),
+		"akamai_cps_upload_certificate":     resourceCPSUploadCertificate(defaultPollChangeStatusInterval),
 	}
 }
 

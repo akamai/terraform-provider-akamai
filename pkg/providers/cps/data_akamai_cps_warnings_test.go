@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
-
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )

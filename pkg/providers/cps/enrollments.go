@@ -362,7 +362,7 @@ func newChallenge(c *cps.Challenge, dv *cps.DV) challenge {
 	}
 }
 
-func enrollmentDelete(ctx context.Context, d *schema.ResourceData, m interface{}, functionName string) diag.Diagnostics {
+func enrollmentDelete(ctx context.Context, d *schema.ResourceData, m interface{}, functionName string, pollGetEnrollmentInterval time.Duration) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("CPS", functionName)
 	// create a context with logging for api calls
@@ -392,7 +392,7 @@ func enrollmentDelete(ctx context.Context, d *schema.ResourceData, m interface{}
 
 	for {
 		select {
-		case <-time.After(PollForGetEnrollmentInterval):
+		case <-time.After(pollGetEnrollmentInterval):
 			_, err = client.GetEnrollment(ctx, cps.GetEnrollmentRequest{EnrollmentID: enrollmentID})
 			if errors.Is(err, cps.ErrEnrollmentNotFound) {
 				logger.Debugf("Enrollment %d successfully deleted", enrollmentID)
@@ -440,7 +440,7 @@ func readAttrs(enrollment *cps.GetEnrollmentResponse, d *schema.ResourceData) (m
 	return attrs, nil
 }
 
-func waitForVerification(ctx context.Context, logger log.Interface, client cps.CPS, enrollmentID int, acknowledgeWarnings bool, autoApproveWarnings []string) error {
+func waitForVerification(ctx context.Context, logger log.Interface, client cps.CPS, enrollmentID int, acknowledgeWarnings bool, autoApproveWarnings []string, pollChangeStatusInterval time.Duration) error {
 	getEnrollmentReq := cps.GetEnrollmentRequest{EnrollmentID: enrollmentID}
 	enrollmentGet, err := client.GetEnrollment(ctx, getEnrollmentReq)
 	if err != nil {
@@ -466,7 +466,7 @@ func waitForVerification(ctx context.Context, logger log.Interface, client cps.C
 	for ((status.StatusInfo.Status != coodinateDomainValidation && status.StatusInfo.Status != coordinateDomainValidation && status.StatusInfo.Status != waitUploadThirdParty) || len(status.AllowedInput) == 0) &&
 		status.StatusInfo.Status != complete && status.StatusInfo.Status != waitReviewCertWarning {
 		select {
-		case <-time.After(PollForChangeStatusInterval):
+		case <-time.After(pollChangeStatusInterval):
 			status, err = client.GetChangeStatus(ctx, changeStatusReq)
 			if err != nil {
 				return err

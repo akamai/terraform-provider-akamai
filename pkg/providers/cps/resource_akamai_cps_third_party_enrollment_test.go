@@ -4,11 +4,9 @@ import (
 	"fmt"
 	"regexp"
 	"testing"
-	"time"
-
-	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cps"
+	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -19,7 +17,6 @@ import (
 
 func TestResourceThirdPartyEnrollment(t *testing.T) {
 	t.Run("lifecycle test", func(t *testing.T) {
-		PollForChangeStatusInterval = 1 * time.Millisecond
 		client := edgegrid.NewTestClient()
 		enrollment := newEnrollment()
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
@@ -143,7 +140,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/lifecycle/create_enrollment.tf"),
@@ -167,7 +164,6 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 	})
 
 	t.Run("lifecycle test, remove san, returns 'wait-review-cert-warning' status", func(t *testing.T) {
-		PollForChangeStatusInterval = 1 * time.Millisecond
 		client := edgegrid.NewTestClient()
 		enrollment := newEnrollment()
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
@@ -291,7 +287,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/lifecycle/create_enrollment.tf"),
@@ -314,7 +310,6 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 	})
 
 	t.Run("lifecycle test update sans add cn", func(t *testing.T) {
-		PollForChangeStatusInterval = 1 * time.Millisecond
 		client := edgegrid.NewTestClient()
 		commonName := "test.akamai.com"
 		enrollment := newEnrollment(
@@ -427,7 +422,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/lifecycle_no_sans/create_enrollment.tf"),
@@ -448,7 +443,6 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 	})
 
 	t.Run("create enrollment, empty sans", func(t *testing.T) {
-		PollForChangeStatusInterval = 1 * time.Millisecond
 		client := edgegrid.NewTestClient()
 
 		enrollment := newEnrollment(WithEmptySans)
@@ -524,7 +518,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/empty_sans/create_enrollment.tf"),
@@ -538,7 +532,6 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 	})
 
 	t.Run("create enrollment with empty sans and waiting for deletion", func(t *testing.T) {
-		PollForChangeStatusInterval = 1 * time.Millisecond
 		client := edgegrid.NewTestClient()
 
 		enrollment := newEnrollment(WithEmptySans)
@@ -618,7 +611,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/empty_sans/create_enrollment.tf"),
@@ -632,7 +625,6 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 	})
 
 	t.Run("create enrollment, MTLS", func(t *testing.T) {
-		PollForChangeStatusInterval = 1 * time.Millisecond
 		client := edgegrid.NewTestClient()
 		enrollment := newEnrollment(WithEmptySans)
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
@@ -736,7 +728,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/client_mutual_auth/create_enrollment.tf"),
@@ -750,7 +742,6 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 	})
 
 	t.Run("lifecycle test with common name not empty, present in sans", func(t *testing.T) {
-		PollForChangeStatusInterval = 1 * time.Millisecond
 		client := edgegrid.NewTestClient()
 		commonName := "test.akamai.com"
 		enrollment := newEnrollment(
@@ -828,7 +819,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/lifecycle_cn_in_sans/create_enrollment.tf"),
@@ -848,7 +839,6 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 	})
 
 	t.Run("lifecycle test with common name not empty, not present in sans", func(t *testing.T) {
-		PollForChangeStatusInterval = 1 * time.Millisecond
 		client := edgegrid.NewTestClient()
 		commonName := "test.akamai.com"
 		enrollment := newEnrollment(
@@ -930,7 +920,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/lifecycle_no_cn_in_sans/create_enrollment.tf"),
@@ -998,7 +988,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/lifecycle/create_enrollment.tf"),
@@ -1095,7 +1085,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/no_acknowledge_warnings/create_enrollment.tf"),
@@ -1260,7 +1250,6 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 
 	t.Run("acknowledge warnings", func(t *testing.T) {
 		client := edgegrid.NewTestClient()
-		PollForChangeStatusInterval = 1 * time.Millisecond
 		enrollment := newEnrollment(
 			WithEmptySans,
 			WithUpdateFunc(func(e *cps.GetEnrollmentResponse) {
@@ -1355,7 +1344,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/acknowledge_warnings/create_enrollment.tf"),
@@ -1369,7 +1358,6 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 	})
 
 	t.Run("create enrollment, allow duplicate common name", func(t *testing.T) {
-		PollForChangeStatusInterval = 1 * time.Millisecond
 		client := edgegrid.NewTestClient()
 		enrollment := newEnrollment(WithEmptySans)
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
@@ -1445,7 +1433,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/allow_duplicate_cn/create_enrollment.tf"),
@@ -1461,7 +1449,6 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 
 	t.Run("verification failed with warnings, no acknowledgement", func(t *testing.T) {
 		client := edgegrid.NewTestClient()
-		PollForChangeStatusInterval = 1 * time.Millisecond
 		enrollment := newEnrollment(
 			WithEmptySans,
 			WithUpdateFunc(func(e *cps.GetEnrollmentResponse) {
@@ -1526,7 +1513,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/no_acknowledge_warnings/create_enrollment.tf"),
@@ -1539,7 +1526,6 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 
 	t.Run("create enrollment returns an error", func(t *testing.T) {
 		client := edgegrid.NewTestClient()
-		PollForChangeStatusInterval = 1 * time.Millisecond
 		enrollment := newEnrollment(
 			WithEmptySans,
 			WithUpdateFunc(func(e *cps.GetEnrollmentResponse) {
@@ -1568,7 +1554,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		).Return(nil, fmt.Errorf("error creating enrollment")).Once()
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/no_acknowledge_warnings/create_enrollment.tf"),
@@ -1581,7 +1567,6 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 
 	t.Run("auto approve warnings - all warnings on the list to auto approve", func(t *testing.T) {
 		client := edgegrid.NewTestClient()
-		PollForChangeStatusInterval = 1 * time.Millisecond
 		enrollment := newEnrollment(
 			WithEmptySans,
 			WithUpdateFunc(func(e *cps.GetEnrollmentResponse) {
@@ -1676,7 +1661,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/auto_approve_warnings/create_enrollment.tf"),
@@ -1691,7 +1676,6 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 
 	t.Run("auto approve warnings - some warnings not on the list to auto approve", func(t *testing.T) {
 		client := edgegrid.NewTestClient()
-		PollForChangeStatusInterval = 1 * time.Millisecond
 		enrollment := newEnrollment(
 			WithEmptySans,
 			WithUpdateFunc(func(e *cps.GetEnrollmentResponse) {
@@ -1756,7 +1740,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/auto_approve_warnings/create_enrollment.tf"),
@@ -1769,7 +1753,6 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 
 	t.Run("auto approve warnings - some warnings are unknown", func(t *testing.T) {
 		client := edgegrid.NewTestClient()
-		PollForChangeStatusInterval = 1 * time.Millisecond
 		enrollment := newEnrollment(
 			WithEmptySans,
 			WithUpdateFunc(func(e *cps.GetEnrollmentResponse) {
@@ -1840,7 +1823,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/auto_approve_warnings/create_enrollment.tf"),
@@ -1918,7 +1901,7 @@ func TestResourceThirdPartyEnrollmentImport(t *testing.T) {
 			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/import/import_enrollment.tf"),
@@ -1956,7 +1939,7 @@ func TestResourceThirdPartyEnrollmentImport(t *testing.T) {
 			Return(&enrollment, nil).Times(1)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config:        testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/import/import_enrollment.tf"),
@@ -1973,7 +1956,6 @@ func TestResourceThirdPartyEnrollmentImport(t *testing.T) {
 
 func TestSuppressingSignatureAlgorithm(t *testing.T) {
 	t.Run("suppress signature algorithm", func(t *testing.T) {
-		PollForChangeStatusInterval = 1 * time.Millisecond
 		client := edgegrid.NewTestClient()
 		enrollment := getSimpleEnrollment()
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
@@ -2065,7 +2047,7 @@ func TestSuppressingSignatureAlgorithm(t *testing.T) {
 			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/lifecycle/create_enrollment.tf"),

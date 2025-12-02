@@ -4,11 +4,9 @@ import (
 	"fmt"
 	"regexp"
 	"testing"
-	"time"
-
-	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cps"
+	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -20,7 +18,6 @@ import (
 
 func TestResourceDVEnrollment(t *testing.T) {
 	t.Run("lifecycle test", func(t *testing.T) {
-		PollForChangeStatusInterval = 1 * time.Millisecond
 		client := edgegrid.NewTestClient()
 		enrollment := cps.GetEnrollmentResponse{
 			AdminContact: &cps.Contact{
@@ -283,7 +280,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/lifecycle/create_enrollment.tf"),
@@ -319,7 +316,6 @@ func TestResourceDVEnrollment(t *testing.T) {
 	})
 
 	t.Run("lifecycle test, remove san, returns 'wait-review-cert-warning' status", func(t *testing.T) {
-		PollForChangeStatusInterval = 1 * time.Millisecond
 		client := edgegrid.NewTestClient()
 		enrollment := cps.GetEnrollmentResponse{
 			AdminContact: &cps.Contact{
@@ -566,7 +562,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/lifecycle/create_enrollment.tf"),
@@ -602,7 +598,6 @@ func TestResourceDVEnrollment(t *testing.T) {
 	})
 
 	t.Run("create enrollment, empty sans", func(t *testing.T) {
-		PollForChangeStatusInterval = 1 * time.Millisecond
 		client := edgegrid.NewTestClient()
 		enrollment := cps.GetEnrollmentResponse{
 			AdminContact: &cps.Contact{
@@ -771,7 +766,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/empty_sans/create_enrollment.tf"),
@@ -791,7 +786,6 @@ func TestResourceDVEnrollment(t *testing.T) {
 	})
 
 	t.Run("create enrollment with empty sans and waiting for deletion", func(t *testing.T) {
-		PollForChangeStatusInterval = 1 * time.Millisecond
 		client := edgegrid.NewTestClient()
 		enrollment := cps.GetEnrollmentResponse{
 			AdminContact: &cps.Contact{
@@ -964,7 +958,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/empty_sans/create_enrollment.tf"),
@@ -984,7 +978,6 @@ func TestResourceDVEnrollment(t *testing.T) {
 	})
 
 	t.Run("create enrollment, MTLS", func(t *testing.T) {
-		PollForChangeStatusInterval = 1 * time.Millisecond
 		client := edgegrid.NewTestClient()
 		enrollment := cps.GetEnrollmentResponse{
 			AdminContact: &cps.Contact{
@@ -1179,7 +1172,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/client_mutual_auth/create_enrollment.tf"),
@@ -1196,7 +1189,6 @@ func TestResourceDVEnrollment(t *testing.T) {
 	})
 
 	t.Run("lifecycle test with common name not empty, present in sans", func(t *testing.T) {
-		PollForChangeStatusInterval = 1 * time.Millisecond
 		client := edgegrid.NewTestClient()
 		commonName := "test.akamai.com"
 		enrollment := cps.GetEnrollmentResponse{
@@ -1372,7 +1364,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/lifecycle_cn_in_sans/create_enrollment.tf"),
@@ -1532,7 +1524,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/lifecycle/create_enrollment.tf"),
@@ -1751,7 +1743,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/no_acknowledge_warnings/create_enrollment.tf"),
@@ -1778,7 +1770,6 @@ func TestResourceDVEnrollment(t *testing.T) {
 
 	t.Run("acknowledge warnings", func(t *testing.T) {
 		client := edgegrid.NewTestClient()
-		PollForChangeStatusInterval = 1 * time.Millisecond
 		enrollment := cps.GetEnrollmentResponse{
 			AdminContact: &cps.Contact{
 				AddressLineOne:   "150 Broadway",
@@ -1946,7 +1937,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/acknowledge_warnings/create_enrollment.tf"),
@@ -1964,7 +1955,6 @@ func TestResourceDVEnrollment(t *testing.T) {
 	})
 
 	t.Run("create enrollment, allow duplicate common name", func(t *testing.T) {
-		PollForChangeStatusInterval = 1 * time.Millisecond
 		client := edgegrid.NewTestClient()
 		enrollment := cps.GetEnrollmentResponse{
 			AdminContact: &cps.Contact{
@@ -2134,7 +2124,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/allow_duplicate_cn/create_enrollment.tf"),
@@ -2162,7 +2152,6 @@ func TestResourceDVEnrollment(t *testing.T) {
 
 	t.Run("verification failed with warnings, no acknowledgement", func(t *testing.T) {
 		client := edgegrid.NewTestClient()
-		PollForChangeStatusInterval = 1 * time.Millisecond
 		enrollment := cps.GetEnrollmentResponse{
 			AdminContact: &cps.Contact{
 				AddressLineOne:   "150 Broadway",
@@ -2276,7 +2265,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/no_acknowledge_warnings/create_enrollment.tf"),
@@ -2289,7 +2278,6 @@ func TestResourceDVEnrollment(t *testing.T) {
 
 	t.Run("create enrollment returns an error", func(t *testing.T) {
 		client := edgegrid.NewTestClient()
-		PollForChangeStatusInterval = 1 * time.Millisecond
 		enrollment := cps.GetEnrollmentResponse{
 			AdminContact: &cps.Contact{
 				AddressLineOne:   "150 Broadway",
@@ -2361,7 +2349,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		).Return(nil, fmt.Errorf("error creating enrollment")).Once()
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/no_acknowledge_warnings/create_enrollment.tf"),
@@ -2523,7 +2511,7 @@ func TestResourceDVEnrollmentImport(t *testing.T) {
 			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/import/import_enrollment.tf"),
@@ -2561,7 +2549,7 @@ func TestResourceDVEnrollmentImport(t *testing.T) {
 			Return(&enrollment, nil).Times(1)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config:        testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/import/import_enrollment.tf"),
