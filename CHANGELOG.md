@@ -71,6 +71,12 @@
 
 
 
+* CPS
+  * Allowed update of the `exclude_sans` field in the `akamai_cps_third_party_enrollment` resource.
+
+
+
+
 
 
 

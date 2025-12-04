@@ -338,6 +338,7 @@ func resourceCPSThirdPartyEnrollmentUpdate(ctx context.Context, d *schema.Resour
 		"network_configuration",
 		"signature_algorithm",
 		"organization",
+		"exclude_sans",
 	) {
 		logger.Debug("Enrollment does not have to be updated. Verifying status.")
 		if err = waitForVerification(ctx, logger, client, enrollmentID, acknowledgeWarnings, autoApproveWarningsAsString); err != nil {
