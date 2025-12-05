@@ -1116,13 +1116,13 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 	})
 
 	t.Run("lifecycle test exclude_sans update", func(t *testing.T) {
-		PollForChangeStatusInterval = 1 * time.Millisecond
-		client := &cps.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 		enrollment := newEnrollment()
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 		enrollmentReqBody.ThirdParty.ExcludeSANS = false
 
-		client.On("CreateEnrollment",
+		client.CPS.On("CreateEnrollment",
 			testutils.MockContext,
 			cps.CreateEnrollmentRequest{
 				EnrollmentRequestBody: enrollmentReqBody,
@@ -1141,11 +1141,11 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 				ChangeType: "new-certificate",
 			},
 		}
-		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Once()
 
 		// first verification loop, invalid status
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1157,7 +1157,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// second verification loop, valid status, empty allowed input array
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1169,7 +1169,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// final verification loop
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1180,7 +1180,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Times(3)
 
 		enrollmentUpdate := newEnrollment(
@@ -1192,7 +1192,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 
 		enrollmentUpdateReqBody := createEnrollmentReqBodyFromEnrollment(enrollmentUpdate)
 		allowCancel := true
-		client.On("UpdateEnrollment",
+		client.CPS.On("UpdateEnrollment",
 			testutils.MockContext,
 			cps.UpdateEnrollmentRequest{
 				EnrollmentRequestBody:     enrollmentUpdateReqBody,
@@ -1209,10 +1209,10 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			WithBase(&enrollmentUpdate),
 			WithPendingChangeID(2),
 		)
-		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollmentGet, nil).Times(3)
 
-		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
 		}).Return(&cps.Change{
@@ -1223,7 +1223,7 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
+		client.CPS.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
 			EnrollmentID:              1,
 			AllowCancelPendingChanges: &allowCancel,
 		}).Return(&cps.RemoveEnrollmentResponse{
@@ -1231,32 +1231,30 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		}, nil).Once()
 
 		// Mock that the enrollment is not found after removal.
-		client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(nil, cps.ErrEnrollmentNotFound).Once()
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/exclude_sans/create_enrollment.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_cps_third_party_enrollment.third_party", "contract_id", "ctr_1"),
-							resource.TestCheckResourceAttr("akamai_cps_third_party_enrollment.third_party", "exclude_sans", "false"),
-						),
-					},
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/exclude_sans/update_enrollment.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_cps_third_party_enrollment.third_party", "contract_id", "ctr_1"),
-							resource.TestCheckResourceAttr("akamai_cps_third_party_enrollment.third_party", "exclude_sans", "true"),
-						),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/exclude_sans/create_enrollment.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_cps_third_party_enrollment.third_party", "contract_id", "ctr_1"),
+						resource.TestCheckResourceAttr("akamai_cps_third_party_enrollment.third_party", "exclude_sans", "false"),
+					),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/exclude_sans/update_enrollment.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_cps_third_party_enrollment.third_party", "contract_id", "ctr_1"),
+						resource.TestCheckResourceAttr("akamai_cps_third_party_enrollment.third_party", "exclude_sans", "true"),
+					),
+				},
+			},
 		})
+		client.CPS.AssertExpectations(t)
 
-		client.AssertExpectations(t)
 	})
 
 	t.Run("acknowledge warnings", func(t *testing.T) {
