@@ -20,6 +20,8 @@ const (
 	// testALBRetryTimeout is the timeout for ALB activation retries in tests.
 	// This needs to be larger than testALBPollActivationInterval to allow retries.
 	testALBRetryTimeout = 10 * time.Millisecond
+	// testPolicyDeletionPollInterval is the polling interval for policy deletion in tests.
+	testPolicyDeletionPollInterval = 1 * time.Millisecond
 )
 
 func TestMain(m *testing.M) {
@@ -30,11 +32,12 @@ type (
 	// CustomPollingSubprovider is a cloudlets subprovider with customizable polling intervals for testing.
 	CustomPollingSubprovider struct {
 		Subprovider
-		pollActivationInterval    time.Duration
-		pollRetryInterval         time.Duration
-		retryTimeout              time.Duration
-		albPollActivationInterval time.Duration
-		albRetryTimeout           time.Duration
+		pollActivationInterval     time.Duration
+		pollRetryInterval          time.Duration
+		retryTimeout               time.Duration
+		albPollActivationInterval  time.Duration
+		albRetryTimeout            time.Duration
+		policyDeletionPollInterval time.Duration
 	}
 )
 
@@ -42,11 +45,12 @@ type (
 // Use WithPolicyActivationIntervals and WithALBActivationIntervals to customize specific intervals.
 func NewCustomPollingSubprovider() *CustomPollingSubprovider {
 	return &CustomPollingSubprovider{
-		pollActivationInterval:    defaultPollActivationInterval,
-		pollRetryInterval:         defaultPollRetryInterval,
-		retryTimeout:              defaultRetryTimeout,
-		albPollActivationInterval: defaultALBPollActivationInterval,
-		albRetryTimeout:           defaultALBRetryTimeout,
+		pollActivationInterval:     defaultPollActivationInterval,
+		pollRetryInterval:          defaultPollRetryInterval,
+		retryTimeout:               defaultRetryTimeout,
+		albPollActivationInterval:  defaultALBPollActivationInterval,
+		albRetryTimeout:            defaultALBRetryTimeout,
+		policyDeletionPollInterval: defaultDeletionPolicyPollInterval,
 	}
 }
 
@@ -65,12 +69,18 @@ func (p *CustomPollingSubprovider) WithALBActivationIntervals(pollActivationInte
 	return p
 }
 
+// WithPolicyDeletionIntervals sets custom polling intervals for policy deletion.
+func (p *CustomPollingSubprovider) WithPolicyDeletionIntervals(pollInterval time.Duration) *CustomPollingSubprovider {
+	p.policyDeletionPollInterval = pollInterval
+	return p
+}
+
 // SDKResources overrides the embedded Subprovider's SDKResources to use test polling intervals.
 func (p *CustomPollingSubprovider) SDKResources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
 		"akamai_cloudlets_application_load_balancer":            resourceCloudletsApplicationLoadBalancer(),
 		"akamai_cloudlets_application_load_balancer_activation": resourceCloudletsApplicationLoadBalancerActivation(p.albPollActivationInterval, p.albRetryTimeout),
-		"akamai_cloudlets_policy":                               resourceCloudletsPolicy(),
+		"akamai_cloudlets_policy":                               resourceCloudletsPolicy(p.policyDeletionPollInterval),
 		"akamai_cloudlets_policy_activation":                    resourceCloudletsPolicyActivation(p.pollActivationInterval, p.pollRetryInterval, p.retryTimeout),
 	}
 }

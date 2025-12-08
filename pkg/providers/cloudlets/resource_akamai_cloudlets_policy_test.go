@@ -287,7 +287,7 @@ func TestResourcePolicyV2(t *testing.T) {
 		expectRemovePolicy(client.CloudletsV2, policy.PolicyID, 2, 0)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
@@ -343,7 +343,7 @@ func TestResourcePolicyV2(t *testing.T) {
 		expectRemovePolicy(client.CloudletsV2, policy.PolicyID, 2, 0)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
@@ -369,7 +369,7 @@ func TestResourcePolicyV2(t *testing.T) {
 		expectRemovePolicy(client.CloudletsV2, policy.PolicyID, 1, 1)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
@@ -398,7 +398,7 @@ func TestResourcePolicyV2(t *testing.T) {
 		expectRemovePolicy(client.CloudletsV2, policy.PolicyID, 1, 0)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
@@ -436,7 +436,7 @@ func TestResourcePolicyV2(t *testing.T) {
 		expectRemovePolicy(client.CloudletsV2, policy.PolicyID, 1, 0)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
@@ -474,7 +474,7 @@ func TestResourcePolicyV2(t *testing.T) {
 		expectRemovePolicy(client.CloudletsV2, policy.PolicyID, 1, 0)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
@@ -514,7 +514,7 @@ func TestResourcePolicyV2(t *testing.T) {
 		expectRemovePolicy(client.CloudletsV2, policy.PolicyID, 1, 0)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
@@ -553,7 +553,7 @@ func TestResourcePolicyV2(t *testing.T) {
 		expectRemovePolicy(client.CloudletsV2, policy.PolicyID, 1, 0)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
@@ -600,7 +600,7 @@ func TestResourcePolicyV2(t *testing.T) {
 		)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
@@ -633,7 +633,7 @@ func TestResourcePolicyV2(t *testing.T) {
 		expectRemovePolicy(client.CloudletsV2, policy.PolicyID, 1, 0)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
@@ -667,7 +667,7 @@ func TestResourcePolicyV2(t *testing.T) {
 		expectReadPolicy(client.CloudletsV2, policy, policyVersions, 2)
 		expectRemovePolicy(client.CloudletsV2, 2, 1, 0)
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
@@ -692,7 +692,7 @@ func TestResourcePolicyV2(t *testing.T) {
 		expectReadPolicy(client.CloudletsV2, policy, policyVersions, 2)
 		expectRemovePolicy(client.CloudletsV2, 2, 1, 0)
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
@@ -729,7 +729,7 @@ func TestResourcePolicyV2(t *testing.T) {
 		expectReadPolicy(client.CloudletsV2, policy, policyVersions, 2)
 		expectRemovePolicy(client.CloudletsV2, 2, 1, 0)
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
@@ -757,7 +757,7 @@ func TestResourcePolicyV2(t *testing.T) {
 		}).Return(nil, fmt.Errorf("oops"))
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
@@ -829,7 +829,7 @@ func TestResourcePolicyV2(t *testing.T) {
 			client := edgegrid.NewTestClient()
 			testCases[i].Expectations(client.CloudletsV2)
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
@@ -851,7 +851,7 @@ func TestResourcePolicyV2(t *testing.T) {
 		client.CloudletsV2.On("GetPolicy", testutils.MockContext, cloudlets.GetPolicyRequest{PolicyID: policy.PolicyID}).Return(nil, fmt.Errorf("oops"))
 		expectRemovePolicy(client.CloudletsV2, 2, 1, 0)
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
@@ -876,7 +876,7 @@ func TestResourcePolicyV2(t *testing.T) {
 		}).Return(nil, fmt.Errorf("oops"))
 		expectRemovePolicy(client.CloudletsV2, 2, 1, 0)
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
@@ -904,7 +904,7 @@ func TestResourcePolicyV2(t *testing.T) {
 		expectRemovePolicy(client.CloudletsV2, policy.PolicyID, 1, 0)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
@@ -973,7 +973,7 @@ func TestResourcePolicyV2(t *testing.T) {
 			client := edgegrid.NewTestClient()
 			testCases[i].Expectations(client.CloudletsV2)
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
@@ -993,7 +993,7 @@ func TestResourcePolicyV2(t *testing.T) {
 		client := edgegrid.NewTestClient()
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
@@ -1015,7 +1015,7 @@ func TestResourcePolicyV2(t *testing.T) {
 		expectRemovePolicy(client.CloudletsV2, 2, 1, 0)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
@@ -1059,7 +1059,7 @@ func TestResourcePolicyV2(t *testing.T) {
 		expectRemovePolicy(client.CloudletsV2, 2, 1, 0)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
@@ -1094,7 +1094,7 @@ func TestResourcePolicyV2(t *testing.T) {
 		expectRemovePolicy(client.CloudletsV2, 2, 1, 0)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
@@ -1123,7 +1123,7 @@ func TestResourcePolicyV2(t *testing.T) {
 		expectRemovePolicy(client.CloudletsV2, 2, 1, 0)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
@@ -1154,7 +1154,7 @@ func TestResourcePolicyV2(t *testing.T) {
 		expectRemovePolicy(client.CloudletsV2, 2, 1, 0)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
@@ -1447,7 +1447,7 @@ func TestResourcePolicyV3(t *testing.T) {
 		expectRemovePolicy(client.CloudletsV3, policy.ID)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
@@ -1498,7 +1498,7 @@ func TestResourcePolicyV3(t *testing.T) {
 		expectRemovePolicy(client.CloudletsV3, policy.ID)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
@@ -1579,7 +1579,7 @@ func TestResourcePolicyV3(t *testing.T) {
 		client.CloudletsV3.On("DeletePolicy", testutils.MockContext, v3.DeletePolicyRequest{PolicyID: policy.ID}).Return(nil).Once()
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
@@ -1651,7 +1651,7 @@ func TestResourcePolicyV3(t *testing.T) {
 		client.CloudletsV3.On("DeletePolicy", testutils.MockContext, v3.DeletePolicyRequest{PolicyID: policy.ID}).Return(nil).Once()
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
@@ -1679,7 +1679,7 @@ func TestResourcePolicyV3(t *testing.T) {
 		expectRemovePolicy(client.CloudletsV3, policy.ID)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
@@ -1715,7 +1715,7 @@ func TestResourcePolicyV3(t *testing.T) {
 		expectRemovePolicy(client.CloudletsV3, policy.ID)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
@@ -1753,7 +1753,7 @@ func TestResourcePolicyV3(t *testing.T) {
 		expectRemovePolicy(client.CloudletsV3, policy.ID)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
@@ -1791,7 +1791,7 @@ func TestResourcePolicyV3(t *testing.T) {
 		expectRemovePolicy(client.CloudletsV3, policy.ID)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
@@ -1827,7 +1827,7 @@ func TestResourcePolicyV3(t *testing.T) {
 		expectRemovePolicy(client.CloudletsV3, policy.ID)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
@@ -1871,7 +1871,7 @@ func TestResourcePolicyV3(t *testing.T) {
 		)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
@@ -1901,7 +1901,7 @@ func TestResourcePolicyV3(t *testing.T) {
 		expectRemovePolicy(client.CloudletsV3, policy.ID)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
@@ -1934,7 +1934,7 @@ func TestResourcePolicyV3(t *testing.T) {
 		expectReadPolicy(client.CloudletsV3, policy, version, 2)
 		expectRemovePolicy(client.CloudletsV3, 2)
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
@@ -1972,7 +1972,7 @@ func TestResourcePolicyV3(t *testing.T) {
 		expectReadPolicy(client.CloudletsV3, policy, version, 2)
 		expectRemovePolicy(client.CloudletsV3, 2)
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
@@ -2005,7 +2005,7 @@ func TestResourcePolicyV3(t *testing.T) {
 		expectReadPolicy(client.CloudletsV3, policy, version, 2)
 		expectRemovePolicy(client.CloudletsV3, 2)
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
@@ -2041,7 +2041,7 @@ func TestResourcePolicyV3(t *testing.T) {
 		expectReadPolicy(client.CloudletsV3, policy, version, 2)
 		expectRemovePolicy(client.CloudletsV3, 2)
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
@@ -2069,7 +2069,7 @@ func TestResourcePolicyV3(t *testing.T) {
 		}).Return(nil, fmt.Errorf("oops")).Once()
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
@@ -2138,7 +2138,7 @@ func TestResourcePolicyV3(t *testing.T) {
 			client := edgegrid.NewTestClient()
 			testCases[i].Expectations(client.CloudletsV3)
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
@@ -2162,7 +2162,7 @@ func TestResourcePolicyV3(t *testing.T) {
 		client.CloudletsV3.On("GetPolicy", testutils.MockContext, v3.GetPolicyRequest{PolicyID: policy.ID}).Return(nil, fmt.Errorf("oops")).Once()
 		expectRemovePolicy(client.CloudletsV3, 2)
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
@@ -2189,7 +2189,7 @@ func TestResourcePolicyV3(t *testing.T) {
 		}).Return(nil, fmt.Errorf("oops")).Once()
 		expectRemovePolicy(client.CloudletsV3, 2)
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
@@ -2215,7 +2215,7 @@ func TestResourcePolicyV3(t *testing.T) {
 		expectRemovePolicy(client.CloudletsV3, policy.ID)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
@@ -2279,7 +2279,7 @@ func TestResourcePolicyV3(t *testing.T) {
 			client := edgegrid.NewTestClient()
 			testCases[i].Expectations(client.CloudletsV3)
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
@@ -2304,7 +2304,7 @@ func TestResourcePolicyV3(t *testing.T) {
 		expectRemovePolicy(client.CloudletsV3, policy.ID)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/create_no_match_rules/policy_create.tf", testDir),
@@ -2323,7 +2323,7 @@ func TestResourcePolicyV3(t *testing.T) {
 				},
 			},
 		})
-		client.CloudletsV3.AssertExpectations(t)
+		client.CloudletsV2.AssertExpectations(t)
 		client.CloudletsV3.AssertExpectations(t)
 	})
 
@@ -2337,7 +2337,7 @@ func TestResourcePolicyV3(t *testing.T) {
 		expectRemovePolicy(client.CloudletsV3, policy.ID)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/create_no_match_rules_no_description/policy_create.tf", testDir),
@@ -2356,7 +2356,7 @@ func TestResourcePolicyV3(t *testing.T) {
 				},
 			},
 		})
-		client.CloudletsV3.AssertExpectations(t)
+		client.CloudletsV2.AssertExpectations(t)
 		client.CloudletsV3.AssertExpectations(t)
 	})
 
@@ -2378,7 +2378,7 @@ func TestResourcePolicyV3(t *testing.T) {
 		expectRemovePolicy(client.CloudletsV3, policy.ID)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/create_no_match_rules/policy_create.tf", testDir),
@@ -2398,7 +2398,7 @@ func TestResourcePolicyV3(t *testing.T) {
 				},
 			},
 		})
-		client.CloudletsV3.AssertExpectations(t)
+		client.CloudletsV2.AssertExpectations(t)
 		client.CloudletsV3.AssertExpectations(t)
 	})
 
@@ -2424,7 +2424,7 @@ func TestResourcePolicyV3(t *testing.T) {
 		expectRemovePolicy(client.CloudletsV3, policy.ID)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/create_no_match_rules/policy_create.tf", testDir),
@@ -2443,7 +2443,7 @@ func TestResourcePolicyV3(t *testing.T) {
 				},
 			},
 		})
-		client.CloudletsV3.AssertExpectations(t)
+		client.CloudletsV2.AssertExpectations(t)
 		client.CloudletsV3.AssertExpectations(t)
 	})
 
@@ -2463,7 +2463,7 @@ func TestResourcePolicyV3(t *testing.T) {
 		expectRemovePolicy(client.CloudletsV3, policy.ID)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/create_no_match_rules/policy_create.tf", testDir),
@@ -2483,7 +2483,7 @@ func TestResourcePolicyV3(t *testing.T) {
 				},
 			},
 		})
-		client.CloudletsV3.AssertExpectations(t)
+		client.CloudletsV2.AssertExpectations(t)
 		client.CloudletsV3.AssertExpectations(t)
 	})
 
@@ -2536,7 +2536,7 @@ func TestResourcePolicyV3(t *testing.T) {
 		expectRemovePolicy(client.CloudletsV3, policy.ID)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/create_no_match_rules/policy_create.tf", testDir),
@@ -2555,7 +2555,7 @@ func TestResourcePolicyV3(t *testing.T) {
 				},
 			},
 		})
-		client.CloudletsV3.AssertExpectations(t)
+		client.CloudletsV2.AssertExpectations(t)
 		client.CloudletsV3.AssertExpectations(t)
 	})
 }

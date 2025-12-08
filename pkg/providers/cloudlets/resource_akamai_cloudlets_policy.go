@@ -24,15 +24,24 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-var (
-	// DeletionPolicyPollInterval is the default poll interval for delete policy retries.
-	DeletionPolicyPollInterval = time.Second * 10
-
-	// DeletionPolicyTimeout is the default timeout for the policy deletion.
-	DeletionPolicyTimeout = time.Minute * 90
+const (
+	// defaultDeletionPolicyPollInterval is the default poll interval for delete policy retries.
+	defaultDeletionPolicyPollInterval = 10 * time.Second
 )
 
-func resourceCloudletsPolicy() *schema.Resource {
+var (
+	// DeletionPolicyTimeout is the default timeout for the policy deletion.
+	DeletionPolicyTimeout = 90 * time.Minute
+)
+
+type policyResource struct {
+	deletionPollInterval time.Duration
+}
+
+func resourceCloudletsPolicy(deletionPollInterval time.Duration) *schema.Resource {
+	r := &policyResource{
+		deletionPollInterval: deletionPollInterval,
+	}
 	return &schema.Resource{
 		CustomizeDiff: customdiff.All(
 			suppressDescriptionChange,
@@ -42,10 +51,10 @@ func resourceCloudletsPolicy() *schema.Resource {
 			cloudletCodeValidation,
 			cloudletCodeChangeValidation,
 		),
-		CreateContext: resourcePolicyCreate,
-		ReadContext:   resourcePolicyRead,
-		UpdateContext: resourcePolicyUpdate,
-		DeleteContext: resourcePolicyDelete,
+		CreateContext: r.create,
+		ReadContext:   r.read,
+		UpdateContext: r.update,
+		DeleteContext: r.delete,
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:        schema.TypeString,
@@ -119,7 +128,7 @@ func resourceCloudletsPolicy() *schema.Resource {
 			},
 		},
 		Importer: &schema.ResourceImporter{
-			StateContext: resourcePolicyImport,
+			StateContext: r.importState,
 		},
 		Timeouts: &schema.ResourceTimeout{
 			Default: &DeletionPolicyTimeout,
@@ -195,11 +204,14 @@ func suppressDescriptionChange(ctx context.Context, diff *schema.ResourceDiff, m
 		isShared := diff.Get("is_shared").(bool)
 		var strategy policyExecutionStrategy
 		if isShared {
-			strategy = v3PolicyStrategy{meta.Client().GetCloudletsV3()}
+			strategy = v3PolicyStrategy{
+				client: meta.Client().GetCloudletsV3(),
+			}
 		} else {
-			strategy = v2PolicyStrategy{meta.Client().GetCloudletsV2()}
+			strategy = v2PolicyStrategy{
+				client: meta.Client().GetCloudletsV2(),
+			}
 		}
-
 		policyID, err := strconv.ParseInt(diff.Id(), 10, 0)
 		if err != nil {
 			return err
@@ -275,7 +287,7 @@ func enforceMatchRulesChange(_ context.Context, diff *schema.ResourceDiff, _ any
 	return diff.SetNewComputed("version")
 }
 
-func resourcePolicyCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
+func (r *policyResource) create(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("Cloudlets", "resourcePolicyCreate")
 	ctx = session.ContextWithOptions(
@@ -300,7 +312,7 @@ func resourcePolicyCreate(ctx context.Context, d *schema.ResourceData, m any) di
 		return diag.Errorf("invalid group_id provided: %s", err)
 	}
 
-	executionStrategy, err := getPolicyExecutionStrategy(d, meta)
+	executionStrategy, err := r.getPolicyExecutionStrategy(d, meta)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -321,7 +333,7 @@ func resourcePolicyCreate(ctx context.Context, d *schema.ResourceData, m any) di
 	if err != nil {
 		if errors.Is(err, tf.ErrNotFound) {
 			if description == "" {
-				return resourcePolicyRead(ctx, d, m)
+				return r.read(ctx, d, m)
 			}
 		} else {
 			return diag.FromErr(err)
@@ -341,15 +353,15 @@ func resourcePolicyCreate(ctx context.Context, d *schema.ResourceData, m any) di
 	if updateError != nil {
 		// The resource will be created as tainted (because the setId was executed). So on next plan it'll delete it and create again.
 		// We still want to have actual (server's) values in state. Otherwise, the values from config would be put into the state as default.
-		if errPolicyRead := resourcePolicyRead(ctx, d, m); errPolicyRead != nil {
+		if errPolicyRead := r.read(ctx, d, m); errPolicyRead != nil {
 			return append(errPolicyRead, diag.FromErr(updateError)...)
 		}
 		return diag.FromErr(updateError)
 	}
-	return resourcePolicyRead(ctx, d, m)
+	return r.read(ctx, d, m)
 }
 
-func resourcePolicyRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
+func (r *policyResource) read(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("Cloudlets", "resourcePolicyRead")
 	ctx = session.ContextWithOptions(
@@ -372,7 +384,7 @@ func resourcePolicyRead(ctx context.Context, d *schema.ResourceData, m any) diag
 		return diag.FromErr(err)
 	}
 
-	executionStrategy, err := getPolicyExecutionStrategy(d, meta)
+	executionStrategy, err := r.getPolicyExecutionStrategy(d, meta)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -388,7 +400,7 @@ func resourcePolicyRead(ctx context.Context, d *schema.ResourceData, m any) diag
 	return nil
 }
 
-func resourcePolicyUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
+func (r *policyResource) update(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("Cloudlets", "resourcePolicyUpdate")
 	ctx = session.ContextWithOptions(
@@ -402,7 +414,7 @@ func resourcePolicyUpdate(ctx context.Context, d *schema.ResourceData, m any) di
 		return nil
 	}
 
-	executionStrategy, err := getPolicyExecutionStrategy(d, meta)
+	executionStrategy, err := r.getPolicyExecutionStrategy(d, meta)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -454,13 +466,13 @@ func resourcePolicyUpdate(ctx context.Context, d *schema.ResourceData, m any) di
 				}
 				if updateVersionErr != nil {
 					// We still want to have actual (server's) values in state. Otherwise, the values from config would be put into the state as default.
-					if errPolicyRead := resourcePolicyRead(ctx, d, m); errPolicyRead != nil {
+					if errPolicyRead := r.read(ctx, d, m); errPolicyRead != nil {
 						return append(errPolicyRead, diag.FromErr(updateVersionErr)...)
 					}
 					return diag.FromErr(updateVersionErr)
 				}
 			}
-			return resourcePolicyRead(ctx, d, m)
+			return r.read(ctx, d, m)
 		}
 	}
 
@@ -471,12 +483,12 @@ func resourcePolicyUpdate(ctx context.Context, d *schema.ResourceData, m any) di
 	}
 
 	if d.HasChanges("description", "match_rules", "match_rule_format") {
-		if diags := updatePolicyVersion(ctx, d, m, executionStrategy, policyID); diags != nil {
+		if diags := r.updatePolicyVersion(ctx, d, m, executionStrategy, policyID); diags != nil {
 			return diags
 		}
 	}
 
-	return resourcePolicyRead(ctx, d, m)
+	return r.read(ctx, d, m)
 }
 
 func updatePolicyNameAndGroup(ctx context.Context, d *schema.ResourceData, executionStrategy policyExecutionStrategy, policyID int64) error {
@@ -496,7 +508,7 @@ func updatePolicyNameAndGroup(ctx context.Context, d *schema.ResourceData, execu
 	return executionStrategy.updatePolicy(ctx, policyID, int64(groupIDNum), name)
 }
 
-func updatePolicyVersion(ctx context.Context, d *schema.ResourceData, m any, executionStrategy policyExecutionStrategy, policyID int64) diag.Diagnostics {
+func (r *policyResource) updatePolicyVersion(ctx context.Context, d *schema.ResourceData, m any, executionStrategy policyExecutionStrategy, policyID int64) diag.Diagnostics {
 	isNewVersionNeeded, version, err := determineIfNewVersionNeeded(ctx, d, executionStrategy, policyID)
 	if err != nil {
 		return diag.FromErr(err)
@@ -523,7 +535,7 @@ func updatePolicyVersion(ctx context.Context, d *schema.ResourceData, m any, exe
 
 	if updateVersionErr != nil {
 		// We still want to have actual (server's) values in state. Otherwise, the values from config would be put into the state as default.
-		if errPolicyRead := resourcePolicyRead(ctx, d, m); errPolicyRead != nil {
+		if errPolicyRead := r.read(ctx, d, m); errPolicyRead != nil {
 			return append(errPolicyRead, diag.FromErr(updateVersionErr)...)
 		}
 		return diag.FromErr(updateVersionErr)
@@ -549,7 +561,7 @@ func determineIfNewVersionNeeded(ctx context.Context, d *schema.ResourceData, ex
 	return isNewVersionNeeded, version, nil
 }
 
-func resourcePolicyDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
+func (r *policyResource) delete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("Cloudlets", "resourcePolicyDelete")
 	ctx = session.ContextWithOptions(
@@ -558,7 +570,7 @@ func resourcePolicyDelete(ctx context.Context, d *schema.ResourceData, m any) di
 	)
 	logger.Debug("Deleting policy")
 
-	executionStrategy, err := getPolicyExecutionStrategy(d, meta)
+	executionStrategy, err := r.getPolicyExecutionStrategy(d, meta)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -568,7 +580,7 @@ func resourcePolicyDelete(ctx context.Context, d *schema.ResourceData, m any) di
 		return diag.FromErr(err)
 	}
 
-	err = executionStrategy.deletePolicy(ctx, policyID)
+	err = executionStrategy.deletePolicy(ctx, policyID, r.deletionPollInterval)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -577,7 +589,7 @@ func resourcePolicyDelete(ctx context.Context, d *schema.ResourceData, m any) di
 	return nil
 }
 
-func resourcePolicyImport(ctx context.Context, d *schema.ResourceData, m any) ([]*schema.ResourceData, error) {
+func (r *policyResource) importState(ctx context.Context, d *schema.ResourceData, m any) ([]*schema.ResourceData, error) {
 	meta := meta.Must(m)
 	logger := meta.Log("Cloudlets", "resourcePolicyImport")
 	logger.Debugf("Import Policy")
@@ -587,7 +599,7 @@ func resourcePolicyImport(ctx context.Context, d *schema.ResourceData, m any) ([
 		return nil, fmt.Errorf("policy name cannot be empty")
 	}
 
-	policyStrategy, policyID, err := discoverPolicyExecutionStrategy(ctx, meta, name)
+	policyStrategy, policyID, err := r.discoverPolicyExecutionStrategy(ctx, meta, name)
 	if err != nil {
 		return nil, err
 	}
@@ -687,7 +699,7 @@ func setWarnings[W cloudlets.Warning | v3.MatchRulesWarning](d *schema.ResourceD
 	return d.Set("warnings", string(warningsJSON))
 }
 
-func getPolicyExecutionStrategy(d *schema.ResourceData, meta meta.Meta) (policyExecutionStrategy, error) {
+func (r *policyResource) getPolicyExecutionStrategy(d *schema.ResourceData, meta meta.Meta) (policyExecutionStrategy, error) {
 	var executionStrategy policyExecutionStrategy
 	isV3, err := tf.GetBoolValue("is_shared", d)
 	if err != nil {
@@ -695,9 +707,9 @@ func getPolicyExecutionStrategy(d *schema.ResourceData, meta meta.Meta) (policyE
 	}
 
 	if isV3 {
-		executionStrategy = v3PolicyStrategy{meta.Client().GetCloudletsV3()}
+		executionStrategy = v3PolicyStrategy{client: meta.Client().GetCloudletsV3()}
 	} else {
-		executionStrategy = v2PolicyStrategy{meta.Client().GetCloudletsV2()}
+		executionStrategy = v2PolicyStrategy{client: meta.Client().GetCloudletsV2()}
 	}
 	return executionStrategy, nil
 }
@@ -708,20 +720,20 @@ type policyExecutionStrategy interface {
 	updatePolicy(ctx context.Context, policyID, groupID int64, cloudletName string) error
 	newPolicyVersionIsNeeded(ctx context.Context, policyID, version int64) (bool, error)
 	readPolicy(ctx context.Context, policyID int64, version *int64) (map[string]any, error)
-	deletePolicy(ctx context.Context, policyID int64) error
+	deletePolicy(ctx context.Context, policyID int64, deletionPollInterval time.Duration) error
 	getVersionStrategy(meta meta.Meta) versionStrategy
 	setPolicyType(d *schema.ResourceData) error
 	isFirstVersionCreated() bool
 }
 
-func discoverPolicyExecutionStrategy(ctx context.Context, meta meta.Meta, policyName string) (policyExecutionStrategy, int64, error) {
+func (r *policyResource) discoverPolicyExecutionStrategy(ctx context.Context, meta meta.Meta, policyName string) (policyExecutionStrategy, int64, error) {
 
-	strategy, policyID, errV2 := checkForV2Policy(ctx, meta, policyName)
+	strategy, policyID, errV2 := r.checkForV2Policy(ctx, meta, policyName)
 	if strategy != nil {
 		return strategy, policyID, nil
 	}
 
-	strategy, policyID, errV3 := checkForV3Policy(ctx, meta, policyName)
+	strategy, policyID, errV3 := r.checkForV3Policy(ctx, meta, policyName)
 	if strategy != nil {
 		return strategy, policyID, nil
 	}
@@ -740,7 +752,7 @@ func discoverPolicyExecutionStrategy(ctx context.Context, meta meta.Meta, policy
 	return nil, 0, fmt.Errorf("policy '%s' does not exist", policyName)
 }
 
-func checkForV2Policy(ctx context.Context, meta meta.Meta, policyName string) (policyExecutionStrategy, int64, error) {
+func (r *policyResource) checkForV2Policy(ctx context.Context, meta meta.Meta, policyName string) (policyExecutionStrategy, int64, error) {
 	v2Client := meta.Client().GetCloudletsV2()
 	size, offset := 1000, 0
 	var errV2 error
@@ -768,7 +780,7 @@ func checkForV2Policy(ctx context.Context, meta meta.Meta, policyName string) (p
 	return nil, 0, errV2
 }
 
-func checkForV3Policy(ctx context.Context, meta meta.Meta, policyName string) (policyExecutionStrategy, int64, error) {
+func (r *policyResource) checkForV3Policy(ctx context.Context, meta meta.Meta, policyName string) (policyExecutionStrategy, int64, error) {
 	v3Client := meta.Client().GetCloudletsV3()
 	size, page := 1000, 0
 	var errV3 error

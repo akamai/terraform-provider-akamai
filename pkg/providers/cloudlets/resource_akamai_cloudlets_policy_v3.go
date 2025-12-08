@@ -138,8 +138,8 @@ func (strategy v3PolicyStrategy) readPolicy(ctx context.Context, policyID int64,
 	return attrs, nil
 }
 
-func (strategy v3PolicyStrategy) deletePolicy(ctx context.Context, policyID int64) error {
-	err := deactivatePolicyVersions(ctx, policyID, strategy.client)
+func (strategy v3PolicyStrategy) deletePolicy(ctx context.Context, policyID int64, deletionPollInterval time.Duration) error {
+	err := deactivatePolicyVersions(ctx, policyID, strategy.client, deletionPollInterval)
 	if err != nil {
 		return err
 	}
@@ -157,7 +157,7 @@ func (strategy v3PolicyStrategy) setPolicyType(d *schema.ResourceData) error {
 	return d.Set("is_shared", true)
 }
 
-func deactivatePolicyVersions(ctx context.Context, policyID int64, client v3.Cloudlets) error {
+func deactivatePolicyVersions(ctx context.Context, policyID int64, client v3.Cloudlets, deletionPollInterval time.Duration) error {
 	policy, err := client.GetPolicy(ctx, v3.GetPolicyRequest{
 		PolicyID: policyID,
 	})
@@ -166,7 +166,7 @@ func deactivatePolicyVersions(ctx context.Context, policyID int64, client v3.Clo
 	}
 
 	if policyHasOngoingActivations(policy) {
-		policy, err = waitForOngoingActivations(ctx, policyID, client)
+		policy, err = waitForOngoingActivations(ctx, policyID, client, deletionPollInterval)
 		if err != nil {
 			return err
 		}
@@ -202,7 +202,7 @@ func deactivatePolicyVersions(ctx context.Context, policyID int64, client v3.Clo
 
 	for {
 		select {
-		case <-time.After(DeletionPolicyPollInterval):
+		case <-time.After(deletionPollInterval):
 			everythingDeactivated, err := verifyVersionDeactivated(ctx, policyID, client)
 			if err != nil {
 				return err
@@ -221,10 +221,10 @@ func policyHasOngoingActivations(policy *v3.Policy) bool {
 		(policy.CurrentActivations.Production.Latest != nil && policy.CurrentActivations.Production.Latest.Status == v3.ActivationStatusInProgress)
 }
 
-func waitForOngoingActivations(ctx context.Context, policyID int64, client v3.Cloudlets) (*v3.Policy, error) {
+func waitForOngoingActivations(ctx context.Context, policyID int64, client v3.Cloudlets, deletionPollInterval time.Duration) (*v3.Policy, error) {
 	for {
 		select {
-		case <-time.After(DeletionPolicyPollInterval):
+		case <-time.After(deletionPollInterval):
 			policy, err := client.GetPolicy(ctx, v3.GetPolicyRequest{PolicyID: policyID})
 			if err != nil {
 				return nil, err
