@@ -249,6 +249,7 @@ func TestSharedPolicyDataSource(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			client := edgegrid.NewTestClient()
 			if test.init != nil {
 				test.init(client.CloudletsV3, test.data)

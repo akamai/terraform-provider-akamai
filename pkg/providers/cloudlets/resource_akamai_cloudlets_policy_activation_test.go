@@ -15,6 +15,7 @@ import (
 )
 
 func TestResourceCloudletsPolicyActivation(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		init  func(*cloudlets.Mock)
 		steps []resource.TestStep
@@ -1014,6 +1015,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			client := edgegrid.NewTestClient()
 			test.init(client.CloudletsV2)
 			resource.UnitTest(t, resource.TestCase{
@@ -1028,6 +1030,7 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 }
 
 func TestResourceV3CloudletsPolicyActivation(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		init  func(*cloudlets.Mock, *v3.Mock)
 		steps []resource.TestStep
@@ -1737,6 +1740,7 @@ func TestResourceV3CloudletsPolicyActivation(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			client := edgegrid.NewTestClient()
 			test.init(client.CloudletsV2, client.CloudletsV3)
 			resource.UnitTest(t, resource.TestCase{

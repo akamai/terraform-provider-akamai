@@ -13,6 +13,7 @@ import (
 )
 
 func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
+	t.Parallel()
 	anError := fmt.Errorf("an error")
 	originNotDefinedError := fmt.Errorf(`"detail": "Origin 'origin-test-1' is not defined in Property Manager for this network"`)
 	tests := map[string]struct {
@@ -555,6 +556,7 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			client := edgegrid.NewTestClient()
 			test.init(client.CloudletsV2)
 			resource.UnitTest(t, resource.TestCase{

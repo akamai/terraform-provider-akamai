@@ -13,6 +13,7 @@ import (
 )
 
 func TestDataCloudletsPolicy(t *testing.T) {
+	t.Parallel()
 	getPolicyReturn := cloudlets.Policy{
 		Location:         "/cloudlets/api/v2/policies/1234",
 		PolicyID:         1234,
@@ -543,6 +544,7 @@ func TestDataCloudletsPolicy(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
+			t.Parallel()
 			client := edgegrid.NewTestClient()
 			if test.init != nil {
 				test.init(client.CloudletsV2)

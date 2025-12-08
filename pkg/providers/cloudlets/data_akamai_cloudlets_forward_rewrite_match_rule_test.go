@@ -9,6 +9,7 @@ import (
 )
 
 func TestDataCloudletsForwardRewriteMatchRule(t *testing.T) {
+	t.Parallel()
 
 	tests := map[string]struct {
 		configPath       string
@@ -44,6 +45,7 @@ func TestDataCloudletsForwardRewriteMatchRule(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
@@ -59,6 +61,7 @@ func TestDataCloudletsForwardRewriteMatchRule(t *testing.T) {
 }
 
 func TestIncorrectDataCloudletsForwardRewriteMatchRule(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		configPath string
 		withError  string
@@ -90,6 +93,7 @@ func TestIncorrectDataCloudletsForwardRewriteMatchRule(t *testing.T) {
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{

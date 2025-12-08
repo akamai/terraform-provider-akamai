@@ -19,6 +19,7 @@ import (
 )
 
 func TestResourcePolicyV2(t *testing.T) {
+	t.Parallel()
 
 	type policyAttributes struct {
 		name, version, matchRulesPath string
@@ -274,6 +275,7 @@ func TestResourcePolicyV2(t *testing.T) {
 	)
 
 	t.Run("policy lifecycle with create new version", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicy/lifecycle"
 
 		client := edgegrid.NewTestClient()
@@ -313,6 +315,7 @@ func TestResourcePolicyV2(t *testing.T) {
 	})
 
 	t.Run("policy lifecycle detects new version drift", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicy/lifecycle_with_drift"
 
 		client := edgegrid.NewTestClient()
@@ -361,6 +364,7 @@ func TestResourcePolicyV2(t *testing.T) {
 	})
 
 	t.Run("policy lifecycle and delete retries", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicy/lifecycle"
 
 		client := edgegrid.NewTestClient()
@@ -386,6 +390,7 @@ func TestResourcePolicyV2(t *testing.T) {
 	})
 
 	t.Run("policy lifecycle with update existing version", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicy/lifecycle"
 
 		client := edgegrid.NewTestClient()
@@ -424,6 +429,7 @@ func TestResourcePolicyV2(t *testing.T) {
 	})
 
 	t.Run("update only policy", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicy/lifecycle_policy_update"
 
 		client := edgegrid.NewTestClient()
@@ -462,6 +468,7 @@ func TestResourcePolicyV2(t *testing.T) {
 	})
 
 	t.Run("update only version", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicy/lifecycle_version_update"
 
 		client := edgegrid.NewTestClient()
@@ -500,6 +507,7 @@ func TestResourcePolicyV2(t *testing.T) {
 	})
 
 	t.Run("update only description for not active policy - expect no new version", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicy/lifecycle_description_update"
 
 		client := edgegrid.NewTestClient()
@@ -540,6 +548,7 @@ func TestResourcePolicyV2(t *testing.T) {
 	})
 
 	t.Run("update description for active policy version - suppress diff", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicy/lifecycle_description_update"
 
 		client := edgegrid.NewTestClient()
@@ -579,6 +588,7 @@ func TestResourcePolicyV2(t *testing.T) {
 	})
 
 	t.Run("warnings creating and updating version", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicy/lifecycle_version_update"
 
 		client := edgegrid.NewTestClient()
@@ -620,6 +630,7 @@ func TestResourcePolicyV2(t *testing.T) {
 	})
 
 	t.Run("remove match rules from version", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicy/lifecycle_remove_match_rules"
 
 		client := edgegrid.NewTestClient()
@@ -659,6 +670,7 @@ func TestResourcePolicyV2(t *testing.T) {
 	})
 
 	t.Run("create policy without match rules or description", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicy/create_no_match_rules_no_description"
 
 		client := edgegrid.NewTestClient()
@@ -684,6 +696,7 @@ func TestResourcePolicyV2(t *testing.T) {
 	})
 
 	t.Run("create policy without match rules with description", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicy/create_no_match_rules"
 
 		client := edgegrid.NewTestClient()
@@ -709,6 +722,7 @@ func TestResourcePolicyV2(t *testing.T) {
 	})
 
 	t.Run("create policy with timeout", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicy/timeouts"
 
 		matchRules := cloudlets.MatchRules{
@@ -747,6 +761,7 @@ func TestResourcePolicyV2(t *testing.T) {
 	})
 
 	t.Run("error creating policy", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicy/lifecycle"
 
 		client := edgegrid.NewTestClient()
@@ -769,6 +784,7 @@ func TestResourcePolicyV2(t *testing.T) {
 	})
 
 	t.Run("error creating policy version", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicy/lifecycle"
 
 		policy := &cloudlets.Policy{
@@ -842,6 +858,7 @@ func TestResourcePolicyV2(t *testing.T) {
 	})
 
 	t.Run("error fetching policy", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicy/create_no_match_rules"
 
 		client := edgegrid.NewTestClient()
@@ -863,6 +880,7 @@ func TestResourcePolicyV2(t *testing.T) {
 	})
 
 	t.Run("error fetching policy version", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicy/create_no_match_rules"
 
 		client := edgegrid.NewTestClient()
@@ -888,6 +906,7 @@ func TestResourcePolicyV2(t *testing.T) {
 	})
 
 	t.Run("error updating policy", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicy/lifecycle_policy_update"
 
 		client := edgegrid.NewTestClient()
@@ -919,6 +938,7 @@ func TestResourcePolicyV2(t *testing.T) {
 	})
 
 	t.Run("error updating version", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicy/lifecycle_version_update"
 
 		expectErrorUpdatingVersion := func(client *cloudlets.Mock, expectReadPolicyTimes int) (policy *cloudlets.Policy) {
@@ -989,6 +1009,7 @@ func TestResourcePolicyV2(t *testing.T) {
 	})
 
 	t.Run("invalid group id passed", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicy/invalid_group_id"
 		client := edgegrid.NewTestClient()
 
@@ -1005,6 +1026,7 @@ func TestResourcePolicyV2(t *testing.T) {
 	})
 
 	t.Run("import policy", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicy/import"
 		client := edgegrid.NewTestClient()
 
@@ -1033,6 +1055,7 @@ func TestResourcePolicyV2(t *testing.T) {
 	})
 
 	t.Run("import policy - test checkForV2Policy()", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicy/import"
 		client := edgegrid.NewTestClient()
 		policyID := int64(2)
@@ -1077,6 +1100,7 @@ func TestResourcePolicyV2(t *testing.T) {
 	})
 
 	t.Run("error importing policy not found", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicy/import_no_match_rules"
 		client := edgegrid.NewTestClient()
 
@@ -1112,6 +1136,7 @@ func TestResourcePolicyV2(t *testing.T) {
 	})
 
 	t.Run("importing policy no version found", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicy/import_no_version"
 		client := edgegrid.NewTestClient()
 
@@ -1145,6 +1170,7 @@ func TestResourcePolicyV2(t *testing.T) {
 	})
 
 	t.Run("error importing policy name cannot be empty", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicy/import_no_match_rules"
 		client := edgegrid.NewTestClient()
 
@@ -1174,6 +1200,7 @@ func TestResourcePolicyV2(t *testing.T) {
 }
 
 func TestResourcePolicyV3(t *testing.T) {
+	t.Parallel()
 
 	type policyAttributes struct {
 		version, matchRulesPath string
@@ -1436,6 +1463,7 @@ func TestResourcePolicyV3(t *testing.T) {
 	)
 
 	t.Run("policy v3 lifecycle with create new version", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicyV3/lifecycle"
 
 		client := edgegrid.NewTestClient()
@@ -1473,6 +1501,7 @@ func TestResourcePolicyV3(t *testing.T) {
 	})
 
 	t.Run("policy v3 create policy and update with version drift", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicyV3/lifecycle_with_drift"
 
 		client := edgegrid.NewTestClient()
@@ -1516,6 +1545,7 @@ func TestResourcePolicyV3(t *testing.T) {
 	})
 
 	t.Run("policy V3 lifecycle, deactivation before delete", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicyV3/lifecycle"
 
 		client := edgegrid.NewTestClient()
@@ -1596,6 +1626,7 @@ func TestResourcePolicyV3(t *testing.T) {
 	})
 
 	t.Run("policy V3 lifecycle, in progress deactivation during delete", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicyV3/lifecycle"
 
 		client := edgegrid.NewTestClient()
@@ -1668,6 +1699,7 @@ func TestResourcePolicyV3(t *testing.T) {
 	})
 
 	t.Run("policy v3 lifecycle with update existing version", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicyV3/lifecycle"
 
 		client := edgegrid.NewTestClient()
@@ -1705,6 +1737,7 @@ func TestResourcePolicyV3(t *testing.T) {
 	})
 
 	t.Run("update only policy v3", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicyV3/lifecycle_policy_update"
 
 		client := edgegrid.NewTestClient()
@@ -1741,6 +1774,7 @@ func TestResourcePolicyV3(t *testing.T) {
 	})
 
 	t.Run("update only description for not active v3 policy - expect no new version", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicyV3/lifecycle_description_update"
 
 		client := edgegrid.NewTestClient()
@@ -1779,6 +1813,7 @@ func TestResourcePolicyV3(t *testing.T) {
 	})
 
 	t.Run("update only description for active v3 policy - expect no changes", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicyV3/lifecycle_description_update"
 
 		client := edgegrid.NewTestClient()
@@ -1817,6 +1852,7 @@ func TestResourcePolicyV3(t *testing.T) {
 	})
 
 	t.Run("update only version for v3 policy", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicyV3/lifecycle_version_update"
 
 		client := edgegrid.NewTestClient()
@@ -1853,6 +1889,7 @@ func TestResourcePolicyV3(t *testing.T) {
 	})
 
 	t.Run("warnings creating and updating version for v3 policy", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicyV3/lifecycle_version_update"
 
 		client := edgegrid.NewTestClient()
@@ -1891,6 +1928,7 @@ func TestResourcePolicyV3(t *testing.T) {
 	})
 
 	t.Run("remove match rules from version for v3 policy", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicyV3/lifecycle_remove_match_rules"
 
 		client := edgegrid.NewTestClient()
@@ -1927,6 +1965,7 @@ func TestResourcePolicyV3(t *testing.T) {
 	})
 
 	t.Run("create v3 policy without match rules or description", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicyV3/create_no_match_rules_no_description"
 
 		client := edgegrid.NewTestClient()
@@ -1951,6 +1990,7 @@ func TestResourcePolicyV3(t *testing.T) {
 	})
 
 	t.Run("create v3 policy without version, update to create new version", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicyV3/lifecycle_no_version"
 
 		client := edgegrid.NewTestClient()
@@ -1998,6 +2038,7 @@ func TestResourcePolicyV3(t *testing.T) {
 	})
 
 	t.Run("create V3 policy without match rules with description", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicyV3/create_no_match_rules"
 
 		client := edgegrid.NewTestClient()
@@ -2022,6 +2063,7 @@ func TestResourcePolicyV3(t *testing.T) {
 	})
 
 	t.Run("create V3 policy with timeout", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicyV3/timeouts"
 
 		matchRules := v3.MatchRules{
@@ -2059,6 +2101,7 @@ func TestResourcePolicyV3(t *testing.T) {
 	})
 
 	t.Run("error creating V3 policy", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicyV3/lifecycle"
 
 		client := edgegrid.NewTestClient()
@@ -2081,6 +2124,7 @@ func TestResourcePolicyV3(t *testing.T) {
 	})
 
 	t.Run("error first update v3 policy version", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicyV3/lifecycle"
 
 		policy := &v3.Policy{
@@ -2151,6 +2195,7 @@ func TestResourcePolicyV3(t *testing.T) {
 	})
 
 	t.Run("error fetching V3 policy", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicyV3/create_no_match_rules"
 
 		client := edgegrid.NewTestClient()
@@ -2174,6 +2219,7 @@ func TestResourcePolicyV3(t *testing.T) {
 	})
 
 	t.Run("error fetching V3 policy version", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicyV3/create_no_match_rules"
 
 		client := edgegrid.NewTestClient()
@@ -2201,6 +2247,7 @@ func TestResourcePolicyV3(t *testing.T) {
 	})
 
 	t.Run("error updating V3 policy", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicyV3/lifecycle_policy_update"
 
 		client := edgegrid.NewTestClient()
@@ -2230,6 +2277,7 @@ func TestResourcePolicyV3(t *testing.T) {
 	})
 
 	t.Run("error updating version in v3 policy", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicyV3/lifecycle_version_update"
 
 		expectErrorUpdatingVersion := func(client *v3.Mock, expectReadPolicyTimes int) (policy *v3.Policy) {
@@ -2295,6 +2343,7 @@ func TestResourcePolicyV3(t *testing.T) {
 	})
 
 	t.Run("import policy v3", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicyV3"
 		client := edgegrid.NewTestClient()
 
@@ -2328,6 +2377,7 @@ func TestResourcePolicyV3(t *testing.T) {
 	})
 
 	t.Run("import policy v3 without version", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicyV3"
 		client := edgegrid.NewTestClient()
 
@@ -2361,6 +2411,7 @@ func TestResourcePolicyV3(t *testing.T) {
 	})
 
 	t.Run("import policy v3 - no policy found", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicyV3"
 		client := edgegrid.NewTestClient()
 
@@ -2403,6 +2454,7 @@ func TestResourcePolicyV3(t *testing.T) {
 	})
 
 	t.Run("import policy v3 - v2 api error, v3 policy found", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicyV3"
 		client := edgegrid.NewTestClient()
 
@@ -2448,6 +2500,7 @@ func TestResourcePolicyV3(t *testing.T) {
 	})
 
 	t.Run("import policy v3 - v2 and v3 api error", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicyV3"
 		client := edgegrid.NewTestClient()
 
@@ -2488,6 +2541,7 @@ func TestResourcePolicyV3(t *testing.T) {
 	})
 
 	t.Run("import policy v3 - test checkForV3Policy()", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicyV3"
 		client := edgegrid.NewTestClient()
 		policyID := int64(2)
@@ -2561,6 +2615,7 @@ func TestResourcePolicyV3(t *testing.T) {
 }
 
 func TestDiffSuppressMatchRules(t *testing.T) {
+	t.Parallel()
 	basePath := "testdata/TestResPolicy/diff_suppress"
 	tests := map[string]struct {
 		oldPath, newPath string
@@ -2595,6 +2650,7 @@ func TestDiffSuppressMatchRules(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			oldJSON := testutils.LoadFixtureStringf(t, "%s/%s", basePath, test.oldPath)
 			newJSON := testutils.LoadFixtureStringf(t, "%s/%s", basePath, test.newPath)
 			res := diffSuppressMatchRules("", oldJSON, newJSON, nil)

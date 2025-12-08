@@ -15,6 +15,7 @@ import (
 )
 
 func TestFindingLatestPolicyVersion(t *testing.T) {
+	t.Parallel()
 	preparePolicyVersionsPage := func(pageSize, startingVersion int64) []cloudlets.PolicyVersion {
 		versions := make([]cloudlets.PolicyVersion, 0, pageSize)
 		for i := startingVersion; i < startingVersion+pageSize; i++ {
@@ -82,6 +83,7 @@ func TestFindingLatestPolicyVersion(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			client := edgegrid.NewTestClient()
 			test.init(client.CloudletsV2)
 			versionStrategy := v2VersionStrategy{client: client.CloudletsV2}
@@ -102,6 +104,7 @@ func TestFindingLatestPolicyVersion(t *testing.T) {
 }
 
 func TestFindingLatestPolicyVersionV3(t *testing.T) {
+	t.Parallel()
 	preparePolicyVersionsPage := func(pageSize, startingVersion int64) []v3.ListPolicyVersionsItem {
 		versions := make([]v3.ListPolicyVersionsItem, 0, pageSize)
 		for i := startingVersion; i < startingVersion+pageSize; i++ {
@@ -169,6 +172,7 @@ func TestFindingLatestPolicyVersionV3(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			client := edgegrid.NewTestClient()
 			test.init(client.CloudletsV3)
 			checker := v3VersionStrategy{client: client.CloudletsV3}

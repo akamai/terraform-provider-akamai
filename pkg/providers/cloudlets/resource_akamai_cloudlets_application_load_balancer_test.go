@@ -17,6 +17,7 @@ import (
 )
 
 func TestResourceApplicationLoadBalancer(t *testing.T) {
+	t.Parallel()
 
 	type loadBalancerAttributes struct {
 		originID, version, originDescription, description, balancingType string
@@ -257,6 +258,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 	)
 
 	t.Run("load balancer lifecycle with create new version", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
 		client := edgegrid.NewTestClient()
 
@@ -295,6 +297,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 	})
 
 	t.Run("load balancer lifecycle with update existing version", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
 		client := edgegrid.NewTestClient()
 
@@ -333,6 +336,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 	})
 
 	t.Run("update only description", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle_origin_update"
 		client := edgegrid.NewTestClient()
 
@@ -371,6 +375,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 	})
 
 	t.Run("update only version", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle_version_update"
 		client := edgegrid.NewTestClient()
 
@@ -409,6 +414,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 	})
 
 	t.Run("update version + empty liveness_settings", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle_no_liveness_settings"
 		client := edgegrid.NewTestClient()
 
@@ -455,6 +461,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 	})
 
 	t.Run("error creating origin", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
 		client := edgegrid.NewTestClient()
 
@@ -484,6 +491,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 	})
 
 	t.Run("error creating origin which already exist", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
 		client := edgegrid.NewTestClient()
 
@@ -511,6 +519,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 	})
 
 	t.Run("error creating version", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
 		client := edgegrid.NewTestClient()
 
@@ -575,6 +584,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 	})
 
 	t.Run("load balancer lifecycle with create new version", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
 		client := edgegrid.NewTestClient()
 
@@ -613,6 +623,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 	})
 
 	t.Run("load balancer lifecycle with origin description", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle_origin_desc"
 		client := edgegrid.NewTestClient()
 
@@ -654,6 +665,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 	})
 
 	t.Run("error fetching version", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
 		client := edgegrid.NewTestClient()
 
@@ -682,6 +694,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 	})
 
 	t.Run("import load balancer", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
 		client := edgegrid.NewTestClient()
 
@@ -709,6 +722,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 	})
 
 	t.Run("error importing load balancer not found", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
 		client := edgegrid.NewTestClient()
 
@@ -736,6 +750,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 	})
 
 	t.Run("error importing load balancer origin_id cannot be empty", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
 		client := edgegrid.NewTestClient()
 
@@ -763,6 +778,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 	})
 
 	t.Run("error importing load balancer no version found", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
 		client := edgegrid.NewTestClient()
 
@@ -790,6 +806,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 	})
 
 	t.Run("error creating origin with akamaized dc", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
 		client := edgegrid.NewTestClient()
 
@@ -818,6 +835,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 	})
 
 	t.Run("error updating origin with akamized dc", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle_dc_update"
 		client := edgegrid.NewTestClient()
 
@@ -860,6 +878,7 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 	})
 
 	t.Run("error creating origin with sum of percentages other than 100", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResLoadBalancerConfig/percentage_validation"
 		client := edgegrid.NewTestClient()
 

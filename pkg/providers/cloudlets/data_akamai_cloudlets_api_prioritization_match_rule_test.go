@@ -11,6 +11,7 @@ import (
 )
 
 func TestDataCloudletsAPIPrioritizationMatchRule(t *testing.T) {
+	t.Parallel()
 	workdir := "testdata/TestDataCloudletsAPIPrioritizationMatchRule"
 
 	tests := map[string]struct {
@@ -46,6 +47,7 @@ func TestDataCloudletsAPIPrioritizationMatchRule(t *testing.T) {
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
@@ -61,6 +63,7 @@ func TestDataCloudletsAPIPrioritizationMatchRule(t *testing.T) {
 }
 
 func TestIncorrectDataCloudletsAPIPrioritizationMatchRule(t *testing.T) {
+	t.Parallel()
 	workdir := "testdata/TestDataCloudletsAPIPrioritizationMatchRule"
 
 	tests := map[string]struct {
@@ -104,6 +107,7 @@ func TestIncorrectDataCloudletsAPIPrioritizationMatchRule(t *testing.T) {
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
