@@ -195,9 +195,9 @@ func suppressDescriptionChange(ctx context.Context, diff *schema.ResourceDiff, m
 		isShared := diff.Get("is_shared").(bool)
 		var strategy policyExecutionStrategy
 		if isShared {
-			strategy = v3PolicyStrategy{ClientV3(meta)}
+			strategy = v3PolicyStrategy{meta.Client().GetCloudletsV3()}
 		} else {
-			strategy = v2PolicyStrategy{Client(meta)}
+			strategy = v2PolicyStrategy{meta.Client().GetCloudletsV2()}
 		}
 
 		policyID, err := strconv.ParseInt(diff.Id(), 10, 0)
@@ -695,9 +695,9 @@ func getPolicyExecutionStrategy(d *schema.ResourceData, meta meta.Meta) (policyE
 	}
 
 	if isV3 {
-		executionStrategy = v3PolicyStrategy{ClientV3(meta)}
+		executionStrategy = v3PolicyStrategy{meta.Client().GetCloudletsV3()}
 	} else {
-		executionStrategy = v2PolicyStrategy{Client(meta)}
+		executionStrategy = v2PolicyStrategy{meta.Client().GetCloudletsV2()}
 	}
 	return executionStrategy, nil
 }
@@ -741,7 +741,7 @@ func discoverPolicyExecutionStrategy(ctx context.Context, meta meta.Meta, policy
 }
 
 func checkForV2Policy(ctx context.Context, meta meta.Meta, policyName string) (policyExecutionStrategy, int64, error) {
-	v2Client := Client(meta)
+	v2Client := meta.Client().GetCloudletsV2()
 	size, offset := 1000, 0
 	var errV2 error
 	for {
@@ -769,7 +769,7 @@ func checkForV2Policy(ctx context.Context, meta meta.Meta, policyName string) (p
 }
 
 func checkForV3Policy(ctx context.Context, meta meta.Meta, policyName string) (policyExecutionStrategy, int64, error) {
-	v3Client := ClientV3(meta)
+	v3Client := meta.Client().GetCloudletsV3()
 	size, page := 1000, 0
 	var errV3 error
 	for {

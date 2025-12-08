@@ -12,11 +12,12 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudlets"
 	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudlets/v3"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/log"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/timeouts"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -129,7 +130,7 @@ func resourcePolicyActivationDelete(ctx context.Context, rd *schema.ResourceData
 	logger.Debug("Deleting cloudlets policy activation")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 
-	strategy := getActivationStrategy(rd, meta, logger)
+	strategy := getActivationStrategy(rd, meta)
 
 	policyID, err := tf.GetIntValueAsInt64("policy_id", rd)
 	if err != nil {
@@ -160,7 +161,7 @@ func resourcePolicyActivationUpdate(ctx context.Context, rd *schema.ResourceData
 	logger := meta.Log("Cloudlets", "resourcePolicyActivationUpdate")
 
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	strategy := getActivationStrategy(rd, meta, logger)
+	strategy := getActivationStrategy(rd, meta)
 
 	if !rd.HasChangeExcept("timeouts") {
 		logger.Debug("Only timeouts were updated, skipping")
@@ -241,7 +242,7 @@ func resourcePolicyActivationCreate(ctx context.Context, rd *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	strategy, isShared, err := discoverActivationStrategy(ctx, policyID, meta, logger)
+	strategy, isShared, err := discoverActivationStrategy(ctx, policyID, meta.Client())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -312,7 +313,7 @@ func resourcePolicyActivationRead(ctx context.Context, rd *schema.ResourceData, 
 	meta := meta.Must(m)
 	logger := meta.Log("Cloudlets", "resourcePolicyActivationRead")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	strategy := getActivationStrategy(rd, meta, logger)
+	strategy := getActivationStrategy(rd, meta)
 
 	logger.Debug("Reading policy activations")
 
@@ -343,11 +344,11 @@ func resourcePolicyActivationRead(ctx context.Context, rd *schema.ResourceData, 
 	return nil
 }
 
-func getActivationStrategy(rd *schema.ResourceData, m meta.Meta, logger log.Interface) activationStrategy {
+func getActivationStrategy(rd *schema.ResourceData, m meta.Meta) activationStrategy {
 	if rd.Get("is_shared").(bool) {
-		return &v3ActivationStrategy{client: ClientV3(m), logger: logger}
+		return &v3ActivationStrategy{client: m.Client().GetCloudletsV3()}
 	}
-	return &v2ActivationStrategy{client: Client(m), logger: logger}
+	return &v2ActivationStrategy{client: m.Client().GetCloudletsV2()}
 }
 
 func resourcePolicyActivationImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
@@ -368,7 +369,7 @@ func resourcePolicyActivationImport(ctx context.Context, d *schema.ResourceData,
 	}
 	network := parts[1]
 
-	strategy, _, err := discoverActivationStrategy(ctx, policyID, meta, logger)
+	strategy, _, err := discoverActivationStrategy(ctx, policyID, meta.Client())
 	if err != nil {
 		return nil, err
 	}
@@ -541,7 +542,7 @@ func statePolicyActivationNetwork(i interface{}) string {
 	return net
 }
 
-func syncToServerRemovedProperties(ctx context.Context, logger log.Interface, client cloudlets.Cloudlets, policyID int64, network cloudlets.PolicyActivationNetwork, activeProps, newPolicyProperties []string) ([]string, error) {
+func syncToServerRemovedProperties(ctx context.Context, client cloudlets.Cloudlets, policyID int64, network cloudlets.PolicyActivationNetwork, activeProps, newPolicyProperties []string) ([]string, error) {
 	policyProperties, err := client.GetPolicyProperties(ctx, cloudlets.GetPolicyPropertiesRequest{PolicyID: policyID})
 	if err != nil {
 		return nil, fmt.Errorf("%w: cannot find policy %d properties: %s", ErrPolicyActivation, policyID, err.Error())
@@ -557,18 +558,18 @@ activePropertiesLoop:
 		// find out property id
 		associateProperty, ok := policyProperties[activeProp]
 		if !ok {
-			logger.Warnf("Policy %d server side discrepancies: '%s' is not present in GetPolicyProperties response", policyID, activeProp)
+			tflog.Warn(ctx, fmt.Sprintf("Policy %d server side discrepancies: '%s' is not present in GetPolicyProperties response", policyID, activeProp))
 			continue activePropertiesLoop
 		}
 		propertyID := associateProperty.ID
 
 		// wait for removal until there aren't any pending activations
-		if err = waitForNotPendingPolicyActivation(ctx, logger, client, policyID, network); err != nil {
+		if err = waitForNotPendingPolicyActivation(ctx, client, policyID, network); err != nil {
 			return nil, err
 		}
 
 		// remove property from policy
-		logger.Debugf("proceeding to delete property '%s' from policy (ID=%d)", activeProp, policyID)
+		tflog.Debug(ctx, fmt.Sprintf("proceeding to delete property '%s' from policy (ID=%d)", activeProp, policyID))
 		if err := client.DeletePolicyProperty(ctx, cloudlets.DeletePolicyPropertyRequest{PolicyID: policyID, PropertyID: propertyID, Network: network}); err != nil {
 			return nil, fmt.Errorf("%w: cannot remove policy %d property %d and network '%s'. Please, try once again later.\n%s", ErrPolicyActivation, policyID, propertyID, network, err.Error())
 		}
@@ -576,7 +577,7 @@ activePropertiesLoop:
 	}
 
 	// wait for removal until there aren't any pending activations
-	if err = waitForNotPendingPolicyActivation(ctx, logger, client, policyID, network); err != nil {
+	if err = waitForNotPendingPolicyActivation(ctx, client, policyID, network); err != nil {
 		return nil, err
 	}
 
@@ -584,8 +585,8 @@ activePropertiesLoop:
 	return removedProperties, nil
 }
 
-func waitForNotPendingPolicyActivation(ctx context.Context, logger log.Interface, client cloudlets.Cloudlets, policyID int64, network cloudlets.PolicyActivationNetwork) error {
-	logger.Debugf("waiting until there none of the policy (ID=%d) activations are in pending state", policyID)
+func waitForNotPendingPolicyActivation(ctx context.Context, client cloudlets.Cloudlets, policyID int64, network cloudlets.PolicyActivationNetwork) error {
+	tflog.Debug(ctx, fmt.Sprintf("waiting until there none of the policy (ID=%d) activations are in pending state", policyID))
 	activations, err := waitForListPolicyActivations(ctx, client, cloudlets.ListPolicyActivationsRequest{PolicyID: policyID})
 	if err != nil {
 		return fmt.Errorf("%w: failed to list policy activations for policy %d: %s", ErrPolicyActivation, policyID, err.Error())
@@ -659,21 +660,20 @@ func waitForListPolicyActivations(ctx context.Context, client cloudlets.Cloudlet
 	return activations, nil
 }
 
-func discoverActivationStrategy(ctx context.Context, policyID int64, meta meta.Meta, logger log.Interface) (activationStrategy, bool, error) {
-	v2Client := Client(meta)
+func discoverActivationStrategy(ctx context.Context, policyID int64, client edgegrid.Client) (activationStrategy, bool, error) {
+	v2Client := client.GetCloudletsV2()
 	_, v2Err := v2Client.GetPolicy(ctx, cloudlets.GetPolicyRequest{PolicyID: policyID})
 	if v2Err == nil {
-		return &v2ActivationStrategy{client: v2Client, logger: logger}, false, nil
+		return &v2ActivationStrategy{client: v2Client}, false, nil
 	}
 
-	v3Client := ClientV3(meta)
+	v3Client := client.GetCloudletsV3()
 	_, V3err := v3Client.GetPolicy(ctx, v3.GetPolicyRequest{PolicyID: policyID})
 	if V3err == nil {
-		return &v3ActivationStrategy{client: v3Client, logger: logger}, true, nil
+		return &v3ActivationStrategy{client: v3Client}, true, nil
 	}
 
 	return nil, false, fmt.Errorf("could not get policy %d: neither as V2 (%s) nor as V3 (%s)", policyID, v2Err, V3err)
-
 }
 
 type activationStrategy interface {

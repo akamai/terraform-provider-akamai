@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudlets"
+	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -257,171 +258,163 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 
 	t.Run("load balancer lifecycle with create new version", func(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
-		client := new(cloudlets.Mock)
+		client := edgegrid.NewTestClient()
 
-		origin, lbVersion := expectCreateLoadBalancer(client, "test_origin", "", "test description", "WEIGHTED", 1, []string{"tf.test"})
+		origin, lbVersion := expectCreateLoadBalancer(client.CloudletsV2, "test_origin", "", "test description", "WEIGHTED", 1, []string{"tf.test"})
 
-		expectReadLoadBalancer(client, origin, lbVersion, 3)
+		expectReadLoadBalancer(client.CloudletsV2, origin, lbVersion, 3)
 
-		lbVersion = expectCreateLoadBalancerVersion(client, origin.OriginID, lbVersion, "PERFORMANCE", "test description updated")
+		lbVersion = expectCreateLoadBalancerVersion(client.CloudletsV2, origin.OriginID, lbVersion, "PERFORMANCE", "test description updated")
 
-		expectReadLoadBalancer(client, origin, lbVersion, 2)
+		expectReadLoadBalancer(client.CloudletsV2, origin, lbVersion, 2)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
-						Check: checkAttributes(loadBalancerAttributes{
-							originID:      "test_origin",
-							version:       "1",
-							description:   "test description",
-							balancingType: "WEIGHTED",
-						}),
-					},
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/alb_update.tf", testDir),
-						Check: checkAttributes(loadBalancerAttributes{
-							originID:      "test_origin",
-							version:       "2",
-							description:   "test description updated",
-							balancingType: "PERFORMANCE",
-						}),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
+					Check: checkAttributes(loadBalancerAttributes{
+						originID:      "test_origin",
+						version:       "1",
+						description:   "test description",
+						balancingType: "WEIGHTED",
+					}),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/alb_update.tf", testDir),
+					Check: checkAttributes(loadBalancerAttributes{
+						originID:      "test_origin",
+						version:       "2",
+						description:   "test description updated",
+						balancingType: "PERFORMANCE",
+					}),
+				},
+			},
 		})
-		client.AssertExpectations(t)
+		client.CloudletsV2.AssertExpectations(t)
 	})
 
 	t.Run("load balancer lifecycle with update existing version", func(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
-		client := new(cloudlets.Mock)
+		client := edgegrid.NewTestClient()
 
-		origin, lbVersion := expectCreateLoadBalancer(client, "test_origin", "", "test description", "WEIGHTED", 1, []string{"tf.test"})
+		origin, lbVersion := expectCreateLoadBalancer(client.CloudletsV2, "test_origin", "", "test description", "WEIGHTED", 1, []string{"tf.test"})
 
-		expectReadLoadBalancer(client, origin, lbVersion, 3)
+		expectReadLoadBalancer(client.CloudletsV2, origin, lbVersion, 3)
 
-		lbVersion = expectUpdateLoadBalancerVersion(client, origin.OriginID, lbVersion, "PERFORMANCE", "test description updated")
+		lbVersion = expectUpdateLoadBalancerVersion(client.CloudletsV2, origin.OriginID, lbVersion, "PERFORMANCE", "test description updated")
 
-		expectReadLoadBalancer(client, origin, lbVersion, 2)
+		expectReadLoadBalancer(client.CloudletsV2, origin, lbVersion, 2)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
-						Check: checkAttributes(loadBalancerAttributes{
-							originID:      "test_origin",
-							version:       "1",
-							description:   "test description",
-							balancingType: "WEIGHTED",
-						}),
-					},
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/alb_update.tf", testDir),
-						Check: checkAttributes(loadBalancerAttributes{
-							originID:      "test_origin",
-							version:       "1",
-							description:   "test description updated",
-							balancingType: "PERFORMANCE",
-						}),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
+					Check: checkAttributes(loadBalancerAttributes{
+						originID:      "test_origin",
+						version:       "1",
+						description:   "test description",
+						balancingType: "WEIGHTED",
+					}),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/alb_update.tf", testDir),
+					Check: checkAttributes(loadBalancerAttributes{
+						originID:      "test_origin",
+						version:       "1",
+						description:   "test description updated",
+						balancingType: "PERFORMANCE",
+					}),
+				},
+			},
 		})
-		client.AssertExpectations(t)
+		client.CloudletsV2.AssertExpectations(t)
 	})
 
 	t.Run("update only description", func(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle_origin_update"
-		client := new(cloudlets.Mock)
+		client := edgegrid.NewTestClient()
 
-		origin, lbVersion := expectCreateLoadBalancer(client, "test_origin", "", "test description", "WEIGHTED", 1, []string{"tf.test"})
+		origin, lbVersion := expectCreateLoadBalancer(client.CloudletsV2, "test_origin", "", "test description", "WEIGHTED", 1, []string{"tf.test"})
 
-		expectReadLoadBalancer(client, origin, lbVersion, 3)
+		expectReadLoadBalancer(client.CloudletsV2, origin, lbVersion, 3)
 
-		lbVersion = expectUpdateLoadBalancerVersion(client, origin.OriginID, lbVersion, "", "test description updated")
+		lbVersion = expectUpdateLoadBalancerVersion(client.CloudletsV2, origin.OriginID, lbVersion, "", "test description updated")
 
-		expectReadLoadBalancer(client, origin, lbVersion, 2)
+		expectReadLoadBalancer(client.CloudletsV2, origin, lbVersion, 2)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
-						Check: checkAttributes(loadBalancerAttributes{
-							originID:      "test_origin",
-							version:       "1",
-							description:   "test description",
-							balancingType: "WEIGHTED",
-						}),
-					},
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/alb_update.tf", testDir),
-						Check: checkAttributes(loadBalancerAttributes{
-							originID:      "test_origin",
-							version:       "1",
-							description:   "test description updated",
-							balancingType: "WEIGHTED",
-						}),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
+					Check: checkAttributes(loadBalancerAttributes{
+						originID:      "test_origin",
+						version:       "1",
+						description:   "test description",
+						balancingType: "WEIGHTED",
+					}),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/alb_update.tf", testDir),
+					Check: checkAttributes(loadBalancerAttributes{
+						originID:      "test_origin",
+						version:       "1",
+						description:   "test description updated",
+						balancingType: "WEIGHTED",
+					}),
+				},
+			},
 		})
-		client.AssertExpectations(t)
+		client.CloudletsV2.AssertExpectations(t)
 	})
 
 	t.Run("update only version", func(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle_version_update"
-		client := new(cloudlets.Mock)
+		client := edgegrid.NewTestClient()
 
-		origin, lbVersion := expectCreateLoadBalancer(client, "test_origin", "", "test description", "WEIGHTED", 1, []string{"tf.test"})
+		origin, lbVersion := expectCreateLoadBalancer(client.CloudletsV2, "test_origin", "", "test description", "WEIGHTED", 1, []string{"tf.test"})
 
-		expectReadLoadBalancer(client, origin, lbVersion, 3)
+		expectReadLoadBalancer(client.CloudletsV2, origin, lbVersion, 3)
 
-		lbVersion = expectUpdateLoadBalancerVersion(client, origin.OriginID, lbVersion, "PERFORMANCE", "")
+		lbVersion = expectUpdateLoadBalancerVersion(client.CloudletsV2, origin.OriginID, lbVersion, "PERFORMANCE", "")
 
-		expectReadLoadBalancer(client, origin, lbVersion, 2)
+		expectReadLoadBalancer(client.CloudletsV2, origin, lbVersion, 2)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
-						Check: checkAttributes(loadBalancerAttributes{
-							originID:      "test_origin",
-							version:       "1",
-							description:   "test description",
-							balancingType: "WEIGHTED",
-						}),
-					},
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/alb_update.tf", testDir),
-						Check: checkAttributes(loadBalancerAttributes{
-							originID:      "test_origin",
-							version:       "1",
-							description:   "test description",
-							balancingType: "PERFORMANCE",
-						}),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
+					Check: checkAttributes(loadBalancerAttributes{
+						originID:      "test_origin",
+						version:       "1",
+						description:   "test description",
+						balancingType: "WEIGHTED",
+					}),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/alb_update.tf", testDir),
+					Check: checkAttributes(loadBalancerAttributes{
+						originID:      "test_origin",
+						version:       "1",
+						description:   "test description",
+						balancingType: "PERFORMANCE",
+					}),
+				},
+			},
 		})
-		client.AssertExpectations(t)
+		client.CloudletsV2.AssertExpectations(t)
 	})
 
 	t.Run("update version + empty liveness_settings", func(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle_no_liveness_settings"
-		client := new(cloudlets.Mock)
+		client := edgegrid.NewTestClient()
 
-		origin, lbVersion := expectCreateLoadBalancer(client, "test_origin", "", "test description", "WEIGHTED", 1, []string{"tf.test"})
+		origin, lbVersion := expectCreateLoadBalancer(client.CloudletsV2, "test_origin", "", "test description", "WEIGHTED", 1, []string{"tf.test"})
 
-		expectReadLoadBalancer(client, origin, lbVersion, 3)
+		expectReadLoadBalancer(client.CloudletsV2, origin, lbVersion, 3)
 
 		// no liveness_settings for update
 		var lbVersionUpdate cloudlets.LoadBalancerVersion
@@ -431,41 +424,39 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 		lbVersionUpdate.LivenessSettings = nil
 		lbVersionUpdate.Description = "test description updated"
 
-		lbVersionUpdate = *expectUpdateLoadBalancerVersion(client, origin.OriginID, &lbVersionUpdate, "PERFORMANCE", "")
+		lbVersionUpdate = *expectUpdateLoadBalancerVersion(client.CloudletsV2, origin.OriginID, &lbVersionUpdate, "PERFORMANCE", "")
 
-		expectReadLoadBalancer(client, origin, &lbVersionUpdate, 2)
+		expectReadLoadBalancer(client.CloudletsV2, origin, &lbVersionUpdate, 2)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
-						Check: checkAttributes(loadBalancerAttributes{
-							originID:      "test_origin",
-							version:       "1",
-							description:   "test description",
-							balancingType: "WEIGHTED",
-						}),
-					},
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/alb_update.tf", testDir),
-						Check: checkAttributes(loadBalancerAttributes{
-							originID:      "test_origin",
-							version:       "1",
-							description:   "test description updated",
-							balancingType: "PERFORMANCE",
-						}),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
+					Check: checkAttributes(loadBalancerAttributes{
+						originID:      "test_origin",
+						version:       "1",
+						description:   "test description",
+						balancingType: "WEIGHTED",
+					}),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/alb_update.tf", testDir),
+					Check: checkAttributes(loadBalancerAttributes{
+						originID:      "test_origin",
+						version:       "1",
+						description:   "test description updated",
+						balancingType: "PERFORMANCE",
+					}),
+				},
+			},
 		})
-		client.AssertExpectations(t)
+		client.CloudletsV2.AssertExpectations(t)
 	})
 
 	t.Run("error creating origin", func(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
-		client := new(cloudlets.Mock)
+		client := edgegrid.NewTestClient()
 
 		origins := []cloudlets.OriginResponse{
 			{
@@ -476,27 +467,25 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 				},
 			},
 		}
-		client.On("ListOrigins", testutils.MockContext, mock.Anything).Return(origins, nil).Once()
+		client.CloudletsV2.On("ListOrigins", testutils.MockContext, mock.Anything).Return(origins, nil).Once()
 
-		client.On("CreateOrigin", testutils.MockContext, cloudlets.CreateOriginRequest{OriginID: "test_origin"}).Return(nil, fmt.Errorf("creating origin")).Once()
+		client.CloudletsV2.On("CreateOrigin", testutils.MockContext, cloudlets.CreateOriginRequest{OriginID: "test_origin"}).Return(nil, fmt.Errorf("creating origin")).Once()
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
-						ExpectError: regexp.MustCompile("creating origin"),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
+					ExpectError: regexp.MustCompile("creating origin"),
 				},
-			})
+			},
 		})
-		client.AssertExpectations(t)
+		client.CloudletsV2.AssertExpectations(t)
 	})
 
 	t.Run("error creating origin which already exist", func(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
-		client := new(cloudlets.Mock)
+		client := edgegrid.NewTestClient()
 
 		origins := []cloudlets.OriginResponse{
 			{
@@ -507,25 +496,23 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 				},
 			},
 		}
-		client.On("ListOrigins", testutils.MockContext, mock.Anything).Return(origins, nil).Once()
+		client.CloudletsV2.On("ListOrigins", testutils.MockContext, mock.Anything).Return(origins, nil).Once()
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
-						ExpectError: regexp.MustCompile("already exists"),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
+					ExpectError: regexp.MustCompile("already exists"),
 				},
-			})
+			},
 		})
-		client.AssertExpectations(t)
+		client.CloudletsV2.AssertExpectations(t)
 	})
 
 	t.Run("error creating version", func(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
-		client := new(cloudlets.Mock)
+		client := edgegrid.NewTestClient()
 
 		origins := []cloudlets.OriginResponse{
 			{
@@ -536,9 +523,9 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 				},
 			},
 		}
-		client.On("ListOrigins", testutils.MockContext, mock.Anything).Return(origins, nil).Once()
+		client.CloudletsV2.On("ListOrigins", testutils.MockContext, mock.Anything).Return(origins, nil).Once()
 
-		client.On("CreateOrigin", testutils.MockContext, cloudlets.CreateOriginRequest{OriginID: "test_origin"}).Return(&cloudlets.Origin{OriginID: "test_origin"}, nil).Once()
+		client.CloudletsV2.On("CreateOrigin", testutils.MockContext, cloudlets.CreateOriginRequest{OriginID: "test_origin"}).Return(&cloudlets.Origin{OriginID: "test_origin"}, nil).Once()
 
 		loadBalancerVersionReq := cloudlets.LoadBalancerVersion{
 			Description:   "test description",
@@ -570,257 +557,241 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 				Timeout:           60,
 			},
 		}
-		client.On("CreateLoadBalancerVersion", testutils.MockContext, cloudlets.CreateLoadBalancerVersionRequest{
+		client.CloudletsV2.On("CreateLoadBalancerVersion", testutils.MockContext, cloudlets.CreateLoadBalancerVersionRequest{
 			OriginID:            "test_origin",
 			LoadBalancerVersion: loadBalancerVersionReq,
 		}).Return(nil, fmt.Errorf("creating version")).Once()
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
-						ExpectError: regexp.MustCompile("creating version"),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
+					ExpectError: regexp.MustCompile("creating version"),
 				},
-			})
+			},
 		})
-		client.AssertExpectations(t)
+		client.CloudletsV2.AssertExpectations(t)
 	})
 
 	t.Run("load balancer lifecycle with create new version", func(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
-		client := new(cloudlets.Mock)
+		client := edgegrid.NewTestClient()
 
-		origin, lbVersion := expectCreateLoadBalancer(client, "test_origin", "", "test description", "WEIGHTED", 1, []string{"tf.test"})
+		origin, lbVersion := expectCreateLoadBalancer(client.CloudletsV2, "test_origin", "", "test description", "WEIGHTED", 1, []string{"tf.test"})
 
-		expectReadLoadBalancer(client, origin, lbVersion, 3)
+		expectReadLoadBalancer(client.CloudletsV2, origin, lbVersion, 3)
 
-		lbVersion = expectCreateLoadBalancerVersion(client, origin.OriginID, lbVersion, "PERFORMANCE", "test description updated")
+		lbVersion = expectCreateLoadBalancerVersion(client.CloudletsV2, origin.OriginID, lbVersion, "PERFORMANCE", "test description updated")
 
-		expectReadLoadBalancer(client, origin, lbVersion, 2)
+		expectReadLoadBalancer(client.CloudletsV2, origin, lbVersion, 2)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
-						Check: checkAttributes(loadBalancerAttributes{
-							originID:      "test_origin",
-							version:       "1",
-							description:   "test description",
-							balancingType: "WEIGHTED",
-						}),
-					},
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/alb_update.tf", testDir),
-						Check: checkAttributes(loadBalancerAttributes{
-							originID:      "test_origin",
-							version:       "2",
-							description:   "test description updated",
-							balancingType: "PERFORMANCE",
-						}),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
+					Check: checkAttributes(loadBalancerAttributes{
+						originID:      "test_origin",
+						version:       "1",
+						description:   "test description",
+						balancingType: "WEIGHTED",
+					}),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/alb_update.tf", testDir),
+					Check: checkAttributes(loadBalancerAttributes{
+						originID:      "test_origin",
+						version:       "2",
+						description:   "test description updated",
+						balancingType: "PERFORMANCE",
+					}),
+				},
+			},
 		})
-		client.AssertExpectations(t)
+		client.CloudletsV2.AssertExpectations(t)
 	})
 
 	t.Run("load balancer lifecycle with origin description", func(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle_origin_desc"
-		client := new(cloudlets.Mock)
+		client := edgegrid.NewTestClient()
 
-		origin, lbVersion := expectCreateLoadBalancer(client, "test_origin", "origin description", "test description", "WEIGHTED", 1, []string{"tf.test"})
+		origin, lbVersion := expectCreateLoadBalancer(client.CloudletsV2, "test_origin", "origin description", "test description", "WEIGHTED", 1, []string{"tf.test"})
 
-		expectReadLoadBalancer(client, origin, lbVersion, 3)
+		expectReadLoadBalancer(client.CloudletsV2, origin, lbVersion, 3)
 
-		origin = expectOriginDescriptionUpdate(client, origin, "update origin description")
-		lbVersion = expectCreateLoadBalancerVersion(client, origin.OriginID, lbVersion, "PERFORMANCE", "test description updated")
+		origin = expectOriginDescriptionUpdate(client.CloudletsV2, origin, "update origin description")
+		lbVersion = expectCreateLoadBalancerVersion(client.CloudletsV2, origin.OriginID, lbVersion, "PERFORMANCE", "test description updated")
 
-		expectReadLoadBalancer(client, origin, lbVersion, 2)
+		expectReadLoadBalancer(client.CloudletsV2, origin, lbVersion, 2)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
-						Check: checkAttributes(loadBalancerAttributes{
-							originID:          "test_origin",
-							version:           "1",
-							originDescription: "origin description",
-							description:       "test description",
-							balancingType:     "WEIGHTED",
-						}),
-					},
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/alb_update.tf", testDir),
-						Check: checkAttributes(loadBalancerAttributes{
-							originID:          "test_origin",
-							version:           "2",
-							originDescription: "update origin description",
-							description:       "test description updated",
-							balancingType:     "PERFORMANCE",
-						}),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
+					Check: checkAttributes(loadBalancerAttributes{
+						originID:          "test_origin",
+						version:           "1",
+						originDescription: "origin description",
+						description:       "test description",
+						balancingType:     "WEIGHTED",
+					}),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/alb_update.tf", testDir),
+					Check: checkAttributes(loadBalancerAttributes{
+						originID:          "test_origin",
+						version:           "2",
+						originDescription: "update origin description",
+						description:       "test description updated",
+						balancingType:     "PERFORMANCE",
+					}),
+				},
+			},
 		})
-		client.AssertExpectations(t)
+		client.CloudletsV2.AssertExpectations(t)
 	})
 
 	t.Run("error fetching version", func(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
-		client := new(cloudlets.Mock)
+		client := edgegrid.NewTestClient()
 
-		origin, _ := expectCreateLoadBalancer(client, "test_origin", "", "test description", "WEIGHTED", 1, []string{"tf.test"})
+		origin, _ := expectCreateLoadBalancer(client.CloudletsV2, "test_origin", "", "test description", "WEIGHTED", 1, []string{"tf.test"})
 
-		client.On("GetOrigin", testutils.MockContext, cloudlets.GetOriginRequest{
+		client.CloudletsV2.On("GetOrigin", testutils.MockContext, cloudlets.GetOriginRequest{
 			OriginID: "test_origin",
 		}).Return(origin, nil).Once()
 
-		client.On("GetLoadBalancerVersion", testutils.MockContext, cloudlets.GetLoadBalancerVersionRequest{
+		client.CloudletsV2.On("GetLoadBalancerVersion", testutils.MockContext, cloudlets.GetLoadBalancerVersionRequest{
 			OriginID:       "test_origin",
 			Version:        1,
 			ShouldValidate: true,
 		}).Return(nil, fmt.Errorf("fetching version")).Once()
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
-						ExpectError: regexp.MustCompile("fetching version"),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
+					ExpectError: regexp.MustCompile("fetching version"),
 				},
-			})
+			},
 		})
-		client.AssertExpectations(t)
+		client.CloudletsV2.AssertExpectations(t)
 	})
 
 	t.Run("import load balancer", func(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
-		client := new(cloudlets.Mock)
+		client := edgegrid.NewTestClient()
 
-		origin, lbVersion := expectCreateLoadBalancer(client, "test_origin", "", "test description", "WEIGHTED", 1, []string{"tf.test"})
+		origin, lbVersion := expectCreateLoadBalancer(client.CloudletsV2, "test_origin", "", "test description", "WEIGHTED", 1, []string{"tf.test"})
 
-		expectReadLoadBalancer(client, origin, lbVersion, 3)
+		expectReadLoadBalancer(client.CloudletsV2, origin, lbVersion, 3)
 
-		expectImportLoadBalancer(client, origin, 1)
+		expectImportLoadBalancer(client.CloudletsV2, origin, 1)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
-					},
-					{
-						ImportState:       true,
-						ImportStateId:     "test_origin",
-						ResourceName:      "akamai_cloudlets_application_load_balancer.alb",
-						ImportStateVerify: true,
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
 				},
-			})
+				{
+					ImportState:       true,
+					ImportStateId:     "test_origin",
+					ResourceName:      "akamai_cloudlets_application_load_balancer.alb",
+					ImportStateVerify: true,
+				},
+			},
 		})
-		client.AssertExpectations(t)
+		client.CloudletsV2.AssertExpectations(t)
 	})
 
 	t.Run("error importing load balancer not found", func(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
-		client := new(cloudlets.Mock)
+		client := edgegrid.NewTestClient()
 
-		origin, lbVersion := expectCreateLoadBalancer(client, "test_origin", "", "test description", "WEIGHTED", 1, []string{"tf.test"})
+		origin, lbVersion := expectCreateLoadBalancer(client.CloudletsV2, "test_origin", "", "test description", "WEIGHTED", 1, []string{"tf.test"})
 
-		expectReadLoadBalancer(client, origin, lbVersion, 2)
+		expectReadLoadBalancer(client.CloudletsV2, origin, lbVersion, 2)
 
-		client.On("GetOrigin", testutils.MockContext, cloudlets.GetOriginRequest{OriginID: "not_existing_test_origin"}).Return(nil, fmt.Errorf("could not find origin with origin_id: not_existing_test_origin")).Once()
+		client.CloudletsV2.On("GetOrigin", testutils.MockContext, cloudlets.GetOriginRequest{OriginID: "not_existing_test_origin"}).Return(nil, fmt.Errorf("could not find origin with origin_id: not_existing_test_origin")).Once()
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
-					},
-					{
-						ImportState:   true,
-						ImportStateId: "not_existing_test_origin",
-						ResourceName:  "akamai_cloudlets_application_load_balancer.alb",
-						ExpectError:   regexp.MustCompile("could not find origin with origin_id: not_existing_test_origin"),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
 				},
-			})
+				{
+					ImportState:   true,
+					ImportStateId: "not_existing_test_origin",
+					ResourceName:  "akamai_cloudlets_application_load_balancer.alb",
+					ExpectError:   regexp.MustCompile("could not find origin with origin_id: not_existing_test_origin"),
+				},
+			},
 		})
-		client.AssertExpectations(t)
+		client.CloudletsV2.AssertExpectations(t)
 	})
 
 	t.Run("error importing load balancer origin_id cannot be empty", func(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
-		client := new(cloudlets.Mock)
+		client := edgegrid.NewTestClient()
 
-		origin, lbVersion := expectCreateLoadBalancer(client, "test_origin", "", "test description", "WEIGHTED", 1, []string{"tf.test"})
+		origin, lbVersion := expectCreateLoadBalancer(client.CloudletsV2, "test_origin", "", "test description", "WEIGHTED", 1, []string{"tf.test"})
 
-		expectReadLoadBalancer(client, origin, lbVersion, 2)
+		expectReadLoadBalancer(client.CloudletsV2, origin, lbVersion, 2)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
-					},
-					{
-						ImportState: true,
-						ImportStateIdFunc: func(_ *terraform.State) (string, error) {
-							return "", nil
-						},
-						ResourceName: "akamai_cloudlets_application_load_balancer.alb",
-						ExpectError:  regexp.MustCompile("the origin ID cannot be empty"),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
 				},
-			})
+				{
+					ImportState: true,
+					ImportStateIdFunc: func(_ *terraform.State) (string, error) {
+						return "", nil
+					},
+					ResourceName: "akamai_cloudlets_application_load_balancer.alb",
+					ExpectError:  regexp.MustCompile("the origin ID cannot be empty"),
+				},
+			},
 		})
-		client.AssertExpectations(t)
+		client.CloudletsV2.AssertExpectations(t)
 	})
 
 	t.Run("error importing load balancer no version found", func(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
-		client := new(cloudlets.Mock)
+		client := edgegrid.NewTestClient()
 
-		origin, lbVersion := expectCreateLoadBalancer(client, "test_origin", "", "test description", "WEIGHTED", 1, []string{"tf.test"})
+		origin, lbVersion := expectCreateLoadBalancer(client.CloudletsV2, "test_origin", "", "test description", "WEIGHTED", 1, []string{"tf.test"})
 
-		expectReadLoadBalancer(client, origin, lbVersion, 2)
+		expectReadLoadBalancer(client.CloudletsV2, origin, lbVersion, 2)
 
-		expectImportLoadBalancer(client, origin, 0)
+		expectImportLoadBalancer(client.CloudletsV2, origin, 0)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
-					},
-					{
-						ImportState:   true,
-						ImportStateId: "test_origin",
-						ResourceName:  "akamai_cloudlets_application_load_balancer.alb",
-						ExpectError:   regexp.MustCompile("no load balancer version found for the origin_id: test_origin"),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
 				},
-			})
+				{
+					ImportState:   true,
+					ImportStateId: "test_origin",
+					ResourceName:  "akamai_cloudlets_application_load_balancer.alb",
+					ExpectError:   regexp.MustCompile("no load balancer version found for the origin_id: test_origin"),
+				},
+			},
 		})
-		client.AssertExpectations(t)
+		client.CloudletsV2.AssertExpectations(t)
 	})
 
 	t.Run("error creating origin with akamaized dc", func(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle"
-		client := new(cloudlets.Mock)
+		client := edgegrid.NewTestClient()
 
 		origins := []cloudlets.OriginResponse{
 			{
@@ -831,30 +802,28 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 				},
 			},
 		}
-		client.On("ListOrigins", testutils.MockContext, mock.Anything).Return(origins, nil).Once()
+		client.CloudletsV2.On("ListOrigins", testutils.MockContext, mock.Anything).Return(origins, nil).Once()
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
-						ExpectError: regexp.MustCompile("'liveness_hosts' field should be omitted for GTM hostname: \"test-hostname\". " +
-							"Liveness tests for this host can be configured in DNS traffic management"),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
+					ExpectError: regexp.MustCompile("'liveness_hosts' field should be omitted for GTM hostname: \"test-hostname\". " +
+						"Liveness tests for this host can be configured in DNS traffic management"),
 				},
-			})
+			},
 		})
-		client.AssertExpectations(t)
+		client.CloudletsV2.AssertExpectations(t)
 	})
 
 	t.Run("error updating origin with akamized dc", func(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/lifecycle_dc_update"
-		client := new(cloudlets.Mock)
+		client := edgegrid.NewTestClient()
 
-		origin, lbVersion := expectCreateLoadBalancer(client, "test_origin", "", "test description", "WEIGHTED", 1, []string{})
+		origin, lbVersion := expectCreateLoadBalancer(client.CloudletsV2, "test_origin", "", "test description", "WEIGHTED", 1, []string{})
 
-		expectReadLoadBalancer(client, origin, lbVersion, 3)
+		expectReadLoadBalancer(client.CloudletsV2, origin, lbVersion, 3)
 
 		origins := []cloudlets.OriginResponse{
 			{
@@ -872,41 +841,37 @@ func TestResourceApplicationLoadBalancer(t *testing.T) {
 				},
 			},
 		}
-		client.On("ListOrigins", testutils.MockContext, mock.Anything).Return(origins, nil).Once()
+		client.CloudletsV2.On("ListOrigins", testutils.MockContext, mock.Anything).Return(origins, nil).Once()
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
-					},
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/alb_update.tf", testDir),
-						ExpectError: regexp.MustCompile("'liveness_hosts' field should be omitted for GTM hostname: \"test-hostname\". " +
-							"Liveness tests for this host can be configured in DNS traffic management"),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/alb_update.tf", testDir),
+					ExpectError: regexp.MustCompile("'liveness_hosts' field should be omitted for GTM hostname: \"test-hostname\". " +
+						"Liveness tests for this host can be configured in DNS traffic management"),
+				},
+			},
 		})
-		client.AssertExpectations(t)
+		client.CloudletsV2.AssertExpectations(t)
 	})
 
 	t.Run("error creating origin with sum of percentages other than 100", func(t *testing.T) {
 		testDir := "testdata/TestResLoadBalancerConfig/percentage_validation"
-		client := new(cloudlets.Mock)
+		client := edgegrid.NewTestClient()
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
-						ExpectError: regexp.MustCompile("the total data center percentage must be 100%: total=10.012%"),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureStringf(t, "%s/alb_create.tf", testDir),
+					ExpectError: regexp.MustCompile("the total data center percentage must be 100%: total=10.012%"),
 				},
-			})
+			},
 		})
-		client.AssertExpectations(t)
+		client.CloudletsV2.AssertExpectations(t)
 	})
 }

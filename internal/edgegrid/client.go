@@ -3,6 +3,8 @@ package edgegrid
 
 import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudcertificates"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudlets"
+	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudlets/v3"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cps"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/domainownership"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/hapi"
@@ -16,11 +18,15 @@ import (
 type Client interface {
 	GetCloudCertificates() cloudcertificates.CloudCertificates
 
+	GetCloudletsV2() cloudlets.Cloudlets
+
+	GetCloudletsV3() v3.Cloudlets
+
+	GetCPS() cps.CPS
+
 	GetDomainOwnership() domainownership.DomainOwnership
 
 	GetHAPI() hapi.HAPI
-
-	GetCPS() cps.CPS
 
 	GetIAM() iam.IAM
 
@@ -50,6 +56,21 @@ func (c *ClientImpl) GetCloudCertificates() cloudcertificates.CloudCertificates 
 	return cloudcertificates.Client(c.sess)
 }
 
+// GetCloudletsV2 returns the Cloudlets V2 client for managing cloudlets.
+func (c *ClientImpl) GetCloudletsV2() cloudlets.Cloudlets {
+	return cloudlets.Client(c.sess)
+}
+
+// GetCloudletsV3 returns the Cloudlets V3 client for managing cloudlets.
+func (c *ClientImpl) GetCloudletsV3() v3.Cloudlets {
+	return v3.Client(c.sess)
+}
+
+// GetCPS returns the CPS client for managing certificates.
+func (c *ClientImpl) GetCPS() cps.CPS {
+	return cps.Client(c.sess)
+}
+
 // GetDomainOwnership returns the Domain Ownership client for managing domain ownership.
 func (c *ClientImpl) GetDomainOwnership() domainownership.DomainOwnership {
 	return domainownership.Client(c.sess)
@@ -58,11 +79,6 @@ func (c *ClientImpl) GetDomainOwnership() domainownership.DomainOwnership {
 // GetHAPI returns the HAPI client for managing hostnames APIs.
 func (c *ClientImpl) GetHAPI() hapi.HAPI {
 	return hapi.Client(c.sess)
-}
-
-// GetCPS returns the CPS client for managing certificates.
-func (c *ClientImpl) GetCPS() cps.CPS {
-	return cps.Client(c.sess)
 }
 
 // GetIAM returns the IAM client for managing identity and access management.

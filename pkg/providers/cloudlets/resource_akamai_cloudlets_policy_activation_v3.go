@@ -9,14 +9,12 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudlets"
 	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudlets/v3"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/log"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 type v3ActivationStrategy struct {
 	client       v3.Cloudlets
-	logger       log.Interface
 	network      v3.Network
 	activationID int64
 }

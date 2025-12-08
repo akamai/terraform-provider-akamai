@@ -2,6 +2,8 @@ package edgegrid
 
 import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudcertificates"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudlets"
+	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudlets/v3"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cps"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/domainownership"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/hapi"
@@ -17,6 +19,8 @@ var (
 // TestClient is a mock implementation of the Client interface for testing purposes.
 type TestClient struct {
 	CloudCertificates *cloudcertificates.Mock
+	CloudletsV2       *cloudlets.Mock
+	CloudletsV3       *v3.Mock
 	CPS               *cps.Mock
 	DomainOwnership   *domainownership.Mock
 	HAPI              *hapi.Mock
@@ -29,6 +33,8 @@ type TestClient struct {
 func NewTestClient() *TestClient {
 	return &TestClient{
 		CloudCertificates: &cloudcertificates.Mock{},
+		CloudletsV2:       &cloudlets.Mock{},
+		CloudletsV3:       &v3.Mock{},
 		CPS:               &cps.Mock{},
 		DomainOwnership:   &domainownership.Mock{},
 		HAPI:              &hapi.Mock{},
@@ -41,6 +47,16 @@ func NewTestClient() *TestClient {
 // GetCloudCertificates returns the mock CCM client.
 func (c *TestClient) GetCloudCertificates() cloudcertificates.CloudCertificates {
 	return c.CloudCertificates
+}
+
+// GetCloudletsV2 returns the mock Cloudlets V2 client.
+func (c *TestClient) GetCloudletsV2() cloudlets.Cloudlets {
+	return c.CloudletsV2
+}
+
+// GetCloudletsV3 returns the mock Cloudlets V3 client.
+func (c *TestClient) GetCloudletsV3() v3.Cloudlets {
+	return c.CloudletsV3
 }
 
 // GetCPS returns the mock CPS client.

@@ -6,9 +6,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudlets"
-	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudlets/v3"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/subprovider"
 )
 
@@ -17,34 +14,11 @@ type (
 	Subprovider struct{}
 )
 
-var (
-	_ subprovider.Subprovider = &Subprovider{}
-)
-
-var (
-	client   cloudlets.Cloudlets
-	v3Client v3.Cloudlets
-)
+var _ subprovider.Subprovider = &Subprovider{}
 
 // NewSubprovider returns a new cloudlets subprovider
 func NewSubprovider() *Subprovider {
 	return &Subprovider{}
-}
-
-// Client returns the cloudlets interface
-func Client(meta meta.Meta) cloudlets.Cloudlets {
-	if client != nil {
-		return client
-	}
-	return cloudlets.Client(meta.Session())
-}
-
-// ClientV3 returns the cloudlets v3 interface
-func ClientV3(meta meta.Meta) v3.Cloudlets {
-	if v3Client != nil {
-		return v3Client
-	}
-	return v3.Client(meta.Session())
 }
 
 // SDKResources returns the cloudlets resources implemented using terraform-plugin-sdk

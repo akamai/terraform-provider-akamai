@@ -8,6 +8,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudlets"
 	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudlets/v3"
+	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -43,7 +44,7 @@ func TestNonSharedPolicyActivationDataSource(t *testing.T) {
 		config      string
 		data        testDataForNonSharedPolicyActivation
 		expectError *regexp.Regexp
-		init        func(*cloudlets.Mock, testDataForNonSharedPolicyActivation)
+		init        func(*cloudlets.Mock, *v3.Mock, testDataForNonSharedPolicyActivation)
 		check       resource.TestCheckFunc
 	}{
 		"no property id": {
@@ -65,7 +66,7 @@ func TestNonSharedPolicyActivationDataSource(t *testing.T) {
 				network:     cloudlets.PolicyActivationNetworkStaging,
 				properties:  []string{"prp_0", "prp_1"},
 			},
-			init: func(m2 *cloudlets.Mock, data testDataForNonSharedPolicyActivation) {
+			init: func(m2 *cloudlets.Mock, _ *v3.Mock, data testDataForNonSharedPolicyActivation) {
 				mockGetPolicyV2(m2, data, nil, 1)
 				expectListPolicyActivations(m2, data.policyID, data.version, data.network, data.properties, cloudlets.PolicyActivationStatusActive, "", 0, nil).Times(1)
 			},
@@ -82,7 +83,7 @@ func TestNonSharedPolicyActivationDataSource(t *testing.T) {
 				network:     cloudlets.PolicyActivationNetworkStaging,
 				properties:  []string{"prp_0", "prp_1"},
 			},
-			init: func(m2 *cloudlets.Mock, data testDataForNonSharedPolicyActivation) {
+			init: func(m2 *cloudlets.Mock, _ *v3.Mock, data testDataForNonSharedPolicyActivation) {
 				mockGetPolicyV2(m2, data, nil, 3)
 				expectListPolicyActivations(m2, data.policyID, data.version, data.network, data.properties, cloudlets.PolicyActivationStatusActive, "", 1, nil).Times(3)
 			},
@@ -116,30 +117,30 @@ func TestNonSharedPolicyActivationDataSource(t *testing.T) {
 				},
 			},
 			expectError: regexp.MustCompile(`Error: Reading Policy Failed`),
-			init: func(m2 *cloudlets.Mock, data testDataForNonSharedPolicyActivation) {
+			init: func(m2 *cloudlets.Mock, m3 *v3.Mock, data testDataForNonSharedPolicyActivation) {
 				mockGetPolicyV2WithError(m2, data.policyID, &cloudlets.Error{StatusCode: http.StatusNotFound}, 1)
+				mockGetPolicyV3WithError(m3, data.policyID, &cloudlets.Error{StatusCode: http.StatusNotFound}, 1)
 			},
 		},
 	}
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			clientV2 := &cloudlets.Mock{}
+			client := edgegrid.NewTestClient()
 			if test.init != nil {
-				test.init(clientV2, test.data)
+				test.init(client.CloudletsV2, client.CloudletsV3, test.data)
 			}
-			useClient(clientV2, func() {
-				resource.Test(t, resource.TestCase{
-					IsUnitTest:               true,
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{{
-						Config:      testutils.LoadFixtureStringf(t, "testdata/TestDataCloudletsPolicyActivation/%s", test.config),
-						Check:       test.check,
-						ExpectError: test.expectError,
-					}},
-				})
+			resource.Test(t, resource.TestCase{
+				IsUnitTest:               true,
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				Steps: []resource.TestStep{{
+					Config:      testutils.LoadFixtureStringf(t, "testdata/TestDataCloudletsPolicyActivation/%s", test.config),
+					Check:       test.check,
+					ExpectError: test.expectError,
+				}},
 			})
-			clientV2.AssertExpectations(t)
+			client.CloudletsV2.AssertExpectations(t)
+			client.CloudletsV3.AssertExpectations(t)
 		})
 	}
 }
@@ -387,24 +388,21 @@ func TestSharedPolicyActivationDataSource(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			clientV2 := &cloudlets.Mock{}
-			clientV3 := &v3.Mock{}
+			client := edgegrid.NewTestClient()
 			if test.init != nil {
-				test.init(clientV2, clientV3, test.data)
+				test.init(client.CloudletsV2, client.CloudletsV3, test.data)
 			}
-			useClientV2AndV3(clientV2, clientV3, func() {
-				resource.Test(t, resource.TestCase{
-					IsUnitTest:               true,
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{{
-						Config:      testutils.LoadFixtureStringf(t, "testdata/TestDataCloudletsPolicyActivation/%s", test.config),
-						Check:       test.check,
-						ExpectError: test.expectError,
-					}},
-				})
+			resource.Test(t, resource.TestCase{
+				IsUnitTest:               true,
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				Steps: []resource.TestStep{{
+					Config:      testutils.LoadFixtureStringf(t, "testdata/TestDataCloudletsPolicyActivation/%s", test.config),
+					Check:       test.check,
+					ExpectError: test.expectError,
+				}},
 			})
-			clientV2.AssertExpectations(t)
-			clientV3.AssertExpectations(t)
+			client.CloudletsV2.AssertExpectations(t)
+			client.CloudletsV3.AssertExpectations(t)
 		})
 	}
 }

@@ -150,7 +150,7 @@ func (strategy v3PolicyStrategy) deletePolicy(ctx context.Context, policyID int6
 }
 
 func (strategy v3PolicyStrategy) getVersionStrategy(meta meta.Meta) versionStrategy {
-	return v3VersionStrategy{ClientV3(meta)}
+	return v3VersionStrategy{meta.Client().GetCloudletsV3()}
 }
 
 func (strategy v3PolicyStrategy) setPolicyType(d *schema.ResourceData) error {

@@ -126,7 +126,7 @@ func resourceApplicationLoadBalancerActivationUpdate(ctx context.Context, rd *sc
 	logger.Debugf("version number or network has changed: proceeding to update application load balancer activation version")
 
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := Client(meta)
+	client := meta.Client().GetCloudletsV2()
 
 	activation, err := resourceApplicationLoadBalancerActivationChange(ctx, rd, logger, client)
 	if err != nil {
@@ -140,7 +140,7 @@ func resourceApplicationLoadBalancerActivationCreate(ctx context.Context, rd *sc
 	meta := meta.Must(m)
 	logger := meta.Log("Cloudlets", "resourceApplicationLoadBalancerActivationCreate")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := Client(meta)
+	client := meta.Client().GetCloudletsV2()
 
 	logger.Debug("Creating an application load balancer activation.")
 
@@ -157,7 +157,7 @@ func resourceApplicationLoadBalancerActivationImport(ctx context.Context, rd *sc
 	logger := meta.Log("Cloudlets", "resourceApplicationLoadBalancerActivationImport")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 	logger.Debug("Importing an application load balancer activation.")
-	client := Client(meta)
+	client := meta.Client().GetCloudletsV2()
 
 	parts := strings.Split(rd.Id(), ",")
 	if len(parts) != 3 {
@@ -299,7 +299,7 @@ func resourceApplicationLoadBalancerActivationRead(ctx context.Context, rd *sche
 	meta := meta.Must(m)
 	logger := meta.Log("Cloudlets", "resourceApplicationLoadBalancerActivationRead")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := Client(meta)
+	client := meta.Client().GetCloudletsV2()
 
 	logger.Debug("Reading application load balancer activations.")
 

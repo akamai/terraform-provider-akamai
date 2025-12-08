@@ -9,6 +9,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudlets"
 	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudlets/v3"
+	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
@@ -1017,16 +1018,14 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &cloudlets.Mock{}
-			test.init(client)
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps:                    test.steps,
-				})
+			client := edgegrid.NewTestClient()
+			test.init(client.CloudletsV2)
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+				IsUnitTest:               true,
+				Steps:                    test.steps,
 			})
-			client.AssertExpectations(t)
+			client.CloudletsV2.AssertExpectations(t)
 		})
 	}
 }
@@ -1744,18 +1743,15 @@ func TestResourceV3CloudletsPolicyActivation(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			v2Client := &cloudlets.Mock{}
-			v3client := &v3.Mock{}
-			test.init(v2Client, v3client)
-			useClientV2AndV3(v2Client, v3client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps:                    test.steps,
-				})
+			client := edgegrid.NewTestClient()
+			test.init(client.CloudletsV2, client.CloudletsV3)
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+				IsUnitTest:               true,
+				Steps:                    test.steps,
 			})
-			v2Client.AssertExpectations(t)
-			v3client.AssertExpectations(t)
+			client.CloudletsV2.AssertExpectations(t)
+			client.CloudletsV3.AssertExpectations(t)
 		})
 	}
 }
