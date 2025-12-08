@@ -36,7 +36,7 @@ func NewSubprovider() *Subprovider {
 func (p *Subprovider) SDKResources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
 		"akamai_cloudlets_application_load_balancer":            resourceCloudletsApplicationLoadBalancer(),
-		"akamai_cloudlets_application_load_balancer_activation": resourceCloudletsApplicationLoadBalancerActivation(),
+		"akamai_cloudlets_application_load_balancer_activation": resourceCloudletsApplicationLoadBalancerActivation(defaultALBPollActivationInterval, defaultALBRetryTimeout),
 		"akamai_cloudlets_policy":                               resourceCloudletsPolicy(),
 		"akamai_cloudlets_policy_activation":                    resourceCloudletsPolicyActivation(defaultPollActivationInterval, defaultPollRetryInterval, defaultRetryTimeout),
 	}

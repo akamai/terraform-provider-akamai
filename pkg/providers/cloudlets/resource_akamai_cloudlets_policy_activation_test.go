@@ -1017,9 +1017,10 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 			client := edgegrid.NewTestClient()
 			test.init(client.CloudletsV2)
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollActivationInterval, testPollRetryInterval, testRetryTimeout)),
-				IsUnitTest:               true,
-				Steps:                    test.steps,
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client,
+					NewCustomPollingSubprovider().WithPolicyActivationIntervals(testPollActivationInterval, testPollRetryInterval, testRetryTimeout)),
+				IsUnitTest: true,
+				Steps:      test.steps,
 			})
 			client.CloudletsV2.AssertExpectations(t)
 		})
@@ -1739,9 +1740,10 @@ func TestResourceV3CloudletsPolicyActivation(t *testing.T) {
 			client := edgegrid.NewTestClient()
 			test.init(client.CloudletsV2, client.CloudletsV3)
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollActivationInterval, testPollRetryInterval, testRetryTimeout)),
-				IsUnitTest:               true,
-				Steps:                    test.steps,
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client,
+					NewCustomPollingSubprovider().WithPolicyActivationIntervals(testPollActivationInterval, testPollRetryInterval, testRetryTimeout)),
+				IsUnitTest: true,
+				Steps:      test.steps,
 			})
 			client.CloudletsV2.AssertExpectations(t)
 			client.CloudletsV3.AssertExpectations(t)

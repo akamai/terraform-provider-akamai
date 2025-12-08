@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"regexp"
 	"testing"
-	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudlets"
 	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
@@ -554,18 +553,15 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 		},
 	}
 
-	// redefining times to run the tests faster
-	ALBActivationPollMinimum = time.Millisecond * 1
-	ALBActivationPollInterval = time.Millisecond * 1
-
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := edgegrid.NewTestClient()
 			test.init(client.CloudletsV2)
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
-				IsUnitTest:               true,
-				Steps:                    test.steps,
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client,
+					NewCustomPollingSubprovider().WithALBActivationIntervals(testALBPollActivationInterval, testALBRetryTimeout)),
+				IsUnitTest: true,
+				Steps:      test.steps,
 			})
 			client.CloudletsV2.AssertExpectations(t)
 		})
