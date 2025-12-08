@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"regexp"
 	"testing"
-	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudlets"
 	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudlets/v3"
@@ -1013,15 +1012,12 @@ func TestResourceCloudletsPolicyActivation(t *testing.T) {
 		},
 	}
 
-	// redefining times to accelerate tests
-	ActivationPollMinimum, ActivationPollInterval, PolicyActivationRetryPollMinimum = time.Millisecond, time.Millisecond, time.Millisecond
-
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := edgegrid.NewTestClient()
 			test.init(client.CloudletsV2)
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollActivationInterval, testPollRetryInterval, testRetryTimeout)),
 				IsUnitTest:               true,
 				Steps:                    test.steps,
 			})
@@ -1738,15 +1734,12 @@ func TestResourceV3CloudletsPolicyActivation(t *testing.T) {
 		},
 	}
 
-	// redefining times to accelerate tests
-	ActivationPollMinimum, ActivationPollInterval, PolicyActivationRetryPollMinimum = time.Millisecond, time.Millisecond, time.Millisecond
-
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			client := edgegrid.NewTestClient()
 			test.init(client.CloudletsV2, client.CloudletsV3)
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollActivationInterval, testPollRetryInterval, testRetryTimeout)),
 				IsUnitTest:               true,
 				Steps:                    test.steps,
 			})

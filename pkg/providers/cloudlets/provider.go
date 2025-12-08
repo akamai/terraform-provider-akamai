@@ -2,6 +2,8 @@
 package cloudlets
 
 import (
+	"time"
+
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -16,6 +18,15 @@ type (
 
 var _ subprovider.Subprovider = &Subprovider{}
 
+const (
+	// defaultPollActivationInterval is the default polling interval for activation status checks
+	defaultPollActivationInterval = time.Minute
+	// defaultPollRetryInterval is the default polling interval for retrying policy activation
+	defaultPollRetryInterval = 15 * time.Second
+	// defaultRetryTimeout is the default timeout for policy activation retries
+	defaultRetryTimeout = 10 * time.Minute
+)
+
 // NewSubprovider returns a new cloudlets subprovider
 func NewSubprovider() *Subprovider {
 	return &Subprovider{}
@@ -27,7 +38,7 @@ func (p *Subprovider) SDKResources() map[string]*schema.Resource {
 		"akamai_cloudlets_application_load_balancer":            resourceCloudletsApplicationLoadBalancer(),
 		"akamai_cloudlets_application_load_balancer_activation": resourceCloudletsApplicationLoadBalancerActivation(),
 		"akamai_cloudlets_policy":                               resourceCloudletsPolicy(),
-		"akamai_cloudlets_policy_activation":                    resourceCloudletsPolicyActivation(),
+		"akamai_cloudlets_policy_activation":                    resourceCloudletsPolicyActivation(defaultPollActivationInterval, defaultPollRetryInterval, defaultRetryTimeout),
 	}
 }
 

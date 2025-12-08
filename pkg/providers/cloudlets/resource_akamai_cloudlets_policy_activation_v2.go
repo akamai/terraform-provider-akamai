@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudlets"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/tf"
@@ -89,7 +90,7 @@ func (strategy *v2ActivationStrategy) activateVersion(ctx context.Context, polic
 	return err
 }
 
-func (strategy *v2ActivationStrategy) reactivateVersion(ctx context.Context, policyID, version int64) error {
+func (strategy *v2ActivationStrategy) reactivateVersion(ctx context.Context, policyID, version int64, pollInterval time.Duration) error {
 	// Activate policy version. This will include new associated_properties + the ones which need to be removed
 	// it will fail if any of the associated_properties are not valid
 	if err := strategy.activateVersion(ctx, policyID, version); err != nil {
@@ -97,26 +98,26 @@ func (strategy *v2ActivationStrategy) reactivateVersion(ctx context.Context, pol
 	}
 
 	// 6. remove from the server all unnecessary policy associated_properties
-	removedProperties, err := syncToServerRemovedProperties(ctx, strategy.client, policyID, strategy.network, strategy.activeProps, strategy.associatedProperties)
+	removedProperties, err := syncToServerRemovedProperties(ctx, strategy.client, policyID, strategy.network, strategy.activeProps, strategy.associatedProperties, pollInterval)
 	strategy.removedProps = removedProperties
 	return err
 }
 
-func (strategy *v2ActivationStrategy) waitForActivation(ctx context.Context, policyID, version int64) (string, error) {
-	act, err := waitForPolicyActivation(ctx, strategy.client, policyID, version, strategy.network, strategy.associatedProperties, strategy.removedProps)
+func (strategy *v2ActivationStrategy) waitForActivation(ctx context.Context, policyID, version int64, pollInterval time.Duration) (string, error) {
+	act, err := waitForPolicyActivation(ctx, strategy.client, policyID, version, strategy.network, strategy.associatedProperties, strategy.removedProps, pollInterval)
 	if err != nil {
 		return "", err
 	}
 	return formatPolicyActivationID(act[0].PolicyInfo.PolicyID, act[0].Network), nil
 }
 
-func (strategy *v2ActivationStrategy) readActivationFromServer(ctx context.Context, policyID int64, network string) (map[string]any, error) {
+func (strategy *v2ActivationStrategy) readActivationFromServer(ctx context.Context, policyID int64, network string, pollInterval time.Duration) (map[string]any, error) {
 	net, err := getPolicyActivationNetwork(network)
 	if err != nil {
 		return nil, err
 	}
 
-	activations, err := waitForListPolicyActivations(ctx, strategy.client, cloudlets.ListPolicyActivationsRequest{
+	activations, err := waitForListPolicyActivations(ctx, strategy.client, pollInterval, cloudlets.ListPolicyActivationsRequest{
 		PolicyID: policyID,
 		Network:  net,
 	})
@@ -140,7 +141,7 @@ func (strategy *v2ActivationStrategy) readActivationFromServer(ctx context.Conte
 	return attrs, nil
 }
 
-func (strategy *v2ActivationStrategy) isReactivationNotNeeded(ctx context.Context, policyID, version int64, hasVersionChange bool) (bool, string, error) {
+func (strategy *v2ActivationStrategy) isReactivationNotNeeded(ctx context.Context, policyID, version int64, hasVersionChange bool, pollInterval time.Duration) (bool, string, error) {
 	// policy version validation
 	_, err := strategy.client.GetPolicyVersion(ctx, cloudlets.GetPolicyVersionRequest{
 		PolicyID:  policyID,
@@ -152,7 +153,7 @@ func (strategy *v2ActivationStrategy) isReactivationNotNeeded(ctx context.Contex
 	}
 
 	// look for activations with this version which is active in the given network
-	activations, err := waitForListPolicyActivations(ctx, strategy.client, cloudlets.ListPolicyActivationsRequest{
+	activations, err := waitForListPolicyActivations(ctx, strategy.client, pollInterval, cloudlets.ListPolicyActivationsRequest{
 		PolicyID: policyID,
 		Network:  strategy.network,
 	})
@@ -173,7 +174,7 @@ func (strategy *v2ActivationStrategy) isReactivationNotNeeded(ctx context.Contex
 	return isAlreadyActive, formatPolicyActivationID(policyID, strategy.network), nil
 }
 
-func (strategy *v2ActivationStrategy) deactivatePolicy(ctx context.Context, policyID, _ int64, net string) error {
+func (strategy *v2ActivationStrategy) deactivatePolicy(ctx context.Context, policyID, _ int64, net string, pollInterval time.Duration) error {
 	network, err := getPolicyActivationNetwork(net)
 	if err != nil {
 		return err
@@ -183,7 +184,7 @@ func (strategy *v2ActivationStrategy) deactivatePolicy(ctx context.Context, poli
 	if err != nil {
 		return fmt.Errorf("%s: cannot find policy %d properties: %s", ErrPolicyActivation.Error(), policyID, err.Error())
 	}
-	activations, err := waitForListPolicyActivations(ctx, strategy.client, cloudlets.ListPolicyActivationsRequest{
+	activations, err := waitForListPolicyActivations(ctx, strategy.client, pollInterval, cloudlets.ListPolicyActivationsRequest{
 		PolicyID: policyID,
 		Network:  network,
 	})
@@ -205,7 +206,7 @@ func (strategy *v2ActivationStrategy) deactivatePolicy(ctx context.Context, poli
 			continue
 		}
 		// wait for removal until there aren't any pending activations
-		if err = waitForNotPendingPolicyActivation(ctx, strategy.client, policyID, network); err != nil {
+		if err = waitForNotPendingPolicyActivation(ctx, strategy.client, policyID, network, pollInterval); err != nil {
 			return err
 		}
 
