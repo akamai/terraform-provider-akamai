@@ -381,33 +381,6 @@ func hasSignedCertDetails(cert cloudcertificates.Certificate) bool {
 		cert.SignedCertificateSHA256Fingerprint != nil
 }
 
-func (c *uploadSignedCertificateResource) pollForCertificateAvailability(ctx context.Context, certificateID string) error {
-	ctx, cancel := context.WithTimeout(ctx, c.pollingTimeout)
-	defer cancel()
-
-	ticker := time.NewTicker(c.pollingInterval)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ctx.Done():
-			return fmt.Errorf("the certificate '%s' was not found on the server. Please verify certificate_id is correct: %w", certificateID, ctx.Err())
-		case <-ticker.C:
-			cert, err := c.Client.GetCloudCertificates().GetCertificate(ctx, cloudcertificates.GetCertificateRequest{
-				CertificateID: certificateID,
-			})
-			if err == nil {
-				tflog.Debug(ctx, fmt.Sprintf("certificate %s found", certificateID))
-				tflog.Debug(ctx, fmt.Sprintf("certificate response: %+v", cert))
-				return nil
-			}
-			if !errors.Is(err, cloudcertificates.ErrCertificateNotFound) && !errors.Is(err, cloudcertificates.ErrCertificateResourceNotFound) {
-				return fmt.Errorf("error retrieving certificate '%s' in upload resource plan time check: %w", certificateID, err)
-			}
-		}
-	}
-}
-
 type uploadSignedCertificateResourceModel struct {
 	CertificateID                       types.String `tfsdk:"certificate_id"`
 	SignedCertificatePEM                types.String `tfsdk:"signed_certificate_pem"`
