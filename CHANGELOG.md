@@ -67,6 +67,10 @@
 
 
 
+* PAPI Domain Ownership Validation (Beta)
+  * Added `domain_ownership_verification` attribute to the `akamai_property_hostnames` data source,
+    containing the domain validation details.
+
 * MTLS Keystore
   * Eliminated the global client variable and its synchronization logic, significantly reducing
     unit test execution time.

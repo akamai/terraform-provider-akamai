@@ -13,15 +13,23 @@ import (
 )
 
 // NewTimeFromString returns a time value parsed from a string
-// in the RFC3339Nano format
+// in the RFC3339Nano format.
 func NewTimeFromString(t *testing.T, s string) time.Time {
 	parsedTime, err := time.Parse(time.RFC3339Nano, s)
 	require.NoError(t, err)
 	return parsedTime
 }
 
+// NewTimeFromStringPtr returns a pointer to a time value parsed from a string
+// in the RFC3339Nano format.
+func NewTimeFromStringPtr(t *testing.T, s string) *time.Time {
+	parsedTime, err := time.Parse(time.RFC3339Nano, s)
+	require.NoError(t, err)
+	return &parsedTime
+}
+
 // NewTimeFromStringMust returns a time value parsed from a string
-// in the RFC3339Nano format. It assumes that the input string is always valid
+// in the RFC3339Nano format. It assumes that the input string is always valid.
 func NewTimeFromStringMust(s string) time.Time {
 	parsedTime, err := time.Parse(time.RFC3339Nano, s)
 	if err != nil {
@@ -65,14 +73,14 @@ func (h *RateLimitHTTPHandler) ServeHTTP(w http.ResponseWriter, _ *http.Request,
 	}
 }
 
-// AvailableAt returns the point in time at which the handler stops returning status code 429
+// AvailableAt returns the point in time at which the handler stops returning status code 429.
 func (h *RateLimitHTTPHandler) AvailableAt() time.Time {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
 	return h.availableAt
 }
 
-// ReturnedCodes returns a list of status codes from subsequent handler responses
+// ReturnedCodes returns a list of status codes from subsequent handler responses.
 func (h *RateLimitHTTPHandler) ReturnedCodes() []int {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
@@ -81,7 +89,7 @@ func (h *RateLimitHTTPHandler) ReturnedCodes() []int {
 	return res
 }
 
-// ReturnTimes returns a list of times at which subsequent responses were written
+// ReturnTimes returns a list of times at which subsequent responses were written.
 func (h *RateLimitHTTPHandler) ReturnTimes() []time.Time {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()

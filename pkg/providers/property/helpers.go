@@ -236,9 +236,65 @@ func flattenHostnames(Hostnames []papi.Hostname) []map[string]interface{} {
 		m["cert_status"] = []map[string]any{flattenCertType(&hn.CertStatus)}
 		m["ccm_certificates"] = flattenCCMCertificates(hn.CCMCertificates)
 		m["ccm_cert_status"] = flattenCCMCertificateStatus(hn.CCMCertStatus)
+		if hn.DomainOwnershipVerification != nil {
+			m["domain_ownership_verification"] = []map[string]any{flattenDomainOwnershipVerification(hn.DomainOwnershipVerification)}
+		} else {
+			m["domain_ownership_verification"] = nil
+		}
 		res = append(res, m)
 	}
 	return res
+}
+
+func flattenDomainOwnershipVerification(dov *papi.DomainOwnershipVerification) map[string]any {
+	if dov == nil {
+		return nil
+	}
+
+	attrs := map[string]any{
+		"status": dov.Status,
+	}
+
+	if dov.ChallengeTokenExpiryDate != nil {
+		attrs["challenge_token_expiry_date"] = dov.ChallengeTokenExpiryDate.Format(time.RFC3339Nano)
+	}
+
+	if dov.ValidationCname != nil {
+		attrs["validation_cname"] = []map[string]any{
+			{
+				"hostname": dov.ValidationCname.Hostname,
+				"target":   dov.ValidationCname.Target,
+			},
+		}
+	}
+	if dov.ValidationHTTP != nil {
+		attrs["validation_http"] = []map[string]any{
+			{
+				"redirect_method": []map[string]any{
+					{
+						"http_redirect_from": dov.ValidationHTTP.RedirectMethod.HTTPRedirectFrom,
+						"http_redirect_to":   dov.ValidationHTTP.RedirectMethod.HTTPRedirectTo,
+					},
+				},
+				"file_content_method": []map[string]any{
+					{
+						"url":  dov.ValidationHTTP.FileContentMethod.URL,
+						"body": dov.ValidationHTTP.FileContentMethod.Body,
+					},
+				},
+			},
+		}
+	}
+	if dov.ValidationTXT != nil {
+		attrs["validation_txt"] = []map[string]any{
+			{
+				"hostname":        dov.ValidationTXT.Hostname,
+				"challenge_token": dov.ValidationTXT.ChallengeToken,
+			},
+		}
+	}
+
+	return attrs
 }
 
 // TODO: remove this when updating akamai_property_hostnames datasource
