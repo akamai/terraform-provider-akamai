@@ -3,6 +3,7 @@ package appsec
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/tf"
@@ -12,6 +13,8 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
+
+var emailRegex = regexp.MustCompile(`^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$`)
 
 // ValidateActions ensure actions are correct for API call
 func ValidateActions(v interface{}, path cty.Path) diag.Diagnostics {
@@ -114,5 +117,24 @@ func validateEmptyElementsInList(v interface{}, path cty.Path) diag.Diagnostics 
 	if v.(string) == "" {
 		return diag.Errorf("empty or invalid string value for config parameter %s", attrStep.Name)
 	}
+	return nil
+}
+
+// validateNotificationEmail validates email format for notification_emails field
+func validateNotificationEmail(v interface{}, _ cty.Path) diag.Diagnostics {
+
+	email, ok := v.(string)
+	if !ok {
+		return diag.Errorf("email must be a string for config parameter")
+	}
+
+	if strings.TrimSpace(email) == "" {
+		return diag.Errorf("email must not be empty")
+	}
+
+	if !emailRegex.MatchString(email) {
+		return diag.Errorf("invalid email format %s", email)
+	}
+
 	return nil
 }
