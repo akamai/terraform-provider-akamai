@@ -69,7 +69,13 @@
 
 
 
-
+* PAPI
+  * Added `akamai_property_account_hostnames` data source, that allows to list all hostnames for the account. Available filters include:
+    * `contract_id`
+    * `group_id`
+    * `hostname`
+    * `cname_to`
+    * `network`
 
 
 
