@@ -82,6 +82,11 @@
 * PAPI
   * Added a validation for `edge_hostname_id` and `property_id` in `akamai_property_hostname_bucket`
 
+
+* PAPI
+  * Added new fields `mtls` and `tls_configuration` to the `akamai_property` resource which are optional for CCM hostnames.
+
+
 #### BUG FIXES:
 
 * PAPI

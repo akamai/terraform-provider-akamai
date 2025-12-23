@@ -342,6 +342,12 @@ func (p *mockProperty) mockUpdatePropertyVersionHostnames(err ...error) *mock.Ca
 			copyCerts.RSACertLink = ""
 			copyCerts.ECDSACertLink = ""
 			requestHostnames[i].CCMCertificates = &copyCerts
+
+			if requestHostnames[i].MTLS != nil {
+				copyMTLS := *requestHostnames[i].MTLS
+				copyMTLS.CASetLink = ""
+				requestHostnames[i].MTLS = &copyMTLS
+			}
 		}
 		// CCMCertStatus is used only for mocking responses
 		requestHostnames[i].CCMCertStatus = nil
