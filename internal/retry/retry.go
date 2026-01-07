@@ -66,11 +66,11 @@ type Fn[T any] func(context.Context) (*T, error)
 //
 // Example usage:
 //
-//	result, err := Poll(ctx, PollingOpts[*MyResource]{
+//	result, err := Poll(ctx, PollingOpts[MyResource]{
 //	    Fn: func(ctx context.Context) (*MyResource, error) {
 //	        return fetchResource(ctx, resourceID)
 //	    },
-//	    ShouldRetryData: func(r *MyResource) bool {
+//	    ShouldRetryData: func(r MyResource) bool {
 //	        return r.Status != "ACTIVE" // Keep polling until status is ACTIVE
 //	    },
 //	    ShouldRetryError: func(err error) bool {
@@ -80,12 +80,13 @@ type Fn[T any] func(context.Context) (*T, error)
 //	    Deadline: 2 * time.Minute,
 //	})
 func Poll[T any](ctx context.Context, opts PollingOpts[T]) (*T, error) {
-	now := time.Now()
-	if opts.Fn == nil {
-		return nil, fmt.Errorf("retry function cannot be nil")
-	}
 	if ctx == nil {
 		return nil, fmt.Errorf("context cannot be nil")
+	}
+	originalDeadline := getDeadlineOrNil(ctx)
+
+	if opts.Fn == nil {
+		return nil, fmt.Errorf("retry function cannot be nil")
 	}
 	if opts.ShouldRetryData == nil {
 		opts.ShouldRetryData = func(_ T) bool { return false }
@@ -102,7 +103,6 @@ func Poll[T any](ctx context.Context, opts PollingOpts[T]) (*T, error) {
 	if opts.Deadline < 0 {
 		return nil, fmt.Errorf("deadline %v cannot be negative", opts.Deadline)
 	}
-	originalDeadline := getDeadlineOrNil(ctx, now)
 	if opts.Deadline > 0 {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, opts.Deadline)
@@ -112,13 +112,18 @@ func Poll[T any](ctx context.Context, opts PollingOpts[T]) (*T, error) {
 	}
 
 	tflog.Debug(ctx, "Starting polling loop", map[string]any{
-		"interval":          opts.Interval,
-		"deadline":          opts.Deadline,
-		"effectiveDeadline": getDeadlineOrNil(ctx, now),
-		"originalDeadline":  originalDeadline,
+		"interval":          formatDurationPtr(&opts.Interval),
+		"deadline":          formatDurationPtr(&opts.Deadline),
+		"effectiveDeadline": formatDurationPtr(getDeadlineOrNil(ctx)),
+		"originalDeadline":  formatDurationPtr(originalDeadline),
 	})
 
+	attempt := 0
+
 	for {
+		attempt++
+		ctx = tflog.SetField(ctx, "attempt", attempt)
+
 		// Check context error to handle cancellations and timeouts.
 		if ctx.Err() != nil {
 			tflog.Debug(ctx, "Context terminated before function execution", map[string]any{
@@ -143,7 +148,7 @@ func Poll[T any](ctx context.Context, opts PollingOpts[T]) (*T, error) {
 		case <-time.After(opts.Interval):
 			// Continue to next iteration
 			tflog.Debug(ctx, "Retrying after interval", map[string]any{
-				"interval": opts.Interval,
+				"interval": formatDurationPtr(&opts.Interval),
 			})
 		case <-ctx.Done():
 			tflog.Debug(ctx, "Context terminated while waiting to retry", map[string]any{
@@ -178,15 +183,22 @@ func shouldRetry[T any](ctx context.Context, opts PollingOpts[T], resp *T, err e
 		return true, nil
 	}
 
-	tflog.Debug(ctx, "Not retrying as response is acceptable")
+	tflog.Debug(ctx, "Not retrying as no error and response is acceptable")
 	return false, nil
 }
 
-func getDeadlineOrNil(ctx context.Context, start time.Time) *time.Duration {
+func getDeadlineOrNil(ctx context.Context) *time.Duration {
 	deadline, ok := ctx.Deadline()
 	if ok {
-		diff := deadline.Sub(start)
+		diff := time.Until(deadline)
 		return &diff
 	}
 	return nil
+}
+
+func formatDurationPtr(d *time.Duration) string {
+	if d == nil {
+		return "<nil>"
+	}
+	return d.String()
 }

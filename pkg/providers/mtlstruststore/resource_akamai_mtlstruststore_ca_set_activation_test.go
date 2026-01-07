@@ -1,6 +1,7 @@
 package mtlstruststore
 
 import (
+	"net/http"
 	"regexp"
 	"testing"
 	"time"
@@ -15,7 +16,6 @@ import (
 )
 
 func TestCASetActivationResource(t *testing.T) {
-	pollingInterval = 1 * time.Millisecond
 	mockListCASetActivations := func(client *mtlstruststore.Mock, testData commonDataForResource, activated bool) *mock.Call {
 		var activations []mtlstruststore.ActivateCASetVersionResponse
 		if activated {
@@ -267,6 +267,85 @@ func TestCASetActivationResource(t *testing.T) {
 					Version: resourceData.version,
 					Network: mtlstruststore.ActivationNetworkStaging,
 				}).Return(nil, mtlstruststore.ErrCASetVersionNotActiveOnNetworkCannotBeDeactivated).Once()
+			},
+			mockData: createActivationData,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCASetActivation/create.tf"),
+					Check: test.NewStateChecker("akamai_mtlstruststore_ca_set_activation.test").
+						CheckEqual("ca_set_id", "12345").Build(),
+				},
+			},
+		},
+		"delete - polling before CA set version detached from CCM hostname": {
+			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
+				// create.
+				mockGetCASetVersion(m, resourceData).Once()
+				mockListCASetActivations(m, resourceData, true).Once()
+				mockActivateCASetVersion(m, resourceData, 1, "STAGING")
+				mockGetCASetVersionActivation(m, resourceData, 1, "COMPLETE", "ACTIVATE", 1)
+
+				// read.
+				resourceData.stagingStatus = "ACTIVE"
+				mockGetCASet(m, resourceData).Once()
+				mockListCASetVersionActivations(m, resourceData, true).Once()
+
+				// modify plan
+				mockGetCASetVersion(m, resourceData).Once()
+				mockListCASetAssociations(m, resourceData).Once()
+
+				// delete.
+				mockListCASetActivations(m, resourceData, true).Once()
+				// poll three times before success
+				m.On("DeactivateCASetVersion", testutils.MockContext, mtlstruststore.DeactivateCASetVersionRequest{
+					CASetID: resourceData.caSetID,
+					Version: resourceData.version,
+					Network: mtlstruststore.ActivationNetworkStaging,
+				}).Return(nil, &mtlstruststore.Error{
+					Type:   "/mtls-edge-truststore/error-types/ca-set-in-use-by-ccm-hostnames-and-not-cps-enrollments",
+					Status: http.StatusConflict,
+				}).Times(3)
+				mockDeactivateCASetActivation(m, resourceData, 1)
+				mockGetCASetVersionActivation(m, resourceData, 1, "COMPLETE", "DEACTIVATE", 1)
+			},
+			mockData: createActivationData,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCASetActivation/create.tf"),
+					Check: test.NewStateChecker("akamai_mtlstruststore_ca_set_activation.test").
+						CheckEqual("ca_set_id", "12345").Build(),
+				},
+			},
+		},
+		"delete - polling before CA set version detached from CCM hostname - temporary upstream server error": {
+			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
+				// create.
+				mockGetCASetVersion(m, resourceData).Once()
+				mockListCASetActivations(m, resourceData, true).Once()
+				mockActivateCASetVersion(m, resourceData, 1, "STAGING")
+				mockGetCASetVersionActivation(m, resourceData, 1, "COMPLETE", "ACTIVATE", 1)
+
+				// read.
+				resourceData.stagingStatus = "ACTIVE"
+				mockGetCASet(m, resourceData).Once()
+				mockListCASetVersionActivations(m, resourceData, true).Once()
+
+				// modify plan
+				mockGetCASetVersion(m, resourceData).Once()
+				mockListCASetAssociations(m, resourceData).Once()
+
+				// delete.
+				mockListCASetActivations(m, resourceData, true).Once()
+				m.On("DeactivateCASetVersion", testutils.MockContext, mtlstruststore.DeactivateCASetVersionRequest{
+					CASetID: resourceData.caSetID,
+					Version: resourceData.version,
+					Network: mtlstruststore.ActivationNetworkStaging,
+				}).Return(nil, &mtlstruststore.Error{
+					Type:   "/mtls-edge-truststore/error-types/find-associations-failed-for-ccm-hostnames-but-cps-enrollments-not-linked-to-ca-set",
+					Status: http.StatusInternalServerError,
+				}).Once()
+				mockDeactivateCASetActivation(m, resourceData, 1)
+				mockGetCASetVersionActivation(m, resourceData, 1, "COMPLETE", "DEACTIVATE", 1)
 			},
 			mockData: createActivationData,
 			steps: []resource.TestStep{
@@ -1054,8 +1133,12 @@ func TestCASetActivationResource(t *testing.T) {
 				tc.init(client, tc.mockData)
 			}
 			useClient(client, func() {
+				cfg := DefaultCASetActivationResourceConfig()
+				cfg.pollingInterval = 1 * time.Millisecond
+				cfg.ccmMTLSDetachTimeout = 100 * time.Millisecond
+				cfg.ccmMTLSDetachPollInterval = 10 * time.Millisecond
 				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubproviderWithConfig(cfg)),
 					IsUnitTest:               true,
 					Steps:                    tc.steps,
 				})
