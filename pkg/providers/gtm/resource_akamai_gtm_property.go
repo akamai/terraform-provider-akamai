@@ -566,8 +566,26 @@ func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m 
 			if err == nil {
 				logger.Infof("Property create pending")
 			} else {
+				// Set the ID on Domain PropagationStatus as DENIED or any other failures to ensure Terraform marks the property as "tainted".
+				propertyResourceID := fmt.Sprintf("%s:%s", domain, cStatus.Resource.Name)
+				d.SetId(propertyResourceID)
 				logger.Errorf("Property create error: %s", err.Error())
-				return diag.Errorf("property create error: %s", err.Error())
+
+				var diags diag.Diagnostics
+
+				diags = append(diags, diag.Diagnostic{
+					Severity: diag.Warning,
+					Summary:  "Property creation failed to complete propagation and will be recreated on the next apply.",
+					Detail:   "The resource has been marked as tainted in the Terraform state because it failed to verify completion. The next `terraform apply` will attempt to delete and recreate this resource.",
+				})
+
+				diags = append(diags, diag.Diagnostic{
+					Severity: diag.Error,
+					Summary:  "Property create error",
+					Detail:   strings.TrimPrefix(err.Error(), "ERROR: "),
+				})
+
+				return diags
 			}
 		}
 	}

@@ -343,6 +343,76 @@ func TestResGTMProperty(t *testing.T) {
 				},
 			},
 		},
+		"create property failed in wait loop (denied), taint and recover": {
+			property: getBasicProperty(),
+			init: func(m *gtm.Mock) {
+				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+				// create
+				mockCreateProperty(m, getBasicProperty(), &gtm.CreatePropertyResponse{
+					Resource: getBasicProperty(),
+					Status:   getPendingResponseStatus(),
+				}, nil)
+
+				deniedStatus := gtm.GetDomainStatusResponse{
+					PropagationStatus: "DENIED",
+					Message:           `ERROR: In target (property "tfexample_prop_1", datacenter "tg1 (datacenterId 3131)"): Server DNS lookup for "1.2.3.9" failed: cannot resolve hostname "1.2.3.9" to address records: query for A record for 1.2.3.9 returned NXDOMAIN`,
+				}
+				m.On("GetDomainStatus", testutils.MockContext, gtm.GetDomainStatusRequest{
+					DomainName: testDomainName,
+				}).Return(&deniedStatus, nil).Once()
+
+				// read
+				mockGetProperty(m, testPropertyName, getBasicProperty(), nil, testutils.Twice)
+
+				// delete
+				mockDeleteProperty(m, testPropertyName)
+
+				// read
+				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+
+				// create
+				mockCreateProperty(m, getBasicProperty(), &gtm.CreatePropertyResponse{
+					Resource: getBasicProperty(),
+					Status:   getPendingResponseStatus(),
+				}, nil)
+
+				completeStatus := gtm.GetDomainStatusResponse{
+					PropagationStatus: "COMPLETE",
+				}
+				m.On("GetDomainStatus", testutils.MockContext, gtm.GetDomainStatusRequest{
+					DomainName: testDomainName,
+				}).Return(&completeStatus, nil).Times(3)
+
+				// read
+				mockGetProperty(m, testPropertyName, getBasicProperty(), nil, testutils.ThreeTimes)
+
+				// delete
+				mockDeleteProperty(m, testPropertyName)
+			},
+			steps: []resource.TestStep{
+				{
+					// Step 1: Expect failure from the DENIED status
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/create_property_with_wait_on_complete.tf"),
+					ExpectError: regexp.MustCompile(`Property create error[\s\S]*Server DNS lookup for "1\.2\.3\.9" failed`),
+				},
+				{
+					// Step 2: Expect successful recovery
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/create_property_with_wait_on_complete.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(propertyResourceName, "name", "tfexample_prop_1"),
+						resource.TestCheckResourceAttr(propertyResourceName, "type", "weighted-round-robin"),
+						resource.TestCheckResourceAttr(propertyResourceName, "weighted_hash_bits_for_ipv4", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "weighted_hash_bits_for_ipv6", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.http_method", ""),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.http_request_body", ""),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.alternate_ca_certificates.#", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.pre_2023_security_posture", "false"),
+						resource.TestCheckResourceAttr(propertyResourceName, "traffic_target.0.precedence", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "id", "gtm_terra_testdomain.akadns.net:tfexample_prop_1"),
+					),
+				},
+			},
+		},
 		"create property failed - property already exists": {
 			property: getBasicProperty(),
 			init: func(m *gtm.Mock) {
