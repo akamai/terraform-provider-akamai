@@ -147,9 +147,11 @@ func (d *accountHostnamesDataSource) Schema(_ context.Context, _ datasource.Sche
 						},
 						"production_cert_type": schema.StringAttribute{
 							Computed: true,
-							Description: "Indicates the type of the certificate used in the property hostname. " +
-								"Either `CPS_MANAGED` for the certificates you create with the Certificate Provisioning System API (CPS), " +
-								"or `DEFAULT` for Default Domain Validation (DV) certificates deployed automatically.",
+							Description: "Indicates the certificate's provisioning type. " +
+								"Either `CPS_MANAGED` for the certificates created with the Certificate Provisioning System (CPS) API, " +
+								"`CCM` for the certificates created with the Cloud Certificate Manager (CCM) API, " +
+								"or `DEFAULT` for the Domain Validation (DV) certificates created automatically. " +
+								"Note that you can't specify the `DEFAULT` value if your property hostname uses the `akamaized.net` domain suffix.",
 						},
 						"production_cname_to": schema.StringAttribute{
 							Computed: true,
@@ -183,9 +185,11 @@ func (d *accountHostnamesDataSource) Schema(_ context.Context, _ datasource.Sche
 						},
 						"staging_cert_type": schema.StringAttribute{
 							Computed: true,
-							Description: "Indicates the type of the certificate used in the property hostname. " +
-								"Either `CPS_MANAGED` for the certificates you create with the Certificate Provisioning System API (CPS), " +
-								"or `DEFAULT` for Default Domain Validation (DV) certificates deployed automatically.",
+							Description: "Indicates the certificate's provisioning type. " +
+								"Either `CPS_MANAGED` for the certificates created with the Certificate Provisioning System (CPS) API, " +
+								"`CCM` for the certificates created with the Cloud Certificate Manager (CCM) API, " +
+								"or `DEFAULT` for the Domain Validation (DV) certificates created automatically. " +
+								"Note that you can't specify the `DEFAULT` value if your property hostname uses the `akamaized.net` domain suffix.",
 						},
 						"staging_cname_to": schema.StringAttribute{
 							Computed: true,
