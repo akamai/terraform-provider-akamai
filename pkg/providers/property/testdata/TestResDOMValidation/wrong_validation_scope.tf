@@ -5,8 +5,9 @@ provider "akamai" {
 resource "akamai_property_domainownership_validation" "test" {
   domains = [
     {
-      domain_name      = "test1.example.com"
-      validation_scope = "WRONG"
+      domain_name       = "test1.example.com"
+      validation_scope  = "WRONG"
+      validation_method = "HTTP"
     }
   ]
 }

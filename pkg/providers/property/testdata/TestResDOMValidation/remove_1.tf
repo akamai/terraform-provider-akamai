@@ -5,12 +5,14 @@ provider "akamai" {
 resource "akamai_property_domainownership_validation" "test" {
   domains = [
     {
-      domain_name      = "test1.example.com"
-      validation_scope = "HOST"
+      domain_name       = "test1.example.com"
+      validation_scope  = "HOST"
+      validation_method = "HTTP"
     },
     {
-      domain_name      = "test2.example.com"
-      validation_scope = "DOMAIN"
+      domain_name       = "test2.example.com"
+      validation_scope  = "DOMAIN"
+      validation_method = "DNS_CNAME"
     }
   ]
 }

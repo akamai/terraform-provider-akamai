@@ -105,6 +105,15 @@
   * Added a validation for `edge_hostname_id` and `property_id` in `akamai_property_hostname_bucket`
 
 
+
+
+
+* PAPI Domain Ownership Validation (Beta)
+  * Changed the `validation_method` field in the `akamai_property_domainownership_validation` resource from `Optional` to `Required`.
+
+
+
+
 * PAPI
   * Added new fields `mtls` and `tls_configuration` to the `akamai_property` resource which are optional for CCM hostnames.
 

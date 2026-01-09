@@ -30,14 +30,14 @@ type (
 func getMinCreate() validationTestData {
 	return validationTestData{
 		create: map[domainKey]domainDetails{
-			newDomainKey("test1.example.com", "HOST"):     newDomainDetails("REQUEST_ACCEPTED", "FQDN", nil),
-			newDomainKey("test2.example.com", "DOMAIN"):   newDomainDetails("REQUEST_ACCEPTED", "FQDN", nil),
-			newDomainKey("test3.example.com", "WILDCARD"): newDomainDetails("REQUEST_ACCEPTED", "FQDN", nil),
+			newDomainKey("test1.example.com", "HOST"):     newDomainDetails("REQUEST_ACCEPTED", "FQDN", "HTTP"),
+			newDomainKey("test2.example.com", "DOMAIN"):   newDomainDetails("REQUEST_ACCEPTED", "FQDN", "DNS_CNAME"),
+			newDomainKey("test3.example.com", "WILDCARD"): newDomainDetails("REQUEST_ACCEPTED", "FQDN", "DNS_TXT"),
 		},
 		postCreateValidation: map[domainKey]domainDetails{
-			newDomainKey("test1.example.com", "HOST"):     newDomainDetails("VALIDATED", "FQDN", nil),
-			newDomainKey("test2.example.com", "DOMAIN"):   newDomainDetails("VALIDATED", "FQDN", nil),
-			newDomainKey("test3.example.com", "WILDCARD"): newDomainDetails("VALIDATED", "FQDN", nil),
+			newDomainKey("test1.example.com", "HOST"):     newDomainDetails("VALIDATED", "FQDN", "HTTP"),
+			newDomainKey("test2.example.com", "DOMAIN"):   newDomainDetails("VALIDATED", "FQDN", "DNS_CNAME"),
+			newDomainKey("test3.example.com", "WILDCARD"): newDomainDetails("VALIDATED", "FQDN", "DNS_TXT"),
 		},
 	}
 }
@@ -47,9 +47,9 @@ func get101Domains() validationTestData {
 	postCreateValidationMap := make(map[domainKey]domainDetails)
 	for i := range 101 {
 		createMap[newDomainKey(fmt.Sprintf("test%d.example.com", i), "HOST")] =
-			newDomainDetails("REQUEST_ACCEPTED", "FQDN", nil)
+			newDomainDetails("REQUEST_ACCEPTED", "FQDN", "HTTP")
 		postCreateValidationMap[newDomainKey(fmt.Sprintf("test%d.example.com", i), "HOST")] =
-			newDomainDetails("VALIDATED", "FQDN", nil)
+			newDomainDetails("VALIDATED", "FQDN", "HTTP")
 	}
 	return validationTestData{
 		create:               createMap,
@@ -64,13 +64,13 @@ func get501Domains() validationTestData {
 	postUpdateValidationMap := make(map[domainKey]domainDetails)
 	for i := range 501 {
 		createMap[newDomainKey(fmt.Sprintf("test%d.example.com", i), "HOST")] =
-			newDomainDetails("REQUEST_ACCEPTED", "FQDN", nil)
+			newDomainDetails("REQUEST_ACCEPTED", "FQDN", "HTTP")
 		postCreateValidationMap[newDomainKey(fmt.Sprintf("test%d.example.com", i), "HOST")] =
-			newDomainDetails("VALIDATED", "FQDN", nil)
+			newDomainDetails("VALIDATED", "FQDN", "HTTP")
 		updateMap[newDomainKey(fmt.Sprintf("update-test%d.example.com", i), "HOST")] =
-			newDomainDetails("REQUEST_ACCEPTED", "FQDN", nil)
+			newDomainDetails("REQUEST_ACCEPTED", "FQDN", "HTTP")
 		postUpdateValidationMap[newDomainKey(fmt.Sprintf("update-test%d.example.com", i), "HOST")] =
-			newDomainDetails("VALIDATED", "FQDN", nil)
+			newDomainDetails("VALIDATED", "FQDN", "HTTP")
 	}
 	return validationTestData{
 		create:               createMap,
@@ -80,44 +80,29 @@ func get501Domains() validationTestData {
 	}
 }
 
-func getFullCreate() validationTestData {
-	return validationTestData{
-		create: map[domainKey]domainDetails{
-			newDomainKey("test1.example.com", "HOST"):     newDomainDetails("REQUEST_ACCEPTED", "FQDN", ptr.To("DNS_CNAME")),
-			newDomainKey("test2.example.com", "DOMAIN"):   newDomainDetails("REQUEST_ACCEPTED", "FQDN", ptr.To("DNS_TXT")),
-			newDomainKey("test3.example.com", "WILDCARD"): newDomainDetails("REQUEST_ACCEPTED", "FQDN", ptr.To("HTTP")),
-		},
-		postCreateValidation: map[domainKey]domainDetails{
-			newDomainKey("test1.example.com", "HOST"):     newDomainDetails("VALIDATED", "FQDN", ptr.To("DNS_CNAME")),
-			newDomainKey("test2.example.com", "DOMAIN"):   newDomainDetails("VALIDATED", "FQDN", ptr.To("DNS_TXT")),
-			newDomainKey("test3.example.com", "WILDCARD"): newDomainDetails("VALIDATED", "FQDN", ptr.To("HTTP")),
-		},
-	}
-}
-
 func getMinCreateAddOne() validationTestData {
 	return validationTestData{
 		create: map[domainKey]domainDetails{
-			newDomainKey("test1.example.com", "HOST"):     newDomainDetails("REQUEST_ACCEPTED", "", nil),
-			newDomainKey("test2.example.com", "DOMAIN"):   newDomainDetails("REQUEST_ACCEPTED", "", nil),
-			newDomainKey("test3.example.com", "WILDCARD"): newDomainDetails("REQUEST_ACCEPTED", "", nil),
+			newDomainKey("test1.example.com", "HOST"):     newDomainDetails("REQUEST_ACCEPTED", "", "HTTP"),
+			newDomainKey("test2.example.com", "DOMAIN"):   newDomainDetails("REQUEST_ACCEPTED", "", "DNS_CNAME"),
+			newDomainKey("test3.example.com", "WILDCARD"): newDomainDetails("REQUEST_ACCEPTED", "", "DNS_TXT"),
 		},
 		postCreateValidation: map[domainKey]domainDetails{
-			newDomainKey("test1.example.com", "HOST"):     newDomainDetails("VALIDATED", "", nil),
-			newDomainKey("test2.example.com", "DOMAIN"):   newDomainDetails("VALIDATED", "", nil),
-			newDomainKey("test3.example.com", "WILDCARD"): newDomainDetails("VALIDATED", "", nil),
+			newDomainKey("test1.example.com", "HOST"):     newDomainDetails("VALIDATED", "", "HTTP"),
+			newDomainKey("test2.example.com", "DOMAIN"):   newDomainDetails("VALIDATED", "", "DNS_CNAME"),
+			newDomainKey("test3.example.com", "WILDCARD"): newDomainDetails("VALIDATED", "", "DNS_TXT"),
 		},
 		update: map[domainKey]domainDetails{
-			newDomainKey("test1.example.com", "HOST"):     newDomainDetails("VALIDATED", "", nil),
-			newDomainKey("test2.example.com", "DOMAIN"):   newDomainDetails("VALIDATED", "", nil),
-			newDomainKey("test3.example.com", "WILDCARD"): newDomainDetails("VALIDATED", "", nil),
-			newDomainKey("test4.example.com", "HOST"):     newDomainDetails("REQUEST_ACCEPTED", "", nil),
+			newDomainKey("test1.example.com", "HOST"):     newDomainDetails("VALIDATED", "", "HTTP"),
+			newDomainKey("test2.example.com", "DOMAIN"):   newDomainDetails("VALIDATED", "", "DNS_CNAME"),
+			newDomainKey("test3.example.com", "WILDCARD"): newDomainDetails("VALIDATED", "", "DNS_TXT"),
+			newDomainKey("test4.example.com", "HOST"):     newDomainDetails("REQUEST_ACCEPTED", "", "HTTP"),
 		},
 		postUpdateValidation: map[domainKey]domainDetails{
-			newDomainKey("test1.example.com", "HOST"):     newDomainDetails("VALIDATED", "", nil),
-			newDomainKey("test2.example.com", "DOMAIN"):   newDomainDetails("VALIDATED", "", nil),
-			newDomainKey("test3.example.com", "WILDCARD"): newDomainDetails("VALIDATED", "", nil),
-			newDomainKey("test4.example.com", "HOST"):     newDomainDetails("VALIDATED", "", nil),
+			newDomainKey("test1.example.com", "HOST"):     newDomainDetails("VALIDATED", "", "HTTP"),
+			newDomainKey("test2.example.com", "DOMAIN"):   newDomainDetails("VALIDATED", "", "DNS_CNAME"),
+			newDomainKey("test3.example.com", "WILDCARD"): newDomainDetails("VALIDATED", "", "DNS_TXT"),
+			newDomainKey("test4.example.com", "HOST"):     newDomainDetails("VALIDATED", "", "HTTP"),
 		},
 	}
 }
@@ -125,18 +110,18 @@ func getMinCreateAddOne() validationTestData {
 func getMinCreateRemoveOne() validationTestData {
 	return validationTestData{
 		create: map[domainKey]domainDetails{
-			newDomainKey("test1.example.com", "HOST"):     newDomainDetails("REQUEST_ACCEPTED", "", nil),
-			newDomainKey("test2.example.com", "DOMAIN"):   newDomainDetails("REQUEST_ACCEPTED", "", nil),
-			newDomainKey("test3.example.com", "WILDCARD"): newDomainDetails("REQUEST_ACCEPTED", "", nil),
+			newDomainKey("test1.example.com", "HOST"):     newDomainDetails("REQUEST_ACCEPTED", "", "HTTP"),
+			newDomainKey("test2.example.com", "DOMAIN"):   newDomainDetails("REQUEST_ACCEPTED", "", "DNS_CNAME"),
+			newDomainKey("test3.example.com", "WILDCARD"): newDomainDetails("REQUEST_ACCEPTED", "", "DNS_TXT"),
 		},
 		postCreateValidation: map[domainKey]domainDetails{
-			newDomainKey("test1.example.com", "HOST"):     newDomainDetails("VALIDATED", "", nil),
-			newDomainKey("test2.example.com", "DOMAIN"):   newDomainDetails("VALIDATED", "", nil),
-			newDomainKey("test3.example.com", "WILDCARD"): newDomainDetails("VALIDATED", "", nil),
+			newDomainKey("test1.example.com", "HOST"):     newDomainDetails("VALIDATED", "", "HTTP"),
+			newDomainKey("test2.example.com", "DOMAIN"):   newDomainDetails("VALIDATED", "", "DNS_CNAME"),
+			newDomainKey("test3.example.com", "WILDCARD"): newDomainDetails("VALIDATED", "", "DNS_TXT"),
 		},
 		postUpdateValidation: map[domainKey]domainDetails{
-			newDomainKey("test1.example.com", "HOST"):   newDomainDetails("VALIDATED", "", nil),
-			newDomainKey("test2.example.com", "DOMAIN"): newDomainDetails("VALIDATED", "", nil),
+			newDomainKey("test1.example.com", "HOST"):   newDomainDetails("VALIDATED", "", "HTTP"),
+			newDomainKey("test2.example.com", "DOMAIN"): newDomainDetails("VALIDATED", "", "DNS_CNAME"),
 		},
 	}
 }
@@ -144,24 +129,24 @@ func getMinCreateRemoveOne() validationTestData {
 func getMinCreateAddOneRemoveOne() validationTestData {
 	return validationTestData{
 		create: map[domainKey]domainDetails{
-			newDomainKey("test1.example.com", "HOST"):     newDomainDetails("REQUEST_ACCEPTED", "", nil),
-			newDomainKey("test2.example.com", "DOMAIN"):   newDomainDetails("REQUEST_ACCEPTED", "", nil),
-			newDomainKey("test3.example.com", "WILDCARD"): newDomainDetails("REQUEST_ACCEPTED", "", nil),
+			newDomainKey("test1.example.com", "HOST"):     newDomainDetails("REQUEST_ACCEPTED", "", "HTTP"),
+			newDomainKey("test2.example.com", "DOMAIN"):   newDomainDetails("REQUEST_ACCEPTED", "", "DNS_CNAME"),
+			newDomainKey("test3.example.com", "WILDCARD"): newDomainDetails("REQUEST_ACCEPTED", "", "DNS_TXT"),
 		},
 		postCreateValidation: map[domainKey]domainDetails{
-			newDomainKey("test1.example.com", "HOST"):     newDomainDetails("VALIDATED", "", nil),
-			newDomainKey("test2.example.com", "DOMAIN"):   newDomainDetails("VALIDATED", "", nil),
-			newDomainKey("test3.example.com", "WILDCARD"): newDomainDetails("VALIDATED", "", nil),
+			newDomainKey("test1.example.com", "HOST"):     newDomainDetails("VALIDATED", "", "HTTP"),
+			newDomainKey("test2.example.com", "DOMAIN"):   newDomainDetails("VALIDATED", "", "DNS_CNAME"),
+			newDomainKey("test3.example.com", "WILDCARD"): newDomainDetails("VALIDATED", "", "DNS_TXT"),
 		},
 		update: map[domainKey]domainDetails{
-			newDomainKey("test1.example.com", "HOST"):     newDomainDetails("VALIDATED", "", nil),
-			newDomainKey("test2.example.com", "DOMAIN"):   newDomainDetails("VALIDATED", "", nil),
-			newDomainKey("test4.example.com", "WILDCARD"): newDomainDetails("REQUEST_ACCEPTED", "", nil),
+			newDomainKey("test1.example.com", "HOST"):     newDomainDetails("VALIDATED", "", "HTTP"),
+			newDomainKey("test2.example.com", "DOMAIN"):   newDomainDetails("VALIDATED", "", "DNS_CNAME"),
+			newDomainKey("test4.example.com", "WILDCARD"): newDomainDetails("REQUEST_ACCEPTED", "", "HTTP"),
 		},
 		postUpdateValidation: map[domainKey]domainDetails{
-			newDomainKey("test1.example.com", "HOST"):     newDomainDetails("VALIDATED", "", nil),
-			newDomainKey("test2.example.com", "DOMAIN"):   newDomainDetails("VALIDATED", "", nil),
-			newDomainKey("test4.example.com", "WILDCARD"): newDomainDetails("VALIDATED", "", nil),
+			newDomainKey("test1.example.com", "HOST"):     newDomainDetails("VALIDATED", "", "HTTP"),
+			newDomainKey("test2.example.com", "DOMAIN"):   newDomainDetails("VALIDATED", "", "DNS_CNAME"),
+			newDomainKey("test4.example.com", "WILDCARD"): newDomainDetails("VALIDATED", "", "HTTP"),
 		},
 	}
 }
@@ -174,25 +159,25 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 		CheckEqual("domains.#", "3").
 		CheckEqual("domains.0.domain_name", "test1.example.com").
 		CheckEqual("domains.0.validation_scope", "HOST").
-		CheckMissing("domains.0.validation_method").
+		CheckEqual("domains.0.validation_method", "HTTP").
 		CheckEqual("domains.1.domain_name", "test2.example.com").
 		CheckEqual("domains.1.validation_scope", "DOMAIN").
-		CheckMissing("domains.1.validation_method").
+		CheckEqual("domains.1.validation_method", "DNS_CNAME").
 		CheckEqual("domains.2.domain_name", "test3.example.com").
 		CheckEqual("domains.2.validation_scope", "WILDCARD").
-		CheckMissing("domains.2.validation_method")
+		CheckEqual("domains.2.validation_method", "DNS_TXT")
 
 	importChecker := test.NewImportChecker().
 		CheckEqual("domains.#", "3").
 		CheckEqual("domains.0.domain_name", "test1.example.com").
 		CheckEqual("domains.0.validation_scope", "HOST").
-		CheckMissing("domains.0.validation_method").
+		CheckEqual("domains.0.validation_method", "HTTP").
 		CheckEqual("domains.1.domain_name", "test2.example.com").
 		CheckEqual("domains.1.validation_scope", "DOMAIN").
-		CheckMissing("domains.1.validation_method").
+		CheckEqual("domains.1.validation_method", "DNS_CNAME").
 		CheckEqual("domains.2.domain_name", "test3.example.com").
 		CheckEqual("domains.2.validation_scope", "WILDCARD").
-		CheckMissing("domains.2.validation_method")
+		CheckEqual("domains.2.validation_method", "DNS_TXT")
 
 	domains101Checker := test.NewStateChecker("akamai_property_domainownership_validation.test").
 		CheckEqual("domains.#", "101")
@@ -227,9 +212,9 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 				// Create
 				mockSearchDomains(m, mockData.create)
 				pending := map[domainKey]domainDetails{
-					newDomainKey("test1.example.com", "HOST"):     newDomainDetails("PENDING", "FQDN", nil),
-					newDomainKey("test2.example.com", "DOMAIN"):   newDomainDetails("PENDING", "FQDN", nil),
-					newDomainKey("test3.example.com", "WILDCARD"): newDomainDetails("PENDING", "FQDN", nil),
+					newDomainKey("test1.example.com", "HOST"):     newDomainDetails("PENDING", "FQDN", "HTTP"),
+					newDomainKey("test2.example.com", "DOMAIN"):   newDomainDetails("PENDING", "FQDN", "DNS_CNAME"),
+					newDomainKey("test3.example.com", "WILDCARD"): newDomainDetails("PENDING", "FQDN", "DNS_TXT"),
 				}
 				mockValidateDomains(m, mockData.create, pending)
 				mockSearchDomains(m, mockData.postCreateValidation)
@@ -250,7 +235,7 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 		"create with 3 domains - one domain already validated": {
 			init: func(m *domainownership.Mock, mockData validationTestData) {
 				// Simulate one domain already validated before creation.
-				mockData.create[newDomainKey("test2.example.com", "DOMAIN")] = newDomainDetails("VALIDATED", "FQDN", nil)
+				mockData.create[newDomainKey("test2.example.com", "DOMAIN")] = newDomainDetails("VALIDATED", "FQDN", "DNS_TXT")
 				// Create
 				mockSearchDomains(m, mockData.create)
 				mockValidateDomains(m, mockData.create, mockData.postCreateValidation)
@@ -286,29 +271,6 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 				},
 			},
 		},
-		"create with 3 domains - with validation methods": {
-			init: func(m *domainownership.Mock, mockData validationTestData) {
-				// Create
-				mockSearchDomains(m, mockData.create)
-				mockValidateDomains(m, mockData.create, mockData.postCreateValidation)
-				// Read before destroy
-				mockSearchDomains(m, mockData.postCreateValidation)
-				// Delete
-				mockSearchDomains(m, mockData.postCreateValidation)
-				mockInvalidateDomains(m, mockData.postCreateValidation)
-			},
-			mockData: getFullCreate(),
-			steps: []resource.TestStep{
-				{
-					Config: testutils.LoadFixtureString(t, "testdata/TestResDOMValidation/create_with_validation_methods.tf"),
-					Check: minCreateChecker.
-						CheckEqual("domains.0.validation_method", "DNS_CNAME").
-						CheckEqual("domains.1.validation_method", "DNS_TXT").
-						CheckEqual("domains.2.validation_method", "HTTP").
-						Build(),
-				},
-			},
-		},
 		"create with 101 domains": {
 			init: func(m *domainownership.Mock, mockData validationTestData) {
 				// Create
@@ -338,7 +300,7 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 				maps.Copy(pending, mockData.postCreateValidation)
 				for i := range 100 {
 					pending[newDomainKey(fmt.Sprintf("test%d.example.com", i), "HOST")] =
-						newDomainDetails("PENDING", "FQDN", nil)
+						newDomainDetails("PENDING", "FQDN", "HTTP")
 				}
 				// Second call to SearchDomains returns 100 domains as VALIDATED.
 				searchedCompleted := make(map[domainKey]domainDetails)
@@ -373,7 +335,7 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 				mockValidateDomains(m, mockData.create, mockData.postCreateValidation)
 				// Read
 				mockSearchDomains(m, mockData.postCreateValidation)
-				// Refresh with drift - one domain got invalidated outside of TF
+				// Refresh with drift - one domain got invalidated outside TF
 				var searchDomainsBody []domainownership.Domain
 				for k := range mockData.create {
 					searchDomainsBody = append(searchDomainsBody, domainownership.Domain{
@@ -385,21 +347,21 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 					{
 						DomainName:       "test1.example.com",
 						ValidationScope:  "HOST",
-						ValidationMethod: nil,
+						ValidationMethod: ptr.To("HTTP"),
 						DomainStatus:     "VALIDATED",
 						ValidationLevel:  "FQDN",
 					},
 					{
 						DomainName:       "test2.example.com",
 						ValidationScope:  "DOMAIN",
-						ValidationMethod: nil,
+						ValidationMethod: ptr.To("DNS_CNAME"),
 						DomainStatus:     "INVALIDATED",
 						ValidationLevel:  "FQDN",
 					},
 					{
 						DomainName:       "test3.example.com",
 						ValidationScope:  "WILDCARD",
-						ValidationMethod: nil,
+						ValidationMethod: ptr.To("DNS_TXT"),
 						DomainStatus:     "VALIDATED",
 						ValidationLevel:  "FQDN",
 					},
@@ -443,6 +405,7 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 					Check: minCreateChecker.
 						CheckEqual("domains.#", "2").
 						CheckEqual("domains.1.validation_scope", "WILDCARD").
+						CheckEqual("domains.1.validation_method", "DNS_TXT").
 						CheckEqual("domains.1.domain_name", "test3.example.com").
 						CheckMissing("domains.2.domain_name").
 						CheckMissing("domains.2.validation_scope").
@@ -472,21 +435,21 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 					{
 						DomainName:       "test1.example.com",
 						ValidationScope:  "HOST",
-						ValidationMethod: nil,
+						ValidationMethod: ptr.To("HTTP"),
 						DomainStatus:     "REQUEST_ACCEPTED",
 						ValidationLevel:  "FQDN",
 					},
 					{
 						DomainName:       "test2.example.com",
 						ValidationScope:  "DOMAIN",
-						ValidationMethod: nil,
+						ValidationMethod: ptr.To("DNS_CNAME"),
 						DomainStatus:     "INVALIDATED",
 						ValidationLevel:  "FQDN",
 					},
 					{
 						DomainName:       "test3.example.com",
 						ValidationScope:  "WILDCARD",
-						ValidationMethod: nil,
+						ValidationMethod: ptr.To("DNS_TXT"),
 						DomainStatus:     "TOKEN_EXPIRED",
 						ValidationLevel:  "FQDN",
 					},
@@ -548,7 +511,7 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 						CheckEqual("domains.#", "4").
 						CheckEqual("domains.3.domain_name", "test4.example.com").
 						CheckEqual("domains.3.validation_scope", "HOST").
-						CheckMissing("domains.3.validation_method").
+						CheckEqual("domains.3.validation_method", "HTTP").
 						Build(),
 				},
 			},
@@ -577,7 +540,7 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 					domainsResponse = append(domainsResponse, domainownership.SearchDomainItem{
 						DomainName:       k.domainName,
 						ValidationScope:  k.validationScope,
-						ValidationMethod: v.validationMethod,
+						ValidationMethod: ptr.To(v.validationMethod),
 						ValidationLevel:  v.validationLevel,
 						DomainStatus:     v.validationStatus,
 					})
@@ -655,7 +618,7 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 						CheckEqual("domains.#", "4").
 						CheckEqual("domains.3.domain_name", "test4.example.com").
 						CheckEqual("domains.3.validation_scope", "HOST").
-						CheckMissing("domains.3.validation_method").
+						CheckEqual("domains.3.validation_method", "HTTP").
 						Build(),
 				},
 			},
@@ -670,7 +633,7 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 				// Update
 				mockSearchDomains(m, mockData.postCreateValidation)
 				toInvalidate := map[domainKey]domainDetails{
-					newDomainKey("test3.example.com", string(domainownership.ValidationScopeWildcard)): newDomainDetails("VALIDATED", "FQDN", nil),
+					newDomainKey("test3.example.com", string(domainownership.ValidationScopeWildcard)): newDomainDetails("VALIDATED", "FQDN", "DNS_TXT"),
 				}
 				mockInvalidateDomains(m, toInvalidate)
 				// Read after update
@@ -713,7 +676,7 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 				mockSearchDomains(m, domainsToSearch)
 
 				toInvalidate := map[domainKey]domainDetails{
-					newDomainKey("test3.example.com", "WILDCARD"): newDomainDetails("VALIDATED", "FQDN", nil),
+					newDomainKey("test3.example.com", "WILDCARD"): newDomainDetails("VALIDATED", "FQDN", "DNS_TXT"),
 				}
 				mockInvalidateDomains(m, toInvalidate)
 				mockValidateDomains(m, mockData.update, mockData.postUpdateValidation)
@@ -735,7 +698,7 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 						CheckEqual("domains.#", "3").
 						CheckEqual("domains.2.domain_name", "test4.example.com").
 						CheckEqual("domains.2.validation_scope", "WILDCARD").
-						CheckMissing("domains.2.validation_method").
+						CheckEqual("domains.2.validation_method", "HTTP").
 						Build(),
 				},
 			},
@@ -779,7 +742,7 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 					domainsResponse = append(domainsResponse, domainownership.SearchDomainItem{
 						DomainName:       k.domainName,
 						ValidationScope:  k.validationScope,
-						ValidationMethod: v.validationMethod,
+						ValidationMethod: ptr.To(v.validationMethod),
 						DomainStatus:     v.validationStatus,
 						ValidationLevel:  v.validationLevel,
 					})
@@ -829,7 +792,7 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 					domainsResponse = append(domainsResponse, domainownership.SearchDomainItem{
 						DomainName:       k.domainName,
 						ValidationScope:  k.validationScope,
-						ValidationMethod: v.validationMethod,
+						ValidationMethod: ptr.To(v.validationMethod),
 						DomainStatus:     v.validationStatus,
 						ValidationLevel:  "FQDN",
 					})
@@ -1253,9 +1216,9 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 				// Create
 				mockSearchDomains(m, mockData.create)
 				pending := map[domainKey]domainDetails{
-					newDomainKey("test1.example.com", "HOST"):     newDomainDetails("PENDING", "FQDN", nil),
-					newDomainKey("test2.example.com", "DOMAIN"):   newDomainDetails("PENDING", "FQDN", nil),
-					newDomainKey("test3.example.com", "WILDCARD"): newDomainDetails("PENDING", "FQDN", nil),
+					newDomainKey("test1.example.com", "HOST"):     newDomainDetails("PENDING", "FQDN", "HTTP"),
+					newDomainKey("test2.example.com", "DOMAIN"):   newDomainDetails("PENDING", "FQDN", "HTTP"),
+					newDomainKey("test3.example.com", "WILDCARD"): newDomainDetails("PENDING", "FQDN", "HTTP"),
 				}
 				mockValidateDomains(m, mockData.create, pending)
 			},
@@ -1316,7 +1279,7 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 			init: func(m *domainownership.Mock, mockData validationTestData) {
 				oneDomainInvalidated := mockData
 				oneDomainInvalidated.create[newDomainKey("test3.example.com", "WILDCARD")] =
-					newDomainDetails("INVALIDATED", "FQDN", nil)
+					newDomainDetails("INVALIDATED", "FQDN", "HTTP")
 				// Create
 				mockSearchDomains(m, oneDomainInvalidated.create)
 			},
@@ -1332,7 +1295,7 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 			init: func(m *domainownership.Mock, mockData validationTestData) {
 				oneDomainTokenExpired := mockData
 				oneDomainTokenExpired.create[newDomainKey("test3.example.com", "WILDCARD")] =
-					newDomainDetails("TOKEN_EXPIRED", "FQDN", nil)
+					newDomainDetails("TOKEN_EXPIRED", "FQDN", "HTTP")
 				// Create
 				mockSearchDomains(m, oneDomainTokenExpired.create)
 			},
@@ -1356,7 +1319,7 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 				// Update
 				mockSearchDomains(m, mockData.update)
 				pending := map[domainKey]domainDetails{
-					newDomainKey("test4.example.com", "HOST"): newDomainDetails("PENDING", "FQDN", nil),
+					newDomainKey("test4.example.com", "HOST"): newDomainDetails("PENDING", "FQDN", "HTTP"),
 				}
 				mockValidateDomains(m, mockData.update, pending)
 				// Delete - use postCreateValidation as update failed.
@@ -1448,7 +1411,7 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 				// Update
 				oneDomainInvalidated := mockData.update
 				oneDomainInvalidated[newDomainKey("test4.example.com", "HOST")] =
-					newDomainDetails("INVALIDATED", "FQDN", nil)
+					newDomainDetails("INVALIDATED", "FQDN", "HTTP")
 				mockSearchDomains(m, oneDomainInvalidated)
 
 				// Delete
@@ -1478,7 +1441,7 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 				// Update
 				oneDomainTokenExpired := mockData.update
 				oneDomainTokenExpired[newDomainKey("test4.example.com", "HOST")] =
-					newDomainDetails("TOKEN_EXPIRED", "FQDN", nil)
+					newDomainDetails("TOKEN_EXPIRED", "FQDN", "HTTP")
 				mockSearchDomains(m, oneDomainTokenExpired)
 
 				// Delete
@@ -1574,7 +1537,7 @@ func mockSearchDomains(m *domainownership.Mock, domains map[domainKey]domainDeta
 		domainsResponse = append(domainsResponse, domainownership.SearchDomainItem{
 			DomainName:       k.domainName,
 			ValidationScope:  k.validationScope,
-			ValidationMethod: v.validationMethod,
+			ValidationMethod: ptr.To(v.validationMethod),
 			ValidationLevel:  v.validationLevel,
 			DomainStatus:     v.validationStatus,
 		})
@@ -1603,14 +1566,10 @@ func mockValidateDomains(m *domainownership.Mock, domainsToValidate map[domainKe
 	var validateDomainResponse []domainownership.ValidateDomainResponse
 	for k, v := range domainsToValidate {
 		if v.validationStatus == "REQUEST_ACCEPTED" {
-			var validationMethod *domainownership.ValidationMethod
-			if v.validationMethod != nil {
-				validationMethod = ptr.To(domainownership.ValidationMethod(*v.validationMethod))
-			}
 			validateDomainsBody = append(validateDomainsBody, domainownership.ValidateDomain{
 				DomainName:       k.domainName,
 				ValidationScope:  domainownership.ValidationScope(k.validationScope),
-				ValidationMethod: validationMethod,
+				ValidationMethod: domainownership.ValidationMethod(v.validationMethod),
 			})
 		}
 	}
@@ -1682,10 +1641,13 @@ func newDomainKey(name string, scope string) domainKey {
 	}
 }
 
-func newDomainDetails(status, level string, method *string) domainDetails {
-	return domainDetails{
+func newDomainDetails(status, level string, method string) domainDetails {
+	domainDetail := domainDetails{
 		validationStatus: status,
 		validationLevel:  level,
-		validationMethod: method,
 	}
+	if method != "" {
+		domainDetail.validationMethod = method
+	}
+	return domainDetail
 }

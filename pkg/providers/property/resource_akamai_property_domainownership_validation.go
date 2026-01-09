@@ -54,7 +54,7 @@ type (
 	}
 
 	domainDetails struct {
-		validationMethod *string
+		validationMethod string
 		validationStatus string
 		validationLevel  string
 	}
@@ -118,7 +118,7 @@ func validateDomainsSchema() schema.SetNestedAttribute {
 					},
 				},
 				"validation_method": schema.StringAttribute{
-					Optional: true,
+					Required: true,
 					MarkdownDescription: "The method used to validate the domain. Possible values are: \n" +
 						"* `DNS_CNAME` - For this method, Akamai generates a `cname_record` that you copy as the `target` to a `CNAME` record of your DNS configuration. The record's name needs to be in the `_acme-challenge.domain-name` format.\n" +
 						"* `DNS_TXT` - For this method, Akamai generates a `txt_record` with a token `value` that you copy as the `target` to a `TXT` record of your DNS configuration. The record's name needs to be in the `_akamai-{host|wildcard|domain}-challenge.domainName` format based on the validation scope.\n" +
@@ -271,11 +271,11 @@ func (d *DomainOwnershipValidationResource) Read(ctx context.Context, req resour
 	}
 
 	var refreshedStateDomains []domainModel
-	for domain, domainDetails := range stateDomainsMap {
+	for domain := range stateDomainsMap {
 		refreshedStateDomains = append(refreshedStateDomains, domainModel{
 			DomainName:       types.StringValue(domain.domainName),
 			ValidationScope:  types.StringValue(domain.validationScope),
-			ValidationMethod: types.StringPointerValue(domainDetails.validationMethod),
+			ValidationMethod: types.StringValue(apiDomainsMap[domain].validationMethod),
 		})
 	}
 	tflog.Debug(ctx, "refreshed state domains", map[string]any{
@@ -653,7 +653,7 @@ func domainsToMap(domains []domainModel) map[domainKey]domainDetails {
 			domainName:      d.DomainName.ValueString(),
 			validationScope: d.ValidationScope.ValueString(),
 		}] = domainDetails{
-			validationMethod: d.ValidationMethod.ValueStringPointer(),
+			validationMethod: d.ValidationMethod.ValueString(),
 		}
 	}
 	return domainMap
@@ -662,14 +662,17 @@ func domainsToMap(domains []domainModel) map[domainKey]domainDetails {
 func apiDomainsToMap(domains []domainownership.SearchDomainItem) map[domainKey]domainDetails {
 	domainMap := make(map[domainKey]domainDetails)
 	for _, d := range domains {
-		domainMap[domainKey{
-			domainName:      d.DomainName,
-			validationScope: d.ValidationScope,
-		}] = domainDetails{
-			validationMethod: d.ValidationMethod,
+		details := domainDetails{
 			validationStatus: d.DomainStatus,
 			validationLevel:  d.ValidationLevel,
 		}
+		if d.ValidationMethod != nil {
+			details.validationMethod = *d.ValidationMethod
+		}
+		domainMap[domainKey{
+			domainName:      d.DomainName,
+			validationScope: d.ValidationScope,
+		}] = details
 	}
 	return domainMap
 }
