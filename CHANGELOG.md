@@ -33,6 +33,9 @@
     * Updated various dependencies.
 
 
+* Cloud Access
+  * Added support for the new authentication method, Akamai Video Manager Cloudinary (`AVM_CLOUDINARY`), in the `akamai_cloudaccess_key` resource.
+
 * Cloudlets
     * Eliminated the global client variable and its synchronization logic, significantly reducing
       unit test execution time.
