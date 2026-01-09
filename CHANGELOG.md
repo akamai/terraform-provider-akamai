@@ -79,6 +79,13 @@
 
 
 
+
+
+
+  * Added `akamai_property_hostname_audit_history` data source, that allows to fetch a detailed record of all modifications made to a property hostname.
+
+
+
 * PAPI
   * Added a validation for `edge_hostname_id` and `property_id` in `akamai_property_hostname_bucket`
 
