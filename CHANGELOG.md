@@ -79,6 +79,9 @@
 
 #### BUG FIXES:
 
+* PAPI
+    * Fixed intermittent test failures in CP Code resource by increasing polling timings in tests by 10x
+
 * Cloudlets
     * Removed the `akaRuleId` and `location` fields from the `match_rules` JSON payload to avoid API validation errors when updating Akamai Cloudlets policies ([I#688](https://github.com/akamai/terraform-provider-akamai/issues/688)).
 

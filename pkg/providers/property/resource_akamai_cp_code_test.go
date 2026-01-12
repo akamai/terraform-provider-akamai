@@ -451,10 +451,10 @@ func TestResCPCode(t *testing.T) {
 
 	t.Run("timeout waiting for update", func(t *testing.T) {
 		timeoutVal := cpCodeResourceUpdateTimeout
-		oldInterval := cpCodeResourceUpdateTimeout
+		oldInterval := updatePollInterval
 
-		cpCodeResourceUpdateTimeout = time.Millisecond * 6
-		updatePollInterval = time.Millisecond * 4
+		cpCodeResourceUpdateTimeout = time.Millisecond * 60
+		updatePollInterval = time.Millisecond * 40
 
 		client := edgegrid.NewTestClient()
 
