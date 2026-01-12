@@ -75,12 +75,116 @@ func dataSourcePropertyHostnames() *schema.Resource {
 						"cert_provisioning_type": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Indicates the certificate's provisioning type. Either `CPS_MANAGED` for the certificates you create with the Certificate Provisioning System (CPS) API, or `DEFAULT` for the Domain Validation (DV) certificates created automatically. Note that you can't specify the `DEFAULT` value if your property hostname uses the `akamaized.net` domain suffix.",
+							Description: "Indicates the certificate's provisioning type. Either `CPS_MANAGED` for the certificates created with the Certificate Provisioning System (CPS) API, `CCM` for the certificates created with the Cloud Certificate Manager (CCM) API, or `DEFAULT` for the Domain Validation (DV) certificates created automatically. Note that you can't specify the `DEFAULT` value if your property hostname uses the `akamaized.net` domain suffix.",
 						},
 						"cert_status": {
 							Type:     schema.TypeList,
 							Computed: true,
 							Elem:     certStatus,
+						},
+						"ccm_certificates": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "Identifiers for the RSA and ECDSA certificates created with Cloud Certificate Manager (CCM).",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"ecdsa_cert_id": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Certificate ID for ECDSA.",
+									},
+									"rsa_cert_id": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Certificate ID for RSA.",
+									},
+								},
+							},
+						},
+						"ccm_cert_status": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "CCM certificate deployment status for RSA and ECDSA certificates.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"ecdsa_staging_status": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Status of the ECDSA certificate on staging network.",
+									},
+									"ecdsa_production_status": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Status of the ECDSA certificate on production network.",
+									},
+									"rsa_staging_status": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Status of the RSA certificate on staging network.",
+									},
+									"rsa_production_status": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Status of the RSA certificate on production network.",
+									},
+								},
+							},
+						},
+						"mtls": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "Mutual TLS configuration for the hostnames created with Cloud Certificate Manager (CCM).",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"ca_set_id": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "ID of the Client CA set used for mutual TLS.",
+									},
+									"check_client_ocsp": {
+										Type:        schema.TypeBool,
+										Computed:    true,
+										Description: "Whether to check the OCSP status of the client certificate.",
+									},
+									"send_ca_set_client": {
+										Type:        schema.TypeBool,
+										Computed:    true,
+										Description: "Whether to send the CA set to the client during the TLS handshake.",
+									},
+								},
+							},
+						},
+						"tls_configuration": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "TLS configuration settings applicable to the Cloud Certificate Manager (CCM) hostnames.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"cipher_profile": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Cipher profile name.",
+									},
+									"disallowed_tls_versions": {
+										Type:     schema.TypeList,
+										Computed: true,
+										Elem: &schema.Schema{
+											Type: schema.TypeString,
+										},
+										Description: "List of TLS versions that are disallowed.",
+									},
+									"fips_mode": {
+										Type:        schema.TypeBool,
+										Computed:    true,
+										Description: "Enable FIPS mode.",
+									},
+									"staple_server_ocsp_response": {
+										Type:        schema.TypeBool,
+										Computed:    true,
+										Description: "Staple the OCSP response for the server certificate.",
+									},
+								},
+							},
 						},
 					},
 				},
@@ -260,7 +364,7 @@ func dataPropertyHostnamesRead(ctx context.Context, d *schema.ResourceData, m in
 	// setting concatenated id to uniquely identify data
 	d.SetId(propertyID + strconv.Itoa(version))
 
-	if err := d.Set("hostnames", flattenHostnames(hostnamesResponse.Hostnames.Items)); err != nil {
+	if err := d.Set("hostnames", flattenHostnamesCCM(hostnamesResponse.Hostnames.Items)); err != nil {
 		return diag.Errorf("error setting hostnames: %s", err)
 	}
 

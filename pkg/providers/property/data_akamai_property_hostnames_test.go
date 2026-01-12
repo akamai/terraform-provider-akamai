@@ -17,6 +17,53 @@ import (
 
 func TestDataPropertyHostnames(t *testing.T) {
 	t.Parallel()
+
+	tests := map[string]struct {
+		init        func(*edgegrid.TestClient)
+		config      string
+		checks      resource.TestCheckFunc
+		expectError *regexp.Regexp
+	}{
+		"list hostnames with CCM Certificates, CCM Certificate Status, MTLS, TLS Configuration details": {
+			init: func(client *edgegrid.TestClient) {
+				mockGetPropertyWithPropertyType(client.PAPI, nil).Times(3)
+
+				hostnames := papi.HostnameResponseItems{Items: buildPropertyHostnamesWithCCM()}
+
+				client.PAPI.On("GetLatestVersion", testutils.MockContext, papi.GetLatestVersionRequest{
+					ContractID:  "ctr_test",
+					GroupID:     "grp_test",
+					PropertyID:  "prp_test",
+					ActivatedOn: "",
+				}).Return(&papi.GetPropertyVersionsResponse{
+					ContractID: "ctr_test",
+					GroupID:    "grp_test",
+					Version: papi.PropertyVersionGetItem{
+						PropertyVersion: 1,
+					},
+				}, nil).Times(3)
+				client.PAPI.On("GetPropertyVersionHostnames", testutils.MockContext, papi.GetPropertyVersionHostnamesRequest{
+					PropertyID:        "prp_test",
+					PropertyVersion:   1,
+					ContractID:        "ctr_test",
+					GroupID:           "grp_test",
+					ValidateHostnames: false,
+					IncludeCertStatus: true,
+				}).Return(&papi.GetPropertyVersionHostnamesResponse{
+					AccountID:       "act_test",
+					ContractID:      "ctr_test",
+					GroupID:         "grp_test",
+					PropertyID:      "prp_test",
+					PropertyVersion: 1,
+					Etag:            "etag",
+					Hostnames:       hostnames,
+				}, nil).Times(3)
+			},
+			config: testutils.LoadFixtureString(t, "testdata/TestDataPropertyHostnames/property_hostnames.tf"),
+			checks: newHostnamesStateChecker(flattenHostnamesCCM(buildPropertyHostnamesWithCCM())).Build(),
+		},
+	}
+
 	t.Run("list hostnames", func(t *testing.T) {
 		t.Parallel()
 		client := edgegrid.NewTestClient()
@@ -65,6 +112,7 @@ func TestDataPropertyHostnames(t *testing.T) {
 
 		client.PAPI.AssertExpectations(t)
 	})
+
 	t.Run("list hostnames of type HOSTNAME_BUCKET", func(t *testing.T) {
 		t.Parallel()
 		client := edgegrid.NewTestClient()
@@ -650,6 +698,28 @@ func TestDataPropertyHostnames(t *testing.T) {
 
 		client.PAPI.AssertExpectations(t)
 	})
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			client := edgegrid.NewTestClient()
+			if tc.init != nil {
+				tc.init(client)
+			}
+
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+				IsUnitTest:               true,
+				Steps: []resource.TestStep{{
+					Config:      tc.config,
+					Check:       tc.checks,
+					ExpectError: tc.expectError,
+				}},
+			})
+
+			client.PAPI.AssertExpectations(t)
+		})
+	}
 }
 
 func mockListActivePropertyHostnames(client *papi.Mock, offset int, resp *papi.ListActivePropertyHostnamesResponse, err error) *mock.Call {
@@ -690,9 +760,61 @@ func buildPropertyHostnames() []papi.Hostname {
 	return hostnames
 }
 
+func buildPropertyHostnamesWithCCM() []papi.Hostname {
+	hostnames := make([]papi.Hostname, 10)
+	for i := 0; i < 10; i++ {
+		// Alternate boolean values to test both true and false scenarios
+		isEven := i%2 == 0
+
+		hostnames[i] = papi.Hostname{
+			CnameType:            "EDGE_HOSTNAME",
+			EdgeHostnameID:       fmt.Sprintf("ehn_%d", i),
+			CnameFrom:            fmt.Sprintf("cnamef%d.example.com", i),
+			CnameTo:              fmt.Sprintf("cnamet%d.example.com.edgekey.net", i),
+			CertProvisioningType: "CCM",
+			CertStatus: papi.CertStatusItem{
+				ValidationCname: papi.ValidationCname{
+					Hostname: fmt.Sprintf("cnamef%v", i),
+					Target:   fmt.Sprintf("cnamet%v", i),
+				},
+				Staging: []papi.StatusItem{{
+					Status: "PENDING",
+				}},
+				Production: []papi.StatusItem{{
+					Status: "PENDING",
+				},
+				},
+			},
+			CCMCertificates: &papi.CCMCertificates{
+				ECDSACertID: fmt.Sprintf("ecdsa_cert_%d", i),
+				RSACertID:   fmt.Sprintf("rsa_cert_%d", i),
+			},
+			CCMCertStatus: &papi.CCMCertStatus{
+				ECDSAStagingStatus:    "ACTIVE",
+				ECDSAProductionStatus: "ACTIVE",
+				RSAStagingStatus:      "PENDING",
+				RSAProductionStatus:   "PENDING",
+			},
+			MTLS: &papi.MTLS{
+				CASetID:         fmt.Sprintf("ca_set_%d", i),
+				CASetLink:       fmt.Sprintf("/ccm/v3/ca-sets/ca_set_%d", i),
+				CheckClientOCSP: isEven,
+				SendCASetClient: !isEven,
+			},
+			TLSConfiguration: &papi.TLSConfiguration{
+				CipherProfile:            "ak-akamai-default-2022q1",
+				DisallowedTLSVersions:    []string{"TLSv1", "TLSv1_1"},
+				StapleServerOcspResponse: isEven,
+				FIPSMode:                 !isEven,
+			},
+		}
+	}
+	return hostnames
+}
+
 func buildHostnameItems(itemsNo int) []papi.HostnameItem {
 	hostnames := make([]papi.HostnameItem, 0, itemsNo)
-	for i := range itemsNo {
+	for i := 0; i < itemsNo; i++ {
 		hostnames = append(hostnames, papi.HostnameItem{
 			CertStatus: &papi.CertStatusItem{
 				ValidationCname: papi.ValidationCname{
@@ -723,20 +845,27 @@ func buildAggregatedHostnamesTest(hostnames []map[string]interface{}, id, groupI
 	testVar = append(testVar, resource.TestCheckResourceAttr("data.akamai_property_hostnames.akaprophosts", "property_id", propertyID))
 	testVar = append(testVar, resource.TestCheckResourceAttr("data.akamai_property_hostnames.akaprophosts", "version", strconv.Itoa(version)))
 	testVar = append(testVar, resource.TestCheckResourceAttr("data.akamai_property_hostnames.akaprophosts", "hostnames.#", fmt.Sprintf("%v", len(hostnames))))
+
 	for ind, hostname := range hostnames {
 		for mapKey, mapVal := range hostname {
-			if mapKey != "cert_status" {
-				value := fmt.Sprintf("%v", mapVal)
-				key := fmt.Sprintf("hostnames.%v.%v", ind, mapKey)
-				testVar = append(testVar, resource.TestCheckResourceAttr("data.akamai_property_hostnames.akaprophosts", key, value))
-			} else {
-				certStatuses := mapVal.([]map[string]interface{})
-				for cInd, cert := range certStatuses {
-					for cKey, cVal := range cert {
-						value := fmt.Sprintf("%v", cVal)
-						key := fmt.Sprintf("hostnames.%v.%v.%v.%v", ind, mapKey, cInd, cKey)
-						testVar = append(testVar, resource.TestCheckResourceAttr("data.akamai_property_hostnames.akaprophosts", key, value))
+			switch mapKey {
+			case "cert_status":
+				if certStatuses, ok := mapVal.([]map[string]interface{}); ok {
+					for cInd, cert := range certStatuses {
+						for cKey, cVal := range cert {
+							value := fmt.Sprintf("%v", cVal)
+							key := fmt.Sprintf("hostnames.%v.%v.%v.%v", ind, mapKey, cInd, cKey)
+							testVar = append(testVar, resource.TestCheckResourceAttr("data.akamai_property_hostnames.akaprophosts", key, value))
+						}
 					}
+				}
+			case "ccm_cert_status", "ccm_certificates", "mtls", "tls_configuration":
+				continue
+			default:
+				if mapVal != nil {
+					value := fmt.Sprintf("%v", mapVal)
+					key := fmt.Sprintf("hostnames.%v.%v", ind, mapKey)
+					testVar = append(testVar, resource.TestCheckResourceAttr("data.akamai_property_hostnames.akaprophosts", key, value))
 				}
 			}
 		}
@@ -758,4 +887,55 @@ func mockGetPropertyWithPropertyType(client *papi.Mock, propertyType *string) *m
 			PropertyType: propertyType,
 		},
 	}, nil)
+}
+
+func newHostnamesStateChecker(hostnames []map[string]any) test.StateChecker {
+	checker := test.NewStateChecker("data.akamai_property_hostnames.akaprophosts").
+		CheckEqual("id", "prp_test1").
+		CheckEqual("group_id", "grp_test").
+		CheckEqual("contract_id", "ctr_test").
+		CheckEqual("property_id", "prp_test").
+		CheckEqual("version", "1").
+		CheckEqual("hostnames.#", "10")
+
+	for ind, hostname := range hostnames {
+		for mapKey, mapVal := range hostname {
+			switch mapKey {
+			case "cert_status":
+				certStatuses := mapVal.([]map[string]interface{})
+				for cInd, cert := range certStatuses {
+					for cKey, cVal := range cert {
+						value := fmt.Sprintf("%v", cVal)
+						key := fmt.Sprintf("hostnames.%v.%v.%v.%v", ind, mapKey, cInd, cKey)
+						checker = checker.CheckEqual(key, value)
+					}
+				}
+			case "ccm_cert_status", "ccm_certificates", "mtls", "tls_configuration":
+				if items, ok := mapVal.([]map[string]interface{}); ok {
+					for itemIndex, itemMap := range items {
+						for itemKey, itemValue := range itemMap {
+							switch v := itemValue.(type) {
+							case []string:
+								baseKey := fmt.Sprintf("hostnames.%d.%s.%d.%s", ind, mapKey, itemIndex, itemKey)
+								checker = checker.CheckEqual(fmt.Sprintf("%s.#", baseKey), fmt.Sprintf("%d", len(v)))
+								for i, strVal := range v {
+									elementKey := fmt.Sprintf("%s.%d", baseKey, i)
+									checker = checker.CheckEqual(elementKey, strVal)
+								}
+							default:
+								value := fmt.Sprintf("%v", itemValue)
+								key := fmt.Sprintf("hostnames.%d.%s.%d.%s", ind, mapKey, itemIndex, itemKey)
+								checker = checker.CheckEqual(key, value)
+							}
+						}
+					}
+				}
+			default:
+				value := fmt.Sprintf("%v", mapVal)
+				key := fmt.Sprintf("hostnames.%v.%v", ind, mapKey)
+				checker = checker.CheckEqual(key, value)
+			}
+		}
+	}
+	return checker
 }

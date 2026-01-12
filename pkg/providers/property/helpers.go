@@ -234,6 +234,8 @@ func flattenHostnames(Hostnames []papi.Hostname) []map[string]interface{} {
 		m["edge_hostname_id"] = hn.EdgeHostnameID
 		m["cname_type"] = hn.CnameType
 		m["cert_status"] = []map[string]any{flattenCertType(&hn.CertStatus)}
+		m["ccm_certificates"] = flattenCCMCertificates(hn.CCMCertificates)
+		m["ccm_cert_status"] = flattenCCMCertificateStatus(hn.CCMCertStatus)
 		res = append(res, m)
 	}
 	return res

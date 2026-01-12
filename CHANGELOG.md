@@ -66,7 +66,12 @@
     unit test execution time.
 
 
-
+* CCM
+  * Added support for Cloud Certificate Manager (CCM) data in the `akamai_property_hostnames` datasource. The following attributes are now available on each object in the `hostnames` list.
+    * `ccm_certificates`
+    * `ccm_cert_status`
+    * `mtls`
+    * `tls_configuration`
 
 
 * PAPI
