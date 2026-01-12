@@ -16,42 +16,70 @@ import (
 var (
 	streamList = []datastream.StreamDetails{
 		{
-			StreamID:      1,
-			StreamName:    "Stream1",
-			StreamStatus:  datastream.StreamStatusDeactivated,
-			StreamVersion: 2,
-			LatestVersion: 2,
-			GroupID:       1234,
-			ContractID:    "1-ABCDE",
-			ProductID:     "P-1234",
-			CreatedBy:     "user1",
-			CreatedDate:   "14-07-2020 07:07:40 GMT",
+			StreamID:        1,
+			StreamName:      "Stream1",
+			StreamStatus:    datastream.StreamStatusDeactivated,
+			StreamVersion:   2,
+			LatestVersion:   2,
+			GroupID:         1234,
+			ContractID:      "1-ABCDE",
+			ProductID:       "P-1234",
+			CreatedBy:       "user1",
+			CreatedDate:     "14-07-2020 07:07:40 GMT",
+			IntegrationType: "PM_DEPENDENT",
 			Properties: []datastream.Property{
 				{
-					PropertyID:   13371337,
-					PropertyName: "property_name_1",
+					PropertyID:      13371337,
+					PropertyName:    "property_name_1",
+					IntegrationType: "PM_DEPENDENT",
 				},
 			},
 		},
 		{
-			StreamID:      2,
-			StreamName:    "Stream2",
-			StreamStatus:  datastream.StreamStatusActivated,
-			StreamVersion: 3,
-			LatestVersion: 3,
-			GroupID:       4321,
-			ContractID:    "2-ABCDE",
-			ProductID:     "P-1234",
-			CreatedBy:     "user2",
-			CreatedDate:   "24-07-2020 07:07:40 GMT",
+			StreamID:        2,
+			StreamName:      "Stream2",
+			StreamStatus:    datastream.StreamStatusActivated,
+			StreamVersion:   3,
+			LatestVersion:   3,
+			GroupID:         4321,
+			ContractID:      "2-ABCDE",
+			ProductID:       "P-1234",
+			CreatedBy:       "user2",
+			CreatedDate:     "24-07-2020 07:07:40 GMT",
+			IntegrationType: "HYBRID",
 			Properties: []datastream.Property{
 				{
-					PropertyID:   23372337,
-					PropertyName: "property_name_2",
+					PropertyID:      23372337,
+					PropertyName:    "property_name_2",
+					IntegrationType: "HYBRID",
 				},
 				{
-					PropertyID:   33373337,
-					PropertyName: "property_name_3",
+					PropertyID:      33373337,
+					PropertyName:    "property_name_3",
+					IntegrationType: "DS_MANAGED",
+				},
+			},
+		},
+	}
+
+	streamListWithEmptyFields = []datastream.StreamDetails{
+		{
+			StreamID:      3,
+			StreamName:    "Stream3",
+			StreamStatus:  datastream.StreamStatusActivated,
+			StreamVersion: 1,
+			LatestVersion: 1,
+			GroupID:       1234,
+			ContractID:    "1-ABCDE",
+			ProductID:     "P-1234",
+			CreatedBy:     "user3",
+			CreatedDate:   "01-08-2020 07:07:40 GMT",
+			// IntegrationType: "" (empty string when not set)
+			Properties: []datastream.Property{
+				{
+					PropertyID:   44374437,
+					PropertyName: "property_name_4",
+					// IntegrationType: "" (empty string when not set)
 				},
 			},
 		},
@@ -123,6 +151,18 @@ func TestDataDatastreams(t *testing.T) {
 				},
 			},
 		},
+		"list streams with empty integration_type": {
+			init: func(m *datastream.Mock) {
+				m.On("ListStreams", testutils.MockContext, mock.Anything).
+					Return(streamListWithEmptyFields, nil)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataDatastreams/list_streams_without_groupid.tf"),
+					Check:  streamsChecks(streamListWithEmptyFields),
+				},
+			},
+		},
 		"could not fetch stream list": {
 			init: func(m *datastream.Mock) {
 				m.On("ListStreams", testutils.MockContext, mock.Anything).
@@ -161,7 +201,7 @@ func streamsChecks(details []datastream.StreamDetails) resource.TestCheckFunc {
 	}
 	for idx, stream := range details {
 		attrName := func(attr string) string { return fmt.Sprintf("streams_details.%d.%s", idx, attr) }
-		testCheck := resource.ComposeAggregateTestCheckFunc(
+		testCheck := []resource.TestCheckFunc{
 			resource.TestCheckResourceAttr("data.akamai_datastreams.test", attrName("stream_id"), strconv.FormatInt(stream.StreamID, 10)),
 			resource.TestCheckResourceAttr("data.akamai_datastreams.test", attrName("stream_name"), stream.StreamName),
 			resource.TestCheckResourceAttr("data.akamai_datastreams.test", attrName("stream_version"), strconv.FormatInt(stream.StreamVersion, 10)),
@@ -173,8 +213,12 @@ func streamsChecks(details []datastream.StreamDetails) resource.TestCheckFunc {
 			resource.TestCheckResourceAttr("data.akamai_datastreams.test", attrName("stream_status"), string(stream.StreamStatus)),
 			resource.TestCheckResourceAttr("data.akamai_datastreams.test", attrName("created_by"), stream.CreatedBy),
 			resource.TestCheckResourceAttr("data.akamai_datastreams.test", attrName("created_date"), stream.CreatedDate),
-		)
-		checks = append(checks, testCheck)
+		}
+		// Only check integration_type if it's non-empty (API may not return it)
+		if stream.IntegrationType != "" {
+			testCheck = append(testCheck, resource.TestCheckResourceAttr("data.akamai_datastreams.test", attrName("integration_type"), stream.IntegrationType))
+		}
+		checks = append(checks, resource.ComposeAggregateTestCheckFunc(testCheck...))
 	}
 	return resource.ComposeAggregateTestCheckFunc(checks...)
 }
@@ -188,6 +232,10 @@ func propertiesCheck(key string, properties []datastream.Property) resource.Test
 		testCheck := []resource.TestCheckFunc{
 			resource.TestCheckResourceAttr("data.akamai_datastreams.test", attrName("property_id"), strconv.Itoa(property.PropertyID)),
 			resource.TestCheckResourceAttr("data.akamai_datastreams.test", attrName("property_name"), property.PropertyName),
+		}
+		// Only check integration_type if it's non-empty (API may not return it)
+		if property.IntegrationType != "" {
+			testCheck = append(testCheck, resource.TestCheckResourceAttr("data.akamai_datastreams.test", attrName("integration_type"), property.IntegrationType))
 		}
 		checks = append(checks, testCheck...)
 	}

@@ -24,6 +24,12 @@
 
 #### FEATURES/ENHANCEMENTS:
 
+* DataStream
+  * Added new attributes to the `akamai_datastream` resource:
+    * `sampling_percentage` (optional) — specifies the percentage of data (1–100) that the stream sends to the destination. A value of `1` means only 1% of the data is sent. If not specified, the stream sends 100% of the data by default.
+    * `integration_type` (computed, read-only) — displays the integration mode returned by the API, such as `PM_DEPENDENT`, `HYBRID`, or `DS_MANAGED`, at the property and stream levels. This attribute value is automatically populated only when present in the API response. If the API response doesn't include an integration type, this value won't be set in the Terraform state.
+  * Added a new computed attribute `integration_type` to the `akamai_datastreams` data source.
+
 * CPS
     * Eliminated the global client variable and its synchronization logic, significantly reducing
       unit test execution time.
