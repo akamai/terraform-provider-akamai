@@ -87,6 +87,7 @@ func (p *Subprovider) FrameworkResources() []func() resource.Resource {
 		NewBootstrapResource,
 		NewDomainsResource,
 		NewHostnameBucketResource,
+		NewDomainOwnershipLateValidationResource,
 		NewDomainOwnershipValidationResource,
 	}
 }

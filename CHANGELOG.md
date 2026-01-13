@@ -30,6 +30,10 @@
     * `integration_type` (computed, read-only) — displays the integration mode returned by the API, such as `PM_DEPENDENT`, `HYBRID`, or `DS_MANAGED`, at the property and stream levels. This attribute value is automatically populated only when present in the API response. If the API response doesn't include an integration type, this value won't be set in the Terraform state.
   * Added a new computed attribute `integration_type` to the `akamai_datastreams` data source.
 
+* PAPI Domain Ownership Validation (Beta)
+  * Added new resource:
+    * `akamai_property_domainownership_late_validation` - enables late domain ownership validation for properties whose hostnames have not yet been validated.
+  
 * CPS
     * Eliminated the global client variable and its synchronization logic, significantly reducing
       unit test execution time.
