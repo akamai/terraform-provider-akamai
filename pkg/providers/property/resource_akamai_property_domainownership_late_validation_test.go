@@ -768,6 +768,121 @@ func TestDomainOwnershipLateValidationResource(t *testing.T) {
 				},
 			},
 		},
+		"error expected - missing contract_id": {
+			steps: []resource.TestStep{
+				{
+					Config: `
+provider "akamai" {
+  edgerc = "../../common/testutils/edgerc"
+}
+
+resource "akamai_property_domainownership_late_validation" "test" {
+  group_id          = "grp_2"
+  property_id       = "prp_123"
+  version           = 1
+  validation_method = "DNS_CNAME"
+}
+`,
+					ExpectError: regexp.MustCompile(`The argument "contract_id" is required, but no definition was found.`),
+				},
+			},
+		},
+		"error expected - missing group_id": {
+			steps: []resource.TestStep{
+				{
+					Config: `
+provider "akamai" {
+  edgerc = "../../common/testutils/edgerc"
+}
+
+resource "akamai_property_domainownership_late_validation" "test" {
+  contract_id       = "ctr_1"
+  property_id       = "prp_123"
+  version           = 1
+  validation_method = "DNS_CNAME"
+}
+`,
+					ExpectError: regexp.MustCompile(`The argument "group_id" is required, but no definition was found.`),
+				},
+			},
+		},
+		"error expected - missing property_id": {
+			steps: []resource.TestStep{
+				{
+					Config: `
+provider "akamai" {
+  edgerc = "../../common/testutils/edgerc"
+}
+
+resource "akamai_property_domainownership_late_validation" "test" {
+  contract_id       = "ctr_1"
+  group_id          = "grp_2"
+  version           = 1
+  validation_method = "DNS_CNAME"
+}
+`,
+					ExpectError: regexp.MustCompile(`The argument "property_id" is required, but no definition was found.`),
+				},
+			},
+		},
+		"error expected - missing version": {
+			steps: []resource.TestStep{
+				{
+					Config: `
+provider "akamai" {
+  edgerc = "../../common/testutils/edgerc"
+}
+
+resource "akamai_property_domainownership_late_validation" "test" {
+  contract_id       = "ctr_1"
+  group_id          = "grp_2"
+  property_id       = "prp_123"
+  validation_method = "DNS_CNAME"
+}
+`,
+					ExpectError: regexp.MustCompile(`The argument "version" is required, but no definition was found.`),
+				},
+			},
+		},
+		"error expected - missing validation_method": {
+			steps: []resource.TestStep{
+				{
+					Config: `
+provider "akamai" {
+  edgerc = "../../common/testutils/edgerc"
+}
+
+resource "akamai_property_domainownership_late_validation" "test" {
+  contract_id       = "ctr_1"
+  group_id          = "grp_2"
+  property_id       = "prp_123"
+  version           = 1
+}
+`,
+					ExpectError: regexp.MustCompile(`The argument "validation_method" is required, but no definition was found.`),
+				},
+			},
+		},
+		"error expected - incorrect validation_method": {
+			steps: []resource.TestStep{
+				{
+					Config: `
+provider "akamai" {
+  edgerc = "../../common/testutils/edgerc"
+}
+
+resource "akamai_property_domainownership_late_validation" "test" {
+  contract_id       = "ctr_1"
+  group_id          = "grp_2"
+  property_id       = "prp_123"
+  version           = 1
+  validation_method = "incorrect"
+}
+`,
+					ExpectError: regexp.MustCompile(`(?s)Attribute validation_method value must be one of: \["DNS_CNAME" "DNS_TXT".+"HTTP"], got: "incorrect"`),
+				},
+			},
+		},
 		"import successful": {
 			init: func(m *mockProperty, _ *domainownership.Mock) {
 				m.hostnames = papi.HostnameResponseItems{

@@ -95,7 +95,7 @@ func (d *DomainOwnershipLateValidationResource) Schema(ctx context.Context, _ re
 				},
 			},
 			"validation_method": schema.StringAttribute{
-				Optional: true,
+				Required: true,
 				MarkdownDescription: "The method used to validate the domain. Possible values are: \n" +
 					"* `DNS_CNAME` - For this method, Akamai generates a `cname_record` that you copy as the `target` to a `CNAME` record of your DNS configuration. The record's name needs to be in the `_acme-challenge.domain-name` format.\n" +
 					"* `DNS_TXT` - For this method, Akamai generates a `txt_record` with a token `value` that you copy as the `target` to a `TXT` record of your DNS configuration. The record's name needs to be in the `_akamai-{host|wildcard|domain}-challenge.domainName` format based on the validation scope.\n" +
