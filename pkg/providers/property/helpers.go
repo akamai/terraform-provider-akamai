@@ -236,11 +236,32 @@ func flattenHostnames(Hostnames []papi.Hostname) []map[string]interface{} {
 		m["cert_status"] = []map[string]any{flattenCertType(&hn.CertStatus)}
 		m["ccm_certificates"] = flattenCCMCertificates(hn.CCMCertificates)
 		m["ccm_cert_status"] = flattenCCMCertificateStatus(hn.CCMCertStatus)
+		m["mtls"] = flattenMTLS(hn.MTLS)
+		m["tls_configuration"] = flattenTLSConfiguration(hn.TLSConfiguration)
 		if hn.DomainOwnershipVerification != nil {
 			m["domain_ownership_verification"] = []map[string]any{flattenDomainOwnershipVerification(hn.DomainOwnershipVerification)}
 		} else {
 			m["domain_ownership_verification"] = nil
 		}
+		res = append(res, m)
+	}
+	return res
+}
+
+func flattenHostnamesWithoutDOM(Hostnames []papi.Hostname) []map[string]interface{} {
+	var res []map[string]interface{}
+	for _, hn := range Hostnames {
+		m := map[string]interface{}{}
+		m["cname_from"] = hn.CnameFrom
+		m["cname_to"] = hn.CnameTo
+		m["cert_provisioning_type"] = hn.CertProvisioningType
+		m["edge_hostname_id"] = hn.EdgeHostnameID
+		m["cname_type"] = hn.CnameType
+		m["cert_status"] = []map[string]any{flattenCertType(&hn.CertStatus)}
+		m["ccm_certificates"] = flattenCCMCertificates(hn.CCMCertificates)
+		m["ccm_cert_status"] = flattenCCMCertificateStatus(hn.CCMCertStatus)
+		m["mtls"] = flattenMTLS(hn.MTLS)
+		m["tls_configuration"] = flattenTLSConfiguration(hn.TLSConfiguration)
 		res = append(res, m)
 	}
 	return res
@@ -295,27 +316,6 @@ func flattenDomainOwnershipVerification(dov *papi.DomainOwnershipVerification) m
 	}
 
 	return attrs
-}
-
-// TODO: remove this when updating akamai_property_hostnames datasource
-// and use flattenHostnames instead
-func flattenHostnamesCCM(Hostnames []papi.Hostname) []map[string]interface{} {
-	var res []map[string]interface{}
-	for _, hn := range Hostnames {
-		m := map[string]interface{}{}
-		m["cname_from"] = hn.CnameFrom
-		m["cname_to"] = hn.CnameTo
-		m["cert_provisioning_type"] = hn.CertProvisioningType
-		m["edge_hostname_id"] = hn.EdgeHostnameID
-		m["cname_type"] = hn.CnameType
-		m["cert_status"] = []map[string]any{flattenCertType(&hn.CertStatus)}
-		m["ccm_certificates"] = flattenCCMCertificates(hn.CCMCertificates)
-		m["ccm_cert_status"] = flattenCCMCertificateStatus(hn.CCMCertStatus)
-		m["mtls"] = flattenMTLS(hn.MTLS)
-		m["tls_configuration"] = flattenTLSConfiguration(hn.TLSConfiguration)
-		res = append(res, m)
-	}
-	return res
 }
 
 func flattenCCMCertificateStatus(status *papi.CCMCertStatus) []map[string]string {

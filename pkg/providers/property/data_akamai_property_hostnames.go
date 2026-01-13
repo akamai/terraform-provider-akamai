@@ -479,7 +479,7 @@ func dataPropertyHostnamesRead(ctx context.Context, d *schema.ResourceData, m in
 	// setting concatenated id to uniquely identify data
 	d.SetId(propertyID + strconv.Itoa(version))
 
-	if err := d.Set("hostnames", flattenHostnamesCCM(hostnamesResponse.Hostnames.Items)); err != nil {
+	if err := d.Set("hostnames", flattenHostnames(hostnamesResponse.Hostnames.Items)); err != nil {
 		return diag.Errorf("error setting hostnames: %s", err)
 	}
 

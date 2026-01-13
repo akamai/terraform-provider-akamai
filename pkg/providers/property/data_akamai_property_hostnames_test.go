@@ -61,7 +61,7 @@ func TestDataPropertyHostnames(t *testing.T) {
 				}, nil).Times(3)
 			},
 			config: testutils.LoadFixtureString(t, "testdata/TestDataPropertyHostnames/property_hostnames.tf"),
-			checks: newHostnamesStateChecker(flattenHostnamesCCM(buildPropertyHostnamesWithCCM())).Build(),
+			checks: newHostnamesStateChecker(flattenHostnames(buildPropertyHostnamesWithCCM())).Build(),
 		},
 		"list hostnames": {
 			init: func(client *edgegrid.TestClient) {

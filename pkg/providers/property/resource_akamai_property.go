@@ -786,7 +786,7 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 		"latest_version":      property.LatestVersion,
 		"staging_version":     stagingVersion,
 		"production_version":  productionVersion,
-		"hostnames":           flattenHostnamesCCM(hostnames),
+		"hostnames":           flattenHostnamesWithoutDOM(hostnames),
 		"use_hostname_bucket": useHostnameBucket,
 		"rules":               string(rulesJSON),
 		"rule_format":         ruleFormat,
