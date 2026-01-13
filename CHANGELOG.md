@@ -23,8 +23,7 @@
 
 
 #### FEATURES/ENHANCEMENTS:
-* Appsec
-    * Fixed issue in `resource_akamai_appsec_rapid_rules.go` where `tf apply` was showing diff due to a change in rule ordering.
+
 
 * DataStream
   * Added new attributes to the `akamai_datastream` resource:

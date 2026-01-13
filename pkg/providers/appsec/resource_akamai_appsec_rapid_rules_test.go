@@ -13,10 +13,7 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
-	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
-	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -36,26 +33,12 @@ func TestRapidRulesResource(t *testing.T) {
 	err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResRapidRules/ConditionException.json"), &ruleConditionException)
 	require.NoError(t, err)
 
-	rapidRulesOrderTestUpdated := appsec.GetRapidRulesResponse{}
-	err = json.Unmarshal(
-		testutils.LoadFixtureBytes(t, "testdata/TestResRapidRules/RapidRulesOrderTest.json"),
-		&rapidRulesOrderTestUpdated,
-	)
-	require.NoError(t, err)
-
 	baseChecker := test.NewStateChecker(resourceReferenceName).
 		CheckEqual("id", "111111:2222_333333").
 		CheckEqual("config_id", "111111").
 		CheckEqual("security_policy_id", "2222_333333").
 		CheckEqual("default_action", "akamai_managed").
 		CheckEqual("rule_definitions", "null")
-
-	orderedChecker := test.NewStateChecker(resourceReferenceName).
-		CheckEqual("id", "111111:2222_333333").
-		CheckEqual("config_id", "111111").
-		CheckEqual("security_policy_id", "2222_333333").
-		CheckEqual("enabled", "true").
-		CheckEqual("default_action", "deny")
 
 	createRapidRulesInit := func(m *appsec.Mock) {
 		mockGetConfiguration(m, 3)
@@ -421,112 +404,6 @@ func TestRapidRulesResource(t *testing.T) {
 					ResourceName:       resourceReferenceName,
 					ExpectError:        regexp.MustCompile("Error: invalid security policy id ''"),
 					ImportStatePersist: true,
-				},
-			},
-		},
-		"update rapid rules - suppress diff on rule order": {
-			init: func(m *appsec.Mock) {
-				// Step 1: Create resource with original rule order
-				mockGetConfiguration(m, 6)
-				mockUpdateRapidRulesStatus(m, true, 1)
-				mockGetRapidRulesDefaultAction(m, "deny", 4)
-				mockGetRapidRulesStatus(m, true, 3)
-
-				expectedReq := appsec.GetRapidRulesRequest{
-					ConfigID: 111111,
-					Version:  2,
-					PolicyID: "2222_333333",
-				}
-
-				// First read returns prior state (used during Step 1 create)
-				m.On("GetRapidRules",
-					mock.Anything,
-					expectedReq,
-				).Return(&rapidRulesPriorState, nil).Once()
-
-				// Subsequent reads return updated state with reordered rules (Step 1 final read + Step 2 reads)
-				m.On("GetRapidRules",
-					mock.Anything,
-					expectedReq,
-				).Return(&rapidRulesOrderTestUpdated, nil).Times(4)
-
-				// Apply rule actions, locks, and exceptions (2 rules × 2 locks each = 4)
-				// Called During Read and Update in Step 1 and Step 2
-				m.On("UpdateRapidRuleActionLock",
-					mock.Anything,
-					mock.AnythingOfType("appsec.UpdateRapidRuleActionLockRequest"),
-				).Return(&appsec.UpdateRapidRuleActionLockResponse{
-					Enabled: false,
-				}, nil).Times(8)
-
-				// Update actions for 2 rules
-				// Called During Read and Update in Step 1 and Step 2
-				m.On("UpdateRapidRuleAction",
-					mock.Anything,
-					mock.AnythingOfType("appsec.UpdateRapidRuleActionRequest"),
-				).Return(&appsec.UpdateRapidRuleActionResponse{}, nil).Times(4)
-
-				// Apply exceptions for 2 rules
-				// Called During Read and Update in Step 1 and Step 2
-				m.On("UpdateRapidRuleException",
-					mock.Anything,
-					mock.AnythingOfType("appsec.UpdateRapidRuleExceptionRequest"),
-				).Return(
-					(*appsec.UpdateRapidRuleExceptionResponse)(&ruleConditionException),
-					nil,
-				).Times(2)
-
-				// Final status cleanup.
-				mockUpdateRapidRulesStatus(m, false, 1)
-			},
-			steps: []resource.TestStep{
-				{
-					// Step 1: canonical order.
-					Config: testutils.LoadFixtureString(t,
-						"testdata/TestResRapidRules/create_rapid_rules_test_reordered_list.tf"),
-					Check: orderedChecker.Build(),
-				},
-				{
-					// Step 2: same rules, shuffled order. PreventJsonReorder
-					// NOTE: ExpectNonEmptyPlan=true due to cosmetic 'id' diff.
-					// Terraform marks computed attributes as "to be computed" during any
-					// update, even when the plan modifier successfully prevents the real diff.
-					Config: testutils.LoadFixtureString(t,
-						"testdata/TestResRapidRules/update_rapid_rules_reordered.tf"),
-					ExpectNonEmptyPlan: true,
-					ConfigPlanChecks: resource.ConfigPlanChecks{
-						PreApply: []plancheck.PlanCheck{
-							plancheck.ExpectKnownValue(
-								resourceReferenceName,
-								tfjsonpath.New("rule_definitions"),
-								knownvalue.StringExact(
-									toDefinitionsJSON("RuleDefinitionsOrderTestOriginal.json"),
-								),
-							),
-							// Verify other attributes also didn't change
-							plancheck.ExpectKnownValue(
-								resourceReferenceName,
-								tfjsonpath.New("enabled"),
-								knownvalue.Bool(true),
-							),
-							plancheck.ExpectKnownValue(
-								resourceReferenceName,
-								tfjsonpath.New("default_action"),
-								knownvalue.StringExact("deny"),
-							),
-
-							// Only 'id' should be unknown (cosmetic change)
-							plancheck.ExpectUnknownValue(
-								resourceReferenceName,
-								tfjsonpath.New("id"),
-							),
-						},
-					},
-
-					Check: orderedChecker.
-						CheckEqual("rule_definitions",
-							toDefinitionsJSON("RuleDefinitionsOrderTestOriginal.json")).
-						Build(),
 				},
 			},
 		},
