@@ -78,7 +78,7 @@ func TestPoll(t *testing.T) {
 		},
 		"context timeout due to deadline option": {
 			setupContext: func() (context.Context, context.CancelFunc) {
-				return context.WithCancel(context.Background())
+				return context.Background(), nil
 			},
 			setupFn:          returnCallsTimes100FailingOnFirst(2),
 			shouldRetryError: alwaysRetry,
@@ -110,7 +110,7 @@ func TestPoll(t *testing.T) {
 		},
 		"error context without deadline and no deadline option": {
 			setupContext: func() (context.Context, context.CancelFunc) {
-				return context.WithCancel(context.Background())
+				return context.Background(), nil
 			},
 			expectedError: "either provide a context with deadline or set Deadline in polling options",
 			expectedCalls: 0,
@@ -135,10 +135,20 @@ func TestPoll(t *testing.T) {
 			setupContext: func() (context.Context, context.CancelFunc) {
 				ctx, cancel := context.WithTimeout(context.Background(), 1*time.Millisecond)
 				// Wait to ensure context expires before Poll is called
-				time.Sleep(5 * time.Millisecond)
+				time.Sleep(200 * time.Millisecond)
 				return ctx, cancel
 			},
 			expectedError: "context terminated before function execution: context deadline exceeded",
+			expectedCalls: 0, // Function should NOT be called
+		},
+		"function not executed when context is already done - cancel version": {
+			setupContext: func() (context.Context, context.CancelFunc) {
+				ctx, cancel := context.WithCancel(context.Background())
+				cancel()
+				return ctx, nil
+			},
+			deadline:      5 * time.Second, // need to provide deadline somewhere
+			expectedError: "context terminated before function execution: context canceled",
 			expectedCalls: 0, // Function should NOT be called
 		},
 		"error negative deadline": {
