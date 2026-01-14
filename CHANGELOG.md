@@ -1,29 +1,31 @@
 # RELEASE NOTES
 
-## X.X.X (X X, X)
-
-#### BREAKING CHANGES:
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+## 9.3.0 (Jan 21, 2026)
 
 #### FEATURES/ENHANCEMENTS:
 
+* General
+  * Migrated to Go `1.24`.
+  * Migrated Terraform to version 1.13.5.
+  * Updated various dependencies.
+
+* ClientLists
+  * Added support for the `DOMAIN` client list type.
+
+* Cloud Access
+  * Added support for the new authentication method, Akamai Video Manager Cloudinary (`AVM_CLOUDINARY`), in the `akamai_cloudaccess_key` resource.
+
+* Cloud Certificates (Beta)
+  * Eliminated the global client variable and its synchronization logic, significantly reducing
+    unit test execution time.
+
+* Cloudlets
+  * Eliminated the global client variable and its synchronization logic, significantly reducing
+    unit test execution time.
+
+* CPS
+  * Eliminated the global client variable and its synchronization logic, significantly reducing
+    unit test execution time.
 
 * DataStream
   * Added new attributes to the `akamai_datastream` resource:
@@ -31,156 +33,53 @@
     * `integration_type` (computed, read-only) — displays the integration mode returned by the API, such as `PM_DEPENDENT`, `HYBRID`, or `DS_MANAGED`, at the property and stream levels. This attribute value is automatically populated only when present in the API response. If the API response doesn't include an integration type, this value won't be set in the Terraform state.
   * Added a new computed attribute `integration_type` to the `akamai_datastreams` data source.
 
-* PAPI Domain Ownership Validation (Beta)
-  * Added new resource:
-    * `akamai_property_domainownership_late_validation` - enables late domain ownership validation for properties whose hostnames have not yet been validated.
-  
-* CPS
-    * Eliminated the global client variable and its synchronization logic, significantly reducing
-      unit test execution time.
-
-* General
-    * Migrated to Go `1.24`.
-    * Updated various dependencies.
-
-
-* Cloud Access
-  * Added support for the new authentication method, Akamai Video Manager Cloudinary (`AVM_CLOUDINARY`), in the `akamai_cloudaccess_key` resource.
-
-* Cloudlets
-    * Eliminated the global client variable and its synchronization logic, significantly reducing
-      unit test execution time.
-
-
-
-* ClientLists
-  * Added support for `DOMAIN` type client lists.
-
-
-
-* PAPI
-  * Eliminated the global client variable and its synchronization logic, significantly reducing
-    unit test execution time.
-
-
-
-* Global
-  * Migrated Terraform to version 1.13.5.
-
-
-
-
-
-* Cloud Certificates (Beta)
-  * Eliminated the global client variable and its synchronization logic, significantly reducing
-    unit test execution time.
-
-
-
-* PAPI Domain Ownership Validation (Beta)
-  * Added `domain_ownership_verification` attribute to the `akamai_property_hostnames` data source,
-    containing the domain validation details.
-
 * MTLS Keystore
   * Eliminated the global client variable and its synchronization logic, significantly reducing
     unit test execution time.
 
-
-* CCM
-  * Added support for Cloud Certificate Manager (CCM) data in the `akamai_property_hostnames` datasource. The following attributes are now available on each object in the `hostnames` list.
-    * `ccm_certificates`
-    * `ccm_cert_status`
-    * `mtls`
-    * `tls_configuration`
-
-
 * PAPI
-  * Added `akamai_property_account_hostnames` data source, that allows to list all hostnames for the account. Available filters include:
+  * Eliminated the global client variable and its synchronization logic, significantly reducing
+    unit test execution time.
+  * Added the `akamai_property_account_hostnames` data source, which allows listing all hostnames for the account. Available filters include:
     * `contract_id`
     * `group_id`
     * `hostname`
     * `cname_to`
     * `network`
-
-
-
-
-
-
-  * Added `akamai_property_hostname_audit_history` data source, that allows to fetch a detailed record of all modifications made to a property hostname.
-
-
-
-* PAPI
-  * Added a validation for `edge_hostname_id` and `property_id` in `akamai_property_hostname_bucket`
-
-
-
-
+  * Added the `akamai_property_hostname_audit_history` data source, which allows fetching a detailed record of all modifications made to a property hostname.
+  * Added basic format validation for the `edge_hostname_id` and `property_id` attributes in the `akamai_property_hostname_bucket` resource, ensuring values match the expected ID patterns, optional `ehn_` or `prp_` prefix followed by digits.
+  * Added new fields `mtls` and `tls_configuration` to the `akamai_property` resource, which are optional for CCM hostnames. 
+  * Added support for the Cloud Certificate Manager (CCM) data in the `akamai_property_hostnames` data source. The following attributes are now available on each object in the `hostnames` list:
+    * `ccm_certificates`
+    * `ccm_cert_status`
+    * `mtls`
+    * `tls_configuration`
 
 * PAPI Domain Ownership Validation (Beta)
+  * Added a new resource, `akamai_property_domainownership_late_validation`, which enables late domain ownership validation for properties whose hostnames have not yet been validated.
+  * Added the `domain_ownership_verification` attribute to the `akamai_property_hostnames` data source, containing the domain validation details.
   * Changed the `validation_method` field in the `akamai_property_domainownership_validation` resource from `Optional` to `Required`.
-
-
-
-
-* PAPI
-  * Added new fields `mtls` and `tls_configuration` to the `akamai_property` resource which are optional for CCM hostnames.
-
 
 #### BUG FIXES:
 
-* PAPI
-    * Fixed intermittent test failures in CP Code resource by increasing polling timings in tests by 10x
+* AppSec
+  * Fixed state handling in the `akamai_appsec_custom_deny` resource when `GetCustomDeny` returns `404 Not Found` for the latest configuration version, the resource is removed from the state so Terraform can recreate it on the next apply.
+  * Added validation to the `akamai_appsec_rule` resource to prevent `rule_action` from being set to "none" when a non-empty `condition_exception` is provided.
+  * Fixed a state issue in the `akamai_appsec_activations` resource on failed activation.
 
 * Cloudlets
-    * Removed the `akaRuleId` and `location` fields from the `match_rules` JSON payload to avoid API validation errors when updating Akamai Cloudlets policies ([I#688](https://github.com/akamai/terraform-provider-akamai/issues/688)).
-
-
-
-* GTM
-  * Fixed an issue in `resource_akamai_gtm_property` where failed property creation now marks the resource as tainted, ensuring it can be recreated during the next `terraform apply` ([I#613](https://github.com/akamai/terraform-provider-akamai/issues/613)).
-
-
-
-
-
-
-* PAPI
-    * Relaxed too strict validation of edge hostname domain prefixes in the `akamai_edge_hostname` resource ([I#668](https://github.com/akamai/terraform-provider-akamai/issues/668)).
-
-
-
+  * Removed the `akaRuleId` and `location` fields from the `match_rules` JSON payload to avoid API validation errors when updating Akamai Cloudlets policies ([I#688](https://github.com/akamai/terraform-provider-akamai/issues/688)).
 
 * CPS
   * Allowed update of the `exclude_sans` field in the `akamai_cps_third_party_enrollment` resource.
 
-
-
-* Appsec
-  * Added validation to `akamai_appsec_rule` resource to prevent `rule_action` from being set to "none" when a non-empty `condition_exception` is supplied.
-
-
-* Appsec
-  * Fixed state issue in `akamai_appsec_activations` on failed activation. 
-
-
-
-
-
-
-
-
-
-
-
-
+* GTM
+  * Fixed an issue in the `akamai_gtm_property` resource where failed property creation now marks the resource as tainted, ensuring it can be recreated during the next `terraform apply` ([I#613](https://github.com/akamai/terraform-provider-akamai/issues/613)).
 
 * PAPI
-  * Fixed a bug where the Terraform provider crashed when using `edge_hostname_id` without `ehn_` prefix in `akamai_property_hostname_bucket`
-
-
-
+  * Fixed intermittent test failures in the `akamai_cp_code` resource by increasing polling timings in tests by 10 times.
+  * Relaxed too strict validation of edge hostname domain prefixes in the `akamai_edge_hostname` resource, allowing now to start the domain prefix with a digit ([I#668](https://github.com/akamai/terraform-provider-akamai/issues/668)).
+  * Fixed a bug where the Terraform provider crashed when using `edge_hostname_id` without the `ehn_` prefix in the `akamai_property_hostname_bucket` resource.
 
 ## 9.2.0 (Nov 13, 2025)
 
