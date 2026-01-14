@@ -31,6 +31,8 @@ var (
 	_ resource.ResourceWithConfigure   = &DomainOwnershipLateValidationResource{}
 )
 
+const defaultLateValidationPollTimeout = 30 * time.Minute
+
 type (
 	// DomainOwnershipLateValidationResource represents akamai_domainownership_late_validation resource.
 	DomainOwnershipLateValidationResource struct {
@@ -129,7 +131,12 @@ func (d *DomainOwnershipLateValidationResource) Create(ctx context.Context, req 
 		return
 	}
 
-	diags := d.validateDomains(ctx, &plan)
+	timeout, timeoutDiags := plan.Timeouts.Create(ctx, defaultLateValidationPollTimeout)
+	if resp.Diagnostics.Append(timeoutDiags...); resp.Diagnostics.HasError() {
+		return
+	}
+
+	diags := d.validateDomains(ctx, &plan, timeout)
 	if resp.Diagnostics.Append(diags...); resp.Diagnostics.HasError() {
 		return
 	}
@@ -195,7 +202,12 @@ func (d *DomainOwnershipLateValidationResource) Update(ctx context.Context, req 
 		return
 	}
 
-	diags := d.validateDomains(ctx, &plan)
+	timeout, timeoutDiags := plan.Timeouts.Update(ctx, defaultLateValidationPollTimeout)
+	if resp.Diagnostics.Append(timeoutDiags...); resp.Diagnostics.HasError() {
+		return
+	}
+
+	diags := d.validateDomains(ctx, &plan, timeout)
 	if resp.Diagnostics.Append(diags...); resp.Diagnostics.HasError() {
 		return
 	}
@@ -260,6 +272,7 @@ func (d *DomainOwnershipLateValidationResource) ImportState(ctx context.Context,
 	data.Version = types.Int64Value(version)
 	data.ContractID = types.StringValue(contractID)
 	data.GroupID = types.StringValue(groupID)
+	data.ValidationMethod = types.StringValue(validationMethod)
 
 	data.Timeouts = timeouts.Value{
 		Object: types.ObjectNull(map[string]attr.Type{
@@ -272,7 +285,7 @@ func (d *DomainOwnershipLateValidationResource) ImportState(ctx context.Context,
 }
 
 // validateDomains contains the shared logic for Create and Update.
-func (d *DomainOwnershipLateValidationResource) validateDomains(ctx context.Context, plan *domainOwnershipLateValidationResourceModel) diag.Diagnostics {
+func (d *DomainOwnershipLateValidationResource) validateDomains(ctx context.Context, plan *domainOwnershipLateValidationResourceModel, timeout time.Duration) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	papiClient := d.Client.GetPAPI()
@@ -331,12 +344,6 @@ func (d *DomainOwnershipLateValidationResource) validateDomains(ctx context.Cont
 
 	if len(domainsToPoll) == 0 {
 		tflog.Info(ctx, "All domains were successfully validated.")
-		return diags
-	}
-
-	timeout, timeoutDiags := plan.Timeouts.Create(ctx, defaultPollTimeout)
-	if timeoutDiags.HasError() {
-		diags.Append(timeoutDiags...)
 		return diags
 	}
 

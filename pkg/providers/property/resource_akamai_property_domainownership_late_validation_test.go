@@ -31,13 +31,15 @@ func TestDomainOwnershipLateValidationResource(t *testing.T) {
 		CheckEqual("property_id", "prp_123").
 		CheckEqual("contract_id", "ctr_1").
 		CheckEqual("version", "1").
-		CheckEqual("group_id", "grp_1")
+		CheckEqual("group_id", "grp_1").
+		CheckEqual("validation_method", "DNS_CNAME")
 
 	importCheckerWithoutPrefix := test.NewImportChecker().
 		CheckEqual("property_id", "123").
 		CheckEqual("contract_id", "1").
 		CheckEqual("version", "1").
-		CheckEqual("group_id", "1")
+		CheckEqual("group_id", "1").
+		CheckEqual("validation_method", "DNS_CNAME")
 
 	key := domainOwnershipLateValidationResourceModel{
 		PropertyID: types.StringValue("prp_123"),
