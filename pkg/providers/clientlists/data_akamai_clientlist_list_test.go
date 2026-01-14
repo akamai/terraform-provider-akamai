@@ -46,6 +46,10 @@ func TestDataClientList(t *testing.T) {
 	err = json.Unmarshal(testutils.LoadFixtureBytes(t, getPath(testDir, "user_client_list.json")), &getClientListResponseUsername)
 	require.NoError(t, err)
 
+	getClientListResponseDomain := clientlists.GetClientListResponse{}
+	err = json.Unmarshal(testutils.LoadFixtureBytes(t, getPath(testDir, "domain_client_list.json")), &getClientListResponseDomain)
+	require.NoError(t, err)
+
 	getClientListItemsResponseUsername := &clientlists.GetClientListItemsResponse{}
 	err = json.Unmarshal(testutils.LoadFixtureBytes(t, getPath(testDir, "user_client_list_items.json")), &getClientListItemsResponseUsername)
 	require.NoError(t, err)
@@ -230,6 +234,28 @@ func TestDataClientList(t *testing.T) {
 						CheckEqual("list.items.1.value", "e00b5827-7105-4366-bc24-aa735fc18e4c").
 						CheckEqual("output_text", loadText(t, getPath(testDir, "user_output_text_user_id.txt"))).
 						CheckEqual("json", loadJSON(t, getPath(testDir, "user_output_json_user_id.txt"))).
+						Build(),
+				},
+			},
+		},
+		"DOMAIN client list": {
+			listType: clientlists.GEO,
+			init: func(m *clientlists.Mock) {
+				mockGetClientList(m, getClientListResponseDomain, clientlists.GetClientListRequest{
+					ListID:       "206535_MAIL",
+					IncludeItems: true,
+				}, 3)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString(getPath(testDir, "domain_list.tf")),
+					Check: baseChecker.
+						CheckEqual("list.list_id", "206535_MAIL").
+						CheckEqual("list.items.#", "2").
+						CheckEqual("list.items.0.value", "bluemail.com").
+						CheckEqual("list.items.1.value", "greenmail.com").
+						CheckEqual("output_text", loadText(t, getPath(testDir, "domain_output_text.txt"))).
+						CheckEqual("json", loadJSON(t, getPath(testDir, "domain_output_json.txt"))).
 						Build(),
 				},
 			},

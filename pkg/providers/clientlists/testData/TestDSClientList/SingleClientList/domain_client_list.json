@@ -1,0 +1,58 @@
+{
+  "name": "mail",
+  "type": "DOMAIN",
+  "notes": "",
+  "tags": [],
+  "listId": "206535_MAIL",
+  "version": 1,
+  "itemsCount": 2,
+  "createDate": "2026-01-12T09:38:12.139+00:00",
+  "createdBy": "ccare2",
+  "updateDate": "2026-01-12T09:38:12.139+00:00",
+  "updatedBy": "ccare2",
+  "productionActivationStatus": "INACTIVE",
+  "stagingActivationStatus": "INACTIVE",
+  "productionActiveVersion": 0,
+  "stagingActiveVersion": 0,
+  "listType": "CL",
+  "shared": false,
+  "readOnly": false,
+  "deprecated": false,
+  "contractId": "ctr_1",
+  "groupId": 1,
+  "groupName": "grp_1",
+  "items": [
+    {
+      "value": "bluemail.com",
+      "tags": [
+        "blue"
+      ],
+      "description": "blue mail domain",
+      "expirationDate": "",
+      "createDate": "2026-01-12T09:38:12.159+00:00",
+      "createdBy": "ccare2",
+      "createdVersion": 0,
+      "productionStatus": "INACTIVE",
+      "stagingStatus": "INACTIVE",
+      "type": "DOMAIN",
+      "updateDate": "2026-01-12T09:38:12.159+00:00",
+      "updatedBy": "ccare2"
+    },
+    {
+      "value": "greenmail.com",
+      "tags": [
+        "green"
+      ],
+      "description": "green mail domain",
+      "expirationDate": "",
+      "createDate": "2026-01-12T09:38:12.159+00:00",
+      "createdBy": "ccare2",
+      "createdVersion": 0,
+      "productionStatus": "INACTIVE",
+      "stagingStatus": "INACTIVE",
+      "type": "DOMAIN",
+      "updateDate": "2026-01-12T09:38:12.159+00:00",
+      "updatedBy": "ccare2"
+    }
+  ]
+}

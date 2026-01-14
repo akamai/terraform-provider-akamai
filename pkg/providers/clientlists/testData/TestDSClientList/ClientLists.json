@@ -240,6 +240,28 @@
       "updateDate": "2023-06-06T06:33:35.031+00:00",
       "updatedBy": "ccare2",
       "version": 111
+    },
+    {
+      "createDate": "2026-01-12T09:38:12.139+00:00",
+      "createdBy": "ccare2",
+      "deprecated": false,
+      "groupId": 1,
+      "groupName": "grp_1",
+      "itemsCount": 2,
+      "listId": "206535_MAIL",
+      "listType": "CL",
+      "name": "mail",
+      "productionActivationStatus": "INACTIVE",
+      "readOnly": false,
+      "rollbackPossible": false,
+      "shared": false,
+      "stagingActivationStatus": "INACTIVE",
+      "tags": [],
+      "type": "DOMAIN",
+      "updateDate": "2026-01-12T09:38:12.139+00:00",
+      "updatedBy": "ccare2",
+      "upgradedFromNetworkList": false,
+      "version": 1
     }
   ]
 }

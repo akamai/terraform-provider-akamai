@@ -407,6 +407,8 @@ func getClientListItemsTemplateName(listType clientlists.ClientListType) string 
 		return "tlsFingerprintClientListItemsDS"
 	case clientlists.FileHash:
 		return "fileHashClientListItemsDS"
+	case clientlists.DOMAIN:
+		return "domainClientListItemsDS"
 	default:
 		return "unknownClientListItemsDS" // fallback or handle error
 	}

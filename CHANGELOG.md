@@ -53,6 +53,11 @@
 
 
 
+* ClientLists
+  * Added support for `DOMAIN` type client lists.
+
+
+
 * PAPI
   * Eliminated the global client variable and its synchronization logic, significantly reducing
     unit test execution time.
