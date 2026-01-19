@@ -15,31 +15,13 @@
 * Cloud Access
   * Added support for the new authentication method, Akamai Video Manager Cloudinary (`AVM_CLOUDINARY`), in the `akamai_cloudaccess_key` resource.
 
-* Cloud Certificates (Beta)
-  * Eliminated the global client variable and its synchronization logic, significantly reducing
-    unit test execution time.
-
-* Cloudlets
-  * Eliminated the global client variable and its synchronization logic, significantly reducing
-    unit test execution time.
-
-* CPS
-  * Eliminated the global client variable and its synchronization logic, significantly reducing
-    unit test execution time.
-
 * DataStream
   * Added new attributes to the `akamai_datastream` resource:
     * `sampling_percentage` (optional) — specifies the percentage of data (1–100) that the stream sends to the destination. A value of `1` means only 1% of the data is sent. If not specified, the stream sends 100% of the data by default.
     * `integration_type` (computed, read-only) — displays the integration mode returned by the API, such as `PM_DEPENDENT`, `HYBRID`, or `DS_MANAGED`, at the property and stream levels. This attribute value is automatically populated only when present in the API response. If the API response doesn't include an integration type, this value won't be set in the Terraform state.
   * Added a new computed attribute `integration_type` to the `akamai_datastreams` data source.
 
-* MTLS Keystore
-  * Eliminated the global client variable and its synchronization logic, significantly reducing
-    unit test execution time.
-
 * PAPI
-  * Eliminated the global client variable and its synchronization logic, significantly reducing
-    unit test execution time.
   * Added the `akamai_property_account_hostnames` data source, which allows listing all hostnames for the account. Available filters include:
     * `contract_id`
     * `group_id`
@@ -77,7 +59,6 @@
   * Fixed an issue in the `akamai_gtm_property` resource where failed property creation now marks the resource as tainted, ensuring it can be recreated during the next `terraform apply` ([I#613](https://github.com/akamai/terraform-provider-akamai/issues/613)).
 
 * PAPI
-  * Fixed intermittent test failures in the `akamai_cp_code` resource by increasing polling timings in tests by 10 times.
   * Relaxed too strict validation of edge hostname domain prefixes in the `akamai_edge_hostname` resource, allowing now to start the domain prefix with a digit ([I#668](https://github.com/akamai/terraform-provider-akamai/issues/668)).
   * Fixed a bug where the Terraform provider crashed when using `edge_hostname_id` without the `ehn_` prefix in the `akamai_property_hostname_bucket` resource.
 
