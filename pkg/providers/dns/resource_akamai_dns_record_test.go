@@ -317,6 +317,105 @@ func TestResDnsRecord(t *testing.T) {
 		client.DNS.AssertExpectations(t)
 	})
 
+	t.Run("TXT record test - update target", func(t *testing.T) {
+
+		target := "\"v=spf1 mx include:spf.domain.com include:spf.protection.outlook.com -all\""
+		name := "infrastructure.domain.net"
+
+		normalizedTarget := fmt.Sprintf("%q", target)
+
+		client := &dns.Mock{}
+
+		client.On("GetRecord",
+			testutils.MockContext,
+			dns.GetRecordRequest{Zone: name, Name: name, RecordType: "TXT"},
+		).Return(nil, notFound).Once()
+
+		client.On("CreateRecord",
+			testutils.MockContext,
+			dns.CreateRecordRequest{
+				Record: &dns.RecordBody{
+					Name:       name,
+					RecordType: "TXT",
+					TTL:        300,
+					Active:     false,
+					Target:     []string{normalizedTarget},
+				},
+				Zone:    name,
+				RecLock: []bool{false},
+			},
+		).Return(nil)
+
+		client.On("GetRecord",
+			testutils.MockContext,
+			dns.GetRecordRequest{Zone: name, Name: name, RecordType: "TXT"},
+		).Return(&dns.GetRecordResponse{
+			Name:       name,
+			RecordType: "TXT",
+			TTL:        300,
+			Active:     false,
+			Target:     []string{normalizedTarget},
+		}, nil).Once()
+
+		client.On("ParseRData",
+			testutils.MockContext,
+			"TXT",
+			[]string{normalizedTarget},
+		).Return(map[string]interface{}{
+			"target": []string{normalizedTarget},
+		}).Times(2)
+
+		client.On("ProcessRdata",
+			testutils.MockContext,
+			[]string{normalizedTarget},
+			"TXT",
+		).Return([]string{normalizedTarget}).Times(2)
+
+		client.On("GetRecord",
+			testutils.MockContext,
+			dns.GetRecordRequest{Zone: name, Name: name, RecordType: "TXT"},
+		).Return(&dns.GetRecordResponse{
+			Name:       name,
+			RecordType: "TXT",
+			TTL:        300,
+			Active:     false,
+			Target:     []string{normalizedTarget},
+		}, nil).Once()
+
+		client.On("DeleteRecord",
+			testutils.MockContext,
+			dns.DeleteRecordRequest{Zone: name, Name: name, RecordType: "TXT", RecLock: []bool{false}},
+		).Return(nil)
+
+		resourceName := "akamai_dns_record.txt_record"
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResDnsRecord/quotation_marks/create.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(resourceName, "recordtype", "TXT"),
+							resource.TestCheckResourceAttr(resourceName, "target.#", "1"),
+							resource.TestCheckResourceAttr(resourceName, "target.0", "\"v=spf1 mx include:spf.domain.com include:spf.protection.outlook.com -all\""),
+						),
+					},
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResDnsRecord/quotation_marks/update.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(resourceName, "recordtype", "TXT"),
+							resource.TestCheckResourceAttr(resourceName, "target.#", "1"),
+							resource.TestCheckResourceAttr(resourceName, "target.0", "v=spf1 mx include:spf.domain.com include:spf.protection.outlook.com -all"),
+						),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
 	t.Run("SRV record with default values", func(t *testing.T) {
 		t.Parallel()
 		client := edgegrid.NewTestClient()
