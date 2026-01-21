@@ -8,7 +8,9 @@ import (
 )
 
 func TestSplitChallenges(t *testing.T) {
+	t.Parallel()
 	t.Run("Non empty challenges", func(t *testing.T) {
+		t.Parallel()
 		challenges := mockDVArray()
 		gotHTTPChallenge, gotDNSChallenge := splitChallenges(challenges)
 		wantHTTPChallenge := []challengeHTTP{
@@ -30,6 +32,7 @@ func TestSplitChallenges(t *testing.T) {
 	})
 
 	t.Run("Empty challenges", func(t *testing.T) {
+		t.Parallel()
 		challenges := mockEmptyDVArray()
 		gotHTTPChallenge, gotDNSChallenge := splitChallenges(challenges)
 		wantDNSChallenge := make([]challengeDNS, 0)
@@ -40,6 +43,7 @@ func TestSplitChallenges(t *testing.T) {
 }
 
 func TestNewChallenge(t *testing.T) {
+	t.Parallel()
 	challenge1 := cps.Challenge{
 		Error:             "",
 		FullPath:          "http://TestFullPath",
@@ -71,6 +75,7 @@ func TestNewChallenge(t *testing.T) {
 }
 
 func TestConvertWarnings(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		warnings         string
 		expectedWarnings []string
@@ -112,6 +117,7 @@ func TestConvertWarnings(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			res, err := convertWarnings(test.warnings)
 			if err != nil {
 				assert.Equal(t, test.err, err.Error())
@@ -123,6 +129,7 @@ func TestConvertWarnings(t *testing.T) {
 }
 
 func TestCanApproveWarnings(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		warnings            string
 		autoApproveWarnings []string
@@ -171,6 +178,7 @@ func TestCanApproveWarnings(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			res, err := canApproveWarnings(test.autoApproveWarnings, test.warnings)
 			if err != nil {
 				assert.Equal(t, test.err, err.Error())

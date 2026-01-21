@@ -9,6 +9,7 @@ import (
 	"time"
 
 	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudlets/v3"
+	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -248,22 +249,21 @@ func TestSharedPolicyDataSource(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &v3.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 			if test.init != nil {
-				test.init(client, test.data)
+				test.init(client.CloudletsV3, test.data)
 			}
-			useClientV3(client, func() {
-				resource.Test(t, resource.TestCase{
-					IsUnitTest:               true,
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{{
-						Config:      testutils.LoadFixtureStringf(t, "testdata/TestDataCloudletsSharedPolicy/%s", test.config),
-						Check:       checkAttrsForSharedPolicy(test.data),
-						ExpectError: test.expectError,
-					}},
-				})
+			resource.Test(t, resource.TestCase{
+				IsUnitTest:               true,
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				Steps: []resource.TestStep{{
+					Config:      testutils.LoadFixtureStringf(t, "testdata/TestDataCloudletsSharedPolicy/%s", test.config),
+					Check:       checkAttrsForSharedPolicy(test.data),
+					ExpectError: test.expectError,
+				}},
 			})
-			client.AssertExpectations(t)
+			client.CloudletsV3.AssertExpectations(t)
 		})
 	}
 }

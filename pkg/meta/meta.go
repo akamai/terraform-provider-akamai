@@ -7,6 +7,7 @@ import (
 
 	akalog "github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/log"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/log"
 	"github.com/hashicorp/go-hclog"
 )
@@ -24,6 +25,9 @@ type (
 
 		// Session returns the operation API session
 		Session() session.Session
+
+		// Client returns the edgegrid client
+		Client() edgegrid.Client
 	}
 
 	// OperationMeta is the implementation of Meta interface
@@ -31,6 +35,7 @@ type (
 		operationID string
 		log         hclog.Logger
 		sess        session.Session
+		client      edgegrid.Client
 	}
 )
 
@@ -52,6 +57,7 @@ func New(sess session.Session, log hclog.Logger, operationID string) (*Operation
 		operationID: operationID,
 		sess:        sess,
 		log:         log,
+		client:      edgegrid.NewClientImpl(sess),
 	}, nil
 }
 
@@ -77,4 +83,14 @@ func (m *OperationMeta) OperationID() string {
 // Session returns the meta session
 func (m *OperationMeta) Session() session.Session {
 	return m.sess
+}
+
+// Client returns the edgegrid client
+func (m *OperationMeta) Client() edgegrid.Client {
+	return m.client
+}
+
+// SetClient sets the edgegrid client
+func (m *OperationMeta) SetClient(c edgegrid.Client) {
+	m.client = c
 }

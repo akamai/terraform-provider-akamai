@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cps"
+	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
@@ -15,6 +16,7 @@ import (
 )
 
 func TestResourceCPSUploadCertificate(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		init                func(*cps.Mock, *cps.GetEnrollmentResponse, int, int)
 		enrollment          *cps.GetEnrollmentResponse
@@ -72,32 +74,32 @@ func TestResourceCPSUploadCertificate(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &cps.Mock{}
-			test.init(client, test.enrollment, test.enrollmentID, test.changeID)
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps: []resource.TestStep{
-						{
-							Config:      testutils.LoadFixtureString(t, test.configPathForCreate),
-							Check:       test.checkFuncForCreate,
-							ExpectError: test.error,
-						},
-						{
-							Config:      testutils.LoadFixtureString(t, test.configPathForUpdate),
-							Check:       test.checkFuncForUpdate,
-							ExpectError: test.error,
-						},
+			t.Parallel()
+			client := edgegrid.NewTestClient()
+			test.init(client.CPS, test.enrollment, test.enrollmentID, test.changeID)
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
+				IsUnitTest:               true,
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureString(t, test.configPathForCreate),
+						Check:       test.checkFuncForCreate,
+						ExpectError: test.error,
 					},
-				})
+					{
+						Config:      testutils.LoadFixtureString(t, test.configPathForUpdate),
+						Check:       test.checkFuncForUpdate,
+						ExpectError: test.error,
+					},
+				},
 			})
-			client.AssertExpectations(t)
+			client.CPS.AssertExpectations(t)
 		})
 	}
 }
 
 func TestResourceCPSUploadCertificateWithThirdPartyEnrollmentDependency(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		init         func(*cps.Mock, *cps.GetEnrollmentResponse, int, int)
 		enrollment   cps.GetEnrollmentResponse
@@ -176,27 +178,27 @@ func TestResourceCPSUploadCertificateWithThirdPartyEnrollmentDependency(t *testi
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &cps.Mock{}
-			test.init(client, &test.enrollment, test.enrollmentID, test.changeID)
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps: []resource.TestStep{
-						{
-							Config:      testutils.LoadFixtureString(t, test.configPath),
-							ExpectError: test.error,
-							Check:       test.checkFunc,
-						},
+			t.Parallel()
+			client := edgegrid.NewTestClient()
+			test.init(client.CPS, &test.enrollment, test.enrollmentID, test.changeID)
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
+				IsUnitTest:               true,
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureString(t, test.configPath),
+						ExpectError: test.error,
+						Check:       test.checkFunc,
 					},
-				})
+				},
 			})
-			client.AssertExpectations(t)
+			client.CPS.AssertExpectations(t)
 		})
 	}
 }
 
 func TestResourceCPSUploadCertificateLifecycle(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		init                      func(*cps.Mock, *cps.GetEnrollmentResponse, *cps.GetEnrollmentResponse, int, int, int)
 		enrollment                *cps.GetEnrollmentResponse
@@ -272,37 +274,37 @@ func TestResourceCPSUploadCertificateLifecycle(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &cps.Mock{}
-			test.init(client, test.enrollment, test.enrollmentUpdated, test.enrollmentID, test.changeID, test.changeIDUpdated)
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps: []resource.TestStep{
-						{
-							Config:      testutils.LoadFixtureString(t, test.configPathForCreate),
-							Check:       test.checkFuncForCreate,
-							ExpectError: test.errorForCreate,
-						},
-						{
-							Config:      testutils.LoadFixtureString(t, test.configPathForUpdate),
-							Check:       test.checkFuncForUpdate,
-							ExpectError: test.errorForUpdate,
-						},
-						{
-							Config:      testutils.LoadFixtureString(t, test.configPathForSecondUpdate),
-							Check:       test.checkFuncForUpdate,
-							ExpectError: test.errorForSecondUpdate,
-						},
+			t.Parallel()
+			client := edgegrid.NewTestClient()
+			test.init(client.CPS, test.enrollment, test.enrollmentUpdated, test.enrollmentID, test.changeID, test.changeIDUpdated)
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
+				IsUnitTest:               true,
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureString(t, test.configPathForCreate),
+						Check:       test.checkFuncForCreate,
+						ExpectError: test.errorForCreate,
 					},
-				})
+					{
+						Config:      testutils.LoadFixtureString(t, test.configPathForUpdate),
+						Check:       test.checkFuncForUpdate,
+						ExpectError: test.errorForUpdate,
+					},
+					{
+						Config:      testutils.LoadFixtureString(t, test.configPathForSecondUpdate),
+						Check:       test.checkFuncForUpdate,
+						ExpectError: test.errorForSecondUpdate,
+					},
+				},
 			})
-			client.AssertExpectations(t)
+			client.CPS.AssertExpectations(t)
 		})
 	}
 }
 
 func TestCreateCPSUploadCertificate(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		init         func(*cps.Mock, *cps.GetEnrollmentResponse, int, int)
 		enrollment   *cps.GetEnrollmentResponse
@@ -649,29 +651,29 @@ func TestCreateCPSUploadCertificate(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &cps.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 			if test.init != nil {
-				test.init(client, test.enrollment, test.enrollmentID, test.changeID)
+				test.init(client.CPS, test.enrollment, test.enrollmentID, test.changeID)
 			}
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps: []resource.TestStep{
-						{
-							Config:      testutils.LoadFixtureString(t, test.configPath),
-							Check:       test.checkFunc,
-							ExpectError: test.error,
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
+				IsUnitTest:               true,
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureString(t, test.configPath),
+						Check:       test.checkFunc,
+						ExpectError: test.error,
 					},
-				})
+				},
 			})
-			client.AssertExpectations(t)
+			client.CPS.AssertExpectations(t)
 		})
 	}
 }
 
 func TestReadCPSUploadCertificate(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		init         func(*cps.Mock, *cps.GetEnrollmentResponse, int, int)
 		enrollment   *cps.GetEnrollmentResponse
@@ -743,27 +745,27 @@ func TestReadCPSUploadCertificate(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &cps.Mock{}
-			test.init(client, test.enrollment, test.enrollmentID, test.changeID)
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps: []resource.TestStep{
-						{
-							Config:      testutils.LoadFixtureString(t, test.configPath),
-							Check:       test.checkFunc,
-							ExpectError: test.error,
-						},
+			t.Parallel()
+			client := edgegrid.NewTestClient()
+			test.init(client.CPS, test.enrollment, test.enrollmentID, test.changeID)
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
+				IsUnitTest:               true,
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureString(t, test.configPath),
+						Check:       test.checkFunc,
+						ExpectError: test.error,
 					},
-				})
+				},
 			})
-			client.AssertExpectations(t)
+			client.CPS.AssertExpectations(t)
 		})
 	}
 }
 
 func TestUpdateCPSUploadCertificate(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		init                func(*cps.Mock, *cps.GetEnrollmentResponse, *cps.GetEnrollmentResponse, int, int, int)
 		enrollment          *cps.GetEnrollmentResponse
@@ -1108,32 +1110,32 @@ func TestUpdateCPSUploadCertificate(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &cps.Mock{}
-			test.init(client, test.enrollment, test.enrollmentUpdated, test.enrollmentID, test.changeID, test.changeIDUpdated)
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps: []resource.TestStep{
-						{
-							Config:      testutils.LoadFixtureString(t, test.configPathForCreate),
-							Check:       test.checkFuncForCreate,
-							ExpectError: test.errorForCreate,
-						},
-						{
-							Config:      testutils.LoadFixtureString(t, test.configPathForUpdate),
-							Check:       test.checkFuncForUpdate,
-							ExpectError: test.errorForUpdate,
-						},
+			t.Parallel()
+			client := edgegrid.NewTestClient()
+			test.init(client.CPS, test.enrollment, test.enrollmentUpdated, test.enrollmentID, test.changeID, test.changeIDUpdated)
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
+				IsUnitTest:               true,
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureString(t, test.configPathForCreate),
+						Check:       test.checkFuncForCreate,
+						ExpectError: test.errorForCreate,
 					},
-				})
+					{
+						Config:      testutils.LoadFixtureString(t, test.configPathForUpdate),
+						Check:       test.checkFuncForUpdate,
+						ExpectError: test.errorForUpdate,
+					},
+				},
 			})
-			client.AssertExpectations(t)
+			client.CPS.AssertExpectations(t)
 		})
 	}
 }
 
 func TestResourceUploadCertificateImport(t *testing.T) {
+	t.Parallel()
 	id := 1
 
 	checker := test.NewImportChecker().
@@ -1184,24 +1186,24 @@ func TestResourceUploadCertificateImport(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &cps.Mock{}
-			test.init(client)
+			t.Parallel()
+			client := edgegrid.NewTestClient()
+			test.init(client.CPS)
 
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							Config:           testutils.LoadFixtureString(t, "testdata/TestResCPSUploadCertificate/import/import_upload.tf"),
-							ImportState:      true,
-							ImportStateId:    fmt.Sprintf("%d", id),
-							ResourceName:     "akamai_cps_upload_certificate.import",
-							ImportStateCheck: test.stateCheck,
-							ExpectError:      test.expectedError,
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
+				Steps: []resource.TestStep{
+					{
+						Config:           testutils.LoadFixtureString(t, "testdata/TestResCPSUploadCertificate/import/import_upload.tf"),
+						ImportState:      true,
+						ImportStateId:    fmt.Sprintf("%d", id),
+						ResourceName:     "akamai_cps_upload_certificate.import",
+						ImportStateCheck: test.stateCheck,
+						ExpectError:      test.expectedError,
 					},
-				})
+				},
 			})
+			client.CPS.AssertExpectations(t)
 		})
 	}
 }

@@ -60,8 +60,8 @@ type TattleT struct{ *testing.T }
 
 // FailNow overrides testing.T.FailNow() so when a test mock fails an assertion, we see which test failed
 func (t TattleT) FailNow() {
-	t.T.Helper()
-	t.T.Fatalf("FAIL: %s", t.T.Name())
+	t.Helper()
+	t.Fatalf("FAIL: %s", t.Name())
 }
 
 // TestStepDestroyFailed creates a terraform test step, to work around an issue of verifying error if resource destroy failed correctly.

@@ -6,13 +6,16 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func TestDSPropertyRulesRead(t *testing.T) {
+	t.Parallel()
 	t.Run("get datasource property rules", func(t *testing.T) {
-		client := &papi.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 		mockImpl := func(m *papi.Mock) {
 			m.On("GetLatestVersion", testutils.MockContext, papi.GetLatestVersionRequest{
 				ContractID: "ctr_2",
@@ -46,29 +49,28 @@ func TestDSPropertyRulesRead(t *testing.T) {
 				},
 			}, nil)
 		}
-		mockImpl(client)
-		useClient(client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestDSPropertyRules/ds_property_rules.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("data.akamai_property_rules.rules", "id", "prp_2"),
-							resource.TestCheckResourceAttr("data.akamai_property_rules.rules", "property_id", "prp_2"),
-							resource.TestCheckResourceAttr("data.akamai_property_rules.rules", "group_id", "grp_2"),
-							resource.TestCheckResourceAttr("data.akamai_property_rules.rules", "contract_id", "ctr_2"),
-							resource.TestCheckResourceAttrSet("data.akamai_property_rules.rules", "rules"),
-							resource.TestCheckResourceAttr("data.akamai_property_rules.rules", "rule_format", "latest"),
-							resource.TestCheckResourceAttr("data.akamai_property_rules.rules", "errors", `[{"type":"","title":"some error","detail":""}]`),
-						),
-					},
+		mockImpl(client.PAPI)
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDSPropertyRules/ds_property_rules.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("data.akamai_property_rules.rules", "id", "prp_2"),
+						resource.TestCheckResourceAttr("data.akamai_property_rules.rules", "property_id", "prp_2"),
+						resource.TestCheckResourceAttr("data.akamai_property_rules.rules", "group_id", "grp_2"),
+						resource.TestCheckResourceAttr("data.akamai_property_rules.rules", "contract_id", "ctr_2"),
+						resource.TestCheckResourceAttrSet("data.akamai_property_rules.rules", "rules"),
+						resource.TestCheckResourceAttr("data.akamai_property_rules.rules", "rule_format", "latest"),
+						resource.TestCheckResourceAttr("data.akamai_property_rules.rules", "errors", `[{"type":"","title":"some error","detail":""}]`),
+					),
 				},
-			})
+			},
 		})
-		client.AssertExpectations(t)
+		client.PAPI.AssertExpectations(t)
 	})
 	t.Run("get datasource property rules with rule format", func(t *testing.T) {
+		t.Parallel()
 		tests := map[string]struct {
 			configFile         string
 			expectedRuleFormat string
@@ -120,28 +122,28 @@ func TestDSPropertyRulesRead(t *testing.T) {
 
 		for name, test := range tests {
 			t.Run(name, func(t *testing.T) {
-				client := &papi.Mock{}
-				mockImpl(client, test.expectedRuleFormat)
+				t.Parallel()
+				client := edgegrid.NewTestClient()
+				mockImpl(client.PAPI, test.expectedRuleFormat)
 
-				useClient(client, nil, func() {
-					resource.UnitTest(t, resource.TestCase{
-						ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-						Steps: []resource.TestStep{
-							{
-								Config: testutils.LoadFixtureString(t, test.configFile),
-								Check: resource.ComposeAggregateTestCheckFunc(
-									resource.TestCheckResourceAttr("data.akamai_property_rules.rules", "rule_format", test.expectedRuleFormat),
-								),
-							},
+				resource.UnitTest(t, resource.TestCase{
+					ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+					Steps: []resource.TestStep{
+						{
+							Config: testutils.LoadFixtureString(t, test.configFile),
+							Check: resource.ComposeAggregateTestCheckFunc(
+								resource.TestCheckResourceAttr("data.akamai_property_rules.rules", "rule_format", test.expectedRuleFormat),
+							),
 						},
-					})
+					},
 				})
-				client.AssertExpectations(t)
+				client.PAPI.AssertExpectations(t)
 			})
 		}
 	})
 	t.Run("error getting datasource property rules with invalid rule format", func(t *testing.T) {
-		client := &papi.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 		mockImpl := func(m *papi.Mock) {
 			m.On("GetRuleFormats", testutils.MockContext).Return(&papi.GetRuleFormatsResponse{
 				RuleFormats: papi.RuleFormatItems{
@@ -152,101 +154,97 @@ func TestDSPropertyRulesRead(t *testing.T) {
 				},
 			}, nil)
 		}
-		mockImpl(client)
-		useClient(client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestDSPropertyRules/with_versioned_rule_format.tf"),
-						ExpectError: regexp.MustCompile("given 'rule_format' is not supported: \"v2015-08-17\""),
-					},
+		mockImpl(client.PAPI)
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDSPropertyRules/with_versioned_rule_format.tf"),
+					ExpectError: regexp.MustCompile("given 'rule_format' is not supported: \"v2015-08-17\""),
 				},
-			})
+			},
 		})
-		client.AssertExpectations(t)
+
+		client.PAPI.AssertExpectations(t)
 	})
 	t.Run("error getting rule formats", func(t *testing.T) {
-		client := &papi.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 		mockImpl := func(m *papi.Mock) {
 			m.On("GetRuleFormats", testutils.MockContext).Return(nil, fmt.Errorf("oops"))
 		}
-		mockImpl(client)
-		useClient(client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestDSPropertyRules/with_versioned_rule_format.tf"),
-						ExpectError: regexp.MustCompile("oops"),
-					},
+		mockImpl(client.PAPI)
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDSPropertyRules/with_versioned_rule_format.tf"),
+					ExpectError: regexp.MustCompile("oops"),
 				},
-			})
+			},
 		})
-		client.AssertExpectations(t)
+
+		client.PAPI.AssertExpectations(t)
 	})
 	t.Run("group_id is required with contract_id", func(t *testing.T) {
-		client := &papi.Mock{}
-		useClient(client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestDSPropertyRules/missing_group_id.tf"),
-						ExpectError: regexp.MustCompile("\"contract_id\": all of `contract_id,group_id` must be specified"),
-					},
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDSPropertyRules/missing_group_id.tf"),
+					ExpectError: regexp.MustCompile("\"contract_id\": all of `contract_id,group_id` must be specified"),
 				},
-			})
+			},
 		})
-		client.AssertExpectations(t)
+		client.PAPI.AssertExpectations(t)
 	})
 	t.Run("contract_id is required with group_id", func(t *testing.T) {
-		client := &papi.Mock{}
-		useClient(client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestDSPropertyRules/missing_contract_id.tf"),
-						ExpectError: regexp.MustCompile("\"group_id\": all of `contract_id,group_id` must be specified"),
-					},
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDSPropertyRules/missing_contract_id.tf"),
+					ExpectError: regexp.MustCompile("\"group_id\": all of `contract_id,group_id` must be specified"),
 				},
-			})
+			},
 		})
-		client.AssertExpectations(t)
+		client.PAPI.AssertExpectations(t)
 	})
 	t.Run("contract_id cannot be empty", func(t *testing.T) {
-		client := &papi.Mock{}
-		useClient(client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestDSPropertyRules/empty_contract_id.tf"),
-						ExpectError: regexp.MustCompile(`provided value cannot be blank((.|\n)*)contract_id = ""`),
-					},
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDSPropertyRules/empty_contract_id.tf"),
+					ExpectError: regexp.MustCompile(`provided value cannot be blank((.|\n)*)contract_id = ""`),
 				},
-			})
+			},
 		})
-		client.AssertExpectations(t)
+		client.PAPI.AssertExpectations(t)
 	})
 	t.Run("group_id cannot be empty", func(t *testing.T) {
-		client := &papi.Mock{}
-		useClient(client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestDSPropertyRules/empty_group_id.tf"),
-						ExpectError: regexp.MustCompile(`provided value cannot be blank((.|\n)*)group_id += ""`),
-					},
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDSPropertyRules/empty_group_id.tf"),
+					ExpectError: regexp.MustCompile(`provided value cannot be blank((.|\n)*)group_id += ""`),
 				},
-			})
+			},
 		})
-		client.AssertExpectations(t)
+		client.PAPI.AssertExpectations(t)
 	})
 	t.Run("error fetching latest version", func(t *testing.T) {
-		client := &papi.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 		mockImpl := func(m *papi.Mock) {
 			m.On("GetLatestVersion", testutils.MockContext, papi.GetLatestVersionRequest{
 				ContractID: "ctr_2",
@@ -254,22 +252,21 @@ func TestDSPropertyRulesRead(t *testing.T) {
 				PropertyID: "prp_2",
 			}).Return(nil, fmt.Errorf("fetching latest version")).Once()
 		}
-		mockImpl(client)
-		useClient(client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestDSPropertyRules/ds_property_rules.tf"),
-						ExpectError: regexp.MustCompile("fetching latest version"),
-					},
+		mockImpl(client.PAPI)
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDSPropertyRules/ds_property_rules.tf"),
+					ExpectError: regexp.MustCompile("fetching latest version"),
 				},
-			})
+			},
 		})
-		client.AssertExpectations(t)
+		client.PAPI.AssertExpectations(t)
 	})
 	t.Run("error fetching rules", func(t *testing.T) {
-		client := &papi.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 		mockImpl := func(m *papi.Mock) {
 			m.On("GetLatestVersion", testutils.MockContext, papi.GetLatestVersionRequest{
 				ContractID: "ctr_2",
@@ -291,25 +288,24 @@ func TestDSPropertyRulesRead(t *testing.T) {
 				ValidateMode:    papi.RuleValidateModeFull,
 			}).Return(nil, fmt.Errorf("fetching rule tree")).Once()
 		}
-		mockImpl(client)
-		useClient(client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestDSPropertyRules/ds_property_rules.tf"),
-						ExpectError: regexp.MustCompile("fetching rule tree"),
-					},
+		mockImpl(client.PAPI)
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDSPropertyRules/ds_property_rules.tf"),
+					ExpectError: regexp.MustCompile("fetching rule tree"),
 				},
-			})
+			},
 		})
-		client.AssertExpectations(t)
+		client.PAPI.AssertExpectations(t)
 	})
 }
 
 func TestDSPropertyRulesRead_Fail(t *testing.T) {
+	t.Parallel()
 	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+		ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(nil, NewSubprovider()),
 		Steps: []resource.TestStep{{
 			Config:      testutils.LoadFixtureString(t, "testdata/TestDSPropertyRules/always_fails.tf"),
 			ExpectError: regexp.MustCompile(`Error: provided value cannot be blank`),

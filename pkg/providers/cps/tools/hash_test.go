@@ -8,6 +8,7 @@ import (
 )
 
 func TestHashFromChallengesMap(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		val      interface{}
 		expected int
@@ -28,6 +29,7 @@ func TestHashFromChallengesMap(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			res := HashFromChallengesMap(test.val)
 			assert.Equal(t, test.expected, res)
 		})

@@ -2,6 +2,7 @@ package appsec
 
 import (
 	"encoding/json"
+	"regexp"
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/appsec"
@@ -69,4 +70,23 @@ func TestAkamaiRule_res_basic(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
+	t.Run("match by Rule ID with none rule action and non-empty conditions", func(t *testing.T) {
+		client := &appsec.Mock{}
+		useClient(client, func() {
+			resource.Test(t, resource.TestCase{
+				IsUnitTest:               true,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResRule/match_by_id_none_rule_action.tf"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("akamai_appsec_rule.test", "id", "43253:AAAA_81230:12345"),
+						),
+						ExpectError: regexp.MustCompile("Error: `rule_action` cannot be 'none' if non-empty `condition_exception` is supplied"),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
 }

@@ -1,30 +1,47 @@
 package mtlskeystore
 
 import (
-	"sync"
 	"testing"
+	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/mtlskeystore"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 )
 
 func TestMain(m *testing.M) {
 	testutils.TestRunner(m)
 }
 
-// Only allow one test at a time to patch the client via useClient()
-var clientLock sync.Mutex
+type (
+	// CustomPollingSubprovider is an MTLSKeystore subprovider with customizable polling parameters
+	// for testing purposes.
+	CustomPollingSubprovider struct {
+		Subprovider
+		pollingInterval time.Duration
+		pollingTimeout  time.Duration
+	}
+)
 
-// useClient swaps out the client on the global instance for the duration of the given func
-func useClient(mtlsKeystoreClient mtlskeystore.MTLSKeystore, f func()) {
-	clientLock.Lock()
-	orig := client
-	client = mtlsKeystoreClient
+func NewCustomPollingSubprovider(pollingInterval, pollingTimeout time.Duration) *CustomPollingSubprovider {
+	return &CustomPollingSubprovider{
+		pollingInterval: pollingInterval,
+		pollingTimeout:  pollingTimeout,
+	}
+}
 
-	defer func() {
-		client = orig
-		clientLock.Unlock()
-	}()
+func (p *CustomPollingSubprovider) FrameworkResources() []func() resource.Resource {
+	return []func() resource.Resource{
+		NewClientCertificateAkamaiResource,
+		NewClientCertificateThirdPartyResource,
+		NewClientCertificateUploadResourceCustomPolling(p.pollingInterval, p.pollingTimeout),
+	}
+}
 
-	f()
+func NewClientCertificateUploadResourceCustomPolling(pollingInterval, pollingTimeout time.Duration) func() resource.Resource {
+	return func() resource.Resource {
+		return &clientCertificateUploadResource{
+			pollingInterval: pollingInterval,
+			pollingTimeout:  pollingTimeout,
+		}
+	}
 }

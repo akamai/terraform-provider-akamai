@@ -6,12 +6,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourceProperty() *schema.Resource {
@@ -142,14 +141,13 @@ func dataPropertyRead(ctx context.Context, d *schema.ResourceData, m interface{}
 }
 
 func getPropertyVersion(ctx context.Context, meta meta.Meta, property *papi.Property) (*papi.GetPropertyVersionsResponse, error) {
-	client := Client(meta)
 	req := papi.GetPropertyVersionRequest{
 		PropertyID:      property.PropertyID,
 		PropertyVersion: property.LatestVersion,
 		ContractID:      property.ContractID,
 		GroupID:         property.GroupID,
 	}
-	resp, err := client.GetPropertyVersion(ctx, req)
+	resp, err := meta.Client().GetPAPI().GetPropertyVersion(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", ErrPropertyVersionNotFound, err.Error())
 	}
@@ -157,14 +155,13 @@ func getPropertyVersion(ctx context.Context, meta meta.Meta, property *papi.Prop
 }
 
 func getRulesForProperty(ctx context.Context, property *papi.Property, meta meta.Meta) (*papi.GetRuleTreeResponse, error) {
-	client := Client(meta)
 	req := papi.GetRuleTreeRequest{
 		PropertyID:      property.PropertyID,
 		PropertyVersion: property.LatestVersion,
 		ContractID:      property.ContractID,
 		GroupID:         property.GroupID,
 	}
-	rules, err := client.GetRuleTree(ctx, req)
+	rules, err := meta.Client().GetPAPI().GetRuleTree(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", ErrRulesNotFound, err.Error())
 	}

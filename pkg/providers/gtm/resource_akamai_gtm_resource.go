@@ -511,7 +511,7 @@ func populateResourceObject(d *schema.ResourceData, rsrc *gtm.Resource, m interf
 	}
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() host_header failed: %v", err.Error())
-		return fmt.Errorf("Resource Object could not be populated: %v", err.Error())
+		return fmt.Errorf("resource object could not be populated: %v", err.Error())
 	}
 
 	vfloat, err := tf.GetFloat64Value("least_squares_decay", d)
@@ -520,7 +520,7 @@ func populateResourceObject(d *schema.ResourceData, rsrc *gtm.Resource, m interf
 	}
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() least_squares_decay failed: %v", err.Error())
-		return fmt.Errorf("Resource Object could not be populated: %v", err.Error())
+		return fmt.Errorf("resource object could not be populated: %v", err.Error())
 	}
 
 	vint, err := tf.GetIntValue("upper_bound", d)
@@ -529,7 +529,7 @@ func populateResourceObject(d *schema.ResourceData, rsrc *gtm.Resource, m interf
 	}
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() upper_bound failed: %v", err.Error())
-		return fmt.Errorf("Resource Object could not be populated: %v", err.Error())
+		return fmt.Errorf("resource object could not be populated: %v", err.Error())
 	}
 
 	vstr, err = tf.GetStringValue("description", d)
@@ -538,7 +538,7 @@ func populateResourceObject(d *schema.ResourceData, rsrc *gtm.Resource, m interf
 	}
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() description failed: %v", err.Error())
-		return fmt.Errorf("Resource Object could not be populated: %v", err.Error())
+		return fmt.Errorf("resource object could not be populated: %v", err.Error())
 	}
 
 	vstr, err = tf.GetStringValue("leader_string", d)
@@ -547,7 +547,7 @@ func populateResourceObject(d *schema.ResourceData, rsrc *gtm.Resource, m interf
 	}
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() leader_string failed: %v", err.Error())
-		return fmt.Errorf("Resource Object could not be populated: %v", err.Error())
+		return fmt.Errorf("resource object could not be populated: %v", err.Error())
 	}
 
 	vstr, err = tf.GetStringValue("constrained_property", d)
@@ -556,7 +556,7 @@ func populateResourceObject(d *schema.ResourceData, rsrc *gtm.Resource, m interf
 	}
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() constrained_property failed: %v", err.Error())
-		return fmt.Errorf("Resource Object could not be populated: %v", err.Error())
+		return fmt.Errorf("resource object could not be populated: %v", err.Error())
 	}
 
 	vstr, err = tf.GetStringValue("aggregation_type", d)
@@ -570,7 +570,7 @@ func populateResourceObject(d *schema.ResourceData, rsrc *gtm.Resource, m interf
 	}
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() load_imbalance_percentage failed: %v", err.Error())
-		return fmt.Errorf("Resource Object could not be populated: %v", err.Error())
+		return fmt.Errorf("resource object could not be populated: %v", err.Error())
 	}
 
 	vfloat, err = tf.GetFloat64Value("max_u_multiplicative_increment", d)
@@ -579,7 +579,7 @@ func populateResourceObject(d *schema.ResourceData, rsrc *gtm.Resource, m interf
 	}
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() max_u_multiplicative_increment failed: %v", err.Error())
-		return fmt.Errorf("Resource Object could not be populated: %v", err.Error())
+		return fmt.Errorf("resource object could not be populated: %v", err.Error())
 	}
 
 	vfloat, err = tf.GetFloat64Value("decay_rate", d)
@@ -588,7 +588,7 @@ func populateResourceObject(d *schema.ResourceData, rsrc *gtm.Resource, m interf
 	}
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() decay_rate failed: %v", err.Error())
-		return fmt.Errorf("Resource Object could not be populated: %v", err.Error())
+		return fmt.Errorf("resource object could not be populated: %v", err.Error())
 	}
 
 	if _, ok := d.GetOk("resource_instance"); ok {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -38,7 +39,7 @@ var (
 
 // HostnameBucketResource represents akamai_property_hostname_bucket resource.
 type HostnameBucketResource struct {
-	meta meta.Meta
+	meta.Resource
 }
 
 // HostnameBucketResourceModel is a model for akamai_property_hostname_bucket resource.
@@ -138,7 +139,7 @@ type Hostname struct {
 // To identify if two hostnames are the same, we need to compare the rest of required attributes, that being `edge_hostname_id`
 // and `cert_provisioning_type`.
 func (h Hostname) equal(other Hostname) bool {
-	return h.CertProvisioningType == other.CertProvisioningType && h.EdgeHostnameID == other.EdgeHostnameID
+	return h.CertProvisioningType == other.CertProvisioningType && strings.TrimPrefix(h.EdgeHostnameID.ValueString(), "ehn_") == strings.TrimPrefix(other.EdgeHostnameID.ValueString(), "ehn_")
 }
 
 func (h Hostname) toLog() map[string]any {
@@ -191,25 +192,6 @@ func (h *HostnameBucketResource) Metadata(_ context.Context, _ resource.Metadata
 	resp.TypeName = "akamai_property_hostname_bucket"
 }
 
-// Configure implements resource.ResourceWithConfigure.
-func (h *HostnameBucketResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		// ProviderData is nil when Configure is run first time as part of ValidateDataSourceConfig in framework provider
-		return
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Resource Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-			)
-		}
-	}()
-
-	h.meta = meta.Must(req.ProviderData)
-}
-
 // Schema implements resource's Schema.
 func (h *HostnameBucketResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
@@ -219,6 +201,12 @@ func (h *HostnameBucketResource) Schema(_ context.Context, _ resource.SchemaRequ
 				PlanModifiers: []planmodifier.String{
 					modifiers.StringUseStateIf(modifiers.EqualUpToPrefixFunc("prp_")),
 					modifiers.PreventStringUpdate(),
+				},
+				Validators: []validator.String{
+					stringvalidator.RegexMatches(
+						regexp.MustCompile(`^(prp_)?\d+$`),
+						"must start with 'prp_' prefix followed by digits, or be digits only",
+					),
 				},
 				Description: "The unique identifier for the property.",
 			},
@@ -316,6 +304,12 @@ func (h *HostnameBucketResource) Schema(_ context.Context, _ resource.SchemaRequ
 								modifiers.StringUseStateIf(modifiers.EqualUpToPrefixFunc("ehn_")),
 							},
 							Description: "Identifies the edge hostname you mapped your traffic to on the production network.",
+							Validators: []validator.String{
+								stringvalidator.RegexMatches(
+									regexp.MustCompile(`^(ehn_)?\d+$`),
+									"must start with 'ehn_' prefix followed by digits, or be digits only",
+								),
+							},
 						},
 						"cname_to": schema.StringAttribute{
 							Computed: true,
@@ -480,16 +474,14 @@ func (h *HostnameBucketResource) Create(ctx context.Context, req resource.Create
 		return
 	}
 
-	client := Client(h.meta)
-
 	// Send the PATCH requests to add the hostnames and wait for their activation.
-	if err := plan.sendRequests(ctx, client, requestsData.requests, waitForHostnameBucketActivation); err != nil {
+	if err := plan.sendRequests(ctx, h.Client.GetPAPI(), requestsData.requests, waitForHostnameBucketActivation); err != nil {
 		resp.Diagnostics.AddError("Create Property Hostname Bucket error", err.Error())
 		return
 	}
 
 	// After all PATCH requests, list the hostnames and fill the `cname_to` attributes.
-	responses, err := listHostnamesResponses(ctx, client, &plan)
+	responses, err := listHostnamesResponses(ctx, h.Client.GetPAPI(), &plan)
 	if err != nil {
 		resp.Diagnostics.AddError("Create Property Hostname Bucket error", err.Error())
 		return
@@ -533,9 +525,8 @@ func (h *HostnameBucketResource) Read(ctx context.Context, req resource.ReadRequ
 	}
 
 	ctx = tflog.SetField(ctx, "id", state.ID.ValueString())
-	client := Client(h.meta)
 
-	act, err := findCurrentActivation(ctx, client, &state)
+	act, err := findCurrentActivation(ctx, h.Client.GetPAPI(), &state)
 	if err != nil {
 		resp.Diagnostics.AddError("Read Property Hostname Bucket Resource error", err.Error())
 		return
@@ -548,7 +539,7 @@ func (h *HostnameBucketResource) Read(ctx context.Context, req resource.ReadRequ
 	}
 	state.NotifyEmails = emails
 
-	responses, err := listHostnamesResponses(ctx, client, &state)
+	responses, err := listHostnamesResponses(ctx, h.Client.GetPAPI(), &state)
 	if err != nil {
 		resp.Diagnostics.AddError("Read Property Hostname Bucket Resource error", err.Error())
 		return
@@ -636,15 +627,13 @@ func (h *HostnameBucketResource) Update(ctx context.Context, req resource.Update
 		return
 	}
 
-	client := Client(h.meta)
-
-	if err := plan.sendRequests(ctx, client, requestsData.requests, waitForHostnameBucketActivation); err != nil {
+	if err := plan.sendRequests(ctx, h.Client.GetPAPI(), requestsData.requests, waitForHostnameBucketActivation); err != nil {
 		resp.Diagnostics.AddError("Update Property Hostname Bucket error", err.Error())
 		return
 	}
 
 	// After all PATCH requests, list the hostnames and fill the `cname_to` attributes.
-	responses, err := listHostnamesResponses(ctx, client, &plan)
+	responses, err := listHostnamesResponses(ctx, h.Client.GetPAPI(), &plan)
 	if err != nil {
 		resp.Diagnostics.AddError("Update Property Hostname Bucket error", err.Error())
 		return
@@ -694,8 +683,7 @@ func (h *HostnameBucketResource) Delete(ctx context.Context, req resource.Delete
 		return
 	}
 
-	client := Client(h.meta)
-	if err := state.sendRequests(ctx, client, requestsData.requests, waitForHostnameBucketDeletion); err != nil {
+	if err := state.sendRequests(ctx, h.Client.GetPAPI(), requestsData.requests, waitForHostnameBucketDeletion); err != nil {
 		resp.Diagnostics.AddError("Delete Property Hostname Bucket Resource error", err.Error())
 		return
 	}

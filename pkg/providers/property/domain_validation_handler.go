@@ -7,7 +7,6 @@ import (
 	"sort"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/domainownership"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
@@ -88,11 +87,9 @@ func (v *validationHandler) buildValidateRequests() []domainownership.ValidateDo
 	var domainsToValidateSlice []domainownership.ValidateDomain
 	for domainKey, domainDetails := range v.domainsToValidate {
 		r := domainownership.ValidateDomain{
-			DomainName:      domainKey.domainName,
-			ValidationScope: domainownership.ValidationScope(domainKey.validationScope),
-		}
-		if domainDetails.validationMethod != nil {
-			r.ValidationMethod = ptr.To(domainownership.ValidationMethod(*domainDetails.validationMethod))
+			DomainName:       domainKey.domainName,
+			ValidationScope:  domainownership.ValidationScope(domainKey.validationScope),
+			ValidationMethod: domainownership.ValidationMethod(domainDetails.validationMethod),
 		}
 		domainsToValidateSlice = append(domainsToValidateSlice, r)
 	}

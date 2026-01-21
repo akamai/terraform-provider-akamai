@@ -92,16 +92,19 @@ func TestResourceStream(t *testing.T) {
 			NotificationEmails: streamConfiguration.NotificationEmails,
 			Properties: []datastream.Property{
 				{
-					PropertyID:   1,
-					PropertyName: "property_1",
+					PropertyID:      1,
+					PropertyName:    "property_1",
+					IntegrationType: "PM_DEPENDENT",
 				},
 				{
-					PropertyID:   2,
-					PropertyName: "property_2",
+					PropertyID:      2,
+					PropertyName:    "property_2",
+					IntegrationType: "PM_DEPENDENT",
 				},
 				{
-					PropertyID:   3,
-					PropertyName: "property_3",
+					PropertyID:      3,
+					PropertyName:    "property_3",
+					IntegrationType: "PM_DEPENDENT",
 				},
 			},
 			DatasetFields: []datastream.DataSetField{
@@ -141,6 +144,7 @@ func TestResourceStream(t *testing.T) {
 			StreamStatus:          datastream.StreamStatusActivating,
 			ModifiedBy:            "janesmith",
 			ModifiedDate:          "15-07-2020 05:51:52 GMT",
+			IntegrationType:       "PM_DEPENDENT",
 		}
 
 		updateStreamRequest := datastream.UpdateStreamRequest{
@@ -234,21 +238,25 @@ func TestResourceStream(t *testing.T) {
 			ProductID:          "Download_Delivery",
 			Properties: []datastream.Property{
 				{
-					PropertyID:   1,
-					PropertyName: "property_1",
+					PropertyID:      1,
+					PropertyName:    "property_1",
+					IntegrationType: "PM_DEPENDENT",
 				},
 				{
-					PropertyID:   2,
-					PropertyName: "property_2",
+					PropertyID:      2,
+					PropertyName:    "property_2",
+					IntegrationType: "PM_DEPENDENT",
 				},
 				{
-					PropertyID:   3,
-					PropertyName: "property_3",
+					PropertyID:      3,
+					PropertyName:    "property_3",
+					IntegrationType: "PM_DEPENDENT",
 				},
 			},
-			StreamID:      updateStreamResponse.StreamID,
-			StreamName:    streamConfiguration.StreamName,
-			StreamVersion: updateStreamResponse.StreamVersion,
+			StreamID:        updateStreamResponse.StreamID,
+			StreamName:      streamConfiguration.StreamName,
+			StreamVersion:   updateStreamResponse.StreamVersion,
+			IntegrationType: "PM_DEPENDENT",
 		}
 
 		getStreamResponseStreamActivating := modifyResponse(*getStreamResponseActivated, func(r *datastream.DetailedStreamVersion) {
@@ -402,6 +410,7 @@ func TestResourceStream(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_datastream.s", "s3_connector.0.path", "s3_test_path"),
 							resource.TestCheckResourceAttr("akamai_datastream.s", "s3_connector.0.region", "s3_test_region"),
 							resource.TestCheckResourceAttr("akamai_datastream.s", "s3_connector.0.secret_access_key", "s3_test_secret_key"),
+							resource.TestCheckResourceAttr("akamai_datastream.s", "integration_type", "PM_DEPENDENT"),
 						),
 					},
 					{
@@ -436,6 +445,7 @@ func TestResourceStream(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_datastream.s", "s3_connector.0.path", "s3_test_path"),
 							resource.TestCheckResourceAttr("akamai_datastream.s", "s3_connector.0.region", "s3_test_region"),
 							resource.TestCheckResourceAttr("akamai_datastream.s", "s3_connector.0.secret_access_key", "s3_test_secret_key"),
+							resource.TestCheckResourceAttr("akamai_datastream.s", "integration_type", "PM_DEPENDENT"),
 						),
 					},
 				},
@@ -2485,4 +2495,478 @@ func TestFilePrefixSuffixSetForObjectStorageDestination(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, configurationOfPrefixSuffixSupportedDest.UploadFilePrefix, result.UploadFilePrefix)
 	assert.Equal(t, configurationOfPrefixSuffixSupportedDest.UploadFileSuffix, result.UploadFileSuffix)
+}
+
+// TestResourceStreamSamplingPercentage tests the sampling_percentage field
+func TestResourceStreamSamplingPercentage(t *testing.T) {
+	tests := map[string]struct {
+		samplingPercentage int
+		expectSampling     bool
+		expectError        *regexp.Regexp
+		integrationType    string
+	}{
+		"without sampling_percentage": {
+			samplingPercentage: 0,
+			expectSampling:     false,
+			expectError:        nil,
+			integrationType:    "",
+		},
+		"without sampling_percentage but with integration_type": {
+			samplingPercentage: 0,
+			expectSampling:     false,
+			expectError:        nil,
+			integrationType:    "PM_DEPENDENT",
+		},
+		"with sampling_percentage 10": {
+			samplingPercentage: 10,
+			expectSampling:     true,
+			expectError:        nil,
+			integrationType:    "PM_DEPENDENT",
+		},
+		"with sampling_percentage 50": {
+			samplingPercentage: 50,
+			expectSampling:     true,
+			expectError:        nil,
+			integrationType:    "PM_DEPENDENT",
+		},
+		"with sampling_percentage 100": {
+			samplingPercentage: 100,
+			expectSampling:     true,
+			expectError:        nil,
+			integrationType:    "PM_DEPENDENT",
+		},
+		"with invalid sampling_percentage 0": {
+			samplingPercentage: 0,
+			expectSampling:     true, // explicitly set to 0 in config
+			expectError:        regexp.MustCompile(`expected sampling_percentage to be in the range \(1 - 100\), got 0`),
+			integrationType:    "",
+		},
+		"with invalid sampling_percentage -1": {
+			samplingPercentage: -1,
+			expectSampling:     true,
+			expectError:        regexp.MustCompile(`expected sampling_percentage to be in the range \(1 - 100\), got -1`),
+			integrationType:    "",
+		},
+		"with invalid sampling_percentage 101": {
+			samplingPercentage: 101,
+			expectSampling:     true,
+			expectError:        regexp.MustCompile(`expected sampling_percentage to be in the range \(1 - 100\), got 101`),
+			integrationType:    "",
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			client := &datastream.Mock{}
+
+			streamConfig := datastream.StreamConfiguration{
+				ContractID: "test_contract",
+				DeliveryConfiguration: datastream.DeliveryConfiguration{
+					Format: datastream.FormatTypeStructured,
+					Frequency: datastream.Frequency{
+						IntervalInSeconds: datastream.IntervalInSeconds30,
+					},
+					UploadFilePrefix: "ak",
+					UploadFileSuffix: "ds",
+				},
+				Destination: datastream.AbstractConnector(
+					&datastream.S3Connector{
+						AccessKey:       "key",
+						Bucket:          "bucket",
+						DisplayName:     "connector",
+						Path:            "path",
+						Region:          "region",
+						SecretAccessKey: "secret",
+					},
+				),
+				DatasetFields: []datastream.DatasetFieldID{
+					{DatasetFieldID: 1001},
+				},
+				GroupID:    1337,
+				Properties: []datastream.PropertyID{{PropertyID: 1}},
+				StreamName: "test_stream",
+			}
+
+			// Only set sampling_percentage in the request if expectSampling is true and value is valid
+			// This ensures that when not set, the API request has SamplingPercentage = 0 (zero value)
+			// The resource code always sets SamplingPercentage in the struct, but when not provided
+			// in Terraform config, it will be 0, which the API should treat as "not set"
+			if test.expectSampling && test.expectError == nil {
+				streamConfig.SamplingPercentage = test.samplingPercentage
+			}
+			// When expectSampling is false, SamplingPercentage remains 0 (the zero value for int)
+			// This matches what the resource code does when sampling_percentage is not set in Terraform
+
+			createReq := datastream.CreateStreamRequest{
+				StreamConfiguration: streamConfig,
+				Activate:            false,
+			}
+
+			streamResponse := &datastream.DetailedStreamVersion{
+				StreamID:           streamID,
+				StreamVersion:      1,
+				StreamName:         "test_stream",
+				StreamStatus:       datastream.StreamStatusInactive,
+				GroupID:            1337,
+				ContractID:         "test_contract",
+				SamplingPercentage: test.samplingPercentage,
+				IntegrationType:    test.integrationType,
+				Properties: []datastream.Property{
+					{
+						PropertyID:      1,
+						PropertyName:    "property_1",
+						IntegrationType: test.integrationType,
+					},
+				},
+				DatasetFields: []datastream.DataSetField{
+					{
+						DatasetFieldID:          1001,
+						DatasetFieldName:        "field_1",
+						DatasetFieldDescription: "desc_1",
+					},
+				},
+				Destination: datastream.Destination{
+					Bucket:          "bucket",
+					DestinationType: datastream.DestinationTypeS3,
+					DisplayName:     "connector",
+					Path:            "path",
+					Region:          "region",
+				},
+				DeliveryConfiguration: streamConfig.DeliveryConfiguration,
+				LatestVersion:         1,
+				ProductID:             "Download_Delivery",
+				CreatedBy:             "user",
+				CreatedDate:           "01-01-2026 00:00:00 GMT",
+				ModifiedBy:            "user",
+				ModifiedDate:          "01-01-2026 00:00:00 GMT",
+			}
+
+			// Only set up mock expectations if we're not expecting a validation error
+			// Validation errors occur before the API call, so no mocks are needed
+			if test.expectError == nil {
+				client.On("CreateStream", testutils.MockContext, createReq).
+					Return(streamResponse, nil).Once()
+
+				client.On("GetStream", testutils.MockContext, datastream.GetStreamRequest{
+					StreamID: streamID,
+				}).Return(streamResponse, nil)
+
+				client.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
+					StreamID: streamID,
+				}).Return(' ', nil).Once()
+			}
+
+			// Build terraform config
+			samplingPercentage := ""
+			if test.expectSampling {
+				samplingPercentage = fmt.Sprintf("sampling_percentage = %d", test.samplingPercentage)
+			}
+			tfConfig := fmt.Sprintf(`
+provider "akamai" {
+  edgerc = "../../common/testutils/edgerc"
+}
+
+resource "akamai_datastream" "s" {
+  active = false
+  delivery_configuration {
+    format = "STRUCTURED"
+    frequency {
+      interval_in_secs = 30
+    }
+    upload_file_prefix = "ak"
+    upload_file_suffix = "ds"
+  }
+  contract_id = "test_contract"
+  dataset_fields = [1001]
+  group_id = 1337
+  properties = [1]
+  stream_name = "test_stream"
+  %s
+  s3_connector {
+    access_key = "key"
+    bucket = "bucket"
+    display_name = "connector"
+    path = "path"
+    region = "region"
+    secret_access_key = "secret"
+  }
+}
+`, samplingPercentage)
+
+			useClient(client, func() {
+				// For validation error cases, expect error and don't run checks
+				if test.expectError != nil {
+					resource.UnitTest(t, resource.TestCase{
+						ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+						Steps: []resource.TestStep{
+							{
+								Config:      tfConfig,
+								ExpectError: test.expectError,
+							},
+						},
+					})
+					return
+				}
+
+				var checks []resource.TestCheckFunc
+				checks = append(checks,
+					resource.TestCheckResourceAttr("akamai_datastream.s", "stream_name", "test_stream"),
+				)
+
+				// When sampling_percentage is set, verify both sampling_percentage and integration_type are populated
+				if test.expectSampling && test.samplingPercentage > 0 {
+					checks = append(checks,
+						resource.TestCheckResourceAttr("akamai_datastream.s", "sampling_percentage", strconv.Itoa(test.samplingPercentage)),
+					)
+				} else {
+					// When sampling_percentage is not set, verify it's not in state
+					checks = append(checks, resource.TestCheckNoResourceAttr("akamai_datastream.s", "sampling_percentage"))
+				}
+
+				// Verify integration_type: if present in API response, it should be in state; otherwise not
+				if test.integrationType != "" {
+					checks = append(checks,
+						resource.TestCheckResourceAttr("akamai_datastream.s", "integration_type", test.integrationType),
+					)
+				} else {
+					checks = append(checks, resource.TestCheckNoResourceAttr("akamai_datastream.s", "integration_type"))
+				}
+
+				resource.UnitTest(t, resource.TestCase{
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+					Steps: []resource.TestStep{
+						{
+							Config: tfConfig,
+							Check:  resource.ComposeTestCheckFunc(checks...),
+						},
+					},
+				})
+			})
+
+			// Assert mock expectations for all cases
+			client.AssertExpectations(t)
+		})
+	}
+}
+
+// TestResourceStreamIntegrationType tests the integration_type field
+func TestResourceStreamIntegrationType(t *testing.T) {
+	tests := map[string]struct {
+		integrationType    string
+		expectInState      bool
+		samplingPercentage int
+		expectSampling     bool
+	}{
+		"integration_type PM_DEPENDENT present": {
+			integrationType:    "PM_DEPENDENT",
+			expectInState:      true,
+			samplingPercentage: 0,
+			expectSampling:     false,
+		},
+		"integration_type HYBRID present": {
+			integrationType:    "HYBRID",
+			expectInState:      true,
+			samplingPercentage: 0,
+			expectSampling:     false,
+		},
+		"integration_type DS_MANAGED present": {
+			integrationType:    "DS_MANAGED",
+			expectInState:      true,
+			samplingPercentage: 0,
+			expectSampling:     false,
+		},
+		"integration_type not present (empty)": {
+			integrationType:    "",
+			expectInState:      false,
+			samplingPercentage: 0,
+			expectSampling:     false,
+		},
+		"integration_type PM_DEPENDENT with sampling_percentage": {
+			integrationType:    "PM_DEPENDENT",
+			expectInState:      true,
+			samplingPercentage: 50,
+			expectSampling:     true,
+		},
+		"integration_type HYBRID with sampling_percentage": {
+			integrationType:    "HYBRID",
+			expectInState:      true,
+			samplingPercentage: 75,
+			expectSampling:     true,
+		},
+		"integration_type not present with sampling_percentage": {
+			integrationType:    "",
+			expectInState:      false,
+			samplingPercentage: 25,
+			expectSampling:     true,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			client := &datastream.Mock{}
+
+			streamConfig := datastream.StreamConfiguration{
+				ContractID: "test_contract",
+				DeliveryConfiguration: datastream.DeliveryConfiguration{
+					Format: datastream.FormatTypeStructured,
+					Frequency: datastream.Frequency{
+						IntervalInSeconds: datastream.IntervalInSeconds30,
+					},
+					UploadFilePrefix: "ak",
+					UploadFileSuffix: "ds",
+				},
+				Destination: datastream.AbstractConnector(
+					&datastream.S3Connector{
+						AccessKey:       "key",
+						Bucket:          "bucket",
+						DisplayName:     "connector",
+						Path:            "path",
+						Region:          "region",
+						SecretAccessKey: "secret",
+					},
+				),
+				DatasetFields: []datastream.DatasetFieldID{
+					{DatasetFieldID: 1001},
+				},
+				GroupID:    1337,
+				Properties: []datastream.PropertyID{{PropertyID: 1}},
+				StreamName: "test_stream",
+			}
+
+			// Set sampling_percentage if expected
+			if test.expectSampling {
+				streamConfig.SamplingPercentage = test.samplingPercentage
+			}
+
+			createReq := datastream.CreateStreamRequest{
+				StreamConfiguration: streamConfig,
+				Activate:            false,
+			}
+
+			streamResponse := &datastream.DetailedStreamVersion{
+				StreamID:           streamID,
+				StreamVersion:      1,
+				StreamName:         "test_stream",
+				StreamStatus:       datastream.StreamStatusInactive,
+				GroupID:            1337,
+				ContractID:         "test_contract",
+				SamplingPercentage: test.samplingPercentage,
+				IntegrationType:    test.integrationType,
+				Properties: []datastream.Property{
+					{
+						PropertyID:      1,
+						PropertyName:    "property_1",
+						IntegrationType: test.integrationType,
+					},
+				},
+				DatasetFields: []datastream.DataSetField{
+					{
+						DatasetFieldID:          1001,
+						DatasetFieldName:        "field_1",
+						DatasetFieldDescription: "desc_1",
+					},
+				},
+				Destination: datastream.Destination{
+					Bucket:          "bucket",
+					DestinationType: datastream.DestinationTypeS3,
+					DisplayName:     "connector",
+					Path:            "path",
+					Region:          "region",
+				},
+				DeliveryConfiguration: streamConfig.DeliveryConfiguration,
+				LatestVersion:         1,
+				ProductID:             "Download_Delivery",
+				CreatedBy:             "user",
+				CreatedDate:           "01-01-2026 00:00:00 GMT",
+				ModifiedBy:            "user",
+				ModifiedDate:          "01-01-2026 00:00:00 GMT",
+			}
+
+			client.On("CreateStream", testutils.MockContext, createReq).
+				Return(streamResponse, nil).Once()
+
+			client.On("GetStream", testutils.MockContext, datastream.GetStreamRequest{
+				StreamID: streamID,
+			}).Return(streamResponse, nil)
+
+			client.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
+				StreamID: streamID,
+			}).Return(' ', nil).Once()
+
+			// Build terraform config
+			samplingPercentage := ""
+			if test.expectSampling {
+				samplingPercentage = fmt.Sprintf("sampling_percentage = %d", test.samplingPercentage)
+			}
+			tfConfig := fmt.Sprintf(`
+provider "akamai" {
+  edgerc = "../../common/testutils/edgerc"
+}
+
+resource "akamai_datastream" "s" {
+  active = false
+  delivery_configuration {
+    format = "STRUCTURED"
+    frequency {
+      interval_in_secs = 30
+    }
+    upload_file_prefix = "ak"
+    upload_file_suffix = "ds"
+  }
+  contract_id = "test_contract"
+  dataset_fields = [1001]
+  group_id = 1337
+  properties = [1]
+  stream_name = "test_stream"
+  %s
+  s3_connector {
+    access_key = "key"
+    bucket = "bucket"
+    display_name = "connector"
+    path = "path"
+    region = "region"
+    secret_access_key = "secret"
+  }
+}
+`, samplingPercentage)
+
+			useClient(client, func() {
+				var checks []resource.TestCheckFunc
+				checks = append(checks,
+					resource.TestCheckResourceAttr("akamai_datastream.s", "stream_name", "test_stream"),
+				)
+
+				// Verify sampling_percentage if set
+				if test.expectSampling {
+					checks = append(checks,
+						resource.TestCheckResourceAttr("akamai_datastream.s", "sampling_percentage", strconv.Itoa(test.samplingPercentage)),
+					)
+				} else {
+					checks = append(checks, resource.TestCheckNoResourceAttr("akamai_datastream.s", "sampling_percentage"))
+				}
+
+				// Verify integration_type: if present in API response, it should be in state; otherwise not
+				if test.expectInState {
+					require.NotEmpty(t, test.integrationType, "integration_type should not be empty when expectInState is true")
+					checks = append(checks,
+						resource.TestCheckResourceAttr("akamai_datastream.s", "integration_type", test.integrationType),
+					)
+				} else {
+					checks = append(checks, resource.TestCheckNoResourceAttr("akamai_datastream.s", "integration_type"))
+				}
+
+				resource.UnitTest(t, resource.TestCase{
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+					Steps: []resource.TestStep{
+						{
+							Config: tfConfig,
+							Check:  resource.ComposeTestCheckFunc(checks...),
+						},
+					},
+				})
+			})
+
+			client.AssertExpectations(t)
+		})
+	}
 }

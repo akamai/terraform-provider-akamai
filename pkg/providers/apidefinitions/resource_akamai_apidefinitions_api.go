@@ -433,9 +433,9 @@ func (m *apiResourceModel) populateFromVersion(resp *v0.API, versionNumber int64
 	var apiState *string
 	var err error
 	if importState {
-		apiState, err = serializeIndent(resp.RegisterAPIRequest.APIAttributes)
+		apiState, err = serializeIndent(resp.APIAttributes)
 	} else {
-		apiState, err = serialize(resp.RegisterAPIRequest.APIAttributes)
+		apiState, err = serialize(resp.APIAttributes)
 	}
 	if err != nil {
 		diags.AddError("error parsing API", err.Error())

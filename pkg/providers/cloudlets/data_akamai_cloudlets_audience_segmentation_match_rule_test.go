@@ -9,6 +9,7 @@ import (
 )
 
 func TestDataCloudletsAudienceSegmentationMatchRule(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		configPath       string
 		expectedJSONPath string
@@ -53,6 +54,7 @@ func TestDataCloudletsAudienceSegmentationMatchRule(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
@@ -68,6 +70,7 @@ func TestDataCloudletsAudienceSegmentationMatchRule(t *testing.T) {
 }
 
 func TestIncorrectDataCloudletsAudienceSegmentationMatchRule(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		configPath string
 		withError  string
@@ -111,6 +114,7 @@ func TestIncorrectDataCloudletsAudienceSegmentationMatchRule(t *testing.T) {
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{

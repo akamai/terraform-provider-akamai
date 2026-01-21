@@ -5,8 +5,8 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/iam"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -120,24 +120,22 @@ func TestBootstrapResourceCreate(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			m := &papi.Mock{}
+			client := edgegrid.NewTestClient()
 			mp := &mockProperty{
 				mockPropertyData: basicDataBootstrap,
-				papiMock:         m,
+				papiMock:         client.PAPI,
 			}
 			if test.init != nil {
 				test.init(mp)
 			}
 
-			useClient(m, nil, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps:                    test.steps,
-				})
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				IsUnitTest:               true,
+				Steps:                    test.steps,
 			})
 
-			m.AssertExpectations(t)
+			client.PAPI.AssertExpectations(t)
 		})
 	}
 }
@@ -282,44 +280,40 @@ func TestBootstrapResourceUpdate(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			iamMock := &iam.Mock{}
-			papiMock := &papi.Mock{}
+			client := edgegrid.NewTestClient()
 			mp := &mockProperty{
 				mockPropertyData: basicDataBootstrap,
-				papiMock:         papiMock,
-				iamMock:          iamMock,
+				papiMock:         client.PAPI,
+				iamMock:          client.IAM,
 			}
 
 			if test.init != nil {
 				test.init(mp)
 			}
 
-			useClient(papiMock, nil, func() {
-				useIam(iamMock, func() {
-					baseChecks := baseChecker.Build()
-					if test.baseChecks != nil {
-						baseChecks = test.baseChecks
-					}
-					resource.UnitTest(t, resource.TestCase{
-						ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-						IsUnitTest:               true,
-						Steps: []resource.TestStep{
-							{
-								Config:      testutils.LoadFixtureString(t, test.configPathForCreate),
-								Check:       baseChecks,
-								ExpectError: test.errorForCreate,
-							},
-							{
-								Config:      testutils.LoadFixtureString(t, test.configPathForUpdate),
-								Check:       test.updateChecks,
-								ExpectError: test.errorForUpdate,
-							},
-						},
-					})
-				})
+			baseChecks := baseChecker.Build()
+			if test.baseChecks != nil {
+				baseChecks = test.baseChecks
+			}
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				IsUnitTest:               true,
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureString(t, test.configPathForCreate),
+						Check:       baseChecks,
+						ExpectError: test.errorForCreate,
+					},
+					{
+						Config:      testutils.LoadFixtureString(t, test.configPathForUpdate),
+						Check:       test.updateChecks,
+						ExpectError: test.errorForUpdate,
+					},
+				},
 			})
 
-			papiMock.AssertExpectations(t)
+			client.PAPI.AssertExpectations(t)
+			client.IAM.AssertExpectations(t)
 		})
 	}
 }
@@ -404,34 +398,32 @@ func TestBootstrapResourceImport(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			m := &papi.Mock{}
+			client := edgegrid.NewTestClient()
 			mp := &mockProperty{
 				mockPropertyData: test.mockData,
-				papiMock:         m,
+				papiMock:         client.PAPI,
 			}
 
 			if test.init != nil {
 				test.init(mp)
 			}
 
-			useClient(m, nil, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps: []resource.TestStep{
-						{
-							ImportState:      true,
-							ImportStateId:    test.importStateID,
-							ImportStateCheck: test.stateCheck,
-							ResourceName:     "akamai_property_bootstrap.test",
-							Config:           testutils.LoadFixtureString(t, "testdata/TestResPropertyBootstrap/create.tf"),
-							ExpectError:      test.error,
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				IsUnitTest:               true,
+				Steps: []resource.TestStep{
+					{
+						ImportState:      true,
+						ImportStateId:    test.importStateID,
+						ImportStateCheck: test.stateCheck,
+						ResourceName:     "akamai_property_bootstrap.test",
+						Config:           testutils.LoadFixtureString(t, "testdata/TestResPropertyBootstrap/create.tf"),
+						ExpectError:      test.error,
 					},
-				})
+				},
 			})
 
-			m.AssertExpectations(t)
+			client.PAPI.AssertExpectations(t)
 		})
 	}
 }

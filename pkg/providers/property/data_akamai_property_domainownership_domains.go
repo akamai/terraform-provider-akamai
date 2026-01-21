@@ -20,7 +20,7 @@ var (
 
 type (
 	domainsDataSource struct {
-		meta meta.Meta
+		meta.DataSource
 	}
 	domainsDataSourceModel struct {
 		Domains []domainDetailsModel `tfsdk:"domains"`
@@ -47,22 +47,6 @@ func NewDomainOwnershipDomainsDataSource() datasource.DataSource {
 // Metadata configures data source's meta information.
 func (d *domainsDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "akamai_property_domainownership_domains"
-}
-
-// Configure configures data source at the beginning of the lifecycle.
-func (d *domainsDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Data Source Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.",
-					req.ProviderData))
-		}
-	}()
-	d.meta = meta.Must(req.ProviderData)
 }
 
 // Schema is used to define data source's terraform schema.
@@ -207,7 +191,6 @@ func (d *domainsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	if resp.Diagnostics.Append(req.Config.Get(ctx, &data)...); resp.Diagnostics.HasError() {
 		return
 	}
-	client := DomainOwnershipClient(d.meta)
 
 	//Pagination parameters
 	pageSize := int64(1000)
@@ -219,7 +202,7 @@ func (d *domainsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	for {
 		tflog.Debug(ctx, fmt.Sprintf("Fetching domains page %d with size %d", page, pageSize))
 
-		domainsResp, err := client.ListDomains(ctx, domainownership.ListDomainsRequest{
+		domainsResp, err := d.Client.GetDomainOwnership().ListDomains(ctx, domainownership.ListDomainsRequest{
 			Paginate: &paginate,
 			Page:     page,
 			PageSize: pageSize,

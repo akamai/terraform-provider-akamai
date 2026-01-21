@@ -7,6 +7,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudlets"
 	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudlets/v3"
+	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
 	"github.com/stretchr/testify/assert"
@@ -14,6 +15,7 @@ import (
 )
 
 func TestFindingLatestPolicyVersion(t *testing.T) {
+	t.Parallel()
 	preparePolicyVersionsPage := func(pageSize, startingVersion int64) []cloudlets.PolicyVersion {
 		versions := make([]cloudlets.PolicyVersion, 0, pageSize)
 		for i := startingVersion; i < startingVersion+pageSize; i++ {
@@ -80,29 +82,29 @@ func TestFindingLatestPolicyVersion(t *testing.T) {
 	}
 
 	for name, test := range tests {
-		m := new(cloudlets.Mock)
-		test.init(m)
-		useClient(m, func() {
-			t.Run(name, func(t *testing.T) {
-				versionStrategy := v2VersionStrategy{client: m}
-				version, err := versionStrategy.findLatestPolicyVersion(context.Background(), policyID)
-				m.AssertExpectations(t)
-				if test.withError {
-					assert.Error(t, err)
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			client := edgegrid.NewTestClient()
+			test.init(client.CloudletsV2)
+			versionStrategy := v2VersionStrategy{client: client.CloudletsV2}
+			version, err := versionStrategy.findLatestPolicyVersion(context.Background(), policyID)
+			if test.withError {
+				assert.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				if test.expected != nil {
+					assert.Equal(t, *test.expected, *version)
 				} else {
-					require.NoError(t, err)
-					if test.expected != nil {
-						assert.Equal(t, *test.expected, *version)
-					} else {
-						assert.Nil(t, version)
-					}
+					assert.Nil(t, version)
 				}
-			})
+			}
+			client.CloudletsV2.AssertExpectations(t)
 		})
 	}
 }
 
 func TestFindingLatestPolicyVersionV3(t *testing.T) {
+	t.Parallel()
 	preparePolicyVersionsPage := func(pageSize, startingVersion int64) []v3.ListPolicyVersionsItem {
 		versions := make([]v3.ListPolicyVersionsItem, 0, pageSize)
 		for i := startingVersion; i < startingVersion+pageSize; i++ {
@@ -169,24 +171,23 @@ func TestFindingLatestPolicyVersionV3(t *testing.T) {
 	}
 
 	for name, test := range tests {
-		m := new(v3.Mock)
-		test.init(m)
-		useClientV3(m, func() {
-			t.Run(name, func(t *testing.T) {
-				checker := v3VersionStrategy{client: m}
-				version, err := checker.findLatestPolicyVersion(context.Background(), policyID)
-				m.AssertExpectations(t)
-				if test.withError {
-					assert.Error(t, err)
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			client := edgegrid.NewTestClient()
+			test.init(client.CloudletsV3)
+			checker := v3VersionStrategy{client: client.CloudletsV3}
+			version, err := checker.findLatestPolicyVersion(context.Background(), policyID)
+			if test.withError {
+				assert.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				if test.expected != nil {
+					assert.Equal(t, *test.expected, *version)
 				} else {
-					require.NoError(t, err)
-					if test.expected != nil {
-						assert.Equal(t, *test.expected, *version)
-					} else {
-						assert.Nil(t, version)
-					}
+					assert.Nil(t, version)
 				}
-			})
+			}
+			client.CloudletsV3.AssertExpectations(t)
 		})
 	}
 }

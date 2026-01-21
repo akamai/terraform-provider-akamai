@@ -5,83 +5,83 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func TestDataProperties(t *testing.T) {
+	t.Parallel()
 	t.Run("list properties", func(t *testing.T) {
-		client := &papi.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 		props := papi.PropertiesItems{Items: buildPapiProperties()}
 		properties := decodePropertyItems(props.Items)
 
-		client.On("GetProperties",
+		client.PAPI.On("GetProperties",
 			testutils.MockContext,
 			papi.GetPropertiesRequest{GroupID: "grp_test", ContractID: "ctr_test"},
 		).Return(&papi.GetPropertiesResponse{Properties: props}, nil).Times(3)
 
-		useClient(client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{{
-					Config: testutils.LoadFixtureString(t, "testdata/TestDataProperties/properties.tf"),
-					Check:  buildAggregatedTest(properties, "grp_testctr_test", "grp_test", "ctr_test"),
-				}},
-			})
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{{
+				Config: testutils.LoadFixtureString(t, "testdata/TestDataProperties/properties.tf"),
+				Check:  buildAggregatedTest(properties, "grp_testctr_test", "grp_test", "ctr_test"),
+			}},
 		})
 
-		client.AssertExpectations(t)
+		client.PAPI.AssertExpectations(t)
 	})
 
 	t.Run("list properties without group prefix", func(t *testing.T) {
-		client := &papi.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 		props := papi.PropertiesItems{Items: buildPapiProperties()}
 		properties := decodePropertyItems(props.Items)
 
-		client.On("GetProperties",
+		client.PAPI.On("GetProperties",
 			testutils.MockContext,
 			papi.GetPropertiesRequest{GroupID: "grp_test", ContractID: "ctr_test"},
 		).Return(&papi.GetPropertiesResponse{Properties: props}, nil).Times(3)
 
-		useClient(client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{{
-					Config: testutils.LoadFixtureString(t, "testdata/TestDataProperties/properties_no_group_prefix.tf"),
-					Check:  buildAggregatedTest(properties, "grp_testctr_test", "test", "ctr_test"),
-				}},
-			})
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{{
+				Config: testutils.LoadFixtureString(t, "testdata/TestDataProperties/properties_no_group_prefix.tf"),
+				Check:  buildAggregatedTest(properties, "grp_testctr_test", "test", "ctr_test"),
+			}},
 		})
 
-		client.AssertExpectations(t)
+		client.PAPI.AssertExpectations(t)
 	})
 
 	t.Run("list properties without contract prefix", func(t *testing.T) {
-		client := &papi.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 		props := papi.PropertiesItems{Items: buildPapiProperties()}
 		properties := decodePropertyItems(props.Items)
 
-		client.On("GetProperties",
+		client.PAPI.On("GetProperties",
 			testutils.MockContext,
 			papi.GetPropertiesRequest{GroupID: "grp_test", ContractID: "ctr_test"},
 		).Return(&papi.GetPropertiesResponse{Properties: props}, nil).Times(3)
 
-		useClient(client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{{
-					Config: testutils.LoadFixtureString(t, "testdata/TestDataProperties/properties_no_contract_prefix.tf"),
-					Check:  buildAggregatedTest(properties, "grp_testctr_test", "grp_test", "test"),
-				}},
-			})
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{{
+				Config: testutils.LoadFixtureString(t, "testdata/TestDataProperties/properties_no_contract_prefix.tf"),
+				Check:  buildAggregatedTest(properties, "grp_testctr_test", "grp_test", "test"),
+			}},
 		})
 
-		client.AssertExpectations(t)
+		client.PAPI.AssertExpectations(t)
 	})
 
 	t.Run("list properties, in some hostname bucket support enabled", func(t *testing.T) {
-		client := &papi.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 		props := papi.PropertiesItems{Items: []*papi.Property{
 			{
 				AccountID:     "act1",
@@ -118,22 +118,20 @@ func TestDataProperties(t *testing.T) {
 		}}
 		properties := decodePropertyItems(props.Items)
 
-		client.On("GetProperties",
+		client.PAPI.On("GetProperties",
 			testutils.MockContext,
 			papi.GetPropertiesRequest{GroupID: "grp_test", ContractID: "ctr_test"},
 		).Return(&papi.GetPropertiesResponse{Properties: props}, nil).Times(3)
 
-		useClient(client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{{
-					Config: testutils.LoadFixtureString(t, "testdata/TestDataProperties/properties.tf"),
-					Check:  buildAggregatedTest(properties, "grp_testctr_test", "grp_test", "ctr_test"),
-				}},
-			})
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{{
+				Config: testutils.LoadFixtureString(t, "testdata/TestDataProperties/properties.tf"),
+				Check:  buildAggregatedTest(properties, "grp_testctr_test", "grp_test", "ctr_test"),
+			}},
 		})
 
-		client.AssertExpectations(t)
+		client.PAPI.AssertExpectations(t)
 	})
 }
 

@@ -202,7 +202,7 @@ func (m *certificateResourceModel) populateCertificateFields(ctx context.Context
 }
 
 type certificateResource struct {
-	meta meta.Meta
+	meta.Resource
 }
 
 // NewCertificateResource returns a new CloudCertificates Certificate resource.
@@ -212,26 +212,6 @@ func NewCertificateResource() resource.Resource {
 
 func (c *certificateResource) Metadata(_ context.Context, _ resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = "akamai_cloudcertificates_certificate"
-}
-
-// Configure implements resource.ResourceWithConfigure.
-func (c *certificateResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	// Prevent panic if the provider has not been configured.
-	if req.ProviderData == nil {
-		return
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"unexpected resource configure type",
-				fmt.Sprintf("expected meta.Meta, got: %T. please report this issue to the provider developers.",
-					req.ProviderData),
-			)
-		}
-	}()
-
-	c.meta = meta.Must(req.ProviderData)
 }
 
 func (c *certificateResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
@@ -536,8 +516,7 @@ func (c *certificateResource) Create(ctx context.Context, req resource.CreateReq
 		}
 	}
 
-	client := Client(c.meta)
-	cert, err := client.CreateCertificate(ctx, createReq)
+	cert, err := c.Client.GetCloudCertificates().CreateCertificate(ctx, createReq)
 	if err != nil {
 		resp.Diagnostics.AddError("Unable to create CCM Certificate", err.Error())
 		return
@@ -563,8 +542,7 @@ func (c *certificateResource) Read(ctx context.Context, req resource.ReadRequest
 
 	ctx = tflog.SetField(ctx, "certificate_id", state.CertificateID.ValueString())
 
-	client := Client(c.meta)
-	cert, err := client.GetCertificate(ctx, cloudcertificates.GetCertificateRequest{
+	cert, err := c.Client.GetCloudCertificates().GetCertificate(ctx, cloudcertificates.GetCertificateRequest{
 		CertificateID: state.CertificateID.ValueString(),
 	})
 	if err != nil && errors.Is(err, cloudcertificates.ErrCertificateNotFound) {
@@ -601,8 +579,7 @@ func (c *certificateResource) Update(ctx context.Context, req resource.UpdateReq
 	// TODO: update only if 'renew_before_expiration_days' is false.
 	// Add support for 'renew_before_expiration_days' logic.
 	tflog.Debug(ctx, "'base_name' change detected, updating the certificate name")
-	client := Client(c.meta)
-	cert, err := client.PatchCertificate(ctx, cloudcertificates.PatchCertificateRequest{
+	cert, err := c.Client.GetCloudCertificates().PatchCertificate(ctx, cloudcertificates.PatchCertificateRequest{
 		CertificateID: plan.CertificateID.ValueString(),
 		// If base_name is Null, it must be used as empty string to reset the name to the default value.
 		CertificateName: ptr.To(plan.BaseName.ValueString()),
@@ -633,8 +610,7 @@ func (c *certificateResource) Delete(ctx context.Context, req resource.DeleteReq
 
 	ctx = tflog.SetField(ctx, "certificate_id", state.CertificateID.ValueString())
 
-	client := Client(c.meta)
-	if _, err := client.DeleteCertificate(ctx, cloudcertificates.DeleteCertificateRequest{
+	if _, err := c.Client.GetCloudCertificates().DeleteCertificate(ctx, cloudcertificates.DeleteCertificateRequest{
 		CertificateID: state.CertificateID.ValueString(),
 	}); err != nil {
 		resp.Diagnostics.AddError("Unable to delete CCM Certificate", err.Error())
@@ -659,8 +635,7 @@ func (c *certificateResource) ImportState(ctx context.Context, req resource.Impo
 	}
 	certificateID := parts[0]
 
-	client := Client(c.meta)
-	cert, err := client.GetCertificate(ctx, cloudcertificates.GetCertificateRequest{
+	cert, err := c.Client.GetCloudCertificates().GetCertificate(ctx, cloudcertificates.GetCertificateRequest{
 		CertificateID: certificateID,
 	})
 	if err != nil && errors.Is(err, cloudcertificates.ErrCertificateNotFound) {

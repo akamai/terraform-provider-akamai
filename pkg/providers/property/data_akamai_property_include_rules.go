@@ -73,7 +73,6 @@ func dataSourcePropertyIncludeRules() *schema.Resource {
 
 func dataPropertyIncludeRulesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := Client(meta)
 	log := meta.Log("PAPI", "dataPropertyIncludeRulesRead")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(log))
 
@@ -96,7 +95,7 @@ func dataPropertyIncludeRulesRead(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(err)
 	}
 
-	includeRuleTree, err := client.GetIncludeRuleTree(ctx, papi.GetIncludeRuleTreeRequest{
+	includeRuleTree, err := meta.Client().GetPAPI().GetIncludeRuleTree(ctx, papi.GetIncludeRuleTreeRequest{
 		ContractID:     contractID,
 		GroupID:        groupID,
 		IncludeID:      includeID,

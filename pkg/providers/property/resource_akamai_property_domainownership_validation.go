@@ -34,7 +34,7 @@ var (
 type (
 	// DomainOwnershipValidationResource represents akamai_domainownership_validation resource.
 	DomainOwnershipValidationResource struct {
-		meta meta.Meta
+		meta.Resource
 	}
 
 	domainOwnershipValidationResourceModel struct {
@@ -54,7 +54,7 @@ type (
 	}
 
 	domainDetails struct {
-		validationMethod *string
+		validationMethod string
 		validationStatus string
 		validationLevel  string
 	}
@@ -68,25 +68,6 @@ func NewDomainOwnershipValidationResource() resource.Resource {
 // Metadata implements resource.Resource.
 func (d *DomainOwnershipValidationResource) Metadata(_ context.Context, _ resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = "akamai_property_domainownership_validation"
-}
-
-// Configure implements resource.ResourceWithConfigure.
-func (d *DomainOwnershipValidationResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		// ProviderData is nil when Configure is run first time as part of ValidateDataSourceConfig in framework provider
-		return
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Resource Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-			)
-		}
-	}()
-
-	d.meta = meta.Must(req.ProviderData)
 }
 
 // Schema implements resource's Schema.
@@ -137,7 +118,7 @@ func validateDomainsSchema() schema.SetNestedAttribute {
 					},
 				},
 				"validation_method": schema.StringAttribute{
-					Optional: true,
+					Required: true,
 					MarkdownDescription: "The method used to validate the domain. Possible values are: \n" +
 						"* `DNS_CNAME` - For this method, Akamai generates a `cname_record` that you copy as the `target` to a `CNAME` record of your DNS configuration. The record's name needs to be in the `_acme-challenge.domain-name` format.\n" +
 						"* `DNS_TXT` - For this method, Akamai generates a `txt_record` with a token `value` that you copy as the `target` to a `TXT` record of your DNS configuration. The record's name needs to be in the `_akamai-{host|wildcard|domain}-challenge.domainName` format based on the validation scope.\n" +
@@ -175,8 +156,7 @@ func (d *DomainOwnershipValidationResource) Create(ctx context.Context, req reso
 		"domains": planDomains,
 	})
 
-	client := DomainOwnershipClient(d.meta)
-	apiDomains, err := fetchDomainsFromAPI(ctx, client, planDomains)
+	apiDomains, err := fetchDomainsFromAPI(ctx, d.Client.GetDomainOwnership(), planDomains)
 	if err != nil {
 		resp.Diagnostics.AddError("Error Searching Domains", err.Error())
 		return
@@ -196,7 +176,7 @@ func (d *DomainOwnershipValidationResource) Create(ctx context.Context, req reso
 	}
 
 	requests := validationHandler.buildValidateRequests()
-	domainsToPoll, err := validateDomains(ctx, client, requests)
+	domainsToPoll, err := validateDomains(ctx, d.Client.GetDomainOwnership(), requests)
 	if err != nil {
 		resp.Diagnostics.AddError("Error Validating Domains", err.Error())
 		return
@@ -212,7 +192,7 @@ func (d *DomainOwnershipValidationResource) Create(ctx context.Context, req reso
 			"domains": domainsToPoll,
 			"timeout": createTimeout,
 		})
-		resp.Diagnostics.Append(waitForDomains(ctx, client, domainsToPoll, createTimeout)...)
+		resp.Diagnostics.Append(waitForDomains(ctx, d.Client.GetDomainOwnership(), domainsToPoll, createTimeout)...)
 		if resp.Diagnostics.HasError() {
 			resp.Diagnostics.AddWarning("Partial success of create",
 				"Some domains scheduled for validation may not have been validated. "+
@@ -254,8 +234,7 @@ func (d *DomainOwnershipValidationResource) Read(ctx context.Context, req resour
 		"state_domains_map": stateDomainsMap,
 	})
 
-	client := DomainOwnershipClient(d.meta)
-	apiDomains, err := fetchDomainsFromAPI(ctx, client, stateDomains)
+	apiDomains, err := fetchDomainsFromAPI(ctx, d.Client.GetDomainOwnership(), stateDomains)
 	if err != nil {
 		resp.Diagnostics.AddError("Error Searching Domains", err.Error())
 		return
@@ -292,11 +271,11 @@ func (d *DomainOwnershipValidationResource) Read(ctx context.Context, req resour
 	}
 
 	var refreshedStateDomains []domainModel
-	for domain, domainDetails := range stateDomainsMap {
+	for domain := range stateDomainsMap {
 		refreshedStateDomains = append(refreshedStateDomains, domainModel{
 			DomainName:       types.StringValue(domain.domainName),
 			ValidationScope:  types.StringValue(domain.validationScope),
-			ValidationMethod: types.StringPointerValue(domainDetails.validationMethod),
+			ValidationMethod: types.StringValue(apiDomainsMap[domain].validationMethod),
 		})
 	}
 	tflog.Debug(ctx, "refreshed state domains", map[string]any{
@@ -364,8 +343,7 @@ func (d *DomainOwnershipValidationResource) Update(ctx context.Context, req reso
 		})
 	}
 
-	client := DomainOwnershipClient(d.meta)
-	apiDomains, err := fetchDomainsFromAPI(ctx, client, domainsToSearch)
+	apiDomains, err := fetchDomainsFromAPI(ctx, d.Client.GetDomainOwnership(), domainsToSearch)
 	if err != nil {
 		resp.Diagnostics.AddError("Error Searching Domains", err.Error())
 		return
@@ -381,7 +359,7 @@ func (d *DomainOwnershipValidationResource) Update(ctx context.Context, req reso
 		calculateDomainsToInvalidate().
 		buildInvalidateRequest()
 	if invalidateRequest != nil {
-		invalidateResponse, err := client.InvalidateDomains(ctx, *invalidateRequest)
+		invalidateResponse, err := d.Client.GetDomainOwnership().InvalidateDomains(ctx, *invalidateRequest)
 		if err != nil {
 			resp.Diagnostics.AddError("Error Invalidating Domains", err.Error())
 			return
@@ -398,7 +376,7 @@ func (d *DomainOwnershipValidationResource) Update(ctx context.Context, req reso
 	}
 
 	validateRequests := validationHandler.buildValidateRequests()
-	domainsToPoll, err := validateDomains(ctx, client, validateRequests)
+	domainsToPoll, err := validateDomains(ctx, d.Client.GetDomainOwnership(), validateRequests)
 	if err != nil {
 		resp.Diagnostics.AddError("Error Validating Domains", err.Error())
 		return
@@ -414,7 +392,7 @@ func (d *DomainOwnershipValidationResource) Update(ctx context.Context, req reso
 			"domains": domainsToPoll,
 			"timeout": updateTimeout,
 		})
-		resp.Diagnostics.Append(waitForDomains(ctx, client, domainsToPoll, updateTimeout)...)
+		resp.Diagnostics.Append(waitForDomains(ctx, d.Client.GetDomainOwnership(), domainsToPoll, updateTimeout)...)
 		if resp.Diagnostics.HasError() {
 			resp.Diagnostics.AddWarning("Partial success of update",
 				"Domains scheduled for invalidation have been successfully invalidated while "+
@@ -449,8 +427,7 @@ func (d *DomainOwnershipValidationResource) Delete(ctx context.Context, req reso
 		"domains": stateDomains,
 	})
 
-	client := DomainOwnershipClient(d.meta)
-	apiDomains, err := fetchDomainsFromAPI(ctx, client, stateDomains)
+	apiDomains, err := fetchDomainsFromAPI(ctx, d.Client.GetDomainOwnership(), stateDomains)
 	if err != nil {
 		resp.Diagnostics.AddError("Error Searching Domains", err.Error())
 		return
@@ -468,7 +445,7 @@ func (d *DomainOwnershipValidationResource) Delete(ctx context.Context, req reso
 		calculateDomainsToInvalidate().
 		buildInvalidateRequest()
 	if invalidateRequest != nil {
-		invalidateResponse, err := client.InvalidateDomains(ctx, *invalidateRequest)
+		invalidateResponse, err := d.Client.GetDomainOwnership().InvalidateDomains(ctx, *invalidateRequest)
 		if err != nil {
 			resp.Diagnostics.AddError("Error Invalidating Domains", err.Error())
 			return
@@ -487,8 +464,7 @@ func (d *DomainOwnershipValidationResource) ImportState(ctx context.Context, req
 	id := req.ID
 	tflog.Debug(ctx, fmt.Sprintf("importID: %s", id))
 
-	client := DomainOwnershipClient(d.meta)
-	domains, diags := parseDomains(ctx, client, id, true)
+	domains, diags := parseDomains(ctx, d.Client.GetDomainOwnership(), id, true)
 	if resp.Diagnostics.Append(diags...); resp.Diagnostics.HasError() {
 		return
 	}
@@ -677,7 +653,7 @@ func domainsToMap(domains []domainModel) map[domainKey]domainDetails {
 			domainName:      d.DomainName.ValueString(),
 			validationScope: d.ValidationScope.ValueString(),
 		}] = domainDetails{
-			validationMethod: d.ValidationMethod.ValueStringPointer(),
+			validationMethod: d.ValidationMethod.ValueString(),
 		}
 	}
 	return domainMap
@@ -686,14 +662,17 @@ func domainsToMap(domains []domainModel) map[domainKey]domainDetails {
 func apiDomainsToMap(domains []domainownership.SearchDomainItem) map[domainKey]domainDetails {
 	domainMap := make(map[domainKey]domainDetails)
 	for _, d := range domains {
-		domainMap[domainKey{
-			domainName:      d.DomainName,
-			validationScope: d.ValidationScope,
-		}] = domainDetails{
-			validationMethod: d.ValidationMethod,
+		details := domainDetails{
 			validationStatus: d.DomainStatus,
 			validationLevel:  d.ValidationLevel,
 		}
+		if d.ValidationMethod != nil {
+			details.validationMethod = *d.ValidationMethod
+		}
+		domainMap[domainKey{
+			domainName:      d.DomainName,
+			validationScope: d.ValidationScope,
+		}] = details
 	}
 	return domainMap
 }

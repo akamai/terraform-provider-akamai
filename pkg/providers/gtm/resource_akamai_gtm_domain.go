@@ -669,7 +669,7 @@ func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain, m interface{}
 	}
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() default_timeout_penalty failed: %v", err.Error())
-		return fmt.Errorf("Domain Object could not be populated: %v", err.Error())
+		return fmt.Errorf("domain object could not be populated: %v", err.Error())
 	}
 
 	vint, err = tf.GetIntValue("servermonitor_liveness_count", d)
@@ -698,7 +698,7 @@ func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain, m interface{}
 	}
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() load_imbalance_percentage failed: %v", err.Error())
-		return fmt.Errorf("Domain Object could not be populated: %v", err.Error())
+		return fmt.Errorf("domain object could not be populated: %v", err.Error())
 	}
 
 	vfloat, err = tf.GetFloat64Value("default_health_max", d)
@@ -723,7 +723,7 @@ func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain, m interface{}
 	}
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() default_ssl_client_private_key failed: %v", err.Error())
-		return fmt.Errorf("Domain Object could not be populated: %v", err.Error())
+		return fmt.Errorf("domain object could not be populated: %v", err.Error())
 	}
 
 	vint, err = tf.GetIntValue("default_error_penalty", d)
@@ -732,7 +732,7 @@ func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain, m interface{}
 	}
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() default_error_penalty failed: %v", err.Error())
-		return fmt.Errorf("Domain Object could not be populated: %v", err.Error())
+		return fmt.Errorf("domain object could not be populated: %v", err.Error())
 	}
 
 	vfloat, err = tf.GetFloat64Value("max_test_timeout", d)
@@ -771,7 +771,7 @@ func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain, m interface{}
 	}
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() comment failed: %v", err.Error())
-		return fmt.Errorf("Domain Object could not be populated: %v", err.Error())
+		return fmt.Errorf("domain object could not be populated: %v", err.Error())
 	}
 
 	vint, err = tf.GetIntValue("min_test_interval", d)
@@ -788,7 +788,7 @@ func populateDomainObject(d *schema.ResourceData, dom *gtm.Domain, m interface{}
 	}
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		logger.Errorf("populateResourceObject() default_ssl_client_certificate failed: %v", err.Error())
-		return fmt.Errorf("Domain Object could not be populated: %v", err.Error())
+		return fmt.Errorf("domain object could not be populated: %v", err.Error())
 	}
 
 	if vbool, err := tf.GetBoolValue("end_user_mapping_enabled", d); err == nil {

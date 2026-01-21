@@ -11,6 +11,7 @@ import (
 )
 
 func TestParseObjectMatchValue(t *testing.T) {
+	t.Parallel()
 	dummySchemaSetFunc := func(_ interface{}) int {
 		return 1
 	}
@@ -125,6 +126,7 @@ func TestParseObjectMatchValue(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			out, err := parseObjectMatchValue(test.criteria, test.handler)
 
 			if test.expectedError != nil {

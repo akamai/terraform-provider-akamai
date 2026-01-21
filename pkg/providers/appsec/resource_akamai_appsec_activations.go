@@ -60,7 +60,7 @@ func resourceActivations() *schema.Resource {
 			"notification_emails": {
 				Type:             schema.TypeSet,
 				Required:         true,
-				Elem:             &schema.Schema{Type: schema.TypeString},
+				Elem:             &schema.Schema{Type: schema.TypeString, ValidateDiagFunc: validateNotificationEmail},
 				Description:      "List of email addresses to be notified with the results of the activation",
 				DiffSuppressFunc: suppressActivationEmailFieldForAppSecActivation,
 			},
@@ -90,6 +90,7 @@ type activationParams struct {
 	NotificationEmails []string
 	ResourceData       *schema.ResourceData
 	Logger             akalog.Interface
+	Meta               interface{}
 }
 
 var (
@@ -147,6 +148,7 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 		NotificationEmails: notificationEmails,
 		ResourceData:       d,
 		Logger:             logger,
+		Meta:               m,
 	}
 
 	return activateVersion(ctx, client, params)
@@ -248,6 +250,7 @@ func resourceActivationsUpdate(ctx context.Context, d *schema.ResourceData, m in
 		NotificationEmails: notificationEmails,
 		ResourceData:       d,
 		Logger:             logger,
+		Meta:               m,
 	}
 
 	return activateVersion(ctx, client, params)
@@ -300,6 +303,7 @@ func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m in
 		NotificationEmails: notificationEmails,
 		ResourceData:       d,
 		Logger:             logger,
+		Meta:               m,
 	}
 
 	return deactivateVersion(ctx, client, params)
@@ -324,7 +328,7 @@ func resourceImporter(ctx context.Context, d *schema.ResourceData, m interface{}
 		return nil, err
 	}
 	network := iDParts[2]
-	if !(network == "STAGING" || network == "PRODUCTION") {
+	if network != "STAGING" && network != "PRODUCTION" {
 		return nil, fmt.Errorf("bad network value %s; must be either STAGING or PRODUCTION", network)
 
 	}
@@ -469,6 +473,11 @@ func pollActivation(ctx context.Context, client appsec.APPSEC, activationStatus 
 			return "", fmt.Errorf("activation context terminated: %s", ctx.Err())
 		}
 	}
+
+	if activationStatus == appsec.StatusFailed {
+		return activationStatus, fmt.Errorf("activation failed with status: %s", activationStatus)
+	}
+
 	return activationStatus, nil
 }
 
@@ -749,6 +758,26 @@ func isPendingDeactivation(status string) bool {
 		status == "DEACTIVATION_PENDING"
 }
 
+// handleActivationFailure handles activation failure by refreshing state and returning appropriate diagnostics
+func handleActivationFailure(ctx context.Context, params activationParams, finalStatus appsec.StatusValue) diag.Diagnostics {
+	readDiags := resourceActivationsRead(ctx, params.ResourceData, params.Meta)
+
+	if readDiags.HasError() {
+		failedErr := diag.Errorf("activation failed for version %d on %s for config %d with status: %s",
+			params.Version, params.Network, params.ConfigID, finalStatus)
+		return append(failedErr, readDiags...)
+	}
+
+	return diag.Diagnostics{
+		diag.Diagnostic{
+			Severity: diag.Warning,
+			Summary:  "Activation Failed",
+			Detail: fmt.Sprintf("Activation failed for version %d on %s for config %d with status: %s. State has been reverted to the currently active version %d.",
+				params.Version, params.Network, params.ConfigID, finalStatus, params.ResourceData.Get("version")),
+		},
+	}
+}
+
 // activateVersion orchestrates the activation of a configuration version
 func activateVersion(ctx context.Context, client appsec.APPSEC, params activationParams) diag.Diagnostics {
 	// Check if there's already an active or pending version for this config and network
@@ -805,7 +834,15 @@ func handleSameVersion(ctx context.Context, client appsec.APPSEC, currentVersion
 	}
 	finalStatus, err := pollActivation(ctx, client, appsec.StatusValue(currentVersion.Status), getActivationsRequest)
 	if err != nil {
-		return diag.FromErr(err)
+		// Refresh state to current active version before returning error
+		params.Logger.Warnf("activation polling failed for version %d on %s for config %d, refreshing state to current active version: %s", params.Version, params.Network, params.ConfigID, err.Error())
+		return handleActivationFailure(ctx, params, finalStatus)
+	}
+
+	// If activation failed, refresh state by calling read method to get current active version
+	if finalStatus == appsec.StatusFailed {
+		params.Logger.Warnf("activation failed for version %d on %s for config %d, refreshing state to current active version", params.Version, params.Network, params.ConfigID)
+		return handleActivationFailure(ctx, params, finalStatus)
 	}
 
 	// Set the final status after successful polling
@@ -851,12 +888,26 @@ func performActivation(ctx context.Context, client appsec.APPSEC, params activat
 
 	activation, err := lookupActivation(ctx, client, getActivationsRequest)
 	if err != nil {
+		// Refresh state to current active version before returning error
+		params.Logger.Warnf("failed to lookup activation %d, refreshing state to current active version: %s", activationResp.ActivationID, err.Error())
+		readDiags := resourceActivationsRead(ctx, params.ResourceData, params.Meta)
+		if readDiags.HasError() {
+			// If read also fails, append the read errors to the original error
+			return append(diag.FromErr(err), readDiags...)
+		}
 		return diag.FromErr(err)
 	}
 
 	finalStatus, err := pollActivation(ctx, client, activation.Status, getActivationsRequest)
 	if err != nil {
-		return diag.FromErr(err)
+		params.Logger.Warnf("activation polling failed for version %d on %s for config %d, refreshing state to current active version: %s", params.Version, params.Network, params.ConfigID, err.Error())
+		return handleActivationFailure(ctx, params, finalStatus)
+	}
+
+	// If activation failed, refresh state by calling read method to get current active version
+	if finalStatus == appsec.StatusFailed {
+		params.Logger.Warnf("activation failed for version %d on %s for config %d, refreshing state to current active version", params.Version, params.Network, params.ConfigID)
+		return handleActivationFailure(ctx, params, finalStatus)
 	}
 
 	// Set the final status after successful polling

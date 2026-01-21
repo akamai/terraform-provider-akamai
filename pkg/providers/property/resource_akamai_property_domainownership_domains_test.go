@@ -8,6 +8,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/domainownership"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/ptr"
+	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
 	tst "github.com/akamai/terraform-provider-akamai/v9/internal/test"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
@@ -17,7 +18,7 @@ import (
 )
 
 func TestDomainOwnershipDomainsRes(t *testing.T) {
-
+	t.Parallel()
 	test1 := test.AttributeBatch{
 		"domain_name":                                 "test1.com",
 		"validation_scope":                            "HOST",
@@ -1883,25 +1884,25 @@ resource "akamai_property_domainownership_domains" "test" {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			m := &domainownership.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 			if tc.init != nil {
-				tc.init(m)
+				tc.init(client.DomainOwnership)
 			}
 
-			useDomainOwnership(m, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps:                    tc.steps,
-				})
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				IsUnitTest:               true,
+				Steps:                    tc.steps,
 			})
 
-			m.AssertExpectations(t)
+			client.DomainOwnership.AssertExpectations(t)
 		})
 	}
 }
 
 func TestDomainOwnershipDomainsImport(t *testing.T) {
+	t.Parallel()
 	importChecker := test.NewImportChecker().
 		CheckEqual("domains.#", "2")
 
@@ -2144,27 +2145,26 @@ resource "akamai_property_domainownership_domains" "test" {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			m := &domainownership.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 			if tc.init != nil {
-				tc.init(m)
+				tc.init(client.DomainOwnership)
 			}
 
-			useDomainOwnership(m, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							ImportStateCheck: tc.stateCheck,
-							ImportStateId:    tc.importID,
-							ImportState:      true,
-							ResourceName:     "akamai_property_domainownership_domains.test",
-							Config:           tc.config,
-							ExpectError:      tc.expectError,
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						ImportStateCheck: tc.stateCheck,
+						ImportStateId:    tc.importID,
+						ImportState:      true,
+						ResourceName:     "akamai_property_domainownership_domains.test",
+						Config:           tc.config,
+						ExpectError:      tc.expectError,
 					},
-				})
+				},
 			})
-			m.AssertExpectations(t)
+			client.DomainOwnership.AssertExpectations(t)
 		})
 	}
 }

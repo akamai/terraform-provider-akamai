@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/mtlstruststore"
+	"github.com/akamai/terraform-provider-akamai/v9/internal/retry"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/framework/date"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/framework/modifiers"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
@@ -29,8 +30,6 @@ var (
 	_ resource.ResourceWithConfigure   = &caSetActivationResource{}
 	_ resource.ResourceWithModifyPlan  = &caSetActivationResource{}
 	_ resource.ResourceWithImportState = &caSetActivationResource{}
-
-	pollingInterval = 5 * time.Second
 )
 
 var (
@@ -38,16 +37,36 @@ var (
 )
 
 type caSetActivationResource struct {
-	meta              meta.Meta
-	deleteTimeout     time.Duration
-	activationTimeout time.Duration
+	meta meta.Meta
+	CASetActivationResourceConfig
+}
+
+// CASetActivationResourceConfig is the configuration for the CASetActivation resource.
+type CASetActivationResourceConfig struct {
+	deleteTimeout             time.Duration
+	activationTimeout         time.Duration
+	pollingInterval           time.Duration
+	ccmMTLSDetachTimeout      time.Duration
+	ccmMTLSDetachPollInterval time.Duration
+}
+
+// DefaultCASetActivationResourceConfig returns the default configuration for the CASetActivation resource.
+func DefaultCASetActivationResourceConfig() CASetActivationResourceConfig {
+	return CASetActivationResourceConfig{
+		deleteTimeout:             1 * time.Hour,
+		activationTimeout:         1 * time.Hour,
+		pollingInterval:           5 * time.Second,
+		ccmMTLSDetachTimeout:      15 * time.Minute,
+		ccmMTLSDetachPollInterval: 30 * time.Second,
+	}
 }
 
 // NewCASetActivationResource returns a new akamai_mtlstruststore_ca_set_activation resource.
-func NewCASetActivationResource() resource.Resource {
-	return &caSetActivationResource{
-		deleteTimeout:     1 * time.Hour,
-		activationTimeout: 1 * time.Hour,
+func NewCASetActivationResource(config CASetActivationResourceConfig) func() resource.Resource {
+	return func() resource.Resource {
+		return &caSetActivationResource{
+			CASetActivationResourceConfig: config,
+		}
 	}
 }
 
@@ -292,7 +311,7 @@ func (c *caSetActivationResource) upsert(ctx context.Context, plan *caSetActivat
 		RetryAfter:   activation.RetryAfter,
 	}
 
-	status, err := waitForActivationOrDeactivation(ctx, activationTimeout, client, activationInfo)
+	status, err := c.waitForActivationOrDeactivation(ctx, activationTimeout, client, activationInfo)
 	if err != nil {
 		return fmt.Errorf("activation polling failed: %w", err)
 	}
@@ -430,11 +449,31 @@ func (c *caSetActivationResource) Delete(ctx context.Context, req resource.Delet
 			return
 		}
 	} else {
-		// Create a new deactivation request.
-		deactivation, err = client.DeactivateCASetVersion(ctx, mtlstruststore.DeactivateCASetVersionRequest{
-			CASetID: caSetID,
-			Version: version,
-			Network: mtlstruststore.ActivationNetwork(network),
+		// Sometimes, when there is mTLS enabled for CCM-bound hostnames, the deactivation API call
+		// may temporarily fail after the property has been deactivated but before the CA set version
+		// is marked as detached from the hostname in the truststore.
+		deactivation, err = retry.Poll(ctx, retry.PollingOpts[mtlstruststore.DeactivateCASetVersionResponse]{
+			Fn: func(ctx context.Context) (*mtlstruststore.DeactivateCASetVersionResponse, error) {
+				// Create a new deactivation request.
+				return client.DeactivateCASetVersion(ctx, mtlstruststore.DeactivateCASetVersionRequest{
+					CASetID: caSetID,
+					Version: version,
+					Network: mtlstruststore.ActivationNetwork(network),
+				})
+			},
+			ShouldRetryError: func(err error) bool {
+				if errors.Is(err, mtlstruststore.ErrCASetInUseByHostnamesAndNotEnrollments) {
+					return true
+				}
+				// Sometimes there is an intermittent error where CCM hostnames cannot be fetched
+				// from upstream servers.
+				if errors.Is(err, mtlstruststore.ErrFindAssociationsFailedForHostnamesEnrollmentsNotLinked) {
+					return true
+				}
+				return false
+			},
+			Deadline: c.ccmMTLSDetachTimeout,
+			Interval: c.ccmMTLSDetachPollInterval,
 		})
 		if err != nil {
 			if errors.Is(err, mtlstruststore.ErrCASetVersionNotActiveOnNetworkCannotBeDeactivated) {
@@ -462,7 +501,7 @@ func (c *caSetActivationResource) Delete(ctx context.Context, req resource.Delet
 		return
 	}
 
-	_, err = waitForActivationOrDeactivation(ctx, timeout, client, deactivationInfo)
+	_, err = c.waitForActivationOrDeactivation(ctx, timeout, client, deactivationInfo)
 	if err != nil {
 		resp.Diagnostics.AddError(fmt.Sprintf("Failed to deactivate CA set ID %s version %d", caSetID, version), err.Error())
 		return
@@ -500,7 +539,7 @@ func checkOngoingCASetOperation(ctx context.Context, client mtlstruststore.MTLST
 	return nil, nil
 }
 
-func waitForActivationOrDeactivation(ctx context.Context, timeout time.Duration, client mtlstruststore.MTLSTruststore, activation caSetActivationInfo) (*mtlstruststore.GetCASetVersionActivationResponse, error) {
+func (c *caSetActivationResource) waitForActivationOrDeactivation(ctx context.Context, timeout time.Duration, client mtlstruststore.MTLSTruststore, activation caSetActivationInfo) (*mtlstruststore.GetCASetVersionActivationResponse, error) {
 
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
@@ -533,7 +572,7 @@ func waitForActivationOrDeactivation(ctx context.Context, timeout time.Duration,
 				if !activation.RetryAfter.IsZero() {
 					activationPollInterval = time.Until(activation.RetryAfter)
 				} else {
-					activationPollInterval = pollingInterval
+					activationPollInterval = c.pollingInterval
 				}
 			case "FAILED":
 				return nil, fmt.Errorf("%s failed for CA Set %s, Version %d",

@@ -17,16 +17,20 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-var (
-	changeAckRetryInterval = 10 * time.Second
-)
+// dvValidationResource represents the akamai_cps_dv_validation resource with configurable polling intervals.
+type dvValidationResource struct {
+	pollChangeStatusInterval time.Duration
+}
 
-func resourceCPSDVValidation() *schema.Resource {
+func resourceCPSDVValidation(pollChangeStatusInterval time.Duration) *schema.Resource {
+	res := &dvValidationResource{
+		pollChangeStatusInterval: pollChangeStatusInterval,
+	}
 	return &schema.Resource{
-		CreateContext: resourceCPSDVValidationCreate,
-		ReadContext:   resourceCPSDVValidationRead,
-		UpdateContext: resourceCPSDVValidationUpdate,
-		DeleteContext: resourceCPSDVValidationDelete,
+		CreateContext: res.create,
+		ReadContext:   res.read,
+		UpdateContext: res.update,
+		DeleteContext: res.delete,
 
 		Schema: map[string]*schema.Schema{
 			"enrollment_id": {
@@ -75,14 +79,14 @@ func resourceCPSDVValidation() *schema.Resource {
 	}
 }
 
-func resourceCPSDVValidationCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (r *dvValidationResource) create(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("CPS", "resourceCPSDVValidationCreate")
 	ctx = session.ContextWithOptions(
 		ctx,
 		session.WithContextLog(logger),
 	)
-	client := inst.Client(meta)
+	client := meta.Client().GetCPS()
 	logger.Debug("Creating dv validation")
 	enrollmentID, err := tf.GetIntValue("enrollment_id", d)
 	if err != nil {
@@ -104,7 +108,7 @@ func resourceCPSDVValidationCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	// if status is `coordinate-domain-validation` or `wait-review-cert-warning` proceed further
-	status, err := waitForChangeStatus(ctx, client, enrollmentID, changeID, coodinateDomainValidation, coordinateDomainValidation, waitReviewCertWarning)
+	status, err := waitForChangeStatus(ctx, client, enrollmentID, changeID, r.pollChangeStatusInterval, coodinateDomainValidation, coordinateDomainValidation, waitReviewCertWarning)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -120,7 +124,7 @@ func resourceCPSDVValidationCreate(ctx context.Context, d *schema.ResourceData, 
 			return diag.FromErr(err)
 		}
 		d.SetId(strconv.Itoa(enrollmentID))
-		return resourceCPSDVValidationRead(ctx, d, m)
+		return r.read(ctx, d, m)
 	}
 
 	// if the status is `coordinate-domain-validation`, send ack for DV challenges
@@ -130,7 +134,7 @@ func resourceCPSDVValidationCreate(ctx context.Context, d *schema.ResourceData, 
 		ChangeID:        changeID,
 	})
 	if err == nil {
-		status, err = waitForChangeStatus(ctx, client, enrollmentID, changeID, waitReviewCertWarning, complete, coordinateDomainValidation, coodinateDomainValidation)
+		status, err = waitForChangeStatus(ctx, client, enrollmentID, changeID, r.pollChangeStatusInterval, waitReviewCertWarning, complete, coordinateDomainValidation, coodinateDomainValidation)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -143,21 +147,21 @@ func resourceCPSDVValidationCreate(ctx context.Context, d *schema.ResourceData, 
 
 		// for other statuses: `coordinate-domain-validation` and `complete`, go to read
 		d.SetId(strconv.Itoa(enrollmentID))
-		return resourceCPSDVValidationRead(ctx, d, m)
+		return r.read(ctx, d, m)
 	}
 
 	// in case of error, attempt retry
 	logger.Debugf("error sending acknowledgement request: %s", err)
 	for {
 		select {
-		case <-time.After(changeAckRetryInterval):
+		case <-time.After(r.pollChangeStatusInterval):
 			err = client.AcknowledgeDVChallenges(ctx, cps.AcknowledgementRequest{
 				Acknowledgement: cps.Acknowledgement{Acknowledgement: cps.AcknowledgementAcknowledge},
 				EnrollmentID:    enrollmentID,
 				ChangeID:        changeID,
 			})
 			if err == nil {
-				status, err = waitForChangeStatus(ctx, client, enrollmentID, changeID, waitReviewCertWarning, complete, coordinateDomainValidation, coodinateDomainValidation)
+				status, err = waitForChangeStatus(ctx, client, enrollmentID, changeID, r.pollChangeStatusInterval, waitReviewCertWarning, complete, coordinateDomainValidation, coodinateDomainValidation)
 				if err != nil {
 					return diag.FromErr(err)
 				}
@@ -170,7 +174,7 @@ func resourceCPSDVValidationCreate(ctx context.Context, d *schema.ResourceData, 
 
 				// for other statuses: `coordinate-domain-validation` and `complete`, go to read
 				d.SetId(strconv.Itoa(enrollmentID))
-				return resourceCPSDVValidationRead(ctx, d, m)
+				return r.read(ctx, d, m)
 			}
 		case <-ctx.Done():
 			return diag.Errorf("retry timeout reached - error sending acknowledgement request: %s", err)
@@ -178,14 +182,14 @@ func resourceCPSDVValidationCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 }
 
-func resourceCPSDVValidationRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (r *dvValidationResource) read(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("CPS", "resourceCPSDVValidationRead")
 	ctx = session.ContextWithOptions(
 		ctx,
 		session.WithContextLog(logger),
 	)
-	client := inst.Client(meta)
+	client := meta.Client().GetCPS()
 	logger.Debug("Reading dv validation")
 	enrollmentID, err := tf.GetIntValue("enrollment_id", d)
 	if err != nil {
@@ -222,7 +226,7 @@ func resourceCPSDVValidationRead(ctx context.Context, d *schema.ResourceData, m 
 	return nil
 }
 
-func resourceCPSDVValidationUpdate(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (r *dvValidationResource) update(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("CPS", "resourceCPSDVValidationUpdate")
 
@@ -234,7 +238,7 @@ func resourceCPSDVValidationUpdate(_ context.Context, d *schema.ResourceData, m 
 	return diag.Errorf("Update in this resource is not allowed") //all fields are force new - it should never reach here
 }
 
-func resourceCPSDVValidationDelete(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+func (r *dvValidationResource) delete(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	d.SetId("")
 	return nil
 }

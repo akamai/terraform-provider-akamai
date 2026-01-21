@@ -1261,4 +1261,160 @@ func TestResourceClientList(t *testing.T) {
 		})
 		client.AssertExpectations(t)
 	})
+
+	t.Run("Create a new domain type client list", func(t *testing.T) {
+		client := new(clientlists.Mock)
+		clientList := expectCreateList(client, clientlists.CreateClientListRequest{
+			Name:       "List Name",
+			Notes:      "List Notes",
+			Tags:       []string{"a", "b"},
+			Type:       clientlists.DOMAIN,
+			ContractID: "12_ABC",
+			GroupID:    12,
+			Items:      []clientlists.ListItemPayload{},
+		})
+		expectReadList(client, clientList.ListContent, []clientlists.ListItemContent{}, 2)
+		expectDeleteList(client, clientList.ListContent)
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/domain_type_list_create.tf", testDir)),
+						Check: checkAttributes(listAttributes{
+							ListID:     clientList.ListID,
+							Name:       "List Name",
+							Notes:      "List Notes",
+							Tags:       []string{"a", "b"},
+							Type:       "DOMAIN",
+							ContractID: "12_ABC",
+							GroupID:    12,
+							Version:    1,
+							ItemsCount: 0,
+							Items:      []clientlists.ListItemPayload{},
+						}),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+
+	t.Run("Update domain type client list", func(t *testing.T) {
+		client := new(clientlists.Mock)
+		clientList := expectCreateList(client, clientlists.CreateClientListRequest{
+			Name:       "List Name",
+			Notes:      "List Notes",
+			Tags:       []string{"a", "b"},
+			Type:       clientlists.DOMAIN,
+			ContractID: "12_ABC",
+			GroupID:    12,
+			Items:      []clientlists.ListItemPayload{},
+		})
+		expectReadList(client, clientList.ListContent, []clientlists.ListItemContent{}, 3)
+		updateResponse := expectUpdateList(client, clientlists.DOMAIN, 0, clientlists.UpdateClientListRequest{
+			UpdateClientList: clientlists.UpdateClientList{
+				Name:  "List Name Updated",
+				Notes: "List Notes Updated",
+				Tags:  []string{"a", "c", "d"},
+			},
+			ListID: clientList.ListID,
+		})
+		expectReadList(client, updateResponse.ListContent, []clientlists.ListItemContent{}, 2)
+		expectDeleteList(client, clientList.ListContent)
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/domain_type_list_create.tf", testDir)),
+						Check: checkAttributes(listAttributes{
+							ListID:     clientList.ListID,
+							Name:       "List Name",
+							Notes:      "List Notes",
+							Tags:       []string{"a", "b"},
+							Type:       "DOMAIN",
+							ContractID: "12_ABC",
+							GroupID:    12,
+							Version:    1,
+							ItemsCount: 0,
+						}),
+					},
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/domain_type_list_update.tf", testDir)),
+						Check: checkAttributes(listAttributes{
+							ListID:     clientList.ListID,
+							Name:       "List Name Updated",
+							Notes:      "List Notes Updated",
+							Tags:       []string{"a", "c", "d"},
+							Type:       "DOMAIN",
+							ContractID: "12_ABC",
+							GroupID:    12,
+							Version:    1,
+							ItemsCount: 0,
+						}),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+
+	t.Run("Create a new domain type client list with items", func(t *testing.T) {
+		client := new(clientlists.Mock)
+		items := append([]clientlists.ListItemPayload{},
+			clientlists.ListItemPayload{
+				Value:       "b.com",
+				Description: "Domain b",
+				Tags:        []string{},
+			},
+			clientlists.ListItemPayload{
+				Value:       "a.com",
+				Description: "Domain a",
+				Tags:        []string{},
+			},
+			clientlists.ListItemPayload{
+				Value:       "c.com",
+				Description: "Domain c",
+				Tags:        []string{},
+			})
+
+		clientList := expectCreateList(client, clientlists.CreateClientListRequest{
+			Name:       "List Name",
+			Notes:      "List Notes",
+			Tags:       []string{"a", "b"},
+			Type:       clientlists.DOMAIN,
+			ContractID: "12_ABC",
+			GroupID:    12,
+			Items:      items,
+		})
+		expectReadList(client, clientList.ListContent, mapItemsPayloadToContent(items), 2)
+		expectDeleteList(client, clientList.ListContent)
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/domain_type_list_and_items_create.tf", testDir)),
+						Check: checkAttributes(listAttributes{
+							ListID:     clientList.ListID,
+							Name:       "List Name",
+							Notes:      "List Notes",
+							Tags:       []string{"a", "b"},
+							Type:       "DOMAIN",
+							ContractID: "12_ABC",
+							GroupID:    12,
+							Version:    1,
+							ItemsCount: len(items),
+							Items:      items,
+						}),
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
 }

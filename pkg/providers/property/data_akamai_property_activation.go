@@ -72,7 +72,6 @@ var dataSourcePropertyActivationSchema = map[string]*schema.Schema{
 func dataSourcePropertyActivationRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "dataSourcePropertyActivationRead")
-	client := Client(meta)
 
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 
@@ -89,12 +88,12 @@ func dataSourcePropertyActivationRead(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	version, err := resolveVersion(ctx, d, client, propertyID, network)
+	version, err := resolveVersion(ctx, d, meta.Client().GetPAPI(), propertyID, network)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	resp, err := client.GetActivations(ctx, papi.GetActivationsRequest{
+	resp, err := meta.Client().GetPAPI().GetActivations(ctx, papi.GetActivationsRequest{
 		PropertyID: propertyID,
 	})
 	if err != nil {

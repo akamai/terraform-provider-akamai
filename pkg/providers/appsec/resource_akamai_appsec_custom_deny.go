@@ -3,8 +3,10 @@ package appsec
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
+	"net/http"
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/appsec"
@@ -124,6 +126,13 @@ func resourceCustomDenyRead(ctx context.Context, d *schema.ResourceData, m inter
 
 	getCustomDenyResponse, err := client.GetCustomDeny(ctx, getCustomDeny)
 	if err != nil {
+		var apiError *appsec.Error
+		if errors.As(err, &apiError) && apiError.StatusCode == http.StatusNotFound {
+			// Custom deny not found in latest config version, remove from state so it can be recreated
+			logger.Warnf("custom deny '%s' not found in config version %d, removing from state", customDenyID, version)
+			d.SetId("")
+			return nil
+		}
 		logger.Errorf("calling 'getCustomDeny': %s", err.Error())
 		return diag.FromErr(err)
 	}

@@ -1,12 +1,12 @@
 package property
 
 import (
+	"context"
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/net/context"
 )
 
 type requestStructure struct {
@@ -15,6 +15,7 @@ type requestStructure struct {
 }
 
 func TestHostnameRequestBuilder(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		plan                     map[string]Hostname
 		state                    map[string]Hostname
@@ -236,6 +237,7 @@ func TestHostnameRequestBuilder(t *testing.T) {
 }
 
 func TestSortHostnameOps(t *testing.T) {
+	t.Parallel()
 	ops := []hostnameOp{
 		{action: actionAdd, cnameFrom: "kilo.edgesuite.net"},
 		{action: actionRemove, cnameFrom: "foxtrot.edgesuite.net"},

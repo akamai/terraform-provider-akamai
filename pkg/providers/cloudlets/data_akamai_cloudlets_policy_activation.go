@@ -7,7 +7,6 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudlets"
 	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudlets/v3"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -15,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
 type policyActivationDataSourceModel struct {
@@ -31,7 +31,7 @@ var (
 )
 
 type policyActivationDataSource struct {
-	meta meta.Meta
+	meta.DataSource
 }
 
 // NewPolicyActivationDataSource returns a new capacity data source
@@ -46,22 +46,6 @@ func (d *policyActivationDataSource) Metadata(_ context.Context, _ datasource.Me
 
 func (d *policyActivationDataSource) name() string {
 	return "akamai_cloudlets_policy_activation"
-}
-
-// Configure configures data source at the beginning of the lifecycle
-func (d *policyActivationDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-
-	m, ok := req.ProviderData.(meta.Meta)
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected Data Source Configure Type",
-			fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-		)
-	}
-	d.meta = m
 }
 
 // Schema is used to define data source's terraform schema
@@ -97,9 +81,7 @@ func (d *policyActivationDataSource) Schema(_ context.Context, _ datasource.Sche
 
 // Read is called when the provider must read data source values in order to update state
 func (d *policyActivationDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	logger := d.meta.Log("Cloudlets", "Read")
-	logger.Debug("Cloudlets Policy Activation DataSource Read")
-	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
+	tflog.Debug(ctx, "Cloudlets Policy Activation DataSource Read")
 
 	var data policyActivationDataSourceModel
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
@@ -110,7 +92,7 @@ func (d *policyActivationDataSource) Read(ctx context.Context, req datasource.Re
 	policyID := data.PolicyID.ValueInt64()
 	network := data.Network.ValueString()
 
-	strategy, _, err := discoverActivationStrategy(ctx, policyID, d.meta, logger)
+	strategy, _, err := discoverActivationStrategy(ctx, policyID, d.Client)
 	if err != nil {
 		resp.Diagnostics.AddError("Reading Policy Failed", err.Error())
 		return

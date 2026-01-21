@@ -11,7 +11,9 @@ Use the Akamai Provider to manage and provision your Akamai configurations in Te
 
 ## Requirements
 
-- [Terraform](https://www.terraform.io/downloads.html) 1.0.x
+The Akamai Provider requires [Terraform](https://developer.hashicorp.com/terraform) 1.0.x or newer.
+
+The provider has been tested with Terraform up to version 1.13.5. Versions newer than 1.13.5 may work, but are not officially supported. 
 
 ## Installation
 

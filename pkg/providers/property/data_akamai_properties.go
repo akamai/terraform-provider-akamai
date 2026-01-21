@@ -3,14 +3,13 @@ package property
 import (
 	"context"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/str"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourceProperties() *schema.Resource {
@@ -154,12 +153,11 @@ func decodeVersion(version interface{}) int {
 
 // Reusable function to fetch all the properties for a given group and contract
 func getProperties(ctx context.Context, groupID string, contractID string, meta meta.Meta) (*papi.GetPropertiesResponse, error) {
-	client := Client(meta)
 	req := papi.GetPropertiesRequest{
 		ContractID: contractID,
 		GroupID:    groupID,
 	}
-	props, err := client.GetProperties(ctx, req)
+	props, err := meta.Client().GetPAPI().GetProperties(ctx, req)
 	if err != nil {
 		return nil, err
 	}

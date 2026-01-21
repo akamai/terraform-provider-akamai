@@ -343,9 +343,10 @@ func splitChallenges(challenges *cps.DVArray) ([]challengeHTTP, []challengeDNS) 
 			if challenge.Status != "pending" {
 				continue
 			}
-			if challenge.Type == "http-01" {
+			switch challenge.Type {
+			case "http-01":
 				httpChallenges = append(httpChallenges, challengeHTTP(newChallenge(&challenge, &dv)))
-			} else if challenge.Type == "dns-01" {
+			case "dns-01":
 				dnsChallenges = append(dnsChallenges, challengeDNS(newChallenge(&challenge, &dv)))
 			}
 		}
@@ -361,7 +362,7 @@ func newChallenge(c *cps.Challenge, dv *cps.DV) challenge {
 	}
 }
 
-func enrollmentDelete(ctx context.Context, d *schema.ResourceData, m interface{}, functionName string) diag.Diagnostics {
+func enrollmentDelete(ctx context.Context, d *schema.ResourceData, m interface{}, functionName string, pollGetEnrollmentInterval time.Duration) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("CPS", functionName)
 	// create a context with logging for api calls
@@ -369,7 +370,7 @@ func enrollmentDelete(ctx context.Context, d *schema.ResourceData, m interface{}
 		ctx,
 		session.WithContextLog(logger),
 	)
-	client := inst.Client(meta)
+	client := meta.Client().GetCPS()
 	logger.Debug("Deleting enrollment")
 	enrollmentID, err := strconv.Atoi(d.Id())
 	if err != nil {
@@ -391,7 +392,7 @@ func enrollmentDelete(ctx context.Context, d *schema.ResourceData, m interface{}
 
 	for {
 		select {
-		case <-time.After(PollForGetEnrollmentInterval):
+		case <-time.After(pollGetEnrollmentInterval):
 			_, err = client.GetEnrollment(ctx, cps.GetEnrollmentRequest{EnrollmentID: enrollmentID})
 			if errors.Is(err, cps.ErrEnrollmentNotFound) {
 				logger.Debugf("Enrollment %d successfully deleted", enrollmentID)
@@ -439,7 +440,7 @@ func readAttrs(enrollment *cps.GetEnrollmentResponse, d *schema.ResourceData) (m
 	return attrs, nil
 }
 
-func waitForVerification(ctx context.Context, logger log.Interface, client cps.CPS, enrollmentID int, acknowledgeWarnings bool, autoApproveWarnings []string) error {
+func waitForVerification(ctx context.Context, logger log.Interface, client cps.CPS, enrollmentID int, acknowledgeWarnings bool, autoApproveWarnings []string, pollChangeStatusInterval time.Duration) error {
 	getEnrollmentReq := cps.GetEnrollmentRequest{EnrollmentID: enrollmentID}
 	enrollmentGet, err := client.GetEnrollment(ctx, getEnrollmentReq)
 	if err != nil {
@@ -465,7 +466,7 @@ func waitForVerification(ctx context.Context, logger log.Interface, client cps.C
 	for ((status.StatusInfo.Status != coodinateDomainValidation && status.StatusInfo.Status != coordinateDomainValidation && status.StatusInfo.Status != waitUploadThirdParty) || len(status.AllowedInput) == 0) &&
 		status.StatusInfo.Status != complete && status.StatusInfo.Status != waitReviewCertWarning {
 		select {
-		case <-time.After(PollForChangeStatusInterval):
+		case <-time.After(pollChangeStatusInterval):
 			status, err = client.GetChangeStatus(ctx, changeStatusReq)
 			if err != nil {
 				return err

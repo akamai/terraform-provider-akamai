@@ -1,63 +1,86 @@
 package cloudlets
 
 import (
-	"sync"
 	"testing"
+	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudlets"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+)
 
-	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudlets/v3"
+const (
+	// testPollActivationInterval is the polling interval for activation status checks in tests.
+	testPollActivationInterval = 1 * time.Millisecond
+	// testPollRetryInterval is the polling interval for retrying policy activation in tests.
+	testPollRetryInterval = 1 * time.Millisecond
+	// testRetryTimeout is the timeout for policy activation retries in tests.
+	testRetryTimeout = 1 * time.Millisecond
+	// testALBPollActivationInterval is the polling interval for ALB activation status checks in tests.
+	testALBPollActivationInterval = 1 * time.Millisecond
+	// testALBRetryTimeout is the timeout for ALB activation retries in tests.
+	// This needs to be larger than testALBPollActivationInterval to allow retries.
+	testALBRetryTimeout = 10 * time.Millisecond
+	// testPolicyDeletionPollInterval is the polling interval for policy deletion in tests.
+	testPolicyDeletionPollInterval = 1 * time.Millisecond
 )
 
 func TestMain(m *testing.M) {
 	testutils.TestRunner(m)
 }
 
-// Only allow one test at a time to patch the client via useClient()
-var clientLock sync.Mutex
+type (
+	// CustomPollingSubprovider is a cloudlets subprovider with customizable polling intervals for testing.
+	CustomPollingSubprovider struct {
+		Subprovider
+		pollActivationInterval     time.Duration
+		pollRetryInterval          time.Duration
+		retryTimeout               time.Duration
+		albPollActivationInterval  time.Duration
+		albRetryTimeout            time.Duration
+		policyDeletionPollInterval time.Duration
+	}
+)
 
-// useClient swaps out the client on the global instance for the duration of the given func
-func useClient(cloudletsClient cloudlets.Cloudlets, f func()) {
-	clientLock.Lock()
-	orig := client
-	client = cloudletsClient
-
-	defer func() {
-		client = orig
-		clientLock.Unlock()
-	}()
-
-	f()
+// NewCustomPollingSubprovider creates a cloudlets subprovider with default test polling intervals.
+// Use WithPolicyActivationIntervals and WithALBActivationIntervals to customize specific intervals.
+func NewCustomPollingSubprovider() *CustomPollingSubprovider {
+	return &CustomPollingSubprovider{
+		pollActivationInterval:     defaultPollActivationInterval,
+		pollRetryInterval:          defaultPollRetryInterval,
+		retryTimeout:               defaultRetryTimeout,
+		albPollActivationInterval:  defaultALBPollActivationInterval,
+		albRetryTimeout:            defaultALBRetryTimeout,
+		policyDeletionPollInterval: defaultDeletionPolicyPollInterval,
+	}
 }
 
-// useClientV3 swaps out the client v3 on the global instance for the duration of the given func
-func useClientV3(cloudletsV3Client v3.Cloudlets, f func()) {
-	clientLock.Lock()
-	orig := v3Client
-	v3Client = cloudletsV3Client
-
-	defer func() {
-		v3Client = orig
-		clientLock.Unlock()
-	}()
-
-	f()
+// WithPolicyActivationIntervals sets custom polling intervals for policy activation.
+func (p *CustomPollingSubprovider) WithPolicyActivationIntervals(pollActivationInterval, pollRetryInterval, retryTimeout time.Duration) *CustomPollingSubprovider {
+	p.pollActivationInterval = pollActivationInterval
+	p.pollRetryInterval = pollRetryInterval
+	p.retryTimeout = retryTimeout
+	return p
 }
 
-// useClientV2AndV3 swaps out both client (v2) and client v3 on the global instances for the duration of the given func. To be used in by tests for data sources and resources that use both V2 & V3 cloudlets
-func useClientV2AndV3(cloudletsV2Client cloudlets.Cloudlets, cloudletsV3Client v3.Cloudlets, f func()) {
-	clientLock.Lock()
-	origV2 := client
-	client = cloudletsV2Client
-	origV3 := v3Client
-	v3Client = cloudletsV3Client
+// WithALBActivationIntervals sets custom polling intervals for ALB activation.
+func (p *CustomPollingSubprovider) WithALBActivationIntervals(pollActivationInterval, retryTimeout time.Duration) *CustomPollingSubprovider {
+	p.albPollActivationInterval = pollActivationInterval
+	p.albRetryTimeout = retryTimeout
+	return p
+}
 
-	defer func() {
-		client = origV2
-		v3Client = origV3
-		clientLock.Unlock()
-	}()
+// WithPolicyDeletionIntervals sets custom polling intervals for policy deletion.
+func (p *CustomPollingSubprovider) WithPolicyDeletionIntervals(pollInterval time.Duration) *CustomPollingSubprovider {
+	p.policyDeletionPollInterval = pollInterval
+	return p
+}
 
-	f()
+// SDKResources overrides the embedded Subprovider's SDKResources to use test polling intervals.
+func (p *CustomPollingSubprovider) SDKResources() map[string]*schema.Resource {
+	return map[string]*schema.Resource{
+		"akamai_cloudlets_application_load_balancer":            resourceCloudletsApplicationLoadBalancer(),
+		"akamai_cloudlets_application_load_balancer_activation": resourceCloudletsApplicationLoadBalancerActivation(p.albPollActivationInterval, p.albRetryTimeout),
+		"akamai_cloudlets_policy":                               resourceCloudletsPolicy(p.policyDeletionPollInterval),
+		"akamai_cloudlets_policy_activation":                    resourceCloudletsPolicyActivation(p.pollActivationInterval, p.pollRetryInterval, p.retryTimeout),
+	}
 }

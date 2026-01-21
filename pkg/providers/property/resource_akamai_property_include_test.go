@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/hapi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -22,6 +22,7 @@ import (
 )
 
 func TestResourcePropertyInclude(t *testing.T) {
+	t.Parallel()
 	type testData struct {
 		assetID           string
 		groupID           string
@@ -1048,24 +1049,25 @@ func TestResourcePropertyInclude(t *testing.T) {
 
 	for name, testCase := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &papi.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 			if testCase.init != nil {
-				testCase.init(client, &testCase.testData)
+				testCase.init(client.PAPI, &testCase.testData)
 			}
 
-			useClient(client, &hapi.Mock{}, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps:                    testCase.steps,
-				})
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+				IsUnitTest:               true,
+				Steps:                    testCase.steps,
 			})
-			client.AssertExpectations(t)
+
+			client.PAPI.AssertExpectations(t)
 		})
 	}
 }
 
 func TestValidatePropertyIncludeName(t *testing.T) {
+	t.Parallel()
 	invalidNameCharacters := diag.Errorf("a name must only contain letters, numbers, and these characters: . _ -")
 	invalidNameLength := diag.Errorf("a name must be longer than 2 characters and shorter than 86 characters")
 

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudcertificates"
+	"github.com/akamai/terraform-provider-akamai/v9/internal/retry"
 	"github.com/akamai/terraform-provider-akamai/v9/internal/text"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/framework/date"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/framework/modifiers"
@@ -27,41 +28,24 @@ var (
 	_ resource.ResourceWithConfigure   = &uploadSignedCertificateResource{}
 	_ resource.ResourceWithImportState = &uploadSignedCertificateResource{}
 	_ resource.ResourceWithModifyPlan  = &uploadSignedCertificateResource{}
-
-	pollingInterval = 10 * time.Second
-	pollingTimeout  = 1 * time.Minute
 )
 
 type uploadSignedCertificateResource struct {
-	meta meta.Meta
+	meta.Resource
+	pollingInterval time.Duration
+	pollingTimeout  time.Duration
 }
 
 // NewUploadSignedCertificateResource returns a new CloudCertificates Certificate resource.
 func NewUploadSignedCertificateResource() resource.Resource {
-	return &uploadSignedCertificateResource{}
+	return &uploadSignedCertificateResource{
+		pollingInterval: 10 * time.Second,
+		pollingTimeout:  1 * time.Minute,
+	}
 }
 
 func (c *uploadSignedCertificateResource) Metadata(_ context.Context, _ resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = "akamai_cloudcertificates_upload_signed_certificate"
-}
-
-// Configure implements resource.ResourceWithConfigure.
-func (c *uploadSignedCertificateResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	// Prevent panic if the provider has not been configured.
-	if req.ProviderData == nil {
-		return
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"unexpected resource configure type",
-				fmt.Sprintf("expected meta.Meta, got: %T. please report this issue to the provider developers.", req.ProviderData),
-			)
-		}
-	}()
-
-	c.meta = meta.Must(req.ProviderData)
 }
 
 func (c *uploadSignedCertificateResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
@@ -160,8 +144,7 @@ func (c *uploadSignedCertificateResource) Read(ctx context.Context, req resource
 
 	ctx = tflog.SetField(ctx, "certificate_id", state.CertificateID.ValueString())
 
-	client := Client(c.meta)
-	cert, err := client.GetCertificate(ctx, cloudcertificates.GetCertificateRequest{
+	cert, err := c.Client.GetCloudCertificates().GetCertificate(ctx, cloudcertificates.GetCertificateRequest{
 		CertificateID: state.CertificateID.ValueString(),
 	})
 
@@ -234,8 +217,7 @@ func (c *uploadSignedCertificateResource) ImportState(ctx context.Context, req r
 		state.AcknowledgeWarnings = types.BoolValue(false)
 	}
 
-	client := Client(c.meta)
-	cert, err := client.GetCertificate(ctx, cloudcertificates.GetCertificateRequest{
+	cert, err := c.Client.GetCloudCertificates().GetCertificate(ctx, cloudcertificates.GetCertificateRequest{
 		CertificateID: certificateID,
 	})
 	if err != nil {
@@ -286,26 +268,36 @@ func (c *uploadSignedCertificateResource) ModifyPlan(ctx context.Context, req re
 	//   we cannot upload the signed certificate (and optionally the trust chain) again.
 	// Note that during creation, the state will be empty, so we decided to always fetch
 	// the status from the API for simplicity and up-to-date information.
-	client := Client(c.meta)
-	cert, err := client.GetCertificate(ctx, cloudcertificates.GetCertificateRequest{
-		CertificateID: plan.CertificateID.ValueString(),
+	//
+	// We added polling here to handle the case where the certificate resource
+	// has just been created and may not be immediately available via the API.
+	cert, err := retry.Poll(ctx, retry.PollingOpts[cloudcertificates.GetCertificateResponse]{
+		Fn: func(ctx context.Context) (*cloudcertificates.GetCertificateResponse, error) {
+			return c.Client.GetCloudCertificates().GetCertificate(ctx, cloudcertificates.GetCertificateRequest{
+				CertificateID: plan.CertificateID.ValueString(),
+			})
+		},
+		ShouldRetryError: func(err error) bool {
+			tflog.Debug(ctx, "error polling certificate", map[string]any{
+				"error":          err.Error(),
+				"certificate_id": plan.CertificateID.ValueString(),
+			})
+			return errors.Is(err, cloudcertificates.ErrCertificateNotFound) ||
+				errors.Is(err, cloudcertificates.ErrCertificateResourceNotFound)
+		},
+		Interval: c.pollingInterval,
+		Deadline: c.pollingTimeout,
 	})
 	if err != nil {
-		if errors.Is(err, cloudcertificates.ErrCertificateNotFound) || errors.Is(err, cloudcertificates.ErrCertificateResourceNotFound) {
-			tflog.Debug(ctx, fmt.Sprintf("certificate %s not found, polling for 1 minute", plan.CertificateID.ValueString()))
-			// Due to API consistency issues, we need to poll for a short period to see if the
-			// certificate appears in the API. After one minute, we may assume it does not exist.
-			if err = pollForCertificateAvailability(ctx, client, plan.CertificateID.ValueString()); err != nil {
-				resp.Diagnostics.AddError(
-					"Error polling for CCM Certificate object",
-					err.Error())
-				return
-			}
-		} else {
-			resp.Diagnostics.AddError("Unable to get CCM Certificate for signed certificate upload",
-				fmt.Sprintf("Error retrieving certificate '%s': %s",
+		if errors.Is(err, context.DeadlineExceeded) {
+			resp.Diagnostics.AddError("Error polling for CCM Certificate object",
+				fmt.Sprintf("the certificate '%s' was not found on the server. Please verify certificate_id is correct: %s",
 					plan.CertificateID.ValueString(), err.Error()))
+			return
 		}
+		resp.Diagnostics.AddError("Unable to get CCM Certificate for signed certificate upload",
+			fmt.Sprintf("Error retrieving certificate '%s': %s",
+				plan.CertificateID.ValueString(), err.Error()))
 		return
 	}
 
@@ -336,8 +328,7 @@ func (c *uploadSignedCertificateResource) uploadSignedCertificate(ctx context.Co
 		AcknowledgeWarnings:  m.AcknowledgeWarnings.ValueBool(),
 	}
 
-	client := Client(c.meta)
-	patchedCert, err := client.PatchCertificate(ctx, patchReq)
+	patchedCert, err := c.Client.GetCloudCertificates().PatchCertificate(ctx, patchReq)
 	if err != nil {
 		return err
 	}
@@ -346,75 +337,48 @@ func (c *uploadSignedCertificateResource) uploadSignedCertificate(ctx context.Co
 	// If the response does not contain signed certificate details, we need to poll
 	// until they are available.
 	if !hasSignedCertDetails(cert) {
-		tflog.Debug(ctx, "signed certificate details not present, entering polling")
-		cert, err = waitForSignedCertAfterUpload(ctx, client, m.CertificateID.ValueString())
+		tflog.Debug(ctx, "signed certificate details not present, entering polling", map[string]any{
+			"certificate_id": m.CertificateID.ValueString(),
+		})
+		getCertResp, err := retry.Poll(ctx, retry.PollingOpts[cloudcertificates.GetCertificateResponse]{
+			Fn: func(ctx context.Context) (*cloudcertificates.GetCertificateResponse, error) {
+				return c.Client.GetCloudCertificates().GetCertificate(ctx, cloudcertificates.GetCertificateRequest{
+					CertificateID: m.CertificateID.ValueString(),
+				})
+			},
+			ShouldRetryData: func(resp cloudcertificates.GetCertificateResponse) bool {
+				if hasSignedCertDetails(resp.Certificate) {
+					tflog.Debug(ctx, "signed certificate details are now available, exiting polling", map[string]any{
+						"certificate_id": m.CertificateID.ValueString(),
+					})
+					return false
+				}
+				tflog.Debug(ctx, "signed certificate details are not yet available, continuing polling", map[string]any{
+					"certificate_id": m.CertificateID.ValueString(),
+				})
+				return true
+			},
+			Interval: c.pollingInterval,
+			Deadline: c.pollingTimeout,
+		})
 		if err != nil {
+			if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
+				return fmt.Errorf("context terminated while waiting for signed certificate details to be available for certificateID %s: %w",
+					m.CertificateID.ValueString(), ctx.Err())
+			}
 			return err
 		}
+		cert = getCertResp.Certificate
 	}
 	m.populateCertFields(cert)
 
 	return nil
 }
 
-func waitForSignedCertAfterUpload(ctx context.Context, client cloudcertificates.CloudCertificates, certificateID string) (cloudcertificates.Certificate, error) {
-	ctx, cancel := context.WithTimeout(ctx, pollingTimeout)
-	defer cancel()
-
-	ticker := time.NewTicker(pollingInterval)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ctx.Done():
-			return cloudcertificates.Certificate{}, fmt.Errorf("context terminated while waiting for signed certificate details to be available for certificateID %s: %w", certificateID, ctx.Err())
-		case <-ticker.C:
-			cert, err := client.GetCertificate(ctx, cloudcertificates.GetCertificateRequest{
-				CertificateID: certificateID,
-			})
-			if err != nil {
-				return cloudcertificates.Certificate{}, err
-			}
-			tflog.Debug(ctx, fmt.Sprintf("received certificate from polling loop %+v", cert))
-			if hasSignedCertDetails(cert.Certificate) {
-				tflog.Debug(ctx, "signed certificate details are now available, exiting polling")
-				return cert.Certificate, nil
-			}
-		}
-	}
-}
-
 func hasSignedCertDetails(cert cloudcertificates.Certificate) bool {
 	return cert.SignedCertificatePEM != nil &&
 		cert.SignedCertificateSerialNumber != nil &&
 		cert.SignedCertificateSHA256Fingerprint != nil
-}
-
-func pollForCertificateAvailability(ctx context.Context, client cloudcertificates.CloudCertificates, certificateID string) error {
-	ctx, cancel := context.WithTimeout(ctx, pollingTimeout)
-	defer cancel()
-
-	ticker := time.NewTicker(pollingInterval)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ctx.Done():
-			return fmt.Errorf("the certificate '%s' was not found on the server. Please verify certificate_id is correct: %w", certificateID, ctx.Err())
-		case <-ticker.C:
-			cert, err := client.GetCertificate(ctx, cloudcertificates.GetCertificateRequest{
-				CertificateID: certificateID,
-			})
-			if err == nil {
-				tflog.Debug(ctx, fmt.Sprintf("certificate %s found", certificateID))
-				tflog.Debug(ctx, fmt.Sprintf("certificate response: %+v", cert))
-				return nil
-			}
-			if !errors.Is(err, cloudcertificates.ErrCertificateNotFound) && !errors.Is(err, cloudcertificates.ErrCertificateResourceNotFound) {
-				return fmt.Errorf("Error retrieving certificate '%s' in upload resource plan time check: %w", certificateID, err)
-			}
-		}
-	}
 }
 
 type uploadSignedCertificateResourceModel struct {

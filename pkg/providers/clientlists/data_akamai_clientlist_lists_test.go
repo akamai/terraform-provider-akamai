@@ -37,8 +37,8 @@ func TestDataClientLists(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "testData/TestDSClientList/match_all.tf"),
 					Check: baseChecker.
-						CheckEqual("list_ids.#", "10").
-						CheckEqual("lists.#", "10").
+						CheckEqual("list_ids.#", "11").
+						CheckEqual("lists.#", "11").
 						CheckEqual("lists.0.list_id", "91596_AUDITLOGSTESTLIST").
 						CheckEqual("lists.0.name", "AUDIT LOGS - TEST LIST").
 						CheckEqual("lists.0.type", "IP").
@@ -61,8 +61,8 @@ func TestDataClientLists(t *testing.T) {
 						CheckEqual("type.#", "2").
 						CheckEqual("type.0", "GEO").
 						CheckEqual("type.1", "IP").
-						CheckEqual("list_ids.#", "10").
-						CheckEqual("lists.#", "10").
+						CheckEqual("list_ids.#", "11").
+						CheckEqual("lists.#", "11").
 						Build(),
 				},
 			},
@@ -81,8 +81,28 @@ func TestDataClientLists(t *testing.T) {
 						CheckEqual("name", "test").
 						CheckEqual("type.#", "1").
 						CheckEqual("type.0", string(clientlists.USER)).
-						CheckEqual("list_ids.#", "10").
-						CheckEqual("lists.#", "10").
+						CheckEqual("list_ids.#", "11").
+						CheckEqual("lists.#", "11").
+						Build(),
+				},
+			},
+		},
+		"happy path - domain type lists": {
+			init: func(m *clientlists.Mock) {
+				mockGetClientLists(m, allListsResponse, clientlists.GetClientListsRequest{
+					Name: "test",
+					Type: []clientlists.ClientListType{clientlists.DOMAIN},
+				}, 3)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testData/TestDSClientList/domain_type.tf"),
+					Check: baseChecker.
+						CheckEqual("name", "test").
+						CheckEqual("type.#", "1").
+						CheckEqual("type.0", string(clientlists.DOMAIN)).
+						CheckEqual("list_ids.#", "11").
+						CheckEqual("lists.#", "11").
 						Build(),
 				},
 			},

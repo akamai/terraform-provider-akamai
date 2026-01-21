@@ -234,7 +234,7 @@ func (m *resourceDataSourceModel) setResourceInstances(resourceInstances []gtm.R
 			DataCenterID:         types.Int64Value(int64(res.DatacenterID)),
 			UseDefaultLoadObject: types.BoolValue(res.UseDefaultLoadObject),
 			LoadObject:           types.StringValue(res.LoadObject.LoadObject),
-			LoadObjectPort:       types.Int64Value(int64(res.LoadObject.LoadObjectPort)),
+			LoadObjectPort:       types.Int64Value(int64(res.LoadObjectPort)),
 		}
 
 		for _, server := range res.LoadServers {

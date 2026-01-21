@@ -9,6 +9,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/mtlskeystore"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/ptr"
+	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
 	tst "github.com/akamai/terraform-provider-akamai/v9/internal/test"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
@@ -1883,17 +1884,16 @@ func TestClientCertificateThirdPartyResource(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			client := &mtlskeystore.Mock{}
+			client := edgegrid.NewTestClient()
 			if tc.init != nil {
-				tc.init(client, tc.mockCreateData, tc.mockUpdateData)
+				tc.init(client.MTLSKeystore, tc.mockCreateData, tc.mockUpdateData)
 			}
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps:                    tc.steps,
-				})
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				Steps:                    tc.steps,
 			})
-			client.AssertExpectations(t)
+
+			client.MTLSKeystore.AssertExpectations(t)
 		})
 	}
 }
@@ -2192,17 +2192,16 @@ func TestClientCertificateThirdPartyResource_Import(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			client := &mtlskeystore.Mock{}
+			client := edgegrid.NewTestClient()
 			if tc.init != nil {
-				tc.init(client, tc.importData)
+				tc.init(client.MTLSKeystore, tc.importData)
 			}
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps:                    tc.steps,
-				})
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				Steps:                    tc.steps,
 			})
-			client.AssertExpectations(t)
+
+			client.MTLSKeystore.AssertExpectations(t)
 		})
 	}
 }
@@ -2317,15 +2316,14 @@ func TestClientCertificateThirdPartyResource_ValidationErrors(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			client := &mtlskeystore.Mock{}
+			client := edgegrid.NewTestClient()
 
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps:                    tc.steps,
-				})
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				Steps:                    tc.steps,
 			})
-			client.AssertExpectations(t)
+
+			client.MTLSKeystore.AssertExpectations(t)
 		})
 	}
 }

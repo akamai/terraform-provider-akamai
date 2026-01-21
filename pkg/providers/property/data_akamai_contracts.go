@@ -68,7 +68,7 @@ func dataContractsRead(ctx context.Context, d *schema.ResourceData, m interface{
 
 // Reusable function to fetch all the contracts accessible through a API token
 func getContracts(ctx context.Context, meta akameta.Meta) (*papi.GetContractsResponse, error) {
-	contracts, err := Client(meta).GetContracts(ctx)
+	contracts, err := meta.Client().GetPAPI().GetContracts(ctx)
 	if err != nil {
 		return nil, err
 	}

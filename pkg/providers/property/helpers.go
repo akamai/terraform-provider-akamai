@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/str"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 var certStatus = &schema.Resource{
@@ -170,6 +172,56 @@ var ccmCertificateStatusSchema = &schema.Resource{
 	},
 }
 
+var mtlsSchema = &schema.Resource{
+	Schema: map[string]*schema.Schema{
+		"ca_set_id": {
+			Type:        schema.TypeString,
+			Required:    true,
+			Description: "The ID of the Certificate Authority (CA) set to use for mTLS.",
+			ValidateDiagFunc: validation.ToDiagFunc(validation.StringMatch(regexp.MustCompile(`^\d+$`),
+				"must be a string representing an integer value")),
+		},
+		"check_client_ocsp": {
+			Type:        schema.TypeBool,
+			Optional:    true,
+			Description: "Indicates whether to check the client OCSP.",
+		},
+		"send_ca_set_client": {
+			Type:        schema.TypeBool,
+			Optional:    true,
+			Description: "Indicates whether to send the CA set to the client.",
+		},
+	},
+}
+
+var tlsConfigurationSchema = &schema.Resource{
+	Schema: map[string]*schema.Schema{
+		"cipher_profile": {
+			Type:        schema.TypeString,
+			Required:    true,
+			Description: "The cipher profile to use for TLS connections.",
+		},
+		"disallowed_tls_versions": {
+			Type:        schema.TypeList,
+			Optional:    true,
+			Description: "A list of TLS versions that are disallowed.",
+			Elem: &schema.Schema{
+				Type: schema.TypeString,
+			},
+		},
+		"staple_server_ocsp_response": {
+			Type:        schema.TypeBool,
+			Optional:    true,
+			Description: "Indicates whether to staple the server OCSP response.",
+		},
+		"fips_mode": {
+			Type:        schema.TypeBool,
+			Optional:    true,
+			Description: "Indicates whether FIPS mode is enabled.",
+		},
+	},
+}
+
 // Convert given hostnames to the map form that can be stored in a schema.ResourceData
 // Setting only statuses for default certs if they exist
 func flattenHostnames(Hostnames []papi.Hostname) []map[string]interface{} {
@@ -182,14 +234,21 @@ func flattenHostnames(Hostnames []papi.Hostname) []map[string]interface{} {
 		m["edge_hostname_id"] = hn.EdgeHostnameID
 		m["cname_type"] = hn.CnameType
 		m["cert_status"] = []map[string]any{flattenCertType(&hn.CertStatus)}
+		m["ccm_certificates"] = flattenCCMCertificates(hn.CCMCertificates)
+		m["ccm_cert_status"] = flattenCCMCertificateStatus(hn.CCMCertStatus)
+		m["mtls"] = flattenMTLS(hn.MTLS)
+		m["tls_configuration"] = flattenTLSConfiguration(hn.TLSConfiguration)
+		if hn.DomainOwnershipVerification != nil {
+			m["domain_ownership_verification"] = []map[string]any{flattenDomainOwnershipVerification(hn.DomainOwnershipVerification)}
+		} else {
+			m["domain_ownership_verification"] = nil
+		}
 		res = append(res, m)
 	}
 	return res
 }
 
-// TODO: remove this when updating akamai_property_hostnames datasource
-// and use flattenHostnames instead
-func flattenHostnamesCCM(Hostnames []papi.Hostname) []map[string]interface{} {
+func flattenHostnamesWithoutDOM(Hostnames []papi.Hostname) []map[string]interface{} {
 	var res []map[string]interface{}
 	for _, hn := range Hostnames {
 		m := map[string]interface{}{}
@@ -201,9 +260,62 @@ func flattenHostnamesCCM(Hostnames []papi.Hostname) []map[string]interface{} {
 		m["cert_status"] = []map[string]any{flattenCertType(&hn.CertStatus)}
 		m["ccm_certificates"] = flattenCCMCertificates(hn.CCMCertificates)
 		m["ccm_cert_status"] = flattenCCMCertificateStatus(hn.CCMCertStatus)
+		m["mtls"] = flattenMTLS(hn.MTLS)
+		m["tls_configuration"] = flattenTLSConfiguration(hn.TLSConfiguration)
 		res = append(res, m)
 	}
 	return res
+}
+
+func flattenDomainOwnershipVerification(dov *papi.DomainOwnershipVerification) map[string]any {
+	if dov == nil {
+		return nil
+	}
+
+	attrs := map[string]any{
+		"status": dov.Status,
+	}
+
+	if dov.ChallengeTokenExpiryDate != nil {
+		attrs["challenge_token_expiry_date"] = dov.ChallengeTokenExpiryDate.Format(time.RFC3339Nano)
+	}
+
+	if dov.ValidationCname != nil {
+		attrs["validation_cname"] = []map[string]any{
+			{
+				"hostname": dov.ValidationCname.Hostname,
+				"target":   dov.ValidationCname.Target,
+			},
+		}
+	}
+	if dov.ValidationHTTP != nil {
+		attrs["validation_http"] = []map[string]any{
+			{
+				"redirect_method": []map[string]any{
+					{
+						"http_redirect_from": dov.ValidationHTTP.RedirectMethod.HTTPRedirectFrom,
+						"http_redirect_to":   dov.ValidationHTTP.RedirectMethod.HTTPRedirectTo,
+					},
+				},
+				"file_content_method": []map[string]any{
+					{
+						"url":  dov.ValidationHTTP.FileContentMethod.URL,
+						"body": dov.ValidationHTTP.FileContentMethod.Body,
+					},
+				},
+			},
+		}
+	}
+	if dov.ValidationTXT != nil {
+		attrs["validation_txt"] = []map[string]any{
+			{
+				"hostname":        dov.ValidationTXT.Hostname,
+				"challenge_token": dov.ValidationTXT.ChallengeToken,
+			},
+		}
+	}
+
+	return attrs
 }
 
 func flattenCCMCertificateStatus(status *papi.CCMCertStatus) []map[string]string {
@@ -227,6 +339,34 @@ func flattenCCMCertificates(certificates *papi.CCMCertificates) []map[string]str
 	m["rsa_cert_id"] = certificates.RSACertID
 	m["ecdsa_cert_id"] = certificates.ECDSACertID
 	return []map[string]string{m}
+}
+
+func flattenMTLS(mtls *papi.MTLS) []map[string]any {
+	if mtls == nil {
+		return nil
+	}
+	return []map[string]any{
+		{
+			"ca_set_id":          mtls.CASetID,
+			"check_client_ocsp":  mtls.CheckClientOCSP,
+			"send_ca_set_client": mtls.SendCASetClient,
+		},
+	}
+}
+
+func flattenTLSConfiguration(tlsConfig *papi.TLSConfiguration) []map[string]any {
+	if tlsConfig == nil {
+		return nil
+	}
+
+	return []map[string]any{
+		{
+			"cipher_profile":              tlsConfig.CipherProfile,
+			"disallowed_tls_versions":     tlsConfig.DisallowedTLSVersions,
+			"staple_server_ocsp_response": tlsConfig.StapleServerOcspResponse,
+			"fips_mode":                   tlsConfig.FIPSMode,
+		},
+	}
 }
 
 func flattenBucketHostnames(hostnames []papi.HostnameItem) []map[string]any {

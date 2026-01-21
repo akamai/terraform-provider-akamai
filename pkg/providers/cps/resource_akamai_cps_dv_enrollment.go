@@ -20,21 +20,24 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-var (
-	// PollForChangeStatusInterval defines retry interval for getting status of a pending change.
-	PollForChangeStatusInterval = 10 * time.Second
-	// PollForGetEnrollmentInterval defines retry interval for getting enrollment.
-	PollForGetEnrollmentInterval = 30 * time.Second
-)
+// dvEnrollmentResource represents the akamai_cps_dv_enrollment resource with configurable polling intervals.
+type dvEnrollmentResource struct {
+	pollChangeStatusInterval  time.Duration
+	pollGetEnrollmentInterval time.Duration
+}
 
-func resourceCPSDVEnrollment() *schema.Resource {
+func resourceCPSDVEnrollment(pollChangeStatusInterval, pollGetEnrollmentInterval time.Duration) *schema.Resource {
+	res := &dvEnrollmentResource{
+		pollChangeStatusInterval:  pollChangeStatusInterval,
+		pollGetEnrollmentInterval: pollGetEnrollmentInterval,
+	}
 	return &schema.Resource{
-		CreateContext: resourceCPSDVEnrollmentCreate,
-		ReadContext:   resourceCPSDVEnrollmentRead,
-		UpdateContext: resourceCPSDVEnrollmentUpdate,
-		DeleteContext: resourceCPSDVEnrollmentDelete,
+		CreateContext: res.create,
+		ReadContext:   res.read,
+		UpdateContext: res.update,
+		DeleteContext: res.delete,
 		Importer: &schema.ResourceImporter{
-			StateContext: resourceCPSDVEnrollmentImport,
+			StateContext: res.importState,
 		},
 		Schema: map[string]*schema.Schema{
 			"common_name": {
@@ -240,7 +243,7 @@ func resourceCPSDVEnrollment() *schema.Resource {
 	}
 }
 
-func resourceCPSDVEnrollmentCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (r *dvEnrollmentResource) create(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("CPS", "resourceCPSDVEnrollmentCreate")
 	// create a context with logging for api calls
@@ -248,7 +251,7 @@ func resourceCPSDVEnrollmentCreate(ctx context.Context, d *schema.ResourceData, 
 		ctx,
 		session.WithContextLog(logger),
 	)
-	client := inst.Client(meta)
+	client := meta.Client().GetCPS()
 	logger.Debug("Creating enrollment")
 
 	enrollmentReqBody := cps.EnrollmentRequestBody{
@@ -360,13 +363,13 @@ func resourceCPSDVEnrollmentCreate(ctx context.Context, d *schema.ResourceData, 
 			return diag.FromErr(err)
 		}
 	}
-	if err = waitForVerification(ctx, logger, client, res.ID, acknowledgeWarnings, nil); err != nil {
+	if err = waitForVerification(ctx, logger, client, res.ID, acknowledgeWarnings, nil, r.pollChangeStatusInterval); err != nil {
 		return diag.FromErr(err)
 	}
-	return resourceCPSDVEnrollmentRead(ctx, d, m)
+	return r.read(ctx, d, m)
 }
 
-func resourceCPSDVEnrollmentRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (r *dvEnrollmentResource) read(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("CPS", "resourceCPSDVEnrollmentRead")
 	// create a context with logging for api calls
@@ -374,7 +377,7 @@ func resourceCPSDVEnrollmentRead(ctx context.Context, d *schema.ResourceData, m 
 		ctx,
 		session.WithContextLog(logger),
 	)
-	client := inst.Client(meta)
+	client := meta.Client().GetCPS()
 	logger.Debug("Reading enrollment")
 	enrollmentID, err := strconv.Atoi(d.Id())
 	if err != nil {
@@ -471,14 +474,14 @@ func resourceCPSDVEnrollmentRead(ctx context.Context, d *schema.ResourceData, m 
 	return nil
 }
 
-func resourceCPSDVEnrollmentUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (r *dvEnrollmentResource) update(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("CPS", "resourceCPSDVEnrollmentUpdate")
 	ctx = session.ContextWithOptions(
 		ctx,
 		session.WithContextLog(logger),
 	)
-	client := inst.Client(meta)
+	client := meta.Client().GetCPS()
 	logger.Debug("Updating enrollment")
 
 	if !d.HasChangeExcept("timeouts") {
@@ -505,10 +508,10 @@ func resourceCPSDVEnrollmentUpdate(ctx context.Context, d *schema.ResourceData, 
 		"organization",
 	) {
 		logger.Debug("Enrollment does not have to be updated. Verifying status.")
-		if err = waitForVerification(ctx, logger, client, enrollmentID, acknowledgeWarnings, nil); err != nil {
+		if err = waitForVerification(ctx, logger, client, enrollmentID, acknowledgeWarnings, nil, r.pollChangeStatusInterval); err != nil {
 			return diag.FromErr(err)
 		}
-		return resourceCPSDVEnrollmentRead(ctx, d, m)
+		return r.read(ctx, d, m)
 	}
 	enrollmentReqBody := cps.EnrollmentRequestBody{
 		CertificateType: "san",
@@ -588,17 +591,17 @@ func resourceCPSDVEnrollmentUpdate(ctx context.Context, d *schema.ResourceData, 
 	}
 	d.SetId(strconv.Itoa(enrollmentID))
 
-	if err = waitForVerification(ctx, logger, client, enrollmentID, acknowledgeWarnings, nil); err != nil {
+	if err = waitForVerification(ctx, logger, client, enrollmentID, acknowledgeWarnings, nil, r.pollChangeStatusInterval); err != nil {
 		return diag.FromErr(err)
 	}
-	return resourceCPSDVEnrollmentRead(ctx, d, m)
+	return r.read(ctx, d, m)
 }
 
-func resourceCPSDVEnrollmentDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	return enrollmentDelete(ctx, d, m, "resourceCPSDVEnrollmentDelete")
+func (r *dvEnrollmentResource) delete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	return enrollmentDelete(ctx, d, m, "resourceCPSDVEnrollmentDelete", r.pollGetEnrollmentInterval)
 }
 
-func resourceCPSDVEnrollmentImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+func (r *dvEnrollmentResource) importState(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	meta := meta.Must(m)
 	logger := meta.Log("CPS", "resourceCPSDVEnrollmentImport")
 	// create a context with logging for api calls
@@ -621,7 +624,7 @@ func resourceCPSDVEnrollmentImport(ctx context.Context, d *schema.ResourceData, 
 		return nil, fmt.Errorf("enrollment ID must be a number: %s", err)
 	}
 
-	client := inst.Client(meta)
+	client := meta.Client().GetCPS()
 	req := cps.GetEnrollmentRequest{EnrollmentID: eid}
 	enrollment, err := client.GetEnrollment(ctx, req)
 	if err != nil {

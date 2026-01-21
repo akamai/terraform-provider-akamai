@@ -1048,3 +1048,129 @@ func TestCreateActivation(t *testing.T) {
 		assert.Equal(t, "atv_123", actID)
 	})
 }
+
+func Test_isCCMDeployedOrDeploying(t *testing.T) {
+	tests := map[string]struct {
+		hostname papi.Hostname
+		want     bool
+	}{
+		"nil CCMCertStatus returns false": {
+			hostname: papi.Hostname{
+				CCMCertStatus: nil,
+			},
+			want: false,
+		},
+		"ECDSA staging DEPLOYED returns true": {
+			hostname: papi.Hostname{
+				CCMCertStatus: &papi.CCMCertStatus{
+					ECDSAStagingStatus: "DEPLOYED",
+				},
+			},
+			want: true,
+		},
+		"ECDSA staging DEPLOYING returns true": {
+			hostname: papi.Hostname{
+				CCMCertStatus: &papi.CCMCertStatus{
+					ECDSAStagingStatus: "DEPLOYING",
+				},
+			},
+			want: true,
+		},
+		"RSA staging DEPLOYED returns true": {
+			hostname: papi.Hostname{
+				CCMCertStatus: &papi.CCMCertStatus{
+					RSAStagingStatus: "DEPLOYED",
+				},
+			},
+			want: true,
+		},
+		"RSA staging DEPLOYING returns true": {
+			hostname: papi.Hostname{
+				CCMCertStatus: &papi.CCMCertStatus{
+					RSAStagingStatus: "DEPLOYING",
+				},
+			},
+			want: true,
+		},
+		"ECDSA production DEPLOYED returns true": {
+			hostname: papi.Hostname{
+				CCMCertStatus: &papi.CCMCertStatus{
+					ECDSAProductionStatus: "DEPLOYED",
+				},
+			},
+			want: true,
+		},
+		"ECDSA production DEPLOYING returns true": {
+			hostname: papi.Hostname{
+				CCMCertStatus: &papi.CCMCertStatus{
+					ECDSAProductionStatus: "DEPLOYING",
+				},
+			},
+			want: true,
+		},
+		"RSA production DEPLOYED returns true": {
+			hostname: papi.Hostname{
+				CCMCertStatus: &papi.CCMCertStatus{
+					RSAProductionStatus: "DEPLOYED",
+				},
+			},
+			want: true,
+		},
+		"RSA production DEPLOYING returns true": {
+			hostname: papi.Hostname{
+				CCMCertStatus: &papi.CCMCertStatus{
+					RSAProductionStatus: "DEPLOYING",
+				},
+			},
+			want: true,
+		},
+		"other statuses returns false": {
+			hostname: papi.Hostname{
+				CCMCertStatus: &papi.CCMCertStatus{
+					ECDSAStagingStatus:    "PENDING",
+					RSAStagingStatus:      "FAILED",
+					ECDSAProductionStatus: "CANCELLED",
+					RSAProductionStatus:   "UNKNOWN",
+				},
+			},
+			want: false,
+		},
+		"multiple statuses with at least one DEPLOYED returns true": {
+			hostname: papi.Hostname{
+				CCMCertStatus: &papi.CCMCertStatus{
+					ECDSAStagingStatus:    "PENDING",
+					RSAStagingStatus:      "DEPLOYED",
+					ECDSAProductionStatus: "FAILED",
+					RSAProductionStatus:   "UNKNOWN",
+				},
+			},
+			want: true,
+		},
+		"multiple statuses with at least one DEPLOYING returns true": {
+			hostname: papi.Hostname{
+				CCMCertStatus: &papi.CCMCertStatus{
+					ECDSAStagingStatus:    "DEPLOYING",
+					RSAStagingStatus:      "PENDING",
+					ECDSAProductionStatus: "FAILED",
+					RSAProductionStatus:   "UNKNOWN",
+				},
+			},
+			want: true,
+		},
+		"empty CCMCertStatus returns false": {
+			hostname: papi.Hostname{
+				CCMCertStatus: &papi.CCMCertStatus{},
+			},
+			want: false,
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			got := isCCMDeployedOrDeploying(tt.hostname)
+			if got != tt.want {
+				t.Errorf("isCCMDeployedOrDeploying() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

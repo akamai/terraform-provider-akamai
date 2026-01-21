@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -575,25 +576,23 @@ func TestHostnameBucketResource_Create(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			papiMock := &papi.Mock{}
+			client := edgegrid.NewTestClient()
 			mp := mockProperty{
-				papiMock: papiMock,
+				papiMock: client.PAPI,
 			}
 			tc.init(&mp)
 
-			useClient(papiMock, nil, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							Config:      testutils.LoadFixtureStringf(t, "testdata/TestResPropertyHostnameBucket/create/%s", tc.configFile),
-							Check:       tc.checksForCreate,
-							ExpectError: tc.expectError,
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureStringf(t, "testdata/TestResPropertyHostnameBucket/create/%s", tc.configFile),
+						Check:       tc.checksForCreate,
+						ExpectError: tc.expectError,
 					},
-				})
+				},
 			})
-			papiMock.AssertExpectations(t)
+			client.PAPI.AssertExpectations(t)
 		})
 	}
 }
@@ -1065,35 +1064,52 @@ func TestHostnameBucketResource_Update(t *testing.T) {
 			createConfig: "5000.tf",
 			updateConfig: "update_1000_remove_4000.tf",
 		},
+		"create 1, update by removing ehn_ prefix from edge_hostname_id": {
+			init: func(p *mockProperty) {
+				// Set up initial data for the property and hostname bucket
+				setUpInitialData(p, true)
+				// Create
+				mockResourceHostnameBucketUpsert(p)
+				// Read x2
+				mockResourceHostnameBucketRead(p, 2)
+				// Update step - no upsert because prefix removal should not trigger changes
+				// Read - verifies that state remains unchanged
+				mockResourceHostnameBucketRead(p)
+				// Delete
+				mockResourceHostnameBucketDelete(p)
+			},
+			checksForCreate: basicChecker.Build(),
+			checksForUpdate: basicChecker.Build(),
+			createConfig:    "1.tf",
+			updateConfig:    "no_ehn_prefix_in_edge_hostname_id.tf",
+		},
 	}
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			papiMock := &papi.Mock{}
+			client := edgegrid.NewTestClient()
 			mp := mockProperty{
-				papiMock: papiMock,
+				papiMock: client.PAPI,
 			}
 			tc.init(&mp)
 
-			useClient(papiMock, nil, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							Config:      testutils.LoadFixtureStringf(t, "testdata/TestResPropertyHostnameBucket/create/%s", tc.createConfig),
-							Check:       tc.checksForCreate,
-							ExpectError: tc.createError,
-						},
-						{
-							Config:      testutils.LoadFixtureStringf(t, "testdata/TestResPropertyHostnameBucket/update/%s", tc.updateConfig),
-							Check:       tc.checksForUpdate,
-							ExpectError: tc.updateError,
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureStringf(t, "testdata/TestResPropertyHostnameBucket/create/%s", tc.createConfig),
+						Check:       tc.checksForCreate,
+						ExpectError: tc.createError,
 					},
-				})
+					{
+						Config:      testutils.LoadFixtureStringf(t, "testdata/TestResPropertyHostnameBucket/update/%s", tc.updateConfig),
+						Check:       tc.checksForUpdate,
+						ExpectError: tc.updateError,
+					},
+				},
 			})
-			papiMock.AssertExpectations(t)
+			client.PAPI.AssertExpectations(t)
 		})
 	}
 }
@@ -1369,28 +1385,26 @@ func TestHostnameBucketResource_Import(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			papiMock := &papi.Mock{}
+			client := edgegrid.NewTestClient()
 			mp := mockProperty{
-				papiMock: papiMock,
+				papiMock: client.PAPI,
 			}
 			tc.init(&mp)
 
-			useClient(papiMock, nil, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							ImportStateCheck: tc.stateCheck,
-							ImportStateId:    tc.importID,
-							ImportState:      true,
-							ResourceName:     "akamai_property_hostname_bucket.test",
-							Config:           testutils.LoadFixtureString(t, "testdata/TestResPropertyHostnameBucket/import/default.tf"),
-							ExpectError:      tc.expectError,
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						ImportStateCheck: tc.stateCheck,
+						ImportStateId:    tc.importID,
+						ImportState:      true,
+						ResourceName:     "akamai_property_hostname_bucket.test",
+						Config:           testutils.LoadFixtureString(t, "testdata/TestResPropertyHostnameBucket/import/default.tf"),
+						ExpectError:      tc.expectError,
 					},
-				})
+				},
 			})
-			papiMock.AssertExpectations(t)
+			client.PAPI.AssertExpectations(t)
 		})
 	}
 }
@@ -1603,24 +1617,40 @@ func TestHostnameBucketResource_ValidationErrors(t *testing.T) {
 				},
 			},
 		},
+		"validation error - invalid edge_hostname_id": {
+			init: func(_ *mockProperty) {},
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureStringf(t, "testdata/TestResPropertyHostnameBucket/validation/invalid_edge_hostname_id.tf"),
+					ExpectError: regexp.MustCompile(`(?s)must start with 'ehn_' prefix followed by digits, or be digits only, got:.+` + `invalid_id`),
+				},
+			},
+		},
+		"validation error - invalid property_id": {
+			init: func(_ *mockProperty) {},
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureStringf(t, "testdata/TestResPropertyHostnameBucket/validation/invalid_property_id.tf"),
+					ExpectError: regexp.MustCompile(`(?s)must start with 'prp_' prefix followed by digits, or be.+` + `digits only, got: invalid_id`),
+				},
+			},
+		},
 	}
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			papiMock := &papi.Mock{}
+			client := edgegrid.NewTestClient()
 			mp := mockProperty{
-				papiMock: papiMock,
+				papiMock: client.PAPI,
 			}
 			tc.init(&mp)
 
-			useClient(papiMock, nil, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps:                    tc.steps,
-				})
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				Steps:                    tc.steps,
 			})
-			papiMock.AssertExpectations(t)
+			client.PAPI.AssertExpectations(t)
 		})
 	}
 }
@@ -1867,19 +1897,17 @@ func TestHostnameBucketResource_Diff(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			papiMock := &papi.Mock{}
+			client := edgegrid.NewTestClient()
 			mp := mockProperty{
-				papiMock: papiMock,
+				papiMock: client.PAPI,
 			}
 			tc.init(&mp)
 
-			useClient(papiMock, nil, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps:                    tc.steps,
-				})
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				Steps:                    tc.steps,
 			})
-			papiMock.AssertExpectations(t)
+			client.PAPI.AssertExpectations(t)
 		})
 	}
 }

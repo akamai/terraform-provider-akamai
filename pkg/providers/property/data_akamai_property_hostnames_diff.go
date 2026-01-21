@@ -2,7 +2,6 @@ package property
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
@@ -22,7 +21,7 @@ func NewHostnamesDiffDataSource() datasource.DataSource {
 
 // hostnamesDiffDataSource defines the data source implementation for fetching property hostnames diff information.
 type hostnamesDiffDataSource struct {
-	meta meta.Meta
+	meta.DataSource
 }
 
 // hostnamesDiffDataSourceModel describes the data source data model for PropertyHostnamesDiffDataSource.
@@ -100,11 +99,11 @@ func (d *hostnamesDiffDataSource) Schema(_ context.Context, _ datasource.SchemaR
 						},
 						"staging_cert_provisioning_type": schema.StringAttribute{
 							Computed:    true,
-							Description: "Indicates the certificate's provisioning type. Either `CPS_MANAGED` for the certificates you create with the Certificate Provisioning System (CPS) API, or `DEFAULT` for the Domain Validation (DV) certificates created automatically. Note that you can't specify the `DEFAULT` value if your property hostname uses the `akamaized.net` domain suffix.",
+							Description: "Indicates the certificate's provisioning type. Either `CPS_MANAGED` for the certificates created with the Certificate Provisioning System (CPS) API, `CCM` for the certificates created with the Cloud Certificate Manager (CCM) API, or `DEFAULT` for the Domain Validation (DV) certificates created automatically. Note that you can't specify the `DEFAULT` value if your property hostname uses the `akamaized.net` domain suffix.",
 						},
 						"production_cert_provisioning_type": schema.StringAttribute{
 							Computed:    true,
-							Description: "Indicates the certificate's provisioning type. Either `CPS_MANAGED` for the certificates you create with the Certificate Provisioning System (CPS) API, or `DEFAULT` for the Domain Validation (DV) certificates created automatically. Note that you can't specify the `DEFAULT` value if your property hostname uses the `akamaized.net` domain suffix.",
+							Description: "Indicates the certificate's provisioning type. Either `CPS_MANAGED` for the certificates created with the Certificate Provisioning System (CPS) API, `CCM` for the certificates created with the Cloud Certificate Manager (CCM) API, or `DEFAULT` for the Domain Validation (DV) certificates created automatically. Note that you can't specify the `DEFAULT` value if your property hostname uses the `akamaized.net` domain suffix.",
 						},
 						"staging_cname_to": schema.StringAttribute{
 							Computed:    true,
@@ -119,25 +118,6 @@ func (d *hostnamesDiffDataSource) Schema(_ context.Context, _ datasource.SchemaR
 			},
 		},
 	}
-}
-
-// Configure  configures data source at the beginning of the lifecycle.
-func (d *hostnamesDiffDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		// ProviderData is nil when Configure is run first time as part of ValidateDataSourceConfig in framework provider
-		return
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Data Source Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-			)
-		}
-	}()
-
-	d.meta = meta.Must(req.ProviderData)
 }
 
 func getHostnamesDiff(ctx context.Context, client papi.PAPI, contractID, groupID, propertyID string) (*papi.GetActivePropertyHostnamesDiffResponse, error) {
@@ -181,8 +161,7 @@ func (d *hostnamesDiffDataSource) Read(ctx context.Context, req datasource.ReadR
 		return
 	}
 
-	client := Client(d.meta)
-	activations, err := getHostnamesDiff(ctx, client, data.ContractID.ValueString(), data.GroupID.ValueString(), data.PropertyID.ValueString())
+	activations, err := getHostnamesDiff(ctx, d.Client.GetPAPI(), data.ContractID.ValueString(), data.GroupID.ValueString(), data.PropertyID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("fetching property hostnames diff failed", err.Error())
 		return

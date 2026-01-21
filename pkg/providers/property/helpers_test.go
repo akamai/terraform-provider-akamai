@@ -15,6 +15,7 @@ import (
 )
 
 func TestNetworkAlias(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		hasNetwork  bool
 		addNetwork  papi.ActivationNetwork
@@ -73,6 +74,7 @@ func TestNetworkAlias(t *testing.T) {
 }
 
 func TestIsPropertyInGroup(t *testing.T) {
+	t.Parallel()
 	key := papiKey{
 		propertyID: "prp_1",
 		groupID:    "grp_2",
@@ -142,6 +144,7 @@ func TestIsPropertyInGroup(t *testing.T) {
 }
 
 func TestValidatePropertyMove(t *testing.T) {
+	t.Parallel()
 	key := papiKey{
 		propertyID: "prp_1",
 		groupID:    "grp_2",
@@ -202,6 +205,7 @@ func TestValidatePropertyMove(t *testing.T) {
 }
 
 func TestWaitForPropertyGroupIDChange(t *testing.T) {
+	t.Parallel()
 	key := papiKey{
 		propertyID: "prp_1",
 		groupID:    "grp_2",
@@ -252,6 +256,7 @@ func TestWaitForPropertyGroupIDChange(t *testing.T) {
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			mock := &papi.Mock{}
 			mp := mockProperty{
 				mockPropertyData: mockPropertyData{
@@ -276,6 +281,7 @@ func TestWaitForPropertyGroupIDChange(t *testing.T) {
 // For general tests of the moving property functionality, see group id scenarios
 // in TestPropertyLifecycle.
 func TestMovePropertyValidations(t *testing.T) {
+	t.Parallel()
 	key := func(groupID string) papiKey {
 		return papiKey{
 			propertyID: "prp_1",

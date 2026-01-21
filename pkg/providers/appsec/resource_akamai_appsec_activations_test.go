@@ -2653,4 +2653,129 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
+	t.Run("activation fails immediately and state reverts to active version", func(t *testing.T) {
+		client := &appsec.Mock{}
+
+		// Load test data
+		createActivationsFailedResponse := appsec.CreateActivationsResponse{}
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/CreateActivationsFailedResponse.json"), &createActivationsFailedResponse)
+		require.NoError(t, err)
+
+		getActivationsFailedResponse := appsec.GetActivationsResponse{}
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/ActivationsFailed.json"), &getActivationsFailedResponse)
+		require.NoError(t, err)
+
+		// History showing current active version (v6) before attempt to activate v7
+		getActivationHistoryWithActive6 := appsec.GetActivationHistoryResponse{}
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/ActivationHistoryWithActiveVersion6.json"), &getActivationHistoryWithActive6)
+		require.NoError(t, err)
+
+		// Mock GetActivationHistory for Create - shows version 6 is currently active
+		client.On("GetActivationHistory",
+			testutils.MockContext,
+			appsec.GetActivationHistoryRequest{ConfigID: 43253},
+		).Return(&getActivationHistoryWithActive6, nil).Once()
+
+		// Mock GetHostMoveValidation to return no hosts to move (standard activation)
+		getHostMoveValidationResponse := appsec.GetHostMoveValidationResponse{
+			HostsToMove: []appsec.HostToMove{},
+		}
+		client.On("GetHostMoveValidation",
+			testutils.MockContext,
+			appsec.GetHostMoveValidationRequest{
+				ConfigID:      43253,
+				ConfigVersion: 7,
+				Network:       appsec.NetworkValue("STAGING"),
+			},
+		).Return(&getHostMoveValidationResponse, nil).Once()
+
+		// Mock CreateActivations - returns FAILED response immediately
+		client.On("CreateActivations",
+			testutils.MockContext,
+			appsec.CreateActivationsRequest{
+				Action:             "ACTIVATE",
+				Network:            "STAGING",
+				Note:               "Test Notes",
+				NotificationEmails: []string{"user@example.com"},
+				ActivationConfigs: []struct {
+					ConfigID      int `json:"configId"`
+					ConfigVersion int `json:"configVersion"`
+				}{{ConfigID: 43253, ConfigVersion: 7}}},
+		).Return(&createActivationsFailedResponse, nil).Once()
+
+		// Mock GetActivations for polling - returns FAILED status
+		client.On("GetActivations",
+			testutils.MockContext,
+			appsec.GetActivationsRequest{ActivationID: 547696},
+		).Return(&getActivationsFailedResponse, nil).Once()
+
+		// Mock GetActivationHistory for read method call when FAILED status is detected
+		// This should return the currently active version (v6) to revert state
+		client.On("GetActivationHistory",
+			testutils.MockContext,
+			appsec.GetActivationHistoryRequest{ConfigID: 43253},
+		).Return(&getActivationHistoryWithActive6, nil).Times(2)
+
+		// Even though ExpectError is set, the test framework still tries to cleanup/delete the resource
+		// Mock GetActivationHistory for deactivateVersion (finds current active v6)
+		client.On("GetActivationHistory",
+			testutils.MockContext,
+			appsec.GetActivationHistoryRequest{ConfigID: 43253},
+		).Return(&getActivationHistoryWithActive6, nil).Once()
+
+		// Mock RemoveActivations for cleanup - deactivate v6
+		removeActivationsResponse := appsec.RemoveActivationsResponse{
+			ActivationID: 547693,
+			Status:       appsec.StatusDeactivated,
+			Network:      appsec.NetworkValue("STAGING"),
+		}
+		client.On("RemoveActivations",
+			testutils.MockContext,
+			appsec.RemoveActivationsRequest{
+				ActivationID:       547693,
+				Action:             "DEACTIVATE",
+				Network:            "STAGING",
+				Note:               "Previous Active Version Notes",
+				NotificationEmails: []string{"user@example.com"},
+				ActivationConfigs: []struct {
+					ConfigID      int `json:"configId"`
+					ConfigVersion int `json:"configVersion"`
+				}{{ConfigID: 43253, ConfigVersion: 6}}},
+		).Return(&removeActivationsResponse, nil).Once()
+
+		// Mock GetActivations for deactivation polling
+		getActivationsDeactivatedResponse := appsec.GetActivationsResponse{
+			ActivationID: 547693,
+			Status:       appsec.StatusDeactivated,
+			Network:      appsec.NetworkValue("STAGING"),
+		}
+		client.On("GetActivations",
+			testutils.MockContext,
+			appsec.GetActivationsRequest{ActivationID: 547693},
+		).Return(&getActivationsDeactivatedResponse, nil).Once()
+
+		useClient(client, func() {
+			resource.Test(t, resource.TestCase{
+				IsUnitTest:               true,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResActivations/match_by_id.tf"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							// Verify state was reverted to currently active version (v6)
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "config_id", "43253"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "version", "6"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "network", "STAGING"),
+							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "status", "ACTIVATED"),
+						),
+						// Warning is returned instead of error to prevent resource tainting
+						ExpectNonEmptyPlan: true, // Plan should still show drift since desired version (7) != actual version (6)
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
 }

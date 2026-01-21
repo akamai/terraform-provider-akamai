@@ -1,63 +1,13 @@
 package property
 
 import (
-	"sync"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/domainownership"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/hapi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/iam"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
 )
 
 func TestMain(m *testing.M) {
 	testutils.TestRunner(m)
-}
-
-// Only allow one test at a time to patch the client via useClient()
-var clientLock sync.Mutex
-
-// useClient swaps out the client on the global instance for the duration of the given func
-func useClient(papiCli papi.PAPI, hapiCli hapi.HAPI, f func()) {
-	clientLock.Lock()
-	orig := client
-	client = papiCli
-
-	origHapi := hapiClient
-	hapiClient = hapiCli
-
-	defer func() {
-		client = orig
-		hapiClient = origHapi
-		clientLock.Unlock()
-	}()
-
-	f()
-}
-
-func useIam(iamCli iam.IAM, f func()) {
-	origIam := iamClient
-	iamClient = iamCli
-
-	defer func() {
-		iamClient = origIam
-	}()
-
-	f()
-}
-
-func useDomainOwnership(domainownershipCli domainownership.DomainOwnership, f func()) {
-	clientLock.Lock()
-	origClient := domainownershipClient
-	domainownershipClient = domainownershipCli
-
-	defer func() {
-		domainownershipClient = origClient
-		clientLock.Unlock()
-	}()
-
-	f()
 }
 
 // Wrapper to intercept the papi.Mock's call of t.FailNow(). The Terraform test driver runs the provider code on
@@ -72,5 +22,5 @@ type T struct{ *testing.T }
 
 // Overrides testing.T.FailNow() so when a test mock fails an assertion, we see which test had failed before it hangs
 func (t T) FailNow() {
-	t.T.Fatalf("FAIL: %s", t.T.Name())
+	t.Fatalf("FAIL: %s", t.Name())
 }

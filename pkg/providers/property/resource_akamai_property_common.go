@@ -93,8 +93,7 @@ func getProduct(ctx context.Context, client papi.PAPI, productID, contractID str
 }
 
 func findProperty(ctx context.Context, name string, meta meta.Meta) (*papi.Property, error) {
-	client := Client(meta)
-	results, err := client.SearchProperties(ctx, papi.SearchRequest{Key: papi.SearchKeyPropertyName, Value: name})
+	results, err := meta.Client().GetPAPI().SearchProperties(ctx, papi.SearchRequest{Key: papi.SearchKeyPropertyName, Value: name})
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +101,7 @@ func findProperty(ctx context.Context, name string, meta meta.Meta) (*papi.Prope
 		return nil, fmt.Errorf("%w: %s", ErrPropertyNotFound, name)
 	}
 
-	property, err := client.GetProperty(ctx, papi.GetPropertyRequest{
+	property, err := meta.Client().GetPAPI().GetProperty(ctx, papi.GetPropertyRequest{
 		ContractID: results.Versions.Items[0].ContractID,
 		GroupID:    results.Versions.Items[0].GroupID,
 		PropertyID: results.Versions.Items[0].PropertyID,

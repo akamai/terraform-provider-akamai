@@ -188,6 +188,20 @@ func resourceProperty() *schema.Resource {
 							Description: "Deployment status for the RSA and ECDSA certificates created with Cloud Certificate Manager (CCM).",
 							Elem:        ccmCertificateStatusSchema,
 						},
+						"mtls": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							MaxItems:    1,
+							Description: "Optional mutual TLS settings for the CCM hostnames.",
+							Elem:        mtlsSchema,
+						},
+						"tls_configuration": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							MaxItems:    1,
+							Description: "Optional TLS configuration settings applicable to the Cloud Certificate Manager (CCM) hostnames.",
+							Elem:        tlsConfigurationSchema,
+						},
 					},
 				},
 			},
@@ -305,7 +319,19 @@ func getCCMHashPart(hostname map[string]any) string {
 	}
 	rsaCertID := ccmCerts["rsa_cert_id"].(string)
 	ecdsaCertID := ccmCerts["ecdsa_cert_id"].(string)
-	return fmt.Sprintf(".%s.%s", rsaCertID, ecdsaCertID)
+	mtls := hostname["mtls"].([]any)
+	var caSetID string
+	if len(mtls) > 0 {
+		mtlsMap := mtls[0].(map[string]any)
+		caSetID = mtlsMap["ca_set_id"].(string)
+	}
+	tlsConfiguration := hostname["tls_configuration"].([]any)
+	var cipherProfile string
+	if len(tlsConfiguration) > 0 {
+		tlsConfigMap := tlsConfiguration[0].(map[string]any)
+		cipherProfile = tlsConfigMap["cipher_profile"].(string)
+	}
+	return fmt.Sprintf(".%s.%s.%s.%s", rsaCertID, ecdsaCertID, caSetID, cipherProfile)
 }
 
 // propertyRulesCustomDiff compares Rules.Criteria and Rules.Children fields from terraform state
@@ -508,6 +534,15 @@ func ensureCCMCertificatesConsistency(_ context.Context, d *schema.ResourceDiff,
 			if areCcmCerts {
 				return fmt.Errorf("ccm_certificates is only allowed when cert_provisioning_type is 'CCM'")
 			}
+			if len(m["mtls"].([]any)) > 0 {
+				return fmt.Errorf("hostname %v: mtls can only be set when cert_provisioning_type is CCM",
+					m["cname_from"])
+			}
+			if len(m["tls_configuration"].([]any)) > 0 {
+				return fmt.Errorf(
+					"hostname %v: tls_configuration can only be set when cert_provisioning_type is CCM",
+					m["cname_from"])
+			}
 		}
 	}
 	return nil
@@ -525,7 +560,6 @@ func propertyVersionNotesDiffSuppress(_, _, _ string, rd *schema.ResourceData) b
 func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyCreate")
-	client := Client(meta)
 	ctx = log.NewContext(ctx, logger)
 
 	// Schema guarantees these types
@@ -567,7 +601,7 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 	}
 
 	if propertyID == "" {
-		propertyID, err = createProperty(ctx, client, papi.CreatePropertyRequest{
+		propertyID, err = createProperty(ctx, meta.Client().GetPAPI(), papi.CreatePropertyRequest{
 			ContractID: contractID,
 			GroupID:    groupID,
 			Property: papi.PropertyCreate{
@@ -578,7 +612,7 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 			},
 		})
 		if err != nil {
-			return interpretCreatePropertyError(ctx, err, client, groupID, contractID, productID)
+			return interpretCreatePropertyError(ctx, err, meta.Client().GetPAPI(), groupID, contractID, productID)
 		}
 	}
 	// Save minimum state BEFORE moving on
@@ -609,7 +643,7 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 	} else {
 		hostnames := mapToHostnames(hostnameVal.List())
 		if len(hostnames) > 0 {
-			if err := updatePropertyHostnames(ctx, client, property, hostnames); err != nil {
+			if err := updatePropertyHostnames(ctx, meta.Client().GetPAPI(), property, hostnames); err != nil {
 				return diag.FromErr(err)
 			}
 		}
@@ -624,7 +658,7 @@ func resourcePropertyCreate(ctx context.Context, d *schema.ResourceData, m inter
 			return diag.FromErr(err)
 		}
 
-		if err := updatePropertyRules(ctx, client, property, rulesUpdate, ruleFormat); err != nil {
+		if err := updatePropertyRules(ctx, meta.Client().GetPAPI(), property, rulesUpdate, ruleFormat); err != nil {
 			d.Partial(true)
 			return diag.FromErr(err)
 		}
@@ -659,9 +693,9 @@ func interpretCreatePropertyError(ctx context.Context, err error, client papi.PA
 }
 
 func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	ctx = log.NewContext(ctx, meta.Must(m).Log("PAPI", "resourcePropertyRead"))
+	meta := meta.Must(m)
+	ctx = log.NewContext(ctx, meta.Log("PAPI", "resourcePropertyRead"))
 	logger := log.FromContext(ctx)
-	client := Client(meta.Must(m))
 
 	propertyID := d.Id()
 	contractID := str.AddPrefix(d.Get("contract_id").(string), "ctr_")
@@ -672,9 +706,9 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 	var err error
 	var v int
 	if readVersionID == 0 {
-		property, err = fetchLatestProperty(ctx, client, propertyID, groupID, contractID)
+		property, err = fetchLatestProperty(ctx, meta.Client().GetPAPI(), propertyID, groupID, contractID)
 	} else {
-		property, v, err = fetchProperty(ctx, client, propertyID, groupID, contractID, strconv.Itoa(readVersionID))
+		property, v, err = fetchProperty(ctx, meta.Client().GetPAPI(), propertyID, groupID, contractID, strconv.Itoa(readVersionID))
 	}
 	if err != nil {
 		return diag.FromErr(err)
@@ -698,12 +732,12 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 	useHostnameBucket := property.PropertyType != nil && *property.PropertyType == "HOSTNAME_BUCKET"
 	var hostnames []papi.Hostname
 	if !useHostnameBucket {
-		hostnames, err = fetchPropertyVersionHostnames(ctx, client, *property, v)
+		hostnames, err = fetchPropertyVersionHostnames(ctx, meta.Client().GetPAPI(), *property, v)
 		if err != nil {
 			return diag.FromErr(fmt.Errorf("error reading property: %w", err))
 		}
 	}
-	rules, ruleFormat, ruleErrors, ruleWarnings, err := fetchPropertyVersionRules(ctx, client, *property, v)
+	rules, ruleFormat, ruleErrors, ruleWarnings, err := fetchPropertyVersionRules(ctx, meta.Client().GetPAPI(), *property, v)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -733,7 +767,7 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 		}
 	}
 
-	res, err := fetchPropertyVersion(ctx, client, propertyID, groupID, contractID, v)
+	res, err := fetchPropertyVersion(ctx, meta.Client().GetPAPI(), propertyID, groupID, contractID, v)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -752,7 +786,7 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 		"latest_version":      property.LatestVersion,
 		"staging_version":     stagingVersion,
 		"production_version":  productionVersion,
-		"hostnames":           flattenHostnamesCCM(hostnames),
+		"hostnames":           flattenHostnamesWithoutDOM(hostnames),
 		"use_hostname_bucket": useHostnameBucket,
 		"rules":               string(rulesJSON),
 		"rule_format":         ruleFormat,
@@ -771,9 +805,9 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 }
 
 func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	ctx = log.NewContext(ctx, meta.Must(m).Log("PAPI", "resourcePropertyUpdate"))
+	meta := meta.Must(m)
+	ctx = log.NewContext(ctx, meta.Log("PAPI", "resourcePropertyUpdate"))
 	logger := log.FromContext(ctx)
-	client := Client(meta.Must(m))
 
 	diags := diag.Diagnostics{}
 
@@ -839,7 +873,7 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.FromErr(err)
 	}
 	if groupsDiffer {
-		hlp := helper{client, IAMClient(meta.Must(m))}
+		hlp := helper{meta.Client().GetPAPI(), meta.Client().GetIAM()}
 		key := papiKey{
 			propertyID: property.PropertyID,
 			groupID:    oldGroupID,
@@ -866,7 +900,7 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 		propertyVersion = property.LatestVersion
 	}
 
-	resp, err := fetchPropertyVersion(ctx, client, propertyID, property.GroupID, contractID, propertyVersion)
+	resp, err := fetchPropertyVersion(ctx, meta.Client().GetPAPI(), propertyID, property.GroupID, contractID, propertyVersion)
 	if err != nil {
 		d.Partial(true)
 		return diag.FromErr(err)
@@ -875,7 +909,7 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 	// if read_version is not the latest version or not editable then create a new version from it before proceeding
 	if (propertyVersion != property.LatestVersion) || (resp.Version.ProductionStatus != papi.VersionStatusInactive || resp.Version.StagingStatus != papi.VersionStatusInactive) {
 		// The latest version has been activated on either production or staging, so we need to create a new version to apply changes on
-		versionID, err := createPropertyVersion(ctx, client, property, propertyVersion)
+		versionID, err := createPropertyVersion(ctx, meta.Client().GetPAPI(), property, propertyVersion)
 		if err != nil {
 			d.Partial(true)
 			return diag.FromErr(err)
@@ -891,7 +925,7 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 		if err == nil {
 			hostnames := mapToHostnames(hostnamesVal.List())
 			if len(hostnames) > 0 {
-				if err := updatePropertyHostnames(ctx, client, property, hostnames); err != nil {
+				if err := updatePropertyHostnames(ctx, meta.Client().GetPAPI(), property, hostnames); err != nil {
 					d.Partial(true)
 					return diag.FromErr(err)
 				}
@@ -902,7 +936,7 @@ func resourcePropertyUpdate(ctx context.Context, d *schema.ResourceData, m inter
 	}
 
 	if shouldUpdateRuleTree(d) {
-		if err := updateRuleTree(ctx, client, property, d); err != nil {
+		if err := updateRuleTree(ctx, meta.Client().GetPAPI(), property, d); err != nil {
 			return diag.FromErr(err)
 		}
 	}
@@ -942,9 +976,9 @@ func updateRuleTree(ctx context.Context, client papi.PAPI, property papi.Propert
 }
 
 func resourcePropertyDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	ctx = log.NewContext(ctx, meta.Must(m).Log("PAPI", "resourcePropertyDelete"))
+	meta := meta.Must(m)
+	ctx = log.NewContext(ctx, meta.Log("PAPI", "resourcePropertyDelete"))
 	logger := log.FromContext(ctx)
-	client := Client(meta.Must(m))
 
 	propertyID, err := tf.GetStringValue("property_id", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
@@ -964,7 +998,7 @@ func resourcePropertyDelete(ctx context.Context, d *schema.ResourceData, m inter
 		oldGroupID.(string), newGroupID.(string))
 	groupID := str.AddPrefix(oldGroupID.(string), "grp_")
 
-	if err := removeProperty(ctx, client, propertyID, groupID, contractID); err != nil {
+	if err := removeProperty(ctx, meta.Client().GetPAPI(), propertyID, groupID, contractID); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -972,7 +1006,8 @@ func resourcePropertyDelete(ctx context.Context, d *schema.ResourceData, m inter
 }
 
 func resourcePropertyImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	ctx = log.NewContext(ctx, meta.Must(m).Log("PAPI", "resourcePropertyImport"))
+	meta := meta.Must(m)
+	ctx = log.NewContext(ctx, meta.Log("PAPI", "resourcePropertyImport"))
 
 	// User-supplied import ID is a comma-separated list of propertyID[,groupID[,contractID]]
 	// contractID and groupID are optional as long as the propertyID is sufficient to fetch the property
@@ -1019,7 +1054,7 @@ func resourcePropertyImport(ctx context.Context, d *schema.ResourceData, m inter
 					return nil, ErrPropertyVersionNotFound
 				}
 				// if we ran validation, and we actually have a network name, we still need to fetch the desired version number
-				_, attrs["read_version"], err = fetchProperty(ctx, Client(meta.Must(m)), propertyID, groupID, contractID, version)
+				_, attrs["read_version"], err = fetchProperty(ctx, meta.Client().GetPAPI(), propertyID, groupID, contractID, version)
 				if err != nil {
 					return nil, err
 				}
@@ -1039,11 +1074,10 @@ func resourcePropertyImport(ctx context.Context, d *schema.ResourceData, m inter
 	var property *papi.Property
 	var err error
 	var v int
-	client = Client(meta.Must(m))
 	if !isDefaultVersion(version) {
-		property, v, err = fetchProperty(ctx, client, propertyID, groupID, contractID, version)
+		property, v, err = fetchProperty(ctx, meta.Client().GetPAPI(), propertyID, groupID, contractID, version)
 	} else {
-		property, err = fetchLatestProperty(ctx, client, propertyID, groupID, contractID)
+		property, err = fetchLatestProperty(ctx, meta.Client().GetPAPI(), propertyID, groupID, contractID)
 	}
 	if err != nil {
 		return nil, err
@@ -1334,7 +1368,7 @@ func fetchPropertyVersion(ctx context.Context, client papi.PAPI, propertyID, gro
 	return res, err
 }
 
-// fetchPropertyVersionHostnames fetchs hostnames for latest version of given property.
+// fetchPropertyVersionHostnames fetches hostnames for latest version of given property.
 func fetchPropertyVersionHostnames(ctx context.Context, client papi.PAPI, property papi.Property, version int) ([]papi.Hostname, error) {
 	req := papi.GetPropertyVersionHostnamesRequest{
 		PropertyID:        property.PropertyID,
@@ -1518,6 +1552,8 @@ func mapToHostnames(givenList []interface{}) []papi.Hostname {
 		cnameTo := r["cname_to"]
 		certProvisioningType := r["cert_provisioning_type"]
 		if len(r) != 0 {
+			var mtls *papi.MTLS
+			var tlsConfig *papi.TLSConfiguration
 			var ccmCerts *papi.CCMCertificates
 			if certProvisioningType.(string) == string(papi.CertTypeCCM) {
 				certs := r["ccm_certificates"].([]any)
@@ -1528,6 +1564,36 @@ func mapToHostnames(givenList []interface{}) []papi.Hostname {
 						ECDSACertID: m["ecdsa_cert_id"].(string),
 					}
 				}
+
+				if r["mtls"] != nil {
+					mtlsMap := r["mtls"].([]any)
+					if len(mtlsMap) > 0 {
+						m := mtlsMap[0].(map[string]any)
+						mtls = &papi.MTLS{
+							CASetID:         m["ca_set_id"].(string),
+							CheckClientOCSP: m["check_client_ocsp"].(bool),
+							SendCASetClient: m["send_ca_set_client"].(bool),
+						}
+					}
+				}
+
+				if r["tls_configuration"] != nil {
+					tlsConfigMap := r["tls_configuration"].([]any)
+					if len(tlsConfigMap) > 0 {
+						m := tlsConfigMap[0].(map[string]any)
+
+						var disallowedTLSVersions []string
+						for _, v := range m["disallowed_tls_versions"].([]any) {
+							disallowedTLSVersions = append(disallowedTLSVersions, v.(string))
+						}
+						tlsConfig = &papi.TLSConfiguration{
+							CipherProfile:            m["cipher_profile"].(string),
+							DisallowedTLSVersions:    disallowedTLSVersions,
+							StapleServerOcspResponse: m["staple_server_ocsp_response"].(bool),
+							FIPSMode:                 m["fips_mode"].(bool),
+						}
+					}
+				}
 			}
 
 			hostnames = append(hostnames, papi.Hostname{
@@ -1536,8 +1602,9 @@ func mapToHostnames(givenList []interface{}) []papi.Hostname {
 				CnameTo:              cnameTo.(string), // guaranteed by schema to be a string
 				CertProvisioningType: certProvisioningType.(string),
 				CCMCertificates:      ccmCerts,
+				MTLS:                 mtls,
+				TLSConfiguration:     tlsConfig,
 			})
-
 		}
 	}
 	return hostnames
@@ -1570,7 +1637,6 @@ func validateAtLeastOneCertIDProvidedCCM(d *schema.ResourceData) error {
 					r["cname_from"])
 			}
 		}
-
 	}
 	return nil
 }

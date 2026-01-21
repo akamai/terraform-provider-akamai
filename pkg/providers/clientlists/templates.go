@@ -20,6 +20,10 @@ type OutputTemplate struct {
 	TemplateString string
 }
 
+const (
+	clientListItemsTemplateName = "Client list items"
+)
+
 var (
 	templateFuncs = template.FuncMap{
 		"tags": func(in []string) string {
@@ -115,38 +119,44 @@ func InitTemplates(otm map[string]*OutputTemplate) {
 	}
 	otm["userClientListItemsDS"] = &OutputTemplate{
 		TemplateType:   "TABULAR",
-		TemplateName:   "Client list items",
+		TemplateName:   clientListItemsTemplateName,
 		TableTitle:     "UserID/Username|Description|Tags|CreateDate|UpdateDate|ExpirationDate",
 		TemplateString: `{{range $index, $element := .Items}}{{if $index}}<<>>{{end}}{{.Value}}|{{.Description}}|{{tags .Tags}}|{{.CreateDate}}|{{.UpdateDate}}|{{noExpiration .ExpirationDate}}{{end}}`,
 	}
 	otm["ipClientListItemsDS"] = &OutputTemplate{
 		TemplateType:   "TABULAR",
-		TemplateName:   "Client list items",
+		TemplateName:   clientListItemsTemplateName,
 		TableTitle:     "IP/CIDR|Description|Tags|CreateDate|UpdateDate|ExpirationDate",
 		TemplateString: `{{range $index, $element := .Items}}{{if $index}}<<>>{{end}}{{.Value}}|{{.Description}}|{{tags .Tags}}|{{.CreateDate}}|{{.UpdateDate}}|{{noExpiration .ExpirationDate}}{{end}}`,
 	}
 	otm["asnClientListItemsDS"] = &OutputTemplate{
 		TemplateType:   "TABULAR",
-		TemplateName:   "Client list items",
+		TemplateName:   clientListItemsTemplateName,
 		TableTitle:     "ASN|Description|Tags|CreateDate|UpdateDate|ExpirationDate",
 		TemplateString: `{{range $index, $element := .Items}}{{if $index}}<<>>{{end}}{{.Value}}|{{.Description}}|{{tags .Tags}}|{{.CreateDate}}|{{.UpdateDate}}|{{noExpiration .ExpirationDate}}{{end}}`,
 	}
 	otm["geoClientListItemsDS"] = &OutputTemplate{
 		TemplateType:   "TABULAR",
-		TemplateName:   "Client list items",
+		TemplateName:   clientListItemsTemplateName,
 		TableTitle:     "GEO|Description|Tags|CreateDate|UpdateDate|ExpirationDate",
 		TemplateString: `{{range $index, $element := .Items}}{{if $index}}<<>>{{end}}{{.Value}}|{{.Description}}|{{tags .Tags}}|{{.CreateDate}}|{{.UpdateDate}}|{{noExpiration .ExpirationDate}}{{end}}`,
 	}
 	otm["tlsFingerprintClientListItemsDS"] = &OutputTemplate{
 		TemplateType:   "TABULAR",
-		TemplateName:   "Client list items",
+		TemplateName:   clientListItemsTemplateName,
 		TableTitle:     "TLS fingerprint|Description|Tags|CreateDate|UpdateDate|ExpirationDate",
 		TemplateString: `{{range $index, $element := .Items}}{{if $index}}<<>>{{end}}{{.Value}}|{{.Description}}|{{tags .Tags}}|{{.CreateDate}}|{{.UpdateDate}}|{{noExpiration .ExpirationDate}}{{end}}`,
 	}
 	otm["fileHashClientListItemsDS"] = &OutputTemplate{
 		TemplateType:   "TABULAR",
-		TemplateName:   "Client list items",
+		TemplateName:   clientListItemsTemplateName,
 		TableTitle:     "File HASH|Description|Tags|CreateDate|UpdateDate|ExpirationDate",
+		TemplateString: `{{range $index, $element := .Items}}{{if $index}}<<>>{{end}}{{.Value}}|{{.Description}}|{{tags .Tags}}|{{.CreateDate}}|{{.UpdateDate}}|{{noExpiration .ExpirationDate}}{{end}}`,
+	}
+	otm["domainClientListItemsDS"] = &OutputTemplate{
+		TemplateType:   "TABULAR",
+		TemplateName:   clientListItemsTemplateName,
+		TableTitle:     "Domain|Description|Tags|CreateDate|UpdateDate|ExpirationDate",
 		TemplateString: `{{range $index, $element := .Items}}{{if $index}}<<>>{{end}}{{.Value}}|{{.Description}}|{{tags .Tags}}|{{.CreateDate}}|{{.UpdateDate}}|{{noExpiration .ExpirationDate}}{{end}}`,
 	}
 }

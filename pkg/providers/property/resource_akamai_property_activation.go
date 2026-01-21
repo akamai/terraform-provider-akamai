@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -14,12 +15,14 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/log"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v9/internal/retry"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/date"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/str"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/timeouts"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
 	"github.com/hashicorp/go-hclog"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/spf13/cast"
@@ -67,6 +70,12 @@ var (
 
 	// CreateActivationRetry poll wait time code waits between retries for activation creation
 	CreateActivationRetry = 10 * time.Second
+
+	// ccmHostnamesPollInterval is the interval for polling CCM hostnames to have assigned edgehostname ID.
+	ccmHostnamesPollInterval = 20 * time.Second
+
+	// ccmHostnamesPollTimeout is the maximum time to wait for CCM hostnames to have assigned edgehostname ID.
+	ccmHostnamesPollTimeout = 3 * time.Minute
 )
 
 var akamaiPropertyActivationSchema = map[string]*schema.Schema{
@@ -174,7 +183,6 @@ func papiError() *schema.Resource {
 func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyActivationCreate")
-	client := Client(meta)
 
 	logger.Debug("resourcePropertyActivationCreate call")
 
@@ -201,7 +209,7 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	version, err := resolveVersion(ctx, d, client, propertyID, network)
+	version, err := resolveVersion(ctx, d, meta.Client().GetPAPI(), propertyID, network)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -209,7 +217,7 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 	acknowledgeRuleWarnings := d.Get("auto_acknowledge_rule_warnings").(bool)
 
 	// check to see if this tree has any issues
-	rules, err := client.GetRuleTree(ctx, papi.GetRuleTreeRequest{
+	rules, err := meta.Client().GetPAPI().GetRuleTree(ctx, papi.GetRuleTreeRequest{
 		PropertyID:      propertyID,
 		PropertyVersion: version,
 		ValidateRules:   true,
@@ -231,7 +239,7 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	activation, err := lookupActivation(ctx, client, lookupActivationRequest{
+	activation, err := lookupActivation(ctx, meta.Client().GetPAPI(), lookupActivationRequest{
 		propertyID: propertyID,
 		network:    network,
 		activationType: map[papi.ActivationType]struct{}{
@@ -272,13 +280,13 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 		}
 
 		logger.Debug("creating activation")
-		activationID, diagErr := createActivation(ctx, client, addPropertyComplianceRecord(complianceRecord, createActivationRequest))
+		activationID, diagErr := createActivation(ctx, meta.Client().GetPAPI(), addPropertyComplianceRecord(complianceRecord, createActivationRequest))
 		if diagErr != nil {
 			return diagErr
 		}
 
 		// query the activation to retrieve the initial status
-		act, err := client.GetActivation(ctx, papi.GetActivationRequest{
+		act, err := meta.Client().GetPAPI().GetActivation(ctx, papi.GetActivationRequest{
 			ActivationID: activationID,
 			PropertyID:   propertyID,
 		})
@@ -293,9 +301,21 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 		}
 	}
 
-	activation, diagErr := pollActivation(ctx, client, activation, propertyID)
+	activation, diagErr := pollActivation(ctx, meta.Client().GetPAPI(), activation, propertyID)
 	if diagErr != nil {
 		return diagErr
+	}
+
+	// Poll the CCM hostnames to ensure they have been assigned edgehostname ID.
+	// Until all receive their edgehostname ID, or timeout occurs, we keep polling.
+	// If there is any error, issue a warning and continue processing.
+	if err := waitForCCMHostnames(ctx, meta.Client().GetPAPI(), propertyID, version); err != nil {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Warning,
+			Summary:  "Received error from polling function during wait for all CCM hostnames to have edge hostname ID assigned.",
+			Detail: "Property activation was successful, but some CCM hostnames might not have edge hostname ID assigned yet. " +
+				fmt.Sprintf("Error details: %s", err.Error()),
+		})
 	}
 
 	attrs := map[string]interface{}{
@@ -309,13 +329,74 @@ func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceDat
 
 	d.SetId(propertyID + ":" + string(network))
 
+	return diags
+}
+
+func waitForCCMHostnames(ctx context.Context, client papi.PAPI, propertyID string, version int) error {
+	_, err := retry.Poll(ctx, retry.PollingOpts[papi.GetPropertyVersionHostnamesResponse]{
+		Fn: func(ctx context.Context) (*papi.GetPropertyVersionHostnamesResponse, error) {
+			return client.GetPropertyVersionHostnames(ctx, papi.GetPropertyVersionHostnamesRequest{
+				PropertyID:      propertyID,
+				PropertyVersion: version,
+			})
+		},
+		ShouldRetryData: func(resp papi.GetPropertyVersionHostnamesResponse) bool {
+			for _, h := range resp.Hostnames.Items {
+				if h.CertProvisioningType == string(papi.CertTypeCCM) {
+					isDeployedOrDeploying := isCCMDeployedOrDeploying(h)
+					if isDeployedOrDeploying && h.EdgeHostnameID == "" {
+						tflog.Debug(ctx, "edgehostname of type CCM has no assigned edgehostname ID yet, polling needed", map[string]any{
+							"cname_to":         h.CnameTo,
+							"cname_from":       h.CnameFrom,
+							"property_id":      propertyID,
+							"property_version": version,
+							"ccm_cert_status":  h.CCMCertStatus,
+						})
+						return true
+					}
+					tflog.Debug(ctx, "edgehostname of type CCM not elligible for polling", map[string]any{
+						"cname_to":         h.CnameTo,
+						"cname_from":       h.CnameFrom,
+						"property_id":      propertyID,
+						"property_version": version,
+						"ccm_cert_status":  h.CCMCertStatus,
+					})
+
+				}
+			}
+			tflog.Debug(ctx, "all CCM hostnames have edgehostname ID assigned, exiting polling", map[string]any{
+				"property_id":      propertyID,
+				"property_version": version,
+			})
+			return false
+		},
+		Interval: ccmHostnamesPollInterval,
+		Deadline: ccmHostnamesPollTimeout,
+	})
+	if err != nil {
+		if errors.Is(err, context.DeadlineExceeded) {
+			return fmt.Errorf("timeout waiting for CCM hostnames to be assigned edgehostname ID")
+		}
+		return err
+	}
+
 	return nil
+}
+
+func isCCMDeployedOrDeploying(h papi.Hostname) bool {
+	if h.CCMCertStatus != nil {
+		ss := []string{"DEPLOYED", "DEPLOYING"}
+		return slices.Contains(ss, h.CCMCertStatus.ECDSAStagingStatus) ||
+			slices.Contains(ss, h.CCMCertStatus.RSAStagingStatus) ||
+			slices.Contains(ss, h.CCMCertStatus.ECDSAProductionStatus) ||
+			slices.Contains(ss, h.CCMCertStatus.RSAProductionStatus)
+	}
+	return false
 }
 
 func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyActivationDelete")
-	client := Client(meta)
 
 	logger.Debug("resourcePropertyActivationDelete call")
 
@@ -338,7 +419,7 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 	}
 
-	version, err := resolveVersion(ctx, d, client, propertyID, network)
+	version, err := resolveVersion(ctx, d, meta.Client().GetPAPI(), propertyID, network)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -351,7 +432,7 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 	// Schema guarantees these types
 	acknowledgeRuleWarnings := d.Get("auto_acknowledge_rule_warnings").(bool)
 
-	activation, err := lookupActivation(ctx, client, lookupActivationRequest{
+	activation, err := lookupActivation(ctx, meta.Client().GetPAPI(), lookupActivationRequest{
 		propertyID: propertyID,
 		version:    version,
 		network:    network,
@@ -390,7 +471,7 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 			},
 		}
 
-		deleteActivationID, diagErr := createActivation(ctx, client, addPropertyComplianceRecord(complianceRecord, deleteActivationRequest))
+		deleteActivationID, diagErr := createActivation(ctx, meta.Client().GetPAPI(), addPropertyComplianceRecord(complianceRecord, deleteActivationRequest))
 		if diagErr != nil {
 			return diagErr
 		}
@@ -398,7 +479,7 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 		d.SetId(deleteActivationID)
 
 		// query the activation to retrieve the initial status
-		act, err := client.GetActivation(ctx, papi.GetActivationRequest{
+		act, err := meta.Client().GetPAPI().GetActivation(ctx, papi.GetActivationRequest{
 			ActivationID: deleteActivationID,
 			PropertyID:   propertyID,
 		})
@@ -427,7 +508,7 @@ func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceDat
 		}
 		select {
 		case <-time.After(tf.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
-			act, err := client.GetActivation(ctx, papi.GetActivationRequest{
+			act, err := meta.Client().GetPAPI().GetActivation(ctx, papi.GetActivationRequest{
 				ActivationID: activation.ActivationID,
 				PropertyID:   propertyID,
 			})
@@ -462,7 +543,6 @@ func flattenErrorArray(errors []*papi.Error) string {
 func resourcePropertyActivationRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyActivationRead")
-	client := Client(meta)
 
 	logger.Debug("resourcePropertyActivationRead call")
 	// create a context with logging for api calls
@@ -483,7 +563,7 @@ func resourcePropertyActivationRead(ctx context.Context, d *schema.ResourceData,
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	resp, err := client.GetActivations(ctx, papi.GetActivationsRequest{
+	resp, err := meta.Client().GetPAPI().GetActivations(ctx, papi.GetActivationsRequest{
 		PropertyID: propertyID,
 	})
 	if err != nil {
@@ -572,7 +652,6 @@ func resolveVersion(ctx context.Context, d *schema.ResourceData, client papi.PAP
 func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourcePropertyActivationUpdate")
-	client := Client(meta)
 
 	logger.Debug("resourcePropertyActivationUpdate call")
 	// create a context with logging for api calls
@@ -599,7 +678,7 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	version, err := resolveVersion(ctx, d, client, propertyID, network)
+	version, err := resolveVersion(ctx, d, meta.Client().GetPAPI(), propertyID, network)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -619,7 +698,7 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	// check to see if this tree has any issues
-	rules, err := client.GetRuleTree(ctx, papi.GetRuleTreeRequest{
+	rules, err := meta.Client().GetPAPI().GetRuleTree(ctx, papi.GetRuleTreeRequest{
 		PropertyID:      propertyID,
 		PropertyVersion: version,
 		ValidateRules:   true,
@@ -636,7 +715,7 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 		d.Partial(true)
 		return diags
 	}
-	propertyActivation, err := lookupActivation(ctx, client, lookupActivationRequest{
+	propertyActivation, err := lookupActivation(ctx, meta.Client().GetPAPI(), lookupActivationRequest{
 		propertyID: propertyID,
 		version:    version,
 		network:    network,
@@ -648,7 +727,7 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	versionStatus, err := resolveVersionStatus(ctx, client, propertyID, version, network)
+	versionStatus, err := resolveVersionStatus(ctx, meta.Client().GetPAPI(), propertyID, version, network)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -686,13 +765,13 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 			},
 		}
 
-		activationID, diagErr := createActivation(ctx, client, addPropertyComplianceRecord(complianceRecord, createActivationRequest))
+		activationID, diagErr := createActivation(ctx, meta.Client().GetPAPI(), addPropertyComplianceRecord(complianceRecord, createActivationRequest))
 		if diagErr != nil {
 			return diagErr
 		}
 
 		// query the activation to retrieve the initial status
-		act, err := client.GetActivation(ctx, papi.GetActivationRequest{
+		act, err := meta.Client().GetPAPI().GetActivation(ctx, papi.GetActivationRequest{
 			ActivationID: activationID,
 			PropertyID:   propertyID,
 		})
@@ -707,9 +786,21 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 		}
 	}
 
-	propertyActivation, diagErr := pollActivation(ctx, client, propertyActivation, propertyID)
+	propertyActivation, diagErr := pollActivation(ctx, meta.Client().GetPAPI(), propertyActivation, propertyID)
 	if diagErr != nil {
 		return diagErr
+	}
+
+	// Poll the CCM hostnames to ensure they have been assigned edgehostname ID.
+	// Until all receive their edgehostname ID, or timeout occurs, we keep polling.
+	// If there is any error, issue a warning and continue processing.
+	if err := waitForCCMHostnames(ctx, meta.Client().GetPAPI(), propertyID, version); err != nil {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Warning,
+			Summary:  "Received error from polling function during wait for all CCM hostnames to have edge hostname ID assigned.",
+			Detail: "Property activation was successful, but some CCM hostnames might not have edge hostname ID assigned yet. " +
+				fmt.Sprintf("Error details: %s", err.Error()),
+		})
 	}
 
 	attrs := map[string]interface{}{
@@ -723,7 +814,7 @@ func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceDat
 
 	d.SetId(propertyID + ":" + string(network))
 
-	return nil
+	return diags
 }
 
 func resourcePropertyActivationImport(_ context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {

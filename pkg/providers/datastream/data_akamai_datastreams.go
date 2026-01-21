@@ -72,6 +72,11 @@ func dataAkamaiDatastreamStreams() *schema.Resource {
 										Computed:    true,
 										Description: "The descriptive label for the property.",
 									},
+									"integration_type": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The integration mode for the property in datastream (e.g., PM_DEPENDENT, HYBRID, DS_MANAGED).",
+									},
 								},
 							},
 						},
@@ -110,6 +115,11 @@ func dataAkamaiDatastreamStreams() *schema.Resource {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "The date and time when activation status was modified",
+						},
+						"integration_type": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The integration mode for the stream in datastream (e.g., PM_DEPENDENT, HYBRID, DS_MANAGED)",
 						},
 					},
 				},
@@ -162,7 +172,7 @@ func dataDatastreamStreamsRead(ctx context.Context, d *schema.ResourceData, m in
 func createStreamsAttrs(streams []datastream.StreamDetails) []interface{} {
 	streamsAttrs := make([]interface{}, 0, len(streams))
 	for _, stream := range streams {
-		streamsAttrs = append(streamsAttrs, map[string]interface{}{
+		streamAttr := map[string]interface{}{
 			"stream_status":  stream.StreamStatus,
 			"contract_id":    stream.ContractID,
 			"created_by":     stream.CreatedBy,
@@ -176,7 +186,12 @@ func createStreamsAttrs(streams []datastream.StreamDetails) []interface{} {
 			"stream_id":      stream.StreamID,
 			"stream_name":    stream.StreamName,
 			"stream_version": stream.StreamVersion,
-		})
+		}
+		// Only set integration_type if it's non-empty (API may not return the field)
+		if stream.IntegrationType != "" {
+			streamAttr["integration_type"] = stream.IntegrationType
+		}
+		streamsAttrs = append(streamsAttrs, streamAttr)
 	}
 
 	return streamsAttrs
@@ -186,10 +201,15 @@ func createPropertiesAttrs(properties []datastream.Property) []interface{} {
 	propertyAttrs := make([]interface{}, 0, len(properties))
 
 	for _, property := range properties {
-		propertyAttrs = append(propertyAttrs, map[string]interface{}{
+		propertyAttr := map[string]interface{}{
 			"property_id":   property.PropertyID,
 			"property_name": property.PropertyName,
-		})
+		}
+		// Only set integration_type if it's non-empty (API may not return the field)
+		if property.IntegrationType != "" {
+			propertyAttr["integration_type"] = property.IntegrationType
+		}
+		propertyAttrs = append(propertyAttrs, propertyAttr)
 	}
 
 	return propertyAttrs

@@ -111,6 +111,17 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 		Optional:    true,
 		Description: "Identifies if stream needs to collect midgress data",
 	},
+	"sampling_percentage": {
+		Type:         schema.TypeInt,
+		Optional:     true,
+		ValidateFunc: validation.IntBetween(1, 100),
+		Description:  "The sample percentage of data that your stream will send to the destination",
+	},
+	"integration_type": {
+		Type:        schema.TypeString,
+		Computed:    true,
+		Description: "The integration mode for the stream (e.g., PM_DEPENDENT, HYBRID, DS_MANAGED)",
+	},
 	"delivery_configuration": {
 		Type:        schema.TypeSet,
 		MinItems:    1,
@@ -1124,7 +1135,11 @@ func resourceDatastreamCreate(ctx context.Context, d *schema.ResourceData, m int
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
+	// sampling_percentage is optional, so only get it if it exists
+	var samplingPercentage int
+	if value, exists := d.GetOk("sampling_percentage"); exists {
+		samplingPercentage = value.(int)
+	}
 	req := datastream.CreateStreamRequest{
 		StreamConfiguration: datastream.StreamConfiguration{
 			CollectMidgress:       collectMidgress,
@@ -1136,6 +1151,7 @@ func resourceDatastreamCreate(ctx context.Context, d *schema.ResourceData, m int
 			GroupID:               groupID,
 			Properties:            propertyIDs,
 			StreamName:            streamName,
+			SamplingPercentage:    samplingPercentage,
 		},
 		Activate: active,
 	}
@@ -1225,6 +1241,14 @@ func resourceDatastreamRead(ctx context.Context, d *schema.ResourceData, m inter
 	attrs["properties"] = PropertyToList(streamDetails.Properties)
 	attrs["stream_name"] = streamDetails.StreamName
 	attrs["stream_version"] = streamDetails.StreamVersion
+	// Only set sampling_percentage if it's non-zero (API may not return the field; zero indicates not set)
+	if streamDetails.SamplingPercentage > 0 {
+		attrs["sampling_percentage"] = streamDetails.SamplingPercentage
+	}
+	// Only set integration_type if it's non-empty (API may not return the field)
+	if streamDetails.IntegrationType != "" {
+		attrs["integration_type"] = streamDetails.IntegrationType
+	}
 
 	connectorKey, connectorProps, err := ConnectorToMap(streamDetails.Destination, d)
 	if err != nil {
@@ -1428,6 +1452,11 @@ func updateStream(ctx context.Context, client datastream.DS, logger akalog.Inter
 			return err
 		}
 
+		// sampling_percentage is optional, so only get it if it exists
+		var samplingPercentage int
+		if value, exists := d.GetOk("sampling_percentage"); exists {
+			samplingPercentage = value.(int)
+		}
 		req := datastream.UpdateStreamRequest{
 			StreamID: streamID,
 			StreamConfiguration: datastream.StreamConfiguration{
@@ -1439,6 +1468,7 @@ func updateStream(ctx context.Context, client datastream.DS, logger akalog.Inter
 				NotificationEmails:    emailIDs,
 				Properties:            propertyIDs,
 				StreamName:            streamName,
+				SamplingPercentage:    samplingPercentage,
 			},
 			Activate: isStreamActive,
 		}
@@ -1744,6 +1774,7 @@ func enforceComputedFieldsChange(_ context.Context, d *schema.ResourceDiff, _ in
 		"latest_version",
 		"modified_by",
 		"modified_date",
+		"integration_type",
 	}
 
 	// Get all changed keys

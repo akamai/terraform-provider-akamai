@@ -74,7 +74,6 @@ type includeActivationAttrs struct {
 
 func dataPropertyIncludeActivationRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := Client(meta)
 	log := meta.Log("PAPI", "dataPropertyIncludeActivationRead")
 	log.Debug("Reading Property Include Activation")
 
@@ -83,7 +82,7 @@ func dataPropertyIncludeActivationRead(ctx context.Context, d *schema.ResourceDa
 		return diag.Errorf("getIncludeActivationAttrs error: %s", err)
 	}
 
-	activations, err := client.ListIncludeActivations(ctx, papi.ListIncludeActivationsRequest{
+	activations, err := meta.Client().GetPAPI().ListIncludeActivations(ctx, papi.ListIncludeActivationsRequest{
 		IncludeID:  attrs.includeID,
 		ContractID: attrs.contractID,
 		GroupID:    attrs.groupID,

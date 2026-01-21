@@ -4,15 +4,16 @@ import (
 	"fmt"
 	"regexp"
 	"testing"
-	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudlets"
+	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
 
 func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
+	t.Parallel()
 	anError := fmt.Errorf("an error")
 	originNotDefinedError := fmt.Errorf(`"detail": "Origin 'origin-test-1' is not defined in Property Manager for this network"`)
 	tests := map[string]struct {
@@ -553,22 +554,18 @@ func TestResourceCloudletsApplicationLoadBalancerActivation(t *testing.T) {
 		},
 	}
 
-	// redefining times to run the tests faster
-	ALBActivationPollMinimum = time.Millisecond * 1
-	ALBActivationPollInterval = time.Millisecond * 1
-
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &cloudlets.Mock{}
-			test.init(client)
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps:                    test.steps,
-				})
+			t.Parallel()
+			client := edgegrid.NewTestClient()
+			test.init(client.CloudletsV2)
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client,
+					NewCustomPollingSubprovider().WithALBActivationIntervals(testALBPollActivationInterval, testALBRetryTimeout)),
+				IsUnitTest: true,
+				Steps:      test.steps,
 			})
-			client.AssertExpectations(t)
+			client.CloudletsV2.AssertExpectations(t)
 		})
 	}
 }

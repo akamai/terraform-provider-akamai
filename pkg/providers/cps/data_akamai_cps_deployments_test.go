@@ -6,11 +6,13 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cps"
+	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func TestDataCPSDeployments(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		configPath     string
 		checkFunctions []resource.TestCheckFunc
@@ -235,21 +237,20 @@ func TestDataCPSDeployments(t *testing.T) {
 	}
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			client := &cps.Mock{}
-			test.init(client)
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							Config:      testutils.LoadFixtureString(t, test.configPath),
-							Check:       resource.ComposeAggregateTestCheckFunc(test.checkFunctions...),
-							ExpectError: test.withError,
-						},
+			t.Parallel()
+			client := edgegrid.NewTestClient()
+			test.init(client.CPS)
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureString(t, test.configPath),
+						Check:       resource.ComposeAggregateTestCheckFunc(test.checkFunctions...),
+						ExpectError: test.withError,
 					},
-				})
-				client.AssertExpectations(t)
+				},
 			})
+			client.CPS.AssertExpectations(t)
 		})
 	}
 }

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/mtlskeystore"
+	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v9/internal/test"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
 	tst "github.com/akamai/terraform-provider-akamai/v9/pkg/common/test"
@@ -1386,17 +1387,16 @@ func TestClientCertificateAkamaiResource(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			client := &mtlskeystore.Mock{}
+			client := edgegrid.NewTestClient()
 			if tc.init != nil {
-				tc.init(client, tc.mockData, tc.mockUpdateData)
+				tc.init(client.MTLSKeystore, tc.mockData, tc.mockUpdateData)
 			}
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps:                    tc.steps,
-				})
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				Steps:                    tc.steps,
 			})
-			client.AssertExpectations(t)
+
+			client.MTLSKeystore.AssertExpectations(t)
 		})
 	}
 
@@ -1661,17 +1661,16 @@ func TestClientCertificateAkamaiResource_ImportState(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			client := &mtlskeystore.Mock{}
+			client := edgegrid.NewTestClient()
 			if tc.init != nil {
-				tc.init(client, tc.mockData)
+				tc.init(client.MTLSKeystore, tc.mockData)
 			}
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps:                    tc.steps,
-				})
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				Steps:                    tc.steps,
 			})
-			client.AssertExpectations(t)
+
+			client.MTLSKeystore.AssertExpectations(t)
 		})
 	}
 

@@ -162,7 +162,7 @@ func (strategy v2PolicyStrategy) readPolicy(ctx context.Context, policyID int64,
 
 }
 
-func (strategy v2PolicyStrategy) deletePolicy(ctx context.Context, policyID int64) error {
+func (strategy v2PolicyStrategy) deletePolicy(ctx context.Context, policyID int64, deletionPollInterval time.Duration) error {
 	policyVersions, err := getAllV2PolicyVersions(ctx, policyID, strategy.client)
 	if err != nil {
 		return err
@@ -179,7 +179,7 @@ func (strategy v2PolicyStrategy) deletePolicy(ctx context.Context, policyID int6
 	activationPending := true
 	for activationPending {
 		select {
-		case <-time.After(DeletionPolicyPollInterval):
+		case <-time.After(deletionPollInterval):
 			if err = strategy.client.RemovePolicy(ctx, cloudlets.RemovePolicyRequest{PolicyID: policyID}); err != nil {
 				statusErr := new(cloudlets.Error)
 				// if error does not contain information about pending activations, return it as it is not expected
@@ -197,7 +197,7 @@ func (strategy v2PolicyStrategy) deletePolicy(ctx context.Context, policyID int6
 }
 
 func (strategy v2PolicyStrategy) getVersionStrategy(meta meta.Meta) versionStrategy {
-	return v2VersionStrategy{Client(meta)}
+	return v2VersionStrategy{meta.Client().GetCloudletsV2()}
 }
 
 func (strategy v2PolicyStrategy) setPolicyType(d *schema.ResourceData) error {

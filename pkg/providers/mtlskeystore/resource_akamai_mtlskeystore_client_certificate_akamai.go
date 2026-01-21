@@ -42,7 +42,7 @@ var (
 )
 
 type clientCertificateAkamaiResource struct {
-	meta meta.Meta
+	meta.Resource
 }
 
 type clientCertificateAkamaiResourceModel struct {
@@ -127,25 +127,6 @@ func NewClientCertificateAkamaiResource() resource.Resource {
 
 func (c *clientCertificateAkamaiResource) Metadata(_ context.Context, _ resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = "akamai_mtlskeystore_client_certificate_akamai"
-}
-
-// Configure implements resource.ResourceWithConfigure.
-func (c *clientCertificateAkamaiResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	// Prevent panic if the provider has not been configured.
-	if req.ProviderData == nil {
-		return
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"unexpected resource configure type",
-				fmt.Sprintf("expected meta.Meta, got: %T. please report this issue to the provider developers.", req.ProviderData),
-			)
-		}
-	}()
-
-	c.meta = meta.Must(req.ProviderData)
 }
 
 func (c *clientCertificateAkamaiResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
@@ -372,7 +353,7 @@ func (c *clientCertificateAkamaiResource) Create(ctx context.Context, req resour
 		return
 	}
 
-	client := Client(c.meta)
+	client := c.Client.GetMTLSKeystore()
 	certificate, err := client.CreateClientCertificate(ctx, *clientCertificateRequest)
 	if err != nil {
 		resp.Diagnostics.AddError("Unable to Create Client Certificate", err.Error())
@@ -438,7 +419,7 @@ func (c *clientCertificateAkamaiResource) Read(ctx context.Context, req resource
 		return
 	}
 
-	client := Client(c.meta)
+	client := c.Client.GetMTLSKeystore()
 	certificate, err := client.GetClientCertificate(ctx, mtlskeystore.GetClientCertificateRequest{
 		CertificateID: state.CertificateID.ValueInt64(),
 	})
@@ -492,7 +473,7 @@ func (c *clientCertificateAkamaiResource) Update(ctx context.Context, req resour
 		return
 	}
 
-	client := Client(c.meta)
+	client := c.Client.GetMTLSKeystore()
 	isCertNameChanged := !plan.CertificateName.Equal(state.CertificateName)
 	areNotificationEmailsChanged := !plan.NotificationEmails.Equal(state.NotificationEmails)
 	if isCertNameChanged || areNotificationEmailsChanged {
@@ -667,7 +648,7 @@ func (c *clientCertificateAkamaiResource) ImportState(ctx context.Context, req r
 	}
 
 	// API call is needed to populate subject from server, and extract contract and group ID from it
-	client := Client(c.meta)
+	client := c.Client.GetMTLSKeystore()
 	certificate, err := client.GetClientCertificate(ctx, mtlskeystore.GetClientCertificateRequest{
 		CertificateID: certificateID,
 	})
@@ -730,7 +711,7 @@ func (c *clientCertificateAkamaiResource) Delete(ctx context.Context, req resour
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	client := Client(c.meta)
+	client := c.Client.GetMTLSKeystore()
 
 	versions, err := client.ListClientCertificateVersions(ctx, mtlskeystore.ListClientCertificateVersionsRequest{
 		CertificateID: state.CertificateID.ValueInt64(),

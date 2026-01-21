@@ -8,14 +8,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/str"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/timeouts"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 // PAPI CP Code
@@ -91,7 +90,6 @@ const cpCodePrefix = "cpc_"
 
 func resourceCPCodeCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := Client(meta)
 	logger := meta.Log("PAPI", "resourceCPCodeCreate")
 	logger.Debugf("Creating CP Code")
 
@@ -121,13 +119,13 @@ func resourceCPCodeCreate(ctx context.Context, d *schema.ResourceData, m interfa
 
 	var cpCodeID string
 	// Because CPCodes can't be deleted, we re-use an existing CPCode if it's there
-	cpCode, err := findCPCode(ctx, client, name, contractID, groupID)
+	cpCode, err := findCPCode(ctx, meta.Client().GetPAPI(), name, contractID, groupID)
 	if err != nil && !errors.Is(err, ErrCPCodeNotFound) {
 		return diag.Errorf("%s: %s", ErrLookingUpCPCode, err)
 	}
 
 	if errors.Is(err, ErrCPCodeNotFound) {
-		cpCodeID, err = createCPCode(ctx, client, name, productID, contractID, groupID)
+		cpCodeID, err = createCPCode(ctx, meta.Client().GetPAPI(), name, productID, contractID, groupID)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -142,7 +140,6 @@ func resourceCPCodeCreate(ctx context.Context, d *schema.ResourceData, m interfa
 func resourceCPCodeRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourceCPCodeRead")
-	client := Client(meta)
 	logger.Debugf("Read CP Code")
 
 	contractID, err := tf.GetStringValue("contract_id", d)
@@ -164,7 +161,7 @@ func resourceCPCodeRead(ctx context.Context, d *schema.ResourceData, m interface
 	if err := d.Set("contract_id", contractID); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
-	cpCodeResp, err := client.GetCPCode(ctx, papi.GetCPCodeRequest{
+	cpCodeResp, err := meta.Client().GetPAPI().GetCPCode(ctx, papi.GetCPCodeRequest{
 		CPCodeID:   d.Id(),
 		ContractID: contractID,
 		GroupID:    groupID,
@@ -193,7 +190,6 @@ func resourceCPCodeRead(ctx context.Context, d *schema.ResourceData, m interface
 func resourceCPCodeUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourceCPCodeUpdate")
-	client := Client(meta)
 	logger.Debugf("Update CP Code")
 
 	if !d.HasChangeExcept("timeouts") {
@@ -228,12 +224,12 @@ func resourceCPCodeUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 		return diag.FromErr(err)
 	}
 
-	cpCode, err := client.GetCPCodeDetail(ctx, cpCodeID)
+	cpCode, err := meta.Client().GetPAPI().GetCPCodeDetail(ctx, cpCodeID)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	_, err = client.UpdateCPCode(ctx, papi.UpdateCPCodeRequest{
+	_, err = meta.Client().GetPAPI().UpdateCPCode(ctx, papi.UpdateCPCodeRequest{
 		ID:               cpCode.ID,
 		Name:             name,
 		Purgeable:        &cpCode.Purgeable,
@@ -246,7 +242,7 @@ func resourceCPCodeUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 
 	// Because we use CPRG API for update, we need to ensure that changes are also present when fetching cpCode with PAPI
-	if err := waitForCPCodeNameUpdate(ctx, client, contractID, groupID, d.Id(), name); err != nil {
+	if err := waitForCPCodeNameUpdate(ctx, meta.Client().GetPAPI(), contractID, groupID, d.Id(), name); err != nil {
 		if errors.Is(err, ErrCPCodeUpdateTimeout) {
 			return append(tf.DiagWarningf("%s", err), tf.DiagWarningf("Resource has been updated, but the change is still ongoing on the server")...)
 		}
@@ -259,7 +255,6 @@ func resourceCPCodeUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 func resourceCPCodeImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	meta := meta.Must(m)
 	logger := meta.Log("PAPI", "resourceCPCodeImport")
-	client := Client(meta)
 	logger.Debugf("Import CP Code")
 
 	parts := strings.Split(d.Id(), ",")
@@ -274,7 +269,7 @@ func resourceCPCodeImport(ctx context.Context, d *schema.ResourceData, m interfa
 	contractID := str.AddPrefix(parts[1], "ctr_")
 	groupID := str.AddPrefix(parts[2], "grp_")
 
-	cpCodeResp, err := client.GetCPCode(ctx, papi.GetCPCodeRequest{
+	cpCodeResp, err := meta.Client().GetPAPI().GetCPCode(ctx, papi.GetCPCodeRequest{
 		CPCodeID:   cpCodeID,
 		ContractID: contractID,
 		GroupID:    groupID,

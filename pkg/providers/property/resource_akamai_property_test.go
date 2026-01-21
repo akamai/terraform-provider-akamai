@@ -10,8 +10,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/iam"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
@@ -27,6 +27,7 @@ import (
 )
 
 func TestPropertyCreate(t *testing.T) {
+	t.Parallel()
 	basicData := mockPropertyData{
 		propertyName:  "test_property",
 		productID:     "prd_3",
@@ -65,7 +66,7 @@ func TestPropertyCreate(t *testing.T) {
 			init: func(p *mockProperty) {
 				p.mockPropertyData = basicData
 				p.mockCreateProperty()
-				p.mockPropertyData.ruleTree.ruleFormat = "v2024-02-12"
+				p.ruleTree.ruleFormat = "v2024-02-12"
 				mockResourcePropertyRead(p, 2)
 				p.mockRemoveProperty()
 			},
@@ -75,9 +76,9 @@ func TestPropertyCreate(t *testing.T) {
 		"Create property with hostname bucket": {
 			init: func(p *mockProperty) {
 				p.mockPropertyData = basicData
-				p.mockPropertyData.useHostnameBucket = true
+				p.useHostnameBucket = true
 				p.mockCreateProperty()
-				p.mockPropertyData.ruleTree.ruleFormat = "v2024-02-12"
+				p.ruleTree.ruleFormat = "v2024-02-12"
 				p.mockGetProperty().Twice()
 				p.mockGetRuleTree().Times(2)
 				p.mockGetPropertyVersion().Times(2)
@@ -104,7 +105,7 @@ func TestPropertyCreate(t *testing.T) {
 				}
 
 				mockResourcePropertyCreateWithVersionHostnames(p)
-				p.mockPropertyData.ruleTree.ruleFormat = "v2024-02-12"
+				p.ruleTree.ruleFormat = "v2024-02-12"
 				mockResourcePropertyRead(p, 2)
 				p.mockRemoveProperty()
 			},
@@ -119,36 +120,31 @@ func TestPropertyCreate(t *testing.T) {
 
 	for name, td := range tests {
 		t.Run(name, func(t *testing.T) {
-			papiMock := &papi.Mock{}
-			iamMock := &iam.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 			mp := mockProperty{
-				papiMock: papiMock,
-				iamMock:  iamMock,
+				papiMock: client.PAPI,
+				iamMock:  client.IAM,
 			}
 			td.init(&mp)
-
-			useClient(papiMock, nil, func() {
-				useIam(iamMock, func() {
-					resource.UnitTest(t, resource.TestCase{
-						ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-						Steps: []resource.TestStep{
-							{
-								Config: testutils.LoadFixtureStringf(t, "testdata/TestResProperty/Creation/%s", td.configFile),
-								Check:  td.check,
-							},
-						},
-					})
-				})
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureStringf(t, "testdata/TestResProperty/Creation/%s", td.configFile),
+						Check:  td.check,
+					},
+				},
 			})
-			papiMock.AssertExpectations(t)
-			iamMock.AssertExpectations(t)
+			client.PAPI.AssertExpectations(t)
+			client.IAM.AssertExpectations(t)
 		})
 	}
 }
 
 // TestPropertyLifecycle tests various lifecycle workflows that result in a success
 func TestPropertyLifecycle(t *testing.T) {
-
+	t.Parallel()
 	// defaultChecker contains basic checks for every test case, that can be built upon
 	defaultChecker := test.NewStateChecker("akamai_property.test").
 		CheckEqual("id", "prp_4").
@@ -1180,44 +1176,41 @@ func TestPropertyLifecycle(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			papiMock := &papi.Mock{}
-			iamMock := &iam.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 			mp := mockProperty{
-				papiMock: papiMock,
-				iamMock:  iamMock,
+				papiMock: client.PAPI,
+				iamMock:  client.IAM,
 			}
 			test.init(&mp)
 
-			useClient(papiMock, nil, func() {
-				useIam(iamMock, func() {
-					resource.UnitTest(t, resource.TestCase{
-						ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-						Steps: []resource.TestStep{
-							{
-								Config: testutils.LoadFixtureStringf(t, "testdata/TestResProperty/Lifecycle/%s/step0.tf", test.configDir),
-								Check:  test.checksForCreate,
-							},
-							{
-								Config:           testutils.LoadFixtureStringf(t, "testdata/TestResProperty/Lifecycle/%s/step1.tf", test.configDir),
-								Check:            test.checksForUpdate,
-								ConfigPlanChecks: test.configPlanChecks,
-								ExpectError:      test.updateError,
-							},
-						},
-					})
-				})
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureStringf(t, "testdata/TestResProperty/Lifecycle/%s/step0.tf", test.configDir),
+						Check:  test.checksForCreate,
+					},
+					{
+						Config:           testutils.LoadFixtureStringf(t, "testdata/TestResProperty/Lifecycle/%s/step1.tf", test.configDir),
+						Check:            test.checksForUpdate,
+						ConfigPlanChecks: test.configPlanChecks,
+						ExpectError:      test.updateError,
+					},
+				},
 			})
 
-			papiMock.AssertExpectations(t)
-			iamMock.AssertExpectations(t)
+			client.PAPI.AssertExpectations(t)
+			client.IAM.AssertExpectations(t)
 		})
 	}
 
 	// separate tests as they require different number of steps or filenames
 	t.Run("Lifecycle: diff cpCode", func(t *testing.T) {
-		papiMock := &papi.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 		mp := &mockProperty{
-			papiMock:         papiMock,
+			papiMock:         client.PAPI,
 			mockPropertyData: basicData,
 		}
 		mp.ruleTree = mockRuleTreeData{
@@ -1261,25 +1254,25 @@ func TestPropertyLifecycle(t *testing.T) {
 		// delete
 		mp.mockRemoveProperty()
 
-		useClient(papiMock, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/Lifecycle/rules diff cpcode/step0.tf"),
-						Check: defaultChecker.
-							CheckEqual("rules", `{"rules":{"behaviors":[{"name":"cpCode","options":{"value":{"cpCodeLimits":null,"description":"CliTerraformCPCode","id":1050269,"name":"DevExpCliTerraformPapiAsSchemaTest","products":["Web_App_Accel"]}}}],"name":"default","options":{}}}`).
-							Build(),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/Lifecycle/rules diff cpcode/step0.tf"),
+					Check: defaultChecker.
+						CheckEqual("rules", `{"rules":{"behaviors":[{"name":"cpCode","options":{"value":{"cpCodeLimits":null,"description":"CliTerraformCPCode","id":1050269,"name":"DevExpCliTerraformPapiAsSchemaTest","products":["Web_App_Accel"]}}}],"name":"default","options":{}}}`).
+						Build(),
 				},
-			})
+			},
 		})
+		client.PAPI.AssertExpectations(t)
 	})
 
 	t.Run("Lifecycle: new version changed on server", func(t *testing.T) {
-		papiMock := &papi.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 		mp := &mockProperty{
-			papiMock:         papiMock,
+			papiMock:         client.PAPI,
 			mockPropertyData: basicDataWithDefaultRules,
 		}
 		// create
@@ -1331,30 +1324,29 @@ func TestPropertyLifecycle(t *testing.T) {
 		// delete
 		mp.mockRemoveProperty()
 
-		useClient(papiMock, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/Lifecycle/new version changed on server/step0.tf"),
-						Check:  defaultChecker.Build(),
-					},
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/Lifecycle/new version changed on server/step0.tf"),
-						Check: defaultChecker.
-							CheckEqual("latest_version", "2").
-							Build(),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/Lifecycle/new version changed on server/step0.tf"),
+					Check:  defaultChecker.Build(),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/Lifecycle/new version changed on server/step0.tf"),
+					Check: defaultChecker.
+						CheckEqual("latest_version", "2").
+						Build(),
+				},
+			},
 		})
+		client.PAPI.AssertExpectations(t)
 	})
 
 	t.Run("Lifecycle: no diff for CriteriaMustSatisfy", func(t *testing.T) {
-		// set initial data
-		papiMock := &papi.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 		mp := &mockProperty{
-			papiMock:         papiMock,
+			papiMock:         client.PAPI,
 			mockPropertyData: basicData,
 		}
 		mp.ruleTree = mockRuleTreeData{
@@ -1425,24 +1417,24 @@ func TestPropertyLifecycle(t *testing.T) {
 		// delete
 		mp.mockRemoveProperty()
 
-		useClient(papiMock, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/Lifecycle/criteriaMustSatisfyNoDiff/step0.tf"),
-						Check: defaultChecker.
-							CheckEqual("rules", `{"rules":{"children":[{"name":"Default CORS Policy","options":{},"criteriaMustSatisfy":"all"}],"name":"","options":{}}}`).
-							Build(),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/Lifecycle/criteriaMustSatisfyNoDiff/step0.tf"),
+					Check: defaultChecker.
+						CheckEqual("rules", `{"rules":{"children":[{"name":"Default CORS Policy","options":{},"criteriaMustSatisfy":"all"}],"name":"","options":{}}}`).
+						Build(),
 				},
-			})
+			},
 		})
+		client.PAPI.AssertExpectations(t)
 	})
 }
 
 // TestPropertyImports tests import functionality of property resource
 func TestPropertyImport(t *testing.T) {
+	t.Parallel()
 	// Based on importID, different API calls are being made in the Import and Read functions. If the importID allows to
 	// reconcile specific property version, GetProperty calls are being executed in Import and Read operations. If the property version
 	// is unknown, GetPropertyVersions is being used instead of GetProperty.
@@ -1763,9 +1755,10 @@ func TestPropertyImport(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			papiMock := &papi.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 			mp := mockProperty{
-				papiMock: papiMock,
+				papiMock: client.PAPI,
 			}
 			test.init(&mp)
 
@@ -1774,29 +1767,28 @@ func TestPropertyImport(t *testing.T) {
 				test.config = "testdata/TestResProperty/Importable/importable.tf"
 			}
 
-			useClient(papiMock, nil, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							ImportStateCheck:        test.stateCheck,
-							ImportStateId:           test.importID,
-							ImportState:             true,
-							ResourceName:            "akamai_property.test",
-							Config:                  testutils.LoadFixtureString(t, test.config),
-							ImportStateVerifyIgnore: []string{"product", "read_version"},
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						ImportStateCheck:        test.stateCheck,
+						ImportStateId:           test.importID,
+						ImportState:             true,
+						ResourceName:            "akamai_property.test",
+						Config:                  testutils.LoadFixtureString(t, test.config),
+						ImportStateVerifyIgnore: []string{"product", "read_version"},
 					},
-				})
+				},
 			})
 
-			papiMock.AssertExpectations(t)
+			client.PAPI.AssertExpectations(t)
 		})
 	}
 }
 
 // TestPropertyErrors tests various cases where we should expect an error or validation is triggered
 func TestPropertyErrors(t *testing.T) {
+	t.Parallel()
 	// basicData holds basic, common data across test cases
 	basicData := mockPropertyData{
 		propertyName:  "test_property",
@@ -2209,7 +2201,9 @@ func TestPropertyErrors(t *testing.T) {
 				p.mockGetActivations()               // no activation
 				p.mockCreateActivation()
 				p.mockGetActivation()
-
+				// GetPropertyVersionHostnames call differs from the same API call done in property resource,
+				// so separate mock is needed here.
+				expectGetPropertyVersionHostnames(p.papiMock, p.propertyID, p.latestVersion, p.hostnames.Items).Once()
 				activatedVersion := papi.PropertyVersionItems{
 					Items: []papi.PropertyVersionGetItem{
 						{
@@ -2399,32 +2393,33 @@ func TestPropertyErrors(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			papiMock := &papi.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 			mp := mockProperty{
-				papiMock: papiMock,
+				papiMock: client.PAPI,
 			}
 			test.init(&mp)
 
-			useClient(papiMock, nil, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps:                    test.steps,
-				})
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+				Steps:                    test.steps,
 			})
 
-			papiMock.AssertExpectations(t)
+			client.PAPI.AssertExpectations(t)
 		})
 	}
 }
 
 // TestSchemaConfiguration tests errors when invalid HCL configuration is provided
 func TestSchemaConfiguration(t *testing.T) {
+	t.Parallel()
 	assertConfigError := func(flaw, rx string) func(t *testing.T) {
 		fixtureName := strings.ReplaceAll(flaw, " ", "_")
 
 		return func(t *testing.T) {
+			t.Parallel()
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(nil, NewSubprovider()),
 				Steps: []resource.TestStep{{
 					Config:      testutils.LoadFixtureStringf(t, "testdata/TestResProperty/ConfigError/%s.tf", fixtureName),
 					ExpectError: regexp.MustCompile(rx),
@@ -2443,6 +2438,7 @@ func TestSchemaConfiguration(t *testing.T) {
 }
 
 func TestPropertyResource_VersionNotesLifecycle(t *testing.T) {
+	t.Parallel()
 	testdataDir := "testdata/TestResProperty/Lifecycle/versionNotes"
 	versionNotes1, versionNotes2, versionNotes3 := "lifecycleTest", "updatedNotes", "updatedNotes2"
 	rulesFile1And2, rulesFile4And5, rulesFile3 := "01_02_rules.json", "04_05_rules.json", "03_rules.json"
@@ -2459,7 +2455,7 @@ func TestPropertyResource_VersionNotesLifecycle(t *testing.T) {
 		CheckEqual("latest_version", "1").
 		CheckEqual("use_hostname_bucket", "false")
 
-	papiMock := &papi.Mock{}
+	client := edgegrid.NewTestClient()
 	basicData := mockPropertyData{
 		propertyName:  "test_property",
 		groupID:       "grp_123",
@@ -2487,7 +2483,7 @@ func TestPropertyResource_VersionNotesLifecycle(t *testing.T) {
 
 	prp := &mockProperty{
 		mockPropertyData: basicData,
-		papiMock:         papiMock,
+		papiMock:         client.PAPI,
 	}
 
 	// --- step 1 ---
@@ -2545,45 +2541,45 @@ func TestPropertyResource_VersionNotesLifecycle(t *testing.T) {
 	// delete
 	prp.mockRemoveProperty()
 
-	useClient(papiMock, nil, func() {
-		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-			Steps: []resource.TestStep{
-				{
-					Config: testutils.LoadFixtureStringf(t, "%s/01_with_notes_and_comments.tf", testdataDir),
-					Check: checker.
-						CheckEqual("version_notes", "lifecycleTest").
-						CheckEqual("rules", testutils.LoadFixtureStringf(t, "%s/01_expected_rules.json", testdataDir)).
-						Build(),
-				},
-				{
-					Config:   testutils.LoadFixtureStringf(t, "%s/02_update_notes_no_diff.tf", testdataDir),
-					PlanOnly: true,
-				},
-				{
-					Config: testutils.LoadFixtureStringf(t, "%s/03_update_notes_and_rules.tf", testdataDir),
-					Check: checker.
-						CheckEqual("version_notes", "updatedNotes2").
-						CheckEqual("rules", testutils.LoadFixtureStringf(t, "%s/03_expected_rules.json", testdataDir)).
-						Build(),
-				},
-				{
-					Config: testutils.LoadFixtureStringf(t, "%s/04_05_remove_notes_update_comments.tf", testdataDir),
-					Check: checker.
-						CheckEqual("version_notes", "Rules_04").
-						CheckEqual("rules", testutils.LoadFixtureStringf(t, "%s/04_expected_rules.json", testdataDir)).
-						Build(),
-				},
-				{
-					Config:   testutils.LoadFixtureStringf(t, "%s/04_05_remove_notes_update_comments.tf", testdataDir),
-					PlanOnly: true,
-				},
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+		Steps: []resource.TestStep{
+			{
+				Config: testutils.LoadFixtureStringf(t, "%s/01_with_notes_and_comments.tf", testdataDir),
+				Check: checker.
+					CheckEqual("version_notes", "lifecycleTest").
+					CheckEqual("rules", testutils.LoadFixtureStringf(t, "%s/01_expected_rules.json", testdataDir)).
+					Build(),
 			},
-		})
+			{
+				Config:   testutils.LoadFixtureStringf(t, "%s/02_update_notes_no_diff.tf", testdataDir),
+				PlanOnly: true,
+			},
+			{
+				Config: testutils.LoadFixtureStringf(t, "%s/03_update_notes_and_rules.tf", testdataDir),
+				Check: checker.
+					CheckEqual("version_notes", "updatedNotes2").
+					CheckEqual("rules", testutils.LoadFixtureStringf(t, "%s/03_expected_rules.json", testdataDir)).
+					Build(),
+			},
+			{
+				Config: testutils.LoadFixtureStringf(t, "%s/04_05_remove_notes_update_comments.tf", testdataDir),
+				Check: checker.
+					CheckEqual("version_notes", "Rules_04").
+					CheckEqual("rules", testutils.LoadFixtureStringf(t, "%s/04_expected_rules.json", testdataDir)).
+					Build(),
+			},
+			{
+				Config:   testutils.LoadFixtureStringf(t, "%s/04_05_remove_notes_update_comments.tf", testdataDir),
+				PlanOnly: true,
+			},
+		},
 	})
+
 }
 
 func TestValidatePropertyName(t *testing.T) {
+	t.Parallel()
 	invalidNameCharacters := diag.Errorf("a name must only contain letters, numbers, and these characters: . _ -")
 	invalidNameLength := diag.Errorf("a name must be longer than 0 characters and shorter than 86 characters")
 

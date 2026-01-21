@@ -5,14 +5,16 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
 func TestDataSourceMultipleGroups_basic(t *testing.T) {
+	t.Parallel()
 	t.Run("test output", func(t *testing.T) {
-		client := &papi.Mock{}
+		client := edgegrid.NewTestClient()
 		contractIDs := []string{"ctr_1234"}
 		groups := []map[string]interface{}{{
 			"group_id":        "grp_12345",
@@ -20,7 +22,7 @@ func TestDataSourceMultipleGroups_basic(t *testing.T) {
 			"parent_group_id": "grp_parent",
 			"contractIds":     contractIDs,
 		}}
-		client.On("GetGroups", testutils.MockContext).Return(&papi.GetGroupsResponse{
+		client.PAPI.On("GetGroups", testutils.MockContext).Return(&papi.GetGroupsResponse{
 			AccountID: "act_1-1TJZFB", AccountName: "example.com",
 			Groups: papi.GroupItems{Items: []*papi.Group{{
 				GroupID:       groups[0]["group_id"].(string),
@@ -28,30 +30,30 @@ func TestDataSourceMultipleGroups_basic(t *testing.T) {
 				ParentGroupID: groups[0]["parent_group_id"].(string),
 				ContractIDs:   contractIDs,
 			}}}}, nil)
-		useClient(client, nil, func() {
-			resource.ParallelTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				CheckDestroy:             testAccCheckAkamaiMultipleGroupsDestroy,
-				IsUnitTest:               true,
-				Steps: []resource.TestStep{
-					{
-						Config: testAccDataSourceMultipleGroupsBasic(),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckOutput("group_id1", groups[0]["group_id"].(string)),
-							resource.TestCheckOutput("group_name1", groups[0]["group_name"].(string)),
-							resource.TestCheckOutput("parent_group_id1", groups[0]["parent_group_id"].(string)),
-							resource.TestCheckOutput("group_contract1", contractIDs[0]),
-						),
-					},
+		resource.ParallelTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			CheckDestroy:             testAccCheckAkamaiMultipleGroupsDestroy,
+			IsUnitTest:               true,
+			Steps: []resource.TestStep{
+				{
+					Config: testAccDataSourceMultipleGroupsBasic(),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckOutput("group_id1", groups[0]["group_id"].(string)),
+						resource.TestCheckOutput("group_name1", groups[0]["group_name"].(string)),
+						resource.TestCheckOutput("parent_group_id1", groups[0]["parent_group_id"].(string)),
+						resource.TestCheckOutput("group_contract1", contractIDs[0]),
+					),
 				},
-			})
+			},
 		})
 	})
 }
 
 func TestGroup_ContractNotFoundInState(t *testing.T) {
+	t.Parallel()
 	t.Run("contractId not found in state", func(t *testing.T) {
-		client := &papi.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 		contractIDs := []string{"ctr_contractID"}
 		groups := []map[string]interface{}{{
 			"group_id":        "grp_test",
@@ -59,7 +61,7 @@ func TestGroup_ContractNotFoundInState(t *testing.T) {
 			"parent_group_id": "grp_parent",
 			"contractIds":     contractIDs,
 		}}
-		client.On("GetGroups", testutils.MockContext).Return(&papi.GetGroupsResponse{
+		client.PAPI.On("GetGroups", testutils.MockContext).Return(&papi.GetGroupsResponse{
 			AccountID: "act_1-1TJZFB", AccountName: "example.com",
 			Groups: papi.GroupItems{Items: []*papi.Group{{
 				GroupID:       groups[0]["group_id"].(string),
@@ -67,14 +69,12 @@ func TestGroup_ContractNotFoundInState(t *testing.T) {
 				ParentGroupID: groups[0]["parent_group_id"].(string),
 				ContractIDs:   contractIDs,
 			}}}}, nil)
-		useClient(client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				IsUnitTest:               true,
-				Steps: []resource.TestStep{{
-					Config: testutils.LoadFixtureString(t, "testdata/TestDSContractRequired/groups.tf"),
-				}},
-			})
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			IsUnitTest:               true,
+			Steps: []resource.TestStep{{
+				Config: testutils.LoadFixtureString(t, "testdata/TestDSContractRequired/groups.tf"),
+			}},
 		})
 	})
 }

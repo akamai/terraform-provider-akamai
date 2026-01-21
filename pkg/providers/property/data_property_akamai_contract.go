@@ -50,7 +50,7 @@ func dataPropertyContractRead(ctx context.Context, d *schema.ResourceData, m int
 		if !errors.Is(err, tf.ErrNotFound) {
 			return diag.FromErr(err)
 		}
-		contracts, err := Client(meta).GetContracts(ctx)
+		contracts, err := meta.Client().GetPAPI().GetContracts(ctx)
 		if err != nil {
 			return diag.Errorf("error looking up Contracts for group %v: %s", group, err)
 		}

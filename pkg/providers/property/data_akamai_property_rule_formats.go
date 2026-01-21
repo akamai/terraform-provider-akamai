@@ -24,13 +24,12 @@ func dataSourcePropertyRuleFormats() *schema.Resource {
 
 func dataPropertyRuleFormatsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := Client(meta)
 
 	logger := meta.Log("PAPI", "dataPropertyRuleFormatsRead")
 	logger.Debugf("read property rule formats")
 
 	// Get property rule formats
-	ruleFormats, err := client.GetRuleFormats(ctx)
+	ruleFormats, err := meta.Client().GetPAPI().GetRuleFormats(ctx)
 	if err != nil {
 		return diag.FromErr(err)
 	}

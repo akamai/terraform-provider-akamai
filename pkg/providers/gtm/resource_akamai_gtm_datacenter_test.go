@@ -245,12 +245,12 @@ func TestResGTMDatacenterImport(t *testing.T) {
 		"expect error - no domain name, invalid import ID": {
 			domainName:   "",
 			datacenterID: "3132",
-			expectError:  regexp.MustCompile(`Error: Invalid Datacenter resource ID`),
+			expectError:  regexp.MustCompile(`Error: invalid datacenter resource ID`),
 		},
 		"expect error - wrong datacenterID, invalid import ID": {
 			domainName:   "",
 			datacenterID: "wrong id",
-			expectError:  regexp.MustCompile(`Error: Invalid Datacenter resource ID`),
+			expectError:  regexp.MustCompile(`Error: invalid datacenter resource ID`),
 		},
 		"expect error - read": {
 			domainName:   testDomainName,

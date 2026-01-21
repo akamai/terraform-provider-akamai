@@ -294,7 +294,7 @@ func populateSchemaFieldsWithPolicyVersion(p *cloudlets.PolicyVersion, d *schema
 func dataSourceCloudletsPolicyRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	log := meta.Log("Cloudlets", "dataSourceCloudletsPolicyRead")
-	client := Client(meta)
+	client := meta.Client().GetCloudletsV2()
 
 	policyID, err := tf.GetIntValue("policy_id", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
@@ -315,7 +315,7 @@ func dataSourceCloudletsPolicyRead(ctx context.Context, d *schema.ResourceData, 
 
 	var version *int64
 	if v, err := tf.GetIntValue("version", d); err != nil {
-		policyVersionStrategy := v2VersionStrategy{Client(meta)}
+		policyVersionStrategy := v2VersionStrategy{meta.Client().GetCloudletsV2()}
 		version, err = policyVersionStrategy.findLatestPolicyVersion(ctx, int64(policyID))
 		if err != nil {
 			return diag.FromErr(err)

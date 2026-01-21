@@ -20,14 +20,23 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func resourceCloudletsApplicationLoadBalancerActivation() *schema.Resource {
+type albActivationResource struct {
+	pollActivationInterval time.Duration
+	retryTimeout           time.Duration
+}
+
+func resourceCloudletsApplicationLoadBalancerActivation(pollActivationInterval, retryTimeout time.Duration) *schema.Resource {
+	r := &albActivationResource{
+		pollActivationInterval: pollActivationInterval,
+		retryTimeout:           retryTimeout,
+	}
 	return &schema.Resource{
-		CreateContext: resourceApplicationLoadBalancerActivationCreate,
-		ReadContext:   resourceApplicationLoadBalancerActivationRead,
-		UpdateContext: resourceApplicationLoadBalancerActivationUpdate,
-		DeleteContext: resourceApplicationLoadBalancerActivationDelete,
+		CreateContext: r.create,
+		ReadContext:   r.read,
+		UpdateContext: r.update,
+		DeleteContext: r.delete,
 		Importer: &schema.ResourceImporter{
-			StateContext: resourceApplicationLoadBalancerActivationImport,
+			StateContext: r.importState,
 		},
 		Schema: resourceCloudletsApplicationLoadBalancerActivationSchema(),
 		Timeouts: &schema.ResourceTimeout{
@@ -85,19 +94,19 @@ func resourceCloudletsApplicationLoadBalancerActivationSchema() map[string]*sche
 	}
 }
 
-var (
-	// ALBActivationPollMinimum is the minimum polling interval for activation creation
-	ALBActivationPollMinimum = time.Second * 15
-	// ALBActivationPollInterval is the interval for polling an activation status on creation
-	ALBActivationPollInterval = ALBActivationPollMinimum
-
-	// ApplicationLoadBalancerActivationResourceTimeout is the default timeout for the resource operations
-	ApplicationLoadBalancerActivationResourceTimeout = time.Minute * 20
-	// ApplicationLoadBalancerActivationRetryTimeout is the default timeout for the resource activation retries
-	ApplicationLoadBalancerActivationRetryTimeout = time.Minute * 10
+const (
+	// defaultALBPollActivationInterval is the default polling interval for ALB activation status checks
+	defaultALBPollActivationInterval = 15 * time.Second
+	// defaultALBRetryTimeout is the default timeout for ALB activation retries
+	defaultALBRetryTimeout = 10 * time.Minute
 )
 
-func resourceApplicationLoadBalancerActivationDelete(_ context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
+var (
+	// ApplicationLoadBalancerActivationResourceTimeout is the default timeout for the resource operations
+	ApplicationLoadBalancerActivationResourceTimeout = 20 * time.Minute
+)
+
+func (r *albActivationResource) delete(_ context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("Cloudlets", "resourceApplicationLoadBalancerActivationDelete")
 	logger.Debug("Deleting a cloudlets application load balancer activation from a local schema only.")
@@ -110,7 +119,7 @@ func resourceApplicationLoadBalancerActivationDelete(_ context.Context, rd *sche
 		}}
 }
 
-func resourceApplicationLoadBalancerActivationUpdate(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (r *albActivationResource) update(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("Cloudlets", "resourceApplicationLoadBalancerActivationUpdate")
 
@@ -121,43 +130,43 @@ func resourceApplicationLoadBalancerActivationUpdate(ctx context.Context, rd *sc
 
 	if !rd.HasChanges("version", "network") {
 		logger.Debugf("Nothing has changed, nothing to update.")
-		return resourceApplicationLoadBalancerActivationRead(ctx, rd, m)
+		return r.read(ctx, rd, m)
 	}
 	logger.Debugf("version number or network has changed: proceeding to update application load balancer activation version")
 
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := Client(meta)
+	client := meta.Client().GetCloudletsV2()
 
-	activation, err := resourceApplicationLoadBalancerActivationChange(ctx, rd, logger, client)
+	activation, err := r.activationChange(ctx, rd, logger, client)
 	if err != nil {
 		return diag.Errorf("%v update: %s", ErrApplicationLoadBalancerActivation, err.Error())
 	}
 	rd.SetId(fmt.Sprintf("%s:%s", activation.OriginID, activation.Network))
-	return resourceApplicationLoadBalancerActivationRead(ctx, rd, m)
+	return r.read(ctx, rd, m)
 }
 
-func resourceApplicationLoadBalancerActivationCreate(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (r *albActivationResource) create(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("Cloudlets", "resourceApplicationLoadBalancerActivationCreate")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := Client(meta)
+	client := meta.Client().GetCloudletsV2()
 
 	logger.Debug("Creating an application load balancer activation.")
 
-	activation, err := resourceApplicationLoadBalancerActivationChange(ctx, rd, logger, client)
+	activation, err := r.activationChange(ctx, rd, logger, client)
 	if err != nil {
 		return diag.Errorf("%v create: %s", ErrApplicationLoadBalancerActivation, err.Error())
 	}
 	rd.SetId(fmt.Sprintf("%s:%s", activation.OriginID, activation.Network))
-	return resourceApplicationLoadBalancerActivationRead(ctx, rd, m)
+	return r.read(ctx, rd, m)
 }
 
-func resourceApplicationLoadBalancerActivationImport(ctx context.Context, rd *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+func (r *albActivationResource) importState(ctx context.Context, rd *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	meta := meta.Must(m)
 	logger := meta.Log("Cloudlets", "resourceApplicationLoadBalancerActivationImport")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 	logger.Debug("Importing an application load balancer activation.")
-	client := Client(meta)
+	client := meta.Client().GetCloudletsV2()
 
 	parts := strings.Split(rd.Id(), ",")
 	if len(parts) != 3 {
@@ -199,7 +208,7 @@ func resourceApplicationLoadBalancerActivationImport(ctx context.Context, rd *sc
 	return []*schema.ResourceData{rd}, nil
 }
 
-func resourceApplicationLoadBalancerActivationChange(ctx context.Context, rd *schema.ResourceData, logger log.Interface, client cloudlets.Cloudlets) (*cloudlets.LoadBalancerActivation, error) {
+func (r *albActivationResource) activationChange(ctx context.Context, rd *schema.ResourceData, logger log.Interface, client cloudlets.Cloudlets) (*cloudlets.LoadBalancerActivation, error) {
 	originID, err := tf.GetStringValue("origin_id", rd)
 	if err != nil {
 		return nil, err
@@ -237,7 +246,7 @@ func resourceApplicationLoadBalancerActivationChange(ctx context.Context, rd *sc
 
 	// at this point, we are sure that the given version is not active
 	logger.Debugf("Activating application load balancer version %d.", version)
-	pollingActivationTries := ALBActivationPollMinimum
+	pollingActivationTries := r.pollActivationInterval
 	var activation *cloudlets.LoadBalancerActivation
 
 	for {
@@ -257,7 +266,7 @@ func resourceApplicationLoadBalancerActivationChange(ctx context.Context, rd *sc
 		case <-time.After(pollingActivationTries):
 			logger.Debugf("retrying ALB activation after %s", pollingActivationTries)
 			pollingActivationTries = 2 * pollingActivationTries
-			if pollingActivationTries > ApplicationLoadBalancerActivationRetryTimeout ||
+			if pollingActivationTries > r.retryTimeout ||
 				!strings.Contains(strings.ToLower(err.Error()), ErrApplicationLoadBalancerActivationOriginNotDefined.Error()) {
 				if errOnRestore := tf.RestoreOldValues(rd, []string{"network", "version"}); errOnRestore != nil {
 					return activation, fmt.Errorf(`%w failed. No changes were written to the server:
@@ -281,7 +290,7 @@ Failed to restore previous local schema values. The schema will remain in a tain
 	}
 
 	// wait until application load balancer activation is done
-	activation, err = waitForLoadBalancerActivation(ctx, client, originID, version, activationNetwork)
+	activation, err = waitForLoadBalancerActivation(ctx, client, originID, version, activationNetwork, r.pollActivationInterval)
 	if err != nil {
 		return nil, fmt.Errorf("an error occurred while waiting for the load balancer activation status == 'active':\n%s", err.Error())
 	}
@@ -295,11 +304,11 @@ Failed to restore previous local schema values. The schema will remain in a tain
 	return activation, nil
 }
 
-func resourceApplicationLoadBalancerActivationRead(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (r *albActivationResource) read(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("Cloudlets", "resourceApplicationLoadBalancerActivationRead")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := Client(meta)
+	client := meta.Client().GetCloudletsV2()
 
 	logger.Debug("Reading application load balancer activations.")
 
@@ -370,7 +379,7 @@ func getApplicationLoadBalancerActivation(ctx context.Context, client cloudlets.
 }
 
 // waitForLoadBalancerActivation polls server until the activation has active status or until context is closed (because of timeout, cancellation or context termination)
-func waitForLoadBalancerActivation(ctx context.Context, client cloudlets.Cloudlets, originID string, version int64, network cloudlets.LoadBalancerActivationNetwork) (*cloudlets.LoadBalancerActivation, error) {
+func waitForLoadBalancerActivation(ctx context.Context, client cloudlets.Cloudlets, originID string, version int64, network cloudlets.LoadBalancerActivationNetwork, pollActivationInterval time.Duration) (*cloudlets.LoadBalancerActivation, error) {
 	activation, err := getApplicationLoadBalancerActivation(ctx, client, originID, version, network)
 	if err != nil {
 		return nil, err
@@ -380,7 +389,7 @@ func waitForLoadBalancerActivation(ctx context.Context, client cloudlets.Cloudle
 			return nil, fmt.Errorf("%v: originID: %s, status: %s", ErrApplicationLoadBalancerActivation, activation.OriginID, activation.Status)
 		}
 		select {
-		case <-time.After(tf.MaxDuration(ALBActivationPollInterval, ALBActivationPollMinimum)):
+		case <-time.After(pollActivationInterval):
 			activation, err = getApplicationLoadBalancerActivation(ctx, client, originID, version, network)
 			if err != nil {
 				return nil, err

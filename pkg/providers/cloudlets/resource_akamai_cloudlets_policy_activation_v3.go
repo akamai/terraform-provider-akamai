@@ -9,14 +9,12 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudlets"
 	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudlets/v3"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/log"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 type v3ActivationStrategy struct {
 	client       v3.Cloudlets
-	logger       log.Interface
 	network      v3.Network
 	activationID int64
 }
@@ -74,14 +72,14 @@ func (strategy *v3ActivationStrategy) activateVersion(ctx context.Context, polic
 	return err
 }
 
-func (strategy *v3ActivationStrategy) reactivateVersion(ctx context.Context, policyID, version int64) error {
+func (strategy *v3ActivationStrategy) reactivateVersion(ctx context.Context, policyID, version int64, _ time.Duration) error {
 	return strategy.activateVersion(ctx, policyID, version)
 }
 
-func (strategy *v3ActivationStrategy) waitForActivation(ctx context.Context, policyID, _ int64) (string, error) {
+func (strategy *v3ActivationStrategy) waitForActivation(ctx context.Context, policyID, _ int64, pollInterval time.Duration) (string, error) {
 	for {
 		select {
-		case <-time.After(tf.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
+		case <-time.After(pollInterval):
 			activation, err := strategy.client.GetPolicyActivation(ctx, v3.GetPolicyActivationRequest{
 				PolicyID:     policyID,
 				ActivationID: strategy.activationID,
@@ -113,7 +111,7 @@ func (strategy *v3ActivationStrategy) getID(policyID int64, network v3.Network) 
 	return fmt.Sprintf("%d:%s", policyID, network)
 }
 
-func (strategy *v3ActivationStrategy) readActivationFromServer(ctx context.Context, policyID int64, network string) (map[string]any, error) {
+func (strategy *v3ActivationStrategy) readActivationFromServer(ctx context.Context, policyID int64, network string, _ time.Duration) (map[string]any, error) {
 	policy, err := strategy.client.GetPolicy(ctx, v3.GetPolicyRequest{
 		PolicyID: policyID,
 	})
@@ -156,7 +154,7 @@ func mapNetworkToV2(network v3.Network) cloudlets.PolicyActivationNetwork {
 	return cloudlets.PolicyActivationNetworkProduction
 }
 
-func (strategy *v3ActivationStrategy) isReactivationNotNeeded(ctx context.Context, policyID, version int64, _ bool) (bool, string, error) {
+func (strategy *v3ActivationStrategy) isReactivationNotNeeded(ctx context.Context, policyID, version int64, _ bool, _ time.Duration) (bool, string, error) {
 	isActive, id, err := strategy.isVersionAlreadyActive(ctx, policyID, version)
 	if err != nil {
 		return false, "", fmt.Errorf("policy activation update: %w", err)
@@ -164,7 +162,7 @@ func (strategy *v3ActivationStrategy) isReactivationNotNeeded(ctx context.Contex
 	return isActive, id, nil
 }
 
-func (strategy *v3ActivationStrategy) deactivatePolicy(ctx context.Context, policyID, version int64, network string) error {
+func (strategy *v3ActivationStrategy) deactivatePolicy(ctx context.Context, policyID, version int64, network string, pollInterval time.Duration) error {
 	net, err := strategy.parseNetwork(network)
 	if err != nil {
 		return err
@@ -181,7 +179,7 @@ func (strategy *v3ActivationStrategy) deactivatePolicy(ctx context.Context, poli
 		strategy.activationID = deactivation.ID
 	}
 
-	_, err = strategy.waitForActivation(ctx, policyID, -1)
+	_, err = strategy.waitForActivation(ctx, policyID, -1, pollInterval)
 	return err
 }
 

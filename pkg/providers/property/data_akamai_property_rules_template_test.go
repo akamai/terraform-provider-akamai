@@ -6,7 +6,6 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -15,343 +14,305 @@ import (
 )
 
 func TestDataAkamaiPropertyRulesRead(t *testing.T) {
+	t.Parallel()
 	t.Run("valid nested template with vars map", func(t *testing.T) {
-		client := papi.Mock{}
-		useClient(&client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_map.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/rules/rules_out.json")),
-						),
-					},
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_map_with_data.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/rules/rules_out.json")),
-						),
-					},
+		t.Parallel()
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(nil, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_map.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/rules/rules_out.json")),
+					),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_map_with_data.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/rules/rules_out.json")),
+					),
+				},
+			},
 		})
 	})
 	t.Run("valid nested template with vars map and non-standard property-snippets folder", func(t *testing.T) {
-		client := papi.Mock{}
-		useClient(&client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_map_ns.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/rules/rules_out.json")),
-						),
-					},
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_map_with_data_ns.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/rules/rules_out.json")),
-						),
-					},
+		t.Parallel()
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(nil, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_map_ns.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/rules/rules_out.json")),
+					),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_map_with_data_ns.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/rules/rules_out.json")),
+					),
+				},
+			},
 		})
 	})
 	t.Run("valid nested template with vars files", func(t *testing.T) {
-		client := papi.Mock{}
-		useClient(&client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_null_values.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/rules/rules_defaults.json")),
-						),
-					},
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_null_values_with_data.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/rules/rules_defaults.json")),
-						),
-					},
+		t.Parallel()
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(nil, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_null_values.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/rules/rules_defaults.json")),
+					),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_null_values_with_data.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/rules/rules_defaults.json")),
+					),
+				},
+			},
 		})
 	})
 	t.Run("valid nested template with including jsons that are not valid", func(t *testing.T) {
-		client := papi.Mock{}
-		useClient(&client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_not_valid_json_includes.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/rules/rules_incorrect_json_includes.json")),
-						),
-					},
+		t.Parallel()
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(nil, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_not_valid_json_includes.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/rules/rules_incorrect_json_includes.json")),
+					),
 				},
-			})
+			},
 		})
 	})
 	t.Run("null values do not overwrite defaults", func(t *testing.T) {
-		client := papi.Mock{}
-		useClient(&client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_file.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/rules/rules_out.json")),
-						),
-					},
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_file_with_data.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/rules/rules_out.json")),
-						),
-					},
+		t.Parallel()
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(nil, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_file.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/rules/rules_out.json")),
+					),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_file_with_data.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/rules/rules_out.json")),
+					),
+				},
+			},
 		})
 	})
 	t.Run("valid property-snippets folder as symlink", func(t *testing.T) {
-		client := papi.Mock{}
-		useClient(&client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_symlink_top.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/symlink/rules_out.json")),
-						),
-					},
+		t.Parallel()
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(nil, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_symlink_top.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/symlink/rules_out.json")),
+					),
 				},
-			})
+			},
 		})
 	})
 	t.Run("valid property-snippets subfolder as symlink", func(t *testing.T) {
-		client := papi.Mock{}
-		useClient(&client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_symlink.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/symlink/rules_out.json")),
-						),
-					},
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_symlink_with_data.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/symlink/rules_out.json")),
-						),
-					},
+		t.Parallel()
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(nil, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_symlink.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/symlink/rules_out.json")),
+					),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_symlink_with_data.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/symlink/rules_out.json")),
+					),
+				},
+			},
 		})
 	})
 	t.Run("valid property-snippets subfolders as recursive symlinks", func(t *testing.T) {
-		client := papi.Mock{}
-		useClient(&client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_symlink_recursive.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/symlink/rules_out.json")),
-						),
-					},
+		t.Parallel()
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(nil, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_symlink_recursive.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/symlink/rules_out.json")),
+					),
 				},
-			})
+			},
 		})
 	})
 	t.Run("returns error if property-snippets subfolder is symlink but follow_links disabled", func(t *testing.T) {
-		client := papi.Mock{}
-		useClient(&client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_symlink_follow_links_disabled.tf"),
-						ExpectError: regexp.MustCompile(`reading file: read testdata/TestDSRulesTemplate/symlink/property-snippets/common: is a directory: set follow_links to allow symlinks as snippet folders`),
-					},
+		t.Parallel()
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(nil, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_symlink_follow_links_disabled.tf"),
+					ExpectError: regexp.MustCompile(`reading file: read testdata/TestDSRulesTemplate/symlink/property-snippets/common: is a directory: set follow_links to allow symlinks as snippet folders`),
 				},
-			})
+			},
 		})
 	})
 	t.Run("error conflicts in template_file and template", func(t *testing.T) {
-		client := papi.Mock{}
-		useClient(&client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_file_data_conflict.tf"),
-						ExpectError: regexp.MustCompile(`"template_file": only one of .template,template_file. can be specified`),
-					},
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_file_data_missing.tf"),
-						ExpectError: regexp.MustCompile(`"template_file": one of .template,template_file. must be specified`),
-					},
+		t.Parallel()
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(nil, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_file_data_conflict.tf"),
+					ExpectError: regexp.MustCompile(`"template_file": only one of .template,template_file. can be specified`),
 				},
-			})
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_file_data_missing.tf"),
+					ExpectError: regexp.MustCompile(`"template_file": one of .template,template_file. must be specified`),
+				},
+			},
 		})
 	})
 	t.Run("error missing values in template", func(t *testing.T) {
-		client := papi.Mock{}
-		useClient(&client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_missing_data.tf"),
-						ExpectError: regexp.MustCompile(`The argument "template_data" is required, but no definition was found.`),
-					},
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_missing_dir.tf"),
-						ExpectError: regexp.MustCompile(`The argument "template_dir" is required, but no definition was found.`),
-					},
+		t.Parallel()
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(nil, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_missing_data.tf"),
+					ExpectError: regexp.MustCompile(`The argument "template_data" is required, but no definition was found.`),
 				},
-			})
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_missing_dir.tf"),
+					ExpectError: regexp.MustCompile(`The argument "template_dir" is required, but no definition was found.`),
+				},
+			},
 		})
 	})
 	t.Run("error setting both map and file variables", func(t *testing.T) {
-		client := papi.Mock{}
-		useClient(&client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_conflict.tf"),
-						ExpectError: regexp.MustCompile(`"variables": conflicts with var_definition_file`),
-					},
+		t.Parallel()
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(nil, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_conflict.tf"),
+					ExpectError: regexp.MustCompile(`"variables": conflicts with var_definition_file`),
 				},
-			})
+			},
 		})
 	})
 	t.Run("variable has invalid type", func(t *testing.T) {
-		client := papi.Mock{}
-		useClient(&client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_invalid_type.tf"),
-						ExpectError: regexp.MustCompile(`'type' has invalid value: should be 'bool', 'number', 'string' or 'jsonBlock'`),
-					},
+		t.Parallel()
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(nil, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_invalid_type.tf"),
+					ExpectError: regexp.MustCompile(`'type' has invalid value: should be 'bool', 'number', 'string' or 'jsonBlock'`),
 				},
-			})
+			},
 		})
 	})
 	t.Run("variable not found in template", func(t *testing.T) {
-		client := papi.Mock{}
-		useClient(&client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_var_not_found.tf"),
-						ExpectError: regexp.MustCompile(`executing "snippets/sub/another-template.json" at <.options>: map has no entry for key "options"`),
-					},
+		t.Parallel()
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(nil, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_var_not_found.tf"),
+					ExpectError: regexp.MustCompile(`executing "snippets/sub/another-template.json" at <.options>: map has no entry for key "options"`),
 				},
-			})
+			},
 		})
 	})
 	t.Run("invalid variable in map", func(t *testing.T) {
-		client := papi.Mock{}
-		useClient(&client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_invalid_value.tf"),
-						ExpectError: regexp.MustCompile(`value could not be represented as number: strconv.ParseFloat: parsing "all": invalid syntax`),
-					},
+		t.Parallel()
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(nil, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_invalid_value.tf"),
+					ExpectError: regexp.MustCompile(`value could not be represented as number: strconv.ParseFloat: parsing "all": invalid syntax`),
 				},
-			})
+			},
 		})
 	})
 	t.Run("error fetching vars from map - file not found", func(t *testing.T) {
-		client := papi.Mock{}
-		useClient(&client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_file_not_found.tf"),
-						ExpectError: regexp.MustCompile(`reading file: open invalid_path: no such file or directory`),
-					},
+		t.Parallel()
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(nil, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_vars_file_not_found.tf"),
+					ExpectError: regexp.MustCompile(`reading file: open invalid_path: no such file or directory`),
 				},
-			})
+			},
 		})
 	})
 	t.Run("invalid json result", func(t *testing.T) {
-		client := papi.Mock{}
-		useClient(&client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_invalid_json.tf"),
-						ExpectError: regexp.MustCompile(`invalid JSON result:`),
-					},
+		t.Parallel()
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(nil, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_invalid_json.tf"),
+					ExpectError: regexp.MustCompile(`invalid JSON result:`),
 				},
-			})
+			},
 		})
 	})
 	t.Run("template file not found", func(t *testing.T) {
-		client := papi.Mock{}
-		useClient(&client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_file_not_found.tf"),
-						ExpectError: regexp.MustCompile(`Error: stat testdata/TestDSRulesTemplate/rules/property-snippets/non-existent.json: no such file or directory`),
-					},
+		t.Parallel()
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(nil, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_file_not_found.tf"),
+					ExpectError: regexp.MustCompile(`Error: stat testdata/TestDSRulesTemplate/rules/property-snippets/non-existent.json: no such file or directory`),
 				},
-			})
+			},
 		})
 	})
 	t.Run("template file is empty", func(t *testing.T) {
-		client := papi.Mock{}
-		useClient(&client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_file_is_empty.tf"),
-						ExpectError: regexp.MustCompile(`Error: snippets file should be with .json extension and cannot be empty. Invalid file: testdata/TestDSRulesTemplate/property-snippets/empty_json.json`),
-					},
+		t.Parallel()
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(nil, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_file_is_empty.tf"),
+					ExpectError: regexp.MustCompile(`Error: snippets file should be with .json extension and cannot be empty. Invalid file: testdata/TestDSRulesTemplate/property-snippets/empty_json.json`),
 				},
-			})
+			},
 		})
 	})
 	t.Run("error fetching json file from .terraform - expected error", func(t *testing.T) {
-		client := papi.Mock{}
-		useClient(&client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_json_file_in_terraform_config_dir.tf"),
-						ExpectError: regexp.MustCompile(`template ".terraform/rules1.json" not defined`),
-					},
+		t.Parallel()
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(nil, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_json_file_in_terraform_config_dir.tf"),
+					ExpectError: regexp.MustCompile(`template ".terraform/rules1.json" not defined`),
 				},
-			})
+			},
 		})
 	})
 }
 
 func TestFormatValue(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		given     interface{}
 		expected  interface{}
@@ -392,6 +353,7 @@ func TestFormatValue(t *testing.T) {
 }
 
 func TestGetValuesFromMap(t *testing.T) {
+	t.Parallel()
 	variablesPath := "testdata/TestDSRulesTemplate/variables"
 	tests := map[string]struct {
 		definitionsFile string
@@ -458,6 +420,7 @@ func TestGetValuesFromMap(t *testing.T) {
 }
 
 func TestConvertToTypedMap(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		givenVars []interface{}
 		expected  map[string]interface{}
@@ -559,6 +522,7 @@ func TestConvertToTypedMap(t *testing.T) {
 }
 
 func TestFlattenTemplate(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		givenList    []interface{}
 		expectedData string
@@ -639,6 +603,7 @@ func TestFlattenTemplate(t *testing.T) {
 }
 
 func TestConvertToTemplate(t *testing.T) {
+	t.Parallel()
 	templates := "testdata/TestDSRulesTemplate/rules/property-snippets"
 	templatesOut := "testdata/TestDSRulesTemplate/output"
 	tests := map[string]struct {
@@ -681,6 +646,7 @@ func TestConvertToTemplate(t *testing.T) {
 }
 
 func TestStringToTemplate(t *testing.T) {
+	t.Parallel()
 	templates := "testdata/TestDSRulesTemplate/rules/property-snippets"
 	templatesOut := "testdata/TestDSRulesTemplate/output"
 	tests := map[string]struct {
@@ -721,6 +687,7 @@ func TestStringToTemplate(t *testing.T) {
 }
 
 func TestVariablesNesting(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		configPath   string
 		expectedPath string
@@ -752,25 +719,24 @@ func TestVariablesNesting(t *testing.T) {
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := papi.Mock{}
-			useClient(&client, nil, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							Config: testutils.LoadFixtureString(t, test.configPath),
-							Check: resource.ComposeAggregateTestCheckFunc(
-								resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", testutils.LoadFixtureString(t, test.expectedPath)),
-							),
-						},
+			t.Parallel()
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(nil, NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, test.configPath),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("data.akamai_property_rules_template.test", "json", testutils.LoadFixtureString(t, test.expectedPath)),
+						),
 					},
-				})
+				},
 			})
 		})
 	}
 }
 
 func TestVariablesAndIncludesNestingCyclicDependency(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		configPath string
 		withError  string
@@ -786,38 +752,33 @@ func TestVariablesAndIncludesNestingCyclicDependency(t *testing.T) {
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := papi.Mock{}
-			useClient(&client, nil, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							Config:      testutils.LoadFixtureString(t, test.configPath),
-							ExpectError: regexp.MustCompile(test.withError),
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(nil, NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureString(t, test.configPath),
+						ExpectError: regexp.MustCompile(test.withError),
 					},
-				})
+				},
 			})
 		})
 	}
 }
 
 func TestMultipleTemplates(t *testing.T) {
+	t.Parallel()
 	t.Run("Multiple templates in one directory", func(t *testing.T) {
-		client := papi.Mock{}
-		useClient(&client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_multiple_templates.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("data.akamai_property_rules_template.rules1", "json", testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/output/template_multiple_templates_snippet1.json")),
-							resource.TestCheckResourceAttr("data.akamai_property_rules_template.rules2", "json", testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/output/template_multiple_templates_snippet2.json")),
-						),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(nil, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/template_multiple_templates.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("data.akamai_property_rules_template.rules1", "json", testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/output/template_multiple_templates_snippet1.json")),
+						resource.TestCheckResourceAttr("data.akamai_property_rules_template.rules2", "json", testutils.LoadFixtureString(t, "testdata/TestDSRulesTemplate/output/template_multiple_templates_snippet2.json")),
+					),
 				},
-			})
+			},
 		})
 	})
 }

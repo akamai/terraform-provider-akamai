@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/assert"
@@ -304,199 +305,193 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 	)
 
 	t.Run("create a new include activation lifecycle", func(t *testing.T) {
-		client := new(papi.Mock)
+		client := edgegrid.NewTestClient()
 		state := State{}
 
 		// create
 		actReq := activateIncludeReq("STAGING", false)
-		state = expectCreate(client, state, actReq)
+		state = expectCreate(client.PAPI, state, actReq)
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// delete
 		deactReq := deactivateIncludeReq("STAGING", false)
-		_ = expectDelete(client, state, deactReq)
+		_ = expectDelete(client.PAPI, state, deactReq)
 
-		useClient(client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation.tf", testDir),
-						Check: checkAttributes(attrs{
-							includeID:    includeID,
-							contractID:   contractID,
-							groupID:      groupID,
-							version:      version,
-							network:      "STAGING",
-							note:         note,
-							notifyEmails: []string{email},
-						}),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation.tf", testDir),
+					Check: checkAttributes(attrs{
+						includeID:    includeID,
+						contractID:   contractID,
+						groupID:      groupID,
+						version:      version,
+						network:      "STAGING",
+						note:         note,
+						notifyEmails: []string{email},
+					}),
 				},
-			})
+			},
 		})
-		client.AssertExpectations(t)
+		client.PAPI.AssertExpectations(t)
 	})
 
 	t.Run("include activation with timeout lifecycle", func(t *testing.T) {
-		client := new(papi.Mock)
+		client := edgegrid.NewTestClient()
 		state := State{}
 
 		// create
 		actReq := activateIncludeReq("STAGING", false)
-		state = expectCreate(client, state, actReq)
+		state = expectCreate(client.PAPI, state, actReq)
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// update
 		// no actual update on only timeout change
-		expectRead(client, state, papi.ActivationNetworkStaging)
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// delete
 		deactReq := deactivateIncludeReq("STAGING", false)
-		_ = expectDelete(client, state, deactReq)
+		_ = expectDelete(client.PAPI, state, deactReq)
 
-		useClient(client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation_with_timeout.tf", testDir),
-						Check: checkAttributes(attrs{
-							includeID:    includeID,
-							contractID:   contractID,
-							groupID:      groupID,
-							version:      version,
-							network:      "STAGING",
-							note:         note,
-							notifyEmails: []string{email},
-							timeout:      "2h1m",
-						}),
-					},
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation_with_timeout_update.tf", testDir),
-						Check: checkAttributes(attrs{
-							includeID:    includeID,
-							contractID:   contractID,
-							groupID:      groupID,
-							version:      version,
-							network:      "STAGING",
-							note:         note,
-							notifyEmails: []string{email},
-							timeout:      "2h2m",
-						}),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation_with_timeout.tf", testDir),
+					Check: checkAttributes(attrs{
+						includeID:    includeID,
+						contractID:   contractID,
+						groupID:      groupID,
+						version:      version,
+						network:      "STAGING",
+						note:         note,
+						notifyEmails: []string{email},
+						timeout:      "2h1m",
+					}),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation_with_timeout_update.tf", testDir),
+					Check: checkAttributes(attrs{
+						includeID:    includeID,
+						contractID:   contractID,
+						groupID:      groupID,
+						version:      version,
+						network:      "STAGING",
+						note:         note,
+						notifyEmails: []string{email},
+						timeout:      "2h2m",
+					}),
+				},
+			},
 		})
-		client.AssertExpectations(t)
+		client.PAPI.AssertExpectations(t)
 	})
 
 	t.Run("update include activation lifecycle", func(t *testing.T) {
-		client := new(papi.Mock)
+		client := edgegrid.NewTestClient()
 		state := State{}
 
 		// 1. first step
 
 		// create
 		actReq := activateIncludeReq("STAGING", false)
-		state = expectCreate(client, state, actReq)
+		state = expectCreate(client.PAPI, state, actReq)
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// 2. second step - network ForceNew
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// delete
 		deactReq := deactivateIncludeReq("STAGING", false)
-		state = expectDelete(client, state, deactReq)
+		state = expectDelete(client.PAPI, state, deactReq)
 
 		// create
 		actReq = activateIncludeReq("PRODUCTION", true)
-		state = expectCreate(client, state, actReq)
+		state = expectCreate(client.PAPI, state, actReq)
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkProduction)
+		expectRead(client.PAPI, state, papi.ActivationNetworkProduction)
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkProduction)
+		expectRead(client.PAPI, state, papi.ActivationNetworkProduction)
 
 		// delete
 		deactReq = deactivateIncludeReq("PRODUCTION", true)
-		_ = expectDelete(client, state, deactReq)
+		_ = expectDelete(client.PAPI, state, deactReq)
 
-		useClient(client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation.tf", testDir),
-						Check: checkAttributes(attrs{
-							includeID:    includeID,
-							contractID:   contractID,
-							groupID:      groupID,
-							version:      version,
-							network:      "STAGING",
-							note:         note,
-							notifyEmails: []string{email},
-						}),
-					},
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation_update.tf", testDir),
-						Check: checkAttributes(attrs{
-							includeID:                   includeID,
-							contractID:                  contractID,
-							groupID:                     groupID,
-							version:                     version,
-							network:                     "PRODUCTION",
-							note:                        note,
-							notifyEmails:                []string{email},
-							autoAcknowledgeRuleWarnings: true,
-						}),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation.tf", testDir),
+					Check: checkAttributes(attrs{
+						includeID:    includeID,
+						contractID:   contractID,
+						groupID:      groupID,
+						version:      version,
+						network:      "STAGING",
+						note:         note,
+						notifyEmails: []string{email},
+					}),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation_update.tf", testDir),
+					Check: checkAttributes(attrs{
+						includeID:                   includeID,
+						contractID:                  contractID,
+						groupID:                     groupID,
+						version:                     version,
+						network:                     "PRODUCTION",
+						note:                        note,
+						notifyEmails:                []string{email},
+						autoAcknowledgeRuleWarnings: true,
+					}),
+				},
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.PAPI.AssertExpectations(t)
 	})
 
 	t.Run("update include activation lifecycle - extended notify emails is correctly read in update", func(t *testing.T) {
-		client := new(papi.Mock)
+		client := edgegrid.NewTestClient()
 		state := State{}
 
 		// 1. first step
 
 		// create
 		actReq := activateIncludeReq("STAGING", false)
-		state = expectCreate(client, state, actReq)
+		state = expectCreate(client.PAPI, state, actReq)
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// 2. second step - activation of new version
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// update
 		updateVersion := 4
@@ -505,58 +500,56 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		actReq = activateIncludeReq("STAGING", false)
 		actReq.Version = updateVersion
 		actReq.NotifyEmails = updateNotificationEmails
-		state = expectCreate(client, state, actReq)
+		state = expectCreate(client.PAPI, state, actReq)
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// delete
 		deactReq := deactivateIncludeReq("STAGING", false)
 		deactReq.Version = updateVersion
 		deactReq.NotifyEmails = updateNotificationEmails
-		_ = expectDelete(client, state, deactReq)
+		_ = expectDelete(client.PAPI, state, deactReq)
 
-		useClient(client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation.tf", testDir),
-						Check: checkAttributes(attrs{
-							includeID:    includeID,
-							contractID:   contractID,
-							groupID:      groupID,
-							version:      version,
-							network:      "STAGING",
-							note:         note,
-							notifyEmails: []string{email},
-						}),
-					},
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation_email_updated.tf", testDir),
-						Check: checkAttributes(attrs{
-							includeID:                   includeID,
-							contractID:                  contractID,
-							groupID:                     groupID,
-							version:                     4,
-							network:                     "STAGING",
-							note:                        note,
-							notifyEmails:                []string{"jbond2@example.com", email},
-							autoAcknowledgeRuleWarnings: false,
-						}),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation.tf", testDir),
+					Check: checkAttributes(attrs{
+						includeID:    includeID,
+						contractID:   contractID,
+						groupID:      groupID,
+						version:      version,
+						network:      "STAGING",
+						note:         note,
+						notifyEmails: []string{email},
+					}),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation_email_updated.tf", testDir),
+					Check: checkAttributes(attrs{
+						includeID:                   includeID,
+						contractID:                  contractID,
+						groupID:                     groupID,
+						version:                     4,
+						network:                     "STAGING",
+						note:                        note,
+						notifyEmails:                []string{"jbond2@example.com", email},
+						autoAcknowledgeRuleWarnings: false,
+					}),
+				},
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.PAPI.AssertExpectations(t)
 	})
 
 	t.Run("update include activation lifecycle - shrinking notify emails is correctly read in update", func(t *testing.T) {
-		client := new(papi.Mock)
+		client := edgegrid.NewTestClient()
 		state := State{}
 
 		// 1. first step
@@ -568,90 +561,88 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		actReq := activateIncludeReq("STAGING", false)
 		actReq.Version = createVersion
 		actReq.NotifyEmails = createNotificationEmails
-		state = expectCreate(client, state, actReq)
+		state = expectCreate(client.PAPI, state, actReq)
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// 2. second step - activation of new version
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// update
 
 		actReq = activateIncludeReq("STAGING", false)
-		state = expectCreate(client, state, actReq)
+		state = expectCreate(client.PAPI, state, actReq)
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// delete
 		deactReq := deactivateIncludeReq("STAGING", false)
-		_ = expectDelete(client, state, deactReq)
+		_ = expectDelete(client.PAPI, state, deactReq)
 
-		useClient(client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation_email_updated.tf", testDir),
-						Check: checkAttributes(attrs{
-							includeID:                   includeID,
-							contractID:                  contractID,
-							groupID:                     groupID,
-							version:                     4,
-							network:                     "STAGING",
-							note:                        note,
-							notifyEmails:                []string{"jbond2@example.com", email},
-							autoAcknowledgeRuleWarnings: false,
-						}),
-					},
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation.tf", testDir),
-						Check: checkAttributes(attrs{
-							includeID:    includeID,
-							contractID:   contractID,
-							groupID:      groupID,
-							version:      version,
-							network:      "STAGING",
-							note:         note,
-							notifyEmails: []string{email},
-						}),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation_email_updated.tf", testDir),
+					Check: checkAttributes(attrs{
+						includeID:                   includeID,
+						contractID:                  contractID,
+						groupID:                     groupID,
+						version:                     4,
+						network:                     "STAGING",
+						note:                        note,
+						notifyEmails:                []string{"jbond2@example.com", email},
+						autoAcknowledgeRuleWarnings: false,
+					}),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation.tf", testDir),
+					Check: checkAttributes(attrs{
+						includeID:    includeID,
+						contractID:   contractID,
+						groupID:      groupID,
+						version:      version,
+						network:      "STAGING",
+						note:         note,
+						notifyEmails: []string{email},
+					}),
+				},
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.PAPI.AssertExpectations(t)
 	})
 
 	t.Run("update include activation lifecycle - replaced notify emails is correctly read in update", func(t *testing.T) {
-		client := new(papi.Mock)
+		client := edgegrid.NewTestClient()
 		state := State{}
 
 		// 1. first step
 
 		// create
 		actReq := activateIncludeReq("STAGING", false)
-		state = expectCreate(client, state, actReq)
+		state = expectCreate(client.PAPI, state, actReq)
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// 2. second step - activation of new version
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// update
 		updateVersion := 4
@@ -660,58 +651,56 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		actReq = activateIncludeReq("STAGING", false)
 		actReq.Version = updateVersion
 		actReq.NotifyEmails = updateNotificationEmails
-		state = expectCreate(client, state, actReq)
+		state = expectCreate(client.PAPI, state, actReq)
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// delete
 		deactReq := deactivateIncludeReq("STAGING", false)
 		deactReq.Version = updateVersion
 		deactReq.NotifyEmails = updateNotificationEmails
-		_ = expectDelete(client, state, deactReq)
+		_ = expectDelete(client.PAPI, state, deactReq)
 
-		useClient(client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation.tf", testDir),
-						Check: checkAttributes(attrs{
-							includeID:    includeID,
-							contractID:   contractID,
-							groupID:      groupID,
-							version:      version,
-							network:      "STAGING",
-							note:         note,
-							notifyEmails: []string{email},
-						}),
-					},
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation_email_exchanged.tf", testDir),
-						Check: checkAttributes(attrs{
-							includeID:                   includeID,
-							contractID:                  contractID,
-							groupID:                     groupID,
-							version:                     4,
-							network:                     "STAGING",
-							note:                        note,
-							notifyEmails:                []string{"jbond2@example.com"},
-							autoAcknowledgeRuleWarnings: false,
-						}),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation.tf", testDir),
+					Check: checkAttributes(attrs{
+						includeID:    includeID,
+						contractID:   contractID,
+						groupID:      groupID,
+						version:      version,
+						network:      "STAGING",
+						note:         note,
+						notifyEmails: []string{email},
+					}),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation_email_exchanged.tf", testDir),
+					Check: checkAttributes(attrs{
+						includeID:                   includeID,
+						contractID:                  contractID,
+						groupID:                     groupID,
+						version:                     4,
+						network:                     "STAGING",
+						note:                        note,
+						notifyEmails:                []string{"jbond2@example.com"},
+						autoAcknowledgeRuleWarnings: false,
+					}),
+				},
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.PAPI.AssertExpectations(t)
 	})
 
 	t.Run("update include activation lifecycle - notify emails is correctly read in update when complicated changes within contacts", func(t *testing.T) {
-		client := new(papi.Mock)
+		client := edgegrid.NewTestClient()
 		state := State{}
 
 		// 1. first step
@@ -719,18 +708,18 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		// create
 		actReq := activateIncludeReq("STAGING", false)
 		actReq.NotifyEmails = []string{"jbond3@example.com", "jbond@example.com", "jbond2@example.com"}
-		state = expectCreate(client, state, actReq)
+		state = expectCreate(client.PAPI, state, actReq)
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// 2. second step - activation of new version
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// update
 		updateVersion := 4
@@ -739,79 +728,77 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		actReq = activateIncludeReq("STAGING", false)
 		actReq.Version = updateVersion
 		actReq.NotifyEmails = updateNotificationEmails
-		state = expectCreate(client, state, actReq)
+		state = expectCreate(client.PAPI, state, actReq)
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// delete
 		deactReq := deactivateIncludeReq("STAGING", false)
 		deactReq.Version = updateVersion
 		deactReq.NotifyEmails = updateNotificationEmails
-		_ = expectDelete(client, state, deactReq)
+		_ = expectDelete(client.PAPI, state, deactReq)
 
-		useClient(client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation_complicated_emails.tf", testDir),
-						Check: checkAttributes(attrs{
-							includeID:    includeID,
-							contractID:   contractID,
-							groupID:      groupID,
-							version:      version,
-							network:      "STAGING",
-							note:         note,
-							notifyEmails: []string{"jbond2@example.com", "jbond3@example.com", "jbond@example.com"},
-						}),
-					},
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation_complicated_emails_update.tf", testDir),
-						Check: checkAttributes(attrs{
-							includeID:                   includeID,
-							contractID:                  contractID,
-							groupID:                     groupID,
-							version:                     4,
-							network:                     "STAGING",
-							note:                        note,
-							notifyEmails:                []string{"jbond2@example.com", "jbond3@example.com", "jbond4@example.com", "jbond5@example.com"},
-							autoAcknowledgeRuleWarnings: false,
-						}),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation_complicated_emails.tf", testDir),
+					Check: checkAttributes(attrs{
+						includeID:    includeID,
+						contractID:   contractID,
+						groupID:      groupID,
+						version:      version,
+						network:      "STAGING",
+						note:         note,
+						notifyEmails: []string{"jbond2@example.com", "jbond3@example.com", "jbond@example.com"},
+					}),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation_complicated_emails_update.tf", testDir),
+					Check: checkAttributes(attrs{
+						includeID:                   includeID,
+						contractID:                  contractID,
+						groupID:                     groupID,
+						version:                     4,
+						network:                     "STAGING",
+						note:                        note,
+						notifyEmails:                []string{"jbond2@example.com", "jbond3@example.com", "jbond4@example.com", "jbond5@example.com"},
+						autoAcknowledgeRuleWarnings: false,
+					}),
+				},
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.PAPI.AssertExpectations(t)
 	})
 
 	t.Run("update include activation compliance record", func(t *testing.T) {
-		client := new(papi.Mock)
+		client := edgegrid.NewTestClient()
 		state := State{}
 
 		// 1. first step
 
 		// create
 		actReq := activateIncludeReq("PRODUCTION", true)
-		state = expectCreate(client, state, actReq)
+		state = expectCreate(client.PAPI, state, actReq)
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkProduction)
+		expectRead(client.PAPI, state, papi.ActivationNetworkProduction)
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkProduction)
+		expectRead(client.PAPI, state, papi.ActivationNetworkProduction)
 
 		// 2. second step
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkProduction)
+		expectRead(client.PAPI, state, papi.ActivationNetworkProduction)
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkProduction)
+		expectRead(client.PAPI, state, papi.ActivationNetworkProduction)
 
 		// delete
 		deactReq := deactivateIncludeReq("PRODUCTION", true)
@@ -819,220 +806,212 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 			OtherNoncomplianceReason: "NO_PRODUCTION_TRAFFIC",
 			TicketID:                 "",
 		}
-		_ = expectDelete(client, state, deactReq)
+		_ = expectDelete(client.PAPI, state, deactReq)
 
-		useClient(client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						// Akamai accounts cannot activate the property include in the production network without compliance_record,
-						// this test case is simplified only to test compliance_record update.
-						Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation_update.tf", testDir),
-						Check: checkAttributes(attrs{
-							includeID:                   includeID,
-							contractID:                  contractID,
-							groupID:                     groupID,
-							version:                     version,
-							network:                     "PRODUCTION",
-							note:                        note,
-							notifyEmails:                []string{email},
-							autoAcknowledgeRuleWarnings: true,
-						}),
-					},
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation_update_compliance_record.tf", testDir),
-						Check: checkAttributes(attrs{
-							includeID:                   includeID,
-							contractID:                  contractID,
-							groupID:                     groupID,
-							network:                     "PRODUCTION",
-							note:                        note,
-							version:                     version,
-							notifyEmails:                []string{email},
-							autoAcknowledgeRuleWarnings: true,
-							timeout:                     "",
-							complianceRecord: map[string]string{
-								"compliance_record.0.noncompliance_reason_other.0.other_noncompliance_reason": "NO_PRODUCTION_TRAFFIC",
-							},
-						}),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					// Akamai accounts cannot activate the property include in the production network without compliance_record,
+					// this test case is simplified only to test compliance_record update.
+					Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation_update.tf", testDir),
+					Check: checkAttributes(attrs{
+						includeID:                   includeID,
+						contractID:                  contractID,
+						groupID:                     groupID,
+						version:                     version,
+						network:                     "PRODUCTION",
+						note:                        note,
+						notifyEmails:                []string{email},
+						autoAcknowledgeRuleWarnings: true,
+					}),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation_update_compliance_record.tf", testDir),
+					Check: checkAttributes(attrs{
+						includeID:                   includeID,
+						contractID:                  contractID,
+						groupID:                     groupID,
+						network:                     "PRODUCTION",
+						note:                        note,
+						version:                     version,
+						notifyEmails:                []string{email},
+						autoAcknowledgeRuleWarnings: true,
+						timeout:                     "",
+						complianceRecord: map[string]string{
+							"compliance_record.0.noncompliance_reason_other.0.other_noncompliance_reason": "NO_PRODUCTION_TRAFFIC",
+						},
+					}),
+				},
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.PAPI.AssertExpectations(t)
 	})
 
 	t.Run("include activation lifecycle, every activation/deactivation has recoverable error with activation processing in background", func(t *testing.T) {
-		client := new(papi.Mock)
+		client := edgegrid.NewTestClient()
 		state := State{}
 
 		actReq := activateIncludeReq("STAGING", false)
 		// create -> fail
-		state = expectWaitPending(client, state, actReq.Network, 2)
-		expectAssertState(client, state)
-		expectActivateIncludeWithRecoverableFail(client, actReq)
+		state = expectWaitPending(client.PAPI, state, actReq.Network, 2)
+		expectAssertState(client.PAPI, state)
+		expectActivateIncludeWithRecoverableFail(client.PAPI, actReq)
 
 		newIncludeActivation := getExpectedActivationBasedOnRequest(actReq)
 		state.activations = append([]papi.IncludeActivation{newIncludeActivation}, state.activations...)
-		expectListIncludeActivations(client, state.activations)
-		state = expectWaitPending(client, state, actReq.Network, 2)
+		expectListIncludeActivations(client.PAPI, state.activations)
+		state = expectWaitPending(client.PAPI, state, actReq.Network, 2)
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// delete
 		deactReq := deactivateIncludeReq("STAGING", false)
-		state = expectWaitPending(client, state, deactReq.Network, 2)
-		expectAssertState(client, state)
-		client.On("DeactivateInclude", testutils.MockContext, deactReq).
+		state = expectWaitPending(client.PAPI, state, deactReq.Network, 2)
+		expectAssertState(client.PAPI, state)
+		client.PAPI.On("DeactivateInclude", testutils.MockContext, deactReq).
 			Return(nil, &papi.Error{StatusCode: 500}).Once()
 
 		newIncludeDeactivation := getActivationBasedOnDeactivationRequest(deactReq)
 		state.activations = append([]papi.IncludeActivation{newIncludeDeactivation}, state.activations...)
-		expectListIncludeActivations(client, state.activations)
-		state = expectWaitPending(client, state, deactReq.Network, 2)
+		expectListIncludeActivations(client.PAPI, state.activations)
+		state = expectWaitPending(client.PAPI, state, deactReq.Network, 2)
 
-		useClient(client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation.tf", testDir),
-						Check: checkAttributes(attrs{
-							includeID:    includeID,
-							contractID:   contractID,
-							groupID:      groupID,
-							version:      version,
-							network:      "STAGING",
-							note:         note,
-							notifyEmails: []string{email},
-						}),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation.tf", testDir),
+					Check: checkAttributes(attrs{
+						includeID:    includeID,
+						contractID:   contractID,
+						groupID:      groupID,
+						version:      version,
+						network:      "STAGING",
+						note:         note,
+						notifyEmails: []string{email},
+					}),
 				},
-			})
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.PAPI.AssertExpectations(t)
 	})
 	t.Run("include activation lifecycle, every activation/deactivation requires retry due to recoverable error without activation processing in background", func(t *testing.T) {
-		client := new(papi.Mock)
+		client := edgegrid.NewTestClient()
 		state := State{}
 
 		actReq := activateIncludeReq("STAGING", false)
 		// create -> fail
-		state = expectWaitPending(client, state, actReq.Network, 2)
-		expectAssertState(client, state)
-		state = expectWaitPending(client, state, actReq.Network, 0)
-		expectActivateIncludeWithRecoverableFail(client, actReq)
-		state = expectActivateInclude(client, state, actReq, 2)
-		state = expectWaitPending(client, state, actReq.Network, 2)
+		state = expectWaitPending(client.PAPI, state, actReq.Network, 2)
+		expectAssertState(client.PAPI, state)
+		state = expectWaitPending(client.PAPI, state, actReq.Network, 0)
+		expectActivateIncludeWithRecoverableFail(client.PAPI, actReq)
+		state = expectActivateInclude(client.PAPI, state, actReq, 2)
+		state = expectWaitPending(client.PAPI, state, actReq.Network, 2)
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// delete
 		deactReq := deactivateIncludeReq("STAGING", false)
-		state = expectWaitPending(client, state, deactReq.Network, 2)
-		expectAssertState(client, state)
-		client.On("DeactivateInclude", testutils.MockContext, deactReq).
+		state = expectWaitPending(client.PAPI, state, deactReq.Network, 2)
+		expectAssertState(client.PAPI, state)
+		client.PAPI.On("DeactivateInclude", testutils.MockContext, deactReq).
 			Return(nil, &papi.Error{StatusCode: 500}).Once()
-		expectListIncludeActivations(client, state.activations)
-		state = expectDectivateInclude(client, state, deactReq, 2)
-		state = expectWaitPending(client, state, deactReq.Network, 2)
+		expectListIncludeActivations(client.PAPI, state.activations)
+		state = expectDectivateInclude(client.PAPI, state, deactReq, 2)
+		state = expectWaitPending(client.PAPI, state, deactReq.Network, 2)
 
-		useClient(client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation.tf", testDir),
-						Check: checkAttributes(attrs{
-							includeID:    includeID,
-							contractID:   contractID,
-							groupID:      groupID,
-							version:      version,
-							network:      "STAGING",
-							note:         note,
-							notifyEmails: []string{email},
-						}),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation.tf", testDir),
+					Check: checkAttributes(attrs{
+						includeID:    includeID,
+						contractID:   contractID,
+						groupID:      groupID,
+						version:      version,
+						network:      "STAGING",
+						note:         note,
+						notifyEmails: []string{email},
+					}),
 				},
-			})
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.PAPI.AssertExpectations(t)
 	})
 	t.Run("include activation lifecycle, every activation/deactivation requires retry due to recoverable EOF error without activation processing in background", func(t *testing.T) {
-		client := new(papi.Mock)
+		client := edgegrid.NewTestClient()
 		state := State{}
 
 		actReq := activateIncludeReq("STAGING", false)
 		// create -> fail
-		state = expectWaitPending(client, state, actReq.Network, 2)
-		expectAssertState(client, state)
-		state = expectWaitPending(client, state, actReq.Network, 0)
-		client.On("ActivateInclude", testutils.MockContext, actReq).
+		state = expectWaitPending(client.PAPI, state, actReq.Network, 2)
+		expectAssertState(client.PAPI, state)
+		state = expectWaitPending(client.PAPI, state, actReq.Network, 0)
+		client.PAPI.On("ActivateInclude", testutils.MockContext, actReq).
 			Return(nil, &url.Error{
 				Op:  "Post",
 				URL: "https://akab-xxxxxxxxxxxxxxxx-xxxxxxxxxxxxxxxx.luna.akamaiapis.net/papi/v1/includes/inc_12345/activations",
 				Err: io.EOF,
 			}).Once()
-		state = expectActivateInclude(client, state, actReq, 2)
-		state = expectWaitPending(client, state, actReq.Network, 2)
+		state = expectActivateInclude(client.PAPI, state, actReq, 2)
+		state = expectWaitPending(client.PAPI, state, actReq.Network, 2)
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// delete
 		deactReq := deactivateIncludeReq("STAGING", false)
-		state = expectWaitPending(client, state, deactReq.Network, 2)
-		expectAssertState(client, state)
-		client.On("DeactivateInclude", testutils.MockContext, deactReq).
+		state = expectWaitPending(client.PAPI, state, deactReq.Network, 2)
+		expectAssertState(client.PAPI, state)
+		client.PAPI.On("DeactivateInclude", testutils.MockContext, deactReq).
 			Return(nil, &url.Error{
 				Op:  "Post",
 				URL: "https://akab-xxxxxxxxxxxxxxxx-xxxxxxxxxxxxxxxx.luna.akamaiapis.net/papi/v1/includes/inc_12345/activations",
 				Err: io.EOF,
 			}).Once()
-		expectListIncludeActivations(client, state.activations)
-		state = expectDectivateInclude(client, state, deactReq, 2)
-		state = expectWaitPending(client, state, deactReq.Network, 2)
+		expectListIncludeActivations(client.PAPI, state.activations)
+		state = expectDectivateInclude(client.PAPI, state, deactReq, 2)
+		state = expectWaitPending(client.PAPI, state, deactReq.Network, 2)
 
-		useClient(client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation.tf", testDir),
-						Check: checkAttributes(attrs{
-							includeID:    includeID,
-							contractID:   contractID,
-							groupID:      groupID,
-							version:      version,
-							network:      "STAGING",
-							note:         note,
-							notifyEmails: []string{email},
-						}),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation.tf", testDir),
+					Check: checkAttributes(attrs{
+						includeID:    includeID,
+						contractID:   contractID,
+						groupID:      groupID,
+						version:      version,
+						network:      "STAGING",
+						note:         note,
+						notifyEmails: []string{email},
+					}),
 				},
-			})
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.PAPI.AssertExpectations(t)
 	})
 
 	t.Run("wait for ongoing expected activation to finish", func(t *testing.T) {
-		client := new(papi.Mock)
+		client := edgegrid.NewTestClient()
 		state := State{}
 
 		actReq := activateIncludeReq("STAGING", false)
@@ -1041,42 +1020,40 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		state.activations = append(state.activations, pendingIncludeActivation)
 
 		// create
-		state = expectCreateOnlyReadState(client, state, actReq)
+		state = expectCreateOnlyReadState(client.PAPI, state, actReq)
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// delete
 		deactReq := deactivateIncludeReq("STAGING", false)
-		_ = expectDelete(client, state, deactReq)
+		_ = expectDelete(client.PAPI, state, deactReq)
 
-		useClient(client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation.tf", testDir),
-						Check: checkAttributes(attrs{
-							includeID:    includeID,
-							contractID:   contractID,
-							groupID:      groupID,
-							version:      version,
-							network:      "STAGING",
-							note:         note,
-							notifyEmails: []string{email},
-						}),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation.tf", testDir),
+					Check: checkAttributes(attrs{
+						includeID:    includeID,
+						contractID:   contractID,
+						groupID:      groupID,
+						version:      version,
+						network:      "STAGING",
+						note:         note,
+						notifyEmails: []string{email},
+					}),
 				},
-			})
+			},
 		})
-		client.AssertExpectations(t)
+		client.PAPI.AssertExpectations(t)
 	})
 
 	t.Run("wait for ongoing unexpected activation to finish", func(t *testing.T) {
-		client := new(papi.Mock)
+		client := edgegrid.NewTestClient()
 		state := State{}
 
 		actReq := activateIncludeReq("STAGING", false)
@@ -1089,42 +1066,40 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		state.activations = append(state.activations, pendingIncludeActivation)
 
 		// create
-		state = expectCreate(client, state, actReq)
+		state = expectCreate(client.PAPI, state, actReq)
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// delete
 		deactReq := deactivateIncludeReq("STAGING", false)
-		_ = expectDelete(client, state, deactReq)
+		_ = expectDelete(client.PAPI, state, deactReq)
 
-		useClient(client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation.tf", testDir),
-						Check: checkAttributes(attrs{
-							includeID:    includeID,
-							contractID:   contractID,
-							groupID:      groupID,
-							version:      version,
-							network:      "STAGING",
-							note:         note,
-							notifyEmails: []string{email},
-						}),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation.tf", testDir),
+					Check: checkAttributes(attrs{
+						includeID:    includeID,
+						contractID:   contractID,
+						groupID:      groupID,
+						version:      version,
+						network:      "STAGING",
+						note:         note,
+						notifyEmails: []string{email},
+					}),
 				},
-			})
+			},
 		})
-		client.AssertExpectations(t)
+		client.PAPI.AssertExpectations(t)
 	})
 
 	t.Run("missing compliance record error when network is PRODUCTION", func(t *testing.T) {
-		client := new(papi.Mock)
+		client := edgegrid.NewTestClient()
 		state := State{}
 
 		// create
@@ -1136,52 +1111,48 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 			NotifyEmails:           []string{email},
 			AcknowledgeAllWarnings: false,
 		}
-		state = expectWaitPending(client, state, req.Network, 2)
-		expectAssertState(client, state)
+		state = expectWaitPending(client.PAPI, state, req.Network, 2)
+		expectAssertState(client.PAPI, state)
 		newIncludeActivation := getExpectedActivationBasedOnRequest(req)
 
-		client.On("ActivateInclude", testutils.MockContext, req).
+		client.PAPI.On("ActivateInclude", testutils.MockContext, req).
 			Return(&papi.ActivationIncludeResponse{
 				ActivationID: newIncludeActivation.ActivationID,
 			}, nil).Once()
 
 		// GetIncludeActivation returns error about missing_compliance_record. TFP checks for that error and returns it
-		client.On("GetIncludeActivation", testutils.MockContext, papi.GetIncludeActivationRequest{
+		client.PAPI.On("GetIncludeActivation", testutils.MockContext, papi.GetIncludeActivationRequest{
 			IncludeID:    includeID,
 			ActivationID: newIncludeActivation.ActivationID,
 		}).Return(nil, papi.ErrMissingComplianceRecord).Once()
 
-		useClient(client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureStringf(t, "%s/no_compliance_record_on_production.tf", testDir),
-						ExpectError: regexp.MustCompile(`Error: for 'PRODUCTION' network, 'compliance_record' must be specified`),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureStringf(t, "%s/no_compliance_record_on_production.tf", testDir),
+					ExpectError: regexp.MustCompile(`Error: for 'PRODUCTION' network, 'compliance_record' must be specified`),
 				},
-			})
+			},
 		})
-		client.AssertExpectations(t)
+		client.PAPI.AssertExpectations(t)
 	})
 
 	t.Run("incorrect timeout format", func(t *testing.T) {
 
-		useClient(client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureStringf(t, "%s/property_include_activation_incorrect_timeout.tf", testDir),
-						ExpectError: regexp.MustCompile(`provided incorrect duration`),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(nil, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureStringf(t, "%s/property_include_activation_incorrect_timeout.tf", testDir),
+					ExpectError: regexp.MustCompile(`provided incorrect duration`),
 				},
-			})
+			},
 		})
 	})
 
 	t.Run("first create fails but second create works", func(t *testing.T) {
-		client := new(papi.Mock)
+		client := edgegrid.NewTestClient()
 		state := State{}
 
 		actReq := activateIncludeReq("STAGING", false)
@@ -1189,173 +1160,167 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		// --- 1st step ---
 
 		// create -> fail
-		state = expectCreateWithNonrecoverableFail(client, state, actReq)
+		state = expectCreateWithNonrecoverableFail(client.PAPI, state, actReq)
 
 		// --- 2nd step ---
 
 		// create
-		state = expectCreate(client, state, actReq)
+		state = expectCreate(client.PAPI, state, actReq)
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// delete
 		deactReq := deactivateIncludeReq("STAGING", false)
-		_ = expectDelete(client, state, deactReq)
+		_ = expectDelete(client.PAPI, state, deactReq)
 
-		useClient(client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation.tf", testDir),
-						Check: checkAttributes(attrs{
-							includeID:    includeID,
-							contractID:   contractID,
-							groupID:      groupID,
-							version:      version,
-							network:      "STAGING",
-							note:         note,
-							notifyEmails: []string{email},
-						}),
-						ExpectError: regexp.MustCompile("404"),
-					},
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation.tf", testDir),
-						Check: checkAttributes(attrs{
-							includeID:    includeID,
-							contractID:   contractID,
-							groupID:      groupID,
-							version:      version,
-							network:      "STAGING",
-							note:         note,
-							notifyEmails: []string{email},
-						}),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation.tf", testDir),
+					Check: checkAttributes(attrs{
+						includeID:    includeID,
+						contractID:   contractID,
+						groupID:      groupID,
+						version:      version,
+						network:      "STAGING",
+						note:         note,
+						notifyEmails: []string{email},
+					}),
+					ExpectError: regexp.MustCompile("404"),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation.tf", testDir),
+					Check: checkAttributes(attrs{
+						includeID:    includeID,
+						contractID:   contractID,
+						groupID:      groupID,
+						version:      version,
+						network:      "STAGING",
+						note:         note,
+						notifyEmails: []string{email},
+					}),
+				},
+			},
 		})
-		client.AssertExpectations(t)
+		client.PAPI.AssertExpectations(t)
 	})
 
 	t.Run("import", func(t *testing.T) {
-		client := new(papi.Mock)
+		client := edgegrid.NewTestClient()
 		state := State{}
 
 		// create
 		actReq := activateIncludeReq("STAGING", false)
-		state = expectCreate(client, state, actReq)
+		state = expectCreate(client.PAPI, state, actReq)
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// delete
 		deactReq := deactivateIncludeReq("STAGING", false)
-		_ = expectDelete(client, state, deactReq)
+		_ = expectDelete(client.PAPI, state, deactReq)
 
-		useClient(client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation.tf", testDir),
-					},
-					{
-						ImportState:       true,
-						ImportStateVerify: true,
-						ImportStateId:     "ctr_test_contract:grp_test_group:inc_12345:STAGING",
-						ResourceName:      "akamai_property_include_activation.activation",
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation.tf", testDir),
 				},
-			})
+				{
+					ImportState:       true,
+					ImportStateVerify: true,
+					ImportStateId:     "ctr_test_contract:grp_test_group:inc_12345:STAGING",
+					ResourceName:      "akamai_property_include_activation.activation",
+				},
+			},
 		})
-		client.AssertExpectations(t)
+		client.PAPI.AssertExpectations(t)
 	})
 
 	t.Run("note and notify_emails fields change suppressed", func(t *testing.T) {
-		client := new(papi.Mock)
+		client := edgegrid.NewTestClient()
 		state := State{}
 
 		// 1. first step
 
 		// create
 		actReq := activateIncludeReq("STAGING", false)
-		state = expectCreate(client, state, actReq)
+		state = expectCreate(client.PAPI, state, actReq)
 
 		// read after create
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// 2. second step - update only note field - change suppressed
-		expectRead(client, state, papi.ActivationNetworkStaging)
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// read before delete
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 		// delete
 		deactReq := deactivateIncludeReq("STAGING", false)
-		_ = expectDelete(client, state, deactReq)
+		_ = expectDelete(client.PAPI, state, deactReq)
 
-		useClient(client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation.tf", testDir),
-						Check: checkAttributes(attrs{
-							includeID:    includeID,
-							contractID:   contractID,
-							groupID:      groupID,
-							version:      version,
-							network:      "STAGING",
-							note:         note,
-							notifyEmails: []string{email},
-						}),
-					},
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation_suppressed.tf", testDir),
-						Check: checkAttributes(attrs{
-							includeID:    includeID,
-							contractID:   contractID,
-							groupID:      groupID,
-							version:      version,
-							network:      "STAGING",
-							note:         note,
-							notifyEmails: []string{email},
-						}),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation.tf", testDir),
+					Check: checkAttributes(attrs{
+						includeID:    includeID,
+						contractID:   contractID,
+						groupID:      groupID,
+						version:      version,
+						network:      "STAGING",
+						note:         note,
+						notifyEmails: []string{email},
+					}),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation_suppressed.tf", testDir),
+					Check: checkAttributes(attrs{
+						includeID:    includeID,
+						contractID:   contractID,
+						groupID:      groupID,
+						version:      version,
+						network:      "STAGING",
+						note:         note,
+						notifyEmails: []string{email},
+					}),
+				},
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.PAPI.AssertExpectations(t)
 	})
 
 	t.Run("note and notify_emails change not suppressed when version is updated", func(t *testing.T) {
-		client := new(papi.Mock)
+		client := edgegrid.NewTestClient()
 		state := State{}
 
 		// 1. first step
 
 		// create
 		actReq := activateIncludeReq("STAGING", false)
-		state = expectCreate(client, state, actReq)
+		state = expectCreate(client.PAPI, state, actReq)
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// 2. second step - update note and version with creation of new activation - note and notify_emails change not suppressed
 		// create
@@ -1366,13 +1331,13 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 			Note:         "not suppressed note field change",
 			NotifyEmails: []string{email, "jbond2@example.com"},
 		}
-		state = expectCreate(client, state, req)
+		state = expectCreate(client.PAPI, state, req)
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// read
-		expectRead(client, state, papi.ActivationNetworkStaging)
+		expectRead(client.PAPI, state, papi.ActivationNetworkStaging)
 
 		// delete
 		deactReq := papi.DeactivateIncludeRequest{
@@ -1382,41 +1347,39 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 			Note:         "not suppressed note field change",
 			NotifyEmails: []string{email, "jbond2@example.com"},
 		}
-		_ = expectDelete(client, state, deactReq)
+		_ = expectDelete(client.PAPI, state, deactReq)
 
-		useClient(client, nil, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation.tf", testDir),
-						Check: checkAttributes(attrs{
-							includeID:    includeID,
-							contractID:   contractID,
-							groupID:      groupID,
-							version:      version,
-							network:      "STAGING",
-							note:         note,
-							notifyEmails: []string{email},
-						}),
-					},
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/property_include_update_note_not_suppressed.tf", testDir),
-						Check: checkAttributes(attrs{
-							includeID:    includeID,
-							contractID:   contractID,
-							groupID:      groupID,
-							version:      4,
-							network:      "STAGING",
-							note:         "not suppressed note field change",
-							notifyEmails: []string{"jbond2@example.com", email},
-						}),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation.tf", testDir),
+					Check: checkAttributes(attrs{
+						includeID:    includeID,
+						contractID:   contractID,
+						groupID:      groupID,
+						version:      version,
+						network:      "STAGING",
+						note:         note,
+						notifyEmails: []string{email},
+					}),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/property_include_update_note_not_suppressed.tf", testDir),
+					Check: checkAttributes(attrs{
+						includeID:    includeID,
+						contractID:   contractID,
+						groupID:      groupID,
+						version:      4,
+						network:      "STAGING",
+						note:         "not suppressed note field change",
+						notifyEmails: []string{"jbond2@example.com", email},
+					}),
+				},
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.PAPI.AssertExpectations(t)
 	})
 }
 

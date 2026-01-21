@@ -2,8 +2,6 @@
 package cloudcertificates
 
 import (
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudcertificates"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/subprovider"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -16,21 +14,12 @@ type (
 )
 
 var (
-	_      subprovider.Subprovider = &Subprovider{}
-	client cloudcertificates.CloudCertificates
+	_ subprovider.Subprovider = &Subprovider{}
 )
 
 // NewSubprovider returns a new CloudCertificates subprovider.
 func NewSubprovider() *Subprovider {
 	return &Subprovider{}
-}
-
-// Client returns the CloudCertificates interface.
-func Client(meta meta.Meta) cloudcertificates.CloudCertificates {
-	if client != nil {
-		return client
-	}
-	return cloudcertificates.Client(meta.Session())
 }
 
 // SDKResources returns the CloudCertificates resources implemented using terraform-plugin-sdk.

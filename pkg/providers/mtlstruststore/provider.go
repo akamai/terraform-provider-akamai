@@ -12,7 +12,9 @@ import (
 
 type (
 	// Subprovider gathers MTLS Truststore resources and data sources.
-	Subprovider struct{}
+	Subprovider struct {
+		cASetActivationResourceConfig CASetActivationResourceConfig
+	}
 )
 
 var (
@@ -20,9 +22,16 @@ var (
 	client mtlstruststore.MTLSTruststore
 )
 
-// NewSubprovider returns a new MTLS Truststore subprovider.
+// NewSubproviderWithConfig returns a new MTLS Truststore subprovider with the given configuration.
+func NewSubproviderWithConfig(config CASetActivationResourceConfig) *Subprovider {
+	return &Subprovider{
+		cASetActivationResourceConfig: config,
+	}
+}
+
+// NewSubprovider returns a new MTLS Truststore subprovider with default configuration.
 func NewSubprovider() *Subprovider {
-	return &Subprovider{}
+	return NewSubproviderWithConfig(DefaultCASetActivationResourceConfig())
 }
 
 // Client returns the MTLS Truststore interface.
@@ -46,7 +55,7 @@ func (p *Subprovider) SDKDataSources() map[string]*schema.Resource {
 // FrameworkResources returns the MTLS Truststore resources implemented using terraform-plugin-framework.
 func (p *Subprovider) FrameworkResources() []func() resource.Resource {
 	return []func() resource.Resource{
-		NewCASetActivationResource,
+		NewCASetActivationResource(p.cASetActivationResourceConfig),
 		NewCASetResource,
 	}
 }

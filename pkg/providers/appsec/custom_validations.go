@@ -3,6 +3,7 @@ package appsec
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/tf"
@@ -12,6 +13,8 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
+
+var emailRegex = regexp.MustCompile(`^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$`)
 
 // ValidateActions ensure actions are correct for API call
 func ValidateActions(v interface{}, path cty.Path) diag.Diagnostics {
@@ -48,7 +51,7 @@ func validateWithBotManActions(v interface{}, path cty.Path) diag.Diagnostics {
 
 	m := map[string]struct{}{"alert": {}, "delay": {}, "deny": {}, "monitor": {}, "none": {}, "slow": {}, "tarpit": {}}
 	_, ok = m[value]
-	if !(ok || strings.Contains(value, "deny_custom_") || strings.Contains(value, "cond_action_") || strings.Contains(value, "serve_alt_") || strings.Contains(value, "challenge_")) {
+	if !ok && !strings.Contains(value, "deny_custom_") && !strings.Contains(value, "cond_action_") && !strings.Contains(value, "serve_alt_") && !strings.Contains(value, "challenge_") {
 		return diag.Errorf("%q may only contain alert, cond_action_{action_id}, delay, deny, deny_custom_{action_id}, monitor, none, serve_alt_{action_id}, slow, tarpit, challenge_{action_id}", schemaFieldName)
 	}
 
@@ -89,6 +92,16 @@ func VerifyIDUnchanged(_ context.Context, d *schema.ResourceDiff, m interface{})
 	return nil
 }
 
+func validateRuleActionAndConditionException(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
+	action := d.Get("rule_action").(string)
+	conditionException := d.Get("condition_exception").(string)
+
+	if action == "none" && conditionException != "" {
+		return fmt.Errorf("`rule_action` cannot be 'none' if non-empty `condition_exception` is supplied")
+	}
+	return nil
+}
+
 func validateActionAndConditionException(action, conditionexception string) error {
 	if action == "none" && conditionexception != "" {
 		return fmt.Errorf("action cannot be 'none' if non-empty condition/exception is supplied")
@@ -104,5 +117,24 @@ func validateEmptyElementsInList(v interface{}, path cty.Path) diag.Diagnostics 
 	if v.(string) == "" {
 		return diag.Errorf("empty or invalid string value for config parameter %s", attrStep.Name)
 	}
+	return nil
+}
+
+// validateNotificationEmail validates email format for notification_emails field
+func validateNotificationEmail(v interface{}, _ cty.Path) diag.Diagnostics {
+
+	email, ok := v.(string)
+	if !ok {
+		return diag.Errorf("email must be a string for config parameter")
+	}
+
+	if strings.TrimSpace(email) == "" {
+		return diag.Errorf("email must not be empty")
+	}
+
+	if !emailRegex.MatchString(email) {
+		return diag.Errorf("invalid email format %s", email)
+	}
+
 	return nil
 }

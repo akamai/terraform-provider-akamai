@@ -2,62 +2,40 @@
 package cps
 
 import (
-	"sync"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cps"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/subprovider"
 )
 
 type (
 	// Subprovider gathers CPS resources and data sources
-	Subprovider struct {
-		client cps.CPS
-	}
-
-	option func(p *Subprovider)
-)
-
-var (
-	once sync.Once
-
-	inst *Subprovider
+	Subprovider struct{}
 )
 
 var _ subprovider.Subprovider = &Subprovider{}
 
+const (
+	// Default polling intervals
+	defaultPollChangeStatusInterval  = 10 * time.Second
+	defaultPollGetEnrollmentInterval = 30 * time.Second
+)
+
 // NewSubprovider returns a new CPS subprovider
-func NewSubprovider(opts ...option) *Subprovider {
-	once.Do(func() {
-		inst = &Subprovider{}
-
-		for _, opt := range opts {
-			opt(inst)
-		}
-	})
-
-	return inst
-}
-
-// Client returns the CPS interface
-func (p *Subprovider) Client(meta meta.Meta) cps.CPS {
-	if p.client != nil {
-		return p.client
-	}
-	return cps.Client(meta.Session())
+func NewSubprovider() *Subprovider {
+	return &Subprovider{}
 }
 
 // SDKResources returns the CPS resources implemented using terraform-plugin-sdk
 func (p *Subprovider) SDKResources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
-		"akamai_cps_dv_enrollment":          resourceCPSDVEnrollment(),
-		"akamai_cps_dv_validation":          resourceCPSDVValidation(),
-		"akamai_cps_third_party_enrollment": resourceCPSThirdPartyEnrollment(),
-		"akamai_cps_upload_certificate":     resourceCPSUploadCertificate(),
+		"akamai_cps_dv_enrollment":          resourceCPSDVEnrollment(defaultPollChangeStatusInterval, defaultPollGetEnrollmentInterval),
+		"akamai_cps_dv_validation":          resourceCPSDVValidation(defaultPollChangeStatusInterval),
+		"akamai_cps_third_party_enrollment": resourceCPSThirdPartyEnrollment(defaultPollChangeStatusInterval, defaultPollGetEnrollmentInterval),
+		"akamai_cps_upload_certificate":     resourceCPSUploadCertificate(defaultPollChangeStatusInterval),
 	}
 }
 

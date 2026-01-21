@@ -1,0 +1,42 @@
+{
+    "id": 12345,
+    "name": "Web Attack Rep Profile",
+    "context": "WEBATCK",
+    "description": "Reputation profile description",
+    "threshold": 5,
+    "sharedIpHandling": "NON_SHARED",
+    "condition": {
+        "atomicConditions": [
+            {
+                "checkIps": "connecting",
+                "className": "AsNumberCondition",
+                "index": 1,
+                "positiveMatch": true,
+                "value": [
+                    "1"
+                ]
+            },
+            {
+                "className": "RequestCookieCondition",
+                "index": 2,
+                "name": "x-header",
+                "nameCase": true,
+                "nameWildcard": true,
+                "positiveMatch": true,
+                "valueCase": false,
+                "valueWildcard": true
+            },
+            {
+                "className": "HostCondition",
+                "host": [
+                    "*.com"
+                ],
+                "index": 3,
+                "positiveMatch": true,
+                "valueWildcard": true
+            }
+        ],
+        "positiveMatch": true
+    },
+    "enabled": false
+}

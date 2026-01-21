@@ -15,9 +15,9 @@ func getPolicyVersionExecutionStrategy(d *schema.ResourceData, meta meta.Meta) (
 	}
 
 	if isV3 {
-		return v3VersionStrategy{ClientV3(meta)}, nil
+		return v3VersionStrategy{meta.Client().GetCloudletsV3()}, nil
 	}
-	return v2VersionStrategy{Client(meta)}, nil
+	return v2VersionStrategy{meta.Client().GetCloudletsV2()}, nil
 }
 
 type versionStrategy interface {

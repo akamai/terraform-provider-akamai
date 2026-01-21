@@ -5,12 +5,14 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func TestPropertyCCM(t *testing.T) {
+	t.Parallel()
 	commonPropertyAttrs := test.AttributeBatch{
 		"id":                  "prp_222222",
 		"name":                "test_property",
@@ -217,6 +219,109 @@ func TestPropertyCCM(t *testing.T) {
 				},
 			},
 		},
+		"Creating basic property with CCM certificate, MTLS and TLS configuration": {
+			init: func(p *mockProperty) {
+				p.mockPropertyData = basicData()
+				p.hostnames.Items[0].MTLS = &papi.MTLS{
+					CASetID:         "524125",
+					CheckClientOCSP: true,
+					SendCASetClient: true,
+				}
+				p.hostnames.Items[0].TLSConfiguration = &papi.TLSConfiguration{
+					CipherProfile:            "ak-akamai-2020q1",
+					DisallowedTLSVersions:    []string{"TLSv1_1", "TLSv1"},
+					StapleServerOcspResponse: true,
+					FIPSMode:                 true,
+				}
+				// create
+				mockResourcePropertyCreateWithVersionHostnames(p)
+				// read from create
+				p.ruleTree.ruleFormat = "v2024-02-12"
+				mockResourcePropertyRead(p)
+				// read
+				mockResourcePropertyRead(p)
+				// delete
+				p.mockRemoveProperty()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/CCM/ccm_with_mtls_and_tls_configuration.tf"),
+					Check: defaultChecker.
+						CheckEqual("hostnames.0.mtls.0.ca_set_id", "524125").
+						CheckEqual("hostnames.0.mtls.0.check_client_ocsp", "true").
+						CheckEqual("hostnames.0.mtls.0.send_ca_set_client", "true").
+						CheckEqual("hostnames.0.tls_configuration.0.cipher_profile", "ak-akamai-2020q1").
+						CheckEqual("hostnames.0.tls_configuration.0.disallowed_tls_versions.#", "2").
+						CheckEqual("hostnames.0.tls_configuration.0.disallowed_tls_versions.0", "TLSv1_1").
+						CheckEqual("hostnames.0.tls_configuration.0.disallowed_tls_versions.1", "TLSv1").
+						CheckEqual("hostnames.0.tls_configuration.0.staple_server_ocsp_response", "true").
+						CheckEqual("hostnames.0.tls_configuration.0.fips_mode", "true").
+						Build(),
+				},
+			},
+		},
+		"Creating basic property with CCM certificate and MTLS": {
+			init: func(p *mockProperty) {
+				p.mockPropertyData = basicData()
+				p.hostnames.Items[0].MTLS = &papi.MTLS{
+					CASetID:         "524125",
+					CheckClientOCSP: true,
+					SendCASetClient: true,
+				}
+				// create
+				mockResourcePropertyCreateWithVersionHostnames(p)
+				// read from create
+				p.ruleTree.ruleFormat = "v2024-02-12"
+				mockResourcePropertyRead(p)
+				// read
+				mockResourcePropertyRead(p)
+				// delete
+				p.mockRemoveProperty()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/CCM/ccm_with_mtls.tf"),
+					Check: defaultChecker.
+						CheckEqual("hostnames.0.mtls.0.ca_set_id", "524125").
+						CheckEqual("hostnames.0.mtls.0.check_client_ocsp", "true").
+						CheckEqual("hostnames.0.mtls.0.send_ca_set_client", "true").
+						Build(),
+				},
+			},
+		},
+		"Creating basic property with CCM certificate and TLS configuration": {
+			init: func(p *mockProperty) {
+				p.mockPropertyData = basicData()
+				p.hostnames.Items[0].TLSConfiguration = &papi.TLSConfiguration{
+					CipherProfile:            "ak-akamai-2020q1",
+					DisallowedTLSVersions:    []string{"TLSv1_1", "TLSv1"},
+					StapleServerOcspResponse: true,
+					FIPSMode:                 true,
+				}
+				// create
+				mockResourcePropertyCreateWithVersionHostnames(p)
+				// read from create
+				p.ruleTree.ruleFormat = "v2024-02-12"
+				mockResourcePropertyRead(p)
+				// read
+				mockResourcePropertyRead(p)
+				// delete
+				p.mockRemoveProperty()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/CCM/ccm_with_tls_configuration.tf"),
+					Check: defaultChecker.
+						CheckEqual("hostnames.0.tls_configuration.0.cipher_profile", "ak-akamai-2020q1").
+						CheckEqual("hostnames.0.tls_configuration.0.disallowed_tls_versions.#", "2").
+						CheckEqual("hostnames.0.tls_configuration.0.disallowed_tls_versions.0", "TLSv1_1").
+						CheckEqual("hostnames.0.tls_configuration.0.disallowed_tls_versions.1", "TLSv1").
+						CheckEqual("hostnames.0.tls_configuration.0.staple_server_ocsp_response", "true").
+						CheckEqual("hostnames.0.tls_configuration.0.fips_mode", "true").
+						Build(),
+				},
+			},
+		},
 		"Updating ID of the CCM RSA certificate on inactive property - no new version": {
 			init: func(p *mockProperty) {
 				p.mockPropertyData = basicData()
@@ -397,6 +502,76 @@ func TestPropertyCCM(t *testing.T) {
 				},
 			},
 		},
+		"Updating MTLS and TLS configuration on CCM-bound hostname": {
+			init: func(p *mockProperty) {
+				p.mockPropertyData = basicData()
+				p.hostnames.Items[0].MTLS = &papi.MTLS{
+					CASetID:         "524125",
+					CheckClientOCSP: true,
+					SendCASetClient: true,
+				}
+				p.hostnames.Items[0].TLSConfiguration = &papi.TLSConfiguration{
+					CipherProfile:            "ak-akamai-2020q1",
+					DisallowedTLSVersions:    []string{"TLSv1_1", "TLSv1"},
+					StapleServerOcspResponse: true,
+					FIPSMode:                 true,
+				}
+				// create
+				mockResourcePropertyCreateWithVersionHostnames(p)
+				// read from create
+				p.ruleTree.ruleFormat = "v2024-02-12"
+				mockResourcePropertyRead(p)
+				// read x 2
+				mockResourcePropertyRead(p, 2)
+				// update
+				p.mockGetPropertyVersion()
+				p.hostnames = basicHostnames()
+				p.hostnames.Items[0].MTLS = &papi.MTLS{
+					CASetID: "524126",
+				}
+				p.hostnames.Items[0].TLSConfiguration = &papi.TLSConfiguration{
+					CipherProfile:         "ak-akamai-2020q2",
+					DisallowedTLSVersions: []string{"TLSv1", "TLSv2"},
+				}
+				p.mockUpdatePropertyVersionHostnames()
+				// read from update
+				mockResourcePropertyRead(p)
+				// read
+				mockResourcePropertyRead(p)
+				// delete
+				p.mockRemoveProperty()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/CCM/ccm_with_mtls_and_tls_configuration.tf"),
+					Check: defaultChecker.
+						CheckEqual("hostnames.0.mtls.0.ca_set_id", "524125").
+						CheckEqual("hostnames.0.mtls.0.check_client_ocsp", "true").
+						CheckEqual("hostnames.0.mtls.0.send_ca_set_client", "true").
+						CheckEqual("hostnames.0.tls_configuration.0.cipher_profile", "ak-akamai-2020q1").
+						CheckEqual("hostnames.0.tls_configuration.0.disallowed_tls_versions.#", "2").
+						CheckEqual("hostnames.0.tls_configuration.0.disallowed_tls_versions.0", "TLSv1_1").
+						CheckEqual("hostnames.0.tls_configuration.0.disallowed_tls_versions.1", "TLSv1").
+						CheckEqual("hostnames.0.tls_configuration.0.staple_server_ocsp_response", "true").
+						CheckEqual("hostnames.0.tls_configuration.0.fips_mode", "true").
+						Build(),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/CCM/update_mtls_and_tls_configuration.tf"),
+					Check: defaultChecker.
+						CheckEqual("hostnames.0.mtls.0.ca_set_id", "524126").
+						CheckEqual("hostnames.0.mtls.0.check_client_ocsp", "false").
+						CheckEqual("hostnames.0.mtls.0.send_ca_set_client", "false").
+						CheckEqual("hostnames.0.tls_configuration.0.cipher_profile", "ak-akamai-2020q2").
+						CheckEqual("hostnames.0.tls_configuration.0.disallowed_tls_versions.#", "2").
+						CheckEqual("hostnames.0.tls_configuration.0.disallowed_tls_versions.0", "TLSv1").
+						CheckEqual("hostnames.0.tls_configuration.0.disallowed_tls_versions.1", "TLSv2").
+						CheckEqual("hostnames.0.tls_configuration.0.staple_server_ocsp_response", "false").
+						CheckEqual("hostnames.0.tls_configuration.0.fips_mode", "false").
+						Build(),
+				},
+			},
+		},
 		"Importing basic property with CCM RSA certificate": {
 			init: func(p *mockProperty) {
 				p.mockPropertyData = basicData()
@@ -419,6 +594,53 @@ func TestPropertyCCM(t *testing.T) {
 				{
 					// Confirm idempotency after import
 					Config:   testutils.LoadFixtureString(t, "testdata/TestResProperty/CCM/ccm_property.tf"),
+					PlanOnly: true,
+				},
+			},
+		},
+		"Importing basic property with CCM, MTLS and TLS configuration": {
+			init: func(p *mockProperty) {
+				p.mockPropertyData = basicData()
+				p.hostnames.Items[0].MTLS = &papi.MTLS{
+					CASetID:         "524125",
+					CheckClientOCSP: true,
+					SendCASetClient: true,
+				}
+				p.hostnames.Items[0].TLSConfiguration = &papi.TLSConfiguration{
+					CipherProfile:            "ak-akamai-2020q1",
+					DisallowedTLSVersions:    []string{"TLSv1_1", "TLSv1"},
+					StapleServerOcspResponse: true,
+					FIPSMode:                 true,
+				}
+				// read
+				p.ruleTree.ruleFormat = "v2024-02-12"
+				mockResourcePropertyRead(p, 2)
+
+				// delete
+				p.mockRemoveProperty()
+			},
+			steps: []resource.TestStep{
+				{
+					ImportStateCheck: defaultImportChecker.
+						CheckEqual("hostnames.0.mtls.0.ca_set_id", "524125").
+						CheckEqual("hostnames.0.mtls.0.check_client_ocsp", "true").
+						CheckEqual("hostnames.0.mtls.0.send_ca_set_client", "true").
+						CheckEqual("hostnames.0.tls_configuration.0.cipher_profile", "ak-akamai-2020q1").
+						CheckEqual("hostnames.0.tls_configuration.0.disallowed_tls_versions.#", "2").
+						CheckEqual("hostnames.0.tls_configuration.0.disallowed_tls_versions.0", "TLSv1_1").
+						CheckEqual("hostnames.0.tls_configuration.0.disallowed_tls_versions.1", "TLSv1").
+						CheckEqual("hostnames.0.tls_configuration.0.staple_server_ocsp_response", "true").
+						CheckEqual("hostnames.0.tls_configuration.0.fips_mode", "true").
+						Build(),
+					ImportStateId:      "prp_222222,ctr_C-0N7RAC7,grp_12345",
+					ImportState:        true,
+					ResourceName:       "akamai_property.test",
+					Config:             testutils.LoadFixtureString(t, "testdata/TestResProperty/CCM/ccm_with_mtls_and_tls_configuration.tf"),
+					ImportStatePersist: true,
+				},
+				{
+					// Confirm idempotency after import
+					Config:   testutils.LoadFixtureString(t, "testdata/TestResProperty/CCM/ccm_with_mtls_and_tls_configuration.tf"),
 					PlanOnly: true,
 				},
 			},
@@ -471,26 +693,65 @@ func TestPropertyCCM(t *testing.T) {
 				},
 			},
 		},
+		"Error mtls without ccm": {
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResProperty/CCM/mtls_without_ccm.tf"),
+					ExpectError: regexp.MustCompile(`Error: hostname example.com: mtls can only be set when cert_provisioning_type is CCM`),
+				},
+			},
+		},
+		"Error tls_configuration without ccm": {
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResProperty/CCM/tls_config_without_ccm.tf"),
+					ExpectError: regexp.MustCompile(`Error: hostname example.com: tls_configuration can only be set when cert_provisioning_type is CCM`),
+				},
+			},
+		},
+		"Error wrong ca_set_id": {
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResProperty/CCM/mtls_wrong_ca_set_id.tf"),
+					ExpectError: regexp.MustCompile(`Error: invalid value for ca_set_id \(must be a string representing an integer value\)`),
+				},
+			},
+		},
+		"Error missing ca_set_id": {
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResProperty/CCM/mtls_missing_ca_set_id.tf"),
+					ExpectError: regexp.MustCompile(`The argument "ca_set_id" is required, but no definition was found.`),
+				},
+			},
+		},
+		"Error missing cipher_profile": {
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResProperty/CCM/tls_config_missing_cipher_profile.tf"),
+					ExpectError: regexp.MustCompile(`The argument "cipher_profile" is required, but no definition was found.`),
+				},
+			},
+		},
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			papiMock := &papi.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 			mp := mockProperty{
-				papiMock: papiMock,
+				papiMock: client.PAPI,
 			}
 			if test.init != nil {
 				test.init(&mp)
 			}
 
-			useClient(papiMock, nil, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps:                    test.steps,
-				})
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+				IsUnitTest:               true,
+				Steps:                    test.steps,
 			})
 
-			papiMock.AssertExpectations(t)
+			client.PAPI.AssertExpectations(t)
 		})
 	}
 }

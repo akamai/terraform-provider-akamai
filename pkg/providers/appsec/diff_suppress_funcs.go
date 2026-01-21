@@ -149,19 +149,19 @@ func areReputationProfilesEqual(oldProfile, newProfile appsec.CreateReputationPr
 				if oldAtomicCond.CheckIps != newAtomicCond.CheckIps && newAtomicCond.CheckIps != "" {
 					return false
 				}
-				if oldAtomicCond.NameCase != newAtomicCond.NameCase && !(oldAtomicCond.NameCase && !newAtomicCond.NameCase) {
+				if oldAtomicCond.NameCase != newAtomicCond.NameCase && (!oldAtomicCond.NameCase || newAtomicCond.NameCase) {
 					return false
 				}
-				if oldAtomicCond.NameWildcard != newAtomicCond.NameWildcard && !(oldAtomicCond.NameWildcard && !newAtomicCond.NameWildcard) {
+				if oldAtomicCond.NameWildcard != newAtomicCond.NameWildcard && (!oldAtomicCond.NameWildcard || newAtomicCond.NameWildcard) {
 					return false
 				}
-				if oldAtomicCond.ValueCase != newAtomicCond.ValueCase && !(oldAtomicCond.ValueCase && !newAtomicCond.ValueCase) {
+				if oldAtomicCond.ValueCase != newAtomicCond.ValueCase && (!oldAtomicCond.ValueCase || newAtomicCond.ValueCase) {
 					return false
 				}
-				if oldAtomicCond.ValueWildcard != newAtomicCond.ValueWildcard && !(oldAtomicCond.ValueWildcard && !newAtomicCond.ValueWildcard) {
+				if oldAtomicCond.ValueWildcard != newAtomicCond.ValueWildcard && (!oldAtomicCond.ValueWildcard || newAtomicCond.ValueWildcard) {
 					return false
 				}
-				if oldAtomicCond.PositiveMatch != newAtomicCond.PositiveMatch && !(oldAtomicCond.PositiveMatch && !newAtomicCond.PositiveMatch) {
+				if oldAtomicCond.PositiveMatch != newAtomicCond.PositiveMatch && (!oldAtomicCond.PositiveMatch || newAtomicCond.PositiveMatch) {
 					// only 'true' is supported for this case
 					if oldAtomicCond.ClassName != "HostCondition" {
 						return false

@@ -75,12 +75,231 @@ func dataSourcePropertyHostnames() *schema.Resource {
 						"cert_provisioning_type": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Indicates the certificate's provisioning type. Either `CPS_MANAGED` for the certificates you create with the Certificate Provisioning System (CPS) API, or `DEFAULT` for the Domain Validation (DV) certificates created automatically. Note that you can't specify the `DEFAULT` value if your property hostname uses the `akamaized.net` domain suffix.",
+							Description: "Indicates the certificate's provisioning type. Either `CPS_MANAGED` for the certificates created with the Certificate Provisioning System (CPS) API, `CCM` for the certificates created with the Cloud Certificate Manager (CCM) API, or `DEFAULT` for the Domain Validation (DV) certificates created automatically. Note that you can't specify the `DEFAULT` value if your property hostname uses the `akamaized.net` domain suffix.",
 						},
 						"cert_status": {
 							Type:     schema.TypeList,
 							Computed: true,
 							Elem:     certStatus,
+						},
+						"ccm_certificates": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "Identifiers for the RSA and ECDSA certificates created with Cloud Certificate Manager (CCM).",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"ecdsa_cert_id": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Certificate ID for ECDSA.",
+									},
+									"rsa_cert_id": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Certificate ID for RSA.",
+									},
+								},
+							},
+						},
+						"ccm_cert_status": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "CCM certificate deployment status for RSA and ECDSA certificates.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"ecdsa_staging_status": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Status of the ECDSA certificate on staging network.",
+									},
+									"ecdsa_production_status": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Status of the ECDSA certificate on production network.",
+									},
+									"rsa_staging_status": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Status of the RSA certificate on staging network.",
+									},
+									"rsa_production_status": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Status of the RSA certificate on production network.",
+									},
+								},
+							},
+						},
+						"mtls": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "Mutual TLS configuration for the hostnames created with Cloud Certificate Manager (CCM).",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"ca_set_id": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "ID of the Client CA set used for mutual TLS.",
+									},
+									"check_client_ocsp": {
+										Type:        schema.TypeBool,
+										Computed:    true,
+										Description: "Whether to check the OCSP status of the client certificate.",
+									},
+									"send_ca_set_client": {
+										Type:        schema.TypeBool,
+										Computed:    true,
+										Description: "Whether to send the CA set to the client during the TLS handshake.",
+									},
+								},
+							},
+						},
+						"tls_configuration": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "TLS configuration settings applicable to the Cloud Certificate Manager (CCM) hostnames.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"cipher_profile": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Cipher profile name.",
+									},
+									"disallowed_tls_versions": {
+										Type:     schema.TypeList,
+										Computed: true,
+										Elem: &schema.Schema{
+											Type: schema.TypeString,
+										},
+										Description: "List of TLS versions that are disallowed.",
+									},
+									"fips_mode": {
+										Type:        schema.TypeBool,
+										Computed:    true,
+										Description: "Enable FIPS mode.",
+									},
+									"staple_server_ocsp_response": {
+										Type:        schema.TypeBool,
+										Computed:    true,
+										Description: "Staple the OCSP response for the server certificate.",
+									},
+								},
+							},
+						},
+						"domain_ownership_verification": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "Domain ownership verification details for the hostname.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"status": {
+										Type:     schema.TypeString,
+										Computed: true,
+										Description: "The status of the domain ownership verification. " +
+											"'NOT_VALIDATED' means that the domain hasn't been validated yet. " +
+											"When you submit the domain for validation, the initial status is 'REQUEST_ACCEPTED', " +
+											"and then 'PENDING', when the domain is waiting for the validation to start. " +
+											"When it starts, the status changes to 'VALIDATION_IN_PROGRESS', and then to 'VALIDATED', " +
+											"when the validation is completed successfully. " +
+											"'TOKEN_EXPIRED' means you haven't completed the validation in the requested time frame and " +
+											"you need to generate new validation challenges for the domain. " +
+											"If you no longer want a domain to be owned within Akamai, " +
+											"you can change the status to 'INVALIDATED'.",
+									},
+									"challenge_token_expiry_date": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "An ISO 8601 timestamp indicating when the domain validation challenge expires.",
+									},
+									"validation_cname": {
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: "The CNAME record you copy to your DNS to prove you own the domain.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"hostname": {
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "The hostname part of the CNAME record that validates the domain ownership.",
+												},
+												"target": {
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "The destination part of the CNAME record that validates the domain ownership.",
+												},
+											},
+										},
+									},
+									"validation_txt": {
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: "The TXT record with the challenge token that you add to your hostname's DNS zone to prove you own the domain.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"hostname": {
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "The hostname where you should add the TXT record to validate the domain ownership.",
+												},
+												"challenge_token": {
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "A token you need to copy to the DNS TXT record that validates the domain ownership.",
+												},
+											},
+										},
+									},
+									"validation_http": {
+										Type:     schema.TypeList,
+										Computed: true,
+										Description: "In the HTTP validation method, you create a file containing a token and " +
+											"save it on your HTTP server at the provided URL. " +
+											"Alternatively, you can use a redirect URL with the token.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"redirect_method": {
+													Type:        schema.TypeList,
+													Computed:    true,
+													Description: "Details for the HTTP redirect method of validation.",
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"http_redirect_from": {
+																Type:        schema.TypeString,
+																Computed:    true,
+																Description: "The location on your HTTP server where you set up the redirect.",
+															},
+															"http_redirect_to": {
+																Type:        schema.TypeString,
+																Computed:    true,
+																Description: "The redirect URL with the token that you place on your HTTP server.",
+															},
+														},
+													},
+												},
+												"file_content_method": {
+													Type:        schema.TypeList,
+													Computed:    true,
+													Description: "Details for the file content method of validation.",
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"url": {
+																Type:        schema.TypeString,
+																Computed:    true,
+																Description: "The URL where you should place the file containing the challenge token.",
+															},
+															"body": {
+																Type:        schema.TypeString,
+																Computed:    true,
+																Description: "The content of the file that you should place at the specified URL.",
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
 						},
 					},
 				},
@@ -151,7 +370,6 @@ func dataSourcePropertyHostnames() *schema.Resource {
 
 func dataPropertyHostnamesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := Client(meta)
 	log := meta.Log("PAPI", "dataPropertyHostnamesRead")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
@@ -188,7 +406,7 @@ func dataPropertyHostnamesRead(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 
-	property, err := client.GetProperty(ctx, papi.GetPropertyRequest{ContractID: contractID, GroupID: groupID, PropertyID: propertyID})
+	property, err := meta.Client().GetPAPI().GetProperty(ctx, papi.GetPropertyRequest{ContractID: contractID, GroupID: groupID, PropertyID: propertyID})
 	if err != nil {
 		log.Error("could not fetch property", "error", err)
 		return diag.FromErr(err)
@@ -199,7 +417,7 @@ func dataPropertyHostnamesRead(ctx context.Context, d *schema.ResourceData, m in
 		if version != 0 {
 			diags = append(diags, diag.Diagnostic{Severity: diag.Warning, Summary: "provided `version` for HOSTNAME_BUCKET property, ignoring provided value"})
 		}
-		hostnames, err := getAllActivePropertyHostnames(ctx, client, contractID, groupID, propertyID, filterCerts)
+		hostnames, err := getAllActivePropertyHostnames(ctx, meta.Client().GetPAPI(), contractID, groupID, propertyID, filterCerts)
 		if err != nil {
 			return append(diags, diag.FromErr(err)...)
 		}
@@ -216,13 +434,13 @@ func dataPropertyHostnamesRead(ctx context.Context, d *schema.ResourceData, m in
 
 	var prpVersion *papi.GetPropertyVersionsResponse
 	if version == 0 {
-		prpVersion, err = client.GetLatestVersion(ctx, papi.GetLatestVersionRequest{
+		prpVersion, err = meta.Client().GetPAPI().GetLatestVersion(ctx, papi.GetLatestVersionRequest{
 			PropertyID: propertyID,
 			ContractID: contractID,
 			GroupID:    groupID,
 		})
 	} else {
-		prpVersion, err = client.GetPropertyVersion(ctx, papi.GetPropertyVersionRequest{
+		prpVersion, err = meta.Client().GetPAPI().GetPropertyVersion(ctx, papi.GetPropertyVersionRequest{
 			PropertyID:      propertyID,
 			PropertyVersion: version,
 			ContractID:      contractID,
@@ -250,7 +468,7 @@ func dataPropertyHostnamesRead(ctx context.Context, d *schema.ResourceData, m in
 	}
 
 	log.Debug("fetching property hostnames")
-	hostnamesResponse, err := client.GetPropertyVersionHostnames(ctx, hostNamesReq)
+	hostnamesResponse, err := meta.Client().GetPAPI().GetPropertyVersionHostnames(ctx, hostNamesReq)
 	if err != nil {
 		log.Error("could not fetch property hostnames", "error", err)
 		return diag.FromErr(err)

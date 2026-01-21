@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 
 	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudlets/v3"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
@@ -56,7 +55,7 @@ var (
 )
 
 type sharedPolicyDataSource struct {
-	meta meta.Meta
+	meta.DataSource
 }
 
 // NewSharedPolicyDataSource returns a new cloudlets shared policy data source
@@ -71,25 +70,6 @@ func (d *sharedPolicyDataSource) name() string {
 // Metadata configures data source's meta information
 func (d *sharedPolicyDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = d.name()
-}
-
-// Configure configures data source at the beginning of the lifecycle
-func (d *sharedPolicyDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		// ProviderData is nil when Configure is run first time as part of ValidateDataSourceConfig in framework provider
-		return
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Data Source Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-			)
-		}
-	}()
-
-	d.meta = meta.Must(req.ProviderData)
 }
 
 // Schema is used to define data source's terraform schema
@@ -215,7 +195,7 @@ func (d *sharedPolicyDataSource) Read(ctx context.Context, req datasource.ReadRe
 		return
 	}
 
-	client := ClientV3(d.meta)
+	client := d.Client.GetCloudletsV3()
 	policy, err := client.GetPolicy(ctx, v3.GetPolicyRequest{
 		PolicyID: data.PolicyID.ValueInt64(),
 	})

@@ -436,7 +436,7 @@ func validateExceptions(exceptionsConfig []interface{}) error {
 	if len(exceptionsConfig) > 0 {
 		_, ok := exceptionsConfig[0].(map[string]interface{})
 		if !ok {
-			return fmt.Errorf("Invalid exceptions configuration")
+			return fmt.Errorf("invalid exceptions configuration")
 		}
 	}
 	return nil
