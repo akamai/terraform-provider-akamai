@@ -26,15 +26,18 @@ var (
 	_ resource.Resource                = &DomainOwnershipValidationResource{}
 	_ resource.ResourceWithImportState = &DomainOwnershipValidationResource{}
 	_ resource.ResourceWithConfigure   = &DomainOwnershipValidationResource{}
-
-	searchInterval     = 30 * time.Second
-	defaultPollTimeout = 30 * time.Minute
 )
 
 type (
 	// DomainOwnershipValidationResource represents akamai_domainownership_validation resource.
 	DomainOwnershipValidationResource struct {
 		meta.Resource
+		domainOwnershipValidationResourceConfig
+	}
+
+	domainOwnershipValidationResourceConfig struct {
+		searchInterval     time.Duration
+		defaultPollTimeout time.Duration
 	}
 
 	domainOwnershipValidationResourceModel struct {
@@ -60,9 +63,20 @@ type (
 	}
 )
 
+func defaultDomainOwnershipValidationResourceConfig() domainOwnershipValidationResourceConfig {
+	return domainOwnershipValidationResourceConfig{
+		searchInterval:     30 * time.Second,
+		defaultPollTimeout: 30 * time.Minute,
+	}
+}
+
 // NewDomainOwnershipValidationResource returns new domain ownership validation resource.
-func NewDomainOwnershipValidationResource() resource.Resource {
-	return &DomainOwnershipValidationResource{}
+func NewDomainOwnershipValidationResource(config domainOwnershipValidationResourceConfig) func() resource.Resource {
+	return func() resource.Resource {
+		return &DomainOwnershipValidationResource{
+			domainOwnershipValidationResourceConfig: config,
+		}
+	}
 }
 
 // Metadata implements resource.Resource.
@@ -182,7 +196,7 @@ func (d *DomainOwnershipValidationResource) Create(ctx context.Context, req reso
 		return
 	}
 
-	createTimeout, diags := plan.Timeouts.Create(ctx, defaultPollTimeout)
+	createTimeout, diags := plan.Timeouts.Create(ctx, d.defaultPollTimeout)
 	if resp.Diagnostics.Append(diags...); resp.Diagnostics.HasError() {
 		return
 	}
@@ -192,7 +206,7 @@ func (d *DomainOwnershipValidationResource) Create(ctx context.Context, req reso
 			"domains": domainsToPoll,
 			"timeout": createTimeout,
 		})
-		resp.Diagnostics.Append(waitForDomains(ctx, d.Client.GetDomainOwnership(), domainsToPoll, createTimeout)...)
+		resp.Diagnostics.Append(d.waitForDomains(ctx, d.Client.GetDomainOwnership(), domainsToPoll, createTimeout)...)
 		if resp.Diagnostics.HasError() {
 			resp.Diagnostics.AddWarning("Partial success of create",
 				"Some domains scheduled for validation may not have been validated. "+
@@ -382,7 +396,7 @@ func (d *DomainOwnershipValidationResource) Update(ctx context.Context, req reso
 		return
 	}
 
-	updateTimeout, diags := plan.Timeouts.Update(ctx, defaultPollTimeout)
+	updateTimeout, diags := plan.Timeouts.Update(ctx, d.defaultPollTimeout)
 	if resp.Diagnostics.Append(diags...); resp.Diagnostics.HasError() {
 		return
 	}
@@ -392,7 +406,7 @@ func (d *DomainOwnershipValidationResource) Update(ctx context.Context, req reso
 			"domains": domainsToPoll,
 			"timeout": updateTimeout,
 		})
-		resp.Diagnostics.Append(waitForDomains(ctx, d.Client.GetDomainOwnership(), domainsToPoll, updateTimeout)...)
+		resp.Diagnostics.Append(d.waitForDomains(ctx, d.Client.GetDomainOwnership(), domainsToPoll, updateTimeout)...)
 		if resp.Diagnostics.HasError() {
 			resp.Diagnostics.AddWarning("Partial success of update",
 				"Domains scheduled for invalidation have been successfully invalidated while "+
@@ -766,12 +780,12 @@ func formatDomainsForDiag(domains map[domainKey]domainDetails) string {
 	return strings.Join(domainInfos, ", ")
 }
 
-func waitForDomains(ctx context.Context, client domainownership.DomainOwnership, domainsToPoll map[domainKey]domainDetails, timeout time.Duration) diag.Diagnostics {
+func (d *DomainOwnershipValidationResource) waitForDomains(ctx context.Context, client domainownership.DomainOwnership, domainsToPoll map[domainKey]domainDetails, timeout time.Duration) diag.Diagnostics {
 	var diags diag.Diagnostics
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	searchPollIntervalTicker := time.NewTicker(searchInterval)
+	searchPollIntervalTicker := time.NewTicker(d.searchInterval)
 	defer searchPollIntervalTicker.Stop()
 
 	for {

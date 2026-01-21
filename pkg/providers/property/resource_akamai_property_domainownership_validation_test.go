@@ -153,7 +153,6 @@ func getMinCreateAddOneRemoveOne() validationTestData {
 
 func TestDomainOwnershipValidationResource(t *testing.T) {
 	t.Parallel()
-	searchInterval = 1 * time.Millisecond
 
 	minCreateChecker := test.NewStateChecker("akamai_property_domainownership_validation.test").
 		CheckEqual("domains.#", "3").
@@ -183,9 +182,11 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 		CheckEqual("domains.#", "101")
 
 	tests := map[string]struct {
-		init     func(*domainownership.Mock, validationTestData)
-		mockData validationTestData
-		steps    []resource.TestStep
+		init               func(*domainownership.Mock, validationTestData)
+		mockData           validationTestData
+		steps              []resource.TestStep
+		defaultPollTimeout time.Duration
+		searchInterval     time.Duration
 	}{
 		"create with 3 domains - no polling": {
 			init: func(m *domainownership.Mock, mockData validationTestData) {
@@ -208,7 +209,6 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 		},
 		"create with 3 domains - with polling": {
 			init: func(m *domainownership.Mock, mockData validationTestData) {
-				defaultPollTimeout = 30 * time.Minute
 				// Create
 				mockSearchDomains(m, mockData.create)
 				pending := map[domainKey]domainDetails{
@@ -292,7 +292,6 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 		},
 		"create with 101 domains - poll for 100 domains": {
 			init: func(m *domainownership.Mock, mockData validationTestData) {
-				defaultPollTimeout = 30 * time.Minute
 				// Create
 				mockSearchDomains(m, mockData.create)
 				// Simulate 100 domains are in PENDING status.
@@ -1210,9 +1209,9 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 			},
 		},
 		"expect error - create - timeout exceeded": {
+			defaultPollTimeout: 1 * time.Microsecond,
+			searchInterval:     5 * time.Second,
 			init: func(m *domainownership.Mock, mockData validationTestData) {
-				defaultPollTimeout = 1 * time.Microsecond
-				searchInterval = 5 * time.Second
 				// Create
 				mockSearchDomains(m, mockData.create)
 				pending := map[domainKey]domainDetails{
@@ -1308,9 +1307,9 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 			},
 		},
 		"expect error - create with 3 domains - update by adding one domain - timeout exceeded": {
+			defaultPollTimeout: 1 * time.Microsecond,
+			searchInterval:     5 * time.Second,
 			init: func(m *domainownership.Mock, mockData validationTestData) {
-				defaultPollTimeout = 1 * time.Microsecond
-				searchInterval = 5 * time.Second
 				// Create
 				mockSearchDomains(m, mockData.create)
 				mockValidateDomains(m, mockData.create, mockData.postCreateValidation)
@@ -1510,15 +1509,27 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			client := edgegrid.NewTestClient()
 
 			if tc.init != nil {
 				tc.init(client.DomainOwnership, tc.mockData)
 			}
 
+			config := defaultSubproviderConfig()
+			if tc.defaultPollTimeout != 0 {
+				config.domainValidation.defaultPollTimeout = tc.defaultPollTimeout
+			}
+			if tc.searchInterval != 0 {
+				config.domainValidation.searchInterval = tc.searchInterval
+			} else {
+				config.domainValidation.searchInterval = 1 * time.Millisecond
+			}
+
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
-				Steps:                    tc.steps,
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(
+					client, newSubproviderWithConfig(config)),
+				Steps: tc.steps,
 			})
 
 			client.DomainOwnership.AssertExpectations(t)

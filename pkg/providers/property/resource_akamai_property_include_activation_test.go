@@ -30,12 +30,12 @@ var (
 )
 
 func TestResourcePropertyIncludeActivation(t *testing.T) {
-
+	t.Parallel()
+	config := defaultSubproviderConfig()
+	config.includeActivation.createActivationRetry = 10 * time.Millisecond
 	// lower down the timeouts for testing purposes
-	activationPollInterval = time.Microsecond
-	getActivationInterval = time.Microsecond
-	CreateActivationRetry = 10 * time.Millisecond
-	ActivationPollInterval = 10 * time.Millisecond
+	config.includeActivation.activationPollInterval = time.Microsecond
+	config.includeActivation.getActivationInterval = time.Microsecond
 
 	type attrs struct {
 		includeID, contractID, groupID, network, note string
@@ -305,6 +305,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 	)
 
 	t.Run("create a new include activation lifecycle", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		state := State{}
 
@@ -323,7 +324,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		_ = expectDelete(client.PAPI, state, deactReq)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation.tf", testDir),
@@ -343,6 +344,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 	})
 
 	t.Run("include activation with timeout lifecycle", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		state := State{}
 
@@ -366,7 +368,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		_ = expectDelete(client.PAPI, state, deactReq)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation_with_timeout.tf", testDir),
@@ -400,6 +402,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 	})
 
 	t.Run("update include activation lifecycle", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		state := State{}
 
@@ -439,7 +442,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		_ = expectDelete(client.PAPI, state, deactReq)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation.tf", testDir),
@@ -473,6 +476,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 	})
 
 	t.Run("update include activation lifecycle - extended notify emails is correctly read in update", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		state := State{}
 
@@ -515,7 +519,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		_ = expectDelete(client.PAPI, state, deactReq)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation.tf", testDir),
@@ -549,6 +553,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 	})
 
 	t.Run("update include activation lifecycle - shrinking notify emails is correctly read in update", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		state := State{}
 
@@ -590,7 +595,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		_ = expectDelete(client.PAPI, state, deactReq)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation_email_updated.tf", testDir),
@@ -624,6 +629,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 	})
 
 	t.Run("update include activation lifecycle - replaced notify emails is correctly read in update", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		state := State{}
 
@@ -666,7 +672,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		_ = expectDelete(client.PAPI, state, deactReq)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation.tf", testDir),
@@ -700,6 +706,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 	})
 
 	t.Run("update include activation lifecycle - notify emails is correctly read in update when complicated changes within contacts", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		state := State{}
 
@@ -743,7 +750,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		_ = expectDelete(client.PAPI, state, deactReq)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation_complicated_emails.tf", testDir),
@@ -777,6 +784,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 	})
 
 	t.Run("update include activation compliance record", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		state := State{}
 
@@ -809,7 +817,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		_ = expectDelete(client.PAPI, state, deactReq)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
 			Steps: []resource.TestStep{
 				{
 					// Akamai accounts cannot activate the property include in the production network without compliance_record,
@@ -850,6 +858,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 	})
 
 	t.Run("include activation lifecycle, every activation/deactivation has recoverable error with activation processing in background", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		state := State{}
 
@@ -883,7 +892,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		state = expectWaitPending(client.PAPI, state, deactReq.Network, 2)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation.tf", testDir),
@@ -903,6 +912,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		client.PAPI.AssertExpectations(t)
 	})
 	t.Run("include activation lifecycle, every activation/deactivation requires retry due to recoverable error without activation processing in background", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		state := State{}
 
@@ -932,7 +942,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		state = expectWaitPending(client.PAPI, state, deactReq.Network, 2)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation.tf", testDir),
@@ -952,6 +962,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		client.PAPI.AssertExpectations(t)
 	})
 	t.Run("include activation lifecycle, every activation/deactivation requires retry due to recoverable EOF error without activation processing in background", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		state := State{}
 
@@ -990,7 +1001,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		state = expectWaitPending(client.PAPI, state, deactReq.Network, 2)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation.tf", testDir),
@@ -1011,6 +1022,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 	})
 
 	t.Run("wait for ongoing expected activation to finish", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		state := State{}
 
@@ -1033,7 +1045,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		_ = expectDelete(client.PAPI, state, deactReq)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation.tf", testDir),
@@ -1053,6 +1065,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 	})
 
 	t.Run("wait for ongoing unexpected activation to finish", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		state := State{}
 
@@ -1079,7 +1092,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		_ = expectDelete(client.PAPI, state, deactReq)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation.tf", testDir),
@@ -1099,6 +1112,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 	})
 
 	t.Run("missing compliance record error when network is PRODUCTION", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		state := State{}
 
@@ -1127,7 +1141,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		}).Return(nil, papi.ErrMissingComplianceRecord).Once()
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
 			Steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureStringf(t, "%s/no_compliance_record_on_production.tf", testDir),
@@ -1139,9 +1153,10 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 	})
 
 	t.Run("incorrect timeout format", func(t *testing.T) {
+		t.Parallel()
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(nil, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(nil, newSubproviderWithConfig(config)),
 			Steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureStringf(t, "%s/property_include_activation_incorrect_timeout.tf", testDir),
@@ -1152,6 +1167,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 	})
 
 	t.Run("first create fails but second create works", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		state := State{}
 
@@ -1178,7 +1194,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		_ = expectDelete(client.PAPI, state, deactReq)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation.tf", testDir),
@@ -1211,6 +1227,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 	})
 
 	t.Run("import", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		state := State{}
 
@@ -1232,7 +1249,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		_ = expectDelete(client.PAPI, state, deactReq)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation.tf", testDir),
@@ -1249,6 +1266,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 	})
 
 	t.Run("note and notify_emails fields change suppressed", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		state := State{}
 
@@ -1272,7 +1290,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		_ = expectDelete(client.PAPI, state, deactReq)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation.tf", testDir),
@@ -1305,6 +1323,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 	})
 
 	t.Run("note and notify_emails change not suppressed when version is updated", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		state := State{}
 
@@ -1350,7 +1369,7 @@ func TestResourcePropertyIncludeActivation(t *testing.T) {
 		_ = expectDelete(client.PAPI, state, deactReq)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/property_include_activation.tf", testDir),

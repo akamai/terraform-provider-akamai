@@ -40,6 +40,7 @@ func (c ctxt) Value(_ interface{}) interface{} {
 }
 
 func TestResolveVersion(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		versionData       int
 		versionDataExists bool
@@ -110,7 +111,7 @@ func TestResolveVersion(t *testing.T) {
 }
 
 func TestLookupActivation(t *testing.T) {
-
+	t.Parallel()
 	tests := map[string]struct {
 		init                     func(*papi.Mock)
 		query                    lookupActivationRequest
@@ -301,11 +302,10 @@ func TestLookupActivation(t *testing.T) {
 }
 
 func TestCreateActivation(t *testing.T) {
+	t.Parallel()
 
-	defer func(t time.Duration) {
-		CreateActivationRetry = t
-	}(CreateActivationRetry) // restore previous value
-	CreateActivationRetry = time.Microsecond
+	config := defaultPropertyActivationResourceConfig()
+	config.createActivationRetry = time.Microsecond
 
 	propID := "someID"
 
@@ -327,7 +327,7 @@ func TestCreateActivation(t *testing.T) {
 		}, nil).Once()
 
 		ctx := context.Background()
-		actID, diagErr := createActivation(ctx, m, createReq)
+		actID, diagErr := createActivation(ctx, m, createReq, config)
 		m.AssertExpectations(t)
 		assert.Nil(t, diagErr)
 		assert.Equal(t, "atv_123", actID)
@@ -357,7 +357,7 @@ func TestCreateActivation(t *testing.T) {
 		}, nil).Once()
 
 		ctx := context.Background()
-		actID, diagErr := createActivation(ctx, m, createReq)
+		actID, diagErr := createActivation(ctx, m, createReq, config)
 		m.AssertExpectations(t)
 		assert.Nil(t, diagErr)
 		assert.Equal(t, "atv_123", actID)
@@ -369,7 +369,7 @@ func TestCreateActivation(t *testing.T) {
 		m.On("CreateActivation", testutils.MockContext, createReq).Return(nil, error(&papi.Error{StatusCode: 400})).Once()
 
 		ctx := context.Background()
-		actID, diagErr := createActivation(ctx, m, createReq)
+		actID, diagErr := createActivation(ctx, m, createReq, config)
 		m.AssertExpectations(t)
 		assert.NotNil(t, diagErr)
 		assert.Equal(t, "", actID)
@@ -436,7 +436,7 @@ func TestCreateActivation(t *testing.T) {
 		}, nil).Once()
 
 		ctx := context.Background()
-		actID, diagErr := createActivation(ctx, m, req)
+		actID, diagErr := createActivation(ctx, m, req, config)
 		m.AssertExpectations(t)
 		assert.False(t, diagErr.HasError())
 		assert.Equal(t, "atv_123", actID)
@@ -498,7 +498,7 @@ func TestCreateActivation(t *testing.T) {
 		}, nil).Times(4)
 
 		ctx := context.Background()
-		actID, diags := createActivation(ctx, m, req)
+		actID, diags := createActivation(ctx, m, req, config)
 		m.AssertExpectations(t)
 		assert.True(t, diags.HasError())
 		assert.Contains(t, diags[0].Summary, "You selected an unauthorized CCM certificate for the example.net hostname.")
@@ -528,7 +528,7 @@ func TestCreateActivation(t *testing.T) {
 		m.On("CreateActivation", testutils.MockContext, createReq).Return(nil, &activateErr).Once()
 
 		ctx := context.Background()
-		actID, diags := createActivation(ctx, m, createReq)
+		actID, diags := createActivation(ctx, m, createReq, config)
 		m.AssertExpectations(t)
 		assert.True(t, diags.HasError())
 		assert.Contains(t, diags[0].Summary, "You did something wrong.")
@@ -551,7 +551,7 @@ func TestCreateActivation(t *testing.T) {
 		m.On("CreateActivation", testutils.MockContext, createReq).Return(nil, &activateErr).Once()
 
 		ctx := context.Background()
-		actID, diags := createActivation(ctx, m, createReq)
+		actID, diags := createActivation(ctx, m, createReq, config)
 		m.AssertExpectations(t)
 		assert.True(t, diags.HasError())
 		assert.Contains(t, diags[0].Summary, "https://foo.akamaiapis.net/papi/v1/properties/prp_123456/activations#fedcba9876543210")
@@ -590,7 +590,7 @@ func TestCreateActivation(t *testing.T) {
 		}, nil)
 
 		ctx := context.Background()
-		actID, diagErr := createActivation(ctx, m, createReq)
+		actID, diagErr := createActivation(ctx, m, createReq, config)
 		m.AssertExpectations(t)
 		assert.Nil(t, diagErr)
 		assert.Equal(t, "atv_123", actID)
@@ -646,7 +646,7 @@ func TestCreateActivation(t *testing.T) {
 		}, nil).Once()
 
 		ctx := context.Background()
-		actID, diagErr := createActivation(ctx, m, createReq)
+		actID, diagErr := createActivation(ctx, m, createReq, config)
 		m.AssertExpectations(t)
 		assert.Nil(t, diagErr)
 		assert.Equal(t, "atv_123", actID)
@@ -676,7 +676,7 @@ func TestCreateActivation(t *testing.T) {
 		}, nil).Once()
 
 		ctx := context.Background()
-		actID, diagErr := createActivation(ctx, m, createReq)
+		actID, diagErr := createActivation(ctx, m, createReq, config)
 		m.AssertExpectations(t)
 		assert.Nil(t, diagErr)
 		assert.Equal(t, "atv_123", actID)
@@ -705,7 +705,7 @@ func TestCreateActivation(t *testing.T) {
 		}, nil).Once()
 
 		ctx := context.Background()
-		actID, diagErr := createActivation(ctx, m, createReq)
+		actID, diagErr := createActivation(ctx, m, createReq, config)
 		m.AssertExpectations(t)
 		assert.Nil(t, diagErr)
 		assert.Equal(t, "atv_123", actID)
@@ -718,7 +718,7 @@ func TestCreateActivation(t *testing.T) {
 		m.On("CreateActivation", testutils.MockContext, createReq).Return(nil, expectedError).Once()
 
 		ctx := context.Background()
-		actID, diagErr := createActivation(ctx, m, createReq)
+		actID, diagErr := createActivation(ctx, m, createReq, config)
 		m.AssertExpectations(t)
 		assert.NotEmpty(t, diagErr)
 		assert.Contains(t, diagErr[0].Summary, expectedError.Error())
@@ -775,7 +775,7 @@ func TestCreateActivation(t *testing.T) {
 		}, nil).Once()
 
 		ctx := context.Background()
-		actID, diagErr := createActivation(ctx, m, createReq)
+		actID, diagErr := createActivation(ctx, m, createReq, config)
 		m.AssertExpectations(t)
 		assert.Nil(t, diagErr)
 		assert.Equal(t, "atv_000", actID)
@@ -833,7 +833,7 @@ func TestCreateActivation(t *testing.T) {
 		}, nil).Once()
 
 		ctx := context.Background()
-		actID, diagErr := createActivation(ctx, m, createReq)
+		actID, diagErr := createActivation(ctx, m, createReq, config)
 		m.AssertExpectations(t)
 		assert.Nil(t, diagErr)
 		assert.Equal(t, "atv_000", actID)
@@ -890,7 +890,7 @@ func TestCreateActivation(t *testing.T) {
 		}, nil).Once()
 
 		ctx := context.Background()
-		actID, diagErr := createActivation(ctx, m, createReq)
+		actID, diagErr := createActivation(ctx, m, createReq, config)
 		m.AssertExpectations(t)
 		assert.Nil(t, diagErr)
 		assert.Equal(t, "atv_123", actID)
@@ -946,7 +946,7 @@ func TestCreateActivation(t *testing.T) {
 		}, nil).Once()
 
 		ctx := context.Background()
-		actID, diagErr := createActivation(ctx, m, createReq)
+		actID, diagErr := createActivation(ctx, m, createReq, config)
 		m.AssertExpectations(t)
 		assert.Nil(t, diagErr)
 		assert.Equal(t, "atv_123", actID)
@@ -1042,14 +1042,15 @@ func TestCreateActivation(t *testing.T) {
 		}, nil).Once()
 
 		ctx := context.Background()
-		actID, diagErr := createActivation(ctx, m, createReq)
+		actID, diagErr := createActivation(ctx, m, createReq, config)
 		m.AssertExpectations(t)
 		assert.Nil(t, diagErr)
 		assert.Equal(t, "atv_123", actID)
 	})
 }
 
-func Test_isCCMDeployedOrDeploying(t *testing.T) {
+func TestIsCCMDeployedOrDeploying(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		hostname papi.Hostname
 		want     bool

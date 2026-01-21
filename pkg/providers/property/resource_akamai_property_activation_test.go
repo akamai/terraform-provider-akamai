@@ -22,6 +22,7 @@ var defaultVersionHostnames = []papi.Hostname{
 }
 
 func TestResourcePAPIPropertyActivation(t *testing.T) {
+	t.Parallel()
 	baseChecker := test.NewStateChecker("akamai_property_activation.test").
 		CheckEqual("id", "prp_test:STAGING").
 		CheckEqual("property_id", "prp_test").
@@ -35,8 +36,10 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 		CheckEqual("note", "property activation note for creating")
 
 	tests := map[string]struct {
-		init  func(*papi.Mock)
-		steps []resource.TestStep
+		init                     func(*papi.Mock)
+		steps                    []resource.TestStep
+		ccmHostnamesPollInterval time.Duration
+		ccmHostnamesPollTimeout  time.Duration
 	}{
 		"property activation lifecycle - OK": {
 			init: func(m *papi.Mock) {
@@ -602,9 +605,9 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 			},
 		},
 		"create property activation with CCM hostnames not ready - polling times out - continue processing": {
+			ccmHostnamesPollInterval: 10 * time.Millisecond,
+			ccmHostnamesPollTimeout:  1 * time.Millisecond,
 			init: func(m *papi.Mock) {
-				ccmHostnamesPollInterval = 10 * time.Millisecond
-				ccmHostnamesPollTimeout = 1 * time.Millisecond
 				// create
 				expectGetRuleTree(m, "prp_test", 1, ruleTreeResponseValid, nil).Once()
 				expectGetActivations(m, "prp_test", papi.GetActivationsResponse{}, nil).Once()
@@ -1691,20 +1694,30 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 		},
 	}
 
-	for name, test := range tests {
+	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			client := edgegrid.NewTestClient()
-			ccmHostnamesPollInterval = 1 * time.Millisecond
-			if test.init != nil {
-				test.init(client.PAPI)
+
+			config := defaultSubproviderConfig()
+			if tc.ccmHostnamesPollInterval != 0 {
+				config.propertyActivation.ccmHostnamesPollInterval = tc.ccmHostnamesPollInterval
+			} else {
+				config.propertyActivation.ccmHostnamesPollInterval = 1 * time.Millisecond
+			}
+			if tc.ccmHostnamesPollTimeout != 0 {
+				config.propertyActivation.ccmHostnamesPollTimeout = tc.ccmHostnamesPollTimeout
+			}
+
+			if tc.init != nil {
+				tc.init(client.PAPI)
 			}
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
-				IsUnitTest:               true,
-				Steps:                    test.steps,
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client,
+					newSubproviderWithConfig(config)),
+				IsUnitTest: true,
+				Steps:      tc.steps,
 			})
-			ccmHostnamesPollTimeout = 3 * time.Minute
-			ccmHostnamesPollInterval = 20 * time.Second
 			client.PAPI.AssertExpectations(t)
 		})
 	}

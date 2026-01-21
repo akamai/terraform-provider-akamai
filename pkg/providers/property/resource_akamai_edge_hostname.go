@@ -12,6 +12,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/hapi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/str"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/timeouts"
@@ -26,27 +27,18 @@ const (
 	retriesMax                     = 15
 	minDomainPrefixLength          = 1
 	minDomainPrefixLengthAkamaized = 4
-)
 
-const (
 	changeRequestStatusPending   = "PENDING"
 	changeRequestStatusSucceeded = "SUCCEEDED"
 	changeRequestStatusFailed    = "FAILED"
 	changeRequestStatusIgnored   = "IGNORED"
+
+	defaultEdgeHostnameTimeout = time.Minute * 45
 )
 
 var (
-	// EgdeHostnamePollInterval is the interval for polling an edgehostname creation or deletion
-	EgdeHostnamePollInterval = time.Minute
-
-	// GetEdgeHostnamePollInterval is the interval for polling an edgehostname after creation.
-	GetEdgeHostnamePollInterval = time.Second * 10
-
 	// errContextTerminated is returned when the context is terminated while waiting for an edge hostname to be ready.
 	errContextTerminated = errors.New("get edge hostname context terminated")
-
-	// EdgeHostnameReadTimeout is the timeout for fetching an edge hostname in the Read context.
-	EdgeHostnameReadTimeout = time.Minute * 1
 
 	// domainPrefixPatterns maps domain suffixes to their respective regex patterns for validating domain prefixes
 	// according to API validation rules.
@@ -56,23 +48,40 @@ var (
 	}
 )
 
-var defaultEdgeHostnameTimeout = time.Minute * 45
+type secureEdgeHostNameResourceConfig struct {
+	// edgeHostnamePollInterval is the interval for polling an edgehostname creation or deletion
+	edgeHostnamePollInterval time.Duration
 
-func resourceSecureEdgeHostName() *schema.Resource {
+	// getEdgeHostnamePollInterval is the interval for polling an edgehostname after creation.
+	getEdgeHostnamePollInterval time.Duration
+
+	// edgeHostnameReadTimeout is the timeout for fetching an edge hostname in the Read context.
+	edgeHostnameReadTimeout time.Duration
+}
+
+func defaultSecureEdgeHostNameResourceConfig() secureEdgeHostNameResourceConfig {
+	return secureEdgeHostNameResourceConfig{
+		edgeHostnamePollInterval:    time.Minute,
+		getEdgeHostnamePollInterval: time.Second * 10,
+		edgeHostnameReadTimeout:     time.Minute,
+	}
+}
+
+func resourceSecureEdgeHostName(config secureEdgeHostNameResourceConfig) *schema.Resource {
 	return &schema.Resource{
 		CustomizeDiff: customdiff.All(
 			validateImmutableFields,
 		),
-		CreateContext: resourceSecureEdgeHostNameCreate,
-		ReadContext:   resourceSecureEdgeHostNameRead,
-		UpdateContext: resourceSecureEdgeHostNameUpdate,
-		DeleteContext: resourceSecureEdgeHostNameDelete,
+		CreateContext: resourceSecureEdgeHostNameCreate(config),
+		ReadContext:   resourceSecureEdgeHostNameRead(config),
+		UpdateContext: resourceSecureEdgeHostNameUpdate(config),
+		DeleteContext: resourceSecureEdgeHostNameDelete(config),
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceSecureEdgeHostNameImport,
 		},
 		Schema: akamaiSecureEdgeHostNameSchema,
 		Timeouts: &schema.ResourceTimeout{
-			Default: &defaultEdgeHostnameTimeout,
+			Default: ptr.To(defaultEdgeHostnameTimeout),
 		},
 	}
 }
@@ -146,142 +155,151 @@ var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
 	},
 }
 
-func resourceSecureEdgeHostNameCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := meta.Must(m)
-	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameCreate")
+func resourceSecureEdgeHostNameCreate(config secureEdgeHostNameResourceConfig) schema.CreateContextFunc {
+	return func(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+		meta := meta.Must(m)
+		logger := meta.Log("PAPI", "resourceSecureEdgeHostNameCreate")
 
-	edgeHostname, err := tf.GetStringValue("edge_hostname", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	diags := validateDomainPrefix(edgeHostname)
-	if diags.HasError() {
-		return diags
-	}
-
-	groupID, err := tf.GetStringValue("group_id", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	groupID = str.AddPrefix(groupID, "grp_")
-	if err := d.Set("group_id", groupID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
-	}
-
-	contractID, err := tf.GetStringValue("contract_id", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	contractID = str.AddPrefix(contractID, "ctr_")
-	if err := d.Set("contract_id", contractID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
-	}
-
-	logger.Debugf("Edgehostnames GROUP = %v", groupID)
-	logger.Debugf("Edgehostnames CONTRACT = %v", contractID)
-
-	// Schema no longer guarantees that product_id is set, this field is required only for creation
-	productID, err := tf.GetStringValue("product_id", d)
-	if err != nil {
-		return diag.Errorf("`product_id` must be specified for creation")
-	}
-	productID = str.AddPrefix(productID, "prd_")
-	if err := d.Set("product_id", productID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
-	}
-
-	edgeHostnames, err := meta.Client().GetPAPI().GetEdgeHostnames(ctx, papi.GetEdgeHostnamesRequest{
-		ContractID: contractID,
-		GroupID:    groupID,
-	})
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	newHostname := papi.EdgeHostnameCreate{}
-	newHostname.ProductID = productID
-	newHostname.DomainSuffix, newHostname.SecureNetwork = parseEdgeHostname(edgeHostname)
-	newHostname.DomainPrefix = strings.TrimSuffix(edgeHostname, "."+newHostname.DomainSuffix)
-	// ip_behavior is required value in schema.
-	newHostname.IPVersionBehavior = strings.ToUpper(d.Get("ip_behavior").(string))
-
-	for _, h := range edgeHostnames.EdgeHostnames.Items {
-		if h.DomainPrefix == newHostname.DomainPrefix && h.DomainSuffix == newHostname.DomainSuffix {
-			return diag.Errorf("edgehostname '%s' already exists", edgeHostname)
-		}
-	}
-	certEnrollmentID, err := tf.GetIntValue("certificate", d)
-	if err != nil {
-		if !errors.Is(err, tf.ErrNotFound) {
-			return diag.FromErr(err)
-		}
-		if newHostname.SecureNetwork == papi.EHSecureNetworkEnhancedTLS {
-			return diag.FromErr(fmt.Errorf("a certificate enrollment ID is required for Enhanced TLS edge hostnames with 'edgekey.net' suffix"))
-		}
-	}
-	newHostname.CertEnrollmentID = certEnrollmentID
-	newHostname.SlotNumber = certEnrollmentID
-
-	useCasesJSON, err := tf.GetStringValue("use_cases", d)
-	if err != nil && !errors.Is(err, tf.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	if useCasesJSON != "" {
-		var useCases []papi.UseCase
-		if err := json.Unmarshal([]byte(useCasesJSON), &useCases); err != nil {
-			return diag.Errorf("error while un-marshaling use cases JSON: %s", err)
-		}
-		newHostname.UseCases = useCases
-	}
-
-	logger.Debugf("Creating new edge hostname: %#v", newHostname)
-	hostname, err := meta.Client().GetPAPI().CreateEdgeHostname(ctx, papi.CreateEdgeHostnameRequest{
-		EdgeHostname: newHostname,
-		ContractID:   contractID,
-		GroupID:      groupID,
-	})
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	edgeHostnameKey := edgeHostnameKey{
-		edgeHostnameID: hostname.EdgeHostnameID,
-		contractID:     contractID,
-		groupID:        groupID,
-	}
-
-	if _, err := waitUntilEdgeHostnameReady(ctx, meta, edgeHostnameKey); err != nil {
-		return diag.FromErr(err)
-	}
-
-	if d.HasChange("ttl") {
-		edgeHostnameID, err := strconv.Atoi(strings.TrimPrefix(hostname.EdgeHostnameID, "ehn_"))
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		_, err = waitForHAPIPropagation(ctx, meta.Client().GetHAPI(), edgeHostnameID)
+		edgeHostname, err := tf.GetStringValue("edge_hostname", d)
 		if err != nil {
 			return diag.FromErr(err)
 		}
 
-		ttl, err := tf.GetIntValueAsInt64("ttl", d)
+		diags := validateDomainPrefix(edgeHostname)
+		if diags.HasError() {
+			return diags
+		}
+
+		groupID, err := tf.GetStringValue("group_id", d)
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		patches := []patch{{
-			value: strconv.FormatInt(ttl, 10),
-			field: "ttl",
-			path:  "/ttl",
-		}}
-		diagnostics := patchEdgeHostname(ctx, d, meta, edgeHostnameID, patches)
-		if diagnostics != nil {
-			return diagnostics
+		groupID = str.AddPrefix(groupID, "grp_")
+		if err := d.Set("group_id", groupID); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 		}
-	}
 
-	d.SetId(hostname.EdgeHostnameID)
-	return resourceSecureEdgeHostNameRead(ctx, d, meta)
+		contractID, err := tf.GetStringValue("contract_id", d)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		contractID = str.AddPrefix(contractID, "ctr_")
+		if err := d.Set("contract_id", contractID); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
+		}
+
+		logger.Debugf("Edgehostnames GROUP = %v", groupID)
+		logger.Debugf("Edgehostnames CONTRACT = %v", contractID)
+
+		// Schema no longer guarantees that product_id is set, this field is required only for creation
+		productID, err := tf.GetStringValue("product_id", d)
+		if err != nil {
+			return diag.Errorf("`product_id` must be specified for creation")
+		}
+		productID = str.AddPrefix(productID, "prd_")
+		if err := d.Set("product_id", productID); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
+		}
+
+		edgeHostnames, err := meta.Client().GetPAPI().GetEdgeHostnames(ctx, papi.GetEdgeHostnamesRequest{
+			ContractID: contractID,
+			GroupID:    groupID,
+		})
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		newHostname := papi.EdgeHostnameCreate{}
+		newHostname.ProductID = productID
+		newHostname.DomainSuffix, newHostname.SecureNetwork = parseEdgeHostname(edgeHostname)
+		newHostname.DomainPrefix = strings.TrimSuffix(edgeHostname, "."+newHostname.DomainSuffix)
+		// ip_behavior is required value in schema.
+		newHostname.IPVersionBehavior = strings.ToUpper(d.Get("ip_behavior").(string))
+
+		for _, h := range edgeHostnames.EdgeHostnames.Items {
+			if h.DomainPrefix == newHostname.DomainPrefix && h.DomainSuffix == newHostname.DomainSuffix {
+				return diag.Errorf("edgehostname '%s' already exists", edgeHostname)
+			}
+		}
+		certEnrollmentID, err := tf.GetIntValue("certificate", d)
+		if err != nil {
+			if !errors.Is(err, tf.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+			if newHostname.SecureNetwork == papi.EHSecureNetworkEnhancedTLS {
+				return diag.FromErr(fmt.Errorf("a certificate enrollment ID is required for Enhanced TLS edge hostnames with 'edgekey.net' suffix"))
+			}
+		}
+		newHostname.CertEnrollmentID = certEnrollmentID
+		newHostname.SlotNumber = certEnrollmentID
+
+		useCasesJSON, err := tf.GetStringValue("use_cases", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		if useCasesJSON != "" {
+			var useCases []papi.UseCase
+			if err := json.Unmarshal([]byte(useCasesJSON), &useCases); err != nil {
+				return diag.Errorf("error while un-marshaling use cases JSON: %s", err)
+			}
+			newHostname.UseCases = useCases
+		}
+
+		logger.Debugf("Creating new edge hostname: %#v", newHostname)
+		hostname, err := meta.Client().GetPAPI().CreateEdgeHostname(ctx, papi.CreateEdgeHostnameRequest{
+			EdgeHostname: newHostname,
+			ContractID:   contractID,
+			GroupID:      groupID,
+		})
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		edgeHostnameKey := edgeHostnameKey{
+			edgeHostnameID: hostname.EdgeHostnameID,
+			contractID:     contractID,
+			groupID:        groupID,
+		}
+
+		if _, err := waitUntilEdgeHostnameReady(ctx, meta, edgeHostnameKey, config); err != nil {
+			return diag.FromErr(err)
+		}
+
+		if d.HasChange("ttl") {
+			edgeHostnameID, err := strconv.Atoi(strings.TrimPrefix(hostname.EdgeHostnameID, "ehn_"))
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			_, err = waitForHAPIPropagation(ctx, meta.Client().GetHAPI(), edgeHostnameID, config)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+
+			ttl, err := tf.GetIntValueAsInt64("ttl", d)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			patches := []patch{{
+				value: strconv.FormatInt(ttl, 10),
+				field: "ttl",
+				path:  "/ttl",
+			}}
+			diagnostics := patchEdgeHostname(ctx,
+				patchEdgeHostnameOptions{
+					resourceData:   d,
+					meta:           meta,
+					edgeHostnameID: edgeHostnameID,
+					patches:        patches,
+					config:         config,
+				})
+			if diagnostics != nil {
+				return diagnostics
+			}
+		}
+
+		d.SetId(hostname.EdgeHostnameID)
+		return resourceSecureEdgeHostNameRead(config)(ctx, d, meta)
+	}
 }
 
 type edgeHostnameKey struct {
@@ -293,7 +311,9 @@ type edgeHostnameKey struct {
 // waitUntilEdgeHostnameReady waits until the edge hostname is available in the GetEdgeHostname response.
 // Note: After creation, the edge hostname can be in one of three states: missing (not yet available even though creation was successful), CREATED or PENDING.
 // This function waits only if the edge hostname is present in the GetEdgeHostname response, it does not matter if it is in CREATED or PENDING status.
-func waitUntilEdgeHostnameReady(ctx context.Context, meta meta.Meta, edgeHostnameKey edgeHostnameKey) (*papi.GetEdgeHostnamesResponse, error) {
+func waitUntilEdgeHostnameReady(ctx context.Context, meta meta.Meta, edgeHostnameKey edgeHostnameKey,
+	config secureEdgeHostNameResourceConfig) (*papi.GetEdgeHostnamesResponse, error) {
+
 	logger := meta.Log("PAPI", "waitUntilEdgeHostnameReady")
 
 	for {
@@ -318,10 +338,11 @@ func waitUntilEdgeHostnameReady(ctx context.Context, meta meta.Meta, edgeHostnam
 			return nil, err
 		}
 
-		logger.Debugf("edge hostname is %s not found yet, waiting %s before retrying", edgeHostnameKey.edgeHostnameID, GetEdgeHostnamePollInterval)
+		logger.Debugf("edge hostname is %s not found yet, waiting %s before retrying",
+			edgeHostnameKey.edgeHostnameID, config.getEdgeHostnamePollInterval)
 
 		select {
-		case <-time.After(GetEdgeHostnamePollInterval):
+		case <-time.After(config.getEdgeHostnamePollInterval):
 			logger.Debugf("retrying check for edge hostname %s", edgeHostnameKey.edgeHostnameID)
 		case <-ctx.Done():
 			logger.Debugf("context terminated while waiting for the edge hostname %s to appear in the response: %s", edgeHostnameKey.edgeHostnameID, ctx.Err())
@@ -359,176 +380,187 @@ func validateDomainPrefix(edgeHostname string) diag.Diagnostics {
 	return nil
 }
 
-func resourceSecureEdgeHostNameRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := meta.Must(m)
-	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameRead")
+func resourceSecureEdgeHostNameRead(config secureEdgeHostNameResourceConfig) schema.ReadContextFunc {
+	return func(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+		meta := meta.Must(m)
+		logger := meta.Log("PAPI", "resourceSecureEdgeHostNameRead")
 
-	groupID, err := tf.GetStringValue("group_id", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	groupID = str.AddPrefix(groupID, "grp_")
-	if err := d.Set("group_id", groupID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
-	}
-
-	contractID, err := tf.GetStringValue("contract_id", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	contractID = str.AddPrefix(contractID, "ctr_")
-	// set contract/contract_id into ResourceData
-	if err := d.Set("contract_id", contractID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
-	}
-
-	// Schema guarantees product_id/product are strings and one or the other is set
-	var productID string
-	if got, ok := d.GetOk("product_id"); ok {
-		productID = got.(string)
-	}
-	productID = str.AddPrefix(productID, "prd_")
-	if err := d.Set("product_id", productID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
-	}
-
-	logger.Debugf("Edgehostnames GROUP = %v", groupID)
-	logger.Debugf("Edgehostnames CONTRACT = %v", contractID)
-
-	edgeHostnameResp, err := meta.Client().GetPAPI().GetEdgeHostname(ctx, papi.GetEdgeHostnameRequest{
-		EdgeHostnameID: d.Id(),
-		ContractID:     contractID,
-		GroupID:        groupID,
-	})
-	if err != nil {
-		if errors.Is(err, papi.ErrNotFound) {
-			logger.Debugf("edge hostname %s not found in read", d.Id())
-			// If the edge hostname is not found in Read, wait one minute to check if it's a problem with database inconsistency on API side.
-			ctx, cancel := context.WithTimeout(ctx, EdgeHostnameReadTimeout)
-			defer cancel()
-
-			edgeHostnameResp, err = waitUntilEdgeHostnameReady(ctx, meta, edgeHostnameKey{
-				edgeHostnameID: d.Id(),
-				contractID:     contractID,
-				groupID:        groupID,
-			})
-			if err != nil {
-				// If after one minute the edge hostname is still not found, remove it from the state,
-				// as most probably it was deleted outside of terraform.
-				if errors.Is(err, errContextTerminated) {
-					logger.Info("edge hostname was deleted outside of terraform")
-					d.SetId("")
-					return nil
-				}
-				return diag.FromErr(fmt.Errorf("error waiting for edge hostname %s to be ready: %w", d.Id(), err))
-			}
-			// If the edge hostname is returned within one minute, continue processing.
-			logger.Debugf("edge hostname %s recovered after receiving 404", d.Id())
-		} else {
-			// Return any other error as is.
-			return diag.FromErr(err)
-		}
-	}
-
-	foundEdgeHostname := edgeHostnameResp.EdgeHostname
-	useCasesJSON, err := useCases2JSON(foundEdgeHostname.UseCases)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("use_cases", string(useCasesJSON)); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
-	}
-
-	if err := d.Set("edge_hostname", foundEdgeHostname.Domain); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
-	}
-
-	if err := d.Set("ip_behavior", foundEdgeHostname.IPVersionBehavior); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
-	}
-
-	_, err = tf.GetIntValueAsInt64("ttl", d)
-	if err != nil && !errors.Is(err, tf.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	if err == nil {
-		edgeHostnameID, err := strconv.Atoi(strings.TrimPrefix(foundEdgeHostname.ID, "ehn_"))
+		groupID, err := tf.GetStringValue("group_id", d)
 		if err != nil {
 			return diag.FromErr(err)
 		}
-
-		// in theory this call is redundant, added here as safeguard
-		_, err = waitForHAPIPropagation(ctx, meta.Client().GetHAPI(), edgeHostnameID)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		hostname, err := meta.Client().GetHAPI().GetEdgeHostname(ctx, edgeHostnameID)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		ttl := hostname.TTL
-		if hostname.UseDefaultTTL {
-			ttl = 0
-		}
-		if err := d.Set("ttl", ttl); err != nil {
+		groupID = str.AddPrefix(groupID, "grp_")
+		if err := d.Set("group_id", groupID); err != nil {
 			return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 		}
-	}
-	return nil
-}
 
-func resourceSecureEdgeHostNameUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := meta.Must(m)
-	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameUpdate")
+		contractID, err := tf.GetStringValue("contract_id", d)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		contractID = str.AddPrefix(contractID, "ctr_")
+		// set contract/contract_id into ResourceData
+		if err := d.Set("contract_id", contractID); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
+		}
 
-	if !d.HasChangeExcept("timeouts") {
-		logger.Debug("Only timeouts were updated, skipping")
+		// Schema guarantees product_id/product are strings and one or the other is set
+		var productID string
+		if got, ok := d.GetOk("product_id"); ok {
+			productID = got.(string)
+		}
+		productID = str.AddPrefix(productID, "prd_")
+		if err := d.Set("product_id", productID); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
+		}
+
+		logger.Debugf("Edgehostnames GROUP = %v", groupID)
+		logger.Debugf("Edgehostnames CONTRACT = %v", contractID)
+
+		edgeHostnameResp, err := meta.Client().GetPAPI().GetEdgeHostname(ctx, papi.GetEdgeHostnameRequest{
+			EdgeHostnameID: d.Id(),
+			ContractID:     contractID,
+			GroupID:        groupID,
+		})
+		if err != nil {
+			if errors.Is(err, papi.ErrNotFound) {
+				logger.Debugf("edge hostname %s not found in read", d.Id())
+				// If the edge hostname is not found in Read, wait one minute to check if it's a problem with database inconsistency on API side.
+				ctx, cancel := context.WithTimeout(ctx, config.edgeHostnameReadTimeout)
+				defer cancel()
+
+				edgeHostnameResp, err = waitUntilEdgeHostnameReady(ctx, meta, edgeHostnameKey{
+					edgeHostnameID: d.Id(),
+					contractID:     contractID,
+					groupID:        groupID,
+				}, config)
+				if err != nil {
+					// If after one minute the edge hostname is still not found, remove it from the state,
+					// as most probably it was deleted outside of terraform.
+					if errors.Is(err, errContextTerminated) {
+						logger.Info("edge hostname was deleted outside of terraform")
+						d.SetId("")
+						return nil
+					}
+					return diag.FromErr(fmt.Errorf("error waiting for edge hostname %s to be ready: %w", d.Id(), err))
+				}
+				// If the edge hostname is returned within one minute, continue processing.
+				logger.Debugf("edge hostname %s recovered after receiving 404", d.Id())
+			} else {
+				// Return any other error as is.
+				return diag.FromErr(err)
+			}
+		}
+
+		foundEdgeHostname := edgeHostnameResp.EdgeHostname
+		useCasesJSON, err := useCases2JSON(foundEdgeHostname.UseCases)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		if err := d.Set("use_cases", string(useCasesJSON)); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
+		}
+
+		if err := d.Set("edge_hostname", foundEdgeHostname.Domain); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
+		}
+
+		if err := d.Set("ip_behavior", foundEdgeHostname.IPVersionBehavior); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
+		}
+
+		_, err = tf.GetIntValueAsInt64("ttl", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		if err == nil {
+			edgeHostnameID, err := strconv.Atoi(strings.TrimPrefix(foundEdgeHostname.ID, "ehn_"))
+			if err != nil {
+				return diag.FromErr(err)
+			}
+
+			// in theory this call is redundant, added here as safeguard
+			_, err = waitForHAPIPropagation(ctx, meta.Client().GetHAPI(), edgeHostnameID, config)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			hostname, err := meta.Client().GetHAPI().GetEdgeHostname(ctx, edgeHostnameID)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			ttl := hostname.TTL
+			if hostname.UseDefaultTTL {
+				ttl = 0
+			}
+			if err := d.Set("ttl", ttl); err != nil {
+				return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
+			}
+		}
 		return nil
 	}
+}
 
-	patches := make([]patch, 0, 2)
-	if d.HasChange("ip_behavior") {
-		ipBehavior, err := tf.GetStringValue("ip_behavior", d)
-		if err != nil {
-			return diag.FromErr(err)
+func resourceSecureEdgeHostNameUpdate(config secureEdgeHostNameResourceConfig) schema.UpdateContextFunc {
+	return func(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+		meta := meta.Must(m)
+		logger := meta.Log("PAPI", "resourceSecureEdgeHostNameUpdate")
+
+		if !d.HasChangeExcept("timeouts") {
+			logger.Debug("Only timeouts were updated, skipping")
+			return nil
 		}
-		// IPV6_COMPLIANCE type has to mapped to IPV6_IPV4_DUALSTACK which is only accepted value by HAPI client
-		if ipBehavior == papi.EHIPVersionV6Compliance {
-			ipBehavior = "IPV6_IPV4_DUALSTACK"
+
+		patches := make([]patch, 0, 2)
+		if d.HasChange("ip_behavior") {
+			ipBehavior, err := tf.GetStringValue("ip_behavior", d)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			// IPV6_COMPLIANCE type has to mapped to IPV6_IPV4_DUALSTACK which is only accepted value by HAPI client
+			if ipBehavior == papi.EHIPVersionV6Compliance {
+				ipBehavior = "IPV6_IPV4_DUALSTACK"
+			}
+			patches = append(patches, patch{
+				value: ipBehavior,
+				field: "ip_behavior",
+				path:  "/ipVersionBehavior",
+			})
 		}
-		patches = append(patches, patch{
-			value: ipBehavior,
-			field: "ip_behavior",
-			path:  "/ipVersionBehavior",
-		})
+
+		if d.HasChange("ttl") {
+			ttl, err := tf.GetIntValueAsInt64("ttl", d)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			patches = append(patches, patch{
+				value: strconv.FormatInt(ttl, 10),
+				field: "ttl",
+				path:  "/ttl",
+			})
+		}
+
+		if len(patches) > 0 {
+			edgeHostnameIDString := d.Id()
+			edgeHostnameID, err := strconv.Atoi(strings.TrimPrefix(edgeHostnameIDString, "ehn_"))
+			if err != nil {
+				return diag.FromErr(err)
+			}
+
+			diagnostics := patchEdgeHostname(ctx,
+				patchEdgeHostnameOptions{
+					resourceData:   d,
+					meta:           meta,
+					edgeHostnameID: edgeHostnameID,
+					patches:        patches,
+					config:         config,
+				})
+			if diagnostics != nil {
+				return diagnostics
+			}
+		}
+
+		return resourceSecureEdgeHostNameRead(config)(ctx, d, m)
 	}
-
-	if d.HasChange("ttl") {
-		ttl, err := tf.GetIntValueAsInt64("ttl", d)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		patches = append(patches, patch{
-			value: strconv.FormatInt(ttl, 10),
-			field: "ttl",
-			path:  "/ttl",
-		})
-	}
-
-	if len(patches) > 0 {
-		edgeHostnameIDString := d.Id()
-		edgeHostnameID, err := strconv.Atoi(strings.TrimPrefix(edgeHostnameIDString, "ehn_"))
-		if err != nil {
-			return diag.FromErr(err)
-		}
-
-		diagnostics := patchEdgeHostname(ctx, d, meta, edgeHostnameID, patches)
-		if diagnostics != nil {
-			return diagnostics
-		}
-	}
-
-	return resourceSecureEdgeHostNameRead(ctx, d, m)
 }
 
 type patch struct {
@@ -537,24 +569,32 @@ type patch struct {
 	path  string
 }
 
-func patchEdgeHostname(ctx context.Context, d *schema.ResourceData, meta meta.Meta, edgeHostnameID int, patches []patch) diag.Diagnostics {
-	logger := meta.Log("PAPI", "patchEdgeHostname")
+type patchEdgeHostnameOptions struct {
+	resourceData   *schema.ResourceData
+	meta           meta.Meta
+	edgeHostnameID int
+	patches        []patch
+	config         secureEdgeHostNameResourceConfig
+}
 
-	edgeHostname, err := tf.GetStringValue("edge_hostname", d)
+func patchEdgeHostname(ctx context.Context, opts patchEdgeHostnameOptions) diag.Diagnostics {
+	logger := opts.meta.Log("PAPI", "patchEdgeHostname")
+
+	edgeHostname, err := tf.GetStringValue("edge_hostname", opts.resourceData)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	dnsZone, _ := parseEdgeHostname(edgeHostname)
-	emails, err := tf.GetListValue("status_update_email", d)
+	emails, err := tf.GetListValue("status_update_email", opts.resourceData)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
-	l := len(patches)
+	l := len(opts.patches)
 	body := make([]hapi.UpdateEdgeHostnameRequestBody, 0, l)
 	fields := make([]string, 0, l)
 	comments := make([]string, 0, l)
-	for _, p := range patches {
+	for _, p := range opts.patches {
 		logger.Debugf("Proceeding to update %s for %s", p.field, edgeHostname)
 		body = append(body, hapi.UpdateEdgeHostnameRequestBody{
 
@@ -580,13 +620,13 @@ func patchEdgeHostname(ctx context.Context, d *schema.ResourceData, meta meta.Me
 		req.StatusUpdateEmail = statusUpdateEmails
 	}
 
-	_, err = waitForHAPIPropagation(ctx, meta.Client().GetHAPI(), edgeHostnameID)
+	_, err = waitForHAPIPropagation(ctx, opts.meta.Client().GetHAPI(), opts.edgeHostnameID, opts.config)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	resp, err := meta.Client().GetHAPI().UpdateEdgeHostname(ctx, req)
+	resp, err := opts.meta.Client().GetHAPI().UpdateEdgeHostname(ctx, req)
 	if err != nil {
-		if err2 := tf.RestoreOldValues(d, fields); err2 != nil {
+		if err2 := tf.RestoreOldValues(opts.resourceData, fields); err2 != nil {
 			return diag.Errorf(`%s failed. No changes were written to server: 
 %s
 
@@ -596,17 +636,18 @@ Failed to restore previous local schema values. The schema will remain in tainte
 		return diag.FromErr(err)
 	}
 
-	if err = waitForChange(ctx, meta.Client().GetHAPI(), resp.ChangeID); err != nil {
+	if err = waitForChange(ctx, opts.meta.Client().GetHAPI(), resp.ChangeID); err != nil {
 		return diag.FromErr(err)
 	}
 	return nil
 }
 
-func waitForHAPIPropagation(ctx context.Context, hapiClient hapi.HAPI, edgeHostnameID int) (*hapi.GetEdgeHostnameResponse, error) {
+func waitForHAPIPropagation(ctx context.Context, hapiClient hapi.HAPI, edgeHostnameID int,
+	config secureEdgeHostNameResourceConfig) (*hapi.GetEdgeHostnameResponse, error) {
 	retries := 0
 	for {
 		select {
-		case <-time.After(EgdeHostnamePollInterval):
+		case <-time.After(config.edgeHostnamePollInterval):
 			resp, err := hapiClient.GetEdgeHostname(ctx, edgeHostnameID)
 			if resp == nil && err != nil {
 				var target = &hapi.Error{}
@@ -653,69 +694,71 @@ func waitForChange(ctx context.Context, client hapi.HAPI, changeID int) error {
 	}
 }
 
-func resourceSecureEdgeHostNameDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := meta.Must(m)
-	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameDelete")
+func resourceSecureEdgeHostNameDelete(config secureEdgeHostNameResourceConfig) schema.DeleteContextFunc {
+	return func(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+		meta := meta.Must(m)
+		logger := meta.Log("PAPI", "resourceSecureEdgeHostNameDelete")
 
-	edgeHostnameID, err := strconv.Atoi(strings.TrimPrefix(d.Id(), "ehn_"))
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	hostname, err := waitForHAPIPropagation(ctx, meta.Client().GetHAPI(), edgeHostnameID)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	emails, err := tf.GetListValue("status_update_email", d)
-	if err != nil && !errors.Is(err, tf.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-
-	statusUpdateEmail := make([]string, 0)
-	for _, email := range emails {
-		statusUpdateEmail = append(statusUpdateEmail, email.(string))
-	}
-
-	deleteEdgeHostname, err := meta.Client().GetHAPI().DeleteEdgeHostname(ctx, hapi.DeleteEdgeHostnameRequest{
-		DNSZone:           hostname.DNSZone,
-		RecordName:        hostname.RecordName,
-		StatusUpdateEmail: statusUpdateEmail,
-		Comments:          hostname.Comments,
-	})
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	for deleteInProgress := true; deleteInProgress; {
-		select {
-		case <-time.After(EgdeHostnamePollInterval):
-			deleteStatus, err := meta.Client().GetHAPI().GetChangeRequest(ctx, hapi.GetChangeRequest{ChangeID: deleteEdgeHostname.ChangeID})
-			if err != nil {
-				return diag.FromErr(err)
-			}
-
-			switch deleteStatus.Status {
-			case changeRequestStatusSucceeded:
-				deleteInProgress = false
-				continue
-			case changeRequestStatusFailed, changeRequestStatusIgnored:
-				return diag.Diagnostics{diag.Diagnostic{
-					Severity: diag.Error,
-					Summary:  fmt.Sprintf("edgehostname deletion request got status %s", deleteStatus.Status),
-					Detail:   deleteStatus.StatusMessage,
-				}}
-			case changeRequestStatusPending:
-				logger.Debugf("edgehostname %d deletion is not yet ready, waiting for another attempt", edgeHostnameID)
-			}
-		case <-ctx.Done():
-			return diag.FromErr(fmt.Errorf("delete edge hostname context terminated: %s", ctx.Err()))
+		edgeHostnameID, err := strconv.Atoi(strings.TrimPrefix(d.Id(), "ehn_"))
+		if err != nil {
+			return diag.FromErr(err)
 		}
-	}
 
-	logger.Info("edge hostname was deleted successfully")
-	d.SetId("")
-	return nil
+		hostname, err := waitForHAPIPropagation(ctx, meta.Client().GetHAPI(), edgeHostnameID, config)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		emails, err := tf.GetListValue("status_update_email", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+
+		statusUpdateEmail := make([]string, 0)
+		for _, email := range emails {
+			statusUpdateEmail = append(statusUpdateEmail, email.(string))
+		}
+
+		deleteEdgeHostname, err := meta.Client().GetHAPI().DeleteEdgeHostname(ctx, hapi.DeleteEdgeHostnameRequest{
+			DNSZone:           hostname.DNSZone,
+			RecordName:        hostname.RecordName,
+			StatusUpdateEmail: statusUpdateEmail,
+			Comments:          hostname.Comments,
+		})
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		for deleteInProgress := true; deleteInProgress; {
+			select {
+			case <-time.After(config.edgeHostnamePollInterval):
+				deleteStatus, err := meta.Client().GetHAPI().GetChangeRequest(ctx, hapi.GetChangeRequest{ChangeID: deleteEdgeHostname.ChangeID})
+				if err != nil {
+					return diag.FromErr(err)
+				}
+
+				switch deleteStatus.Status {
+				case changeRequestStatusSucceeded:
+					deleteInProgress = false
+					continue
+				case changeRequestStatusFailed, changeRequestStatusIgnored:
+					return diag.Diagnostics{diag.Diagnostic{
+						Severity: diag.Error,
+						Summary:  fmt.Sprintf("edgehostname deletion request got status %s", deleteStatus.Status),
+						Detail:   deleteStatus.StatusMessage,
+					}}
+				case changeRequestStatusPending:
+					logger.Debugf("edgehostname %d deletion is not yet ready, waiting for another attempt", edgeHostnameID)
+				}
+			case <-ctx.Done():
+				return diag.FromErr(fmt.Errorf("delete edge hostname context terminated: %s", ctx.Err()))
+			}
+		}
+
+		logger.Info("edge hostname was deleted successfully")
+		d.SetId("")
+		return nil
+	}
 }
 
 // resourceSecureEdgeHostNameImport accepts the following import ID:

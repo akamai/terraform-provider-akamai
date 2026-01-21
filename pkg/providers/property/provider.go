@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"sync"
 
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/str"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/subprovider"
@@ -16,43 +15,57 @@ import (
 
 type (
 	// Subprovider gathers property resources and data sources
-	Subprovider struct{}
+	Subprovider struct {
+		config subproviderConfig
+	}
 
-	option func(p *Subprovider)
-)
-
-var (
-	once sync.Once
-
-	inst *Subprovider
+	subproviderConfig struct {
+		cpCode             cpCodeResourceConfig
+		domainValidation   domainOwnershipValidationResourceConfig
+		lateValidation     domainOwnershipLateValidationResourceConfig
+		edgeHostName       secureEdgeHostNameResourceConfig
+		hostnameBucket     hostnameBucketResourceConfig
+		includeActivation  propertyIncludeActivationResourceConfig
+		propertyActivation propertyActivationResourceConfig
+	}
 )
 
 var (
 	_ subprovider.Subprovider = &Subprovider{}
 )
 
+func defaultSubproviderConfig() subproviderConfig {
+	return subproviderConfig{
+		cpCode:             defaultCPCodeResourceConfig(),
+		domainValidation:   defaultDomainOwnershipValidationResourceConfig(),
+		lateValidation:     defaultDomainOwnershipLateValidationResourceConfig(),
+		edgeHostName:       defaultSecureEdgeHostNameResourceConfig(),
+		hostnameBucket:     defaultHostnameBucketResourceConfig(),
+		includeActivation:  defaultPropertyIncludeActivationResourceConfig(),
+		propertyActivation: defaultPropertyActivationResourceConfig(),
+	}
+}
+
+func newSubproviderWithConfig(config subproviderConfig) *Subprovider {
+	return &Subprovider{
+		config: config,
+	}
+}
+
 // NewSubprovider returns a new property subprovider
-func NewSubprovider(opts ...option) *Subprovider {
-	once.Do(func() {
-		inst = &Subprovider{}
-
-		for _, opt := range opts {
-			opt(inst)
-		}
-	})
-
-	return inst
+func NewSubprovider() *Subprovider {
+	return newSubproviderWithConfig(defaultSubproviderConfig())
 }
 
 // SDKResources returns the property resources implemented using terraform-plugin-sdk
 func (p *Subprovider) SDKResources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
-		"akamai_cp_code":                     resourceCPCode(),
-		"akamai_edge_hostname":               resourceSecureEdgeHostName(),
+		"akamai_cp_code":                     resourceCPCode(p.config.cpCode),
+		"akamai_edge_hostname":               resourceSecureEdgeHostName(p.config.edgeHostName),
 		"akamai_property":                    resourceProperty(),
-		"akamai_property_activation":         resourcePropertyActivation(),
+		"akamai_property_activation":         resourcePropertyActivation(p.config.propertyActivation),
 		"akamai_property_include":            resourcePropertyInclude(),
-		"akamai_property_include_activation": resourcePropertyIncludeActivation(),
+		"akamai_property_include_activation": resourcePropertyIncludeActivation(p.config.includeActivation),
 	}
 }
 
@@ -86,9 +99,9 @@ func (p *Subprovider) FrameworkResources() []func() resource.Resource {
 	return []func() resource.Resource{
 		NewBootstrapResource,
 		NewDomainsResource,
-		NewHostnameBucketResource,
-		NewDomainOwnershipLateValidationResource,
-		NewDomainOwnershipValidationResource,
+		NewHostnameBucketResource(p.config.hostnameBucket),
+		NewDomainOwnershipLateValidationResource(p.config.lateValidation),
+		NewDomainOwnershipValidationResource(p.config.domainValidation),
 	}
 }
 

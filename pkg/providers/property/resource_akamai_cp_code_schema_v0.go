@@ -2,7 +2,7 @@ package property
 
 import "github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-func resourceCPCodeV0() *schema.Resource {
+func resourceCPCodeV0(config cpCodeResourceConfig) *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -24,7 +24,7 @@ func resourceCPCodeV0() *schema.Resource {
 			},
 		},
 		Timeouts: &schema.ResourceTimeout{
-			Update: &cpCodeResourceUpdateTimeout,
+			Update: &config.cpCodeResourceUpdateTimeout,
 		},
 	}
 }

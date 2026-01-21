@@ -21,15 +21,15 @@ import (
 )
 
 func TestResourceEdgeHostname(t *testing.T) {
+	t.Parallel()
 	testDir := "testdata/TestResourceEdgeHostname"
 
-	EgdeHostnamePollInterval = time.Microsecond
-	GetEdgeHostnamePollInterval = time.Microsecond
-
 	tests := map[string]struct {
-		init      func(*papi.Mock, *hapi.Mock)
-		withError *regexp.Regexp
-		steps     []resource.TestStep
+		init                        func(*papi.Mock, *hapi.Mock)
+		withError                   *regexp.Regexp
+		steps                       []resource.TestStep
+		edgeHostnameReadTimeout     time.Duration
+		getEdgeHostnamePollInterval time.Duration
 	}{
 		"edge hostname with .edgesuite.net, create edge hostname": {
 			init: func(mp *papi.Mock, mh *hapi.Mock) {
@@ -3167,10 +3167,10 @@ func TestResourceEdgeHostname(t *testing.T) {
 			},
 		},
 		"delete done outside of Terraform - resource drift": {
+			// For this test, context must be terminated before further GET calls to fulfill the number of mocks.
+			edgeHostnameReadTimeout:     time.Second * 1,
+			getEdgeHostnamePollInterval: time.Second * 10,
 			init: func(mp *papi.Mock, mh *hapi.Mock) {
-				// For this test, context must be terminated before further GET calls to fulfill the number of mocks.
-				EdgeHostnameReadTimeout = time.Second * 1
-				GetEdgeHostnamePollInterval = time.Second * 10
 				// Create
 				mp.On("GetEdgeHostnames", testutils.MockContext, papi.GetEdgeHostnamesRequest{
 					ContractID: "ctr_2",
@@ -3280,13 +3280,25 @@ func TestResourceEdgeHostname(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			client := edgegrid.NewTestClient()
 			if test.init != nil {
 				test.init(client.PAPI, client.HAPI)
 			}
+			config := defaultSubproviderConfig()
+			if test.edgeHostnameReadTimeout != 0 {
+				config.edgeHostName.edgeHostnameReadTimeout = test.edgeHostnameReadTimeout
+			}
+			if test.getEdgeHostnamePollInterval != 0 {
+				config.edgeHostName.getEdgeHostnamePollInterval = test.getEdgeHostnamePollInterval
+			} else {
+				config.edgeHostName.getEdgeHostnamePollInterval = time.Millisecond
+			}
+			config.edgeHostName.edgeHostnamePollInterval = time.Millisecond
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
-				Steps:                    test.steps,
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(
+					client, newSubproviderWithConfig(config)),
+				Steps: test.steps,
 			})
 			client.PAPI.AssertExpectations(t)
 			client.HAPI.AssertExpectations(t)
@@ -3377,7 +3389,10 @@ func (b edgeHostnameMockDataBuilder) build() edgeHostnameMockData {
 }
 
 func TestResourceEdgeHostname_WithImport(t *testing.T) {
-	EgdeHostnamePollInterval = time.Microsecond
+	t.Parallel()
+	config := defaultSubproviderConfig()
+	config.edgeHostName.edgeHostnamePollInterval = time.Microsecond
+
 	expectGetEdgeHostname := func(m *papi.Mock, edgehostID, contractID, groupID string) *mock.Call {
 		return m.On("GetEdgeHostname", testutils.MockContext, papi.GetEdgeHostnameRequest{
 			EdgeHostnameID: edgehostID,
@@ -3694,6 +3709,7 @@ func TestResourceEdgeHostname_WithImport(t *testing.T) {
 	}
 
 	t.Run("import existing akamaized edgehostname without certificate - no product id provided by user", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		id := "ehn_1,1,2"
 
@@ -3717,7 +3733,7 @@ func TestResourceEdgeHostname_WithImport(t *testing.T) {
 		mockData.mockGetChangeStatus(client.HAPI, changeRequestStatusSucceeded)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResourceEdgeHostname/creation_before_import_edgehostname_akamaized.tf"),
@@ -3746,6 +3762,7 @@ func TestResourceEdgeHostname_WithImport(t *testing.T) {
 		client.HAPI.AssertExpectations(t)
 	})
 	t.Run("import existing akamaized edgehostname without domain validation", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		id := "ehn_1,2,2"
 
@@ -3820,7 +3837,7 @@ func TestResourceEdgeHostname_WithImport(t *testing.T) {
 			},
 		}, nil)
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
 			Steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResourceEdgeHostname/edgehostname_domainprefix_for_akamaized_dot_net_less_than_minimum_required_length.tf"),
@@ -3847,6 +3864,7 @@ func TestResourceEdgeHostname_WithImport(t *testing.T) {
 		client.HAPI.AssertExpectations(t)
 	})
 	t.Run("import existing akamaized edgehostname without certificate - product provided by user, different product id returned by api", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		id := "ehn_1,1,2,prd_10"
 		// Create
@@ -3868,7 +3886,7 @@ func TestResourceEdgeHostname_WithImport(t *testing.T) {
 		mockData.mockDeleteEdgeHostname(client.HAPI)
 		mockData.mockGetChangeStatus(client.HAPI, changeRequestStatusSucceeded)
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResourceEdgeHostname/creation_before_import_edgehostname_akamaized.tf"),
@@ -3897,6 +3915,7 @@ func TestResourceEdgeHostname_WithImport(t *testing.T) {
 		client.HAPI.AssertExpectations(t)
 	})
 	t.Run("import existing akamaized edgehostname without certificate - product id provided by user, product id not returned by api", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		id := "ehn_1,1,2,prd_2"
 		// Create
@@ -3918,7 +3937,7 @@ func TestResourceEdgeHostname_WithImport(t *testing.T) {
 		mockData.mockDeleteEdgeHostname(client.HAPI)
 		mockData.mockGetChangeStatus(client.HAPI, changeRequestStatusSucceeded)
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResourceEdgeHostname/creation_before_import_edgehostname_akamaized.tf"),
@@ -3947,6 +3966,7 @@ func TestResourceEdgeHostname_WithImport(t *testing.T) {
 		client.HAPI.AssertExpectations(t)
 	})
 	t.Run("import existing akamaized edgehostname without certificate - product id without prefix provided by user, product id not returned by api", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		id := "ehn_1,1,2,2"
 		// Create
@@ -3968,7 +3988,7 @@ func TestResourceEdgeHostname_WithImport(t *testing.T) {
 		mockData.mockDeleteEdgeHostname(client.HAPI)
 		mockData.mockGetChangeStatus(client.HAPI, changeRequestStatusSucceeded)
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResourceEdgeHostname/creation_before_import_edgehostname_akamaized.tf"),
@@ -3997,6 +4017,7 @@ func TestResourceEdgeHostname_WithImport(t *testing.T) {
 		client.HAPI.AssertExpectations(t)
 	})
 	t.Run("import existing akamaized edgehostname without certificate - product id not provided by user, product id not returned by api", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		id := "ehn_1,1,2"
 		// Create
@@ -4018,7 +4039,7 @@ func TestResourceEdgeHostname_WithImport(t *testing.T) {
 		mockData.mockDeleteEdgeHostname(client.HAPI)
 		mockData.mockGetChangeStatus(client.HAPI, changeRequestStatusSucceeded)
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResourceEdgeHostname/creation_before_import_edgehostname_akamaized.tf"),
@@ -4047,6 +4068,7 @@ func TestResourceEdgeHostname_WithImport(t *testing.T) {
 		client.HAPI.AssertExpectations(t)
 	})
 	t.Run("import existing edgehostname with certificate - no product id provided by user", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		id := "ehn_1,1,2"
 		// Create
@@ -4069,7 +4091,7 @@ func TestResourceEdgeHostname_WithImport(t *testing.T) {
 		mockData.mockDeleteEdgeHostname(client.HAPI)
 		mockData.mockGetChangeStatus(client.HAPI, changeRequestStatusSucceeded)
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResourceEdgeHostname/creation_before_import_edgehostname.tf"),
@@ -4098,6 +4120,7 @@ func TestResourceEdgeHostname_WithImport(t *testing.T) {
 		client.HAPI.AssertExpectations(t)
 	})
 	t.Run("import existing edgehostname with missing certificate - no product id provided by user", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		id := "ehn_1,1,2"
 		// Create
@@ -4135,7 +4158,7 @@ func TestResourceEdgeHostname_WithImport(t *testing.T) {
 		mockData.mockDeleteEdgeHostname(client.HAPI)
 		mockData.mockGetChangeStatus(client.HAPI, changeRequestStatusSucceeded)
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResourceEdgeHostname/creation_before_import_edgehostname_missing_certificate.tf"),
@@ -4165,6 +4188,7 @@ func TestResourceEdgeHostname_WithImport(t *testing.T) {
 		client.HAPI.AssertExpectations(t)
 	})
 	t.Run("import existing edgehostname with custom ttl - no product id provided by user", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		id := "ehn_1,1,2"
 		// Create
@@ -4217,7 +4241,7 @@ func TestResourceEdgeHostname_WithImport(t *testing.T) {
 		mockData.mockDeleteEdgeHostname(client.HAPI)
 		mockData.mockGetChangeStatus(client.HAPI, changeRequestStatusSucceeded)
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResourceEdgeHostname/creation_before_import_edgehostname_with_ttl.tf"),
@@ -4247,6 +4271,7 @@ func TestResourceEdgeHostname_WithImport(t *testing.T) {
 		client.HAPI.AssertExpectations(t)
 	})
 	t.Run("import existing akamaized edgehostname without certificate - product_id supplied", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 
 		// create
@@ -4270,7 +4295,7 @@ func TestResourceEdgeHostname_WithImport(t *testing.T) {
 		mockData.mockDeleteEdgeHostname(client.HAPI)
 		mockData.mockGetChangeStatus(client.HAPI, changeRequestStatusSucceeded)
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResourceEdgeHostname/import_edgehostname_akamaized_product_id.tf"),
@@ -4287,6 +4312,7 @@ func TestResourceEdgeHostname_WithImport(t *testing.T) {
 		client.HAPI.AssertExpectations(t)
 	})
 	t.Run("import existing akamaized edgehostname - product_id without prefix supplied ", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 
 		// create
@@ -4311,7 +4337,7 @@ func TestResourceEdgeHostname_WithImport(t *testing.T) {
 		mockData.mockDeleteEdgeHostname(client.HAPI)
 		mockData.mockGetChangeStatus(client.HAPI, changeRequestStatusSucceeded)
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResourceEdgeHostname/import_edgehostname_akamaized_product_id.tf"),
@@ -4328,6 +4354,7 @@ func TestResourceEdgeHostname_WithImport(t *testing.T) {
 		client.HAPI.AssertExpectations(t)
 	})
 	t.Run("import existing edgehostname with certificate", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 
 		// create
@@ -4353,7 +4380,7 @@ func TestResourceEdgeHostname_WithImport(t *testing.T) {
 		mockData.mockDeleteEdgeHostname(client.HAPI)
 		mockData.mockGetChangeStatus(client.HAPI, changeRequestStatusSucceeded)
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResourceEdgeHostname/import_edgehostname_product_id.tf"),
@@ -4370,6 +4397,7 @@ func TestResourceEdgeHostname_WithImport(t *testing.T) {
 		client.HAPI.AssertExpectations(t)
 	})
 	t.Run("import existing edgehostname with missing certificate", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 
 		// create
@@ -4409,7 +4437,7 @@ func TestResourceEdgeHostname_WithImport(t *testing.T) {
 		mockData.mockDeleteEdgeHostname(client.HAPI)
 		mockData.mockGetChangeStatus(client.HAPI, changeRequestStatusSucceeded)
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResourceEdgeHostname/import_edgehostname_product_id.tf"),
@@ -4428,8 +4456,9 @@ func TestResourceEdgeHostname_WithImport(t *testing.T) {
 		client.HAPI.AssertExpectations(t)
 	})
 	t.Run("import error - too few parts of id", func(t *testing.T) {
+		t.Parallel()
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(nil, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(nil, newSubproviderWithConfig(config)),
 			Steps: []resource.TestStep{
 				{
 					Config:        testutils.LoadFixtureString(t, "testdata/TestResourceEdgeHostname/import_edgehostname_akamaized_product_id.tf"),
@@ -4443,8 +4472,9 @@ func TestResourceEdgeHostname_WithImport(t *testing.T) {
 		})
 	})
 	t.Run("import error - too many parts of id", func(t *testing.T) {
+		t.Parallel()
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(nil, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(nil, newSubproviderWithConfig(config)),
 			Steps: []resource.TestStep{
 				{
 					Config:        testutils.LoadFixtureString(t, "testdata/TestResourceEdgeHostname/import_edgehostname_akamaized_product_id.tf"),
@@ -4458,8 +4488,9 @@ func TestResourceEdgeHostname_WithImport(t *testing.T) {
 		})
 	})
 	t.Run("import error - empty product id", func(t *testing.T) {
+		t.Parallel()
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(nil, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(nil, newSubproviderWithConfig(config)),
 			Steps: []resource.TestStep{
 				{
 					Config:        testutils.LoadFixtureString(t, "testdata/TestResourceEdgeHostname/import_edgehostname_akamaized_product_id.tf"),

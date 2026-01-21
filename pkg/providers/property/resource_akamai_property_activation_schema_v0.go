@@ -2,6 +2,7 @@ package property
 
 import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -66,7 +67,7 @@ func resourcePropertyActivationV0() *schema.Resource {
 			},
 		},
 		Timeouts: &schema.ResourceTimeout{
-			Default: &PropertyResourceTimeout,
+			Default: ptr.To(propertyResourceTimeout),
 		},
 	}
 }

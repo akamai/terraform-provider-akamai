@@ -98,10 +98,12 @@ func TestResCPCode(t *testing.T) {
 	}
 
 	// redefining times to accelerate tests
-	updatePollMinimum = time.Millisecond * 1
-	updatePollInterval = updatePollMinimum
+	config := defaultSubproviderConfig()
+	config.cpCode.updatePollMinimum = time.Millisecond * 1
+	config.cpCode.updatePollInterval = config.cpCode.updatePollMinimum
 
 	t.Run("create new CP Code", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		defer client.PAPI.AssertExpectations(t)
 
@@ -111,7 +113,7 @@ func TestResCPCode(t *testing.T) {
 
 		// No mock behavior for delete because there is no delete operation for CP Codes
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
 			Steps: []resource.TestStep{{
 				Config: testutils.LoadFixtureString(t, "testdata/TestResCPCode/create_new_cp_code.tf"),
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -129,6 +131,7 @@ func TestResCPCode(t *testing.T) {
 	})
 
 	t.Run("use existing CP Code with multiple products", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		defer client.PAPI.AssertExpectations(t)
 
@@ -144,7 +147,7 @@ func TestResCPCode(t *testing.T) {
 
 		// No mock behavior for delete because there is no delete operation for CP Codes
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
 			Steps: []resource.TestStep{{
 				Config: testutils.LoadFixtureString(t, "testdata/TestResCPCode/use_existing_cp_code.tf"),
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -161,6 +164,7 @@ func TestResCPCode(t *testing.T) {
 	})
 
 	t.Run("use existing CP Code", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		defer client.PAPI.AssertExpectations(t)
 
@@ -177,7 +181,7 @@ func TestResCPCode(t *testing.T) {
 
 		// No mock behavior for delete because there is no delete operation for CP Codes
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
 			Steps: []resource.TestStep{{
 				Config: testutils.LoadFixtureString(t, "testdata/TestResCPCode/use_existing_cp_code.tf"),
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -193,6 +197,7 @@ func TestResCPCode(t *testing.T) {
 	})
 
 	t.Run("product missing from CP Code", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		defer client.PAPI.AssertExpectations(t)
 
@@ -211,7 +216,7 @@ func TestResCPCode(t *testing.T) {
 
 		// No mock behavior for delete because there is no delete operation for CP Codes
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
 			Steps: []resource.TestStep{{
 				Config:      testutils.LoadFixtureString(t, "testdata/TestResCPCode/use_existing_cp_code.tf"),
 				ExpectError: regexp.MustCompile("Couldn't find product id on the CP Code"),
@@ -221,6 +226,7 @@ func TestResCPCode(t *testing.T) {
 	})
 
 	t.Run("change name", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		defer client.PAPI.AssertExpectations(t)
 
@@ -235,7 +241,7 @@ func TestResCPCode(t *testing.T) {
 
 		// No mock behavior for delete because there is no delete operation for CP Codes
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResCPCode/change_name_step0.tf"),
@@ -257,6 +263,7 @@ func TestResCPCode(t *testing.T) {
 	})
 
 	t.Run("import existing cp code", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		id := "0,1,2"
 
@@ -264,7 +271,7 @@ func TestResCPCode(t *testing.T) {
 		expectGetCPCodes(client.PAPI, "ctr_1", "grp_2", CPCodes)
 		expectGetCPCode(client.PAPI, "ctr_1", "grp_2", 0, "test cpcode", []string{"prd_Web_Accel"}, nil).Times(4)
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResCPCode/import_cp_code.tf"),
@@ -291,10 +298,11 @@ func TestResCPCode(t *testing.T) {
 	})
 
 	t.Run("invalid import ID passed", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		id := "123"
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
 			Steps: []resource.TestStep{
 				{
 					Config:        testutils.LoadFixtureString(t, "testdata/TestResCPCode/import_cp_code.tf"),
@@ -310,10 +318,11 @@ func TestResCPCode(t *testing.T) {
 	})
 
 	t.Run("empty CP code ID passed", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		id := ",ctr_1-1NC95D,grp_194665"
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
 			Steps: []resource.TestStep{
 				{
 					Config:        testutils.LoadFixtureString(t, "testdata/TestResCPCode/import_cp_code.tf"),
@@ -329,6 +338,7 @@ func TestResCPCode(t *testing.T) {
 	})
 
 	t.Run("immutable attributes updated", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		defer client.PAPI.AssertExpectations(t)
 
@@ -338,7 +348,7 @@ func TestResCPCode(t *testing.T) {
 
 		// No mock behavior for delete because there is no delete operation for CP Codes
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResCPCode/change_name_step0.tf"),
@@ -389,6 +399,7 @@ func TestResCPCode(t *testing.T) {
 	})
 
 	t.Run("error fetching cpCode details", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		defer client.PAPI.AssertExpectations(t)
 
@@ -400,7 +411,7 @@ func TestResCPCode(t *testing.T) {
 
 		// No mock behavior for delete because there is no delete operation for CP Codes
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResCPCode/change_name_step0.tf"),
@@ -419,6 +430,7 @@ func TestResCPCode(t *testing.T) {
 	})
 
 	t.Run("error updating cpCode", func(t *testing.T) {
+		t.Parallel()
 		client := edgegrid.NewTestClient()
 		defer client.PAPI.AssertExpectations(t)
 
@@ -431,7 +443,7 @@ func TestResCPCode(t *testing.T) {
 
 		// No mock behavior for delete because there is no delete operation for CP Codes
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResCPCode/change_name_step0.tf"),
@@ -450,19 +462,13 @@ func TestResCPCode(t *testing.T) {
 	})
 
 	t.Run("timeout waiting for update", func(t *testing.T) {
-		timeoutVal := cpCodeResourceUpdateTimeout
-		oldInterval := updatePollInterval
-
-		cpCodeResourceUpdateTimeout = time.Millisecond * 60
-		updatePollInterval = time.Millisecond * 40
+		t.Parallel()
+		toConfig := config
+		toConfig.cpCode.updatePollInterval = time.Millisecond * 40
+		toConfig.cpCode.cpCodeResourceUpdateTimeout = time.Millisecond * 60
 
 		client := edgegrid.NewTestClient()
-
-		defer func() {
-			cpCodeResourceUpdateTimeout = timeoutVal
-			updatePollInterval = oldInterval
-			client.PAPI.AssertExpectations(t)
-		}()
+		defer client.PAPI.AssertExpectations(t)
 
 		expectGetCPCodes(client.PAPI, "ctr_1", "grp_1", nil).Once()
 		expectCreateCPCode(client.PAPI, "test cpcode", "prd_1", "ctr_1", "grp_1").Once()
@@ -474,7 +480,7 @@ func TestResCPCode(t *testing.T) {
 
 		// No mock behavior for delete because there is no delete operation for CP Codes
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(toConfig)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResCPCode/change_name_step0.tf"),
@@ -492,9 +498,10 @@ func TestResCPCode(t *testing.T) {
 	})
 
 	t.Run("error when no product and product_id provided", func(t *testing.T) {
+		t.Parallel()
 		expectedErr := regexp.MustCompile("`product_id` must be specified for creation")
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(nil, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(nil, newSubproviderWithConfig(config)),
 			Steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResCPCode/missing_product.tf"),

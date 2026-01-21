@@ -18,7 +18,6 @@ import (
 
 func TestDomainOwnershipLateValidationResource(t *testing.T) {
 	t.Parallel()
-	searchInterval = 1 * time.Millisecond
 
 	commonStateChecker := test.NewStateChecker("akamai_property_domainownership_late_validation.test").
 		CheckEqual("property_id", "prp_123").
@@ -998,6 +997,8 @@ resource "akamai_property_domainownership_late_validation" "test" {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
 			client := edgegrid.NewTestClient()
 			mp := mockProperty{
 				mockPropertyData: mockPropertyData{
@@ -1012,8 +1013,11 @@ resource "akamai_property_domainownership_late_validation" "test" {
 				tc.init(&mp, client.DomainOwnership)
 			}
 
+			config := defaultSubproviderConfig()
+			config.lateValidation.searchInterval = 1 * time.Millisecond
+
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, newSubproviderWithConfig(config)),
 				Steps:                    tc.steps,
 			})
 

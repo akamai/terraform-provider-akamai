@@ -37,6 +37,11 @@ type (
 	// DomainOwnershipLateValidationResource represents akamai_domainownership_late_validation resource.
 	DomainOwnershipLateValidationResource struct {
 		meta.Resource
+		domainOwnershipLateValidationResourceConfig
+	}
+
+	domainOwnershipLateValidationResourceConfig struct {
+		searchInterval time.Duration
 	}
 
 	domainOwnershipLateValidationResourceModel struct {
@@ -49,9 +54,19 @@ type (
 	}
 )
 
+func defaultDomainOwnershipLateValidationResourceConfig() domainOwnershipLateValidationResourceConfig {
+	return domainOwnershipLateValidationResourceConfig{
+		searchInterval: 30 * time.Second,
+	}
+}
+
 // NewDomainOwnershipLateValidationResource returns new domain ownership late validation resource.
-func NewDomainOwnershipLateValidationResource() resource.Resource {
-	return &DomainOwnershipLateValidationResource{}
+func NewDomainOwnershipLateValidationResource(config domainOwnershipLateValidationResourceConfig) func() resource.Resource {
+	return func() resource.Resource {
+		return &DomainOwnershipLateValidationResource{
+			domainOwnershipLateValidationResourceConfig: config,
+		}
+	}
 }
 
 // Metadata implements resource.Resource.
@@ -348,19 +363,19 @@ func (d *DomainOwnershipLateValidationResource) validateDomains(ctx context.Cont
 	}
 
 	tflog.Info(ctx, "Polling required for domains", map[string]any{"domains": domainsToPoll, "timeout": timeout})
-	waitDiags := waitForDomainsValidation(ctx, papiClient, prop, version, timeout)
+	waitDiags := d.waitForDomainsValidation(ctx, papiClient, prop, version, timeout)
 	diags.Append(waitDiags...)
 
 	return diags
 }
 
 // waitForDomainsValidation polls for domain validation status until all domains are validated or a timeout occurs.
-func waitForDomainsValidation(ctx context.Context, client papi.PAPI, prop papi.Property, version int, timeout time.Duration) diag.Diagnostics {
+func (d *DomainOwnershipLateValidationResource) waitForDomainsValidation(ctx context.Context, client papi.PAPI, prop papi.Property, version int, timeout time.Duration) diag.Diagnostics {
 	var diags diag.Diagnostics
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	searchPollIntervalTicker := time.NewTicker(searchInterval)
+	searchPollIntervalTicker := time.NewTicker(d.searchInterval)
 	defer searchPollIntervalTicker.Stop()
 
 	var stillNotValidated []string

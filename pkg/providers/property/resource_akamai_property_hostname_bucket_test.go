@@ -39,8 +39,9 @@ var basicChecker = test.NewStateChecker("akamai_property_hostname_bucket.test").
 func TestHostnameBucketResource_Create(t *testing.T) {
 	t.Parallel()
 	// decrease timeout and intervals for tests
-	forceTimeoutDuration = time.Second
-	getHostnameBucketActivationInterval = time.Second
+	config := defaultSubproviderConfig()
+	config.hostnameBucket.forceTimeoutDuration = time.Second
+	config.hostnameBucket.getHostnameBucketActivationInterval = time.Second
 
 	tests := map[string]struct {
 		init            func(*mockProperty)
@@ -583,7 +584,7 @@ func TestHostnameBucketResource_Create(t *testing.T) {
 			tc.init(&mp)
 
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, newSubproviderWithConfig(config)),
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureStringf(t, "testdata/TestResPropertyHostnameBucket/create/%s", tc.configFile),

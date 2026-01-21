@@ -17,6 +17,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v9/internal/retry"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/date"
+	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/str"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/timeouts"
@@ -28,18 +29,41 @@ import (
 	"github.com/spf13/cast"
 )
 
-func resourcePropertyActivation() *schema.Resource {
+type propertyActivationResourceConfig struct {
+	// activationPollInterval is the interval for polling an activation status on creation
+	activationPollInterval time.Duration
+
+	// createActivationRetry poll wait time code waits between retries for activation creation
+	createActivationRetry time.Duration
+
+	// ccmHostnamesPollInterval is the interval for polling CCM hostnames to have assigned edgehostname ID.
+	ccmHostnamesPollInterval time.Duration
+
+	// ccmHostnamesPollTimeout is the maximum time to wait for CCM hostnames to have assigned edgehostname ID.
+	ccmHostnamesPollTimeout time.Duration
+}
+
+func defaultPropertyActivationResourceConfig() propertyActivationResourceConfig {
+	return propertyActivationResourceConfig{
+		activationPollInterval:   ActivationPollMinimum,
+		createActivationRetry:    10 * time.Second,
+		ccmHostnamesPollInterval: 20 * time.Second,
+		ccmHostnamesPollTimeout:  3 * time.Minute,
+	}
+}
+
+func resourcePropertyActivation(config propertyActivationResourceConfig) *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourcePropertyActivationCreate,
+		CreateContext: resourcePropertyActivationCreate(config),
 		ReadContext:   resourcePropertyActivationRead,
-		UpdateContext: resourcePropertyActivationUpdate,
-		DeleteContext: resourcePropertyActivationDelete,
+		UpdateContext: resourcePropertyActivationUpdate(config),
+		DeleteContext: resourcePropertyActivationDelete(config),
 		Importer: &schema.ResourceImporter{
 			StateContext: resourcePropertyActivationImport,
 		},
 		Schema: akamaiPropertyActivationSchema,
 		Timeouts: &schema.ResourceTimeout{
-			Default: &PropertyResourceTimeout,
+			Default: ptr.To(propertyResourceTimeout),
 		},
 		SchemaVersion: 1,
 		StateUpgraders: []schema.StateUpgrader{{
@@ -59,23 +83,9 @@ const (
 	// binary exponential backoff, this results in a maximum wait time of 150 seconds before giving up
 	// (not including the time spent in the API calls themselves).
 	CCMWorkaroundMaxRetries = 4
-)
 
-var (
-	// ActivationPollInterval is the interval for polling an activation status on creation
-	ActivationPollInterval = ActivationPollMinimum
-
-	// PropertyResourceTimeout is the default timeout for the resource operations
-	PropertyResourceTimeout = time.Minute * 90
-
-	// CreateActivationRetry poll wait time code waits between retries for activation creation
-	CreateActivationRetry = 10 * time.Second
-
-	// ccmHostnamesPollInterval is the interval for polling CCM hostnames to have assigned edgehostname ID.
-	ccmHostnamesPollInterval = 20 * time.Second
-
-	// ccmHostnamesPollTimeout is the maximum time to wait for CCM hostnames to have assigned edgehostname ID.
-	ccmHostnamesPollTimeout = 3 * time.Minute
+	// propertyResourceTimeout is the default timeout for the resource operations
+	propertyResourceTimeout = time.Minute * 90
 )
 
 var akamaiPropertyActivationSchema = map[string]*schema.Schema{
@@ -180,164 +190,179 @@ func papiError() *schema.Resource {
 	}}
 }
 
-func resourcePropertyActivationCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := meta.Must(m)
-	logger := meta.Log("PAPI", "resourcePropertyActivationCreate")
+func resourcePropertyActivationCreate(config propertyActivationResourceConfig) schema.CreateContextFunc {
+	return func(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+		meta := meta.Must(m)
+		logger := meta.Log("PAPI", "resourcePropertyActivationCreate")
 
-	logger.Debug("resourcePropertyActivationCreate call")
+		logger.Debug("resourcePropertyActivationCreate call")
 
-	// create a context with logging for api calls
-	ctx = session.ContextWithOptions(
-		ctx,
-		session.WithContextLog(logger),
-	)
+		// create a context with logging for api calls
+		ctx = session.ContextWithOptions(
+			ctx,
+			session.WithContextLog(logger),
+		)
 
-	if dead, ok := ctx.Deadline(); ok {
-		logger.Debugf("activation create with deadline in %s", time.Until(dead).String())
-	}
+		if dead, ok := ctx.Deadline(); ok {
+			logger.Debugf("activation create with deadline in %s", time.Until(dead).String())
+		}
 
-	propertyID, err := resolvePropertyID(d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("property_id", propertyID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
-	}
-
-	network, err := networkAlias(d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	version, err := resolveVersion(ctx, d, meta.Client().GetPAPI(), propertyID, network)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	// Schema guarantees these types
-	acknowledgeRuleWarnings := d.Get("auto_acknowledge_rule_warnings").(bool)
-
-	// check to see if this tree has any issues
-	rules, err := meta.Client().GetPAPI().GetRuleTree(ctx, papi.GetRuleTreeRequest{
-		PropertyID:      propertyID,
-		PropertyVersion: version,
-		ValidateRules:   true,
-	})
-	if err != nil {
-		d.Partial(true)
-		return diag.FromErr(err)
-	}
-
-	// if there are errors return them cleanly
-	diags := checkRuleTreeErrorsAndWarnings(rules, d, logger)
-	if diags != nil && diags.HasError() {
-		d.Partial(true)
-		return diags
-	}
-
-	complianceRecord, err := tf.GetListValue("compliance_record", d)
-	if err != nil && !errors.Is(err, tf.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-
-	activation, err := lookupActivation(ctx, meta.Client().GetPAPI(), lookupActivationRequest{
-		propertyID: propertyID,
-		network:    network,
-		activationType: map[papi.ActivationType]struct{}{
-			papi.ActivationTypeActivate:   {},
-			papi.ActivationTypeDeactivate: {},
-		},
-	})
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	// we create a new property activation in case of no previous activation, or deleted activation
-	if activation == nil || activation.ActivationType == papi.ActivationTypeDeactivate || activation.PropertyVersion != version {
-		contactSet, err := tf.GetSetValue("contact", d)
+		propertyID, err := resolvePropertyID(d)
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		var contacts []string
-		for _, contact := range contactSet.List() {
-			contacts = append(contacts, cast.ToString(contact))
+		if err := d.Set("property_id", propertyID); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 		}
 
-		note, err := tf.GetStringValue("note", d)
+		network, err := networkAlias(d)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		version, err := resolveVersion(ctx, d, meta.Client().GetPAPI(), propertyID, network)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		// Schema guarantees these types
+		acknowledgeRuleWarnings := d.Get("auto_acknowledge_rule_warnings").(bool)
+
+		// check to see if this tree has any issues
+		rules, err := meta.Client().GetPAPI().GetRuleTree(ctx, papi.GetRuleTreeRequest{
+			PropertyID:      propertyID,
+			PropertyVersion: version,
+			ValidateRules:   true,
+		})
+		if err != nil {
+			d.Partial(true)
+			return diag.FromErr(err)
+		}
+
+		// if there are errors return them cleanly
+		diags := checkRuleTreeErrorsAndWarnings(rules, d, logger)
+		if diags != nil && diags.HasError() {
+			d.Partial(true)
+			return diags
+		}
+
+		complianceRecord, err := tf.GetListValue("compliance_record", d)
 		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return diag.FromErr(err)
 		}
 
-		createActivationRequest := papi.CreateActivationRequest{
-			PropertyID: propertyID,
-			Activation: papi.Activation{
-				ActivationType:         papi.ActivationTypeActivate,
-				Network:                network,
-				PropertyVersion:        version,
-				NotifyEmails:           contacts,
-				AcknowledgeAllWarnings: acknowledgeRuleWarnings,
-				Note:                   note,
+		activation, err := lookupActivation(ctx, meta.Client().GetPAPI(), lookupActivationRequest{
+			propertyID: propertyID,
+			network:    network,
+			activationType: map[papi.ActivationType]struct{}{
+				papi.ActivationTypeActivate:   {},
+				papi.ActivationTypeDeactivate: {},
 			},
-		}
-
-		logger.Debug("creating activation")
-		activationID, diagErr := createActivation(ctx, meta.Client().GetPAPI(), addPropertyComplianceRecord(complianceRecord, createActivationRequest))
-		if diagErr != nil {
-			return diagErr
-		}
-
-		// query the activation to retrieve the initial status
-		act, err := meta.Client().GetPAPI().GetActivation(ctx, papi.GetActivationRequest{
-			ActivationID: activationID,
-			PropertyID:   propertyID,
 		})
 		if err != nil {
 			return diag.FromErr(err)
 		}
 
-		activation = act.Activation
+		// we create a new property activation in case of no previous activation, or deleted activation
+		if activation == nil || activation.ActivationType == papi.ActivationTypeDeactivate || activation.PropertyVersion != version {
+			contactSet, err := tf.GetSetValue("contact", d)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			var contacts []string
+			for _, contact := range contactSet.List() {
+				contacts = append(contacts, cast.ToString(contact))
+			}
 
-		if err = setErrorsAndWarnings(d, flattenErrorArray(act.Errors), flattenErrorArray(act.Warnings)); err != nil {
+			note, err := tf.GetStringValue("note", d)
+			if err != nil && !errors.Is(err, tf.ErrNotFound) {
+				return diag.FromErr(err)
+			}
+
+			createActivationRequest := papi.CreateActivationRequest{
+				PropertyID: propertyID,
+				Activation: papi.Activation{
+					ActivationType:         papi.ActivationTypeActivate,
+					Network:                network,
+					PropertyVersion:        version,
+					NotifyEmails:           contacts,
+					AcknowledgeAllWarnings: acknowledgeRuleWarnings,
+					Note:                   note,
+				},
+			}
+
+			logger.Debug("creating activation")
+			activationID, diagErr := createActivation(ctx, meta.Client().GetPAPI(),
+				addPropertyComplianceRecord(complianceRecord, createActivationRequest), config)
+			if diagErr != nil {
+				return diagErr
+			}
+
+			// query the activation to retrieve the initial status
+			act, err := meta.Client().GetPAPI().GetActivation(ctx, papi.GetActivationRequest{
+				ActivationID: activationID,
+				PropertyID:   propertyID,
+			})
+			if err != nil {
+				return diag.FromErr(err)
+			}
+
+			activation = act.Activation
+
+			if err = setErrorsAndWarnings(d, flattenErrorArray(act.Errors), flattenErrorArray(act.Warnings)); err != nil {
+				return diag.FromErr(err)
+			}
+		}
+
+		activation, diagErr := pollActivation(ctx, meta.Client().GetPAPI(), activation, propertyID, config)
+		if diagErr != nil {
+			return diagErr
+		}
+
+		// Poll the CCM hostnames to ensure they have been assigned edgehostname ID.
+		// Until all receive their edgehostname ID, or timeout occurs, we keep polling.
+		// If there is any error, issue a warning and continue processing.
+		if err := waitForCCMHostnames(ctx, waitForCCMHostnamesOpts{
+			client:     meta.Client().GetPAPI(),
+			propertyID: propertyID,
+			version:    version,
+			config:     config,
+		}); err != nil {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Warning,
+				Summary:  "Received error from polling function during wait for all CCM hostnames to have edge hostname ID assigned.",
+				Detail: "Property activation was successful, but some CCM hostnames might not have edge hostname ID assigned yet. " +
+					fmt.Sprintf("Error details: %s", err.Error()),
+			})
+		}
+
+		attrs := map[string]interface{}{
+			"status":        string(activation.Status),
+			"activation_id": activation.ActivationID,
+			"version":       version,
+		}
+		if err := tf.SetAttrs(d, attrs); err != nil {
 			return diag.FromErr(err)
 		}
-	}
 
-	activation, diagErr := pollActivation(ctx, meta.Client().GetPAPI(), activation, propertyID)
-	if diagErr != nil {
-		return diagErr
-	}
+		d.SetId(propertyID + ":" + string(network))
 
-	// Poll the CCM hostnames to ensure they have been assigned edgehostname ID.
-	// Until all receive their edgehostname ID, or timeout occurs, we keep polling.
-	// If there is any error, issue a warning and continue processing.
-	if err := waitForCCMHostnames(ctx, meta.Client().GetPAPI(), propertyID, version); err != nil {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Warning,
-			Summary:  "Received error from polling function during wait for all CCM hostnames to have edge hostname ID assigned.",
-			Detail: "Property activation was successful, but some CCM hostnames might not have edge hostname ID assigned yet. " +
-				fmt.Sprintf("Error details: %s", err.Error()),
-		})
+		return diags
 	}
-
-	attrs := map[string]interface{}{
-		"status":        string(activation.Status),
-		"activation_id": activation.ActivationID,
-		"version":       version,
-	}
-	if err := tf.SetAttrs(d, attrs); err != nil {
-		return diag.FromErr(err)
-	}
-
-	d.SetId(propertyID + ":" + string(network))
-
-	return diags
 }
 
-func waitForCCMHostnames(ctx context.Context, client papi.PAPI, propertyID string, version int) error {
+type waitForCCMHostnamesOpts struct {
+	client     papi.PAPI
+	propertyID string
+	version    int
+	config     propertyActivationResourceConfig
+}
+
+func waitForCCMHostnames(ctx context.Context, opts waitForCCMHostnamesOpts) error {
 	_, err := retry.Poll(ctx, retry.PollingOpts[papi.GetPropertyVersionHostnamesResponse]{
 		Fn: func(ctx context.Context) (*papi.GetPropertyVersionHostnamesResponse, error) {
-			return client.GetPropertyVersionHostnames(ctx, papi.GetPropertyVersionHostnamesRequest{
-				PropertyID:      propertyID,
-				PropertyVersion: version,
+			return opts.client.GetPropertyVersionHostnames(ctx, papi.GetPropertyVersionHostnamesRequest{
+				PropertyID:      opts.propertyID,
+				PropertyVersion: opts.version,
 			})
 		},
 		ShouldRetryData: func(resp papi.GetPropertyVersionHostnamesResponse) bool {
@@ -348,8 +373,8 @@ func waitForCCMHostnames(ctx context.Context, client papi.PAPI, propertyID strin
 						tflog.Debug(ctx, "edgehostname of type CCM has no assigned edgehostname ID yet, polling needed", map[string]any{
 							"cname_to":         h.CnameTo,
 							"cname_from":       h.CnameFrom,
-							"property_id":      propertyID,
-							"property_version": version,
+							"property_id":      opts.propertyID,
+							"property_version": opts.version,
 							"ccm_cert_status":  h.CCMCertStatus,
 						})
 						return true
@@ -357,21 +382,21 @@ func waitForCCMHostnames(ctx context.Context, client papi.PAPI, propertyID strin
 					tflog.Debug(ctx, "edgehostname of type CCM not elligible for polling", map[string]any{
 						"cname_to":         h.CnameTo,
 						"cname_from":       h.CnameFrom,
-						"property_id":      propertyID,
-						"property_version": version,
+						"property_id":      opts.propertyID,
+						"property_version": opts.version,
 						"ccm_cert_status":  h.CCMCertStatus,
 					})
 
 				}
 			}
 			tflog.Debug(ctx, "all CCM hostnames have edgehostname ID assigned, exiting polling", map[string]any{
-				"property_id":      propertyID,
-				"property_version": version,
+				"property_id":      opts.propertyID,
+				"property_version": opts.version,
 			})
 			return false
 		},
-		Interval: ccmHostnamesPollInterval,
-		Deadline: ccmHostnamesPollTimeout,
+		Interval: opts.config.ccmHostnamesPollInterval,
+		Deadline: opts.config.ccmHostnamesPollTimeout,
 	})
 	if err != nil {
 		if errors.Is(err, context.DeadlineExceeded) {
@@ -379,7 +404,6 @@ func waitForCCMHostnames(ctx context.Context, client papi.PAPI, propertyID strin
 		}
 		return err
 	}
-
 	return nil
 }
 
@@ -394,141 +418,144 @@ func isCCMDeployedOrDeploying(h papi.Hostname) bool {
 	return false
 }
 
-func resourcePropertyActivationDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := meta.Must(m)
-	logger := meta.Log("PAPI", "resourcePropertyActivationDelete")
+func resourcePropertyActivationDelete(config propertyActivationResourceConfig) schema.DeleteContextFunc {
+	return func(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+		meta := meta.Must(m)
+		logger := meta.Log("PAPI", "resourcePropertyActivationDelete")
 
-	logger.Debug("resourcePropertyActivationDelete call")
+		logger.Debug("resourcePropertyActivationDelete call")
 
-	// create a context with logging for api calls
-	ctx = session.ContextWithOptions(
-		ctx,
-		session.WithContextLog(logger),
-	)
+		// create a context with logging for api calls
+		ctx = session.ContextWithOptions(
+			ctx,
+			session.WithContextLog(logger),
+		)
 
-	network, err := networkAlias(d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	propertyID, err := resolvePropertyID(d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("property_id", propertyID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
-	}
-
-	version, err := resolveVersion(ctx, d, meta.Client().GetPAPI(), propertyID, network)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	complianceRecord, err := tf.GetListValue("compliance_record", d)
-	if err != nil && !errors.Is(err, tf.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-
-	// Schema guarantees these types
-	acknowledgeRuleWarnings := d.Get("auto_acknowledge_rule_warnings").(bool)
-
-	activation, err := lookupActivation(ctx, meta.Client().GetPAPI(), lookupActivationRequest{
-		propertyID: propertyID,
-		version:    version,
-		network:    network,
-		activationType: map[papi.ActivationType]struct{}{
-			papi.ActivationTypeDeactivate: {},
-			papi.ActivationTypeActivate:   {},
-		},
-	})
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	if activation == nil || activation.ActivationType == papi.ActivationTypeActivate {
-		contactSet, err := tf.GetRawSetValue("contact", d, tf.NewRawConfig(d))
+		network, err := networkAlias(d)
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		var contacts []string
-		for _, contact := range contactSet {
-			contacts = append(contacts, cast.ToString(contact))
+
+		propertyID, err := resolvePropertyID(d)
+		if err != nil {
+			return diag.FromErr(err)
 		}
-		note, err := tf.GetStringValue("note", d)
+		if err := d.Set("property_id", propertyID); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
+		}
+
+		version, err := resolveVersion(ctx, d, meta.Client().GetPAPI(), propertyID, network)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		complianceRecord, err := tf.GetListValue("compliance_record", d)
 		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return diag.FromErr(err)
 		}
 
-		deleteActivationRequest := papi.CreateActivationRequest{
-			PropertyID: propertyID,
-			Activation: papi.Activation{
-				ActivationType:         papi.ActivationTypeDeactivate,
-				Network:                network,
-				PropertyVersion:        version,
-				NotifyEmails:           contacts,
-				AcknowledgeAllWarnings: acknowledgeRuleWarnings,
-				Note:                   note,
+		// Schema guarantees these types
+		acknowledgeRuleWarnings := d.Get("auto_acknowledge_rule_warnings").(bool)
+
+		activation, err := lookupActivation(ctx, meta.Client().GetPAPI(), lookupActivationRequest{
+			propertyID: propertyID,
+			version:    version,
+			network:    network,
+			activationType: map[papi.ActivationType]struct{}{
+				papi.ActivationTypeDeactivate: {},
+				papi.ActivationTypeActivate:   {},
 			},
-		}
-
-		deleteActivationID, diagErr := createActivation(ctx, meta.Client().GetPAPI(), addPropertyComplianceRecord(complianceRecord, deleteActivationRequest))
-		if diagErr != nil {
-			return diagErr
-		}
-		// update with id we are now polling on
-		d.SetId(deleteActivationID)
-
-		// query the activation to retrieve the initial status
-		act, err := meta.Client().GetPAPI().GetActivation(ctx, papi.GetActivationRequest{
-			ActivationID: deleteActivationID,
-			PropertyID:   propertyID,
 		})
 		if err != nil {
 			return diag.FromErr(err)
 		}
 
-		activation = act.Activation
+		if activation == nil || activation.ActivationType == papi.ActivationTypeActivate {
+			contactSet, err := tf.GetRawSetValue("contact", d, tf.NewRawConfig(d))
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			var contacts []string
+			for _, contact := range contactSet {
+				contacts = append(contacts, cast.ToString(contact))
+			}
+			note, err := tf.GetStringValue("note", d)
+			if err != nil && !errors.Is(err, tf.ErrNotFound) {
+				return diag.FromErr(err)
+			}
 
-		if err := d.Set("activation_id", activation.ActivationID); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
-		}
+			deleteActivationRequest := papi.CreateActivationRequest{
+				PropertyID: propertyID,
+				Activation: papi.Activation{
+					ActivationType:         papi.ActivationTypeDeactivate,
+					Network:                network,
+					PropertyVersion:        version,
+					NotifyEmails:           contacts,
+					AcknowledgeAllWarnings: acknowledgeRuleWarnings,
+					Note:                   note,
+				},
+			}
 
-		if err = setErrorsAndWarnings(d, flattenErrorArray(act.Errors), flattenErrorArray(act.Warnings)); err != nil {
-			return diag.FromErr(err)
-		}
-	}
+			deleteActivationID, diagErr := createActivation(ctx, meta.Client().GetPAPI(),
+				addPropertyComplianceRecord(complianceRecord, deleteActivationRequest), config)
+			if diagErr != nil {
+				return diagErr
+			}
+			// update with id we are now polling on
+			d.SetId(deleteActivationID)
 
-	// deactivations also use status Active for when they are fully processed
-	for activation.Status != papi.ActivationStatusActive {
-		if activation.Status == papi.ActivationStatusAborted {
-			return diag.FromErr(fmt.Errorf("deactivation request aborted"))
-		}
-		if activation.Status == papi.ActivationStatusFailed {
-			return diag.FromErr(fmt.Errorf("deactivation request failed in downstream system"))
-		}
-		select {
-		case <-time.After(tf.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
+			// query the activation to retrieve the initial status
 			act, err := meta.Client().GetPAPI().GetActivation(ctx, papi.GetActivationRequest{
-				ActivationID: activation.ActivationID,
+				ActivationID: deleteActivationID,
 				PropertyID:   propertyID,
 			})
 			if err != nil {
 				return diag.FromErr(err)
 			}
+
 			activation = act.Activation
+
+			if err := d.Set("activation_id", activation.ActivationID); err != nil {
+				return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
+			}
 
 			if err = setErrorsAndWarnings(d, flattenErrorArray(act.Errors), flattenErrorArray(act.Warnings)); err != nil {
 				return diag.FromErr(err)
 			}
-
-		case <-ctx.Done():
-			return diag.FromErr(fmt.Errorf("activation context terminated: %w", ctx.Err()))
 		}
+
+		// deactivations also use status Active for when they are fully processed
+		for activation.Status != papi.ActivationStatusActive {
+			if activation.Status == papi.ActivationStatusAborted {
+				return diag.FromErr(fmt.Errorf("deactivation request aborted"))
+			}
+			if activation.Status == papi.ActivationStatusFailed {
+				return diag.FromErr(fmt.Errorf("deactivation request failed in downstream system"))
+			}
+			select {
+			case <-time.After(tf.MaxDuration(config.activationPollInterval, ActivationPollMinimum)):
+				act, err := meta.Client().GetPAPI().GetActivation(ctx, papi.GetActivationRequest{
+					ActivationID: activation.ActivationID,
+					PropertyID:   propertyID,
+				})
+				if err != nil {
+					return diag.FromErr(err)
+				}
+				activation = act.Activation
+
+				if err = setErrorsAndWarnings(d, flattenErrorArray(act.Errors), flattenErrorArray(act.Warnings)); err != nil {
+					return diag.FromErr(err)
+				}
+
+			case <-ctx.Done():
+				return diag.FromErr(fmt.Errorf("activation context terminated: %w", ctx.Err()))
+			}
+		}
+
+		d.SetId("")
+
+		return nil
 	}
-
-	d.SetId("")
-
-	return nil
 }
 
 func flattenErrorArray(errors []*papi.Error) string {
@@ -649,172 +676,180 @@ func resolveVersion(ctx context.Context, d *schema.ResourceData, client papi.PAP
 	return version, nil
 }
 
-func resourcePropertyActivationUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := meta.Must(m)
-	logger := meta.Log("PAPI", "resourcePropertyActivationUpdate")
+func resourcePropertyActivationUpdate(config propertyActivationResourceConfig) schema.UpdateContextFunc {
+	return func(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+		meta := meta.Must(m)
+		logger := meta.Log("PAPI", "resourcePropertyActivationUpdate")
 
-	logger.Debug("resourcePropertyActivationUpdate call")
-	// create a context with logging for api calls
-	ctx = session.ContextWithOptions(
-		ctx,
-		session.WithContextLog(logger),
-	)
+		logger.Debug("resourcePropertyActivationUpdate call")
+		// create a context with logging for api calls
+		ctx = session.ContextWithOptions(
+			ctx,
+			session.WithContextLog(logger),
+		)
 
-	if !d.HasChangesExcept("timeouts", "compliance_record") {
-		logger.Debug("Only timeouts and/or compliance_record were updated, update with no API calls")
-		return nil
-	}
-
-	propertyID, err := resolvePropertyID(d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("property_id", propertyID); err != nil {
-		return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
-	}
-
-	network, err := networkAlias(d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	version, err := resolveVersion(ctx, d, meta.Client().GetPAPI(), propertyID, network)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	complianceRecord, err := tf.GetListValue("compliance_record", d)
-	if err != nil && !errors.Is(err, tf.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-
-	// Schema guarantees these types
-	acknowledgeRuleWarnings := d.Get("auto_acknowledge_rule_warnings").(bool)
-
-	// Assigns a log message to the activation request
-	note, err := tf.GetStringValue("note", d)
-	if err != nil && !errors.Is(err, tf.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-
-	// check to see if this tree has any issues
-	rules, err := meta.Client().GetPAPI().GetRuleTree(ctx, papi.GetRuleTreeRequest{
-		PropertyID:      propertyID,
-		PropertyVersion: version,
-		ValidateRules:   true,
-	})
-	if err != nil {
-		// Reverting to previous state(property version in this case) when error occurs.
-		d.Partial(true)
-		return diag.FromErr(err)
-	}
-
-	// if there are errors return them cleanly
-	diags := checkRuleTreeErrorsAndWarnings(rules, d, logger)
-	if diags.HasError() {
-		d.Partial(true)
-		return diags
-	}
-	propertyActivation, err := lookupActivation(ctx, meta.Client().GetPAPI(), lookupActivationRequest{
-		propertyID: propertyID,
-		version:    version,
-		network:    network,
-		activationType: map[papi.ActivationType]struct{}{
-			papi.ActivationTypeActivate: {},
-		},
-	})
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	versionStatus, err := resolveVersionStatus(ctx, meta.Client().GetPAPI(), propertyID, version, network)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	if versionStatus == papi.VersionStatusActive {
-		var updatedFields []string
-
-		if d.HasChange("auto_acknowledge_rule_warnings") {
-			updatedFields = append(updatedFields, "'auto_acknowledge_rule_warnings'")
+		if !d.HasChangesExcept("timeouts", "compliance_record") {
+			logger.Debug("Only timeouts and/or compliance_record were updated, update with no API calls")
+			return nil
 		}
-		if len(updatedFields) > 0 {
-			return diag.Errorf("Cannot update %s field(s) while property version is ACTIVE. Deactivate the current version to update, or create a new property version activation.", strings.Join(updatedFields, ", "))
-		}
-	}
 
-	if propertyActivation == nil || versionStatus == papi.VersionStatusDeactivated {
-		contactSet, err := tf.GetRawSetValue("contact", d, tf.NewRawConfig(d))
+		propertyID, err := resolvePropertyID(d)
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		var contacts []string
-		for _, contact := range contactSet {
-			contacts = append(contacts, cast.ToString(contact))
+		if err := d.Set("property_id", propertyID); err != nil {
+			return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 		}
 
-		createActivationRequest := papi.CreateActivationRequest{
-			PropertyID: propertyID,
-			Activation: papi.Activation{
-				ActivationType:         papi.ActivationTypeActivate,
-				Network:                network,
-				PropertyVersion:        version,
-				NotifyEmails:           contacts,
-				AcknowledgeAllWarnings: acknowledgeRuleWarnings,
-				Note:                   note,
+		network, err := networkAlias(d)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		version, err := resolveVersion(ctx, d, meta.Client().GetPAPI(), propertyID, network)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		complianceRecord, err := tf.GetListValue("compliance_record", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+
+		// Schema guarantees these types
+		acknowledgeRuleWarnings := d.Get("auto_acknowledge_rule_warnings").(bool)
+
+		// Assigns a log message to the activation request
+		note, err := tf.GetStringValue("note", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+
+		// check to see if this tree has any issues
+		rules, err := meta.Client().GetPAPI().GetRuleTree(ctx, papi.GetRuleTreeRequest{
+			PropertyID:      propertyID,
+			PropertyVersion: version,
+			ValidateRules:   true,
+		})
+		if err != nil {
+			// Reverting to previous state(property version in this case) when error occurs.
+			d.Partial(true)
+			return diag.FromErr(err)
+		}
+
+		// if there are errors return them cleanly
+		diags := checkRuleTreeErrorsAndWarnings(rules, d, logger)
+		if diags.HasError() {
+			d.Partial(true)
+			return diags
+		}
+		propertyActivation, err := lookupActivation(ctx, meta.Client().GetPAPI(), lookupActivationRequest{
+			propertyID: propertyID,
+			version:    version,
+			network:    network,
+			activationType: map[papi.ActivationType]struct{}{
+				papi.ActivationTypeActivate: {},
 			},
+		})
+		if err != nil {
+			return diag.FromErr(err)
 		}
 
-		activationID, diagErr := createActivation(ctx, meta.Client().GetPAPI(), addPropertyComplianceRecord(complianceRecord, createActivationRequest))
+		versionStatus, err := resolveVersionStatus(ctx, meta.Client().GetPAPI(), propertyID, version, network)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		if versionStatus == papi.VersionStatusActive {
+			var updatedFields []string
+
+			if d.HasChange("auto_acknowledge_rule_warnings") {
+				updatedFields = append(updatedFields, "'auto_acknowledge_rule_warnings'")
+			}
+			if len(updatedFields) > 0 {
+				return diag.Errorf("Cannot update %s field(s) while property version is ACTIVE. Deactivate the current version to update, or create a new property version activation.", strings.Join(updatedFields, ", "))
+			}
+		}
+
+		if propertyActivation == nil || versionStatus == papi.VersionStatusDeactivated {
+			contactSet, err := tf.GetRawSetValue("contact", d, tf.NewRawConfig(d))
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			var contacts []string
+			for _, contact := range contactSet {
+				contacts = append(contacts, cast.ToString(contact))
+			}
+
+			createActivationRequest := papi.CreateActivationRequest{
+				PropertyID: propertyID,
+				Activation: papi.Activation{
+					ActivationType:         papi.ActivationTypeActivate,
+					Network:                network,
+					PropertyVersion:        version,
+					NotifyEmails:           contacts,
+					AcknowledgeAllWarnings: acknowledgeRuleWarnings,
+					Note:                   note,
+				},
+			}
+
+			activationID, diagErr := createActivation(ctx, meta.Client().GetPAPI(),
+				addPropertyComplianceRecord(complianceRecord, createActivationRequest), config)
+			if diagErr != nil {
+				return diagErr
+			}
+
+			// query the activation to retrieve the initial status
+			act, err := meta.Client().GetPAPI().GetActivation(ctx, papi.GetActivationRequest{
+				ActivationID: activationID,
+				PropertyID:   propertyID,
+			})
+			if err != nil {
+				return diag.FromErr(err)
+			}
+
+			propertyActivation = act.Activation
+
+			if err = setErrorsAndWarnings(d, flattenErrorArray(act.Errors), flattenErrorArray(act.Warnings)); err != nil {
+				return diag.FromErr(err)
+			}
+		}
+
+		propertyActivation, diagErr := pollActivation(ctx, meta.Client().GetPAPI(),
+			propertyActivation, propertyID, config)
 		if diagErr != nil {
 			return diagErr
 		}
 
-		// query the activation to retrieve the initial status
-		act, err := meta.Client().GetPAPI().GetActivation(ctx, papi.GetActivationRequest{
-			ActivationID: activationID,
-			PropertyID:   propertyID,
-		})
-		if err != nil {
+		// Poll the CCM hostnames to ensure they have been assigned edgehostname ID.
+		// Until all receive their edgehostname ID, or timeout occurs, we keep polling.
+		// If there is any error, issue a warning and continue processing.
+		if err := waitForCCMHostnames(ctx, waitForCCMHostnamesOpts{
+			client:     meta.Client().GetPAPI(),
+			propertyID: propertyID,
+			version:    version,
+			config:     config,
+		}); err != nil {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Warning,
+				Summary:  "Received error from polling function during wait for all CCM hostnames to have edge hostname ID assigned.",
+				Detail: "Property activation was successful, but some CCM hostnames might not have edge hostname ID assigned yet. " +
+					fmt.Sprintf("Error details: %s", err.Error()),
+			})
+		}
+		attrs := map[string]interface{}{
+			"status":        string(propertyActivation.Status),
+			"activation_id": propertyActivation.ActivationID,
+			"version":       version,
+		}
+		if err := tf.SetAttrs(d, attrs); err != nil {
 			return diag.FromErr(err)
 		}
 
-		propertyActivation = act.Activation
+		d.SetId(propertyID + ":" + string(network))
 
-		if err = setErrorsAndWarnings(d, flattenErrorArray(act.Errors), flattenErrorArray(act.Warnings)); err != nil {
-			return diag.FromErr(err)
-		}
+		return diags
 	}
-
-	propertyActivation, diagErr := pollActivation(ctx, meta.Client().GetPAPI(), propertyActivation, propertyID)
-	if diagErr != nil {
-		return diagErr
-	}
-
-	// Poll the CCM hostnames to ensure they have been assigned edgehostname ID.
-	// Until all receive their edgehostname ID, or timeout occurs, we keep polling.
-	// If there is any error, issue a warning and continue processing.
-	if err := waitForCCMHostnames(ctx, meta.Client().GetPAPI(), propertyID, version); err != nil {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Warning,
-			Summary:  "Received error from polling function during wait for all CCM hostnames to have edge hostname ID assigned.",
-			Detail: "Property activation was successful, but some CCM hostnames might not have edge hostname ID assigned yet. " +
-				fmt.Sprintf("Error details: %s", err.Error()),
-		})
-	}
-
-	attrs := map[string]interface{}{
-		"status":        string(propertyActivation.Status),
-		"activation_id": propertyActivation.ActivationID,
-		"version":       version,
-	}
-	if err := tf.SetAttrs(d, attrs); err != nil {
-		return diag.FromErr(err)
-	}
-
-	d.SetId(propertyID + ":" + string(network))
-
-	return diags
 }
 
 func resourcePropertyActivationImport(_ context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
@@ -1045,7 +1080,8 @@ func networkAlias(d *schema.ResourceData) (papi.ActivationNetwork, error) {
 	return papi.ActivationNetwork(alias), nil
 }
 
-func pollActivation(ctx context.Context, client papi.PAPI, activation *papi.Activation, propertyID string) (*papi.Activation, diag.Diagnostics) {
+func pollActivation(ctx context.Context, client papi.PAPI, activation *papi.Activation,
+	propertyID string, config propertyActivationResourceConfig) (*papi.Activation, diag.Diagnostics) {
 
 	retriesMax := 5
 	retries5xx := 0
@@ -1058,7 +1094,7 @@ func pollActivation(ctx context.Context, client papi.PAPI, activation *papi.Acti
 			return nil, diag.FromErr(fmt.Errorf("activation request failed in downstream system"))
 		}
 		select {
-		case <-time.After(tf.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
+		case <-time.After(tf.MaxDuration(config.activationPollInterval, ActivationPollMinimum)):
 			act, err := client.GetActivation(ctx, papi.GetActivationRequest{
 				ActivationID: activation.ActivationID,
 				PropertyID:   propertyID,
@@ -1104,7 +1140,9 @@ func suppressDiffIfNoPropertyReactivation(_, oldValue, newValue string, d *schem
 	return oldValue == newValue
 }
 
-func createActivation(ctx context.Context, client papi.PAPI, request papi.CreateActivationRequest) (string, diag.Diagnostics) {
+func createActivation(ctx context.Context, client papi.PAPI, request papi.CreateActivationRequest,
+	config propertyActivationResourceConfig) (string, diag.Diagnostics) {
+
 	log := hclog.FromContext(ctx)
 
 	errMsg := "create failed"
@@ -1115,7 +1153,7 @@ func createActivation(ctx context.Context, client papi.PAPI, request papi.Create
 		errMsg = "create deactivation failed"
 	}
 
-	createActivationRetry := CreateActivationRetry
+	createActivationRetry := config.createActivationRetry
 	var retries = 0
 
 	for {

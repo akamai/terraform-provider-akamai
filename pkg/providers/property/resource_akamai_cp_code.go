@@ -17,14 +17,30 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+const cpCodePrefix = "cpc_"
+
+type cpCodeResourceConfig struct {
+	updatePollMinimum           time.Duration
+	updatePollInterval          time.Duration
+	cpCodeResourceUpdateTimeout time.Duration
+}
+
+func defaultCPCodeResourceConfig() cpCodeResourceConfig {
+	return cpCodeResourceConfig{
+		updatePollMinimum:           time.Minute,
+		updatePollInterval:          time.Minute,
+		cpCodeResourceUpdateTimeout: time.Minute * 30,
+	}
+}
+
 // PAPI CP Code
 //
 // https://techdocs.akamai.com/property-mgr/reference/post-cpcodes
-func resourceCPCode() *schema.Resource {
+func resourceCPCode(config cpCodeResourceConfig) *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceCPCodeCreate,
 		ReadContext:   resourceCPCodeRead,
-		UpdateContext: resourceCPCodeUpdate,
+		UpdateContext: resourceCPCodeUpdate(config),
 		// NB: CP Codes cannot be deleted https://techdocs.akamai.com/property-mgr/reference/post-cpcodes
 		DeleteContext: schema.NoopContext,
 		Importer: &schema.ResourceImporter{
@@ -69,24 +85,16 @@ func resourceCPCode() *schema.Resource {
 			},
 		},
 		Timeouts: &schema.ResourceTimeout{
-			Update: &cpCodeResourceUpdateTimeout,
+			Update: &config.cpCodeResourceUpdateTimeout,
 		},
 		SchemaVersion: 1,
 		StateUpgraders: []schema.StateUpgrader{{
 			Version: 0,
-			Type:    resourceCPCodeV0().CoreConfigSchema().ImpliedType(),
+			Type:    resourceCPCodeV0(config).CoreConfigSchema().ImpliedType(),
 			Upgrade: timeouts.MigrateToExplicit(),
 		}},
 	}
 }
-
-var (
-	updatePollMinimum           = time.Minute
-	updatePollInterval          = updatePollMinimum
-	cpCodeResourceUpdateTimeout = time.Minute * 30
-)
-
-const cpCodePrefix = "cpc_"
 
 func resourceCPCodeCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
@@ -187,69 +195,78 @@ func resourceCPCodeRead(ctx context.Context, d *schema.ResourceData, m interface
 	return nil
 }
 
-func resourceCPCodeUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := meta.Must(m)
-	logger := meta.Log("PAPI", "resourceCPCodeUpdate")
-	logger.Debugf("Update CP Code")
+func resourceCPCodeUpdate(config cpCodeResourceConfig) schema.UpdateContextFunc {
+	return func(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+		meta := meta.Must(m)
+		logger := meta.Log("PAPI", "resourceCPCodeUpdate")
+		logger.Debugf("Update CP Code")
 
-	if !d.HasChangeExcept("timeouts") {
-		logger.Debug("Only timeouts were updated, skipping")
-		return nil
-	}
-
-	if diags := checkImmutableChanged(d); diags != nil {
-		d.Partial(true)
-		return diags
-	}
-
-	contractID, err := tf.GetStringValue("contract_id", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	contractID = str.AddPrefix(contractID, "ctr_")
-	groupID, err := tf.GetStringValue("group_id", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	groupID = str.AddPrefix(groupID, "grp_")
-
-	// trimCPCodeID is needed here for backwards compatibility
-	cpCodeID, err := strconv.Atoi(strings.TrimPrefix(d.Id(), cpCodePrefix))
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	name, err := tf.GetStringValue("name", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	cpCode, err := meta.Client().GetPAPI().GetCPCodeDetail(ctx, cpCodeID)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	_, err = meta.Client().GetPAPI().UpdateCPCode(ctx, papi.UpdateCPCodeRequest{
-		ID:               cpCode.ID,
-		Name:             name,
-		Purgeable:        &cpCode.Purgeable,
-		OverrideTimeZone: &cpCode.OverrideTimeZone,
-		Contracts:        cpCode.Contracts,
-		Products:         cpCode.Products,
-	})
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	// Because we use CPRG API for update, we need to ensure that changes are also present when fetching cpCode with PAPI
-	if err := waitForCPCodeNameUpdate(ctx, meta.Client().GetPAPI(), contractID, groupID, d.Id(), name); err != nil {
-		if errors.Is(err, ErrCPCodeUpdateTimeout) {
-			return append(tf.DiagWarningf("%s", err), tf.DiagWarningf("Resource has been updated, but the change is still ongoing on the server")...)
+		if !d.HasChangeExcept("timeouts") {
+			logger.Debug("Only timeouts were updated, skipping")
+			return nil
 		}
-		return diag.FromErr(err)
-	}
 
-	return resourceCPCodeRead(ctx, d, m)
+		if diags := checkImmutableChanged(d); diags != nil {
+			d.Partial(true)
+			return diags
+		}
+
+		contractID, err := tf.GetStringValue("contract_id", d)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		contractID = str.AddPrefix(contractID, "ctr_")
+		groupID, err := tf.GetStringValue("group_id", d)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		groupID = str.AddPrefix(groupID, "grp_")
+
+		// trimCPCodeID is needed here for backwards compatibility
+		cpCodeID, err := strconv.Atoi(strings.TrimPrefix(d.Id(), cpCodePrefix))
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		name, err := tf.GetStringValue("name", d)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		cpCode, err := meta.Client().GetPAPI().GetCPCodeDetail(ctx, cpCodeID)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		_, err = meta.Client().GetPAPI().UpdateCPCode(ctx, papi.UpdateCPCodeRequest{
+			ID:               cpCode.ID,
+			Name:             name,
+			Purgeable:        &cpCode.Purgeable,
+			OverrideTimeZone: &cpCode.OverrideTimeZone,
+			Contracts:        cpCode.Contracts,
+			Products:         cpCode.Products,
+		})
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		// Because we use CPRG API for update, we need to ensure that changes are also present when fetching cpCode with PAPI
+		if err := waitForCPCodeNameUpdate(ctx, waitForCPCodeNameUpdateOpts{
+			client:      meta.Client().GetPAPI(),
+			contractID:  contractID,
+			groupID:     groupID,
+			cpCodeID:    d.Id(),
+			updatedName: name,
+			config:      config,
+		}); err != nil {
+			if errors.Is(err, ErrCPCodeUpdateTimeout) {
+				return append(tf.DiagWarningf("%s", err), tf.DiagWarningf("Resource has been updated, but the change is still ongoing on the server")...)
+			}
+			return diag.FromErr(err)
+		}
+
+		return resourceCPCodeRead(ctx, d, m)
+	}
 }
 
 func resourceCPCodeImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
@@ -334,17 +351,26 @@ func checkImmutableChanged(d *schema.ResourceData) diag.Diagnostics {
 	return diags
 }
 
-func waitForCPCodeNameUpdate(ctx context.Context, client papi.PAPI, contractID, groupID, CPCodeID, updatedName string) error {
-	req := papi.GetCPCodeRequest{CPCodeID: CPCodeID, ContractID: contractID, GroupID: groupID}
-	CPCodeResp, err := client.GetCPCode(ctx, req)
+type waitForCPCodeNameUpdateOpts struct {
+	client      papi.PAPI
+	contractID  string
+	groupID     string
+	cpCodeID    string
+	updatedName string
+	config      cpCodeResourceConfig
+}
+
+func waitForCPCodeNameUpdate(ctx context.Context, opts waitForCPCodeNameUpdateOpts) error {
+	req := papi.GetCPCodeRequest{CPCodeID: opts.cpCodeID, ContractID: opts.contractID, GroupID: opts.groupID}
+	CPCodeResp, err := opts.client.GetCPCode(ctx, req)
 	if err != nil {
 		return err
 	}
 
-	for CPCodeResp.CPCode.Name != updatedName {
+	for CPCodeResp.CPCode.Name != opts.updatedName {
 		select {
-		case <-time.After(tf.MaxDuration(updatePollInterval, updatePollMinimum)):
-			CPCodeResp, err = client.GetCPCode(ctx, req)
+		case <-time.After(tf.MaxDuration(opts.config.updatePollInterval, opts.config.updatePollMinimum)):
+			CPCodeResp, err = opts.client.GetCPCode(ctx, req)
 			if err != nil {
 				return err
 			}
