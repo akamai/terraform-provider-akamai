@@ -115,6 +115,67 @@ func TestResGTMCIDRMap(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
+	t.Run("update CIDRMap domain name - delete and create new CIDRMap", func(t *testing.T) {
+		client := &gtm.Mock{}
+
+		mockGetCIDRMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+
+		mockGetDatacenter(client, datacenterID5400, &dc, nil, testutils.Once)
+
+		mockCreateCIDRMap(client, getCIDRMap(), &gtm.CreateCIDRMapResponse{
+			Resource: getCIDRMap(),
+			Status:   getDefaultResponseStatus(),
+		}, nil)
+
+		mockGetCIDRMap(client, getCIDRMap(), nil, testutils.FourTimes)
+
+		mockDeleteCIDRMap(client)
+
+		testDomainName = "gtm_terra_testdomain_updated.akadns.net"
+
+		mockGetCIDRMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+
+		mockGetDatacenter(client, datacenterID5400, &dc, nil, testutils.Once)
+
+		mockCreateCIDRMap(client, getCIDRMap(), &gtm.CreateCIDRMapResponse{
+			Resource: getCIDRMap(),
+			Status:   getDefaultResponseStatus(),
+		}, nil)
+
+		mockGetCIDRMap(client, getCIDRMap(), nil, testutils.ThreeTimes)
+
+		mockDeleteCIDRMap(client)
+
+		//reset domain name for other tests
+		testDomainName = "gtm_terra_testdomain.akadns.net"
+
+		resourceName := "akamai_gtm_cidrmap.tfexample_cidrmap_1"
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmCidrmap/create_basic.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(resourceName, "name", "tfexample_cidrmap_1"),
+							resource.TestCheckResourceAttr(resourceName, "domain", "gtm_terra_testdomain.akadns.net"),
+						),
+					},
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmCidrmap/domain_update/updated_domain_name.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(resourceName, "name", "tfexample_cidrmap_1"),
+							resource.TestCheckResourceAttr(resourceName, "domain", "gtm_terra_testdomain_updated.akadns.net"),
+						),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
 	t.Run("create cidrmap, remove outside of terraform, expect non-empty plan", func(t *testing.T) {
 		client := &gtm.Mock{}
 

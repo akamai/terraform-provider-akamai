@@ -113,10 +113,12 @@
 
 
 
-
 #### BUG FIXES:
 
 
+* GTM
+    * Added support for recreating `akamai_gtm_domain` resource by modification of the `name` field ([I#626](https://github.com/akamai/terraform-provider-akamai/issues/626)).
+    * Added support for recreating `akamai_gtm_property`,`akamai_gtm_resource`,`akamai_gtm_geomap`,`akamai_gtm_datacenter`,`akamai_gtm_cidrmap` and `akamai_gtm_asmap` resources by modification of the `domain` field.
 
 
 

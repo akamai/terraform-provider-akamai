@@ -125,6 +125,68 @@ func TestResGTMResource(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
+	t.Run("update resource domain name - delete and create new resource", func(t *testing.T) {
+		client := &gtm.Mock{}
+
+		// Create
+		mockGetResource(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+
+		mockCreateResource(client, getDefaultResource(), &gtm.CreateResourceResponse{
+			Resource: getDefaultResource(),
+			Status:   getDefaultResponseStatus(),
+		}, nil)
+
+		// Read after create + refresh
+		mockGetResource(client, getDefaultResource(), nil, testutils.FourTimes)
+
+		mockDeleteResource(client)
+
+		testDomainName = "gtm_terra_testdomain_updated.akadns.net"
+
+		// Create
+		mockGetResource(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+
+		mockCreateResource(client, getDefaultResource(), &gtm.CreateResourceResponse{
+			Resource: getDefaultResource(),
+			Status:   getDefaultResponseStatus(),
+		}, nil)
+
+		// Read after create + refresh
+		mockGetResource(client, getDefaultResource(), nil, testutils.ThreeTimes)
+
+		mockDeleteResource(client)
+
+		testDomainName = "gtm_terra_testdomain.akadns.net"
+
+		resourceName := "akamai_gtm_resource.tfexample_resource_1"
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmResource/create_basic.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(resourceName, "name", "tfexample_resource_1"),
+							resource.TestCheckResourceAttr(resourceName, "aggregation_type", "latest"),
+							resource.TestCheckResourceAttr(resourceName, "domain", "gtm_terra_testdomain.akadns.net"),
+						),
+					},
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmResource/domain_update/updated_domain_name.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(resourceName, "name", "tfexample_resource_1"),
+							resource.TestCheckResourceAttr(resourceName, "aggregation_type", "latest"),
+							resource.TestCheckResourceAttr(resourceName, "domain", "gtm_terra_testdomain_updated.akadns.net"),
+						),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
 	t.Run("create resource, remove outside of terraform, expect non-empty plan", func(t *testing.T) {
 		client := &gtm.Mock{}
 

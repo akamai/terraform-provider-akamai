@@ -31,6 +31,7 @@ func resourceGTMv1Domain() *schema.Resource {
 		ReadContext:   resourceGTMv1DomainRead,
 		UpdateContext: resourceGTMv1DomainUpdate,
 		DeleteContext: resourceGTMv1DomainDelete,
+		CustomizeDiff: preventNameUpdateWithoutContractAndGroup,
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceGTMv1DomainImport,
 		},
@@ -55,6 +56,7 @@ func resourceGTMv1Domain() *schema.Resource {
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
+				ForceNew: true,
 			},
 			"type": {
 				Type:             schema.TypeString,
@@ -193,6 +195,17 @@ func resourceGTMv1Domain() *schema.Resource {
 			},
 		},
 	}
+}
+
+func preventNameUpdateWithoutContractAndGroup(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
+	if d.HasChange("name") {
+		contract := d.Get("contract").(string)
+		group := d.Get("group").(string)
+		if contract == "" || group == "" {
+			return fmt.Errorf("`contract` and `group` must be provided when creating new domain or changing its `name`")
+		}
+	}
+	return nil
 }
 
 // GetQueryArgs retrieves optional query args. contractId, groupId [and accountSwitchKey] supported.

@@ -29,6 +29,7 @@ func resourceGTMv1GeoMap() *schema.Resource {
 			"domain": {
 				Type:     schema.TypeString,
 				Required: true,
+				ForceNew: true,
 			},
 			"wait_on_complete": {
 				Type:     schema.TypeBool,

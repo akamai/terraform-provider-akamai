@@ -114,6 +114,60 @@ func TestResGTMDatacenter(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
+	t.Run("update datacenter domain name - delete and create new datacenter", func(t *testing.T) {
+		client := &gtm.Mock{}
+
+		mockCreateDatacenter(client, &gtm.CreateDatacenterResponse{
+			Resource: getTestDatacenterResp(),
+			Status:   getPendingResponseStatus(),
+		}, nil)
+
+		mockGetDatacenter(client, datacenterID3132, getTestDatacenterResp(), nil, testutils.FourTimes)
+
+		mockDeleteDatacenter(client)
+
+		testDomainName = "gtm_terra_testdomain_updated.akadns.net"
+
+		mockCreateDatacenter(client, &gtm.CreateDatacenterResponse{
+			Resource: getTestDatacenterResp(),
+			Status:   getPendingResponseStatus(),
+		}, nil)
+
+		mockGetDatacenter(client, datacenterID3132, getTestDatacenterResp(), nil, testutils.ThreeTimes)
+
+		mockDeleteDatacenter(client)
+
+		testDomainName = "gtm_terra_testdomain.akadns.net"
+
+		resourceName := "akamai_gtm_datacenter.tfexample_dc_1"
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDatacenter/create_basic.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(resourceName, "nickname", "tfexample_dc_1"),
+							resource.TestCheckResourceAttr(resourceName, "continent", "EU"),
+							resource.TestCheckResourceAttr(resourceName, "domain", "gtm_terra_testdomain.akadns.net"),
+						),
+					},
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDatacenter/domain_update/updated_domain_name.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(resourceName, "nickname", "tfexample_dc_1"),
+							resource.TestCheckResourceAttr(resourceName, "continent", "EU"),
+							resource.TestCheckResourceAttr(resourceName, "domain", "gtm_terra_testdomain_updated.akadns.net"),
+						),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
 	t.Run("create datacenter, remove outside of terraform, expect non-empty plan", func(t *testing.T) {
 		client := &gtm.Mock{}
 

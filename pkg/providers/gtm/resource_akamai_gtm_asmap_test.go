@@ -113,6 +113,67 @@ func TestResGTMASMap(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
+	t.Run("update asmap domain name - delete and create new asmap", func(t *testing.T) {
+		client := &gtm.Mock{}
+
+		mockGetASMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+
+		mockGetDatacenter(client, datacenterID5400, getDefaultDatacenter(), nil, testutils.Once)
+
+		mockCreateASMap(client, getASMapForTestsForCreate(), &gtm.CreateASMapResponse{
+			Resource: getASMapForTestsForCreateResponse(),
+			Status:   getDefaultResponseStatus(),
+		}, nil)
+
+		mockGetASMap(client, getASMapForTestsForCreateResponse(), nil, testutils.FourTimes)
+
+		mockDeleteASMap(client)
+
+		testDomainName = "gtm_terra_testdomain_updated.akadns.net"
+
+		mockGetASMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+
+		mockGetDatacenter(client, datacenterID5400, getDefaultDatacenter(), nil, testutils.Once)
+
+		mockCreateASMap(client, getASMapForTestsForCreate(), &gtm.CreateASMapResponse{
+			Resource: getASMapForTestsForCreateResponse(),
+			Status:   getDefaultResponseStatus(),
+		}, nil)
+
+		mockGetASMap(client, getASMapForTestsForCreateResponse(), nil, testutils.ThreeTimes)
+
+		mockDeleteASMap(client)
+
+		// rollback to original domain name for other tests
+		testDomainName = "gtm_terra_testdomain.akadns.net"
+
+		resourceName := "akamai_gtm_asmap.tfexample_as_1"
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmAsmap/create_basic.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(resourceName, "name", "tfexample_as_1"),
+							resource.TestCheckResourceAttr(resourceName, "domain", "gtm_terra_testdomain.akadns.net"),
+						),
+					},
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmAsmap/domain_update/updated_domain_name.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(resourceName, "name", "tfexample_as_1"),
+							resource.TestCheckResourceAttr(resourceName, "domain", "gtm_terra_testdomain_updated.akadns.net"),
+						),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
 	t.Run("create asmap, remove outside of terraform, expect non-empty plan", func(t *testing.T) {
 		client := &gtm.Mock{}
 
