@@ -3,13 +3,17 @@ package iam
 import (
 	"context"
 	"fmt"
+	"maps"
+	"slices"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/iam"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/date"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -65,8 +69,10 @@ func (d *roleDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, r
 		MarkdownDescription: "Role data source.",
 		Attributes: map[string]schema.Attribute{
 			"role_id": schema.Int64Attribute{
-				Required:    true,
+				Optional:    true,
 				Description: "Unique identifier for each role.",
+				Validators: []validator.Int64{
+					int64validator.ExactlyOneOf(path.MatchRoot("role_name"), path.MatchRoot("role_id"))},
 			},
 			"created_by": schema.StringAttribute{
 				Computed:    true,
@@ -90,7 +96,11 @@ func (d *roleDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, r
 			},
 			"role_name": schema.StringAttribute{
 				Computed:    true,
+				Optional:    true,
 				Description: "Descriptive label for the role.",
+				Validators: []validator.String{
+					stringvalidator.ExactlyOneOf(path.MatchRoot("role_name"), path.MatchRoot("role_id")),
+				},
 			},
 			"type": schema.StringAttribute{
 				Computed:    true,
@@ -200,6 +210,30 @@ func (d *roleDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	}
 
 	client := inst.Client(d.meta)
+
+	if data.RoleID.IsNull() {
+		roles, err := client.ListRoles(ctx, iam.ListRolesRequest{})
+		if err != nil {
+			resp.Diagnostics.AddError("listing iam roles failed", err.Error())
+			return
+		}
+		filteredRoles := make(map[int64]string)
+		for _, role := range roles {
+			if role.RoleName == data.RoleName.ValueString() {
+				filteredRoles[role.RoleID] = role.RoleName
+			}
+		}
+		switch len(filteredRoles) {
+		case 0:
+			resp.Diagnostics.AddError("finding iam role by name failed", fmt.Sprintf("role with name '%s' not found", data.RoleName.ValueString()))
+			return
+		case 1:
+			data.RoleID = types.Int64Value(slices.Collect(maps.Keys(filteredRoles))[0])
+		default:
+			resp.Diagnostics.AddError("finding iam role by name failed", fmt.Sprintf("multiple roles with name '%s' found. Specific roles IDs are '%v'. Please use 'role_id' to select the desired role", data.RoleName.ValueString(), slices.Collect(maps.Keys(filteredRoles))))
+			return
+		}
+	}
 
 	getRoleResp, err := client.GetRole(ctx, iam.GetRoleRequest{
 		ID:           data.RoleID.ValueInt64(),

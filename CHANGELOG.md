@@ -55,7 +55,8 @@
 #### FEATURES/ENHANCEMENTS:
 
 
-
+* IAM
+  * Added support for retrieving IAM role based on `role_name` in the `akamai_iam_role` data source.([I#690](https://github.com/akamai/terraform-provider-akamai/issues/690)).
 
 
 
