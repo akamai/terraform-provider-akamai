@@ -26,11 +26,6 @@ func dataSourceAdvancedSettingsAsePenaltyBox() *schema.Resource {
 				Computed:    true,
 				Description: "JSON representation for the ASE Penalty Box settings.",
 			},
-			"output_text": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Text representation for the ASE Penalty Box settings.",
-			},
 		},
 	}
 }
@@ -57,17 +52,6 @@ func dataSourceAdvancedSettingsAsePenaltyBoxRead(ctx context.Context, d *schema.
 	if err != nil {
 		logger.Errorf("calling 'getAdvancedSettingsAsePenaltyBox': %s", err.Error())
 		return diag.FromErr(err)
-	}
-
-	ots := OutputTemplates{}
-	InitTemplates(ots)
-
-	outputText, err := RenderTemplates(ots, "advancedSettingsAsePenaltyBoxDS", advancedSettingsAsePenaltyBox)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("output_text", outputText); err != nil {
-		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	jsonBody, err := json.Marshal(advancedSettingsAsePenaltyBox)

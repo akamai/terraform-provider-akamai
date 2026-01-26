@@ -56,11 +56,6 @@ func dataSourceWAFMode() *schema.Resource {
 				Computed:    true,
 				Description: "Timestamp indicating when evaluation mode expires",
 			},
-			"output_text": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Text representation",
-			},
 		},
 	}
 }
@@ -92,17 +87,6 @@ func dataSourceWAFModeRead(ctx context.Context, d *schema.ResourceData, m interf
 	if err != nil {
 		logger.Errorf("calling 'getWAFMode': %s", err.Error())
 		return diag.FromErr(err)
-	}
-
-	ots := OutputTemplates{}
-	InitTemplates(ots)
-
-	outputtext, err := RenderTemplates(ots, "wafModesDS", wafMode)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("output_text", outputtext); err != nil {
-		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	jsonBody, err := json.Marshal(wafMode)

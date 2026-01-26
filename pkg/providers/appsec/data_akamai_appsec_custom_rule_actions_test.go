@@ -27,11 +27,6 @@ func TestAkamaiCustomRuleActions_data_basic(t *testing.T) {
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
-		client.On("GetCustomRuleActions",
-			testutils.MockContext,
-			appsec.GetCustomRuleActionsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
-		).Return(&getCustomRuleActionsResponse, nil)
-
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
 				IsUnitTest:               true,

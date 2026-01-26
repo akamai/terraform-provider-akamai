@@ -31,11 +31,6 @@ func dataSourceSlowPostProtectionSettings() *schema.Resource {
 				Computed:    true,
 				Description: "JSON representation",
 			},
-			"output_text": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Text representation",
-			},
 		},
 	}
 }
@@ -67,17 +62,6 @@ func dataSourceSlowPostProtectionSettingsRead(ctx context.Context, d *schema.Res
 	if err != nil {
 		logger.Errorf("calling 'getSlowPostProtectionSettings': %s", err.Error())
 		return diag.FromErr(err)
-	}
-
-	ots := OutputTemplates{}
-	InitTemplates(ots)
-
-	outputtext, err := RenderTemplates(ots, "slowPostDS", slowpostprotectionsettings)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("output_text", outputtext); err != nil {
-		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	jsonBody, err := json.Marshal(slowpostprotectionsettings)

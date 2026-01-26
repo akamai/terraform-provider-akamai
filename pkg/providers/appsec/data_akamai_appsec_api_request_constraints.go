@@ -37,11 +37,6 @@ func dataSourceAPIRequestConstraints() *schema.Resource {
 				Computed:    true,
 				Description: "JSON representation",
 			},
-			"output_text": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Text representation",
-			},
 		},
 	}
 }
@@ -79,17 +74,6 @@ func dataSourceAPIRequestConstraintsRead(ctx context.Context, d *schema.Resource
 	if err != nil {
 		logger.Errorf("calling 'getApiRequestConstraints': %s", err.Error())
 		return diag.FromErr(err)
-	}
-
-	ots := OutputTemplates{}
-	InitTemplates(ots)
-
-	outputtext, err := RenderTemplates(ots, "apiRequestConstraintsDS", apirequestconstraints)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	if err = d.Set("output_text", outputtext); err != nil {
-		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	jsonBody, err := json.Marshal(apirequestconstraints)

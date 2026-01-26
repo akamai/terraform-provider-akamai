@@ -32,11 +32,6 @@ func dataSourceAdvancedSettingsRequestBody() *schema.Resource {
 				Computed:    true,
 				Description: "JSON representation",
 			},
-			"output_text": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Text representation",
-			},
 		},
 	}
 }
@@ -69,28 +64,6 @@ func dataSourceAdvancedSettingsRequestBodyRead(ctx context.Context, d *schema.Re
 	if err != nil {
 		logger.Errorf("calling 'getAdvancedSettingsRequestBody': %s", err.Error())
 		return diag.FromErr(err)
-	}
-
-	ots := OutputTemplates{}
-	InitTemplates(ots)
-
-	if policyID != "" {
-		outputText, err := RenderTemplates(ots, "advancedSettingsRequestBodyPolicyDS", advancedSettingsRequestBody)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		if err := d.Set("output_text", outputText); err != nil {
-			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
-		}
-
-	} else {
-		outputText, err := RenderTemplates(ots, "advancedSettingsRequestBodyDS", advancedSettingsRequestBody)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		if err := d.Set("output_text", outputText); err != nil {
-			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
-		}
 	}
 
 	jsonBody, err := json.Marshal(advancedSettingsRequestBody)

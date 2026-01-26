@@ -50,11 +50,6 @@ func dataSourceNetworkList() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"output_text": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Text Export representation",
-			},
 			"list": {
 				Type:     schema.TypeList,
 				Elem:     &schema.Schema{Type: schema.TypeString},
@@ -122,29 +117,6 @@ func dataSourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m in
 			logger.Errorf("error setting 'list': %s", err.Error())
 			return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 		}
-
-		getNetworkListsResponse := network.GetNetworkListsResponse{
-			NetworkLists: []network.GetNetworkListsResponseListElement{{
-				ElementCount:    networkList.ElementCount,
-				Name:            networkList.Name,
-				NetworkListType: networkList.NetworkListType,
-				ReadOnly:        networkList.ReadOnly,
-				Shared:          networkList.Shared,
-				SyncPoint:       networkList.SyncPoint,
-				Type:            networkList.Type,
-				UniqueID:        networkList.UniqueID,
-				Description:     networkList.Description,
-			}},
-		}
-		ots := OutputTemplates{}
-		InitTemplates(ots)
-		outputText, err := RenderTemplates(ots, "networkListsDS", getNetworkListsResponse)
-		if err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
-		}
-		if err := d.Set("output_text", outputText); err != nil {
-			return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
-		}
 	} else {
 		networkLists, err := client.GetNetworkLists(ctx, network.GetNetworkListsRequest{
 			Name: name,
@@ -174,17 +146,6 @@ func dataSourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m in
 		}
 		if err := d.Set("list", IDs); err != nil {
 			logger.Errorf("error setting 'list': %s", err.Error())
-			return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
-		}
-
-		ots := OutputTemplates{}
-		InitTemplates(ots)
-
-		outputText, err := RenderTemplates(ots, "networkListsDS", networkLists)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		if err := d.Set("output_text", outputText); err != nil {
 			return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 		}
 	}

@@ -85,7 +85,6 @@ func TestDataClientList(t *testing.T) {
 						CheckEqual("list.items.1.value", "7.7.7.7").
 						CheckEqual("list.items.2.value", "8.8.8.8").
 						CheckEqual("list.items.3.value", "9.9.9.9").
-						CheckEqual("output_text", loadText(t, getPath(testDir, "ip_output_text.txt"))).
 						CheckEqual("json", loadJSON(t, getPath(testDir, "ip_output_json.txt"))).
 						Build(),
 				},
@@ -110,7 +109,6 @@ func TestDataClientList(t *testing.T) {
 						CheckEqual("list.items.2.value", "AO").
 						CheckEqual("list.items.3.value", "DZ").
 						CheckEqual("list.items.4.value", "IN").
-						CheckEqual("output_text", loadText(t, getPath(testDir, "geo_output_text.txt"))).
 						CheckEqual("json", loadJSON(t, getPath(testDir, "geo_output_json.txt"))).
 						Build(),
 				},
@@ -135,7 +133,6 @@ func TestDataClientList(t *testing.T) {
 						CheckEqual("list.items.2.value", "3003").
 						CheckEqual("list.items.3.value", "4004").
 						CheckEqual("list.items.4.value", "5005").
-						CheckEqual("output_text", loadText(t, getPath(testDir, "asn_output_text.txt"))).
 						CheckEqual("json", loadJSON(t, getPath(testDir, "asn_output_json.txt"))).
 						Build(),
 				},
@@ -157,7 +154,6 @@ func TestDataClientList(t *testing.T) {
 						CheckEqual("list.items.#", "2").
 						CheckEqual("list.items.0.value", "c18eaddafe6a3bba").
 						CheckEqual("list.items.1.value", "cd08e31494f9531f560d64c695473da9").
-						CheckEqual("output_text", loadText(t, getPath(testDir, "tls_fingerprint_output_text.txt"))).
 						CheckEqual("json", loadJSON(t, getPath(testDir, "tls_fingerprint_output_json.txt"))).
 						Build(),
 				},
@@ -179,7 +175,6 @@ func TestDataClientList(t *testing.T) {
 						CheckEqual("list.items.#", "2").
 						CheckEqual("list.items.0.value", "65d860160bdc9b98abf72407e14ca40b609417de7939897d3b58d55787aaef69").
 						CheckEqual("list.items.1.value", "f0456d7aed088e791e4610c3c2ad63afe46e2e777988fdbc9270f15ec9711b42").
-						CheckEqual("output_text", loadText(t, getPath(testDir, "file_hash_output_text.txt"))).
 						CheckEqual("json", loadJSON(t, getPath(testDir, "file_hash_output_json.txt"))).
 						Build(),
 				},
@@ -207,7 +202,6 @@ func TestDataClientList(t *testing.T) {
 						CheckEqual("list.items.2.value", "7340cbfc-3dad-4c52-a653-7874bc2a79dc (sales@ubs.com)").
 						CheckEqual("list.items.3.value", "8894f428-bedc-4ca2-8258-fa24d7740709 (user2)").
 						CheckEqual("list.items.4.value", "d7505c0f-b1f6-4c02-93bf-a601577f5641 (user3)").
-						CheckEqual("output_text", loadText(t, getPath(testDir, "user_output_text.txt"))).
 						CheckEqual("json", loadJSON(t, getPath(testDir, "user_output_json.txt"))).
 						Build(),
 				},
@@ -232,7 +226,6 @@ func TestDataClientList(t *testing.T) {
 						CheckEqual("list.items.#", "2").
 						CheckEqual("list.items.0.value", "8728690e-cd6c-42d1-94e8-6a9a9f326cb5").
 						CheckEqual("list.items.1.value", "e00b5827-7105-4366-bc24-aa735fc18e4c").
-						CheckEqual("output_text", loadText(t, getPath(testDir, "user_output_text_user_id.txt"))).
 						CheckEqual("json", loadJSON(t, getPath(testDir, "user_output_json_user_id.txt"))).
 						Build(),
 				},
@@ -254,7 +247,6 @@ func TestDataClientList(t *testing.T) {
 						CheckEqual("list.items.#", "2").
 						CheckEqual("list.items.0.value", "bluemail.com").
 						CheckEqual("list.items.1.value", "greenmail.com").
-						CheckEqual("output_text", loadText(t, getPath(testDir, "domain_output_text.txt"))).
 						CheckEqual("json", loadJSON(t, getPath(testDir, "domain_output_json.txt"))).
 						Build(),
 				},
@@ -337,10 +329,6 @@ func mockGetClientListItemsFailure(m *clientlists.Mock, request clientlists.GetC
 	err := errors.New("get client list items error")
 	m.On("GetClientListItems", mock.Anything, request).
 		Return(nil, err).Once()
-}
-
-func loadText(t *testing.T, path string) string {
-	return testutils.LoadFixtureString(t, path)
 }
 
 func loadJSON(t *testing.T, path string) string {

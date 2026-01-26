@@ -13,9 +13,7 @@
 
 
 * AppSec
-    * Removed the `output_text` attribute from `akamai_appsec_ip_geo_protection` resource.
-
-
+  * Removed the `output_text` attribute from all resources and all data sources.
 
 
 

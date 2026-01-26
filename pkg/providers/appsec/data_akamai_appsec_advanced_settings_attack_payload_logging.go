@@ -32,11 +32,6 @@ func dataSourceAdvancedSettingsAttackPayloadLogging() *schema.Resource {
 				Computed:    true,
 				Description: "JSON representation",
 			},
-			"output_text": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Text representation",
-			},
 		},
 	}
 }
@@ -67,17 +62,6 @@ func dataSourceAdvancedSettingsAttackPayloadLoggingRead(ctx context.Context, d *
 	if err != nil {
 		logger.Errorf("calling 'getAdvancedSettingsAttackPayloadLogging': %s", err.Error())
 		return diag.FromErr(err)
-	}
-
-	ots := OutputTemplates{}
-	InitTemplates(ots)
-
-	outputText, err := RenderTemplates(ots, "advancedSettingsAttackPayloadLoggingDS", advancedSettingsAttackPayloadLogging)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("output_text", outputText); err != nil {
-		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	jsonBody, err := json.Marshal(advancedSettingsAttackPayloadLogging)
