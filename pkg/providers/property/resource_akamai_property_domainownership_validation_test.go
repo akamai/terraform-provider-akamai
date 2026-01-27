@@ -1230,6 +1230,59 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 				},
 			},
 		},
+		"expect error and warning - create - timeout exceeded with partial validation success": {
+			defaultPollTimeout: 25 * time.Millisecond,
+			searchInterval:     10 * time.Millisecond,
+			init: func(m *domainownership.Mock, mockData validationTestData) {
+				// Create
+				mockSearchDomains(m, mockData.create)
+				// Simulate 2 out of 3 domains become validated, 1 stays pending
+				partialValidation := map[domainKey]domainDetails{
+					newDomainKey("test1.example.com", "HOST"):     newDomainDetails("VALIDATED", "FQDN", "HTTP"),
+					newDomainKey("test2.example.com", "DOMAIN"):   newDomainDetails("VALIDATED", "FQDN", "DNS_CNAME"),
+					newDomainKey("test3.example.com", "WILDCARD"): newDomainDetails("PENDING", "FQDN", "DNS_TXT"),
+				}
+				mockValidateDomains(m, mockData.create, partialValidation)
+				// Poll the pending domain
+				pendingOnly := map[domainKey]domainDetails{
+					newDomainKey("test3.example.com", "WILDCARD"): newDomainDetails("PENDING", "FQDN", "DNS_TXT"),
+				}
+				mockSearchDomains(m, pendingOnly).Twice()
+			},
+			mockData: getMinCreate(),
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResDOMValidation/create.tf"),
+					Check:       minCreateChecker.Build(),
+					ExpectError: regexp.MustCompile(`Timeout while waiting for domain validation`),
+				},
+			},
+		},
+		"expect error - create - timeout exceeded with no validation success": {
+			defaultPollTimeout: 25 * time.Millisecond,
+			searchInterval:     10 * time.Millisecond,
+			init: func(m *domainownership.Mock, mockData validationTestData) {
+				// Create
+				mockSearchDomains(m, mockData.create)
+				// Simulate all 3 domains stay pending
+				allPending := map[domainKey]domainDetails{
+					newDomainKey("test1.example.com", "HOST"):     newDomainDetails("PENDING", "FQDN", "HTTP"),
+					newDomainKey("test2.example.com", "DOMAIN"):   newDomainDetails("PENDING", "FQDN", "DNS_CNAME"),
+					newDomainKey("test3.example.com", "WILDCARD"): newDomainDetails("PENDING", "FQDN", "DNS_TXT"),
+				}
+				mockValidateDomains(m, mockData.create, allPending)
+				// Poll for all pending domains
+				mockSearchDomains(m, allPending).Twice()
+			},
+			mockData: getMinCreate(),
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResDOMValidation/create.tf"),
+					Check:       minCreateChecker.Build(),
+					ExpectError: regexp.MustCompile(`Timeout while waiting for domain validation`),
+				},
+			},
+		},
 		"expect error - create - one domain not found in API": {
 			init: func(m *domainownership.Mock, mockData validationTestData) {
 				// Create
@@ -1456,6 +1509,81 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResDOMValidation/add_1.tf"),
 					ExpectError: regexp.MustCompile(`domain test4.example.com with scope HOST is in TOKEN_EXPIRED status, cannot(\n|.)validate`),
+				},
+			},
+		},
+		"expect error and warning - update - timeout exceeded with partial validation success": {
+			defaultPollTimeout: 25 * time.Millisecond,
+			searchInterval:     10 * time.Millisecond,
+			init: func(m *domainownership.Mock, mockData validationTestData) {
+				// Create
+				mockSearchDomains(m, mockData.create)
+				mockValidateDomains(m, mockData.create, mockData.postCreateValidation)
+				// Read x2
+				mockSearchDomains(m, mockData.postCreateValidation).Twice()
+				// Update
+				mockSearchDomains(m, mockData.update)
+				// Simulate 2 out of 3 domains become validated, 1 stays pending
+				partialValidationUpdate := map[domainKey]domainDetails{
+					newDomainKey("test1.example.com", "HOST"):     newDomainDetails("VALIDATED", "FQDN", "HTTP"),
+					newDomainKey("test2.example.com", "DOMAIN"):   newDomainDetails("VALIDATED", "FQDN", "DNS_CNAME"),
+					newDomainKey("test3.example.com", "WILDCARD"): newDomainDetails("PENDING", "FQDN", "DNS_TXT"),
+				}
+				mockValidateDomains(m, mockData.update, partialValidationUpdate)
+				// Poll the pending domain
+				pendingOnly := map[domainKey]domainDetails{
+					newDomainKey("test3.example.com", "WILDCARD"): newDomainDetails("PENDING", "FQDN", "DNS_TXT"),
+				}
+				mockSearchDomains(m, pendingOnly).Twice()
+				// Delete - use postCreateValidation as update failed
+				mockSearchDomains(m, mockData.postCreateValidation)
+				mockInvalidateDomains(m, mockData.postCreateValidation)
+			},
+			mockData: getMinCreateAddOne(),
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDOMValidation/create.tf"),
+					Check:  minCreateChecker.Build(),
+				},
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResDOMValidation/add_1.tf"),
+					ExpectError: regexp.MustCompile(`Timeout while waiting for domain validation`),
+				},
+			},
+		},
+		"expect error - update - timeout exceeded with no validation success": {
+			defaultPollTimeout: 25 * time.Millisecond,
+			searchInterval:     10 * time.Millisecond,
+			init: func(m *domainownership.Mock, mockData validationTestData) {
+				// Create
+				mockSearchDomains(m, mockData.create)
+				mockValidateDomains(m, mockData.create, mockData.postCreateValidation)
+				// Read x2
+				mockSearchDomains(m, mockData.postCreateValidation).Twice()
+				// Update
+				mockSearchDomains(m, mockData.update)
+				// Simulate all domains in update stay pending
+				allPendingUpdate := map[domainKey]domainDetails{
+					newDomainKey("test1.example.com", "HOST"):     newDomainDetails("PENDING", "FQDN", "HTTP"),
+					newDomainKey("test2.example.com", "DOMAIN"):   newDomainDetails("PENDING", "FQDN", "DNS_CNAME"),
+					newDomainKey("test3.example.com", "WILDCARD"): newDomainDetails("PENDING", "FQDN", "DNS_TXT"),
+				}
+				mockValidateDomains(m, mockData.update, allPendingUpdate)
+				// Poll for all pending domains
+				mockSearchDomains(m, allPendingUpdate).Twice()
+				// Delete - use postCreateValidation as update failed
+				mockSearchDomains(m, mockData.postCreateValidation)
+				mockInvalidateDomains(m, mockData.postCreateValidation)
+			},
+			mockData: getMinCreateAddOne(),
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDOMValidation/create.tf"),
+					Check:  minCreateChecker.Build(),
+				},
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResDOMValidation/add_1.tf"),
+					ExpectError: regexp.MustCompile(`Timeout while waiting for domain validation`),
 				},
 			},
 		},
