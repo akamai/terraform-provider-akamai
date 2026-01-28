@@ -3,7 +3,6 @@ provider "akamai" {
 }
 
 resource "akamai_clientlist_activation" "activation_ASN_LIST_1" {
-  version                 = 2
   network                 = "STAGING"
   comments                = "Activation Comments"
   notification_recipients = ["user@example.com"]

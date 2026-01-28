@@ -52,7 +52,7 @@ func resourceClientListActivation() *schema.Resource {
 			},
 			"version": {
 				Type:        schema.TypeInt,
-				Required:    true,
+				Computed:    true,
 				Description: "The client list version.",
 			},
 			"network": {
@@ -182,7 +182,7 @@ func Delete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Dia
 	logger := meta.Log("CLIENTLIST", "Delete")
 	logger.Debug("Deleting client list activation")
 
-	attrs, err := getResourceAttrs(d, true)
+	attrs, err := getResourceAttrs(d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -214,7 +214,7 @@ func Delete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Dia
 }
 
 func activate(ctx context.Context, d *schema.ResourceData, meta meta.Meta, client clientlists.ClientLists, logger akalog.Interface) diag.Diagnostics {
-	attrs, err := getResourceAttrs(d, false)
+	attrs, err := getResourceAttrs(d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -251,27 +251,12 @@ type resourceAttrs struct {
 	Comments       string
 	SiebelTicketID string
 	Emails         []string
-	Version        int64
 }
 
-func getResourceAttrs(d *schema.ResourceData, destroy bool) (*resourceAttrs, error) {
+func getResourceAttrs(d *schema.ResourceData) (*resourceAttrs, error) {
 	listID, err := tf.GetStringValue("list_id", d)
 	if err != nil {
 		return nil, err
-	}
-
-	var version int64
-	if destroy { // Don’t Use tf.NewRawConfig(d) in Destroy. It’s intended for config access only, which is unavailable during destroy.
-		ver, ok := d.Get("version").(int)
-		if !ok {
-			return nil, fmt.Errorf("%w: %s", errors.New("value not found"), "version")
-		}
-		version = int64(ver)
-	} else {
-		version, err = tf.GetInt64Value("version", tf.NewRawConfig(d))
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	network, err := tf.GetStringValue("network", d)
@@ -294,7 +279,6 @@ func getResourceAttrs(d *schema.ResourceData, destroy bool) (*resourceAttrs, err
 
 	return &resourceAttrs{
 		ListID:         listID,
-		Version:        version,
 		Network:        network,
 		Comments:       comments,
 		SiebelTicketID: siebelTicketID,
@@ -386,7 +370,11 @@ func createDeactivationWithRetry(ctx context.Context, meta meta.Meta, client cli
 
 // Suppress diff on callers field when activation is not required
 func suppressFieldDiff(_, oldValue, newValue string, d *schema.ResourceData) bool {
-	if oldValue != newValue && d.HasChanges("list_id", "version", "network") {
+	status, err := tf.GetStringValue("status", d)
+	if err != nil {
+		status = ""
+	}
+	if oldValue != newValue && (d.HasChanges("list_id", "network") || status != string(clientlists.Active)) {
 		return false
 	}
 	return true
