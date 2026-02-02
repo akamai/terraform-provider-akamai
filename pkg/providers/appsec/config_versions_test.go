@@ -391,17 +391,11 @@ func TestGetModifiableConfigVersion_LatestVersionIsModifiable(t *testing.T) {
 		BasedOn:    1,
 		CreateDate: time.Now(),
 		CreatedBy:  "test@example.com",
-		Production: struct {
-			Status string    `json:"status,omitempty"`
-			Time   time.Time `json:"time,omitempty"`
-		}{
+		Production: appsec.EnvironmentStatus{
 			Status: "Inactive",
 			Time:   time.Now(),
 		},
-		Staging: struct {
-			Status string    `json:"status,omitempty"`
-			Time   time.Time `json:"time,omitempty"`
-		}{
+		Staging: appsec.EnvironmentStatus{
 			Status: "Inactive",
 			Time:   time.Now(),
 		},
@@ -575,17 +569,11 @@ func TestGetModifiableConfigVersion_LatestVersionWasPreviouslyActive(t *testing.
 		BasedOn:    1,
 		CreateDate: time.Now(),
 		CreatedBy:  "test@example.com",
-		Production: struct {
-			Status string    `json:"status,omitempty"`
-			Time   time.Time `json:"time,omitempty"`
-		}{
+		Production: appsec.EnvironmentStatus{
 			Status: "Inactive",
 			Time:   time.Now(),
 		},
-		Staging: struct {
-			Status string    `json:"status,omitempty"`
-			Time   time.Time `json:"time,omitempty"`
-		}{
+		Staging: appsec.EnvironmentStatus{
 			Status: "Deactivated", // Was previously active
 			Time:   time.Now(),
 		},
@@ -744,17 +732,11 @@ func TestGetModifiableConfigVersion_ConcurrentAccess(t *testing.T) {
 		BasedOn:    1,
 		CreateDate: time.Now(),
 		CreatedBy:  "test@example.com",
-		Production: struct {
-			Status string    `json:"status,omitempty"`
-			Time   time.Time `json:"time,omitempty"`
-		}{
+		Production: appsec.EnvironmentStatus{
 			Status: "Inactive",
 			Time:   time.Now(),
 		},
-		Staging: struct {
-			Status string    `json:"status,omitempty"`
-			Time   time.Time `json:"time,omitempty"`
-		}{
+		Staging: appsec.EnvironmentStatus{
 			Status: "Inactive",
 			Time:   time.Now(),
 		},
