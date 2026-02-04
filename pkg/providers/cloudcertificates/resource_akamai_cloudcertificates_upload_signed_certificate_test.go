@@ -831,14 +831,16 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 				tc.init(client.CloudCertificates, mockCerts)
 			}
 
-			pollingTimeout := tc.pollingTimeout
-			if pollingTimeout == 0 {
-				pollingTimeout = 1 * time.Minute
+			// Use custom config if provided in the test case.
+			config := defaultSubproviderConfig()
+			config.uploadCertificate.pollingInterval = time.Millisecond
+			if tc.pollingTimeout != 0 {
+				config.uploadCertificate.pollingTimeout = tc.pollingTimeout
 			}
 
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(
-					client, NewCustomPollingSubprovider(pollingTimeout), testprovider.NewMockSubprovider()),
+					client, newSubproviderWithConfig(config), testprovider.NewMockSubprovider()),
 				Steps: tc.steps,
 			})
 			client.CloudCertificates.AssertExpectations(t)

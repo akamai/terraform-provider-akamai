@@ -30,17 +30,32 @@ var (
 	_ resource.ResourceWithModifyPlan  = &uploadSignedCertificateResource{}
 )
 
+type uploadSignedCertificateResourceConfig struct {
+	// pollingInterval defines the interval between polling attempts.
+	pollingInterval time.Duration
+
+	// pollingTimeout defines the maximum time to wait for polling.
+	pollingTimeout time.Duration
+}
+
+func defaultUploadSignedCertificateResourceConfig() uploadSignedCertificateResourceConfig {
+	return uploadSignedCertificateResourceConfig{
+		pollingInterval: 10 * time.Second,
+		pollingTimeout:  1 * time.Minute,
+	}
+}
+
 type uploadSignedCertificateResource struct {
 	meta.Resource
-	pollingInterval time.Duration
-	pollingTimeout  time.Duration
+	uploadSignedCertificateResourceConfig
 }
 
 // NewUploadSignedCertificateResource returns a new CloudCertificates Certificate resource.
-func NewUploadSignedCertificateResource() resource.Resource {
-	return &uploadSignedCertificateResource{
-		pollingInterval: 10 * time.Second,
-		pollingTimeout:  1 * time.Minute,
+func NewUploadSignedCertificateResource(config uploadSignedCertificateResourceConfig) func() resource.Resource {
+	return func() resource.Resource {
+		return &uploadSignedCertificateResource{
+			uploadSignedCertificateResourceConfig: config,
+		}
 	}
 }
 
@@ -258,7 +273,8 @@ func (c *uploadSignedCertificateResource) ModifyPlan(ctx context.Context, req re
 		return
 	}
 
-	if plan.CertificateID.IsNull() || plan.CertificateID.IsUnknown() {
+	if plan.CertificateID.IsNull() || plan.CertificateID.IsUnknown() ||
+		plan.SignedCertificatePEM.IsNull() || plan.SignedCertificatePEM.IsUnknown() {
 		return
 	}
 

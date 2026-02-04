@@ -10,16 +10,36 @@ import (
 
 type (
 	// Subprovider gathers CloudCertificates resources and data sources.
-	Subprovider struct{}
+	Subprovider struct {
+		config subproviderConfig
+	}
+
+	subproviderConfig struct {
+		certificate       certificateResourceConfig
+		uploadCertificate uploadSignedCertificateResourceConfig
+	}
 )
 
 var (
 	_ subprovider.Subprovider = &Subprovider{}
 )
 
+func defaultSubproviderConfig() subproviderConfig {
+	return subproviderConfig{
+		certificate:       defaultCertificateResourceConfig(),
+		uploadCertificate: defaultUploadSignedCertificateResourceConfig(),
+	}
+}
+
+func newSubproviderWithConfig(config subproviderConfig) *Subprovider {
+	return &Subprovider{
+		config: config,
+	}
+}
+
 // NewSubprovider returns a new CloudCertificates subprovider.
 func NewSubprovider() *Subprovider {
-	return &Subprovider{}
+	return newSubproviderWithConfig(defaultSubproviderConfig())
 }
 
 // SDKResources returns the CloudCertificates resources implemented using terraform-plugin-sdk.
@@ -35,8 +55,8 @@ func (p *Subprovider) SDKDataSources() map[string]*schema.Resource {
 // FrameworkResources returns the CloudCertificates resources implemented using terraform-plugin-framework.
 func (p *Subprovider) FrameworkResources() []func() resource.Resource {
 	return []func() resource.Resource{
-		NewCertificateResource,
-		NewUploadSignedCertificateResource,
+		NewCertificateResource(p.config.certificate),
+		NewUploadSignedCertificateResource(p.config.uploadCertificate),
 	}
 }
 

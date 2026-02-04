@@ -74,6 +74,9 @@
 
 
 
+* Cloud Certificates (Beta)
+  * Added support for replacing certificates with non-empty `base_name` using the `terraform apply -replace akamai_cloudcertificates_certificate.<certificate name>` command.
+  * Beginning of this release the resource `akamai_cloudcertificates_certificate` should be always defined with the flag `create_before_destroy` set to true to avoid downtime.
 
 
 
