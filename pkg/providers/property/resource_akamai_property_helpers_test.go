@@ -330,28 +330,34 @@ func (p *mockProperty) mockUpdateRuleTree(err ...error) *mock.Call {
 func (p *mockProperty) mockUpdatePropertyVersionHostnames(err ...error) *mock.Call {
 	// Copy hostnames from mock data and remove unnecessary fields (EdgeHostnameID and CertStatus) that are not used in the request to satisfy mocks.
 	// Use original mock data for the response.
-	requestHostnames := make([]papi.Hostname, len(p.hostnames.Items))
-	copy(requestHostnames, p.hostnames.Items)
-	for i := range requestHostnames {
-		requestHostnames[i].EdgeHostnameID = ""
-		requestHostnames[i].CertStatus = papi.CertStatusItem{}
-		// Links are used only for mocking responses
-		if requestHostnames[i].CCMCertificates != nil {
-			// copy on write
-			copyCerts := *requestHostnames[i].CCMCertificates
-			copyCerts.RSACertLink = ""
-			copyCerts.ECDSACertLink = ""
-			requestHostnames[i].CCMCertificates = &copyCerts
-
-			if requestHostnames[i].MTLS != nil {
-				copyMTLS := *requestHostnames[i].MTLS
-				copyMTLS.CASetLink = ""
-				requestHostnames[i].MTLS = &copyMTLS
+	requestHostnames := make([]papi.Hostname, 0, len(p.hostnames.Items))
+	for _, hostname := range p.hostnames.Items {
+		var ccmCertificates *papi.CCMCertificates
+		if hostname.CCMCertificates != nil {
+			ccmCertificates = &papi.CCMCertificates{
+				ECDSACertID: hostname.CCMCertificates.ECDSACertID,
+				RSACertID:   hostname.CCMCertificates.RSACertID,
 			}
 		}
-		// CCMCertStatus is used only for mocking responses
-		requestHostnames[i].CCMCertStatus = nil
 
+		var mtls *papi.MTLS
+		if hostname.MTLS != nil {
+			mtls = &papi.MTLS{
+				CASetID:         hostname.MTLS.CASetID,
+				CheckClientOCSP: hostname.MTLS.CheckClientOCSP,
+				SendCASetClient: hostname.MTLS.SendCASetClient,
+			}
+		}
+
+		requestHostnames = append(requestHostnames, papi.Hostname{
+			CnameType:            papi.HostnameCnameType(hostname.CnameType),
+			CnameFrom:            hostname.CnameFrom,
+			CnameTo:              hostname.CnameTo,
+			CertProvisioningType: hostname.CertProvisioningType,
+			CCMCertificates:      ccmCertificates,
+			MTLS:                 mtls,
+			TLSConfiguration:     hostname.TLSConfiguration,
+		})
 	}
 
 	req := papi.UpdatePropertyVersionHostnamesRequest{

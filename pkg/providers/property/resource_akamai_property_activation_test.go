@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-var defaultVersionHostnames = []papi.Hostname{
+var defaultVersionHostnames = []papi.HostnameResponseItem{
 	{
 		EdgeHostnameID:       "ehn_789",
 		CertProvisioningType: "DEFAULT",
@@ -139,7 +139,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 				expectGetActivation(m, "prp_test", "atv_update", 2, "STAGING", papi.ActivationStatusActive, papi.ActivationTypeActivate, "property activation note for updating", []string{"user@example.com"}, nil).Once()
 				// First API call returns default hostname and one CCM hostname
 				// with no assigned edge hostname id - need to poll.
-				expectGetPropertyVersionHostnames(m, "prp_test", 2, []papi.Hostname{
+				expectGetPropertyVersionHostnames(m, "prp_test", 2, []papi.HostnameResponseItem{
 					{
 						EdgeHostnameID:       "ehn_789",
 						CertProvisioningType: "DEFAULT",
@@ -153,7 +153,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 					},
 				}).Once()
 				// Second API call returns CCM hostname with assigned edge hostname id.
-				expectGetPropertyVersionHostnames(m, "prp_test", 2, []papi.Hostname{
+				expectGetPropertyVersionHostnames(m, "prp_test", 2, []papi.HostnameResponseItem{
 					{
 						EdgeHostnameID:       "ehn_789",
 						CertProvisioningType: "DEFAULT",
@@ -419,7 +419,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 					[]string{"user@example.com"}, "", "atv_activation1", false, nil).Once()
 				expectGetActivation(m, "prp_test", "atv_activation1", 1, "STAGING", papi.ActivationStatusActive, papi.ActivationTypeActivate, "", []string{"user@example.com"}, nil).Once()
 				// first api call returns CCM hostname with assigned edge hostname id - no polling needed.
-				expectGetPropertyVersionHostnames(m, "prp_test", 1, []papi.Hostname{
+				expectGetPropertyVersionHostnames(m, "prp_test", 1, []papi.HostnameResponseItem{
 					{
 						CertProvisioningType: "CCM",
 						EdgeHostnameID:       "ehn_789",
@@ -461,7 +461,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 					[]string{"user@example.com"}, "", "atv_activation1", false, nil).Once()
 				expectGetActivation(m, "prp_test", "atv_activation1", 1, "STAGING", papi.ActivationStatusActive, papi.ActivationTypeActivate, "", []string{"user@example.com"}, nil).Once()
 				// first api call returns CCM hostname with no assigned edge hostname id.
-				expectGetPropertyVersionHostnames(m, "prp_test", 1, []papi.Hostname{
+				expectGetPropertyVersionHostnames(m, "prp_test", 1, []papi.HostnameResponseItem{
 					{
 						CertProvisioningType: "CCM",
 						CCMCertStatus: &papi.CCMCertStatus{
@@ -471,7 +471,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 					},
 				}).Once()
 				// second api call returns CCM hostname with assigned edge hostname id - exit polling loop.
-				expectGetPropertyVersionHostnames(m, "prp_test", 1, []papi.Hostname{
+				expectGetPropertyVersionHostnames(m, "prp_test", 1, []papi.HostnameResponseItem{
 					{
 						CertProvisioningType: "CCM",
 						EdgeHostnameID:       "ehn_789",
@@ -517,7 +517,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 					[]string{"user@example.com"}, "", "atv_activation1", false, nil).Once()
 				expectGetActivation(m, "prp_test", "atv_activation1", 1, "STAGING", papi.ActivationStatusActive, papi.ActivationTypeActivate, "", []string{"user@example.com"}, nil).Once()
 				// first api call returns CCM hostname with statuses different than DEPLOYED or DEPLOYING - no polling needed.
-				expectGetPropertyVersionHostnames(m, "prp_test", 1, []papi.Hostname{
+				expectGetPropertyVersionHostnames(m, "prp_test", 1, []papi.HostnameResponseItem{
 					{
 						CertProvisioningType: "CCM",
 						EdgeHostnameID:       "ehn_789",
@@ -565,7 +565,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 					[]string{"user@example.com"}, "", "atv_activation1", false, nil).Once()
 				expectGetActivation(m, "prp_test", "atv_activation1", 1, "STAGING", papi.ActivationStatusActive, papi.ActivationTypeActivate, "", []string{"user@example.com"}, nil).Once()
 				// first api call returns CCM hostname with no assigned edge hostname id.
-				expectGetPropertyVersionHostnames(m, "prp_test", 1, []papi.Hostname{
+				expectGetPropertyVersionHostnames(m, "prp_test", 1, []papi.HostnameResponseItem{
 					{
 						CertProvisioningType: "CCM",
 					},
@@ -615,7 +615,7 @@ func TestResourcePAPIPropertyActivation(t *testing.T) {
 					[]string{"user@example.com"}, "", "atv_activation1", false, nil).Once()
 				expectGetActivation(m, "prp_test", "atv_activation1", 1, "STAGING", papi.ActivationStatusActive, papi.ActivationTypeActivate, "", []string{"user@example.com"}, nil).Once()
 				// first api call returns CCM hostname with no assigned edge hostname id.
-				expectGetPropertyVersionHostnames(m, "prp_test", 1, []papi.Hostname{
+				expectGetPropertyVersionHostnames(m, "prp_test", 1, []papi.HostnameResponseItem{
 					{
 						CertProvisioningType: "CCM",
 					},
@@ -1943,7 +1943,7 @@ var (
 		return client.On("GetPropertyVersion", testutils.MockContext, req).Return(&res, nil)
 	}
 
-	expectGetPropertyVersionHostnames = func(client *papi.Mock, propertyID string, version int, hostnames []papi.Hostname) *mock.Call {
+	expectGetPropertyVersionHostnames = func(client *papi.Mock, propertyID string, version int, hostnames []papi.HostnameResponseItem) *mock.Call {
 		req := papi.GetPropertyVersionHostnamesRequest{
 			PropertyID:        propertyID,
 			PropertyVersion:   version,

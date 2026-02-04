@@ -70,16 +70,18 @@ func TestPropertyCCM(t *testing.T) {
 
 	basicHostnames := func() papi.HostnameResponseItems {
 		return papi.HostnameResponseItems{
-			Items: []papi.Hostname{
+			Items: []papi.HostnameResponseItem{
 				{
 					CnameType:            "EDGE_HOSTNAME",
 					EdgeHostnameID:       "ehn_111",
 					CnameFrom:            "example.com",
 					CnameTo:              "example.com.edgekey.net",
 					CertProvisioningType: "CCM",
-					CCMCertificates: &papi.CCMCertificates{
-						RSACertID:   "654321",
+					CCMCertificates: &papi.CCMCertificatesResp{
 						RSACertLink: "/ccm/v1/certificates/654321",
+						CCMCertificates: papi.CCMCertificates{
+							RSACertID: "654321",
+						},
 					},
 					CCMCertStatus: &papi.CCMCertStatus{
 						ECDSAProductionStatus: "NOT_FOUND",
@@ -147,9 +149,11 @@ func TestPropertyCCM(t *testing.T) {
 		"Creating basic property with CCM ECDSA certificate": {
 			init: func(p *mockProperty) {
 				p.mockPropertyData = basicData()
-				p.hostnames.Items[0].CCMCertificates = &papi.CCMCertificates{
-					ECDSACertID:   "765432",
+				p.hostnames.Items[0].CCMCertificates = &papi.CCMCertificatesResp{
 					ECDSACertLink: "/ccm/v1/certificates/765432",
+					CCMCertificates: papi.CCMCertificates{
+						ECDSACertID: "765432",
+					},
 				}
 				p.hostnames.Items[0].CCMCertStatus = &papi.CCMCertStatus{
 					ECDSAProductionStatus: "NEEDS_ACTIVATION",
@@ -185,11 +189,13 @@ func TestPropertyCCM(t *testing.T) {
 		"Creating basic property with both CCM RSA and ECDSA certificates": {
 			init: func(p *mockProperty) {
 				p.mockPropertyData = basicData()
-				p.hostnames.Items[0].CCMCertificates = &papi.CCMCertificates{
-					ECDSACertID:   "765432",
+				p.hostnames.Items[0].CCMCertificates = &papi.CCMCertificatesResp{
 					ECDSACertLink: "/ccm/v1/certificates/765432",
-					RSACertID:     "654321",
 					RSACertLink:   "/ccm/v1/certificates/654321",
+					CCMCertificates: papi.CCMCertificates{
+						ECDSACertID: "765432",
+						RSACertID:   "654321",
+					},
 				}
 				p.hostnames.Items[0].CCMCertStatus = &papi.CCMCertStatus{
 					ECDSAProductionStatus: "NEEDS_ACTIVATION",
@@ -222,10 +228,12 @@ func TestPropertyCCM(t *testing.T) {
 		"Creating basic property with CCM certificate, MTLS and TLS configuration": {
 			init: func(p *mockProperty) {
 				p.mockPropertyData = basicData()
-				p.hostnames.Items[0].MTLS = &papi.MTLS{
-					CASetID:         "524125",
-					CheckClientOCSP: true,
-					SendCASetClient: true,
+				p.hostnames.Items[0].MTLS = &papi.MTLSResp{
+					MTLS: papi.MTLS{
+						CASetID:         "524125",
+						CheckClientOCSP: true,
+						SendCASetClient: true,
+					},
 				}
 				p.hostnames.Items[0].TLSConfiguration = &papi.TLSConfiguration{
 					CipherProfile:            "ak-akamai-2020q1",
@@ -263,10 +271,12 @@ func TestPropertyCCM(t *testing.T) {
 		"Creating basic property with CCM certificate and MTLS": {
 			init: func(p *mockProperty) {
 				p.mockPropertyData = basicData()
-				p.hostnames.Items[0].MTLS = &papi.MTLS{
-					CASetID:         "524125",
-					CheckClientOCSP: true,
-					SendCASetClient: true,
+				p.hostnames.Items[0].MTLS = &papi.MTLSResp{
+					MTLS: papi.MTLS{
+						CASetID:         "524125",
+						CheckClientOCSP: true,
+						SendCASetClient: true,
+					},
 				}
 				// create
 				mockResourcePropertyCreateWithVersionHostnames(p)
@@ -408,7 +418,7 @@ func TestPropertyCCM(t *testing.T) {
 			init: func(p *mockProperty) {
 				p.mockPropertyData = basicData()
 				p.hostnames = papi.HostnameResponseItems{
-					Items: []papi.Hostname{
+					Items: []papi.HostnameResponseItem{
 						{
 							CnameType:            "EDGE_HOSTNAME",
 							EdgeHostnameID:       "ehn_222",
@@ -433,16 +443,18 @@ func TestPropertyCCM(t *testing.T) {
 				p.newVersionID = 2
 				p.mockCreatePropertyVersion()
 				p.hostnames = papi.HostnameResponseItems{
-					Items: []papi.Hostname{
+					Items: []papi.HostnameResponseItem{
 						{
 							CnameType:            "EDGE_HOSTNAME",
 							EdgeHostnameID:       "ehn_111",
 							CnameFrom:            "example.com",
 							CnameTo:              "example.com.edgekey.net",
 							CertProvisioningType: "CCM",
-							CCMCertificates: &papi.CCMCertificates{
-								RSACertID:   "654321",
+							CCMCertificates: &papi.CCMCertificatesResp{
 								RSACertLink: "/ccm/v1/certificates/654321",
+								CCMCertificates: papi.CCMCertificates{
+									RSACertID: "654321",
+								},
 							},
 							CCMCertStatus: &papi.CCMCertStatus{
 								ECDSAProductionStatus: "NOT_FOUND",
@@ -505,10 +517,12 @@ func TestPropertyCCM(t *testing.T) {
 		"Updating MTLS and TLS configuration on CCM-bound hostname": {
 			init: func(p *mockProperty) {
 				p.mockPropertyData = basicData()
-				p.hostnames.Items[0].MTLS = &papi.MTLS{
-					CASetID:         "524125",
-					CheckClientOCSP: true,
-					SendCASetClient: true,
+				p.hostnames.Items[0].MTLS = &papi.MTLSResp{
+					MTLS: papi.MTLS{
+						CASetID:         "524125",
+						CheckClientOCSP: true,
+						SendCASetClient: true,
+					},
 				}
 				p.hostnames.Items[0].TLSConfiguration = &papi.TLSConfiguration{
 					CipherProfile:            "ak-akamai-2020q1",
@@ -526,8 +540,10 @@ func TestPropertyCCM(t *testing.T) {
 				// update
 				p.mockGetPropertyVersion()
 				p.hostnames = basicHostnames()
-				p.hostnames.Items[0].MTLS = &papi.MTLS{
-					CASetID: "524126",
+				p.hostnames.Items[0].MTLS = &papi.MTLSResp{
+					MTLS: papi.MTLS{
+						CASetID: "524126",
+					},
 				}
 				p.hostnames.Items[0].TLSConfiguration = &papi.TLSConfiguration{
 					CipherProfile:         "ak-akamai-2020q2",
@@ -601,10 +617,12 @@ func TestPropertyCCM(t *testing.T) {
 		"Importing basic property with CCM, MTLS and TLS configuration": {
 			init: func(p *mockProperty) {
 				p.mockPropertyData = basicData()
-				p.hostnames.Items[0].MTLS = &papi.MTLS{
-					CASetID:         "524125",
-					CheckClientOCSP: true,
-					SendCASetClient: true,
+				p.hostnames.Items[0].MTLS = &papi.MTLSResp{
+					MTLS: papi.MTLS{
+						CASetID:         "524125",
+						CheckClientOCSP: true,
+						SendCASetClient: true,
+					},
 				}
 				p.hostnames.Items[0].TLSConfiguration = &papi.TLSConfiguration{
 					CipherProfile:            "ak-akamai-2020q1",

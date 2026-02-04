@@ -407,7 +407,7 @@ func waitForCCMHostnames(ctx context.Context, opts waitForCCMHostnamesOpts) erro
 	return nil
 }
 
-func isCCMDeployedOrDeploying(h papi.Hostname) bool {
+func isCCMDeployedOrDeploying(h papi.HostnameResponseItem) bool {
 	if h.CCMCertStatus != nil {
 		ss := []string{"DEPLOYED", "DEPLOYING"}
 		return slices.Contains(ss, h.CCMCertStatus.ECDSAStagingStatus) ||

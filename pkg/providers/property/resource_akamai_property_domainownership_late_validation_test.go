@@ -54,7 +54,7 @@ func TestDomainOwnershipLateValidationResource(t *testing.T) {
 		"create with all domains already validated": {
 			init: func(m *mockProperty, _ *domainownership.Mock) {
 				m.hostnames = papi.HostnameResponseItems{
-					Items: []papi.Hostname{
+					Items: []papi.HostnameResponseItem{
 						{
 							CnameType:            "EDGE_HOSTNAME",
 							CnameFrom:            "from1.test.domain",
@@ -110,7 +110,7 @@ func TestDomainOwnershipLateValidationResource(t *testing.T) {
 		"create with some domains requires validation, succeeds immediately": {
 			init: func(m *mockProperty, domMock *domainownership.Mock) {
 				m.hostnames = papi.HostnameResponseItems{
-					Items: []papi.Hostname{
+					Items: []papi.HostnameResponseItem{
 						{
 							CnameType:            "EDGE_HOSTNAME",
 							CnameFrom:            "from1.test.domain",
@@ -198,7 +198,7 @@ func TestDomainOwnershipLateValidationResource(t *testing.T) {
 				// create
 				domMock.On("ValidateDomains", testutils.MockContext, req).Return(&resp, nil).Once()
 				m.hostnames = papi.HostnameResponseItems{
-					Items: []papi.Hostname{
+					Items: []papi.HostnameResponseItem{
 						{
 							CnameType:            "EDGE_HOSTNAME",
 							CnameFrom:            "from1.test.domain",
@@ -266,7 +266,7 @@ func TestDomainOwnershipLateValidationResource(t *testing.T) {
 		"create with one domain requiring polling": {
 			init: func(m *mockProperty, domMock *domainownership.Mock) {
 				m.hostnames = papi.HostnameResponseItems{
-					Items: []papi.Hostname{
+					Items: []papi.HostnameResponseItem{
 						{
 							CnameFrom:                   "from1.test.domain",
 							DomainOwnershipVerification: &papi.DomainOwnershipVerification{Status: "PENDING"},
@@ -299,7 +299,7 @@ func TestDomainOwnershipLateValidationResource(t *testing.T) {
 
 				// create
 				m.hostnames = papi.HostnameResponseItems{
-					Items: []papi.Hostname{
+					Items: []papi.HostnameResponseItem{
 						{
 							CnameFrom:                   "from1.test.domain",
 							DomainOwnershipVerification: &papi.DomainOwnershipVerification{Status: "PENDING"},
@@ -310,7 +310,7 @@ func TestDomainOwnershipLateValidationResource(t *testing.T) {
 
 				// create
 				m.hostnames = papi.HostnameResponseItems{
-					Items: []papi.Hostname{
+					Items: []papi.HostnameResponseItem{
 						{
 							CnameFrom:                   "from1.test.domain",
 							DomainOwnershipVerification: &papi.DomainOwnershipVerification{Status: "VALIDATED"},
@@ -334,7 +334,7 @@ func TestDomainOwnershipLateValidationResource(t *testing.T) {
 		"create with polling timeout": {
 			init: func(m *mockProperty, domMock *domainownership.Mock) {
 				m.hostnames = papi.HostnameResponseItems{
-					Items: []papi.Hostname{
+					Items: []papi.HostnameResponseItem{
 						{
 							CnameFrom:                   "from1.test.domain",
 							DomainOwnershipVerification: &papi.DomainOwnershipVerification{Status: "PENDING"},
@@ -367,7 +367,7 @@ func TestDomainOwnershipLateValidationResource(t *testing.T) {
 
 				// create
 				m.hostnames = papi.HostnameResponseItems{
-					Items: []papi.Hostname{
+					Items: []papi.HostnameResponseItem{
 						{
 							CnameFrom:                   "from1.test.domain",
 							DomainOwnershipVerification: &papi.DomainOwnershipVerification{Status: "PENDING"},
@@ -386,7 +386,7 @@ func TestDomainOwnershipLateValidationResource(t *testing.T) {
 		"create fails because of the API error": {
 			init: func(m *mockProperty, domMock *domainownership.Mock) {
 				m.hostnames = papi.HostnameResponseItems{
-					Items: []papi.Hostname{
+					Items: []papi.HostnameResponseItem{
 						{
 							CnameFrom:                   "from1.test.domain",
 							DomainOwnershipVerification: &papi.DomainOwnershipVerification{Status: "PENDING"},
@@ -420,7 +420,7 @@ func TestDomainOwnershipLateValidationResource(t *testing.T) {
 
 				m.latestVersion = 1
 				m.hostnames = papi.HostnameResponseItems{
-					Items: []papi.Hostname{
+					Items: []papi.HostnameResponseItem{
 						{
 							CnameFrom:                   "from1.test.domain",
 							DomainOwnershipVerification: &papi.DomainOwnershipVerification{Status: "VALIDATED"},
@@ -433,7 +433,7 @@ func TestDomainOwnershipLateValidationResource(t *testing.T) {
 				// update
 				m.latestVersion = 2
 				m.hostnames = papi.HostnameResponseItems{
-					Items: []papi.Hostname{
+					Items: []papi.HostnameResponseItem{
 						{
 							CnameFrom:                   "from1.test.domain",
 							DomainOwnershipVerification: &papi.DomainOwnershipVerification{Status: "PENDING"},
@@ -463,7 +463,7 @@ func TestDomainOwnershipLateValidationResource(t *testing.T) {
 				domMock.On("ValidateDomains", testutils.MockContext, validateReq).Return(&validateResp, nil).Once()
 
 				m.hostnames = papi.HostnameResponseItems{
-					Items: []papi.Hostname{
+					Items: []papi.HostnameResponseItem{
 						{
 							CnameFrom:                   "from1.test.domain",
 							DomainOwnershipVerification: &papi.DomainOwnershipVerification{Status: "PENDING"},
@@ -473,7 +473,7 @@ func TestDomainOwnershipLateValidationResource(t *testing.T) {
 				m.mockGetPropertyVersionHostnames()
 
 				m.hostnames = papi.HostnameResponseItems{
-					Items: []papi.Hostname{
+					Items: []papi.HostnameResponseItem{
 						{
 							CnameFrom:                   "from1.test.domain",
 							DomainOwnershipVerification: &papi.DomainOwnershipVerification{Status: "VALIDATED"},
@@ -509,7 +509,7 @@ func TestDomainOwnershipLateValidationResource(t *testing.T) {
 			init: func(m *mockProperty, _ *domainownership.Mock) {
 				m.latestVersion = 1
 				m.hostnames = papi.HostnameResponseItems{
-					Items: []papi.Hostname{
+					Items: []papi.HostnameResponseItem{
 						{
 							CnameFrom:                   "from1.test.domain",
 							DomainOwnershipVerification: &papi.DomainOwnershipVerification{Status: "VALIDATED"},
@@ -548,7 +548,7 @@ func TestDomainOwnershipLateValidationResource(t *testing.T) {
 		"update property version having different hostname ": {
 			init: func(m *mockProperty, domMock *domainownership.Mock) {
 				m.hostnames = papi.HostnameResponseItems{
-					Items: []papi.Hostname{
+					Items: []papi.HostnameResponseItem{
 						{
 							CnameFrom:                   "from1.test.domain",
 							DomainOwnershipVerification: &papi.DomainOwnershipVerification{Status: "PENDING"},
@@ -580,7 +580,7 @@ func TestDomainOwnershipLateValidationResource(t *testing.T) {
 				domMock.On("ValidateDomains", testutils.MockContext, validateReq).Return(&validateResp, nil).Once()
 
 				m.hostnames = papi.HostnameResponseItems{
-					Items: []papi.Hostname{
+					Items: []papi.HostnameResponseItem{
 						{
 							CnameFrom:                   "from1.test.domain",
 							DomainOwnershipVerification: &papi.DomainOwnershipVerification{Status: "VALIDATED"},
@@ -595,7 +595,7 @@ func TestDomainOwnershipLateValidationResource(t *testing.T) {
 				// update
 				m.latestVersion = 2
 				m.hostnames = papi.HostnameResponseItems{
-					Items: []papi.Hostname{
+					Items: []papi.HostnameResponseItem{
 						{
 							CnameFrom:                   "from2.test.domain",
 							DomainOwnershipVerification: &papi.DomainOwnershipVerification{Status: "PENDING"},
@@ -626,7 +626,7 @@ func TestDomainOwnershipLateValidationResource(t *testing.T) {
 				domMock.On("ValidateDomains", testutils.MockContext, validateReq).Return(&validateResp, nil).Once()
 
 				m.hostnames = papi.HostnameResponseItems{
-					Items: []papi.Hostname{
+					Items: []papi.HostnameResponseItem{
 						{
 							CnameFrom:                   "from1.test.domain",
 							DomainOwnershipVerification: &papi.DomainOwnershipVerification{Status: "VALIDATED"},
@@ -661,7 +661,7 @@ func TestDomainOwnershipLateValidationResource(t *testing.T) {
 			init: func(m *mockProperty, domMock *domainownership.Mock) {
 				// 1. INITIAL STATE: One domain is PENDING
 				m.hostnames = papi.HostnameResponseItems{
-					Items: []papi.Hostname{
+					Items: []papi.HostnameResponseItem{
 						{
 							CnameFrom:                   "from1.test.domain",
 							DomainOwnershipVerification: &papi.DomainOwnershipVerification{Status: "PENDING"},
@@ -692,7 +692,7 @@ func TestDomainOwnershipLateValidationResource(t *testing.T) {
 				domMock.On("ValidateDomains", testutils.MockContext, validateReq).Return(&validateResp, nil).Once()
 
 				m.hostnames = papi.HostnameResponseItems{
-					Items: []papi.Hostname{
+					Items: []papi.HostnameResponseItem{
 						{
 							CnameFrom:                   "from1.test.domain",
 							DomainOwnershipVerification: &papi.DomainOwnershipVerification{Status: "VALIDATED"},
@@ -707,7 +707,7 @@ func TestDomainOwnershipLateValidationResource(t *testing.T) {
 				// update
 				m.groupID = "grp_2"
 				m.hostnames = papi.HostnameResponseItems{
-					Items: []papi.Hostname{
+					Items: []papi.HostnameResponseItem{
 						{
 							CnameFrom:                   "from2.test.domain",
 							DomainOwnershipVerification: &papi.DomainOwnershipVerification{Status: "PENDING"},
@@ -737,7 +737,7 @@ func TestDomainOwnershipLateValidationResource(t *testing.T) {
 				domMock.On("ValidateDomains", testutils.MockContext, validateReq).Return(&validateResp, nil).Once()
 
 				m.hostnames = papi.HostnameResponseItems{
-					Items: []papi.Hostname{
+					Items: []papi.HostnameResponseItem{
 						{
 							CnameFrom:                   "from2.test.domain",
 							DomainOwnershipVerification: &papi.DomainOwnershipVerification{Status: "VALIDATED"},
@@ -887,7 +887,7 @@ resource "akamai_property_domainownership_late_validation" "test" {
 		"import successful": {
 			init: func(m *mockProperty, _ *domainownership.Mock) {
 				m.hostnames = papi.HostnameResponseItems{
-					Items: []papi.Hostname{
+					Items: []papi.HostnameResponseItem{
 						{
 							CnameFrom:                   "from1.test.domain",
 							DomainOwnershipVerification: &papi.DomainOwnershipVerification{Status: "VALIDATED"},
@@ -922,7 +922,7 @@ resource "akamai_property_domainownership_late_validation" "test" {
 					PropertyID:      "prp_123",
 					PropertyVersion: 1,
 					Hostnames: papi.HostnameResponseItems{
-						Items: []papi.Hostname{
+						Items: []papi.HostnameResponseItem{
 							{
 								CnameFrom:                   "from1.test.domain",
 								DomainOwnershipVerification: &papi.DomainOwnershipVerification{Status: "VALIDATED"},
