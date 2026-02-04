@@ -151,6 +151,59 @@ func getMinCreateAddOneRemoveOne() validationTestData {
 	}
 }
 
+func getWithMANUALAndSYSTEMValidationMethodsAndCreateValidated() validationTestData {
+	return validationTestData{
+		create: map[domainKey]domainDetails{
+			newDomainKey("example1.com", "HOST"):   newDomainDetails("VALIDATED", "FQDN", "SYSTEM"),
+			newDomainKey("example2.com", "DOMAIN"): newDomainDetails("VALIDATED", "FQDN", "MANUAL"),
+		},
+		postCreateValidation: map[domainKey]domainDetails{
+			newDomainKey("example1.com", "HOST"):   newDomainDetails("VALIDATED", "FQDN", "SYSTEM"),
+			newDomainKey("example2.com", "DOMAIN"): newDomainDetails("VALIDATED", "FQDN", "MANUAL"),
+		},
+		update: map[domainKey]domainDetails{
+			newDomainKey("example1.com", "HOST"):   newDomainDetails("VALIDATED", "FQDN", "SYSTEM"),
+			newDomainKey("example2.com", "DOMAIN"): newDomainDetails("VALIDATED", "FQDN", "MANUAL"),
+			newDomainKey("example3.com", "HOST"):   newDomainDetails("VALIDATED", "FQDN", "SYSTEM"),
+			newDomainKey("example4.com", "DOMAIN"): newDomainDetails("VALIDATED", "FQDN", "MANUAL"),
+		},
+		postUpdateValidation: map[domainKey]domainDetails{
+			newDomainKey("example1.com", "HOST"):   newDomainDetails("VALIDATED", "FQDN", "SYSTEM"),
+			newDomainKey("example2.com", "DOMAIN"): newDomainDetails("VALIDATED", "FQDN", "MANUAL"),
+			newDomainKey("example3.com", "HOST"):   newDomainDetails("VALIDATED", "FQDN", "SYSTEM"),
+			newDomainKey("example4.com", "DOMAIN"): newDomainDetails("VALIDATED", "FQDN", "MANUAL"),
+		},
+	}
+}
+
+func getWithMANUALAndSYSTEMValidationMethodsAndCreateNotValidated() validationTestData {
+	return validationTestData{
+		create: map[domainKey]domainDetails{
+			newDomainKey("example1.com", "HOST"):   newDomainDetails("PENDING", "FQDN", "SYSTEM"),
+			newDomainKey("example2.com", "DOMAIN"): newDomainDetails("VALIDATION_IN_PROGRESS", "FQDN", "MANUAL"),
+		},
+	}
+}
+
+func getWithMANUALAndSYSTEMValidationMethodsAndUpdateNotValidated() validationTestData {
+	return validationTestData{
+		create: map[domainKey]domainDetails{
+			newDomainKey("example1.com", "HOST"):   newDomainDetails("VALIDATED", "FQDN", "SYSTEM"),
+			newDomainKey("example2.com", "DOMAIN"): newDomainDetails("VALIDATED", "FQDN", "MANUAL"),
+		},
+		postCreateValidation: map[domainKey]domainDetails{
+			newDomainKey("example1.com", "HOST"):   newDomainDetails("VALIDATED", "FQDN", "SYSTEM"),
+			newDomainKey("example2.com", "DOMAIN"): newDomainDetails("VALIDATED", "FQDN", "MANUAL"),
+		},
+		update: map[domainKey]domainDetails{
+			newDomainKey("example1.com", "HOST"):   newDomainDetails("VALIDATED", "FQDN", "SYSTEM"),
+			newDomainKey("example2.com", "DOMAIN"): newDomainDetails("VALIDATED", "FQDN", "MANUAL"),
+			newDomainKey("example3.com", "HOST"):   newDomainDetails("PENDING", "FQDN", "SYSTEM"),
+			newDomainKey("example4.com", "DOMAIN"): newDomainDetails("REQUEST_ACCEPTED", "FQDN", "MANUAL"),
+		},
+	}
+}
+
 func TestDomainOwnershipValidationResource(t *testing.T) {
 	t.Parallel()
 
@@ -482,6 +535,33 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 				},
 			},
 		},
+		"create with 2 domains - MANUAL and SYSTEM validation methods when validated": {
+			init: func(m *domainownership.Mock, mockData validationTestData) {
+				// Create
+				mockSearchDomains(m, mockData.create)
+				mockValidateDomains(m, mockData.create, mockData.postCreateValidation)
+				// Read x2
+				mockSearchDomains(m, mockData.postCreateValidation)
+				// Delete
+				mockSearchDomains(m, mockData.postCreateValidation)
+				mockInvalidateDomains(m, mockData.postCreateValidation)
+			},
+			mockData: getWithMANUALAndSYSTEMValidationMethodsAndCreateValidated(),
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDOMValidation/create_with_manual_and_system_validation_methods.tf"),
+					Check: test.NewStateChecker("akamai_property_domainownership_validation.test").
+						CheckEqual("domains.#", "2").
+						CheckEqual("domains.0.domain_name", "example1.com").
+						CheckEqual("domains.0.validation_scope", "HOST").
+						CheckEqual("domains.0.validation_method", "SYSTEM").
+						CheckEqual("domains.1.domain_name", "example2.com").
+						CheckEqual("domains.1.validation_scope", "DOMAIN").
+						CheckEqual("domains.1.validation_method", "MANUAL").
+						Build(),
+				},
+			},
+		},
 		"create with 3 domains - update by adding one domain": {
 			init: func(m *domainownership.Mock, mockData validationTestData) {
 				// Create
@@ -698,6 +778,56 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 						CheckEqual("domains.2.domain_name", "test4.example.com").
 						CheckEqual("domains.2.validation_scope", "WILDCARD").
 						CheckEqual("domains.2.validation_method", "HTTP").
+						Build(),
+				},
+			},
+		},
+		"create with 2 domains - update with MANUAL and SYSTEM validation methods when validated": {
+			init: func(m *domainownership.Mock, mockData validationTestData) {
+				// Create
+				mockSearchDomains(m, mockData.create)
+				mockValidateDomains(m, mockData.create, mockData.postCreateValidation)
+				// Read x2
+				mockSearchDomains(m, mockData.postCreateValidation).Twice()
+				// Update
+				mockSearchDomains(m, mockData.update)
+				mockValidateDomains(m, mockData.update, mockData.postUpdateValidation)
+				// Read after update
+				mockSearchDomains(m, mockData.postUpdateValidation)
+				// Delete
+				mockSearchDomains(m, mockData.postUpdateValidation)
+				mockInvalidateDomains(m, mockData.postUpdateValidation)
+			},
+			mockData: getWithMANUALAndSYSTEMValidationMethodsAndCreateValidated(),
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDOMValidation/create_with_manual_and_system_validation_methods.tf"),
+					Check: test.NewStateChecker("akamai_property_domainownership_validation.test").
+						CheckEqual("domains.#", "2").
+						CheckEqual("domains.0.domain_name", "example1.com").
+						CheckEqual("domains.0.validation_scope", "HOST").
+						CheckEqual("domains.0.validation_method", "SYSTEM").
+						CheckEqual("domains.1.domain_name", "example2.com").
+						CheckEqual("domains.1.validation_scope", "DOMAIN").
+						CheckEqual("domains.1.validation_method", "MANUAL").
+						Build(),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDOMValidation/update_with_manual_and_system_validation_methods.tf"),
+					Check: test.NewStateChecker("akamai_property_domainownership_validation.test").
+						CheckEqual("domains.#", "4").
+						CheckEqual("domains.0.domain_name", "example1.com").
+						CheckEqual("domains.0.validation_scope", "HOST").
+						CheckEqual("domains.0.validation_method", "SYSTEM").
+						CheckEqual("domains.1.domain_name", "example2.com").
+						CheckEqual("domains.1.validation_scope", "DOMAIN").
+						CheckEqual("domains.1.validation_method", "MANUAL").
+						CheckEqual("domains.2.domain_name", "example3.com").
+						CheckEqual("domains.2.validation_scope", "HOST").
+						CheckEqual("domains.2.validation_method", "SYSTEM").
+						CheckEqual("domains.3.domain_name", "example4.com").
+						CheckEqual("domains.3.validation_scope", "DOMAIN").
+						CheckEqual("domains.3.validation_method", "MANUAL").
 						Build(),
 				},
 			},
@@ -1359,6 +1489,19 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 				},
 			},
 		},
+		"expect error - create with 2 domains - MANUAL and SYSTEM validation methods when MANUAL not validated": {
+			init: func(m *domainownership.Mock, mockData validationTestData) {
+				// Create
+				mockSearchDomains(m, mockData.create)
+			},
+			mockData: getWithMANUALAndSYSTEMValidationMethodsAndCreateNotValidated(),
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResDOMValidation/create_with_manual_and_system_validation_methods.tf"),
+					ExpectError: regexp.MustCompile("invalid validation method"),
+				},
+			},
+		},
 		"expect error - create with 3 domains - update by adding one domain - timeout exceeded": {
 			defaultPollTimeout: 1 * time.Microsecond,
 			searchInterval:     5 * time.Second,
@@ -1587,6 +1730,39 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 				},
 			},
 		},
+		"expect error - update - MANUAL and SYSTEM validation methods when not validated": {
+			init: func(m *domainownership.Mock, mockData validationTestData) {
+				// Create
+				mockSearchDomains(m, mockData.create)
+				mockValidateDomains(m, mockData.create, mockData.postCreateValidation)
+				// Read x2
+				mockSearchDomains(m, mockData.postCreateValidation).Twice()
+				// Update
+				mockSearchDomains(m, mockData.update)
+				// Delete
+				mockSearchDomains(m, mockData.postCreateValidation)
+				mockInvalidateDomains(m, mockData.postCreateValidation)
+			},
+			mockData: getWithMANUALAndSYSTEMValidationMethodsAndUpdateNotValidated(),
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDOMValidation/create_with_manual_and_system_validation_methods.tf"),
+					Check: test.NewStateChecker("akamai_property_domainownership_validation.test").
+						CheckEqual("domains.#", "2").
+						CheckEqual("domains.0.domain_name", "example1.com").
+						CheckEqual("domains.0.validation_scope", "HOST").
+						CheckEqual("domains.0.validation_method", "SYSTEM").
+						CheckEqual("domains.1.domain_name", "example2.com").
+						CheckEqual("domains.1.validation_scope", "DOMAIN").
+						CheckEqual("domains.1.validation_method", "MANUAL").
+						Build(),
+				},
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResDOMValidation/update_with_manual_and_system_validation_methods.tf"),
+					ExpectError: regexp.MustCompile("invalid validation method"),
+				},
+			},
+		},
 		"validation error - no domains": {
 			init:     func(_ *domainownership.Mock, _ validationTestData) {},
 			mockData: getMinCreate(),
@@ -1629,7 +1805,7 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResDOMValidation/wrong_validation_method.tf"),
-					ExpectError: regexp.MustCompile(`.validation_method(\n|.)value must be one of: \["DNS_CNAME" "DNS_TXT" "HTTP"\], got: "WRONG"`),
+					ExpectError: regexp.MustCompile(`.validation_method(\n|.)value must be one of: \["DNS_CNAME" "DNS_TXT" "HTTP" "SYSTEM" "MANUAL"\], got:(\n|.)"WRONG"`),
 				},
 			},
 		},

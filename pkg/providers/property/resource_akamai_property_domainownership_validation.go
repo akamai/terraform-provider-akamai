@@ -136,12 +136,16 @@ func validateDomainsSchema() schema.SetNestedAttribute {
 					MarkdownDescription: "The method used to validate the domain. Possible values are: \n" +
 						"* `DNS_CNAME` - For this method, Akamai generates a `cname_record` that you copy as the `target` to a `CNAME` record of your DNS configuration. The record's name needs to be in the `_acme-challenge.domain-name` format.\n" +
 						"* `DNS_TXT` - For this method, Akamai generates a `txt_record` with a token `value` that you copy as the `target` to a `TXT` record of your DNS configuration. The record's name needs to be in the `_akamai-{host|wildcard|domain}-challenge.domainName` format based on the validation scope.\n" +
-						"* `HTTP` - Applies only to domains with the `HOST` validation scope. For this method, you create the file containing a token and place it on your HTTP server in the location specified by the `validation_challenge.http_file.path` or use a redirect to the `validation_challenge.http_redirect.to` with the token.",
+						"* `HTTP` - Applies only to domains with the `HOST` validation scope. For this method, you create the file containing a token and place it on your HTTP server in the location specified by the `validation_challenge.http_file.path` or use a redirect to the `validation_challenge.http_redirect.to` with the token.\n" +
+						"* `SYSTEM` - no longer supported for new validations.\n" +
+						"* `MANUAL` - no longer supported for new validations.",
 					Validators: []validator.String{
 						stringvalidator.OneOf(
 							string(domainownership.ValidationMethodDNSCNAME),
 							string(domainownership.ValidationMethodDNSTXT),
-							string(domainownership.ValidationMethodHTTP)),
+							string(domainownership.ValidationMethodHTTP),
+							string(domainownership.ValidationMethodSYSTEM),
+							string(domainownership.ValidationMethodMANUAL)),
 					},
 				},
 			},
@@ -185,6 +189,11 @@ func (d *DomainOwnershipValidationResource) Create(ctx context.Context, req reso
 
 	validationHandler, err = validationHandler.calculateDomainsToValidate()
 	if err != nil {
+		resp.Diagnostics.AddError("Error Validating Domains", err.Error())
+		return
+	}
+
+	if err := validationHandler.ensureValidationMethodsSupported(); err != nil {
 		resp.Diagnostics.AddError("Error Validating Domains", err.Error())
 		return
 	}
@@ -394,6 +403,11 @@ func (d *DomainOwnershipValidationResource) Update(ctx context.Context, req reso
 
 	validationHandler, err = validationHandler.calculateDomainsToValidate()
 	if err != nil {
+		resp.Diagnostics.AddError("Error Validating Domains", err.Error())
+		return
+	}
+
+	if err := validationHandler.ensureValidationMethodsSupported(); err != nil {
 		resp.Diagnostics.AddError("Error Validating Domains", err.Error())
 		return
 	}

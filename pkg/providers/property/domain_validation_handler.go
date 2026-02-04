@@ -182,3 +182,20 @@ func (v *validationHandler) buildInvalidateRequest() *domainownership.Invalidate
 
 	return &domainownership.InvalidateDomainsRequest{Domains: domainsToInvalidateSlice}
 }
+
+func (v *validationHandler) ensureValidationMethodsSupported() error {
+	var invalidDomains []string
+	for domainKey, domainDetails := range v.domainsToValidate {
+		validationMethod := domainDetails.validationMethod
+		if (validationMethod == string(domainownership.ValidationMethodSYSTEM) ||
+			validationMethod == string(domainownership.ValidationMethodMANUAL)) && domainDetails.validationStatus != "VALIDATED" {
+			invalidDomains = append(invalidDomains, domainKey.domainName)
+		}
+	}
+
+	if len(invalidDomains) > 0 {
+		return fmt.Errorf("invalid validation method: the validation methods 'SYSTEM' and 'MANUAL' are not supported for validating new domains. Domains with invalid validation methods: %v", invalidDomains)
+	}
+
+	return nil
+}
