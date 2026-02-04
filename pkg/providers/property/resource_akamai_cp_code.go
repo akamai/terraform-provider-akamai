@@ -125,24 +125,59 @@ func resourceCPCodeCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 	groupID = str.AddPrefix(groupID, "grp_")
 
+	client := meta.Client().GetPAPI()
+
+	products, err := client.GetProducts(ctx, papi.GetProductsRequest{
+		ContractID: contractID,
+	})
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	var productIDExists bool
+	for _, v := range products.Products.Items {
+		if productID == str.AddPrefix(v.ProductID, "prd_") {
+			productIDExists = true
+			break
+		}
+	}
+
+	if !productIDExists {
+		return diag.Errorf("`product_id` `%s` does not exist under contract `%s`, you need to provide a valid `product_id`", productID, contractID)
+	}
+
 	var cpCodeID string
 	// Because CPCodes can't be deleted, we re-use an existing CPCode if it's there
-	cpCode, err := findCPCode(ctx, meta.Client().GetPAPI(), name, contractID, groupID)
+	cpCode, err := findCPCode(ctx, client, name, contractID, groupID)
 	if err != nil && !errors.Is(err, ErrCPCodeNotFound) {
 		return diag.Errorf("%s: %s", ErrLookingUpCPCode, err)
 	}
 
+	var diags diag.Diagnostics
 	if errors.Is(err, ErrCPCodeNotFound) {
-		cpCodeID, err = createCPCode(ctx, meta.Client().GetPAPI(), name, productID, contractID, groupID)
+		cpCodeID, err = createCPCode(ctx, client, name, productID, contractID, groupID)
 		if err != nil {
 			return diag.FromErr(err)
 		}
 	} else {
+		// we use the first value returned. Most cpcodes have but a single product and we need to pick one for comparison.
+		if len(cpCode.ProductIDs) == 0 {
+			return diag.Errorf(errCPCodeNoProductID, name)
+		}
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Warning,
+			Summary:  "CP Code already exists",
+			Detail:   fmt.Sprintf("CP Code %q has associated product IDs; skipping creation of a new CP Code.", name),
+		})
 		cpCodeID = cpCode.ID
 	}
 
 	d.SetId(strings.TrimPrefix(cpCodeID, cpCodePrefix))
-	return resourceCPCodeRead(ctx, d, m)
+
+	readDiags := resourceCPCodeRead(ctx, d, m)
+	diags = append(diags, readDiags...)
+
+	return diags
 }
 
 func resourceCPCodeRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -183,10 +218,12 @@ func resourceCPCodeRead(ctx context.Context, d *schema.ResourceData, m interface
 	if err := d.Set("name", cpCode.Name); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
+
 	// we use the first value returned.  Most cpcodes have but a single product and we need to pick one for comparison.
 	if len(cpCode.ProductIDs) == 0 {
-		return diag.Errorf("Couldn't find product id on the CP Code")
+		return diag.Errorf(errCPCodeNoProductID, cpCode.Name)
 	}
+
 	if err := d.Set("product_id", cpCode.ProductIDs[0]); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
@@ -307,7 +344,7 @@ func resourceCPCodeImport(ctx context.Context, d *schema.ResourceData, m interfa
 		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 	if len(cpCode.ProductIDs) == 0 {
-		return nil, fmt.Errorf("could not find product id on the CP Code")
+		return nil, fmt.Errorf(errCPCodeNoProductID, cpCode.Name)
 	}
 	if err := d.Set("product_id", cpCode.ProductIDs[0]); err != nil {
 		return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
@@ -387,3 +424,5 @@ func waitForCPCodeNameUpdate(ctx context.Context, opts waitForCPCodeNameUpdateOp
 
 	return nil
 }
+
+var errCPCodeNoProductID = "the CP code named `%s` already exists, but does not have a PAPI-supported product ID, so it cannot be managed by Terraform"

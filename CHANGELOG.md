@@ -124,6 +124,12 @@
 
 
 
+* PAPI
+  * Added verification that the product exists in the contract before creating a CP code in the `akamai_cp_code` resource ([I#706](https://github.com/akamai/terraform-provider-akamai/issues/706)).
+
+
+
+
 
 
 
