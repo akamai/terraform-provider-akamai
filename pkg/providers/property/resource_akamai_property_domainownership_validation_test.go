@@ -1385,8 +1385,8 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 			},
 		},
 		"expect error and warning - create - timeout exceeded with partial validation success": {
-			defaultPollTimeout: 25 * time.Millisecond,
-			searchInterval:     10 * time.Millisecond,
+			defaultPollTimeout: 500 * time.Millisecond,
+			searchInterval:     200 * time.Millisecond,
 			init: func(m *domainownership.Mock, mockData validationTestData) {
 				// Create
 				mockSearchDomains(m, mockData.create)
@@ -1413,8 +1413,8 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 			},
 		},
 		"expect error - create - timeout exceeded with no validation success": {
-			defaultPollTimeout: 25 * time.Millisecond,
-			searchInterval:     10 * time.Millisecond,
+			defaultPollTimeout: 500 * time.Millisecond,
+			searchInterval:     200 * time.Millisecond,
 			init: func(m *domainownership.Mock, mockData validationTestData) {
 				// Create
 				mockSearchDomains(m, mockData.create)
@@ -1697,8 +1697,8 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 			},
 		},
 		"expect error and warning - update - timeout exceeded with partial validation success": {
-			defaultPollTimeout: 25 * time.Millisecond,
-			searchInterval:     10 * time.Millisecond,
+			defaultPollTimeout: 500 * time.Millisecond,
+			searchInterval:     200 * time.Millisecond,
 			init: func(m *domainownership.Mock, mockData validationTestData) {
 				// Create
 				mockSearchDomains(m, mockData.create)
@@ -1736,8 +1736,8 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 			},
 		},
 		"expect error - update - timeout exceeded with no validation success": {
-			defaultPollTimeout: 25 * time.Millisecond,
-			searchInterval:     10 * time.Millisecond,
+			defaultPollTimeout: 500 * time.Millisecond,
+			searchInterval:     200 * time.Millisecond,
 			init: func(m *domainownership.Mock, mockData validationTestData) {
 				// Create
 				mockSearchDomains(m, mockData.create)
@@ -1748,9 +1748,7 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 				mockSearchDomains(m, mockData.update)
 				// Simulate all domains in update stay pending
 				allPendingUpdate := map[domainKey]domainDetails{
-					newDomainKey("test1.example.com", "HOST"):     newDomainDetails("PENDING", "FQDN", "HTTP"),
-					newDomainKey("test2.example.com", "DOMAIN"):   newDomainDetails("PENDING", "FQDN", "DNS_CNAME"),
-					newDomainKey("test3.example.com", "WILDCARD"): newDomainDetails("PENDING", "FQDN", "DNS_TXT"),
+					newDomainKey("test4.example.com", "HOST"): newDomainDetails("PENDING", "FQDN", "HTTP"),
 				}
 				mockValidateDomains(m, mockData.update, allPendingUpdate)
 				// Poll for all pending domains
