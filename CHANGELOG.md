@@ -136,6 +136,7 @@
 * PAPI Domain Ownership Validation (Beta)
   * Fixed a bug where validation timeouts caused a misleading warning to appear even when no domains were validated in the akamai_property_domainownership_validation. Warnings are now limited to partial success cases and list the validated domains.
   * Relaxed validation for `akamai_property_domainownership_validation` resource to allow `SYSTEM` and `MANUAL` validation methods for already validated domains ([I#732](https://github.com/akamai/terraform-provider-akamai/issues/732)).
+  * Fixed a bug where it was allowed to use a different validation method for domains that were already validated with another validation method.
 
 
 

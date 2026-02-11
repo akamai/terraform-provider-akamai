@@ -288,7 +288,7 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 		"create with 3 domains - one domain already validated": {
 			init: func(m *domainownership.Mock, mockData validationTestData) {
 				// Simulate one domain already validated before creation.
-				mockData.create[newDomainKey("test2.example.com", "DOMAIN")] = newDomainDetails("VALIDATED", "FQDN", "DNS_TXT")
+				mockData.create[newDomainKey("test2.example.com", "DOMAIN")] = newDomainDetails("VALIDATED", "FQDN", "DNS_CNAME")
 				// Create
 				mockSearchDomains(m, mockData.create)
 				mockValidateDomains(m, mockData.create, mockData.postCreateValidation)
@@ -562,6 +562,30 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 				},
 			},
 		},
+		"create with 3 domains - validation method mismatch with API allowed when domain not validated": {
+			init: func(m *domainownership.Mock, mockData validationTestData) {
+				apiDomains := map[domainKey]domainDetails{
+					newDomainKey("test1.example.com", "HOST"):     newDomainDetails("REQUEST_ACCEPTED", "FQDN", "DNS_CNAME"),
+					newDomainKey("test2.example.com", "DOMAIN"):   newDomainDetails("REQUEST_ACCEPTED", "FQDN", "DNS_CNAME"),
+					newDomainKey("test3.example.com", "WILDCARD"): newDomainDetails("REQUEST_ACCEPTED", "FQDN", "DNS_TXT"),
+				}
+				// Create
+				mockSearchDomains(m, apiDomains)
+				mockValidateDomains(m, mockData.create, mockData.postCreateValidation)
+				// Read
+				mockSearchDomains(m, mockData.postCreateValidation)
+				// Delete
+				mockSearchDomains(m, mockData.postCreateValidation)
+				mockInvalidateDomains(m, mockData.postCreateValidation)
+			},
+			mockData: getMinCreate(),
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDOMValidation/create.tf"),
+					Check:  minCreateChecker.Build(),
+				},
+			},
+		},
 		"create with 3 domains - update by adding one domain": {
 			init: func(m *domainownership.Mock, mockData validationTestData) {
 				// Create
@@ -751,7 +775,7 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 				// Update
 				domainsToSearch := make(map[domainKey]domainDetails)
 				maps.Copy(domainsToSearch, mockData.postCreateValidation)
-				domainsToSearch[newDomainKey("test4.example.com", string(domainownership.ValidationScopeWildcard))] = domainDetails{}
+				domainsToSearch[newDomainKey("test4.example.com", string(domainownership.ValidationScopeWildcard))] = newDomainDetails("REQUEST_ACCEPTED", "FQDN", "HTTP")
 				mockSearchDomains(m, domainsToSearch)
 
 				toInvalidate := map[domainKey]domainDetails{
@@ -1499,6 +1523,23 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResDOMValidation/create_with_manual_and_system_validation_methods.tf"),
 					ExpectError: regexp.MustCompile("invalid validation method"),
+				},
+			},
+		},
+		"expect error - create - validation method mismatch with API": {
+			init: func(m *domainownership.Mock, _ validationTestData) {
+				// API has domain with DNS_CNAME, but plan wants HTTP
+				apiDomains := map[domainKey]domainDetails{
+					newDomainKey("test1.example.com", "HOST"):     newDomainDetails("VALIDATED", "FQDN", "DNS_CNAME"),
+					newDomainKey("test2.example.com", "DOMAIN"):   newDomainDetails("VALIDATED", "FQDN", "DNS_CNAME"),
+					newDomainKey("test3.example.com", "WILDCARD"): newDomainDetails("VALIDATED", "FQDN", "DNS_TXT"),
+				}
+				mockSearchDomains(m, apiDomains)
+			},
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResDOMValidation/create.tf"),
+					ExpectError: regexp.MustCompile("validation method cannot be changed for existing domains"),
 				},
 			},
 		},

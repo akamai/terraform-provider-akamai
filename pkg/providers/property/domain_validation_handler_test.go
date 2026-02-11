@@ -221,3 +221,177 @@ func TestValidationHandler_CalculateAndBuildInvalidateRequest(t *testing.T) {
 		})
 	}
 }
+
+func TestValidationHandler_EnsureCorrectValidationMethods(t *testing.T) {
+	t.Parallel()
+	tests := map[string]struct {
+		apiDomains        map[domainKey]domainDetails
+		planDomains       map[domainKey]domainDetails
+		domainsToValidate map[domainKey]domainDetails
+		expectedErr       string
+	}{
+		"validation method mismatch - DNS_CNAME vs DNS_TXT": {
+			apiDomains: map[domainKey]domainDetails{
+				{domainName: "test.com", validationScope: "HOST"}: {
+					validationMethod: "DNS_CNAME",
+					validationStatus: "VALIDATED",
+				},
+			},
+			planDomains: map[domainKey]domainDetails{
+				{domainName: "test.com", validationScope: "HOST"}: {
+					validationMethod: "DNS_TXT",
+				},
+			},
+			domainsToValidate: map[domainKey]domainDetails{},
+			expectedErr:       "validation method cannot be changed for existing domains",
+		},
+		"multiple domains with validation method mismatch": {
+			apiDomains: map[domainKey]domainDetails{
+				{domainName: "test.com", validationScope: "HOST"}: {
+					validationMethod: "DNS_CNAME",
+					validationStatus: "VALIDATED",
+				},
+				{domainName: "example.com", validationScope: "HOST"}: {
+					validationMethod: "HTTP",
+					validationStatus: "VALIDATED",
+				},
+			},
+			planDomains: map[domainKey]domainDetails{
+				{domainName: "test.com", validationScope: "HOST"}: {
+					validationMethod: "DNS_TXT",
+				},
+				{domainName: "example.com", validationScope: "HOST"}: {
+					validationMethod: "DNS_CNAME",
+				},
+			},
+			domainsToValidate: map[domainKey]domainDetails{},
+			expectedErr:       "validation method cannot be changed for existing domains",
+		},
+		"validation method matches": {
+			apiDomains: map[domainKey]domainDetails{
+				{domainName: "test.com", validationScope: "HOST"}: {
+					validationMethod: "DNS_CNAME",
+					validationStatus: "VALIDATED",
+				},
+			},
+			planDomains: map[domainKey]domainDetails{
+				{domainName: "test.com", validationScope: "HOST"}: {
+					validationMethod: "DNS_CNAME",
+				},
+			},
+			domainsToValidate: map[domainKey]domainDetails{},
+		},
+		"validation method mistmatch allowed for non-validated domain": {
+			apiDomains: map[domainKey]domainDetails{
+				{domainName: "test.com", validationScope: "HOST"}: {
+					validationMethod: "DNS_CNAME",
+					validationStatus: "PENDING",
+				},
+			},
+			planDomains: map[domainKey]domainDetails{
+				{domainName: "test.com", validationScope: "HOST"}: {
+					validationMethod: "DNS_TXT",
+				},
+			},
+		},
+		"SYSTEM validation method for non-validated domain": {
+			apiDomains: map[domainKey]domainDetails{
+				{domainName: "test.com", validationScope: "HOST"}: {
+					validationMethod: "SYSTEM",
+					validationStatus: "PENDING",
+				},
+			},
+			planDomains: map[domainKey]domainDetails{
+				{domainName: "test.com", validationScope: "HOST"}: {
+					validationMethod: "SYSTEM",
+				},
+			},
+			domainsToValidate: map[domainKey]domainDetails{
+				{domainName: "test.com", validationScope: "HOST"}: {
+					validationMethod: "SYSTEM",
+					validationStatus: "PENDING",
+				},
+			},
+			expectedErr: "validation methods 'SYSTEM' and 'MANUAL' are not supported for validating new domains",
+		},
+		"MANUAL validation method for non-validated domain": {
+			apiDomains: map[domainKey]domainDetails{
+				{domainName: "test.com", validationScope: "HOST"}: {
+					validationMethod: "MANUAL",
+					validationStatus: "PENDING",
+				},
+			},
+			planDomains: map[domainKey]domainDetails{
+				{domainName: "test.com", validationScope: "HOST"}: {
+					validationMethod: "MANUAL",
+				},
+			},
+			domainsToValidate: map[domainKey]domainDetails{
+				{domainName: "test.com", validationScope: "HOST"}: {
+					validationMethod: "MANUAL",
+					validationStatus: "PENDING",
+				},
+			},
+			expectedErr: "validation methods 'SYSTEM' and 'MANUAL' are not supported for validating new domains",
+		},
+		"SYSTEM validation method for already validated domain": {
+			apiDomains: map[domainKey]domainDetails{
+				{domainName: "test.com", validationScope: "HOST"}: {
+					validationMethod: "SYSTEM",
+					validationStatus: "VALIDATED",
+				},
+			},
+			planDomains: map[domainKey]domainDetails{
+				{domainName: "test.com", validationScope: "HOST"}: {
+					validationMethod: "SYSTEM",
+				},
+			},
+			domainsToValidate: map[domainKey]domainDetails{
+				{domainName: "test.com", validationScope: "HOST"}: {
+					validationMethod: "SYSTEM",
+					validationStatus: "VALIDATED",
+				},
+			},
+		},
+		"MANUAL validation method for already validated domain": {
+			apiDomains: map[domainKey]domainDetails{
+				{domainName: "test.com", validationScope: "HOST"}: {
+					validationMethod: "MANUAL",
+					validationStatus: "VALIDATED",
+				},
+			},
+			planDomains: map[domainKey]domainDetails{
+				{domainName: "test.com", validationScope: "HOST"}: {
+					validationMethod: "MANUAL",
+				},
+			},
+			domainsToValidate: map[domainKey]domainDetails{
+				{domainName: "test.com", validationScope: "HOST"}: {
+					validationMethod: "MANUAL",
+					validationStatus: "VALIDATED",
+				},
+			},
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			handler := newValidationHandler(context.Background()).
+				setAPIDomains(tc.apiDomains).
+				setPlanDomains(tc.planDomains)
+
+			handler.domainsToValidate = tc.domainsToValidate
+
+			err := handler.ensureCorrectValidationMethods()
+
+			if tc.expectedErr != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tc.expectedErr)
+				return
+			}
+
+			require.NoError(t, err)
+		})
+	}
+}

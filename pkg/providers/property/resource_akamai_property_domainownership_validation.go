@@ -193,7 +193,7 @@ func (d *DomainOwnershipValidationResource) Create(ctx context.Context, req reso
 		return
 	}
 
-	if err := validationHandler.ensureValidationMethodsSupported(); err != nil {
+	if err := validationHandler.ensureCorrectValidationMethods(); err != nil {
 		resp.Diagnostics.AddError("Error Validating Domains", err.Error())
 		return
 	}
@@ -407,7 +407,7 @@ func (d *DomainOwnershipValidationResource) Update(ctx context.Context, req reso
 		return
 	}
 
-	if err := validationHandler.ensureValidationMethodsSupported(); err != nil {
+	if err := validationHandler.ensureCorrectValidationMethods(); err != nil {
 		resp.Diagnostics.AddError("Error Validating Domains", err.Error())
 		return
 	}
