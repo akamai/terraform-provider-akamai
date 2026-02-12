@@ -423,7 +423,7 @@ func getBehaviorsSchemaV20251016() map[string]*schema.Schema {
 		"allow_caching_on_commercial_network": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior cannot be used in includes.",
+			Description: "Allows caching content on both the commercial network and the public sector network. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -1941,7 +1941,7 @@ func getBehaviorsSchemaV20251016() map[string]*schema.Schema {
 					"ttl": {
 						ValidateDiagFunc: validateRegexOrVariable("^[0-9]+[DdHhMmSs]$"),
 						Optional:         true,
-						Description:      "The maximum time content may remain cached. Setting the value to `0` is the same as setting a `no-cache` header, which forces content to revalidate.",
+						Description:      "The maximum time for which content may remain cached. Specify it using a number followed by either `s` for seconds, `m` for minutes, `h` for hours, or `d` for days. For example, specify `30s` to cache for thirty seconds, or `6h` to cache for six hours. Setting the value to `0` is the same as setting a `no-cache` header, which forces content to revalidate with the origin.",
 						Type:             schema.TypeString,
 					},
 					"default_ttl": {
@@ -3124,13 +3124,13 @@ func getBehaviorsSchemaV20251016() map[string]*schema.Schema {
 					"geo_protection_xff_mode": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"IGNORE_XFF", "USE_XFF_AND_IP"}, false)),
 						Optional:         true,
-						Description:      "",
+						Description:      "Specifies the action to take.",
 						Type:             schema.TypeString,
 					},
 					"ip_protection_xff_mode": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"IGNORE_XFF", "USE_XFF_AND_IP", "PREFER_XFF_OVER_IP"}, false)),
 						Optional:         true,
-						Description:      "",
+						Description:      "Specifies the action to take.",
 						Type:             schema.TypeString,
 					},
 				},
@@ -6251,7 +6251,7 @@ func getBehaviorsSchemaV20251016() map[string]*schema.Schema {
 		"gov_cloud": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior is for internal usage only. This behavior cannot be used in includes.",
+			Description: "This documentation file is no-op, and included in the behavior This behavior is for internal usage only. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -6940,7 +6940,7 @@ func getBehaviorsSchemaV20251016() map[string]*schema.Schema {
 		"image_manager": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Optimizes images' size or file type for the requesting device.  You can also use this behavior to generate API tokens to apply your own policies to matching images using the `Image and Video Manager API`. To apply this behavior, you need to match on a `fileExtension`. Once you apply Image and Video Manager to traffic, you can add the `advancedImMatch` to ensure the behavior applies to the requests from the Image and Video Manager backend. This behavior can be used in includes.",
+			Description: "Optimizes images' size or file type for the requesting device.  You can also use this behavior to generate API tokens to apply your own policies to matching images using the `Image and Video Manager API`. To apply this behavior, you need to match on a `fileExtension`. Once you apply Image and Video Manager to traffic, you can add the `advancedImMatch` to ensure the behavior applies to the requests from the Image and Video Manager back end. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -9130,7 +9130,7 @@ func getBehaviorsSchemaV20251016() map[string]*schema.Schema {
 					},
 					"custom_certificate_authorities": {
 						Optional:    true,
-						Description: "Specifies an array of certification objects. See the `verification settings in the Origin Server behavior` or contact your Akamai representative for details on this object's requirements.",
+						Description: "Specifies an array of certificate objects. See the `verification settings in the Origin Server behavior` or contact your Akamai representative for details on this object's requirements.",
 						Type:        schema.TypeList,
 						Elem: &schema.Resource{
 							Schema: map[string]*schema.Schema{
@@ -9619,7 +9619,7 @@ func getBehaviorsSchemaV20251016() map[string]*schema.Schema {
 					},
 					"custom_certificates": {
 						Optional:    true,
-						Description: "Specifies an array of certification objects. See the `verification settings in the Origin Server behavior` or contact your Akamai representative for details on this object's requirements.",
+						Description: "Specifies an array of certificate objects. See the `verification settings in the Origin Server behavior` or contact your Akamai representative for details on this object's requirements.",
 						Type:        schema.TypeList,
 						Elem: &schema.Resource{
 							Schema: map[string]*schema.Schema{
@@ -10957,7 +10957,7 @@ func getBehaviorsSchemaV20251016() map[string]*schema.Schema {
 		"pqc_origin": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Note that this behavior is in Limited Availability. To enable it, contact your Akamai account team. This behavior can be used in includes.",
+			Description: "Use this behavior to enable Post Quantum Cryptography (PQC) key exchanges. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -11614,7 +11614,7 @@ func getBehaviorsSchemaV20251016() map[string]*schema.Schema {
 					"destination_path_other": {
 						ValidateDiagFunc: validateRegexOrVariable("^/"),
 						Optional:         true,
-						Description:      "When `destinationPath` is set to `PREFIX_REQUEST`, this replaces the current path.",
+						Description:      "When `destinationPath` is set to `OTHER`, this replaces the current path.",
 						Type:             schema.TypeString,
 					},
 					"query_string": {
@@ -14596,7 +14596,7 @@ func getBehaviorsSchemaV20251016() map[string]*schema.Schema {
 		"virtual_waiting_room": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior helps you maintain business continuity for dynamic applications in high-demand situations such as flash sales. It decreases abandonment by providing a user-friendly waiting room experience. FIFO (First-in First-out) is a request processing mechanism that prioritizes the first requests that enter the waiting room to send them first to the origin. Users can see both their estimated arrival time and position in the line. With Cloudlets available on your contract, choose `Your services` > `Edge logic Cloudlets` to control Virtual Waitig Room within `Control Center`. Otherwise use the `Cloudlets API` to configure it programmatically. This behavior cannot be used in includes.",
+			Description: "This behavior helps you maintain business continuity for dynamic applications in high-demand situations such as flash sales. It decreases abandonment by providing a user-friendly waiting room experience. FIFO (First-in First-out) is a request processing mechanism that prioritizes the first requests that enter the waiting room to send them first to the origin. Users can see both their estimated arrival time and position in the line. With Cloudlets available on your contract, choose `Your services` > `Edge logic Cloudlets` to control Virtual Waiting Room within `Control Center`. Otherwise use the `Cloudlets API` to configure it programmatically. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -15136,7 +15136,7 @@ func getBehaviorsSchemaV20251016() map[string]*schema.Schema {
 		"visitor_prioritization_queue_it": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "TBD This behavior cannot be used in includes.",
+			Description: "TBD. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -15162,19 +15162,29 @@ func getBehaviorsSchemaV20251016() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"customer_id": {
+						ValidateDiagFunc: validateRegexOrVariable("^[\\w-]+$"),
+						Optional:         true,
+						Description:      "",
+						Type:             schema.TypeString,
+					},
+					"api_key_cam_guid": {
 						Optional:    true,
 						Description: "",
 						Type:        schema.TypeString,
 					},
-					"secret_key": {
-						Optional:    true,
-						Description: "",
-						Type:        schema.TypeString,
+					"additional_headers_mode": {
+						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"DENY", "CUSTOM"}, false)),
+						Optional:         true,
+						Description:      "",
+						Type:             schema.TypeString,
 					},
-					"api_key": {
+					"additional_headers_list": {
 						Optional:    true,
 						Description: "",
-						Type:        schema.TypeString,
+						Type:        schema.TypeList,
+						Elem: &schema.Schema{
+							Type: schema.TypeString,
+						},
 					},
 				},
 			},
@@ -15492,7 +15502,7 @@ func getCriteriaSchemaV20251016() map[string]*schema.Schema {
 		"cacheability": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Matches the current cache state.  Note that any `NO_STORE` or `BYPASS_CACHE` HTTP headers set on the origin's content overrides properties' `caching` instructions, in which case this criteria does not apply. This criterion can be used in includes.",
+			Description: "Matches the current cache state. Note that any `NO_STORE` or `BYPASS_CACHE` HTTP headers set on the origin's content overrides properties' `caching` instructions, in which case this criteria does not apply. This criterion can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
