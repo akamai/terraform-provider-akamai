@@ -216,16 +216,16 @@ func resourceCPSDVEnrollment(pollChangeStatusInterval, pollGetEnrollmentInterval
 			},
 		},
 		CustomizeDiff: customdiff.Sequence(
-			func(_ context.Context, diff *schema.ResourceDiff, _ interface{}) error {
+			func(_ context.Context, diff *schema.ResourceDiff, _ any) error {
 				if !diff.HasChange("sans") {
 					return nil
 				}
-				domainsToValidate := []interface{}{map[string]interface{}{
+				domainsToValidate := []any{map[string]any{
 					"domain": strings.ToLower(diff.Get("common_name").(string)),
 				}}
 				if sans, ok := diff.Get("sans").(*schema.Set); ok {
 					for _, san := range sans.List() {
-						domain := map[string]interface{}{"domain": strings.ToLower(san.(string))}
+						domain := map[string]any{"domain": strings.ToLower(san.(string))}
 						domainsToValidate = append(domainsToValidate, domain)
 					}
 				}
@@ -243,7 +243,7 @@ func resourceCPSDVEnrollment(pollChangeStatusInterval, pollGetEnrollmentInterval
 	}
 }
 
-func (r *dvEnrollmentResource) create(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (r *dvEnrollmentResource) create(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("CPS", "resourceCPSDVEnrollmentCreate")
 	// create a context with logging for api calls
@@ -369,7 +369,7 @@ func (r *dvEnrollmentResource) create(ctx context.Context, d *schema.ResourceDat
 	return r.read(ctx, d, m)
 }
 
-func (r *dvEnrollmentResource) read(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (r *dvEnrollmentResource) read(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("CPS", "resourceCPSDVEnrollmentRead")
 	// create a context with logging for api calls
@@ -400,8 +400,8 @@ func (r *dvEnrollmentResource) read(ctx context.Context, d *schema.ResourceData,
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	dnsChallenges := make([]interface{}, 0)
-	httpChallenges := make([]interface{}, 0)
+	dnsChallenges := make([]any, 0)
+	httpChallenges := make([]any, 0)
 	changeID, err := cpstools.GetChangeIDFromPendingChanges(enrollment.PendingChanges)
 	if err != nil {
 		if errors.Is(err, cpstools.ErrNoPendingChanges) {
@@ -416,6 +416,7 @@ func (r *dvEnrollmentResource) read(ctx context.Context, d *schema.ResourceData,
 		}
 		return diag.FromErr(err)
 	}
+
 	changeStatusReq := cps.GetChangeStatusRequest{
 		EnrollmentID: enrollmentID,
 		ChangeID:     changeID,
@@ -450,14 +451,14 @@ func (r *dvEnrollmentResource) read(ctx context.Context, d *schema.ResourceData,
 				continue
 			}
 			if challenge.Type == "http-01" {
-				httpChallenges = append(httpChallenges, map[string]interface{}{
+				httpChallenges = append(httpChallenges, map[string]any{
 					"full_path":     challenge.FullPath,
 					"response_body": challenge.ResponseBody,
 					"domain":        dv.Domain,
 				})
 			}
 			if challenge.Type == "dns-01" {
-				dnsChallenges = append(dnsChallenges, map[string]interface{}{
+				dnsChallenges = append(dnsChallenges, map[string]any{
 					"full_path":     challenge.FullPath,
 					"response_body": challenge.ResponseBody,
 					"domain":        dv.Domain,
@@ -474,7 +475,7 @@ func (r *dvEnrollmentResource) read(ctx context.Context, d *schema.ResourceData,
 	return nil
 }
 
-func (r *dvEnrollmentResource) update(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (r *dvEnrollmentResource) update(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("CPS", "resourceCPSDVEnrollmentUpdate")
 	ctx = session.ContextWithOptions(
@@ -597,11 +598,11 @@ func (r *dvEnrollmentResource) update(ctx context.Context, d *schema.ResourceDat
 	return r.read(ctx, d, m)
 }
 
-func (r *dvEnrollmentResource) delete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (r *dvEnrollmentResource) delete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	return enrollmentDelete(ctx, d, m, "resourceCPSDVEnrollmentDelete", r.pollGetEnrollmentInterval)
 }
 
-func (r *dvEnrollmentResource) importState(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+func (r *dvEnrollmentResource) importState(ctx context.Context, d *schema.ResourceData, m any) ([]*schema.ResourceData, error) {
 	meta := meta.Must(m)
 	logger := meta.Log("CPS", "resourceCPSDVEnrollmentImport")
 	// create a context with logging for api calls

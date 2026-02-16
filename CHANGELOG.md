@@ -93,7 +93,8 @@
 
 
 
-
+* CPS
+  * Added `pre_verification_warnings` and `post_verification_warnings` attributes to the `akamai_cps_enrollment` data source. If present, they contain the details about the warnings for the given enrollment ([I#644](https://github.com/akamai/terraform-provider-akamai/issues/644)).
 
 
 

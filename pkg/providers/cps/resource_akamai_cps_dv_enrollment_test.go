@@ -279,7 +279,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 
 		// Mock that the enrollment in not found after removal.
 		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
-			Return(nil, cps.ErrEnrollmentNotFound).Once()
+			Return(nil, cps.ErrNotFound).Once()
 
 		resource.UnitTest(t, resource.TestCase{
 			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
@@ -406,6 +406,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 				ChangeType: "new-certificate",
 			},
 		}
+
 		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
 			Return(&enrollment, nil).Once()
 
@@ -538,6 +539,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 				Status: waitReviewCertWarning,
 			},
 		}, nil).Twice()
+
 		client.CPS.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
 			EnrollmentID: 1,
 			ChangeID:     2,
@@ -562,7 +564,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 
 		// Mock that the enrollment in not found after removal.
 		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
-			Return(nil, cps.ErrEnrollmentNotFound).Once()
+			Return(nil, cps.ErrNotFound).Once()
 
 		resource.UnitTest(t, resource.TestCase{
 			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
@@ -596,7 +598,6 @@ func TestResourceDVEnrollment(t *testing.T) {
 				},
 			},
 		})
-
 		client.CPS.AssertExpectations(t)
 	})
 
@@ -767,7 +768,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 
 		// Mock that the enrollment in not found after removal.
 		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
-			Return(nil, cps.ErrEnrollmentNotFound).Once()
+			Return(nil, cps.ErrNotFound).Once()
 
 		resource.UnitTest(t, resource.TestCase{
 			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
@@ -960,7 +961,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 
 		// Mock that the second get enrollment is not found after removal.
 		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
-			Return(nil, cps.ErrEnrollmentNotFound).Once()
+			Return(nil, cps.ErrNotFound).Once()
 
 		resource.UnitTest(t, resource.TestCase{
 			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
@@ -1175,7 +1176,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 
 		// Mock that the enrollment in not found after removal.
 		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
-			Return(nil, cps.ErrEnrollmentNotFound).Once()
+			Return(nil, cps.ErrNotFound).Once()
 
 		resource.UnitTest(t, resource.TestCase{
 			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
@@ -1368,7 +1369,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 
 		// Mock that the enrollment in not found after removal.
 		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
-			Return(nil, cps.ErrEnrollmentNotFound).Once()
+			Return(nil, cps.ErrNotFound).Once()
 
 		resource.UnitTest(t, resource.TestCase{
 			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
@@ -1529,7 +1530,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 
 		// Mock that the enrollment in not found after removal.
 		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
-			Return(nil, cps.ErrEnrollmentNotFound).Once()
+			Return(nil, cps.ErrNotFound).Once()
 
 		resource.UnitTest(t, resource.TestCase{
 			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
@@ -1749,7 +1750,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 
 		// Mock that the enrollment in not found after removal.
 		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
-			Return(nil, cps.ErrEnrollmentNotFound).Once()
+			Return(nil, cps.ErrNotFound).Once()
 
 		resource.UnitTest(t, resource.TestCase{
 			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
@@ -1944,7 +1945,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 
 		// Mock that the enrollment in not found after removal.
 		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
-			Return(nil, cps.ErrEnrollmentNotFound).Once()
+			Return(nil, cps.ErrNotFound).Once()
 
 		resource.UnitTest(t, resource.TestCase{
 			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
@@ -2132,7 +2133,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 
 		// Mock that the enrollment in not found after removal.
 		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
-			Return(nil, cps.ErrEnrollmentNotFound).Once()
+			Return(nil, cps.ErrNotFound).Once()
 
 		resource.UnitTest(t, resource.TestCase{
 			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
@@ -2274,7 +2275,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 
 		// Mock that the enrollment in not found after removal.
 		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
-			Return(nil, cps.ErrEnrollmentNotFound).Once()
+			Return(nil, cps.ErrNotFound).Once()
 
 		resource.UnitTest(t, resource.TestCase{
 			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
@@ -2523,7 +2524,7 @@ func TestResourceDVEnrollmentImport(t *testing.T) {
 
 		// Mock that the enrollment in not found after removal.
 		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
-			Return(nil, cps.ErrEnrollmentNotFound).Once()
+			Return(nil, cps.ErrNotFound).Once()
 
 		resource.UnitTest(t, resource.TestCase{
 			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),

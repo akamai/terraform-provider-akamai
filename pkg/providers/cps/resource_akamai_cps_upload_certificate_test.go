@@ -163,7 +163,7 @@ func TestResourceCPSUploadCertificateWithThirdPartyEnrollmentDependency(t *testi
 				}, nil).Once()
 				// Mock that the enrollment in not found after removal.
 				client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: enrollmentID}).
-					Return(nil, cps.ErrEnrollmentNotFound).Once()
+					Return(nil, cps.ErrNotFound).Once()
 			},
 			enrollment:   getSimpleEnrollment(),
 			enrollmentID: 2,

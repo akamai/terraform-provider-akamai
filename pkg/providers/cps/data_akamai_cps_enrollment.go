@@ -326,11 +326,21 @@ func dataSourceCPSEnrollment() *schema.Resource {
 				Elem:        &schema.Schema{Type: schema.TypeInt},
 				Description: "Slots where the certificate is deployed on the production network",
 			},
+			"pre_verification_warnings": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Warnings triggered for a given change before submitting the certificate signing request (CSR) to the certificate authority (CA) or after a certificate upload.",
+			},
+			"post_verification_warnings": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Warnings generated for a given change after CPS retrieves the signed certificate from the CA or after a certificate upload.",
+			},
 		},
 	}
 }
 
-func dataCPSEnrollmentRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataCPSEnrollmentRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("CPS", "dataCPSEnrollmentRead")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
@@ -358,12 +368,11 @@ func dataCPSEnrollmentRead(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.FromErr(err)
 	}
 
-	challengesAttrs, err := getChallengesAttrs(ctx, enrollment, client)
+	additionalAttrs, err := getAdditionalAttrs(ctx, enrollment, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
-	if err = tf.SetAttrs(d, challengesAttrs); err != nil {
+	if err = tf.SetAttrs(d, additionalAttrs); err != nil {
 		return diag.FromErr(err)
 	}
 
