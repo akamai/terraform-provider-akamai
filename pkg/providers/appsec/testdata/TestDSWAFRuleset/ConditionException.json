@@ -1,0 +1,29 @@
+{
+  "advancedExceptions": {
+    "conditionOperator": "AND",
+    "conditions": [
+      {
+        "type": "hostMatch",
+        "hosts": [
+          "www.hostname.com"
+        ],
+        "positiveMatch": true
+      },
+      {
+        "type": "ipMatch",
+        "ips": [
+          "1.1.1.1"
+        ],
+        "positiveMatch": true,
+        "useHeaders": false
+      },
+      {
+        "type": "pathMatch",
+        "paths": [
+          "/test"
+        ],
+        "positiveMatch": true
+      }
+    ]
+  }
+}

@@ -184,5 +184,6 @@ func (p *Subprovider) FrameworkDataSources() []func() datasource.DataSource {
 		NewRapidRulesDataSource,
 		NewURLProtectionRuleActionsDataSource,
 		NewURLProtectionRulesActionsDataSource,
+		NewWAFRulesetDataSource,
 	}
 }

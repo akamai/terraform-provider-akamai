@@ -67,6 +67,9 @@
 
 
 
+* Appsec
+  * Added data source `akamai_appsec_waf_ruleset`
+
 
 
 
@@ -889,13 +892,11 @@
 
 * Appsec
   * Fixed import of `akamai_appsec_match_target` for newly created security configuration or any security configuration not synced in the terraform state ([I#546](https://github.com/akamai/terraform-provider-akamai/issues/546))
+  * Fixed issue where activation was not triggered after network list change in `resource_akamai_networklist_activations` resource ([I#518](https://github.com/akamai/terraform-provider-akamai/issues/518))
   * Fixed `akamai_appsec_configuration` data source to return a single security configuration in the output_text instead of the entire list of security configurations
 
 * Cloudlets
   * Corrected format of the retry time when logging in `akamai_cloudlets_application_load_balancer_activation` and `akamai_cloudlets_policy_activation` resources
-
-* Network Lists
-  * Fixed issue where activation was not triggered after network list change in `resource_akamai_networklist_activations` resource ([I#518](https://github.com/akamai/terraform-provider-akamai/issues/518))
 
 * PAPI
   * Fixed issue with provider producing an inconsistent final plan with Cloudlet policy ([I#567](https://github.com/akamai/terraform-provider-akamai/issues/567)).
@@ -1135,7 +1136,7 @@
 #### FEATURES/ENHANCEMENTS:
 
 * Appsec
-  * Added retries in the `akamai_appsec_activations` resource ([I#471](https://github.com/akamai/terraform-provider-akamai/issues/471))
+  * Added retries in `akamai_appsec_activations` and `akamai_networklist_activations` resources ([I#471](https://github.com/akamai/terraform-provider-akamai/issues/471))
   * Added reactivation support for `akamai_appsec_activations` if the config was deactivated manually ([I#441](https://github.com/akamai/terraform-provider-akamai/issues/441) and [I#442](https://github.com/akamai/terraform-provider-akamai/issues/442))
 
 * Cloudlets
@@ -1172,9 +1173,6 @@
   * Extended `akamai_imaging_policy_image` with new fields:
     * `serve_stale_duration` available under `policy`
     * `allow_pristine_on_downsize` and `prefer_modern_formats` available under `policy.output`
-
-* Network Lists
-  * Added retries in the `akamai_networklist_activations` resource ([I#471](https://github.com/akamai/terraform-provider-akamai/issues/471))
 
 * PAPI
   * Added new resource:
@@ -1245,7 +1243,7 @@
 #### FEATURES/ENHANCEMENTS:
 
 * Appsec
-  * Suppressed trigger of new activation for `note` field change in `akamai_appsec_activations` resource.
+  * Suppressed trigger of new activation for `note` field change in `akamai_networklist_activations` and `akamai_appsec_activations` resources.
 
 * Client Lists
   * Added support for state import for `akamai_clientlist_list` and `akamai_clientlist_activation` resources
@@ -1272,9 +1270,6 @@
 
 * IAM
   * Phone number is no longer required for IAM user in `akamai_iam_user` resource.
-
-* Network Lists
-  * Suppressed trigger of new activation for `note` field change in `akamai_networklist_activations` resource.
 
 * PAPI
   * Added configurable timeout for following resources as `timeouts.default` field ([I#440](https://github.com/akamai/terraform-provider-akamai/issues/440))
@@ -1308,28 +1303,28 @@
 
 #### FEATURES/ENHANCEMENTS:
 
+* Appsec
+  * Added `sync_point` value in `akamai_networklist_network_lists` data source
+
 * CPS
   * Added `pending_changes` computed field to `akamai_cps_enrollment` data source ([#PR468](https://github.com/akamai/terraform-provider-akamai/pull/468))
 
 * Cloud Wrapper
   * Added support for `comments` argument modification in `akamai_cloudwrapper_configuration` resource
 
-* Network Lists
-  * Added `sync_point` value in `akamai_networklist_network_lists` data source
-
 #### BUG FIXES:
 
-* GTM
-  * Added better drift handling in `akamai_gtm_property` - when property is removed without terraform knowledge, resource doesn't just error on refresh but suggests recreation.
-
-* Network Lists
-  * Fixed `akamai_networklist_network_list` import resulting in null `contract_id` and `group_id`.
+* Appsec
+  * Fixed `akamai_networklist_network_list` import resulting in null `contract_id` and `group_id`
 
 * PAPI
   * Added errors to `data_property_akamai_contract` and `data_property_akamai_group` data sources, when fetching groups returns multiple inconclusive results
   * Fixed drift issue in `akamai_edge_hostname` resource [(#457)](https://github.com/akamai/terraform-provider-akamai/issues/457)
   * Added missing fields to `akamai_property_builder` for `origin` and `siteShield` behaviors ([#465](https://github.com/akamai/terraform-provider-akamai/issues/465))
   * Improved `akamai_property_rules_builder` empty list transformation ([#438](https://github.com/akamai/terraform-provider-akamai/issues/438))
+
+* GTM
+  * Added better drift handling in `akamai_gtm_property` - when property is removed without terraform knowledge, resource doesn't just error on refresh but suggests recreation
 
 ## 5.2.0 (Aug 29, 2023)
 
@@ -2064,7 +2059,7 @@
   * Add support for Evasive Path Match feature
 
 * NETWORK LISTS
-  * Include `contract_id` & `group_id` in `akamai_networklist_network_lists` datasource
+  * Include contract_id & group_id in akamai_networklist_network_lists datasource
 
 * PAPI
   * Add support for array type variables in akamai_property_rules_template ([#257](https://github.com/akamai/terraform-provider-akamai/issues/257))
