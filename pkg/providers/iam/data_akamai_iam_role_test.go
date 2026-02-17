@@ -248,7 +248,7 @@ func TestRoleDataSource(t *testing.T) {
 				"actions.delete":   "true",
 				"actions.edit":     "true",
 			},
-			expectError: regexp.MustCompile(`multiple roles with name 'example-role' found\. Specific roles IDs are '\[12345\s54321\]'\. Please use 'role_id' to select the desired role`),
+			expectError: regexp.MustCompile(`multiple roles with name 'example-role' found\. Specific roles IDs are '\[(?:12345\s54321|54321\s12345)\]'\. Please use 'role_id' to select the desired role`),
 		},
 	}
 
