@@ -1,185 +1,55 @@
 # RELEASE NOTES
 
-## X.X.X (X X, X)
+## 10.0.0 (Feb 25, 2026)
 
 #### BREAKING CHANGES:
 
+* AppSec
+  * Removed the `output_text` attribute from all resources and data sources.
+  * Removed the `output_text` attribute from the `akamai_networklist_network_lists` data source.
+
 * ClientLists
-    * Made the following changes in the `resource_akamai_clientlists_list_activation` resource:
-    * Marked `version` attribute in schema as `Computed` instead of `Required`.
+  * Marked the `version` attribute in the `akamai_clientlist_activation` resource's schema as `Computed` instead of `Required`.
+  * Removed the `output_text` attribute from `akamai_clientlist_list` and `akamai_clientlist_lists` data sources.
 
 * PAPI
-  * Removed the `secret_key` and `api_key` attributes from the `akamai_property_rule_formats` data source for the rule formats `v2025-05-30`, `v2025-07-07`, `v2025-09-09` and `v2025-10-16`.
-
-
-* AppSec
-  * Removed the `output_text` attribute from all resources and all data sources.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  * Removed the `secret_key` and `api_key` attributes from the `visitor_prioritization_queue_it` behavior for these rule formats: `v2025-05-30`, `v2025-07-07`, `v2025-09-09`, and `v2025-10-16`. These attributes aren't available anymore when defining rules in JSON format or when using the `akamai_property_rules_builder` data source with the corresponding rule format blocks.
 
 #### FEATURES/ENHANCEMENTS:
 
-
-* IAM
-  * Added support for retrieving IAM role based on `role_name` in the `akamai_iam_role` data source.([I#690](https://github.com/akamai/terraform-provider-akamai/issues/690)).
-
-* PAPI
-    * Added support for the new rule format [`v2026-01-09`](https://techdocs.akamai.com/terraform/docs/rule-format-changes#v2026-01-09).
-    * Introduced support for the `api_key_cam_guid`, `additional_headers_mode`, and `additional_headers_list` attributes in the `akamai_property_rule_formats` data source for the rule formats `v2025-05-30`, `v2025-07-07`, `v2025-09-09` and `v2025-10-16`.
-
-
-
-
-
-
-
+* General
+  * Updated various dependencies.
 
 * Cloud Certificates (Beta)
-  * Added support for replacing certificates with non-empty `base_name` using the `terraform apply -replace akamai_cloudcertificates_certificate.<certificate name>` command.
-  * Beginning of this release the resource `akamai_cloudcertificates_certificate` should be always defined with the flag `create_before_destroy` set to true to avoid downtime.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  * Added support for replacing certificates with a non-empty `base_name` using the `terraform apply -replace akamai_cloudcertificates_certificate.<certificate name>` command.
+  * As of this release, it is strongly recommended to define the `akamai_cloudcertificates_certificate` resource with the `lifecycle` block set to `create_before_destroy = true` to ensure the correct order of operations during certificate renewal.
 
 * CPS
-  * Added `pre_verification_warnings` and `post_verification_warnings` attributes to the `akamai_cps_enrollment` data source. If present, they contain the details about the warnings for the given enrollment ([I#644](https://github.com/akamai/terraform-provider-akamai/issues/644)).
+  * Added the `pre_verification_warnings` and `post_verification_warnings` attributes to the `akamai_cps_enrollment` data source. If present, these contain details about warnings for the given enrollment ([I#644](https://github.com/akamai/terraform-provider-akamai/issues/644)).
 
+* IAM
+  * Added support for retrieving the IAM role by `role_name` in the `akamai_iam_role` data source ([I#690](https://github.com/akamai/terraform-provider-akamai/issues/690)).
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+* PAPI
+  * Added support for the new rule format [`v2026-01-09`](https://techdocs.akamai.com/terraform/docs/rule-format-changes#v2026-01-09).
+  * Introduced support for the `api_key_cam_guid`, `additional_headers_mode`, and `additional_headers_list` attributes in the `visitor_prioritization_queue_it` behavior for these rule formats: `v2025-05-30`, `v2025-07-07`, `v2025-09-09`, and `v2025-10-16`. These attributes are available when defining rules in JSON format or when using the `akamai_property_rules_builder` data source with the corresponding rule format blocks.
 
 #### BUG FIXES:
 
+* DNS
+  * Allowed setting the `ttl` field to `0` in the `akamai_dns_record` resource ([I#682](https://github.com/akamai/terraform-provider-akamai/issues/682)).
 
 * GTM
-    * Added support for recreating `akamai_gtm_domain` resource by modification of the `name` field ([I#626](https://github.com/akamai/terraform-provider-akamai/issues/626)).
-    * Added support for recreating `akamai_gtm_property`,`akamai_gtm_resource`,`akamai_gtm_geomap`,`akamai_gtm_datacenter`,`akamai_gtm_cidrmap` and `akamai_gtm_asmap` resources by modification of the `domain` field.
-
-
-
+  * Added support for recreating the `akamai_gtm_domain` resource when the `name` field is modified ([I#626](https://github.com/akamai/terraform-provider-akamai/issues/626)).
+  * Added support for recreating the `akamai_gtm_property`, `akamai_gtm_resource`, `akamai_gtm_geomap`, `akamai_gtm_datacenter`,`akamai_gtm_cidrmap`, and `akamai_gtm_asmap` resources when the `domain` field is modified.
 
 * PAPI
   * Added verification that the product exists in the contract before creating a CP code in the `akamai_cp_code` resource ([I#706](https://github.com/akamai/terraform-provider-akamai/issues/706)).
 
-
-
-
-
-
-
 * PAPI Domain Ownership Validation (Beta)
-  * Fixed a bug where validation timeouts caused a misleading warning to appear even when no domains were validated in the akamai_property_domainownership_validation. Warnings are now limited to partial success cases and list the validated domains.
-  * Relaxed validation for `akamai_property_domainownership_validation` resource to allow `SYSTEM` and `MANUAL` validation methods for already validated domains ([I#732](https://github.com/akamai/terraform-provider-akamai/issues/732)).
-  * Fixed a bug where it was allowed to use a different validation method for domains that were already validated with another validation method.
-
-
-
-
-
-
-
-
-* DNS
-    * Allowed setting the `ttl` field to `0` in the `akamai_dns_record` resource ([I#682](https://github.com/akamai/terraform-provider-akamai/issues/682)).
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  * Fixed a bug where validation timeouts caused a misleading warning to appear even when no domains were validated in the `akamai_property_domainownership_validation` resource. Warnings are now limited to partial success cases and list the validated domains.
+  * Relaxed validation for the `akamai_property_domainownership_validation` resource to allow `SYSTEM` and `MANUAL` validation methods for domains that have already been validated ([I#732](https://github.com/akamai/terraform-provider-akamai/issues/732)).
+  * Fixed a bug that allowed using a different validation method for domains that were already validated with another validation method.
 
 ## 9.3.0 (Jan 21, 2026)
 
