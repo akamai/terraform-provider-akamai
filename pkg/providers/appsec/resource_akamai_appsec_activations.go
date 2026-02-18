@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/appsec"
-	akalog "github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/log"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
+	akalog "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/log"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/date"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/id"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/tf"

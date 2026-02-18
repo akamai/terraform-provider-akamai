@@ -3,7 +3,7 @@ module github.com/akamai/terraform-provider-akamai/v9
 go 1.24.10
 
 require (
-	github.com/akamai/AkamaiOPEN-edgegrid-golang/v12 v12.3.0
+	github.com/akamai/AkamaiOPEN-edgegrid-golang/v13 v13.0.0
 	github.com/allegro/bigcache/v2 v2.2.5
 	github.com/dlclark/regexp2 v1.11.5
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
@@ -94,4 +94,4 @@ require (
 
 replace github.com/stretchr/testify v1.4.0 => github.com/stretchr/testify v1.10.0 // Fix security vulnerability
 
-// replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v12 => ../AkamaiOPEN-edgegrid-golang
+// replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v13 => ../AkamaiOPEN-edgegrid-golang

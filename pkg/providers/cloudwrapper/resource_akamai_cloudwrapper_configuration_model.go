@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudwrapper"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudwrapper"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/framework/modifiers"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/framework/replacer"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"

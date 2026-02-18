@@ -4,7 +4,7 @@ package accountprotection
 import (
 	"sync"
 
-	apr "github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/accountprotection"
+	apr "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/accountprotection"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/providers/appsec"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/subprovider"

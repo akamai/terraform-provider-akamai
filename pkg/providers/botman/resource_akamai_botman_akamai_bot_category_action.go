@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/botman"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/botman"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/id"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
