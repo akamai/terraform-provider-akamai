@@ -6,11 +6,11 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudcertificates"
-	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
-	tst "github.com/akamai/terraform-provider-akamai/v9/internal/test"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/test"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
+	tst "github.com/akamai/terraform-provider-akamai/v10/internal/test"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/test"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )

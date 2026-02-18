@@ -7,9 +7,9 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudlets"
 	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudlets/v3"
-	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 )
 

@@ -6,7 +6,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/iam"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 )
 
 func TestMain(m *testing.M) {

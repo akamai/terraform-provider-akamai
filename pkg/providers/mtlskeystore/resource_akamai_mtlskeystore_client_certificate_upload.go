@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/mtlskeystore"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/framework/modifiers"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/framework/modifiers"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"

@@ -6,8 +6,8 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

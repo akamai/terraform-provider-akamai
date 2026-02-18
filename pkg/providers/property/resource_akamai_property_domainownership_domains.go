@@ -7,9 +7,9 @@ import (
 	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/domainownership"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/framework/date"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/framework/modifiers"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/framework/date"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/framework/modifiers"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"

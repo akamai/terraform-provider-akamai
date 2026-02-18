@@ -9,9 +9,9 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/iam"
-	"github.com/akamai/terraform-provider-akamai/v9/internal/test"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/test"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/stretchr/testify/mock"
