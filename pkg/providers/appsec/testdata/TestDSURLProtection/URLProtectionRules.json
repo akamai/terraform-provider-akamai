@@ -1,0 +1,228 @@
+{
+	"urlProtectionPolicies": [
+		{
+			"configId": 43007,
+			"configVersion": 40,
+			"createDate": "2026-02-03T08:01:42Z",
+			"createdBy": "johndoe",
+			"hostnamePaths": [
+				{
+					"hostname": "www.testking12313.com",
+					"paths": [
+						"/*"
+					]
+				}
+			],
+			"intelligentLoadShedding": false,
+			"name": "Test1",
+			"policyId": 4123,
+			"protectionType": "SINGLE",
+			"rateThreshold": 20,
+			"updateDate": "2026-02-03T08:01:42Z",
+			"updatedBy": "johndoe",
+			"used": false
+		},
+		{
+			"categories": [
+				{
+					"type": "BOTS"
+				},
+				{
+					"type": "CLOUD_PROVIDERS"
+				},
+				{
+					"type": "PROXIES"
+				},
+				{
+					"type": "TOR_EXIT_NODES"
+				}
+			],
+			"configId": 43007,
+			"configVersion": 40,
+			"createDate": "2026-02-03T08:02:31Z",
+			"createdBy": "johndoe",
+			"hostnamePaths": [
+				{
+					"hostname": "test.com",
+					"paths": [
+						"/*"
+					]
+				},
+				{
+					"hostname": "www.testking12313.com",
+					"paths": [
+						"/*",
+						"//"
+					]
+				}
+			],
+			"intelligentLoadShedding": true,
+			"name": "Test2",
+			"policyId": 4125,
+			"protectionType": "MULTIPLE",
+			"rateThreshold": 50,
+			"sheddingThresholdHitsPerSec": 25,
+			"updateDate": "2026-02-03T08:02:31Z",
+			"updatedBy": "johndoe",
+			"used": false
+		},
+		{
+			"apiDefinitions": [
+				{
+					"apiDefinitionId": 606554,
+					"definedResources": true,
+					"resourceIds": [],
+					"undefinedResources": true
+				},
+				{
+					"apiDefinitionId": 606553,
+					"definedResources": false,
+					"resourceIds": [],
+					"undefinedResources": true
+				}
+			],
+			"categories": [
+				{
+					"type": "BOTS"
+				},
+				{
+					"listIds": [
+						"81658_10KIPCLIENTLIST"
+					],
+					"positiveMatch": true,
+					"type": "CLIENT_LIST"
+				},
+				{
+					"listIds": [
+						"106791_1CLICKTEST10"
+					],
+					"positiveMatch": false,
+					"type": "CLIENT_LIST"
+				},
+				{
+					"type": "CLOUD_PROVIDERS"
+				},
+				{
+					"type": "PROXIES"
+				},
+				{
+					"type": "TOR_EXIT_NODES"
+				}
+			],
+			"configId": 43007,
+			"configVersion": 40,
+			"createDate": "2026-02-03T08:03:34Z",
+			"createdBy": "johndoe",
+			"intelligentLoadShedding": true,
+			"name": "Test3",
+			"policyId": 4127,
+			"rateThreshold": 89,
+			"sheddingThresholdHitsPerSec": 50,
+			"updateDate": "2026-02-03T08:03:34Z",
+			"updatedBy": "johndoe",
+			"used": false
+		},
+		{
+			"bypassCondition": {
+				"atomicConditions": [
+					{
+						"checkIps": "connecting",
+						"className": "NetworkListCondition",
+						"index": 1,
+						"positiveMatch": true,
+						"value": [
+							"106723_1CLICKTEST",
+							"99175_10KCL"
+						]
+					},
+					{
+						"className": "RequestHeaderCondition",
+						"index": 2,
+						"name": [
+							"Accept"
+						],
+						"nameWildcard": true,
+						"positiveMatch": true
+					},
+					{
+						"className": "RequestHeaderCondition",
+						"index": 3,
+						"name": [
+							"Accept-Charset"
+						],
+						"nameWildcard": true,
+						"positiveMatch": true,
+						"value": [
+							"test"
+						],
+						"valueCase": false,
+						"valueWildcard": true
+					},
+					{
+						"className": "RequestHeaderCondition",
+						"index": 4,
+						"name": [
+							"Accept-Language"
+						],
+						"nameWildcard": false,
+						"positiveMatch": true,
+						"value": [
+							"test"
+						],
+						"valueCase": false,
+						"valueWildcard": false
+					},
+					{
+						"className": "RequestHeaderCondition",
+						"index": 5,
+						"name": [
+							"Cache-Control"
+						],
+						"nameWildcard": false,
+						"positiveMatch": true,
+						"value": [
+							"test"
+						],
+						"valueCase": true,
+						"valueWildcard": true
+					},
+					{
+						"className": "RequestHeaderCondition",
+						"index": 6,
+						"name": [
+							"Connection"
+						],
+						"nameWildcard": true,
+						"positiveMatch": true,
+						"value": [
+							"test"
+						],
+						"valueCase": true,
+						"valueWildcard": false
+					}
+				]
+			},
+			"configId": 43007,
+			"configVersion": 40,
+			"createDate": "2026-02-03T08:05:19Z",
+			"createdBy": "johndoe",
+			"description": "test",
+			"hostnamePaths": [
+				{
+					"hostname": "www.testking12313.com",
+					"paths": [
+						"/0"
+					]
+				}
+			],
+			"intelligentLoadShedding": false,
+			"name": "test4",
+			"policyId": 4129,
+			"protectionType": "SINGLE",
+			"rateThreshold": 40,
+			"updateDate": "2026-02-03T08:05:19Z",
+			"updatedBy": "johndoe",
+			"used": false
+		}
+	]
+}
