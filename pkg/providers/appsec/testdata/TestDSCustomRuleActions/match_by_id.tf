@@ -9,6 +9,6 @@ data "akamai_appsec_custom_rule_actions" "test" {
 }
 
 output "customruleactions" {
-  value = data.akamai_appsec_custom_rule_actions.test.output_text
+  value = data.akamai_appsec_custom_rule_actions.test
 }
 

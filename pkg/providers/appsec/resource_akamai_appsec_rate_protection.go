@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/id"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/id"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -44,11 +44,6 @@ func resourceRateProtection() *schema.Resource {
 			"enabled": {
 				Type:     schema.TypeBool,
 				Required: true,
-			},
-			"output_text": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Text representation",
 			},
 		},
 	}
@@ -133,15 +128,6 @@ func resourceRateProtectionRead(ctx context.Context, d *schema.ResourceData, m i
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("enabled", enabled); err != nil {
-		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
-	}
-	ots := OutputTemplates{}
-	InitTemplates(ots)
-	outputtext, err := RenderTemplates(ots, "protections", response)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("output_text", outputtext); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 

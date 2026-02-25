@@ -5,13 +5,14 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudcertificates"
-	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
-	tst "github.com/akamai/terraform-provider-akamai/v9/internal/test"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/test"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudcertificates"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
+	tst "github.com/akamai/terraform-provider-akamai/v10/internal/test"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/test"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
@@ -186,6 +187,11 @@ var (
 
 func TestCertificateResource(t *testing.T) {
 	t.Parallel()
+	config := defaultSubproviderConfig()
+	config.certificate.timestampFunc = func() time.Time {
+		t, _ := time.Parse(renewedNameDateLayout, "2025-05-01T12_05_01Z")
+		return t
+	}
 
 	minCertChecker := test.NewStateChecker("akamai_cloudcertificates_certificate.test").
 		CheckEqual("contract_id", "test_contract").
@@ -289,6 +295,7 @@ func TestCertificateResource(t *testing.T) {
 		"happy path - create certificate with all optional attributes": {
 			init: func(m *cloudcertificates.Mock, createData certificateTestData, _ certificateTestData) {
 				// Create
+				mockEmptyRenewalChain(m, createData)
 				mockCreateCertificate(m, createData)
 				// Read before destroy
 				mockGetCertificate(m, createData)
@@ -306,6 +313,7 @@ func TestCertificateResource(t *testing.T) {
 		"happy path - create certificate with optional attributes, different key type, some missing subject fields": {
 			init: func(m *cloudcertificates.Mock, createData certificateTestData, _ certificateTestData) {
 				// Create
+				mockEmptyRenewalChain(m, createData)
 				mockCreateCertificate(m, createData)
 				// Read before destroy
 				mockGetCertificate(m, createData)
@@ -329,6 +337,7 @@ func TestCertificateResource(t *testing.T) {
 		"happy path - create certificate, update name": {
 			init: func(m *cloudcertificates.Mock, createData certificateTestData, updateData certificateTestData) {
 				// Create
+				mockEmptyRenewalChain(m, createData)
 				mockCreateCertificate(m, createData)
 				// Read before update
 				mockGetCertificate(m, createData)
@@ -362,6 +371,7 @@ func TestCertificateResource(t *testing.T) {
 		"happy path - create certificate, reset name": {
 			init: func(m *cloudcertificates.Mock, createData certificateTestData, updateData certificateTestData) {
 				// Create
+				mockEmptyRenewalChain(m, createData)
 				mockCreateCertificate(m, createData)
 				// Read before update
 				mockGetCertificate(m, createData)
@@ -403,6 +413,7 @@ func TestCertificateResource(t *testing.T) {
 		"happy path - create certificate, change order of SANs - no diff": {
 			init: func(m *cloudcertificates.Mock, createData certificateTestData, _ certificateTestData) {
 				// Create
+				mockEmptyRenewalChain(m, createData)
 				mockCreateCertificate(m, createData)
 				// Read x2
 				mockGetCertificate(m, createData).Twice()
@@ -449,6 +460,165 @@ func TestCertificateResource(t *testing.T) {
 				},
 			},
 		},
+		"happy path - renew certificate": {
+			init: func(m *cloudcertificates.Mock, createData certificateTestData, _ certificateTestData) {
+				// Certificate exists already
+				mockListCertificates(m, cloudcertificates.ListCertificatesRequest{
+					ContractID:      createData.contractID,
+					Domain:          createData.sans[0],
+					CertificateName: createData.baseName,
+				}, &cloudcertificates.ListCertificatesResponse{
+					Certificates: []cloudcertificates.Certificate{
+						{
+							CertificateName: createData.name,
+						},
+						{
+							CertificateName: "test-name.renewed.2025-03-01T12_05_01Z",
+						},
+						{
+							CertificateName: "test-name.renewed.2025-04-01T12_05_01Z",
+						},
+					},
+				}, nil).Once()
+				// Renew
+				renewedName := fmt.Sprintf("%s.renewed.2025-05-01T12_05_01Z", createData.name)
+				renewedCertificate := createData
+				renewedCertificate.name = renewedName
+				renewedCertificate.baseName = renewedName
+				renewedCertificate.certificateID = "123456"
+				renewedCertificate.keyType = "ECDSA"
+				renewedCertificate.keySize = "P-256"
+				mockCreateCertificate(m, renewedCertificate)
+				// Read before destroy
+				mockGetCertificate(m, renewedCertificate)
+				// Delete
+				mockDeleteCertificate(m, renewedCertificate)
+			},
+			createMockData: fullCertificateRSA,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCertificate/create/renew_full.tf"),
+					Check: fullCertChecker.
+						CheckEqual("name", "test-name.renewed.2025-05-01T12_05_01Z").
+						CheckEqual("certificate_id", "123456").
+						CheckEqual("key_type", "ECDSA").
+						CheckEqual("key_size", "P-256").
+						Build(),
+				},
+			},
+		},
+		"happy path - create certificate without optionals and renew certificate": {
+			init: func(m *cloudcertificates.Mock, createData certificateTestData, _ certificateTestData) {
+				// Create
+				mockCreateCertificate(m, createData)
+				// Read before renew
+				mockGetCertificate(m, createData).Twice()
+				// Renew
+				renewedName := "test.example.com2345678901"
+				renewedCertificate := createData
+				renewedCertificate.name = renewedName
+				renewedCertificate.certificateID = "123456"
+				renewedCertificate.keyType = "ECDSA"
+				renewedCertificate.keySize = "P-256"
+				// Create new certificate BEFORE destroying the old one
+				mockCreateCertificate(m, renewedCertificate)
+				// Delete old certificate
+				mockDeleteCertificate(m, createData)
+				// Read before destroy
+				mockGetCertificate(m, renewedCertificate)
+				// Delete
+				mockDeleteCertificate(m, renewedCertificate)
+			},
+			createMockData: minCertificate,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCertificate/create/min_with_create_before_destroy.tf"),
+					Check: minCertChecker.
+						Build(),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCertificate/create/renew_min.tf"),
+					ConfigPlanChecks: resource.ConfigPlanChecks{
+						PreApply: []plancheck.PlanCheck{
+							plancheck.ExpectResourceAction("akamai_cloudcertificates_certificate.test",
+								plancheck.ResourceActionCreateBeforeDestroy),
+						},
+					},
+					Check: minCertChecker.
+						CheckEqual("name", "test.example.com2345678901").
+						CheckEqual("certificate_id", "123456").
+						CheckEqual("key_type", "ECDSA").
+						CheckEqual("key_size", "P-256").
+						Build(),
+				},
+			},
+		},
+		"happy path - create certificate and renew certificate": {
+			init: func(m *cloudcertificates.Mock, createData certificateTestData, _ certificateTestData) {
+				// Create
+				mockListCertificates(m, cloudcertificates.ListCertificatesRequest{
+					ContractID:      createData.contractID,
+					Domain:          createData.sans[0],
+					CertificateName: createData.baseName,
+				}, &cloudcertificates.ListCertificatesResponse{
+					Certificates: []cloudcertificates.Certificate{{}},
+				}, nil).Once()
+				mockCreateCertificate(m, createData)
+				// Read before renew
+				mockGetCertificate(m, createData).Twice()
+				// Renew
+				mockListCertificates(m, cloudcertificates.ListCertificatesRequest{
+					ContractID:      createData.contractID,
+					Domain:          createData.sans[0],
+					CertificateName: createData.baseName,
+				}, &cloudcertificates.ListCertificatesResponse{
+					Certificates: []cloudcertificates.Certificate{
+						{
+							CertificateName: createData.name,
+						},
+					},
+				}, nil).Once()
+
+				renewedName := fmt.Sprintf("%s.renewed.2025-05-01T12_05_01Z", createData.name)
+				renewedCertificate := createData
+				renewedCertificate.name = renewedName
+				renewedCertificate.baseName = renewedName
+				renewedCertificate.certificateID = "123456"
+				renewedCertificate.keyType = "ECDSA"
+				renewedCertificate.keySize = "P-256"
+				// Create new certificate BEFORE destroying the old one
+				mockCreateCertificate(m, renewedCertificate)
+				// Delete old certificate
+				mockDeleteCertificate(m, createData)
+				// Read before destroy
+				mockGetCertificate(m, renewedCertificate)
+				// Delete
+				mockDeleteCertificate(m, renewedCertificate)
+			},
+			createMockData: fullCertificateRSA,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCertificate/create/full_with_create_before_destroy.tf"),
+					Check: fullCertChecker.
+						Build(),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCertificate/create/renew_full.tf"),
+					ConfigPlanChecks: resource.ConfigPlanChecks{
+						PreApply: []plancheck.PlanCheck{
+							plancheck.ExpectResourceAction("akamai_cloudcertificates_certificate.test",
+								plancheck.ResourceActionCreateBeforeDestroy),
+						},
+					},
+					Check: fullCertChecker.
+						CheckEqual("name", "test-name.renewed.2025-05-01T12_05_01Z").
+						CheckEqual("certificate_id", "123456").
+						CheckEqual("key_type", "ECDSA").
+						CheckEqual("key_size", "P-256").
+						Build(),
+				},
+			},
+		},
 		"import - not renewed certificate": {
 			init: func(m *cloudcertificates.Mock, data certificateTestData, _ certificateTestData) {
 				// Import
@@ -476,7 +646,7 @@ func TestCertificateResource(t *testing.T) {
 		},
 		"import - renewed certificate": {
 			init: func(m *cloudcertificates.Mock, data certificateTestData, _ certificateTestData) {
-				data.name = "test-certificate.renewed.2025-05-01"
+				data.name = "test-certificate.renewed.2025-05-01T12_05_01Z"
 				// Import
 				mockGetCertificate(m, data)
 				// Read
@@ -488,7 +658,7 @@ func TestCertificateResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					ImportStateCheck: importChecker.
-						CheckEqual("name", "test-certificate.renewed.2025-05-01").
+						CheckEqual("name", "test-certificate.renewed.2025-05-01T12_05_01Z").
 						CheckEqual("base_name", "test-certificate").
 						Build(),
 					ImportStateId:      "12345",
@@ -633,6 +803,7 @@ func TestCertificateResource(t *testing.T) {
 		"expect error - PatchCertificate fails": {
 			init: func(m *cloudcertificates.Mock, createData certificateTestData, updateData certificateTestData) {
 				// Create
+				mockEmptyRenewalChain(m, createData)
 				mockCreateCertificate(m, createData)
 				// Read before update
 				mockGetCertificate(m, createData)
@@ -982,6 +1153,7 @@ func TestCertificateResource(t *testing.T) {
 		"expect error - update subject": {
 			init: func(m *cloudcertificates.Mock, createData certificateTestData, _ certificateTestData) {
 				// Create
+				mockEmptyRenewalChain(m, createData)
 				mockCreateCertificate(m, createData)
 				// Read before update
 				mockGetCertificate(m, createData)
@@ -1069,7 +1241,7 @@ func TestCertificateResource(t *testing.T) {
 			}
 
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, newSubproviderWithConfig(config)),
 				Steps:                    tc.steps,
 			})
 
@@ -1203,6 +1375,16 @@ func mockPatchCertificate(m *cloudcertificates.Mock, data certificateTestData) *
 	}, nil).Once()
 }
 
+func mockEmptyRenewalChain(m *cloudcertificates.Mock, data certificateTestData) {
+	mockListCertificates(m, cloudcertificates.ListCertificatesRequest{
+		ContractID:      data.contractID,
+		Domain:          data.sans[0],
+		CertificateName: data.baseName,
+	}, &cloudcertificates.ListCertificatesResponse{
+		Certificates: []cloudcertificates.Certificate{{}},
+	}, nil).Once()
+}
+
 func TestExtractBaseName(t *testing.T) {
 
 	tests := []struct {
@@ -1212,7 +1394,7 @@ func TestExtractBaseName(t *testing.T) {
 	}{
 		{"empty", "", ""},
 		{"casual name", "foo", "foo"},
-		{"renewed name", "foo.renewed.2025-05-01", "foo"},
+		{"renewed name", "foo.renewed.2025-05-01T12_05_01Z", "foo"},
 		{"bad suffix", "foo.rotated.2025-05-01", "foo.rotated.2025-05-01"},
 		{"non-existing date", "foo.renewed.2025-99-01", "foo.renewed.2025-99-01"},
 		{"no basename", ".renewed.2025-05-01", ".renewed.2025-05-01"},

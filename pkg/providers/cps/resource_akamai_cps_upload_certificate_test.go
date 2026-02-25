@@ -6,11 +6,11 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cps"
-	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/test"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cps"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/test"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
@@ -163,7 +163,7 @@ func TestResourceCPSUploadCertificateWithThirdPartyEnrollmentDependency(t *testi
 				}, nil).Once()
 				// Mock that the enrollment in not found after removal.
 				client.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: enrollmentID}).
-					Return(nil, cps.ErrEnrollmentNotFound).Once()
+					Return(nil, cps.ErrNotFound).Once()
 			},
 			enrollment:   getSimpleEnrollment(),
 			enrollmentID: 2,

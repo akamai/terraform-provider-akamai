@@ -10,10 +10,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/test"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/test"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
@@ -39,8 +39,9 @@ var basicChecker = test.NewStateChecker("akamai_property_hostname_bucket.test").
 func TestHostnameBucketResource_Create(t *testing.T) {
 	t.Parallel()
 	// decrease timeout and intervals for tests
-	forceTimeoutDuration = time.Second
-	getHostnameBucketActivationInterval = time.Second
+	config := defaultSubproviderConfig()
+	config.hostnameBucket.forceTimeoutDuration = time.Second
+	config.hostnameBucket.getHostnameBucketActivationInterval = time.Second
 
 	tests := map[string]struct {
 		init            func(*mockProperty)
@@ -583,7 +584,7 @@ func TestHostnameBucketResource_Create(t *testing.T) {
 			tc.init(&mp)
 
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, newSubproviderWithConfig(config)),
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureStringf(t, "testdata/TestResPropertyHostnameBucket/create/%s", tc.configFile),

@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/framework/modifiers"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/str"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/framework/modifiers"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/str"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-validators/mapvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -40,6 +40,21 @@ var (
 // HostnameBucketResource represents akamai_property_hostname_bucket resource.
 type HostnameBucketResource struct {
 	meta.Resource
+	hostnameBucketResourceConfig
+}
+
+type hostnameBucketResourceConfig struct {
+	// getHostnameBucketActivationInterval is the time interval after which consecutive requests are being sent.
+	getHostnameBucketActivationInterval time.Duration
+
+	// forceTimeoutDuration is used to overwrite `timeout_for_activation` for unit tests.
+	forceTimeoutDuration time.Duration
+}
+
+func defaultHostnameBucketResourceConfig() hostnameBucketResourceConfig {
+	return hostnameBucketResourceConfig{
+		getHostnameBucketActivationInterval: time.Second * 30,
+	}
 }
 
 // HostnameBucketResourceModel is a model for akamai_property_hostname_bucket resource.
@@ -159,10 +174,6 @@ func getStringValueWithPrefixOrNull(val, pre string) basetypes.StringValue {
 }
 
 var (
-	// getHostnameBucketActivationInterval is the time interval after which consecutive requests are being sent.
-	getHostnameBucketActivationInterval = time.Second * 30
-	// forceTimeoutDuration is used to overwrite `timeout_for_activation` for unit tests.
-	forceTimeoutDuration time.Duration
 	// errCancelActivation is returned when an activation has been cancelled.
 	errCancelActivation = errors.New("timeout has been reached; activation has been cancelled")
 	// hostnameObjectType represents the object inside the 'hostnames' attribute.
@@ -183,8 +194,12 @@ const (
 )
 
 // NewHostnameBucketResource returns new property hostname bucket resource.
-func NewHostnameBucketResource() resource.Resource {
-	return &HostnameBucketResource{}
+func NewHostnameBucketResource(config hostnameBucketResourceConfig) func() resource.Resource {
+	return func() resource.Resource {
+		return &HostnameBucketResource{
+			hostnameBucketResourceConfig: config,
+		}
+	}
 }
 
 // Metadata implements resource.Resource.
@@ -475,7 +490,7 @@ func (h *HostnameBucketResource) Create(ctx context.Context, req resource.Create
 	}
 
 	// Send the PATCH requests to add the hostnames and wait for their activation.
-	if err := plan.sendRequests(ctx, h.Client.GetPAPI(), requestsData.requests, waitForHostnameBucketActivation); err != nil {
+	if err := plan.sendRequests(ctx, h.Client.GetPAPI(), requestsData.requests, h.waitForHostnameBucketActivation); err != nil {
 		resp.Diagnostics.AddError("Create Property Hostname Bucket error", err.Error())
 		return
 	}
@@ -627,7 +642,7 @@ func (h *HostnameBucketResource) Update(ctx context.Context, req resource.Update
 		return
 	}
 
-	if err := plan.sendRequests(ctx, h.Client.GetPAPI(), requestsData.requests, waitForHostnameBucketActivation); err != nil {
+	if err := plan.sendRequests(ctx, h.Client.GetPAPI(), requestsData.requests, h.waitForHostnameBucketActivation); err != nil {
 		resp.Diagnostics.AddError("Update Property Hostname Bucket error", err.Error())
 		return
 	}
@@ -683,7 +698,7 @@ func (h *HostnameBucketResource) Delete(ctx context.Context, req resource.Delete
 		return
 	}
 
-	if err := state.sendRequests(ctx, h.Client.GetPAPI(), requestsData.requests, waitForHostnameBucketDeletion); err != nil {
+	if err := state.sendRequests(ctx, h.Client.GetPAPI(), requestsData.requests, h.waitForHostnameBucketDeletion); err != nil {
 		resp.Diagnostics.AddError("Delete Property Hostname Bucket Resource error", err.Error())
 		return
 	}
@@ -863,11 +878,11 @@ func findCurrentActivation(ctx context.Context, client papi.PAPI, data *Hostname
 	return papi.HostnameActivationListItem{}, fmt.Errorf("there is no active hostname activation for given property")
 }
 
-func waitForHostnameBucketActivation(ctx context.Context, client papi.PAPI, data HostnameBucketResourceModel) error {
+func (h *HostnameBucketResource) waitForHostnameBucketActivation(ctx context.Context, client papi.PAPI, data HostnameBucketResourceModel) error {
 	timeout := time.Duration(data.TimeoutForActivation.ValueInt64()) * time.Minute
 	// Overwrite the timeout value if the forceTimeoutDuration has been configured in unit tests.
-	if forceTimeoutDuration != 0 {
-		timeout = forceTimeoutDuration
+	if h.forceTimeoutDuration != 0 {
+		timeout = h.forceTimeoutDuration
 	}
 	deadline := time.Now().Add(timeout)
 
@@ -918,12 +933,12 @@ func waitForHostnameBucketActivation(ctx context.Context, client papi.PAPI, data
 						return fmt.Errorf("sent cancel request for the activation: %s, but reached the timeout for waiting until the change is active. Please remove local state and import the resource", cancelActivationID)
 					}
 
-					time.Sleep(getHostnameBucketActivationInterval)
+					time.Sleep(h.getHostnameBucketActivationInterval)
 				}
 			}
 		}
 
-		time.Sleep(getHostnameBucketActivationInterval)
+		time.Sleep(h.getHostnameBucketActivationInterval)
 	}
 }
 
@@ -932,7 +947,7 @@ func waitForHostnameBucketActivation(ctx context.Context, client papi.PAPI, data
 // but the resource would not be deleted locally.
 // Moreover, we would need to check and verify if the cancel request went through and was actually successful,
 // so let's not overcomplicate already complicated system.
-func waitForHostnameBucketDeletion(ctx context.Context, client papi.PAPI, data HostnameBucketResourceModel) error {
+func (h *HostnameBucketResource) waitForHostnameBucketDeletion(ctx context.Context, client papi.PAPI, data HostnameBucketResourceModel) error {
 	for {
 		activation, err := client.GetPropertyHostnameActivation(ctx, papi.GetPropertyHostnameActivationRequest{
 			PropertyID:           data.PropertyID.ValueString(),
@@ -947,7 +962,7 @@ func waitForHostnameBucketDeletion(ctx context.Context, client papi.PAPI, data H
 			return nil
 		}
 
-		time.Sleep(getHostnameBucketActivationInterval)
+		time.Sleep(h.getHostnameBucketActivationInterval)
 	}
 }
 

@@ -8,9 +8,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/dns"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/dns"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/ptr"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/test"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/assert"
@@ -243,7 +245,7 @@ func TestResDnsRecord(t *testing.T) {
 				Record: &dns.RecordBody{
 					Name:       "exampleterraform.io",
 					RecordType: "TXT",
-					TTL:        300,
+					TTL:        ptr.To(300),
 					Active:     false,
 					Target:     []string{normalizedTarget1, normalizedTarget2, normalizedTarget3},
 				},
@@ -334,7 +336,7 @@ func TestResDnsRecord(t *testing.T) {
 				Record: &dns.RecordBody{
 					Name:       "origin.example.org",
 					RecordType: "SRV",
-					TTL:        300,
+					TTL:        ptr.To(300),
 					Active:     false,
 					Target:     []string{targetBig, targetSmall, targetTiny},
 				},
@@ -426,7 +428,7 @@ func TestResDnsRecord(t *testing.T) {
 				Record: &dns.RecordBody{
 					Name:       "origin.example.org",
 					RecordType: "SRV",
-					TTL:        300,
+					TTL:        ptr.To(300),
 					Active:     false,
 					Target:     []string{targetBig, targetSmall, targetTiny},
 				},
@@ -535,7 +537,7 @@ func TestResDnsRecord(t *testing.T) {
 				Record: &dns.RecordBody{
 					Name:       "exampleterraform.io",
 					RecordType: "AAAA",
-					TTL:        300,
+					TTL:        ptr.To(300),
 					Active:     false,
 					Target:     targetSent,
 				},
@@ -606,6 +608,173 @@ func TestResDnsRecord(t *testing.T) {
 
 		client.AssertExpectations(t)
 	})
+
+	t.Run("A record with ttl set to 0", func(t *testing.T) {
+		client := &dns.Mock{}
+
+		// read
+		client.On("GetRecord",
+			testutils.MockContext,
+			dns.GetRecordRequest{
+				Zone:       "exampleterraform.io",
+				Name:       "exampleterraform.io",
+				RecordType: "A",
+			},
+		).Return(nil, notFound).Once()
+
+		// create
+		client.On("CreateRecord",
+			testutils.MockContext,
+			dns.CreateRecordRequest{
+				Record: &dns.RecordBody{
+					Name:       "exampleterraform.io",
+					RecordType: "A",
+					TTL:        ptr.To(0),
+					Active:     false,
+					Target:     []string{"10.0.0.2", "10.0.0.3"},
+				},
+				Zone:    "exampleterraform.io",
+				RecLock: []bool{false},
+			},
+		).Return(nil).Once()
+
+		// read
+		client.On("GetRecord",
+			testutils.MockContext,
+			mock.AnythingOfType("dns.GetRecordRequest"),
+		).Return(&dns.GetRecordResponse{
+			Name:       "exampleterraform.io",
+			RecordType: "A",
+			TTL:        0,
+			Active:     false,
+			Target:     []string{"10.0.0.2", "10.0.0.3"},
+		}, nil).Once()
+
+		retCreate := dnsClient.ParseRData(context.Background(), "A", []string{"10.0.0.2", "10.0.0.3"})
+
+		client.On("ParseRData",
+			testutils.MockContext,
+			"A",
+			[]string{"10.0.0.2", "10.0.0.3"},
+		).Return(retCreate).Times(3)
+
+		client.On("ProcessRdata",
+			testutils.MockContext,
+			[]string{"10.0.0.2", "10.0.0.3"},
+			"A",
+		).Return([]string{"A"}, nil).Times(4)
+
+		client.On("GetRecord",
+			testutils.MockContext,
+			dns.GetRecordRequest{
+				Zone:       "exampleterraform.io",
+				Name:       "exampleterraform.io",
+				RecordType: "A",
+			},
+		).Return(&dns.GetRecordResponse{
+			Name:       "exampleterraform.io",
+			RecordType: "exampleterraform.io",
+			TTL:        0,
+			Active:     false,
+			Target:     []string{"10.0.0.2", "10.0.0.3"},
+		}, nil).Times(3)
+
+		// update
+		client.On("UpdateRecord",
+			testutils.MockContext,
+			dns.UpdateRecordRequest{
+				Record: &dns.RecordBody{
+					Name:       "exampleterraform.io",
+					RecordType: "A",
+					TTL:        ptr.To(0),
+					Active:     false,
+					Target:     []string{"10.0.0.4", "10.0.0.5"},
+				},
+				Zone:    "exampleterraform.io",
+				RecLock: []bool{false},
+			},
+		).Return(nil).Once()
+
+		// read
+		client.On("GetRecord",
+			testutils.MockContext,
+			dns.GetRecordRequest{
+				Zone:       "exampleterraform.io",
+				Name:       "exampleterraform.io",
+				RecordType: "A",
+			},
+		).Return(&dns.GetRecordResponse{
+			Name:       "exampleterraform.io",
+			RecordType: "A",
+			TTL:        0,
+			Active:     false,
+			Target:     []string{"10.0.0.4", "10.0.0.5"},
+		}, nil).Times(2)
+
+		retUpdate := dnsClient.ParseRData(context.Background(), "A", []string{"10.0.0.4", "10.0.0.5"})
+
+		client.On("ParseRData",
+			testutils.MockContext,
+			"A",
+			[]string{"10.0.0.4", "10.0.0.5"},
+		).Return(retUpdate).Times(2)
+
+		client.On("ProcessRdata",
+			testutils.MockContext,
+			[]string{"10.0.0.4", "10.0.0.5"},
+			"A",
+		).Return([]string{"A"}, nil).Times(2)
+
+		// delete
+		client.On("DeleteRecord",
+			testutils.MockContext,
+			dns.DeleteRecordRequest{
+				Zone:       "exampleterraform.io",
+				Name:       "exampleterraform.io",
+				RecordType: "A",
+				RecLock:    []bool{false},
+			},
+		).Return(nil).Once()
+
+		resourceName := "akamai_dns_record.a_record"
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResDnsRecord/create_with_ttl_0.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(resourceName, "zone", "exampleterraform.io"),
+							resource.TestCheckResourceAttr(resourceName, "name", "exampleterraform.io"),
+							resource.TestCheckResourceAttr(resourceName, "recordtype", "A"),
+							resource.TestCheckResourceAttr(resourceName, "ttl", "0"),
+							resource.TestCheckNoResourceAttr(resourceName, "active"),
+							resource.TestCheckResourceAttr(resourceName, "target.#", "2"),
+							resource.TestCheckResourceAttr(resourceName, "target.0", "10.0.0.2"),
+							resource.TestCheckResourceAttr(resourceName, "target.1", "10.0.0.3"),
+						),
+					},
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResDnsRecord/update_with_ttl_0.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(resourceName, "zone", "exampleterraform.io"),
+							resource.TestCheckResourceAttr(resourceName, "name", "exampleterraform.io"),
+							resource.TestCheckResourceAttr(resourceName, "recordtype", "A"),
+							resource.TestCheckResourceAttr(resourceName, "ttl", "0"),
+							resource.TestCheckNoResourceAttr(resourceName, "active"),
+							resource.TestCheckResourceAttr(resourceName, "target.#", "2"),
+							resource.TestCheckResourceAttr(resourceName, "target.0", "10.0.0.4"),
+							resource.TestCheckResourceAttr(resourceName, "target.1", "10.0.0.5"),
+						),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
 	t.Run("AAAA record with invalid IPv6 address", func(t *testing.T) {
 		client := &dns.Mock{}
 
@@ -641,6 +810,265 @@ func TestResDnsRecord(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
+	t.Run("expect error - empty zone", func(t *testing.T) {
+		client := &dns.Mock{}
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResDnsRecord/validation/empty_zone.tf"),
+						ExpectError: regexp.MustCompile("Error: zone must not be empty"),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("expect error - empty name", func(t *testing.T) {
+		client := &dns.Mock{}
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResDnsRecord/validation/empty_name.tf"),
+						ExpectError: regexp.MustCompile("configuration argument name must be set"),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("expect error - empty record type", func(t *testing.T) {
+		client := &dns.Mock{}
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResDnsRecord/validation/empty_record_type.tf"),
+						ExpectError: regexp.MustCompile(`The argument "recordtype" is required, but no definition was found.`),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("expect error - wrong record type", func(t *testing.T) {
+		client := &dns.Mock{}
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResDnsRecord/validation/wrong_record_type.tf"),
+						ExpectError: regexp.MustCompile(`Error: expected recordtype to be one of \["A" "AAAA" "CNAME" ` +
+							`"LOC" "NS" "PTR" "SPF" "TXT" "AFSDB" "DNSKEY" "DS" "HINFO" "MX" "NAPTR" "NSEC3" ` +
+							`"NSEC3PARAM" "RP" "RRSIG" "SRV" "SSHFP" "SOA" "AKAMAICDN" "AKAMAITLC" "CAA" "CERT" ` +
+							`"TLSA" "SVCB" "HTTPS"\], got WRONG_TYPE`),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("expect error - empty ttl", func(t *testing.T) {
+		client := &dns.Mock{}
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResDnsRecord/validation/empty_ttl.tf"),
+						ExpectError: regexp.MustCompile("The argument \"ttl\" is required, but no definition was found."),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("expect error - negative ttl", func(t *testing.T) {
+		client := &dns.Mock{}
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureString(t, "testdata/TestResDnsRecord/validation/negative_ttl.tf"),
+						ExpectError: regexp.MustCompile(`Error: expected ttl to be at least \(0\), got -1`),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+}
+
+func TestDnsRecordImport(t *testing.T) {
+	baseImportChecker := test.NewImportChecker().
+		CheckEqual("recordtype", "A").
+		CheckEqual("name", "exampleterraform.io").
+		CheckEqual("zone", "exampleterraform.io").
+		CheckEqual("target.#", "2").
+		CheckEqual("target.0", "10.0.0.2").
+		CheckEqual("target.1", "10.0.0.3").
+		CheckEqual("ttl", "300").
+		CheckMissing("active")
+
+	tests := map[string]struct {
+		zone        string
+		recordName  string
+		recordType  string
+		init        func(d *dns.Mock)
+		expectError *regexp.Regexp
+		stateCheck  resource.ImportStateCheckFunc
+	}{
+		"basic import": {
+			zone:       "exampleterraform.io",
+			recordName: "exampleterraform.io",
+			recordType: "A",
+			init: func(d *dns.Mock) {
+				d.On("GetRecord", testutils.MockContext, dns.GetRecordRequest{
+					Zone:       "exampleterraform.io",
+					Name:       "exampleterraform.io",
+					RecordType: "A",
+				}).Return(&dns.GetRecordResponse{
+					Name:       "exampleterraform.io",
+					RecordType: "A",
+					TTL:        300,
+					Active:     false,
+					Target:     []string{"10.0.0.2", "10.0.0.3"},
+				}, nil).Times(2)
+
+				d.On("ProcessRdata",
+					testutils.MockContext,
+					[]string{"10.0.0.2", "10.0.0.3"},
+					"A",
+				).Return([]string{"A"}, nil).Times(2)
+
+				d.On("ParseRData",
+					testutils.MockContext,
+					"A",
+					[]string{"10.0.0.2", "10.0.0.3"},
+				).Return(map[string]interface{}{
+					"target": []string{"10.0.0.2", "10.0.0.3"},
+				}).Times(2)
+			},
+			stateCheck: baseImportChecker.
+				Build(),
+		},
+		"import with ttl 0": {
+			zone:       "exampleterraform.io",
+			recordName: "exampleterraform.io",
+			recordType: "A",
+			init: func(d *dns.Mock) {
+				d.On("GetRecord", testutils.MockContext, dns.GetRecordRequest{
+					Zone:       "exampleterraform.io",
+					Name:       "exampleterraform.io",
+					RecordType: "A",
+				}).Return(&dns.GetRecordResponse{
+					Name:       "exampleterraform.io",
+					RecordType: "A",
+					TTL:        0,
+					Active:     false,
+					Target:     []string{"10.0.0.2", "10.0.0.3"},
+				}, nil).Times(2)
+
+				d.On("ProcessRdata",
+					testutils.MockContext,
+					[]string{"10.0.0.2", "10.0.0.3"},
+					"A",
+				).Return([]string{"A"}, nil).Times(2)
+
+				d.On("ParseRData",
+					testutils.MockContext,
+					"A",
+					[]string{"10.0.0.2", "10.0.0.3"},
+				).Return(map[string]interface{}{
+					"target": []string{"10.0.0.2", "10.0.0.3"},
+				}).Times(2)
+			},
+			stateCheck: baseImportChecker.
+				CheckEqual("ttl", "0").
+				Build(),
+		},
+		"expect error - no zone": {
+			zone:        "",
+			recordName:  "exampleterraform.io",
+			recordType:  "A",
+			expectError: regexp.MustCompile("Error: invalid ID for Zone Import: #exampleterraform.io#A"),
+		},
+		"expect error - no record name": {
+			zone:        "exampleterraform.io",
+			recordName:  "",
+			recordType:  "A",
+			expectError: regexp.MustCompile("Error: invalid ID for Zone Import: exampleterraform.io##A"),
+		},
+		"expect error - no record type": {
+			zone:        "exampleterraform.io",
+			recordName:  "exampleterraform.io",
+			recordType:  "",
+			expectError: regexp.MustCompile("Error: invalid ID for Zone Import: exampleterraform.io#exampleterraform.io#"),
+		},
+		"expect error - wrong ID, record not found": {
+			zone:       "wrong-zone.com",
+			recordName: "wrong-record",
+			recordType: "WRONG",
+			init: func(d *dns.Mock) {
+				d.On("GetRecord", testutils.MockContext, dns.GetRecordRequest{
+					Zone:       "wrong-zone.com",
+					Name:       "wrong-record",
+					RecordType: "WRONG",
+				}).Return(nil, &dns.Error{
+					StatusCode: http.StatusNotFound,
+				}).Once()
+			},
+			expectError: regexp.MustCompile("Error: record not found"),
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			client := &dns.Mock{}
+			if tc.init != nil {
+				tc.init(client)
+			}
+			useClient(client, func() {
+				resource.UnitTest(t, resource.TestCase{
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+					Steps: []resource.TestStep{
+						{
+							ImportStateCheck: tc.stateCheck,
+							ImportStateId:    fmt.Sprintf("%s#%s#%s", tc.zone, tc.recordName, tc.recordType),
+							ImportState:      true,
+							ResourceName:     "akamai_dns_record.a_record",
+							Config:           testutils.LoadFixtureString(t, "testdata/TestResDnsRecord/import_with_ttl_0.tf"),
+							ExpectError:      tc.expectError,
+						},
+					},
+				})
+			})
+			client.AssertExpectations(t)
+		})
+	}
 }
 
 func TestMXRecord(t *testing.T) {
@@ -664,7 +1092,13 @@ func TestMXRecord(t *testing.T) {
 			Return(nil).Once()
 	}
 	mockRead := func(d *dns.Mock, realClient dns.DNS, createdRecord *dns.RecordBody) {
-		response := (*dns.GetRecordResponse)(createdRecord)
+		response := &dns.GetRecordResponse{
+			Name:       createdRecord.Name,
+			RecordType: createdRecord.RecordType,
+			TTL:        *createdRecord.TTL,
+			Active:     createdRecord.Active,
+			Target:     createdRecord.Target,
+		}
 		d.On("GetRecord", testutils.MockContext, getRecordRequest).
 			Return(response, nil).Once()
 		d.On("ProcessRdata", testutils.MockContext, createdRecord.Target, mx).
@@ -677,7 +1111,13 @@ func TestMXRecord(t *testing.T) {
 			Return(realClient.ProcessRdata(context.Background(), createdRecord.Target, mx)).Once()
 	}
 	mockUpdate := func(d *dns.Mock, realClient dns.DNS, previousRecord *dns.RecordBody, updatedRecord *dns.RecordBody) {
-		response := (*dns.GetRecordResponse)(previousRecord)
+		response := &dns.GetRecordResponse{
+			Name:       previousRecord.Name,
+			RecordType: previousRecord.RecordType,
+			TTL:        *previousRecord.TTL,
+			Active:     previousRecord.Active,
+			Target:     previousRecord.Target,
+		}
 		d.On("GetRecord", testutils.MockContext, getRecordRequest).
 			Return(response, nil).Once()
 		d.On("ProcessRdata", testutils.MockContext, previousRecord.Target, mx).
@@ -705,7 +1145,7 @@ func TestMXRecord(t *testing.T) {
 		createdRecord := &dns.RecordBody{
 			Name:       name,
 			RecordType: mx,
-			TTL:        300,
+			TTL:        ptr.To(300),
 			Target:     createTargets,
 		}
 		mockCreate(d, dnsClient, createdRecord)
@@ -719,7 +1159,7 @@ func TestMXRecord(t *testing.T) {
 		updatedRecord := &dns.RecordBody{
 			Name:       name,
 			RecordType: mx,
-			TTL:        300,
+			TTL:        ptr.To(300),
 			Target:     updateTargets,
 		}
 		mockUpdate(d, dnsClient, createdRecord, updatedRecord)
@@ -731,7 +1171,7 @@ func TestMXRecord(t *testing.T) {
 		deleteRecord := &dns.RecordBody{
 			Name:       name,
 			RecordType: mx,
-			TTL:        300,
+			TTL:        ptr.To(300),
 			Target:     deleteTargets,
 		}
 		mockDelete(d, deleteRecord)

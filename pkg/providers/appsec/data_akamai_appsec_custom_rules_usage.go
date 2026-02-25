@@ -5,13 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -24,11 +23,10 @@ type (
 
 	// customRulesUsageDataSourceModel describes the data source data model for CustomRulesUsageDataSource.
 	customRulesUsageDataSourceModel struct {
-		ConfigID   types.Int64             `tfsdk:"config_id"`
-		RuleIDs    types.Set               `tfsdk:"rule_ids"`
-		Rules      []customRulesUsageModel `tfsdk:"rules"`
-		JSON       types.String            `tfsdk:"json"`
-		OutputText types.String            `tfsdk:"output_text"`
+		ConfigID types.Int64             `tfsdk:"config_id"`
+		RuleIDs  types.Set               `tfsdk:"rule_ids"`
+		Rules    []customRulesUsageModel `tfsdk:"rules"`
+		JSON     types.String            `tfsdk:"json"`
 	}
 
 	customRulesUsageModel struct {
@@ -39,12 +37,6 @@ type (
 	policyModel struct {
 		PolicyID   types.String `tfsdk:"policy_id"`
 		PolicyName types.String `tfsdk:"policy_name"`
-	}
-
-	customRuleUsageItem struct {
-		RuleID     int64  `json:"ruleId"`
-		PolicyID   string `json:"policyId"`
-		PolicyName string `json:"policyName"`
 	}
 )
 
@@ -113,10 +105,6 @@ func (d *customRulesUsageDataSource) Schema(_ context.Context, _ datasource.Sche
 				Computed:    true,
 				Description: "JSON-formatted information about the custom rules usage.",
 			},
-			"output_text": schema.StringAttribute{
-				Computed:    true,
-				Description: "Tabular representation of the custom rules usage.",
-			},
 		},
 	}
 }
@@ -181,40 +169,13 @@ func (d *customRulesUsageDataSource) Read(ctx context.Context, request datasourc
 		return
 	}
 
-	outputText, diags := createOutputText(rules)
-	response.Diagnostics.Append(diags...)
 	if response.Diagnostics.HasError() {
 		return
 	}
 
 	data.Rules = usage
 	data.JSON = types.StringValue(string(jsonBody))
-	data.OutputText = types.StringValue(outputText)
 	response.Diagnostics.Append(response.State.Set(ctx, &data)...)
-}
-
-func createOutputText(rules []appsec.CustomRuleUsage) (string, diag.Diagnostics) {
-	var diags diag.Diagnostics
-	ots := OutputTemplates{}
-	InitTemplates(ots)
-
-	usageItems := make([]customRuleUsageItem, 0, len(rules))
-	for _, rule := range rules {
-		usageItem := customRuleUsageItem{
-			RuleID: rule.RuleID,
-		}
-		for _, policy := range rule.Policies {
-			usageItem.PolicyID = policy.PolicyID
-			usageItem.PolicyName = policy.PolicyName
-			usageItems = append(usageItems, usageItem)
-		}
-	}
-
-	outputText, err := RenderTemplates(ots, "customRulesUsage", usageItems)
-	if err != nil {
-		diags.AddError("Error rendering output text", err.Error())
-	}
-	return outputText, diags
 }
 
 func createCustomRulesUsageModel(rules []appsec.CustomRuleUsage) []customRulesUsageModel {

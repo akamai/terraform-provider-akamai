@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/domainownership"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/domainownership"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -26,15 +26,18 @@ var (
 	_ resource.Resource                = &DomainOwnershipValidationResource{}
 	_ resource.ResourceWithImportState = &DomainOwnershipValidationResource{}
 	_ resource.ResourceWithConfigure   = &DomainOwnershipValidationResource{}
-
-	searchInterval     = 30 * time.Second
-	defaultPollTimeout = 30 * time.Minute
 )
 
 type (
 	// DomainOwnershipValidationResource represents akamai_domainownership_validation resource.
 	DomainOwnershipValidationResource struct {
 		meta.Resource
+		domainOwnershipValidationResourceConfig
+	}
+
+	domainOwnershipValidationResourceConfig struct {
+		searchInterval     time.Duration
+		defaultPollTimeout time.Duration
 	}
 
 	domainOwnershipValidationResourceModel struct {
@@ -60,9 +63,20 @@ type (
 	}
 )
 
+func defaultDomainOwnershipValidationResourceConfig() domainOwnershipValidationResourceConfig {
+	return domainOwnershipValidationResourceConfig{
+		searchInterval:     30 * time.Second,
+		defaultPollTimeout: 30 * time.Minute,
+	}
+}
+
 // NewDomainOwnershipValidationResource returns new domain ownership validation resource.
-func NewDomainOwnershipValidationResource() resource.Resource {
-	return &DomainOwnershipValidationResource{}
+func NewDomainOwnershipValidationResource(config domainOwnershipValidationResourceConfig) func() resource.Resource {
+	return func() resource.Resource {
+		return &DomainOwnershipValidationResource{
+			domainOwnershipValidationResourceConfig: config,
+		}
+	}
 }
 
 // Metadata implements resource.Resource.
@@ -122,12 +136,16 @@ func validateDomainsSchema() schema.SetNestedAttribute {
 					MarkdownDescription: "The method used to validate the domain. Possible values are: \n" +
 						"* `DNS_CNAME` - For this method, Akamai generates a `cname_record` that you copy as the `target` to a `CNAME` record of your DNS configuration. The record's name needs to be in the `_acme-challenge.domain-name` format.\n" +
 						"* `DNS_TXT` - For this method, Akamai generates a `txt_record` with a token `value` that you copy as the `target` to a `TXT` record of your DNS configuration. The record's name needs to be in the `_akamai-{host|wildcard|domain}-challenge.domainName` format based on the validation scope.\n" +
-						"* `HTTP` - Applies only to domains with the `HOST` validation scope. For this method, you create the file containing a token and place it on your HTTP server in the location specified by the `validation_challenge.http_file.path` or use a redirect to the `validation_challenge.http_redirect.to` with the token.",
+						"* `HTTP` - Applies only to domains with the `HOST` validation scope. For this method, you create the file containing a token and place it on your HTTP server in the location specified by the `validation_challenge.http_file.path` or use a redirect to the `validation_challenge.http_redirect.to` with the token.\n" +
+						"* `SYSTEM` - no longer supported for new validations.\n" +
+						"* `MANUAL` - no longer supported for new validations.",
 					Validators: []validator.String{
 						stringvalidator.OneOf(
 							string(domainownership.ValidationMethodDNSCNAME),
 							string(domainownership.ValidationMethodDNSTXT),
-							string(domainownership.ValidationMethodHTTP)),
+							string(domainownership.ValidationMethodHTTP),
+							string(domainownership.ValidationMethodSYSTEM),
+							string(domainownership.ValidationMethodMANUAL)),
 					},
 				},
 			},
@@ -175,14 +193,21 @@ func (d *DomainOwnershipValidationResource) Create(ctx context.Context, req reso
 		return
 	}
 
+	if err := validationHandler.ensureCorrectValidationMethods(); err != nil {
+		resp.Diagnostics.AddError("Error Validating Domains", err.Error())
+		return
+	}
+
+	var validatedDomainsNames []string
+
 	requests := validationHandler.buildValidateRequests()
-	domainsToPoll, err := validateDomains(ctx, d.Client.GetDomainOwnership(), requests)
+	domainsToPoll, err := validateDomains(ctx, d.Client.GetDomainOwnership(), requests, &validatedDomainsNames)
 	if err != nil {
 		resp.Diagnostics.AddError("Error Validating Domains", err.Error())
 		return
 	}
 
-	createTimeout, diags := plan.Timeouts.Create(ctx, defaultPollTimeout)
+	createTimeout, diags := plan.Timeouts.Create(ctx, d.defaultPollTimeout)
 	if resp.Diagnostics.Append(diags...); resp.Diagnostics.HasError() {
 		return
 	}
@@ -192,11 +217,18 @@ func (d *DomainOwnershipValidationResource) Create(ctx context.Context, req reso
 			"domains": domainsToPoll,
 			"timeout": createTimeout,
 		})
-		resp.Diagnostics.Append(waitForDomains(ctx, d.Client.GetDomainOwnership(), domainsToPoll, createTimeout)...)
+		resp.Diagnostics.Append(d.waitForDomains(ctx, d.Client.GetDomainOwnership(), domainsToPoll, createTimeout, &validatedDomainsNames)...)
 		if resp.Diagnostics.HasError() {
-			resp.Diagnostics.AddWarning("Partial success of create",
-				"Some domains scheduled for validation may not have been validated. "+
-					"Rerun 'terraform apply' to retry validating the remaining domains.")
+			if len(validatedDomainsNames) > 0 {
+				resp.Diagnostics.AddWarning(
+					"Partial domain validation",
+					fmt.Sprintf(
+						"Some domains scheduled for validation may not have been validated. "+
+							"Successfully validated domains: %s. "+
+							"Rerun 'terraform apply' to retry validating the remaining domains.",
+						strings.Join(validatedDomainsNames, ", "),
+					))
+			}
 			return
 		}
 	}
@@ -375,14 +407,21 @@ func (d *DomainOwnershipValidationResource) Update(ctx context.Context, req reso
 		return
 	}
 
+	if err := validationHandler.ensureCorrectValidationMethods(); err != nil {
+		resp.Diagnostics.AddError("Error Validating Domains", err.Error())
+		return
+	}
+
+	var validatedDomainsNames []string
+
 	validateRequests := validationHandler.buildValidateRequests()
-	domainsToPoll, err := validateDomains(ctx, d.Client.GetDomainOwnership(), validateRequests)
+	domainsToPoll, err := validateDomains(ctx, d.Client.GetDomainOwnership(), validateRequests, &validatedDomainsNames)
 	if err != nil {
 		resp.Diagnostics.AddError("Error Validating Domains", err.Error())
 		return
 	}
 
-	updateTimeout, diags := plan.Timeouts.Update(ctx, defaultPollTimeout)
+	updateTimeout, diags := plan.Timeouts.Update(ctx, d.defaultPollTimeout)
 	if resp.Diagnostics.Append(diags...); resp.Diagnostics.HasError() {
 		return
 	}
@@ -392,11 +431,18 @@ func (d *DomainOwnershipValidationResource) Update(ctx context.Context, req reso
 			"domains": domainsToPoll,
 			"timeout": updateTimeout,
 		})
-		resp.Diagnostics.Append(waitForDomains(ctx, d.Client.GetDomainOwnership(), domainsToPoll, updateTimeout)...)
+		resp.Diagnostics.Append(d.waitForDomains(ctx, d.Client.GetDomainOwnership(), domainsToPoll, updateTimeout, &validatedDomainsNames)...)
 		if resp.Diagnostics.HasError() {
-			resp.Diagnostics.AddWarning("Partial success of update",
-				"Domains scheduled for invalidation have been successfully invalidated while "+
-					"some domains scheduled for validation may not have been validated")
+			if len(validatedDomainsNames) > 0 {
+				resp.Diagnostics.AddWarning(
+					"Partial domain validation",
+					fmt.Sprintf(
+						"Domains scheduled for invalidation have been successfully invalidated while "+
+							"some domains scheduled for validation may not have been validated. "+
+							"Successfully validated domains: %s. ",
+						strings.Join(validatedDomainsNames, ", "),
+					))
+			}
 			return
 		}
 	}
@@ -733,7 +779,7 @@ func fetchDomainsFromAPI(ctx context.Context, client domainownership.DomainOwner
 	return apiDomains.Domains, nil
 }
 
-func validateDomains(ctx context.Context, client domainownership.DomainOwnership, requests []domainownership.ValidateDomainsRequest) (map[domainKey]domainDetails, error) {
+func validateDomains(ctx context.Context, client domainownership.DomainOwnership, requests []domainownership.ValidateDomainsRequest, validatedDomainsNames *[]string) (map[domainKey]domainDetails, error) {
 	domainsToPoll := make(map[domainKey]domainDetails)
 	for _, request := range requests {
 		validatedDomains, err := client.ValidateDomains(ctx, request)
@@ -752,6 +798,8 @@ func validateDomains(ctx context.Context, client domainownership.DomainOwnership
 				}] = domainDetails{
 					validationStatus: d.DomainStatus,
 				}
+			} else {
+				*validatedDomainsNames = append(*validatedDomainsNames, d.DomainName)
 			}
 		}
 	}
@@ -766,12 +814,12 @@ func formatDomainsForDiag(domains map[domainKey]domainDetails) string {
 	return strings.Join(domainInfos, ", ")
 }
 
-func waitForDomains(ctx context.Context, client domainownership.DomainOwnership, domainsToPoll map[domainKey]domainDetails, timeout time.Duration) diag.Diagnostics {
+func (d *DomainOwnershipValidationResource) waitForDomains(ctx context.Context, client domainownership.DomainOwnership, domainsToPoll map[domainKey]domainDetails, timeout time.Duration, validatedDomainsNames *[]string) diag.Diagnostics {
 	var diags diag.Diagnostics
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	searchPollIntervalTicker := time.NewTicker(searchInterval)
+	searchPollIntervalTicker := time.NewTicker(d.searchInterval)
 	defer searchPollIntervalTicker.Stop()
 
 	for {
@@ -820,6 +868,7 @@ func waitForDomains(ctx context.Context, client domainownership.DomainOwnership,
 						domainName:      d.DomainName,
 						validationScope: d.ValidationScope,
 					})
+					*validatedDomainsNames = append(*validatedDomainsNames, d.DomainName)
 				} else {
 					domainsToPoll[domainKey{
 						domainName:      d.DomainName,

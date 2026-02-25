@@ -7,8 +7,8 @@ import (
 	"slices"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/apidefinitions"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/date"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/apidefinitions"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/date"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )

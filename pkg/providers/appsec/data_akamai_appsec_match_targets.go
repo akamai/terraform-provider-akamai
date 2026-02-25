@@ -6,9 +6,9 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -44,11 +44,6 @@ func dataSourceMatchTargets() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "JSON Export representation",
-			},
-			"output_text": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Text representation",
 			},
 		},
 	}
@@ -94,22 +89,6 @@ func dataSourceMatchTargetsRead(ctx context.Context, d *schema.ResourceData, m i
 
 	ots := OutputTemplates{}
 	InitTemplates(ots)
-
-	matchtargetCount := len(matchtargets.MatchTargets.WebsiteTargets) + len(matchtargets.MatchTargets.APITargets)
-	matchtargetsOutputText := make([]MatchTargetOutputText, 0, matchtargetCount)
-	for _, value := range matchtargets.MatchTargets.WebsiteTargets {
-		matchtargetsOutputText = append(matchtargetsOutputText, MatchTargetOutputText{value.TargetID, value.SecurityPolicy.PolicyID, WebsiteTarget})
-	}
-	for _, value := range matchtargets.MatchTargets.APITargets {
-		matchtargetsOutputText = append(matchtargetsOutputText, MatchTargetOutputText{value.TargetID, value.SecurityPolicy.PolicyID, APITarget})
-	}
-	websiteMatchTargetsText, err := RenderTemplates(ots, "matchTargetDS", matchtargetsOutputText)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("output_text", websiteMatchTargetsText); err != nil {
-		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
-	}
 
 	d.SetId(strconv.Itoa(getMatchTargets.ConfigID))
 

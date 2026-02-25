@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -30,11 +30,6 @@ func dataSourceContractsGroups() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "JSON representation",
-			},
-			"output_text": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Text representation",
 			},
 			"default_contractid": {
 				Type:        schema.TypeString,
@@ -73,17 +68,6 @@ func dataSourceContractsGroupsRead(ctx context.Context, d *schema.ResourceData, 
 	if err != nil {
 		logger.Errorf("calling 'getContractsGroups': %s", err.Error())
 		return diag.FromErr(err)
-	}
-
-	ots := OutputTemplates{}
-	InitTemplates(ots)
-
-	outputtext, err := RenderTemplates(ots, "contractsgroupsDS", contractsgroups)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("output_text", outputtext); err != nil {
-		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	jsonBody, err := json.Marshal(contractsgroups)

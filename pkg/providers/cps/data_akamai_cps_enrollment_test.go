@@ -6,10 +6,10 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cps"
-	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cps"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
@@ -20,6 +20,11 @@ const (
 	enrollment4ID = 4
 	changeID      = 2848126
 )
+
+type warnings struct {
+	pre  string
+	post string
+}
 
 var (
 	enrollmentDV1 = &cps.GetEnrollmentResponse{
@@ -341,14 +346,12 @@ var (
 func TestDataEnrollment(t *testing.T) {
 	t.Parallel()
 	tests := map[string]struct {
-		enrollment   *cps.GetEnrollmentResponse
-		enrollmentID int
-		init         func(*testing.T, *cps.Mock)
-		steps        []resource.TestStep
+		enrollment *cps.GetEnrollmentResponse
+		init       func(*testing.T, *cps.Mock)
+		steps      []resource.TestStep
 	}{
-		"happy path without challenges": {
-			enrollment:   enrollmentDV1,
-			enrollmentID: enrollment1ID,
+		"happy path without challenges and post and pre verification warnings": {
+			enrollment: enrollmentDV1,
 			init: func(_ *testing.T, m *cps.Mock) {
 				m.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{
 					EnrollmentID: enrollment1ID,
@@ -357,17 +360,26 @@ func TestDataEnrollment(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDataEnrollment/enrollment_without_challenges.tf"),
-					Check:  checkAttributesForEnrollment(enrollmentDV1, enrollment1ID, mockEmptyChanges(), mockEmptyDVArray()),
+					Check:  checkAttributesForEnrollment(enrollmentDV1, enrollment1ID, mockEmptyChanges(), mockEmptyDVArray(), mockNoWarnings()),
 				},
 			},
 		},
-		"happy path with challenges": {
-			enrollment:   enrollmentDV2,
-			enrollmentID: enrollment2ID,
+		"happy path with challenges and no post and pre verification warnings": {
+			enrollment: enrollmentDV2,
 			init: func(_ *testing.T, m *cps.Mock) {
 				m.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{
 					EnrollmentID: enrollment2ID,
 				}).Return(enrollmentDV2, nil).Times(3)
+
+				m.On("GetChangePreVerificationWarnings", testutils.MockContext, cps.GetChangeRequest{
+					EnrollmentID: enrollment2ID,
+					ChangeID:     changeID,
+				}).Return(nil, cps.ErrNotFound).Times(3)
+
+				m.On("GetChangePostVerificationWarnings", testutils.MockContext, cps.GetChangeRequest{
+					EnrollmentID: enrollment2ID,
+					ChangeID:     changeID,
+				}).Return(nil, cps.ErrNotFound).Times(3)
 
 				dvArray := mockDVArray()
 				change := mockLetsEncryptChallenges()
@@ -385,13 +397,53 @@ func TestDataEnrollment(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDataEnrollment/enrollment_with_challenges.tf"),
-					Check:  checkAttributesForEnrollment(enrollmentDV2, enrollment2ID, mockLetsEncryptChallenges(), mockDVArray()),
+					Check:  checkAttributesForEnrollment(enrollmentDV2, enrollment2ID, mockLetsEncryptChallenges(), mockDVArray(), mockNoWarnings()),
+				},
+			},
+		},
+		"happy path with challenges and post and pre verification warnings returned": {
+			enrollment: enrollmentDV2,
+			init: func(_ *testing.T, m *cps.Mock) {
+				m.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{
+					EnrollmentID: enrollment2ID,
+				}).Return(enrollmentDV2, nil).Times(3)
+
+				m.On("GetChangePreVerificationWarnings", testutils.MockContext, cps.GetChangeRequest{
+					EnrollmentID: enrollment2ID,
+					ChangeID:     changeID,
+				}).Return(&cps.PreVerificationWarnings{
+					Warnings: "some pre verification warnings",
+				}, nil).Times(3)
+
+				m.On("GetChangePostVerificationWarnings", testutils.MockContext, cps.GetChangeRequest{
+					EnrollmentID: enrollment2ID,
+					ChangeID:     changeID,
+				}).Return(&cps.PostVerificationWarnings{
+					Warnings: "some post verification warnings",
+				}, nil).Times(3)
+
+				dvArray := mockDVArray()
+				change := mockLetsEncryptChallenges()
+
+				m.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+					ChangeID:     changeID,
+					EnrollmentID: enrollment2ID,
+				}).Return(change, nil).Times(3)
+
+				m.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
+					ChangeID:     changeID,
+					EnrollmentID: enrollment2ID,
+				}).Return(dvArray, nil).Times(3)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataEnrollment/enrollment_with_challenges.tf"),
+					Check:  checkAttributesForEnrollment(enrollmentDV2, enrollment2ID, mockLetsEncryptChallenges(), mockDVArray(), mockWarnings()),
 				},
 			},
 		},
 		"could not fetch an enrollment": {
-			enrollment:   enrollmentDV1,
-			enrollmentID: enrollment1ID,
+			enrollment: enrollmentDV1,
 			init: func(_ *testing.T, m *cps.Mock) {
 				m.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{
 					EnrollmentID: enrollment1ID,
@@ -405,12 +457,21 @@ func TestDataEnrollment(t *testing.T) {
 			},
 		},
 		"could not fetch a change status": {
-			enrollment:   enrollmentDV2,
-			enrollmentID: enrollment2ID,
+			enrollment: enrollmentDV2,
 			init: func(_ *testing.T, m *cps.Mock) {
 				m.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{
 					EnrollmentID: enrollment2ID,
 				}).Return(enrollmentDV2, nil).Once()
+
+				m.On("GetChangePreVerificationWarnings", testutils.MockContext, cps.GetChangeRequest{
+					EnrollmentID: enrollment2ID,
+					ChangeID:     changeID,
+				}).Return(nil, cps.ErrNotFound).Once()
+
+				m.On("GetChangePostVerificationWarnings", testutils.MockContext, cps.GetChangeRequest{
+					EnrollmentID: enrollment2ID,
+					ChangeID:     changeID,
+				}).Return(nil, cps.ErrNotFound).Once()
 
 				m.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 					ChangeID:     changeID,
@@ -425,12 +486,21 @@ func TestDataEnrollment(t *testing.T) {
 			},
 		},
 		"no changes on lets encrypt challenges": {
-			enrollment:   enrollmentDV2,
-			enrollmentID: enrollment2ID,
+			enrollment: enrollmentDV2,
 			init: func(_ *testing.T, m *cps.Mock) {
 				m.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{
 					EnrollmentID: enrollment2ID,
 				}).Return(enrollmentDV2, nil).Once()
+
+				m.On("GetChangePreVerificationWarnings", testutils.MockContext, cps.GetChangeRequest{
+					EnrollmentID: enrollment2ID,
+					ChangeID:     changeID,
+				}).Return(nil, cps.ErrNotFound).Once()
+
+				m.On("GetChangePostVerificationWarnings", testutils.MockContext, cps.GetChangeRequest{
+					EnrollmentID: enrollment2ID,
+					ChangeID:     changeID,
+				}).Return(nil, cps.ErrNotFound).Once()
 
 				change := mockLetsEncryptChallenges()
 
@@ -452,12 +522,21 @@ func TestDataEnrollment(t *testing.T) {
 			},
 		},
 		"third party change type": {
-			enrollment:   enrollmentThirdParty,
-			enrollmentID: enrollment3ID,
+			enrollment: enrollmentThirdParty,
 			init: func(_ *testing.T, m *cps.Mock) {
 				m.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{
 					EnrollmentID: enrollment3ID,
 				}).Return(enrollmentThirdParty, nil).Times(3)
+
+				m.On("GetChangePreVerificationWarnings", testutils.MockContext, cps.GetChangeRequest{
+					EnrollmentID: enrollment3ID,
+					ChangeID:     changeID,
+				}).Return(nil, cps.ErrNotFound).Times(3)
+
+				m.On("GetChangePostVerificationWarnings", testutils.MockContext, cps.GetChangeRequest{
+					EnrollmentID: enrollment3ID,
+					ChangeID:     changeID,
+				}).Return(nil, cps.ErrNotFound).Times(3)
 
 				change := mockThirdPartyCSRChallenges()
 
@@ -470,17 +549,26 @@ func TestDataEnrollment(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDataEnrollment/enrollment_with_third_party_challenges.tf"),
-					Check:  checkAttributesForEnrollment(enrollmentThirdParty, enrollment3ID, mockThirdPartyCSRChallenges(), mockThirdPartyCSRDVArray()),
+					Check:  checkAttributesForEnrollment(enrollmentThirdParty, enrollment3ID, mockThirdPartyCSRChallenges(), mockThirdPartyCSRDVArray(), mockNoWarnings()),
 				},
 			},
 		},
 		"ev change type": {
-			enrollment:   enrollmentEV,
-			enrollmentID: enrollment4ID,
+			enrollment: enrollmentEV,
 			init: func(_ *testing.T, m *cps.Mock) {
 				m.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{
 					EnrollmentID: enrollment4ID,
 				}).Return(enrollmentEV, nil).Times(3)
+
+				m.On("GetChangePreVerificationWarnings", testutils.MockContext, cps.GetChangeRequest{
+					EnrollmentID: enrollment4ID,
+					ChangeID:     changeID,
+				}).Return(nil, cps.ErrNotFound).Times(3)
+
+				m.On("GetChangePostVerificationWarnings", testutils.MockContext, cps.GetChangeRequest{
+					EnrollmentID: enrollment4ID,
+					ChangeID:     changeID,
+				}).Return(nil, cps.ErrNotFound).Times(3)
 
 				change := mockEVChallenges()
 
@@ -493,7 +581,7 @@ func TestDataEnrollment(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDataEnrollment/enrollment_with_ev_challenges.tf"),
-					Check:  checkAttributesForEnrollment(enrollmentEV, enrollment4ID, mockEVChallenges(), mockEVDVArray()),
+					Check:  checkAttributesForEnrollment(enrollmentEV, enrollment4ID, mockEVChallenges(), mockEVDVArray(), mockNoWarnings()),
 				},
 			},
 		},
@@ -515,12 +603,13 @@ func TestDataEnrollment(t *testing.T) {
 	}
 }
 
-func checkAttributesForEnrollment(en *cps.GetEnrollmentResponse, enID int, changes *cps.Change, dvArray *cps.DVArray) resource.TestCheckFunc {
+func checkAttributesForEnrollment(en *cps.GetEnrollmentResponse, enID int, changes *cps.Change, dvArray *cps.DVArray, warns warnings) resource.TestCheckFunc {
 	return resource.ComposeAggregateTestCheckFunc(
 		checkCommonAttrs(en, enID),
 		checkSetTypeAttrs(en),
 		checkChallenges(changes, dvArray),
 		checkPendingChangesEnrollment(en),
+		checkPreAndPostVerificationWarnings(warns),
 	)
 }
 
@@ -601,7 +690,7 @@ func checkSetTypeAttrs(en *cps.GetEnrollmentResponse) resource.TestCheckFunc {
 	sansCount := len(en.CSR.SANS)
 	checkFunctions = append(checkFunctions, resource.TestCheckResourceAttr("data.akamai_cps_enrollment.test", "sans.#", strconv.Itoa(sansCount)))
 
-	for i := 0; i < sansCount; i++ {
+	for i := range sansCount {
 		checkFunctions = append(checkFunctions, resource.TestCheckResourceAttr("data.akamai_cps_enrollment.test", fmt.Sprintf("sans.%v", i), en.CSR.SANS[i]))
 	}
 
@@ -614,7 +703,7 @@ func checkSetTypeAttrs(en *cps.GetEnrollmentResponse) resource.TestCheckFunc {
 
 	disallowedTLSVersionsNumber := len(en.NetworkConfiguration.DisallowedTLSVersions)
 	checkFunctions = append(checkFunctions, resource.TestCheckResourceAttr("data.akamai_cps_enrollment.test", "network_configuration.0.disallowed_tls_versions.#", strconv.Itoa(disallowedTLSVersionsNumber)))
-	for i := 0; i < disallowedTLSVersionsNumber; i++ {
+	for i := range disallowedTLSVersionsNumber {
 		checkFunctions = append(checkFunctions, resource.TestCheckResourceAttr("data.akamai_cps_enrollment.test", fmt.Sprintf("network_configuration.0.disallowed_tls_versions.%v", i), en.NetworkConfiguration.DisallowedTLSVersions[i]))
 	}
 	return resource.ComposeAggregateTestCheckFunc(checkFunctions...)
@@ -685,4 +774,30 @@ func calculateNumberOfChanges(dvArray *cps.DVArray, changeType string) int {
 		}
 	}
 	return counter
+}
+
+func checkPreAndPostVerificationWarnings(warns warnings) resource.TestCheckFunc {
+	var checkFunctions []resource.TestCheckFunc
+	if warns.pre != "" {
+		checkFunctions = append(checkFunctions, resource.TestCheckResourceAttr("data.akamai_cps_enrollment.test", "pre_verification_warnings", warns.pre))
+	} else {
+		checkFunctions = append(checkFunctions, resource.TestCheckNoResourceAttr("data.akamai_cps_enrollment.test", "pre_verification_warnings"))
+	}
+	if warns.post != "" {
+		checkFunctions = append(checkFunctions, resource.TestCheckResourceAttr("data.akamai_cps_enrollment.test", "post_verification_warnings", warns.post))
+	} else {
+		checkFunctions = append(checkFunctions, resource.TestCheckNoResourceAttr("data.akamai_cps_enrollment.test", "post_verification_warnings"))
+	}
+	return resource.ComposeAggregateTestCheckFunc(checkFunctions...)
+}
+
+func mockNoWarnings() warnings {
+	return warnings{}
+}
+
+func mockWarnings() warnings {
+	return warnings{
+		pre:  "some pre verification warnings",
+		post: "some post verification warnings",
+	}
 }

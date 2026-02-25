@@ -1,21 +1,24 @@
 package gtm
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"regexp"
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/gtm"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/test"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/gtm"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/test"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
-const testDomainName = "gtm_terra_testdomain.akadns.net"
+var testDomainName = "gtm_terra_testdomain.akadns.net"
 
 func TestResGTMDomain(t *testing.T) {
 	sleepInterval = 5 * time.Millisecond
@@ -212,7 +215,7 @@ func TestResGTMDomain(t *testing.T) {
 		client.AssertExpectations(t)
 	})
 
-	t.Run("create, update domain name - error", func(t *testing.T) {
+	t.Run("create, update domain name - delete + create with new name", func(t *testing.T) {
 		client := &gtm.Mock{}
 
 		mockGetDomain(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
@@ -222,13 +225,33 @@ func TestResGTMDomain(t *testing.T) {
 			Status:   getDefaultResponseStatus(),
 		}, nil)
 
-		mockGetDomain(client, getReturnedTestDomain(), nil, testutils.FourTimes)
+		mockGetDomain(client, getReturnedTestDomain(), nil, testutils.ThreeTimes)
 
 		mockGetDomainStatus(client, testutils.Once)
 
 		mockDeleteDomain(client, nil)
 
 		mockDeleteDomainStatus(client, nil)
+
+		testDomainName = "gtm_terra_testdomain_updated.akadns.net"
+
+		mockGetDomain(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+
+		mockCreateDomain(client, getTestDomain(), &gtm.CreateDomainResponse{
+			Resource: getReturnedTestDomain(),
+			Status:   getDefaultResponseStatus(),
+		}, nil)
+
+		mockGetDomain(client, getReturnedTestDomain(), nil, testutils.Twice)
+
+		mockGetDomainStatus(client, testutils.Once)
+
+		mockDeleteDomain(client, nil)
+
+		mockDeleteDomainStatus(client, nil)
+
+		//resets value for other tests
+		testDomainName = "gtm_terra_testdomain.akadns.net"
 
 		useClient(client, func() {
 			resource.UnitTest(t, resource.TestCase{
@@ -245,8 +268,14 @@ func TestResGTMDomain(t *testing.T) {
 						),
 					},
 					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/update_domain_name.tf"),
-						ExpectError: regexp.MustCompile("Error: once the domain is created, updating its name is not allowed"),
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/domain_update/updated_domain_name.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(resourceName, "name", "gtm_terra_testdomain_updated.akadns.net"),
+							resource.TestCheckResourceAttr(resourceName, "type", "weighted"),
+							resource.TestCheckResourceAttr(resourceName, "load_imbalance_percentage", "10"),
+							resource.TestCheckResourceAttr(resourceName, "sign_and_serve", "false"),
+							resource.TestCheckNoResourceAttr(resourceName, "sign_and_serve_algorithm"),
+						),
 					},
 				},
 			})
@@ -810,5 +839,77 @@ func getPendingResponseStatus() *gtm.ResponseStatus {
 		PassingValidation:     true,
 		PropagationStatus:     "PENDING",
 		PropagationStatusDate: "2019-04-25T14:54:00.000+00:00",
+	}
+}
+
+func TestPreventNameUpdateWithoutContractAndGroup(t *testing.T) {
+	tests := map[string]struct {
+		oldName     string
+		newName     string
+		contract    string
+		group       string
+		expectError *regexp.Regexp
+	}{
+		"no name change - no error": {
+			oldName:  "domain.akadns.net",
+			newName:  "domain.akadns.net",
+			contract: "",
+			group:    "",
+		},
+		"name change with contract and group - no error": {
+			oldName:  "domain.akadns.net",
+			newName:  "new-domain.akadns.net",
+			contract: "ctr_1-2ABCDEF",
+			group:    "grp_123ABC",
+		},
+		"name change without contract - error": {
+			oldName:     "domain.akadns.net",
+			newName:     "new-domain.akadns.net",
+			contract:    "",
+			group:       "grp_123ABC",
+			expectError: regexp.MustCompile("`contract` and `group` must be provided when creating new domain or changing its `name`"),
+		},
+		"name change without group - error": {
+			oldName:     "domain.akadns.net",
+			newName:     "new-domain.akadns.net",
+			contract:    "ctr_1-2ABCDEF",
+			group:       "",
+			expectError: regexp.MustCompile("`contract` and `group` must be provided when creating new domain or changing its `name`"),
+		},
+		"name change without contract and group - error": {
+			oldName:     "domain.akadns.net",
+			newName:     "new-domain.akadns.net",
+			contract:    "",
+			group:       "",
+			expectError: regexp.MustCompile("`contract` and `group` must be provided when creating new domain or changing its `name`"),
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			diff := &schema.ResourceDiff{}
+			d := schema.TestResourceDataRaw(t, resourceGTMv1Domain().Schema, map[string]interface{}{
+				"name":     tc.oldName,
+				"type":     "weighted",
+				"contract": tc.contract,
+				"group":    tc.group,
+			})
+			d.SetId(tc.oldName)
+
+			// Update the name to simulate the change
+			err := diff.SetNew("name", tc.newName)
+			if err != nil {
+				return
+			}
+
+			err = preventNameUpdateWithoutContractAndGroup(context.Background(), diff, nil)
+
+			if tc.expectError != nil {
+				assert.Error(t, err)
+				assert.Regexp(t, tc.expectError, err.Error())
+			} else {
+				assert.NoError(t, err)
+			}
+		})
 	}
 }

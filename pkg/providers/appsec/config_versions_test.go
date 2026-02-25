@@ -9,13 +9,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/appsec"
-	akalog "github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/log"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/cache"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/log"
-	akameta "github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
+	akalog "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/log"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/cache"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/log"
+	akameta "github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -391,17 +391,11 @@ func TestGetModifiableConfigVersion_LatestVersionIsModifiable(t *testing.T) {
 		BasedOn:    1,
 		CreateDate: time.Now(),
 		CreatedBy:  "test@example.com",
-		Production: struct {
-			Status string    `json:"status,omitempty"`
-			Time   time.Time `json:"time,omitempty"`
-		}{
+		Production: appsec.EnvironmentStatus{
 			Status: "Inactive",
 			Time:   time.Now(),
 		},
-		Staging: struct {
-			Status string    `json:"status,omitempty"`
-			Time   time.Time `json:"time,omitempty"`
-		}{
+		Staging: appsec.EnvironmentStatus{
 			Status: "Inactive",
 			Time:   time.Now(),
 		},
@@ -575,17 +569,11 @@ func TestGetModifiableConfigVersion_LatestVersionWasPreviouslyActive(t *testing.
 		BasedOn:    1,
 		CreateDate: time.Now(),
 		CreatedBy:  "test@example.com",
-		Production: struct {
-			Status string    `json:"status,omitempty"`
-			Time   time.Time `json:"time,omitempty"`
-		}{
+		Production: appsec.EnvironmentStatus{
 			Status: "Inactive",
 			Time:   time.Now(),
 		},
-		Staging: struct {
-			Status string    `json:"status,omitempty"`
-			Time   time.Time `json:"time,omitempty"`
-		}{
+		Staging: appsec.EnvironmentStatus{
 			Status: "Deactivated", // Was previously active
 			Time:   time.Now(),
 		},
@@ -744,17 +732,11 @@ func TestGetModifiableConfigVersion_ConcurrentAccess(t *testing.T) {
 		BasedOn:    1,
 		CreateDate: time.Now(),
 		CreatedBy:  "test@example.com",
-		Production: struct {
-			Status string    `json:"status,omitempty"`
-			Time   time.Time `json:"time,omitempty"`
-		}{
+		Production: appsec.EnvironmentStatus{
 			Status: "Inactive",
 			Time:   time.Now(),
 		},
-		Staging: struct {
-			Status string    `json:"status,omitempty"`
-			Time   time.Time `json:"time,omitempty"`
-		}{
+		Staging: appsec.EnvironmentStatus{
 			Status: "Inactive",
 			Time:   time.Now(),
 		},

@@ -6,7 +6,7 @@ import (
 	"slices"
 	"sort"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/domainownership"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/domainownership"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
@@ -181,4 +181,31 @@ func (v *validationHandler) buildInvalidateRequest() *domainownership.Invalidate
 	})
 
 	return &domainownership.InvalidateDomainsRequest{Domains: domainsToInvalidateSlice}
+}
+
+func (v *validationHandler) ensureCorrectValidationMethods() error {
+	var invalidDomains []string
+	for domainKey, domainDetails := range v.domainsToValidate {
+		if validationMethod := domainDetails.validationMethod; (validationMethod == string(domainownership.ValidationMethodSYSTEM) ||
+			validationMethod == string(domainownership.ValidationMethodMANUAL)) && domainDetails.validationStatus != "VALIDATED" {
+			invalidDomains = append(invalidDomains, domainKey.domainName)
+		}
+	}
+
+	if len(invalidDomains) > 0 {
+		return fmt.Errorf("invalid validation method: the validation methods 'SYSTEM' and 'MANUAL' are not supported for validating new domains. Domains with invalid validation methods: %v", invalidDomains)
+	}
+
+	invalidDomains = []string{}
+	for planDomainKey, planDomainDetails := range v.planDomains {
+		if apiDomainDetails, ok := v.apiDomains[planDomainKey]; ok && apiDomainDetails.validationStatus == "VALIDATED" && planDomainDetails.validationMethod != apiDomainDetails.validationMethod {
+			invalidDomains = append(invalidDomains, planDomainKey.domainName)
+		}
+	}
+
+	if len(invalidDomains) > 0 {
+		return fmt.Errorf("validation method cannot be changed for existing domains. Domains with changed validation methods: %v", invalidDomains)
+	}
+
+	return nil
 }

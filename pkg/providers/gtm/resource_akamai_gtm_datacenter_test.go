@@ -6,9 +6,9 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/gtm"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/test"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/gtm"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/test"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -106,6 +106,60 @@ func TestResGTMDatacenter(t *testing.T) {
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmDatacenter/update_basic.tf"),
 						ExpectError: regexp.MustCompile("API error"),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("update datacenter domain name - delete and create new datacenter", func(t *testing.T) {
+		client := &gtm.Mock{}
+
+		mockCreateDatacenter(client, &gtm.CreateDatacenterResponse{
+			Resource: getTestDatacenterResp(),
+			Status:   getPendingResponseStatus(),
+		}, nil)
+
+		mockGetDatacenter(client, datacenterID3132, getTestDatacenterResp(), nil, testutils.FourTimes)
+
+		mockDeleteDatacenter(client)
+
+		testDomainName = "gtm_terra_testdomain_updated.akadns.net"
+
+		mockCreateDatacenter(client, &gtm.CreateDatacenterResponse{
+			Resource: getTestDatacenterResp(),
+			Status:   getPendingResponseStatus(),
+		}, nil)
+
+		mockGetDatacenter(client, datacenterID3132, getTestDatacenterResp(), nil, testutils.ThreeTimes)
+
+		mockDeleteDatacenter(client)
+
+		testDomainName = "gtm_terra_testdomain.akadns.net"
+
+		resourceName := "akamai_gtm_datacenter.tfexample_dc_1"
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDatacenter/create_basic.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(resourceName, "nickname", "tfexample_dc_1"),
+							resource.TestCheckResourceAttr(resourceName, "continent", "EU"),
+							resource.TestCheckResourceAttr(resourceName, "domain", "gtm_terra_testdomain.akadns.net"),
+						),
+					},
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDatacenter/domain_update/updated_domain_name.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(resourceName, "nickname", "tfexample_dc_1"),
+							resource.TestCheckResourceAttr(resourceName, "continent", "EU"),
+							resource.TestCheckResourceAttr(resourceName, "domain", "gtm_terra_testdomain_updated.akadns.net"),
+						),
 					},
 				},
 			})

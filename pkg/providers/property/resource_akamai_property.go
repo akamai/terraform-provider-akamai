@@ -10,12 +10,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/log"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/str"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/log"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/str"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
@@ -730,7 +730,7 @@ func resourcePropertyRead(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 
 	useHostnameBucket := property.PropertyType != nil && *property.PropertyType == "HOSTNAME_BUCKET"
-	var hostnames []papi.Hostname
+	var hostnames []papi.HostnameResponseItem
 	if !useHostnameBucket {
 		hostnames, err = fetchPropertyVersionHostnames(ctx, meta.Client().GetPAPI(), *property, v)
 		if err != nil {
@@ -1369,7 +1369,7 @@ func fetchPropertyVersion(ctx context.Context, client papi.PAPI, propertyID, gro
 }
 
 // fetchPropertyVersionHostnames fetches hostnames for latest version of given property.
-func fetchPropertyVersionHostnames(ctx context.Context, client papi.PAPI, property papi.Property, version int) ([]papi.Hostname, error) {
+func fetchPropertyVersionHostnames(ctx context.Context, client papi.PAPI, property papi.Property, version int) ([]papi.HostnameResponseItem, error) {
 	req := papi.GetPropertyVersionHostnamesRequest{
 		PropertyID:        property.PropertyID,
 		GroupID:           property.GroupID,

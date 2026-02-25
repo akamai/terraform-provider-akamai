@@ -3,10 +3,10 @@ provider "akamai" {
 }
 
 resource "akamai_gtm_domain" "testdomain" {
-  name                      = "gtm_terra_testdomain.akadns.net-updated"
+  name                      = "gtm_terra_testdomain_updated.akadns.net"
   type                      = "weighted"
   contract                  = "1-2ABCDEF"
-  comment                   = "Test"
+  comment                   = "Edit Property test_property"
   group                     = "123ABC"
-  load_imbalance_percentage = 20.0
+  load_imbalance_percentage = 10.0
 }

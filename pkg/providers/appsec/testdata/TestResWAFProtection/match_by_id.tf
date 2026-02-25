@@ -10,6 +10,6 @@ resource "akamai_appsec_waf_protection" "test" {
 }
 
 output "appsecwafprotection" {
-  value = akamai_appsec_waf_protection.test.output_text
+  value = akamai_appsec_waf_protection.test
 }
 

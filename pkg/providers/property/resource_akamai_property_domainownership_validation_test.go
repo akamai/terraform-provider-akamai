@@ -9,11 +9,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/domainownership"
-	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/test"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/domainownership"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/test"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -151,9 +151,61 @@ func getMinCreateAddOneRemoveOne() validationTestData {
 	}
 }
 
+func getWithMANUALAndSYSTEMValidationMethodsAndCreateValidated() validationTestData {
+	return validationTestData{
+		create: map[domainKey]domainDetails{
+			newDomainKey("example1.com", "HOST"):   newDomainDetails("VALIDATED", "FQDN", "SYSTEM"),
+			newDomainKey("example2.com", "DOMAIN"): newDomainDetails("VALIDATED", "FQDN", "MANUAL"),
+		},
+		postCreateValidation: map[domainKey]domainDetails{
+			newDomainKey("example1.com", "HOST"):   newDomainDetails("VALIDATED", "FQDN", "SYSTEM"),
+			newDomainKey("example2.com", "DOMAIN"): newDomainDetails("VALIDATED", "FQDN", "MANUAL"),
+		},
+		update: map[domainKey]domainDetails{
+			newDomainKey("example1.com", "HOST"):   newDomainDetails("VALIDATED", "FQDN", "SYSTEM"),
+			newDomainKey("example2.com", "DOMAIN"): newDomainDetails("VALIDATED", "FQDN", "MANUAL"),
+			newDomainKey("example3.com", "HOST"):   newDomainDetails("VALIDATED", "FQDN", "SYSTEM"),
+			newDomainKey("example4.com", "DOMAIN"): newDomainDetails("VALIDATED", "FQDN", "MANUAL"),
+		},
+		postUpdateValidation: map[domainKey]domainDetails{
+			newDomainKey("example1.com", "HOST"):   newDomainDetails("VALIDATED", "FQDN", "SYSTEM"),
+			newDomainKey("example2.com", "DOMAIN"): newDomainDetails("VALIDATED", "FQDN", "MANUAL"),
+			newDomainKey("example3.com", "HOST"):   newDomainDetails("VALIDATED", "FQDN", "SYSTEM"),
+			newDomainKey("example4.com", "DOMAIN"): newDomainDetails("VALIDATED", "FQDN", "MANUAL"),
+		},
+	}
+}
+
+func getWithMANUALAndSYSTEMValidationMethodsAndCreateNotValidated() validationTestData {
+	return validationTestData{
+		create: map[domainKey]domainDetails{
+			newDomainKey("example1.com", "HOST"):   newDomainDetails("PENDING", "FQDN", "SYSTEM"),
+			newDomainKey("example2.com", "DOMAIN"): newDomainDetails("VALIDATION_IN_PROGRESS", "FQDN", "MANUAL"),
+		},
+	}
+}
+
+func getWithMANUALAndSYSTEMValidationMethodsAndUpdateNotValidated() validationTestData {
+	return validationTestData{
+		create: map[domainKey]domainDetails{
+			newDomainKey("example1.com", "HOST"):   newDomainDetails("VALIDATED", "FQDN", "SYSTEM"),
+			newDomainKey("example2.com", "DOMAIN"): newDomainDetails("VALIDATED", "FQDN", "MANUAL"),
+		},
+		postCreateValidation: map[domainKey]domainDetails{
+			newDomainKey("example1.com", "HOST"):   newDomainDetails("VALIDATED", "FQDN", "SYSTEM"),
+			newDomainKey("example2.com", "DOMAIN"): newDomainDetails("VALIDATED", "FQDN", "MANUAL"),
+		},
+		update: map[domainKey]domainDetails{
+			newDomainKey("example1.com", "HOST"):   newDomainDetails("VALIDATED", "FQDN", "SYSTEM"),
+			newDomainKey("example2.com", "DOMAIN"): newDomainDetails("VALIDATED", "FQDN", "MANUAL"),
+			newDomainKey("example3.com", "HOST"):   newDomainDetails("PENDING", "FQDN", "SYSTEM"),
+			newDomainKey("example4.com", "DOMAIN"): newDomainDetails("REQUEST_ACCEPTED", "FQDN", "MANUAL"),
+		},
+	}
+}
+
 func TestDomainOwnershipValidationResource(t *testing.T) {
 	t.Parallel()
-	searchInterval = 1 * time.Millisecond
 
 	minCreateChecker := test.NewStateChecker("akamai_property_domainownership_validation.test").
 		CheckEqual("domains.#", "3").
@@ -183,9 +235,11 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 		CheckEqual("domains.#", "101")
 
 	tests := map[string]struct {
-		init     func(*domainownership.Mock, validationTestData)
-		mockData validationTestData
-		steps    []resource.TestStep
+		init               func(*domainownership.Mock, validationTestData)
+		mockData           validationTestData
+		steps              []resource.TestStep
+		defaultPollTimeout time.Duration
+		searchInterval     time.Duration
 	}{
 		"create with 3 domains - no polling": {
 			init: func(m *domainownership.Mock, mockData validationTestData) {
@@ -208,7 +262,6 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 		},
 		"create with 3 domains - with polling": {
 			init: func(m *domainownership.Mock, mockData validationTestData) {
-				defaultPollTimeout = 30 * time.Minute
 				// Create
 				mockSearchDomains(m, mockData.create)
 				pending := map[domainKey]domainDetails{
@@ -235,7 +288,7 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 		"create with 3 domains - one domain already validated": {
 			init: func(m *domainownership.Mock, mockData validationTestData) {
 				// Simulate one domain already validated before creation.
-				mockData.create[newDomainKey("test2.example.com", "DOMAIN")] = newDomainDetails("VALIDATED", "FQDN", "DNS_TXT")
+				mockData.create[newDomainKey("test2.example.com", "DOMAIN")] = newDomainDetails("VALIDATED", "FQDN", "DNS_CNAME")
 				// Create
 				mockSearchDomains(m, mockData.create)
 				mockValidateDomains(m, mockData.create, mockData.postCreateValidation)
@@ -292,7 +345,6 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 		},
 		"create with 101 domains - poll for 100 domains": {
 			init: func(m *domainownership.Mock, mockData validationTestData) {
-				defaultPollTimeout = 30 * time.Minute
 				// Create
 				mockSearchDomains(m, mockData.create)
 				// Simulate 100 domains are in PENDING status.
@@ -480,6 +532,57 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 				{
 					RefreshState:       true,
 					ExpectNonEmptyPlan: true,
+				},
+			},
+		},
+		"create with 2 domains - MANUAL and SYSTEM validation methods when validated": {
+			init: func(m *domainownership.Mock, mockData validationTestData) {
+				// Create
+				mockSearchDomains(m, mockData.create)
+				mockValidateDomains(m, mockData.create, mockData.postCreateValidation)
+				// Read x2
+				mockSearchDomains(m, mockData.postCreateValidation)
+				// Delete
+				mockSearchDomains(m, mockData.postCreateValidation)
+				mockInvalidateDomains(m, mockData.postCreateValidation)
+			},
+			mockData: getWithMANUALAndSYSTEMValidationMethodsAndCreateValidated(),
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDOMValidation/create_with_manual_and_system_validation_methods.tf"),
+					Check: test.NewStateChecker("akamai_property_domainownership_validation.test").
+						CheckEqual("domains.#", "2").
+						CheckEqual("domains.0.domain_name", "example1.com").
+						CheckEqual("domains.0.validation_scope", "HOST").
+						CheckEqual("domains.0.validation_method", "SYSTEM").
+						CheckEqual("domains.1.domain_name", "example2.com").
+						CheckEqual("domains.1.validation_scope", "DOMAIN").
+						CheckEqual("domains.1.validation_method", "MANUAL").
+						Build(),
+				},
+			},
+		},
+		"create with 3 domains - validation method mismatch with API allowed when domain not validated": {
+			init: func(m *domainownership.Mock, mockData validationTestData) {
+				apiDomains := map[domainKey]domainDetails{
+					newDomainKey("test1.example.com", "HOST"):     newDomainDetails("REQUEST_ACCEPTED", "FQDN", "DNS_CNAME"),
+					newDomainKey("test2.example.com", "DOMAIN"):   newDomainDetails("REQUEST_ACCEPTED", "FQDN", "DNS_CNAME"),
+					newDomainKey("test3.example.com", "WILDCARD"): newDomainDetails("REQUEST_ACCEPTED", "FQDN", "DNS_TXT"),
+				}
+				// Create
+				mockSearchDomains(m, apiDomains)
+				mockValidateDomains(m, mockData.create, mockData.postCreateValidation)
+				// Read
+				mockSearchDomains(m, mockData.postCreateValidation)
+				// Delete
+				mockSearchDomains(m, mockData.postCreateValidation)
+				mockInvalidateDomains(m, mockData.postCreateValidation)
+			},
+			mockData: getMinCreate(),
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDOMValidation/create.tf"),
+					Check:  minCreateChecker.Build(),
 				},
 			},
 		},
@@ -672,7 +775,7 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 				// Update
 				domainsToSearch := make(map[domainKey]domainDetails)
 				maps.Copy(domainsToSearch, mockData.postCreateValidation)
-				domainsToSearch[newDomainKey("test4.example.com", string(domainownership.ValidationScopeWildcard))] = domainDetails{}
+				domainsToSearch[newDomainKey("test4.example.com", string(domainownership.ValidationScopeWildcard))] = newDomainDetails("REQUEST_ACCEPTED", "FQDN", "HTTP")
 				mockSearchDomains(m, domainsToSearch)
 
 				toInvalidate := map[domainKey]domainDetails{
@@ -699,6 +802,56 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 						CheckEqual("domains.2.domain_name", "test4.example.com").
 						CheckEqual("domains.2.validation_scope", "WILDCARD").
 						CheckEqual("domains.2.validation_method", "HTTP").
+						Build(),
+				},
+			},
+		},
+		"create with 2 domains - update with MANUAL and SYSTEM validation methods when validated": {
+			init: func(m *domainownership.Mock, mockData validationTestData) {
+				// Create
+				mockSearchDomains(m, mockData.create)
+				mockValidateDomains(m, mockData.create, mockData.postCreateValidation)
+				// Read x2
+				mockSearchDomains(m, mockData.postCreateValidation).Twice()
+				// Update
+				mockSearchDomains(m, mockData.update)
+				mockValidateDomains(m, mockData.update, mockData.postUpdateValidation)
+				// Read after update
+				mockSearchDomains(m, mockData.postUpdateValidation)
+				// Delete
+				mockSearchDomains(m, mockData.postUpdateValidation)
+				mockInvalidateDomains(m, mockData.postUpdateValidation)
+			},
+			mockData: getWithMANUALAndSYSTEMValidationMethodsAndCreateValidated(),
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDOMValidation/create_with_manual_and_system_validation_methods.tf"),
+					Check: test.NewStateChecker("akamai_property_domainownership_validation.test").
+						CheckEqual("domains.#", "2").
+						CheckEqual("domains.0.domain_name", "example1.com").
+						CheckEqual("domains.0.validation_scope", "HOST").
+						CheckEqual("domains.0.validation_method", "SYSTEM").
+						CheckEqual("domains.1.domain_name", "example2.com").
+						CheckEqual("domains.1.validation_scope", "DOMAIN").
+						CheckEqual("domains.1.validation_method", "MANUAL").
+						Build(),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDOMValidation/update_with_manual_and_system_validation_methods.tf"),
+					Check: test.NewStateChecker("akamai_property_domainownership_validation.test").
+						CheckEqual("domains.#", "4").
+						CheckEqual("domains.0.domain_name", "example1.com").
+						CheckEqual("domains.0.validation_scope", "HOST").
+						CheckEqual("domains.0.validation_method", "SYSTEM").
+						CheckEqual("domains.1.domain_name", "example2.com").
+						CheckEqual("domains.1.validation_scope", "DOMAIN").
+						CheckEqual("domains.1.validation_method", "MANUAL").
+						CheckEqual("domains.2.domain_name", "example3.com").
+						CheckEqual("domains.2.validation_scope", "HOST").
+						CheckEqual("domains.2.validation_method", "SYSTEM").
+						CheckEqual("domains.3.domain_name", "example4.com").
+						CheckEqual("domains.3.validation_scope", "DOMAIN").
+						CheckEqual("domains.3.validation_method", "MANUAL").
 						Build(),
 				},
 			},
@@ -1210,9 +1363,9 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 			},
 		},
 		"expect error - create - timeout exceeded": {
+			defaultPollTimeout: 1 * time.Microsecond,
+			searchInterval:     5 * time.Second,
 			init: func(m *domainownership.Mock, mockData validationTestData) {
-				defaultPollTimeout = 1 * time.Microsecond
-				searchInterval = 5 * time.Second
 				// Create
 				mockSearchDomains(m, mockData.create)
 				pending := map[domainKey]domainDetails{
@@ -1228,6 +1381,59 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResDOMValidation/create.tf"),
 					Check:       minCreateChecker.Build(),
 					ExpectError: regexp.MustCompile(`Error: Timeout while waiting for domain validation`),
+				},
+			},
+		},
+		"expect error and warning - create - timeout exceeded with partial validation success": {
+			defaultPollTimeout: 500 * time.Millisecond,
+			searchInterval:     200 * time.Millisecond,
+			init: func(m *domainownership.Mock, mockData validationTestData) {
+				// Create
+				mockSearchDomains(m, mockData.create)
+				// Simulate 2 out of 3 domains become validated, 1 stays pending
+				partialValidation := map[domainKey]domainDetails{
+					newDomainKey("test1.example.com", "HOST"):     newDomainDetails("VALIDATED", "FQDN", "HTTP"),
+					newDomainKey("test2.example.com", "DOMAIN"):   newDomainDetails("VALIDATED", "FQDN", "DNS_CNAME"),
+					newDomainKey("test3.example.com", "WILDCARD"): newDomainDetails("PENDING", "FQDN", "DNS_TXT"),
+				}
+				mockValidateDomains(m, mockData.create, partialValidation)
+				// Poll the pending domain
+				pendingOnly := map[domainKey]domainDetails{
+					newDomainKey("test3.example.com", "WILDCARD"): newDomainDetails("PENDING", "FQDN", "DNS_TXT"),
+				}
+				mockSearchDomains(m, pendingOnly).Twice()
+			},
+			mockData: getMinCreate(),
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResDOMValidation/create.tf"),
+					Check:       minCreateChecker.Build(),
+					ExpectError: regexp.MustCompile(`Timeout while waiting for domain validation`),
+				},
+			},
+		},
+		"expect error - create - timeout exceeded with no validation success": {
+			defaultPollTimeout: 500 * time.Millisecond,
+			searchInterval:     200 * time.Millisecond,
+			init: func(m *domainownership.Mock, mockData validationTestData) {
+				// Create
+				mockSearchDomains(m, mockData.create)
+				// Simulate all 3 domains stay pending
+				allPending := map[domainKey]domainDetails{
+					newDomainKey("test1.example.com", "HOST"):     newDomainDetails("PENDING", "FQDN", "HTTP"),
+					newDomainKey("test2.example.com", "DOMAIN"):   newDomainDetails("PENDING", "FQDN", "DNS_CNAME"),
+					newDomainKey("test3.example.com", "WILDCARD"): newDomainDetails("PENDING", "FQDN", "DNS_TXT"),
+				}
+				mockValidateDomains(m, mockData.create, allPending)
+				// Poll for all pending domains
+				mockSearchDomains(m, allPending).Twice()
+			},
+			mockData: getMinCreate(),
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResDOMValidation/create.tf"),
+					Check:       minCreateChecker.Build(),
+					ExpectError: regexp.MustCompile(`Timeout while waiting for domain validation`),
 				},
 			},
 		},
@@ -1307,10 +1513,40 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 				},
 			},
 		},
-		"expect error - create with 3 domains - update by adding one domain - timeout exceeded": {
+		"expect error - create with 2 domains - MANUAL and SYSTEM validation methods when MANUAL not validated": {
 			init: func(m *domainownership.Mock, mockData validationTestData) {
-				defaultPollTimeout = 1 * time.Microsecond
-				searchInterval = 5 * time.Second
+				// Create
+				mockSearchDomains(m, mockData.create)
+			},
+			mockData: getWithMANUALAndSYSTEMValidationMethodsAndCreateNotValidated(),
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResDOMValidation/create_with_manual_and_system_validation_methods.tf"),
+					ExpectError: regexp.MustCompile("invalid validation method"),
+				},
+			},
+		},
+		"expect error - create - validation method mismatch with API": {
+			init: func(m *domainownership.Mock, _ validationTestData) {
+				// API has domain with DNS_CNAME, but plan wants HTTP
+				apiDomains := map[domainKey]domainDetails{
+					newDomainKey("test1.example.com", "HOST"):     newDomainDetails("VALIDATED", "FQDN", "DNS_CNAME"),
+					newDomainKey("test2.example.com", "DOMAIN"):   newDomainDetails("VALIDATED", "FQDN", "DNS_CNAME"),
+					newDomainKey("test3.example.com", "WILDCARD"): newDomainDetails("VALIDATED", "FQDN", "DNS_TXT"),
+				}
+				mockSearchDomains(m, apiDomains)
+			},
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResDOMValidation/create.tf"),
+					ExpectError: regexp.MustCompile("validation method cannot be changed for existing domains"),
+				},
+			},
+		},
+		"expect error - create with 3 domains - update by adding one domain - timeout exceeded": {
+			defaultPollTimeout: 1 * time.Microsecond,
+			searchInterval:     5 * time.Second,
+			init: func(m *domainownership.Mock, mockData validationTestData) {
 				// Create
 				mockSearchDomains(m, mockData.create)
 				mockValidateDomains(m, mockData.create, mockData.postCreateValidation)
@@ -1460,6 +1696,112 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 				},
 			},
 		},
+		"expect error and warning - update - timeout exceeded with partial validation success": {
+			defaultPollTimeout: 500 * time.Millisecond,
+			searchInterval:     200 * time.Millisecond,
+			init: func(m *domainownership.Mock, mockData validationTestData) {
+				// Create
+				mockSearchDomains(m, mockData.create)
+				mockValidateDomains(m, mockData.create, mockData.postCreateValidation)
+				// Read x2
+				mockSearchDomains(m, mockData.postCreateValidation).Twice()
+				// Update
+				mockSearchDomains(m, mockData.update)
+				// Simulate 2 out of 3 domains become validated, 1 stays pending
+				partialValidationUpdate := map[domainKey]domainDetails{
+					newDomainKey("test1.example.com", "HOST"):     newDomainDetails("VALIDATED", "FQDN", "HTTP"),
+					newDomainKey("test2.example.com", "DOMAIN"):   newDomainDetails("VALIDATED", "FQDN", "DNS_CNAME"),
+					newDomainKey("test3.example.com", "WILDCARD"): newDomainDetails("PENDING", "FQDN", "DNS_TXT"),
+				}
+				mockValidateDomains(m, mockData.update, partialValidationUpdate)
+				// Poll the pending domain
+				pendingOnly := map[domainKey]domainDetails{
+					newDomainKey("test3.example.com", "WILDCARD"): newDomainDetails("PENDING", "FQDN", "DNS_TXT"),
+				}
+				mockSearchDomains(m, pendingOnly).Twice()
+				// Delete - use postCreateValidation as update failed
+				mockSearchDomains(m, mockData.postCreateValidation)
+				mockInvalidateDomains(m, mockData.postCreateValidation)
+			},
+			mockData: getMinCreateAddOne(),
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDOMValidation/create.tf"),
+					Check:  minCreateChecker.Build(),
+				},
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResDOMValidation/add_1.tf"),
+					ExpectError: regexp.MustCompile(`Timeout while waiting for domain validation`),
+				},
+			},
+		},
+		"expect error - update - timeout exceeded with no validation success": {
+			defaultPollTimeout: 500 * time.Millisecond,
+			searchInterval:     200 * time.Millisecond,
+			init: func(m *domainownership.Mock, mockData validationTestData) {
+				// Create
+				mockSearchDomains(m, mockData.create)
+				mockValidateDomains(m, mockData.create, mockData.postCreateValidation)
+				// Read x2
+				mockSearchDomains(m, mockData.postCreateValidation).Twice()
+				// Update
+				mockSearchDomains(m, mockData.update)
+				// Simulate all domains in update stay pending
+				allPendingUpdate := map[domainKey]domainDetails{
+					newDomainKey("test4.example.com", "HOST"): newDomainDetails("PENDING", "FQDN", "HTTP"),
+				}
+				mockValidateDomains(m, mockData.update, allPendingUpdate)
+				// Poll for all pending domains
+				mockSearchDomains(m, allPendingUpdate).Twice()
+				// Delete - use postCreateValidation as update failed
+				mockSearchDomains(m, mockData.postCreateValidation)
+				mockInvalidateDomains(m, mockData.postCreateValidation)
+			},
+			mockData: getMinCreateAddOne(),
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDOMValidation/create.tf"),
+					Check:  minCreateChecker.Build(),
+				},
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResDOMValidation/add_1.tf"),
+					ExpectError: regexp.MustCompile(`Timeout while waiting for domain validation`),
+				},
+			},
+		},
+		"expect error - update - MANUAL and SYSTEM validation methods when not validated": {
+			init: func(m *domainownership.Mock, mockData validationTestData) {
+				// Create
+				mockSearchDomains(m, mockData.create)
+				mockValidateDomains(m, mockData.create, mockData.postCreateValidation)
+				// Read x2
+				mockSearchDomains(m, mockData.postCreateValidation).Twice()
+				// Update
+				mockSearchDomains(m, mockData.update)
+				// Delete
+				mockSearchDomains(m, mockData.postCreateValidation)
+				mockInvalidateDomains(m, mockData.postCreateValidation)
+			},
+			mockData: getWithMANUALAndSYSTEMValidationMethodsAndUpdateNotValidated(),
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDOMValidation/create_with_manual_and_system_validation_methods.tf"),
+					Check: test.NewStateChecker("akamai_property_domainownership_validation.test").
+						CheckEqual("domains.#", "2").
+						CheckEqual("domains.0.domain_name", "example1.com").
+						CheckEqual("domains.0.validation_scope", "HOST").
+						CheckEqual("domains.0.validation_method", "SYSTEM").
+						CheckEqual("domains.1.domain_name", "example2.com").
+						CheckEqual("domains.1.validation_scope", "DOMAIN").
+						CheckEqual("domains.1.validation_method", "MANUAL").
+						Build(),
+				},
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResDOMValidation/update_with_manual_and_system_validation_methods.tf"),
+					ExpectError: regexp.MustCompile("invalid validation method"),
+				},
+			},
+		},
 		"validation error - no domains": {
 			init:     func(_ *domainownership.Mock, _ validationTestData) {},
 			mockData: getMinCreate(),
@@ -1502,7 +1844,7 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResDOMValidation/wrong_validation_method.tf"),
-					ExpectError: regexp.MustCompile(`.validation_method(\n|.)value must be one of: \["DNS_CNAME" "DNS_TXT" "HTTP"\], got: "WRONG"`),
+					ExpectError: regexp.MustCompile(`.validation_method(\n|.)value must be one of: \["DNS_CNAME" "DNS_TXT" "HTTP" "SYSTEM" "MANUAL"\], got:(\n|.)"WRONG"`),
 				},
 			},
 		},
@@ -1510,15 +1852,27 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			client := edgegrid.NewTestClient()
 
 			if tc.init != nil {
 				tc.init(client.DomainOwnership, tc.mockData)
 			}
 
+			config := defaultSubproviderConfig()
+			if tc.defaultPollTimeout != 0 {
+				config.domainValidation.defaultPollTimeout = tc.defaultPollTimeout
+			}
+			if tc.searchInterval != 0 {
+				config.domainValidation.searchInterval = tc.searchInterval
+			} else {
+				config.domainValidation.searchInterval = 1 * time.Millisecond
+			}
+
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
-				Steps:                    tc.steps,
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(
+					client, newSubproviderWithConfig(config)),
+				Steps: tc.steps,
 			})
 
 			client.DomainOwnership.AssertExpectations(t)

@@ -6,9 +6,9 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/gtm"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/test"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/gtm"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/test"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -107,6 +107,67 @@ func TestResGTMCIDRMap(t *testing.T) {
 					{
 						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmCidrmap/update_basic.tf"),
 						ExpectError: regexp.MustCompile("API error"),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	t.Run("update CIDRMap domain name - delete and create new CIDRMap", func(t *testing.T) {
+		client := &gtm.Mock{}
+
+		mockGetCIDRMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+
+		mockGetDatacenter(client, datacenterID5400, &dc, nil, testutils.Once)
+
+		mockCreateCIDRMap(client, getCIDRMap(), &gtm.CreateCIDRMapResponse{
+			Resource: getCIDRMap(),
+			Status:   getDefaultResponseStatus(),
+		}, nil)
+
+		mockGetCIDRMap(client, getCIDRMap(), nil, testutils.FourTimes)
+
+		mockDeleteCIDRMap(client)
+
+		testDomainName = "gtm_terra_testdomain_updated.akadns.net"
+
+		mockGetCIDRMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+
+		mockGetDatacenter(client, datacenterID5400, &dc, nil, testutils.Once)
+
+		mockCreateCIDRMap(client, getCIDRMap(), &gtm.CreateCIDRMapResponse{
+			Resource: getCIDRMap(),
+			Status:   getDefaultResponseStatus(),
+		}, nil)
+
+		mockGetCIDRMap(client, getCIDRMap(), nil, testutils.ThreeTimes)
+
+		mockDeleteCIDRMap(client)
+
+		//reset domain name for other tests
+		testDomainName = "gtm_terra_testdomain.akadns.net"
+
+		resourceName := "akamai_gtm_cidrmap.tfexample_cidrmap_1"
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmCidrmap/create_basic.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(resourceName, "name", "tfexample_cidrmap_1"),
+							resource.TestCheckResourceAttr(resourceName, "domain", "gtm_terra_testdomain.akadns.net"),
+						),
+					},
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmCidrmap/domain_update/updated_domain_name.tf"),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(resourceName, "name", "tfexample_cidrmap_1"),
+							resource.TestCheckResourceAttr(resourceName, "domain", "gtm_terra_testdomain_updated.akadns.net"),
+						),
 					},
 				},
 			})

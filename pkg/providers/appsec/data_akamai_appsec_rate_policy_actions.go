@@ -5,9 +5,9 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -30,11 +30,6 @@ func dataSourceRatePolicyActions() *schema.Resource {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Description: "Unique identifier of a specific rate policy for which to retrieve information",
-			},
-			"output_text": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Text representation",
 			},
 		},
 	}
@@ -77,17 +72,6 @@ func dataSourceRatePolicyActionsRead(ctx context.Context, d *schema.ResourceData
 
 	for _, configval := range ratepolicyactions.RatePolicyActions {
 		d.SetId(strconv.Itoa(configval.ID))
-	}
-
-	ots := OutputTemplates{}
-	InitTemplates(ots)
-
-	outputtext, err := RenderTemplates(ots, "ratePolicyActions", ratepolicyactions)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("output_text", outputtext); err != nil {
-		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	return nil

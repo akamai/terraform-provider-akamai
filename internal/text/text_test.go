@@ -101,6 +101,12 @@ func TestImportIDSplitter(t *testing.T) {
 			acceptedLengths: []int{2},
 			expectError:     "importID cannot be empty; you need to provide an importID in the format 'resourceID,groupID'",
 		},
+		"error - accepting two parts but one provided": {
+			input:           "123,",
+			formatHint:      "resourceID,groupID",
+			acceptedLengths: []int{2},
+			expectError:     "importID part 2 cannot be empty; you need to provide an importID in the format 'resourceID,groupID'",
+		},
 		"error - accepting two parts but three provided": {
 			input:           "123,456,789",
 			formatHint:      "resourceID,groupID",

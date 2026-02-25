@@ -1,6 +1,6 @@
 package dns
 
-import "github.com/akamai/terraform-provider-akamai/v9/pkg/providers/registry"
+import "github.com/akamai/terraform-provider-akamai/v10/pkg/providers/registry"
 
 func init() {
 	registry.RegisterSubprovider(NewSubprovider())

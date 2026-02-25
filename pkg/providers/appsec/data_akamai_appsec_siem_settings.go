@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -25,11 +25,6 @@ func dataSourceSiemSettings() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "JSON representation",
-			},
-			"output_text": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Text representation",
 			},
 		},
 	}
@@ -55,24 +50,6 @@ func dataSourceSiemSettingsRead(ctx context.Context, d *schema.ResourceData, m i
 	siemsettings, err := client.GetSiemSettings(ctx, getSiemSettings)
 	if err != nil {
 		logger.Errorf("calling 'getSiemSettings': %s", err.Error())
-		return diag.FromErr(err)
-	}
-
-	ots := OutputTemplates{}
-	InitTemplates(ots)
-
-	outputtext := ""
-	settingstext, err := RenderTemplates(ots, "siemsettingsDS", siemsettings)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	outputtext = outputtext + settingstext
-	policiestext, err := RenderTemplates(ots, "siempoliciesDS", siemsettings)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	outputtext = outputtext + policiestext
-	if err := d.Set("output_text", outputtext); err != nil {
 		return diag.FromErr(err)
 	}
 

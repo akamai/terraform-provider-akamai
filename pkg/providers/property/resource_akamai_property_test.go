@@ -10,11 +10,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/test"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/test"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -93,7 +93,7 @@ func TestPropertyCreate(t *testing.T) {
 			init: func(p *mockProperty) {
 				p.mockPropertyData = basicData
 				p.hostnames = papi.HostnameResponseItems{
-					Items: []papi.Hostname{
+					Items: []papi.HostnameResponseItem{
 						{
 							CnameType:            "EDGE_HOSTNAME",
 							EdgeHostnameID:       "ehn_123",
@@ -180,7 +180,7 @@ func TestPropertyLifecycle(t *testing.T) {
 			},
 		},
 		hostnames: papi.HostnameResponseItems{
-			Items: []papi.Hostname{
+			Items: []papi.HostnameResponseItem{
 				{
 					CnameType:            "EDGE_HOSTNAME",
 					EdgeHostnameID:       "ehn_123",
@@ -202,7 +202,7 @@ func TestPropertyLifecycle(t *testing.T) {
 
 	// updatedHostname contains details about the updated hostname
 	updatedHostname := papi.HostnameResponseItems{
-		Items: []papi.Hostname{
+		Items: []papi.HostnameResponseItem{
 			{
 				CnameType:            "EDGE_HOSTNAME",
 				CnameFrom:            "from.test.domain",
@@ -739,7 +739,7 @@ func TestPropertyLifecycle(t *testing.T) {
 					},
 				}
 				p.hostnames = papi.HostnameResponseItems{
-					Items: []papi.Hostname{
+					Items: []papi.HostnameResponseItem{
 						{
 							CnameType:            "EDGE_HOSTNAME",
 							CnameFrom:            "from1.test.domain",
@@ -990,7 +990,7 @@ func TestPropertyLifecycle(t *testing.T) {
 				p.mockGetPropertyVersion()
 				// change in hostnames detected
 				p.hostnames = papi.HostnameResponseItems{
-					Items: []papi.Hostname{
+					Items: []papi.HostnameResponseItem{
 						{
 							CnameFrom:            "from2.test.domain",
 							CnameTo:              "to.test.domain",
@@ -1282,7 +1282,7 @@ func TestPropertyLifecycle(t *testing.T) {
 		// simulate remote change outside terraform, only for response data - new version with updated CnameTo.
 		mp.latestVersion = 2
 		mp.hostnames = papi.HostnameResponseItems{
-			Items: []papi.Hostname{
+			Items: []papi.HostnameResponseItem{
 				{
 					CnameType:            "EDGE_HOSTNAME",
 					CnameFrom:            "from.test.domain",
@@ -1308,7 +1308,7 @@ func TestPropertyLifecycle(t *testing.T) {
 		// such drift should invoke update function, which should use value from config which should replace the remote value.
 		// Hence, CnameTo is assigned the value from config for the mock data.
 		mp.hostnames = papi.HostnameResponseItems{
-			Items: []papi.Hostname{
+			Items: []papi.HostnameResponseItem{
 				{
 					CnameType:            "EDGE_HOSTNAME",
 					CnameFrom:            "from.test.domain",
@@ -1478,7 +1478,7 @@ func TestPropertyImport(t *testing.T) {
 		contractID:    "ctr_1",
 		latestVersion: 1,
 		hostnames: papi.HostnameResponseItems{
-			Items: []papi.Hostname{
+			Items: []papi.HostnameResponseItem{
 				{
 					CnameTo:        "to.test.domain",
 					EdgeHostnameID: "ehn_123",
@@ -1827,7 +1827,7 @@ func TestPropertyErrors(t *testing.T) {
 	}
 
 	defaultHostname := papi.HostnameResponseItems{
-		Items: []papi.Hostname{
+		Items: []papi.HostnameResponseItem{
 			{
 				CnameType:            "EDGE_HOSTNAME",
 				CnameFrom:            "from.test.domain",
@@ -2007,7 +2007,7 @@ func TestPropertyErrors(t *testing.T) {
 				// set initial data
 				p.mockPropertyData = basicData
 				p.hostnames = papi.HostnameResponseItems{
-					Items: []papi.Hostname{
+					Items: []papi.HostnameResponseItem{
 						{
 							CnameType:            "EDGE_HOSTNAME",
 							CnameFrom:            "terraform.provider.myu877.test.net",
@@ -2051,7 +2051,7 @@ func TestPropertyErrors(t *testing.T) {
 				// set initial data
 				p.mockPropertyData = basicData
 				p.hostnames = papi.HostnameResponseItems{
-					Items: []papi.Hostname{
+					Items: []papi.HostnameResponseItem{
 						{
 							CnameType:            "EDGE_HOSTNAME",
 							CnameFrom:            "terraform.provider.myu877.test.net",
@@ -2083,7 +2083,7 @@ func TestPropertyErrors(t *testing.T) {
 				// set initial data
 				p.mockPropertyData = basicData
 				p.hostnames = papi.HostnameResponseItems{
-					Items: []papi.Hostname{
+					Items: []papi.HostnameResponseItem{
 						{
 							CnameType:            "EDGE_HOSTNAME",
 							CnameFrom:            "terraform.provider.myu877.test.net",
@@ -2163,7 +2163,7 @@ func TestPropertyErrors(t *testing.T) {
 						},
 					},
 					hostnames: papi.HostnameResponseItems{
-						Items: []papi.Hostname{
+						Items: []papi.HostnameResponseItem{
 							{
 								CnameType:            "EDGE_HOSTNAME",
 								CnameFrom:            "dxe-2406-issue-example-second.com",
@@ -2231,7 +2231,7 @@ func TestPropertyErrors(t *testing.T) {
 
 				// prepare updated hostnames
 				updatedHostnames := papi.HostnameResponseItems{
-					Items: []papi.Hostname{
+					Items: []papi.HostnameResponseItem{
 						{
 							CnameType:            "EDGE_HOSTNAME",
 							CnameFrom:            "dxe-2406-issue-example-second.com",

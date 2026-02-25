@@ -3,7 +3,7 @@ package property
 import (
 	"testing"
 
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 )
 
 func TestMain(m *testing.M) {

@@ -10,11 +10,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/dns"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/log"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/dns"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/log"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -27,7 +27,7 @@ func resourceDNSv2Zone() *schema.Resource {
 		UpdateContext: resourceDNSv2ZoneUpdate,
 		DeleteContext: resourceDNSv2ZoneDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceDNSv2ZoneImport,
+			StateContext: resourceDNSv2ZoneImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"contract": {
@@ -483,12 +483,11 @@ func resourceDNSv2ZoneUpdate(ctx context.Context, d *schema.ResourceData, m inte
 }
 
 // Import Zone. Id is the zone
-func resourceDNSv2ZoneImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+func resourceDNSv2ZoneImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	hostname := d.Id()
 	meta := meta.Must(m)
 	logger := meta.Log("AkamaiDNS", "resourceDNSZoneImport")
 	// create a context with logging for api calls
-	ctx := context.TODO()
 	ctx = session.ContextWithOptions(
 		ctx,
 		session.WithContextLog(logger),

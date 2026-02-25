@@ -7,8 +7,8 @@ import (
 	"sync"
 	"testing"
 
-	apr "github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/accountprotection"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
+	apr "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/accountprotection"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 )
 
 func TestMain(m *testing.M) {

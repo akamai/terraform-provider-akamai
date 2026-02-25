@@ -16,14 +16,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/dns"
-	akalog "github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/log"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/hash"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/log"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/providers/dns/internal/txtrecord"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/dns"
+	akalog "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/log"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/hash"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/log"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/providers/dns/internal/txtrecord"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -39,7 +39,7 @@ func resourceDNSv2Record() *schema.Resource {
 		UpdateContext: resourceDNSRecordUpdate,
 		DeleteContext: resourceDNSRecordDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceDNSRecordImport,
+			StateContext: resourceDNSRecordImport,
 		},
 		Schema: getResourceDNSRecordSchema(),
 	}
@@ -94,8 +94,9 @@ func getResourceDNSRecordSchema() map[string]*schema.Schema {
 			}, false)),
 		},
 		"ttl": {
-			Type:     schema.TypeInt,
-			Required: true,
+			Type:         schema.TypeInt,
+			Required:     true,
+			ValidateFunc: validation.IntAtLeast(0),
 		},
 		"target": {
 			Type:             schema.TypeList,
@@ -1253,20 +1254,17 @@ func validateSOARecord(d *schema.ResourceData, logger akalog.Interface) bool {
 	return true
 }
 
-func resourceDNSRecordImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+func resourceDNSRecordImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	meta := meta.Must(m)
 	logger := meta.Log("AkamaiDNS", "resourceDNSRecordImport")
 	// create a context with logging for api calls
-
-	// create context. TODO: *** Way to find TF context ***
-	ctx := context.TODO()
 	ctx = session.ContextWithOptions(
 		ctx,
 		session.WithContextLog(logger),
 	)
 
 	idParts := strings.Split(d.Id(), "#")
-	if len(idParts) != 3 {
+	if len(idParts) != 3 || idParts[0] == "" || idParts[1] == "" || idParts[2] == "" {
 		return []*schema.ResourceData{d}, fmt.Errorf("invalid ID for Zone Import: %s", d.Id())
 	}
 	zone := idParts[0]
@@ -1363,10 +1361,7 @@ func resourceDNSRecordDelete(ctx context.Context, d *schema.ResourceData, m inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	ttl, err := tf.GetIntValue("ttl", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
+	ttl := d.Get("ttl").(int)
 	logger.Infof("Record Delete. zone: %s, host: %s, recordtype: %s", zone, host, recordType)
 	logger.Info("Record Delete.")
 	// serialize record updates of same type
@@ -1390,7 +1385,7 @@ func resourceDNSRecordDelete(ctx context.Context, d *schema.ResourceData, m inte
 		sort.Strings(records)
 	}
 	logger.Debugf("Delete zone Record. Zone: %s, Host: %s, Recordtype:  %s", zone, host, recordType)
-	recordcreate := dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
+	recordcreate := dns.RecordBody{Name: host, RecordType: recordType, TTL: &ttl, Target: records}
 
 	// Warning: Delete will expunge the ENTIRE Recordset regardless of whether user thought they were removing an instance
 
@@ -1450,10 +1445,7 @@ func bindRecord(ctx context.Context, meta meta.Meta, d *schema.ResourceData, log
 		return dns.RecordBody{}, err
 	}
 
-	ttl, err := tf.GetIntValue("ttl", d)
-	if err != nil {
-		return dns.RecordBody{}, err
-	}
+	ttl := d.Get("ttl").(int)
 
 	target, err := tf.GetListValue("target", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
@@ -1470,7 +1462,7 @@ func bindRecord(ctx context.Context, meta meta.Meta, d *schema.ResourceData, log
 		if recordType != RRTypeTxt {
 			sort.Strings(records)
 		}
-		return dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}, nil
+		return dns.RecordBody{Name: host, RecordType: recordType, TTL: &ttl, Target: records}, nil
 	}
 
 	return newRecordCreate(ctx, meta, d, recordType, target, host, ttl, logger)
@@ -1499,7 +1491,7 @@ func newRecordCreate(ctx context.Context, meta meta.Meta, d *schema.ResourceData
 
 		}
 		sort.Strings(records)
-		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
+		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: &ttl, Target: records}
 
 	case RRTypeDnskey:
 		flags, err := tf.GetIntValue("flags", d)
@@ -1519,7 +1511,7 @@ func newRecordCreate(ctx context.Context, meta meta.Meta, d *schema.ResourceData
 			return dns.RecordBody{}, err
 		}
 		records := []string{strconv.Itoa(flags) + " " + strconv.Itoa(protocol) + " " + strconv.Itoa(algorithm) + " " + key}
-		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
+		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: &ttl, Target: records}
 
 	case RRTypeDs:
 		digestType, err := tf.GetIntValue("digest_type", d)
@@ -1539,7 +1531,7 @@ func newRecordCreate(ctx context.Context, meta meta.Meta, d *schema.ResourceData
 			return dns.RecordBody{}, err
 		}
 		records := []string{strconv.Itoa(keytag) + " " + strconv.Itoa(algorithm) + " " + strconv.Itoa(digestType) + " " + digest}
-		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
+		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: &ttl, Target: records}
 
 	case RRTypeHinfo:
 		hardware, err := tf.GetStringValue("hardware", d)
@@ -1562,7 +1554,7 @@ func newRecordCreate(ctx context.Context, meta meta.Meta, d *schema.ResourceData
 		}
 
 		records := []string{hardware + " " + software}
-		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
+		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: &ttl, Target: records}
 
 	case RRTypeLoc:
 		records := make([]string, 0, len(target))
@@ -1574,7 +1566,7 @@ func newRecordCreate(ctx context.Context, meta meta.Meta, d *schema.ResourceData
 			records = append(records, recContentStr)
 		}
 		sort.Strings(records)
-		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
+		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: &ttl, Target: records}
 
 	case RRTypeMx:
 		zone, err := tf.GetStringValue("zone", d)
@@ -1762,7 +1754,7 @@ func newRecordCreate(ctx context.Context, meta meta.Meta, d *schema.ResourceData
 		}
 		logger.Debugf("Existing MX records to append to target before schema data LEN %d %v", len(rdata), records)
 
-		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
+		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: &ttl, Target: records}
 
 	case RRTypeNaptr:
 		flagsnaptr, err := tf.GetStringValue("flagsnaptr", d)
@@ -1800,7 +1792,7 @@ func newRecordCreate(ctx context.Context, meta meta.Meta, d *schema.ResourceData
 			flagsnaptr = `"` + flagsnaptr + `"`
 		}
 		records := []string{strconv.Itoa(order) + " " + strconv.Itoa(preference) + " " + flagsnaptr + " " + service + " " + regexp + " " + replacement}
-		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
+		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: &ttl, Target: records}
 
 	case RRTypeNsec3:
 		flags, err := tf.GetIntValue("flags", d)
@@ -1828,7 +1820,7 @@ func newRecordCreate(ctx context.Context, meta meta.Meta, d *schema.ResourceData
 			return dns.RecordBody{}, err
 		}
 		records := []string{strconv.Itoa(algorithm) + " " + strconv.Itoa(flags) + " " + strconv.Itoa(iterations) + " " + salt + " " + nextHashedOwnerName + " " + typeBitmaps}
-		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
+		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: &ttl, Target: records}
 
 	case RRTypeNsec3Param:
 		flags, err := tf.GetIntValue("flags", d)
@@ -1848,7 +1840,7 @@ func newRecordCreate(ctx context.Context, meta meta.Meta, d *schema.ResourceData
 			return dns.RecordBody{}, err
 		}
 		records := []string{strconv.Itoa(algorithm) + " " + strconv.Itoa(flags) + " " + strconv.Itoa(iterations) + " " + salt}
-		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
+		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: &ttl, Target: records}
 
 	case RRTypeRp:
 		mailbox, err := tf.GetStringValue("mailbox", d)
@@ -1866,7 +1858,7 @@ func newRecordCreate(ctx context.Context, meta meta.Meta, d *schema.ResourceData
 			txt += "."
 		}
 		records := []string{mailbox + " " + txt}
-		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
+		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: &ttl, Target: records}
 
 	case RRTypeRrsig:
 		expiration, err := tf.GetStringValue("expiration", d)
@@ -1906,7 +1898,7 @@ func newRecordCreate(ctx context.Context, meta meta.Meta, d *schema.ResourceData
 			return dns.RecordBody{}, err
 		}
 		records := []string{typeCovered + " " + strconv.Itoa(algorithm) + " " + strconv.Itoa(labels) + " " + strconv.Itoa(originalTTL) + " " + expiration + " " + inception + " " + strconv.Itoa(keytag) + " " + signer + " " + signature}
-		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
+		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: &ttl, Target: records}
 
 	case RRTypeSrv:
 		records := make([]string, 0, len(target))
@@ -1951,7 +1943,7 @@ func newRecordCreate(ctx context.Context, meta meta.Meta, d *schema.ResourceData
 		if doSort {
 			sort.Strings(records)
 		}
-		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
+		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: &ttl, Target: records}
 
 	case RRTypeSshfp:
 		algorithm, err := tf.GetIntValue("algorithm", d)
@@ -1967,7 +1959,7 @@ func newRecordCreate(ctx context.Context, meta meta.Meta, d *schema.ResourceData
 			return dns.RecordBody{}, err
 		}
 		records := []string{strconv.Itoa(algorithm) + " " + strconv.Itoa(fingerprintType) + " " + fingerprint}
-		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
+		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: &ttl, Target: records}
 
 	case RRTypeSoa:
 		nameserver, err := tf.GetStringValue("name_server", d)
@@ -2003,7 +1995,7 @@ func newRecordCreate(ctx context.Context, meta meta.Meta, d *schema.ResourceData
 		}
 
 		records := []string{nameserver + " " + emailaddr + " " + strconv.Itoa(serial) + " " + strconv.Itoa(refresh) + " " + strconv.Itoa(retry) + " " + strconv.Itoa(expiry) + " " + strconv.Itoa(nxdomainttl)}
-		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
+		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: &ttl, Target: records}
 
 	case RRTypeAkamaiTlc:
 		dnsname, err := tf.GetStringValue("dns_name", d)
@@ -2015,7 +2007,7 @@ func newRecordCreate(ctx context.Context, meta meta.Meta, d *schema.ResourceData
 			return dns.RecordBody{}, err
 		}
 		records := []string{answtype + " " + dnsname}
-		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
+		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: &ttl, Target: records}
 
 	case RRTypeCert:
 		certtype, err := tf.GetStringValue("type_mnemonic", d)
@@ -2043,7 +2035,7 @@ func newRecordCreate(ctx context.Context, meta meta.Meta, d *schema.ResourceData
 			certtype = strconv.Itoa(typevalue)
 		}
 		records := []string{certtype + " " + strconv.Itoa(keytag) + " " + strconv.Itoa(algorithm) + " " + certificate}
-		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
+		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: &ttl, Target: records}
 
 	case RRTypeTlsa:
 		usage, err := tf.GetIntValue("usage", d)
@@ -2063,7 +2055,7 @@ func newRecordCreate(ctx context.Context, meta meta.Meta, d *schema.ResourceData
 			return dns.RecordBody{}, err
 		}
 		records := []string{strconv.Itoa(usage) + " " + strconv.Itoa(selector) + " " + strconv.Itoa(matchtype) + " " + certificate}
-		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
+		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: &ttl, Target: records}
 
 	case RRTypeSvcb, RRTypeHTTPS:
 		pri, err := tf.GetIntValue("svc_priority", d)
@@ -2079,7 +2071,7 @@ func newRecordCreate(ctx context.Context, meta meta.Meta, d *schema.ResourceData
 			return dns.RecordBody{}, err
 		}
 		records := []string{strconv.Itoa(pri) + " " + tname + " " + params}
-		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: ttl, Target: records}
+		recordCreate = dns.RecordBody{Name: host, RecordType: recordType, TTL: &ttl, Target: records}
 
 	default:
 		return dns.RecordBody{}, fmt.Errorf("unable to create a Record Body for %s : %s", host, recordType)
@@ -2208,7 +2200,7 @@ func checkBasicRecordTypes(d *schema.ResourceData) error {
 		if !errors.Is(err, tf.ErrNotFound) {
 			return err
 		}
-		return fmt.Errorf("configuration argument host must be set")
+		return fmt.Errorf("configuration argument name must be set")
 	}
 	_, err = tf.GetStringValue("recordtype", d)
 	if err != nil {
@@ -2216,13 +2208,6 @@ func checkBasicRecordTypes(d *schema.ResourceData) error {
 			return err
 		}
 		return fmt.Errorf("configuration argument recordtype must be set")
-	}
-	_, err = tf.GetIntValue("ttl", d)
-	if err != nil {
-		if !errors.Is(err, tf.ErrNotFound) {
-			return err
-		}
-		return fmt.Errorf("configuration argument ttl must be set")
 	}
 	return nil
 }
@@ -2330,17 +2315,9 @@ func checkDnskeyRecord(d *schema.ResourceData) error {
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	ttl, err := tf.GetIntValue("ttl", d)
-	if err != nil && !errors.Is(err, tf.ErrNotFound) {
-		return err
-	}
 
 	if flags != 0 && flags != 256 && flags != 257 {
 		return fmt.Errorf("configuration argument flags must not be %v for DNSKEY", flags)
-	}
-
-	if ttl == 0 {
-		return fmt.Errorf("configuration argument ttl must be set for DNSKEY")
 	}
 
 	if protocol == 0 {

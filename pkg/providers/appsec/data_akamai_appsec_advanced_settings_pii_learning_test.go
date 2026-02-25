@@ -7,24 +7,15 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/require"
 )
 
-func checkOutputText(value string) error {
-	matched, _ := regexp.MatchString("(?s).*ENABLE PII LEARNING.*true.*", value)
-	if !matched {
-		return errors.New("expected result not found")
-	}
-	return nil
-}
-
 func TestAkamaiAdvancedSettingsPIILearning_data_basic(t *testing.T) {
 	t.Run("match by AdvancedSettingsPIILearning ID", func(t *testing.T) {
 		client := &appsec.Mock{}
-
 		config := appsec.GetConfigurationResponse{}
 		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 		require.NoError(t, err)
@@ -62,7 +53,6 @@ func TestAkamaiAdvancedSettingsPIILearning_data_basic(t *testing.T) {
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("data.akamai_appsec_advanced_settings_pii_learning.test", "id", "43253"),
 							resource.TestCheckResourceAttr("data.akamai_appsec_advanced_settings_pii_learning.test", "json", piiLearningJSON.String()),
-							resource.TestCheckResourceAttrWith("data.akamai_appsec_advanced_settings_pii_learning.test", "output_text", checkOutputText),
 						),
 					},
 				},

@@ -4,7 +4,7 @@ if git diff origin/master -- go.mod | grep -E "\+\sgithub.com/akamai/AkamaiOPEN-
   echo "New EdgeGrid version found in go.mod and it released on GitHub, go.sum should be up-to-date"
 else
   echo "No new EdgeGrid version found in go.mod or it's not yet public, cleaning go.sum and use local EdgeGrid"
-  go mod edit -replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v12=../akamaiopen-edgegrid-golang/
+  go mod edit -replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v13=../akamaiopen-edgegrid-golang/
   go mod tidy # ensure no changes for goreleaser before hook - it enough to check go.mod and go.sum only once it's complete (so it has correct edgegrid-golang entry)
   #  fake commit to ensure clean git state
   git config --global user.email "you@example.com"

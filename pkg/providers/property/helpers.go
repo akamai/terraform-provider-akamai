@@ -9,10 +9,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/iam"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/log"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/str"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/log"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/str"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
@@ -224,7 +224,7 @@ var tlsConfigurationSchema = &schema.Resource{
 
 // Convert given hostnames to the map form that can be stored in a schema.ResourceData
 // Setting only statuses for default certs if they exist
-func flattenHostnames(Hostnames []papi.Hostname) []map[string]interface{} {
+func flattenHostnames(Hostnames []papi.HostnameResponseItem) []map[string]interface{} {
 	var res []map[string]interface{}
 	for _, hn := range Hostnames {
 		m := map[string]interface{}{}
@@ -248,7 +248,7 @@ func flattenHostnames(Hostnames []papi.Hostname) []map[string]interface{} {
 	return res
 }
 
-func flattenHostnamesWithoutDOM(Hostnames []papi.Hostname) []map[string]interface{} {
+func flattenHostnamesWithoutDOM(Hostnames []papi.HostnameResponseItem) []map[string]interface{} {
 	var res []map[string]interface{}
 	for _, hn := range Hostnames {
 		m := map[string]interface{}{}
@@ -331,7 +331,7 @@ func flattenCCMCertificateStatus(status *papi.CCMCertStatus) []map[string]string
 	return []map[string]string{m}
 }
 
-func flattenCCMCertificates(certificates *papi.CCMCertificates) []map[string]string {
+func flattenCCMCertificates(certificates *papi.CCMCertificatesResp) []map[string]string {
 	if certificates == nil {
 		return nil
 	}
@@ -341,7 +341,7 @@ func flattenCCMCertificates(certificates *papi.CCMCertificates) []map[string]str
 	return []map[string]string{m}
 }
 
-func flattenMTLS(mtls *papi.MTLS) []map[string]any {
+func flattenMTLS(mtls *papi.MTLSResp) []map[string]any {
 	if mtls == nil {
 		return nil
 	}

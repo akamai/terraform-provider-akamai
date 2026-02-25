@@ -5,13 +5,14 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudcertificates"
-	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
-	tst "github.com/akamai/terraform-provider-akamai/v9/internal/test"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/test"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudcertificates"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
+	tst "github.com/akamai/terraform-provider-akamai/v10/internal/test"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/test"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestClientCertificateDataSource(t *testing.T) {
@@ -178,7 +179,7 @@ func TestClientCertificateDataSource(t *testing.T) {
 				mockListCertificates(m, cloudcertificates.ListCertificatesRequest{
 					PageSize: 100,
 					Page:     1,
-				}, baseResponse, nil)
+				}, baseResponse, nil).Times(3)
 			},
 			steps: []resource.TestStep{
 				{
@@ -256,7 +257,7 @@ func TestClientCertificateDataSource(t *testing.T) {
 					Page:     1,
 				}, &cloudcertificates.ListCertificatesResponse{
 					Certificates: []cloudcertificates.Certificate{certWithNullSubject},
-				}, nil)
+				}, nil).Times(3)
 			},
 			steps: []resource.TestStep{
 				{
@@ -282,7 +283,7 @@ func TestClientCertificateDataSource(t *testing.T) {
 					Page:              1,
 				}, &cloudcertificates.ListCertificatesResponse{
 					Certificates: []cloudcertificates.Certificate{baseResponse.Certificates[0]},
-				}, nil)
+				}, nil).Times(3)
 			},
 			steps: []resource.TestStep{
 				{
@@ -314,7 +315,7 @@ func TestClientCertificateDataSource(t *testing.T) {
 					Page:       1,
 				}, &cloudcertificates.ListCertificatesResponse{
 					Certificates: []cloudcertificates.Certificate{baseResponse.Certificates[1]},
-				}, nil)
+				}, nil).Times(3)
 			},
 			steps: []resource.TestStep{
 				{
@@ -374,7 +375,7 @@ func TestClientCertificateDataSource(t *testing.T) {
 					Page:                        1,
 				}, &cloudcertificates.ListCertificatesResponse{
 					Certificates: []cloudcertificates.Certificate{filteredCertificate},
-				}, nil)
+				}, nil).Times(3)
 			},
 			steps: []resource.TestStep{
 				{
@@ -408,7 +409,7 @@ func TestClientCertificateDataSource(t *testing.T) {
 					Page:           1,
 				}, &cloudcertificates.ListCertificatesResponse{
 					Certificates: []cloudcertificates.Certificate{baseResponse.Certificates[0]},
-				}, nil)
+				}, nil).Times(3)
 			},
 			steps: []resource.TestStep{
 				{
@@ -440,7 +441,7 @@ func TestClientCertificateDataSource(t *testing.T) {
 					Page:           1,
 				}, &cloudcertificates.ListCertificatesResponse{
 					Certificates: []cloudcertificates.Certificate{expiredCertificate},
-				}, nil)
+				}, nil).Times(3)
 			},
 			steps: []resource.TestStep{
 				{
@@ -472,7 +473,7 @@ func TestClientCertificateDataSource(t *testing.T) {
 					Page:     1,
 				}, &cloudcertificates.ListCertificatesResponse{
 					Certificates: []cloudcertificates.Certificate{baseResponse.Certificates[2], baseResponse.Certificates[0]},
-				}, nil)
+				}, nil).Times(3)
 			},
 			steps: []resource.TestStep{
 				{
@@ -558,7 +559,7 @@ func TestClientCertificateDataSource(t *testing.T) {
 						Next:     ptr.To("/ccm/v1/certificates?page=2&pageSize=100"),
 						Previous: nil,
 					},
-				}, nil)
+				}, nil).Times(3)
 				mockListCertificates(m, cloudcertificates.ListCertificatesRequest{
 					PageSize: 100,
 					Page:     2,
@@ -569,7 +570,7 @@ func TestClientCertificateDataSource(t *testing.T) {
 						Next:     nil,
 						Previous: ptr.To("/ccm/v1/certificates?page=1&pageSize=100"),
 					},
-				}, nil)
+				}, nil).Times(3)
 			},
 			steps: []resource.TestStep{
 				{
@@ -678,10 +679,9 @@ func TestClientCertificateDataSource(t *testing.T) {
 	}
 }
 
-func mockListCertificates(m *cloudcertificates.Mock, req cloudcertificates.ListCertificatesRequest, certificates *cloudcertificates.ListCertificatesResponse, err error) {
+func mockListCertificates(m *cloudcertificates.Mock, req cloudcertificates.ListCertificatesRequest, certificates *cloudcertificates.ListCertificatesResponse, err error) *mock.Call {
 	if err != nil {
-		m.On("ListCertificates", testutils.MockContext, req).Return(nil, err).Once()
-		return
+		return m.On("ListCertificates", testutils.MockContext, req).Return(nil, err).Once()
 	}
-	m.On("ListCertificates", testutils.MockContext, req).Return(certificates, nil).Times(3)
+	return m.On("ListCertificates", testutils.MockContext, req).Return(certificates, nil).Once()
 }

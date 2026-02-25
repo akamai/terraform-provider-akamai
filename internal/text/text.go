@@ -56,8 +56,13 @@ func (p IDSplitter) Split(id string) ([]string, error) {
 	}
 
 	var res []string
-	for _, part := range parts {
-		res = append(res, strings.TrimSpace(part))
+	for i, part := range parts {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			return nil, fmt.Errorf("importID part %d cannot be empty; you need to provide an importID in the format '%s'",
+				i+1, p.FormatHint)
+		}
+		res = append(res, part)
 	}
 
 	return res, nil

@@ -9,6 +9,6 @@ data "akamai_appsec_eval_rules" "test" {
 }
 
 output "configsedge_post_output_text" {
-  value = data.akamai_appsec_eval_rules.test.output_text
+  value = data.akamai_appsec_eval_rules.test
 }
 

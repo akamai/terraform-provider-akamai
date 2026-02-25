@@ -6,13 +6,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudcertificates"
-	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
-	tst "github.com/akamai/terraform-provider-akamai/v9/internal/test"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/test"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testprovider"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudcertificates"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
+	tst "github.com/akamai/terraform-provider-akamai/v10/internal/test"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/test"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testprovider"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -831,14 +831,16 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 				tc.init(client.CloudCertificates, mockCerts)
 			}
 
-			pollingTimeout := tc.pollingTimeout
-			if pollingTimeout == 0 {
-				pollingTimeout = 1 * time.Minute
+			// Use custom config if provided in the test case.
+			config := defaultSubproviderConfig()
+			config.uploadCertificate.pollingInterval = time.Millisecond
+			if tc.pollingTimeout != 0 {
+				config.uploadCertificate.pollingTimeout = tc.pollingTimeout
 			}
 
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(
-					client, NewCustomPollingSubprovider(pollingTimeout), testprovider.NewMockSubprovider()),
+					client, newSubproviderWithConfig(config), testprovider.NewMockSubprovider()),
 				Steps: tc.steps,
 			})
 			client.CloudCertificates.AssertExpectations(t)

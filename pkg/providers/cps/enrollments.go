@@ -9,13 +9,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cps"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/log"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
-	cpstools "github.com/akamai/terraform-provider-akamai/v9/pkg/providers/cps/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cps"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/log"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
+	cpstools "github.com/akamai/terraform-provider-akamai/v10/pkg/providers/cps/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -290,19 +290,48 @@ func createAttrs(en *cps.Enrollment, enID int) map[string]interface{} {
 	}
 }
 
-func getChallengesAttrs(ctx context.Context, en *cps.GetEnrollmentResponse, client cps.CPS) (map[string]interface{}, error) {
+// getAdditionalAttrs retrieves additional attributes related to an enrollment's pending changes,
+// including pre-verification warnings, post-verification warnings, and domain validation challenges.
+func getAdditionalAttrs(ctx context.Context, en *cps.GetEnrollmentResponse, client cps.CPS) (map[string]any, error) {
 	changeID, err := cpstools.GetChangeIDFromPendingChanges(en.PendingChanges)
-
 	if err != nil {
 		if errors.Is(err, cpstools.ErrNoPendingChanges) {
 			return nil, nil
 		}
 		return nil, err
 	}
+
 	enID, err := cpstools.GetEnrollmentID(en.Location)
 	if err != nil {
 		return nil, err
 	}
+
+	attrs := make(map[string]any)
+
+	preVerificationWarnings, err := client.GetChangePreVerificationWarnings(ctx, cps.GetChangeRequest{
+		EnrollmentID: enID,
+		ChangeID:     changeID,
+	})
+	if err != nil {
+		if !errors.Is(err, cps.ErrNotFound) {
+			return nil, err
+		}
+	} else {
+		attrs["pre_verification_warnings"] = preVerificationWarnings.Warnings
+	}
+
+	postVerificationWarnings, err := client.GetChangePostVerificationWarnings(ctx, cps.GetChangeRequest{
+		EnrollmentID: enID,
+		ChangeID:     changeID,
+	})
+	if err != nil {
+		if !errors.Is(err, cps.ErrNotFound) {
+			return nil, err
+		}
+	} else {
+		attrs["post_verification_warnings"] = postVerificationWarnings.Warnings
+	}
+
 	changeStatusReq := cps.GetChangeStatusRequest{
 		EnrollmentID: enID,
 		ChangeID:     changeID,
@@ -311,8 +340,9 @@ func getChallengesAttrs(ctx context.Context, en *cps.GetEnrollmentResponse, clie
 	if err != nil {
 		return nil, err
 	}
+
 	if len(status.AllowedInput) < 1 || status.AllowedInput[0].Type != "lets-encrypt-challenges" {
-		return nil, nil
+		return attrs, nil
 	}
 
 	getChallengesReq := cps.GetChangeRequest{
@@ -325,9 +355,9 @@ func getChallengesAttrs(ctx context.Context, en *cps.GetEnrollmentResponse, clie
 	}
 
 	httpChallenges, dnsChallenges := splitChallenges(challenges)
-	attrs := make(map[string]interface{})
 	attrs["http_challenges"] = httpChallenges
 	attrs["dns_challenges"] = dnsChallenges
+
 	return attrs, nil
 }
 
@@ -385,7 +415,7 @@ func enrollmentDelete(ctx context.Context, d *schema.ResourceData, m interface{}
 	}
 
 	_, err = client.GetEnrollment(ctx, cps.GetEnrollmentRequest{EnrollmentID: enrollmentID})
-	if errors.Is(err, cps.ErrEnrollmentNotFound) {
+	if errors.Is(err, cps.ErrNotFound) {
 		logger.Debugf("Enrollment %d successfully deleted", enrollmentID)
 		return nil
 	}
@@ -394,7 +424,7 @@ func enrollmentDelete(ctx context.Context, d *schema.ResourceData, m interface{}
 		select {
 		case <-time.After(pollGetEnrollmentInterval):
 			_, err = client.GetEnrollment(ctx, cps.GetEnrollmentRequest{EnrollmentID: enrollmentID})
-			if errors.Is(err, cps.ErrEnrollmentNotFound) {
+			if errors.Is(err, cps.ErrNotFound) {
 				logger.Debugf("Enrollment %d successfully deleted", enrollmentID)
 				return nil
 			}

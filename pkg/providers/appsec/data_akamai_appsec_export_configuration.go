@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -36,11 +36,6 @@ func dataSourceExportConfiguration() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "JSON representation",
-			},
-			"output_text": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Text representation",
 			},
 		},
 	}
@@ -75,27 +70,6 @@ func dataSourceExportConfigurationRead(ctx context.Context, d *schema.ResourceDa
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
-	searchlist, ok := d.GetOk("search")
-	if ok {
-		ots := OutputTemplates{}
-		InitTemplates(ots)
-
-		var outputtextresult string
-
-		for _, h := range searchlist.([]interface{}) {
-			outputtext, err := RenderTemplates(ots, h.(string), exportconfiguration)
-			if err != nil {
-				return diag.FromErr(err)
-			}
-			outputtextresult = outputtextresult + outputtext
-		}
-
-		if len(outputtextresult) > 0 {
-			if err := d.Set("output_text", outputtextresult); err != nil {
-				return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
-			}
-		}
-	}
 	d.SetId(strconv.Itoa(exportconfiguration.ConfigID))
 
 	return nil

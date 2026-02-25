@@ -11,27 +11,43 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/date"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/id"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/str"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/timeouts"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/log"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/date"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/id"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/str"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/timeouts"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/log"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-func resourcePropertyIncludeActivation() *schema.Resource {
+type propertyIncludeActivationResourceConfig struct {
+	// createActivationRetry poll wait time code waits between retries for activation creation
+	createActivationRetry time.Duration
+
+	activationPollInterval time.Duration
+	getActivationInterval  time.Duration
+}
+
+func defaultPropertyIncludeActivationResourceConfig() propertyIncludeActivationResourceConfig {
+	return propertyIncludeActivationResourceConfig{
+		createActivationRetry:  10 * time.Second,
+		activationPollInterval: time.Minute,
+		getActivationInterval:  time.Second * 5,
+	}
+}
+
+func resourcePropertyIncludeActivation(config propertyIncludeActivationResourceConfig) *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourcePropertyIncludeActivationCreate,
+		CreateContext: resourcePropertyIncludeActivationCreate(config),
 		ReadContext:   resourcePropertyIncludeActivationRead,
-		UpdateContext: resourcePropertyIncludeActivationUpdate,
-		DeleteContext: resourcePropertyIncludeActivationDelete,
+		UpdateContext: resourcePropertyIncludeActivationUpdate(config),
+		DeleteContext: resourcePropertyIncludeActivationDelete(config),
 		Importer: &schema.ResourceImporter{
 			StateContext: resourcePropertyIncludeActivationImport,
 		},
@@ -150,25 +166,23 @@ func readTimeoutFromEnvOrDefault(name string, timeout time.Duration) *time.Durat
 	return &timeout
 }
 
-var (
-	activationPollInterval   = time.Minute
-	includeActivationTimeout = time.Minute * 30
-	getActivationInterval    = time.Second * 5
-)
+const includeActivationTimeout = time.Minute * 30
 
-func resourcePropertyIncludeActivationCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := meta.Must(m)
-	logger := meta.Log("PAPI", "resourcePropertyIncludeActivationCreate")
-	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
+func resourcePropertyIncludeActivationCreate(config propertyIncludeActivationResourceConfig) schema.CreateContextFunc {
+	return func(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+		meta := meta.Must(m)
+		logger := meta.Log("PAPI", "resourcePropertyIncludeActivationCreate")
+		ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
 
-	logger.Debug("Create property include activation")
+		logger.Debug("Create property include activation")
 
-	err := resourcePropertyIncludeActivationUpsert(ctx, d, meta.Client().GetPAPI())
-	if err != nil {
-		return err
+		err := resourcePropertyIncludeActivationUpsert(ctx, d, meta.Client().GetPAPI(), config)
+		if err != nil {
+			return err
+		}
+
+		return resourcePropertyIncludeActivationRead(ctx, d, m)
 	}
-
-	return resourcePropertyIncludeActivationRead(ctx, d, m)
 }
 
 func resourcePropertyIncludeActivationRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -222,71 +236,77 @@ func resourcePropertyIncludeActivationRead(ctx context.Context, d *schema.Resour
 	return nil
 }
 
-func resourcePropertyIncludeActivationUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := meta.Must(m)
-	logger := meta.Log("PAPI", "resourcePropertyIncludeActivationUpdate")
-	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	logger.Debug("Updating property include activation")
+func resourcePropertyIncludeActivationUpdate(config propertyIncludeActivationResourceConfig) schema.UpdateContextFunc {
+	return func(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+		meta := meta.Must(m)
+		logger := meta.Log("PAPI", "resourcePropertyIncludeActivationUpdate")
+		ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
+		logger.Debug("Updating property include activation")
 
-	if !d.HasChangesExcept("timeouts", "compliance_record") {
-		logger.Debug("Only timeouts and/or compliance_record were updated, update with no API calls")
-		return nil
-	}
+		if !d.HasChangesExcept("timeouts", "compliance_record") {
+			logger.Debug("Only timeouts and/or compliance_record were updated, update with no API calls")
+			return nil
+		}
 
-	if d.HasChange("auto_acknowledge_rule_warnings") && !d.HasChanges("version") {
-		return diag.Errorf("'auto_acknowledge_rule_warnings' attribute cannot be updated after resource creation without 'version' attribute modification")
-	}
+		if d.HasChange("auto_acknowledge_rule_warnings") && !d.HasChanges("version") {
+			return diag.Errorf("'auto_acknowledge_rule_warnings' attribute cannot be updated after resource creation without 'version' attribute modification")
+		}
 
-	err := resourcePropertyIncludeActivationUpsert(ctx, d, meta.Client().GetPAPI())
-	if err != nil {
-		return err
+		err := resourcePropertyIncludeActivationUpsert(ctx, d, meta.Client().GetPAPI(), config)
+		if err != nil {
+			return err
+		}
+		return resourcePropertyIncludeActivationRead(ctx, d, m)
 	}
-	return resourcePropertyIncludeActivationRead(ctx, d, m)
 }
 
-func resourcePropertyIncludeActivationDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := meta.Must(m)
-	logger := meta.Log("PAPI", "resourcePropertyIncludeActivationDelete")
-	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	logger.Debug("Deactivating property include")
+func resourcePropertyIncludeActivationDelete(config propertyIncludeActivationResourceConfig) schema.DeleteContextFunc {
+	return func(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+		meta := meta.Must(m)
+		logger := meta.Log("PAPI", "resourcePropertyIncludeActivationDelete")
+		ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
+		logger.Debug("Deactivating property include")
 
-	activationResourceData := propertyIncludeActivationData{}
-	if err := activationResourceData.populateFromResource(d); err != nil {
-		return diag.FromErr(err)
-	}
+		activationResourceData := propertyIncludeActivationData{}
+		if err := activationResourceData.populateFromResource(d); err != nil {
+			return diag.FromErr(err)
+		}
 
-	// Instead of the `include_id` attribute of the `include_activation` resource, the function uses now the `id` attribute
-	// of this resource which is made up of `contractID:groupID:includeID:network`. This eliminates the possibility of
-	// getting an "undefined" value in case of resource replacement.
-	idParts, err := id.Split(d.Id(), 4, "contractID:groupID:includeID:network")
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	activationResourceData.includeID = idParts[2]
+		// Instead of the `include_id` attribute of the `include_activation` resource, the function uses now the `id` attribute
+		// of this resource which is made up of `contractID:groupID:includeID:network`. This eliminates the possibility of
+		// getting an "undefined" value in case of resource replacement.
+		idParts, err := id.Split(d.Id(), 4, "contractID:groupID:includeID:network")
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		activationResourceData.includeID = idParts[2]
 
-	logger.Debug("waiting for pending (de)activations")
-	if diagErr := waitUntilNoPendingActivationInNetwork(ctx, meta.Client().GetPAPI(), activationResourceData); diagErr != nil {
-		return diagErr
-	}
+		logger.Debug("waiting for pending (de)activations")
+		if diagErr := waitUntilNoPendingActivationInNetwork(ctx, meta.Client().GetPAPI(),
+			activationResourceData, config); diagErr != nil {
+			return diagErr
+		}
 
-	expectedIsActive, err := isLatestActiveExpectedDeactivated(ctx, meta.Client().GetPAPI(), activationResourceData)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	if expectedIsActive {
-		// we are done here
-		logger.Debug("include version already deactivated")
-		return nil
-	}
+		expectedIsActive, err := isLatestActiveExpectedDeactivated(ctx, meta.Client().GetPAPI(), activationResourceData)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		if expectedIsActive {
+			// we are done here
+			logger.Debug("include version already deactivated")
+			return nil
+		}
 
-	logger.Debug("creating new deactivation")
-	diagErr := createNewDeactivation(ctx, meta.Client().GetPAPI(), activationResourceData)
-	if diagErr != nil {
-		return diagErr
-	}
+		logger.Debug("creating new deactivation")
+		diagErr := createNewDeactivation(ctx, meta.Client().GetPAPI(), activationResourceData, config)
+		if diagErr != nil {
+			return diagErr
+		}
 
-	logger.Debug("waiting for pending deactivation")
-	return waitUntilNoPendingActivationInNetwork(ctx, meta.Client().GetPAPI(), activationResourceData)
+		logger.Debug("waiting for pending deactivation")
+		return waitUntilNoPendingActivationInNetwork(ctx, meta.Client().GetPAPI(),
+			activationResourceData, config)
+	}
 }
 
 func resourcePropertyIncludeActivationImport(_ context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
@@ -315,7 +335,8 @@ func resourcePropertyIncludeActivationImport(_ context.Context, d *schema.Resour
 	return []*schema.ResourceData{d}, nil
 }
 
-func resourcePropertyIncludeActivationUpsert(ctx context.Context, d *schema.ResourceData, client papi.PAPI) diag.Diagnostics {
+func resourcePropertyIncludeActivationUpsert(ctx context.Context, d *schema.ResourceData,
+	client papi.PAPI, config propertyIncludeActivationResourceConfig) diag.Diagnostics {
 	logger := log.Get("resourcePropertyIncludeActivationUpsert")
 
 	activationResourceData := propertyIncludeActivationData{}
@@ -324,7 +345,8 @@ func resourcePropertyIncludeActivationUpsert(ctx context.Context, d *schema.Reso
 	}
 
 	logger.Debug("waiting for pending activations")
-	if diagErr := waitUntilNoPendingActivationInNetwork(ctx, client, activationResourceData); diagErr != nil {
+	if diagErr := waitUntilNoPendingActivationInNetwork(
+		ctx, client, activationResourceData, config); diagErr != nil {
 		return diagErr
 	}
 
@@ -341,13 +363,14 @@ func resourcePropertyIncludeActivationUpsert(ctx context.Context, d *schema.Reso
 	}
 
 	logger.Debug("creating new activation")
-	diagErr := createNewActivation(ctx, client, activationResourceData)
+	diagErr := createNewActivation(ctx, client, activationResourceData, config)
 	if diagErr != nil {
 		return diagErr
 	}
 
 	logger.Debug("waiting for pending activations")
-	if diagErr := waitUntilNoPendingActivationInNetwork(ctx, client, activationResourceData); err != nil {
+	if diagErr := waitUntilNoPendingActivationInNetwork(
+		ctx, client, activationResourceData, config); err != nil {
 		return diagErr
 	}
 
@@ -433,7 +456,8 @@ func parsePropertyIncludeActivationResourceID(activationResourceID string) (*pro
 	}, nil
 }
 
-func waitUntilNoPendingActivationInNetwork(ctx context.Context, client papi.PAPI, activationResourceData propertyIncludeActivationData) diag.Diagnostics {
+func waitUntilNoPendingActivationInNetwork(ctx context.Context, client papi.PAPI,
+	activationResourceData propertyIncludeActivationData, config propertyIncludeActivationResourceConfig) diag.Diagnostics {
 	act, err := findLatestActivationInNetwork(ctx, client, &propertyIncludeActivationID{
 		contractID: activationResourceData.contractID,
 		groupID:    activationResourceData.groupID,
@@ -453,7 +477,7 @@ func waitUntilNoPendingActivationInNetwork(ctx context.Context, client papi.PAPI
 				status == papi.ActivationStatusFailed ||
 				status == papi.ActivationStatusAborted ||
 				status == papi.ActivationStatusDeactivated
-		})
+		}, config)
 
 	return diagErr
 
@@ -490,7 +514,9 @@ func isLatestActiveExpectedActivated(ctx context.Context, client papi.PAPI, acti
 	return isLatestActiveExpectedWithActivationType(ctx, client, activationResourceData, papi.ActivationTypeActivate)
 }
 
-func createNewActivation(ctx context.Context, client papi.PAPI, activationResourceData propertyIncludeActivationData) diag.Diagnostics {
+func createNewActivation(ctx context.Context, client papi.PAPI,
+	activationResourceData propertyIncludeActivationData, config propertyIncludeActivationResourceConfig) diag.Diagnostics {
+
 	logger := log.Get("createNewActivation")
 
 	logger.Debug("preparing activation request")
@@ -504,7 +530,7 @@ func createNewActivation(ctx context.Context, client papi.PAPI, activationResour
 	}
 
 	activateIncludeRequest = papi.ActivateIncludeRequest(addComplianceRecord(activationResourceData.complianceRecord, papi.ActivateOrDeactivateIncludeRequest(activateIncludeRequest)))
-	createActivationRetry := CreateActivationRetry
+	createActivationRetry := config.createActivationRetry
 
 	var actID string
 	var ok bool
@@ -549,13 +575,15 @@ func createNewActivation(ctx context.Context, client papi.PAPI, activationResour
 
 	logger.Debug("waiting for activation creation")
 	// here is used temporary activationID
-	if _, err := waitForActivationCreation(ctx, client, activationResourceData.includeID, actID); err != nil {
+	if _, err := waitForActivationCreation(ctx, client, activationResourceData.includeID, actID, config); err != nil {
 		return diag.FromErr(err)
 	}
 	return nil
 }
 
-func createNewDeactivation(ctx context.Context, client papi.PAPI, activationResourceData propertyIncludeActivationData) diag.Diagnostics {
+func createNewDeactivation(ctx context.Context, client papi.PAPI, activationResourceData propertyIncludeActivationData,
+	config propertyIncludeActivationResourceConfig) diag.Diagnostics {
+
 	logger := log.Get("createNewDeactivation")
 
 	deactivateIncludeRequest := papi.DeactivateIncludeRequest{
@@ -569,7 +597,7 @@ func createNewDeactivation(ctx context.Context, client papi.PAPI, activationReso
 
 	deactivateIncludeRequest = papi.DeactivateIncludeRequest(addComplianceRecord(activationResourceData.complianceRecord, papi.ActivateOrDeactivateIncludeRequest(deactivateIncludeRequest)))
 
-	createActivationRetry := CreateActivationRetry
+	createActivationRetry := config.createActivationRetry
 
 	var actID string
 	var ok bool
@@ -611,7 +639,7 @@ func createNewDeactivation(ctx context.Context, client papi.PAPI, activationReso
 	}
 
 	logger.Info("waiting for creation of include deactivation")
-	if _, err := waitForActivationCreation(ctx, client, activationResourceData.includeID, actID); err != nil {
+	if _, err := waitForActivationCreation(ctx, client, activationResourceData.includeID, actID, config); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -681,7 +709,8 @@ func getLatestActiveIncludeActivationResponseInNetwork(ctx context.Context, clie
 	return activation, nil
 }
 
-func waitForActivationCreation(ctx context.Context, client papi.PAPI, includeID, activationID string) (*papi.GetIncludeActivationResponse, error) {
+func waitForActivationCreation(ctx context.Context, client papi.PAPI, includeID, activationID string,
+	config propertyIncludeActivationResourceConfig) (*papi.GetIncludeActivationResponse, error) {
 	for {
 		activation, err := client.GetIncludeActivation(ctx, papi.GetIncludeActivationRequest{
 			IncludeID:    includeID,
@@ -699,7 +728,7 @@ func waitForActivationCreation(ctx context.Context, client papi.PAPI, includeID,
 			return nil, err
 		}
 
-		if <-time.After(getActivationInterval); true {
+		if <-time.After(config.getActivationInterval); true {
 			continue
 		}
 	}
@@ -709,6 +738,7 @@ func waitForActivationCondition(ctx context.Context,
 	client papi.PAPI,
 	includeID, activationID string,
 	cond func(papi.ActivationStatus) bool,
+	config propertyIncludeActivationResourceConfig,
 ) (*papi.GetIncludeActivationResponse, diag.Diagnostics) {
 	retriesMax := 5
 	retries5xx := 0
@@ -740,7 +770,7 @@ func waitForActivationCondition(ctx context.Context,
 		}
 
 		select {
-		case <-time.After(date.CapDuration(activationPollInterval, ActivationPollMinimum)):
+		case <-time.After(date.CapDuration(config.activationPollInterval, ActivationPollMinimum)):
 			continue
 		case <-ctx.Done():
 			return nil, diag.FromErr(terminateProcess(ctx, string(actStatus)))

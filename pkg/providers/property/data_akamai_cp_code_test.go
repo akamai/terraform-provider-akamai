@@ -4,9 +4,9 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
@@ -193,6 +193,9 @@ func TestDSCPCode(t *testing.T) {
 	t.Run("group not found in state", func(t *testing.T) {
 		t.Parallel()
 		client := edgegrid.NewTestClient()
+
+		expectGetProducts(client.PAPI, "ctr_11", []string{"prd_1", "prd_2", "prd_3"}).Once()
+
 		client.PAPI.On("GetCPCodes",
 			testutils.MockContext, papi.GetCPCodesRequest{ContractID: "ctr_11", GroupID: "grp_22"},
 		).Return(&papi.GetCPCodesResponse{CPCodes: papi.CPCodeItems{Items: []papi.CPCode{{

@@ -5,12 +5,12 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v9/internal/edgegrid"
-	tst "github.com/akamai/terraform-provider-akamai/v9/internal/test"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/test"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
+	tst "github.com/akamai/terraform-provider-akamai/v10/internal/test"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/test"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -817,10 +817,10 @@ func mockListActivePropertyHostnames(client *papi.Mock, offset int, resp *papi.L
 	}).Return(resp, err)
 }
 
-func buildPropertyHostnames() []papi.Hostname {
-	hostnames := make([]papi.Hostname, 10)
+func buildPropertyHostnames() []papi.HostnameResponseItem {
+	hostnames := make([]papi.HostnameResponseItem, 10)
 	for i := range 10 {
-		hostnames[i] = papi.Hostname{
+		hostnames[i] = papi.HostnameResponseItem{
 			CnameType:            "EDGE_HOSTNAME",
 			EdgeHostnameID:       fmt.Sprintf("ehn%v", i),
 			CnameFrom:            fmt.Sprintf("cnamef%v", i),
@@ -844,10 +844,10 @@ func buildPropertyHostnames() []papi.Hostname {
 	return hostnames
 }
 
-func buildPropertyHostnamesWithDOV(dov *papi.DomainOwnershipVerification) []papi.Hostname {
-	hostnames := make([]papi.Hostname, 10)
+func buildPropertyHostnamesWithDOV(dov *papi.DomainOwnershipVerification) []papi.HostnameResponseItem {
+	hostnames := make([]papi.HostnameResponseItem, 10)
 	for i := range 10 {
-		hostnames[i] = papi.Hostname{
+		hostnames[i] = papi.HostnameResponseItem{
 			CnameType:            "EDGE_HOSTNAME",
 			EdgeHostnameID:       fmt.Sprintf("ehn%v", i),
 			CnameFrom:            fmt.Sprintf("cnamef%v", i),
@@ -872,13 +872,13 @@ func buildPropertyHostnamesWithDOV(dov *papi.DomainOwnershipVerification) []papi
 	return hostnames
 }
 
-func buildPropertyHostnamesWithCCM() []papi.Hostname {
-	hostnames := make([]papi.Hostname, 10)
+func buildPropertyHostnamesWithCCM() []papi.HostnameResponseItem {
+	hostnames := make([]papi.HostnameResponseItem, 10)
 	for i := 0; i < 10; i++ {
 		// Alternate boolean values to test both true and false scenarios
 		isEven := i%2 == 0
 
-		hostnames[i] = papi.Hostname{
+		hostnames[i] = papi.HostnameResponseItem{
 			CnameType:            "EDGE_HOSTNAME",
 			EdgeHostnameID:       fmt.Sprintf("ehn_%d", i),
 			CnameFrom:            fmt.Sprintf("cnamef%d.example.com", i),
@@ -897,9 +897,11 @@ func buildPropertyHostnamesWithCCM() []papi.Hostname {
 				},
 				},
 			},
-			CCMCertificates: &papi.CCMCertificates{
-				ECDSACertID: fmt.Sprintf("ecdsa_cert_%d", i),
-				RSACertID:   fmt.Sprintf("rsa_cert_%d", i),
+			CCMCertificates: &papi.CCMCertificatesResp{
+				CCMCertificates: papi.CCMCertificates{
+					ECDSACertID: fmt.Sprintf("ecdsa_cert_%d", i),
+					RSACertID:   fmt.Sprintf("rsa_cert_%d", i),
+				},
 			},
 			CCMCertStatus: &papi.CCMCertStatus{
 				ECDSAStagingStatus:    "ACTIVE",
@@ -907,11 +909,13 @@ func buildPropertyHostnamesWithCCM() []papi.Hostname {
 				RSAStagingStatus:      "PENDING",
 				RSAProductionStatus:   "PENDING",
 			},
-			MTLS: &papi.MTLS{
-				CASetID:         fmt.Sprintf("ca_set_%d", i),
-				CASetLink:       fmt.Sprintf("/ccm/v3/ca-sets/ca_set_%d", i),
-				CheckClientOCSP: isEven,
-				SendCASetClient: !isEven,
+			MTLS: &papi.MTLSResp{
+				CASetLink: fmt.Sprintf("/ccm/v3/ca-sets/ca_set_%d", i),
+				MTLS: papi.MTLS{
+					CASetID:         fmt.Sprintf("ca_set_%d", i),
+					CheckClientOCSP: isEven,
+					SendCASetClient: !isEven,
+				},
 			},
 			TLSConfiguration: &papi.TLSConfiguration{
 				CipherProfile:            "ak-akamai-default-2022q1",

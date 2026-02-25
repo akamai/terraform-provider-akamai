@@ -8,10 +8,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/gtm"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/test"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/gtm"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/test"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -123,6 +123,69 @@ func TestResGTMProperty(t *testing.T) {
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/update_basic.tf"),
 					ExpectError: regexp.MustCompile("API error"),
+				},
+			},
+		},
+		"update property domain name - delete and create new property": {
+			property: getBasicProperty(),
+			init: func(m *gtm.Mock) {
+				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+				mockCreateProperty(m, getBasicProperty(), &gtm.CreatePropertyResponse{
+					Resource: getBasicProperty(),
+					Status:   getPendingResponseStatus(),
+				}, nil)
+				// read
+				mockGetProperty(m, testPropertyName, getBasicProperty(), nil, testutils.FourTimes)
+				// delete
+				mockDeleteProperty(m, testPropertyName)
+
+				testDomainName = "gtm_terra_testdomain_updated.akadns.net"
+
+				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+				mockCreateProperty(m, getBasicProperty(), &gtm.CreatePropertyResponse{
+					Resource: getBasicProperty(),
+					Status:   getPendingResponseStatus(),
+				}, nil)
+				// read
+				mockGetProperty(m, testPropertyName, getBasicProperty(), nil, testutils.ThreeTimes)
+				// delete
+				mockDeleteProperty(m, testPropertyName)
+
+				//restore original domain name
+				testDomainName = "gtm_terra_testdomain.akadns.net"
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/create_basic.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(propertyResourceName, "name", "tfexample_prop_1"),
+						resource.TestCheckResourceAttr(propertyResourceName, "type", "weighted-round-robin"),
+						resource.TestCheckResourceAttr(propertyResourceName, "weighted_hash_bits_for_ipv4", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "weighted_hash_bits_for_ipv6", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.http_method", ""),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.http_request_body", ""),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.alternate_ca_certificates.#", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.pre_2023_security_posture", "false"),
+						resource.TestCheckResourceAttr(propertyResourceName, "traffic_target.0.precedence", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "id", "gtm_terra_testdomain.akadns.net:tfexample_prop_1"),
+						resource.TestCheckResourceAttr(propertyResourceName, "domain", "gtm_terra_testdomain.akadns.net"),
+					),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/domain_update/updated_domain_name.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(propertyResourceName, "name", "tfexample_prop_1"),
+						resource.TestCheckResourceAttr(propertyResourceName, "type", "weighted-round-robin"),
+						resource.TestCheckResourceAttr(propertyResourceName, "weighted_hash_bits_for_ipv4", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "weighted_hash_bits_for_ipv6", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.http_method", ""),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.http_request_body", ""),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.alternate_ca_certificates.#", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.pre_2023_security_posture", "false"),
+						resource.TestCheckResourceAttr(propertyResourceName, "traffic_target.0.precedence", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "id", "gtm_terra_testdomain_updated.akadns.net:tfexample_prop_1"),
+						resource.TestCheckResourceAttr(propertyResourceName, "domain", "gtm_terra_testdomain_updated.akadns.net"),
+					),
 				},
 			},
 		},

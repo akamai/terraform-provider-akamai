@@ -9,13 +9,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/cloudcertificates"
-	"github.com/akamai/terraform-provider-akamai/v9/internal/text"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/framework/date"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/framework/modifiers"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudcertificates"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/text"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/framework/date"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/framework/modifiers"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -43,12 +44,24 @@ var (
 const renewedNameSuffix = ".renewed."
 
 // The date format used in the renewed certificate name in format <base_name>.renewed.YYYY-MM-DD.
-const renewedNameDateLayout = "2006-01-02"
+const renewedNameDateLayout = "2006-01-02T15_04_05Z"
 
 // The regex pattern used by API to validate domain names: commonName and SANs.
 // Modified to disallow uppercase letters, as API will lowercase them automatically.
 // Original pattern from API: ^(\*\.)?([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$
 var domainNameRegex = regexp.MustCompile(`^(\*\.)?([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$`)
+
+type certificateResourceConfig struct {
+	// timestampFunc returns the time when the certificate name was last renewed.
+	// It is used to generate unique names for renewed certificates.
+	timestampFunc func() time.Time
+}
+
+func defaultCertificateResourceConfig() certificateResourceConfig {
+	return certificateResourceConfig{
+		timestampFunc: time.Now,
+	}
+}
 
 type certificateResourceModel struct {
 	ContractID    types.String `tfsdk:"contract_id"`
@@ -203,11 +216,16 @@ func (m *certificateResourceModel) populateCertificateFields(ctx context.Context
 
 type certificateResource struct {
 	meta.Resource
+	certificateResourceConfig
 }
 
 // NewCertificateResource returns a new CloudCertificates Certificate resource.
-func NewCertificateResource() resource.Resource {
-	return &certificateResource{}
+func NewCertificateResource(config certificateResourceConfig) func() resource.Resource {
+	return func() resource.Resource {
+		return &certificateResource{
+			certificateResourceConfig: config,
+		}
+	}
 }
 
 func (c *certificateResource) Metadata(_ context.Context, _ resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -301,7 +319,7 @@ func (c *certificateResource) Schema(_ context.Context, _ resource.SchemaRequest
 				Required:    true,
 				Description: "The key type for a certificate. Valid values are 'RSA' or 'ECDSA'",
 				PlanModifiers: []planmodifier.String{
-					modifiers.PreventStringUpdate(),
+					stringplanmodifier.RequiresReplace(),
 				},
 				Validators: []validator.String{
 					stringvalidator.OneOf([]string{"RSA", "ECDSA"}...),
@@ -311,7 +329,7 @@ func (c *certificateResource) Schema(_ context.Context, _ resource.SchemaRequest
 				Required:    true,
 				Description: "The key size for a certificate. Valid value for key type RSA: '2048'. Valid value for key type ECDSA: 'P-256'.",
 				PlanModifiers: []planmodifier.String{
-					modifiers.PreventStringUpdate(),
+					stringplanmodifier.RequiresReplace(),
 				},
 				Validators: []validator.String{
 					stringvalidator.OneOf([]string{"2048", "P-256"}...),
@@ -321,7 +339,7 @@ func (c *certificateResource) Schema(_ context.Context, _ resource.SchemaRequest
 				Required:    true,
 				Description: "Secure network type to use for the certificate. The only valid value is 'ENHANCED_TLS'",
 				PlanModifiers: []planmodifier.String{
-					modifiers.PreventStringUpdate(),
+					stringplanmodifier.RequiresReplace(),
 				},
 				Validators: []validator.String{
 					stringvalidator.OneOf([]string{"ENHANCED_TLS"}...),
@@ -489,11 +507,31 @@ func (c *certificateResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
+	certificateName := plan.BaseName.ValueString()
+	if certificateName != "" {
+		renewalChain, err := listCertificateRenewalChain(ctx, c.Client, certificateName, plan.ContractID.ValueString(), sans[0])
+		if err != nil {
+			resp.Diagnostics.AddError("Unable to verify CCM Certificate name", err.Error())
+			return
+		}
+		if len(renewalChain) == 0 {
+			tflog.Debug(ctx, "Using the base name as certificate name", map[string]any{
+				"base_name": certificateName,
+			})
+		} else {
+			certificateName = generateUniqueCertificateName(c.timestampFunc(), certificateName)
+			tflog.Debug(ctx, "Renewal chain not empty, generated unique certificate name", map[string]any{
+				"certificate_name": certificateName,
+				"renewal_chain":    renewalChain,
+			})
+		}
+	}
+
 	createReq := cloudcertificates.CreateCertificateRequest{
 		ContractID: strings.TrimPrefix(plan.ContractID.ValueString(), "ctr_"),
 		GroupID:    strings.TrimPrefix(plan.GroupID.ValueString(), "grp_"),
 		Body: cloudcertificates.CreateCertificateRequestBody{
-			CertificateName: plan.BaseName.ValueString(),
+			CertificateName: certificateName,
 			KeyType:         cloudcertificates.CryptographicAlgorithm(plan.KeyType.ValueString()),
 			KeySize:         cloudcertificates.KeySize(plan.KeySize.ValueString()),
 			SecureNetwork:   cloudcertificates.SecureNetwork(plan.SecureNetwork.ValueString()),
@@ -683,4 +721,36 @@ func extractBaseName(name string) string {
 func isEmptySubject(subject cloudcertificates.Subject) bool {
 	return subject.CommonName == "" && subject.Organization == "" && subject.Country == "" &&
 		subject.State == "" && subject.Locality == ""
+}
+
+// listCertificateRenewalChain returns the list of certificate names with the same base name, contractID and domain to
+// find if there is a renewal chain for the given certificate.
+func listCertificateRenewalChain(ctx context.Context, client edgegrid.Client, baseName, contractID, domain string) ([]string, error) {
+	tflog.Debug(ctx, "Fetching similar certificates", map[string]interface{}{
+		"base_name":   baseName,
+		"contract_id": contractID,
+		"domain":      domain,
+	})
+	listReq := cloudcertificates.ListCertificatesRequest{
+		CertificateName: baseName,
+		ContractID:      contractID,
+		Domain:          domain,
+	}
+	resp, err := client.GetCloudCertificates().ListCertificates(ctx, listReq)
+	if err != nil {
+		return nil, err
+	}
+
+	var similarNames []string
+	for _, cert := range resp.Certificates {
+		if baseName == extractBaseName(cert.CertificateName) {
+			similarNames = append(similarNames, cert.CertificateName)
+		}
+	}
+
+	return similarNames, err
+}
+
+func generateUniqueCertificateName(renewedTime time.Time, baseName string) string {
+	return fmt.Sprintf("%s%s%s", baseName, renewedNameSuffix, renewedTime.Format(renewedNameDateLayout))
 }

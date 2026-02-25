@@ -5,18 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v9/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
-
-type aapSelectedHostnamesOutputText struct {
-	PolicyID string
-	Hostname string
-	Status   string
-}
 
 func dataSourceAAPSelectedHostnames() *schema.Resource {
 	return &schema.Resource{
@@ -59,11 +53,6 @@ func dataSourceAAPSelectedHostnames() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "JSON representation",
-			},
-			"output_text": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Text representation",
 			},
 		},
 	}
@@ -134,24 +123,6 @@ func dataSourceAAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceD
 			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
 
-		ots := OutputTemplates{}
-		InitTemplates(ots)
-
-		matchtargetCount := len(matchtargets.MatchTargets.WebsiteTargets) + len(matchtargets.MatchTargets.APITargets)
-		matchtargetsOutputText := make([]MatchTargetOutputText, 0, matchtargetCount)
-		for _, value := range matchtargets.MatchTargets.WebsiteTargets {
-			matchtargetsOutputText = append(matchtargetsOutputText, MatchTargetOutputText{value.TargetID, value.SecurityPolicy.PolicyID, WebsiteTarget})
-		}
-		for _, value := range matchtargets.MatchTargets.APITargets {
-			matchtargetsOutputText = append(matchtargetsOutputText, MatchTargetOutputText{value.TargetID, value.SecurityPolicy.PolicyID, APITarget})
-		}
-		websiteMatchTargetsText, err := RenderTemplates(ots, "matchTargetDS", matchtargetsOutputText)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		if err := d.Set("output_text", websiteMatchTargetsText); err != nil {
-			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
-		}
 	} else { // WAP_AAG and WAP_PLUS accounts
 		getWAPSelectedHostnamesRequest := appsec.GetWAPSelectedHostnamesRequest{
 			ConfigID:         configID,
@@ -177,27 +148,6 @@ func dataSourceAAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceD
 			return diag.FromErr(err)
 		}
 		if err := d.Set("json", string(jsonBody)); err != nil {
-			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
-		}
-
-		ots := OutputTemplates{}
-		InitTemplates(ots)
-
-		textOutputCount := len(WAPSelectedHostnames.ProtectedHosts) + len(WAPSelectedHostnames.EvaluatedHosts)
-		textOutputEntries := make([]aapSelectedHostnamesOutputText, 0, textOutputCount)
-		for _, h := range WAPSelectedHostnames.ProtectedHosts {
-			entry := aapSelectedHostnamesOutputText{PolicyID: securityPolicyID, Hostname: h, Status: "protected"}
-			textOutputEntries = append(textOutputEntries, entry)
-		}
-		for _, h := range WAPSelectedHostnames.EvaluatedHosts {
-			entry := aapSelectedHostnamesOutputText{PolicyID: securityPolicyID, Hostname: h, Status: "evaluated"}
-			textOutputEntries = append(textOutputEntries, entry)
-		}
-		outputtext, err := RenderTemplates(ots, "AAPSelectedHostsDS", textOutputEntries)
-		if err != nil {
-			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
-		}
-		if err := d.Set("output_text", outputtext); err != nil {
 			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
 	}

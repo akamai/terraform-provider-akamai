@@ -25,6 +25,7 @@ __debug_bin
 
 # IntelliJ
 /.idea/
+*/.idea/
 *.ipr
 *.iws
 *.iml
