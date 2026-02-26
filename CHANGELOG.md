@@ -14,9 +14,6 @@
 * Network Lists
   * Removed the `output_text` attribute from the `akamai_networklist_network_lists` data source.
 
-* PAPI
-  * Removed the `secret_key` and `api_key` attributes from the `visitor_prioritization_queue_it` behavior for these rule formats: `v2025-05-30`, `v2025-07-07`, `v2025-09-09`, and `v2025-10-16`. These attributes aren't available anymore when defining rules in JSON format or when using the `akamai_property_rules_builder` data source with the corresponding rule format blocks.
-
 #### FEATURES/ENHANCEMENTS:
 
 * General
