@@ -183,6 +183,29 @@ var (
 		csrExpirationDate: "2027-01-01T00:00:00Z",
 		csrPEM:            "-----BEGIN CERTIFICATE REQUEST-----\nTEST-CSR-PEM\n-----END CERTIFICATE REQUEST-----\n",
 	}
+
+	minCertificateStandardTLS = certificateTestData{
+		// input data
+		contractID:    "test_contract",
+		groupID:       "123",
+		keyType:       "RSA",
+		keySize:       "2048",
+		secureNetwork: "STANDARD_TLS",
+		sans:          []string{"test.example.com"},
+
+		// output data
+		certificateID:     "12345",
+		certificateType:   "THIRD_PARTY",
+		name:              "test.example.com1234567890",
+		certificateStatus: "CSR_READY",
+		accountID:         "act_789",
+		createdBy:         "test_user",
+		createdDate:       "2025-01-01T00:00:00.168262Z",
+		modifiedBy:        "test_user",
+		modifiedDate:      "2025-01-01T00:00:00.616267Z",
+		csrExpirationDate: "2027-01-01T00:00:00Z",
+		csrPEM:            "-----BEGIN CERTIFICATE REQUEST-----\nTEST-CSR-PEM\n-----END CERTIFICATE REQUEST-----\n",
+	}
 )
 
 func TestCertificateResource(t *testing.T) {
@@ -287,6 +310,26 @@ func TestCertificateResource(t *testing.T) {
 					Check: minCertChecker.
 						CheckEqual("contract_id", "ctr_test_contract").
 						CheckEqual("group_id", "grp_123").
+						CheckMissing("subject").
+						Build(),
+				},
+			},
+		},
+		"happy path - create certificate with STANDARD_TLS": {
+			init: func(m *cloudcertificates.Mock, createData certificateTestData, _ certificateTestData) {
+				// Create
+				mockCreateCertificate(m, createData)
+				// Read before destroy
+				mockGetCertificate(m, createData)
+				// Delete
+				mockDeleteCertificate(m, createData)
+			},
+			createMockData: minCertificateStandardTLS,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCertificate/create/min_standard_tls.tf"),
+					Check: minCertChecker.
+						CheckEqual("secure_network", "STANDARD_TLS").
 						CheckMissing("subject").
 						Build(),
 				},
@@ -987,7 +1030,7 @@ func TestCertificateResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResCertificate/validation/wrong_secure_network.tf"),
-					ExpectError: regexp.MustCompile(`Attribute secure_network value must be one of: \["ENHANCED_TLS"\], got:(.|\n)*"WRONG_NETWORK"`),
+					ExpectError: regexp.MustCompile(`Attribute secure_network value must be one of: \["ENHANCED_TLS"(.|\n)*"STANDARD_TLS"\], got:(.|\n)*"WRONG_NETWORK"`),
 				},
 			},
 		},

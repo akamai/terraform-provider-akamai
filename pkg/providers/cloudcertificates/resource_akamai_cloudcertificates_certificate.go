@@ -337,12 +337,12 @@ func (c *certificateResource) Schema(_ context.Context, _ resource.SchemaRequest
 			},
 			"secure_network": schema.StringAttribute{
 				Required:    true,
-				Description: "Secure network type to use for the certificate. The only valid value is 'ENHANCED_TLS'",
+				Description: "Secure network type to use for the certificate. Valid values are 'ENHANCED_TLS' and 'STANDARD_TLS'.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
 				Validators: []validator.String{
-					stringvalidator.OneOf([]string{"ENHANCED_TLS"}...),
+					stringvalidator.OneOf([]string{"ENHANCED_TLS", "STANDARD_TLS"}...),
 				},
 			},
 			"sans": schema.SetAttribute{

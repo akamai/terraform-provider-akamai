@@ -61,7 +61,8 @@
 
 
 
-
+* Cloud Certificates (Beta)
+  * Added support for the `STANDARD_TLS` secure network type in the `akamai_cloudcertificates_certificate` resource. The `secure_network` attribute now accepts both `ENHANCED_TLS` and `STANDARD_TLS` values.
 
 
 
