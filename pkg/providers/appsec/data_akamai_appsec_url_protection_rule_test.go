@@ -29,7 +29,7 @@ func TestDataUrlProtectionRule(t *testing.T) {
 		"happy path - return a url protection rule": {
 			init: func(m *appsec.Mock) {
 				mockGetConfig(m, 3)
-				mockGetURLProtectionRule(m, getURLProtectionRule, 3)
+				mockGetURLProtectionRuleData(m, getURLProtectionRule, 3)
 			},
 			steps: []resource.TestStep{
 				{
@@ -94,7 +94,7 @@ func TestDataUrlProtectionRule(t *testing.T) {
 		"error response from GetURLProtectionRule api": {
 			init: func(m *appsec.Mock) {
 				mockGetConfig(m, 1)
-				mockGetURLProtectionRuleFailure(m, 1)
+				mockGetURLProtectionRuleFailureData(m, 1)
 			},
 			steps: []resource.TestStep{
 				{
@@ -138,12 +138,12 @@ func mockGetConfig(client *appsec.Mock, times int) {
 		}, nil).Times(times)
 }
 
-func mockGetURLProtectionRule(m *appsec.Mock, response appsec.GetURLProtectionRuleResponse, times int) {
+func mockGetURLProtectionRuleData(m *appsec.Mock, response appsec.GetURLProtectionRuleResponse, times int) {
 	m.On("GetURLProtectionRule", mock.Anything, appsec.GetURLProtectionRuleRequest{ConfigID: 43007, ConfigVersion: 40, URLProtectionRuleID: 681}).
 		Return(&response, nil).Times(times)
 }
 
-func mockGetURLProtectionRuleFailure(m *appsec.Mock, times int) {
+func mockGetURLProtectionRuleFailureData(m *appsec.Mock, times int) {
 	m.On("GetURLProtectionRule", mock.Anything, appsec.GetURLProtectionRuleRequest{ConfigID: 43007, ConfigVersion: 40, URLProtectionRuleID: 681}).
 		Return(nil, &serverError).Times(times)
 }

@@ -174,6 +174,7 @@ func (p *Subprovider) SDKDataSources() map[string]*schema.Resource {
 func (p *Subprovider) FrameworkResources() []func() resource.Resource {
 	return []func() resource.Resource{
 		NewRapidRulesResource,
+		NewURLProtectionActionResource,
 	}
 }
 

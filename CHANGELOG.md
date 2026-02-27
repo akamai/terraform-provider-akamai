@@ -71,6 +71,7 @@
 
 * Appsec
   * Added data source `akamai_appsec_waf_ruleset`
+  * Added resource `akamai_appsec_url_protection_action` 
 
 
 
