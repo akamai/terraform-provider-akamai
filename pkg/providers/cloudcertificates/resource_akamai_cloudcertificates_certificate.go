@@ -17,6 +17,7 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -24,6 +25,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -52,8 +54,9 @@ const renewedNameDateLayout = "2006-01-02T15_04_05Z"
 var domainNameRegex = regexp.MustCompile(`^(\*\.)?([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$`)
 
 type certificateResourceConfig struct {
-	// timestampFunc returns the time when the certificate name was last renewed.
-	// It is used to generate unique names for renewed certificates.
+	// timestampFunc returns the current time. It is used to generate unique
+	// names for renewed certificates and to calculate whether a certificate
+	// needs renewal based on its expiration date.
 	timestampFunc func() time.Time
 }
 
@@ -64,28 +67,28 @@ func defaultCertificateResourceConfig() certificateResourceConfig {
 }
 
 type certificateResourceModel struct {
-	ContractID    types.String `tfsdk:"contract_id"`
-	GroupID       types.String `tfsdk:"group_id"`
-	BaseName      types.String `tfsdk:"base_name"`
-	Name          types.String `tfsdk:"name"`
-	KeyType       types.String `tfsdk:"key_type"`
-	KeySize       types.String `tfsdk:"key_size"`
-	SecureNetwork types.String `tfsdk:"secure_network"`
-	SANs          types.Set    `tfsdk:"sans"`
-	Subject       types.Object `tfsdk:"subject"`
-	// TODO: implement renew_before_expiration_days logic.
-	// RenewBeforeExpirationDays types.Int64  `tfsdk:"renew_before_expiration_days"`
-	// NeedsRenewal              types.Bool   `tfsdk:"needs_renewal"`
-	CertificateID     types.String `tfsdk:"certificate_id"`
-	CertificateType   types.String `tfsdk:"certificate_type"`
-	AccountID         types.String `tfsdk:"account_id"`
-	CreatedDate       types.String `tfsdk:"created_date"`
-	CreatedBy         types.String `tfsdk:"created_by"`
-	ModifiedDate      types.String `tfsdk:"modified_date"`
-	ModifiedBy        types.String `tfsdk:"modified_by"`
-	CertificateStatus types.String `tfsdk:"certificate_status"`
-	CSRPEM            types.String `tfsdk:"csr_pem"`
-	CSRExpirationDate types.String `tfsdk:"csr_expiration_date"`
+	ContractID                types.String `tfsdk:"contract_id"`
+	GroupID                   types.String `tfsdk:"group_id"`
+	BaseName                  types.String `tfsdk:"base_name"`
+	Name                      types.String `tfsdk:"name"`
+	KeyType                   types.String `tfsdk:"key_type"`
+	KeySize                   types.String `tfsdk:"key_size"`
+	SecureNetwork             types.String `tfsdk:"secure_network"`
+	SANs                      types.Set    `tfsdk:"sans"`
+	Subject                   types.Object `tfsdk:"subject"`
+	RenewBeforeExpirationDays types.Int64  `tfsdk:"renew_before_expiration_days"`
+	RenewPending              types.Bool   `tfsdk:"renew_pending"`
+	AutoRenew                 types.Bool   `tfsdk:"auto_renew"`
+	CertificateID             types.String `tfsdk:"certificate_id"`
+	CertificateType           types.String `tfsdk:"certificate_type"`
+	AccountID                 types.String `tfsdk:"account_id"`
+	CreatedDate               types.String `tfsdk:"created_date"`
+	CreatedBy                 types.String `tfsdk:"created_by"`
+	ModifiedDate              types.String `tfsdk:"modified_date"`
+	ModifiedBy                types.String `tfsdk:"modified_by"`
+	CertificateStatus         types.String `tfsdk:"certificate_status"`
+	CSRPEM                    types.String `tfsdk:"csr_pem"`
+	CSRExpirationDate         types.String `tfsdk:"csr_expiration_date"`
 }
 
 type subjectModel struct {
@@ -256,7 +259,8 @@ func (c *certificateResource) ModifyPlan(ctx context.Context, req resource.Modif
 			"To fix this, you need to first remove the state and then re-import it with the group_id specified in the import ID.",
 		)
 		return
-	} else if !state.GroupID.Equal(plan.GroupID) {
+	}
+	if !state.GroupID.Equal(plan.GroupID) {
 		resp.Diagnostics.AddError(
 			"Update not Supported",
 			"updating field `group_id` is not possible")
@@ -267,6 +271,20 @@ func (c *certificateResource) ModifyPlan(ctx context.Context, req resource.Modif
 		plan.Name = state.Name
 		plan.ModifiedBy = state.ModifiedBy
 		plan.ModifiedDate = state.ModifiedDate
+	}
+
+	// Handle renew_pending in the plan:
+	// - If threshold changes (added, removed, or modified): reset to false so Read can recalculate.
+	//   This allows the user to dismiss renew_pending by adjusting the threshold.
+	// - If auto_renew=true and renew_pending=true: trigger replacement (new cert will have renew_pending=false).
+	// - Otherwise: copy from state to suppress unnecessary diffs.
+	if !plan.RenewBeforeExpirationDays.Equal(state.RenewBeforeExpirationDays) {
+		plan.RenewPending = types.BoolValue(false)
+	} else if plan.AutoRenew.ValueBool() && state.RenewPending.ValueBool() {
+		plan.RenewPending = types.BoolValue(false)
+		resp.RequiresReplace = append(resp.RequiresReplace, path.Root("renew_pending"))
+	} else {
+		plan.RenewPending = state.RenewPending
 	}
 
 	resp.Diagnostics.Append(resp.Plan.Set(ctx, &plan)...)
@@ -283,6 +301,14 @@ func (c *certificateResource) ValidateConfig(ctx context.Context, req resource.V
 
 	resp.Diagnostics.Append(config.validateKeyTypeAndSize()...)
 	resp.Diagnostics.Append(config.validateSubjectAndSANs(ctx)...)
+
+	if config.AutoRenew.ValueBool() && config.RenewBeforeExpirationDays.IsNull() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("auto_renew"),
+			"Missing required attribute",
+			"`auto_renew` cannot be set to true without `renew_before_expiration_days` configured.",
+		)
+	}
 }
 
 func (c *certificateResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
@@ -360,13 +386,23 @@ func (c *certificateResource) Schema(_ context.Context, _ resource.SchemaRequest
 				},
 			},
 			"subject": subjectSchema(),
-			// TODO: implement renew_before_expiration_days logic.
-			// "renew_before_expiration_days": schema.Int64Attribute{
-			// 	Optional:    true,
-			// },
-			// "needs_renewal": schema.BoolAttribute{
-			// 	Computed:    true,
-			// },
+			"renew_before_expiration_days": schema.Int64Attribute{
+				Optional:    true,
+				Description: "Number of days before the certificate's expiration date when renewal should be indicated. Only non-negative values are accepted.",
+				Validators: []validator.Int64{
+					int64validator.AtLeast(0),
+				},
+			},
+			"renew_pending": schema.BoolAttribute{
+				Computed:    true,
+				Description: "Indicates whether the certificate needs renewal. Set to true when the current time is within 'renew_before_expiration_days' of the certificate's expiration date.",
+			},
+			"auto_renew": schema.BoolAttribute{
+				Optional:    true,
+				Computed:    true, // Must be computed to use Default
+				Default:     booldefault.StaticBool(false),
+				Description: "If true, the resource will be automatically replaced when 'renew_pending' becomes true. Defaults to false.",
+			},
 			"certificate_id": schema.StringAttribute{
 				Computed:    true,
 				Description: "Unique identifier assigned to the newly created CCM certificate.",
@@ -492,6 +528,26 @@ func subjectSchema() schema.SingleNestedAttribute {
 	}
 }
 
+// isWithinRenewalThreshold checks whether the current time is within the renewal
+// threshold defined by renew_before_expiration_days relative to the certificate's
+// expiration date. Returns false when the threshold is not configured or no signed
+// certificate has been uploaded yet.
+func isWithinRenewalThreshold(renewBeforeExpirationDays types.Int64, now time.Time, expiryDate *time.Time) bool {
+	// No threshold configured.
+	if renewBeforeExpirationDays.IsNull() || renewBeforeExpirationDays.IsUnknown() {
+		return false
+	}
+
+	// No signed certificate uploaded yet — nothing to compare against.
+	if expiryDate == nil {
+		return false
+	}
+
+	days := int(renewBeforeExpirationDays.ValueInt64())
+	threshold := expiryDate.AddDate(0, 0, -days)
+	return now.After(threshold)
+}
+
 func (c *certificateResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	tflog.Debug(ctx, "CCM Certificate resource Create")
 
@@ -566,6 +622,12 @@ func (c *certificateResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
+	if isWithinRenewalThreshold(plan.RenewBeforeExpirationDays, c.timestampFunc(), cert.Certificate.SignedCertificateNotValidAfterDate) {
+		plan.RenewPending = types.BoolValue(true)
+	} else {
+		plan.RenewPending = types.BoolValue(false)
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
@@ -600,6 +662,12 @@ func (c *certificateResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
+	// One-way signal: Read only sets renew_pending to true, never back to false.
+	// It resets to false via Update (threshold change) or replacement (new certificate).
+	if isWithinRenewalThreshold(state.RenewBeforeExpirationDays, c.timestampFunc(), cert.Certificate.SignedCertificateNotValidAfterDate) {
+		state.RenewPending = types.BoolValue(true)
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
@@ -612,26 +680,51 @@ func (c *certificateResource) Update(ctx context.Context, req resource.UpdateReq
 		return
 	}
 
-	ctx = tflog.SetField(ctx, "certificate_id", plan.CertificateID.ValueString())
-
-	// TODO: update only if 'renew_before_expiration_days' is false.
-	// Add support for 'renew_before_expiration_days' logic.
-	tflog.Debug(ctx, "'base_name' change detected, updating the certificate name")
-	cert, err := c.Client.GetCloudCertificates().PatchCertificate(ctx, cloudcertificates.PatchCertificateRequest{
-		CertificateID: plan.CertificateID.ValueString(),
-		// If base_name is Null, it must be used as empty string to reset the name to the default value.
-		CertificateName: ptr.To(plan.BaseName.ValueString()),
-	})
-	if err != nil {
-		resp.Diagnostics.AddError("Unable to update CCM Certificate", err.Error())
+	var state certificateResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	tflog.Debug(ctx, "'base_name' updated to "+plan.BaseName.ValueString())
+	ctx = tflog.SetField(ctx, "certificate_id", plan.CertificateID.ValueString())
 
-	resp.Diagnostics.Append(plan.populateCertificateFields(ctx, cert.Certificate, true)...)
-	if resp.Diagnostics.HasError() {
-		return
+	// Warn in Update (not in ModifyPlan) to avoid noise — ModifyPlan can be called multiple times per apply.
+	if state.BaseName.Equal(plan.BaseName) {
+		if !state.RenewBeforeExpirationDays.Equal(plan.RenewBeforeExpirationDays) {
+			resp.Diagnostics.AddWarning(
+				"State-only update",
+				"`renew_before_expiration_days` is only used locally to calculate `renew_pending`. No API calls were made.",
+			)
+		}
+		if !state.AutoRenew.Equal(plan.AutoRenew) {
+			resp.Diagnostics.AddWarning(
+				"State-only update",
+				"`auto_renew` is only used locally to trigger certificate replacement when `renew_pending` is true. No API calls were made.",
+			)
+		}
+	} else {
+		tflog.Debug(ctx, "'base_name' change detected, updating the certificate name")
+		cert, err := c.Client.GetCloudCertificates().PatchCertificate(ctx, cloudcertificates.PatchCertificateRequest{
+			CertificateID: plan.CertificateID.ValueString(),
+			// If base_name is Null, it must be used as empty string to reset the name to the default value.
+			CertificateName: ptr.To(plan.BaseName.ValueString()),
+		})
+		if err != nil {
+			resp.Diagnostics.AddError("Unable to update CCM Certificate", err.Error())
+			return
+		}
+
+		tflog.Debug(ctx, "'base_name' updated to "+plan.BaseName.ValueString())
+
+		resp.Diagnostics.Append(plan.populateCertificateFields(ctx, cert.Certificate, true)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+	}
+
+	// If renew_before_expiration_days changed, reset renew_pending so Read can recalculate it.
+	if !plan.RenewBeforeExpirationDays.Equal(state.RenewBeforeExpirationDays) {
+		plan.RenewPending = types.BoolValue(false)
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
@@ -696,6 +789,8 @@ func (c *certificateResource) ImportState(ctx context.Context, req resource.Impo
 		BaseName:      types.StringValue(baseName),
 		Subject:       types.ObjectNull(subjectType()),
 		SANs:          types.SetNull(types.StringType),
+		RenewPending:  types.BoolValue(false),
+		AutoRenew:     types.BoolValue(false),
 	}
 	if len(parts) == 2 {
 		state.GroupID = types.StringValue(parts[1])

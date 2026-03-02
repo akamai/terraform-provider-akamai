@@ -54,7 +54,8 @@
 
 #### FEATURES/ENHANCEMENTS:
 
-
+* Cloud Certificates (Beta)
+  * Added `renew_before_expiration_days`, `renew_pending`, and `auto_renew` attributes to the `akamai_cloudcertificates_certificate` resource to support automatic certificate renewal. When `renew_before_expiration_days` is set and the certificate is within the renewal threshold, `renew_pending` becomes `true`. Setting `auto_renew` to `true` triggers automatic resource replacement when renewal is pending.
 
 
 
