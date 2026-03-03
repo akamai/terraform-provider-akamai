@@ -110,7 +110,8 @@
 
 
 
-
+* Cloud Certificates (Beta)
+  * Enhanced `base_name` updates to use the same renewal chain logic as creation, ensuring unique certificate names when previous instances exist.
 
 
 

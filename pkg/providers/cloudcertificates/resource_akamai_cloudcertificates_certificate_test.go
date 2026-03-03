@@ -388,6 +388,8 @@ func TestCertificateResource(t *testing.T) {
 				mockCreateCertificate(m, createData)
 				// Read before update
 				mockGetCertificate(m, createData)
+				// Update - check renewal chain for new base_name
+				mockEmptyRenewalChain(m, updateData)
 				// Update
 				mockPatchCertificate(m, updateData)
 				// Read after update
@@ -454,6 +456,55 @@ func TestCertificateResource(t *testing.T) {
 							plancheck.ExpectUnknownValue("akamai_cloudcertificates_certificate.test", tfjsonpath.New("modified_by")),
 						},
 					},
+				},
+			},
+		},
+		"happy path - create certificate, update name with renewal chain": {
+			init: func(m *cloudcertificates.Mock, createData certificateTestData, updateData certificateTestData) {
+				// Create
+				mockEmptyRenewalChain(m, createData)
+				mockCreateCertificate(m, createData)
+				// Read before update
+				mockGetCertificate(m, createData)
+				// Update - check renewal chain for new base_name (chain exists)
+				mockListCertificates(m, cloudcertificates.ListCertificatesRequest{
+					ContractID:      updateData.contractID,
+					Domain:          updateData.sans[0],
+					CertificateName: updateData.baseName,
+				}, &cloudcertificates.ListCertificatesResponse{
+					Certificates: []cloudcertificates.Certificate{
+						{CertificateName: updateData.baseName},
+						{CertificateName: "test-name-updated.renewed.2025-03-01T12_05_01Z"},
+					},
+				}, nil).Once()
+				// Update - patch with suffixed name
+				suffixedName := "test-name-updated.renewed.2025-05-01T12_05_01Z"
+				patchData := updateData
+				patchData.baseName = suffixedName
+				patchData.name = suffixedName
+				mockPatchCertificate(m, patchData)
+				// Read after update
+				mockGetCertificate(m, patchData)
+				// Read before destroy
+				mockGetCertificate(m, patchData)
+				// Delete
+				mockDeleteCertificate(m, patchData)
+			},
+			createMockData: fullCertificateRSA,
+			updateMockData: updateCertificate,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCertificate/create/full.tf"),
+					Check:  fullCertChecker.Build(),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCertificate/update/name.tf"),
+					Check: fullCertChecker.
+						CheckEqual("base_name", "test-name-updated").
+						CheckEqual("name", "test-name-updated.renewed.2025-05-01T12_05_01Z").
+						CheckEqual("modified_date", "2025-05-01T00:00:00.616267Z").
+						CheckEqual("modified_by", "test_user-updated").
+						Build(),
 				},
 			},
 		},
@@ -854,6 +905,8 @@ func TestCertificateResource(t *testing.T) {
 				mockCreateCertificate(m, createData)
 				// Read before update
 				mockGetCertificate(m, createData)
+				// Update - check renewal chain for new base_name
+				mockEmptyRenewalChain(m, updateData)
 				// Update
 				m.On("PatchCertificate", testutils.MockContext, cloudcertificates.PatchCertificateRequest{
 					CertificateID:   updateData.certificateID,
@@ -885,6 +938,37 @@ func TestCertificateResource(t *testing.T) {
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResCertificate/update/name.tf"),
 					ExpectError: regexp.MustCompile(`Error: Unable to update CCM Certificate(.|\n)*API failed`),
+				},
+			},
+		},
+		"expect error - ListCertificates fails during update": {
+			init: func(m *cloudcertificates.Mock, createData certificateTestData, updateData certificateTestData) {
+				// Create
+				mockEmptyRenewalChain(m, createData)
+				mockCreateCertificate(m, createData)
+				// Read before update
+				mockGetCertificate(m, createData)
+				// Update - ListCertificates fails
+				mockListCertificates(m, cloudcertificates.ListCertificatesRequest{
+					ContractID:      updateData.contractID,
+					Domain:          updateData.sans[0],
+					CertificateName: updateData.baseName,
+				}, nil, fmt.Errorf("API failed")).Once()
+				// Read before destroy
+				mockGetCertificate(m, createData)
+				// Delete
+				mockDeleteCertificate(m, createData)
+			},
+			createMockData: fullCertificateRSA,
+			updateMockData: updateCertificate,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCertificate/create/full.tf"),
+					Check:  fullCertChecker.Build(),
+				},
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResCertificate/update/name.tf"),
+					ExpectError: regexp.MustCompile(`Error: Unable to verify CCM Certificate name(.|\n)*API failed`),
 				},
 			},
 		},

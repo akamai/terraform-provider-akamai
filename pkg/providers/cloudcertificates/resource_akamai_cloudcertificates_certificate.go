@@ -563,24 +563,10 @@ func (c *certificateResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
-	certificateName := plan.BaseName.ValueString()
-	if certificateName != "" {
-		renewalChain, err := listCertificateRenewalChain(ctx, c.Client, certificateName, plan.ContractID.ValueString(), sans[0])
-		if err != nil {
-			resp.Diagnostics.AddError("Unable to verify CCM Certificate name", err.Error())
-			return
-		}
-		if len(renewalChain) == 0 {
-			tflog.Debug(ctx, "Using the base name as certificate name", map[string]any{
-				"base_name": certificateName,
-			})
-		} else {
-			certificateName = generateUniqueCertificateName(c.timestampFunc(), certificateName)
-			tflog.Debug(ctx, "Renewal chain not empty, generated unique certificate name", map[string]any{
-				"certificate_name": certificateName,
-				"renewal_chain":    renewalChain,
-			})
-		}
+	certificateName, err := c.resolveCertificateName(ctx, plan.BaseName.ValueString(), plan.ContractID.ValueString(), sans[0])
+	if err != nil {
+		resp.Diagnostics.AddError("Unable to verify CCM Certificate name", err.Error())
+		return
 	}
 
 	createReq := cloudcertificates.CreateCertificateRequest{
@@ -688,6 +674,12 @@ func (c *certificateResource) Update(ctx context.Context, req resource.UpdateReq
 
 	ctx = tflog.SetField(ctx, "certificate_id", plan.CertificateID.ValueString())
 
+	var sans []string
+	resp.Diagnostics.Append(plan.SANs.ElementsAs(ctx, &sans, false)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	// Warn in Update (not in ModifyPlan) to avoid noise — ModifyPlan can be called multiple times per apply.
 	if state.BaseName.Equal(plan.BaseName) {
 		if !state.RenewBeforeExpirationDays.Equal(plan.RenewBeforeExpirationDays) {
@@ -704,10 +696,18 @@ func (c *certificateResource) Update(ctx context.Context, req resource.UpdateReq
 		}
 	} else {
 		tflog.Debug(ctx, "'base_name' change detected, updating the certificate name")
+
+		// Resolve the certificate name using the same renewal chain logic as Create.
+		// If base_name is Null, ValueString() returns empty string, which resets the name to the API default.
+		certificateName, err := c.resolveCertificateName(ctx, plan.BaseName.ValueString(), plan.ContractID.ValueString(), sans[0])
+		if err != nil {
+			resp.Diagnostics.AddError("Unable to verify CCM Certificate name", err.Error())
+			return
+		}
+
 		cert, err := c.Client.GetCloudCertificates().PatchCertificate(ctx, cloudcertificates.PatchCertificateRequest{
-			CertificateID: plan.CertificateID.ValueString(),
-			// If base_name is Null, it must be used as empty string to reset the name to the default value.
-			CertificateName: ptr.To(plan.BaseName.ValueString()),
+			CertificateID:   plan.CertificateID.ValueString(),
+			CertificateName: ptr.To(certificateName),
 		})
 		if err != nil {
 			resp.Diagnostics.AddError("Unable to update CCM Certificate", err.Error())
@@ -844,6 +844,31 @@ func listCertificateRenewalChain(ctx context.Context, client edgegrid.Client, ba
 	}
 
 	return similarNames, err
+}
+
+// resolveCertificateName determines the certificate name to use based on the base_name and renewal chain.
+// If baseName is empty, it returns empty string. If there are no existing certificates with that base name,
+// it returns the base name directly. If there are existing certificates, it generates a unique suffixed name.
+func (c *certificateResource) resolveCertificateName(ctx context.Context, baseName, contractID, domain string) (string, error) {
+	if baseName == "" {
+		return "", nil
+	}
+	renewalChain, err := listCertificateRenewalChain(ctx, c.Client, baseName, contractID, domain)
+	if err != nil {
+		return "", err
+	}
+	if len(renewalChain) == 0 {
+		tflog.Debug(ctx, "Using the base name as certificate name", map[string]any{
+			"base_name": baseName,
+		})
+		return baseName, nil
+	}
+	name := generateUniqueCertificateName(c.timestampFunc(), baseName)
+	tflog.Debug(ctx, "Renewal chain not empty, generated unique certificate name", map[string]any{
+		"certificate_name": name,
+		"renewal_chain":    renewalChain,
+	})
+	return name, nil
 }
 
 func generateUniqueCertificateName(renewedTime time.Time, baseName string) string {
