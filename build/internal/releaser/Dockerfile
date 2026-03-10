@@ -1,4 +1,4 @@
-FROM golang:1.24.10-alpine3.22
+FROM golang:1.25.7-alpine3.23
 
 WORKDIR /workspace
 
