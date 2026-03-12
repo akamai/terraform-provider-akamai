@@ -123,6 +123,7 @@
 
 
 * Appsec
+ * Added resource to support URL protection rules `akamai_appsec_url_protection_rule`.
  * Added datasources to support URL Protection rule actions `akamai_appsec_url_protection_rules_actions` and `akamai_appsec_url_protection_rule_actions`.
 
 

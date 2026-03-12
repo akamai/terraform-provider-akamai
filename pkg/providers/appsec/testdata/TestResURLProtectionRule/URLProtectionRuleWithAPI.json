@@ -1,0 +1,25 @@
+{
+	"apiDefinitions": [
+		{
+			"apiDefinitionId": 3216157,
+			"definedResources": true,
+			"resourceIds": [],
+			"undefinedResources": true
+		}
+	],
+	"categories": [],
+	"configId": 43007,
+	"configVersion": 40,
+	"createDate": "2023-04-14T18:58:53Z",
+	"createdBy": "jsmith",
+	"description": "API Protection",
+	"intelligentLoadShedding": false,
+	"name": "API Protection Rule",
+	"policyId": 681,
+	"protectionType": "MULTIPLE",
+	"rateThreshold": 195,
+	"updateDate": "2023-04-26T02:42:28Z",
+	"updatedBy": "jperez",
+	"used": true
+}
+
