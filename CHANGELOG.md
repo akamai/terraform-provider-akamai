@@ -116,7 +116,8 @@
 
 
 
-
+* PAPI
+  * Added support for new field `https_service_binding` to the `akamai_edge_hostname` resource to enable HTTPS service binding per Edge Hostname.
 
 
 

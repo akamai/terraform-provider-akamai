@@ -138,6 +138,12 @@ var akamaiSecureEdgeHostNameSchema = map[string]*schema.Schema{
 		DiffSuppressFunc: suppressEdgeHostnameUseCases,
 		Description:      "A JSON encoded list of use cases",
 	},
+	"https_service_binding": {
+		Type:             schema.TypeString,
+		Optional:         true,
+		Description:      "Specifies the HTTPS service binding. Allowed values: H2, H3, H2_AND_H3.",
+		ValidateDiagFunc: tf.ValidateStringInSlice([]string{"H2", "H3", "H2_AND_H3"}),
+	},
 	"timeouts": {
 		Type:        schema.TypeList,
 		Optional:    true,
@@ -245,6 +251,14 @@ func resourceSecureEdgeHostNameCreate(config secureEdgeHostNameResourceConfig) s
 			newHostname.UseCases = useCases
 		}
 
+		httpsServiceBinding, err := tf.GetStringValue("https_service_binding", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		if httpsServiceBinding != "" {
+			newHostname.HTTPSServiceBinding = httpsServiceBinding
+		}
+
 		logger.Debugf("Creating new edge hostname: %#v", newHostname)
 		hostname, err := meta.Client().GetPAPI().CreateEdgeHostname(ctx, papi.CreateEdgeHostnameRequest{
 			EdgeHostname: newHostname,
@@ -280,9 +294,10 @@ func resourceSecureEdgeHostNameCreate(config secureEdgeHostNameResourceConfig) s
 				return diag.FromErr(err)
 			}
 			patches := []patch{{
-				value: strconv.FormatInt(ttl, 10),
-				field: "ttl",
-				path:  "/ttl",
+				value:     strconv.FormatInt(ttl, 10),
+				field:     "ttl",
+				path:      "/ttl",
+				operation: "replace",
 			}}
 			diagnostics := patchEdgeHostname(ctx,
 				patchEdgeHostnameOptions{
@@ -469,6 +484,14 @@ func resourceSecureEdgeHostNameRead(config secureEdgeHostNameResourceConfig) sch
 			return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
 		}
 
+		if foundEdgeHostname.HTTPSServiceBinding != nil {
+			httpsServiceBinding := *foundEdgeHostname.HTTPSServiceBinding
+
+			if err := d.Set("https_service_binding", httpsServiceBinding); err != nil {
+				return diag.FromErr(fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error()))
+			}
+		}
+
 		_, err = tf.GetIntValueAsInt64("ttl", d)
 		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return diag.FromErr(err)
@@ -510,7 +533,7 @@ func resourceSecureEdgeHostNameUpdate(config secureEdgeHostNameResourceConfig) s
 			return nil
 		}
 
-		patches := make([]patch, 0, 2)
+		patches := make([]patch, 0, 3)
 		if d.HasChange("ip_behavior") {
 			ipBehavior, err := tf.GetStringValue("ip_behavior", d)
 			if err != nil {
@@ -521,9 +544,10 @@ func resourceSecureEdgeHostNameUpdate(config secureEdgeHostNameResourceConfig) s
 				ipBehavior = "IPV6_IPV4_DUALSTACK"
 			}
 			patches = append(patches, patch{
-				value: ipBehavior,
-				field: "ip_behavior",
-				path:  "/ipVersionBehavior",
+				value:     ipBehavior,
+				field:     "ip_behavior",
+				path:      "/ipVersionBehavior",
+				operation: "replace",
 			})
 		}
 
@@ -533,10 +557,30 @@ func resourceSecureEdgeHostNameUpdate(config secureEdgeHostNameResourceConfig) s
 				return diag.FromErr(err)
 			}
 			patches = append(patches, patch{
-				value: strconv.FormatInt(ttl, 10),
-				field: "ttl",
-				path:  "/ttl",
+				value:     strconv.FormatInt(ttl, 10),
+				field:     "ttl",
+				path:      "/ttl",
+				operation: "replace",
 			})
+		}
+
+		if d.HasChange("https_service_binding") {
+			o, n := d.GetChange("https_service_binding")
+			oldBinding, newBinding := o.(string), n.(string)
+			bindingPath := patch{
+				field: "https_service_binding",
+				path:  "/httpsServiceBinding",
+			}
+			if oldBinding == "" && newBinding != "" {
+				bindingPath.operation = "add"
+				bindingPath.value = newBinding
+			} else if oldBinding != "" && newBinding == "" {
+				bindingPath.operation = "remove"
+			} else {
+				bindingPath.operation = "replace"
+				bindingPath.value = newBinding
+			}
+			patches = append(patches, bindingPath)
 		}
 
 		if len(patches) > 0 {
@@ -564,9 +608,10 @@ func resourceSecureEdgeHostNameUpdate(config secureEdgeHostNameResourceConfig) s
 }
 
 type patch struct {
-	value string
-	field string
-	path  string
+	value     string
+	field     string
+	path      string
+	operation string
 }
 
 type patchEdgeHostnameOptions struct {
@@ -598,7 +643,7 @@ func patchEdgeHostname(ctx context.Context, opts patchEdgeHostnameOptions) diag.
 		logger.Debugf("Proceeding to update %s for %s", p.field, edgeHostname)
 		body = append(body, hapi.UpdateEdgeHostnameRequestBody{
 
-			Op:    "replace",
+			Op:    p.operation,
 			Path:  p.path,
 			Value: p.value,
 		})
