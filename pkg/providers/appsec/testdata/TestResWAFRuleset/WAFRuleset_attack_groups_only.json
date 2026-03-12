@@ -1,0 +1,24 @@
+{
+  "ruleSetInfo": {
+    "rulesetVersion": 1
+  },
+  "attackGroups": [
+    {
+      "group": "CMD",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "group": "SQL",
+      "action": "deny",
+      "conditionException": {}
+    },
+    {
+      "group": "XSS",
+      "action": "none",
+      "conditionException": {}
+    }
+  ],
+  "rules": []
+}
+

@@ -1,0 +1,27 @@
+{
+  "ruleSetInfo": {
+    "rulesetVersion": 1
+  },
+  "attackGroups": [],
+  "rules": [
+    {
+      "ruleId": 950002,
+      "ruleName": "CMD Injection Attack Detected (OS Commands 4)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 950006,
+      "ruleName": "CMD Injection Attack Detected (OS Commands 5)",
+      "action": "deny",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 950118,
+      "ruleName": "Remote File Inclusion Attack (Common PHP RFI Attacks)",
+      "action": "none",
+      "conditionException": {}
+    }
+  ]
+}
+

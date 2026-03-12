@@ -1,0 +1,1972 @@
+{
+  "ruleSetInfo": {
+    "rulesetVersion": 1
+  },
+  "adaptiveIntelligence": {
+    "threatIntelEnabled": true
+  },
+  "attackGroups": [
+    {
+      "group": "POLICY",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "group": "WAT",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "group": "PROTOCOL",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "group": "SQL",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "group": "XSS",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "group": "CMD",
+      "action": "alert",
+      "conditionException": {
+        "advancedExceptions": {
+          "conditionOperator": "AND",
+          "conditions": [
+            {
+              "type": "hostMatch",
+              "hosts": [
+                "www.hostname.com"
+              ],
+              "positiveMatch": true
+            },
+            {
+              "type": "ipMatch",
+              "ips": [
+                "1.1.1.1"
+              ],
+              "positiveMatch": true,
+              "useHeaders": false
+            },
+            {
+              "type": "pathMatch",
+              "paths": [
+                "/test"
+              ],
+              "positiveMatch": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "group": "LFI",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "group": "RFI",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "group": "PLATFORM",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "group": "OUTBOUND",
+      "action": "none",
+      "conditionException": {}
+    }
+  ],
+  "rules": [
+    {
+      "ruleId": 950002,
+      "ruleName": "CMD Injection Attack Detected (OS Commands 4)",
+      "action": "deny",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 950006,
+      "ruleName": "CMD Injection Attack Detected (OS Commands 5)",
+      "action": "none",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 950007,
+      "ruleName": "SQL Injection Attack (Blind Testing)",
+      "action": "alert",
+      "conditionException": {
+        "advancedExceptions": {
+          "conditionOperator": "AND",
+          "conditions": [
+            {
+              "type": "hostMatch",
+              "hosts": [
+                "www.hostname.com"
+              ],
+              "positiveMatch": true
+            },
+            {
+              "type": "ipMatch",
+              "ips": [
+                "1.1.1.1"
+              ],
+              "positiveMatch": true,
+              "useHeaders": false
+            },
+            {
+              "type": "pathMatch",
+              "paths": [
+                "/test"
+              ],
+              "positiveMatch": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "ruleId": 950011,
+      "ruleName": "Server-Side Include (SSI) Attack",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 950118,
+      "ruleName": "Remote File Inclusion Attack (Common PHP RFI Attacks)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 950203,
+      "ruleName": "Local File Inclusion (LFI) Attack (Directory Traversal and Obfuscation Attempts)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 950204,
+      "ruleName": "Local File Inclusion (LFI) Attack (Directory Traversal and Obfuscation Attempts)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 950216,
+      "ruleName": "Unicode Full/Half Width Abuse Attack Attempt",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 950220,
+      "ruleName": "Possible URL Redirector Abuse (Off-Domain URL)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 950902,
+      "ruleName": "SQL Injection Attack (Tautology Probes 1)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 951910,
+      "ruleName": "HTTP Response Splitting Attack (Header Injection)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 958003,
+      "ruleName": "Cross-site Scripting (XSS) Attack (Fromcharcode Detected)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 958008,
+      "ruleName": "Cross-site Scripting (XSS) Attack (HTML INPUT IMAGE Tag)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 958023,
+      "ruleName": "Cross-site Scripting (XSS) Attack (Javascript URL Protocol Handler with \"lowsrc\" Attribute)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 958034,
+      "ruleName": "Cross-site Scripting (XSS) Attack (Style Attribute with 'expression' Keyword)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 958051,
+      "ruleName": "Cross-site Scripting (XSS) Attack (Script Tag)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 958052,
+      "ruleName": "Cross-site Scripting (XSS) Attack (Common PoC DOM Event Triggers)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 959070,
+      "ruleName": "SQL Injection Attack (Merge, Execute, Having Probes)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 959073,
+      "ruleName": "SQL Injection Attack (Built-in Functions, Objects and Keyword Probes 1)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 959976,
+      "ruleName": "PHP Injection Attack (Common Functions)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 959977,
+      "ruleName": "PHP Injection Attack (Configuration Override)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 961011,
+      "ruleName": "HEAD Request with Body Content",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 961012,
+      "ruleName": "POST Request Missing Content-Length Header",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 961034,
+      "ruleName": "Invalid HTTP Protocol Version",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 961904,
+      "ruleName": "Request Containing Content, but Missing Content-Type header",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 961912,
+      "ruleName": "Failed to Parse Request Body for WAF Inspection",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 968230,
+      "ruleName": "HTTP Range Header: Invalid Last Byte Value",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 969151,
+      "ruleName": "PHP Injection Attack (Opening Tag)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 970003,
+      "ruleName": "SQL Information Leakage",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 970004,
+      "ruleName": "IIS Information Leakage",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 970009,
+      "ruleName": "PHP Information Leakage",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 970011,
+      "ruleName": "File or Directory Names Leakage",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 970013,
+      "ruleName": "Directory Listing",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 970014,
+      "ruleName": "ASP/JSP Source Code Leakage",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 970015,
+      "ruleName": "PHP Source Code Leakage",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 970118,
+      "ruleName": "Application is not Available (Server-Side Exceptions)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 970901,
+      "ruleName": "Application is not Available (HTTP 5XX)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 970902,
+      "ruleName": "PHP Source Code Leakage",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 970903,
+      "ruleName": "ASP/JSP Source Code Leakage",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 970904,
+      "ruleName": "IIS Information Leakage",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 973305,
+      "ruleName": "Cross-site Scripting (XSS) Attack (URL Protocols)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 973307,
+      "ruleName": "Cross-site Scripting (XSS) Attack (Eval/Atob Functions)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 973311,
+      "ruleName": "Cross-site Scripting (XSS) Attack (XSS Unicode PoC String)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 973312,
+      "ruleName": "Cross-site Scripting (XSS) Attack (Common PoC Payload)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 973335,
+      "ruleName": "Cross-site Scripting (XSS) Attack (IE XSS Filter Evasion Attempt)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 981240,
+      "ruleName": "SQL Injection Attack (SQL Conditional Probes)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 981242,
+      "ruleName": "SQL Injection Attack (SQL Operator and Expression Probes 1)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 981243,
+      "ruleName": "SQL Injection Attack (SQL Operator and Expression Probes 2)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 981244,
+      "ruleName": "SQL Injection Attack (Tautology Probes 2)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 981247,
+      "ruleName": "SQL Injection Attack (Built-in Functions, Objects and Keyword Probes 3)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 981248,
+      "ruleName": "SQL Injection Attack (Built-in Functions, Objects and Keyword Probes 2)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 981251,
+      "ruleName": "SQL Injection Attack (Built-in Functions, Objects and Keyword Probes 3)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 981252,
+      "ruleName": "SQL Injection Attack (Charset manipulation)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 981253,
+      "ruleName": "SQL Injection Attack (Stored Procedure Detected)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 981254,
+      "ruleName": "SQL Injection Attack (Time-based Blind Probe)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 981255,
+      "ruleName": "SQL Injection Attack (Sysadmin access functions)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 981256,
+      "ruleName": "SQL Injection Attack (Merge, Execute, Match Probes)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 981260,
+      "ruleName": "SQL Injection Attack (Hex Encoding Detected)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 981270,
+      "ruleName": "SQL Injection Attack (NoSQL MongoDB Probes)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 981276,
+      "ruleName": "SQL Injection Attack (UNION Attempt)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 981300,
+      "ruleName": "SQL Injection Attack (SELECT Statement Anomaly Detected)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 981320,
+      "ruleName": "SQL Injection Attack (Known/Default DB Resources Probe)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 999002,
+      "ruleName": "Security Scanner/Web Attack Tool Detected (User-Agent)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 999901,
+      "ruleName": "Security Scanner/Web Attack Tool Detected (Request Header Names)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 999902,
+      "ruleName": "Security Scanner/Web Attack Tool Detected (Filename)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000000,
+      "ruleName": "SQL Injection Attack (GROUP BY/ORDER BY)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000004,
+      "ruleName": "Potential Remote File Inclusion (RFI) Attack: Suspicious Off-Domain URL Reference",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000005,
+      "ruleName": "CMD Injection Attack Detected (OS commands with full path)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000006,
+      "ruleName": "SQL Injection Attack (Comment String Termination)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000012,
+      "ruleName": "Apache Struts Remote Command Execution (OGNL Injection)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000013,
+      "ruleName": "System Command Injection (Attacker Toolset Download)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000014,
+      "ruleName": "Apache Struts Remote Command Execution (OGNL Injection)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000015,
+      "ruleName": "SQL Injection Attack (Database Timing Query)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000017,
+      "ruleName": "MySQL Keywords Anomaly Detection Alert",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000022,
+      "ruleName": "SQL Injection (Built-in Functions, Objects and Keyword Probes 4)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000023,
+      "ruleName": "Apache Struts ClassLoader Manipulation Remote Code Execution",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000025,
+      "ruleName": "CVE-2014-6271 Bash Command Injection Attack",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000033,
+      "ruleName": "PHP Wrapper Attack",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000034,
+      "ruleName": "Command Injection via the Java Runtime.getRuntime() Method",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000037,
+      "ruleName": "Cross-site Scripting (XSS) Attack (JS On-Event Handler)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000038,
+      "ruleName": "Cross-site Scripting (XSS) Attack (DOM Window Properties)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000039,
+      "ruleName": "Cross-site Scripting (XSS) Attack (DOM Document Methods)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000041,
+      "ruleName": "Server Side Template Injection (SSTI)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000056,
+      "ruleName": "PHP Object Injection Attack Detected",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000057,
+      "ruleName": "Cross-site Scripting (XSS) Attack (Common Attack Tool Keywords)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000058,
+      "ruleName": "Apache Struts Remote Command Execution (OGNL Injection)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000061,
+      "ruleName": "Cross-site Scripting Attack (Referer Header From OpenBugBounty Website)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000065,
+      "ruleName": "Apache Struts Remote Command Execution (Deserialization Attack)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000072,
+      "ruleName": "Deserialization Attack Detected",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000080,
+      "ruleName": "Cross-site Scripting (XSS) Attack (Attribute Injection 1)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000081,
+      "ruleName": "Cross-site Scripting (XSS) Attack (Attribute Injection 2)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000100,
+      "ruleName": "SQL Injection Attack (SmartDetect)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000101,
+      "ruleName": "SQL Injection Attack (Common SQL Database Probes)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000102,
+      "ruleName": "SQL Injection Attack (Null Byte Detected)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000103,
+      "ruleName": "SQL Injection Attack (NoSQL Injection)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000104,
+      "ruleName": "SQL Injection Attack (NoSQL Injection)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000105,
+      "ruleName": "NOSQL Operator Injection Detected",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000108,
+      "ruleName": "Pandora / DirtJumper DDoS Detection - HTTP GET Attacks",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000109,
+      "ruleName": "Ruby on Rails YAML Injection Attack",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000110,
+      "ruleName": "Cross-site Scripting (XSS) Attack (SmartDetect)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000111,
+      "ruleName": "Cross-site Scripting (XSS) Attack (Common PoC Probes 1)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000112,
+      "ruleName": "Cross-site Scripting (XSS) Attack (Common PoC Probes 2)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000113,
+      "ruleName": "Cross-site Scripting (XSS) Attack (Javascript Mixed Case Obfuscation)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000114,
+      "ruleName": "Cross-site Scripting (XSS) Attack (Shell Script Execution)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000115,
+      "ruleName": "LOIC 1.1 DoS Detection",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000116,
+      "ruleName": "Cross-site Scripting (XSS) Attack (HTML Injection)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000117,
+      "ruleName": "HULK DoS Attack Tool Detected",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000118,
+      "ruleName": "DirtJumper DDoS Detection - HTTP POST Attacks",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000119,
+      "ruleName": "Cross-site Scripting (XSS) Attack (HTML Context Breaking)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000120,
+      "ruleName": "Local File Inclusion (LFI) Attack (Common OS Files 1)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000121,
+      "ruleName": "Local File Inclusion (LFI) Attack (Common OS Files 2)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000122,
+      "ruleName": "Local File Inclusion (LFI) Attack (Long Directory Traversal)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000123,
+      "ruleName": "Local File Inclusion (LFI) Attack (Directory Traversal Obfuscation)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000124,
+      "ruleName": "Local File Inclusion (LFI) Attack (Common OS Files 3)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000125,
+      "ruleName": "Local File Inclusion (LFI) Attack (Common OS Files 4)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000126,
+      "ruleName": "Local File Inclusion (LFI) Attack (Common OS Files 5)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000127,
+      "ruleName": "Local File Inclusion (LFI) Attack (Nul Byte Detected)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000128,
+      "ruleName": "Cross-site Scripting (XSS) Attack (HTML Entity Named Encoding Detected)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000129,
+      "ruleName": "Pandora DDoS Detection - HTTP POST Attacks",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000130,
+      "ruleName": "Remote File Inclusion Attack (Well-Known RFI Testing/Attack URL)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000131,
+      "ruleName": "Remote File Inclusion Attack (Well-Known RFI Filename)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000132,
+      "ruleName": "Detect Attempts to Access the Wordpress Pingback API",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000133,
+      "ruleName": "Apache Commons FileUpload and Apache Tomcat DoS",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000134,
+      "ruleName": "XML External Entity (XXE) Attack",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000135,
+      "ruleName": "HTTP.sys Remote Code Execution Vulnerability Attack Detected (CVE-2015-1635)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000136,
+      "ruleName": "Potential Account Brute Force Guessing via Wordpress XML-RPC API authenticated methods",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000137,
+      "ruleName": "Detected LOIC / HOIC client request based on query string",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000138,
+      "ruleName": "Detected ARDT client request",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000139,
+      "ruleName": "Detect Attempts to Access the Wordpress system.multicall XML-RPC API",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000140,
+      "ruleName": "Avzhan Bot DDOS Detection",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000141,
+      "ruleName": "CMD Injection Attack Detected (OS Commands 1)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000142,
+      "ruleName": "CMD Injection Attack Detected (OS Commands 2)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000143,
+      "ruleName": "CMD Injection Attack Detected (Bash with -c flag)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000144,
+      "ruleName": "CMD Injection Attack Detected (Uname with -a flag)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000145,
+      "ruleName": "CMD Injection Attack Detected (Cmd.exe with \"dir\" command)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000146,
+      "ruleName": "CMD Injection Attack Detected (/bin/sh with pipe \"|\")",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000147,
+      "ruleName": "CMD Injection Attack Detected (Shellshock Variant)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000148,
+      "ruleName": "CMD Injection Attack Detected (Ping Beaconing)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000149,
+      "ruleName": "CMD Injection Attack Detected (Common Uname PoC)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000150,
+      "ruleName": "CMD Injection Attack Detected (Sleep with Bracketed IFS Obfuscation)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000151,
+      "ruleName": "CMD Injection Attack Detected (Bracketed IFS Argument Separator Detected)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000152,
+      "ruleName": "CMD Injection Attack Detected (IP Address Detected)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000153,
+      "ruleName": "CMD Injection Attack Detected",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000154,
+      "ruleName": "CMD Injection Attack Detected (Common PHP Function Detected)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000155,
+      "ruleName": "CMD Injection Attack Detected (Php/Data Filter Detected)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000156,
+      "ruleName": "CMD Injection Attack Detected (PHP High-Risk Functions)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000157,
+      "ruleName": "Mirai / Kaiten DDoS Detection - HTTP Attacks",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000159,
+      "ruleName": "Server-Side Request Forgery (SSRF) Detected (Localhost Domain Resolution)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000160,
+      "ruleName": "Security Scanner/Web Attack Tool Detected (PoC Testing Payload)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000161,
+      "ruleName": "Out-of-Band (OOB) Domain Blind Attack Detected",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000162,
+      "ruleName": "Mirai/Kaiten Bot DDOS Detection - Bogus Search Engine Referer",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000163,
+      "ruleName": "Server-Side Request Forgery (SSRF) Detected (Cloud Metadata Testing)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000164,
+      "ruleName": "Application Layer Hash DoS Attack",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000165,
+      "ruleName": "Server-Side Request Forgery (SSRF) Detected (Localhost/Loopback PoC Testing)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000166,
+      "ruleName": "Potential Wordpress Javascript DoS Attack (CVE-2018-6389)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000167,
+      "ruleName": "Potential Drupal Attack (CVE-2018-7600)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000168,
+      "ruleName": "Edge Side Inclusion (ESI) injection Attack",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000169,
+      "ruleName": "Phar File Upload/Deserialization Attempt Detected",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000170,
+      "ruleName": "CFM Webshell/Backdoor Upload Detected",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000171,
+      "ruleName": "Webshell/Backdoor File Upload Attempt",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000172,
+      "ruleName": "JSP/ASP/ASPX Webshell/Backdoor Upload Detected",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000173,
+      "ruleName": "Potential HTTP Desync Attack: Invalid Transfer-Encoding Header Value",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000174,
+      "ruleName": "Potential HTTP Desync Attack: HTTP Request Smuggling Detect in Request Body",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000175,
+      "ruleName": "Potential HTTP Desync Attack: Transfer-Encoding Header Name Obfuscation",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000176,
+      "ruleName": "Potential HTTP Desync Attack: Transfer-Encoding Header in Request Body",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000177,
+      "ruleName": "Potential HTTP Desync Attack: Chunked header value with invalid Header Name",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000179,
+      "ruleName": "Microsoft Sharepoint Remote Command Execution (Deserialization Attack)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000180,
+      "ruleName": "Partial Request Body Inspection Warning - Request Body is larger than the configured inspection limit",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000182,
+      "ruleName": "NodeJS Code Injection Detected",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000183,
+      "ruleName": "Possible MS Exchange/OWA Attack Detected (CVE-2021-26855)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000184,
+      "ruleName": "Possible MS Exchange/OWA Attack Detected (CVE-2021-27065)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000185,
+      "ruleName": "Confluence/OGNLi Attack Detected (CVE-2021-26084)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000186,
+      "ruleName": "PowerCMS Movable Type Attack Detected (CVE-2021-20837)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000187,
+      "ruleName": "Magento vulnerability (Callback function) Attack Detected (CVE-2022-24086 CVE-2022-24087)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000188,
+      "ruleName": "Magento vulnerability (validate_rules) Attack Detected (CVE-2022-24086 CVE-2022-24087)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000189,
+      "ruleName": "ThinkPHP RCE (CVE-2018-20062) Attack Detected",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000190,
+      "ruleName": "XML External Entity (XXE) XInclude Attack",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000191,
+      "ruleName": ".NET Deserialization Attack",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000192,
+      "ruleName": "HTTP Hop-By-Hop Header Abuse Attack",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000193,
+      "ruleName": "ThinkPHP Deserialization Attack (CVE-2022-38352)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000195,
+      "ruleName": "Oracle ADF Faces Deserialization Attack Detected (CVE-2022-21445)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000196,
+      "ruleName": "Unix OS Command Execution",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000197,
+      "ruleName": "Command Injection via the ASP.NET Process.Start() Method",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000198,
+      "ruleName": "Possible RCE on MS Exchange Detected (CVE-2022-41040 CVE-2022-41082)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000199,
+      "ruleName": "Webshell Activity on Microsoft Exchange (Related to CVE-2022-41040 CVE-2022-41082)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000200,
+      "ruleName": "Prototype Pollution Pattern Detected",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000202,
+      "ruleName": "OWASSRF CVE-2022-41080 Attack Pattern Detected (Base64 Encoded)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000211,
+      "ruleName": "Cross-site Scripting (XSS) Attack - String Manipulation",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000212,
+      "ruleName": "Cross-site Scripting (XSS) Attack - Hieroglyphy/JSF*ck Obfuscation",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000213,
+      "ruleName": "Cross-site Scripting (XSS) Attack - Common Functions",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000214,
+      "ruleName": "Cross-site Scripting (XSS) Attack - Document Write",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000215,
+      "ruleName": "Cross-site Scripting (XSS) Attack - String Manipulation via Reflect",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000216,
+      "ruleName": "Cross-site Scripting (XSS) Attack - JS Function with Variable Assignment",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000217,
+      "ruleName": "Cross-site Scripting (XSS) Attack - String Manipulation with Variable Assignment",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000218,
+      "ruleName": "Cross-site Scripting (XSS) Attack - Functions within Functions",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000219,
+      "ruleName": "Cross-site Scripting (XSS) Attack - Obfuscation via Combined Functions",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000220,
+      "ruleName": "Cross-site Scripting (XSS) Attack - Imported Payload",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000221,
+      "ruleName": "Cross-site Scripting (XSS) Attack - Nested Function Calls",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000222,
+      "ruleName": "Cross-site Scripting (XSS) Attack - Function Invocations",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000223,
+      "ruleName": "Cross-site Scripting (XSS) Attack - Document Overwrite",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000224,
+      "ruleName": "Cross-site Scripting (XSS) Attack - Payload Referencing URI Fragment",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000225,
+      "ruleName": "Cross-site Scripting (XSS) Attack - Payload Using Constructor",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000226,
+      "ruleName": "Cross-site Scripting (XSS) Attack - Obfuscation via Array Indices",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000227,
+      "ruleName": "Cross-site Scripting (XSS) Attack - XSS using Map Function Assignment",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000228,
+      "ruleName": "Cross-site Scripting (XSS) Attack - XSS via Exception Throw",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000229,
+      "ruleName": "Cross-site Scripting (XSS) Attack - HTML autofocus Property",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000230,
+      "ruleName": "Cross-site Scripting (XSS) Attack - XSS using replace",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000231,
+      "ruleName": "Cross-site Scripting (XSS) Attack - XSS via Function Creation",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000232,
+      "ruleName": "Cross-site Scripting (XSS) Attack - Location Assign and Replace",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000233,
+      "ruleName": "Cross-site Scripting (XSS) Attack - XSS via SetInterval",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000234,
+      "ruleName": "Cross-site Scripting (XSS) Attack - Import Payloads",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000235,
+      "ruleName": "Cross-site Scripting (XSS) Attack - Anonymous Functions Creation",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000236,
+      "ruleName": "Cross-site Scripting (XSS) Attack - XSS Via Array Assignment",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000238,
+      "ruleName": "Cross-site Scripting (XSS) Attack - Location Property Assignment",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000400,
+      "ruleName": "Python Code Injection Detected",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000401,
+      "ruleName": "Null Byte in Multipart File Upload - Name or Filename",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000403,
+      "ruleName": "Base64-Encoded PHP Object Injection Attack Detected",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000404,
+      "ruleName": "Ruby on Rails Sensitive Operation Injection Attack Detected",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000405,
+      "ruleName": "Windows Command Injection Attack - Common Executables",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000406,
+      "ruleName": "Windows Command Injection Attack - Common Payloads",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000407,
+      "ruleName": "Linux Command Injection Attack - Common Payloads",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000408,
+      "ruleName": "Linux Command Injection Attack - Common Commands and Arguments",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000409,
+      "ruleName": "Linux Command Injection Attack - \"whoami\" Evasions",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000410,
+      "ruleName": "Linux Command Injection Attack - Common Reverse Shells and whoami Evasion",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000411,
+      "ruleName": "Linux Command Injection Attack - Common Command Injections with Inline Evasions",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000412,
+      "ruleName": "Command Injection Attack â€“ nslookup with Shell Operators",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000500,
+      "ruleName": "Local File Inclusion (LFI) Attack on Linux files",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000501,
+      "ruleName": "Local File Inclusion (LFI) Attack (file://)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000502,
+      "ruleName": "Local File Inclusion (LFI) Attack - encoding evasion",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000503,
+      "ruleName": "Local File Inclusion (LFI) Attack - Windows and other sensitive files",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000504,
+      "ruleName": "Local File Inclusion (LFI) Attack - Null Byte in Request Path",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000505,
+      "ruleName": "Local File Inclusion (LFI) Attack - %5C with Path Traversal",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000506,
+      "ruleName": "Local File Inclusion (LFI) Attack - Base64 Encoded Payloads",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000507,
+      "ruleName": "Local File Inclusion (LFI) Attack",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000508,
+      "ruleName": "Local File Inclusion (LFI) Attack - Linux Payloads",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000600,
+      "ruleName": "FiberFox DoS Attack Tool Detection",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000601,
+      "ruleName": "JEXBOSS Attack Tool Detection",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000602,
+      "ruleName": "NOWAFPLS Burp Extension Detection",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000603,
+      "ruleName": "DDoSia Toolkit DETECTED",
+      "action": "deny",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000700,
+      "ruleName": "Potential Content-Encoding Attack: Multiple Headers Detected",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000701,
+      "ruleName": "Invalid Expect Request Header (Potential OBS Folding Attack)",
+      "action": "deny",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000901,
+      "ruleName": "Oracle E-Business Suite Unauthenticated RCE - CVE-2022-21587",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000902,
+      "ruleName": "Apache Solr SSRF Detected (CVE-2021-27905)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000903,
+      "ruleName": "Atlassian Confluence Hardcoded Credentials Detected (CVE-2022-26138)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000904,
+      "ruleName": "Apache SSRF Attack Detected (CVE-2021-40438)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000905,
+      "ruleName": "SAML XSLT Remote Code Execution Detected",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000906,
+      "ruleName": "Coldfusion LFI Attack Detected (CVE-2023-26359)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000907,
+      "ruleName": "Weblogic Deserialization Attack Detected (CVE-2019-2725)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000908,
+      "ruleName": "ProxyToken Detected (CVE-2021-33766)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000909,
+      "ruleName": "FortiOS Authentication Bypass Detected (CVE-2022-40684)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000910,
+      "ruleName": "BitBucket Remote Code Execution Detected (CVE-2022-36804)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000911,
+      "ruleName": "Apache Camel Injection/Bypass (CVE-2025-27636 and CVE-2025-29891) Attack Detected",
+      "action": "deny",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000912,
+      "ruleName": "VMware vCenter Server UploadOVA Remote Code Execution Detected (CVE-2021-21972)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000913,
+      "ruleName": "PHPUnit Remote Code Execution Detected (CVE-2017-9841)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000914,
+      "ruleName": "Apache AirFlow Variable Import Endpoint Access (CVE-2021-38540)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000915,
+      "ruleName": "Apache Tomcat CGI-Servlet RCE (CVE-2019-0232)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000916,
+      "ruleName": "SharePoint Attribute/Property Leak Attack Detected",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000917,
+      "ruleName": "Apache APISIX Remote Code Execution Detected (CVE-2022-24112)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000918,
+      "ruleName": "MOVEit SQL Injection in Client Certificate Detected (CVE-2023-35708)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000919,
+      "ruleName": "Apache Tapestry Unauthenticated RCE Vulnerability (CVE-2021-27850)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000920,
+      "ruleName": "Coldfusion Deserialization Attack Detected (CVE-2023-29300)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000921,
+      "ruleName": "Adobe ColdFusion Access Control Bypass (CVE-2023-29298 and CVE-2023-38205)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000922,
+      "ruleName": "Client-Side Template Injection (CSTI) Detected",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000923,
+      "ruleName": "Zimbra Directory Traversal Attack Detected (CVE-2022-27925)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000924,
+      "ruleName": "Citrix ShareFile Storage Zones Controller Remote Code Execution Detected (CVE-2023-24489)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000925,
+      "ruleName": "Confluence Privilege Escalation Vulnerability Attack Detected (CVE-2023-22515)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000926,
+      "ruleName": "XML External Entity (XXE) via DOCTYPE Attack Detected",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000927,
+      "ruleName": "Confluence Improper Authorization Attack Detected (CVE-2023-22518)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000928,
+      "ruleName": "Adobe ColdFusion WDDX Deserialization Attack Detected (CVE-2023-44350/1/3)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000929,
+      "ruleName": "Apache Struts Path Traversal and File Upload Attack Detected (CVE-2023-50164)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000930,
+      "ruleName": "Critical RCE in vCenter Server via Virtual SAN Health Check Plugin (CVE-2021-21985)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000931,
+      "ruleName": "Spring Framework RFD Vulnerability (CVE-2020-5421)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000932,
+      "ruleName": "Apache OFBiz Authentication Bypass Detected (CVE-2023-51467)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000933,
+      "ruleName": "Improper Access Control Vulnerability in Adobe ColdFusion (CVE-2023-26360)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000934,
+      "ruleName": "Ivanti Connect Secure XXE Attack Detected (CVE-2024-22024)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000935,
+      "ruleName": "Wordpress Brick Builder RCE Attack Detected (CVE-2024-25600)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000936,
+      "ruleName": "Adobe ColdFusion Arbitrary File System Read Detected (CVE-2024-20767)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000937,
+      "ruleName": "Spring Kafka Insecure Deserialization Detected (CVE-2023-34040)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000939,
+      "ruleName": "Palo Alto OS Cookie Path Traversal Detected (CVE-2024-3400)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000940,
+      "ruleName": "CrushFTP Server Side Template Injection Detected (CVE-2024-4040)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000941,
+      "ruleName": "CheckPoint Security Gateways Arbitrary File Read Detected (CVE-2024-24919)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000942,
+      "ruleName": "Confluence Add Language Remote Code Execution Detected (CVE-2024-21683)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000943,
+      "ruleName": "MinIO Information Disclosure Detected (CVE-2023-28432)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000944,
+      "ruleName": "JetBrains Authentication Bypass Detected (CVE-2023-42793)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000945,
+      "ruleName": "LikeBtn WordPress Server-Side Request Forgery Detected (CVE-2021-24150)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000946,
+      "ruleName": "Automation Anywhere Server-Side Request Forgery Detected (CVE-2024-6922)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000950,
+      "ruleName": "Apache HTTP Server Exploit Attempt Detected (CVE-2024-38475 CVE-2024-38474)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000951,
+      "ruleName": "Ivanti vTM Authentication Bypass Attempt Detected (CVE-2024-7593)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000952,
+      "ruleName": "Progress WS_FTP Ad Hoc Transfer Deserialization Attack Detected (CVE-2023-40044)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000953,
+      "ruleName": "Adobe ColdFusion Deserialization Attack Detected (CVE-2024-41874)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000954,
+      "ruleName": "elFinder LFI Base64 encoded Attack Detected (CVE-2022-26960)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000955,
+      "ruleName": "Cleo Products Arbitrary File Write Detected (CVE-2024-55956)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000956,
+      "ruleName": "Cleo Products Arbitrary File Read/Write Detected (CVE-2024-50623)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000957,
+      "ruleName": "Apache Tomcat Remote Code Execution Attack Detected (CVE-2025-24813)",
+      "action": "deny",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000959,
+      "ruleName": "JWT Token with Algorithm 'None' Identified",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000960,
+      "ruleName": "CrushFTP Unauthorized Access Attempt Detected (CVE-2025-31161)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000961,
+      "ruleName": "Ingress NGINX RCE Detected (CVE-2025-1974)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000962,
+      "ruleName": "Cacti Remote Code Execution Detected (CVE-2022-46169)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000963,
+      "ruleName": "Joomla Information Disclosure Detected (CVE-2023-23752)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000964,
+      "ruleName": "HTML Injection",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000965,
+      "ruleName": "LDAP Injection (LDAPi) Detected",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000966,
+      "ruleName": "XPATH Injection (XPATHi) Detected",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000967,
+      "ruleName": "Citrix NetScaler Memory Disclosure Detected (CVE-2025-5777)",
+      "action": "deny",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000968,
+      "ruleName": "Potential OPTIONS Method Request Smuggling Attack: Request Smuggling Detected in Request Body",
+      "action": "deny",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000969,
+      "ruleName": "SharePoint Remote Code Execution Detected (CVE-2025-49704, CVE-2025-49706, CVE-2025-53770, CVE-2025-53771)",
+      "action": "deny",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000998,
+      "ruleName": "Citrix Virtual Apps and Desktops (XEN) Unauthenticated RCE (CVE-2024-8068 and CVE-2024-8069) Attack Detected",
+      "action": "deny",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 3000999,
+      "ruleName": "Jackson-Databind Unsafe Java Classes (Deserialization Vulnerability)",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 9999992,
+      "ruleName": "Test Dummy Rule",
+      "action": "alert",
+      "conditionException": {}
+    },
+    {
+      "ruleId": 99999900,
+      "ruleName": "DDoSia Toolkit DETECTED",
+      "action": "deny",
+      "conditionException": {}
+    }
+  ]
+}

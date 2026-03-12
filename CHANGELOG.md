@@ -64,6 +64,7 @@
 * Appsec
   * Added datasource `akamai_appsec_url_protection_rule` to read details of a specific URL protection rule for a specified security configuration.
   * Added datasource `akamai_appsec_url_protection_rules` to list URL protection rules for a specified security configuration.
+  * Added resource `akamai_appsec_waf_ruleset` to manage rules and attack groups. 
 
 
 
