@@ -86,6 +86,13 @@
 
 
 
+* Cloud Access
+  * Added support for a new authentication method `VP_QUEUE_IT` in the `akamai_cloudaccess_key` resource.
+  * Removed the possibility to specify `additional_cdn` and made `cloud_access_key_id` optional for `AVM_CLOUDINARY` authentication method in the `akamai_cloudaccess_key` resource.
+
+
+
+
 
 
 

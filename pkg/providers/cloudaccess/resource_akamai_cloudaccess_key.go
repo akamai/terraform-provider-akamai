@@ -18,6 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
@@ -28,10 +29,11 @@ import (
 )
 
 var (
-	_ resource.Resource                = &KeyResource{}
-	_ resource.ResourceWithConfigure   = &KeyResource{}
-	_ resource.ResourceWithModifyPlan  = &KeyResource{}
-	_ resource.ResourceWithImportState = &KeyResource{}
+	_ resource.Resource                   = &KeyResource{}
+	_ resource.ResourceWithConfigure      = &KeyResource{}
+	_ resource.ResourceWithModifyPlan     = &KeyResource{}
+	_ resource.ResourceWithImportState    = &KeyResource{}
+	_ resource.ResourceWithValidateConfig = &KeyResource{}
 
 	activationTimeout = 60 * time.Minute
 	updateTimeout     = 60 * time.Minute
@@ -86,6 +88,18 @@ func NewKeyResource() resource.Resource {
 	return &KeyResource{}
 }
 
+// ValidateConfig implements resource.ResourceWithValidateConfig.
+func (r *KeyResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var config KeyResourceModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	verifyCloudAccessKeyIDPresence(&config, &resp.Diagnostics)
+	verifyAdditionalCDNPresence(&config, &resp.Diagnostics)
+}
+
 // ModifyPlan implements resource.ResourceWithModifyPlan
 func (r *KeyResource) ModifyPlan(ctx context.Context, request resource.ModifyPlanRequest, response *resource.ModifyPlanResponse) {
 
@@ -110,8 +124,7 @@ func (r *KeyResource) ModifyPlan(ctx context.Context, request resource.ModifyPla
 		return
 	}
 
-	if plan != nil && plan.CredentialsA != nil && plan.CredentialsB != nil &&
-		plan.CredentialsA.CloudAccessKeyID == plan.CredentialsB.CloudAccessKeyID {
+	if plan != nil && !cloudAccessKeyIDUnique(plan) {
 		response.Diagnostics.AddError("cloud access key id of access key error", "'cloud_access_key_id' should be unique for each pair of credentials")
 		return
 	}
@@ -123,11 +136,6 @@ func (r *KeyResource) ModifyPlan(ctx context.Context, request resource.ModifyPla
 
 	if state != nil && plan != nil && checkIfSecretChangedAndWasNotEmpty(state, plan) {
 		response.Diagnostics.AddError("access key credentials error", "cannot update cloud access secret without update of cloud access key id, expect update of secret after import with no API calls")
-		return
-	}
-
-	if state != nil && plan != nil && onlyTimeoutChanged(state, plan) {
-		state.Timeouts = plan.Timeouts
 		return
 	}
 }
@@ -150,12 +158,12 @@ func (r *KeyResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp
 			},
 			"authentication_method": schema.StringAttribute{
 				Required:    true,
-				Description: "The type of cloud provider signing process used to authenticate API requests. Four options are available: \"AWS4_HMAC_SHA256\", \"GOOG4_HMAC_SHA256\", \"AOS4_HMAC_SHA256\" or \"AVM_CLOUDINARY\".",
+				Description: "The type of signing process used to authenticate API requests: AWS4_HMAC_SHA256 for Amazon Web Services, GOOG4_HMAC_SHA256 for Google Cloud Services, AOS4_HMAC_SHA256 for Akamai Object Storage, AVM_CLOUDINARY for Akamai Video Manager Cloudinary, VP_QUEUE_IT for Akamai Visitor Prioritization powered by Queue-it.",
 				PlanModifiers: []planmodifier.String{
 					modifiers.PreventStringUpdate(),
 				},
 				Validators: []validator.String{
-					stringvalidator.OneOf(string(cloudaccess.AuthAWS), string(cloudaccess.AuthGOOG), string(cloudaccess.AuthAOS), string(cloudaccess.AuthAVMCloudinary)),
+					stringvalidator.OneOf(string(cloudaccess.AuthAWS), string(cloudaccess.AuthGOOG), string(cloudaccess.AuthAOS), string(cloudaccess.AuthAVMCloudinary), string(cloudaccess.AuthVPQueueIt)),
 				},
 			},
 			"contract_id": schema.StringAttribute{
@@ -186,7 +194,7 @@ func (r *KeyResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp
 				Attributes: map[string]schema.Attribute{
 					"cloud_access_key_id": schema.StringAttribute{
 						Description: "Access key id from cloud provider which is used to sign API requests",
-						Required:    true,
+						Optional:    true,
 					},
 					"cloud_secret_access_key": schema.StringAttribute{
 						Description: "Cloud Access secret from cloud provider which is used to sign API requests",
@@ -213,7 +221,7 @@ func (r *KeyResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp
 				Attributes: map[string]schema.Attribute{
 					"cloud_access_key_id": schema.StringAttribute{
 						Description: "Access key id from cloud provider which is used to sign API requests",
-						Required:    true,
+						Optional:    true,
 					},
 					"cloud_secret_access_key": schema.StringAttribute{
 						Description: "Cloud Access secret from cloud provider which is used to sign API requests",
@@ -298,10 +306,35 @@ func (r *KeyResource) Configure(_ context.Context, req resource.ConfigureRequest
 	r.meta = meta.Must(req.ProviderData)
 }
 
-// onlyTimeoutChanged defines if timeout is the only parameter which changed between plan and state
-func onlyTimeoutChanged(state, plan *KeyResourceModel) bool {
+// isTimeoutChanged defines if timeout changed between plan and state
+func isTimeoutChanged(state, plan *KeyResourceModel) bool {
 	return state != nil && plan != nil &&
 		!state.Timeouts.Equal(plan.Timeouts)
+}
+
+// hasEqualContent reports whether all user-managed (non-timeout) fields are equal between state and plan.
+func (m *KeyResourceModel) hasEqualContent(plan *KeyResourceModel) bool {
+	if m.AccessKeyName != plan.AccessKeyName {
+		return false
+	}
+	if !credentialsEqualContent(m.CredentialsA, plan.CredentialsA) {
+		return false
+	}
+	if !credentialsEqualContent(m.CredentialsB, plan.CredentialsB) {
+		return false
+	}
+	return true
+}
+
+// credentialsEqualContent compares user-managed credential fields (excludes computed version/version_guid).
+func credentialsEqualContent(a, b *Credentials) bool {
+	if a == nil || b == nil {
+		return a == b
+	}
+
+	return a.CloudAccessKeyID == b.CloudAccessKeyID &&
+		a.CloudSecretAccessKey == b.CloudSecretAccessKey &&
+		a.PrimaryKey == b.PrimaryKey
 }
 
 // Create implements resource.Resource.
@@ -463,13 +496,18 @@ func (r *KeyResource) Update(ctx context.Context, req resource.UpdateRequest, re
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	initializeCredentialVersions(oldState, plan)
 
-	if onlyTimeoutChanged(oldState, plan) {
+	// If only timeouts changed, update state locally — no API calls needed.
+	if oldState.hasEqualContent(plan) && isTimeoutChanged(oldState, plan) {
 		oldState.Timeouts = plan.Timeouts
+		resp.Diagnostics.AddWarning("Local update only",
+			"Only the timeout settings have changed, no API call will be made.")
 		resp.Diagnostics.Append(resp.State.Set(ctx, &oldState)...)
 		return
 	}
+
+	initializeCredentialVersions(oldState, plan)
+
 	plan.AccessKeyUID = oldState.AccessKeyUID
 	if oldState.AccessKeyName != plan.AccessKeyName {
 		resp.Diagnostics.Append(r.updateAccessKey(ctx, plan)...)
@@ -478,7 +516,7 @@ func (r *KeyResource) Update(ctx context.Context, req resource.UpdateRequest, re
 		}
 	}
 
-	updateInStateCredentialA, updateInStateCredentialB := keyVersionRequireUpdateInState(oldState, plan)
+	updateInStateCredentialA, updateInStateCredentialB := keyVersionRequiresUpdateInState(oldState, plan)
 	if updateInStateCredentialA {
 		oldState.CredentialsA.CloudSecretAccessKey = plan.CredentialsA.CloudSecretAccessKey
 	}
@@ -563,20 +601,99 @@ func (r *KeyResource) deleteVersion(ctx context.Context, oldState *KeyResourceMo
 	return diags
 }
 
-func changedOrderOfCredentials(oldState, plan *KeyResourceModel) bool {
-	if oldState.CredentialsA != nil && plan.CredentialsA != nil && oldState.CredentialsB != nil && plan.CredentialsB != nil && (oldState.CredentialsA.CloudAccessKeyID == plan.CredentialsB.CloudAccessKeyID && oldState.CredentialsB.CloudAccessKeyID == plan.CredentialsA.CloudAccessKeyID) {
+// verifyAdditionalCDNPresence checks that AdditionalCDN is not specified for VP_QUEUE_IT and
+// AVM_CLOUDINARY authentication methods.
+func verifyAdditionalCDNPresence(data *KeyResourceModel, diags *diag.Diagnostics) {
+	if data.AuthenticationMethod.IsUnknown() {
+		return
+	}
+	if data.AuthenticationMethod.ValueString() != string(cloudaccess.AuthVPQueueIt) &&
+		data.AuthenticationMethod.ValueString() != string(cloudaccess.AuthAVMCloudinary) {
+		return
+	}
+	if !data.NetworkConfig.AdditionalCDN.IsNull() {
+		diags.AddAttributeError(
+			path.Root("network_configuration").AtName("additional_cdn"),
+			"additional cdn not allowed error",
+			"for the selected authentication method `additional_cdn` must not be specified",
+		)
+	}
+}
+
+// verifyCloudAccessKeyIDPresence checks that CloudAccessKeyID is present for authentication
+// methods other than VP_QUEUE_IT and AVM_CLOUDINARY.
+func verifyCloudAccessKeyIDPresence(data *KeyResourceModel, diags *diag.Diagnostics) {
+	if data.AuthenticationMethod.IsUnknown() {
+		return
+	}
+	if data.AuthenticationMethod.ValueString() == string(cloudaccess.AuthVPQueueIt) ||
+		data.AuthenticationMethod.ValueString() == string(cloudaccess.AuthAVMCloudinary) {
+		return
+	}
+	if data.CredentialsA != nil && data.CredentialsA.CloudAccessKeyID.IsNull() {
+		diags.AddAttributeError(
+			path.Root("credentials_a").AtName("cloud_access_key_id"),
+			"cloud access key id missing error",
+			"for the selected authentication method `cloud_access_key_id` cannot be empty",
+		)
+	}
+	if data.CredentialsB != nil && data.CredentialsB.CloudAccessKeyID.IsNull() {
+		diags.AddAttributeError(
+			path.Root("credentials_b").AtName("cloud_access_key_id"),
+			"cloud access key id missing error",
+			"for the selected authentication method `cloud_access_key_id` cannot be empty",
+		)
+	}
+}
+
+func cloudAccessKeyIDUnique(plan *KeyResourceModel) bool {
+	if plan.CredentialsA == nil || plan.CredentialsB == nil {
 		return true
 	}
-	return false
+	if plan.CredentialsA.CloudAccessKeyID.IsNull() || plan.CredentialsB.CloudAccessKeyID.IsNull() {
+		return true
+	}
+	return !plan.CredentialsA.CloudAccessKeyID.Equal(plan.CredentialsB.CloudAccessKeyID)
+}
+
+func changedOrderOfCredentials(oldState, plan *KeyResourceModel) bool {
+	anyCredentialNil := oldState.CredentialsA == nil || plan.CredentialsA == nil ||
+		oldState.CredentialsB == nil || plan.CredentialsB == nil
+
+	if anyCredentialNil {
+		return false
+	}
+
+	keyIDsSwapped := oldState.CredentialsA.CloudAccessKeyID.Equal(plan.CredentialsB.CloudAccessKeyID) &&
+		oldState.CredentialsB.CloudAccessKeyID.Equal(plan.CredentialsA.CloudAccessKeyID)
+
+	// When both CloudAccessKeyIDs are present, we have the legacy behaviour - we check if they are swapped
+	if !plan.CredentialsA.CloudAccessKeyID.IsNull() && !plan.CredentialsB.CloudAccessKeyID.IsNull() {
+		return keyIDsSwapped
+	}
+
+	secretsSwapped := oldState.CredentialsA.CloudSecretAccessKey.Equal(plan.CredentialsB.CloudSecretAccessKey) &&
+		oldState.CredentialsB.CloudSecretAccessKey.Equal(plan.CredentialsA.CloudSecretAccessKey)
+
+	// When exactly one CloudAccessKeyID is present, use both key ID and secrets to confirm the swap
+	if !plan.CredentialsA.CloudAccessKeyID.IsNull() || !plan.CredentialsB.CloudAccessKeyID.IsNull() {
+		return keyIDsSwapped && secretsSwapped
+	}
+
+	// When both plan key IDs are null, additionally require secrets to be distinct to avoid false positives
+	return keyIDsSwapped && secretsSwapped &&
+		!plan.CredentialsA.CloudSecretAccessKey.Equal(plan.CredentialsB.CloudSecretAccessKey)
 }
 
 func checkIfSecretChangedAndWasNotEmpty(oldState, plan *KeyResourceModel) bool {
 	if oldState.CredentialsA != nil && plan.CredentialsA != nil &&
+		!plan.CredentialsA.CloudAccessKeyID.IsNull() &&
 		oldState.CredentialsA.CloudAccessKeyID.ValueString() == plan.CredentialsA.CloudAccessKeyID.ValueString() &&
 		oldState.CredentialsA.CloudSecretAccessKey.ValueString() != "" && oldState.CredentialsA.CloudSecretAccessKey.ValueString() != plan.CredentialsA.CloudSecretAccessKey.ValueString() {
 		return true
 	}
 	if oldState.CredentialsB != nil && plan.CredentialsB != nil &&
+		!plan.CredentialsB.CloudAccessKeyID.IsNull() &&
 		oldState.CredentialsB.CloudAccessKeyID.ValueString() == plan.CredentialsB.CloudAccessKeyID.ValueString() &&
 		oldState.CredentialsB.CloudSecretAccessKey.ValueString() != "" && oldState.CredentialsB.CloudSecretAccessKey.ValueString() != plan.CredentialsB.CloudSecretAccessKey.ValueString() {
 		return true
@@ -584,7 +701,10 @@ func checkIfSecretChangedAndWasNotEmpty(oldState, plan *KeyResourceModel) bool {
 	return false
 }
 
-func keyVersionRequireUpdateInState(oldState *KeyResourceModel, data *KeyResourceModel) (bool, bool) {
+// keyVersionRequiresUpdateInState reports whether a credential's secret needs to be written to state
+// without making an API call. This covers the post-import scenario: after terraform import, secrets
+// are absent from state because the API never returns them.
+func keyVersionRequiresUpdateInState(oldState *KeyResourceModel, data *KeyResourceModel) (bool, bool) {
 	var updateCredA, updateCredB bool
 	if oldState.CredentialsA != nil && data.CredentialsA != nil && oldState.CredentialsA.CloudAccessKeyID == data.CredentialsA.CloudAccessKeyID && oldState.CredentialsA.CloudSecretAccessKey.ValueString() == "" {
 		updateCredA = true
@@ -619,10 +739,18 @@ func keyVersionRequiresCreation(oldState *KeyResourceModel, data *KeyResourceMod
 
 func keyVersionRequiresDeletion(oldState *KeyResourceModel, data *KeyResourceModel) (bool, bool) {
 	var deleteCredA, deleteCredB bool
-	if oldState.CredentialsA != nil && (data.CredentialsA == nil || (oldState.CredentialsA.CloudAccessKeyID != data.CredentialsA.CloudAccessKeyID)) {
+	if oldState.CredentialsA != nil &&
+		(data.CredentialsA == nil ||
+			(!oldState.CredentialsA.CloudAccessKeyID.Equal(data.CredentialsA.CloudAccessKeyID)) ||
+			(data.CredentialsA.CloudAccessKeyID.IsNull() &&
+				!oldState.CredentialsA.CloudSecretAccessKey.Equal(data.CredentialsA.CloudSecretAccessKey))) {
 		deleteCredA = true
 	}
-	if oldState.CredentialsB != nil && (data.CredentialsB == nil || (oldState.CredentialsB.CloudAccessKeyID != data.CredentialsB.CloudAccessKeyID)) {
+	if oldState.CredentialsB != nil &&
+		(data.CredentialsB == nil ||
+			(!oldState.CredentialsB.CloudAccessKeyID.Equal(data.CredentialsB.CloudAccessKeyID)) ||
+			(data.CredentialsB.CloudAccessKeyID.IsNull() &&
+				!oldState.CredentialsB.CloudSecretAccessKey.Equal(data.CredentialsB.CloudSecretAccessKey))) {
 		deleteCredB = true
 	}
 	return deleteCredA, deleteCredB
@@ -963,7 +1091,8 @@ func (r *KeyResource) ImportState(ctx context.Context, req resource.ImportStateR
 		return
 	}
 	if len(versions.AccessKeyVersions) > 1 {
-		if *versions.AccessKeyVersions[0].CloudAccessKeyID == *versions.AccessKeyVersions[1].CloudAccessKeyID {
+		if versions.AccessKeyVersions[0].CloudAccessKeyID != nil && versions.AccessKeyVersions[1].CloudAccessKeyID != nil &&
+			*versions.AccessKeyVersions[0].CloudAccessKeyID == *versions.AccessKeyVersions[1].CloudAccessKeyID {
 			resp.Diagnostics.AddError("cloud access key id of access key error", "'cloud_access_key_id' should be unique for each pair of credentials")
 			return
 		}
@@ -983,13 +1112,17 @@ func (m *KeyResourceModel) populateModelFromVersionsList(versions *cloudaccess.L
 		return cmp.Compare(a.Version, b.Version)
 	})
 	for _, version := range versions.AccessKeyVersions {
+		cloudAccessKeyID := types.StringNull()
+		if version.CloudAccessKeyID != nil {
+			cloudAccessKeyID = types.StringValue(*version.CloudAccessKeyID)
+		}
 		if m.CredentialsA != nil && version.Version == m.CredentialsA.Version.ValueInt64() {
-			m.CredentialsA.CloudAccessKeyID = types.StringValue(*version.CloudAccessKeyID)
+			m.CredentialsA.CloudAccessKeyID = cloudAccessKeyID
 			credAFromState = true
 			continue
 		}
 		if m.CredentialsB != nil && version.Version == m.CredentialsB.Version.ValueInt64() {
-			m.CredentialsB.CloudAccessKeyID = types.StringValue(*version.CloudAccessKeyID)
+			m.CredentialsB.CloudAccessKeyID = cloudAccessKeyID
 			credBFromState = true
 			continue
 		}
@@ -997,7 +1130,7 @@ func (m *KeyResourceModel) populateModelFromVersionsList(versions *cloudaccess.L
 		//It should be assigned to first empty Credential pair in incremental order
 		if !credAFromState {
 			m.CredentialsA = &Credentials{}
-			m.CredentialsA.CloudAccessKeyID = types.StringValue(*version.CloudAccessKeyID)
+			m.CredentialsA.CloudAccessKeyID = cloudAccessKeyID
 			// Cannot retrieve secret form server
 			m.CredentialsA.CloudSecretAccessKey = types.StringValue("")
 			m.CredentialsA.Version = types.Int64Value(version.Version)
@@ -1008,7 +1141,7 @@ func (m *KeyResourceModel) populateModelFromVersionsList(versions *cloudaccess.L
 		}
 		if !credBFromState {
 			m.CredentialsB = &Credentials{}
-			m.CredentialsB.CloudAccessKeyID = types.StringValue(*version.CloudAccessKeyID)
+			m.CredentialsB.CloudAccessKeyID = cloudAccessKeyID
 			// Cannot retrieve secret form server
 			m.CredentialsB.CloudSecretAccessKey = types.StringValue("")
 			m.CredentialsB.Version = types.Int64Value(version.Version)
