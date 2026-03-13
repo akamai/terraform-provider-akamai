@@ -124,6 +124,9 @@
 #### BUG FIXES:
 
 
+* Cloud Certificates (Beta)
+  * Fixed a misleading error when importing `akamai_cloudcertificates_upload_signed_certificate` without specifying `acknowledge_warnings` in the import ID while the Terraform config has `acknowledge_warnings = true`. The resource now returns a clear error explaining that the flag was toggled on an already-uploaded certificate and prompts the user to verify the import ID format: `certificateID[,acknowledge_warnings]`.
+
 
 
 

@@ -463,6 +463,40 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 				},
 			},
 		},
+		"error - import without acknowledge_warnings but config has it set to true": {
+			init: func(m *cloudcertificates.Mock, mc mockCertificates) {
+				// Import
+				mc.signedCertificate.mockGet(m).Once()
+				// Read
+				mc.signedCertificate.mockGet(m).Once()
+
+				// Read
+				mc.signedCertificate.mockGet(m).Once()
+				// Plan
+				mc.signedCertificate.mockGet(m).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					// Import using only the certificate ID (no acknowledge_warnings flag),
+					// so the imported state has acknowledge_warnings=false.
+					ImportStateCheck: signedCertImportChecker.
+						CheckEqual("acknowledge_warnings", "false").
+						CheckMissing("trust_chain_pem").
+						Build(),
+					ImportStateId:      "12345",
+					ImportState:        true,
+					ResourceName:       "akamai_cloudcertificates_upload_signed_certificate.upload",
+					Config:             testutils.LoadFixtureString(t, "testdata/TestResUploadSignedCertificate/with_acknowledge_warnings.tf"),
+					ImportStatePersist: true,
+				},
+				{
+					// Plan with acknowledge_warnings=true in config but imported state has
+					// acknowledge_warnings=false, should error.
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResUploadSignedCertificate/with_acknowledge_warnings.tf"),
+					ExpectError: regexp.MustCompile(`The 'acknowledge_warnings' flag was toggled for the certificate '12345'`),
+				},
+			},
+		},
 		"error - certificate already in state READY_FOR_USE": {
 			init: func(m *cloudcertificates.Mock, mc mockCertificates) {
 				// Plan x 1
@@ -575,7 +609,7 @@ func TestUploadSignedCertificateResource(t *testing.T) {
 				},
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResUploadSignedCertificate/with_acknowledge_warnings.tf"),
-					ExpectError: regexp.MustCompile(`The certificate '12345' has status 'READY_FOR_USE'`),
+					ExpectError: regexp.MustCompile(`The 'acknowledge_warnings' flag was toggled for the certificate '12345'`),
 				},
 			},
 		},

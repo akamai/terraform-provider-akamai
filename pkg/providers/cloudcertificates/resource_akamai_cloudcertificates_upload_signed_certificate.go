@@ -326,10 +326,20 @@ func (c *uploadSignedCertificateResource) ModifyPlan(ctx context.Context, req re
 			return
 		}
 
-		if state == nil || plan.hasDifferentInput(*state) {
+		if state == nil ||
+			plan.CertificateID != state.CertificateID ||
+			plan.SignedCertificatePEM != state.SignedCertificatePEM ||
+			plan.TrustChainPEM != state.TrustChainPEM {
 			resp.Diagnostics.AddError("Cannot upload signed certificate",
 				fmt.Sprintf("The certificate '%s' has status '%s' and does not support uploading a signed certificate "+
 					"as it has been already uploaded.", cert.Certificate.CertificateID, cert.Certificate.CertificateStatus))
+		} else if plan.AcknowledgeWarnings != state.AcknowledgeWarnings {
+			resp.Diagnostics.AddError("Cannot upload signed certificate",
+				fmt.Sprintf("The 'acknowledge_warnings' flag was toggled for the certificate '%s' (status: '%s'), "+
+					"but the signed certificate has already been uploaded and cannot be uploaded again. "+
+					"If this resource was created via import, ensure the import ID includes the correct value for "+
+					"'acknowledge_warnings': 'certificateID[,acknowledge_warnings]'.",
+					cert.Certificate.CertificateID, cert.Certificate.CertificateStatus))
 		}
 	}
 }
@@ -423,11 +433,4 @@ func (m *uploadSignedCertificateResourceModel) populateCertFields(cert cloudcert
 	m.SignedCertificateSerialNumber = types.StringPointerValue(cert.SignedCertificateSerialNumber)
 	m.SignedCertificateSHA256Fingerprint = types.StringPointerValue(cert.SignedCertificateSHA256Fingerprint)
 	m.SignedCertificateIssuer = types.StringPointerValue(cert.SignedCertificateIssuer)
-}
-
-func (m *uploadSignedCertificateResourceModel) hasDifferentInput(other uploadSignedCertificateResourceModel) bool {
-	return m.CertificateID != other.CertificateID ||
-		m.SignedCertificatePEM != other.SignedCertificatePEM ||
-		m.TrustChainPEM != other.TrustChainPEM ||
-		m.AcknowledgeWarnings != other.AcknowledgeWarnings
 }
