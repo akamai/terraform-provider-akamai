@@ -54,6 +54,7 @@ func TestDataRapidRules(t *testing.T) {
 					Check: baseChecker.
 						CheckEqual("enabled", "false").
 						CheckEqual("default_action", "No default action. Rapid rules is turned off.").
+						CheckEqual("output_text", "Rapid rules is turned off.").
 						Build(),
 				},
 			},
@@ -236,6 +237,7 @@ func TestDataRapidRules(t *testing.T) {
 					Check: baseChecker.
 						CheckEqual("enabled", "false").
 						CheckEqual("default_action", "No default action. Rapid rules is turned off.").
+						CheckEqual("output_text", "Rapid rules is turned off.").
 						CheckEqual("include_expiry_details", "true").
 						CheckMissing("rapid_rules.0.expired").
 						CheckMissing("rapid_rules.0.expire_in_days").

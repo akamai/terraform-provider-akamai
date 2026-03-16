@@ -157,7 +157,14 @@
 
 #### BUG FIXES:
 
+* Appsec
+  * Reverted the previous removal of the `output_text` attribute from all resources and data sources ([I#738](https://github.com/akamai/terraform-provider-akamai/issues/738)). 
 
+* ClientLists
+  * Reverted the previous removal of the `output_text` attribute from `akamai_clientlist_list` and `akamai_clientlist_lists` data sources ([I#738](https://github.com/akamai/terraform-provider-akamai/issues/738)).
+
+* Network Lists
+  * Reverted the previous removal of the `output_text` attribute from the `akamai_networklist_network_lists` data source ([I#738](https://github.com/akamai/terraform-provider-akamai/issues/738)).
 * Cloud Certificates (Beta)
   * Fixed a misleading error when importing `akamai_cloudcertificates_upload_signed_certificate` without specifying `acknowledge_warnings` in the import ID while the Terraform config has `acknowledge_warnings = true`. The resource now returns a clear error explaining that the flag was toggled on an already-uploaded certificate and prompts the user to verify the import ID format: `certificateID[,acknowledge_warnings]`.
 

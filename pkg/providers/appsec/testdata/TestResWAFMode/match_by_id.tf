@@ -10,6 +10,6 @@ resource "akamai_appsec_waf_mode" "test" {
 }
 
 output "configsedge_post_output_text" {
-  value = akamai_appsec_waf_mode.test
+  value = akamai_appsec_waf_mode.test.output_text
 }
 

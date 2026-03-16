@@ -9,6 +9,6 @@ data "akamai_appsec_rate_policy_actions" "test" {
 }
 
 output "ds_rate_policy_actions" {
-  value = data.akamai_appsec_rate_policy_actions.test
+  value = data.akamai_appsec_rate_policy_actions.test.output_text
 }
 

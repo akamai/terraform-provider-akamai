@@ -22,9 +22,10 @@ type (
 
 	// clientListDataSourceModel describes the data source data model for ClientListDataSource.
 	clientListDataSourceModel struct {
-		ListID types.String `tfsdk:"list_id"`
-		List   *listModel   `tfsdk:"list"`
-		JSON   types.String `tfsdk:"json"`
+		ListID     types.String `tfsdk:"list_id"`
+		List       *listModel   `tfsdk:"list"`
+		JSON       types.String `tfsdk:"json"`
+		OutputText types.String `tfsdk:"output_text"`
 	}
 
 	listModel struct {
@@ -206,6 +207,10 @@ func (d *clientListDataSource) Schema(_ context.Context, _ datasource.SchemaRequ
 				Computed:    true,
 				Description: "JSON-formatted information about the client list.",
 			},
+			"output_text": schema.StringAttribute{
+				Computed:    true,
+				Description: "Tabular representation of the client lists.",
+			},
 		},
 	}
 }
@@ -310,6 +315,23 @@ func (d *clientListDataSource) Read(ctx context.Context, request datasource.Read
 		return
 	}
 	data.JSON = types.StringValue(string(jsonBody))
+
+	ots := OutputTemplates{}
+	InitTemplates(ots)
+	outputTextList, err := RenderTemplates(ots, "clientListDS", []clientlists.GetClientListResponse{*cl})
+	if err != nil {
+		response.Diagnostics.AddError("Error rendering output text", err.Error())
+		return
+	}
+
+	clientListItemsTemplateName := getClientListItemsTemplateName(cl.Type)
+	outputTextItems, err := RenderTemplates(ots, clientListItemsTemplateName, cl)
+	if err != nil {
+		response.Diagnostics.AddError("Error rendering output text", err.Error())
+		return
+	}
+
+	data.OutputText = types.StringValue(outputTextList + outputTextItems)
 	data.List = &clientList
 	response.Diagnostics.Append(response.State.Set(ctx, &data)...)
 }
@@ -369,4 +391,25 @@ func calculateValue(item clientlists.ListItemContent) string {
 		return fmt.Sprintf("%s (%s)", item.Value, item.Username)
 	}
 	return item.Value
+}
+
+func getClientListItemsTemplateName(listType clientlists.ClientListType) string {
+	switch listType {
+	case clientlists.USER:
+		return "userClientListItemsDS"
+	case clientlists.IP:
+		return "ipClientListItemsDS"
+	case clientlists.ASN:
+		return "asnClientListItemsDS"
+	case clientlists.GEO:
+		return "geoClientListItemsDS"
+	case clientlists.TLSFingerprint:
+		return "tlsFingerprintClientListItemsDS"
+	case clientlists.FileHash:
+		return "fileHashClientListItemsDS"
+	case clientlists.DOMAIN:
+		return "domainClientListItemsDS"
+	default:
+		return "unknownClientListItemsDS" // fallback or handle error
+	}
 }

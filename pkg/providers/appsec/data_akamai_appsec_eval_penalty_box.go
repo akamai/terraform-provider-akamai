@@ -35,6 +35,11 @@ func dataSourceEvalPenaltyBox() *schema.Resource {
 				Computed:    true,
 				Description: "Whether the penalty box is enabled for the specified security policy",
 			},
+			"output_text": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Text output in tabular form",
+			},
 		},
 	}
 }
@@ -66,6 +71,17 @@ func dataSourceEvalPenaltyBoxRead(ctx context.Context, d *schema.ResourceData, m
 	if err != nil {
 		logger.Errorf("calling 'getEvalPenaltyBox': %s", err.Error())
 		return diag.FromErr(err)
+	}
+
+	ots := OutputTemplates{}
+	InitTemplates(ots)
+
+	outputtext, err := RenderTemplates(ots, "evalPenaltyBoxDS", penaltybox)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("output_text", outputtext); err != nil {
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	if err := d.Set("action", penaltybox.Action); err != nil {

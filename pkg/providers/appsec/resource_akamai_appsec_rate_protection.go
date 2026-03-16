@@ -45,6 +45,11 @@ func resourceRateProtection() *schema.Resource {
 				Type:     schema.TypeBool,
 				Required: true,
 			},
+			"output_text": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Text representation",
+			},
 		},
 	}
 }
@@ -128,6 +133,15 @@ func resourceRateProtectionRead(ctx context.Context, d *schema.ResourceData, m i
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("enabled", enabled); err != nil {
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+	}
+	ots := OutputTemplates{}
+	InitTemplates(ots)
+	outputtext, err := RenderTemplates(ots, "protections", response)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("output_text", outputtext); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 

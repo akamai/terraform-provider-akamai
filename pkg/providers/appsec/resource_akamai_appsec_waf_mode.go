@@ -73,6 +73,11 @@ func resourceWAFMode() *schema.Resource {
 				Computed:    true,
 				Description: "Date on which the evaluation period ends, if applicable",
 			},
+			"output_text": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Text representation",
+			},
 		},
 	}
 }
@@ -169,6 +174,15 @@ func resourceWAFModeRead(ctx context.Context, d *schema.ResourceData, m interfac
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("eval_expiration_date", wafMode.Expires); err != nil {
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+	}
+	ots := OutputTemplates{}
+	InitTemplates(ots)
+	outputtext, err := RenderTemplates(ots, "wafModesDS", wafMode)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("output_text", outputtext); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 

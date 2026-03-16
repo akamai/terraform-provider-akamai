@@ -46,6 +46,11 @@ func resourceReputationProtection() *schema.Resource {
 				Required:    true,
 				Description: "Whether to enable reputation protection",
 			},
+			"output_text": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Text representation",
+			},
 		},
 	}
 }
@@ -132,6 +137,15 @@ func resourceReputationProtectionRead(ctx context.Context, d *schema.ResourceDat
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
+	ots := OutputTemplates{}
+	InitTemplates(ots)
+	outputtext, err := RenderTemplates(ots, "protections", response)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("output_text", outputtext); err != nil {
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+	}
 	return nil
 }
 

@@ -40,6 +40,11 @@ func resourceVersionNotes() *schema.Resource {
 				Required:    true,
 				Description: "Brief description of the security configuration version",
 			},
+			"output_text": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Text representation",
+			},
 		},
 	}
 }
@@ -110,6 +115,15 @@ func resourceVersionNotesRead(ctx context.Context, d *schema.ResourceData, m int
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("version_notes", versionnotes.Notes); err != nil {
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+	}
+	ots := OutputTemplates{}
+	InitTemplates(ots)
+	outputtext, err := RenderTemplates(ots, "versionNotesDS", versionnotes)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err = d.Set("output_text", outputtext); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 

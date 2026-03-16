@@ -30,6 +30,7 @@ type (
 		ListIDs     []types.String    `tfsdk:"list_ids"`
 		Lists       []clientListModel `tfsdk:"lists"`
 		JSON        types.String      `tfsdk:"json"`
+		OutputText  types.String      `tfsdk:"output_text"`
 	}
 
 	clientListModel struct {
@@ -169,6 +170,10 @@ func (d *clientListsDataSource) Schema(_ context.Context, _ datasource.SchemaReq
 				Computed:    true,
 				Description: "JSON representation of the client lists.",
 			},
+			"output_text": schema.StringAttribute{
+				Computed:    true,
+				Description: "Tabular representation of the client lists.",
+			},
 			"id": schema.StringAttribute{
 				MarkdownDescription: "Identifier of the data source",
 				Computed:            true,
@@ -266,6 +271,15 @@ func (d *clientListsDataSource) Read(ctx context.Context, request datasource.Rea
 		return
 	}
 	data.JSON = types.StringValue(string(jsonBody))
+
+	ots := OutputTemplates{}
+	InitTemplates(ots)
+	outputText, err := RenderTemplates(ots, "clientListsDS", lists)
+	if err != nil {
+		response.Diagnostics.AddError("Error rendering output text", err.Error())
+		return
+	}
+	data.OutputText = types.StringValue(outputText)
 	data.ID = types.StringValue(hash.GetSHAString(string(jsonBody)))
 	response.Diagnostics.Append(response.State.Set(ctx, &data)...)
 }

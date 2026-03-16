@@ -7,6 +7,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -30,11 +31,19 @@ func dataSourceCustomRuleActions() *schema.Resource {
 				Optional:    true,
 				Description: "Unique identifier of the custom rule for which to return information",
 			},
+			"output_text": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Text representation",
+			},
 		},
 	}
 }
 
 func dataSourceCustomRuleActionsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := meta.Must(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "dataSourceCustomRuleActionsRead")
 
 	getCustomRuleActions := appsec.GetCustomRuleActionsRequest{}
 
@@ -59,6 +68,23 @@ func dataSourceCustomRuleActionsRead(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 	getCustomRuleActions.RuleID = customRuleID
+
+	customruleactions, err := client.GetCustomRuleActions(ctx, getCustomRuleActions)
+	if err != nil {
+		logger.Errorf("calling 'getCustomRuleActions': %s", err.Error())
+		return diag.FromErr(err)
+	}
+
+	ots := OutputTemplates{}
+	InitTemplates(ots)
+
+	outputtext, err := RenderTemplates(ots, "customRuleAction", customruleactions)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("output_text", outputtext); err != nil {
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+	}
 
 	d.SetId(strconv.Itoa(getCustomRuleActions.ConfigID))
 

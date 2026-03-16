@@ -9,6 +9,6 @@ data "akamai_appsec_security_policy_protections" "test" {
 }
 
 output "appsecwafmode" {
-  value = data.akamai_appsec_security_policy_protections.test
+  value = data.akamai_appsec_security_policy_protections.test.output_text
 }
 
