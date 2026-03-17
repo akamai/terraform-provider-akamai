@@ -62,8 +62,8 @@
   * Added `renew_before_expiration_days`, `renew_pending`, and `auto_renew` attributes to the `akamai_cloudcertificates_certificate` resource to support automatic certificate renewal. When `renew_before_expiration_days` is set and the certificate is within the renewal threshold, `renew_pending` becomes `true`. Setting `auto_renew` to `true` triggers automatic resource replacement when renewal is pending.
 
 * Appsec
-  * Added datasource `akamai_appsec_url_protection_rule` to read details of a specific URL protection rule for a specified security configuration.
-  * Added datasource `akamai_appsec_url_protection_rules` to list URL protection rules for a specified security configuration.
+  * Added datasource `akamai_appsec_url_protection_policy` to read details of a specific URL protection policy for a specified security configuration.
+  * Added datasource `akamai_appsec_url_protection_policies` to list URL protection policies for a specified security configuration.
   * Added resource `akamai_appsec_waf_ruleset` to manage rules and attack groups. 
 
 
@@ -123,8 +123,8 @@
 
 
 * Appsec
- * Added resource to support URL protection rules `akamai_appsec_url_protection_rule`.
- * Added datasources to support URL Protection rule actions `akamai_appsec_url_protection_rules_actions` and `akamai_appsec_url_protection_rule_actions`.
+ * Added resource to support URL protection policies `akamai_appsec_url_protection_policy`.
+ * Added datasources to support URL Protection policy actions `akamai_appsec_url_protection_policies_actions` and `akamai_appsec_url_protection_policy_actions`.
 
 
 * PAPI

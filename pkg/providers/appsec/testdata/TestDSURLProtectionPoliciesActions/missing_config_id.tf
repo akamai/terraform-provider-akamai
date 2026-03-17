@@ -3,7 +3,6 @@ provider "akamai" {
   cache_enabled = false
 }
 
-data "akamai_appsec_url_protection_policy" "test" {
-  url_protection_policy_id = 681
+data "akamai_appsec_url_protection_policies_actions" "test" {
+  security_policy_id = "AAAA_81230"
 }
-
