@@ -36,6 +36,15 @@ func TestWAFRulesetResource(t *testing.T) {
 	require.NoError(t, err)
 
 	// Base state checker for resource tests
+	importNoChangesResponse := appsec.CompositeRulesetResponse{}
+	err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResWAFRuleset/WAFRuleset_import_no_changes.json"), &importNoChangesResponse)
+	require.NoError(t, err)
+
+	// Load delete request for import no changes test (resets rules/groups to "none" action)
+	importNoChangesDeleteRequest := appsec.UpdateWAFCompositeRulesetRequest{}
+	err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResWAFRuleset/WAFRuleset_import_no_changes_delete_request.json"), &importNoChangesDeleteRequest)
+	require.NoError(t, err)
+
 	baseChecker := test.NewStateChecker("akamai_appsec_waf_ruleset.test").
 		CheckEqual("config_id", "111111").
 		CheckEqual("security_policy_id", "2222_333333")
@@ -117,6 +126,7 @@ func TestWAFRulesetResource(t *testing.T) {
 
 		"create waf ruleset - invalid rule ID not in ruleset": {
 			init: func(m *appsec.Mock) {
+				// create (fails validation, no update/delete needed)
 				mockGetConfiguration(m, 1)
 				mockGetWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
 			},
@@ -129,6 +139,7 @@ func TestWAFRulesetResource(t *testing.T) {
 		},
 		"create waf ruleset - invalid attack group not in ruleset": {
 			init: func(m *appsec.Mock) {
+				// create (fails validation, no update/delete needed)
 				mockGetConfiguration(m, 1)
 				mockGetWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
 			},
@@ -142,10 +153,18 @@ func TestWAFRulesetResource(t *testing.T) {
 
 		"create waf ruleset - with rules": {
 			init: func(m *appsec.Mock) {
-				mockGetConfiguration(m, 2)
+				// create
+				mockGetConfiguration(m, 1)
 				mockGetWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
 				mockUpdateWAFCompositeRulesetForResource(m, rulesOnlyResponse, 1)
+
+				// read
+				mockGetConfiguration(m, 1)
 				mockGetWAFCompositeRulesetForResource(m, rulesOnlyResponse, 1)
+
+				// delete
+				mockGetConfiguration(m, 1)
+				mockUpdateWAFCompositeRulesetForResource(m, rulesOnlyResponse, 1)
 			},
 			steps: []resource.TestStep{
 				{
@@ -156,10 +175,18 @@ func TestWAFRulesetResource(t *testing.T) {
 		},
 		"create waf ruleset - with attack groups": {
 			init: func(m *appsec.Mock) {
-				mockGetConfiguration(m, 2)
+				// create
+				mockGetConfiguration(m, 1)
 				mockGetWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
 				mockUpdateWAFCompositeRulesetForResource(m, attackGroupsOnlyResponse, 1)
+
+				// read
+				mockGetConfiguration(m, 1)
 				mockGetWAFCompositeRulesetForResource(m, attackGroupsOnlyResponse, 1)
+
+				// delete
+				mockGetConfiguration(m, 1)
+				mockUpdateWAFCompositeRulesetForResource(m, attackGroupsOnlyResponse, 1)
 			},
 			steps: []resource.TestStep{
 				{
@@ -170,10 +197,18 @@ func TestWAFRulesetResource(t *testing.T) {
 		},
 		"create waf ruleset - with rules and attack groups": {
 			init: func(m *appsec.Mock) {
-				mockGetConfiguration(m, 2)
+				// create
+				mockGetConfiguration(m, 1)
 				mockGetWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
 				mockUpdateWAFCompositeRulesetForResource(m, rulesAndGroupsResponse, 1)
+
+				// read
+				mockGetConfiguration(m, 1)
 				mockGetWAFCompositeRulesetForResource(m, rulesAndGroupsResponse, 1)
+
+				// delete
+				mockGetConfiguration(m, 1)
+				mockUpdateWAFCompositeRulesetForResource(m, rulesAndGroupsResponse, 1)
 			},
 			steps: []resource.TestStep{
 				{
@@ -196,10 +231,18 @@ func TestWAFRulesetResource(t *testing.T) {
 
 		"create waf ruleset - minimal (config_id and policy_id only)": {
 			init: func(m *appsec.Mock) {
-				mockGetConfiguration(m, 2)
+				// create
+				mockGetConfiguration(m, 1)
 				mockGetWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
 				mockUpdateWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
+
+				// read
+				mockGetConfiguration(m, 1)
 				mockGetWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
+
+				// delete
+				mockGetConfiguration(m, 1)
+				mockUpdateWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
 			},
 			steps: []resource.TestStep{
 				{
@@ -210,8 +253,25 @@ func TestWAFRulesetResource(t *testing.T) {
 		},
 		"create waf ruleset - apply and apply again (idempotent)": {
 			init: func(m *appsec.Mock) {
-				mockGetConfiguration(m, 4)
-				mockGetWAFCompositeRulesetForResource(m, wafRulesetResponse, 4)
+				// first apply - create
+				mockGetConfiguration(m, 1)
+				mockGetWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
+				mockUpdateWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
+
+				// first apply - read
+				mockGetConfiguration(m, 1)
+				mockGetWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
+
+				// second apply - read (refresh)
+				mockGetConfiguration(m, 1)
+				mockGetWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
+
+				// second apply - read (plan, no update since idempotent)
+				mockGetConfiguration(m, 1)
+				mockGetWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
+
+				// delete
+				mockGetConfiguration(m, 1)
 				mockUpdateWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
 			},
 			steps: []resource.TestStep{
@@ -228,8 +288,13 @@ func TestWAFRulesetResource(t *testing.T) {
 
 		"import WAF ruleset - verify rules and groups loaded": {
 			init: func(m *appsec.Mock) {
-				mockGetConfiguration(m, 2)
-				mockGetWAFCompositeRulesetForResource(m, wafRulesetResponse, 2)
+				// import
+				mockGetConfiguration(m, 1)
+				mockGetWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
+
+				// read after import
+				mockGetConfiguration(m, 1)
+				mockGetWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
 			},
 			steps: []resource.TestStep{
 				{
@@ -243,8 +308,13 @@ func TestWAFRulesetResource(t *testing.T) {
 		},
 		"import WAF ruleset - successful": {
 			init: func(m *appsec.Mock) {
-				mockGetConfiguration(m, 2)
-				mockGetWAFCompositeRulesetForResource(m, wafRulesetResponse, 2)
+				// import
+				mockGetConfiguration(m, 1)
+				mockGetWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
+
+				// read after import
+				mockGetConfiguration(m, 1)
+				mockGetWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
 			},
 			steps: []resource.TestStep{
 				{
@@ -258,6 +328,7 @@ func TestWAFRulesetResource(t *testing.T) {
 		},
 		"create waf ruleset - Unable to read latest config version from API": {
 			init: func(m *appsec.Mock) {
+				// create (fails to get config version)
 				mockGetConfigurationFailure(m, 1)
 			},
 			steps: []resource.TestStep{
@@ -269,6 +340,7 @@ func TestWAFRulesetResource(t *testing.T) {
 		},
 		"create waf ruleset - Unable to get WAF composite ruleset": {
 			init: func(m *appsec.Mock) {
+				// create (fails to get ruleset)
 				mockGetConfiguration(m, 1)
 				mockGetWAFCompositeRulesetFailureForResource(m)
 			},
@@ -281,6 +353,7 @@ func TestWAFRulesetResource(t *testing.T) {
 		},
 		"create waf ruleset - Unable to update WAF composite ruleset": {
 			init: func(m *appsec.Mock) {
+				// create (fails to update ruleset)
 				mockGetConfiguration(m, 1)
 				mockGetWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
 				mockUpdateWAFCompositeRulesetFailureForResource(m)
@@ -295,6 +368,7 @@ func TestWAFRulesetResource(t *testing.T) {
 
 		"import WAF ruleset - Unable to read latest config version from API": {
 			init: func(m *appsec.Mock) {
+				// import (fails to get config version)
 				mockGetConfigurationFailure(m, 1)
 			},
 			steps: []resource.TestStep{
@@ -309,6 +383,7 @@ func TestWAFRulesetResource(t *testing.T) {
 		},
 		"import WAF ruleset - Unable to read WAF composite ruleset": {
 			init: func(m *appsec.Mock) {
+				// import (fails to get ruleset)
 				mockGetConfiguration(m, 1)
 				mockGetWAFCompositeRulesetFailureForResource(m)
 			},
@@ -343,6 +418,49 @@ func TestWAFRulesetResource(t *testing.T) {
 					ResourceName:       "akamai_appsec_waf_ruleset.test",
 					ExpectError:        regexp.MustCompile("invalid security policy id"),
 					ImportStatePersist: false,
+				},
+			},
+		},
+		"import WAF ruleset - import then apply no changes": {
+			init: func(m *appsec.Mock) {
+				// Step 1: Import
+				mockGetConfigurationForImportNoChanges(m, 1)
+				mockGetWAFCompositeRulesetForImportNoChanges(m, importNoChangesResponse, 1)
+
+				// Step 2: Apply (refresh + plan, no update needed since no changes)
+				mockGetConfigurationForImportNoChanges(m, 1)
+				mockGetWAFCompositeRulesetForImportNoChanges(m, importNoChangesResponse, 1)
+				mockGetConfigurationForImportNoChanges(m, 1)
+				mockGetWAFCompositeRulesetForImportNoChanges(m, importNoChangesResponse, 1)
+				mockGetConfigurationForImportNoChanges(m, 1)
+				mockGetWAFCompositeRulesetForImportNoChanges(m, importNoChangesResponse, 1)
+
+				// Step 3: Delete (cleanup at end of test)
+				mockGetConfigurationForImportNoChanges(m, 1)
+				mockUpdateWAFCompositeRulesetForImportNoChanges(m, importNoChangesDeleteRequest, importNoChangesResponse, 1)
+			},
+			steps: []resource.TestStep{
+				{
+					Config:             testutils.LoadFixtureString(t, "testdata/TestResWAFRuleset/waf_ruleset_import_no_changes.tf"),
+					ImportState:        true,
+					ImportStateId:      "63905:p563_113699",
+					ResourceName:       "akamai_appsec_waf_ruleset.import_no_changes",
+					ImportStatePersist: true,
+					ImportStateCheck: test.NewImportChecker().
+						CheckEqual("config_id", "63905").
+						CheckEqual("security_policy_id", "p563_113699").
+						CheckEqual("rules.#", "1").
+						CheckEqual("attack_groups.#", "2").
+						Build(),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResWAFRuleset/waf_ruleset_import_no_changes.tf"),
+					Check: test.NewStateChecker("akamai_appsec_waf_ruleset.import_no_changes").
+						CheckEqual("config_id", "63905").
+						CheckEqual("security_policy_id", "p563_113699").
+						CheckEqual("rules.#", "1").
+						CheckEqual("attack_groups.#", "2").
+						Build(),
 				},
 			},
 		},
@@ -405,4 +523,30 @@ var wafRulesetResourceServerError = appsec.Error{
 	Title:      "Internal Server Error",
 	Detail:     "Error Fetching Composite Ruleset",
 	StatusCode: http.StatusInternalServerError,
+}
+
+// Mock functions for import no changes test (config_id: 63905, policy_id: p563_113699)
+
+// mockGetConfigurationForImportNoChanges mocks the GetConfiguration API call for import no changes test
+func mockGetConfigurationForImportNoChanges(m *appsec.Mock, times int) {
+	m.On("GetConfiguration", mock.Anything, appsec.GetConfigurationRequest{
+		ConfigID: 63905,
+	}).Return(&appsec.GetConfigurationResponse{
+		ID:            63905,
+		LatestVersion: 2,
+	}, nil).Times(times)
+}
+
+// mockGetWAFCompositeRulesetForImportNoChanges mocks the GetWAFCompositeRuleset API call for import no changes test
+func mockGetWAFCompositeRulesetForImportNoChanges(m *appsec.Mock, response appsec.CompositeRulesetResponse, times int) {
+	m.On("GetWAFCompositeRuleset", mock.Anything, appsec.GetWAFCompositeRulesetRequest{
+		ConfigID: 63905,
+		Version:  2,
+		PolicyID: "p563_113699",
+	}).Return(&response, nil).Times(times)
+}
+
+// mockUpdateWAFCompositeRulesetForImportNoChanges mocks the UpdateWAFCompositeRuleset API call for import no changes test
+func mockUpdateWAFCompositeRulesetForImportNoChanges(m *appsec.Mock, request appsec.UpdateWAFCompositeRulesetRequest, response appsec.CompositeRulesetResponse, times int) {
+	m.On("UpdateWAFCompositeRuleset", mock.Anything, request).Return(&response, nil).Times(times)
 }

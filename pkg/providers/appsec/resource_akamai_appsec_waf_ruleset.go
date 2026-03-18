@@ -9,6 +9,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/framework/modifiers"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf/validators"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -17,7 +18,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -115,7 +115,7 @@ func (r *wafRulesetResource) Schema(_ context.Context, _ resource.SchemaRequest,
 							Optional:    true,
 							Description: "Conditions and exceptions associated with the rule",
 							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.UseStateForUnknown(),
+								NormalizeRuleConditionException(),
 							},
 						},
 					},
@@ -141,7 +141,7 @@ func (r *wafRulesetResource) Schema(_ context.Context, _ resource.SchemaRequest,
 							Description: "JSON-formatted conditions and exceptions associated with the attack group",
 							Optional:    true,
 							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.UseStateForUnknown(),
+								NormalizeAttackGroupConditionException(),
 							},
 						},
 					},
@@ -202,7 +202,7 @@ func (r *wafRulesetResource) ValidateConfig(ctx context.Context, req resource.Va
 	}
 
 	// Validate rules
-	if !data.Rules.IsNull() && !data.Rules.IsUnknown() {
+	if tf.IsKnown(data.Rules) {
 		var rules []wafRuleResourceModel
 		resp.Diagnostics.Append(data.Rules.ElementsAs(ctx, &rules, false)...)
 		if resp.Diagnostics.HasError() {
@@ -217,7 +217,7 @@ func (r *wafRulesetResource) ValidateConfig(ctx context.Context, req resource.Va
 	}
 
 	// Validate attack groups
-	if !data.AttackGroups.IsNull() && !data.AttackGroups.IsUnknown() {
+	if tf.IsKnown(data.AttackGroups) {
 		var attackGroups []attackGroupResourceModel
 		resp.Diagnostics.Append(data.AttackGroups.ElementsAs(ctx, &attackGroups, false)...)
 		if resp.Diagnostics.HasError() {
@@ -270,7 +270,7 @@ func (r *wafRulesetResource) Create(ctx context.Context, req resource.CreateRequ
 	}
 
 	// Convert rules from plan to API format
-	if !data.Rules.IsNull() && !data.Rules.IsUnknown() {
+	if tf.IsKnown(data.Rules) {
 		var rules []wafRuleResourceModel
 		resp.Diagnostics.Append(data.Rules.ElementsAs(ctx, &rules, false)...)
 		if resp.Diagnostics.HasError() {
@@ -294,7 +294,7 @@ func (r *wafRulesetResource) Create(ctx context.Context, req resource.CreateRequ
 	}
 
 	// Convert attack groups from plan to API format
-	if !data.AttackGroups.IsNull() && !data.AttackGroups.IsUnknown() {
+	if tf.IsKnown(data.AttackGroups) {
 		var attackGroups []attackGroupResourceModel
 		resp.Diagnostics.Append(data.AttackGroups.ElementsAs(ctx, &attackGroups, false)...)
 		if resp.Diagnostics.HasError() {
@@ -423,8 +423,8 @@ func (r *wafRulesetResource) Update(ctx context.Context, req resource.UpdateRequ
 	}
 
 	// Only process rules if they are configured in plan or state
-	planRulesConfigured := !plan.Rules.IsNull() && !plan.Rules.IsUnknown()
-	stateRulesConfigured := !state.Rules.IsNull() && !state.Rules.IsUnknown()
+	planRulesConfigured := tf.IsKnown(plan.Rules)
+	stateRulesConfigured := tf.IsKnown(state.Rules)
 
 	if planRulesConfigured || stateRulesConfigured {
 		var planRules, stateRules []wafRuleResourceModel
@@ -458,8 +458,8 @@ func (r *wafRulesetResource) Update(ctx context.Context, req resource.UpdateRequ
 	}
 
 	// Only process attack groups if they are configured in plan or state
-	planAttackGroupsConfigured := !plan.AttackGroups.IsNull() && !plan.AttackGroups.IsUnknown()
-	stateAttackGroupsConfigured := !state.AttackGroups.IsNull() && !state.AttackGroups.IsUnknown()
+	planAttackGroupsConfigured := tf.IsKnown(plan.AttackGroups)
+	stateAttackGroupsConfigured := tf.IsKnown(state.AttackGroups)
 
 	if planAttackGroupsConfigured || stateAttackGroupsConfigured {
 		var planAttackGroups, stateAttackGroups []attackGroupResourceModel
@@ -553,8 +553,8 @@ func updatePlanWithAPIResponse(ctx context.Context, plan *wafRulesetResourceMode
 	return diags
 }
 
-// Delete implements resource's Delete method
-// TODO: Implement Delete method
+// Delete implements resource's Delete method.
+// This method removes the WAF ruleset by resetting only the managed rules and attack groups to action="none".
 func (r *wafRulesetResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	tflog.Debug(ctx, "Deleting WAF Ruleset Resource")
 
@@ -565,7 +565,73 @@ func (r *wafRulesetResource) Delete(ctx context.Context, req resource.DeleteRequ
 		return
 	}
 
-	// TODO: Implement resource deletion logic
+	configID := int(data.ConfigID.ValueInt64())
+
+	// Get modifiable version of the configuration
+	version, err := getModifiableConfigVersion(ctx, configID, wafRulesetResourceName, r.meta)
+	if err != nil {
+		resp.Diagnostics.AddError(readConfigVersionError, err.Error())
+		return
+	}
+
+	client := inst.Client(r.meta)
+
+	// Build update request to reset only managed rules and attack groups to action="none"
+	updateRequest := appsec.UpdateWAFCompositeRulesetRequest{
+		ConfigID: data.ConfigID.ValueInt64(),
+		Version:  int64(version),
+		PolicyID: data.PolicyID.ValueString(),
+	}
+
+	// Reset only managed rules to action="none" with no condition exceptions
+	if tf.IsKnown(data.Rules) {
+		var rules []wafRuleResourceModel
+		resp.Diagnostics.Append(data.Rules.ElementsAs(ctx, &rules, false)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		if len(rules) > 0 {
+			ruleUpdates := make([]appsec.WAFCompositeRuleUpdate, 0, len(rules))
+			for _, rule := range rules {
+				ruleUpdates = append(ruleUpdates, appsec.WAFCompositeRuleUpdate{
+					RuleID:             rule.RuleID.ValueInt64(),
+					Action:             "none",
+					ConditionException: nil,
+				})
+			}
+			updateRequest.Rules = ruleUpdates
+		}
+	}
+
+	// Reset only managed attack groups to action="none" with no condition exceptions
+	if tf.IsKnown(data.AttackGroups) {
+		var attackGroups []attackGroupResourceModel
+		resp.Diagnostics.Append(data.AttackGroups.ElementsAs(ctx, &attackGroups, false)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		if len(attackGroups) > 0 {
+			attackGroupUpdates := make([]appsec.WAFCompositeAttackGroupUpdate, 0, len(attackGroups))
+			for _, ag := range attackGroups {
+				attackGroupUpdates = append(attackGroupUpdates, appsec.WAFCompositeAttackGroupUpdate{
+					Group:              ag.AttackGroup.ValueString(),
+					Action:             "none",
+					ConditionException: nil,
+				})
+			}
+			updateRequest.AttackGroups = attackGroupUpdates
+		}
+	}
+
+	// Execute the update to reset only managed configurations
+	_, err = client.UpdateWAFCompositeRuleset(ctx, updateRequest)
+	if err != nil {
+		resp.Diagnostics.AddError(updateWAFCompositeRulesetError, err.Error())
+		return
+	}
+
 	tflog.Info(ctx, "WAF Ruleset resource removed from state")
 }
 
@@ -672,7 +738,7 @@ func populateWAFRulesetState(
 	var diags diag.Diagnostics
 
 	// Only populate rules if they are configured in model
-	if !model.Rules.IsNull() && !model.Rules.IsUnknown() {
+	if tf.IsKnown(model.Rules) {
 		var modelRules []wafRuleResourceModel
 		diags.Append(model.Rules.ElementsAs(ctx, &modelRules, false)...)
 		if diags.HasError() {
@@ -694,7 +760,7 @@ func populateWAFRulesetState(
 	}
 
 	// Only populate attack groups if they are configured in model
-	if !model.AttackGroups.IsNull() && !model.AttackGroups.IsUnknown() {
+	if tf.IsKnown(model.AttackGroups) {
 		var modelAttackGroups []attackGroupResourceModel
 		diags.Append(model.AttackGroups.ElementsAs(ctx, &modelAttackGroups, false)...)
 		if diags.HasError() {
@@ -924,14 +990,14 @@ func validateWAFRules(rules []wafRuleResourceModel) diag.Diagnostics {
 			diags.AddError(fmt.Sprintf(wafRulesetValidationError, fmt.Sprintf("rule[%d]: rule_id cannot be empty or zero", i)), "")
 		}
 
-		if !rule.RuleAction.IsNull() && !rule.RuleAction.IsUnknown() {
+		if tf.IsKnown(rule.RuleAction) {
 			action := rule.RuleAction.ValueString()
 			if !isValidWAFAction(action) {
 				diags.AddError(fmt.Sprintf(wafRulesetValidationError, fmt.Sprintf("rule[%d]: invalid rule_action '%s'", i, action)), "Action must be one of: alert, deny, deny_custom_{custom_deny_id}, none")
 			}
 		}
 
-		if !rule.ConditionException.IsNull() && !rule.ConditionException.IsUnknown() {
+		if tf.IsKnown(rule.ConditionException) {
 			conditionException := rule.ConditionException.ValueString()
 			if conditionException == "" || conditionException == "{}" {
 				diags.AddError(
@@ -947,8 +1013,7 @@ func validateWAFRules(rules []wafRuleResourceModel) diag.Diagnostics {
 		}
 
 		// Cross-field validation: action="none" cannot have condition_exception
-		if !rule.RuleAction.IsNull() && !rule.RuleAction.IsUnknown() &&
-			!rule.ConditionException.IsNull() && !rule.ConditionException.IsUnknown() {
+		if tf.IsKnown(rule.RuleAction) && tf.IsKnown(rule.ConditionException) {
 			action := rule.RuleAction.ValueString()
 			conditionException := rule.ConditionException.ValueString()
 
@@ -987,14 +1052,14 @@ func validateAttackGroups(attackGroups []attackGroupResourceModel) diag.Diagnost
 			diags.AddError(fmt.Sprintf(wafRulesetValidationError, fmt.Sprintf("attack_group[%d]: attack_group cannot be empty", i)), "")
 		}
 
-		if !attackGroup.AttackGroupAction.IsNull() && !attackGroup.AttackGroupAction.IsUnknown() {
+		if tf.IsKnown(attackGroup.AttackGroupAction) {
 			action := attackGroup.AttackGroupAction.ValueString()
 			if !isValidWAFAction(action) {
 				diags.AddError(fmt.Sprintf(wafRulesetValidationError, fmt.Sprintf("attack_group[%d]: invalid attack_group_action '%s'", i, action)), "Action must be one of: alert, deny, deny_custom_{custom_deny_id}, none")
 			}
 		}
 
-		if !attackGroup.ConditionException.IsNull() && !attackGroup.ConditionException.IsUnknown() {
+		if tf.IsKnown(attackGroup.ConditionException) {
 			conditionException := attackGroup.ConditionException.ValueString()
 			if conditionException == "" || conditionException == "{}" {
 				diags.AddError(
@@ -1010,8 +1075,7 @@ func validateAttackGroups(attackGroups []attackGroupResourceModel) diag.Diagnost
 		}
 
 		// Cross-field validation: action="none" cannot have condition_exception
-		if !attackGroup.AttackGroupAction.IsNull() && !attackGroup.AttackGroupAction.IsUnknown() &&
-			!attackGroup.ConditionException.IsNull() && !attackGroup.ConditionException.IsUnknown() {
+		if tf.IsKnown(attackGroup.AttackGroupAction) && tf.IsKnown(attackGroup.ConditionException) {
 			action := attackGroup.AttackGroupAction.ValueString()
 			conditionException := attackGroup.ConditionException.ValueString()
 

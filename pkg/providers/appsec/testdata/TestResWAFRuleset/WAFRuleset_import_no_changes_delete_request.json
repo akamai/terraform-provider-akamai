@@ -1,0 +1,22 @@
+{
+  "configId": 63905,
+  "version": 2,
+  "policyId": "p563_113699",
+  "rules": [
+    {
+      "ruleId": 950003,
+      "action": "none"
+    }
+  ],
+  "attackGroups": [
+    {
+      "group": "CMD",
+      "action": "none"
+    },
+    {
+      "group": "WAT",
+      "action": "none"
+    }
+  ]
+}
+
