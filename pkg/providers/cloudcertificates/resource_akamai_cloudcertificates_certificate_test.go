@@ -186,6 +186,29 @@ var (
 		csrPEM:            "-----BEGIN CERTIFICATE REQUEST-----\nTEST-CSR-PEM\n-----END CERTIFICATE REQUEST-----\n",
 	}
 
+	minCertificateECDSAP384 = certificateTestData{
+		// input data
+		contractID:    "test_contract",
+		groupID:       "123",
+		keyType:       "ECDSA",
+		keySize:       "P-384",
+		secureNetwork: "ENHANCED_TLS",
+		sans:          []string{"test.example.com"},
+
+		// output data
+		certificateID:     "12345",
+		certificateType:   "THIRD_PARTY",
+		name:              "test.example.com1234567890",
+		certificateStatus: "CSR_READY",
+		accountID:         "act_789",
+		createdBy:         "test_user",
+		createdDate:       "2025-01-01T00:00:00.168262Z",
+		modifiedBy:        "test_user",
+		modifiedDate:      "2025-01-01T00:00:00.616267Z",
+		csrExpirationDate: "2027-01-01T00:00:00Z",
+		csrPEM:            "-----BEGIN CERTIFICATE REQUEST-----\nTEST-CSR-PEM\n-----END CERTIFICATE REQUEST-----\n",
+	}
+
 	minCertificateStandardTLS = certificateTestData{
 		// input data
 		contractID:    "test_contract",
@@ -717,6 +740,27 @@ func TestCertificateResource(t *testing.T) {
 				},
 			},
 		},
+		"happy path - create certificate with ECDSA P-384": {
+			init: func(m *cloudcertificates.Mock, createData certificateTestData, _ certificateTestData) {
+				// Create
+				mockCreateCertificate(m, createData)
+				// Read before destroy
+				mockGetCertificate(m, createData)
+				// Delete
+				mockDeleteCertificate(m, createData)
+			},
+			createMockData: minCertificateECDSAP384,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCertificate/create/min_ecdsa_p384.tf"),
+					Check: minCertChecker.
+						CheckEqual("key_type", "ECDSA").
+						CheckEqual("key_size", "P-384").
+						CheckMissing("subject").
+						Build(),
+				},
+			},
+		},
 		"import - not renewed certificate": {
 			init: func(m *cloudcertificates.Mock, data certificateTestData, _ certificateTestData) {
 				// Import
@@ -1087,8 +1131,9 @@ func TestCertificateResource(t *testing.T) {
 			createMockData: minCertificate,
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, "testdata/TestResCertificate/validation/wrong_key_size_rsa.tf"),
-					ExpectError: regexp.MustCompile(`The specified value '2137' for the RSA key type is invalid. Valid values are(.|\n)*'2048'.`),
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCertificate/validation/wrong_key_size_rsa.tf"),
+					ExpectError: regexp.MustCompile(
+						`Attribute key_size value must be one of: \["2048" "P-256" "P-384"\], got:\s+"2137"`),
 				},
 			},
 		},
@@ -1097,8 +1142,19 @@ func TestCertificateResource(t *testing.T) {
 			createMockData: minCertificate,
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, "testdata/TestResCertificate/validation/wrong_key_size_ecdsa.tf"),
-					ExpectError: regexp.MustCompile(`The specified value '2137' for the ECDSA key type is invalid. Valid values(.|\n)*are 'P-256'.`),
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCertificate/validation/wrong_key_size_ecdsa.tf"),
+					ExpectError: regexp.MustCompile(
+						`Attribute key_size value must be one of: \["2048" "P-256" "P-384"\], got:\s+"2137"`),
+				},
+			},
+		},
+		"expect error - P-384 key_size used with RSA key_type": {
+			init:           func(_ *cloudcertificates.Mock, _ certificateTestData, _ certificateTestData) {},
+			createMockData: minCertificate,
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResCertificate/validation/wrong_key_size_p384_with_rsa.tf"),
+					ExpectError: regexp.MustCompile(`The specified value 'P-384' for the RSA key type is invalid. Valid values are(.|\n)*'2048'.`),
 				},
 			},
 		},
@@ -1108,7 +1164,7 @@ func TestCertificateResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResCertificate/validation/wrong_key_type.tf"),
-					ExpectError: regexp.MustCompile(`Attribute key_type value must be one of: \["RSA" "ECDSA"\], got: "WRONG-TYPE"`),
+					ExpectError: regexp.MustCompile(`Attribute key_type value must be one of: \["ECDSA" "RSA"\], got:(.|\n)*"WRONG-TYPE"`),
 				},
 			},
 		},

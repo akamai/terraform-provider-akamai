@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"regexp"
 	"slices"
+	"sort"
 	"strings"
 	"time"
 
@@ -52,6 +53,32 @@ const renewedNameDateLayout = "2006-01-02T15_04_05Z"
 // Modified to disallow uppercase letters, as API will lowercase them automatically.
 // Original pattern from API: ^(\*\.)?([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$
 var domainNameRegex = regexp.MustCompile(`^(\*\.)?([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$`)
+
+// validKeyCombinations maps each supported key type to its valid key sizes.
+var validKeyCombinations = map[string][]string{
+	"ECDSA": {"P-256", "P-384"},
+	"RSA":   {"2048"},
+}
+
+// validKeyTypes returns sorted valid key type names derived from validKeyCombinations.
+func validKeyTypes() []string {
+	var keys []string
+	for k := range validKeyCombinations {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
+}
+
+// validKeySizes returns sorted unique key sizes derived from validKeyCombinations.
+func validKeySizes() []string {
+	var sizes []string
+	for _, t := range validKeyTypes() {
+		sizes = append(sizes, validKeyCombinations[t]...)
+	}
+	sort.Strings(sizes)
+	return sizes
+}
 
 type certificateResourceConfig struct {
 	// timestampFunc returns the current time. It is used to generate unique
@@ -100,11 +127,6 @@ type subjectModel struct {
 }
 
 func (m *certificateResourceModel) validateKeyTypeAndSize() diag.Diagnostics {
-	validKeyCombinations := map[string][]string{
-		"RSA":   {"2048"},
-		"ECDSA": {"P-256"},
-	}
-
 	var diags diag.Diagnostics
 	if m.KeyType.IsNull() || m.KeyType.IsUnknown() || m.KeySize.IsNull() || m.KeySize.IsUnknown() {
 		return diags
@@ -343,22 +365,24 @@ func (c *certificateResource) Schema(_ context.Context, _ resource.SchemaRequest
 			},
 			"key_type": schema.StringAttribute{
 				Required:    true,
-				Description: "The key type for a certificate. Valid values are 'RSA' or 'ECDSA'",
+				Description: "The key type for a certificate. Valid values are '" + strings.Join(validKeyTypes(), "', '") + "'.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
 				Validators: []validator.String{
-					stringvalidator.OneOf([]string{"RSA", "ECDSA"}...),
+					stringvalidator.OneOf(validKeyTypes()...),
 				},
 			},
 			"key_size": schema.StringAttribute{
-				Required:    true,
-				Description: "The key size for a certificate. Valid value for key type RSA: '2048'. Valid value for key type ECDSA: 'P-256'.",
+				Required: true,
+				Description: "The key size for a certificate. " +
+					"Valid values for key type ECDSA: '" + strings.Join(validKeyCombinations["ECDSA"], "', '") + "'. " +
+					"Valid value for key type RSA: '" + strings.Join(validKeyCombinations["RSA"], "', '") + "'.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
 				Validators: []validator.String{
-					stringvalidator.OneOf([]string{"2048", "P-256"}...),
+					stringvalidator.OneOf(validKeySizes()...),
 				},
 			},
 			"secure_network": schema.StringAttribute{

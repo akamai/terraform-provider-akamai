@@ -3,6 +3,7 @@ package cloudcertificates
 import (
 	"context"
 	"regexp"
+	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudcertificates"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/framework/date"
@@ -131,10 +132,10 @@ func (d *certificatesDataSource) Schema(_ context.Context, _ datasource.SchemaRe
 				},
 			},
 			"key_type": schema.StringAttribute{
-				Description: "Filter certificates by key type. Valid values are `RSA` and `ECDSA`.",
+				Description: "Filter certificates by key type. Valid values are '" + strings.Join(validKeyTypes(), "', '") + "'.",
 				Optional:    true,
 				Validators: []validator.String{
-					stringvalidator.OneOf("RSA", "ECDSA"),
+					stringvalidator.OneOf(validKeyTypes()...),
 				},
 			},
 			"issuer": schema.StringAttribute{
