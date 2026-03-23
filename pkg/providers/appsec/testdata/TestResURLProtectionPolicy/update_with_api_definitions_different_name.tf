@@ -5,7 +5,7 @@ provider "akamai" {
 resource "akamai_appsec_url_protection_policy" "test" {
   config_id          = 43007
   name               = "API Protection Rule test"
-  description        = "Updated API Protection"
+  description        = "API Protection"
   max_rate_threshold = 195
 
   api_definitions = [{

@@ -306,10 +306,9 @@ func (r *urlProtectionActionResource) Read(ctx context.Context, req resource.Rea
 	}
 
 	data.MaxRateThresholdAction = types.StringValue(actionResponse.MaxRateThresholdAction)
-	// Handle LoadSheddingAction: only update it if loadSheddingAction is not null or empty in request
-	if !data.LoadSheddingAction.IsNull() && data.LoadSheddingAction.ValueString() != "" {
-		data.LoadSheddingAction = types.StringValue(actionResponse.LoadSheddingAction)
-	}
+
+	data.LoadSheddingAction = types.StringValue(actionResponse.LoadSheddingAction)
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 

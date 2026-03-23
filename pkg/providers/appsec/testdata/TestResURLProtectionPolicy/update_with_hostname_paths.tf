@@ -4,11 +4,10 @@ provider "akamai" {
 }
 
 resource "akamai_appsec_url_protection_policy" "test" {
-  config_id                = 43007
-  name                     = "URL Protection"
-  description              = "Updated URL Protection"
-  url_protection_policy_id = 681
-  max_rate_threshold       = 195
+  config_id          = 43007
+  name               = "URL Protection"
+  description        = "Updated URL Protection"
+  max_rate_threshold = 195
 
   hostname_paths = [{
     hostname = "custom.com"

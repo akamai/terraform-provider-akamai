@@ -35,6 +35,10 @@ func TestURLProtectionPolicyResource(t *testing.T) {
 	err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResURLProtectionPolicy/URLProtectionPolicyAPIUpdated.json"), &urlProtectionPolicyAPIUpdatedResponse)
 	require.NoError(t, err)
 
+	urlProtectionPolicyAPIUpdatedNameResponse := appsec.GetURLProtectionPolicyResponse{}
+	err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResURLProtectionPolicy/URLProtectionPolicyAPIUpdatedName.json"), &urlProtectionPolicyAPIUpdatedNameResponse)
+	require.NoError(t, err)
+
 	createResponse := appsec.CreateURLProtectionPolicyResponse{
 		URLProtectionPolicyID: 681,
 	}
@@ -322,16 +326,21 @@ func TestURLProtectionPolicyResource(t *testing.T) {
 				},
 			},
 		},
-		"create and update with different name should fail": {
+		"create and update with different name - success": {
 			init: func(m *appsec.Mock) {
 				// Mock GetConfiguration for all phases (create, update, read, delete, etc.)
-				mockGetConfigurationURLProtectionPolicy(m, 4)
+				mockGetConfigurationURLProtectionPolicy(m, 6)
 				// Mock CreateURLProtectionPolicy for initial resource creation
 				mockCreateURLProtectionPolicySuccess(m, createResponse, 1)
 				// Mock GetURLProtectionPolicy for reading after create (may be called multiple times)
-				mockGetURLProtectionPolicyData(m, urlProtectionPolicyWithAPIResponse, 2)
+				mockGetURLProtectionPolicyData(m, urlProtectionPolicyWithAPIResponse, 3)
+				// Mock UpdateURLProtectionPolicy
+				m.On("UpdateURLProtectionPolicy", mock.Anything, mock.AnythingOfType("appsec.UpdateURLProtectionPolicyRequest")).Return(&appsec.UpdateURLProtectionPolicyResponse{
+					URLProtectionPolicyID: 681,
+					Name:                  "API Protection Rule test",
+				}, nil).Once()
 				// Mock GetURLProtectionPolicy for reading after update (may be called multiple times)
-				mockGetURLProtectionPolicyData(m, urlProtectionPolicyAPIUpdatedResponse, 1)
+				mockGetURLProtectionPolicyData(m, urlProtectionPolicyAPIUpdatedNameResponse, 2)
 				// Mock RemoveURLProtectionPolicy for cleanup
 				mockRemoveURLProtectionPolicySuccess(m, 1)
 			},
@@ -344,8 +353,11 @@ func TestURLProtectionPolicyResource(t *testing.T) {
 					),
 				},
 				{
-					Config:      testutils.LoadFixtureString(t, "testdata/TestResURLProtectionPolicy/update_with_api_definitions_different_name.tf"),
-					ExpectError: regexp.MustCompile("updating field `name` is not possible"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestResURLProtectionPolicy/update_with_api_definitions_different_name.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_appsec_url_protection_policy.test", "config_id", "43007"),
+						resource.TestCheckResourceAttr("akamai_appsec_url_protection_policy.test", "name", "API Protection Rule test"),
+					),
 				},
 			},
 		},

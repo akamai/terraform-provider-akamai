@@ -15,7 +15,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -71,16 +73,15 @@ func (r *urlProtectionPolicyResource) Schema(_ context.Context, _ resource.Schem
 				},
 			},
 			"url_protection_policy_id": schema.Int64Attribute{
-				Computed:    true,
-				Optional:    true,
+				Computed: true,
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.UseStateForUnknown(),
+				},
 				Description: "Unique identifier of the URL protection policy",
 			},
 			"name": schema.StringAttribute{
 				Required:    true,
 				Description: "Name of the URL protection policy",
-				PlanModifiers: []planmodifier.String{
-					modifiers.PreventStringUpdate(),
-				},
 			},
 			"description": schema.StringAttribute{
 				Optional:    true,
@@ -127,6 +128,7 @@ func (r *urlProtectionPolicyResource) Schema(_ context.Context, _ resource.Schem
 			"api_definitions": schema.ListNestedAttribute{
 				Optional:    true,
 				Description: "List of API definitions associated with the URL protection policy",
+				Validators:  []validator.List{listvalidator.SizeAtLeast(1), listvalidator.UniqueValues()},
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"api_definition_id": schema.Int64Attribute{
@@ -155,7 +157,7 @@ func (r *urlProtectionPolicyResource) Schema(_ context.Context, _ resource.Schem
 			"hostname_paths": schema.ListNestedAttribute{
 				Optional:    true,
 				Computed:    true,
-				Validators:  []validator.List{listvalidator.SizeAtMost(5)},
+				Validators:  []validator.List{listvalidator.SizeBetween(1, 5)},
 				Description: "List of hostname and path configurations",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
@@ -213,11 +215,17 @@ func (r *urlProtectionPolicyResource) Schema(_ context.Context, _ resource.Schem
 				},
 			},
 			"create_date": schema.StringAttribute{
-				Computed:    true,
+				Computed: true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 				Description: "Date when the URL protection policy was created",
 			},
 			"created_by": schema.StringAttribute{
-				Computed:    true,
+				Computed: true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 				Description: "User who created the URL protection policy",
 			},
 			"update_date": schema.StringAttribute{

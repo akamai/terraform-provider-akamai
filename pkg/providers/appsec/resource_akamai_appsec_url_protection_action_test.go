@@ -17,7 +17,7 @@ func TestURLProtectionActionResource(t *testing.T) {
 
 	actionAfterCreate := appsec.GetURLProtectionPolicyActionsResponse{
 		MaxRateThresholdAction: "alert",
-		LoadSheddingAction:     "",
+		LoadSheddingAction:     "none",
 	}
 
 	actionAfterUpdateWithILS := appsec.GetURLProtectionPolicyActionsResponse{
@@ -158,7 +158,7 @@ func TestURLProtectionActionResource(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, "testdata/TestResURLProtectionAction/create_no_ils.tf"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResURLProtectionAction/create_with_no_load_shedding_when_ils_enabled.tf"),
 					ExpectError: regexp.MustCompile("load_shedding_action is required when intelligent load shedding is enabled"),
 				},
 			},
@@ -215,19 +215,42 @@ func TestURLProtectionActionResource(t *testing.T) {
 		},
 		"update url protection action": {
 			init: func(m *appsec.Mock) {
-				// Create phase
-				mockGetURLProtectionConfiguration(m, 5)                         // 6 GetConfiguration calls during create
-				mockGetURLProtectionPolicy(m, urlProtectionPolicyWithoutILS, 4) // 4 GetURLProtectionPolicy calls during create
+				// Create phase - ValidateConfig
+				mockGetURLProtectionConfiguration(m, 2)
+				mockGetURLProtectionPolicy(m, urlProtectionPolicyWithoutILS, 2)
+
+				// Create phase - Create
+				mockGetURLProtectionConfiguration(m, 1)
 				mockUpdateURLProtectionPolicyActions(m, "alert", "none", 1)
-				mockGetURLProtectionPolicyActions(m, actionAfterCreate, 2)
+				mockGetURLProtectionPolicyActions(m, actionAfterCreate, 1)
 
-				// Update phase
-				mockGetURLProtectionConfiguration(m, 9)                      // 9 GetConfiguration calls during update
-				mockGetURLProtectionPolicy(m, urlProtectionPolicyWithILS, 4) // 4 GetURLProtectionPolicy calls during update
-				mockUpdateURLProtectionPolicyActions(m, "deny", "alert", 1)
-				mockGetURLProtectionPolicyActions(m, actionAfterUpdateWithILS, 3)
+				// Create phase - ValidateConfig (post-create)
+				mockGetURLProtectionConfiguration(m, 2)
+				mockGetURLProtectionPolicy(m, urlProtectionPolicyWithoutILS, 2)
+
+				// Create phase - Read (refresh)
+				mockGetURLProtectionConfiguration(m, 1)
+				mockGetURLProtectionPolicyActions(m, actionAfterCreate, 1)
+
+				// Update phase - ValidateConfig
+				mockGetURLProtectionConfiguration(m, 2)
+				mockGetURLProtectionPolicy(m, urlProtectionPolicyWithILS, 2) // ILS now enabled
+
+				// Update phase - Update
+				mockGetURLProtectionConfiguration(m, 1)
+				mockGetURLProtectionPolicyActions(m, actionAfterUpdateWithILS, 1)
+
+				// Update phase - ValidateConfig (post-update)
+				mockGetURLProtectionConfiguration(m, 1)
+				mockGetURLProtectionPolicy(m, urlProtectionPolicyWithILS, 1)
+
+				// Update phase - Read (refresh)
+				mockGetURLProtectionConfiguration(m, 1)
+				mockGetURLProtectionPolicyActions(m, actionAfterUpdateWithILS, 1)
+
+				// Delete phase
+				mockGetURLProtectionConfiguration(m, 1)
 				mockUpdateURLProtectionPolicyActions(m, "none", "none", 1)
-
 			},
 			steps: []resource.TestStep{
 				{
@@ -317,7 +340,7 @@ func TestURLProtectionActionResource(t *testing.T) {
 					Check:  createActionChecker,
 				},
 				{
-					Config:      testutils.LoadFixtureString(t, "testdata/TestResURLProtectionAction/update_no_ils.tf"), // Changes action but no load_shedding_action
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResURLProtectionAction/create_with_no_load_shedding_when_ils_enabled.tf"), // Changes action but no load_shedding_action
 					ExpectError: regexp.MustCompile("load_shedding_action is required when intelligent load shedding is enabled"),
 				},
 			},
