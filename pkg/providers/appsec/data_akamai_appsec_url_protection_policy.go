@@ -480,7 +480,12 @@ func populateAPIDefinitions(ctx context.Context, model *urlProtectionPolicyDataS
 			diags.Append(diagsTemp...)
 			apiDefModel.ResourceIDs = resourceIDsList
 		} else {
-			apiDefModel.ResourceIDs = types.ListNull(types.Int64Type)
+			var diagsTemp diag.Diagnostics
+			apiDefModel.ResourceIDs, diagsTemp = types.ListValueFrom(ctx, types.Int64Type, []int64{})
+			if diagsTemp.HasError() {
+				diags.Append(diagsTemp...)
+				return diags
+			}
 		}
 
 		apiDefinitions = append(apiDefinitions, apiDefModel)
@@ -544,7 +549,12 @@ func populateCategoriesAndCustomCriteria(ctx context.Context, ilsModel *intellig
 					diags.Append(diagsTemp...)
 					listIDsList = listIDsListTemp
 				} else {
-					listIDsList = types.ListNull(types.StringType)
+					var diagsTemp diag.Diagnostics
+					listIDsList, diagsTemp = types.ListValueFrom(ctx, types.Int64Type, []int64{})
+					if diagsTemp.HasError() {
+						diags.Append(diagsTemp...)
+						return diags
+					}
 				}
 
 				customCriteria = append(customCriteria, customCriteriaModel{
@@ -564,7 +574,12 @@ func populateCategoriesAndCustomCriteria(ctx context.Context, ilsModel *intellig
 		diags.Append(diagsTemp...)
 		ilsModel.Categories = categoriesList
 	} else {
-		ilsModel.Categories = types.ListNull(types.StringType)
+		var diagsTemp diag.Diagnostics
+		ilsModel.Categories, diagsTemp = types.ListValueFrom(ctx, types.StringType, []string{})
+		if diagsTemp.HasError() {
+			diags.Append(diagsTemp...)
+			return diags
+		}
 	}
 
 	// Convert customCriteria to types.List
@@ -579,13 +594,19 @@ func populateCategoriesAndCustomCriteria(ctx context.Context, ilsModel *intellig
 		diags.Append(diagsTemp...)
 		ilsModel.CustomCriteria = customCriteriaList
 	} else {
-		ilsModel.CustomCriteria = types.ListNull(types.ObjectType{
+		var diagsTemp diag.Diagnostics
+		ilsModel.CustomCriteria, diagsTemp = types.ListValueFrom(ctx, types.ObjectType{
 			AttrTypes: map[string]attr.Type{
 				"type":           types.StringType,
 				"list_ids":       types.ListType{ElemType: types.StringType},
 				"positive_match": types.BoolType,
 			},
-		})
+		}, []customCriteriaModel{})
+		if diagsTemp.HasError() {
+			diags.Append(diagsTemp...)
+			return diags
+		}
+
 	}
 	return diags
 }

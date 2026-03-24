@@ -156,7 +156,6 @@ func (r *urlProtectionPolicyResource) Schema(_ context.Context, _ resource.Schem
 			},
 			"hostname_paths": schema.ListNestedAttribute{
 				Optional:    true,
-				Computed:    true,
 				Validators:  []validator.List{listvalidator.SizeBetween(1, 5)},
 				Description: "List of hostname and path configurations",
 				NestedObject: schema.NestedAttributeObject{

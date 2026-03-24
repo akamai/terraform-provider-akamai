@@ -67,6 +67,8 @@
   * Added data source(s) to support URL Protection policy actions `akamai_appsec_url_protection_policies_actions` and `akamai_appsec_url_protection_policy_actions`.
   * Added resource to support URL protection policies `akamai_appsec_url_protection_policy`.
   * Added resource `akamai_appsec_url_protection_action` to manage actions for URL protection policies.
+  * Added `apply_url_protection_controls` field to the `akamai_appsec_security_policy_protections` data source.
+  * Added resource `akamai_appsec_security_policy_protections` to manage all or any subset of protection flags for a security policy.  
 
 * Appsec (Beta)
   * Added data source `akamai_appsec_waf_ruleset`.
