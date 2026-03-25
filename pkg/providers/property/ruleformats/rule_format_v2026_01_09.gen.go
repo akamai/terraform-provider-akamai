@@ -6146,7 +6146,7 @@ func getBehaviorsSchemaV20260109() map[string]*schema.Schema {
 		"g_rpc": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior can be used in includes.",
+			Description: "This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -7734,7 +7734,7 @@ func getBehaviorsSchemaV20260109() map[string]*schema.Schema {
 		"localhost_loopback_protection": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior can be used in includes.",
+			Description: "The behavior allows you to secure incoming requests to hostnames on this property arriving via the `localhost` interface. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -7756,12 +7756,12 @@ func getBehaviorsSchemaV20260109() map[string]*schema.Schema {
 					},
 					"loopback_cross_account_policy": {
 						Optional:    true,
-						Description: "",
+						Description: "Specifies whether `localhost` requests to hostnames on this property are allowed from other accounts. If `false`, you can specify an exception list of Virtual Customer Domain (VCD) IDs identifying customers who are allowed to make `localhost` requests to hostnames on this property.",
 						Type:        schema.TypeBool,
 					},
 					"vcd_ids": {
 						Optional:    true,
-						Description: "",
+						Description: "Lists numeric Virtual Customer Domain (VCD) IDs which identify customers who can make `localhost` requests to hostnames on this property. If the list is empty, all `localhost` requests from other customer accounts to hostnames on this property are denied.",
 						Type:        schema.TypeList,
 						Elem: &schema.Schema{
 							Type: schema.TypeString,
@@ -11006,7 +11006,7 @@ func getBehaviorsSchemaV20260109() map[string]*schema.Schema {
 		"pqc_client_to_edge": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior is Limited Availability. To enable it, contact your Akamai account team. This behavior can be used in includes.",
+			Description: "Use this behavior to disable the Post Quantum Cryptography key exchanges from Client to Edge. We recommend enabling `pqcClientToEdge` to secure client-to-edge communication, protect your data, and address privacy and security goals. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -15216,7 +15216,7 @@ func getBehaviorsSchemaV20260109() map[string]*schema.Schema {
 		"visitor_prioritization_queue_it": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "TBD. This behavior cannot be used in includes.",
+			Description: "Note that this behavior is in Beta and has limited functionality. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -15238,29 +15238,29 @@ func getBehaviorsSchemaV20260109() map[string]*schema.Schema {
 					},
 					"enabled": {
 						Optional:    true,
-						Description: "Enables Visitor Prioritization (Powered by Queue-IT)",
+						Description: "Enables the feature.",
 						Type:        schema.TypeBool,
 					},
 					"customer_id": {
 						ValidateDiagFunc: validateRegexOrVariable("^[\\w-]+$"),
 						Optional:         true,
-						Description:      "",
+						Description:      "Specifies the customer ID on the Queue-it platform.",
 						Type:             schema.TypeString,
 					},
 					"api_key_cam_guid": {
 						Optional:    true,
-						Description: "",
+						Description: "Specifies the API key defined in Cloud Access Manager you use to fetch the Queue-it configuration.",
 						Type:        schema.TypeString,
 					},
 					"additional_headers_mode": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"DENY", "CUSTOM"}, false)),
 						Optional:         true,
-						Description:      "",
+						Description:      "Specifies the request headers Visitor Prioritization can access in addition to the required ones.",
 						Type:             schema.TypeString,
 					},
 					"additional_headers_list": {
 						Optional:    true,
-						Description: "",
+						Description: "Extra request headers Visitor Prioritization can access, in addition to its own default required headers.",
 						Type:        schema.TypeList,
 						Elem: &schema.Schema{
 							Type: schema.TypeString,
