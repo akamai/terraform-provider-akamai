@@ -1,161 +1,41 @@
 # RELEASE NOTES
 
-## X.X.X (X X, X)
-
-#### BREAKING CHANGES:
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+## 10.1.0 (Apr 1, 2026)
 
 #### FEATURES/ENHANCEMENTS:
 
 * General
     * Migrated to Go `1.25`.
-    * 
-
-* Cloud Certificates (Beta)
-  * Added `renew_before_expiration_days`, `renew_pending`, and `auto_renew` attributes to the `akamai_cloudcertificates_certificate` resource to support automatic certificate renewal. When `renew_before_expiration_days` is set and the certificate is within the renewal threshold, `renew_pending` becomes `true`. Setting `auto_renew` to `true` triggers automatic resource replacement when renewal is pending.
+    * Updated various dependencies.
 
 * Appsec (Beta)
-  * Added data source `akamai_appsec_url_protection_policy` to read details of a specific URL protection policy for a specified security configuration.
-  * Added data source `akamai_appsec_url_protection_policies` to list URL protection policies for a specified security configuration.
-  * Added data source(s) to support URL Protection policy actions `akamai_appsec_url_protection_policies_actions` and `akamai_appsec_url_protection_policy_actions`.
-  * Added resource to support URL protection policies `akamai_appsec_url_protection_policy`.
-  * Added resource `akamai_appsec_url_protection_action` to manage actions for URL protection policies.
-  * Added `apply_url_protection_controls` field to the `akamai_appsec_security_policy_protections` data source.
-  * Added resource `akamai_appsec_security_policy_protections` to manage all or any subset of protection flags for a security policy.  
+  * Added the `akamai_appsec_url_protection_policy` data source to read details of a URL protection policy for a security configuration.
+  * Added the `akamai_appsec_url_protection_policies` data source to list URL protection policies for a security configuration.
+  * Added the `akamai_appsec_url_protection_policies_actions` and `akamai_appsec_url_protection_policy_actions` data sources to support URL protection policy actions.
+  * Added the `akamai_appsec_url_protection_policy` resource to support URL protection policies.
+  * Added the `akamai_appsec_url_protection_action` resource to manage actions for URL protection policies.
+  * Added the `apply_url_protection_controls` field to the `akamai_appsec_security_policy_protections` data source.
+  * Added the `akamai_appsec_security_policy_protections` resource to manage all or any subset of protection flags for a security policy.
+  * Added the `akamai_appsec_waf_ruleset` data source.
+  * Added the `akamai_appsec_waf_ruleset` resource to manage rules and attack groups.
 
-* Appsec (Beta)
-  * Added data source `akamai_appsec_waf_ruleset`.
-  * Added resource `akamai_appsec_waf_ruleset` to manage rules and attack groups.
-
-
-
-    
-
-
-
-
+* Cloud Access
+  * Added support for a new authentication method `VP_QUEUE_IT` in the `akamai_cloudaccess_key` resource.
+  * Removed the possibility to specify `additional_cdn` and made the `cloud_access_key_id` argument optional for the `AVM_CLOUDINARY` authentication method in the `akamai_cloudaccess_key` resource.
 
 * Cloud Certificates (Beta)
   * Added support for the `P-384` key size in the ECDSA certificates.
-
-
-
-
-
-
-
-* Cloud Certificates (Beta)
   * Added support for the `STANDARD_TLS` secure network type in the `akamai_cloudcertificates_certificate` resource. The `secure_network` attribute now accepts both `ENHANCED_TLS` and `STANDARD_TLS` values.
-
-
-
-
-
+  * Added `renew_before_expiration_days`, `renew_pending`, and `auto_renew` attributes to the `akamai_cloudcertificates_certificate` resource to support automatic certificate renewal. 
+    When `renew_before_expiration_days` is set and the certificate is within the renewal threshold, `renew_pending` becomes `true`. Setting `auto_renew` to `true` triggers automatic resource replacement when renewal is pending.
+  * Enhanced `base_name` updates to use the same renewal chain logic as creation, ensuring unique certificate names when previous instances exist.
 
 * GTM
   * Added support for the `state_change_notification_webhook` attribute object in the `akamai_gtm_property` resource.
 
-
-
-
-
-
-
-
-
-
-
-* Cloud Access
-  * Added support for a new authentication method `VP_QUEUE_IT` in the `akamai_cloudaccess_key` resource.
-  * Removed the possibility to specify `additional_cdn` and made `cloud_access_key_id` optional for `AVM_CLOUDINARY` authentication method in the `akamai_cloudaccess_key` resource.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 * PAPI
-  * Added support for new field `https_service_binding` to the `akamai_edge_hostname` resource to enable HTTPS service binding per Edge Hostname.
-
-
-* PAPI
+  * Added support for a new field `https_service_binding` in the `akamai_edge_hostname` resource to enable HTTPS service binding per edge hostname.
   * Added support for the new rule format [`v2026-02-16`](https://techdocs.akamai.com/terraform/docs/rule-format-changes#v2026-02-16).
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-* Cloud Certificates (Beta)
-  * Enhanced `base_name` updates to use the same renewal chain logic as creation, ensuring unique certificate names when previous instances exist.
-
-
-
-
 
 #### BUG FIXES:
 
@@ -165,39 +45,12 @@
 * ClientLists
   * Reverted the previous removal of the `output_text` attribute from `akamai_clientlist_list` and `akamai_clientlist_lists` data sources ([I#738](https://github.com/akamai/terraform-provider-akamai/issues/738)).
 
+* Cloud Certificates (Beta)
+  * Fixed a misleading error when importing `akamai_cloudcertificates_upload_signed_certificate` without specifying `acknowledge_warnings` in the import ID while the Terraform config has `acknowledge_warnings = true`. 
+    The resource now returns a clear error explaining that the flag is toggled on an already-uploaded certificate and prompts the user to verify the import ID format: `certificateID[,acknowledge_warnings]`.
+
 * Network Lists
   * Reverted the previous removal of the `output_text` attribute from the `akamai_networklist_network_lists` data source ([I#738](https://github.com/akamai/terraform-provider-akamai/issues/738)).
-* Cloud Certificates (Beta)
-  * Fixed a misleading error when importing `akamai_cloudcertificates_upload_signed_certificate` without specifying `acknowledge_warnings` in the import ID while the Terraform config has `acknowledge_warnings = true`. The resource now returns a clear error explaining that the flag was toggled on an already-uploaded certificate and prompts the user to verify the import ID format: `certificateID[,acknowledge_warnings]`.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 ## 10.0.0 (Feb 25, 2026)
 
@@ -906,11 +759,13 @@
 
 * Appsec
   * Fixed import of `akamai_appsec_match_target` for newly created security configuration or any security configuration not synced in the terraform state ([I#546](https://github.com/akamai/terraform-provider-akamai/issues/546))
-  * Fixed issue where activation was not triggered after network list change in `resource_akamai_networklist_activations` resource ([I#518](https://github.com/akamai/terraform-provider-akamai/issues/518))
   * Fixed `akamai_appsec_configuration` data source to return a single security configuration in the output_text instead of the entire list of security configurations
 
 * Cloudlets
   * Corrected format of the retry time when logging in `akamai_cloudlets_application_load_balancer_activation` and `akamai_cloudlets_policy_activation` resources
+
+* Network Lists
+  * Fixed issue where activation was not triggered after network list change in `resource_akamai_networklist_activations` resource ([I#518](https://github.com/akamai/terraform-provider-akamai/issues/518))
 
 * PAPI
   * Fixed issue with provider producing an inconsistent final plan with Cloudlet policy ([I#567](https://github.com/akamai/terraform-provider-akamai/issues/567)).
@@ -1150,7 +1005,7 @@
 #### FEATURES/ENHANCEMENTS:
 
 * Appsec
-  * Added retries in `akamai_appsec_activations` and `akamai_networklist_activations` resources ([I#471](https://github.com/akamai/terraform-provider-akamai/issues/471))
+  * Added retries in the `akamai_appsec_activations` resource ([I#471](https://github.com/akamai/terraform-provider-akamai/issues/471))
   * Added reactivation support for `akamai_appsec_activations` if the config was deactivated manually ([I#441](https://github.com/akamai/terraform-provider-akamai/issues/441) and [I#442](https://github.com/akamai/terraform-provider-akamai/issues/442))
 
 * Cloudlets
@@ -1187,6 +1042,9 @@
   * Extended `akamai_imaging_policy_image` with new fields:
     * `serve_stale_duration` available under `policy`
     * `allow_pristine_on_downsize` and `prefer_modern_formats` available under `policy.output`
+
+* Network Lists
+  * Added retries in the `akamai_networklist_activations` resource ([I#471](https://github.com/akamai/terraform-provider-akamai/issues/471))
 
 * PAPI
   * Added new resource:
@@ -1257,7 +1115,7 @@
 #### FEATURES/ENHANCEMENTS:
 
 * Appsec
-  * Suppressed trigger of new activation for `note` field change in `akamai_networklist_activations` and `akamai_appsec_activations` resources.
+  * Suppressed trigger of new activation for `note` field change in `akamai_appsec_activations` resource.
 
 * Client Lists
   * Added support for state import for `akamai_clientlist_list` and `akamai_clientlist_activation` resources
@@ -1284,6 +1142,9 @@
 
 * IAM
   * Phone number is no longer required for IAM user in `akamai_iam_user` resource.
+
+* Network Lists
+  * Suppressed trigger of new activation for `note` field change in `akamai_networklist_activations` resource.
 
 * PAPI
   * Added configurable timeout for following resources as `timeouts.default` field ([I#440](https://github.com/akamai/terraform-provider-akamai/issues/440))
@@ -1317,28 +1178,28 @@
 
 #### FEATURES/ENHANCEMENTS:
 
-* Appsec
-  * Added `sync_point` value in `akamai_networklist_network_lists` data source
-
 * CPS
   * Added `pending_changes` computed field to `akamai_cps_enrollment` data source ([#PR468](https://github.com/akamai/terraform-provider-akamai/pull/468))
 
 * Cloud Wrapper
   * Added support for `comments` argument modification in `akamai_cloudwrapper_configuration` resource
 
+* Network Lists
+  * Added `sync_point` value in `akamai_networklist_network_lists` data source
+
 #### BUG FIXES:
 
-* Appsec
-  * Fixed `akamai_networklist_network_list` import resulting in null `contract_id` and `group_id`
+* GTM
+  * Added better drift handling in `akamai_gtm_property` - when property is removed without terraform knowledge, resource doesn't just error on refresh but suggests recreation.
+
+* Network Lists
+  * Fixed `akamai_networklist_network_list` import resulting in null `contract_id` and `group_id`.
 
 * PAPI
   * Added errors to `data_property_akamai_contract` and `data_property_akamai_group` data sources, when fetching groups returns multiple inconclusive results
   * Fixed drift issue in `akamai_edge_hostname` resource [(#457)](https://github.com/akamai/terraform-provider-akamai/issues/457)
   * Added missing fields to `akamai_property_builder` for `origin` and `siteShield` behaviors ([#465](https://github.com/akamai/terraform-provider-akamai/issues/465))
   * Improved `akamai_property_rules_builder` empty list transformation ([#438](https://github.com/akamai/terraform-provider-akamai/issues/438))
-
-* GTM
-  * Added better drift handling in `akamai_gtm_property` - when property is removed without terraform knowledge, resource doesn't just error on refresh but suggests recreation
 
 ## 5.2.0 (Aug 29, 2023)
 
@@ -2073,7 +1934,7 @@
   * Add support for Evasive Path Match feature
 
 * NETWORK LISTS
-  * Include contract_id & group_id in akamai_networklist_network_lists datasource
+  * Include `contract_id` & `group_id` in `akamai_networklist_network_lists` datasource
 
 * PAPI
   * Add support for array type variables in akamai_property_rules_template ([#257](https://github.com/akamai/terraform-provider-akamai/issues/257))
