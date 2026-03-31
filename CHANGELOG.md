@@ -126,6 +126,11 @@
   * Added the `removal_date`, `version_removal_date`, `status`, and `version_status` attributes to the `akamai_mtlstruststore_ca_set` data source.
   * Added the `removal_date`, `status`, and `ca_set_version_statuses` attributes to the `akamai_mtlstruststore_ca_set_versions` data source. The `ca_set_version_statuses` attribute enables filtering CA set versions by status `NOT_DELETED` or `DELETED`.
 
+* Reporting Groups (Beta)
+  * Added new data source:
+    * `akamai_property_reportinggroups_group` - retrieves details of a Reporting Group.
+
+
 
 
 

@@ -11,6 +11,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/iam"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/mtlskeystore"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/reportinggroups"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/session"
 )
 
@@ -33,6 +34,8 @@ type Client interface {
 	GetMTLSKeystore() mtlskeystore.MTLSKeystore
 
 	GetPAPI() papi.PAPI
+
+	GetReportingGroups() reportinggroups.ReportingGroups
 }
 
 var (
@@ -94,4 +97,9 @@ func (c *ClientImpl) GetMTLSKeystore() mtlskeystore.MTLSKeystore {
 // GetPAPI returns the PAPI client for managing property APIs.
 func (c *ClientImpl) GetPAPI() papi.PAPI {
 	return papi.Client(c.sess)
+}
+
+// GetReportingGroups returns the Reporting Groups client for managing reporting groups.
+func (c *ClientImpl) GetReportingGroups() reportinggroups.ReportingGroups {
+	return reportinggroups.Client(c.sess)
 }

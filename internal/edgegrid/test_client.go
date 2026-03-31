@@ -10,6 +10,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/iam"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/mtlskeystore"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/reportinggroups"
 )
 
 var (
@@ -27,6 +28,7 @@ type TestClient struct {
 	IAM               *iam.Mock
 	MTLSKeystore      *mtlskeystore.Mock
 	PAPI              *papi.Mock
+	ReportingGroups   *reportinggroups.Mock
 }
 
 // NewTestClient creates a new instance of TestClient with mock implementations.
@@ -41,6 +43,7 @@ func NewTestClient() *TestClient {
 		IAM:               &iam.Mock{},
 		MTLSKeystore:      &mtlskeystore.Mock{},
 		PAPI:              &papi.Mock{},
+		ReportingGroups:   &reportinggroups.Mock{},
 	}
 }
 
@@ -87,4 +90,9 @@ func (c *TestClient) GetMTLSKeystore() mtlskeystore.MTLSKeystore {
 // GetPAPI returns the mock PAPI client.
 func (c *TestClient) GetPAPI() papi.PAPI {
 	return c.PAPI
+}
+
+// GetReportingGroups returns the mock Reporting Groups client.
+func (c *TestClient) GetReportingGroups() reportinggroups.ReportingGroups {
+	return c.ReportingGroups
 }
