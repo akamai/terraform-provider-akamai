@@ -47,6 +47,11 @@ func dataSourceAttackGroups() *schema.Resource {
 				Computed:    true,
 				Description: "JSON representation",
 			},
+			"output_text": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Text representation",
+			},
 		},
 	}
 }
@@ -84,6 +89,17 @@ func dataSourceAttackGroupsRead(ctx context.Context, d *schema.ResourceData, m i
 	if err != nil {
 		logger.Errorf("calling 'getAttackGroups': %s", err.Error())
 		return diag.FromErr(err)
+	}
+
+	ots := OutputTemplates{}
+	InitTemplates(ots)
+
+	outputtext, err := RenderTemplates(ots, "AttackGroupDS", attackgroups)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("output_text", outputtext); err != nil {
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	jsonBody, err := json.Marshal(attackgroups)

@@ -174,13 +174,22 @@ func (p *Subprovider) SDKDataSources() map[string]*schema.Resource {
 func (p *Subprovider) FrameworkResources() []func() resource.Resource {
 	return []func() resource.Resource{
 		NewRapidRulesResource,
+		NewSecurityPolicyProtectionsResource,
+		NewURLProtectionActionResource,
+		NewURLProtectionPolicyResource,
+		NewWAFRulesetResource,
 	}
 }
 
 // FrameworkDataSources returns the appsec data sources implemented using terraform-plugin-framework
 func (p *Subprovider) FrameworkDataSources() []func() datasource.DataSource {
 	return []func() datasource.DataSource{
-		NewRapidRulesDataSource,
 		NewCustomRulesUsageDataSource,
+		NewRapidRulesDataSource,
+		NewURLProtectionPoliciesActionsDataSource,
+		NewURLProtectionPoliciesDataSource,
+		NewURLProtectionPolicyActionsDataSource,
+		NewURLProtectionPolicyDataSource,
+		NewWAFRulesetDataSource,
 	}
 }

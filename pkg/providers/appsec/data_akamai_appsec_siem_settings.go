@@ -26,6 +26,11 @@ func dataSourceSiemSettings() *schema.Resource {
 				Computed:    true,
 				Description: "JSON representation",
 			},
+			"output_text": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Text representation",
+			},
 		},
 	}
 }
@@ -50,6 +55,24 @@ func dataSourceSiemSettingsRead(ctx context.Context, d *schema.ResourceData, m i
 	siemsettings, err := client.GetSiemSettings(ctx, getSiemSettings)
 	if err != nil {
 		logger.Errorf("calling 'getSiemSettings': %s", err.Error())
+		return diag.FromErr(err)
+	}
+
+	ots := OutputTemplates{}
+	InitTemplates(ots)
+
+	outputtext := ""
+	settingstext, err := RenderTemplates(ots, "siemsettingsDS", siemsettings)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	outputtext = outputtext + settingstext
+	policiestext, err := RenderTemplates(ots, "siempoliciesDS", siemsettings)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	outputtext = outputtext + policiestext
+	if err := d.Set("output_text", outputtext); err != nil {
 		return diag.FromErr(err)
 	}
 

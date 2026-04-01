@@ -8,6 +8,6 @@ data "akamai_appsec_custom_rules" "test" {
 
 }
 output "appseccustomrules" {
-  value = data.akamai_appsec_custom_rules.test
+  value = data.akamai_appsec_custom_rules.test.output_text
 }
 

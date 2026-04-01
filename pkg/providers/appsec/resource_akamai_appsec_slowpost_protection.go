@@ -46,6 +46,11 @@ func resourceSlowPostProtection() *schema.Resource {
 				Required:    true,
 				Description: "Whether to enable slow POST protection",
 			},
+			"output_text": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Text representation",
+			},
 		},
 	}
 }
@@ -128,6 +133,16 @@ func resourceSlowPostProtectionRead(ctx context.Context, d *schema.ResourceData,
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("enabled", enabled); err != nil {
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+	}
+
+	ots := OutputTemplates{}
+	InitTemplates(ots)
+	outputtext, err := RenderTemplates(ots, "protections", response)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("output_text", outputtext); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 

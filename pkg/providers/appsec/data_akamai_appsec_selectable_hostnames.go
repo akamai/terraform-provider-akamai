@@ -56,6 +56,11 @@ func dataSourceSelectableHostnames() *schema.Resource {
 				Computed:    true,
 				Description: "JSON representation of hostnames",
 			},
+			"output_text": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Text representation of hostnames",
+			},
 		},
 	}
 }
@@ -151,6 +156,17 @@ func dataSourceSelectableHostnamesRead(ctx context.Context, d *schema.ResourceDa
 	}
 
 	if err := d.Set("hostnames", newhdata); err != nil {
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+	}
+
+	ots := OutputTemplates{}
+	InitTemplates(ots)
+
+	outputtext, err := RenderTemplates(ots, "selectableHostsDS", selectablehostnames)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("output_text", outputtext); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 

@@ -1,0 +1,4 @@
+{
+    "action": "deny",
+    "loadSheddingAction": "alert"
+}

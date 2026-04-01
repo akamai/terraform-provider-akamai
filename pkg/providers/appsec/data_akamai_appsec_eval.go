@@ -6,6 +6,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -24,11 +25,19 @@ func dataSourceEval() *schema.Resource {
 				Required:    true,
 				Description: "Unique identifier of the security policy",
 			},
+			"output_text": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Text representation",
+			},
 		},
 	}
 }
 
 func dataSourceEvalRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	meta := meta.Must(m)
+	client := inst.Client(meta)
+	logger := meta.Log("APPSEC", "dataSourceEvalRead")
 
 	getEval := appsec.GetEvalRequest{}
 
@@ -47,6 +56,23 @@ func dataSourceEvalRead(ctx context.Context, d *schema.ResourceData, m interface
 		return diag.FromErr(err)
 	}
 	getEval.PolicyID = policyID
+
+	eval, err := client.GetEval(ctx, getEval)
+	if err != nil {
+		logger.Errorf("calling 'getEval': %s", err.Error())
+		return diag.FromErr(err)
+	}
+
+	ots := OutputTemplates{}
+	InitTemplates(ots)
+
+	outputtext, err := RenderTemplates(ots, "EvalDS", eval)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("output_text", outputtext); err != nil {
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+	}
 
 	d.SetId(strconv.Itoa(getEval.ConfigID))
 

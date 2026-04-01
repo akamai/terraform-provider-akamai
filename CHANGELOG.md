@@ -1,5 +1,57 @@
 # RELEASE NOTES
 
+## 10.1.0 (Apr 1, 2026)
+
+#### FEATURES/ENHANCEMENTS:
+
+* General
+    * Migrated to Go `1.25`.
+    * Updated various dependencies.
+
+* Appsec (Beta)
+  * Added the `akamai_appsec_url_protection_policy` data source to read details of a URL protection policy for a security configuration.
+  * Added the `akamai_appsec_url_protection_policies` data source to list URL protection policies for a security configuration.
+  * Added the `akamai_appsec_url_protection_policies_actions` and `akamai_appsec_url_protection_policy_actions` data sources to support URL protection policy actions.
+  * Added the `akamai_appsec_url_protection_policy` resource to support URL protection policies.
+  * Added the `akamai_appsec_url_protection_action` resource to manage actions for URL protection policies.
+  * Added the `apply_url_protection_controls` field to the `akamai_appsec_security_policy_protections` data source.
+  * Added the `akamai_appsec_security_policy_protections` resource to manage all or any subset of protection flags for a security policy.
+  * Added the `akamai_appsec_waf_ruleset` data source.
+  * Added the `akamai_appsec_waf_ruleset` resource to manage rules and attack groups.
+
+* Cloud Access
+  * Added support for a new authentication method `VP_QUEUE_IT` in the `akamai_cloudaccess_key` resource.
+  * Removed the possibility to specify `additional_cdn` and made the `cloud_access_key_id` argument optional for the `AVM_CLOUDINARY` authentication method in the `akamai_cloudaccess_key` resource.
+
+* Cloud Certificates (Beta)
+  * Added support for the `P-384` key size in the ECDSA certificates.
+  * Added support for the `STANDARD_TLS` secure network type in the `akamai_cloudcertificates_certificate` resource. The `secure_network` attribute now accepts both `ENHANCED_TLS` and `STANDARD_TLS` values.
+  * Added `renew_before_expiration_days`, `renew_pending`, and `auto_renew` attributes to the `akamai_cloudcertificates_certificate` resource to support automatic certificate renewal. 
+    When `renew_before_expiration_days` is set and the certificate is within the renewal threshold, `renew_pending` becomes `true`. Setting `auto_renew` to `true` triggers automatic resource replacement when renewal is pending.
+  * Enhanced `base_name` updates to use the same renewal chain logic as creation, ensuring unique certificate names when previous instances exist.
+
+* GTM
+  * Added support for the `state_change_notification_webhook` attribute object in the `akamai_gtm_property` resource.
+
+* PAPI
+  * Added support for a new field `https_service_binding` in the `akamai_edge_hostname` resource to enable HTTPS service binding per edge hostname.
+  * Added support for the new rule format [`v2026-02-16`](https://techdocs.akamai.com/terraform/docs/rule-format-changes#v2026-02-16).
+
+#### BUG FIXES:
+
+* Appsec
+  * Reverted the previous removal of the `output_text` attribute from all resources and data sources ([I#738](https://github.com/akamai/terraform-provider-akamai/issues/738)). 
+
+* ClientLists
+  * Reverted the previous removal of the `output_text` attribute from `akamai_clientlist_list` and `akamai_clientlist_lists` data sources ([I#738](https://github.com/akamai/terraform-provider-akamai/issues/738)).
+
+* Cloud Certificates (Beta)
+  * Fixed a misleading error when importing `akamai_cloudcertificates_upload_signed_certificate` without specifying `acknowledge_warnings` in the import ID while the Terraform config has `acknowledge_warnings = true`. 
+    The resource now returns a clear error explaining that the flag is toggled on an already-uploaded certificate and prompts the user to verify the import ID format: `certificateID[,acknowledge_warnings]`.
+
+* Network Lists
+  * Reverted the previous removal of the `output_text` attribute from the `akamai_networklist_network_lists` data source ([I#738](https://github.com/akamai/terraform-provider-akamai/issues/738)).
+
 ## 10.0.0 (Feb 25, 2026)
 
 #### BREAKING CHANGES:

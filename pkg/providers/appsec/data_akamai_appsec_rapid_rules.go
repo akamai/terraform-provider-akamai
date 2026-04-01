@@ -9,6 +9,7 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
@@ -28,6 +29,7 @@ type (
 		DefaultAction        types.String     `tfsdk:"default_action"`
 		RapidRules           []rapidRuleModel `tfsdk:"rapid_rules"`
 		IncludeExpiryDetails types.Bool       `tfsdk:"include_expiry_details"`
+		OutputText           types.String     `tfsdk:"output_text"`
 	}
 
 	rapidRuleModel struct {
@@ -129,6 +131,10 @@ func (d *rapidRulesDataSource) Schema(_ context.Context, _ datasource.SchemaRequ
 					},
 				},
 			},
+			"output_text": schema.StringAttribute{
+				Computed:    true,
+				Description: "Text representation",
+			},
 			"id": schema.StringAttribute{
 				MarkdownDescription: "Identifier of the data source",
 				Computed:            true,
@@ -195,7 +201,7 @@ func (d *rapidRulesDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	}
 
 	if !status.Enabled {
-		data.populateState("No default action. Rapid rules is turned off.", status.Enabled, nil)
+		data.populateState("No default action. Rapid rules is turned off.", status.Enabled, "Rapid rules is turned off.", nil)
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
 	}
@@ -231,20 +237,40 @@ func (d *rapidRulesDataSource) Read(ctx context.Context, req datasource.ReadRequ
 
 	rapidRules := convertGetRapidRulesResponseToRapidRules(rules, attackGroups, includeExpiry)
 
+	outputText, diags := generateOutputText(rapidRules)
+	if diags.HasError() {
+		resp.Diagnostics.Append(diags...)
+		return
+	}
+
 	output, err := generateOutputRapidRules(*rapidRules)
 	if err != nil {
 		resp.Diagnostics.AddError("generating output_rapid_rules error", err.Error())
 		return
 	}
 
-	data.populateState(defaultActionResponse.Action, status.Enabled, *output)
+	data.populateState(defaultActionResponse.Action, status.Enabled, outputText, *output)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (m *rapidRulesDataSourceModel) populateState(defaultAction string, enabled bool, output []rapidRuleModel) {
+func generateOutputText(rapidRules *[]appsec.RapidRuleDetails) (string, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	ots := OutputTemplates{}
+	InitTemplates(ots)
+	templateName := "RapidRulesWithConditionExceptionDS"
+	outputText, err := RenderTemplates(ots, templateName, rapidRules)
+	if err != nil {
+		diags.AddError(err.Error(), "")
+		return "", diags
+	}
+	return outputText, diags
+}
+
+func (m *rapidRulesDataSourceModel) populateState(defaultAction string, enabled bool, outputText string, output []rapidRuleModel) {
 	m.ID = types.StringValue(fmt.Sprintf("%s:%s", m.ConfigID.String(), m.PolicyID.String()))
 	m.Enabled = types.BoolValue(enabled)
 	m.DefaultAction = types.StringValue(defaultAction)
+	m.OutputText = types.StringValue(outputText)
 	m.RapidRules = output
 }
 

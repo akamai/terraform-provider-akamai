@@ -66,10 +66,20 @@ func dataSourcePolicyProtections() *schema.Resource {
 				Computed:    true,
 				Description: "Whether to enable slow post controls",
 			},
+			"apply_url_protection_controls": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Whether to enable url protection controls",
+			},
 			"json": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "JSON representation",
+			},
+			"output_text": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Text representation",
 			},
 		},
 	}
@@ -102,6 +112,17 @@ func dataSourcePolicyProtectionsRead(ctx context.Context, d *schema.ResourceData
 	if err != nil {
 		logger.Errorf("calling 'getPolicyProtections': %s", err.Error())
 		return diag.FromErr(err)
+	}
+
+	ots := OutputTemplates{}
+	InitTemplates(ots)
+
+	outputtext, err := RenderTemplates(ots, "protections", policyprotections)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("output_text", outputtext); err != nil {
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	jsonBody, err := json.Marshal(policyprotections)
@@ -142,6 +163,10 @@ func dataSourcePolicyProtectionsRead(ctx context.Context, d *schema.ResourceData
 	}
 
 	if err := d.Set("apply_slow_post_controls", policyprotections.ApplySlowPostControls); err != nil {
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+	}
+
+	if err := d.Set("apply_url_protection_controls", policyprotections.ApplyURLProtectionControls); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 

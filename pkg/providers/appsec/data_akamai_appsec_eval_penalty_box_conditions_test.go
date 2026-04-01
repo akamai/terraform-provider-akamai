@@ -32,6 +32,7 @@ func TestAkamaiEvalPenaltyBoxConditions_data_basic(t *testing.T) {
 		err = json.Unmarshal(penaltyBoxConditionBytes, &penaltyBoxCondition)
 		require.NoError(t, err)
 
+		expectedOutputText := "\n+---------------------------------+\n| evalPenaltyBoxConditionsDS      |\n+--------------------+------------+\n| CONDITIONSOPERATOR | CONDITIONS |\n+--------------------+------------+\n| AND                | True       |\n+--------------------+------------+\n"
 		client.On("GetEvalPenaltyBoxConditions",
 			testutils.MockContext,
 			appsec.GetPenaltyBoxConditionsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
@@ -47,6 +48,7 @@ func TestAkamaiEvalPenaltyBoxConditions_data_basic(t *testing.T) {
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("data.akamai_appsec_eval_penalty_box_conditions.test", "id", "43253:AAAA_81230"),
 							resource.TestCheckResourceAttr("data.akamai_appsec_eval_penalty_box_conditions.test", "json", penaltyBoxConditionsJSON.String()),
+							resource.TestCheckResourceAttr("data.akamai_appsec_eval_penalty_box_conditions.test", "output_text", expectedOutputText),
 						),
 					},
 				},

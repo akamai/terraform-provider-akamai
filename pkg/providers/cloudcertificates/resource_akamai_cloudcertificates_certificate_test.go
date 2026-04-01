@@ -13,6 +13,7 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
@@ -33,17 +34,18 @@ type (
 		subject       *cloudcertificates.Subject
 
 		// output data
-		certificateID     string
-		certificateType   string
-		name              string
-		certificateStatus string
-		accountID         string
-		createdBy         string
-		createdDate       string
-		modifiedBy        string
-		modifiedDate      string
-		csrExpirationDate string
-		csrPEM            string
+		certificateID           string
+		certificateType         string
+		name                    string
+		certificateStatus       string
+		accountID               string
+		createdBy               string
+		createdDate             string
+		modifiedBy              string
+		modifiedDate            string
+		csrExpirationDate       string
+		csrPEM                  string
+		signedCertNotValidAfter *time.Time
 	}
 )
 
@@ -183,6 +185,52 @@ var (
 		csrExpirationDate: "2027-01-01T00:00:00Z",
 		csrPEM:            "-----BEGIN CERTIFICATE REQUEST-----\nTEST-CSR-PEM\n-----END CERTIFICATE REQUEST-----\n",
 	}
+
+	minCertificateECDSAP384 = certificateTestData{
+		// input data
+		contractID:    "test_contract",
+		groupID:       "123",
+		keyType:       "ECDSA",
+		keySize:       "P-384",
+		secureNetwork: "ENHANCED_TLS",
+		sans:          []string{"test.example.com"},
+
+		// output data
+		certificateID:     "12345",
+		certificateType:   "THIRD_PARTY",
+		name:              "test.example.com1234567890",
+		certificateStatus: "CSR_READY",
+		accountID:         "act_789",
+		createdBy:         "test_user",
+		createdDate:       "2025-01-01T00:00:00.168262Z",
+		modifiedBy:        "test_user",
+		modifiedDate:      "2025-01-01T00:00:00.616267Z",
+		csrExpirationDate: "2027-01-01T00:00:00Z",
+		csrPEM:            "-----BEGIN CERTIFICATE REQUEST-----\nTEST-CSR-PEM\n-----END CERTIFICATE REQUEST-----\n",
+	}
+
+	minCertificateStandardTLS = certificateTestData{
+		// input data
+		contractID:    "test_contract",
+		groupID:       "123",
+		keyType:       "RSA",
+		keySize:       "2048",
+		secureNetwork: "STANDARD_TLS",
+		sans:          []string{"test.example.com"},
+
+		// output data
+		certificateID:     "12345",
+		certificateType:   "THIRD_PARTY",
+		name:              "test.example.com1234567890",
+		certificateStatus: "CSR_READY",
+		accountID:         "act_789",
+		createdBy:         "test_user",
+		createdDate:       "2025-01-01T00:00:00.168262Z",
+		modifiedBy:        "test_user",
+		modifiedDate:      "2025-01-01T00:00:00.616267Z",
+		csrExpirationDate: "2027-01-01T00:00:00Z",
+		csrPEM:            "-----BEGIN CERTIFICATE REQUEST-----\nTEST-CSR-PEM\n-----END CERTIFICATE REQUEST-----\n",
+	}
 )
 
 func TestCertificateResource(t *testing.T) {
@@ -244,7 +292,9 @@ func TestCertificateResource(t *testing.T) {
 		CheckEqual("modified_by", "test_user").
 		CheckEqual("modified_date", "2025-01-01T00:00:00.616267Z").
 		CheckEqual("csr_expiration_date", "2027-01-01T00:00:00Z").
-		CheckEqual("csr_pem", "-----BEGIN CERTIFICATE REQUEST-----\nTEST-CSR-PEM\n-----END CERTIFICATE REQUEST-----\n")
+		CheckEqual("csr_pem", "-----BEGIN CERTIFICATE REQUEST-----\nTEST-CSR-PEM\n-----END CERTIFICATE REQUEST-----\n").
+		CheckEqual("renew_pending", "false").
+		CheckEqual("auto_renew", "false")
 
 	tests := map[string]struct {
 		init           func(*cloudcertificates.Mock, certificateTestData, certificateTestData)
@@ -287,6 +337,26 @@ func TestCertificateResource(t *testing.T) {
 					Check: minCertChecker.
 						CheckEqual("contract_id", "ctr_test_contract").
 						CheckEqual("group_id", "grp_123").
+						CheckMissing("subject").
+						Build(),
+				},
+			},
+		},
+		"happy path - create certificate with STANDARD_TLS": {
+			init: func(m *cloudcertificates.Mock, createData certificateTestData, _ certificateTestData) {
+				// Create
+				mockCreateCertificate(m, createData)
+				// Read before destroy
+				mockGetCertificate(m, createData)
+				// Delete
+				mockDeleteCertificate(m, createData)
+			},
+			createMockData: minCertificateStandardTLS,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCertificate/create/min_standard_tls.tf"),
+					Check: minCertChecker.
+						CheckEqual("secure_network", "STANDARD_TLS").
 						CheckMissing("subject").
 						Build(),
 				},
@@ -341,6 +411,8 @@ func TestCertificateResource(t *testing.T) {
 				mockCreateCertificate(m, createData)
 				// Read before update
 				mockGetCertificate(m, createData)
+				// Update - check renewal chain for new base_name
+				mockEmptyRenewalChain(m, updateData)
 				// Update
 				mockPatchCertificate(m, updateData)
 				// Read after update
@@ -407,6 +479,55 @@ func TestCertificateResource(t *testing.T) {
 							plancheck.ExpectUnknownValue("akamai_cloudcertificates_certificate.test", tfjsonpath.New("modified_by")),
 						},
 					},
+				},
+			},
+		},
+		"happy path - create certificate, update name with renewal chain": {
+			init: func(m *cloudcertificates.Mock, createData certificateTestData, updateData certificateTestData) {
+				// Create
+				mockEmptyRenewalChain(m, createData)
+				mockCreateCertificate(m, createData)
+				// Read before update
+				mockGetCertificate(m, createData)
+				// Update - check renewal chain for new base_name (chain exists)
+				mockListCertificates(m, cloudcertificates.ListCertificatesRequest{
+					ContractID:      updateData.contractID,
+					Domain:          updateData.sans[0],
+					CertificateName: updateData.baseName,
+				}, &cloudcertificates.ListCertificatesResponse{
+					Certificates: []cloudcertificates.Certificate{
+						{CertificateName: updateData.baseName},
+						{CertificateName: "test-name-updated.renewed.2025-03-01T12_05_01Z"},
+					},
+				}, nil).Once()
+				// Update - patch with suffixed name
+				suffixedName := "test-name-updated.renewed.2025-05-01T12_05_01Z"
+				patchData := updateData
+				patchData.baseName = suffixedName
+				patchData.name = suffixedName
+				mockPatchCertificate(m, patchData)
+				// Read after update
+				mockGetCertificate(m, patchData)
+				// Read before destroy
+				mockGetCertificate(m, patchData)
+				// Delete
+				mockDeleteCertificate(m, patchData)
+			},
+			createMockData: fullCertificateRSA,
+			updateMockData: updateCertificate,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCertificate/create/full.tf"),
+					Check:  fullCertChecker.Build(),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCertificate/update/name.tf"),
+					Check: fullCertChecker.
+						CheckEqual("base_name", "test-name-updated").
+						CheckEqual("name", "test-name-updated.renewed.2025-05-01T12_05_01Z").
+						CheckEqual("modified_date", "2025-05-01T00:00:00.616267Z").
+						CheckEqual("modified_by", "test_user-updated").
+						Build(),
 				},
 			},
 		},
@@ -619,6 +740,27 @@ func TestCertificateResource(t *testing.T) {
 				},
 			},
 		},
+		"happy path - create certificate with ECDSA P-384": {
+			init: func(m *cloudcertificates.Mock, createData certificateTestData, _ certificateTestData) {
+				// Create
+				mockCreateCertificate(m, createData)
+				// Read before destroy
+				mockGetCertificate(m, createData)
+				// Delete
+				mockDeleteCertificate(m, createData)
+			},
+			createMockData: minCertificateECDSAP384,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCertificate/create/min_ecdsa_p384.tf"),
+					Check: minCertChecker.
+						CheckEqual("key_type", "ECDSA").
+						CheckEqual("key_size", "P-384").
+						CheckMissing("subject").
+						Build(),
+				},
+			},
+		},
 		"import - not renewed certificate": {
 			init: func(m *cloudcertificates.Mock, data certificateTestData, _ certificateTestData) {
 				// Import
@@ -807,6 +949,8 @@ func TestCertificateResource(t *testing.T) {
 				mockCreateCertificate(m, createData)
 				// Read before update
 				mockGetCertificate(m, createData)
+				// Update - check renewal chain for new base_name
+				mockEmptyRenewalChain(m, updateData)
 				// Update
 				m.On("PatchCertificate", testutils.MockContext, cloudcertificates.PatchCertificateRequest{
 					CertificateID:   updateData.certificateID,
@@ -838,6 +982,37 @@ func TestCertificateResource(t *testing.T) {
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResCertificate/update/name.tf"),
 					ExpectError: regexp.MustCompile(`Error: Unable to update CCM Certificate(.|\n)*API failed`),
+				},
+			},
+		},
+		"expect error - ListCertificates fails during update": {
+			init: func(m *cloudcertificates.Mock, createData certificateTestData, updateData certificateTestData) {
+				// Create
+				mockEmptyRenewalChain(m, createData)
+				mockCreateCertificate(m, createData)
+				// Read before update
+				mockGetCertificate(m, createData)
+				// Update - ListCertificates fails
+				mockListCertificates(m, cloudcertificates.ListCertificatesRequest{
+					ContractID:      updateData.contractID,
+					Domain:          updateData.sans[0],
+					CertificateName: updateData.baseName,
+				}, nil, fmt.Errorf("API failed")).Once()
+				// Read before destroy
+				mockGetCertificate(m, createData)
+				// Delete
+				mockDeleteCertificate(m, createData)
+			},
+			createMockData: fullCertificateRSA,
+			updateMockData: updateCertificate,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCertificate/create/full.tf"),
+					Check:  fullCertChecker.Build(),
+				},
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResCertificate/update/name.tf"),
+					ExpectError: regexp.MustCompile(`Error: Unable to verify CCM Certificate name(.|\n)*API failed`),
 				},
 			},
 		},
@@ -956,8 +1131,9 @@ func TestCertificateResource(t *testing.T) {
 			createMockData: minCertificate,
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, "testdata/TestResCertificate/validation/wrong_key_size_rsa.tf"),
-					ExpectError: regexp.MustCompile(`The specified value '2137' for the RSA key type is invalid. Valid values are(.|\n)*'2048'.`),
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCertificate/validation/wrong_key_size_rsa.tf"),
+					ExpectError: regexp.MustCompile(
+						`Attribute key_size value must be one of: \["2048" "P-256" "P-384"\], got:\s+"2137"`),
 				},
 			},
 		},
@@ -966,8 +1142,19 @@ func TestCertificateResource(t *testing.T) {
 			createMockData: minCertificate,
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, "testdata/TestResCertificate/validation/wrong_key_size_ecdsa.tf"),
-					ExpectError: regexp.MustCompile(`The specified value '2137' for the ECDSA key type is invalid. Valid values(.|\n)*are 'P-256'.`),
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCertificate/validation/wrong_key_size_ecdsa.tf"),
+					ExpectError: regexp.MustCompile(
+						`Attribute key_size value must be one of: \["2048" "P-256" "P-384"\], got:\s+"2137"`),
+				},
+			},
+		},
+		"expect error - P-384 key_size used with RSA key_type": {
+			init:           func(_ *cloudcertificates.Mock, _ certificateTestData, _ certificateTestData) {},
+			createMockData: minCertificate,
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResCertificate/validation/wrong_key_size_p384_with_rsa.tf"),
+					ExpectError: regexp.MustCompile(`The specified value 'P-384' for the RSA key type is invalid. Valid values are(.|\n)*'2048'.`),
 				},
 			},
 		},
@@ -977,7 +1164,7 @@ func TestCertificateResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResCertificate/validation/wrong_key_type.tf"),
-					ExpectError: regexp.MustCompile(`Attribute key_type value must be one of: \["RSA" "ECDSA"\], got: "WRONG-TYPE"`),
+					ExpectError: regexp.MustCompile(`Attribute key_type value must be one of: \["ECDSA" "RSA"\], got:(.|\n)*"WRONG-TYPE"`),
 				},
 			},
 		},
@@ -987,7 +1174,7 @@ func TestCertificateResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResCertificate/validation/wrong_secure_network.tf"),
-					ExpectError: regexp.MustCompile(`Attribute secure_network value must be one of: \["ENHANCED_TLS"\], got:(.|\n)*"WRONG_NETWORK"`),
+					ExpectError: regexp.MustCompile(`Attribute secure_network value must be one of: \["ENHANCED_TLS"(.|\n)*"STANDARD_TLS"\], got:(.|\n)*"WRONG_NETWORK"`),
 				},
 			},
 		},
@@ -1078,6 +1265,16 @@ func TestCertificateResource(t *testing.T) {
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResCertificate/validation/organization_only_spaces.tf"),
 					ExpectError: regexp.MustCompile(`Attribute subject.organization cannot be empty or whitespace, got:  `),
+				},
+			},
+		},
+		"expect error - auto_renew without renew_before_expiration_days": {
+			init:           func(_ *cloudcertificates.Mock, _ certificateTestData, _ certificateTestData) {},
+			createMockData: minCertificate,
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResCertificate/validation/auto_renew_without_threshold.tf"),
+					ExpectError: regexp.MustCompile(`auto_renew.*cannot be set to true without.*renew_before_expiration_days`),
 				},
 			},
 		},
@@ -1229,6 +1426,307 @@ func TestCertificateResource(t *testing.T) {
 				},
 			},
 		},
+		"passive renewal - no signed cert, renew_pending is false": {
+			init: func(m *cloudcertificates.Mock, createData certificateTestData, _ certificateTestData) {
+				// Create (no signed cert yet)
+				mockEmptyRenewalChain(m, createData)
+				mockCreateCertificate(m, createData)
+				// Read before destroy
+				mockGetCertificate(m, createData)
+				// Delete
+				mockDeleteCertificate(m, createData)
+			},
+			createMockData: fullCertificateRSA,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCertificate/create/with_renewal_passive.tf"),
+					Check: fullCertChecker.
+						CheckEqual("renew_before_expiration_days", "30").
+						CheckEqual("renew_pending", "false").
+						CheckEqual("auto_renew", "false").
+						Build(),
+				},
+			},
+		},
+		"passive renewal - cert not yet in threshold, renew_pending is false": {
+			init: func(m *cloudcertificates.Mock, createData certificateTestData, _ certificateTestData) {
+				// Cert expires 2025-07-15, now is 2025-05-01, threshold is 30 days => renewal at 2025-06-15; not yet
+				expiryDate := time.Date(2025, 7, 15, 0, 0, 0, 0, time.UTC)
+				createData.signedCertNotValidAfter = &expiryDate
+				// Create
+				mockEmptyRenewalChain(m, createData)
+				mockCreateCertificate(m, createData)
+				// Read before destroy
+				mockGetCertificate(m, createData)
+				// Delete
+				mockDeleteCertificate(m, createData)
+			},
+			createMockData: fullCertificateRSA,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCertificate/create/with_renewal_passive.tf"),
+					Check: fullCertChecker.
+						CheckEqual("renew_before_expiration_days", "30").
+						CheckEqual("renew_pending", "false").
+						CheckEqual("auto_renew", "false").
+						Build(),
+				},
+			},
+		},
+		"passive renewal - cert within threshold, renew_pending is true": {
+			init: func(m *cloudcertificates.Mock, createData certificateTestData, _ certificateTestData) {
+				// Cert expires 2025-05-20, now is 2025-05-01, threshold is 30 days => renewal at 2025-04-20; already past
+				expiryDate := time.Date(2025, 5, 20, 0, 0, 0, 0, time.UTC)
+				createData.signedCertNotValidAfter = &expiryDate
+				// Create
+				mockEmptyRenewalChain(m, createData)
+				mockCreateCertificate(m, createData)
+				// Read before destroy
+				mockGetCertificate(m, createData)
+				// Delete
+				mockDeleteCertificate(m, createData)
+			},
+			createMockData: fullCertificateRSA,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCertificate/create/with_renewal_passive.tf"),
+					Check: fullCertChecker.
+						CheckEqual("renew_before_expiration_days", "30").
+						CheckEqual("renew_pending", "true").
+						CheckEqual("auto_renew", "false").
+						Build(),
+				},
+			},
+		},
+		"passive renewal - update: remove renewal days resets renew_pending": {
+			init: func(m *cloudcertificates.Mock, createData certificateTestData, _ certificateTestData) {
+				// Step 1: cert within threshold
+				expiryDate := time.Date(2025, 5, 20, 0, 0, 0, 0, time.UTC)
+				createData.signedCertNotValidAfter = &expiryDate
+				// Create
+				mockEmptyRenewalChain(m, createData)
+				mockCreateCertificate(m, createData)
+				// Step 1 refresh plan Read
+				mockGetCertificate(m, createData)
+				// Step 2: remove renewal days - no PatchCertificate call
+				// Step 2 pre-apply plan Read
+				mockGetCertificate(m, createData)
+				// Step 2 refresh plan Read
+				mockGetCertificate(m, createData)
+				// Delete
+				mockDeleteCertificate(m, createData)
+			},
+			createMockData: fullCertificateRSA,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCertificate/create/with_renewal_passive.tf"),
+					Check: fullCertChecker.
+						CheckEqual("renew_pending", "true").
+						Build(),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCertificate/create/full.tf"),
+					Check: fullCertChecker.
+						CheckEqual("renew_pending", "false").
+						CheckMissing("renew_before_expiration_days").
+						Build(),
+				},
+			},
+		},
+		"passive renewal - update: change renewal days, no API call": {
+			init: func(m *cloudcertificates.Mock, createData certificateTestData, _ certificateTestData) {
+				// Create (no signed cert)
+				mockEmptyRenewalChain(m, createData)
+				mockCreateCertificate(m, createData)
+				// Step 1 refresh plan Read
+				mockGetCertificate(m, createData)
+				// Step 2: only renew_before_expiration_days changes, no PatchCertificate call
+				// Step 2 pre-apply plan Read
+				mockGetCertificate(m, createData)
+				// Step 2 refresh plan Read
+				mockGetCertificate(m, createData)
+				// Delete
+				mockDeleteCertificate(m, createData)
+			},
+			createMockData: fullCertificateRSA,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCertificate/create/with_renewal_passive.tf"),
+					Check: fullCertChecker.
+						CheckEqual("renew_before_expiration_days", "30").
+						CheckEqual("renew_pending", "false").
+						Build(),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCertificate/update/increase_renewal_days.tf"),
+					Check: fullCertChecker.
+						CheckEqual("renew_before_expiration_days", "60").
+						CheckEqual("renew_pending", "false").
+						Build(),
+				},
+			},
+		},
+		"passive renewal - update: decrease threshold dismisses renew_pending": {
+			init: func(m *cloudcertificates.Mock, createData certificateTestData, _ certificateTestData) {
+				// Step 1: cert within threshold (30 days), renew_pending=true
+				// Cert expires 2025-05-20, now is 2025-05-01 => 19 days away, threshold=30 => pending
+				expiryDate := time.Date(2025, 5, 20, 0, 0, 0, 0, time.UTC)
+				createData.signedCertNotValidAfter = &expiryDate
+				// Create
+				mockEmptyRenewalChain(m, createData)
+				mockCreateCertificate(m, createData)
+				// Step 1 refresh plan Read
+				mockGetCertificate(m, createData)
+				// Step 2: decrease threshold to 10 days => renewal at 2025-05-10, now (05-01) is before => not pending
+				// Step 2 pre-apply plan Read
+				mockGetCertificate(m, createData)
+				// Step 2 refresh plan Read
+				mockGetCertificate(m, createData)
+				// Delete
+				mockDeleteCertificate(m, createData)
+			},
+			createMockData: fullCertificateRSA,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCertificate/create/with_renewal_passive.tf"),
+					Check: fullCertChecker.
+						CheckEqual("renew_before_expiration_days", "30").
+						CheckEqual("renew_pending", "true").
+						Build(),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCertificate/update/decrease_renewal_days.tf"),
+					Check: fullCertChecker.
+						CheckEqual("renew_before_expiration_days", "10").
+						CheckEqual("renew_pending", "false").
+						Build(),
+				},
+			},
+		},
+		"passive renewal - update: enable auto_renew, no API call": {
+			init: func(m *cloudcertificates.Mock, createData certificateTestData, _ certificateTestData) {
+				// Create (no signed cert)
+				mockEmptyRenewalChain(m, createData)
+				mockCreateCertificate(m, createData)
+				// Step 1 refresh plan Read
+				mockGetCertificate(m, createData)
+				// Step 2: only auto_renew changes, no PatchCertificate call
+				// Step 2 pre-apply plan Read
+				mockGetCertificate(m, createData)
+				// Step 2 refresh plan Read
+				mockGetCertificate(m, createData)
+				// Delete
+				mockDeleteCertificate(m, createData)
+			},
+			createMockData: fullCertificateRSA,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCertificate/create/with_renewal_passive.tf"),
+					Check: fullCertChecker.
+						CheckEqual("renew_before_expiration_days", "30").
+						CheckEqual("renew_pending", "false").
+						CheckEqual("auto_renew", "false").
+						Build(),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCertificate/create/with_renewal_active.tf"),
+					Check: fullCertChecker.
+						CheckEqual("renew_before_expiration_days", "30").
+						CheckEqual("renew_pending", "false").
+						CheckEqual("auto_renew", "true").
+						Build(),
+				},
+			},
+		},
+		"active renewal - auto_renew true, renew_pending true triggers replacement": {
+			init: func(m *cloudcertificates.Mock, createData certificateTestData, _ certificateTestData) {
+				// Step 1: Create cert without signed cert = renew_pending is false
+				mockEmptyRenewalChain(m, createData)
+				mockCreateCertificate(m, createData)
+				// Step 1 refresh plan Read (no signed cert → renew_pending stays false)
+				mockGetCertificate(m, createData)
+
+				// Step 2: simulate signed cert uploaded between steps
+				certWithExpiry := createData
+				expiryDate := time.Date(2025, 5, 20, 0, 0, 0, 0, time.UTC)
+				certWithExpiry.signedCertNotValidAfter = &expiryDate
+				// Step 2 pre-apply plan Read → renew_pending becomes true → triggers replacement
+				mockGetCertificate(m, certWithExpiry)
+
+				// Step 2: replacement
+				renewedData := createData
+				renewedData.signedCertNotValidAfter = nil // new cert has no signed certificate
+				renewedData.name = "test-name.renewed.2025-05-01T12_05_01Z"
+				renewedData.baseName = "test-name.renewed.2025-05-01T12_05_01Z"
+				renewedData.certificateID = "123456"
+				mockListCertificates(m, cloudcertificates.ListCertificatesRequest{
+					ContractID:      createData.contractID,
+					Domain:          createData.sans[0],
+					CertificateName: createData.baseName,
+				}, &cloudcertificates.ListCertificatesResponse{
+					Certificates: []cloudcertificates.Certificate{
+						{CertificateName: createData.name},
+						{CertificateName: "test-name.renewed.2025-03-01T12_05_01Z"},
+					},
+				}, nil).Once()
+				mockCreateCertificate(m, renewedData)
+				// Delete old cert
+				mockDeleteCertificate(m, createData)
+				// Step 2 refresh plan Read (new cert, no signed cert → renew_pending=false)
+				mockGetCertificate(m, renewedData)
+				// Delete new cert during cleanup
+				mockDeleteCertificate(m, renewedData)
+			},
+			createMockData: fullCertificateRSA,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCertificate/create/with_renewal_active.tf"),
+					Check: fullCertChecker.
+						CheckEqual("renew_before_expiration_days", "30").
+						CheckEqual("renew_pending", "false").
+						CheckEqual("auto_renew", "true").
+						Build(),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCertificate/create/with_renewal_active.tf"),
+					ConfigPlanChecks: resource.ConfigPlanChecks{
+						PreApply: []plancheck.PlanCheck{
+							plancheck.ExpectResourceAction("akamai_cloudcertificates_certificate.test",
+								plancheck.ResourceActionCreateBeforeDestroy),
+						},
+					},
+					Check: fullCertChecker.
+						CheckEqual("renew_before_expiration_days", "30").
+						CheckEqual("renew_pending", "false").
+						CheckEqual("auto_renew", "true").
+						CheckEqual("name", "test-name.renewed.2025-05-01T12_05_01Z").
+						CheckEqual("certificate_id", "123456").
+						Build(),
+				},
+			},
+		},
+		"active renewal - auto_renew true, renew_pending false, no replacement": {
+			init: func(m *cloudcertificates.Mock, createData certificateTestData, _ certificateTestData) {
+				// Cert expires far in the future - no renewal needed
+				mockEmptyRenewalChain(m, createData)
+				mockCreateCertificate(m, createData)
+				// Read before destroy
+				mockGetCertificate(m, createData)
+				// Delete
+				mockDeleteCertificate(m, createData)
+			},
+			createMockData: fullCertificateRSA,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCertificate/create/with_renewal_active.tf"),
+					Check: fullCertChecker.
+						CheckEqual("renew_before_expiration_days", "30").
+						CheckEqual("renew_pending", "false").
+						CheckEqual("auto_renew", "true").
+						Build(),
+				},
+			},
+		},
 	}
 
 	for name, tc := range tests {
@@ -1275,23 +1773,24 @@ func mockCreateCertificate(m *cloudcertificates.Mock, data certificateTestData) 
 		},
 	}).Return(&cloudcertificates.CreateCertificateResponse{
 		Certificate: cloudcertificates.Certificate{
-			AccountID:         data.accountID,
-			CertificateID:     data.certificateID,
-			CertificateName:   data.name,
-			CertificateStatus: data.certificateStatus,
-			CertificateType:   data.certificateType,
-			ContractID:        strings.TrimPrefix(data.contractID, "ctr_"),
-			CreatedBy:         data.createdBy,
-			CreatedDate:       tst.NewTimeFromStringMust(data.createdDate),
-			ModifiedBy:        data.modifiedBy,
-			ModifiedDate:      tst.NewTimeFromStringMust(data.modifiedDate),
-			CSRExpirationDate: tst.NewTimeFromStringMust(data.csrExpirationDate),
-			CSRPEM:            data.csrPEM,
-			KeyType:           data.keyType,
-			KeySize:           data.keySize,
-			SecureNetwork:     string(data.secureNetwork),
-			SANs:              data.sans,
-			Subject:           reqSubject,
+			AccountID:                          data.accountID,
+			CertificateID:                      data.certificateID,
+			CertificateName:                    data.name,
+			CertificateStatus:                  data.certificateStatus,
+			CertificateType:                    data.certificateType,
+			ContractID:                         strings.TrimPrefix(data.contractID, "ctr_"),
+			CreatedBy:                          data.createdBy,
+			CreatedDate:                        tst.NewTimeFromStringMust(data.createdDate),
+			ModifiedBy:                         data.modifiedBy,
+			ModifiedDate:                       tst.NewTimeFromStringMust(data.modifiedDate),
+			CSRExpirationDate:                  tst.NewTimeFromStringMust(data.csrExpirationDate),
+			CSRPEM:                             data.csrPEM,
+			KeyType:                            data.keyType,
+			KeySize:                            data.keySize,
+			SecureNetwork:                      string(data.secureNetwork),
+			SANs:                               data.sans,
+			Subject:                            reqSubject,
+			SignedCertificateNotValidAfterDate: data.signedCertNotValidAfter,
 		},
 	}, nil).Once()
 }
@@ -1311,23 +1810,24 @@ func mockGetCertificate(m *cloudcertificates.Mock, data certificateTestData) *mo
 		CertificateID: data.certificateID,
 	}).Return(&cloudcertificates.GetCertificateResponse{
 		Certificate: cloudcertificates.Certificate{
-			AccountID:         data.accountID,
-			CertificateID:     data.certificateID,
-			CertificateName:   data.name,
-			CertificateStatus: data.certificateStatus,
-			CertificateType:   data.certificateType,
-			ContractID:        strings.TrimPrefix(data.contractID, "ctr_"),
-			CreatedBy:         data.createdBy,
-			CreatedDate:       tst.NewTimeFromStringMust(data.createdDate),
-			ModifiedBy:        data.modifiedBy,
-			ModifiedDate:      tst.NewTimeFromStringMust(data.modifiedDate),
-			CSRExpirationDate: tst.NewTimeFromStringMust(data.csrExpirationDate),
-			CSRPEM:            data.csrPEM,
-			KeyType:           data.keyType,
-			KeySize:           data.keySize,
-			SecureNetwork:     string(data.secureNetwork),
-			SANs:              data.sans,
-			Subject:           subject,
+			AccountID:                          data.accountID,
+			CertificateID:                      data.certificateID,
+			CertificateName:                    data.name,
+			CertificateStatus:                  data.certificateStatus,
+			CertificateType:                    data.certificateType,
+			ContractID:                         strings.TrimPrefix(data.contractID, "ctr_"),
+			CreatedBy:                          data.createdBy,
+			CreatedDate:                        tst.NewTimeFromStringMust(data.createdDate),
+			ModifiedBy:                         data.modifiedBy,
+			ModifiedDate:                       tst.NewTimeFromStringMust(data.modifiedDate),
+			CSRExpirationDate:                  tst.NewTimeFromStringMust(data.csrExpirationDate),
+			CSRPEM:                             data.csrPEM,
+			KeyType:                            data.keyType,
+			KeySize:                            data.keySize,
+			SecureNetwork:                      string(data.secureNetwork),
+			SANs:                               data.sans,
+			Subject:                            subject,
+			SignedCertificateNotValidAfterDate: data.signedCertNotValidAfter,
 		},
 	}, nil).Once()
 }
@@ -1354,23 +1854,24 @@ func mockPatchCertificate(m *cloudcertificates.Mock, data certificateTestData) *
 		CertificateName: ptr.To(data.baseName),
 	}).Return(&cloudcertificates.PatchCertificateResponse{
 		Certificate: cloudcertificates.Certificate{
-			AccountID:         data.accountID,
-			CertificateID:     data.certificateID,
-			CertificateName:   data.name,
-			CertificateStatus: data.certificateStatus,
-			CertificateType:   data.certificateType,
-			ContractID:        strings.TrimPrefix(data.contractID, "ctr_"),
-			CreatedBy:         data.createdBy,
-			CreatedDate:       tst.NewTimeFromStringMust(data.createdDate),
-			ModifiedBy:        data.modifiedBy,
-			ModifiedDate:      tst.NewTimeFromStringMust(data.modifiedDate),
-			CSRExpirationDate: tst.NewTimeFromStringMust(data.csrExpirationDate),
-			CSRPEM:            data.csrPEM,
-			KeyType:           data.keyType,
-			KeySize:           data.keySize,
-			SecureNetwork:     string(data.secureNetwork),
-			SANs:              data.sans,
-			Subject:           subject,
+			AccountID:                          data.accountID,
+			CertificateID:                      data.certificateID,
+			CertificateName:                    data.name,
+			CertificateStatus:                  data.certificateStatus,
+			CertificateType:                    data.certificateType,
+			ContractID:                         strings.TrimPrefix(data.contractID, "ctr_"),
+			CreatedBy:                          data.createdBy,
+			CreatedDate:                        tst.NewTimeFromStringMust(data.createdDate),
+			ModifiedBy:                         data.modifiedBy,
+			ModifiedDate:                       tst.NewTimeFromStringMust(data.modifiedDate),
+			CSRExpirationDate:                  tst.NewTimeFromStringMust(data.csrExpirationDate),
+			CSRPEM:                             data.csrPEM,
+			KeyType:                            data.keyType,
+			KeySize:                            data.keySize,
+			SecureNetwork:                      string(data.secureNetwork),
+			SANs:                               data.sans,
+			Subject:                            subject,
+			SignedCertificateNotValidAfterDate: data.signedCertNotValidAfter,
 		},
 	}, nil).Once()
 }
@@ -1464,6 +1965,70 @@ func TestDomainNameRegex(t *testing.T) {
 		t.Run(tc.label, func(t *testing.T) {
 			isMatch := domainNameRegex.MatchString(tc.domainName)
 			assert.Equal(t, tc.matches, isMatch)
+		})
+	}
+}
+
+func TestIsWithinRenewalThreshold(t *testing.T) {
+	now := time.Date(2026, 1, 15, 0, 0, 0, 0, time.UTC)
+	expiresInFuture := time.Date(2026, 3, 15, 0, 0, 0, 0, time.UTC) // 59 days from now
+	expiresSoon := time.Date(2026, 2, 1, 0, 0, 0, 0, time.UTC)      // 17 days from now
+	expiresExactly := time.Date(2026, 2, 14, 0, 0, 0, 0, time.UTC)  // exactly 30 days from now
+
+	tests := []struct {
+		label                     string
+		renewBeforeExpirationDays types.Int64
+		signedCertNotValidAfter   *time.Time
+		expected                  bool
+	}{
+		{
+			label:                     "null renew_before_expiration_days returns false",
+			renewBeforeExpirationDays: types.Int64Null(),
+			signedCertNotValidAfter:   &expiresSoon,
+			expected:                  false,
+		},
+		{
+			label:                     "unknown renew_before_expiration_days returns false",
+			renewBeforeExpirationDays: types.Int64Unknown(),
+			signedCertNotValidAfter:   &expiresSoon,
+			expected:                  false,
+		},
+		{
+			label:                     "nil expiry date returns false",
+			renewBeforeExpirationDays: types.Int64Value(30),
+			signedCertNotValidAfter:   nil,
+			expected:                  false,
+		},
+		{
+			label:                     "cert expires far in future, outside threshold",
+			renewBeforeExpirationDays: types.Int64Value(30),
+			signedCertNotValidAfter:   &expiresInFuture,
+			expected:                  false,
+		},
+		{
+			label:                     "cert within threshold",
+			renewBeforeExpirationDays: types.Int64Value(30),
+			signedCertNotValidAfter:   &expiresSoon,
+			expected:                  true,
+		},
+		{
+			label:                     "cert exactly at threshold boundary, not yet within",
+			renewBeforeExpirationDays: types.Int64Value(30),
+			signedCertNotValidAfter:   &expiresExactly,
+			expected:                  false,
+		},
+		{
+			label:                     "zero days threshold, now before expiry",
+			renewBeforeExpirationDays: types.Int64Value(0),
+			signedCertNotValidAfter:   &expiresSoon,
+			expected:                  false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.label, func(t *testing.T) {
+			result := isWithinRenewalThreshold(tc.renewBeforeExpirationDays, now, tc.signedCertNotValidAfter)
+			assert.Equal(t, tc.expected, result)
 		})
 	}
 }

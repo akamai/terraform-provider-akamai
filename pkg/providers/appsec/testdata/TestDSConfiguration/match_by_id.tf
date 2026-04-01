@@ -15,6 +15,10 @@ output "configsedgelatestversion" {
   value = data.akamai_appsec_configuration.test.latest_version
 }
 
+output "configsedgeconfiglist" {
+  value = data.akamai_appsec_configuration.test.output_text
+}
+
 output "host_names" {
   value = data.akamai_appsec_configuration.test.host_names
 }

@@ -35,6 +35,11 @@ func dataSourcePenaltyBox() *schema.Resource {
 				Computed:    true,
 				Description: "Penalty Box enabled",
 			},
+			"output_text": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Text representation",
+			},
 		},
 	}
 }
@@ -66,6 +71,17 @@ func dataSourcePenaltyBoxRead(ctx context.Context, d *schema.ResourceData, m int
 	if err != nil {
 		logger.Errorf("calling 'getPenaltyBox': %s", err.Error())
 		return diag.FromErr(err)
+	}
+
+	ots := OutputTemplates{}
+	InitTemplates(ots)
+
+	outputtext, err := RenderTemplates(ots, "penaltyBoxDS", penaltybox)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("output_text", outputtext); err != nil {
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	if err := d.Set("action", penaltybox.Action); err != nil {

@@ -26,6 +26,11 @@ func dataSourceAdvancedSettingsJA4Fingerprint() *schema.Resource {
 				Computed:    true,
 				Description: "JSON representation of JA4 Fingerprint settings",
 			},
+			"output_text": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Text representation of JA4 Fingerprint settings",
+			},
 		},
 	}
 }
@@ -51,6 +56,17 @@ func dataSourceAdvancedSettingsJA4FingerprintRead(ctx context.Context, d *schema
 	if err != nil {
 		logger.Errorf("calling 'getAdvancedSettingsJA4Fingerprint': %s", err.Error())
 		return diag.FromErr(err)
+	}
+
+	ots := OutputTemplates{}
+	InitTemplates(ots)
+
+	outputText, err := RenderTemplates(ots, "advancedSettingsJA4FingerprintDS", advancedSettingsJA4Fingerprint)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("output_text", outputText); err != nil {
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	jsonBody, err := json.Marshal(advancedSettingsJA4Fingerprint)

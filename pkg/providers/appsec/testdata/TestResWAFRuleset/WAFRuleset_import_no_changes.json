@@ -1,0 +1,116 @@
+{
+  "ruleSetInfo": {
+    "rulesetVersion": 1
+  },
+  "attackGroups": [
+    {
+      "group": "CMD",
+      "action": "alert",
+      "conditionException": {
+        "advancedExceptions": {
+          "conditionOperator": "AND",
+          "conditions": [
+            {
+              "type": "hostMatch",
+              "hosts": ["cheppubakku.com"],
+              "positiveMatch": true
+            },
+            {
+              "type": "ipMatch",
+              "ips": ["21.1.1.1", "2.2.2.2", "3.3.3.3"],
+              "positiveMatch": true
+            },
+            {
+              "type": "pathMatch",
+              "paths": ["/test"],
+              "positiveMatch": true
+            },
+            {
+              "type": "extensionMatch",
+              "extensions": ["jpg", "kgf", "lsf"],
+              "positiveMatch": true
+            },
+            {
+              "type": "extensionMatch",
+              "extensions": ["abs"],
+              "positiveMatch": true
+            },
+            {
+              "type": "filenameMatch",
+              "filenames": ["abcd"],
+              "positiveMatch": true
+            },
+            {
+              "type": "extensionMatch",
+              "extensions": ["xyz", "ds"],
+              "positiveMatch": true
+            },
+            {
+              "type": "ipMatch",
+              "ips": ["22.2.2.3"],
+              "positiveMatch": true,
+              "useHeaders": true
+            },
+            {
+              "type": "requestHeaderMatch",
+              "header": "Max-Forwards",
+              "positiveMatch": true,
+              "value": "as",
+              "valueCase": true
+            },
+            {
+              "type": "pathMatch",
+              "paths": ["/aaadasd"],
+              "positiveMatch": false
+            },
+            {
+              "type": "pathMatch",
+              "paths": ["/aaabcs", "/ssc"],
+              "positiveMatch": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "group": "WAT",
+      "action": "alert",
+      "conditionException": {
+        "advancedExceptions": {
+          "conditionOperator": "AND",
+          "conditions": [
+            {
+              "paths": ["/xxicicibanksscatssssss*"],
+              "positiveMatch": true,
+              "type": "pathMatch"
+            },
+            {
+              "paths": ["/xxdpogs"],
+              "positiveMatch": false,
+              "type": "pathMatch"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "rules": [
+    {
+      "ruleId": 950003,
+      "ruleName": "OS File Access Attack Detected",
+      "action": "alert",
+      "conditionException": {
+        "advancedExceptions": {
+          "conditionOperator": "AND",
+          "conditions": [
+            {
+              "paths": ["/xxcatssssszzz*"],
+              "positiveMatch": true,
+              "type": "pathMatch"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

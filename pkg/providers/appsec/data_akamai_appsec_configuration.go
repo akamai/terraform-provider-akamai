@@ -47,6 +47,11 @@ func dataSourceConfiguration() *schema.Resource {
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "Hostnames to be protected by the new configuration",
 			},
+			"output_text": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Text representation",
+			},
 		},
 	}
 }
@@ -120,6 +125,16 @@ func dataSourceConfigurationRead(ctx context.Context, d *schema.ResourceData, m 
 		} else {
 			d.SetId(strconv.Itoa(0))
 		}
+	}
+
+	ots := OutputTemplates{}
+	InitTemplates(ots)
+	outputtext, err := RenderTemplates(ots, "configuration", outputConfigurations)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("output_text", outputtext); err != nil {
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
 	return nil

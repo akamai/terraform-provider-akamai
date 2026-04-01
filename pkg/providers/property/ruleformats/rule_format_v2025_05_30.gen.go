@@ -14818,7 +14818,7 @@ func getBehaviorsSchemaV20250530() map[string]*schema.Schema {
 		"visitor_prioritization_queue_it": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "TBD. This behavior cannot be used in includes.",
+			Description: "Note that this behavior is in Beta and has limited functionality. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -14840,29 +14840,29 @@ func getBehaviorsSchemaV20250530() map[string]*schema.Schema {
 					},
 					"enabled": {
 						Optional:    true,
-						Description: "Enables Visitor Prioritization (Powered by Queue-IT)",
+						Description: "Enables the feature.",
 						Type:        schema.TypeBool,
 					},
 					"customer_id": {
 						ValidateDiagFunc: validateRegexOrVariable("^[\\w-]+$"),
 						Optional:         true,
-						Description:      "",
+						Description:      "Specifies the customer ID on the Queue-it platform.",
 						Type:             schema.TypeString,
 					},
 					"api_key_cam_guid": {
 						Optional:    true,
-						Description: "",
+						Description: "Specifies the API key defined in Cloud Access Manager you use to fetch the Queue-it configuration.",
 						Type:        schema.TypeString,
 					},
 					"additional_headers_mode": {
 						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"DENY", "CUSTOM"}, false)),
 						Optional:         true,
-						Description:      "",
+						Description:      "Specifies the request headers Visitor Prioritization can access in addition to the required ones.",
 						Type:             schema.TypeString,
 					},
 					"additional_headers_list": {
 						Optional:    true,
-						Description: "",
+						Description: "Extra request headers Visitor Prioritization can access, in addition to its own default required headers.",
 						Type:        schema.TypeList,
 						Elem: &schema.Schema{
 							Type: schema.TypeString,

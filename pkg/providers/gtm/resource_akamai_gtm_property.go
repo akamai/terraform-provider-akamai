@@ -19,6 +19,7 @@ import (
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"golang.org/x/exp/slices"
 )
 
@@ -360,6 +361,26 @@ func resourceGTMv1Property() *schema.Resource {
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
+						},
+					},
+				},
+			},
+			"state_change_notification_webhook": {
+				Type:     schema.TypeList,
+				Optional: true,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"url": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"format": {
+							Type:     schema.TypeString,
+							Required: true,
+							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{
+								string(gtm.JSONCompact), string(gtm.JSONPretty), string(gtm.SlackMarkdown),
+							}, false)),
 						},
 					},
 				},
@@ -1068,6 +1089,10 @@ func populatePropertyObject(d *schema.ResourceData, prop *gtm.Property, m interf
 	populateTrafficTargetObject(d, prop, m)
 	populateStaticRRSetObject(d, prop)
 	populateLivenessTestObject(d, prop)
+	err = populateStateChangeNotificationWebhookObject(d, prop)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -1146,7 +1171,9 @@ func populateTerraformPropertyState(d *schema.ResourceData, prop *gtm.GetPropert
 	if err := populateTerraformLivenessTestState(d, prop, m); err != nil {
 		logger.Errorf("error setting liveness test: %s", err)
 	}
-
+	if err := populateTerraformStateChangeNotificationWebhookObject(d, prop, m); err != nil {
+		logger.Errorf("error setting state change notification webhook: %s", err)
+	}
 }
 
 // create and populate GTM Property TrafficTargets object
@@ -1512,6 +1539,54 @@ func populateTerraformLivenessTestState(d *schema.ResourceData, prop *gtm.GetPro
 		}
 	}
 	return d.Set("liveness_test", updatedLtStateList)
+}
+
+func populateTerraformStateChangeNotificationWebhookObject(d *schema.ResourceData, prop *gtm.GetPropertyResponse, m interface{}) error {
+	meta := meta.Must(m)
+	logger := meta.Log("Akamai GTM", "populateTerraformStateChangeNotificationWebhook")
+
+	if prop.StateChangeNotificationWebhook == nil {
+		logger.Debug("No StateChangeNotificationWebhook returned from API")
+		return d.Set("state_change_notification_webhook", nil)
+	}
+
+	webhook := prop.StateChangeNotificationWebhook
+	webhookState := map[string]interface{}{
+		"url":    webhook.URL,
+		"format": webhook.Format,
+	}
+
+	return d.Set("state_change_notification_webhook", []interface{}{webhookState})
+}
+
+func populateStateChangeNotificationWebhookObject(d *schema.ResourceData, prop *gtm.Property) error {
+	webhook, err := tf.GetInterfaceArrayValue("state_change_notification_webhook", d)
+	if err != nil {
+		if errors.Is(err, tf.ErrNotFound) {
+			prop.StateChangeNotificationWebhook = nil
+			return nil
+		}
+		return err
+	}
+
+	if len(webhook) == 0 {
+		return nil
+	}
+
+	v, ok := webhook[0].(map[string]any)
+	if !ok {
+		return fmt.Errorf("%w: state_change_notification_webhook should be a *schema.List", tf.ErrInvalidType)
+	}
+
+	url, _ := v["url"].(string)
+	formatStr, _ := v["format"].(string)
+
+	prop.StateChangeNotificationWebhook = &gtm.StateChangeNotificationWebhook{
+		URL:    &url,
+		Format: gtm.Format(formatStr),
+	}
+
+	return nil
 }
 
 func convertStringToInterfaceList(stringList []string, m interface{}) []interface{} {

@@ -9,6 +9,6 @@ data "akamai_appsec_slow_post" "test" {
 }
 
 output "configsedge_post_output_text" {
-  value = data.akamai_appsec_slow_post.test
+  value = data.akamai_appsec_slow_post.test.output_text
 }
 

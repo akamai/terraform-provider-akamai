@@ -1,0 +1,83 @@
+{
+	"bypassCondition": {
+		"atomicConditions": [
+			{
+				"checkIps": "connecting",
+				"className": "NetworkListCondition",
+				"positiveMatch": true,
+				"value": [
+					"12345_10CLIENTLIST",
+					"54321_123"
+				]
+			},
+			{
+				"className": "RequestHeaderCondition",
+				"name": [
+					"my-custom-header"
+				],
+				"nameWildcard": false,
+				"positiveMatch": true,
+				"value": [
+					"my-custom-value"
+				],
+				"valueCase": false,
+				"valueWildcard": false
+			}
+		]
+	},
+	"categories": [
+		{
+			"type": "BOTS"
+		},
+		{
+			"listIds": [
+				"12345_10CLIENTLIST",
+				"54321_123"
+			],
+			"positiveMatch": true,
+			"type": "CLIENT_LIST"
+		},
+		{
+			"listIds": [
+				"16656_CPISERVERS"
+			],
+			"positiveMatch": true,
+			"type": "CLIENT_LIST"
+		},
+		{
+			"type": "CLOUD_PROVIDERS"
+		},
+		{
+			"type": "PROXIES"
+		},
+		{
+			"type": "TOR_EXIT_NODES"
+		},
+		{
+			"type": "PLATFORM_DDOS_INTELLIGENCE"
+		}
+	],
+	"configId": 43007,
+	"configVersion": 40,
+	"createDate": "2023-04-14T18:58:53Z",
+	"createdBy": "jsmith",
+	"description": "URL Protection",
+	"hostnamePaths": [
+		{
+			"hostname": "custom.com",
+			"paths": [
+				"/asd",
+				"/my-test-path"
+			]
+		}
+	],
+	"intelligentLoadShedding": true,
+	"name": "URL Protection",
+	"policyId": 681,
+	"protectionType": "MULTIPLE",
+	"rateThreshold": 195,
+	"sheddingThresholdHitsPerSec": 150,
+	"updateDate": "2023-04-26T02:42:28Z",
+	"updatedBy": "jperez",
+	"used": true
+}

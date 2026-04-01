@@ -624,7 +624,7 @@ func TestClientCertificateDataSource(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDataCertificates/invalid_key_type.tf"),
 					ExpectError: regexp.MustCompile(`Error: Invalid Attribute Value Match(.|\n)*` +
-						`Attribute key_type value must be one of: \["RSA" "ECDSA"], got: "INVALID-TYPE"`),
+						`Attribute key_type value must be one of: \["ECDSA" "RSA"], got: "INVALID-TYPE"`),
 				},
 			},
 		},

@@ -725,6 +725,132 @@ func TestResGTMProperty(t *testing.T) {
 				},
 			},
 		},
+		"create property with optional state_change_notification_webhook": {
+			property: getBasicProperty(),
+			init: func(m *gtm.Mock) {
+				property := getBasicProperty()
+				property.StateChangeNotificationWebhook = &gtm.StateChangeNotificationWebhook{
+					URL:    ptr.To("https://example.com/gtm-webhook"),
+					Format: "json-compact",
+				}
+
+				// create
+				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+				mockCreateProperty(m, property, &gtm.CreatePropertyResponse{
+					Resource: getBasicProperty(),
+					Status:   getPendingResponseStatus(),
+				}, nil)
+				// read
+				mockGetProperty(m, testPropertyName, property, nil, testutils.ThreeTimes)
+				// update
+				mockGetProperty(m, testPropertyName, property, nil, testutils.Once)
+				mockUpdateProperty(m, getBasicProperty(), &gtm.UpdatePropertyResponse{Status: getDefaultResponseStatus()}, nil)
+				// read
+				mockGetProperty(m, testPropertyName, getBasicProperty(), nil, testutils.Twice)
+				// delete
+				mockGetProperty(m, testPropertyName, property, nil, testutils.Once)
+				mockDeleteProperty(m, testPropertyName)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/create_basic_with_webhook.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(propertyResourceName, "name", "tfexample_prop_1"),
+						resource.TestCheckResourceAttr(propertyResourceName, "type", "weighted-round-robin"),
+						resource.TestCheckResourceAttr(propertyResourceName, "weighted_hash_bits_for_ipv4", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "weighted_hash_bits_for_ipv6", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.http_method", ""),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.http_request_body", ""),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.alternate_ca_certificates.#", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.pre_2023_security_posture", "false"),
+						resource.TestCheckResourceAttr(propertyResourceName, "traffic_target.0.precedence", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "id", "gtm_terra_testdomain.akadns.net:tfexample_prop_1"),
+						resource.TestCheckResourceAttr(propertyResourceName, "state_change_notification_webhook.#", "1"),
+						resource.TestCheckResourceAttr(propertyResourceName, "state_change_notification_webhook.0.url", "https://example.com/gtm-webhook"),
+						resource.TestCheckResourceAttr(propertyResourceName, "state_change_notification_webhook.0.format", "json-compact"),
+					),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/create_basic.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(propertyResourceName, "name", "tfexample_prop_1"),
+						resource.TestCheckResourceAttr(propertyResourceName, "type", "weighted-round-robin"),
+						resource.TestCheckResourceAttr(propertyResourceName, "weighted_hash_bits_for_ipv4", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "weighted_hash_bits_for_ipv6", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.http_method", ""),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.http_request_body", ""),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.alternate_ca_certificates.#", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.pre_2023_security_posture", "false"),
+						resource.TestCheckResourceAttr(propertyResourceName, "traffic_target.0.precedence", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "id", "gtm_terra_testdomain.akadns.net:tfexample_prop_1"),
+						resource.TestCheckResourceAttr(propertyResourceName, "state_change_notification_webhook.#", "0"),
+					),
+				},
+			},
+		},
+		"update property with optional state_change_notification_webhook": {
+			property: getBasicProperty(),
+			init: func(m *gtm.Mock) {
+				updatedProperty := getBasicProperty()
+				updatedProperty.StateChangeNotificationWebhook = &gtm.StateChangeNotificationWebhook{
+					URL:    ptr.To("https://example.com/gtm-webhook"),
+					Format: "json-compact",
+				}
+
+				// create
+				mockGetProperty(m, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+				mockCreateProperty(m, getBasicProperty(), &gtm.CreatePropertyResponse{
+					Resource: getBasicProperty(),
+					Status:   getPendingResponseStatus(),
+				}, nil)
+				// read
+				mockGetProperty(m, testPropertyName, getBasicProperty(), nil, testutils.ThreeTimes)
+				// update
+				mockGetProperty(m, testPropertyName, getBasicProperty(), nil, testutils.Once)
+				mockUpdateProperty(m, updatedProperty, &gtm.UpdatePropertyResponse{Status: getDefaultResponseStatus()}, nil)
+				// read
+				mockGetProperty(m, testPropertyName, updatedProperty, nil, testutils.Twice)
+				// delete
+				mockGetProperty(m, testPropertyName, updatedProperty, nil, testutils.Once)
+				mockDeleteProperty(m, testPropertyName)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/create_basic.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(propertyResourceName, "name", "tfexample_prop_1"),
+						resource.TestCheckResourceAttr(propertyResourceName, "type", "weighted-round-robin"),
+						resource.TestCheckResourceAttr(propertyResourceName, "weighted_hash_bits_for_ipv4", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "weighted_hash_bits_for_ipv6", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.http_method", ""),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.http_request_body", ""),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.alternate_ca_certificates.#", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.pre_2023_security_posture", "false"),
+						resource.TestCheckResourceAttr(propertyResourceName, "traffic_target.0.precedence", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "id", "gtm_terra_testdomain.akadns.net:tfexample_prop_1"),
+						resource.TestCheckResourceAttr(propertyResourceName, "state_change_notification_webhook.#", "0"),
+					),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/create_basic_with_webhook.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(propertyResourceName, "name", "tfexample_prop_1"),
+						resource.TestCheckResourceAttr(propertyResourceName, "type", "weighted-round-robin"),
+						resource.TestCheckResourceAttr(propertyResourceName, "weighted_hash_bits_for_ipv4", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "weighted_hash_bits_for_ipv6", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.http_method", ""),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.http_request_body", ""),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.alternate_ca_certificates.#", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "liveness_test.0.pre_2023_security_posture", "false"),
+						resource.TestCheckResourceAttr(propertyResourceName, "traffic_target.0.precedence", "0"),
+						resource.TestCheckResourceAttr(propertyResourceName, "id", "gtm_terra_testdomain.akadns.net:tfexample_prop_1"),
+						resource.TestCheckResourceAttr(propertyResourceName, "state_change_notification_webhook.#", "1"),
+						resource.TestCheckResourceAttr(propertyResourceName, "state_change_notification_webhook.0.url", "https://example.com/gtm-webhook"),
+						resource.TestCheckResourceAttr(propertyResourceName, "state_change_notification_webhook.0.format", "json-compact"),
+					),
+				},
+			},
+		},
 		"create property with 'ranked-failover' type and two empty precedences in traffic target - error": {
 			property: getRankedFailoverPropertyNoPrecedence(),
 			steps: []resource.TestStep{
@@ -825,6 +951,15 @@ func TestResGTMProperty(t *testing.T) {
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/test_object/test_object_protocol_https.tf"),
 					ExpectError: regexp.MustCompile(`Error: attribute 'test_object' is required when 'test_object_protocol' is set to 'HTTP', 'HTTPS' or 'FTP'`),
+				},
+			},
+		},
+		"create property with optional state_change_notification_webhook incorrect format error": {
+			property: getBasicProperty(),
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/create_basic_with_webhook_incorrect_format.tf"),
+					ExpectError: regexp.MustCompile(`Error: expected format to be one of \["json-compact" "json-pretty" "slack-mrkdwn"], got json`),
 				},
 			},
 		},
@@ -1251,7 +1386,10 @@ func TestResGTMPropertyImport(t *testing.T) {
 				CheckEqual("liveness_test.0.test_timeout", "30").
 				CheckEqual("liveness_test.0.http_header.0.name", "test_name").
 				CheckEqual("liveness_test.0.http_header.0.value", "test_value").
-				CheckEqual("wait_on_complete", "true").Build(),
+				CheckEqual("wait_on_complete", "true").
+				CheckEqual("state_change_notification_webhook.#", "1").
+				CheckEqual("state_change_notification_webhook.0.url", "https://example.com/gtm-webhook").
+				CheckEqual("state_change_notification_webhook.0.format", "json-compact").Build(),
 		},
 		"expect error - no domain name, invalid import ID": {
 			domainName:  "",
@@ -1875,6 +2013,10 @@ func getImportedProperty() *gtm.Property {
 					},
 				},
 			},
+		},
+		StateChangeNotificationWebhook: &gtm.StateChangeNotificationWebhook{
+			URL:    ptr.To("https://example.com/gtm-webhook"),
+			Format: gtm.JSONCompact,
 		},
 	}
 }
