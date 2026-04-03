@@ -23,4 +23,5 @@ import (
 	_ "github.com/akamai/terraform-provider-akamai/v10/pkg/providers/mtlstruststore"
 	_ "github.com/akamai/terraform-provider-akamai/v10/pkg/providers/networklists"
 	_ "github.com/akamai/terraform-provider-akamai/v10/pkg/providers/property"
+	_ "github.com/akamai/terraform-provider-akamai/v10/pkg/providers/reportinggroups"
 )

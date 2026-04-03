@@ -133,6 +133,10 @@
 
 
 
+* Reporting Groups (Beta)
+  * Added new data source:
+    * `akamai_reportinggroups_cp_code` - retrieves details of a CP Code.
+
 
 
 
