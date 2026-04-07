@@ -28,8 +28,8 @@ func TestReportingGroupDataSource(t *testing.T) {
 			{
 				ContractID: "ctr_123",
 				CpCodes: []reportinggroups.CpCodeModel{
-					{CpCodeID: 111, CpCodeName: "CP Code One"},
 					{CpCodeID: 222, CpCodeName: "CP Code Two"},
+					{CpCodeID: 111, CpCodeName: "CP Code One"},
 				},
 			},
 		},
@@ -40,13 +40,12 @@ func TestReportingGroupDataSource(t *testing.T) {
 		CheckEqual("reporting_group_name", "Test Reporting Group").
 		CheckEqual("access_group.contract_id", "ctr_456").
 		CheckEqual("access_group.group_id", "456").
-		CheckEqual("contracts.#", "1").
-		CheckEqual("contracts.0.contract_id", "ctr_123").
-		CheckEqual("contracts.0.cp_codes.#", "2").
-		CheckEqual("contracts.0.cp_codes.0.cp_code_id", "111").
-		CheckEqual("contracts.0.cp_codes.0.cp_code_name", "CP Code One").
-		CheckEqual("contracts.0.cp_codes.1.cp_code_id", "222").
-		CheckEqual("contracts.0.cp_codes.1.cp_code_name", "CP Code Two")
+		CheckEqual("contract.contract_id", "ctr_123").
+		CheckEqual("contract.cp_codes.#", "2").
+		CheckEqual("contract.cp_codes.0.cp_code_id", "111").
+		CheckEqual("contract.cp_codes.0.cp_code_name", "CP Code One").
+		CheckEqual("contract.cp_codes.1.cp_code_id", "222").
+		CheckEqual("contract.cp_codes.1.cp_code_name", "CP Code Two")
 
 	tests := map[string]struct {
 		init  func(*reportinggroups.Mock)

@@ -136,6 +136,16 @@
 
 
 
+* Reporting Groups (Beta)
+  * Added new data source:
+    * `akamai_property_reportinggroups_groups` - lists detailed information about reporting groups available for your account and contract.
+
+
+
+
+
+
+
 
 
 

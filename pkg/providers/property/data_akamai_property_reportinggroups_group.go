@@ -2,6 +2,7 @@ package property
 
 import (
 	"context"
+	"sort"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/reportinggroups"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
@@ -22,10 +23,10 @@ type (
 	}
 
 	reportingGroupDataSourceModel struct {
-		ReportingGroupID   types.Int64                   `tfsdk:"reporting_group_id"`
-		ReportingGroupName types.String                  `tfsdk:"reporting_group_name"`
-		AccessGroup        *accessGroupModel             `tfsdk:"access_group"`
-		Contracts          []reportingGroupContractModel `tfsdk:"contracts"`
+		ReportingGroupID   types.Int64                  `tfsdk:"reporting_group_id"`
+		ReportingGroupName types.String                 `tfsdk:"reporting_group_name"`
+		AccessGroup        *accessGroupModel            `tfsdk:"access_group"`
+		Contract           *reportingGroupContractModel `tfsdk:"contract"`
 	}
 
 	accessGroupModel struct {
@@ -81,28 +82,26 @@ func (d *reportingGroupDataSource) Schema(_ context.Context, _ datasource.Schema
 					},
 				},
 			},
-			"contracts": schema.ListNestedAttribute{
+			"contract": schema.SingleNestedAttribute{
 				Computed:    true,
-				Description: "A collection of contracts and CP codes assigned to the reporting group.",
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"contract_id": schema.StringAttribute{
-							Computed:    true,
-							Description: "Identifies the contract assigned to the reporting group.",
-						},
-						"cp_codes": schema.ListNestedAttribute{
-							Computed:    true,
-							Description: "A collection of CP codes assigned to the reporting group.",
-							NestedObject: schema.NestedAttributeObject{
-								Attributes: map[string]schema.Attribute{
-									"cp_code_id": schema.Int64Attribute{
-										Computed:    true,
-										Description: "Identifies a CP code.",
-									},
-									"cp_code_name": schema.StringAttribute{
-										Computed:    true,
-										Description: "The descriptive label for the CP code.",
-									},
+				Description: "The contract and CP codes assigned to the reporting group.",
+				Attributes: map[string]schema.Attribute{
+					"contract_id": schema.StringAttribute{
+						Computed:    true,
+						Description: "Identifies the contract assigned to the reporting group.",
+					},
+					"cp_codes": schema.ListNestedAttribute{
+						Computed:    true,
+						Description: "A collection of CP codes assigned to the reporting group.",
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"cp_code_id": schema.Int64Attribute{
+									Computed:    true,
+									Description: "Identifies a CP code.",
+								},
+								"cp_code_name": schema.StringAttribute{
+									Computed:    true,
+									Description: "The descriptive label for the CP code.",
 								},
 							},
 						},
@@ -144,18 +143,22 @@ func (m *reportingGroupDataSourceModel) convertReportingGroupToModel(group repor
 		GroupID:    types.Int64PointerValue(group.AccessGroup.GroupID),
 	}
 
-	m.Contracts = make([]reportingGroupContractModel, 0, len(group.Contracts))
-	for _, contract := range group.Contracts {
-		contractModel := reportingGroupContractModel{
-			ContractID: types.StringValue(contract.ContractID),
-			CpCodes:    make([]reportingGroupCpCodeModel, 0, len(contract.CpCodes)),
-		}
+	m.Contract = nil
+	if len(group.Contracts) > 0 {
+		contract := group.Contracts[0]
+		cpCodes := make([]reportingGroupCpCodeModel, 0, len(contract.CpCodes))
 		for _, cp := range contract.CpCodes {
-			contractModel.CpCodes = append(contractModel.CpCodes, reportingGroupCpCodeModel{
+			cpCodes = append(cpCodes, reportingGroupCpCodeModel{
 				CpCodeID:   types.Int64Value(cp.CpCodeID),
 				CpCodeName: types.StringValue(cp.CpCodeName),
 			})
 		}
-		m.Contracts = append(m.Contracts, contractModel)
+		sort.Slice(cpCodes, func(i, j int) bool {
+			return cpCodes[i].CpCodeID.ValueInt64() < cpCodes[j].CpCodeID.ValueInt64()
+		})
+		m.Contract = &reportingGroupContractModel{
+			ContractID: types.StringValue(contract.ContractID),
+			CpCodes:    cpCodes,
+		}
 	}
 }
