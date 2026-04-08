@@ -114,6 +114,7 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 	"sampling_percentage": {
 		Type:         schema.TypeInt,
 		Optional:     true,
+		Computed:     true,
 		ValidateFunc: validation.IntBetween(1, 100),
 		Description:  "The sample percentage of data that your stream will send to the destination",
 	},

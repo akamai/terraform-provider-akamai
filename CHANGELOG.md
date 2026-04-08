@@ -189,8 +189,13 @@
 #### BUG FIXES:
 
 
+
 * Appsec
   * (Beta) Marked all the protection controls attributes in the `akamai_appsec_security_policy_protections` resource's schema as `Required` instead of `Optional` to address problem with unintended disabling of protections in the security policy.
+
+* Datastream
+  * Fixed an idempotency issue in the `akamai_datastream` resource where the `sampling_percentage` attribute was causing unnecessary diffs. The attribute is now marked as `Computed` to properly handle server-side defaults.
+
 
 
 
