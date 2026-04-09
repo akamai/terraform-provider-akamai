@@ -683,13 +683,13 @@ func (r *wafRulesetResource) ImportState(ctx context.Context, req resource.Impor
 	}
 
 	// Convert all rules and attack groups from API response
-	rules, diags := convertAPIRulesToResourceModel(wafRuleset.Rules, nil)
+	rules, diags := importAPIRulesToResourceModel(wafRuleset.Rules)
 	if diags.HasError() {
 		resp.Diagnostics.Append(diags...)
 		return
 	}
 
-	attackGroups, diags := convertAPIAttackGroupsToResourceModel(wafRuleset.AttackGroups, nil)
+	attackGroups, diags := importAPIAttackGroupsToResourceModel(wafRuleset.AttackGroups)
 	if diags.HasError() {
 		resp.Diagnostics.Append(diags...)
 		return
@@ -822,34 +822,45 @@ func filterManagedAttackGroups(apiAttackGroups []appsec.WAFCompositeAttackGroup,
 	return filtered
 }
 
+// importAPIRulesToResourceModel converts all API rules to resource model for import.
+// Rules with action "none" are excluded as they are not managed.
+func importAPIRulesToResourceModel(apiRules []appsec.WAFCompositeRule) ([]wafRuleResourceModel, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	output := make([]wafRuleResourceModel, 0, len(apiRules))
+	for _, rule := range apiRules {
+
+		if rule.Action == "none" {
+			// If action is "none", do not include them in the state as they are not managed
+			continue
+		}
+		var conditionException ruleConditionExceptionStateValue
+
+		conditionExceptionStr, err := marshalJSON(rule.ConditionException)
+		if err != nil {
+			diags.AddError("marshaling rule condition exception", err.Error())
+			return output, diags
+		} else if conditionExceptionStr != "" {
+			conditionException = ruleConditionExceptionStateValue{StringValue: types.StringValue(conditionExceptionStr)}
+		}
+
+		outputRule := wafRuleResourceModel{
+			RuleID:             types.Int64Value(rule.RuleID),
+			RuleAction:         types.StringValue(rule.Action),
+			ConditionException: conditionException,
+		}
+		output = append(output, outputRule)
+	}
+
+	if len(output) == 0 {
+		return nil, diags
+	}
+	return output, diags
+}
+
 // convertAPIRulesToResourceModel converts API rules to resource model
-// Rules are returned in the same order as existingRules to preserve user's config order & prevent drift caused api response order changes
+// Rules are returned in the same order as existingRules to preserve user's config order & prevent drift caused by api response order changes
 func convertAPIRulesToResourceModel(apiRules []appsec.WAFCompositeRule, existingRules []wafRuleResourceModel) ([]wafRuleResourceModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
-
-	// If no existing rules (import case), return all API rules in API order
-	if existingRules == nil {
-		output := make([]wafRuleResourceModel, 0, len(apiRules))
-		for _, rule := range apiRules {
-			var conditionException ruleConditionExceptionStateValue
-
-			conditionExceptionStr, err := marshalJSON(rule.ConditionException)
-			if err != nil {
-				diags.AddError("marshaling rule condition exception", err.Error())
-				return output, diags
-			} else if conditionExceptionStr != "" {
-				conditionException = ruleConditionExceptionStateValue{StringValue: types.StringValue(conditionExceptionStr)}
-			}
-
-			outputRule := wafRuleResourceModel{
-				RuleID:             types.Int64Value(rule.RuleID),
-				RuleAction:         types.StringValue(rule.Action),
-				ConditionException: conditionException,
-			}
-			output = append(output, outputRule)
-		}
-		return output, diags
-	}
 
 	// Build map of API rules by ID for quick lookup
 	apiRulesMap := make(map[int64]appsec.WAFCompositeRule)
@@ -887,34 +898,46 @@ func convertAPIRulesToResourceModel(apiRules []appsec.WAFCompositeRule, existing
 	return output, diags
 }
 
+// importAPIAttackGroupsToResourceModel converts all API attack groups to resource model for import.
+// Attack groups with action "none" are excluded as they are not managed.
+func importAPIAttackGroupsToResourceModel(apiAttackGroups []appsec.WAFCompositeAttackGroup) ([]attackGroupResourceModel, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	output := make([]attackGroupResourceModel, 0, len(apiAttackGroups))
+	for _, attackGroup := range apiAttackGroups {
+
+		if attackGroup.Action == "none" {
+			// If action is "none", do not include them in the state as they are not managed
+			continue
+		}
+
+		var conditionException attackGroupConditionExceptionStateValue
+
+		conditionExceptionStr, err := marshalJSON(attackGroup.ConditionException)
+		if err != nil {
+			diags.AddError("marshaling attack group condition exception", err.Error())
+			return output, diags
+		} else if conditionExceptionStr != "" {
+			conditionException = attackGroupConditionExceptionStateValue{StringValue: types.StringValue(conditionExceptionStr)}
+		}
+
+		outputAttackGroup := attackGroupResourceModel{
+			AttackGroup:        types.StringValue(attackGroup.Group),
+			AttackGroupAction:  types.StringValue(attackGroup.Action),
+			ConditionException: conditionException,
+		}
+		output = append(output, outputAttackGroup)
+	}
+
+	if len(output) == 0 {
+		return nil, diags
+	}
+	return output, diags
+}
+
 // convertAPIAttackGroupsToResourceModel converts API attack groups to resource model
-// Attack groups are returned in the same order as existingGroups to preserve user's config order & prevent drift caused api response order changes
+// Attack groups are returned in the same order as existingGroups to preserve user's config order & prevent drift caused by api response order changes
 func convertAPIAttackGroupsToResourceModel(apiAttackGroups []appsec.WAFCompositeAttackGroup, existingGroups []attackGroupResourceModel) ([]attackGroupResourceModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
-
-	// If no existing groups (import case), return all API groups in API order
-	if existingGroups == nil {
-		output := make([]attackGroupResourceModel, 0, len(apiAttackGroups))
-		for _, attackGroup := range apiAttackGroups {
-			var conditionException attackGroupConditionExceptionStateValue
-
-			conditionExceptionStr, err := marshalJSON(attackGroup.ConditionException)
-			if err != nil {
-				diags.AddError("marshaling attack group condition exception", err.Error())
-				return output, diags
-			} else if conditionExceptionStr != "" {
-				conditionException = attackGroupConditionExceptionStateValue{StringValue: types.StringValue(conditionExceptionStr)}
-			}
-
-			outputAttackGroup := attackGroupResourceModel{
-				AttackGroup:        types.StringValue(attackGroup.Group),
-				AttackGroupAction:  types.StringValue(attackGroup.Action),
-				ConditionException: conditionException,
-			}
-			output = append(output, outputAttackGroup)
-		}
-		return output, diags
-	}
 
 	// Build map of API attack groups by name for quick lookup
 	apiGroupsMap := make(map[string]appsec.WAFCompositeAttackGroup)

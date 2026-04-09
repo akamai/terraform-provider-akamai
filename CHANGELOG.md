@@ -19,8 +19,9 @@
 
 
 
-
-
+#### FEATURES/ENHANCEMENTS:
+* Appsec
+  * Exclude “none” attack groups and rules during import of `akamai_appsec_waf_ruleset` resource.
 
 
 
