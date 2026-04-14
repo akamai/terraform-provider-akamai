@@ -2,6 +2,6 @@ provider "akamai" {
   edgerc = "../../common/testutils/edgerc"
 }
 
-data "akamai_property_reportinggroups_group" "test" {
+data "akamai_reportinggroups_groups" "test" {
 }
 

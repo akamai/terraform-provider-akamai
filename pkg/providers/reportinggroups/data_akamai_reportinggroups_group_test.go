@@ -1,4 +1,4 @@
-package property
+package reportinggroups
 
 import (
 	"fmt"
@@ -35,7 +35,7 @@ func TestReportingGroupDataSource(t *testing.T) {
 		},
 	}
 
-	commonStateChecker := test.NewStateChecker("data.akamai_property_reportinggroups_group.test").
+	commonStateChecker := test.NewStateChecker("data.akamai_reportinggroups_group.test").
 		CheckEqual("reporting_group_id", "12345").
 		CheckEqual("reporting_group_name", "Test Reporting Group").
 		CheckEqual("access_group.contract_id", "ctr_456").
@@ -75,7 +75,7 @@ func TestReportingGroupDataSource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDataReportingGroupsGroup/reporting_group.tf"),
-					Check: test.NewStateChecker("data.akamai_property_reportinggroups_group.test").
+					Check: test.NewStateChecker("data.akamai_reportinggroups_group.test").
 						CheckEqual("reporting_group_id", "12345").
 						CheckEqual("access_group.contract_id", "ctr_456").
 						Build(),

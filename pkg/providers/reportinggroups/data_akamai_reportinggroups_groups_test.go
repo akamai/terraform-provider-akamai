@@ -1,4 +1,4 @@
-package property
+package reportinggroups
 
 import (
 	"fmt"
@@ -121,14 +121,14 @@ func TestReportingGroupsDataSource(t *testing.T) {
 		"contract.cp_codes.0.cp_code_name": "CP Code Three",
 	}
 
-	commonStateChecker := test.NewStateChecker("data.akamai_property_reportinggroups_groups.test").
+	commonStateChecker := test.NewStateChecker("data.akamai_reportinggroups_groups.test").
 		CheckEqual("groups.#", "3").
 		CheckEqualBatch("groups.0.", firstReportingGroup).
 		CheckEqualBatch("groups.1.", secondReportingGroup).
 		CheckMissing("groups.1.access_group.group_id").
 		CheckEqualBatch("groups.2.", thirdReportingGroup)
 
-	firstGroupWithOneCPCodeChecker := test.NewStateChecker("data.akamai_property_reportinggroups_groups.test").
+	firstGroupWithOneCPCodeChecker := test.NewStateChecker("data.akamai_reportinggroups_groups.test").
 		CheckEqual("cp_code_id", "111").
 		CheckEqual("groups.#", "1").
 		CheckEqualBatch("groups.0.", firstReportingGroup).
@@ -178,7 +178,7 @@ func TestReportingGroupsDataSource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDataReportingGroupsGroups/reporting_groups_with_contract_id.tf"),
-					Check: test.NewStateChecker("data.akamai_property_reportinggroups_groups.test").
+					Check: test.NewStateChecker("data.akamai_reportinggroups_groups.test").
 						CheckEqual("groups.#", "2").
 						CheckEqualBatch("groups.0.", secondReportingGroup).
 						CheckMissing("groups.0.access_group.group_id").
@@ -218,7 +218,7 @@ func TestReportingGroupsDataSource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDataReportingGroupsGroups/reporting_groups.tf"),
-					Check: test.NewStateChecker("data.akamai_property_reportinggroups_groups.test").
+					Check: test.NewStateChecker("data.akamai_reportinggroups_groups.test").
 						CheckEqual("groups.#", "0").
 						Build(),
 				},

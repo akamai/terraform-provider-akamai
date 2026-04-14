@@ -1,4 +1,4 @@
-package property
+package reportinggroups
 
 import (
 	"context"
@@ -45,7 +45,7 @@ func NewReportingGroupsDataSource() datasource.DataSource {
 
 // Metadata configures data source's meta information.
 func (d *reportingGroupsDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
-	resp.TypeName = "akamai_property_reportinggroups_groups"
+	resp.TypeName = "akamai_reportinggroups_groups"
 }
 
 // Schema is used to define data source's terraform schema.

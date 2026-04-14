@@ -120,8 +120,6 @@ func (p *Subprovider) FrameworkDataSources() []func() datasource.DataSource {
 		NewHostnameAuditHistoryDataSource,
 		NewHostnamesDiffDataSource,
 		NewIncludeDataSource,
-		NewReportingGroupDataSource,
-		NewReportingGroupsDataSource,
 	}
 }
 

@@ -128,7 +128,7 @@
 
 * Reporting Groups (Beta)
   * Added new data source:
-    * `akamai_property_reportinggroups_group` - retrieves details of a Reporting Group.
+    * `akamai_reportinggroups_group` - retrieves details of a Reporting Group.
 
 
 
@@ -142,7 +142,7 @@
 
 * Reporting Groups (Beta)
   * Added new data source:
-    * `akamai_property_reportinggroups_groups` - lists detailed information about reporting groups available for your account and contract.
+    * `akamai_reportinggroups_groups` - lists detailed information about reporting groups available for your account and contract.
 
 
 
