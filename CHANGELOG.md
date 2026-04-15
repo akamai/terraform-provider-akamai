@@ -64,6 +64,9 @@
 
 
 
+* PAPI
+    * Added new data source:
+        * `akamai_edge_hostnames` - lists all edge hostnames available under a contract
 
 
 
@@ -112,8 +115,7 @@
 
 
 
-
-
+    
 #### BUG FIXES:
 
 

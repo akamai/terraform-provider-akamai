@@ -113,6 +113,7 @@ func (p *Subprovider) FrameworkDataSources() []func() datasource.DataSource {
 		NewDomainOwnershipDomainDataSource,
 		NewDomainOwnershipDomainsDataSource,
 		NewDomainOwnershipSearchDomains,
+		NewEdgeHostnamesDataSource,
 		NewHostnameActivationDataSource,
 		NewHostnameActivationsDataSource,
 		NewHostnameAuditHistoryDataSource,
