@@ -55,7 +55,7 @@
 
 #### FEATURES/ENHANCEMENTS:
 
-
+* Removed examples from `/examples` directory in favor of use-case driven templates. See [Terraform templates](https://github.com/akamai/terraform-templates) for more information.
 
 
 
@@ -154,7 +154,7 @@
 
 
 
-    
+
 #### BUG FIXES:
 
 
@@ -213,7 +213,7 @@
 * Cloud Certificates (Beta)
   * Added support for the `P-384` key size in the ECDSA certificates.
   * Added support for the `STANDARD_TLS` secure network type in the `akamai_cloudcertificates_certificate` resource. The `secure_network` attribute now accepts both `ENHANCED_TLS` and `STANDARD_TLS` values.
-  * Added `renew_before_expiration_days`, `renew_pending`, and `auto_renew` attributes to the `akamai_cloudcertificates_certificate` resource to support automatic certificate renewal. 
+  * Added `renew_before_expiration_days`, `renew_pending`, and `auto_renew` attributes to the `akamai_cloudcertificates_certificate` resource to support automatic certificate renewal.
     When `renew_before_expiration_days` is set and the certificate is within the renewal threshold, `renew_pending` becomes `true`. Setting `auto_renew` to `true` triggers automatic resource replacement when renewal is pending.
   * Enhanced `base_name` updates to use the same renewal chain logic as creation, ensuring unique certificate names when previous instances exist.
 
@@ -227,13 +227,13 @@
 #### BUG FIXES:
 
 * Appsec
-  * Reverted the previous removal of the `output_text` attribute from all resources and data sources ([I#738](https://github.com/akamai/terraform-provider-akamai/issues/738)). 
+  * Reverted the previous removal of the `output_text` attribute from all resources and data sources ([I#738](https://github.com/akamai/terraform-provider-akamai/issues/738)).
 
 * ClientLists
   * Reverted the previous removal of the `output_text` attribute from `akamai_clientlist_list` and `akamai_clientlist_lists` data sources ([I#738](https://github.com/akamai/terraform-provider-akamai/issues/738)).
 
 * Cloud Certificates (Beta)
-  * Fixed a misleading error when importing `akamai_cloudcertificates_upload_signed_certificate` without specifying `acknowledge_warnings` in the import ID while the Terraform config has `acknowledge_warnings = true`. 
+  * Fixed a misleading error when importing `akamai_cloudcertificates_upload_signed_certificate` without specifying `acknowledge_warnings` in the import ID while the Terraform config has `acknowledge_warnings = true`.
     The resource now returns a clear error explaining that the flag is toggled on an already-uploaded certificate and prompts the user to verify the import ID format: `certificateID[,acknowledge_warnings]`.
 
 * Network Lists
@@ -322,7 +322,7 @@
     * `network`
   * Added the `akamai_property_hostname_audit_history` data source, which allows fetching a detailed record of all modifications made to a property hostname.
   * Added basic format validation for the `edge_hostname_id` and `property_id` attributes in the `akamai_property_hostname_bucket` resource, ensuring values match the expected ID patterns, optional `ehn_` or `prp_` prefix followed by digits.
-  * Added new fields `mtls` and `tls_configuration` to the `akamai_property` resource, which are optional for CCM hostnames. 
+  * Added new fields `mtls` and `tls_configuration` to the `akamai_property` resource, which are optional for CCM hostnames.
   * Added support for the Cloud Certificate Manager (CCM) data in the `akamai_property_hostnames` data source. The following attributes are now available on each object in the `hostnames` list:
     * `ccm_certificates`
     * `ccm_cert_status`
@@ -386,7 +386,7 @@
     * `akamai_property_domainownership_domain` - reads details of a given domain.
     * `akamai_property_domainownership_domains` - reads details for all the domains.
     * `akamai_property_domainownership_search_domains` - searches for domains details.
-  
+
 * PAPI
   * Added support for the new rule format `v2025-10-16`. The list of changes can be found [here](https://techdocs.akamai.com/terraform/docs/rule-format-changes#v2025-10-16).
   * Added support for hostnames bound to CCM certificates (`cert_provisioning_type` = `CCM`) in the `akamai_property` resource.
@@ -416,7 +416,7 @@
 
 * Botman
   * Improved the functionality of the `akamai_bot_category_action` and `akamai_botman_bot_detection_action` resources to handle a scenario when a resource is deleted in the backend but still exists in the state file.
-  
+
 * Cloud Access
   * Added support for the new authentication method, Akamai Object Storage (`AOS4_HMAC_SHA256`), in the `akamai_cloudaccess_key` resource.
 
@@ -462,7 +462,7 @@
 
 * General
   * Updated various dependencies to resolve an issue with retrieving the configuration schema from the Terraform provider ([I#694](https://github.com/akamai/terraform-provider-akamai/issues/694)).
-  
+
 ## 9.0.0 (Sep 04, 2025)
 
 #### BREAKING CHANGES:
@@ -491,7 +491,7 @@
     * `akamai_apr_protected_operations`
     * `akamai_apr_general_settings`
     * `akamai_apr_user_risk_response_strategy`
-    * `akamai_apr_user_allow_list`  
+    * `akamai_apr_user_allow_list`
 
 * [IMPORTANT] API Definitions (Beta):
   * Added new resources:
@@ -553,7 +553,7 @@
   * Fixed a discrepancy of computed fields (`stream_version`, `latest_version`, `modified_by`, `modified_date`) when updating them in the output after apply.
 
 * PAPI
-  * Fixed an issue in the `akamai_edge_hostname` resource where the resource was successfully created in the backend, 
+  * Fixed an issue in the `akamai_edge_hostname` resource where the resource was successfully created in the backend,
   but the Terraform Provider returned errors such as "inconsistent result after apply" or "unable to find an edgehostname" ([I#658](https://github.com/akamai/terraform-provider-akamai/issues/658)) and ([I#681](https://github.com/akamai/terraform-provider-akamai/issues/681)).
 
 ## 8.1.0 (Aug 06, 2025)
@@ -580,7 +580,7 @@
         * `akamai_mtlskeystore_client_certificate_third_party` - manages third-party client certificates.
         * `akamai_mtlskeystore_client_certificate_upload` - uploads a signed third-party certificate version.
 
-* PAPI 
+* PAPI
   * Added support for the new rule format `v2025-05-30`. The list of changes can be found [here](https://techdocs.akamai.com/terraform/docs/rule-format-changes#v2025-05-30).
   * Added support for the new rule format `v2025-07-07`. The list of changes can be found [here](https://techdocs.akamai.com/terraform/docs/rule-format-changes#v2025-07-07).
 
@@ -599,7 +599,7 @@
     It can be removed only if there are no items in it. Otherwise, an error is returned.
 
 * PAPI
-  * Modified the `akamai_edge_hostname` resource - replaced the no-op destroy operation with fully developed delete ([I#504](https://github.com/akamai/terraform-provider-akamai/issues/504)).  
+  * Modified the `akamai_edge_hostname` resource - replaced the no-op destroy operation with fully developed delete ([I#504](https://github.com/akamai/terraform-provider-akamai/issues/504)).
 
 #### FEATURES/ENHANCEMENTS:
 
