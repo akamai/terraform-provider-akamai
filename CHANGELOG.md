@@ -78,7 +78,9 @@
 
 
 
-
+* PAPI
+    * Added new data source:
+        * `akamai_edge_hostname` - fetch specific edge hostname details by its ID.
 
 
 
