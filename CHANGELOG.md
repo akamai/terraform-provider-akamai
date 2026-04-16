@@ -61,7 +61,8 @@
 
 
 
-
+* Appsec
+  * Added `deny_custom_{custom_deny_id}` action support for the `penalty_box_action` field in the `akamai_appsec_eval_penalty_box` and `akamai_appsec_penalty_box` resources.
 
 * CCM
     * Added the `geo_class` attribute to the following resources and data sources:
