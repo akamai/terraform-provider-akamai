@@ -102,7 +102,6 @@ func (p *Subprovider) FrameworkResources() []func() resource.Resource {
 		NewDomainOwnershipLateValidationResource(p.config.lateValidation),
 		NewDomainOwnershipValidationResource(p.config.domainValidation),
 		NewHostnameBucketResource(p.config.hostnameBucket),
-		NewReportingGroupsResource,
 	}
 }
 

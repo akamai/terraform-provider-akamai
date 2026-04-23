@@ -1,4 +1,4 @@
-package property
+package reportinggroups
 
 import (
 	"context"

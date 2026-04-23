@@ -49,7 +49,9 @@ func (p *Subprovider) SDKDataSources() map[string]*schema.Resource {
 
 // FrameworkResources returns the reportinggroups resources implemented using terraform-plugin-framework
 func (p *Subprovider) FrameworkResources() []func() resource.Resource {
-	return []func() resource.Resource{}
+	return []func() resource.Resource{
+		NewReportingGroupsResource,
+	}
 }
 
 // FrameworkDataSources returns the reportinggroups data sources implemented using terraform-plugin-framework
