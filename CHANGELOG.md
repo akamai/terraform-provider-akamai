@@ -139,6 +139,11 @@
     * `akamai_reportinggroups_cp_code` - retrieves details of a CP Code.
 
 
+* Reporting Groups (Beta)
+  * Added new data source:
+    * `akamai_reportinggroups_cp_codes` - lists detailed information about CP codes available within your account and contract.
+
+
 
 
 * Reporting Groups (Beta)
