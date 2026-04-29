@@ -62,6 +62,20 @@
 
 
 
+* CCM
+    * Added the `geo_class` attribute to the following resources and data sources:
+        * `resource_akamai_cloudcertificates_certificate`
+        * `data_akamai_cloudcertificates_certificate`
+        * `data_akamai_cloudcertificates_certificates`
+
+
+
+
+
+
+
+
+
 
 
 * PAPI

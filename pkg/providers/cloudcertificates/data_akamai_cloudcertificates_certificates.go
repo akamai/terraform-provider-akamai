@@ -3,9 +3,9 @@ package cloudcertificates
 import (
 	"context"
 	"regexp"
-	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudcertificates"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/text"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/framework/date"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
@@ -52,6 +52,7 @@ type (
 		KeyType                             types.String  `tfsdk:"key_type"`
 		KeySize                             types.String  `tfsdk:"key_size"`
 		SecureNetwork                       types.String  `tfsdk:"secure_network"`
+		GeoClass                            types.String  `tfsdk:"geo_class"`
 		ContractID                          types.String  `tfsdk:"contract_id"`
 		AccountID                           types.String  `tfsdk:"account_id"`
 		CreatedDate                         types.String  `tfsdk:"created_date"`
@@ -132,10 +133,10 @@ func (d *certificatesDataSource) Schema(_ context.Context, _ datasource.SchemaRe
 				},
 			},
 			"key_type": schema.StringAttribute{
-				Description: "Filter certificates by key type. Valid values are '" + strings.Join(validKeyTypes(), "', '") + "'.",
+				Description: "Filter certificates by key type. Valid values are '" + text.JoinStringBased(validKeyTypes(), "', '") + "'.",
 				Optional:    true,
 				Validators: []validator.String{
-					stringvalidator.OneOf(validKeyTypes()...),
+					stringvalidator.OneOf(text.ToStrings(validKeyTypes())...),
 				},
 			},
 			"issuer": schema.StringAttribute{
@@ -218,6 +219,10 @@ func (d *certificatesDataSource) Schema(_ context.Context, _ datasource.SchemaRe
 						},
 						"secure_network": schema.StringAttribute{
 							Description: "The secure network associated with the certificate.",
+							Computed:    true,
+						},
+						"geo_class": schema.StringAttribute{
+							Description: "The geographic network class of the certificate.",
 							Computed:    true,
 						},
 						"contract_id": schema.StringAttribute{
@@ -385,6 +390,7 @@ func certificatesToModels(ctx context.Context, certificates *cloudcertificates.L
 			KeyType:                             types.StringValue(string(cert.KeyType)),
 			KeySize:                             types.StringValue(string(cert.KeySize)),
 			SecureNetwork:                       types.StringValue(cert.SecureNetwork),
+			GeoClass:                            types.StringValue(string(cert.GeoClass)),
 			ContractID:                          types.StringValue(cert.ContractID),
 			AccountID:                           types.StringValue(cert.AccountID),
 			CreatedDate:                         date.TimeRFC3339NanoValue(cert.CreatedDate),

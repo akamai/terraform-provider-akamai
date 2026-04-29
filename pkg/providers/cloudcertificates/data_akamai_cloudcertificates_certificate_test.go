@@ -29,6 +29,7 @@ func defaultCertResp() *cloudcertificates.GetCertificateResponse {
 			CSRPEM:                              "-----BEGIN CERTIFICATE REQUEST-----\ntest-csr\n-----END CERTIFICATE REQUEST-----",
 			KeySize:                             "2048",
 			KeyType:                             "RSA",
+			GeoClass:                            cloudcertificates.GeoClassStandardWorldwide,
 			ModifiedBy:                          "user2",
 			ModifiedDate:                        tst.NewTimeFromStringMust("2024-06-02T05:06:08Z"),
 			SANs:                                []string{"example.com"},
@@ -71,6 +72,7 @@ func TestCertificateDataSource(t *testing.T) {
 		CheckEqual("modified_date", "2024-06-02T05:06:08Z").
 		CheckEqual("sans.#", "2").
 		CheckEqual("secure_network", "STANDARD_TLS").
+		CheckEqual("geo_class", "STANDARD_WORLDWIDE").
 		CheckEqual("signed_certificate_pem", "-----BEGIN CERTIFICATE-----\ntest-cert\n-----END CERTIFICATE-----").
 		CheckEqual("signed_certificate_issuer", "Test CA").
 		CheckEqual("signed_certificate_not_valid_before_date", "2023-01-02T00:00:00Z").
@@ -247,6 +249,28 @@ func TestCertificateDataSource(t *testing.T) {
 					Check: test.NewStateChecker("data.akamai_cloudcertificates_certificate.testcert").
 						CheckEqual("certificate_id", "12345").
 						CheckEqual("account_id", "test_account").
+						Build(),
+				},
+			},
+		},
+		"happy path - get certificate with non-default geo_class": {
+			init: func(m *cloudcertificates.Mock) {
+				certReq := cloudcertificates.GetCertificateRequest{
+					CertificateID: "12345",
+				}
+
+				certResp := defaultCertResp()
+				certResp.Certificate.GeoClass = cloudcertificates.GeoClassContiguousUS
+				certResp.Certificate.SecureNetwork = "ENHANCED_TLS"
+
+				m.On("GetCertificate", mock.Anything, certReq).Return(certResp, nil).Times(3)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, testDir+"certificate.tf"),
+					Check: test.NewStateChecker("data.akamai_cloudcertificates_certificate.testcert").
+						CheckEqual("certificate_id", "12345").
+						CheckEqual("geo_class", "CONTIGUOUS_US").
 						Build(),
 				},
 			},
