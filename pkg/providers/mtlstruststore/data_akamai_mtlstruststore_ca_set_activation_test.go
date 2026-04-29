@@ -15,7 +15,6 @@ import (
 
 func TestCASetActivationDataSource(t *testing.T) {
 	t.Parallel()
-	testDir := "testdata/TestDataCASetActivation/"
 
 	mockListCASetActivations := func(m *mtlstruststore.Mock, testData caSetTestData) {
 		m.On("ListCASetActivations", testutils.MockContext, mtlstruststore.ListCASetActivationsRequest{
@@ -28,6 +27,7 @@ func TestCASetActivationDataSource(t *testing.T) {
 	mockListCASets := func(m *mtlstruststore.Mock, testData caSetTestData) {
 		m.On("ListCASets", testutils.MockContext, mtlstruststore.ListCASetsRequest{
 			CASetNamePrefix: testData.caSetName,
+			CASetStatuses:   []string{mtlstruststore.CASetStatusNotDeleted},
 		}).Return(&mtlstruststore.ListCASetsResponse{
 			CASets: testData.caSets,
 		}, nil).Times(3)
@@ -91,7 +91,7 @@ func TestCASetActivationDataSource(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, testDir+"ca_set_id.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataCASetActivation/ca_set_id.tf"),
 					Check:  commonStateChecker.Build(),
 				},
 			},
@@ -118,7 +118,7 @@ func TestCASetActivationDataSource(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, testDir+"ca_set_id.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataCASetActivation/ca_set_id.tf"),
 					Check: commonStateChecker.
 						CheckEqual("status", "FAILED").
 						CheckEqual("type", "DEACTIVATE").
@@ -150,7 +150,7 @@ func TestCASetActivationDataSource(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, testDir+"ca_set_name.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataCASetActivation/ca_set_name.tf"),
 					Check:  commonStateChecker.Build(),
 				},
 			},
@@ -159,12 +159,13 @@ func TestCASetActivationDataSource(t *testing.T) {
 			init: func(m *mtlstruststore.Mock, _ caSetTestData) {
 				m.On("ListCASets", testutils.MockContext, mtlstruststore.ListCASetsRequest{
 					CASetNamePrefix: "test_name",
-				}).Return(nil, fmt.Errorf("API error: ListCASets failed")).Once()
+					CASetStatuses:   []string{mtlstruststore.CASetStatusNotDeleted},
+				}).Return(nil, fmt.Errorf("ListCASets failed")).Once()
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, testDir+"ca_set_name.tf"),
-					ExpectError: regexp.MustCompile("API error: ListCASets failed"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDataCASetActivation/ca_set_name.tf"),
+					ExpectError: regexp.MustCompile(`(?s)API.+error: ListCASets failed`),
 				},
 			},
 		},
@@ -176,8 +177,8 @@ func TestCASetActivationDataSource(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, testDir+"ca_set_id.tf"),
-					ExpectError: regexp.MustCompile("API error: ListCASetActivations failed"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDataCASetActivation/ca_set_id.tf"),
+					ExpectError: regexp.MustCompile(`(?s)API error: ListCASetActivations.+failed`),
 				},
 			},
 		},
@@ -185,6 +186,7 @@ func TestCASetActivationDataSource(t *testing.T) {
 			init: func(m *mtlstruststore.Mock, _ caSetTestData) {
 				m.On("ListCASets", testutils.MockContext, mtlstruststore.ListCASetsRequest{
 					CASetNamePrefix: "test_name",
+					CASetStatuses:   []string{mtlstruststore.CASetStatusNotDeleted},
 				}).Return(&mtlstruststore.ListCASetsResponse{
 					CASets: []mtlstruststore.CASetResponse{
 						{
@@ -200,8 +202,8 @@ func TestCASetActivationDataSource(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, testDir+"ca_set_name.tf"),
-					ExpectError: regexp.MustCompile(`multiple CA sets IDs found with name 'test_name': map\[123: 1234:]. Use the ID\nto fetch a specific CA set`),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDataCASetActivation/ca_set_name.tf"),
+					ExpectError: regexp.MustCompile(`multiple CA sets found with the name 'test_name' and status 'NOT_DELETED':\s+\[123 1234\]. Use the ID\s+to fetch a specific CA set`),
 				},
 			},
 		},
@@ -219,7 +221,7 @@ func TestCASetActivationDataSource(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, testDir+"ca_set_id.tf"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDataCASetActivation/ca_set_id.tf"),
 					ExpectError: regexp.MustCompile("activation with ID 321 not found"),
 				},
 			},
@@ -227,7 +229,7 @@ func TestCASetActivationDataSource(t *testing.T) {
 		"validation error - missing required argument id": {
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, testDir+"no_id.tf"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDataCASetActivation/no_id.tf"),
 					ExpectError: regexp.MustCompile(`The argument "id" is required, but no definition was found.`),
 				},
 			},
@@ -235,7 +237,7 @@ func TestCASetActivationDataSource(t *testing.T) {
 		"validation error - missing one of required arguments: ca_set_id or ca_set_name": {
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, testDir+"no_ca_set_name_and_ca_set_id.tf"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDataCASetActivation/no_ca_set_name_and_ca_set_id.tf"),
 					ExpectError: regexp.MustCompile(`No attribute specified when one \(and only one\) of \[ca_set_id,ca_set_name] is\nrequired`),
 				},
 			},
@@ -243,7 +245,7 @@ func TestCASetActivationDataSource(t *testing.T) {
 		"validation error - empty ca_set_name": {
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, testDir+"empty_name.tf"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDataCASetActivation/empty_name.tf"),
 					ExpectError: regexp.MustCompile(`Attribute ca_set_name string length must be between 3 and 64, got: 0`),
 				},
 			},
@@ -251,7 +253,7 @@ func TestCASetActivationDataSource(t *testing.T) {
 		"validation error - too short ca_set_name": {
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, testDir+"short_name.tf"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDataCASetActivation/short_name.tf"),
 					ExpectError: regexp.MustCompile(`Attribute ca_set_name string length must be between 3 and 64, got: 2`),
 				},
 			},

@@ -25,6 +25,7 @@ func TestCASetVersionsDataSource(t *testing.T) {
 	mockListCASets := func(m *mtlstruststore.Mock, testData caSetTestData) {
 		m.On("ListCASets", testutils.MockContext, mtlstruststore.ListCASetsRequest{
 			CASetNamePrefix: testData.caSetName,
+			CASetStatuses:   []string{mtlstruststore.CASetStatusNotDeleted},
 		}).Return(&mtlstruststore.ListCASetsResponse{
 			CASets: testData.caSets,
 		}, nil).Times(3)
@@ -399,6 +400,7 @@ func TestCASetVersionsDataSource(t *testing.T) {
 			init: func(m *mtlstruststore.Mock) {
 				m.On("ListCASets", testutils.MockContext, mtlstruststore.ListCASetsRequest{
 					CASetNamePrefix: "test-ca-set-name",
+					CASetStatuses:   []string{mtlstruststore.CASetStatusNotDeleted},
 				}).Return(&mtlstruststore.ListCASetsResponse{
 					CASets: []mtlstruststore.CASetResponse{
 						{
@@ -412,7 +414,7 @@ func TestCASetVersionsDataSource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestDataCASetVersions/name.tf"),
-					ExpectError: regexp.MustCompile("no CA set found with name 'test-ca-set-name'"),
+					ExpectError: regexp.MustCompile("no CA set found with the name 'test-ca-set-name'"),
 				},
 			},
 		},
@@ -450,7 +452,7 @@ func TestCASetVersionsDataSource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestDataCASetVersions/empty.tf"),
-					ExpectError: regexp.MustCompile(`No attribute specified when one \(and only one\) of \[id,name] is\s+required`),
+					ExpectError: regexp.MustCompile(`(?s)No attribute specified when one \(and only one\) of \[id,name] is.+required`),
 				},
 			},
 		},
@@ -458,7 +460,7 @@ func TestCASetVersionsDataSource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestDataCASetVersions/id_name.tf"),
-					ExpectError: regexp.MustCompile(`2 attributes specified when one \(and only one\) of \[name,id] is\s+required`),
+					ExpectError: regexp.MustCompile(`(?s)2 attributes specified when one \(and only one\) of \[name,id] is.+required`),
 				},
 			},
 		},

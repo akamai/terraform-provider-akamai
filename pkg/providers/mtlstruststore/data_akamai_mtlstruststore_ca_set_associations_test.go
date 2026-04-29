@@ -14,7 +14,6 @@ import (
 
 func TestCASetAssociationsDataSource(t *testing.T) {
 	t.Parallel()
-	testDir := "testdata/TestDataCASetAssociations/"
 
 	mockGetCASet := func(client *mtlstruststore.Mock) *mock.Call {
 		return client.On("GetCASet", testutils.MockContext, mtlstruststore.GetCASetRequest{
@@ -26,7 +25,10 @@ func TestCASetAssociationsDataSource(t *testing.T) {
 	}
 
 	mockListCASets := func(client *mtlstruststore.Mock, resp *mtlstruststore.ListCASetsResponse, err error) *mock.Call {
-		return client.On("ListCASets", testutils.MockContext, mtlstruststore.ListCASetsRequest{CASetNamePrefix: "abc"}).
+		return client.On("ListCASets", testutils.MockContext, mtlstruststore.ListCASetsRequest{
+			CASetNamePrefix: "abc",
+			CASetStatuses:   []string{mtlstruststore.CASetStatusNotDeleted},
+		}).
 			Return(resp, err).Times(3)
 	}
 
@@ -62,7 +64,7 @@ func TestCASetAssociationsDataSource(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, testDir+"id.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataCASetAssociations/id.tf"),
 					Check:  defaultStateChecker.Build(),
 				},
 			},
@@ -93,7 +95,7 @@ func TestCASetAssociationsDataSource(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, testDir+"name.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataCASetAssociations/name.tf"),
 					Check:  defaultStateChecker.Build(),
 				},
 			},
@@ -119,7 +121,7 @@ func TestCASetAssociationsDataSource(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, testDir+"id.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataCASetAssociations/id.tf"),
 					Check: defaultStateChecker.
 						CheckEqual("properties.#", "1").
 						CheckEqual("properties.0.property_id", "123").
@@ -159,7 +161,7 @@ func TestCASetAssociationsDataSource(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, testDir+"association_type_properties.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataCASetAssociations/association_type_properties.tf"),
 					Check: defaultStateChecker.
 						CheckEqual("properties.#", "1").
 						CheckEqual("association_type", "properties").
@@ -200,7 +202,7 @@ func TestCASetAssociationsDataSource(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, testDir+"association_type_enrollments.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataCASetAssociations/association_type_enrollments.tf"),
 					Check: defaultStateChecker.
 						CheckEqual("association_type", "enrollments").
 						CheckEqual("enrollments.#", "2").
@@ -298,7 +300,7 @@ data "akamai_mtlstruststore_ca_set_associations" "test" {
   association_type = "invalid"
 }
 `,
-					ExpectError: regexp.MustCompile(`Attribute association_type value must be one of: \["enrollments"\n"properties"], got: "invalid"`),
+					ExpectError: regexp.MustCompile(`(?s)Attribute association_type value must be one of: \["enrollments".+"properties"], got: "invalid"`),
 				},
 			},
 		},
@@ -310,7 +312,7 @@ data "akamai_mtlstruststore_ca_set_associations" "test" {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, testDir+"id.tf"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDataCASetAssociations/id.tf"),
 					ExpectError: regexp.MustCompile(`Error: Could not fetch CA set`),
 				},
 			},
@@ -329,7 +331,7 @@ data "akamai_mtlstruststore_ca_set_associations" "test" {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, testDir+"name.tf"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDataCASetAssociations/name.tf"),
 					ExpectError: regexp.MustCompile(`Error: Could not fetch CA set ID for provided name`),
 				},
 			},
@@ -346,7 +348,7 @@ data "akamai_mtlstruststore_ca_set_associations" "test" {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, testDir+"name.tf"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDataCASetAssociations/name.tf"),
 					ExpectError: regexp.MustCompile(`Error: Could not fetch CA set ID for provided name`),
 				},
 			},
@@ -364,7 +366,7 @@ data "akamai_mtlstruststore_ca_set_associations" "test" {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, testDir+"id.tf"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDataCASetAssociations/id.tf"),
 					ExpectError: regexp.MustCompile(`Error: Error fetching CA set associations`),
 				},
 			},

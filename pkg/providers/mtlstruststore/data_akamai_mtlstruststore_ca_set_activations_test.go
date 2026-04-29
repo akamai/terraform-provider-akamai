@@ -70,6 +70,7 @@ func TestCASetActivationsDataSource(t *testing.T) {
 	mockListCASets := func(m *mtlstruststore.Mock, testData caSetTestData) {
 		m.On("ListCASets", testutils.MockContext, mtlstruststore.ListCASetsRequest{
 			CASetNamePrefix: testData.caSetName,
+			CASetStatuses:   []string{mtlstruststore.CASetStatusNotDeleted},
 		}).Return(&mtlstruststore.ListCASetsResponse{
 			CASets: testData.caSets,
 		}, nil).Times(3)
@@ -249,12 +250,13 @@ func TestCASetActivationsDataSource(t *testing.T) {
 			init: func(m *mtlstruststore.Mock, _ caSetTestData) {
 				m.On("ListCASets", testutils.MockContext, mtlstruststore.ListCASetsRequest{
 					CASetNamePrefix: "example-ca-set",
+					CASetStatuses:   []string{mtlstruststore.CASetStatusNotDeleted},
 				}).Return(nil, fmt.Errorf("List CA sets failed")).Once()
 			},
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestDataCASetActivations/name.tf"),
-					ExpectError: regexp.MustCompile("List CA sets failed"),
+					ExpectError: regexp.MustCompile("(?s)List.+CA sets.+failed"),
 				},
 			},
 		},
@@ -276,7 +278,7 @@ func TestCASetActivationsDataSource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestDataCASetActivations/id_name.tf"),
-					ExpectError: regexp.MustCompile(`2 attributes specified when one \(and only one\) of \[ca_set_name,ca_set_id] is\nrequired`),
+					ExpectError: regexp.MustCompile(`(?s)2 attributes specified when one \(and only one\) of \[ca_set_name,ca_set_id] is.+required`),
 				},
 			},
 		},
@@ -294,7 +296,7 @@ func TestCASetActivationsDataSource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestDataCASetActivations/wrong_status.tf"),
-					ExpectError: regexp.MustCompile(`Attribute status value must be one of: \["IN_PROGRESS" "COMPLETE" "FAILED"],\ngot: "foo"`),
+					ExpectError: regexp.MustCompile(`(?s)Attribute status value must be one of: \["IN_PROGRESS" "COMPLETE" "FAILED"],.+got: "foo"`),
 				},
 			},
 		},
@@ -303,7 +305,7 @@ func TestCASetActivationsDataSource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestDataCASetActivations/wrong_type.tf"),
-					ExpectError: regexp.MustCompile(`Attribute type value must be one of: \["ACTIVATE" "DEACTIVATE" "DELETE"], got:\n"foo"`),
+					ExpectError: regexp.MustCompile(`(?s)Attribute type value must be one of: \["ACTIVATE" "DEACTIVATE" "DELETE"], got:.+"foo"`),
 				},
 			},
 		},
@@ -321,7 +323,7 @@ func TestCASetActivationsDataSource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestDataCASetActivations/invalid_name.tf"),
-					ExpectError: regexp.MustCompile(`Attribute ca_set_name allowed characters are alphanumerics \(a-z, A-Z, 0-9\),\nunderscore \(_\), hyphen \(-\), percent \(%\) and period \(\.\), got: ###`),
+					ExpectError: regexp.MustCompile(`(?s)Attribute ca_set_name allowed characters are alphanumerics \(a-z, A-Z, 0-9\),.+underscore \(_\), hyphen \(-\), percent \(%\) and period \(\.\), got: ###`),
 				},
 			},
 		},
@@ -333,6 +335,7 @@ func TestCASetActivationsDataSource(t *testing.T) {
 			init: func(m *mtlstruststore.Mock, testData caSetTestData) {
 				m.On("ListCASets", testutils.MockContext, mtlstruststore.ListCASetsRequest{
 					CASetNamePrefix: testData.caSetName,
+					CASetStatuses:   []string{mtlstruststore.CASetStatusNotDeleted},
 				}).Return(&mtlstruststore.ListCASetsResponse{
 					CASets: testData.caSets,
 				}, nil).Once()
@@ -340,7 +343,7 @@ func TestCASetActivationsDataSource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestDataCASetActivations/name.tf"),
-					ExpectError: regexp.MustCompile(`no CA set found with name 'example-ca-set'`),
+					ExpectError: regexp.MustCompile(`no CA set found with the name 'example-ca-set'`),
 				},
 			},
 		},

@@ -228,12 +228,12 @@ func (d *caSetDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 
 	if !data.Name.IsNull() {
 		tflog.Debug(ctx, "'name' provided, attempting to find CA set ID")
-		setID, err := findCASetID(ctx, client, data.Name.ValueString())
+		caSet, err := findNotDeletedCASetByName(ctx, client, data.Name.ValueString())
 		if err != nil {
 			resp.Diagnostics.AddError("Read CA set failed", err.Error())
 			return
 		}
-		data.ID = types.StringValue(setID)
+		data.ID = types.StringValue(caSet.CASetID)
 	}
 
 	caSet, err := client.GetCASet(ctx, mtlstruststore.GetCASetRequest{

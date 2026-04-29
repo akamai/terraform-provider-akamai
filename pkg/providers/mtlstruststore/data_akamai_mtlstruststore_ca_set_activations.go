@@ -187,12 +187,12 @@ func (d *caSetActivationsDataSource) Read(ctx context.Context, req datasource.Re
 
 	if !data.CASetName.IsNull() {
 		tflog.Debug(ctx, "'name' provided, attempting to find CA set ID")
-		setID, err := findCASetID(ctx, client, data.CASetName.ValueString())
+		caSet, err := findNotDeletedCASetByName(ctx, client, data.CASetName.ValueString())
 		if err != nil {
 			resp.Diagnostics.AddError("Read CA set activations failed", err.Error())
 			return
 		}
-		data.CASetID = types.StringValue(setID)
+		data.CASetID = types.StringValue(caSet.CASetID)
 	}
 
 	response, err := client.ListCASetActivations(ctx, mtlstruststore.ListCASetActivationsRequest{

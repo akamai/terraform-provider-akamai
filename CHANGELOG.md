@@ -78,6 +78,15 @@
 
 
 
+* mTLS Truststore
+  * Added the `ca_set_statuses` attribute to the `akamai_mtlstruststore_ca_sets` data source that enables filtering CA sets by status (`NOT_DELETED`, `DELETING`, `DELETED`).
+
+
+
+
+
+
+
 
 
 

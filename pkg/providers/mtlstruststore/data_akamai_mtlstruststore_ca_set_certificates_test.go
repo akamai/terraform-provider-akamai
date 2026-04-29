@@ -158,6 +158,7 @@ func TestCASetCertificatesDataSource(t *testing.T) {
 			init: func(m *mtlstruststore.Mock, testData caSetTestData) {
 				m.On("ListCASets", testutils.MockContext, mtlstruststore.ListCASetsRequest{
 					CASetNamePrefix: testData.caSetName,
+					CASetStatuses:   []string{mtlstruststore.CASetStatusNotDeleted},
 				}).Return(&mtlstruststore.ListCASetsResponse{
 					CASets: []mtlstruststore.CASetResponse{
 						{
@@ -444,11 +445,11 @@ func TestCASetCertificatesDataSource(t *testing.T) {
 		},
 		"read failed - ca set not found for given name": {
 			init: func(m *mtlstruststore.Mock, testData caSetTestData) {
-				testData.caSets[0].CASetStatus = ""
 				m.On("ListCASets", testutils.MockContext, mtlstruststore.ListCASetsRequest{
 					CASetNamePrefix: testData.caSetName,
+					CASetStatuses:   []string{mtlstruststore.CASetStatusNotDeleted},
 				}).Return(&mtlstruststore.ListCASetsResponse{
-					CASets: testData.caSets,
+					CASets: []mtlstruststore.CASetResponse{},
 				}, nil).Once()
 			},
 			testData: mockCASetData,
@@ -464,7 +465,7 @@ func TestCASetCertificatesDataSource(t *testing.T) {
 						  version = 1
 		                  include_expired = true
 						}`,
-					ExpectError: regexp.MustCompile("failed to find CA set by name 'example-ca-set': no CA set found with name"),
+					ExpectError: regexp.MustCompile(`(?s)no CA set found with the name.+'example-ca-set' and status 'NOT_DELETED'`),
 				},
 			},
 		},
@@ -503,7 +504,7 @@ func TestCASetCertificatesDataSource(t *testing.T) {
 						data "akamai_mtlstruststore_ca_set_certificates" "test" {
 						  version = 1
 						}`,
-					ExpectError: regexp.MustCompile(`No attribute specified when one \(and only one\) of \[(id,name|name,id)] is required`),
+					ExpectError: regexp.MustCompile(`(?s)No attribute specified when one \(and only one\) of \[id,name] is.+required`),
 				},
 			},
 		},
@@ -576,7 +577,7 @@ func TestCASetCertificatesDataSource(t *testing.T) {
 						  include_expiring_in_days = 20
 						  include_expiring_by_date = "2625-01-01T00:00:00Z"
 						}`,
-					ExpectError: regexp.MustCompile(`Attribute "include_expiring_by_date" cannot be specified when\n.*"include_expiring_in_days" is specified`),
+					ExpectError: regexp.MustCompile(`(?s)Attribute "include_expiring_by_date" cannot be specified when.+"include_expiring_in_days" is specified`),
 				},
 			},
 		},
@@ -595,7 +596,7 @@ func TestCASetCertificatesDataSource(t *testing.T) {
 		                  include_expired = true
 						  include_expiring_by_date = "yesterday"
 						}`,
-					ExpectError: regexp.MustCompile(`The provided expiring timestamp 'yesterday' is not a valid RFC3339 or\n.*RFC3339Nano formatted date`),
+					ExpectError: regexp.MustCompile("(?s)The provided expiring timestamp 'yesterday' is not a valid RFC3339 or.+RFC3339Nano formatted date"),
 				},
 			},
 		},
@@ -612,7 +613,7 @@ func TestCASetCertificatesDataSource(t *testing.T) {
 						  id = 12345
 						  version = 1
 						}`,
-					ExpectError: regexp.MustCompile(`At least one attribute out of 'include_active', 'include_expired',\n.*'include_expiring_in_days', or 'include_expiring_by_date' must be specified\n.*with 'true' value for booleans, or some value for the rest`),
+					ExpectError: regexp.MustCompile("(?s)At least one attribute out of 'include_active', 'include_expired',.*'include_expiring_in_days', or 'include_expiring_by_date' must be specified.*with 'true' value for booleans, or some value for the rest"),
 				},
 			},
 		},
@@ -630,7 +631,7 @@ func TestCASetCertificatesDataSource(t *testing.T) {
 						  version = 1
 						  include_active = false
 						}`,
-					ExpectError: regexp.MustCompile(`At least one attribute out of 'include_active', 'include_expired',\n.*'include_expiring_in_days', or 'include_expiring_by_date' must be specified\n.*with 'true' value for booleans, or some value for the rest`),
+					ExpectError: regexp.MustCompile("(?s)At least one attribute out of 'include_active', 'include_expired',.+'include_expiring_in_days', or 'include_expiring_by_date' must be specified.+with 'true' value for booleans, or some value for the rest"),
 				},
 			},
 		},
@@ -648,7 +649,7 @@ func TestCASetCertificatesDataSource(t *testing.T) {
 						  version = 1
 						  include_expired = false
 						}`,
-					ExpectError: regexp.MustCompile(`At least one attribute out of 'include_active', 'include_expired',\n.*'include_expiring_in_days', or 'include_expiring_by_date' must be specified\n.*with 'true' value for booleans, or some value for the rest`),
+					ExpectError: regexp.MustCompile("(?s)At least one attribute out of 'include_active', 'include_expired',.+'include_expiring_in_days', or 'include_expiring_by_date' must be specified.+with 'true' value for booleans, or some value for the rest"),
 				},
 			},
 		},
@@ -667,7 +668,7 @@ func TestCASetCertificatesDataSource(t *testing.T) {
 						  include_active = true
 						  include_expiring_in_days = 20
 						}`,
-					ExpectError: regexp.MustCompile(`Attribute "include_expiring_in_days" cannot be specified when\n.*"include_active" is specified`),
+					ExpectError: regexp.MustCompile(`(?s)Attribute "include_expiring_in_days" cannot be specified when.+"include_active" is specified`),
 				},
 			},
 		},
@@ -686,7 +687,7 @@ func TestCASetCertificatesDataSource(t *testing.T) {
 						  include_active = true
 						  include_expiring_by_date = "2625-07-01T12:00:00Z"
 						}`,
-					ExpectError: regexp.MustCompile(`Attribute "include_expiring_by_date" cannot be specified when\n.*"include_active" is specified`),
+					ExpectError: regexp.MustCompile(`(?s)Attribute "include_expiring_by_date" cannot be specified when.+"include_active" is specified`),
 				},
 			},
 		},
@@ -704,7 +705,7 @@ func TestCASetCertificatesDataSource(t *testing.T) {
 						  version = 1
 						  include_expiring_by_date = "2024-07-01T12:00:00Z"
 						}`,
-					ExpectError: regexp.MustCompile(`The provided expiring threshold timestamp '2024-07-01T12:00:00Z' cannot be in\n.*the past`),
+					ExpectError: regexp.MustCompile(`(?s)The provided expiring threshold timestamp '2024-07-01T12:00:00Z' cannot be in.+the past`),
 				},
 			},
 		},
