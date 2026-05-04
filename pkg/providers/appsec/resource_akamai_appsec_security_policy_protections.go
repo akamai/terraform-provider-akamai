@@ -38,18 +38,18 @@ type securityPolicyProtectionsResource struct {
 
 // securityPolicyProtectionsModel maps Terraform state/plan for full policy protections.
 type securityPolicyProtectionsModel struct {
-	ConfigID                     types.Int64  `tfsdk:"config_id"`
-	SecurityPolicyID             types.String `tfsdk:"security_policy_id"`
-	ApplyAPIConstraints          types.Bool   `tfsdk:"apply_api_constraints"`
-	ApplyApplicationLayerControl types.Bool   `tfsdk:"apply_application_layer_controls"`
-	ApplyBotmanControls          types.Bool   `tfsdk:"apply_botman_controls"`
-	ApplyMalwareControls         types.Bool   `tfsdk:"apply_malware_controls"`
-	ApplyNetworkLayerControls    types.Bool   `tfsdk:"apply_network_layer_controls"`
-	ApplyRateControls            types.Bool   `tfsdk:"apply_rate_controls"`
-	ApplyReputationControls      types.Bool   `tfsdk:"apply_reputation_controls"`
-	ApplySlowPostControls        types.Bool   `tfsdk:"apply_slow_post_controls"`
-	ApplyURLProtectionControls   types.Bool   `tfsdk:"apply_url_protection_controls"`
-	ApplyAccountProtection       types.Bool   `tfsdk:"apply_account_protection_controls"`
+	ConfigID                       types.Int64  `tfsdk:"config_id"`
+	SecurityPolicyID               types.String `tfsdk:"security_policy_id"`
+	ApplyAccountProtectionControls types.Bool   `tfsdk:"apply_account_protection_controls"`
+	ApplyAPIConstraints            types.Bool   `tfsdk:"apply_api_constraints"`
+	ApplyApplicationLayerControls  types.Bool   `tfsdk:"apply_application_layer_controls"`
+	ApplyBotmanControls            types.Bool   `tfsdk:"apply_botman_controls"`
+	ApplyMalwareControls           types.Bool   `tfsdk:"apply_malware_controls"`
+	ApplyNetworkLayerControls      types.Bool   `tfsdk:"apply_network_layer_controls"`
+	ApplyRateControls              types.Bool   `tfsdk:"apply_rate_controls"`
+	ApplyReputationControls        types.Bool   `tfsdk:"apply_reputation_controls"`
+	ApplySlowPostControls          types.Bool   `tfsdk:"apply_slow_post_controls"`
+	ApplyURLProtectionControls     types.Bool   `tfsdk:"apply_url_protection_controls"`
 }
 
 // NewSecurityPolicyProtectionsResource returns the consolidated resource for
@@ -105,16 +105,16 @@ func (r *securityPolicyProtectionsResource) Schema(_ context.Context, _ resource
 					modifiers.PreventStringUpdate(),
 				},
 			},
-			"apply_api_constraints":             schema.BoolAttribute{Optional: true, Description: "Whether to enable API constraints."},
-			"apply_application_layer_controls":  schema.BoolAttribute{Optional: true, Description: "Whether to enable application layer controls."},
-			"apply_botman_controls":             schema.BoolAttribute{Optional: true, Description: "Whether to enable botman controls."},
-			"apply_malware_controls":            schema.BoolAttribute{Optional: true, Description: "Whether to enable malware controls."},
-			"apply_network_layer_controls":      schema.BoolAttribute{Optional: true, Description: "Whether to enable network layer controls."},
-			"apply_rate_controls":               schema.BoolAttribute{Optional: true, Description: "Whether to enable rate controls."},
-			"apply_reputation_controls":         schema.BoolAttribute{Optional: true, Description: "Whether to enable reputation controls."},
-			"apply_slow_post_controls":          schema.BoolAttribute{Optional: true, Description: "Whether to enable slow post controls."},
-			"apply_url_protection_controls":     schema.BoolAttribute{Optional: true, Description: "Whether to enable URL protection controls."},
-			"apply_account_protection_controls": schema.BoolAttribute{Optional: true, Description: "Whether to enable account protection controls."},
+			"apply_account_protection_controls": schema.BoolAttribute{Required: true, Description: "Whether to enable account protection controls."},
+			"apply_api_constraints":             schema.BoolAttribute{Required: true, Description: "Whether to enable API constraints."},
+			"apply_application_layer_controls":  schema.BoolAttribute{Required: true, Description: "Whether to enable application layer controls."},
+			"apply_botman_controls":             schema.BoolAttribute{Required: true, Description: "Whether to enable botman controls."},
+			"apply_malware_controls":            schema.BoolAttribute{Required: true, Description: "Whether to enable malware controls."},
+			"apply_network_layer_controls":      schema.BoolAttribute{Required: true, Description: "Whether to enable network layer controls."},
+			"apply_rate_controls":               schema.BoolAttribute{Required: true, Description: "Whether to enable rate controls."},
+			"apply_reputation_controls":         schema.BoolAttribute{Required: true, Description: "Whether to enable reputation controls."},
+			"apply_slow_post_controls":          schema.BoolAttribute{Required: true, Description: "Whether to enable slow post controls."},
+			"apply_url_protection_controls":     schema.BoolAttribute{Required: true, Description: "Whether to enable URL protection controls."},
 		},
 	}
 }
@@ -143,6 +143,7 @@ func (r *securityPolicyProtectionsResource) Create(ctx context.Context, req reso
 // Read refreshes state for the full protections resource from the API.
 func (r *securityPolicyProtectionsResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var state securityPolicyProtectionsModel
+
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -185,8 +186,9 @@ func (r *securityPolicyProtectionsResource) Delete(ctx context.Context, req reso
 		return
 	}
 
+	state.ApplyAccountProtectionControls = types.BoolValue(false)
 	state.ApplyAPIConstraints = types.BoolValue(false)
-	state.ApplyApplicationLayerControl = types.BoolValue(false)
+	state.ApplyApplicationLayerControls = types.BoolValue(false)
 	state.ApplyBotmanControls = types.BoolValue(false)
 	state.ApplyMalwareControls = types.BoolValue(false)
 	state.ApplyNetworkLayerControls = types.BoolValue(false)
@@ -243,42 +245,25 @@ func (r *securityPolicyProtectionsResource) updatePolicyProtections(ctx context.
 
 	client := inst.Client(r.meta)
 
-	// Read current protection state from API to preserve unspecified values
-	current, err := client.GetPolicyProtections(ctx, appsec.GetPolicyProtectionsRequest{
-		ConfigID: int(data.ConfigID.ValueInt64()),
-		Version:  version,
-		PolicyID: data.SecurityPolicyID.ValueString(),
-	})
-	if err != nil {
-		diags.AddError("Failed to read current policy protections", err.Error())
-		return
-	}
-
 	_, err = client.UpdatePolicyProtections(ctx, appsec.UpdatePolicyProtectionsRequest{
-		ConfigID:                      int(data.ConfigID.ValueInt64()),
-		Version:                       version,
-		PolicyID:                      data.SecurityPolicyID.ValueString(),
-		ApplyAPIConstraints:           boolValueOrDefault(data.ApplyAPIConstraints, current.ApplyAPIConstraints),
-		ApplyApplicationLayerControls: boolValueOrDefault(data.ApplyApplicationLayerControl, current.ApplyApplicationLayerControls),
-		ApplyBotmanControls:           boolValueOrDefault(data.ApplyBotmanControls, current.ApplyBotmanControls),
-		ApplyMalwareControls:          boolValueOrDefault(data.ApplyMalwareControls, current.ApplyMalwareControls),
-		ApplyNetworkLayerControls:     boolValueOrDefault(data.ApplyNetworkLayerControls, current.ApplyNetworkLayerControls),
-		ApplyRateControls:             boolValueOrDefault(data.ApplyRateControls, current.ApplyRateControls),
-		ApplyReputationControls:       boolValueOrDefault(data.ApplyReputationControls, current.ApplyReputationControls),
-		ApplySlowPostControls:         boolValueOrDefault(data.ApplySlowPostControls, current.ApplySlowPostControls),
-		ApplyURLProtectionControls:    boolValueOrDefault(data.ApplyURLProtectionControls, current.ApplyURLProtectionControls),
+		ConfigID:                       int(data.ConfigID.ValueInt64()),
+		Version:                        version,
+		PolicyID:                       data.SecurityPolicyID.ValueString(),
+		ApplyAccountProtectionControls: data.ApplyAccountProtectionControls.ValueBool(),
+		ApplyAPIConstraints:            data.ApplyAPIConstraints.ValueBool(),
+		ApplyApplicationLayerControls:  data.ApplyApplicationLayerControls.ValueBool(),
+		ApplyBotmanControls:            data.ApplyBotmanControls.ValueBool(),
+		ApplyMalwareControls:           data.ApplyMalwareControls.ValueBool(),
+		ApplyNetworkLayerControls:      data.ApplyNetworkLayerControls.ValueBool(),
+		ApplyRateControls:              data.ApplyRateControls.ValueBool(),
+		ApplyReputationControls:        data.ApplyReputationControls.ValueBool(),
+		ApplySlowPostControls:          data.ApplySlowPostControls.ValueBool(),
+		ApplyURLProtectionControls:     data.ApplyURLProtectionControls.ValueBool(),
 	})
+
 	if err != nil {
 		diags.AddError("Failed to update security policy protections", err.Error())
 	}
-}
-
-// boolValueOrDefault returns the bool value if set, otherwise returns the default.
-func boolValueOrDefault(val types.Bool, defaultVal bool) bool {
-	if val.IsNull() || val.IsUnknown() {
-		return defaultVal
-	}
-	return val.ValueBool()
 }
 
 // readState reads all current controls from the API into the full protections model.
@@ -302,36 +287,16 @@ func (r *securityPolicyProtectionsResource) readState(ctx context.Context, data 
 		return diags
 	}
 
-	if !data.ApplyAPIConstraints.IsNull() {
-		data.ApplyAPIConstraints = types.BoolValue(result.ApplyAPIConstraints)
-	}
-	if !data.ApplyApplicationLayerControl.IsNull() {
-		data.ApplyApplicationLayerControl = types.BoolValue(result.ApplyApplicationLayerControls)
-	}
-	if !data.ApplyBotmanControls.IsNull() {
-		data.ApplyBotmanControls = types.BoolValue(result.ApplyBotmanControls)
-	}
-	if !data.ApplyMalwareControls.IsNull() {
-		data.ApplyMalwareControls = types.BoolValue(result.ApplyMalwareControls)
-	}
-	if !data.ApplyNetworkLayerControls.IsNull() {
-		data.ApplyNetworkLayerControls = types.BoolValue(result.ApplyNetworkLayerControls)
-	}
-	if !data.ApplyRateControls.IsNull() {
-		data.ApplyRateControls = types.BoolValue(result.ApplyRateControls)
-	}
-	if !data.ApplyReputationControls.IsNull() {
-		data.ApplyReputationControls = types.BoolValue(result.ApplyReputationControls)
-	}
-	if !data.ApplySlowPostControls.IsNull() {
-		data.ApplySlowPostControls = types.BoolValue(result.ApplySlowPostControls)
-	}
-	if !data.ApplyURLProtectionControls.IsNull() {
-		data.ApplyURLProtectionControls = types.BoolValue(result.ApplyURLProtectionControls)
-	}
-	if !data.ApplyAccountProtection.IsNull() {
-		data.ApplyAccountProtection = types.BoolValue(result.ApplyAccountProtectionControls)
-	}
+	data.ApplyAccountProtectionControls = types.BoolValue(result.ApplyAccountProtectionControls)
+	data.ApplyAPIConstraints = types.BoolValue(result.ApplyAPIConstraints)
+	data.ApplyApplicationLayerControls = types.BoolValue(result.ApplyApplicationLayerControls)
+	data.ApplyBotmanControls = types.BoolValue(result.ApplyBotmanControls)
+	data.ApplyMalwareControls = types.BoolValue(result.ApplyMalwareControls)
+	data.ApplyNetworkLayerControls = types.BoolValue(result.ApplyNetworkLayerControls)
+	data.ApplyRateControls = types.BoolValue(result.ApplyRateControls)
+	data.ApplyReputationControls = types.BoolValue(result.ApplyReputationControls)
+	data.ApplySlowPostControls = types.BoolValue(result.ApplySlowPostControls)
+	data.ApplyURLProtectionControls = types.BoolValue(result.ApplyURLProtectionControls)
 
 	return diags
 }

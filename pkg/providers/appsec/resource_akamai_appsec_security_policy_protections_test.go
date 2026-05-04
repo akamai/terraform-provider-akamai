@@ -22,7 +22,7 @@ func TestAkamaiAppSecSecurityPolicyProtectionsResource(t *testing.T) {
 	t.Parallel()
 	priorProtections := &appsec.PolicyProtectionsResponse{
 		ApplyAPIConstraints:            true,
-		ApplyAccountProtectionControls: false,
+		ApplyAccountProtectionControls: true,
 		ApplyApplicationLayerControls:  true,
 		ApplyBotmanControls:            false,
 		ApplyMalwareControls:           true,
@@ -48,41 +48,47 @@ func TestAkamaiAppSecSecurityPolicyProtectionsResource(t *testing.T) {
 		init  func(*appsec.Mock)
 		steps []resource.TestStep
 	}{
-		"create protections - passed all optional fields": {
+		"create protections - passed all required fields": {
 			init: func(m *appsec.Mock) {
+				// GetConfiguration called: 1 for Create (getModifiableConfigVersion),
+				// 1 for readState after Create (getLatestConfigVersion),
+				// 1 for Read during plan before Delete (getLatestConfigVersion),
+				// 1 for Delete (getModifiableConfigVersion)
 				mockGetConfigurationPolicyProtection(m, 4)
 				// Mock for Create
 				mockUpdatePolicyProtections(m, appsec.UpdatePolicyProtectionsRequest{
-					ConfigID:                      12345,
-					Version:                       1,
-					PolicyID:                      "test_policy",
-					ApplyAPIConstraints:           true,
-					ApplyApplicationLayerControls: true,
-					ApplyBotmanControls:           false,
-					ApplyMalwareControls:          true,
-					ApplyNetworkLayerControls:     false,
-					ApplyRateControls:             true,
-					ApplyReputationControls:       false,
-					ApplySlowPostControls:         true,
-					ApplyURLProtectionControls:    true,
+					ConfigID:                       12345,
+					Version:                        1,
+					PolicyID:                       "test_policy",
+					ApplyAccountProtectionControls: true,
+					ApplyAPIConstraints:            true,
+					ApplyApplicationLayerControls:  true,
+					ApplyBotmanControls:            false,
+					ApplyMalwareControls:           true,
+					ApplyNetworkLayerControls:      false,
+					ApplyRateControls:              true,
+					ApplyReputationControls:        false,
+					ApplySlowPostControls:          true,
+					ApplyURLProtectionControls:     true,
 				}, 1)
 				// Mock for Delete (all protections disabled)
 				mockUpdatePolicyProtections(m, appsec.UpdatePolicyProtectionsRequest{
-					ConfigID:                      12345,
-					Version:                       1,
-					PolicyID:                      "test_policy",
-					ApplyAPIConstraints:           false,
-					ApplyApplicationLayerControls: false,
-					ApplyBotmanControls:           false,
-					ApplyMalwareControls:          false,
-					ApplyNetworkLayerControls:     false,
-					ApplyRateControls:             false,
-					ApplyReputationControls:       false,
-					ApplySlowPostControls:         false,
-					ApplyURLProtectionControls:    false,
+					ConfigID:                       12345,
+					Version:                        1,
+					PolicyID:                       "test_policy",
+					ApplyAccountProtectionControls: false,
+					ApplyAPIConstraints:            false,
+					ApplyApplicationLayerControls:  false,
+					ApplyBotmanControls:            false,
+					ApplyMalwareControls:           false,
+					ApplyNetworkLayerControls:      false,
+					ApplyRateControls:              false,
+					ApplyReputationControls:        false,
+					ApplySlowPostControls:          false,
+					ApplyURLProtectionControls:     false,
 				}, 1)
-				// GetPolicyProtections called: 1 for create (in updatePolicyProtections), 1 for readState, 1 for read, 1 for delete (in updatePolicyProtections)
-				mockGetPolicyProtections(m, 12345, 1, "test_policy", priorProtections, 4)
+				// GetPolicyProtections called: 1 for readState after Create, 1 for Read during plan before Delete
+				mockGetPolicyProtections(m, 12345, 1, "test_policy", priorProtections, 2)
 			},
 			steps: []resource.TestStep{
 				{
@@ -91,88 +97,72 @@ func TestAkamaiAppSecSecurityPolicyProtectionsResource(t *testing.T) {
 				},
 			},
 		},
-		"create protections - passed no optional fields": {
-			init: func(m *appsec.Mock) {
-				mockGetConfigurationPolicyProtection(m, 4)
-
-				// No optional fields specified - all values fall back to priorProtections
-				mockGetPolicyProtections(m, 12345, 1, "test_policy", priorProtections, 4)
-
-				// Update mirrors priorProtections exactly (no user overrides)
-				mockUpdatePolicyProtections(m, appsec.UpdatePolicyProtectionsRequest{
-					ConfigID:                      12345,
-					Version:                       1,
-					PolicyID:                      "test_policy",
-					ApplyAPIConstraints:           true,
-					ApplyApplicationLayerControls: true,
-					ApplyBotmanControls:           false,
-					ApplyMalwareControls:          true,
-					ApplyNetworkLayerControls:     false,
-					ApplyRateControls:             true,
-					ApplyReputationControls:       false,
-					ApplySlowPostControls:         true,
-					ApplyURLProtectionControls:    true,
-				}, 1)
-
-				// Mock for Delete (all protections disabled)
-				mockUpdatePolicyProtections(m, appsec.UpdatePolicyProtectionsRequest{
-					ConfigID:                      12345,
-					Version:                       1,
-					PolicyID:                      "test_policy",
-					ApplyAPIConstraints:           false,
-					ApplyApplicationLayerControls: false,
-					ApplyBotmanControls:           false,
-					ApplyMalwareControls:          false,
-					ApplyNetworkLayerControls:     false,
-					ApplyRateControls:             false,
-					ApplyReputationControls:       false,
-					ApplySlowPostControls:         false,
-					ApplyURLProtectionControls:    false,
-				}, 1)
-			},
-			steps: []resource.TestStep{
-				{
-					Config: testutils.LoadFixtureString(t, "testdata/TestResSecurityPolicyProtections/partial.tf"),
-					Check:  protectionsChecker(loadProtectionsExpected(t, "expected_partial_protections.json")),
-				},
-			},
-		},
 		"update protections": {
 			init: func(m *appsec.Mock) {
-				mockGetConfigurationPolicyProtection(m, 4)
+				// GetConfiguration called: 1 for Create (getModifiableConfigVersion),
+				// 1 for readState after Create (getLatestConfigVersion),
+				// 1 for Read during plan before Delete (getLatestConfigVersion),
+				// 1 for Delete (getModifiableConfigVersion)
+				mockGetConfigurationPolicyProtection(m, 8)
+				// Mock for Create
 				mockUpdatePolicyProtections(m, appsec.UpdatePolicyProtectionsRequest{
-					ConfigID:                      12345,
-					Version:                       1,
-					PolicyID:                      "test_policy",
-					ApplyAPIConstraints:           false,
-					ApplyApplicationLayerControls: false,
-					ApplyBotmanControls:           true,
-					ApplyMalwareControls:          false,
-					ApplyNetworkLayerControls:     true,
-					ApplyRateControls:             false,
-					ApplyReputationControls:       true,
-					ApplySlowPostControls:         false,
-					ApplyURLProtectionControls:    false,
+					ConfigID:                       12345,
+					Version:                        1,
+					PolicyID:                       "test_policy",
+					ApplyAccountProtectionControls: true,
+					ApplyAPIConstraints:            true,
+					ApplyApplicationLayerControls:  true,
+					ApplyBotmanControls:            false,
+					ApplyMalwareControls:           true,
+					ApplyNetworkLayerControls:      false,
+					ApplyRateControls:              true,
+					ApplyReputationControls:        false,
+					ApplySlowPostControls:          true,
+					ApplyURLProtectionControls:     true,
+				}, 1)
+				// GetPolicyProtections called: 1 for readState after Create, 1 for Read during plan before Delete, 1 for readState before Update
+				mockGetPolicyProtections(m, 12345, 1, "test_policy", priorProtections, 3)
+				// mock for update
+				mockUpdatePolicyProtections(m, appsec.UpdatePolicyProtectionsRequest{
+					ConfigID:                       12345,
+					Version:                        1,
+					PolicyID:                       "test_policy",
+					ApplyAccountProtectionControls: false,
+					ApplyAPIConstraints:            false,
+					ApplyApplicationLayerControls:  false,
+					ApplyBotmanControls:            true,
+					ApplyMalwareControls:           false,
+					ApplyNetworkLayerControls:      true,
+					ApplyRateControls:              false,
+					ApplyReputationControls:        true,
+					ApplySlowPostControls:          false,
+					ApplyURLProtectionControls:     false,
 				}, 1)
 				// Mock for Delete (all protections disabled)
 				mockUpdatePolicyProtections(m, appsec.UpdatePolicyProtectionsRequest{
-					ConfigID:                      12345,
-					Version:                       1,
-					PolicyID:                      "test_policy",
-					ApplyAPIConstraints:           false,
-					ApplyApplicationLayerControls: false,
-					ApplyBotmanControls:           false,
-					ApplyMalwareControls:          false,
-					ApplyNetworkLayerControls:     false,
-					ApplyRateControls:             false,
-					ApplyReputationControls:       false,
-					ApplySlowPostControls:         false,
-					ApplyURLProtectionControls:    false,
+					ConfigID:                       12345,
+					Version:                        1,
+					PolicyID:                       "test_policy",
+					ApplyAccountProtectionControls: false,
+					ApplyAPIConstraints:            false,
+					ApplyApplicationLayerControls:  false,
+					ApplyBotmanControls:            false,
+					ApplyMalwareControls:           false,
+					ApplyNetworkLayerControls:      false,
+					ApplyRateControls:              false,
+					ApplyReputationControls:        false,
+					ApplySlowPostControls:          false,
+					ApplyURLProtectionControls:     false,
 				}, 1)
-				// GetPolicyProtections called: 1 for create (in updatePolicyProtections), 1 for readState, 1 for read, 1 for delete (in updatePolicyProtections)
-				mockGetPolicyProtections(m, 12345, 1, "test_policy", updatedProtections, 4)
+				// GetPolicyProtections called: 1 for readState after Update, 1 for Read during plan before Delete
+				mockGetPolicyProtections(m, 12345, 1, "test_policy", updatedProtections, 2)
 			},
+
 			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, securityPolicyProtectionsBasicFixture),
+					Check:  protectionsChecker(loadProtectionsExpected(t, "expected_basic_protections.json")),
+				},
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResSecurityPolicyProtections/update.tf"),
 					Check:  protectionsChecker(loadProtectionsExpected(t, "expected_updated_protections.json")),
@@ -191,7 +181,31 @@ func TestAkamaiAppSecSecurityPolicyProtectionsResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResSecurityPolicyProtections/empty_security_policy_id.tf"),
-					ExpectError: regexp.MustCompile("Attribute cannot be empty"),
+					ExpectError: regexp.MustCompile("Error: Missing required argument"),
+				},
+			},
+		},
+		"missing required protections control": {
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResSecurityPolicyProtections/missing_protections.tf"),
+					ExpectError: regexp.MustCompile("Missing required argument"),
+				},
+			},
+		},
+		"empty value for protections control": {
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResSecurityPolicyProtections/empty_protections.tf"),
+					ExpectError: regexp.MustCompile("Inappropriate value for attribute"),
+				},
+			},
+		},
+		"null value for protections control": {
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResSecurityPolicyProtections/null_protections.tf"),
+					ExpectError: regexp.MustCompile("Error: Missing Configuration for Required Attribute"),
 				},
 			},
 		},
@@ -208,9 +222,9 @@ func TestAkamaiAppSecSecurityPolicyProtectionsResource(t *testing.T) {
 		},
 		"create protections - Unable to update policy protections": {
 			init: func(m *appsec.Mock) {
+				// GetConfiguration called once for getModifiableConfigVersion in updatePolicyProtections
 				mockGetConfigurationPolicyProtection(m, 1)
-				// GetPolicyProtections is called in updatePolicyProtections before UpdatePolicyProtections
-				mockGetPolicyProtections(m, 12345, 1, "test_policy", priorProtections, 1)
+				// updatePolicyProtections calls UpdatePolicyProtections directly — no GetPolicyProtections
 				mockUpdatePolicyProtectionsFailure(m, 1)
 			},
 			steps: []resource.TestStep{
@@ -222,24 +236,26 @@ func TestAkamaiAppSecSecurityPolicyProtectionsResource(t *testing.T) {
 		},
 		"read protections - Unable to get policy protections": {
 			init: func(m *appsec.Mock) {
+				// GetConfiguration called: 1 for Create (getModifiableConfigVersion),
+				// 1 for readState after Create (getLatestConfigVersion)
 				mockGetConfigurationPolicyProtection(m, 2)
-				// GetPolicyProtections succeeds in updatePolicyProtections
-				mockGetPolicyProtections(m, 12345, 1, "test_policy", priorProtections, 1)
+				// updatePolicyProtections succeeds — no GetPolicyProtections call inside it
 				mockUpdatePolicyProtections(m, appsec.UpdatePolicyProtectionsRequest{
-					ConfigID:                      12345,
-					Version:                       1,
-					PolicyID:                      "test_policy",
-					ApplyAPIConstraints:           true,
-					ApplyApplicationLayerControls: true,
-					ApplyBotmanControls:           false,
-					ApplyMalwareControls:          true,
-					ApplyNetworkLayerControls:     false,
-					ApplyRateControls:             true,
-					ApplyReputationControls:       false,
-					ApplySlowPostControls:         true,
-					ApplyURLProtectionControls:    true,
+					ConfigID:                       12345,
+					Version:                        1,
+					PolicyID:                       "test_policy",
+					ApplyAccountProtectionControls: true,
+					ApplyAPIConstraints:            true,
+					ApplyApplicationLayerControls:  true,
+					ApplyBotmanControls:            false,
+					ApplyMalwareControls:           true,
+					ApplyNetworkLayerControls:      false,
+					ApplyRateControls:              true,
+					ApplyReputationControls:        false,
+					ApplySlowPostControls:          true,
+					ApplyURLProtectionControls:     true,
 				}, 1)
-				// GetPolicyProtections fails in readState
+				// GetPolicyProtections fails in readState after Create
 				mockGetPolicyProtectionsFailure(m, "test_policy", 12345, 1, 1)
 			},
 			steps: []resource.TestStep{
@@ -251,23 +267,26 @@ func TestAkamaiAppSecSecurityPolicyProtectionsResource(t *testing.T) {
 		},
 		"import protections": {
 			init: func(m *appsec.Mock) {
+				// GetConfiguration called: 1 for Read after ImportState (getLatestConfigVersion),
+				// 1 for Delete (getModifiableConfigVersion)
 				mockGetConfigurationPolicyProtection(m, 2)
-				// GetPolicyProtections called: 1 for import read, 1 for delete (in updatePolicyProtections)
-				mockGetPolicyProtections(m, 12345, 1, "test_policy", priorProtections, 2)
+				// GetPolicyProtections called once in Read (via readState) after ImportState
+				mockGetPolicyProtections(m, 12345, 1, "test_policy", priorProtections, 1)
 				// Mock for Delete (all protections disabled)
 				mockUpdatePolicyProtections(m, appsec.UpdatePolicyProtectionsRequest{
-					ConfigID:                      12345,
-					Version:                       1,
-					PolicyID:                      "test_policy",
-					ApplyAPIConstraints:           false,
-					ApplyApplicationLayerControls: false,
-					ApplyBotmanControls:           false,
-					ApplyMalwareControls:          false,
-					ApplyNetworkLayerControls:     false,
-					ApplyRateControls:             false,
-					ApplyReputationControls:       false,
-					ApplySlowPostControls:         false,
-					ApplyURLProtectionControls:    false,
+					ConfigID:                       12345,
+					Version:                        1,
+					PolicyID:                       "test_policy",
+					ApplyAccountProtectionControls: false,
+					ApplyAPIConstraints:            false,
+					ApplyApplicationLayerControls:  false,
+					ApplyBotmanControls:            false,
+					ApplyMalwareControls:           false,
+					ApplyNetworkLayerControls:      false,
+					ApplyRateControls:              false,
+					ApplyReputationControls:        false,
+					ApplySlowPostControls:          false,
+					ApplyURLProtectionControls:     false,
 				}, 1)
 			},
 			steps: []resource.TestStep{

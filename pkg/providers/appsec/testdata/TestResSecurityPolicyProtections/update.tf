@@ -4,15 +4,16 @@ provider "akamai" {
 }
 
 resource "akamai_appsec_security_policy_protections" "test" {
-  config_id                        = 12345
-  security_policy_id               = "test_policy"
-  apply_api_constraints            = false
-  apply_application_layer_controls = false
-  apply_botman_controls            = true
-  apply_malware_controls           = false
-  apply_network_layer_controls     = true
-  apply_rate_controls              = false
-  apply_reputation_controls        = true
-  apply_slow_post_controls         = false
-  apply_url_protection_controls    = false
+  config_id                         = 12345
+  security_policy_id                = "test_policy"
+  apply_account_protection_controls = false
+  apply_api_constraints             = false
+  apply_application_layer_controls  = false
+  apply_botman_controls             = true
+  apply_malware_controls            = false
+  apply_network_layer_controls      = true
+  apply_rate_controls               = false
+  apply_reputation_controls         = true
+  apply_slow_post_controls          = false
+  apply_url_protection_controls     = false
 }
