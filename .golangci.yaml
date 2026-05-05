@@ -57,10 +57,6 @@ linters:
       - linters:
           - staticcheck
         path: pkg/providers/dns/internal/txtrecord/jparse\.go
-      - linters:
-          - staticcheck
-        path: pkg/providers/property/resource_akamai_cp_code\.go
-        text: "GetCPCodeDetail is deprecated|UpdateCPCode is deprecated"
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0

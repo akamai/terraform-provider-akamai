@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/reportinggroups"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/str"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/timeouts"
@@ -270,16 +272,16 @@ func resourceCPCodeUpdate(config cpCodeResourceConfig) schema.UpdateContextFunc 
 			return diag.FromErr(err)
 		}
 
-		cpCode, err := meta.Client().GetPAPI().GetCPCodeDetail(ctx, cpCodeID)
+		cpCode, err := meta.Client().GetReportingGroups().GetCPCode(ctx, reportinggroups.GetCPCodeRequest{CPCodeID: int64(cpCodeID)})
 		if err != nil {
 			return diag.FromErr(err)
 		}
 
-		_, err = meta.Client().GetPAPI().UpdateCPCode(ctx, papi.UpdateCPCodeRequest{
-			ID:               cpCode.ID,
-			Name:             name,
+		_, err = meta.Client().GetReportingGroups().UpdateCPCode(ctx, reportinggroups.UpdateCPCodeRequest{
+			CPCodeID:         cpCode.CPCodeID,
+			CPCodeName:       name,
 			Purgeable:        &cpCode.Purgeable,
-			OverrideTimeZone: &cpCode.OverrideTimeZone,
+			OverrideTimeZone: ptr.To(cpCode.OverrideTimeZone),
 			Contracts:        cpCode.Contracts,
 			Products:         cpCode.Products,
 		})

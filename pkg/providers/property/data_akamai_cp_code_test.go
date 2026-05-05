@@ -194,7 +194,7 @@ func TestDSCPCode(t *testing.T) {
 		t.Parallel()
 		client := edgegrid.NewTestClient()
 
-		expectGetProducts(client.PAPI, "ctr_11", []string{"prd_1", "prd_2", "prd_3"}).Once()
+		expectGetProducts(client.PAPI, "ctr_11", []string{"prd_1", "prd_2", "prd_3"})
 
 		client.PAPI.On("GetCPCodes",
 			testutils.MockContext, papi.GetCPCodesRequest{ContractID: "ctr_11", GroupID: "grp_22"},

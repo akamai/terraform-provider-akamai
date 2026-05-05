@@ -8,7 +8,10 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/ptr"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/reportinggroups"
 	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
@@ -18,7 +21,7 @@ import (
 
 func TestResCPCode(t *testing.T) {
 	t.Parallel()
-	expectGetCPCode := func(m *papi.Mock, contractID, groupID string, CPCodeID int, CPCodeName string, CPCodeProductIDs []string, err error) *mock.Call {
+	expectGetCPCode := func(m *papi.Mock, contractID, groupID string, CPCodeID int, CPCodeName string, CPCodeProductIDs []string, err error, times int) *mock.Call {
 		req := papi.GetCPCodeRequest{CPCodeID: strconv.Itoa(CPCodeID), ContractID: contractID, GroupID: groupID}
 		var res *papi.GetCPCodesResponse
 		if err == nil {
@@ -30,7 +33,7 @@ func TestResCPCode(t *testing.T) {
 				},
 			}
 		}
-		return m.On("GetCPCode", testutils.MockContext, req).Return(res, nil)
+		return m.On("GetCPCode", testutils.MockContext, req).Return(res, nil).Times(times)
 	}
 
 	expectGetCPCodes := func(m *papi.Mock, ContractID, GroupID string, CPCodes []papi.CPCode) *mock.Call {
@@ -41,7 +44,7 @@ func TestResCPCode(t *testing.T) {
 			CPCodes:    papi.CPCodeItems{Items: CPCodes},
 		}
 
-		return m.On("GetCPCodes", testutils.MockContext, req).Return(res, nil)
+		return m.On("GetCPCodes", testutils.MockContext, req).Return(res, nil).Once()
 	}
 
 	expectCreateCPCode := func(m *papi.Mock, CPCName, Product, Contract, Group string) *mock.Call {
@@ -61,244 +64,197 @@ func TestResCPCode(t *testing.T) {
 
 		res := &papi.CreateCPCodeResponse{CPCodeID: cpc.ID}
 
-		return m.On("CreateCPCode", testutils.MockContext, req).Return(res, nil)
+		return m.On("CreateCPCode", testutils.MockContext, req).Return(res, nil).Once()
 	}
 
-	expectUpdateCPCode := func(m *papi.Mock, CPCodeID int, name string, err error) *mock.Call {
-		var res *papi.CPCodeDetailResponse
-
-		f := false
-		req := papi.UpdateCPCodeRequest{
-			ID:               CPCodeID,
-			Name:             name,
-			Purgeable:        &f,
-			OverrideTimeZone: &papi.CPCodeTimeZone{},
+	expectUpdateCPCode := func(m *reportinggroups.Mock, CPCodeID int, name string, err error) *mock.Call {
+		var res *reportinggroups.UpdateCPCodeResponse
+		req := reportinggroups.UpdateCPCodeRequest{
+			CPCodeID:         int64(CPCodeID),
+			CPCodeName:       name,
+			Purgeable:        ptr.To(false),
+			OverrideTimeZone: &reportinggroups.CPCodeTimeZone{},
 		}
 
 		if err == nil {
-			res = &papi.CPCodeDetailResponse{
-				ID:   req.ID,
-				Name: req.Name,
+			res = &reportinggroups.UpdateCPCodeResponse{
+				CPCodeID:   req.CPCodeID,
+				CPCodeName: req.CPCodeName,
 			}
 
 		}
 
-		return m.On("UpdateCPCode", testutils.MockContext, req).Return(res, err)
+		return m.On("UpdateCPCode", testutils.MockContext, req).Return(res, err).Once()
 	}
 
-	expectGetCPCodeDetail := func(m *papi.Mock, CPCodeID int, CPCodeName string, err error) *mock.Call {
-		var res *papi.CPCodeDetailResponse
+	expectGetCPCodeDetail := func(m *reportinggroups.Mock, CPCodeID int, CPCodeName string, err error) *mock.Call {
+		var res *reportinggroups.GetCPCodeResponse
 		if err == nil {
-			res = &papi.CPCodeDetailResponse{
-				ID:   CPCodeID,
-				Name: CPCodeName,
+			res = &reportinggroups.GetCPCodeResponse{
+				CPCodeID:   int64(CPCodeID),
+				CPCodeName: CPCodeName,
 			}
 		}
-		return m.On("GetCPCodeDetail", testutils.MockContext, CPCodeID).Return(res, err)
+		return m.On("GetCPCode", testutils.MockContext, reportinggroups.GetCPCodeRequest{CPCodeID: int64(CPCodeID)}).Return(res, err).Once()
 	}
 
-	// redefining times to accelerate tests
-	config := defaultSubproviderConfig()
-	config.cpCode.updatePollMinimum = time.Millisecond * 1
-	config.cpCode.updatePollInterval = config.cpCode.updatePollMinimum
+	tests := map[string]struct {
+		init                        func(*papi.Mock, *reportinggroups.Mock)
+		steps                       []resource.TestStep
+		updatePollInterval          time.Duration
+		cpCodeResourceUpdateTimeout time.Duration
+	}{
+		"create new CP Code": {
+			init: func(p *papi.Mock, _ *reportinggroups.Mock) {
+				expectGetProducts(p, "ctr_1", []string{"prd_1", "prd_2", "prd_3"})
+				expectGetCPCodes(p, "ctr_1", "grp_1", nil)
+				expectCreateCPCode(p, "test cpcode", "prd_1", "ctr_1", "grp_1")
+				expectGetCPCode(p, "ctr_1", "grp_1", 0, "test cpcode", []string{"prd_1"}, nil, 2)
 
-	t.Run("create new CP Code", func(t *testing.T) {
-		t.Parallel()
-		client := edgegrid.NewTestClient()
-		defer client.PAPI.AssertExpectations(t)
-
-		expectGetProducts(client.PAPI, "ctr_1", []string{"prd_1", "prd_2", "prd_3"}).Once()
-		expectGetCPCodes(client.PAPI, "ctr_1", "grp_1", nil).Once()
-		expectCreateCPCode(client.PAPI, "test cpcode", "prd_1", "ctr_1", "grp_1")
-		expectGetCPCode(client.PAPI, "ctr_1", "grp_1", 0, "test cpcode", []string{"prd_1"}, nil).Times(2)
-
-		// No mock behavior for delete because there is no delete operation for CP Codes
-		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
-			Steps: []resource.TestStep{{
+				// No mock behavior for delete because there is no delete operation for CP Codes
+			},
+			steps: []resource.TestStep{{
 				Config: testutils.LoadFixtureString(t, "testdata/TestResCPCode/create_new_cp_code.tf"),
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "0"),
-					resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
-					resource.TestCheckResourceAttr("akamai_cp_code.test", "group_id", "grp_1"),
-					resource.TestCheckResourceAttr("akamai_cp_code.test", "contract_id", "ctr_1"),
-					resource.TestCheckResourceAttr("akamai_cp_code.test", "product_id", "prd_1"),
-					resource.TestCheckResourceAttr("akamai_cp_code.test", "timeouts.#", "1"),
-					resource.TestCheckResourceAttr("akamai_cp_code.test", "timeouts.0.update", "1h"),
-				),
+				Check: test.NewStateChecker("akamai_cp_code.test").
+					CheckEqual("id", "0").
+					CheckEqual("name", "test cpcode").
+					CheckEqual("group_id", "grp_1").
+					CheckEqual("contract_id", "ctr_1").
+					CheckEqual("product_id", "prd_1").
+					CheckEqual("timeouts.#", "1").
+					CheckEqual("timeouts.0.update", "1h").
+					Build(),
 			}},
-		})
+		},
+		"use existing CP Code with multiple products": {
+			init: func(p *papi.Mock, _ *reportinggroups.Mock) {
+				expectGetProducts(p, "ctr_test", []string{"prd_test", "prd_wrong", "another_wrong"})
 
-	})
+				CPCodes := []papi.CPCode{
+					{ID: "0", Name: "test cpcode", ProductIDs: []string{"prd_test", "prd_wrong", "another_wrong"}},
+				}
 
-	t.Run("use existing CP Code with multiple products", func(t *testing.T) {
-		t.Parallel()
-		client := edgegrid.NewTestClient()
-		defer client.PAPI.AssertExpectations(t)
+				expectGetCPCodes(p, "ctr_test", "grp_test", CPCodes)
+				// No mock behavior for create because we're using an existing CP code
 
-		expectGetProducts(client.PAPI, "ctr_test", []string{"prd_test", "prd_wrong", "another_wrong"}).Once()
+				// Read and plan
+				expectGetCPCode(p, "ctr_test", "grp_test", 0, "test cpcode", []string{"prd_test", "prd_wrong", "another_wrong"}, nil, 2)
 
-		CPCodes := []papi.CPCode{
-			{ID: "0", Name: "test cpcode", ProductIDs: []string{"prd_test", "prd_wrong", "another_wrong"}},
-		}
-
-		expectGetCPCodes(client.PAPI, "ctr_test", "grp_test", CPCodes).Once()
-		// No mock behavior for create because we're using an existing CP code
-
-		// Read and plan
-		expectGetCPCode(client.PAPI, "ctr_test", "grp_test", 0, "test cpcode", []string{"prd_test", "prd_wrong", "another_wrong"}, nil).Times(2)
-
-		// No mock behavior for delete because there is no delete operation for CP Codes
-		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
-			Steps: []resource.TestStep{{
+				// No mock behavior for delete because there is no delete operation for CP Codes
+			},
+			steps: []resource.TestStep{{
 				Config: testutils.LoadFixtureString(t, "testdata/TestResCPCode/use_existing_cp_code.tf"),
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "0"),
-					resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
-					resource.TestCheckResourceAttr("akamai_cp_code.test", "group_id", "grp_test"),
-					resource.TestCheckResourceAttr("akamai_cp_code.test", "contract_id", "ctr_test"),
-					resource.TestCheckResourceAttr("akamai_cp_code.test", "product_id", "prd_test"),
-					resource.TestCheckResourceAttr("akamai_cp_code.test", "timeouts.#", "0"),
-				),
+				Check: test.NewStateChecker("akamai_cp_code.test").
+					CheckEqual("id", "0").
+					CheckEqual("name", "test cpcode").
+					CheckEqual("group_id", "grp_test").
+					CheckEqual("contract_id", "ctr_test").
+					CheckEqual("product_id", "prd_test").
+					CheckEqual("timeouts.#", "0").
+					Build(),
 			}},
-		})
+		},
+		"use existing CP Code": {
+			init: func(p *papi.Mock, _ *reportinggroups.Mock) {
+				expectGetProducts(p, "ctr_test", []string{"prd_test", "prd_wrong", "another_wrong"})
 
-	})
+				CPCodes := []papi.CPCode{
+					{ID: "0", Name: "wrong CP code", ProductIDs: []string{"prd_test"}},
+					{ID: "cpc_1", Name: "test cpcode", ProductIDs: []string{"prd_test"}},
+				}
 
-	t.Run("use existing CP Code", func(t *testing.T) {
-		t.Parallel()
-		client := edgegrid.NewTestClient()
-		defer client.PAPI.AssertExpectations(t)
+				expectGetCPCodes(p, "ctr_test", "grp_test", CPCodes)
+				// No mock behavior for create because we're using an existing CP code
 
-		expectGetProducts(client.PAPI, "ctr_test", []string{"prd_test", "prd_wrong", "another_wrong"}).Once()
+				// Read and plan
+				expectGetCPCode(p, "ctr_test", "grp_test", 1, "test cpcode", []string{"prd_test"}, nil, 2)
 
-		CPCodes := []papi.CPCode{
-			{ID: "0", Name: "wrong CP code", ProductIDs: []string{"prd_test"}},
-			{ID: "cpc_1", Name: "test cpcode", ProductIDs: []string{"prd_test"}},
-		}
-
-		expectGetCPCodes(client.PAPI, "ctr_test", "grp_test", CPCodes).Once()
-		// No mock behavior for create because we're using an existing CP code
-
-		// Read and plan
-		expectGetCPCode(client.PAPI, "ctr_test", "grp_test", 1, "test cpcode", []string{"prd_test"}, nil).Times(2)
-
-		// No mock behavior for delete because there is no delete operation for CP Codes
-		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
-			Steps: []resource.TestStep{{
+				// No mock behavior for delete because there is no delete operation for CP Codes
+			},
+			steps: []resource.TestStep{{
 				Config: testutils.LoadFixtureString(t, "testdata/TestResCPCode/use_existing_cp_code.tf"),
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "1"),
-					resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
-					resource.TestCheckResourceAttr("akamai_cp_code.test", "group_id", "grp_test"),
-					resource.TestCheckResourceAttr("akamai_cp_code.test", "contract_id", "ctr_test"),
-					resource.TestCheckResourceAttr("akamai_cp_code.test", "product_id", "prd_test"),
-				),
+				Check: test.NewStateChecker("akamai_cp_code.test").
+					CheckEqual("id", "1").
+					CheckEqual("name", "test cpcode").
+					CheckEqual("group_id", "grp_test").
+					CheckEqual("contract_id", "ctr_test").
+					CheckEqual("product_id", "prd_test").
+					Build(),
 			}},
-		})
+		},
+		"product missing from CP Code": {
+			init: func(p *papi.Mock, _ *reportinggroups.Mock) {
+				expectGetProducts(p, "ctr_test", []string{"prd_1", "prd_2", "prd_3"})
 
-	})
-
-	t.Run("product missing from CP Code", func(t *testing.T) {
-		t.Parallel()
-		client := edgegrid.NewTestClient()
-		defer client.PAPI.AssertExpectations(t)
-
-		expectGetProducts(client.PAPI, "ctr_test", []string{"prd_1", "prd_2", "prd_3"}).Once()
-
-		// No mock behavior for delete because there is no delete operation for CP Codes
-		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
-			Steps: []resource.TestStep{{
+				// No mock behavior for delete because there is no delete operation for CP Codes
+			},
+			steps: []resource.TestStep{{
 				Config:      testutils.LoadFixtureString(t, "testdata/TestResCPCode/use_existing_cp_code.tf"),
 				ExpectError: regexp.MustCompile("`product_id` `prd_test` does not exist under contract `ctr_test`, you need to provide a valid `product_id`"),
 			}},
-		})
+		},
+		"change name": {
+			init: func(p *papi.Mock, rg *reportinggroups.Mock) {
+				expectGetProducts(p, "ctr_1", []string{"prd_1", "prd_2", "prd_3"})
 
-	})
+				expectGetCPCodes(p, "ctr_1", "grp_1", nil)
+				expectCreateCPCode(p, "test cpcode", "prd_1", "ctr_1", "grp_1")
+				expectGetCPCode(p, "ctr_1", "grp_1", 0, "test cpcode", []string{"prd_1"}, nil, 3)
 
-	t.Run("change name", func(t *testing.T) {
-		t.Parallel()
-		client := edgegrid.NewTestClient()
-		defer client.PAPI.AssertExpectations(t)
+				expectGetCPCodeDetail(rg, 0, "test cpcode", nil)
+				expectUpdateCPCode(rg, 0, "renamed cpcode", nil)
+				expectGetCPCode(p, "ctr_1", "grp_1", 0, "test cpcode", []string{"prd_1"}, nil, 1)
+				expectGetCPCode(p, "ctr_1", "grp_1", 0, "renamed cpcode", []string{"prd_1"}, nil, 3)
 
-		expectGetProducts(client.PAPI, "ctr_1", []string{"prd_1", "prd_2", "prd_3"}).Once()
-
-		expectGetCPCodes(client.PAPI, "ctr_1", "grp_1", nil).Once()
-		expectCreateCPCode(client.PAPI, "test cpcode", "prd_1", "ctr_1", "grp_1").Once()
-		expectGetCPCode(client.PAPI, "ctr_1", "grp_1", 0, "test cpcode", []string{"prd_1"}, nil).Times(3)
-
-		expectGetCPCodeDetail(client.PAPI, 0, "test cpcode", nil).Once()
-		expectUpdateCPCode(client.PAPI, 0, "renamed cpcode", nil).Once()
-		expectGetCPCode(client.PAPI, "ctr_1", "grp_1", 0, "test cpcode", []string{"prd_1"}, nil).Once()
-		expectGetCPCode(client.PAPI, "ctr_1", "grp_1", 0, "renamed cpcode", []string{"prd_1"}, nil).Times(3)
-
-		// No mock behavior for delete because there is no delete operation for CP Codes
-		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
-			Steps: []resource.TestStep{
+				// No mock behavior for delete because there is no delete operation for CP Codes
+			},
+			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResCPCode/change_name_step0.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "0"),
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
-					),
+					Check: test.NewStateChecker("akamai_cp_code.test").
+						CheckEqual("id", "0").
+						CheckEqual("name", "test cpcode").
+						Build(),
 				},
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResCPCode/change_name_step1.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "0"),
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "renamed cpcode"),
-					),
+					Check: test.NewStateChecker("akamai_cp_code.test").
+						CheckEqual("id", "0").
+						CheckEqual("name", "renamed cpcode").
+						Build(),
 				},
 			},
-		})
-
-	})
-
-	t.Run("create CP Code but existing CPCode has no product IDs returns error", func(t *testing.T) {
-		t.Parallel()
-		client := edgegrid.NewTestClient()
-		defer client.PAPI.AssertExpectations(t)
-
-		expectGetProducts(client.PAPI, "ctr_1", []string{"prd_1"}).Once()
-		CPCodes := []papi.CPCode{
-			{ID: "0", Name: "test cpcode", ProductIDs: []string{}},
-		}
-		expectGetCPCodes(client.PAPI, "ctr_1", "grp_1", CPCodes).Once()
-
-		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(defaultSubproviderConfig())),
-			Steps: []resource.TestStep{
+		},
+		"create CP Code but existing CPCode has no product IDs returns error": {
+			init: func(p *papi.Mock, _ *reportinggroups.Mock) {
+				expectGetProducts(p, "ctr_1", []string{"prd_1"})
+				CPCodes := []papi.CPCode{
+					{ID: "0", Name: "test cpcode", ProductIDs: []string{}},
+				}
+				expectGetCPCodes(p, "ctr_1", "grp_1", CPCodes)
+			},
+			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResCPCode/create_new_cp_code.tf"),
 					ExpectError: regexp.MustCompile("the CP code named `test cpcode` already exists, but does not have a PAPI-supported product ID, so it cannot be managed by Terraform"),
 				},
 			},
-		})
-	})
+		},
+		"import existing cp code": {
+			init: func(p *papi.Mock, _ *reportinggroups.Mock) {
+				expectGetProducts(p, "ctr_1", []string{"prd_test", "prd_Web_Accel"})
 
-	t.Run("import existing cp code", func(t *testing.T) {
-		t.Parallel()
-		client := edgegrid.NewTestClient()
-		id := "0,1,2"
-
-		expectGetProducts(client.PAPI, "ctr_1", []string{"prd_test", "prd_Web_Accel"}).Once()
-
-		CPCodes := []papi.CPCode{{ID: "0", Name: "test cpcode", ProductIDs: []string{"prd_Web_Accel"}}}
-		expectGetCPCodes(client.PAPI, "ctr_1", "grp_2", CPCodes)
-		expectGetCPCode(client.PAPI, "ctr_1", "grp_2", 0, "test cpcode", []string{"prd_Web_Accel"}, nil).Times(4)
-		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
-			Steps: []resource.TestStep{
+				CPCodes := []papi.CPCode{{ID: "0", Name: "test cpcode", ProductIDs: []string{"prd_Web_Accel"}}}
+				expectGetCPCodes(p, "ctr_1", "grp_2", CPCodes)
+				expectGetCPCode(p, "ctr_1", "grp_2", 0, "test cpcode", []string{"prd_Web_Accel"}, nil, 4)
+			},
+			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResCPCode/import_cp_code.tf"),
 				},
 				{
 					ImportState:   true,
-					ImportStateId: id,
+					ImportStateId: "0,1,2",
 					ResourceName:  "akamai_cp_code.test",
 					ImportStateCheck: func(s []*terraform.InstanceState) error {
 						assert.Len(t, s, 1)
@@ -313,291 +269,253 @@ func TestResCPCode(t *testing.T) {
 					ImportStateVerify: true,
 				},
 			},
-		})
-		client.PAPI.AssertExpectations(t)
-	})
-
-	t.Run("invalid import ID passed", func(t *testing.T) {
-		t.Parallel()
-		client := edgegrid.NewTestClient()
-		id := "123"
-		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
-			Steps: []resource.TestStep{
+		},
+		"invalid import ID passed": {
+			steps: []resource.TestStep{
 				{
 					Config:        testutils.LoadFixtureString(t, "testdata/TestResCPCode/import_cp_code.tf"),
 					ImportState:   true,
-					ImportStateId: id,
+					ImportStateId: "123",
 					ResourceName:  "akamai_cp_code.test",
 					ExpectError:   regexp.MustCompile("comma-separated list of CP code ID, contract ID and group ID has to be supplied in import"),
 				},
 			},
-		})
-
-		client.PAPI.AssertExpectations(t)
-	})
-
-	t.Run("import cp code with no product IDs returns error", func(t *testing.T) {
-		t.Parallel()
-		client := edgegrid.NewTestClient()
-		defer client.PAPI.AssertExpectations(t)
-
-		id := "123,ctr_1,grp_1"
-		// Mock GetCPCode to return a CPCode with no ProductIDs
-		req := papi.GetCPCodeRequest{CPCodeID: "123", ContractID: "ctr_1", GroupID: "grp_1"}
-		client.PAPI.On("GetCPCode", mock.Anything, req).Return(&papi.GetCPCodesResponse{
-			CPCode: papi.CPCode{
-				ID:         "123",
-				Name:       "test cpcode",
-				ProductIDs: []string{},
+		},
+		"import cp code with no product IDs returns error": {
+			init: func(p *papi.Mock, _ *reportinggroups.Mock) {
+				// Mock GetCPCode to return a CPCode with no ProductIDs
+				req := papi.GetCPCodeRequest{CPCodeID: "123", ContractID: "ctr_1", GroupID: "grp_1"}
+				p.On("GetCPCode", mock.Anything, req).Return(&papi.GetCPCodesResponse{
+					CPCode: papi.CPCode{
+						ID:         "123",
+						Name:       "test cpcode",
+						ProductIDs: []string{},
+					},
+				}, nil).Once()
 			},
-		}, nil).Once()
-
-		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(defaultSubproviderConfig())),
-			Steps: []resource.TestStep{
+			steps: []resource.TestStep{
 				{
 					Config:        testutils.LoadFixtureString(t, "testdata/TestResCPCode/import_cp_code.tf"),
 					ImportState:   true,
-					ImportStateId: id,
+					ImportStateId: "123,ctr_1,grp_1",
 					ResourceName:  "akamai_cp_code.test",
 					ExpectError:   regexp.MustCompile("the CP code named `test cpcode` already exists, but does not have a PAPI-supported product ID, so it cannot be managed by Terraform"),
 				},
 			},
-		})
-	})
-
-	t.Run("empty CP code ID passed", func(t *testing.T) {
-		t.Parallel()
-		client := edgegrid.NewTestClient()
-		id := ",ctr_1-1NC95D,grp_194665"
-		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
-			Steps: []resource.TestStep{
+		},
+		"empty CP code ID passed": {
+			steps: []resource.TestStep{
 				{
 					Config:        testutils.LoadFixtureString(t, "testdata/TestResCPCode/import_cp_code.tf"),
 					ImportState:   true,
-					ImportStateId: id,
+					ImportStateId: ",ctr_1-1NC95D,grp_194665",
 					ResourceName:  "akamai_cp_code.test",
 					ExpectError:   regexp.MustCompile("CP Code is a mandatory parameter"),
 				},
 			},
-		})
+		},
+		"immutable attributes updated": {
+			init: func(p *papi.Mock, _ *reportinggroups.Mock) {
+				expectGetProducts(p, "ctr_1", []string{"prd_1", "prd_2", "prd_3"})
 
-		client.PAPI.AssertExpectations(t)
-	})
+				expectGetCPCodes(p, "ctr_1", "grp_1", nil)
+				expectCreateCPCode(p, "test cpcode", "prd_1", "ctr_1", "grp_1")
+				expectGetCPCode(p, "ctr_1", "grp_1", 0, "test cpcode", []string{"prd_1"}, nil, 5)
 
-	t.Run("immutable attributes updated", func(t *testing.T) {
-		t.Parallel()
-		client := edgegrid.NewTestClient()
-		defer client.PAPI.AssertExpectations(t)
-
-		expectGetProducts(client.PAPI, "ctr_1", []string{"prd_1", "prd_2", "prd_3"}).Once()
-
-		expectGetCPCodes(client.PAPI, "ctr_1", "grp_1", nil).Once()
-		expectCreateCPCode(client.PAPI, "test cpcode", "prd_1", "ctr_1", "grp_1").Once()
-		expectGetCPCode(client.PAPI, "ctr_1", "grp_1", 0, "test cpcode", []string{"prd_1"}, nil).Times(5)
-
-		// No mock behavior for delete because there is no delete operation for CP Codes
-		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
-			Steps: []resource.TestStep{
+				// No mock behavior for delete because there is no delete operation for CP Codes
+			},
+			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResCPCode/change_name_step0.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "0"),
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "group_id", "grp_1"),
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "contract_id", "ctr_1"),
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "product_id", "prd_1"),
-					),
+					Check: test.NewStateChecker("akamai_cp_code.test").
+						CheckEqual("id", "0").
+						CheckEqual("name", "test cpcode").
+						CheckEqual("group_id", "grp_1").
+						CheckEqual("contract_id", "ctr_1").
+						CheckEqual("product_id", "prd_1").
+						Build(),
 				},
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResCPCode/change_immutable.tf"),
 					ExpectError: regexp.MustCompile(`cp code attribute 'contract_id' cannot be changed after creation \(immutable\)`),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "0"),
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "group_id", "grp_1"),
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "contract_id", "ctr_1"),
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "product_id", "prd_1"),
-					),
+					Check: test.NewStateChecker("akamai_cp_code.test").
+						CheckEqual("id", "0").
+						CheckEqual("name", "test cpcode").
+						CheckEqual("group_id", "grp_1").
+						CheckEqual("contract_id", "ctr_1").
+						CheckEqual("product_id", "prd_1").
+						Build(),
 				},
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResCPCode/change_immutable.tf"),
 					ExpectError: regexp.MustCompile(`cp code attribute 'product_id' cannot be changed after creation \(immutable\)`),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "0"),
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "group_id", "grp_1"),
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "contract_id", "ctr_1"),
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "product_id", "prd_1"),
-					),
+					Check: test.NewStateChecker("akamai_cp_code.test").
+						CheckEqual("id", "0").
+						CheckEqual("name", "test cpcode").
+						CheckEqual("group_id", "grp_1").
+						CheckEqual("contract_id", "ctr_1").
+						CheckEqual("product_id", "prd_1").
+						Build(),
 				},
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResCPCode/change_immutable.tf"),
 					ExpectError: regexp.MustCompile(`cp code attribute 'group_id' cannot be changed after creation \(immutable\)`),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "0"),
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "group_id", "grp_1"),
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "contract_id", "ctr_1"),
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "product_id", "prd_1"),
-					),
+					Check: test.NewStateChecker("akamai_cp_code.test").
+						CheckEqual("id", "0").
+						CheckEqual("name", "test cpcode").
+						CheckEqual("group_id", "grp_1").
+						CheckEqual("contract_id", "ctr_1").
+						CheckEqual("product_id", "prd_1").
+						Build(),
 				},
 			},
-		})
+		},
+		"error fetching cpCode details": {
+			init: func(p *papi.Mock, rg *reportinggroups.Mock) {
+				expectGetProducts(p, "ctr_1", []string{"prd_1", "prd_2", "prd_3"})
 
-	})
+				expectGetCPCodes(p, "ctr_1", "grp_1", nil)
+				expectCreateCPCode(p, "test cpcode", "prd_1", "ctr_1", "grp_1")
+				expectGetCPCode(p, "ctr_1", "grp_1", 0, "test cpcode", []string{"prd_1"}, nil, 3)
 
-	t.Run("error fetching cpCode details", func(t *testing.T) {
-		t.Parallel()
-		client := edgegrid.NewTestClient()
-		defer client.PAPI.AssertExpectations(t)
+				expectGetCPCodeDetail(rg, 0, "test cpcode", fmt.Errorf("oops"))
 
-		expectGetProducts(client.PAPI, "ctr_1", []string{"prd_1", "prd_2", "prd_3"}).Once()
-
-		expectGetCPCodes(client.PAPI, "ctr_1", "grp_1", nil).Once()
-		expectCreateCPCode(client.PAPI, "test cpcode", "prd_1", "ctr_1", "grp_1").Once()
-		expectGetCPCode(client.PAPI, "ctr_1", "grp_1", 0, "test cpcode", []string{"prd_1"}, nil).Times(3)
-
-		expectGetCPCodeDetail(client.PAPI, 0, "test cpcode", fmt.Errorf("oops")).Once()
-
-		// No mock behavior for delete because there is no delete operation for CP Codes
-		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
-			Steps: []resource.TestStep{
+				// No mock behavior for delete because there is no delete operation for CP Codes
+			},
+			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResCPCode/change_name_step0.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "0"),
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
-					),
+					Check: test.NewStateChecker("akamai_cp_code.test").
+						CheckEqual("id", "0").
+						CheckEqual("name", "test cpcode").
+						Build(),
 				},
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResCPCode/change_name_step1.tf"),
 					ExpectError: regexp.MustCompile("oops"),
 				},
 			},
-		})
+		},
+		"error updating cpCode": {
+			init: func(p *papi.Mock, rg *reportinggroups.Mock) {
+				expectGetProducts(p, "ctr_1", []string{"prd_1", "prd_2", "prd_3"})
 
-	})
+				expectGetCPCodes(p, "ctr_1", "grp_1", nil)
+				expectCreateCPCode(p, "test cpcode", "prd_1", "ctr_1", "grp_1")
+				expectGetCPCode(p, "ctr_1", "grp_1", 0, "test cpcode", []string{"prd_1"}, nil, 3)
 
-	t.Run("error updating cpCode", func(t *testing.T) {
-		t.Parallel()
-		client := edgegrid.NewTestClient()
-		defer client.PAPI.AssertExpectations(t)
+				expectGetCPCodeDetail(rg, 0, "test cpcode", nil)
+				expectUpdateCPCode(rg, 0, "renamed cpcode", fmt.Errorf("oops"))
 
-		expectGetProducts(client.PAPI, "ctr_1", []string{"prd_1", "prd_2", "prd_3"}).Once()
-
-		expectGetCPCodes(client.PAPI, "ctr_1", "grp_1", nil).Once()
-		expectCreateCPCode(client.PAPI, "test cpcode", "prd_1", "ctr_1", "grp_1").Once()
-		expectGetCPCode(client.PAPI, "ctr_1", "grp_1", 0, "test cpcode", []string{"prd_1"}, nil).Times(3)
-
-		expectGetCPCodeDetail(client.PAPI, 0, "test cpcode", nil).Once()
-		expectUpdateCPCode(client.PAPI, 0, "renamed cpcode", fmt.Errorf("oops")).Once()
-
-		// No mock behavior for delete because there is no delete operation for CP Codes
-		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
-			Steps: []resource.TestStep{
+				// No mock behavior for delete because there is no delete operation for CP Codes
+			},
+			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResCPCode/change_name_step0.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "0"),
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
-					),
+					Check: test.NewStateChecker("akamai_cp_code.test").
+						CheckEqual("id", "0").
+						CheckEqual("name", "test cpcode").
+						Build(),
 				},
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResCPCode/change_name_step1.tf"),
 					ExpectError: regexp.MustCompile("oops"),
 				},
 			},
-		})
+		},
+		"timeout waiting for update": {
+			init: func(p *papi.Mock, rg *reportinggroups.Mock) {
+				expectGetProducts(p, "ctr_1", []string{"prd_1", "prd_2", "prd_3"})
 
-	})
+				expectGetCPCodes(p, "ctr_1", "grp_1", nil)
+				expectCreateCPCode(p, "test cpcode", "prd_1", "ctr_1", "grp_1")
+				expectGetCPCode(p, "ctr_1", "grp_1", 0, "test cpcode", []string{"prd_1"}, nil, 3)
 
-	t.Run("timeout waiting for update", func(t *testing.T) {
-		t.Parallel()
-		toConfig := config
-		toConfig.cpCode.updatePollInterval = time.Millisecond * 40
-		toConfig.cpCode.cpCodeResourceUpdateTimeout = time.Millisecond * 60
+				expectGetCPCodeDetail(rg, 0, "test cpcode", nil)
+				expectUpdateCPCode(rg, 0, "renamed cpcode", nil)
+				expectGetCPCode(p, "ctr_1", "grp_1", 0, "test cpcode", []string{"prd_1"}, nil, 3)
 
-		client := edgegrid.NewTestClient()
-		defer client.PAPI.AssertExpectations(t)
-
-		expectGetProducts(client.PAPI, "ctr_1", []string{"prd_1", "prd_2", "prd_3"}).Once()
-
-		expectGetCPCodes(client.PAPI, "ctr_1", "grp_1", nil).Once()
-		expectCreateCPCode(client.PAPI, "test cpcode", "prd_1", "ctr_1", "grp_1").Once()
-		expectGetCPCode(client.PAPI, "ctr_1", "grp_1", 0, "test cpcode", []string{"prd_1"}, nil).Times(3)
-
-		expectGetCPCodeDetail(client.PAPI, 0, "test cpcode", nil).Once()
-		expectUpdateCPCode(client.PAPI, 0, "renamed cpcode", nil).Once()
-		expectGetCPCode(client.PAPI, "ctr_1", "grp_1", 0, "test cpcode", []string{"prd_1"}, nil).Times(3)
-
-		// No mock behavior for delete because there is no delete operation for CP Codes
-		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(toConfig)),
-			Steps: []resource.TestStep{
+				// No mock behavior for delete because there is no delete operation for CP Codes
+			},
+			updatePollInterval:          time.Millisecond * 40,
+			cpCodeResourceUpdateTimeout: time.Millisecond * 60,
+			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResCPCode/change_name_step0.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "0"),
-						resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
-					),
+					Check: test.NewStateChecker("akamai_cp_code.test").
+						CheckEqual("id", "0").
+						CheckEqual("name", "test cpcode").
+						Build(),
 				},
 				{
 					Config:             testutils.LoadFixtureString(t, "testdata/TestResCPCode/change_name_step1.tf"),
 					ExpectNonEmptyPlan: true,
 				},
 			},
-		})
-	})
-
-	t.Run("error when no product and product_id provided", func(t *testing.T) {
-		t.Parallel()
-		expectedErr := regexp.MustCompile("`product_id` must be specified for creation")
-		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(nil, newSubproviderWithConfig(config)),
-			Steps: []resource.TestStep{
+		},
+		"error when no product and product_id provided": {
+			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResCPCode/missing_product.tf"),
-					ExpectError: expectedErr,
+					ExpectError: regexp.MustCompile("`product_id` must be specified for creation"),
 				},
 			},
-		})
-	})
+		},
+		"use existing CP Code emits warning for associated product IDs": {
+			init: func(p *papi.Mock, _ *reportinggroups.Mock) {
+				expectGetProducts(p, "ctr_1", []string{"prd_1", "prd_2"})
 
-	t.Run("use existing CP Code emits warning for associated product IDs", func(t *testing.T) {
-		t.Parallel()
-		client := edgegrid.NewTestClient()
-		defer client.PAPI.AssertExpectations(t)
+				CPCodes := []papi.CPCode{
+					{ID: "12", Name: "test cpcode", ProductIDs: []string{"prd_2"}},
+				}
 
-		expectGetProducts(client.PAPI, "ctr_1", []string{"prd_1", "prd_2"}).Once()
-
-		CPCodes := []papi.CPCode{
-			{ID: "12", Name: "test cpcode", ProductIDs: []string{"prd_2"}},
-		}
-
-		expectGetCPCodes(client.PAPI, "ctr_1", "grp_1", CPCodes).Once()
-		expectGetCPCode(client.PAPI, "ctr_1", "grp_1", 12, "test cpcode", []string{"prd_2"}, nil).Twice()
-
-		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
-			Steps: []resource.TestStep{{
+				expectGetCPCodes(p, "ctr_1", "grp_1", CPCodes)
+				expectGetCPCode(p, "ctr_1", "grp_1", 12, "test cpcode", []string{"prd_2"}, nil, 2)
+			},
+			steps: []resource.TestStep{{
 				Config: testutils.LoadFixtureString(t, "testdata/TestResCPCode/existing_cp_code.tf"),
 				// Note: The warning diagnostic is not directly assertable here, but this test exercises the code path.
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("akamai_cp_code.test", "id", "12"),
-					resource.TestCheckResourceAttr("akamai_cp_code.test", "name", "test cpcode"),
-					resource.TestCheckResourceAttr("akamai_cp_code.test", "group_id", "grp_1"),
-					resource.TestCheckResourceAttr("akamai_cp_code.test", "contract_id", "ctr_1"),
-					resource.TestCheckResourceAttr("akamai_cp_code.test", "product_id", "prd_2"),
-				),
+				Check: test.NewStateChecker("akamai_cp_code.test").
+					CheckEqual("id", "12").
+					CheckEqual("name", "test cpcode").
+					CheckEqual("group_id", "grp_1").
+					CheckEqual("contract_id", "ctr_1").
+					CheckEqual("product_id", "prd_2").
+					Build(),
 			}},
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			client := edgegrid.NewTestClient()
+
+			if tc.init != nil {
+				tc.init(client.PAPI, client.ReportingGroups)
+			}
+
+			// redefining times to accelerate tests where possible
+			config := defaultSubproviderConfig()
+			config.cpCode.updatePollMinimum = time.Millisecond * 1
+			config.cpCode.updatePollInterval = config.cpCode.updatePollMinimum
+
+			if tc.updatePollInterval != 0 {
+				config.cpCode.updatePollInterval = tc.updatePollInterval
+			}
+			if tc.cpCodeResourceUpdateTimeout != 0 {
+				config.cpCode.cpCodeResourceUpdateTimeout = tc.cpCodeResourceUpdateTimeout
+			}
+
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
+				Steps:                    tc.steps,
+			})
+
+			client.PAPI.AssertExpectations(t)
+			client.ReportingGroups.AssertExpectations(t)
 		})
-	})
+	}
 }
 
 func expectGetProducts(m *papi.Mock, ContractID string, ProductIDs []string) *mock.Call {
@@ -614,5 +532,5 @@ func expectGetProducts(m *papi.Mock, ContractID string, ProductIDs []string) *mo
 		Products:   papi.ProductsItems{Items: products},
 	}
 
-	return m.On("GetProducts", testutils.MockContext, req).Return(res, nil)
+	return m.On("GetProducts", testutils.MockContext, req).Return(res, nil).Once()
 }
