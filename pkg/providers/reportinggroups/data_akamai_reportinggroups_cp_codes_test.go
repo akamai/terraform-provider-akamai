@@ -40,7 +40,7 @@ func TestCPCodesDataSource(t *testing.T) {
 				ProductName: "Ion Standard",
 			},
 		},
-		AccessGroup: reportinggroups.AccessGroupModel{
+		AccessGroup: reportinggroups.AccessGroup{
 			ContractID: "1-2ABCDE",
 			GroupID:    ptr.To(int64(67890)),
 		},
@@ -69,7 +69,7 @@ func TestCPCodesDataSource(t *testing.T) {
 				ProductName: "Site Accelerator",
 			},
 		},
-		AccessGroup: reportinggroups.AccessGroupModel{
+		AccessGroup: reportinggroups.AccessGroup{
 			ContractID: "1-3FGHIJ",
 			GroupID:    ptr.To(int64(78901)),
 		},

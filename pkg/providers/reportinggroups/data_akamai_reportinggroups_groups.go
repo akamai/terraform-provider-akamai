@@ -3,6 +3,7 @@ package reportinggroups
 import (
 	"context"
 	"sort"
+	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/reportinggroups"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
@@ -24,9 +25,9 @@ type (
 
 	reportingGroupsDataSourceModel struct {
 		ContractID         types.String          `tfsdk:"contract_id"`
-		GroupID            types.Int64           `tfsdk:"group_id"`
+		GroupID            types.String          `tfsdk:"group_id"`
 		ReportingGroupName types.String          `tfsdk:"reporting_group_name"`
-		CpCodeID           types.String          `tfsdk:"cp_code_id"`
+		CPCodeID           types.String          `tfsdk:"cp_code_id"`
 		Groups             []reportingGroupModel `tfsdk:"groups"`
 	}
 
@@ -57,9 +58,9 @@ func (d *reportingGroupsDataSource) Schema(_ context.Context, _ datasource.Schem
 				Optional:    true,
 				Description: "Identifies the contract to filter reporting groups by.",
 			},
-			"group_id": schema.Int64Attribute{
+			"group_id": schema.StringAttribute{
 				Optional:    true,
-				Description: "Identifies the access group to filter reporting groups by.",
+				Description: "Identifies the access group to filter reporting groups by. Accepts numeric ID or grp_ prefixed value.",
 			},
 			"reporting_group_name": schema.StringAttribute{
 				Optional:    true,
@@ -90,7 +91,7 @@ func (d *reportingGroupsDataSource) Schema(_ context.Context, _ datasource.Schem
 									Computed:    true,
 									Description: "Identifies the contract assigned to the access control group.",
 								},
-								"group_id": schema.Int64Attribute{
+								"group_id": schema.StringAttribute{
 									Computed:    true,
 									Description: "Identifies the access control group. May be null if the reporting group belongs to many groups.",
 								},
@@ -109,7 +110,7 @@ func (d *reportingGroupsDataSource) Schema(_ context.Context, _ datasource.Schem
 									Description: "A collection of CP codes assigned to the reporting group.",
 									NestedObject: schema.NestedAttributeObject{
 										Attributes: map[string]schema.Attribute{
-											"cp_code_id": schema.Int64Attribute{
+											"cp_code_id": schema.StringAttribute{
 												Computed:    true,
 												Description: "Identifies a CP code.",
 											},
@@ -140,9 +141,9 @@ func (d *reportingGroupsDataSource) Read(ctx context.Context, req datasource.Rea
 
 	listResp, err := d.Client.GetReportingGroups().ListReportingGroups(ctx, reportinggroups.ListReportingGroupsRequest{
 		ContractID:         data.ContractID.ValueString(),
-		GroupID:            data.GroupID.ValueInt64(),
+		GroupID:            data.GroupID.ValueString(),
 		ReportingGroupName: data.ReportingGroupName.ValueString(),
-		CpCodeID:           data.CpCodeID.ValueString(),
+		CPCodeID:           data.CPCodeID.ValueString(),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("List Reporting Groups failed", err.Error())
@@ -154,7 +155,7 @@ func (d *reportingGroupsDataSource) Read(ctx context.Context, req datasource.Rea
 	resp.Diagnostics.Append(resp.State.Set(ctx, data)...)
 }
 
-func (m *reportingGroupsDataSourceModel) convertReportingGroupsToModel(groups []reportinggroups.ReportingGroupItem) {
+func (m *reportingGroupsDataSourceModel) convertReportingGroupsToModel(groups []reportinggroups.ReportingGroup) {
 	sort.Slice(groups, func(i, j int) bool {
 		return groups[i].ReportingGroupID < groups[j].ReportingGroupID
 	})
@@ -164,20 +165,29 @@ func (m *reportingGroupsDataSourceModel) convertReportingGroupsToModel(groups []
 		var contractModel *reportingGroupContractModel
 		if len(group.Contracts) == 1 {
 			contract := group.Contracts[0]
-			cpCodes := make([]reportingGroupCpCodeModel, 0, len(contract.CpCodes))
-			for _, cp := range contract.CpCodes {
-				cpCodes = append(cpCodes, reportingGroupCpCodeModel{
-					CpCodeID:   types.Int64Value(cp.CpCodeID),
-					CpCodeName: types.StringValue(cp.CpCodeName),
+			cpCodes := make([]reportingGroupCPCodeModel, 0, len(contract.CPCodes))
+			for _, cp := range contract.CPCodes {
+				cpCodes = append(cpCodes, reportingGroupCPCodeModel{
+					CPCodeID:   types.StringValue(strconv.FormatInt(cp.CPCodeID, 10)),
+					CPCodeName: types.StringValue(cp.CPCodeName),
 				})
 			}
 			sort.Slice(cpCodes, func(i, j int) bool {
-				return cpCodes[i].CpCodeID.ValueInt64() < cpCodes[j].CpCodeID.ValueInt64()
+				idI, _ := strconv.ParseInt(cpCodes[i].CPCodeID.ValueString(), 10, 64)
+				idJ, _ := strconv.ParseInt(cpCodes[j].CPCodeID.ValueString(), 10, 64)
+				return idI < idJ
 			})
 			contractModel = &reportingGroupContractModel{
 				ContractID: types.StringValue(contract.ContractID),
-				CpCodes:    cpCodes,
+				CPCodes:    cpCodes,
 			}
+		}
+
+		var groupIDVal types.String
+		if group.AccessGroup.GroupID != nil {
+			groupIDVal = types.StringValue(strconv.FormatInt(*group.AccessGroup.GroupID, 10))
+		} else {
+			groupIDVal = types.StringNull()
 		}
 
 		m.Groups = append(m.Groups, reportingGroupModel{
@@ -185,7 +195,7 @@ func (m *reportingGroupsDataSourceModel) convertReportingGroupsToModel(groups []
 			ReportingGroupName: types.StringValue(group.ReportingGroupName),
 			AccessGroup: &accessGroupModel{
 				ContractID: types.StringValue(group.AccessGroup.ContractID),
-				GroupID:    types.Int64PointerValue(group.AccessGroup.GroupID),
+				GroupID:    groupIDVal,
 			},
 			Contract: contractModel,
 		})

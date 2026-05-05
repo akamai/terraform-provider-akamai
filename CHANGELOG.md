@@ -58,7 +58,8 @@
 * Removed examples from `/examples` directory in favor of use-case driven templates. See [Terraform templates](https://github.com/akamai/terraform-templates) for more information.
 
 * Reporting Groups (Beta)
-  * Added a new resource `akamai_reportinggroups_group` allowing users to manage reporting group for properties.
+  * Added new resource:
+    * `akamai_reportinggroups_group` - allowing users to manage reporting group for properties.
 
 
 

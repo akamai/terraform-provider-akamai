@@ -13,6 +13,7 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v10/internal/text"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/framework/modifiers"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/str"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf/validators"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
@@ -80,8 +81,8 @@ type contractResourceModel struct {
 	CPCodes    types.Set                     `tfsdk:"cp_codes"`
 }
 
-// parsedCpCodeIDs returns the CP code IDs as int64, stripping the "cpc_" prefix.
-func (m *contractResourceModel) parsedCpCodeIDs(ctx context.Context) ([]int64, diag.Diagnostics) {
+// parsedCPCodeIDs returns the CP code IDs as int64, stripping the "cpc_" prefix.
+func (m *contractResourceModel) parsedCPCodeIDs(ctx context.Context) ([]int64, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	var cps []cpCodeResourceModel
 	if diags = m.CPCodes.ElementsAs(ctx, &cps, false); diags.HasError() {
@@ -89,7 +90,7 @@ func (m *contractResourceModel) parsedCpCodeIDs(ctx context.Context) ([]int64, d
 	}
 	ids := make([]int64, 0, len(cps))
 	for _, cp := range cps {
-		id, err := strconv.ParseInt(strings.TrimPrefix(cp.CPCodeID.ValueString(), "cpc_"), 10, 64)
+		id, err := str.GetInt64ID(cp.CPCodeID.ValueString(), "cpc_")
 		if err != nil {
 			diags.AddError(
 				"Invalid CP Code ID",
@@ -105,8 +106,8 @@ func (m *contractResourceModel) parsedCpCodeIDs(ctx context.Context) ([]int64, d
 	return ids, diags
 }
 
-// setCpCodes stores cps into the CPCodes set field.
-func (m *contractResourceModel) setCpCodes(ctx context.Context, cps []cpCodeResourceModel) diag.Diagnostics {
+// setCPCodes stores cps into the CPCodes set field.
+func (m *contractResourceModel) setCPCodes(ctx context.Context, cps []cpCodeResourceModel) diag.Diagnostics {
 	var dd diag.Diagnostics
 	m.CPCodes, dd = types.SetValueFrom(ctx, cpcodeType(), cps)
 	return dd
@@ -285,22 +286,21 @@ func (r *reportingGroupsResource) Create(ctx context.Context, req resource.Creat
 		return
 	}
 
-	cpCodeIDs, dd := contract.parsedCpCodeIDs(ctx)
+	cpCodeIDs, dd := contract.parsedCPCodeIDs(ctx)
 	if resp.Diagnostics.Append(dd...); resp.Diagnostics.HasError() {
 		return
 	}
 
-	cpCodesCreateReq := make([]reportinggroups.CpCodeCreateModel, 0, len(cpCodeIDs))
+	cpCodesCreateReq := make([]reportinggroups.CPCodeCreate, 0, len(cpCodeIDs))
 	for _, id := range cpCodeIDs {
-		cpCodesCreateReq = append(cpCodesCreateReq, reportinggroups.CpCodeCreateModel{CpCodeID: id})
+		cpCodesCreateReq = append(cpCodesCreateReq, reportinggroups.CPCodeCreate{CPCodeID: id})
 	}
 
 	accessGroup, dd := plan.accessGroup(ctx)
 	if resp.Diagnostics.Append(dd...); resp.Diagnostics.HasError() {
 		return
 	}
-	groupID, err := strconv.ParseInt(
-		strings.TrimPrefix(accessGroup.GroupID.ValueString(), "grp_"), 10, 64)
+	groupID, err := str.GetInt64ID(accessGroup.GroupID.ValueString(), "grp_")
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Invalid Access Group ID",
@@ -311,13 +311,13 @@ func (r *reportingGroupsResource) Create(ctx context.Context, req resource.Creat
 
 	createReq := reportinggroups.CreateReportingGroupRequest{
 		ReportingGroupName: plan.ReportingGroupName.ValueString(),
-		AccessGroup: reportinggroups.AccessGroupModel{
+		AccessGroup: reportinggroups.AccessGroup{
 			ContractID: strings.TrimPrefix(accessGroup.ContractID.ValueString(), "ctr_"),
 			GroupID:    ptr.To(groupID),
 		},
-		Contracts: []reportinggroups.ContractCreateModel{{
+		Contracts: []reportinggroups.ContractCreate{{
 			ContractID: strings.TrimPrefix(contract.ContractID.ValueString(), "ctr_"),
-			CpCodes:    cpCodesCreateReq,
+			CPCodes:    cpCodesCreateReq,
 		}},
 	}
 	result, err := r.Client.GetReportingGroups().CreateReportingGroup(ctx, createReq)
@@ -400,21 +400,21 @@ func (r *reportingGroupsResource) Update(ctx context.Context, req resource.Updat
 	if resp.Diagnostics.Append(dd...); resp.Diagnostics.HasError() {
 		return
 	}
-	cpCodeIDs, dd := contract.parsedCpCodeIDs(ctx)
+	cpCodeIDs, dd := contract.parsedCPCodeIDs(ctx)
 	if resp.Diagnostics.Append(dd...); resp.Diagnostics.HasError() {
 		return
 	}
-	cpCodesReq := make([]reportinggroups.CpCodeModel, 0, len(cpCodeIDs))
+	cpCodesReq := make([]reportinggroups.CPCode, 0, len(cpCodeIDs))
 	for _, id := range cpCodeIDs {
-		cpCodesReq = append(cpCodesReq, reportinggroups.CpCodeModel{CpCodeID: id})
+		cpCodesReq = append(cpCodesReq, reportinggroups.CPCode{CPCodeID: id})
 	}
 
 	updateReq := reportinggroups.UpdateReportingGroupRequest{
 		ReportingGroupID:   state.ReportingGroupID.ValueInt64(),
 		ReportingGroupName: plan.ReportingGroupName.ValueString(),
-		Contracts: []reportinggroups.ContractModel{{
+		Contracts: []reportinggroups.Contract{{
 			ContractID: strings.TrimPrefix(contract.ContractID.ValueString(), "ctr_"),
-			CpCodes:    cpCodesReq,
+			CPCodes:    cpCodesReq,
 		}},
 	}
 	result, err := r.Client.GetReportingGroups().UpdateReportingGroup(ctx, updateReq)
@@ -478,7 +478,7 @@ func (r *reportingGroupsResource) ImportState(ctx context.Context, req resource.
 	// Parse group_id early (before the API call) to fail fast on malformed input.
 	var groupID int64
 	if len(parts) == 2 {
-		groupID, err = strconv.ParseInt(strings.TrimPrefix(parts[1], "grp_"), 10, 64)
+		groupID, err = str.GetInt64ID(parts[1], "grp_")
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Invalid Group ID in import ID",
@@ -534,7 +534,7 @@ func (r *reportingGroupsResource) ImportState(ctx context.Context, req resource.
 }
 
 func (m *reportingGroupsResourceModel) populateAccessGroup(
-	ctx context.Context, group reportinggroups.AccessGroupModel,
+	ctx context.Context, group reportinggroups.AccessGroup,
 ) diag.Diagnostics {
 	var diags diag.Diagnostics
 	currentAG := &accessGroupResourceModel{}
@@ -557,7 +557,7 @@ func (m *reportingGroupsResourceModel) populateAccessGroup(
 }
 
 func (m *reportingGroupsResourceModel) populateContract(
-	ctx context.Context, contracts []reportinggroups.ContractModel,
+	ctx context.Context, contracts []reportinggroups.Contract,
 ) diag.Diagnostics {
 	var diags diag.Diagnostics
 	if len(contracts) == 0 {
@@ -573,15 +573,15 @@ func (m *reportingGroupsResourceModel) populateContract(
 		ContractID: customtypes.NewIgnorePrefixValue("ctr_", c.ContractID),
 	}
 
-	cpCodes := make([]cpCodeResourceModel, 0, len(c.CpCodes))
-	for _, cp := range c.CpCodes {
+	cpCodes := make([]cpCodeResourceModel, 0, len(c.CPCodes))
+	for _, cp := range c.CPCodes {
 		cpCodes = append(cpCodes, cpCodeResourceModel{
-			CPCodeID:   customtypes.NewIgnorePrefixValue("cpc_", strconv.FormatInt(cp.CpCodeID, 10)),
-			CPCodeName: types.StringValue(cp.CpCodeName),
+			CPCodeID:   customtypes.NewIgnorePrefixValue("cpc_", strconv.FormatInt(cp.CPCodeID, 10)),
+			CPCodeName: types.StringValue(cp.CPCodeName),
 		})
 	}
 
-	if diags.Append(contract.setCpCodes(ctx, cpCodes)...); diags.HasError() {
+	if diags.Append(contract.setCPCodes(ctx, cpCodes)...); diags.HasError() {
 		return diags
 	}
 	diags.Append(m.setContract(ctx, &contract)...)

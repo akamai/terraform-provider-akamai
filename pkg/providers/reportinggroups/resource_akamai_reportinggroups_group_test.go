@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-	"strconv"
 	"strings"
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/reportinggroups"
 	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/str"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -842,7 +842,7 @@ func TestReportingGroupsResource(t *testing.T) {
 				mockCreateReportingGroup(m, createData)
 				// Read after create returns an empty contracts slice
 				resp := buildGetResponse(createData)
-				resp.Contracts = []reportinggroups.ContractModel{}
+				resp.Contracts = []reportinggroups.Contract{}
 				m.On("GetReportingGroup", testutils.MockContext,
 					reportinggroups.GetReportingGroupsRequest{ReportingGroupID: createData.reportingGroupID},
 				).Return(resp, nil).Once()
@@ -929,22 +929,22 @@ func TestReportingGroupsResource(t *testing.T) {
 
 // buildCreateRequest constructs the CreateReportingGroupRequest expected by the mock.
 func buildCreateRequest(data reportingGroupTestData) reportinggroups.CreateReportingGroupRequest {
-	cpCodes := make([]reportinggroups.CpCodeCreateModel, 0, len(data.cpCodes))
+	cpCodes := make([]reportinggroups.CPCodeCreate, 0, len(data.cpCodes))
 	for _, id := range data.cpCodes {
-		cpCodeID, _ := strconv.ParseInt(strings.TrimPrefix(id, "cpc_"), 10, 64) // CP code IDs are sent to API without cpc_ prefix
-		cpCodes = append(cpCodes, reportinggroups.CpCodeCreateModel{CpCodeID: cpCodeID})
+		cpCodeID, _ := str.GetInt64ID(id, "cpc_") // CP code IDs are sent to API without cpc_ prefix
+		cpCodes = append(cpCodes, reportinggroups.CPCodeCreate{CPCodeID: cpCodeID})
 	}
-	grpID, _ := strconv.ParseInt(strings.TrimPrefix(data.groupID, "grp_"), 10, 64)
+	grpID, _ := str.GetInt64ID(data.groupID, "grp_")
 	return reportinggroups.CreateReportingGroupRequest{
 		ReportingGroupName: data.reportingGroupName,
-		AccessGroup: reportinggroups.AccessGroupModel{
+		AccessGroup: reportinggroups.AccessGroup{
 			ContractID: strings.TrimPrefix(data.accessGroupContract, "ctr_"),
 			GroupID:    &grpID,
 		},
-		Contracts: []reportinggroups.ContractCreateModel{
+		Contracts: []reportinggroups.ContractCreate{
 			{
 				ContractID: strings.TrimPrefix(data.contractID, "ctr_"),
-				CpCodes:    cpCodes,
+				CPCodes:    cpCodes,
 			},
 		},
 	}
@@ -953,21 +953,21 @@ func buildCreateRequest(data reportingGroupTestData) reportinggroups.CreateRepor
 // buildUpdateRequest constructs the UpdateReportingGroupRequest expected by the mock.
 // It uses the ID from stateData and the desired values from planData.
 func buildUpdateRequest(stateData, planData reportingGroupTestData) reportinggroups.UpdateReportingGroupRequest {
-	cpCodes := make([]reportinggroups.CpCodeModel, 0, len(planData.cpCodes))
+	cpCodes := make([]reportinggroups.CPCode, 0, len(planData.cpCodes))
 	for _, id := range planData.cpCodes {
-		cpCodeID, _ := strconv.ParseInt(strings.TrimPrefix(id, "cpc_"), 10, 64)
-		cpCodes = append(cpCodes, reportinggroups.CpCodeModel{
-			CpCodeID: cpCodeID,
+		cpCodeID, _ := str.GetInt64ID(id, "cpc_")
+		cpCodes = append(cpCodes, reportinggroups.CPCode{
+			CPCodeID: cpCodeID,
 		})
 	}
 
 	return reportinggroups.UpdateReportingGroupRequest{
 		ReportingGroupID:   stateData.reportingGroupID,
 		ReportingGroupName: planData.reportingGroupName,
-		Contracts: []reportinggroups.ContractModel{
+		Contracts: []reportinggroups.Contract{
 			{
 				ContractID: strings.TrimPrefix(planData.contractID, "ctr_"),
-				CpCodes:    cpCodes,
+				CPCodes:    cpCodes,
 			},
 		},
 	}
@@ -976,10 +976,10 @@ func buildUpdateRequest(stateData, planData reportingGroupTestData) reportinggro
 // buildCreateResponse constructs the CreateReportingGroupResponse returned by the mock.
 func buildCreateResponse(data reportingGroupTestData) *reportinggroups.CreateReportingGroupResponse {
 	return &reportinggroups.CreateReportingGroupResponse{
-		ReportingGroupItem: reportinggroups.ReportingGroupItem{
+		ReportingGroup: reportinggroups.ReportingGroup{
 			ReportingGroupID:   data.reportingGroupID,
 			ReportingGroupName: data.reportingGroupName,
-			AccessGroup: reportinggroups.AccessGroupModel{
+			AccessGroup: reportinggroups.AccessGroup{
 				ContractID: strings.TrimPrefix(data.accessGroupContract, "ctr_"),
 				// GroupID is always null in API responses
 			},
@@ -993,7 +993,7 @@ func buildUpdateResponse(data reportingGroupTestData) *reportinggroups.UpdateRep
 	return &reportinggroups.UpdateReportingGroupResponse{
 		ReportingGroupID:   data.reportingGroupID,
 		ReportingGroupName: data.reportingGroupName,
-		AccessGroup: reportinggroups.AccessGroupModel{
+		AccessGroup: reportinggroups.AccessGroup{
 			ContractID: strings.TrimPrefix(data.accessGroupContract, "ctr_"),
 			// GroupID is always null in API responses
 		},
@@ -1006,7 +1006,7 @@ func buildGetResponse(data reportingGroupTestData) *reportinggroups.GetReporting
 	return &reportinggroups.GetReportingGroupResponse{
 		ReportingGroupID:   data.reportingGroupID,
 		ReportingGroupName: data.reportingGroupName,
-		AccessGroup: reportinggroups.AccessGroupModel{
+		AccessGroup: reportinggroups.AccessGroup{
 			ContractID: strings.TrimPrefix(data.accessGroupContract, "ctr_"),
 			// GroupID is always null in API responses
 		},
@@ -1015,23 +1015,23 @@ func buildGetResponse(data reportingGroupTestData) *reportinggroups.GetReporting
 }
 
 // buildContractModels pairs each CP code ID with its name by index.
-func buildContractModels(data reportingGroupTestData) []reportinggroups.ContractModel {
-	cpCodes := make([]reportinggroups.CpCodeModel, 0, len(data.cpCodes))
+func buildContractModels(data reportingGroupTestData) []reportinggroups.Contract {
+	cpCodes := make([]reportinggroups.CPCode, 0, len(data.cpCodes))
 	for i, id := range data.cpCodes {
 		name := ""
 		if i < len(data.cpCodeNames) {
 			name = data.cpCodeNames[i]
 		}
-		cpCodeID, _ := strconv.ParseInt(strings.TrimPrefix(id, "cpc_"), 10, 64)
-		cpCodes = append(cpCodes, reportinggroups.CpCodeModel{
-			CpCodeID:   cpCodeID,
-			CpCodeName: name,
+		cpCodeID, _ := str.GetInt64ID(id, "cpc_")
+		cpCodes = append(cpCodes, reportinggroups.CPCode{
+			CPCodeID:   cpCodeID,
+			CPCodeName: name,
 		})
 	}
-	return []reportinggroups.ContractModel{
+	return []reportinggroups.Contract{
 		{
 			ContractID: strings.TrimPrefix(data.contractID, "ctr_"),
-			CpCodes:    cpCodes,
+			CPCodes:    cpCodes,
 		},
 	}
 }

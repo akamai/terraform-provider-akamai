@@ -18,20 +18,20 @@ func TestReportingGroupsDataSource(t *testing.T) {
 	t.Parallel()
 
 	listResp := reportinggroups.ListReportingGroupsResponse{
-		Groups: []reportinggroups.ReportingGroupItem{
+		Groups: []reportinggroups.ReportingGroup{
 			{
 				ReportingGroupID:   12345,
 				ReportingGroupName: "First Reporting Group",
-				AccessGroup: reportinggroups.AccessGroupModel{
+				AccessGroup: reportinggroups.AccessGroup{
 					ContractID: "ctr_123",
 					GroupID:    ptr.To(int64(456)),
 				},
-				Contracts: []reportinggroups.ContractModel{
+				Contracts: []reportinggroups.Contract{
 					{
 						ContractID: "ctr_123",
-						CpCodes: []reportinggroups.CpCodeModel{
-							{CpCodeID: 111, CpCodeName: "CP Code One"},
-							{CpCodeID: 222, CpCodeName: "CP Code Two"},
+						CPCodes: []reportinggroups.CPCode{
+							{CPCodeID: 111, CPCodeName: "CP Code One"},
+							{CPCodeID: 222, CPCodeName: "CP Code Two"},
 						},
 					},
 				},
@@ -39,15 +39,15 @@ func TestReportingGroupsDataSource(t *testing.T) {
 			{
 				ReportingGroupID:   12347,
 				ReportingGroupName: "Third Reporting Group",
-				AccessGroup: reportinggroups.AccessGroupModel{
+				AccessGroup: reportinggroups.AccessGroup{
 					ContractID: "ctr_456",
 					GroupID:    ptr.To(int64(456)),
 				},
-				Contracts: []reportinggroups.ContractModel{
+				Contracts: []reportinggroups.Contract{
 					{
 						ContractID: "ctr_456",
-						CpCodes: []reportinggroups.CpCodeModel{
-							{CpCodeID: 333, CpCodeName: "CP Code Three"},
+						CPCodes: []reportinggroups.CPCode{
+							{CPCodeID: 333, CPCodeName: "CP Code Three"},
 						},
 					},
 				},
@@ -55,16 +55,16 @@ func TestReportingGroupsDataSource(t *testing.T) {
 			{
 				ReportingGroupID:   12346,
 				ReportingGroupName: "Second Reporting Group",
-				AccessGroup: reportinggroups.AccessGroupModel{
+				AccessGroup: reportinggroups.AccessGroup{
 					ContractID: "ctr_456",
 					GroupID:    nil,
 				},
-				Contracts: []reportinggroups.ContractModel{
+				Contracts: []reportinggroups.Contract{
 					{
 						ContractID: "ctr_456",
-						CpCodes: []reportinggroups.CpCodeModel{
-							{CpCodeID: 333, CpCodeName: "CP Code Three"},
-							{CpCodeID: 222, CpCodeName: "CP Code Two"},
+						CPCodes: []reportinggroups.CPCode{
+							{CPCodeID: 333, CPCodeName: "CP Code Three"},
+							{CPCodeID: 222, CPCodeName: "CP Code Two"},
 						},
 					},
 				},
@@ -73,13 +73,13 @@ func TestReportingGroupsDataSource(t *testing.T) {
 	}
 
 	firstGroupWithOneCPCode := listResp.Groups[0]
-	firstGroupWithOneCPCode.Contracts = []reportinggroups.ContractModel{
+	firstGroupWithOneCPCode.Contracts = []reportinggroups.Contract{
 		{
 			ContractID: "ctr_123",
-			CpCodes: []reportinggroups.CpCodeModel{
+			CPCodes: []reportinggroups.CPCode{
 				{
-					CpCodeID:   111,
-					CpCodeName: "CP Code One",
+					CPCodeID:   111,
+					CPCodeName: "CP Code One",
 				},
 			},
 		},
@@ -154,9 +154,9 @@ func TestReportingGroupsDataSource(t *testing.T) {
 		"happy path - list reporting groups filtered by cp_code_id": {
 			init: func(m *reportinggroups.Mock) {
 				mockListReportingGroups(m, reportinggroups.ListReportingGroupsRequest{
-					CpCodeID: "111",
+					CPCodeID: "111",
 				}, reportinggroups.ListReportingGroupsResponse{
-					Groups: []reportinggroups.ReportingGroupItem{firstGroupWithOneCPCode},
+					Groups: []reportinggroups.ReportingGroup{firstGroupWithOneCPCode},
 				}, nil)
 			},
 			steps: []resource.TestStep{
@@ -191,11 +191,11 @@ func TestReportingGroupsDataSource(t *testing.T) {
 			init: func(m *reportinggroups.Mock) {
 				mockListReportingGroups(m, reportinggroups.ListReportingGroupsRequest{
 					ContractID:         "ctr_123",
-					GroupID:            456,
+					GroupID:            "456",
 					ReportingGroupName: "First Reporting Group",
-					CpCodeID:           "111",
+					CPCodeID:           "111",
 				}, reportinggroups.ListReportingGroupsResponse{
-					Groups: []reportinggroups.ReportingGroupItem{firstGroupWithOneCPCode},
+					Groups: []reportinggroups.ReportingGroup{firstGroupWithOneCPCode},
 				}, nil)
 			},
 			steps: []resource.TestStep{
@@ -212,7 +212,7 @@ func TestReportingGroupsDataSource(t *testing.T) {
 		"happy path - empty list": {
 			init: func(m *reportinggroups.Mock) {
 				mockListReportingGroups(m, reportinggroups.ListReportingGroupsRequest{}, reportinggroups.ListReportingGroupsResponse{
-					Groups: []reportinggroups.ReportingGroupItem{},
+					Groups: []reportinggroups.ReportingGroup{},
 				}, nil)
 			},
 			steps: []resource.TestStep{

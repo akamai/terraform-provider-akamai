@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/reportinggroups"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/framework/convert"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -51,7 +52,7 @@ type (
 
 	cpCodeAccessGroupModel struct {
 		ContractID types.String `tfsdk:"contract_id"`
-		GroupID    types.Int64  `tfsdk:"group_id"`
+		GroupID    types.String `tfsdk:"group_id"`
 	}
 )
 
@@ -147,7 +148,7 @@ func (d *cpCodeDataSource) Schema(_ context.Context, _ datasource.SchemaRequest,
 						Computed:    true,
 						Description: "The contract identifier assigned to the access control group.",
 					},
-					"group_id": schema.Int64Attribute{
+					"group_id": schema.StringAttribute{
 						Computed:    true,
 						Description: "The access control group identifier.",
 					},
@@ -207,6 +208,6 @@ func (m *cpCodeDataSourceModel) populateFromCPCodeDetail(detail *reportinggroups
 
 	m.AccessGroup = &cpCodeAccessGroupModel{
 		ContractID: types.StringValue(detail.AccessGroup.ContractID),
-		GroupID:    types.Int64PointerValue(detail.AccessGroup.GroupID),
+		GroupID:    convert.Int64PtrToStringValue(detail.AccessGroup.GroupID),
 	}
 }

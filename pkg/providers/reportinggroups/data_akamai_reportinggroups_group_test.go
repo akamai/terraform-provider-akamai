@@ -20,16 +20,16 @@ func TestReportingGroupDataSource(t *testing.T) {
 	getResp := reportinggroups.GetReportingGroupResponse{
 		ReportingGroupID:   12345,
 		ReportingGroupName: "Test Reporting Group",
-		AccessGroup: reportinggroups.AccessGroupModel{
+		AccessGroup: reportinggroups.AccessGroup{
 			ContractID: "ctr_456",
 			GroupID:    ptr.To(int64(456)),
 		},
-		Contracts: []reportinggroups.ContractModel{
+		Contracts: []reportinggroups.Contract{
 			{
 				ContractID: "ctr_123",
-				CpCodes: []reportinggroups.CpCodeModel{
-					{CpCodeID: 222, CpCodeName: "CP Code Two"},
-					{CpCodeID: 111, CpCodeName: "CP Code One"},
+				CPCodes: []reportinggroups.CPCode{
+					{CPCodeID: 222, CPCodeName: "CP Code Two"},
+					{CPCodeID: 111, CPCodeName: "CP Code One"},
 				},
 			},
 		},
@@ -66,7 +66,7 @@ func TestReportingGroupDataSource(t *testing.T) {
 		"happy path - group_id is null": {
 			init: func(m *reportinggroups.Mock) {
 				respNilGroup := getResp
-				respNilGroup.AccessGroup = reportinggroups.AccessGroupModel{
+				respNilGroup.AccessGroup = reportinggroups.AccessGroup{
 					ContractID: "ctr_456",
 					GroupID:    nil,
 				}

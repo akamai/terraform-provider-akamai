@@ -41,7 +41,7 @@ func TestCPCodeDataSource(t *testing.T) {
 					ProductName: "Site Accelerator",
 				},
 			},
-			AccessGroup: reportinggroups.AccessGroupModel{
+			AccessGroup: reportinggroups.AccessGroup{
 				ContractID: "1-2ABCDE",
 				GroupID:    groupID,
 			},
