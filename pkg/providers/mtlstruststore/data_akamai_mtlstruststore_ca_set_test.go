@@ -209,7 +209,7 @@ func TestCASetDataSource(t *testing.T) {
 					CreatedBy:          "example user",
 					ModifiedBy:         ptr.To("example user"),
 					ModifiedDate:       ptr.To(tst.NewTimeFromStringMust("2025-05-16T12:08:34.099457Z")),
-					CaSetVersionStatus: "DELETED",
+					CASetVersionStatus: "DELETED",
 					RemovalDate:        ptr.To(tst.NewTimeFromStringMust("2025-09-01T00:00:00Z")),
 					Certificates:       commonTestData.caSetVersionResponse.Certificates,
 				},
@@ -372,7 +372,7 @@ var commonTestData = caSetTestData{
 		CreatedBy:          "example user",
 		ModifiedBy:         ptr.To("example user"),
 		ModifiedDate:       ptr.To(tst.NewTimeFromStringMust("2025-05-16T12:08:34.099457Z")),
-		CaSetVersionStatus: "NOT_DELETED",
+		CASetVersionStatus: "NOT_DELETED",
 		Certificates: []mtlstruststore.CertificateResponse{
 			{
 				CertificatePEM:     "-----BEGIN CERTIFICATE-----...",

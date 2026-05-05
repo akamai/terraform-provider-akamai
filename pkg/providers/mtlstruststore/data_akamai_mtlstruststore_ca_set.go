@@ -329,7 +329,7 @@ func (m *caSetDataSourceModel) setCASetVersionData(v *mtlstruststore.GetCASetVer
 	m.VersionModifiedBy = types.StringPointerValue(v.ModifiedBy)
 	m.VersionModifiedDate = date.TimeRFC3339NanoPointerValue(v.ModifiedDate)
 	m.VersionRemovalDate = date.TimeRFC3339NanoPointerValue(v.RemovalDate)
-	m.VersionStatus = types.StringValue(v.CaSetVersionStatus)
+	m.VersionStatus = types.StringValue(v.CASetVersionStatus)
 
 	certificates := make([]certificateModel, len(v.Certificates))
 	for i, cert := range v.Certificates {

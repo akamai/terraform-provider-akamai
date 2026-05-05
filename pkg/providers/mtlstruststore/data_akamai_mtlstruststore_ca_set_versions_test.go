@@ -74,7 +74,7 @@ func TestCASetVersionsDataSource(t *testing.T) {
 				ModifiedBy:         ptr.To("jkowalski"),
 				ModifiedDate:       ptr.To(tst.NewTimeFromString(t, "2024-04-16T12:08:34.099457Z")),
 				Certificates:       nil,
-				CaSetVersionStatus: "NOT_DELETED",
+				CASetVersionStatus: "NOT_DELETED",
 			},
 			{
 				CASetID:            "12345",
@@ -89,7 +89,7 @@ func TestCASetVersionsDataSource(t *testing.T) {
 				ModifiedBy:         ptr.To("jkowalski"),
 				ModifiedDate:       ptr.To(tst.NewTimeFromString(t, "2024-04-16T12:08:34.099457Z")),
 				Certificates:       nil,
-				CaSetVersionStatus: "NOT_DELETED",
+				CASetVersionStatus: "NOT_DELETED",
 			},
 			{
 				CASetID:            "12345",
@@ -104,7 +104,7 @@ func TestCASetVersionsDataSource(t *testing.T) {
 				ModifiedBy:         ptr.To("jkowalski"),
 				ModifiedDate:       ptr.To(tst.NewTimeFromString(t, "2024-04-16T12:08:34.099457Z")),
 				Certificates:       nil,
-				CaSetVersionStatus: "NOT_DELETED",
+				CASetVersionStatus: "NOT_DELETED",
 			},
 		},
 	}
@@ -123,7 +123,7 @@ func TestCASetVersionsDataSource(t *testing.T) {
 				CreatedDate:        tst.NewTimeFromString(t, "2024-04-16T12:08:34.099457Z"),
 				ModifiedBy:         ptr.To("jkowalski"),
 				ModifiedDate:       ptr.To(tst.NewTimeFromString(t, "2024-04-16T12:08:34.099457Z")),
-				CaSetVersionStatus: "NOT_DELETED",
+				CASetVersionStatus: "NOT_DELETED",
 				Certificates: []mtlstruststore.CertificateResponse{
 					{
 						Subject:            "C=US,ST=MA,L=Cambridge,O=Akamai,CN=test-subject-example.com",
@@ -152,7 +152,7 @@ func TestCASetVersionsDataSource(t *testing.T) {
 				CreatedDate:        tst.NewTimeFromString(t, "2024-04-16T12:08:34.099457Z"),
 				ModifiedBy:         ptr.To("jkowalski"),
 				ModifiedDate:       ptr.To(tst.NewTimeFromString(t, "2024-04-16T12:08:34.099457Z")),
-				CaSetVersionStatus: "NOT_DELETED",
+				CASetVersionStatus: "NOT_DELETED",
 				Certificates: []mtlstruststore.CertificateResponse{
 					{
 						Subject:            "C=US,ST=MA,L=Cambridge,O=Akamai,CN=test-subject-example.com",
@@ -181,7 +181,7 @@ func TestCASetVersionsDataSource(t *testing.T) {
 				CreatedDate:        tst.NewTimeFromString(t, "2024-04-16T12:08:34.099457Z"),
 				ModifiedBy:         ptr.To("jkowalski"),
 				ModifiedDate:       ptr.To(tst.NewTimeFromString(t, "2024-04-16T12:08:34.099457Z")),
-				CaSetVersionStatus: "NOT_DELETED",
+				CASetVersionStatus: "NOT_DELETED",
 				Certificates: []mtlstruststore.CertificateResponse{
 					{
 						Subject:            "C=US,ST=MA,L=Cambridge,O=Akamai,CN=test-subject-example.com",
@@ -426,7 +426,7 @@ func TestCASetVersionsDataSource(t *testing.T) {
 							CreatedDate:        tst.NewTimeFromString(t, "2024-04-16T12:08:34.099457Z"),
 							ModifiedBy:         ptr.To("jkowalski"),
 							ModifiedDate:       ptr.To(tst.NewTimeFromString(t, "2024-04-16T12:08:34.099457Z")),
-							CaSetVersionStatus: "NOT_DELETED",
+							CASetVersionStatus: "NOT_DELETED",
 						},
 						{
 							CASetID:            "12345",
@@ -441,7 +441,7 @@ func TestCASetVersionsDataSource(t *testing.T) {
 							ModifiedBy:         ptr.To("jkowalski"),
 							ModifiedDate:       ptr.To(tst.NewTimeFromString(t, "2024-04-16T12:08:34.099457Z")),
 							RemovalDate:        ptr.To(tst.NewTimeFromString(t, "2025-07-01T00:00:00Z")),
-							CaSetVersionStatus: "DELETED",
+							CASetVersionStatus: "DELETED",
 						},
 					},
 				}, nil).Times(3)

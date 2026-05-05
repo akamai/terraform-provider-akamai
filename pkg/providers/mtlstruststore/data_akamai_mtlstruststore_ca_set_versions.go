@@ -355,7 +355,7 @@ func convertCASetVersionsDataToModel(versions mtlstruststore.ListCASetVersionsRe
 			ModifiedBy:         types.StringPointerValue(version.ModifiedBy),
 			ModifiedDate:       date.TimeRFC3339NanoPointerValue(version.ModifiedDate),
 			RemovalDate:        date.TimeRFC3339NanoPointerValue(version.RemovalDate),
-			Status:             types.StringValue(version.CaSetVersionStatus),
+			Status:             types.StringValue(version.CASetVersionStatus),
 			Certificates:       certModel,
 		})
 	}
