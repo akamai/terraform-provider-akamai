@@ -44,6 +44,7 @@ type (
 		CreatedDate       types.String `tfsdk:"created_date"`
 		DeletedBy         types.String `tfsdk:"deleted_by"`
 		DeletedDate       types.String `tfsdk:"deleted_date"`
+		RemovalDate       types.String `tfsdk:"removal_date"`
 		Description       types.String `tfsdk:"description"`
 		Status            types.String `tfsdk:"status"`
 		LatestVersion     types.Int64  `tfsdk:"latest_version"`
@@ -118,6 +119,10 @@ func (d *caSetsDataSource) Schema(_ context.Context, _ datasource.SchemaRequest,
 						},
 						"deleted_by": schema.StringAttribute{
 							Description: "The user who requested the CA set be deleted, or null if there's no request.",
+							Computed:    true,
+						},
+						"removal_date": schema.StringAttribute{
+							Description: "The time when the CA set will be permanently deleted from the system. The value is null when the CA set is not scheduled for deletion.",
 							Computed:    true,
 						},
 						"description": schema.StringAttribute{
@@ -231,6 +236,7 @@ func (m *caSetsDataSourceModel) convertCASetsToModel(caSets mtlstruststore.ListC
 			Status:            types.StringValue(caSet.CASetStatus),
 			DeletedBy:         types.StringPointerValue(caSet.DeletedBy),
 			DeletedDate:       date.TimeRFC3339NanoPointerValue(caSet.DeletedDate),
+			RemovalDate:       date.TimeRFC3339NanoPointerValue(caSet.RemovalDate),
 			LatestVersion:     types.Int64PointerValue(caSet.LatestVersion),
 			StagingVersion:    types.Int64PointerValue(caSet.StagingVersion),
 			ProductionVersion: types.Int64PointerValue(caSet.ProductionVersion),

@@ -134,9 +134,15 @@ func (d *caSetActivitiesDataSource) Schema(_ context.Context, _ datasource.Schem
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"type": schema.StringAttribute{
-							Description: "The type of CA set activity. 'CREATE_CA_SET' indicates creating a CA set, or 'CREATE_CA_SET_VERSION' for creating a version. " +
-								"'ACTIVATE_CA_SET_VERSION' indicates activating a CA set version, while 'DEACTIVATE_CA_SET_VERSION' indicates deactivation. " +
-								"'DELETE_CA_SET' indicates deleting a CA set.",
+							MarkdownDescription: "The type of CA set activity. Possible values are: \n" +
+								"* `CREATE_CA_SET` - creating a CA set.\n" +
+								"* `CREATE_CA_SET_VERSION` - creating a CA set version.\n" +
+								"* `ACTIVATE_CA_SET_VERSION` - activating a CA set version.\n" +
+								"* `DEACTIVATE_CA_SET_VERSION` - deactivating a CA set version.\n" +
+								"* `DELETE_CA_SET` - soft deleting a CA set.\n" +
+								"* `DELETE_CA_SET_VERSION` - soft deleting a CA set version.\n" +
+								"* `REMOVE_CA_SET` - hard deleting a CA set.\n" +
+								"* `REMOVE_CA_SET_VERSION` - hard deleting a CA set version.",
 							Computed: true,
 						},
 						"network": schema.StringAttribute{

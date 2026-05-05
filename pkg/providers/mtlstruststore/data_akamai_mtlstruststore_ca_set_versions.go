@@ -3,11 +3,13 @@ package mtlstruststore
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/mtlstruststore"
 	"github.com/akamai/terraform-provider-akamai/v10/internal/customtypes"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/framework/date"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -19,8 +21,9 @@ import (
 
 // Ensure the implementation satisfies the expected interfaces.
 var (
-	_ datasource.DataSource              = &caSetVersionsDataSource{}
-	_ datasource.DataSourceWithConfigure = &caSetVersionsDataSource{}
+	_ datasource.DataSource                   = &caSetVersionsDataSource{}
+	_ datasource.DataSourceWithConfigure      = &caSetVersionsDataSource{}
+	_ datasource.DataSourceWithValidateConfig = &caSetVersionsDataSource{}
 )
 
 type (
@@ -29,11 +32,12 @@ type (
 	}
 
 	caSetVersionsDataSourceModel struct {
-		ID                  types.String   `tfsdk:"id"`
-		Name                types.String   `tfsdk:"name"`
-		ActiveVersionsOnly  types.Bool     `tfsdk:"active_versions_only"`
-		IncludeCertificates types.Bool     `tfsdk:"include_certificates"`
-		Versions            []versionModel `tfsdk:"versions"`
+		ID                   types.String   `tfsdk:"id"`
+		Name                 types.String   `tfsdk:"name"`
+		ActiveVersionsOnly   types.Bool     `tfsdk:"active_versions_only"`
+		IncludeCertificates  types.Bool     `tfsdk:"include_certificates"`
+		CASetVersionStatuses types.Set      `tfsdk:"ca_set_version_statuses"`
+		Versions             []versionModel `tfsdk:"versions"`
 	}
 
 	versionModel struct {
@@ -46,6 +50,8 @@ type (
 		ModifiedDate       types.String       `tfsdk:"modified_date"`
 		ProductionStatus   types.String       `tfsdk:"production_status"`
 		StagingStatus      types.String       `tfsdk:"staging_status"`
+		RemovalDate        types.String       `tfsdk:"removal_date"`
+		Status             types.String       `tfsdk:"status"`
 		Certificates       []certificateModel `tfsdk:"certificates"`
 	}
 )
@@ -108,6 +114,15 @@ func (d *caSetVersionsDataSource) Schema(_ context.Context, _ datasource.SchemaR
 				Description: "If true, only the active versions of the CA set will be returned. The default is false.",
 				Optional:    true,
 			},
+			"ca_set_version_statuses": schema.SetAttribute{
+				Description: "Filter CA set versions by status. One or more values from 'NOT_DELETED', 'DELETED'. When not specified, CA set versions with 'NOT_DELETED' status are returned.",
+				Optional:    true,
+				ElementType: types.StringType,
+				Validators: []validator.Set{
+					setvalidator.SizeAtLeast(1),
+					setvalidator.ValueStringsAre(stringvalidator.OneOf(mtlstruststore.AllCASetVersionStatuses()...)),
+				},
+			},
 			"versions": schema.ListNestedAttribute{
 				Description: "List of CA set versions.",
 				Computed:    true,
@@ -147,6 +162,14 @@ func (d *caSetVersionsDataSource) Schema(_ context.Context, _ datasource.SchemaR
 						},
 						"staging_status": schema.StringAttribute{
 							Description: "The CA set version's status on the staging network, either 'ACTIVE' or 'INACTIVE'.",
+							Computed:    true,
+						},
+						"removal_date": schema.StringAttribute{
+							Description: "The time when the CA set version will be permanently deleted from the system. The value is null when the CA set version is not scheduled for deletion.",
+							Computed:    true,
+						},
+						"status": schema.StringAttribute{
+							Description: "Indicates the CA set version status, 'NOT_DELETED' or 'DELETED'.",
 							Computed:    true,
 						},
 						"certificates": schema.ListNestedAttribute{
@@ -208,6 +231,33 @@ func (d *caSetVersionsDataSource) Schema(_ context.Context, _ datasource.SchemaR
 	}
 }
 
+// ValidateConfig performs config-time validation for incompatible attribute combinations.
+func (d *caSetVersionsDataSource) ValidateConfig(ctx context.Context, req datasource.ValidateConfigRequest, resp *datasource.ValidateConfigResponse) {
+	tflog.Debug(ctx, "MTLS TrustStore CA Set Versions DataSource ValidateConfig")
+
+	var data caSetVersionsDataSourceModel
+	if resp.Diagnostics.Append(req.Config.Get(ctx, &data)...); resp.Diagnostics.HasError() {
+		return
+	}
+	if data.ActiveVersionsOnly.IsUnknown() || data.CASetVersionStatuses.IsUnknown() || data.CASetVersionStatuses.IsNull() {
+		return
+	}
+	if !data.ActiveVersionsOnly.ValueBool() {
+		return
+	}
+	var statuses []string
+	if resp.Diagnostics.Append(data.CASetVersionStatuses.ElementsAs(ctx, &statuses, false)...); resp.Diagnostics.HasError() {
+		return
+	}
+	if slices.Contains(statuses, mtlstruststore.CASetStatusDeleted) {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("active_versions_only"),
+			"Invalid attribute combination",
+			"Attribute `active_versions_only` cannot be set to true when `ca_set_version_statuses` includes `DELETED` status.",
+		)
+	}
+}
+
 // Read is called when the provider must read data source values in order to update state.
 func (d *caSetVersionsDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	tflog.Debug(ctx, "MTLS TrustStore CA Set Versions DataSource Read")
@@ -235,10 +285,18 @@ func (d *caSetVersionsDataSource) Read(ctx context.Context, req datasource.ReadR
 		data.ActiveVersionsOnly = types.BoolValue(false)
 	}
 
+	var caSetVersionStatuses []string
+	if !data.CASetVersionStatuses.IsNull() {
+		if resp.Diagnostics.Append(data.CASetVersionStatuses.ElementsAs(ctx, &caSetVersionStatuses, false)...); resp.Diagnostics.HasError() {
+			return
+		}
+	}
+
 	versions, err := client.ListCASetVersions(ctx, mtlstruststore.ListCASetVersionsRequest{
-		CASetID:             data.ID.ValueString(),
-		IncludeCertificates: data.IncludeCertificates.ValueBool(),
-		ActiveVersionsOnly:  data.ActiveVersionsOnly.ValueBool(),
+		CASetID:              data.ID.ValueString(),
+		IncludeCertificates:  data.IncludeCertificates.ValueBool(),
+		ActiveVersionsOnly:   data.ActiveVersionsOnly.ValueBool(),
+		CASetVersionStatuses: caSetVersionStatuses,
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("Read CA set versions failed", err.Error())
@@ -296,6 +354,8 @@ func convertCASetVersionsDataToModel(versions mtlstruststore.ListCASetVersionsRe
 			StagingStatus:      types.StringValue(version.StagingStatus),
 			ModifiedBy:         types.StringPointerValue(version.ModifiedBy),
 			ModifiedDate:       date.TimeRFC3339NanoPointerValue(version.ModifiedDate),
+			RemovalDate:        date.TimeRFC3339NanoPointerValue(version.RemovalDate),
+			Status:             types.StringValue(version.CaSetVersionStatus),
 			Certificates:       certModel,
 		})
 	}
@@ -317,6 +377,8 @@ func (m *caSetVersionsDataSourceModel) setData(data caSetVersionsDataSourceModel
 			ModifiedDate:       version.ModifiedDate,
 			ProductionStatus:   version.ProductionStatus,
 			StagingStatus:      version.StagingStatus,
+			RemovalDate:        version.RemovalDate,
+			Status:             version.Status,
 			Certificates:       make([]certificateModel, len(version.Certificates)),
 		}
 

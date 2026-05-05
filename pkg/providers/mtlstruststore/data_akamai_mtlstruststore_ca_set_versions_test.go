@@ -45,6 +45,8 @@ func TestCASetVersionsDataSource(t *testing.T) {
 		CheckEqual("versions.0.created_date", "2024-04-16T12:08:34.099457Z").
 		CheckEqual("versions.0.modified_by", "jkowalski").
 		CheckEqual("versions.0.modified_date", "2024-04-16T12:08:34.099457Z").
+		CheckEqual("versions.0.status", "NOT_DELETED").
+		CheckMissing("versions.0.removal_date").
 		CheckEqual("versions.1.version", "2").
 		CheckEqual("versions.1.version_description", "test-description-one-active").
 		CheckEqual("versions.1.allow_insecure_sha1", "true").
@@ -53,51 +55,56 @@ func TestCASetVersionsDataSource(t *testing.T) {
 		CheckEqual("versions.1.created_by", "jkowalski").
 		CheckEqual("versions.1.created_date", "2024-04-16T12:08:34.099457Z").
 		CheckEqual("versions.1.modified_by", "jkowalski").
-		CheckEqual("versions.1.modified_date", "2024-04-16T12:08:34.099457Z")
+		CheckEqual("versions.1.modified_date", "2024-04-16T12:08:34.099457Z").
+		CheckEqual("versions.1.status", "NOT_DELETED").
+		CheckMissing("versions.1.removal_date")
 
 	baseResponse := mtlstruststore.ListCASetVersionsResponse{
 		Versions: []mtlstruststore.CASetVersion{
 			{
-				CASetID:           "12345",
-				CASetName:         "test-ca-set-name",
-				Version:           1,
-				Description:       ptr.To("test-description-two-active"),
-				AllowInsecureSHA1: true,
-				StagingStatus:     "ACTIVE",
-				ProductionStatus:  "ACTIVE",
-				CreatedBy:         "jkowalski",
-				CreatedDate:       tst.NewTimeFromString(t, "2024-04-16T12:08:34.099457Z"),
-				ModifiedBy:        ptr.To("jkowalski"),
-				ModifiedDate:      ptr.To(tst.NewTimeFromString(t, "2024-04-16T12:08:34.099457Z")),
-				Certificates:      nil,
+				CASetID:            "12345",
+				CASetName:          "test-ca-set-name",
+				Version:            1,
+				Description:        ptr.To("test-description-two-active"),
+				AllowInsecureSHA1:  true,
+				StagingStatus:      "ACTIVE",
+				ProductionStatus:   "ACTIVE",
+				CreatedBy:          "jkowalski",
+				CreatedDate:        tst.NewTimeFromString(t, "2024-04-16T12:08:34.099457Z"),
+				ModifiedBy:         ptr.To("jkowalski"),
+				ModifiedDate:       ptr.To(tst.NewTimeFromString(t, "2024-04-16T12:08:34.099457Z")),
+				Certificates:       nil,
+				CaSetVersionStatus: "NOT_DELETED",
 			},
 			{
-				CASetID:           "12345",
-				CASetName:         "test-ca-set-name",
-				Version:           2,
-				Description:       ptr.To("test-description-one-active"),
-				AllowInsecureSHA1: true,
-				StagingStatus:     "INACTIVE",
-				ProductionStatus:  "ACTIVE",
-				CreatedBy:         "jkowalski",
-				CreatedDate:       tst.NewTimeFromString(t, "2024-04-16T12:08:34.099457Z"),
-				ModifiedBy:        ptr.To("jkowalski"),
-				ModifiedDate:      ptr.To(tst.NewTimeFromString(t, "2024-04-16T12:08:34.099457Z")),
-				Certificates:      nil,
+				CASetID:            "12345",
+				CASetName:          "test-ca-set-name",
+				Version:            2,
+				Description:        ptr.To("test-description-one-active"),
+				AllowInsecureSHA1:  true,
+				StagingStatus:      "INACTIVE",
+				ProductionStatus:   "ACTIVE",
+				CreatedBy:          "jkowalski",
+				CreatedDate:        tst.NewTimeFromString(t, "2024-04-16T12:08:34.099457Z"),
+				ModifiedBy:         ptr.To("jkowalski"),
+				ModifiedDate:       ptr.To(tst.NewTimeFromString(t, "2024-04-16T12:08:34.099457Z")),
+				Certificates:       nil,
+				CaSetVersionStatus: "NOT_DELETED",
 			},
 			{
-				CASetID:           "12345",
-				CASetName:         "test-ca-set-name",
-				Version:           3,
-				Description:       ptr.To("test-description-two-inactive"),
-				AllowInsecureSHA1: true,
-				StagingStatus:     "INACTIVE",
-				ProductionStatus:  "INACTIVE",
-				CreatedBy:         "jkowalski",
-				CreatedDate:       tst.NewTimeFromString(t, "2024-04-16T12:08:34.099457Z"),
-				ModifiedBy:        ptr.To("jkowalski"),
-				ModifiedDate:      ptr.To(tst.NewTimeFromString(t, "2024-04-16T12:08:34.099457Z")),
-				Certificates:      nil,
+				CASetID:            "12345",
+				CASetName:          "test-ca-set-name",
+				Version:            3,
+				Description:        ptr.To("test-description-two-inactive"),
+				AllowInsecureSHA1:  true,
+				StagingStatus:      "INACTIVE",
+				ProductionStatus:   "INACTIVE",
+				CreatedBy:          "jkowalski",
+				CreatedDate:        tst.NewTimeFromString(t, "2024-04-16T12:08:34.099457Z"),
+				ModifiedBy:         ptr.To("jkowalski"),
+				ModifiedDate:       ptr.To(tst.NewTimeFromString(t, "2024-04-16T12:08:34.099457Z")),
+				Certificates:       nil,
+				CaSetVersionStatus: "NOT_DELETED",
 			},
 		},
 	}
@@ -105,17 +112,18 @@ func TestCASetVersionsDataSource(t *testing.T) {
 	baseResponseWithCertificates := mtlstruststore.ListCASetVersionsResponse{
 		Versions: []mtlstruststore.CASetVersion{
 			{
-				CASetID:           "12345",
-				CASetName:         "test-ca-set-name",
-				Version:           1,
-				Description:       ptr.To("test-description-two-active"),
-				AllowInsecureSHA1: true,
-				StagingStatus:     "ACTIVE",
-				ProductionStatus:  "ACTIVE",
-				CreatedBy:         "jkowalski",
-				CreatedDate:       tst.NewTimeFromString(t, "2024-04-16T12:08:34.099457Z"),
-				ModifiedBy:        ptr.To("jkowalski"),
-				ModifiedDate:      ptr.To(tst.NewTimeFromString(t, "2024-04-16T12:08:34.099457Z")),
+				CASetID:            "12345",
+				CASetName:          "test-ca-set-name",
+				Version:            1,
+				Description:        ptr.To("test-description-two-active"),
+				AllowInsecureSHA1:  true,
+				StagingStatus:      "ACTIVE",
+				ProductionStatus:   "ACTIVE",
+				CreatedBy:          "jkowalski",
+				CreatedDate:        tst.NewTimeFromString(t, "2024-04-16T12:08:34.099457Z"),
+				ModifiedBy:         ptr.To("jkowalski"),
+				ModifiedDate:       ptr.To(tst.NewTimeFromString(t, "2024-04-16T12:08:34.099457Z")),
+				CaSetVersionStatus: "NOT_DELETED",
 				Certificates: []mtlstruststore.CertificateResponse{
 					{
 						Subject:            "C=US,ST=MA,L=Cambridge,O=Akamai,CN=test-subject-example.com",
@@ -133,17 +141,18 @@ func TestCASetVersionsDataSource(t *testing.T) {
 				},
 			},
 			{
-				CASetID:           "12345",
-				CASetName:         "test-ca-set-name",
-				Version:           2,
-				Description:       ptr.To("test-description-one-active"),
-				AllowInsecureSHA1: true,
-				StagingStatus:     "INACTIVE",
-				ProductionStatus:  "ACTIVE",
-				CreatedBy:         "jkowalski",
-				CreatedDate:       tst.NewTimeFromString(t, "2024-04-16T12:08:34.099457Z"),
-				ModifiedBy:        ptr.To("jkowalski"),
-				ModifiedDate:      ptr.To(tst.NewTimeFromString(t, "2024-04-16T12:08:34.099457Z")),
+				CASetID:            "12345",
+				CASetName:          "test-ca-set-name",
+				Version:            2,
+				Description:        ptr.To("test-description-one-active"),
+				AllowInsecureSHA1:  true,
+				StagingStatus:      "INACTIVE",
+				ProductionStatus:   "ACTIVE",
+				CreatedBy:          "jkowalski",
+				CreatedDate:        tst.NewTimeFromString(t, "2024-04-16T12:08:34.099457Z"),
+				ModifiedBy:         ptr.To("jkowalski"),
+				ModifiedDate:       ptr.To(tst.NewTimeFromString(t, "2024-04-16T12:08:34.099457Z")),
+				CaSetVersionStatus: "NOT_DELETED",
 				Certificates: []mtlstruststore.CertificateResponse{
 					{
 						Subject:            "C=US,ST=MA,L=Cambridge,O=Akamai,CN=test-subject-example.com",
@@ -161,17 +170,18 @@ func TestCASetVersionsDataSource(t *testing.T) {
 				},
 			},
 			{
-				CASetID:           "12345",
-				CASetName:         "test-ca-set-name",
-				Version:           3,
-				Description:       ptr.To("test-description-two-inactive"),
-				AllowInsecureSHA1: true,
-				StagingStatus:     "INACTIVE",
-				ProductionStatus:  "INACTIVE",
-				CreatedBy:         "jkowalski",
-				CreatedDate:       tst.NewTimeFromString(t, "2024-04-16T12:08:34.099457Z"),
-				ModifiedBy:        ptr.To("jkowalski"),
-				ModifiedDate:      ptr.To(tst.NewTimeFromString(t, "2024-04-16T12:08:34.099457Z")),
+				CASetID:            "12345",
+				CASetName:          "test-ca-set-name",
+				Version:            3,
+				Description:        ptr.To("test-description-two-inactive"),
+				AllowInsecureSHA1:  true,
+				StagingStatus:      "INACTIVE",
+				ProductionStatus:   "INACTIVE",
+				CreatedBy:          "jkowalski",
+				CreatedDate:        tst.NewTimeFromString(t, "2024-04-16T12:08:34.099457Z"),
+				ModifiedBy:         ptr.To("jkowalski"),
+				ModifiedDate:       ptr.To(tst.NewTimeFromString(t, "2024-04-16T12:08:34.099457Z")),
+				CaSetVersionStatus: "NOT_DELETED",
 				Certificates: []mtlstruststore.CertificateResponse{
 					{
 						Subject:            "C=US,ST=MA,L=Cambridge,O=Akamai,CN=test-subject-example.com",
@@ -396,6 +406,63 @@ func TestCASetVersionsDataSource(t *testing.T) {
 				},
 			},
 		},
+		"happy path - fetch by id with ca_set_version_statuses filter": {
+			init: func(m *mtlstruststore.Mock) {
+				m.On("ListCASetVersions", testutils.MockContext, mtlstruststore.ListCASetVersionsRequest{
+					CASetID:              "12345",
+					IncludeCertificates:  true,
+					CASetVersionStatuses: []string{"DELETED", "NOT_DELETED"},
+				}).Return(&mtlstruststore.ListCASetVersionsResponse{
+					Versions: []mtlstruststore.CASetVersion{
+						{
+							CASetID:            "12345",
+							CASetName:          "test-ca-set-name",
+							Version:            1,
+							Description:        ptr.To("test-description-two-active"),
+							AllowInsecureSHA1:  true,
+							StagingStatus:      "ACTIVE",
+							ProductionStatus:   "ACTIVE",
+							CreatedBy:          "jkowalski",
+							CreatedDate:        tst.NewTimeFromString(t, "2024-04-16T12:08:34.099457Z"),
+							ModifiedBy:         ptr.To("jkowalski"),
+							ModifiedDate:       ptr.To(tst.NewTimeFromString(t, "2024-04-16T12:08:34.099457Z")),
+							CaSetVersionStatus: "NOT_DELETED",
+						},
+						{
+							CASetID:            "12345",
+							CASetName:          "test-ca-set-name",
+							Version:            2,
+							Description:        ptr.To("test-description-deleted"),
+							AllowInsecureSHA1:  false,
+							StagingStatus:      "INACTIVE",
+							ProductionStatus:   "INACTIVE",
+							CreatedBy:          "jkowalski",
+							CreatedDate:        tst.NewTimeFromString(t, "2024-04-16T12:08:34.099457Z"),
+							ModifiedBy:         ptr.To("jkowalski"),
+							ModifiedDate:       ptr.To(tst.NewTimeFromString(t, "2024-04-16T12:08:34.099457Z")),
+							RemovalDate:        ptr.To(tst.NewTimeFromString(t, "2025-07-01T00:00:00Z")),
+							CaSetVersionStatus: "DELETED",
+						},
+					},
+				}, nil).Times(3)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataCASetVersions/id_ca_set_version_statuses.tf"),
+					Check: test.NewStateChecker("data.akamai_mtlstruststore_ca_set_versions.test").
+						CheckEqual("id", "12345").
+						CheckEqual("name", "test-ca-set-name").
+						CheckEqual("versions.#", "2").
+						CheckEqual("versions.0.version", "1").
+						CheckEqual("versions.0.status", "NOT_DELETED").
+						CheckEqual("versions.1.version", "2").
+						CheckEqual("versions.1.status", "DELETED").
+						CheckEqual("versions.1.version_description", "test-description-deleted").
+						CheckEqual("versions.1.removal_date", "2025-07-01T00:00:00Z").
+						Build(),
+				},
+			},
+		},
 		"error: could not find by ca set name": {
 			init: func(m *mtlstruststore.Mock) {
 				m.On("ListCASets", testutils.MockContext, mtlstruststore.ListCASetsRequest{
@@ -461,6 +528,14 @@ func TestCASetVersionsDataSource(t *testing.T) {
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestDataCASetVersions/id_name.tf"),
 					ExpectError: regexp.MustCompile(`(?s)2 attributes specified when one \(and only one\) of \[name,id] is.+required`),
+				},
+			},
+		},
+		"validation error - active_versions_only cannot be true with DELETED status": {
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDataCASetVersions/id_active_versions_only_with_deleted.tf"),
+					ExpectError: regexp.MustCompile("(?s)active_versions_only.*cannot be set to true when.*ca_set_version_statuses.*DELETED"),
 				},
 			},
 		},

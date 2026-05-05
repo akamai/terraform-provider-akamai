@@ -51,6 +51,8 @@ func TestCASetDataSource(t *testing.T) {
 		CheckEqual("version_modified_date", "2025-05-16T12:08:34.099457Z").
 		CheckEqual("allow_insecure_sha1", "false").
 		CheckEqual("version_description", "Version 1 description").
+		CheckEqual("version_status", "NOT_DELETED").
+		CheckEqual("status", "NOT_DELETED").
 		CheckEqual("staging_version", "1").
 		CheckEqual("production_version", "1").
 		CheckEqual("certificates.#", "1").
@@ -64,7 +66,9 @@ func TestCASetDataSource(t *testing.T) {
 		CheckEqual("certificates.0.issuer", "Example Issuer").
 		CheckEqual("certificates.0.serial_number", "123456789").
 		CheckEqual("certificates.0.signature_algorithm", "SHA256").
-		CheckEqual("certificates.0.subject", "Example Subject")
+		CheckEqual("certificates.0.subject", "Example Subject").
+		CheckMissing("removal_date").
+		CheckMissing("version_removal_date")
 
 	tests := map[string]struct {
 		init     func(*mtlstruststore.Mock, caSetTestData)
@@ -142,6 +146,7 @@ func TestCASetDataSource(t *testing.T) {
 					CASetName:   "example-ca-set",
 					Description: ptr.To("Example CA Set"),
 					AccountID:   "account-123",
+					CASetStatus: mtlstruststore.CASetStatusNotDeleted,
 					CreatedBy:   "example user",
 					CreatedDate: tst.NewTimeFromString(t, "2025-04-16T12:08:34.099457Z"),
 				},
@@ -173,7 +178,54 @@ func TestCASetDataSource(t *testing.T) {
 						CheckMissing("version_description").
 						CheckMissing("version_modified_by").
 						CheckMissing("version_modified_date").
+						CheckMissing("version_removal_date").
+						CheckMissing("version_status").
 						CheckMissing("allow_insecure_sha1").
+						Build(),
+				},
+			},
+		},
+		"happy path - fetch by id with removal dates and DELETED status": {
+			testData: caSetTestData{
+				caSetID:      "12345",
+				caSetVersion: 1,
+				caSetResponse: mtlstruststore.GetCASetResponse{
+					CASetID:           "12345",
+					CASetName:         "example-ca-set",
+					Description:       ptr.To("Example CA Set"),
+					AccountID:         "account-123",
+					CreatedBy:         "example user",
+					CreatedDate:       tst.NewTimeFromStringMust("2025-04-16T12:08:34.099457Z"),
+					CASetStatus:       mtlstruststore.CASetStatusDeleted,
+					StagingVersion:    ptr.To(int64(1)),
+					ProductionVersion: ptr.To(int64(1)),
+					LatestVersion:     ptr.To(int64(1)),
+					RemovalDate:       ptr.To(tst.NewTimeFromStringMust("2025-08-01T00:00:00Z")),
+				},
+				caSetVersionResponse: mtlstruststore.GetCASetVersionResponse{
+					Description:        ptr.To("Version 1 description"),
+					AllowInsecureSHA1:  false,
+					CreatedDate:        tst.NewTimeFromStringMust("2025-04-16T12:08:34.099457Z"),
+					CreatedBy:          "example user",
+					ModifiedBy:         ptr.To("example user"),
+					ModifiedDate:       ptr.To(tst.NewTimeFromStringMust("2025-05-16T12:08:34.099457Z")),
+					CaSetVersionStatus: "DELETED",
+					RemovalDate:        ptr.To(tst.NewTimeFromStringMust("2025-09-01T00:00:00Z")),
+					Certificates:       commonTestData.caSetVersionResponse.Certificates,
+				},
+			},
+			init: func(m *mtlstruststore.Mock, testData caSetTestData) {
+				mockGetCASet(m, testData)
+				mockGetCASetVersion(m, testData)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataCASet/id.tf"),
+					Check: commonStateChecker.
+						CheckEqual("removal_date", "2025-08-01T00:00:00Z").
+						CheckEqual("version_removal_date", "2025-09-01T00:00:00Z").
+						CheckEqual("version_status", "DELETED").
+						CheckEqual("status", "DELETED").
 						Build(),
 				},
 			},
@@ -308,17 +360,19 @@ var commonTestData = caSetTestData{
 		AccountID:         "account-123",
 		CreatedBy:         "example user",
 		CreatedDate:       tst.NewTimeFromStringMust("2025-04-16T12:08:34.099457Z"),
+		CASetStatus:       mtlstruststore.CASetStatusNotDeleted,
 		StagingVersion:    ptr.To(int64(1)),
 		ProductionVersion: ptr.To(int64(1)),
 		LatestVersion:     ptr.To(int64(1)),
 	},
 	caSetVersionResponse: mtlstruststore.GetCASetVersionResponse{
-		Description:       ptr.To("Version 1 description"),
-		AllowInsecureSHA1: false,
-		CreatedDate:       tst.NewTimeFromStringMust("2025-04-16T12:08:34.099457Z"),
-		CreatedBy:         "example user",
-		ModifiedBy:        ptr.To("example user"),
-		ModifiedDate:      ptr.To(tst.NewTimeFromStringMust("2025-05-16T12:08:34.099457Z")),
+		Description:        ptr.To("Version 1 description"),
+		AllowInsecureSHA1:  false,
+		CreatedDate:        tst.NewTimeFromStringMust("2025-04-16T12:08:34.099457Z"),
+		CreatedBy:          "example user",
+		ModifiedBy:         ptr.To("example user"),
+		ModifiedDate:       ptr.To(tst.NewTimeFromStringMust("2025-05-16T12:08:34.099457Z")),
+		CaSetVersionStatus: "NOT_DELETED",
 		Certificates: []mtlstruststore.CertificateResponse{
 			{
 				CertificatePEM:     "-----BEGIN CERTIFICATE-----...",

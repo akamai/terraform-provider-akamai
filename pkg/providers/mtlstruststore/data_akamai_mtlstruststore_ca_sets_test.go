@@ -26,7 +26,8 @@ func TestCASetsDataSource(t *testing.T) {
 		CheckEqual("ca_sets.0.deleted_by", "user1").
 		CheckEqual("ca_sets.0.deleted_date", "2023-01-03T00:00:00Z").
 		CheckEqual("ca_sets.0.account_id", "test_account_1").
-		CheckEqual("ca_sets.0.description", "Test CA Set Only Staging Description")
+		CheckEqual("ca_sets.0.description", "Test CA Set Only Staging Description").
+		CheckMissing("ca_sets.0.removal_date")
 
 	productionNetworkStateChecker := test.NewStateChecker("data.akamai_mtlstruststore_ca_sets.test").
 		CheckEqual("activated_on", "production").
@@ -40,7 +41,8 @@ func TestCASetsDataSource(t *testing.T) {
 		CheckEqual("ca_sets.0.deleted_by", "user3").
 		CheckEqual("ca_sets.0.deleted_date", "2023-01-03T00:00:00Z").
 		CheckEqual("ca_sets.0.account_id", "test_account_1").
-		CheckEqual("ca_sets.0.description", "Test CA Set Only Production Description")
+		CheckEqual("ca_sets.0.description", "Test CA Set Only Production Description").
+		CheckMissing("ca_sets.0.removal_date")
 
 	bothNetworksStateChecker := test.NewStateChecker("data.akamai_mtlstruststore_ca_sets.test").
 		CheckEqual("ca_sets.0.name", "both_ca_set").
@@ -54,7 +56,8 @@ func TestCASetsDataSource(t *testing.T) {
 		CheckEqual("ca_sets.0.deleted_by", "user3").
 		CheckEqual("ca_sets.0.deleted_date", "2023-01-03T00:00:00Z").
 		CheckEqual("ca_sets.0.account_id", "test_account_1").
-		CheckEqual("ca_sets.0.description", "Test CA Set Both Description")
+		CheckEqual("ca_sets.0.description", "Test CA Set Both Description").
+		CheckMissing("ca_sets.0.removal_date")
 
 	allCASetsStateChecker := stagingNetworkStateChecker.
 		CheckEqual("ca_sets.#", "3").
@@ -80,7 +83,9 @@ func TestCASetsDataSource(t *testing.T) {
 		CheckEqual("ca_sets.2.deleted_by", "user3").
 		CheckEqual("ca_sets.2.deleted_date", "2023-01-03T00:00:00Z").
 		CheckEqual("ca_sets.2.account_id", "test_account_1").
-		CheckEqual("ca_sets.2.description", "Test CA Set Both Description")
+		CheckEqual("ca_sets.2.description", "Test CA Set Both Description").
+		CheckMissing("ca_sets.1.removal_date").
+		CheckMissing("ca_sets.2.removal_date")
 
 	notDeleted1StateChecker := test.NewStateChecker("data.akamai_mtlstruststore_ca_sets.test").
 		CheckEqual("ca_sets.0.id", "444444").
@@ -91,7 +96,8 @@ func TestCASetsDataSource(t *testing.T) {
 		CheckEqual("ca_sets.0.created_by", "user1").
 		CheckEqual("ca_sets.0.created_date", "2024-03-01T10:00:00Z").
 		CheckEqual("ca_sets.0.account_id", "test_account_1").
-		CheckEqual("ca_sets.0.description", "First active CA set")
+		CheckEqual("ca_sets.0.description", "First active CA set").
+		CheckMissing("ca_sets.0.removal_date")
 
 	filterByNotDeletedStateChecker := notDeleted1StateChecker.
 		CheckEqual("ca_sets.#", "2").
@@ -103,7 +109,8 @@ func TestCASetsDataSource(t *testing.T) {
 		CheckEqual("ca_sets.1.created_by", "user2").
 		CheckEqual("ca_sets.1.created_date", "2024-05-15T14:30:00Z").
 		CheckEqual("ca_sets.1.account_id", "test_account_2").
-		CheckEqual("ca_sets.1.description", "Second active CA set")
+		CheckEqual("ca_sets.1.description", "Second active CA set").
+		CheckMissing("ca_sets.1.removal_date")
 
 	filterByDeletedAndNotDeletedStateChecker := notDeleted1StateChecker.
 		CheckEqual("ca_sets.#", "2").
@@ -115,7 +122,8 @@ func TestCASetsDataSource(t *testing.T) {
 		CheckEqual("ca_sets.1.deleted_by", "user2").
 		CheckEqual("ca_sets.1.deleted_date", "2024-01-15T12:00:00Z").
 		CheckEqual("ca_sets.1.account_id", "test_account_1").
-		CheckEqual("ca_sets.1.description", "Deleted CA set")
+		CheckEqual("ca_sets.1.description", "Deleted CA set").
+		CheckEqual("ca_sets.1.removal_date", "2024-02-15T12:00:00Z")
 
 	tests := map[string]struct {
 		init  func(*mtlstruststore.Mock)
@@ -413,6 +421,7 @@ var (
 		CreatedDate: tst.NewTimeFromStringMust("2023-06-01T08:00:00Z"),
 		DeletedBy:   ptr.To("user2"),
 		DeletedDate: ptr.To(tst.NewTimeFromStringMust("2024-01-15T12:00:00Z")),
+		RemovalDate: ptr.To(tst.NewTimeFromStringMust("2024-02-15T12:00:00Z")),
 		AccountID:   "test_account_1",
 		Description: ptr.To("Deleted CA set"),
 	}

@@ -125,6 +125,22 @@
 
 
 
+* mTLS Truststore
+  * Updated description in the `akamai_mtlstruststore_ca_set_activities` data source with the following activity types: `REMOVE_CA_SET`, `REMOVE_CA_SET_VERSION`, and `DELETE_CA_SET_VERSION`.
+  * Added the `removal_date` attribute to the `akamai_mtlstruststore_ca_sets` data source.
+  * Added the `removal_date`, `version_removal_date`, `status`, and `version_status` attributes to the `akamai_mtlstruststore_ca_set` data source.
+  * Added the `removal_date`, `status`, and `ca_set_version_statuses` attributes to the `akamai_mtlstruststore_ca_set_versions` data source. The `ca_set_version_statuses` attribute enables filtering CA set versions by status `NOT_DELETED` or `DELETED`.
+
+
+
+
+
+
+
+
+
+
+
 
 
 
