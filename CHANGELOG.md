@@ -65,11 +65,6 @@
   * Added `deny_custom_{custom_deny_id}` action support for the `penalty_box_action` field in the `akamai_appsec_eval_penalty_box` and `akamai_appsec_penalty_box` resources.
   * Added the `apply_account_protection_controls` field to the `akamai_appsec_security_policy_protections` data source to allow displaying account protection controls when fetching the security policy protections.
 
-* CCM
-    * Added the `geo_class` attribute to the following resources and data sources:
-        * `resource_akamai_cloudcertificates_certificate`
-        * `data_akamai_cloudcertificates_certificate`
-        * `data_akamai_cloudcertificates_certificates`
 
 
 

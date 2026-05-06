@@ -9,7 +9,6 @@ resource "akamai_cloudcertificates_certificate" "test" {
   key_size       = "2048"
   key_type       = "RSA"
   secure_network = "ENHANCED_TLS"
-  geo_class      = "STANDARD_WORLDWIDE"
   sans           = ["test.example.com", "test.example2.com"]
   subject = {
     common_name  = "test.example.com"

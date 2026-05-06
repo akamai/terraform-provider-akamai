@@ -45,7 +45,6 @@ type (
 		ModifiedDate                        types.String   `tfsdk:"modified_date"`
 		SANs                                types.Set      `tfsdk:"sans"`
 		SecureNetwork                       types.String   `tfsdk:"secure_network"`
-		GeoClass                            types.String   `tfsdk:"geo_class"`
 		SignedCertificateIssuer             types.String   `tfsdk:"signed_certificate_issuer"`
 		SignedCertificateNotValidAfterDate  types.String   `tfsdk:"signed_certificate_not_valid_after_date"`
 		SignedCertificateNotValidBeforeDate types.String   `tfsdk:"signed_certificate_not_valid_before_date"`
@@ -57,6 +56,8 @@ type (
 		Bindings                            []bindingModel `tfsdk:"bindings"`
 	}
 )
+
+const defaultPageSize int64 = 100
 
 // NewCertificateDataSource returns a new CloudCertificates Certificate data source.
 func NewCertificateDataSource() datasource.DataSource {
@@ -143,10 +144,6 @@ func (d *certificateDataSource) Schema(_ context.Context, _ datasource.SchemaReq
 			"secure_network": schema.StringAttribute{
 				Computed:    true,
 				Description: "The secure network type.",
-			},
-			"geo_class": schema.StringAttribute{
-				Computed:    true,
-				Description: "The geographic network class of the certificate.",
 			},
 			"signed_certificate_issuer": schema.StringAttribute{
 				Description: "The issuer of the signed certificate.",
@@ -319,7 +316,6 @@ func (m *certificateDataSourceModel) convertCertificateToModel(ctx context.Conte
 	m.KeyType = types.StringValue(string(certificate.Certificate.KeyType))
 	m.KeySize = types.StringValue(string(certificate.Certificate.KeySize))
 	m.SecureNetwork = types.StringValue(certificate.Certificate.SecureNetwork)
-	m.GeoClass = types.StringValue(string(certificate.Certificate.GeoClass))
 	m.SignedCertificatePEM = types.StringPointerValue(certificate.Certificate.SignedCertificatePEM)
 	m.SignedCertificateIssuer = types.StringPointerValue(certificate.Certificate.SignedCertificateIssuer)
 	m.SignedCertificateNotValidBeforeDate = date.TimeRFC3339NanoPointerValue(certificate.Certificate.SignedCertificateNotValidBeforeDate)

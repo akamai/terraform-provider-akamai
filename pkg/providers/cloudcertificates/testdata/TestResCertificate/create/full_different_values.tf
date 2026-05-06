@@ -9,7 +9,6 @@ resource "akamai_cloudcertificates_certificate" "test" {
   key_size       = "P-256"
   key_type       = "ECDSA"
   secure_network = "ENHANCED_TLS"
-  geo_class      = "CONTIGUOUS_US"
   sans           = ["test.example.com", "test.example2.com"]
   subject = {
     state    = "CA"
