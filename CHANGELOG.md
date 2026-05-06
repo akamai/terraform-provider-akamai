@@ -57,6 +57,11 @@
 
 * Removed examples from `/examples` directory in favor of use-case driven templates. See [Terraform templates](https://github.com/akamai/terraform-templates) for more information.
 
+
+* Edgeworkers
+  * Added support for the `auto_pin` attribute (set to `true` by default) in the `akamai_edgeworkers_activation` resource.
+  * Extended the import ID to optionally accept `auto_pin` as a third colon-separated argument `edgeworker_id:network[:auto_pin]`.
+
 * Reporting Groups (Beta)
   * Added new resource:
     * `akamai_reportinggroups_group` - allowing users to manage reporting group for properties.

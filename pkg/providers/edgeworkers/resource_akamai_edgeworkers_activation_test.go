@@ -1,20 +1,36 @@
 package edgeworkers
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"testing"
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/edgeworkers"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
 func TestResourceEdgeworkersActivation(t *testing.T) {
 	workdir := "./testdata/TestResourceEdgeWorkersActivation"
 	edgeworkerID := 1234
+	baseChecker := test.NewStateChecker("akamai_edgeworkers_activation.test").
+		CheckEqual("activation_id", "1").
+		CheckEqual("version", "test").
+		CheckEqual("network", stagingNetwork).
+		CheckEqual("note", "note for edgeworkers activation").
+		CheckEqual("auto_pin", "true")
+
+	baseImportChecker := test.NewImportChecker().
+		CheckEqual("edgeworker_id", "1234").
+		CheckEqual("network", "STAGING").
+		CheckEqual("activation_id", "1").
+		CheckEqual("auto_pin", "true")
 
 	tests := map[string]struct {
 		init            func(*edgeworkers.Mock)
@@ -34,7 +50,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				}, nil).Once()
 
 				// create
-				expectFullActivation(m, edgeworkerID, activationID, net, version, note)
+				expectFullActivation(m, edgeworkerID, activationID, net, version, note, true)
 
 				// read
 				expectFullRead(m, edgeworkerID, version, []edgeworkers.Activation{
@@ -47,13 +63,39 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_stag.tf", workdir),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "timeouts.#", "0"),
-					),
+					Check: baseChecker.
+						CheckEqual("timeouts.#", "0").
+						Build(),
+				},
+			},
+		},
+		"create and read activation - autoPin false": {
+			init: func(m *edgeworkers.Mock) {
+				net := edgeworkers.ActivationNetworkStaging
+				version := "test"
+				activationID := 1
+				note := "note for edgeworkers activation"
+				autoPin := false
+
+				expectListEdgeWorkerVersions(m, edgeworkerID, []edgeworkers.EdgeWorkerVersion{
+					*createStubEdgeworkerVersion(edgeworkerID, version),
+				}, nil).Once()
+
+				// create - note: autoPin=false in API request
+				expectFullActivation(m, edgeworkerID, activationID, net, version, note, autoPin)
+
+				expectFullRead(m, edgeworkerID, version, []edgeworkers.Activation{
+					*createStubActivation(edgeworkerID, activationID, net, version, activationStatusComplete, "", note),
+				}, []edgeworkers.Deactivation{}, 2)
+
+				expectFullDeactivation(m, edgeworkerID, 1, net, version, note)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_autopin_false_stag.tf", workdir),
+					Check: baseChecker.
+						CheckEqual("auto_pin", "false").
+						Build(),
 				},
 			},
 		},
@@ -70,7 +112,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				}, nil).Once()
 
 				// create
-				expectFullActivation(m, edgeworkerID, activationID, net, version, note)
+				expectFullActivation(m, edgeworkerID, activationID, net, version, note, true)
 
 				// read
 				expectFullRead(m, edgeworkerID, version, []edgeworkers.Activation{
@@ -83,15 +125,11 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_with_timeout.tf", workdir),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "timeouts.#", "1"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "timeouts.0.default", "2h"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "timeouts.0.delete", "3h"),
-					),
+					Check: baseChecker.
+						CheckEqual("timeouts.#", "1").
+						CheckEqual("timeouts.0.default", "2h").
+						CheckEqual("timeouts.0.delete", "3h").
+						Build(),
 				},
 			},
 		},
@@ -101,6 +139,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				version := "test"
 				activationID := 8
 				note := "note for edgeworkers activation"
+
 				activations := []edgeworkers.Activation{
 					*createStubActivation(edgeworkerID, 7, edgeworkers.ActivationNetworkProduction, "current", activationStatusComplete, "2022-01-25T12:30:06Z", note),
 					*createStubActivation(edgeworkerID, 6, net, "past2", activationStatusComplete, "2022-01-25T12:30:06Z", note),
@@ -127,7 +166,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				}, nil).Once()
 
 				// activate
-				expectActivateVersion(m, edgeworkerID, activationID, net, version, note, nil).Once()
+				expectActivateVersion(m, edgeworkerID, activationID, net, version, note, true, nil).Once()
 				expectGetActivation(m, edgeworkerID, activationID, net, version, activationStatusComplete, nil).Once()
 
 				// read
@@ -142,12 +181,9 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_stag.tf", workdir),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "8"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
-					),
+					Check: baseChecker.
+						CheckEqual("activation_id", "8").
+						Build(),
 				},
 			},
 		},
@@ -180,12 +216,8 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_stag.tf", workdir),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
-					),
+					Check: baseChecker.
+						Build(),
 				},
 			},
 		},
@@ -205,7 +237,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				expectListActivations(m, edgeworkerID, "", []edgeworkers.Activation{}, nil).Once()
 
 				// activate
-				expectActivateVersion(m, edgeworkerID, activationID, net, version, note, nil).Once()
+				expectActivateVersion(m, edgeworkerID, activationID, net, version, note, true, nil).Once()
 				expectGetActivation(m, edgeworkerID, activationID, net, version, activationStatusPresubmit, nil).Times(2)
 				expectGetActivation(m, edgeworkerID, activationID, net, version, activationStatusPending, nil).Times(2)
 				expectGetActivation(m, edgeworkerID, activationID, net, version, activationStatusInProgress, nil).Times(2)
@@ -222,12 +254,8 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_stag.tf", workdir),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
-					),
+					Check: baseChecker.
+						Build(),
 				},
 			},
 		},
@@ -262,12 +290,8 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_stag.tf", workdir),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
-					),
+					Check: baseChecker.
+						Build(),
 				},
 			},
 		},
@@ -284,7 +308,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				}, nil).Times(2)
 
 				// create
-				expectFullActivation(m, edgeworkerID, createActivationID, createNet, version, note)
+				expectFullActivation(m, edgeworkerID, createActivationID, createNet, version, note, true)
 
 				// read + plan + refresh
 				activations := []edgeworkers.Activation{
@@ -293,7 +317,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				expectFullRead(m, edgeworkerID, version, activations, []edgeworkers.Deactivation{}, 3)
 
 				// update - activate
-				expectFullUpdate(m, edgeworkerID, updateActivationID, updateNet, version, "", note, activations)
+				expectFullUpdate(m, edgeworkerID, updateActivationID, updateNet, version, "", note, activations, true)
 
 				// read + plan
 				expectFullRead(m, edgeworkerID, version, []edgeworkers.Activation{
@@ -307,21 +331,14 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_stag.tf", workdir),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
-					),
+					Check:  baseChecker.Build(),
 				},
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_prod.tf", workdir),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "2"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", productionNetwork),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
-					),
+					Check: baseChecker.
+						CheckEqual("activation_id", "2").
+						CheckEqual("network", productionNetwork).
+						Build(),
 				},
 			},
 		},
@@ -339,7 +356,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				}, nil).Times(2)
 
 				// create
-				expectFullActivation(m, edgeworkerID, createActivationID, net, createVersion, note)
+				expectFullActivation(m, edgeworkerID, createActivationID, net, createVersion, note, true)
 
 				// read + plan + refresh
 				activations := []edgeworkers.Activation{
@@ -348,7 +365,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				expectFullRead(m, edgeworkerID, createVersion, activations, []edgeworkers.Deactivation{}, 3)
 
 				// update - activate
-				expectFullUpdate(m, edgeworkerID, updateActivationID, net, updateVersion, createVersion, note, activations)
+				expectFullUpdate(m, edgeworkerID, updateActivationID, net, updateVersion, createVersion, note, activations, true)
 
 				// read + plan
 				expectFullRead(m, edgeworkerID, updateVersion, []edgeworkers.Activation{
@@ -362,21 +379,15 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_stag.tf", workdir),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
-					),
+					Check: baseChecker.
+						Build(),
 				},
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test1_stag.tf", workdir),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "2"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test1"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
-					),
+					Check: baseChecker.
+						CheckEqual("activation_id", "2").
+						CheckEqual("version", "test1").
+						Build(),
 				},
 			},
 		},
@@ -395,7 +406,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				}, nil).Times(2)
 
 				// create
-				expectFullActivation(m, edgeworkerID, createActivationID, net, createVersion, note)
+				expectFullActivation(m, edgeworkerID, createActivationID, net, createVersion, note, true)
 
 				// read + plan
 				expectFullRead(m, edgeworkerID, createVersion, []edgeworkers.Activation{
@@ -410,7 +421,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				expectFullRead(m, edgeworkerID, "someOtherVersion", activations, []edgeworkers.Deactivation{}, 1)
 
 				// update - activate
-				expectFullUpdate(m, edgeworkerID, updateActivationID, net, updateVersion, "someOtherVersion", note, activations)
+				expectFullUpdate(m, edgeworkerID, updateActivationID, net, updateVersion, "someOtherVersion", note, activations, true)
 
 				// read + plan
 				expectFullRead(m, edgeworkerID, updateVersion, []edgeworkers.Activation{
@@ -425,21 +436,15 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_stag.tf", workdir),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
-					),
+					Check: baseChecker.
+						Build(),
 				},
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test1_stag.tf", workdir),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "3"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test1"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
-					),
+					Check: baseChecker.
+						CheckEqual("activation_id", "3").
+						CheckEqual("version", "test1").
+						Build(),
 				},
 			},
 		},
@@ -457,7 +462,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				}, nil).Once()
 
 				// create
-				expectFullActivation(m, edgeworkerID, createActivationID, net, createVersion, note)
+				expectFullActivation(m, edgeworkerID, createActivationID, net, createVersion, note, true)
 
 				// read + plan
 				expectFullRead(m, edgeworkerID, createVersion, []edgeworkers.Activation{
@@ -476,21 +481,15 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_stag.tf", workdir),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
-					),
+					Check: baseChecker.
+						Build(),
 				},
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test1_stag.tf", workdir),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "2"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test1"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
-					),
+					Check: baseChecker.
+						CheckEqual("activation_id", "2").
+						CheckEqual("version", "test1").
+						Build(),
 				},
 			},
 		},
@@ -507,7 +506,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				}, nil).Times(2)
 
 				// create
-				expectFullActivation(m, edgeworkerID, createActivationID, createNet, version, note)
+				expectFullActivation(m, edgeworkerID, createActivationID, createNet, version, note, true)
 
 				// read + plan
 				expectFullRead(m, edgeworkerID, version, []edgeworkers.Activation{
@@ -534,21 +533,15 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_stag.tf", workdir),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
-					),
+					Check: baseChecker.
+						Build(),
 				},
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_prod.tf", workdir),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "2"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", productionNetwork),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
-					),
+					Check: baseChecker.
+						CheckEqual("activation_id", "2").
+						CheckEqual("network", productionNetwork).
+						Build(),
 				},
 			},
 		},
@@ -568,7 +561,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				}, nil).Once()
 
 				// create
-				expectFullActivation(m, edgeworkerID, activationID, net, version, note)
+				expectFullActivation(m, edgeworkerID, activationID, net, version, note, true)
 
 				// read + plan + refresh
 				expectFullRead(m, edgeworkerID, version, []edgeworkers.Activation{
@@ -584,7 +577,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				}, nil).Once()
 
 				// create
-				expectFullActivation(m, updateEdgeworkerID, activationID, net, version, note)
+				expectFullActivation(m, updateEdgeworkerID, activationID, net, version, note, true)
 
 				// read + plan
 				expectFullRead(m, updateEdgeworkerID, version, []edgeworkers.Activation{
@@ -597,21 +590,15 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_stag.tf", workdir),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "edgeworker_id", "1234"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
-					),
+					Check: baseChecker.
+						CheckEqual("edgeworker_id", "1234").
+						Build(),
 				},
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_different_edgeworker_id.tf", workdir),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "edgeworker_id", "4321"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
-					),
+					Check: baseChecker.
+						CheckEqual("edgeworker_id", "4321").
+						Build(),
 				},
 			},
 			omitDefaultMock: true,
@@ -629,7 +616,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				}, nil).Times(1)
 
 				// create
-				expectFullActivation(m, edgeworkerID, createActivationID, createNet, version, note)
+				expectFullActivation(m, edgeworkerID, createActivationID, createNet, version, note, true)
 
 				// read + plan + refresh
 				activations := []edgeworkers.Activation{
@@ -643,21 +630,15 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test1_stag.tf", workdir),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test1"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
-					),
+					Check: baseChecker.
+						CheckEqual("version", "test1").
+						Build(),
 				},
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_note_update_no_activation.tf", workdir),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test1"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
-					),
+					Check: baseChecker.
+						CheckEqual("version", "test1").
+						Build(),
 				},
 			},
 		},
@@ -674,7 +655,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				}, nil).Times(2)
 
 				// create
-				expectFullActivation(m, edgeworkerID, createActivationID, createNet, version, note)
+				expectFullActivation(m, edgeworkerID, createActivationID, createNet, version, note, true)
 
 				// read + plan + refresh
 				activations := []edgeworkers.Activation{
@@ -683,7 +664,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				expectFullRead(m, edgeworkerID, version, activations, []edgeworkers.Deactivation{}, 3)
 
 				// update - activate
-				expectFullUpdate(m, edgeworkerID, updateActivationID, updateNet, version, "", updatedNote, activations)
+				expectFullUpdate(m, edgeworkerID, updateActivationID, updateNet, version, "", updatedNote, activations, true)
 
 				// read + plan
 				expectFullRead(m, edgeworkerID, version, []edgeworkers.Activation{
@@ -698,21 +679,18 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test1_stag.tf", workdir),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test1"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
-					),
+					Check: baseChecker.
+						CheckEqual("version", "test1").
+						Build(),
 				},
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_note_update.tf", workdir),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "2"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test1"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", productionNetwork),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation updated"),
-					),
+					Check: baseChecker.
+						CheckEqual("activation_id", "2").
+						CheckEqual("version", "test1").
+						CheckEqual("network", productionNetwork).
+						CheckEqual("note", "note for edgeworkers activation updated").
+						Build(),
 				},
 			},
 		},
@@ -729,7 +707,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				}, nil).Once()
 
 				// create
-				expectFullActivation(m, edgeworkerID, activationID, net, version, note)
+				expectFullActivation(m, edgeworkerID, activationID, net, version, note, true)
 
 				// read
 				expectFullRead(m, edgeworkerID, version, []edgeworkers.Activation{
@@ -743,12 +721,8 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_stag.tf", workdir),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
-					),
+					Check: baseChecker.
+						Build(),
 				},
 			},
 		},
@@ -765,7 +739,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				}, nil).Once()
 
 				// create
-				expectFullActivation(m, edgeworkerID, activationID, net, version, note)
+				expectFullActivation(m, edgeworkerID, activationID, net, version, note, true)
 
 				// read
 				expectFullRead(m, edgeworkerID, version, []edgeworkers.Activation{
@@ -784,12 +758,8 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_stag.tf", workdir),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
-					),
+					Check: baseChecker.
+						Build(),
 				},
 			},
 		},
@@ -806,7 +776,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				}, nil).Once()
 
 				// create
-				expectFullActivation(m, edgeworkerID, activationID, net, version, note)
+				expectFullActivation(m, edgeworkerID, activationID, net, version, note, true)
 
 				// read
 				expectFullRead(m, edgeworkerID, version, []edgeworkers.Activation{
@@ -823,12 +793,8 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_stag.tf", workdir),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
-					),
+					Check: baseChecker.
+						Build(),
 				},
 			},
 		},
@@ -845,7 +811,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				}, nil).Once()
 
 				// create
-				expectFullActivation(m, edgeworkerID, activationID, net, version, note)
+				expectFullActivation(m, edgeworkerID, activationID, net, version, note, true)
 
 				// read
 				expectFullRead(m, edgeworkerID, version, []edgeworkers.Activation{
@@ -863,12 +829,8 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_stag.tf", workdir),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
-					),
+					Check: baseChecker.
+						Build(),
 				},
 			},
 		},
@@ -879,31 +841,27 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				activationID := 1
 
 				// version verification
-				expectListEdgeWorkerVersions(m, edgeworkerID, []edgeworkers.EdgeWorkerVersion{
-					*createStubEdgeworkerVersion(edgeworkerID, version),
-				}, nil).Once()
-
-				// create
-				expectFullActivation(m, edgeworkerID, activationID, net, version, "")
-
 				expectFullRead(m, edgeworkerID, version, []edgeworkers.Activation{
 					*createStubActivation(edgeworkerID, activationID, net, version, activationStatusComplete, "", ""),
-				}, []edgeworkers.Deactivation{}, 3)
+				}, []edgeworkers.Deactivation{}, 1)
 
 				// test cleanup - destroy
 				expectFullDeactivation(m, edgeworkerID, 1, net, version, "")
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_import.tf", workdir),
-				},
-				{
-					ImportState:       true,
-					ImportStateId:     fmt.Sprintf("%d:STAGING", edgeworkerID),
-					ResourceName:      "akamai_edgeworkers_activation.test",
-					ImportStateVerify: true,
+					Config:        testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_import.tf", workdir),
+					ImportState:   true,
+					ImportStateId: fmt.Sprintf("%d:STAGING", edgeworkerID),
+					ResourceName:  "akamai_edgeworkers_activation.test",
+					ImportStateCheck: baseImportChecker.
+						CheckEqual("version", "test").
+						CheckEqual("note", "").
+						Build(),
+					ImportStatePersist: true,
 				},
 			},
+			omitDefaultMock: true,
 		},
 		"import activation on staging with note": {
 			init: func(m *edgeworkers.Mock) {
@@ -912,32 +870,28 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				activationID := 1
 				note := "note for edgeworkers activation updated"
 
-				// version verification
-				expectListEdgeWorkerVersions(m, edgeworkerID, []edgeworkers.EdgeWorkerVersion{
-					*createStubEdgeworkerVersion(edgeworkerID, version),
-				}, nil).Once()
-
-				// create
-				expectFullActivation(m, edgeworkerID, activationID, net, version, note)
-
+				// import read
 				expectFullRead(m, edgeworkerID, version, []edgeworkers.Activation{
 					*createStubActivation(edgeworkerID, activationID, net, version, activationStatusComplete, "", note),
-				}, []edgeworkers.Deactivation{}, 3)
+				}, []edgeworkers.Deactivation{}, 1)
 
 				// test cleanup - destroy
 				expectFullDeactivation(m, edgeworkerID, 1, net, version, note)
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_note_update_no_activation.tf", workdir),
-				},
-				{
-					ImportState:       true,
-					ImportStateId:     fmt.Sprintf("%d:STAGING", edgeworkerID),
-					ResourceName:      "akamai_edgeworkers_activation.test",
-					ImportStateVerify: true,
+					Config:        testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_note_update_no_activation.tf", workdir),
+					ImportState:   true,
+					ImportStateId: fmt.Sprintf("%d:STAGING", edgeworkerID),
+					ResourceName:  "akamai_edgeworkers_activation.test",
+					ImportStateCheck: baseImportChecker.
+						CheckEqual("version", "test1").
+						CheckEqual("note", "note for edgeworkers activation updated").
+						Build(),
+					ImportStatePersist: true,
 				},
 			},
+			omitDefaultMock: true,
 		},
 		"error on create - missing required arguments": {
 			steps: []resource.TestStep{
@@ -1026,7 +980,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				}, nil).Once()
 
 				expectListActivations(m, edgeworkerID, "", []edgeworkers.Activation{}, nil)
-				expectActivateVersion(m, edgeworkerID, 1, edgeworkers.ActivationNetworkStaging, "test", "note for edgeworkers activation", fmt.Errorf("oops"))
+				expectActivateVersion(m, edgeworkerID, 1, edgeworkers.ActivationNetworkStaging, "test", "note for edgeworkers activation", true, fmt.Errorf("oops"))
 			},
 			steps: []resource.TestStep{
 				{
@@ -1048,7 +1002,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				}, nil).Once()
 
 				expectListActivations(m, edgeworkerID, "", []edgeworkers.Activation{}, nil)
-				expectActivateVersion(m, edgeworkerID, activationID, net, version, note, nil)
+				expectActivateVersion(m, edgeworkerID, activationID, net, version, note, true, nil)
 				expectGetActivation(m, edgeworkerID, activationID, net, version, activationStatusPresubmit, nil).Once()
 				expectGetActivation(m, edgeworkerID, activationID, net, version, activationStatusPending, nil).Once()
 				expectGetActivation(m, edgeworkerID, activationID, net, version, activationStatusInProgress, nil).Once()
@@ -1074,7 +1028,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				}, nil).Once()
 
 				expectListActivations(m, edgeworkerID, "", []edgeworkers.Activation{}, nil)
-				expectActivateVersion(m, edgeworkerID, activationID, net, version, note, nil)
+				expectActivateVersion(m, edgeworkerID, activationID, net, version, note, true, nil)
 				expectGetActivation(m, edgeworkerID, activationID, net, version, activationStatusPresubmit, nil).Once()
 				expectGetActivation(m, edgeworkerID, activationID, net, version, activationStatusPending, nil).Once()
 				expectGetActivation(m, edgeworkerID, activationID, net, version, activationStatusInProgress, nil).Once()
@@ -1100,7 +1054,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				}, nil).Times(2)
 
 				// create
-				expectFullActivation(m, edgeworkerID, createActivationID, net, createVersion, note)
+				expectFullActivation(m, edgeworkerID, createActivationID, net, createVersion, note, true)
 
 				// read + plan + refresh
 				expectFullRead(m, edgeworkerID, createVersion, []edgeworkers.Activation{
@@ -1113,12 +1067,8 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_stag.tf", workdir),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
-					),
+					Check: baseChecker.
+						Build(),
 				},
 				{
 					Config:      testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test1_stag.tf", workdir),
@@ -1139,7 +1089,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				}, nil).Once()
 
 				// create
-				expectFullActivation(m, edgeworkerID, activationID, net, version, note)
+				expectFullActivation(m, edgeworkerID, activationID, net, version, note, true)
 
 				// read + plan
 				expectFullRead(m, edgeworkerID, version, []edgeworkers.Activation{
@@ -1152,12 +1102,8 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_stag.tf", workdir),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
-					),
+					Check: baseChecker.
+						Build(),
 				},
 				{
 					Config:      testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_different_edgeworker_id.tf", workdir),
@@ -1179,7 +1125,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				}, nil).Once()
 
 				// create
-				expectFullActivation(m, edgeworkerID, createActivationID, net, createVersion, note)
+				expectFullActivation(m, edgeworkerID, createActivationID, net, createVersion, note, true)
 
 				// read + plan
 				expectFullRead(m, edgeworkerID, createVersion, []edgeworkers.Activation{
@@ -1199,12 +1145,8 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_stag.tf", workdir),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
-					),
+					Check: baseChecker.
+						Build(),
 				},
 				{
 					Config:      testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test1_stag.tf", workdir),
@@ -1226,7 +1168,7 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				}, nil).Times(2)
 
 				// create
-				expectFullActivation(m, edgeworkerID, createActivationID, net, createVersion, note)
+				expectFullActivation(m, edgeworkerID, createActivationID, net, createVersion, note, true)
 
 				// read + plan + refresh
 				activations := []edgeworkers.Activation{
@@ -1248,12 +1190,8 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_stag.tf", workdir),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "activation_id", "1"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "version", "test"),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "network", stagingNetwork),
-						resource.TestCheckResourceAttr("akamai_edgeworkers_activation.test", "note", "note for edgeworkers activation"),
-					),
+					Check: baseChecker.
+						Build(),
 				},
 				{
 					Config:      testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test1_stag.tf", workdir),
@@ -1274,71 +1212,152 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 			},
 			omitDefaultMock: true,
 		},
-		"error on import - edgeworker id not a number": {
+		"error on customize diff - create + auto_pin changed without other field changes": {
+			init: func(m *edgeworkers.Mock) {
+				net := edgeworkers.ActivationNetworkStaging
+				version := "test"
+				activationID := 1
+				note := "note for edgeworkers activation"
+
+				// create
+				expectListEdgeWorkerVersions(m, edgeworkerID, []edgeworkers.EdgeWorkerVersion{
+					*createStubEdgeworkerVersion(edgeworkerID, version),
+				}, nil).Once()
+				expectFullActivation(m, edgeworkerID, activationID, net, version, note, true)
+
+				// read x 2
+				expectFullRead(m, edgeworkerID, version, []edgeworkers.Activation{
+					*createStubActivation(edgeworkerID, activationID, net, version, activationStatusComplete, "", note),
+				}, []edgeworkers.Deactivation{}, 2)
+
+				// plan with update of auto_pin=false, but no change to other fields, should cause error
+				expectFullRead(m, edgeworkerID, version, []edgeworkers.Activation{
+					*createStubActivation(edgeworkerID, activationID, net, version, activationStatusComplete, "", note),
+				}, []edgeworkers.Deactivation{}, 1)
+
+				// test cleanup - destroy
+				expectFullDeactivation(m, edgeworkerID, 1, net, version, note)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_autopin_true_stag.tf", workdir),
+					Check: baseChecker.
+						CheckEqual("auto_pin", "true").
+						Build(),
+				},
+				{
+					Config:      testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_autopin_false_stag.tf", workdir),
+					ExpectError: regexp.MustCompile(`edgeworker activation: 'auto_pin' can only be changed together with 'version', 'network', or 'edgeworker_id'`),
+				},
+			},
+		},
+		"import activation on staging with auto_pin true": {
 			init: func(m *edgeworkers.Mock) {
 				net := edgeworkers.ActivationNetworkStaging
 				version := "test"
 				activationID := 1
 
-				// version verification
-				expectListEdgeWorkerVersions(m, edgeworkerID, []edgeworkers.EdgeWorkerVersion{
-					*createStubEdgeworkerVersion(edgeworkerID, version),
-				}, nil).Once()
-
-				// create
-				expectFullActivation(m, edgeworkerID, activationID, net, version, "")
-
+				// import read
 				expectFullRead(m, edgeworkerID, version, []edgeworkers.Activation{
 					*createStubActivation(edgeworkerID, activationID, net, version, activationStatusComplete, "", ""),
-				}, []edgeworkers.Deactivation{}, 2)
+				}, []edgeworkers.Deactivation{}, 1)
 
 				// test cleanup - destroy
 				expectFullDeactivation(m, edgeworkerID, 1, net, version, "")
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_import.tf", workdir),
+					Config:        testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_import.tf", workdir),
+					ImportState:   true,
+					ImportStateId: fmt.Sprintf("%d:STAGING:true", edgeworkerID),
+					ResourceName:  "akamai_edgeworkers_activation.test",
+					ImportStateCheck: baseImportChecker.
+						CheckEqual("version", "test").
+						CheckEqual("note", "").
+						Build(),
+					ImportStatePersist: true,
 				},
+			},
+			omitDefaultMock: true,
+		},
+		"import activation on staging with auto_pin false": {
+			init: func(m *edgeworkers.Mock) {
+				net := edgeworkers.ActivationNetworkStaging
+				version := "test"
+				activationID := 1
+				note := "note for edgeworkers activation"
+
+				// import read
+				expectFullRead(m, edgeworkerID, version, []edgeworkers.Activation{
+					*createStubActivation(edgeworkerID, activationID, net, version, activationStatusComplete, "", note),
+				}, []edgeworkers.Deactivation{}, 1)
+
+				// test cleanup - destroy
+				expectFullDeactivation(m, edgeworkerID, 1, net, version, note)
+			},
+			steps: []resource.TestStep{
 				{
+					Config:        testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_autopin_false_stag.tf", workdir),
+					ImportState:   true,
+					ImportStateId: fmt.Sprintf("%d:STAGING:false", edgeworkerID),
+					ResourceName:  "akamai_edgeworkers_activation.test",
+					ImportStateCheck: baseImportChecker.
+						CheckEqual("auto_pin", "false").
+						CheckEqual("version", "test").
+						CheckEqual("note", "note for edgeworkers activation").
+						Build(),
+					ImportStatePersist: true,
+				},
+			},
+			omitDefaultMock: true,
+		},
+		"error on import - invalid auto_pin value": {
+			steps: []resource.TestStep{
+				{
+					Config:        testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_import.tf", workdir),
+					ImportState:   true,
+					ImportStateId: fmt.Sprintf("%d:STAGING:notabool", edgeworkerID),
+					ResourceName:  "akamai_edgeworkers_activation.test",
+					ExpectError:   regexp.MustCompile(`edgeworker activation import: auto_pin must be a boolean, got 'notabool'`),
+				},
+			},
+			omitDefaultMock: true,
+		},
+		"error on import - too many parts": {
+			steps: []resource.TestStep{
+				{
+					Config:        testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_import.tf", workdir),
+					ImportState:   true,
+					ImportStateId: fmt.Sprintf("%d:STAGING:true:extra", edgeworkerID),
+					ResourceName:  "akamai_edgeworkers_activation.test",
+					ExpectError:   regexp.MustCompile(`edgeworker activation import: invalid import id`),
+				},
+			},
+			omitDefaultMock: true,
+		},
+		"error on import - edgeworker id not a number": {
+			steps: []resource.TestStep{
+				{
+					Config:        testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_import.tf", workdir),
 					ImportState:   true,
 					ImportStateId: "123abc:STAGING",
 					ResourceName:  "akamai_edgeworkers_activation.test",
 					ExpectError:   regexp.MustCompile(`edgeworker activation import: edgeworker id must be an integer, got '123abc'`),
 				},
 			},
+			omitDefaultMock: true,
 		},
 		"error on import - invalid network": {
-			init: func(m *edgeworkers.Mock) {
-				net := edgeworkers.ActivationNetworkStaging
-				version := "test"
-				activationID := 1
-
-				// version verification
-				expectListEdgeWorkerVersions(m, edgeworkerID, []edgeworkers.EdgeWorkerVersion{
-					*createStubEdgeworkerVersion(edgeworkerID, version),
-				}, nil).Once()
-
-				// create
-				expectFullActivation(m, edgeworkerID, activationID, net, version, "")
-
-				expectFullRead(m, edgeworkerID, version, []edgeworkers.Activation{
-					*createStubActivation(edgeworkerID, activationID, net, version, activationStatusComplete, "", ""),
-				}, []edgeworkers.Deactivation{}, 2)
-
-				// test cleanup - destroy
-				expectFullDeactivation(m, edgeworkerID, 1, net, version, "")
-			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_import.tf", workdir),
-				},
-				{
+					Config:        testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_import.tf", workdir),
 					ImportState:   true,
 					ImportStateId: fmt.Sprintf("%d:INVALID_NETWORK", edgeworkerID),
 					ResourceName:  "akamai_edgeworkers_activation.test",
 					ExpectError:   regexp.MustCompile(`edgeworker activation import: network must be 'STAGING' or 'PRODUCTION', got 'INVALID_NETWORK'`),
 				},
 			},
+			omitDefaultMock: true,
 		},
 	}
 
@@ -1367,13 +1386,14 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 	}
 }
 
-func expectActivateVersion(m *edgeworkers.Mock, edgeworkerID, activationID int, net edgeworkers.ActivationNetwork, version, note string, e error) *mock.Call {
+func expectActivateVersion(m *edgeworkers.Mock, edgeworkerID, activationID int, net edgeworkers.ActivationNetwork, version, note string, autoPin bool, e error) *mock.Call {
 	req := edgeworkers.ActivateVersionRequest{
 		EdgeWorkerID: edgeworkerID,
 		ActivateVersion: edgeworkers.ActivateVersion{
 			Network: net,
 			Version: version,
 			Note:    note,
+			AutoPin: ptr.To(autoPin),
 		},
 	}
 	if e != nil {
@@ -1478,15 +1498,15 @@ func expectListEdgeWorkersID(m *edgeworkers.Mock, e error, ewIDs ...int) *mock.C
 	}, nil)
 }
 
-func expectFullActivation(m *edgeworkers.Mock, edgeworkerID, activationID int, net edgeworkers.ActivationNetwork, version, note string) {
+func expectFullActivation(m *edgeworkers.Mock, edgeworkerID, activationID int, net edgeworkers.ActivationNetwork, version, note string, autoPin bool) {
 	expectListActivations(m, edgeworkerID, "", []edgeworkers.Activation{}, nil).Once()
-	expectActivateVersion(m, edgeworkerID, activationID, net, version, note, nil).Once()
+	expectActivateVersion(m, edgeworkerID, activationID, net, version, note, autoPin, nil).Once()
 	expectGetActivation(m, edgeworkerID, activationID, net, version, activationStatusComplete, nil).Once()
 }
 
-func expectFullUpdate(m *edgeworkers.Mock, edgeworkerID, activationID int, net edgeworkers.ActivationNetwork, version, listDeactivationsVersion, note string, activations []edgeworkers.Activation) {
+func expectFullUpdate(m *edgeworkers.Mock, edgeworkerID, activationID int, net edgeworkers.ActivationNetwork, version, listDeactivationsVersion, note string, activations []edgeworkers.Activation, autoPin bool) {
 	expectListActivations(m, edgeworkerID, "", activations, nil).Once()
-	expectActivateVersion(m, edgeworkerID, activationID, net, version, note, nil).Once()
+	expectActivateVersion(m, edgeworkerID, activationID, net, version, note, autoPin, nil).Once()
 	if listDeactivationsVersion != "" {
 		expectListDeactivations(m, edgeworkerID, listDeactivationsVersion, []edgeworkers.Deactivation{}, nil).Once()
 	}
@@ -1543,5 +1563,70 @@ func createStubEdgeworkerVersion(edgeworkerID int, version string) *edgeworkers.
 		EdgeWorkerID: edgeworkerID,
 		Version:      version,
 		CreatedTime:  "2022-01-25T12:30:06Z",
+	}
+}
+
+func TestUpgradeEdgeworkersActivationV1(t *testing.T) {
+	tests := map[string]struct {
+		rawState map[string]interface{}
+		expected map[string]interface{}
+	}{
+		"auto_pin not present - should be added as true": {
+			rawState: map[string]interface{}{
+				"edgeworker_id": 1234,
+				"version":       "1",
+				"network":       "STAGING",
+				"activation_id": 1,
+				"note":          "some note",
+			},
+			expected: map[string]interface{}{
+				"edgeworker_id": 1234,
+				"version":       "1",
+				"network":       "STAGING",
+				"activation_id": 1,
+				"note":          "some note",
+				"auto_pin":      true,
+			},
+		},
+		"auto_pin already present as true - should remain unchanged": {
+			rawState: map[string]interface{}{
+				"edgeworker_id": 1234,
+				"version":       "1",
+				"network":       "STAGING",
+				"activation_id": 1,
+				"auto_pin":      true,
+			},
+			expected: map[string]interface{}{
+				"edgeworker_id": 1234,
+				"version":       "1",
+				"network":       "STAGING",
+				"activation_id": 1,
+				"auto_pin":      true,
+			},
+		},
+		"auto_pin already present as false - should remain unchanged": {
+			rawState: map[string]interface{}{
+				"edgeworker_id": 1234,
+				"version":       "1",
+				"network":       "PRODUCTION",
+				"activation_id": 2,
+				"auto_pin":      false,
+			},
+			expected: map[string]interface{}{
+				"edgeworker_id": 1234,
+				"version":       "1",
+				"network":       "PRODUCTION",
+				"activation_id": 2,
+				"auto_pin":      false,
+			},
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			result, err := upgradeEdgeworkersActivationV1(context.Background(), tc.rawState, nil)
+			assert.NoError(t, err)
+			assert.Equal(t, tc.expected, result)
+		})
 	}
 }
