@@ -1,227 +1,52 @@
 # RELEASE NOTES
 
-## X.X.X (X X, X)
-
-#### BREAKING CHANGES:
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+## 10.2.0 (May 13, 2026)
 
 #### FEATURES/ENHANCEMENTS:
+
+* General
+  * Removed examples from the `/examples` directory in favor of use-case driven templates. See [Terraform templates](https://github.com/akamai/terraform-templates) for more information.
+  * Updated various dependencies.
+
 * Appsec
-  * Exclude “none” attack groups and rules during import of `akamai_appsec_waf_ruleset` resource.
+  * Added support for a new action, `deny_custom_{custom_deny_id}`, in the `penalty_box_action` field. This applies to the `akamai_appsec_eval_penalty_box` and `akamai_appsec_penalty_box` resources.
+  * Added the `apply_account_protection_controls` field to the `akamai_appsec_security_policy_protections` data source to allow displaying account protection controls when fetching the security policy protections.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#### FEATURES/ENHANCEMENTS:
-
-* Removed examples from `/examples` directory in favor of use-case driven templates. See [Terraform templates](https://github.com/akamai/terraform-templates) for more information.
-
+* Appsec (Beta)
+  * Excluded `none` attack groups and rules when importing the `akamai_appsec_waf_ruleset` resource.
 
 * Edgeworkers
   * Added support for the `auto_pin` attribute (set to `true` by default) in the `akamai_edgeworkers_activation` resource.
-  * Extended the import ID to optionally accept `auto_pin` as a third colon-separated argument `edgeworker_id:network[:auto_pin]`.
-
-* Reporting Groups (Beta)
-  * Added new resource:
-    * `akamai_reportinggroups_group` - allowing users to manage reporting group for properties.
-
-
-
-* Appsec
-  * Added `deny_custom_{custom_deny_id}` action support for the `penalty_box_action` field in the `akamai_appsec_eval_penalty_box` and `akamai_appsec_penalty_box` resources.
-  * Added the `apply_account_protection_controls` field to the `akamai_appsec_security_policy_protections` data source to allow displaying account protection controls when fetching the security policy protections.
-
-
-
-
-
-
-
-
-
+  * Extended the import ID for the `akamai_edgeworkers_activation` resource to optionally accept `auto_pin` as a third colon-separated argument `edgeworker_id:network[:auto_pin]`.
+  
 * mTLS Truststore
   * Added the `ca_set_statuses` attribute to the `akamai_mtlstruststore_ca_sets` data source that enables filtering CA sets by status (`NOT_DELETED`, `DELETING`, `DELETED`).
-
-
-
-
-
-
-
-
-
-
-* PAPI
-    * Added new data source:
-        * `akamai_edge_hostnames` - lists all edge hostnames available under a contract
-
-
-
-
-
-
-
-
-
-
-
-* PAPI
-    * Added new data source:
-        * `akamai_edge_hostname` - fetch specific edge hostname details by its ID.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-* mTLS Truststore
-  * Updated description in the `akamai_mtlstruststore_ca_set_activities` data source with the following activity types: `REMOVE_CA_SET`, `REMOVE_CA_SET_VERSION`, and `DELETE_CA_SET_VERSION`.
+  * Updated the description in the `akamai_mtlstruststore_ca_set_activities` data source with the following activity types: `REMOVE_CA_SET`, `REMOVE_CA_SET_VERSION`, and `DELETE_CA_SET_VERSION`.
   * Added the `removal_date` attribute to the `akamai_mtlstruststore_ca_sets` data source.
   * Added the `removal_date`, `version_removal_date`, `status`, and `version_status` attributes to the `akamai_mtlstruststore_ca_set` data source.
-  * Added the `removal_date`, `status`, and `ca_set_version_statuses` attributes to the `akamai_mtlstruststore_ca_set_versions` data source. The `ca_set_version_statuses` attribute enables filtering CA set versions by status `NOT_DELETED` or `DELETED`.
+  * Added the `removal_date`, `status`, and `ca_set_version_statuses` attributes to the `akamai_mtlstruststore_ca_set_versions` data source. The `ca_set_version_statuses` attribute enables filtering CA set versions by status, either `NOT_DELETED` or `DELETED`.
+
+* PAPI
+  * Added new data sources:
+    * `akamai_edge_hostname` - fetches specific edge hostname details by its ID.
+    * `akamai_edge_hostnames` - lists all edge hostnames available under a contract.
 
 * Reporting Groups (Beta)
-  * Added new data source:
-    * `akamai_reportinggroups_group` - retrieves details of a Reporting Group.
-
-
-
-
-* Reporting Groups (Beta)
-  * Added new data source:
-    * `akamai_reportinggroups_cp_code` - retrieves details of a CP Code.
-
-
-* Reporting Groups (Beta)
-  * Added new data source:
+  * Added a new resource:
+    * `akamai_reportinggroups_group` - allows managing reporting group for properties.
+  * Added new data sources:
+    * `akamai_reportinggroups_cp_code` - retrieves details of a CP code.
     * `akamai_reportinggroups_cp_codes` - lists detailed information about CP codes available within your account and contract.
-
-
-
-
-* Reporting Groups (Beta)
-  * Added new data source:
+    * `akamai_reportinggroups_group` - retrieves details of a reporting group.
     * `akamai_reportinggroups_groups` - lists detailed information about reporting groups available for your account and contract.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #### BUG FIXES:
-
-
 
 * Appsec
   * (Beta) Marked all the protection controls attributes in the `akamai_appsec_security_policy_protections` resource's schema as `Required` instead of `Optional` to address problem with unintended disabling of protections in the security policy.
 
 * Datastream
   * Fixed an idempotency issue in the `akamai_datastream` resource where the `sampling_percentage` attribute was causing unnecessary diffs. The attribute is now marked as `Computed` to properly handle server-side defaults.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 ## 10.1.0 (Apr 1, 2026)
 

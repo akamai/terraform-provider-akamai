@@ -1,4 +1,29 @@
-cd /workspace/terraform-provider-akamai/examples/akamai_cp_code
+cd /workspace/terraform-provider-akamai
 git status | grep "nothing to commit, working tree clean"
+mkdir example
+cd example
+cat <<EOL > example-config.tf
+terraform {
+  required_version = ">= 1.0"
+  required_providers {
+    akamai = {
+      source  = "akamai/akamai"
+      version = ">= 2.0.0"
+    }
+  }
+}
+
+provider "akamai" {
+  edgerc         = "~/.edgerc"
+  config_section = "default"
+}
+
+resource "akamai_cp_code" "example" {
+  contract_id = "ctr_XXX"
+  group_id    = "grp_XXX"
+  name        = "example-XXX"
+  product_id  = "prd_XXX"
+}
+EOL
 terraform init
 terraform plan
