@@ -3,7 +3,7 @@ module github.com/akamai/terraform-provider-akamai/v10
 go 1.25.7
 
 require (
-	github.com/akamai/AkamaiOPEN-edgegrid-golang/v13 v13.1.0
+	github.com/akamai/AkamaiOPEN-edgegrid-golang/v13 v13.2.0
 	github.com/allegro/bigcache/v2 v2.2.5
 	github.com/dlclark/regexp2 v1.11.5
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0

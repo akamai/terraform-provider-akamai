@@ -16,7 +16,7 @@
   * Excluded `none` attack groups and rules when importing the `akamai_appsec_waf_ruleset` resource.
 
 * Edgeworkers
-  * Added support for the `auto_pin` attribute (set to `true` by default) in the `akamai_edgeworkers_activation` resource.
+  * Added support for the `auto_pin` attribute (set to `true` by default) in the `akamai_edgeworkers_activation` resource ([I#734](https://github.com/akamai/terraform-provider-akamai/issues/734)).
   * Extended the import ID for the `akamai_edgeworkers_activation` resource to optionally accept `auto_pin` as a third colon-separated argument `edgeworker_id:network[:auto_pin]`.
   
 * mTLS Truststore
