@@ -3,16 +3,25 @@ package mtlstruststore
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/mtlstruststore"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/framework/date"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+)
+
+var (
+	_ datasource.DataSource                   = &caSetsDataSource{}
+	_ datasource.DataSourceWithConfigure      = &caSetsDataSource{}
+	_ datasource.DataSourceWithValidateConfig = &caSetsDataSource{}
 )
 
 type (
@@ -21,9 +30,10 @@ type (
 	}
 
 	caSetsDataSourceModel struct {
-		NamePrefix  types.String `tfsdk:"name_prefix"`
-		ActivatedOn types.String `tfsdk:"activated_on"`
-		CASets      []caSetModel `tfsdk:"ca_sets"`
+		NamePrefix    types.String `tfsdk:"name_prefix"`
+		ActivatedOn   types.String `tfsdk:"activated_on"`
+		CASetStatuses types.Set    `tfsdk:"ca_set_statuses"`
+		CASets        []caSetModel `tfsdk:"ca_sets"`
 	}
 
 	caSetModel struct {
@@ -34,6 +44,7 @@ type (
 		CreatedDate       types.String `tfsdk:"created_date"`
 		DeletedBy         types.String `tfsdk:"deleted_by"`
 		DeletedDate       types.String `tfsdk:"deleted_date"`
+		RemovalDate       types.String `tfsdk:"removal_date"`
 		Description       types.String `tfsdk:"description"`
 		Status            types.String `tfsdk:"status"`
 		LatestVersion     types.Int64  `tfsdk:"latest_version"`
@@ -68,6 +79,15 @@ func (d *caSetsDataSource) Schema(_ context.Context, _ datasource.SchemaRequest,
 				Optional:    true,
 				Validators:  []validator.String{stringvalidator.OneOf("INACTIVE", "STAGING", "PRODUCTION", "STAGING+PRODUCTION", "PRODUCTION+STAGING", "STAGING,PRODUCTION", "PRODUCTION,STAGING", "")},
 			},
+			"ca_set_statuses": schema.SetAttribute{
+				Description: "Filter CA sets by status. One or more values from 'NOT_DELETED', 'DELETING', 'DELETED'. When not specified, CA sets with 'NOT_DELETED' status are returned.",
+				Optional:    true,
+				ElementType: types.StringType,
+				Validators: []validator.Set{
+					setvalidator.SizeAtLeast(1),
+					setvalidator.ValueStringsAre(stringvalidator.OneOf(mtlstruststore.AllCASetStatuses()...)),
+				},
+			},
 			"ca_sets": schema.ListNestedAttribute{
 				Description: "List of CA sets.",
 				Computed:    true,
@@ -99,6 +119,10 @@ func (d *caSetsDataSource) Schema(_ context.Context, _ datasource.SchemaRequest,
 						},
 						"deleted_by": schema.StringAttribute{
 							Description: "The user who requested the CA set be deleted, or null if there's no request.",
+							Computed:    true,
+						},
+						"removal_date": schema.StringAttribute{
+							Description: "The time when the CA set will be permanently deleted from the system. The value is null when the CA set is not scheduled for deletion.",
 							Computed:    true,
 						},
 						"description": schema.StringAttribute{
@@ -144,6 +168,31 @@ func (d *caSetsDataSource) Configure(_ context.Context, req datasource.Configure
 	d.meta = meta.Must(req.ProviderData)
 }
 
+func (d *caSetsDataSource) ValidateConfig(ctx context.Context, req datasource.ValidateConfigRequest, resp *datasource.ValidateConfigResponse) {
+	tflog.Debug(ctx, "MTLS TrustStore CA Sets DataSource ValidateConfig")
+
+	var data caSetsDataSourceModel
+	if resp.Diagnostics.Append(req.Config.Get(ctx, &data)...); resp.Diagnostics.HasError() {
+		return
+	}
+	if data.CASetStatuses.IsUnknown() || data.CASetStatuses.IsNull() || data.ActivatedOn.IsUnknown() || data.ActivatedOn.IsNull() {
+		return
+	}
+	var statuses []string
+	if resp.Diagnostics.Append(data.CASetStatuses.ElementsAs(ctx, &statuses, false)...); resp.Diagnostics.HasError() {
+		return
+	}
+
+	if data.ActivatedOn.ValueString() != "" && data.ActivatedOn.ValueString() != string(mtlstruststore.NetworkInactive) &&
+		(slices.Contains(statuses, mtlstruststore.CASetStatusDeleted) || slices.Contains(statuses, mtlstruststore.CASetStatusDeleting)) {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("activated_on"),
+			"Invalid attribute combination",
+			"Attribute `activated_on` cannot be used when `ca_set_statuses` attribute includes `DELETED` or `DELETING` statuses, unless it is set to `INACTIVE`.",
+		)
+	}
+}
+
 func (d *caSetsDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	tflog.Debug(ctx, "MTLS TrustStore CA Sets DataSource Read")
 
@@ -153,9 +202,17 @@ func (d *caSetsDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	}
 	client = Client(d.meta)
 
+	var statuses []string
+	if !data.CASetStatuses.IsNull() {
+		if resp.Diagnostics.Append(data.CASetStatuses.ElementsAs(ctx, &statuses, false)...); resp.Diagnostics.HasError() {
+			return
+		}
+	}
+
 	caSets, err := client.ListCASets(ctx, mtlstruststore.ListCASetsRequest{
 		CASetNamePrefix: data.NamePrefix.ValueString(),
 		ActivatedOn:     mtlstruststore.Network(data.ActivatedOn.ValueString()),
+		CASetStatuses:   statuses,
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("Read CA sets failed", err.Error())
@@ -179,6 +236,7 @@ func (m *caSetsDataSourceModel) convertCASetsToModel(caSets mtlstruststore.ListC
 			Status:            types.StringValue(caSet.CASetStatus),
 			DeletedBy:         types.StringPointerValue(caSet.DeletedBy),
 			DeletedDate:       date.TimeRFC3339NanoPointerValue(caSet.DeletedDate),
+			RemovalDate:       date.TimeRFC3339NanoPointerValue(caSet.RemovalDate),
 			LatestVersion:     types.Int64PointerValue(caSet.LatestVersion),
 			StagingVersion:    types.Int64PointerValue(caSet.StagingVersion),
 			ProductionVersion: types.Int64PointerValue(caSet.ProductionVersion),

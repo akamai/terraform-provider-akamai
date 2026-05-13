@@ -12,10 +12,12 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/edgeworkers"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/collections"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/timeouts"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -33,13 +35,20 @@ func resourceEdgeworkersActivation() *schema.Resource {
 			Delete:  &edgeworkersActivationResourceDeleteTimeout,
 			Default: &edgeworkersActivationResourceDefaultTimeout,
 		},
-		CustomizeDiff: checkEdgeworkerExistsOnDiff,
-		SchemaVersion: 1,
-		StateUpgraders: []schema.StateUpgrader{{
-			Version: 0,
-			Type:    resourceEdgeworkersActivationV0().CoreConfigSchema().ImpliedType(),
-			Upgrade: timeouts.MigrateToExplicit(),
-		}},
+		CustomizeDiff: customdiff.All(checkEdgeworkerExistsOnDiff, validateAutoPinChanged),
+		SchemaVersion: 2,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Version: 0,
+				Type:    resourceEdgeworkersActivationV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: timeouts.MigrateToExplicit(),
+			},
+			{
+				Version: 1,
+				Type:    resourceEdgeworkersActivationV1().CoreConfigSchema().ImpliedType(),
+				Upgrade: upgradeEdgeworkersActivationV1,
+			},
+		},
 	}
 }
 
@@ -73,6 +82,12 @@ func resourceEdgeworkersActivationSchema() map[string]*schema.Schema {
 			Description:      "Assigns a log message to the activation request",
 			DiffSuppressFunc: suppressNoteFieldForEdgeWorkersActivation,
 		},
+		"auto_pin": {
+			Type:        schema.TypeBool,
+			Optional:    true,
+			Default:     defaultAutoPin,
+			Description: "Automatically pin the initial revision during parent EdgeWorker activation.",
+		},
 		"timeouts": {
 			Type:        schema.TypeList,
 			Optional:    true,
@@ -103,6 +118,7 @@ const (
 	activationStatusPresubmit  = "PRESUBMIT"
 	activationStatusPending    = "PENDING"
 	activationStatusInProgress = "IN_PROGRESS"
+	defaultAutoPin             = true
 )
 
 var validEdgeworkerActivationNetworks = []string{stagingNetwork, productionNetwork}
@@ -164,6 +180,7 @@ func resourceEdgeworkersActivationRead(ctx context.Context, rd *schema.ResourceD
 	if err := rd.Set("note", activation.Note); err != nil {
 		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
+
 	return nil
 }
 
@@ -258,8 +275,8 @@ func resourceEdgeworkersActivationImport(_ context.Context, rd *schema.ResourceD
 	logger.Debug("Importing edgeworker")
 
 	parts := strings.Split(rd.Id(), ":")
-	if len(parts) != 2 {
-		return nil, fmt.Errorf("%s import: invalid import id '%s' - colon-separated list of edgeworker ID and network has to be supplied", ErrEdgeworkerActivation, rd.Id())
+	if len(parts) != 2 && len(parts) != 3 {
+		return nil, fmt.Errorf("%s import: invalid import id '%s' - colon-separated list of edgeworker ID, network, and optionally auto_pin has to be supplied", ErrEdgeworkerActivation, rd.Id())
 	}
 
 	edgeworkerID, err := strconv.Atoi(parts[0])
@@ -272,6 +289,14 @@ func resourceEdgeworkersActivationImport(_ context.Context, rd *schema.ResourceD
 		return nil, fmt.Errorf("%s import: network must be 'STAGING' or 'PRODUCTION', got '%s'", ErrEdgeworkerActivation, network)
 	}
 
+	autoPin := defaultAutoPin
+	if len(parts) == 3 {
+		autoPin, err = strconv.ParseBool(parts[2])
+		if err != nil {
+			return nil, fmt.Errorf("%s import: auto_pin must be a boolean, got '%s'", ErrEdgeworkerActivation, parts[2])
+		}
+	}
+
 	if err := rd.Set("edgeworker_id", edgeworkerID); err != nil {
 		return nil, fmt.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
@@ -279,6 +304,12 @@ func resourceEdgeworkersActivationImport(_ context.Context, rd *schema.ResourceD
 	if err := rd.Set("network", network); err != nil {
 		return nil, fmt.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
+
+	if err := rd.Set("auto_pin", autoPin); err != nil {
+		return nil, fmt.Errorf("%v: %s", tf.ErrValueSet, err.Error())
+	}
+
+	rd.SetId(fmt.Sprintf("%d:%s", edgeworkerID, network))
 
 	return []*schema.ResourceData{rd}, nil
 }
@@ -324,12 +355,18 @@ func upsertActivation(ctx context.Context, rd *schema.ResourceData, m interface{
 		return diag.FromErr(err)
 	}
 
+	autoPin, err := tf.GetBoolValue("auto_pin", rd)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	activation, err := client.ActivateVersion(ctx, edgeworkers.ActivateVersionRequest{
 		EdgeWorkerID: edgeworkerID,
 		ActivateVersion: edgeworkers.ActivateVersion{
 			Network: edgeworkers.ActivationNetwork(network),
 			Version: version,
 			Note:    note,
+			AutoPin: ptr.To(autoPin),
 		},
 	})
 
@@ -597,6 +634,13 @@ func checkEdgeworkerExistsOnDiff(ctx context.Context, rd *schema.ResourceDiff, m
 	}
 
 	return fmt.Errorf("%w: edgeworker with id=%d was not found", ErrEdgeworkerActivation, edgeworkerID)
+}
+
+func validateAutoPinChanged(_ context.Context, rd *schema.ResourceDiff, _ interface{}) error {
+	if rd.HasChange("auto_pin") && !rd.HasChanges("version", "network", "edgeworker_id") {
+		return fmt.Errorf("%w: 'auto_pin' can only be changed together with 'version', 'network', or 'edgeworker_id'", ErrEdgeworkerActivation)
+	}
+	return nil
 }
 
 func suppressNoteFieldForEdgeWorkersActivation(_, oldValue, newValue string, d *schema.ResourceData) bool {

@@ -26,6 +26,11 @@ func dataSourcePolicyProtections() *schema.Resource {
 				Required:    true,
 				Description: "Unique identifier of the security policy",
 			},
+			"apply_account_protection_controls": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Whether to enable account protection controls",
+			},
 			"apply_api_constraints": {
 				Type:        schema.TypeBool,
 				Computed:    true,
@@ -131,6 +136,10 @@ func dataSourcePolicyProtectionsRead(ctx context.Context, d *schema.ResourceData
 	}
 
 	if err := d.Set("json", string(jsonBody)); err != nil {
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+	}
+
+	if err := d.Set("apply_account_protection_controls", policyprotections.ApplyAccountProtectionControls); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 

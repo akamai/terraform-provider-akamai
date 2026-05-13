@@ -1,4 +1,5 @@
 {
+  "apply_account_protection_controls": "true",
   "apply_api_constraints": "true",
   "apply_application_layer_controls": "true",
   "apply_botman_controls": "false",

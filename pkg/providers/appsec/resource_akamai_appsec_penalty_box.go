@@ -13,7 +13,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 // appsec v1
@@ -48,14 +47,10 @@ func resourcePenaltyBox() *schema.Resource {
 				Description: "Whether to enable the penalty box for the specified security policy",
 			},
 			"penalty_box_action": {
-				Type:     schema.TypeString,
-				Required: true,
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{
-					string(appsec.ActionTypeDeny),
-					string(appsec.ActionTypeAlert),
-					string(appsec.ActionTypeNone),
-				}, false)),
-				Description: "The action to be taken when the penalty box is triggered",
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: ValidateActions,
+				Description:      "The action to be taken when the penalty box is triggered",
 			},
 		},
 	}

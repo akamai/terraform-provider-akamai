@@ -201,12 +201,12 @@ func (d *caSetAssociationsDataSource) Read(ctx context.Context, req datasource.R
 	client = Client(d.meta)
 
 	if !data.Name.IsNull() {
-		setID, err := findCASetID(ctx, client, data.Name.ValueString())
+		caSet, err := findNotDeletedCASetByName(ctx, client, data.Name.ValueString())
 		if err != nil {
 			resp.Diagnostics.AddError("Could not fetch CA set ID for provided name", err.Error())
 			return
 		}
-		data.ID = types.StringValue(setID)
+		data.ID = types.StringValue(caSet.CASetID)
 	} else {
 		caSet, err := client.GetCASet(ctx, mtlstruststore.GetCASetRequest{CASetID: data.ID.ValueString()})
 		if err != nil {

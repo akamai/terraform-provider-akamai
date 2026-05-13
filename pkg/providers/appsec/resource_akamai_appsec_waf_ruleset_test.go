@@ -302,7 +302,7 @@ func TestWAFRulesetResource(t *testing.T) {
 					ImportState:      true,
 					ImportStateId:    "111111:2222_333333",
 					ResourceName:     "akamai_appsec_waf_ruleset.test",
-					ImportStateCheck: baseImportChecker.CheckEqual("rules.#", "309").CheckEqual("attack_groups.#", "10").Build(),
+					ImportStateCheck: baseImportChecker.CheckEqual("rules.#", "308").CheckEqual("attack_groups.#", "9").Build(),
 				},
 			},
 		},

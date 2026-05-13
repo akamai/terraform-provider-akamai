@@ -14,7 +14,6 @@ import (
 )
 
 func TestCASetDataSource(t *testing.T) {
-	testDir := "testdata/TestDataCASet/"
 	mockGetCASet := func(m *mtlstruststore.Mock, testData caSetTestData) {
 		m.On("GetCASet", testutils.MockContext, mtlstruststore.GetCASetRequest{
 			CASetID: testData.caSetID,
@@ -31,6 +30,7 @@ func TestCASetDataSource(t *testing.T) {
 	mockListCASets := func(m *mtlstruststore.Mock, testData caSetTestData) {
 		m.On("ListCASets", testutils.MockContext, mtlstruststore.ListCASetsRequest{
 			CASetNamePrefix: testData.caSetName,
+			CASetStatuses:   []string{mtlstruststore.CASetStatusNotDeleted},
 		}).Return(&mtlstruststore.ListCASetsResponse{
 			CASets: testData.caSets,
 		}, nil).Times(3)
@@ -51,6 +51,8 @@ func TestCASetDataSource(t *testing.T) {
 		CheckEqual("version_modified_date", "2025-05-16T12:08:34.099457Z").
 		CheckEqual("allow_insecure_sha1", "false").
 		CheckEqual("version_description", "Version 1 description").
+		CheckEqual("version_status", "NOT_DELETED").
+		CheckEqual("status", "NOT_DELETED").
 		CheckEqual("staging_version", "1").
 		CheckEqual("production_version", "1").
 		CheckEqual("certificates.#", "1").
@@ -64,7 +66,9 @@ func TestCASetDataSource(t *testing.T) {
 		CheckEqual("certificates.0.issuer", "Example Issuer").
 		CheckEqual("certificates.0.serial_number", "123456789").
 		CheckEqual("certificates.0.signature_algorithm", "SHA256").
-		CheckEqual("certificates.0.subject", "Example Subject")
+		CheckEqual("certificates.0.subject", "Example Subject").
+		CheckMissing("removal_date").
+		CheckMissing("version_removal_date")
 
 	tests := map[string]struct {
 		init     func(*mtlstruststore.Mock, caSetTestData)
@@ -80,7 +84,7 @@ func TestCASetDataSource(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, testDir+"id.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataCASet/id.tf"),
 					Check:  commonStateChecker.Build(),
 				},
 			},
@@ -93,7 +97,7 @@ func TestCASetDataSource(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, testDir+"id_version.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataCASet/id_version.tf"),
 					Check:  commonStateChecker.Build(),
 				},
 			},
@@ -107,7 +111,7 @@ func TestCASetDataSource(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, testDir+"name.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataCASet/name.tf"),
 					Check:  commonStateChecker.Build(),
 				},
 			},
@@ -121,7 +125,7 @@ func TestCASetDataSource(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, testDir+"name_version.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataCASet/name_version.tf"),
 					Check:  commonStateChecker.Build(),
 				},
 			},
@@ -142,6 +146,7 @@ func TestCASetDataSource(t *testing.T) {
 					CASetName:   "example-ca-set",
 					Description: ptr.To("Example CA Set"),
 					AccountID:   "account-123",
+					CASetStatus: mtlstruststore.CASetStatusNotDeleted,
 					CreatedBy:   "example user",
 					CreatedDate: tst.NewTimeFromString(t, "2025-04-16T12:08:34.099457Z"),
 				},
@@ -151,7 +156,7 @@ func TestCASetDataSource(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, testDir+"id.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataCASet/id.tf"),
 					Check: commonStateChecker.
 						CheckMissing("certificates.#").
 						CheckMissing("certificates.0.certificate_pem").
@@ -173,7 +178,54 @@ func TestCASetDataSource(t *testing.T) {
 						CheckMissing("version_description").
 						CheckMissing("version_modified_by").
 						CheckMissing("version_modified_date").
+						CheckMissing("version_removal_date").
+						CheckMissing("version_status").
 						CheckMissing("allow_insecure_sha1").
+						Build(),
+				},
+			},
+		},
+		"happy path - fetch by id with removal dates and DELETED status": {
+			testData: caSetTestData{
+				caSetID:      "12345",
+				caSetVersion: 1,
+				caSetResponse: mtlstruststore.GetCASetResponse{
+					CASetID:           "12345",
+					CASetName:         "example-ca-set",
+					Description:       ptr.To("Example CA Set"),
+					AccountID:         "account-123",
+					CreatedBy:         "example user",
+					CreatedDate:       tst.NewTimeFromStringMust("2025-04-16T12:08:34.099457Z"),
+					CASetStatus:       mtlstruststore.CASetStatusDeleted,
+					StagingVersion:    ptr.To(int64(1)),
+					ProductionVersion: ptr.To(int64(1)),
+					LatestVersion:     ptr.To(int64(1)),
+					RemovalDate:       ptr.To(tst.NewTimeFromStringMust("2025-08-01T00:00:00Z")),
+				},
+				caSetVersionResponse: mtlstruststore.GetCASetVersionResponse{
+					Description:        ptr.To("Version 1 description"),
+					AllowInsecureSHA1:  false,
+					CreatedDate:        tst.NewTimeFromStringMust("2025-04-16T12:08:34.099457Z"),
+					CreatedBy:          "example user",
+					ModifiedBy:         ptr.To("example user"),
+					ModifiedDate:       ptr.To(tst.NewTimeFromStringMust("2025-05-16T12:08:34.099457Z")),
+					CASetVersionStatus: "DELETED",
+					RemovalDate:        ptr.To(tst.NewTimeFromStringMust("2025-09-01T00:00:00Z")),
+					Certificates:       commonTestData.caSetVersionResponse.Certificates,
+				},
+			},
+			init: func(m *mtlstruststore.Mock, testData caSetTestData) {
+				mockGetCASet(m, testData)
+				mockGetCASetVersion(m, testData)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataCASet/id.tf"),
+					Check: commonStateChecker.
+						CheckEqual("removal_date", "2025-08-01T00:00:00Z").
+						CheckEqual("version_removal_date", "2025-09-01T00:00:00Z").
+						CheckEqual("version_status", "DELETED").
+						CheckEqual("status", "DELETED").
 						Build(),
 				},
 			},
@@ -186,7 +238,7 @@ func TestCASetDataSource(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, testDir+"id.tf"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDataCASet/id.tf"),
 					ExpectError: regexp.MustCompile("CA set not found"),
 				},
 			},
@@ -218,7 +270,7 @@ func TestCASetDataSource(t *testing.T) {
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, testDir+"id.tf"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDataCASet/id.tf"),
 					ExpectError: regexp.MustCompile("Get CA set version failed"),
 				},
 			},
@@ -227,12 +279,13 @@ func TestCASetDataSource(t *testing.T) {
 			init: func(m *mtlstruststore.Mock, _ caSetTestData) {
 				m.On("ListCASets", testutils.MockContext, mtlstruststore.ListCASetsRequest{
 					CASetNamePrefix: "example-ca-set",
+					CASetStatuses:   []string{mtlstruststore.CASetStatusNotDeleted},
 				}).Return(nil, fmt.Errorf("List CA sets failed")).Once()
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, testDir+"/name.tf"),
-					ExpectError: regexp.MustCompile("List CA sets failed"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDataCASet/name.tf"),
+					ExpectError: regexp.MustCompile(`(?s)List.+CA sets.+failed`),
 				},
 			},
 		},
@@ -240,7 +293,7 @@ func TestCASetDataSource(t *testing.T) {
 			init: func(_ *mtlstruststore.Mock, _ caSetTestData) {},
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, testDir+"id_name.tf"),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDataCASet/id_name.tf"),
 					ExpectError: regexp.MustCompile(`2 attributes specified when one \(and only one\) of \[id,name] is required`),
 				},
 			},
@@ -253,14 +306,15 @@ func TestCASetDataSource(t *testing.T) {
 			init: func(m *mtlstruststore.Mock, testData caSetTestData) {
 				m.On("ListCASets", testutils.MockContext, mtlstruststore.ListCASetsRequest{
 					CASetNamePrefix: testData.caSetName,
+					CASetStatuses:   []string{mtlstruststore.CASetStatusNotDeleted},
 				}).Return(&mtlstruststore.ListCASetsResponse{
 					CASets: testData.caSets,
 				}, nil).Once()
 			},
 			steps: []resource.TestStep{
 				{
-					Config:      testutils.LoadFixtureString(t, testDir+"name.tf"),
-					ExpectError: regexp.MustCompile(`no CA set found with name 'example-ca-set'`),
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDataCASet/name.tf"),
+					ExpectError: regexp.MustCompile(`(?s)no CA set found with the name 'example-ca-set'`),
 				},
 			},
 		},
@@ -306,17 +360,19 @@ var commonTestData = caSetTestData{
 		AccountID:         "account-123",
 		CreatedBy:         "example user",
 		CreatedDate:       tst.NewTimeFromStringMust("2025-04-16T12:08:34.099457Z"),
+		CASetStatus:       mtlstruststore.CASetStatusNotDeleted,
 		StagingVersion:    ptr.To(int64(1)),
 		ProductionVersion: ptr.To(int64(1)),
 		LatestVersion:     ptr.To(int64(1)),
 	},
 	caSetVersionResponse: mtlstruststore.GetCASetVersionResponse{
-		Description:       ptr.To("Version 1 description"),
-		AllowInsecureSHA1: false,
-		CreatedDate:       tst.NewTimeFromStringMust("2025-04-16T12:08:34.099457Z"),
-		CreatedBy:         "example user",
-		ModifiedBy:        ptr.To("example user"),
-		ModifiedDate:      ptr.To(tst.NewTimeFromStringMust("2025-05-16T12:08:34.099457Z")),
+		Description:        ptr.To("Version 1 description"),
+		AllowInsecureSHA1:  false,
+		CreatedDate:        tst.NewTimeFromStringMust("2025-04-16T12:08:34.099457Z"),
+		CreatedBy:          "example user",
+		ModifiedBy:         ptr.To("example user"),
+		ModifiedDate:       ptr.To(tst.NewTimeFromStringMust("2025-05-16T12:08:34.099457Z")),
+		CASetVersionStatus: "NOT_DELETED",
 		Certificates: []mtlstruststore.CertificateResponse{
 			{
 				CertificatePEM:     "-----BEGIN CERTIFICATE-----...",

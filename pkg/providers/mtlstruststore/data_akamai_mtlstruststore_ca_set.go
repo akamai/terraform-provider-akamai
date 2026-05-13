@@ -37,12 +37,16 @@ type (
 		CreatedDate         types.String       `tfsdk:"created_date"`
 		DeletedBy           types.String       `tfsdk:"deleted_by"`
 		DeletedDate         types.String       `tfsdk:"deleted_date"`
+		RemovalDate         types.String       `tfsdk:"removal_date"`
+		Status              types.String       `tfsdk:"status"`
 		VersionCreatedBy    types.String       `tfsdk:"version_created_by"`
 		VersionCreatedDate  types.String       `tfsdk:"version_created_date"`
 		VersionModifiedBy   types.String       `tfsdk:"version_modified_by"`
 		VersionModifiedDate types.String       `tfsdk:"version_modified_date"`
 		AllowInsecureSHA1   types.Bool         `tfsdk:"allow_insecure_sha1"`
 		VersionDescription  types.String       `tfsdk:"version_description"`
+		VersionRemovalDate  types.String       `tfsdk:"version_removal_date"`
+		VersionStatus       types.String       `tfsdk:"version_status"`
 		StagingVersion      types.Int64        `tfsdk:"staging_version"`
 		ProductionVersion   types.Int64        `tfsdk:"production_version"`
 		Certificates        []certificateModel `tfsdk:"certificates"`
@@ -128,6 +132,14 @@ func (d *caSetDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, 
 				Description: "The date when the CA set was deleted.",
 				Computed:    true,
 			},
+			"removal_date": schema.StringAttribute{
+				Description: "The time when the CA set will be permanently deleted from the system. The value is null when the CA set is not scheduled for deletion.",
+				Computed:    true,
+			},
+			"status": schema.StringAttribute{
+				Description: "Indicates the CA set status, one of 'NOT_DELETED', 'DELETING', or 'DELETED'.",
+				Computed:    true,
+			},
 			"version_created_by": schema.StringAttribute{
 				Description: "The user who created the CA set version.",
 				Computed:    true,
@@ -150,6 +162,14 @@ func (d *caSetDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, 
 			},
 			"version_description": schema.StringAttribute{
 				Description: "Any additional description you can provide while creating or updating the CA set version.",
+				Computed:    true,
+			},
+			"version_removal_date": schema.StringAttribute{
+				Description: "The time when the CA set version will be permanently deleted from the system. The value is null when the CA set version is not scheduled for deletion.",
+				Computed:    true,
+			},
+			"version_status": schema.StringAttribute{
+				Description: "Indicates the CA set version status, one of 'NOT_DELETED' or 'DELETED'.",
 				Computed:    true,
 			},
 			"staging_version": schema.Int64Attribute{
@@ -228,12 +248,12 @@ func (d *caSetDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 
 	if !data.Name.IsNull() {
 		tflog.Debug(ctx, "'name' provided, attempting to find CA set ID")
-		setID, err := findCASetID(ctx, client, data.Name.ValueString())
+		caSet, err := findNotDeletedCASetByName(ctx, client, data.Name.ValueString())
 		if err != nil {
 			resp.Diagnostics.AddError("Read CA set failed", err.Error())
 			return
 		}
-		data.ID = types.StringValue(setID)
+		data.ID = types.StringValue(caSet.CASetID)
 	}
 
 	caSet, err := client.GetCASet(ctx, mtlstruststore.GetCASetRequest{
@@ -290,6 +310,8 @@ func convertCASetDataToModel(caSet *mtlstruststore.GetCASetResponse, caSetVersio
 		ProductionVersion: types.Int64PointerValue(caSet.ProductionVersion),
 		DeletedBy:         types.StringPointerValue(caSet.DeletedBy),
 		DeletedDate:       date.TimeRFC3339NanoPointerValue(caSet.DeletedDate),
+		RemovalDate:       date.TimeRFC3339NanoPointerValue(caSet.RemovalDate),
+		Status:            types.StringValue(caSet.CASetStatus),
 	}
 
 	if caSetVersion != nil {
@@ -306,6 +328,8 @@ func (m *caSetDataSourceModel) setCASetVersionData(v *mtlstruststore.GetCASetVer
 	m.VersionCreatedDate = date.TimeRFC3339NanoValue(v.CreatedDate)
 	m.VersionModifiedBy = types.StringPointerValue(v.ModifiedBy)
 	m.VersionModifiedDate = date.TimeRFC3339NanoPointerValue(v.ModifiedDate)
+	m.VersionRemovalDate = date.TimeRFC3339NanoPointerValue(v.RemovalDate)
+	m.VersionStatus = types.StringValue(v.CASetVersionStatus)
 
 	certificates := make([]certificateModel, len(v.Certificates))
 	for i, cert := range v.Certificates {
@@ -339,11 +363,15 @@ func (m *caSetDataSourceModel) setData(data caSetDataSourceModel) {
 	m.VersionModifiedDate = data.VersionModifiedDate
 	m.AllowInsecureSHA1 = data.AllowInsecureSHA1
 	m.VersionDescription = data.VersionDescription
+	m.VersionRemovalDate = data.VersionRemovalDate
+	m.VersionStatus = data.VersionStatus
 	m.StagingVersion = data.StagingVersion
 	m.ProductionVersion = data.ProductionVersion
 	m.Certificates = data.Certificates
 	m.DeletedBy = data.DeletedBy
 	m.DeletedDate = data.DeletedDate
+	m.RemovalDate = data.RemovalDate
+	m.Status = data.Status
 	// Set the version only if it wasn't provided.
 	if m.Version.IsNull() || m.Version.IsUnknown() {
 		m.Version = data.Version

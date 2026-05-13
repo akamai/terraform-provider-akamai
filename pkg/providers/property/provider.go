@@ -99,9 +99,9 @@ func (p *Subprovider) FrameworkResources() []func() resource.Resource {
 	return []func() resource.Resource{
 		NewBootstrapResource,
 		NewDomainsResource,
-		NewHostnameBucketResource(p.config.hostnameBucket),
 		NewDomainOwnershipLateValidationResource(p.config.lateValidation),
 		NewDomainOwnershipValidationResource(p.config.domainValidation),
+		NewHostnameBucketResource(p.config.hostnameBucket),
 	}
 }
 
@@ -113,6 +113,8 @@ func (p *Subprovider) FrameworkDataSources() []func() datasource.DataSource {
 		NewDomainOwnershipDomainDataSource,
 		NewDomainOwnershipDomainsDataSource,
 		NewDomainOwnershipSearchDomains,
+		NewEdgeHostnameDataSource,
+		NewEdgeHostnamesDataSource,
 		NewHostnameActivationDataSource,
 		NewHostnameActivationsDataSource,
 		NewHostnameAuditHistoryDataSource,

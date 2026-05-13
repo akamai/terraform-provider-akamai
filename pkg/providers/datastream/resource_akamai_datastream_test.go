@@ -2749,6 +2749,185 @@ resource "akamai_datastream" "s" {
 	}
 }
 
+// TestResourceStreamSamplingPercentageIdempotency tests that sampling_percentage with Computed: true
+// is idempotent - no diff on subsequent applies when the API returns a default value
+func TestResourceStreamSamplingPercentageIdempotency(t *testing.T) {
+	tests := map[string]struct {
+		configSamplingPercentage int  // value in terraform config (0 means not set)
+		apiSamplingPercentage    int  // value returned by API
+		expectInConfig           bool // whether sampling_percentage is in terraform config
+	}{
+		"idempotent when sampling_percentage not set and API returns default 100": {
+			configSamplingPercentage: 0,
+			apiSamplingPercentage:    100,
+			expectInConfig:           false,
+		},
+		"idempotent when sampling_percentage set to 50": {
+			configSamplingPercentage: 50,
+			apiSamplingPercentage:    50,
+			expectInConfig:           true,
+		},
+		"idempotent when sampling_percentage set to 100": {
+			configSamplingPercentage: 100,
+			apiSamplingPercentage:    100,
+			expectInConfig:           true,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			client := &datastream.Mock{}
+
+			streamConfig := datastream.StreamConfiguration{
+				ContractID: "test_contract",
+				DeliveryConfiguration: datastream.DeliveryConfiguration{
+					Format: datastream.FormatTypeStructured,
+					Frequency: datastream.Frequency{
+						IntervalInSeconds: datastream.IntervalInSeconds30,
+					},
+					UploadFilePrefix: "ak",
+					UploadFileSuffix: "ds",
+				},
+				Destination: datastream.AbstractConnector(
+					&datastream.S3Connector{
+						AccessKey:       "key",
+						Bucket:          "bucket",
+						DisplayName:     "connector",
+						Path:            "path",
+						Region:          "region",
+						SecretAccessKey: "secret",
+					},
+				),
+				DatasetFields: []datastream.DatasetFieldID{
+					{DatasetFieldID: 1001},
+				},
+				GroupID:    1337,
+				Properties: []datastream.PropertyID{{PropertyID: 1}},
+				StreamName: "test_stream",
+			}
+
+			// Set sampling_percentage in request only if it's in the config
+			if test.expectInConfig {
+				streamConfig.SamplingPercentage = test.configSamplingPercentage
+			}
+
+			createReq := datastream.CreateStreamRequest{
+				StreamConfiguration: streamConfig,
+				Activate:            false,
+			}
+
+			// API response always includes sampling_percentage (either default or configured value)
+			streamResponse := &datastream.DetailedStreamVersion{
+				StreamID:           streamID,
+				StreamVersion:      1,
+				StreamName:         "test_stream",
+				StreamStatus:       datastream.StreamStatusInactive,
+				GroupID:            1337,
+				ContractID:         "test_contract",
+				SamplingPercentage: test.apiSamplingPercentage,
+				Properties: []datastream.Property{
+					{
+						PropertyID:   1,
+						PropertyName: "property_1",
+					},
+				},
+				DatasetFields: []datastream.DataSetField{
+					{
+						DatasetFieldID:          1001,
+						DatasetFieldName:        "field_1",
+						DatasetFieldDescription: "desc_1",
+					},
+				},
+				Destination: datastream.Destination{
+					Bucket:          "bucket",
+					DestinationType: datastream.DestinationTypeS3,
+					DisplayName:     "connector",
+					Path:            "path",
+					Region:          "region",
+				},
+				DeliveryConfiguration: streamConfig.DeliveryConfiguration,
+				LatestVersion:         1,
+				ProductID:             "Download_Delivery",
+				CreatedBy:             "user",
+				CreatedDate:           "01-01-2026 00:00:00 GMT",
+				ModifiedBy:            "user",
+				ModifiedDate:          "01-01-2026 00:00:00 GMT",
+			}
+
+			client.On("CreateStream", testutils.MockContext, createReq).
+				Return(streamResponse, nil).Once()
+
+			client.On("GetStream", testutils.MockContext, datastream.GetStreamRequest{
+				StreamID: streamID,
+			}).Return(streamResponse, nil)
+
+			client.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
+				StreamID: streamID,
+			}).Return(' ', nil).Once()
+
+			// Build terraform config
+			samplingPercentageConfig := ""
+			if test.expectInConfig {
+				samplingPercentageConfig = fmt.Sprintf("sampling_percentage = %d", test.configSamplingPercentage)
+			}
+			tfConfig := fmt.Sprintf(`
+provider "akamai" {
+  edgerc = "../../common/testutils/edgerc"
+}
+
+resource "akamai_datastream" "s" {
+  active = false
+  delivery_configuration {
+    format = "STRUCTURED"
+    frequency {
+      interval_in_secs = 30
+    }
+    upload_file_prefix = "ak"
+    upload_file_suffix = "ds"
+  }
+  contract_id = "test_contract"
+  dataset_fields = [1001]
+  group_id = 1337
+  properties = [1]
+  stream_name = "test_stream"
+  %s
+  s3_connector {
+    access_key = "key"
+    bucket = "bucket"
+    display_name = "connector"
+    path = "path"
+    region = "region"
+    secret_access_key = "secret"
+  }
+}
+`, samplingPercentageConfig)
+
+			useClient(client, func() {
+				resource.UnitTest(t, resource.TestCase{
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+					Steps: []resource.TestStep{
+						{
+							Config: tfConfig,
+							Check: resource.ComposeTestCheckFunc(
+								resource.TestCheckResourceAttr("akamai_datastream.s", "stream_name", "test_stream"),
+								// With Computed: true, the API's returned value should be in state
+								resource.TestCheckResourceAttr("akamai_datastream.s", "sampling_percentage", strconv.Itoa(test.apiSamplingPercentage)),
+							),
+						},
+						{
+							// Second step with same config and PlanOnly verifies idempotency (no diff)
+							Config:   tfConfig,
+							PlanOnly: true,
+						},
+					},
+				})
+			})
+
+			client.AssertExpectations(t)
+		})
+	}
+}
+
 // TestResourceStreamIntegrationType tests the integration_type field
 func TestResourceStreamIntegrationType(t *testing.T) {
 	tests := map[string]struct {

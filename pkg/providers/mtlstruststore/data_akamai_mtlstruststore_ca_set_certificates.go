@@ -258,7 +258,7 @@ func (data *caSetCertificatesDataSourceModel) resolveDefaults(ctx context.Contex
 	var caSet *mtlstruststore.CASetResponse
 
 	if !data.Name.IsNull() {
-		resp, err := findNotDeletedCASet(ctx, client, data.Name.ValueString())
+		resp, err := findNotDeletedCASetByName(ctx, client, data.Name.ValueString())
 		if err != nil {
 			return fmt.Errorf("failed to find CA set by name '%s': %w", data.Name.ValueString(), err)
 		}
