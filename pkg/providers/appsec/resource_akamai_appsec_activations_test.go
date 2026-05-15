@@ -938,7 +938,8 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 	t.Run("Retry create activation on 500x error", func(t *testing.T) {
 		t.Parallel()
 
-		CreateActivationRetry = 10 * time.Millisecond
+		config := defaultSubproviderConfig()
+		config.activation.createActivationRetry = 10 * time.Millisecond
 
 		err500x := &appsec.Error{StatusCode: 502}
 
@@ -1047,7 +1048,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 
 		mockGetConfigurationVersionDefault(client.APPSEC)
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResActivations/match_by_id.tf"),

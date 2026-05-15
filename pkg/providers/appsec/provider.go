@@ -10,21 +10,39 @@ import (
 
 type (
 	// Subprovider gathers appsec resources and data sources
-	Subprovider struct{}
+	Subprovider struct {
+		config subproviderConfig
+	}
+
+	subproviderConfig struct {
+		activation activationResourceConfig
+	}
 )
 
 var _ subprovider.Subprovider = &Subprovider{}
 
+func defaultSubproviderConfig() subproviderConfig {
+	return subproviderConfig{
+		activation: defaultActivationResourceConfig(),
+	}
+}
+
+func newSubproviderWithConfig(config subproviderConfig) *Subprovider {
+	return &Subprovider{
+		config: config,
+	}
+}
+
 // NewSubprovider returns a new appsec subprovider
 func NewSubprovider() *Subprovider {
-	return &Subprovider{}
+	return newSubproviderWithConfig(defaultSubproviderConfig())
 }
 
 // SDKResources returns the appsec resources implemented using terraform-plugin-sdk
 func (p *Subprovider) SDKResources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
 		"akamai_appsec_aap_selected_hostnames":                   resourceAAPSelectedHostnames(),
-		"akamai_appsec_activations":                              resourceActivations(),
+		"akamai_appsec_activations":                              resourceActivations(p.config.activation),
 		"akamai_appsec_advanced_settings_ase_penalty_box":        resourceAdvancedSettingsAsePenaltyBox(),
 		"akamai_appsec_advanced_settings_attack_payload_logging": resourceAdvancedSettingsAttackPayloadLogging(),
 		"akamai_appsec_advanced_settings_evasive_path_match":     resourceAdvancedSettingsEvasivePathMatch(),
