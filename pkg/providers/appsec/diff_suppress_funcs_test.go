@@ -12,6 +12,7 @@ import (
 )
 
 func TestUkraineGeoControlActionEqual(t *testing.T) {
+	t.Parallel()
 
 	tests := map[string]struct {
 		ukraineGeoControlAction interface{}
@@ -34,6 +35,7 @@ func TestUkraineGeoControlActionEqual(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			resourceDataMap := map[string]interface{}{
 				"ukraine_geo_control_action": test.ukraineGeoControlAction,
 			}
@@ -142,6 +144,7 @@ func TestSuppressFieldForPrefixedGroupIDPostImport(t *testing.T) {
 }
 
 func TestAreReputationProfilesEqual(t *testing.T) {
+	t.Parallel()
 	deepCopyProfile := func(profile appsec.CreateReputationProfileResponse) appsec.CreateReputationProfileResponse {
 		b, _ := json.Marshal(profile)
 		var profileCopy appsec.CreateReputationProfileResponse
@@ -156,53 +159,62 @@ func TestAreReputationProfilesEqual(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("exact match", func(t *testing.T) {
+		t.Parallel()
 		clone := deepCopyProfile(baseProfile)
 		require.True(t, areReputationProfilesEqual(baseProfile, clone))
 	})
 
 	t.Run("different CheckIps", func(t *testing.T) {
+		t.Parallel()
 		mod := deepCopyProfile(baseProfile)
 		mod.Condition.AtomicConditions[0].CheckIps = "different"
 		require.False(t, areReputationProfilesEqual(baseProfile, mod))
 	})
 
 	t.Run("missing AtomicConditions", func(t *testing.T) {
+		t.Parallel()
 		mod := deepCopyProfile(baseProfile)
 		mod.Condition.AtomicConditions = mod.Condition.AtomicConditions[:2]
 		require.False(t, areReputationProfilesEqual(baseProfile, mod))
 	})
 
 	t.Run("different NameCase", func(t *testing.T) {
+		t.Parallel()
 		mod := deepCopyProfile(baseProfile)
 		mod.Condition.AtomicConditions[1].NameCase = false
 		require.True(t, areReputationProfilesEqual(baseProfile, mod))
 	})
 
 	t.Run("different ValueWildcard", func(t *testing.T) {
+		t.Parallel()
 		mod := deepCopyProfile(baseProfile)
 		mod.Condition.AtomicConditions[1].ValueWildcard = false
 		require.True(t, areReputationProfilesEqual(baseProfile, mod))
 	})
 
 	t.Run("different PositiveMatch", func(t *testing.T) {
+		t.Parallel()
 		mod := deepCopyProfile(baseProfile)
 		mod.Condition.AtomicConditions[2].PositiveMatch = false
 		require.True(t, areReputationProfilesEqual(baseProfile, mod))
 	})
 
 	t.Run("different Value", func(t *testing.T) {
+		t.Parallel()
 		mod := deepCopyProfile(baseProfile)
 		mod.Condition.AtomicConditions[0].Value = []string{"2"}
 		require.False(t, areReputationProfilesEqual(baseProfile, mod))
 	})
 
 	t.Run("different Host", func(t *testing.T) {
+		t.Parallel()
 		mod := deepCopyProfile(baseProfile)
 		mod.Condition.AtomicConditions[2].Host = []string{"*.org"}
 		require.False(t, areReputationProfilesEqual(baseProfile, mod))
 	})
 
 	t.Run("different ValueCase", func(t *testing.T) {
+		t.Parallel()
 		mod := deepCopyProfile(baseProfile)
 		mod.Condition.AtomicConditions[1].ValueCase = false
 		base := deepCopyProfile(mod)
@@ -213,6 +225,7 @@ func TestAreReputationProfilesEqual(t *testing.T) {
 	})
 
 	t.Run("different ValueWildcard", func(t *testing.T) {
+		t.Parallel()
 		base := deepCopyProfile(baseProfile)
 		base.Condition.AtomicConditions[1].ValueWildcard = false
 
@@ -222,6 +235,7 @@ func TestAreReputationProfilesEqual(t *testing.T) {
 	})
 
 	t.Run("different NameCase", func(t *testing.T) {
+		t.Parallel()
 		base := deepCopyProfile(baseProfile)
 		base.Condition.AtomicConditions[1].NameCase = false
 
@@ -231,6 +245,7 @@ func TestAreReputationProfilesEqual(t *testing.T) {
 	})
 
 	t.Run("different NameWildcard", func(t *testing.T) {
+		t.Parallel()
 		base := deepCopyProfile(baseProfile)
 		base.Condition.AtomicConditions[1].NameWildcard = false
 
@@ -240,6 +255,7 @@ func TestAreReputationProfilesEqual(t *testing.T) {
 	})
 
 	t.Run("different PositiveMatch", func(t *testing.T) {
+		t.Parallel()
 		base := deepCopyProfile(baseProfile)
 		base.Condition.AtomicConditions[0].PositiveMatch = false
 
@@ -249,6 +265,7 @@ func TestAreReputationProfilesEqual(t *testing.T) {
 	})
 
 	t.Run("allowed PositiveMatch with HostCondition", func(t *testing.T) {
+		t.Parallel()
 		base := deepCopyProfile(baseProfile)
 		base.Condition.AtomicConditions[2].ClassName = "HostCondition"
 		base.Condition.AtomicConditions[2].PositiveMatch = false

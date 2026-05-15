@@ -95,7 +95,7 @@ func (d *urlProtectionPolicyActionsDataSource) Read(ctx context.Context, req dat
 		return
 	}
 
-	client := inst.Client(d.meta)
+	client := d.meta.Client().GetAPPSEC()
 	configID := data.ConfigID.ValueInt64()
 	policyID := data.SecurityPolicyID.ValueString()
 	urlProtectionID := data.URLProtectionPolicyID.ValueInt64()

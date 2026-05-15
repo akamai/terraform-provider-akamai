@@ -472,7 +472,7 @@ func (r *urlProtectionPolicyResource) Create(ctx context.Context, req resource.C
 		return
 	}
 
-	client := inst.Client(r.meta)
+	client := r.meta.Client().GetAPPSEC()
 	out, err := client.CreateURLProtectionPolicy(ctx, *createReq)
 	if err != nil {
 		resp.Diagnostics.AddError("Error creating URL Protection Policy", err.Error())
@@ -562,7 +562,7 @@ func (r *urlProtectionPolicyResource) Read(ctx context.Context, req resource.Rea
 		URLProtectionPolicyID: urlProtectionID,
 	}
 
-	client := inst.Client(r.meta)
+	client := r.meta.Client().GetAPPSEC()
 	out, err := client.GetURLProtectionPolicy(ctx, getReq)
 	if err != nil {
 		resp.Diagnostics.AddError("calling 'GetURLProtectionPolicy'", err.Error())
@@ -657,7 +657,7 @@ func (r *urlProtectionPolicyResource) Update(ctx context.Context, req resource.U
 		return
 	}
 
-	client := inst.Client(r.meta)
+	client := r.meta.Client().GetAPPSEC()
 	out, err := client.UpdateURLProtectionPolicy(ctx, *updateReq)
 	if err != nil {
 		resp.Diagnostics.AddError("Error updating URL Protection Policy", err.Error())
@@ -747,7 +747,7 @@ func (r *urlProtectionPolicyResource) Delete(ctx context.Context, req resource.D
 		URLProtectionPolicyID: urlProtectionID,
 	}
 
-	client := inst.Client(r.meta)
+	client := r.meta.Client().GetAPPSEC()
 	if err := client.RemoveURLProtectionPolicy(ctx, deleteReq); err != nil {
 		resp.Diagnostics.AddError("Error deleting URL Protection Policy", err.Error())
 		return

@@ -49,7 +49,7 @@ func resourceSecurityPolicyRename() *schema.Resource {
 
 func resourceSecurityPolicyRenameCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyRenameCreate")
 	logger.Debugf("in resourceSecurityPolicyRenameCreate")
 
@@ -90,7 +90,7 @@ func resourceSecurityPolicyRenameCreate(ctx context.Context, d *schema.ResourceD
 
 func resourceSecurityPolicyRenameRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyRenameRead")
 	logger.Debugf("in resourceSecurityPolicyRenameRead")
 
@@ -134,7 +134,7 @@ func resourceSecurityPolicyRenameRead(ctx context.Context, d *schema.ResourceDat
 
 func resourceSecurityPolicyRenameUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyRenameUpdate")
 	logger.Debugf("in resourceSecurityPolicyRenameUpdate")
 

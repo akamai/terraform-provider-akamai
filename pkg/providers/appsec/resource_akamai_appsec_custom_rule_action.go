@@ -58,7 +58,7 @@ func resourceCustomRuleAction() *schema.Resource {
 
 func resourceCustomRuleActionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceCustomRuleActionCreate")
 	logger.Debugf("in resourceCustomRuleActionCreate")
 
@@ -104,7 +104,7 @@ func resourceCustomRuleActionCreate(ctx context.Context, d *schema.ResourceData,
 
 func resourceCustomRuleActionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceCustomRuleActionRead")
 	logger.Debugf("in resourceCustomRuleActionRead")
 
@@ -156,7 +156,7 @@ func resourceCustomRuleActionRead(ctx context.Context, d *schema.ResourceData, m
 
 func resourceCustomRuleActionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceCustomRuleActionUpdate")
 	logger.Debugf("in resourceCustomRuleActionUpdate")
 
@@ -201,7 +201,7 @@ func resourceCustomRuleActionUpdate(ctx context.Context, d *schema.ResourceData,
 
 func resourceCustomRuleActionDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceCustomRuleActionDelete")
 	logger.Debugf("in resourceCustomRuleActionDelete")
 

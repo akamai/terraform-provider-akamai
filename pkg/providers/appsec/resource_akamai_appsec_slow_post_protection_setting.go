@@ -75,7 +75,7 @@ func resourceSlowPostProtectionSetting() *schema.Resource {
 
 func resourceSlowPostProtectionSettingCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceSlowPostProtectionSettingCreate")
 	logger.Debugf("in resourceSlowPostProtectionSettingCreate")
 
@@ -131,7 +131,7 @@ func resourceSlowPostProtectionSettingCreate(ctx context.Context, d *schema.Reso
 
 func resourceSlowPostProtectionSettingRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceSlowPostProtectionSettingRead")
 	logger.Debugf("in resourceSlowPostProtectionSettingRead")
 
@@ -188,7 +188,7 @@ func resourceSlowPostProtectionSettingRead(ctx context.Context, d *schema.Resour
 
 func resourceSlowPostProtectionSettingUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceSlowPostProtectionSettingUpdate")
 	logger.Debugf("in resourceSlowPostProtectionSettingUpdate")
 
@@ -243,7 +243,7 @@ func resourceSlowPostProtectionSettingUpdate(ctx context.Context, d *schema.Reso
 
 func resourceSlowPostProtectionSettingDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceSlowPostProtectionSettingDelete")
 	logger.Debugf("in resourceSlowPostProtectionSettingDelete")
 

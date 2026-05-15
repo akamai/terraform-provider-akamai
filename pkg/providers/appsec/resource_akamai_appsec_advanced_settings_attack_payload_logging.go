@@ -57,7 +57,7 @@ func resourceAdvancedSettingsAttackPayloadLoggingImport(ctx context.Context, d *
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsAttackPayloadLoggingImport")
 	logger.Debugf("Import AdvancedSettingsAttackPayloadLogging")
 
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 
 	getAdvancedSettingsAttackPayloadLogging := appsec.GetAdvancedSettingsAttackPayloadLoggingRequest{}
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
@@ -119,7 +119,7 @@ func resourceAdvancedSettingsAttackPayloadLoggingImport(ctx context.Context, d *
 
 func resourceAdvancedSettingsAttackPayloadLoggingCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsAttackPayloadLoggingCreate")
 	logger.Debugf("in resourceAdvancedSettingsAttackPayloadLoggingCreate")
 
@@ -158,7 +158,7 @@ func resourceAdvancedSettingsAttackPayloadLoggingCreate(ctx context.Context, d *
 
 func resourceAdvancedSettingsAttackPayloadLoggingRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsAttackPayloadLoggingRead")
 	logger.Debugf("in resourceAdvancedSettingsLoggingRead")
 
@@ -204,7 +204,7 @@ func resourceAdvancedSettingsAttackPayloadLoggingRead(ctx context.Context, d *sc
 
 func resourceAdvancedSettingsAttackPayloadLoggingUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsAttackPayloadLoggingUpdate")
 	logger.Debugf("in resourceAdvancedSettingsAttackPayloadLoggingUpdate")
 
@@ -240,7 +240,7 @@ func resourceAdvancedSettingsAttackPayloadLoggingUpdate(ctx context.Context, d *
 
 func resourceAdvancedSettingsAttackPayloadLoggingDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsAttackPayloadLoggingDelete")
 	logger.Debugf("in resourceAdvancedSettingsAttackPayloadLoggingDelete")
 

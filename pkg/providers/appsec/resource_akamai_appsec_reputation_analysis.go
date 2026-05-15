@@ -57,7 +57,7 @@ func resourceReputationAnalysis() *schema.Resource {
 
 func resourceReputationAnalysisCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceReputationAnalysisCreate")
 	logger.Debugf("in resourceReputationAnalysisCreate")
 
@@ -103,7 +103,7 @@ func resourceReputationAnalysisCreate(ctx context.Context, d *schema.ResourceDat
 
 func resourceReputationAnalysisRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceReputationAnalysisRead")
 	logger.Debugf("in resourceReputationAnalysisRead")
 
@@ -151,7 +151,7 @@ func resourceReputationAnalysisRead(ctx context.Context, d *schema.ResourceData,
 
 func resourceReputationAnalysisUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceReputationAnalysisUpdate")
 	logger.Debugf("in resourceReputationAnalysisUpdate")
 
@@ -196,7 +196,7 @@ func resourceReputationAnalysisUpdate(ctx context.Context, d *schema.ResourceDat
 
 func resourceReputationAnalysisDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceReputationAnalysisDelete")
 	logger.Debugf("in resourceReputationAnalysisDelete")
 

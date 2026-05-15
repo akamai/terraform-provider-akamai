@@ -195,7 +195,7 @@ func (r *rapidRulesResource) Create(ctx context.Context, req resource.CreateRequ
 	}
 
 	enableRapidRules := buildUpdateRapidRulesStatusRequest(data, version, true)
-	client := inst.Client(r.meta)
+	client := r.meta.Client().GetAPPSEC()
 	_, err = client.UpdateRapidRulesStatus(ctx, enableRapidRules)
 	if err != nil {
 		resp.Diagnostics.AddError(updateRapidRulesStatusError, err.Error())
@@ -304,7 +304,7 @@ func (r *rapidRulesResource) Read(ctx context.Context, req resource.ReadRequest,
 		PolicyID: getRulesRequest.PolicyID,
 	}
 
-	client := inst.Client(r.meta)
+	client := r.meta.Client().GetAPPSEC()
 	status, err := client.GetRapidRulesStatus(ctx, getRapidRulesStatusRequest)
 	if err != nil {
 		resp.Diagnostics.AddError("Unable to read rapid rules status", err.Error())
@@ -376,7 +376,7 @@ func (r *rapidRulesResource) Update(ctx context.Context, req resource.UpdateRequ
 		return
 	}
 
-	client := inst.Client(r.meta)
+	client := r.meta.Client().GetAPPSEC()
 	if plan.Enabled.ValueBool() != state.Enabled.ValueBool() {
 		enableRapidRules := buildUpdateRapidRulesStatusRequest(plan, version, true)
 		_, err = client.UpdateRapidRulesStatus(ctx, enableRapidRules)
@@ -486,7 +486,7 @@ func (r *rapidRulesResource) Delete(ctx context.Context, req resource.DeleteRequ
 	}
 
 	disableRapidRules := buildUpdateRapidRulesStatusRequest(data, version, false)
-	client := inst.Client(r.meta)
+	client := r.meta.Client().GetAPPSEC()
 	_, err = client.UpdateRapidRulesStatus(ctx, disableRapidRules)
 	if err != nil {
 		resp.Diagnostics.AddError(updateRapidRulesStatusError, err.Error())
@@ -530,7 +530,7 @@ func (r *rapidRulesResource) ImportState(ctx context.Context, req resource.Impor
 	}
 
 	enableRapidRulesRequest := buildUpdateRapidRulesStatusRequest(&data, version, true)
-	client := inst.Client(r.meta)
+	client := r.meta.Client().GetAPPSEC()
 	_, err = client.UpdateRapidRulesStatus(ctx, enableRapidRulesRequest)
 	if err != nil {
 		resp.Diagnostics.AddError(updateRapidRulesStatusError, err.Error())
@@ -678,7 +678,7 @@ func (r *rapidRulesResource) readDefaultAction(ctx context.Context, status bool,
 	if !status {
 		return defaultAction, diags
 	}
-	client := inst.Client(r.meta)
+	client := r.meta.Client().GetAPPSEC()
 	getRapidRulesDefaultActionRequest := buildGetRapidRuleDefaultActionRequest(data, version)
 	defaultActionResponse, err := client.GetRapidRulesDefaultAction(ctx, getRapidRulesDefaultActionRequest)
 	if err != nil {
@@ -695,7 +695,7 @@ func (r *rapidRulesResource) updateRapidRuleAction(ctx context.Context, data *ra
 	}
 
 	updateActionReq := buildUpdateRapidRuleActionRequest(data, version, *ruleVersion, ruleID, action)
-	client := inst.Client(r.meta)
+	client := r.meta.Client().GetAPPSEC()
 	_, err = client.UpdateRapidRuleAction(ctx, updateActionReq)
 	if err != nil {
 		return fmt.Errorf("calling 'UpdateRapidRuleAction': %s", err.Error())
@@ -705,7 +705,7 @@ func (r *rapidRulesResource) updateRapidRuleAction(ctx context.Context, data *ra
 
 func (r *rapidRulesResource) updateRapidRuleActionLock(ctx context.Context, data *rapidRulesResourceModel, ruleID int64, lock bool, version int) error {
 	updateLockReq := buildUpdateRapidRuleActionLockRequest(data, version, lock, ruleID)
-	client := inst.Client(r.meta)
+	client := r.meta.Client().GetAPPSEC()
 	_, err := client.UpdateRapidRuleActionLock(ctx, updateLockReq)
 	if err != nil {
 		return fmt.Errorf("calling 'UpdateRapidRuleActionLock': %s", err.Error())
@@ -715,7 +715,7 @@ func (r *rapidRulesResource) updateRapidRuleActionLock(ctx context.Context, data
 
 func (r *rapidRulesResource) updateRapidRuleException(ctx context.Context, data *rapidRulesResourceModel, ruleID int64, version int, exception appsec.RuleConditionException) error {
 	updateExceptionReq := buildUpdateRapidRuleExceptionRequest(data, version, ruleID, exception)
-	client := inst.Client(r.meta)
+	client := r.meta.Client().GetAPPSEC()
 	_, err := client.UpdateRapidRuleException(ctx, updateExceptionReq)
 	if err != nil {
 		return fmt.Errorf("calling 'UpdateRapidRuleException': %s", err.Error())

@@ -169,7 +169,7 @@ func (d *rapidRulesDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		return
 	}
 
-	client := inst.Client(d.meta)
+	client := d.meta.Client().GetAPPSEC()
 	configID := data.ConfigID.ValueInt64()
 	ruleID := getRuleID(data.RuleID)
 	policyID := data.PolicyID.ValueString()

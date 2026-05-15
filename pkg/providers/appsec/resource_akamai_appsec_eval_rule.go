@@ -68,7 +68,7 @@ func resourceEvalRule() *schema.Resource {
 
 func resourceEvalRuleCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceEvalRuleCreate")
 	logger.Debugf("in resourceEvalRuleCreate")
 
@@ -124,7 +124,7 @@ func resourceEvalRuleCreate(ctx context.Context, d *schema.ResourceData, m inter
 
 func resourceEvalRuleRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceEvalRuleRead")
 	logger.Debugf("in resourceEvalRuleRead")
 
@@ -186,7 +186,7 @@ func resourceEvalRuleRead(ctx context.Context, d *schema.ResourceData, m interfa
 
 func resourceEvalRuleUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceEvalRuleUpdate")
 	logger.Debugf("in resourceEvalRuleUpdate")
 
@@ -242,7 +242,7 @@ func resourceEvalRuleUpdate(ctx context.Context, d *schema.ResourceData, m inter
 
 func resourceEvalRuleDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceEvalRuleDelete")
 	logger.Debugf("in resourceEvalRuleDelete")
 

@@ -3,6 +3,7 @@ package edgegrid
 import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/apidefinitions"
 	v0 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/apidefinitions/v0"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/clientlists"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudaccess"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudcertificates"
@@ -32,6 +33,7 @@ var (
 type TestClient struct {
 	APIDefinitions    *apidefinitions.Mock
 	APIDefinitionsV0  *v0.Mock
+	APPSEC            *appsec.Mock
 	ClientLists       *clientlists.Mock
 	CloudAccess       *cloudaccess.Mock
 	CloudCertificates *cloudcertificates.Mock
@@ -58,6 +60,7 @@ func NewTestClient() *TestClient {
 	return &TestClient{
 		APIDefinitions:    &apidefinitions.Mock{},
 		APIDefinitionsV0:  &v0.Mock{},
+		APPSEC:            &appsec.Mock{},
 		ClientLists:       &clientlists.Mock{},
 		CloudAccess:       &cloudaccess.Mock{},
 		CloudCertificates: &cloudcertificates.Mock{},
@@ -88,6 +91,11 @@ func (c *TestClient) GetAPIDefinitions() apidefinitions.APIDefinitions {
 // GetAPIDefinitionsV0 returns the mock API Definitions V0 client.
 func (c *TestClient) GetAPIDefinitionsV0() v0.APIDefinitions {
 	return c.APIDefinitionsV0
+}
+
+// GetAPPSEC returns the mock APPSEC client.
+func (c *TestClient) GetAPPSEC() appsec.APPSEC {
+	return c.APPSEC
 }
 
 // GetClientLists returns the mock Client Lists client.

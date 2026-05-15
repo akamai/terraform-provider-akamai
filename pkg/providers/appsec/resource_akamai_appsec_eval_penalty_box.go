@@ -57,7 +57,7 @@ func resourceEvalPenaltyBox() *schema.Resource {
 
 func resourceEvalPenaltyBoxCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceEvalPenaltyBoxCreate")
 	logger.Debugf("in resourceEvalPenaltyBoxCreate")
 
@@ -103,7 +103,7 @@ func resourceEvalPenaltyBoxCreate(ctx context.Context, d *schema.ResourceData, m
 
 func resourceEvalPenaltyBoxRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceEvalPenaltyBoxRead")
 	logger.Debugf("in resourceEvalPenaltyBoxRead")
 
@@ -151,7 +151,7 @@ func resourceEvalPenaltyBoxRead(ctx context.Context, d *schema.ResourceData, m i
 
 func resourceEvalPenaltyBoxUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceEvalPenaltyBoxUpdate")
 	logger.Debugf("in resourceEvalPenaltyBoxUpdate")
 
@@ -196,7 +196,7 @@ func resourceEvalPenaltyBoxUpdate(ctx context.Context, d *schema.ResourceData, m
 
 func resourceEvalPenaltyBoxDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceEvalPenaltyBoxDelete")
 	logger.Debugf("in resourceEvalPenaltyBoxDelete")
 

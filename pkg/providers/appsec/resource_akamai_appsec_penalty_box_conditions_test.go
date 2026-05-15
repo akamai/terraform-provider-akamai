@@ -5,12 +5,14 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/require"
 )
 
 func TestAkamaiPenaltyBoxConditions_res_basic(t *testing.T) {
+	t.Parallel()
 	var (
 		configVersion = func(configId int, client *appsec.Mock) appsec.GetConfigurationResponse {
 			configResponse := appsec.GetConfigurationResponse{}
@@ -62,71 +64,69 @@ func TestAkamaiPenaltyBoxConditions_res_basic(t *testing.T) {
 	)
 
 	t.Run("match by PenaltyBoxConditions ID", func(t *testing.T) {
-		client := &appsec.Mock{}
-		configResponse := configVersion(43253, client)
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+		configResponse := configVersion(43253, client.APPSEC)
 
-		penaltyBoxConditionsRead(43253, 7, "AAAA_81230", client, "testdata/TestResPenaltyBoxConditions/PenaltyBoxConditions.json")
+		penaltyBoxConditionsRead(43253, 7, "AAAA_81230", client.APPSEC, "testdata/TestResPenaltyBoxConditions/PenaltyBoxConditions.json")
 
 		penaltyBoxConditionsUpdateReq := appsec.PenaltyBoxConditionsPayload{}
 		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResPenaltyBoxConditions/PenaltyBoxConditions.json"), &penaltyBoxConditionsUpdateReq)
 		require.NoError(t, err)
 
 		updatePenaltyBoxConditionsReq := appsec.UpdatePenaltyBoxConditionsRequest{ConfigID: configResponse.ID, Version: configResponse.LatestVersion, PolicyID: "AAAA_81230", ConditionsPayload: penaltyBoxConditionsUpdateReq}
-		penaltyBoxConditionsUpdate(updatePenaltyBoxConditionsReq, client)
+		penaltyBoxConditionsUpdate(updatePenaltyBoxConditionsReq, client.APPSEC)
 
 		penaltyBoxConditionsDeleteReq := appsec.PenaltyBoxConditionsPayload{}
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResPenaltyBoxConditions/PenaltyBoxConditionsEmpty.json"), &penaltyBoxConditionsDeleteReq)
 		require.NoError(t, err)
 
 		removePenaltyBoxConditionsReq := appsec.UpdatePenaltyBoxConditionsRequest{ConfigID: configResponse.ID, Version: configResponse.LatestVersion, PolicyID: "AAAA_81230", ConditionsPayload: penaltyBoxConditionsDeleteReq}
-		penaltyBoxConditionsDelete(removePenaltyBoxConditionsReq, client)
+		penaltyBoxConditionsDelete(removePenaltyBoxConditionsReq, client.APPSEC)
 
-		useClient(client, func() {
-			resource.Test(t, resource.TestCase{
-				IsUnitTest:               true,
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResPenaltyBoxConditions/match_by_id.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_penalty_box_conditions.test", "id", "43253:AAAA_81230"),
-						),
-					},
+		mockGetConfigurationVersionDefault(client.APPSEC)
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResPenaltyBoxConditions/match_by_id.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_appsec_penalty_box_conditions.test", "id", "43253:AAAA_81230"),
+					),
 				},
-			})
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.APPSEC.AssertExpectations(t)
 	})
 
 	t.Run("match by PenaltyBoxConditions ID for Delete case", func(t *testing.T) {
-		client := &appsec.Mock{}
-		configResponse := configVersion(43253, client)
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+		configResponse := configVersion(43253, client.APPSEC)
 
-		penaltyBoxConditionsRead(43253, 7, "AAAA", client, "testdata/TestResPenaltyBoxConditions/PenaltyBoxConditionsEmpty.json")
+		penaltyBoxConditionsRead(43253, 7, "AAAA", client.APPSEC, "testdata/TestResPenaltyBoxConditions/PenaltyBoxConditionsEmpty.json")
 
 		penaltyBoxConditionsDeleteReq := appsec.PenaltyBoxConditionsPayload{}
 		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResPenaltyBoxConditions/PenaltyBoxConditionsEmpty.json"), &penaltyBoxConditionsDeleteReq)
 		require.NoError(t, err)
 
 		removePenaltyBoxConditionsReq := appsec.UpdatePenaltyBoxConditionsRequest{ConfigID: configResponse.ID, Version: configResponse.LatestVersion, PolicyID: "AAAA", ConditionsPayload: penaltyBoxConditionsDeleteReq}
-		penaltyBoxConditionsDelete(removePenaltyBoxConditionsReq, client)
+		penaltyBoxConditionsDelete(removePenaltyBoxConditionsReq, client.APPSEC)
 
-		useClient(client, func() {
-			resource.Test(t, resource.TestCase{
-				IsUnitTest:               true,
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResPenaltyBoxConditions/match_by_id_for_delete.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_penalty_box_conditions.delete_condition", "id", "43253:AAAA"),
-						),
-					},
+		mockGetConfigurationVersionDefault(client.APPSEC)
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResPenaltyBoxConditions/match_by_id_for_delete.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_appsec_penalty_box_conditions.delete_condition", "id", "43253:AAAA"),
+					),
 				},
-			})
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.APPSEC.AssertExpectations(t)
 	})
 }

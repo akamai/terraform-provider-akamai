@@ -42,7 +42,7 @@ func resourceAdvancedSettingsPIILearning() *schema.Resource {
 
 func resourceAdvancedSettingsPIILearningCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPIILearningCreate")
 
 	configID, err := tf.GetIntValue("config_id", d)
@@ -77,7 +77,7 @@ func resourceAdvancedSettingsPIILearningCreate(ctx context.Context, d *schema.Re
 
 func resourceAdvancedSettingsPIILearningRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPIILearningRead")
 
 	configID, err := strconv.Atoi(d.Id())
@@ -112,7 +112,7 @@ func resourceAdvancedSettingsPIILearningRead(ctx context.Context, d *schema.Reso
 
 func resourceAdvancedSettingsPIILearningUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPIILearningUpdate")
 
 	configID, err := strconv.Atoi(d.Id())
@@ -145,7 +145,7 @@ func resourceAdvancedSettingsPIILearningUpdate(ctx context.Context, d *schema.Re
 
 func resourceAdvancedSettingsPIILearningDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPIILearningDelete")
 
 	configID, err := strconv.Atoi(d.Id())

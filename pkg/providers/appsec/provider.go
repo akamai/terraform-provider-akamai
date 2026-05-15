@@ -2,10 +2,6 @@
 package appsec
 
 import (
-	"sync"
-
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/subprovider"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -14,40 +10,14 @@ import (
 
 type (
 	// Subprovider gathers appsec resources and data sources
-	Subprovider struct {
-		client appsec.APPSEC
-	}
-
-	option func(p *Subprovider)
-)
-
-var (
-	once sync.Once
-
-	inst *Subprovider
+	Subprovider struct{}
 )
 
 var _ subprovider.Subprovider = &Subprovider{}
 
 // NewSubprovider returns a new appsec subprovider
-func NewSubprovider(opts ...option) *Subprovider {
-	once.Do(func() {
-		inst = &Subprovider{}
-
-		for _, opt := range opts {
-			opt(inst)
-		}
-	})
-
-	return inst
-}
-
-// Client returns the APPSEC interface
-func (p *Subprovider) Client(meta meta.Meta) appsec.APPSEC {
-	if p.client != nil {
-		return p.client
-	}
-	return appsec.Client(meta.Session())
+func NewSubprovider() *Subprovider {
+	return &Subprovider{}
 }
 
 // SDKResources returns the appsec resources implemented using terraform-plugin-sdk

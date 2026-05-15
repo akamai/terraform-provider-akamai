@@ -37,7 +37,7 @@ func dataSourceAdvancedSettingsAsePenaltyBox() *schema.Resource {
 
 func dataSourceAdvancedSettingsAsePenaltyBoxRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "dataSourceAdvancedSettingsAsePenaltyBoxRead")
 
 	configID, err := tf.GetIntValue("config_id", d)

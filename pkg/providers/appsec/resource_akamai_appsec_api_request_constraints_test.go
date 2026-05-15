@@ -5,14 +5,17 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/require"
 )
 
 func TestAkamaiApiRequestConstraints_res_basic(t *testing.T) {
+	t.Parallel()
 	t.Run("match by ApiRequestConstraints ID", func(t *testing.T) {
-		client := &appsec.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
 		updateResponse := appsec.UpdateApiRequestConstraintsResponse{}
 		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResApiRequestConstraints/ApiRequestConstraints.json"), &updateResponse)
@@ -30,42 +33,40 @@ func TestAkamaiApiRequestConstraints_res_basic(t *testing.T) {
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 		require.NoError(t, err)
 
-		client.On("GetConfiguration",
+		client.APPSEC.On("GetConfiguration",
 			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
-		client.On("GetApiRequestConstraints",
+		client.APPSEC.On("GetApiRequestConstraints",
 			testutils.MockContext,
 			appsec.GetApiRequestConstraintsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", ApiID: 1},
 		).Return(&getResponse, nil)
 
-		client.On("UpdateApiRequestConstraints",
+		client.APPSEC.On("UpdateApiRequestConstraints",
 			testutils.MockContext,
 			appsec.UpdateApiRequestConstraintsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", ApiID: 1, Action: "alert"},
 		).Return(&updateResponse, nil)
 
-		client.On("RemoveApiRequestConstraints",
+		client.APPSEC.On("RemoveApiRequestConstraints",
 			testutils.MockContext,
 			appsec.RemoveApiRequestConstraintsRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", ApiID: 1, Action: "none"},
 		).Return(&deleteResponse, nil)
 
-		useClient(client, func() {
-			resource.Test(t, resource.TestCase{
-				IsUnitTest:               true,
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResApiRequestConstraints/match_by_id.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_api_request_constraints.test", "id", "43253:AAAA_81230:1"),
-						),
-					},
+		mockGetConfigurationVersionDefault(client.APPSEC)
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResApiRequestConstraints/match_by_id.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_appsec_api_request_constraints.test", "id", "43253:AAAA_81230:1"),
+					),
 				},
-			})
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.APPSEC.AssertExpectations(t)
 	})
 
 }

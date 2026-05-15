@@ -57,7 +57,7 @@ func resourceReputationProtection() *schema.Resource {
 
 func resourceReputationProtectionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceReputationProtectionCreate")
 	logger.Debugf("in resourceReputationProtectionCreate")
 
@@ -97,7 +97,7 @@ func resourceReputationProtectionCreate(ctx context.Context, d *schema.ResourceD
 
 func resourceReputationProtectionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceReputationProtectionRead")
 	logger.Debugf("in resourceReputationProtectionRead")
 
@@ -151,7 +151,7 @@ func resourceReputationProtectionRead(ctx context.Context, d *schema.ResourceDat
 
 func resourceReputationProtectionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceReputationProtectionUpdate")
 	logger.Debugf("in resourceReputationProtectionUpdate")
 
@@ -190,7 +190,7 @@ func resourceReputationProtectionUpdate(ctx context.Context, d *schema.ResourceD
 
 func resourceReputationProtectionDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceReputationProtectionDelete")
 	logger.Debugf("in resourceReputationProtectionDelete")
 

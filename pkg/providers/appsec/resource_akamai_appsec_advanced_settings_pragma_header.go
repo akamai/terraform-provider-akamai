@@ -53,7 +53,7 @@ func resourceAdvancedSettingsPragmaHeader() *schema.Resource {
 
 func resourceAdvancedSettingsPragmaHeaderCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPragmaHeaderCreate")
 	logger.Debugf("in resourceAdvancedSettingsPragmaHeaderCreate")
 
@@ -97,7 +97,7 @@ func resourceAdvancedSettingsPragmaHeaderCreate(ctx context.Context, d *schema.R
 
 func resourceAdvancedSettingsPragmaHeaderRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPragmaHeaderRead")
 	logger.Debug("in resourceAdvancedSettingsPragmaHeaderRead")
 
@@ -160,7 +160,7 @@ func resourceAdvancedSettingsPragmaHeaderRead(ctx context.Context, d *schema.Res
 
 func resourceAdvancedSettingsPragmaHeaderDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPragmaHeaderDelete")
 	logger.Debugf("in resourceAdvancedSettingsPragmaHeaderDelete")
 
@@ -214,7 +214,7 @@ func resourceAdvancedSettingsPragmaHeaderDelete(ctx context.Context, d *schema.R
 
 func resourceAdvancedSettingsPragmaHeaderUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPragmaHeaderUpdate")
 	logger.Debugf("in resourceAdvancedSettingsPragmaHeaderUpdate")
 

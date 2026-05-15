@@ -40,7 +40,7 @@ var (
 // creating unnecessary clones.
 func getModifiableConfigVersion(ctx context.Context, configID int, resource string, m interface{}) (int, error) {
 	meta := akameta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "getModifiableConfigVersion")
 
 	// If the version info is in the cache, return it immediately.
@@ -123,7 +123,7 @@ func getModifiableConfigVersion(ctx context.Context, configID int, resource stri
 // obtained from m. Log messages are written to m's logger.
 func getLatestConfigVersion(ctx context.Context, configID int, m interface{}) (int, error) {
 	meta := akameta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "getLatestConfigVersion")
 
 	// Return the cached value if we have one
@@ -170,7 +170,7 @@ func getLatestConfigVersion(ctx context.Context, configID int, m interface{}) (i
 // context and the API client obtained from m. Log messages are written to m's logger.
 func getActiveConfigVersions(ctx context.Context, configID int, m interface{}) (int, int, error) {
 	meta := akameta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "getActiveConfigVersions")
 
 	logger.Debugf("getActiveConfigVersions calling GetConfigurations")

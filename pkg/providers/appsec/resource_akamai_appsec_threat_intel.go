@@ -57,7 +57,7 @@ func resourceThreatIntel() *schema.Resource {
 
 func resourceThreatIntelCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceThreatIntelCreate")
 	logger.Debugf("in resourceThreatIntelCreate")
 
@@ -98,7 +98,7 @@ func resourceThreatIntelCreate(ctx context.Context, d *schema.ResourceData, m in
 
 func resourceThreatIntelRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceThreatIntelRead")
 	logger.Debugf(" in resourceThreatIntelRead")
 
@@ -143,7 +143,7 @@ func resourceThreatIntelRead(ctx context.Context, d *schema.ResourceData, m inte
 
 func resourceThreatIntelUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceThreatIntelUpdate")
 	logger.Debugf("in resourceThreatIntelUpdate")
 

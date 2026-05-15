@@ -5,14 +5,17 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/require"
 )
 
 func TestAkamaiWAFMode_res_basic(t *testing.T) {
+	t.Parallel()
 	t.Run("match by WAFMode ID", func(t *testing.T) {
-		client := &appsec.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
 		updateWAFModeResponse := appsec.UpdateWAFModeResponse{}
 		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResWAFMode/WAFMode.json"), &updateWAFModeResponse)
@@ -26,37 +29,35 @@ func TestAkamaiWAFMode_res_basic(t *testing.T) {
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &config)
 		require.NoError(t, err)
 
-		client.On("GetConfiguration",
+		client.APPSEC.On("GetConfiguration",
 			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&config, nil)
 
-		client.On("GetWAFMode",
+		client.APPSEC.On("GetWAFMode",
 			testutils.MockContext,
 			appsec.GetWAFModeRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230"},
 		).Return(&getWAFModeResponse, nil)
 
-		client.On("UpdateWAFMode",
+		client.APPSEC.On("UpdateWAFMode",
 			testutils.MockContext,
 			appsec.UpdateWAFModeRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", Mode: "AAG"},
 		).Return(&updateWAFModeResponse, nil)
 
-		useClient(client, func() {
-			resource.Test(t, resource.TestCase{
-				IsUnitTest:               true,
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResWAFMode/match_by_id.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_waf_mode.test", "id", "43253:AAAA_81230"),
-						),
-					},
+		mockGetConfigurationVersionDefault(client.APPSEC)
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResWAFMode/match_by_id.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_appsec_waf_mode.test", "id", "43253:AAAA_81230"),
+					),
 				},
-			})
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.APPSEC.AssertExpectations(t)
 	})
 
 }

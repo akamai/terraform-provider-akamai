@@ -4,6 +4,7 @@ package edgegrid
 import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/apidefinitions"
 	v0 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/apidefinitions/v0"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/clientlists"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudaccess"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudcertificates"
@@ -31,6 +32,8 @@ type Client interface {
 	GetAPIDefinitions() apidefinitions.APIDefinitions
 
 	GetAPIDefinitionsV0() v0.APIDefinitions
+
+	GetAPPSEC() appsec.APPSEC
 
 	GetClientLists() clientlists.ClientLists
 
@@ -95,6 +98,11 @@ func (c *ClientImpl) GetAPIDefinitions() apidefinitions.APIDefinitions {
 // GetAPIDefinitionsV0 returns the API Definitions V0 client for managing API definitions.
 func (c *ClientImpl) GetAPIDefinitionsV0() v0.APIDefinitions {
 	return v0.Client(c.sess)
+}
+
+// GetAPPSEC returns the APPSEC client for managing application security.
+func (c *ClientImpl) GetAPPSEC() appsec.APPSEC {
+	return appsec.Client(c.sess)
 }
 
 // GetClientLists returns the Client Lists client for managing client lists.

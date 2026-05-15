@@ -149,7 +149,7 @@ func (d *customRulesUsageDataSource) Read(ctx context.Context, request datasourc
 		return
 	}
 
-	client := inst.Client(d.meta)
+	client := d.meta.Client().GetAPPSEC()
 	configID := data.ConfigID.ValueInt64()
 
 	version, err := getLatestConfigVersion(ctx, int(configID), d.meta)

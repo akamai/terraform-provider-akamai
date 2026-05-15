@@ -57,7 +57,7 @@ func resourceMatchTarget() *schema.Resource {
 
 func resourceMatchTargetCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceMatchTargetCreate")
 	logger.Debugf("in resourceMatchTargetCreate")
 
@@ -91,7 +91,7 @@ func resourceMatchTargetCreate(ctx context.Context, d *schema.ResourceData, m in
 
 func resourceMatchTargetRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceMatchTargetRead")
 	logger.Debugf("in resourceMatchTargetRead")
 
@@ -156,7 +156,7 @@ func resourceMatchTargetRead(ctx context.Context, d *schema.ResourceData, m inte
 
 func resourceMatchTargetImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceMatchTargetImport")
 	logger.Debugf("in resourceMatchTargetImport")
 
@@ -210,7 +210,7 @@ func resourceMatchTargetImport(ctx context.Context, d *schema.ResourceData, m in
 
 func resourceMatchTargetUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceMatchTargetUpdate")
 	logger.Debugf("in resourceMatchTargetUpdate")
 
@@ -253,7 +253,7 @@ func resourceMatchTargetUpdate(ctx context.Context, d *schema.ResourceData, m in
 
 func resourceMatchTargetDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceMatchTargetDelete")
 	logger.Debugf("in resourceMatchTargetDelete")
 

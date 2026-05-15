@@ -58,7 +58,7 @@ func resourceCustomDeny() *schema.Resource {
 
 func resourceCustomDenyCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceCustomDenyCreate")
 	logger.Debugf("in resourceCustomDenyCreate")
 
@@ -98,7 +98,7 @@ func resourceCustomDenyCreate(ctx context.Context, d *schema.ResourceData, m int
 
 func resourceCustomDenyRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceCustomDenyRead")
 	logger.Debugf("in resourceCustomDenyRead")
 
@@ -155,7 +155,7 @@ func resourceCustomDenyRead(ctx context.Context, d *schema.ResourceData, m inter
 
 func resourceCustomDenyUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceCustomDenyUpdate")
 	logger.Debugf("in resourceCustomDenyUpdate")
 
@@ -196,7 +196,7 @@ func resourceCustomDenyUpdate(ctx context.Context, d *schema.ResourceData, m int
 
 func resourceCustomDenyDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceCustomDenyDelete")
 	logger.Debugf("in resourceCustomDenyDelete")
 

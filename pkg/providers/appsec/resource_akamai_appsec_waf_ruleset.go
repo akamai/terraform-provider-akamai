@@ -254,7 +254,7 @@ func (r *wafRulesetResource) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 
-	client := inst.Client(r.meta)
+	client := r.meta.Client().GetAPPSEC()
 
 	// Build composite ruleset update request with all rules and attack groups
 	updateRequest := appsec.UpdateWAFCompositeRulesetRequest{
@@ -354,7 +354,7 @@ func (r *wafRulesetResource) Read(ctx context.Context, req resource.ReadRequest,
 
 	getWAFRulesetRequest := buildGetWAFRulesetRequest(data, version)
 
-	client := inst.Client(r.meta)
+	client := r.meta.Client().GetAPPSEC()
 	wafRuleset, err := client.GetWAFCompositeRuleset(ctx, getWAFRulesetRequest)
 	if err != nil {
 		// If the WAF Ruleset or security policy is not found, remove the resource from state.
@@ -407,7 +407,7 @@ func (r *wafRulesetResource) Update(ctx context.Context, req resource.UpdateRequ
 		return
 	}
 
-	client := inst.Client(r.meta)
+	client := r.meta.Client().GetAPPSEC()
 
 	// Build composite ruleset update request
 	updateRequest := appsec.UpdateWAFCompositeRulesetRequest{
@@ -576,7 +576,7 @@ func (r *wafRulesetResource) Delete(ctx context.Context, req resource.DeleteRequ
 		return
 	}
 
-	client := inst.Client(r.meta)
+	client := r.meta.Client().GetAPPSEC()
 
 	// Build update request to reset only managed rules and attack groups to action="none"
 	updateRequest := appsec.UpdateWAFCompositeRulesetRequest{
@@ -677,7 +677,7 @@ func (r *wafRulesetResource) ImportState(ctx context.Context, req resource.Impor
 		PolicyID: policyID,
 	}
 
-	client := inst.Client(r.meta)
+	client := r.meta.Client().GetAPPSEC()
 	wafRuleset, err := client.GetWAFCompositeRuleset(ctx, getWAFRulesetRequest)
 	if err != nil {
 		resp.Diagnostics.AddError(readWAFRulesetError, err.Error())

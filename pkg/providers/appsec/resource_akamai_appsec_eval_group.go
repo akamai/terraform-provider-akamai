@@ -68,7 +68,7 @@ func resourceEvalGroup() *schema.Resource {
 
 func resourceEvalGroupCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceEvalGroupCreate")
 	logger.Debugf("in resourceEvalGroupCreate")
 
@@ -125,7 +125,7 @@ func resourceEvalGroupCreate(ctx context.Context, d *schema.ResourceData, m inte
 
 func resourceEvalGroupRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceEvalGroupRead")
 	logger.Debugf("in resourceEvalGroupRead")
 
@@ -185,7 +185,7 @@ func resourceEvalGroupRead(ctx context.Context, d *schema.ResourceData, m interf
 
 func resourceEvalGroupUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceEvalGroupUpdate")
 	logger.Debugf("in resourceEvalGroupUpdate")
 
@@ -239,7 +239,7 @@ func resourceEvalGroupUpdate(ctx context.Context, d *schema.ResourceData, m inte
 
 func resourceEvalGroupDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceEvalgroupDelete")
 	logger.Debugf("in resourceEvalGroupDelete")
 

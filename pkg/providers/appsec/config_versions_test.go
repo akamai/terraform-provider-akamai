@@ -22,7 +22,13 @@ import (
 )
 
 // Simple mock implementation of the Meta interface for testing
-type mockMeta struct{}
+type mockMeta struct {
+	client edgegrid.Client
+}
+
+func newMockMetaWithClient(client edgegrid.Client) *mockMeta {
+	return &mockMeta{client: client}
+}
 
 func (m *mockMeta) Log(args ...interface{}) akalog.Interface {
 	// Return a logger that does nothing for testing
@@ -38,7 +44,7 @@ func (m *mockMeta) Session() session.Session {
 }
 
 func (m *mockMeta) Client() edgegrid.Client {
-	return nil
+	return m.client
 }
 
 // Verify our mock implements the interface
@@ -57,7 +63,8 @@ func TestGetLatestConfigVersion_CacheHit(t *testing.T) {
 	defer clearCache()
 
 	// Setup
-	client := &appsec.Mock{}
+	testClient := edgegrid.NewTestClient()
+	client := testClient.APPSEC
 	configID := 12345
 	expectedVersion := 7
 
@@ -74,14 +81,12 @@ func TestGetLatestConfigVersion_CacheHit(t *testing.T) {
 
 	ctx := context.Background()
 
-	useClient(client, func() {
-		// Call the function under test
-		result, err := getLatestConfigVersion(ctx, configID, &mockMeta{})
+	// Call the function under test
+	result, err := getLatestConfigVersion(ctx, configID, newMockMetaWithClient(testClient))
 
-		// Assertions
-		assert.NoError(t, err)
-		assert.Equal(t, expectedVersion, result)
-	})
+	// Assertions
+	assert.NoError(t, err)
+	assert.Equal(t, expectedVersion, result)
 
 	// Verify no API calls were made
 	client.AssertExpectations(t)
@@ -93,7 +98,8 @@ func TestGetLatestConfigVersion_CacheMiss_APISuccess(t *testing.T) {
 	defer clearCache()
 
 	// Setup
-	client := &appsec.Mock{}
+	testClient := edgegrid.NewTestClient()
+	client := testClient.APPSEC
 	configID := 12346
 	expectedVersion := 9
 
@@ -109,22 +115,20 @@ func TestGetLatestConfigVersion_CacheMiss_APISuccess(t *testing.T) {
 
 	ctx := context.Background()
 
-	useClient(client, func() {
-		// Call the function under test
-		result, err := getLatestConfigVersion(ctx, configID, &mockMeta{})
+	// Call the function under test
+	result, err := getLatestConfigVersion(ctx, configID, newMockMetaWithClient(testClient))
 
-		// Assertions
-		assert.NoError(t, err)
-		assert.Equal(t, expectedVersion, result)
+	// Assertions
+	assert.NoError(t, err)
+	assert.Equal(t, expectedVersion, result)
 
-		// Verify value was cached
-		cachedConfig := &appsec.GetConfigurationResponse{}
-		cacheKey := "getLatestConfigVersion:12346"
-		err = cache.Get(cache.BucketName(SubproviderName), cacheKey, cachedConfig)
-		assert.NoError(t, err)
-		assert.Equal(t, configID, cachedConfig.ID)
-		assert.Equal(t, expectedVersion, cachedConfig.LatestVersion)
-	})
+	// Verify value was cached
+	cachedConfig := &appsec.GetConfigurationResponse{}
+	cacheKey := "getLatestConfigVersion:12346"
+	err = cache.Get(cache.BucketName(SubproviderName), cacheKey, cachedConfig)
+	assert.NoError(t, err)
+	assert.Equal(t, configID, cachedConfig.ID)
+	assert.Equal(t, expectedVersion, cachedConfig.LatestVersion)
 
 	// Verify API call was made
 	client.AssertExpectations(t)
@@ -136,7 +140,8 @@ func TestGetLatestConfigVersion_APIError(t *testing.T) {
 	defer clearCache()
 
 	// Setup
-	client := &appsec.Mock{}
+	testClient := edgegrid.NewTestClient()
+	client := testClient.APPSEC
 	configID := 12347
 
 	// Setup API mock to return error
@@ -147,15 +152,13 @@ func TestGetLatestConfigVersion_APIError(t *testing.T) {
 
 	ctx := context.Background()
 
-	useClient(client, func() {
-		// Call the function under test
-		result, err := getLatestConfigVersion(ctx, configID, &mockMeta{})
+	// Call the function under test
+	result, err := getLatestConfigVersion(ctx, configID, newMockMetaWithClient(testClient))
 
-		// Assertions
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "API error")
-		assert.Equal(t, 0, result)
-	})
+	// Assertions
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "API error")
+	assert.Equal(t, 0, result)
 
 	// Verify API call was made
 	client.AssertExpectations(t)
@@ -167,7 +170,8 @@ func TestGetLatestConfigVersion_CacheDisabled(t *testing.T) {
 	defer clearCache()
 
 	// Setup
-	client := &appsec.Mock{}
+	testClient := edgegrid.NewTestClient()
+	client := testClient.APPSEC
 	configID := 12348
 	expectedVersion := 5
 
@@ -186,14 +190,12 @@ func TestGetLatestConfigVersion_CacheDisabled(t *testing.T) {
 
 	ctx := context.Background()
 
-	useClient(client, func() {
-		// Call the function under test
-		result, err := getLatestConfigVersion(ctx, configID, &mockMeta{})
+	// Call the function under test
+	result, err := getLatestConfigVersion(ctx, configID, newMockMetaWithClient(testClient))
 
-		// Assertions
-		assert.NoError(t, err)
-		assert.Equal(t, expectedVersion, result)
-	})
+	// Assertions
+	assert.NoError(t, err)
+	assert.Equal(t, expectedVersion, result)
 
 	// Verify API call was made
 	client.AssertExpectations(t)
@@ -205,7 +207,8 @@ func TestGetLatestConfigVersion_DoubleCallCachingBehavior(t *testing.T) {
 	defer clearCache()
 
 	// This test verifies that subsequent calls use the cache
-	client := &appsec.Mock{}
+	testClient := edgegrid.NewTestClient()
+	client := testClient.APPSEC
 	configID := 12349
 	expectedVersion := 10
 
@@ -221,17 +224,15 @@ func TestGetLatestConfigVersion_DoubleCallCachingBehavior(t *testing.T) {
 
 	ctx := context.Background()
 
-	useClient(client, func() {
-		// First call should hit API and cache the result
-		result1, err1 := getLatestConfigVersion(ctx, configID, &mockMeta{})
-		assert.NoError(t, err1)
-		assert.Equal(t, expectedVersion, result1)
+	// First call should hit API and cache the result
+	result1, err1 := getLatestConfigVersion(ctx, configID, newMockMetaWithClient(testClient))
+	assert.NoError(t, err1)
+	assert.Equal(t, expectedVersion, result1)
 
-		// Second call should hit cache (no additional API call)
-		result2, err2 := getLatestConfigVersion(ctx, configID, &mockMeta{})
-		assert.NoError(t, err2)
-		assert.Equal(t, expectedVersion, result2)
-	})
+	// Second call should hit cache (no additional API call)
+	result2, err2 := getLatestConfigVersion(ctx, configID, newMockMetaWithClient(testClient))
+	assert.NoError(t, err2)
+	assert.Equal(t, expectedVersion, result2)
 
 	// Verify API was called exactly once
 	client.AssertExpectations(t)
@@ -243,7 +244,8 @@ func TestGetLatestConfigVersion_ConcurrentCalls(t *testing.T) {
 	defer clearCache()
 
 	// This test verifies that the mutex prevents race conditions
-	client := &appsec.Mock{}
+	testClient := edgegrid.NewTestClient()
+	client := testClient.APPSEC
 	configID := 12350
 	expectedVersion := 15
 
@@ -259,28 +261,26 @@ func TestGetLatestConfigVersion_ConcurrentCalls(t *testing.T) {
 
 	ctx := context.Background()
 
-	useClient(client, func() {
-		// Run multiple goroutines to test concurrency
-		results := make(chan int, 3)
-		errors := make(chan error, 3)
+	// Run multiple goroutines to test concurrency
+	results := make(chan int, 3)
+	errors := make(chan error, 3)
 
-		for i := 0; i < 3; i++ {
-			go func() {
-				result, err := getLatestConfigVersion(ctx, configID, &mockMeta{})
-				results <- result
-				errors <- err
-			}()
-		}
+	for i := 0; i < 3; i++ {
+		go func() {
+			result, err := getLatestConfigVersion(ctx, configID, newMockMetaWithClient(testClient))
+			results <- result
+			errors <- err
+		}()
+	}
 
-		// Collect results
-		for i := 0; i < 3; i++ {
-			result := <-results
-			err := <-errors
+	// Collect results
+	for i := 0; i < 3; i++ {
+		result := <-results
+		err := <-errors
 
-			assert.NoError(t, err)
-			assert.Equal(t, expectedVersion, result)
-		}
-	})
+		assert.NoError(t, err)
+		assert.Equal(t, expectedVersion, result)
+	}
 
 	// Verify that the API was called at most once due to caching and mutex
 	client.AssertExpectations(t)
@@ -292,7 +292,8 @@ func TestGetLatestConfigVersion_InvalidConfigID(t *testing.T) {
 	defer clearCache()
 
 	// Test with an invalid config ID
-	client := &appsec.Mock{}
+	testClient := edgegrid.NewTestClient()
+	client := testClient.APPSEC
 	configID := -1
 
 	// Setup API mock to return error for invalid config ID
@@ -303,15 +304,13 @@ func TestGetLatestConfigVersion_InvalidConfigID(t *testing.T) {
 
 	ctx := context.Background()
 
-	useClient(client, func() {
-		// Call the function under test
-		result, err := getLatestConfigVersion(ctx, configID, &mockMeta{})
+	// Call the function under test
+	result, err := getLatestConfigVersion(ctx, configID, newMockMetaWithClient(testClient))
 
-		// Assertions
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "invalid config ID")
-		assert.Equal(t, 0, result)
-	})
+	// Assertions
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid config ID")
+	assert.Equal(t, 0, result)
 
 	// Verify API call was made
 	client.AssertExpectations(t)
@@ -339,18 +338,17 @@ func TestGetModifiableConfigVersion_CacheHit(t *testing.T) {
 	require.NoError(t, err)
 
 	// No client mocks needed since we should hit cache
-	client := &appsec.Mock{}
+	testClient := edgegrid.NewTestClient()
+	client := testClient.APPSEC
 
 	ctx := context.Background()
 
-	useClient(client, func() {
-		// Call the function under test
-		result, err := getModifiableConfigVersion(ctx, configID, resource, &mockMeta{})
+	// Call the function under test
+	result, err := getModifiableConfigVersion(ctx, configID, resource, newMockMetaWithClient(testClient))
 
-		// Assertions
-		assert.NoError(t, err)
-		assert.Equal(t, expectedVersion, result)
-	})
+	// Assertions
+	assert.NoError(t, err)
+	assert.Equal(t, expectedVersion, result)
 
 	// Verify no API calls were made due to cache hit
 	client.AssertExpectations(t)
@@ -368,7 +366,8 @@ func TestGetModifiableConfigVersion_LatestVersionIsModifiable(t *testing.T) {
 	resource := "test_resource"
 
 	// Setup mock client
-	client := &appsec.Mock{}
+	testClient := edgegrid.NewTestClient()
+	client := testClient.APPSEC
 
 	getConfigResponse := appsec.GetConfigurationResponse{
 		ID:                configID,
@@ -408,14 +407,12 @@ func TestGetModifiableConfigVersion_LatestVersionIsModifiable(t *testing.T) {
 
 	ctx := context.Background()
 
-	useClient(client, func() {
-		// Call the function under test
-		result, err := getModifiableConfigVersion(ctx, configID, resource, &mockMeta{})
+	// Call the function under test
+	result, err := getModifiableConfigVersion(ctx, configID, resource, newMockMetaWithClient(testClient))
 
-		// Assertions
-		assert.NoError(t, err)
-		assert.Equal(t, latestVersion, result)
-	})
+	// Assertions
+	assert.NoError(t, err)
+	assert.Equal(t, latestVersion, result)
 
 	client.AssertExpectations(t)
 }
@@ -433,7 +430,8 @@ func TestGetModifiableConfigVersion_LatestVersionActiveInStaging(t *testing.T) {
 	resource := "test_resource"
 
 	// Setup mock client
-	client := &appsec.Mock{}
+	testClient := edgegrid.NewTestClient()
+	client := testClient.APPSEC
 
 	getConfigResponse := appsec.GetConfigurationResponse{
 		ID:                configID,
@@ -464,14 +462,12 @@ func TestGetModifiableConfigVersion_LatestVersionActiveInStaging(t *testing.T) {
 
 	ctx := context.Background()
 
-	useClient(client, func() {
-		// Call the function under test
-		result, err := getModifiableConfigVersion(ctx, configID, resource, &mockMeta{})
+	// Call the function under test
+	result, err := getModifiableConfigVersion(ctx, configID, resource, newMockMetaWithClient(testClient))
 
-		// Assertions
-		assert.NoError(t, err)
-		assert.Equal(t, newClonedVersion, result)
-	})
+	// Assertions
+	assert.NoError(t, err)
+	assert.Equal(t, newClonedVersion, result)
 
 	client.AssertExpectations(t)
 }
@@ -489,7 +485,8 @@ func TestGetModifiableConfigVersion_LatestVersionActiveInProduction(t *testing.T
 	resource := "test_resource"
 
 	// Setup mock client
-	client := &appsec.Mock{}
+	testClient := edgegrid.NewTestClient()
+	client := testClient.APPSEC
 
 	getConfigResponse := appsec.GetConfigurationResponse{
 		ID:                configID,
@@ -520,14 +517,12 @@ func TestGetModifiableConfigVersion_LatestVersionActiveInProduction(t *testing.T
 
 	ctx := context.Background()
 
-	useClient(client, func() {
-		// Call the function under test
-		result, err := getModifiableConfigVersion(ctx, configID, resource, &mockMeta{})
+	// Call the function under test
+	result, err := getModifiableConfigVersion(ctx, configID, resource, newMockMetaWithClient(testClient))
 
-		// Assertions
-		assert.NoError(t, err)
-		assert.Equal(t, newClonedVersion, result)
-	})
+	// Assertions
+	assert.NoError(t, err)
+	assert.Equal(t, newClonedVersion, result)
 
 	client.AssertExpectations(t)
 }
@@ -545,7 +540,8 @@ func TestGetModifiableConfigVersion_LatestVersionWasPreviouslyActive(t *testing.
 	resource := "test_resource"
 
 	// Setup mock client
-	client := &appsec.Mock{}
+	testClient := edgegrid.NewTestClient()
+	client := testClient.APPSEC
 
 	getConfigResponse := appsec.GetConfigurationResponse{
 		ID:                configID,
@@ -600,14 +596,12 @@ func TestGetModifiableConfigVersion_LatestVersionWasPreviouslyActive(t *testing.
 
 	ctx := context.Background()
 
-	useClient(client, func() {
-		// Call the function under test
-		result, err := getModifiableConfigVersion(ctx, configID, resource, &mockMeta{})
+	// Call the function under test
+	result, err := getModifiableConfigVersion(ctx, configID, resource, newMockMetaWithClient(testClient))
 
-		// Assertions
-		assert.NoError(t, err)
-		assert.Equal(t, newClonedVersion, result)
-	})
+	// Assertions
+	assert.NoError(t, err)
+	assert.Equal(t, newClonedVersion, result)
 
 	client.AssertExpectations(t)
 }
@@ -622,7 +616,8 @@ func TestGetModifiableConfigVersion_GetConfigurationError(t *testing.T) {
 	expectedError := errors.New("API error")
 
 	// Setup mock client
-	client := &appsec.Mock{}
+	testClient := edgegrid.NewTestClient()
+	client := testClient.APPSEC
 
 	// Mock the GetConfiguration call to return error
 	client.On("GetConfiguration",
@@ -632,15 +627,13 @@ func TestGetModifiableConfigVersion_GetConfigurationError(t *testing.T) {
 
 	ctx := context.Background()
 
-	useClient(client, func() {
-		// Call the function under test
-		result, err := getModifiableConfigVersion(ctx, configID, resource, &mockMeta{})
+	// Call the function under test
+	result, err := getModifiableConfigVersion(ctx, configID, resource, newMockMetaWithClient(testClient))
 
-		// Assertions
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "API error")
-		assert.Equal(t, 0, result)
-	})
+	// Assertions
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "API error")
+	assert.Equal(t, 0, result)
 
 	client.AssertExpectations(t)
 }
@@ -658,7 +651,8 @@ func TestGetModifiableConfigVersion_CloneError(t *testing.T) {
 	expectedError := errors.New("clone error")
 
 	// Setup mock client
-	client := &appsec.Mock{}
+	testClient := edgegrid.NewTestClient()
+	client := testClient.APPSEC
 
 	getConfigResponse := appsec.GetConfigurationResponse{
 		ID:                configID,
@@ -684,15 +678,13 @@ func TestGetModifiableConfigVersion_CloneError(t *testing.T) {
 
 	ctx := context.Background()
 
-	useClient(client, func() {
-		// Call the function under test
-		result, err := getModifiableConfigVersion(ctx, configID, resource, &mockMeta{})
+	// Call the function under test
+	result, err := getModifiableConfigVersion(ctx, configID, resource, newMockMetaWithClient(testClient))
 
-		// Assertions
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "clone error")
-		assert.Equal(t, 0, result)
-	})
+	// Assertions
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "clone error")
+	assert.Equal(t, 0, result)
 
 	client.AssertExpectations(t)
 }
@@ -709,7 +701,8 @@ func TestGetModifiableConfigVersion_ConcurrentAccess(t *testing.T) {
 	resource := "test_resource"
 
 	// Setup mock client
-	client := &appsec.Mock{}
+	testClient := edgegrid.NewTestClient()
+	client := testClient.APPSEC
 
 	getConfigResponse := appsec.GetConfigurationResponse{
 		ID:                configID,
@@ -749,27 +742,25 @@ func TestGetModifiableConfigVersion_ConcurrentAccess(t *testing.T) {
 
 	ctx := context.Background()
 
-	useClient(client, func() {
-		// Run multiple goroutines to test concurrency
-		results := make(chan int, 3)
-		errors := make(chan error, 3)
+	// Run multiple goroutines to test concurrency
+	results := make(chan int, 3)
+	errors := make(chan error, 3)
 
-		for i := 0; i < 3; i++ {
-			go func() {
-				result, err := getModifiableConfigVersion(ctx, configID, resource, &mockMeta{})
-				results <- result
-				errors <- err
-			}()
-		}
+	for i := 0; i < 3; i++ {
+		go func() {
+			result, err := getModifiableConfigVersion(ctx, configID, resource, newMockMetaWithClient(testClient))
+			results <- result
+			errors <- err
+		}()
+	}
 
-		// Collect results
-		for i := 0; i < 3; i++ {
-			result := <-results
-			err := <-errors
-			assert.NoError(t, err)
-			assert.Equal(t, latestVersion, result)
-		}
-	})
+	// Collect results
+	for i := 0; i < 3; i++ {
+		result := <-results
+		err := <-errors
+		assert.NoError(t, err)
+		assert.Equal(t, latestVersion, result)
+	}
 
 	client.AssertExpectations(t)
 }
@@ -786,7 +777,8 @@ func TestGetModifiableConfigVersion_GetConfigurationVersionError(t *testing.T) {
 	resource := "test_resource"
 
 	// Setup mock client
-	client := &appsec.Mock{}
+	testClient := edgegrid.NewTestClient()
+	client := testClient.APPSEC
 
 	getConfigResponse := appsec.GetConfigurationResponse{
 		ID:                configID,
@@ -811,15 +803,13 @@ func TestGetModifiableConfigVersion_GetConfigurationVersionError(t *testing.T) {
 
 	ctx := context.Background()
 
-	useClient(client, func() {
-		// Call the function under test
-		result, err := getModifiableConfigVersion(ctx, configID, resource, &mockMeta{})
+	// Call the function under test
+	result, err := getModifiableConfigVersion(ctx, configID, resource, newMockMetaWithClient(testClient))
 
-		// Assertions - should still succeed and return latest version
-		// because checkIfVersionWasPreviouslyActive returns false on error
-		assert.NoError(t, err)
-		assert.Equal(t, latestVersion, result)
-	})
+	// Assertions - should still succeed and return latest version
+	// because checkIfVersionWasPreviouslyActive returns false on error
+	assert.NoError(t, err)
+	assert.Equal(t, latestVersion, result)
 
 	client.AssertExpectations(t)
 }

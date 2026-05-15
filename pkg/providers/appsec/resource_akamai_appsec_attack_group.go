@@ -68,7 +68,7 @@ func resourceAttackGroup() *schema.Resource {
 
 func resourceAttackGroupCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAttackGroupCreate")
 	logger.Debugf(" in resourceAttackGroupCreate")
 
@@ -124,7 +124,7 @@ func resourceAttackGroupCreate(ctx context.Context, d *schema.ResourceData, m in
 
 func resourceAttackGroupRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAttackGroupRead")
 	logger.Debugf(" in resourceAttackGroupRead")
 
@@ -184,7 +184,7 @@ func resourceAttackGroupRead(ctx context.Context, d *schema.ResourceData, m inte
 
 func resourceAttackGroupUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAttackGroupUpdate")
 	logger.Debugf(" in resourceAttackGroupUpdate")
 
@@ -238,7 +238,7 @@ func resourceAttackGroupUpdate(ctx context.Context, d *schema.ResourceData, m in
 
 func resourceAttackGroupDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAttackGroupDelete")
 	logger.Debugf(" in resourceAttackGroupDelete")
 

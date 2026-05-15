@@ -55,7 +55,7 @@ func resourceRatePolicy() *schema.Resource {
 
 func resourceRatePolicyCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceRatePolicyCreate")
 	logger.Debugf("in resourceRatePolicyCreate")
 
@@ -90,7 +90,7 @@ func resourceRatePolicyCreate(ctx context.Context, d *schema.ResourceData, m int
 
 func resourceRatePolicyRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceRatePolicyRead")
 	logger.Debugf("in resourceRatePolicyRead")
 
@@ -143,7 +143,7 @@ func resourceRatePolicyRead(ctx context.Context, d *schema.ResourceData, m inter
 
 func resourceRatePolicyUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceRatePolicyUpdate")
 	logger.Debugf("in resourceRatePolicy`Update")
 
@@ -187,7 +187,7 @@ func resourceRatePolicyUpdate(ctx context.Context, d *schema.ResourceData, m int
 
 func resourceRatePolicyDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceRatePolicyDelete")
 	logger.Debugf("in resourceRatePolicyDelete")
 

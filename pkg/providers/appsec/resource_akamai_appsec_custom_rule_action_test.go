@@ -5,19 +5,22 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/require"
 )
 
 func TestAkamaiCustomRuleAction_res_basic(t *testing.T) {
+	t.Parallel()
 	t.Run("match by CustomRuleAction ID", func(t *testing.T) {
-		client := &appsec.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
 		getConfigResponse := appsec.GetConfigurationResponse{}
 		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &getConfigResponse)
 		require.NoError(t, err)
-		client.On("GetConfiguration",
+		client.APPSEC.On("GetConfiguration",
 			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&getConfigResponse, nil)
@@ -25,7 +28,7 @@ func TestAkamaiCustomRuleAction_res_basic(t *testing.T) {
 		updateResponse := appsec.UpdateCustomRuleActionResponse{}
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResCustomRuleAction/CustomRuleActionUpdated.json"), &updateResponse)
 		require.NoError(t, err)
-		client.On("UpdateCustomRuleAction",
+		client.APPSEC.On("UpdateCustomRuleAction",
 			testutils.MockContext,
 			appsec.UpdateCustomRuleActionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", RuleID: 60036362, Action: "none"},
 		).Return(&updateResponse, nil)
@@ -33,27 +36,25 @@ func TestAkamaiCustomRuleAction_res_basic(t *testing.T) {
 		getResponse := appsec.GetCustomRuleActionResponse{}
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResCustomRuleAction/CustomRuleAction.json"), &getResponse)
 		require.NoError(t, err)
-		client.On("GetCustomRuleAction",
+		client.APPSEC.On("GetCustomRuleAction",
 			testutils.MockContext,
 			appsec.GetCustomRuleActionRequest{ConfigID: 43253, Version: 7, PolicyID: "AAAA_81230", RuleID: 60036362},
 		).Return(&getResponse, nil)
 
-		useClient(client, func() {
-			resource.Test(t, resource.TestCase{
-				IsUnitTest:               true,
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResCustomRuleAction/match_by_id.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_custom_rule_action.test", "id", "43253:AAAA_81230:60036362"),
-						),
-					},
+		mockGetConfigurationVersionDefault(client.APPSEC)
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCustomRuleAction/match_by_id.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_appsec_custom_rule_action.test", "id", "43253:AAAA_81230:60036362"),
+					),
 				},
-			})
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.APPSEC.AssertExpectations(t)
 	})
 
 }

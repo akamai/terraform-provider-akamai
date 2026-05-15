@@ -165,7 +165,7 @@ func getExceptionsResource() *schema.Resource {
 
 func resourceSiemSettingsCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceSiemSettingsCreate")
 	logger.Debugf("in resourceSiemSettingsCreate")
 
@@ -242,7 +242,7 @@ func resourceSiemSettingsCreate(ctx context.Context, d *schema.ResourceData, m i
 
 func resourceSiemSettingsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceSiemSettingsRead")
 	logger.Debugf("in resourceSiemSettingsRead")
 
@@ -297,7 +297,7 @@ func resourceSiemSettingsRead(ctx context.Context, d *schema.ResourceData, m int
 
 func resourceSiemSettingsUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceSiemSettingsUpdate")
 	logger.Debugf("in resourceSiemSettingsUpdate")
 
@@ -373,7 +373,7 @@ func resourceSiemSettingsUpdate(ctx context.Context, d *schema.ResourceData, m i
 
 func resourceSiemSettingsDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceSiemSettingsDelete")
 	logger.Debugf("in resourceSiemSettingsDelete")
 

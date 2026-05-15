@@ -106,7 +106,7 @@ var (
 
 func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceActivationsCreate")
 	logger.Debug("in resourceActivationsCreate")
 
@@ -156,7 +156,7 @@ func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m in
 
 func resourceActivationsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceActivationsRead")
 	logger.Debug("in resourceActivationsRead")
 
@@ -206,7 +206,7 @@ func resourceActivationsRead(ctx context.Context, d *schema.ResourceData, m inte
 
 func resourceActivationsUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceActivationsUpdate")
 	logger.Debug("in resourceActivationsUpdate")
 
@@ -256,7 +256,7 @@ func resourceActivationsUpdate(ctx context.Context, d *schema.ResourceData, m in
 
 func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceActivationsRemove")
 	logger.Debug("in resourceActivationsDelete")
 
@@ -309,7 +309,7 @@ func resourceActivationsDelete(ctx context.Context, d *schema.ResourceData, m in
 
 func resourceImporter(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceActivationsImport")
 	logger.Debug("in appsec_activation resource's resourceImporter")
 

@@ -150,7 +150,7 @@ func (r *urlProtectionActionResource) ValidateConfig(ctx context.Context, req re
 		return
 	}
 
-	client := inst.Client(r.meta)
+	client := r.meta.Client().GetAPPSEC()
 
 	version, err := getModifiableConfigVersion(ctx, int(config.ConfigID.ValueInt64()), "urlProtectionAction", r.meta)
 	if err != nil {
@@ -213,7 +213,7 @@ func (r *urlProtectionActionResource) Create(ctx context.Context, req resource.C
 		return
 	}
 
-	client := inst.Client(r.meta)
+	client := r.meta.Client().GetAPPSEC()
 
 	loadSheddingAction := data.LoadSheddingAction.ValueString()
 	if data.LoadSheddingAction.IsNull() || data.LoadSheddingAction.ValueString() == "" {
@@ -285,7 +285,7 @@ func (r *urlProtectionActionResource) Read(ctx context.Context, req resource.Rea
 		URLProtectionPolicyID: data.URLProtectionPolicyID.ValueInt64(),
 	}
 
-	client := inst.Client(r.meta)
+	client := r.meta.Client().GetAPPSEC()
 	actionResponse, err := client.GetURLProtectionPolicyActions(ctx, readRequest)
 	if err != nil {
 		// If the URL Protection Policy or its actions are not found, remove the resource from state. May happen if url protection policy is not present in latest config version.
@@ -330,7 +330,7 @@ func (r *urlProtectionActionResource) Update(ctx context.Context, req resource.U
 		return
 	}
 
-	client := inst.Client(r.meta)
+	client := r.meta.Client().GetAPPSEC()
 
 	loadSheddingAction := data.LoadSheddingAction.ValueString()
 	if data.LoadSheddingAction.IsNull() || data.LoadSheddingAction.ValueString() == "" {
@@ -420,7 +420,7 @@ func (r *urlProtectionActionResource) Delete(ctx context.Context, req resource.D
 		},
 	}
 
-	client := inst.Client(r.meta)
+	client := r.meta.Client().GetAPPSEC()
 	_, err = client.UpdateURLProtectionPolicyActions(ctx, deleteRequest)
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to delete URL protection action", err.Error())

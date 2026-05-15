@@ -73,7 +73,7 @@ func resourceAdvancedSettingsAsePenaltyBoxCreate(ctx context.Context, d *schema.
 
 func upsertAdvancedSettingsAsePenaltyBox(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 
 	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
@@ -150,7 +150,7 @@ func upsertAdvancedSettingsAsePenaltyBox(ctx context.Context, d *schema.Resource
 
 func resourceAdvancedSettingsAsePenaltyBoxRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsAsePenaltyBoxRead")
 	logger.Debugf("in resourceAdvancedSettingsAsePenaltyBoxRead")
 
@@ -194,7 +194,7 @@ func resourceAdvancedSettingsAsePenaltyBoxUpdate(ctx context.Context, d *schema.
 
 func resourceAdvancedSettingsAsePenaltyBoxDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsAsePenaltyBoxDelete")
 	logger.Debugf("in resourceAdvancedSettingsAsePenaltyBoxDelete")
 

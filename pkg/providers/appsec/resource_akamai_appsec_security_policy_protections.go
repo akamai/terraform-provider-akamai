@@ -243,7 +243,7 @@ func (r *securityPolicyProtectionsResource) updatePolicyProtections(ctx context.
 		return
 	}
 
-	client := inst.Client(r.meta)
+	client := r.meta.Client().GetAPPSEC()
 
 	_, err = client.UpdatePolicyProtections(ctx, appsec.UpdatePolicyProtectionsRequest{
 		ConfigID:                       int(data.ConfigID.ValueInt64()),
@@ -276,7 +276,7 @@ func (r *securityPolicyProtectionsResource) readState(ctx context.Context, data 
 		return diags
 	}
 
-	client := inst.Client(r.meta)
+	client := r.meta.Client().GetAPPSEC()
 	result, err := client.GetPolicyProtections(ctx, appsec.GetPolicyProtectionsRequest{
 		ConfigID: int(data.ConfigID.ValueInt64()),
 		Version:  version,

@@ -60,7 +60,7 @@ func resourceAAPSelectedHostnames() *schema.Resource {
 
 func resourceAAPSelectedHostnamesCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAAPSelectedHostnamesCreate")
 	logger.Debugf("in resourceAAPSelectedHostnamesCreate")
 
@@ -132,7 +132,7 @@ func resourceAAPSelectedHostnamesCreate(ctx context.Context, d *schema.ResourceD
 
 func resourceAAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAAPSelectedHostnamesRead")
 	logger.Debugf("in resourceAAPSelectedHostnamesRead")
 
@@ -180,7 +180,7 @@ func resourceAAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceDat
 
 func resourceAAPSelectedHostnamesUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAAPSelectedHostnamesUpdate")
 	logger.Debugf("in resourceAAPSelectedHostnamesUpdate")
 

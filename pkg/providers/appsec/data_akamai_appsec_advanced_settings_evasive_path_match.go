@@ -43,7 +43,7 @@ func dataSourceAdvancedSettingsEvasivePathMatch() *schema.Resource {
 
 func dataSourceAdvancedSettingsEvasivePathMatchRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "dataSourceAdvancedSettingsEvasivePathMatchRead")
 
 	getAdvancedSettingsEvasivePathMatch := appsec.GetAdvancedSettingsEvasivePathMatchRequest{}

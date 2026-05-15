@@ -76,7 +76,7 @@ func resourceConfiguration() *schema.Resource {
 
 func resourceConfigurationCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceConfigurationCreate")
 	logger.Debug("in resourceConfigurationCreate")
 
@@ -174,7 +174,7 @@ func resourceConfigurationCreate(ctx context.Context, d *schema.ResourceData, m 
 
 func resourceConfigurationRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceConfigurationRead")
 	logger.Debug("in resourceConfigurationRead")
 
@@ -231,7 +231,7 @@ func resourceConfigurationRead(ctx context.Context, d *schema.ResourceData, m in
 
 func resourceConfigurationUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceConfigurationUpdate")
 	logger.Debug("in resourceConfigurationUpdate")
 
@@ -295,7 +295,7 @@ func resourceConfigurationUpdate(ctx context.Context, d *schema.ResourceData, m 
 
 func resourceConfigurationDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceConfigurationDelete")
 	logger.Debug("in resourceConfigurationDelete")
 

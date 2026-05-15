@@ -59,7 +59,7 @@ func resourceAdvancedSettingsRequestBodyImport(ctx context.Context, d *schema.Re
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsRequestBodyImport")
 	logger.Debugf("Import AdvancedSettingsRequestBody")
 
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 
 	getAdvancedSettingsRequestBody := appsec.GetAdvancedSettingsRequestBodyRequest{}
 	if d.Id() != "" && strings.Contains(d.Id(), ":") {
@@ -129,7 +129,7 @@ func resourceAdvancedSettingsRequestBodyCreate(ctx context.Context, d *schema.Re
 
 func upsertAdvancedSettingsRequestBody(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 
 	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
@@ -172,7 +172,7 @@ func upsertAdvancedSettingsRequestBody(ctx context.Context, d *schema.ResourceDa
 }
 func resourceAdvancedSettingsRequestBodyRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsRequestBodyRead")
 	logger.Debugf("in resourceAdvancedSettingsRequestBodyRead")
 
@@ -227,7 +227,7 @@ func resourceAdvancedSettingsRequestBodyUpdate(ctx context.Context, d *schema.Re
 
 func resourceAdvancedSettingsRequestBodyDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsRequestBodyDelete")
 	logger.Debugf("in resourceAdvancedSettingsRequestBodyDelete")
 

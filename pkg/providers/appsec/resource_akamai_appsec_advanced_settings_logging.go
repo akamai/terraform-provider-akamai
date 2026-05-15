@@ -57,7 +57,7 @@ func resourceAdvancedSettingsLogging() *schema.Resource {
 
 func resourceAdvancedSettingsLoggingCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsLoggingCreate")
 	logger.Debugf("in resourceAdvancedSettingsLoggingCreate")
 
@@ -101,7 +101,7 @@ func resourceAdvancedSettingsLoggingCreate(ctx context.Context, d *schema.Resour
 
 func resourceAdvancedSettingsLoggingRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsLoggingRead")
 	logger.Debugf("in resourceAdvancedSettingsLoggingRead")
 
@@ -163,7 +163,7 @@ func resourceAdvancedSettingsLoggingRead(ctx context.Context, d *schema.Resource
 
 func resourceAdvancedSettingsLoggingUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsLoggingUpdate")
 	logger.Debugf("in resourceAdvancedSettingsLoggingUpdate")
 
@@ -216,7 +216,7 @@ func resourceAdvancedSettingsLoggingUpdate(ctx context.Context, d *schema.Resour
 
 func resourceAdvancedSettingsLoggingDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsLoggingDelete")
 	logger.Debugf("in resourceAdvancedSettingsLoggingDelete")
 

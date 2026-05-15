@@ -5,19 +5,22 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/require"
 )
 
 func TestAkamaiReputationProfile_res_basic(t *testing.T) {
+	t.Parallel()
 	t.Run("match by ReputationProfile ID", func(t *testing.T) {
-		client := &appsec.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
 		configResponse := appsec.GetConfigurationResponse{}
 		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &configResponse)
 		require.NoError(t, err)
-		client.On("GetConfiguration",
+		client.APPSEC.On("GetConfiguration",
 			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&configResponse, nil)
@@ -36,37 +39,35 @@ func TestAkamaiReputationProfile_res_basic(t *testing.T) {
 
 		createReputationProfileJSON := testutils.LoadFixtureBytes(t, "testdata/TestResReputationProfile/CreateReputationProfile.json")
 
-		client.On("CreateReputationProfile",
+		client.APPSEC.On("CreateReputationProfile",
 			testutils.MockContext,
 			appsec.CreateReputationProfileRequest{ConfigID: 43253, ConfigVersion: 7, JsonPayloadRaw: createReputationProfileJSON},
 		).Return(&createReputationProfileResponse, nil)
 
-		client.On("GetReputationProfile",
+		client.APPSEC.On("GetReputationProfile",
 			testutils.MockContext,
 			appsec.GetReputationProfileRequest{ConfigID: 43253, ConfigVersion: 7, ReputationProfileId: 12345},
 		).Return(&getReputationProfileResponse, nil)
 
-		client.On("RemoveReputationProfile",
+		client.APPSEC.On("RemoveReputationProfile",
 			testutils.MockContext,
 			appsec.RemoveReputationProfileRequest{ConfigID: 43253, ConfigVersion: 7, ReputationProfileId: 12345},
 		).Return(&removeReputationProfileResponse, nil)
 
-		useClient(client, func() {
-			resource.Test(t, resource.TestCase{
-				IsUnitTest:               true,
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResReputationProfile/match_by_id.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_reputation_profile.test", "id", "43253:12345"),
-						),
-					},
+		mockGetConfigurationVersionDefault(client.APPSEC)
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResReputationProfile/match_by_id.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_appsec_reputation_profile.test", "id", "43253:12345"),
+					),
 				},
-			})
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.APPSEC.AssertExpectations(t)
 	})
 
 }

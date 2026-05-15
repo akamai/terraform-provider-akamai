@@ -73,7 +73,7 @@ func resourceRuleUpgrade() *schema.Resource {
 
 func resourceRuleUpgradeCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceRuleUpgradeCreate")
 	logger.Debugf(" in resourceRuleUpgradeCreate")
 
@@ -116,7 +116,7 @@ func resourceRuleUpgradeCreate(ctx context.Context, d *schema.ResourceData, m in
 
 func resourceRuleUpgradeRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceRuleUpgradeRead")
 	logger.Debugf(" in resourceRuleUpgradeRead")
 
@@ -167,7 +167,7 @@ func resourceRuleUpgradeRead(ctx context.Context, d *schema.ResourceData, m inte
 
 func resourceRuleUpgradeUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceRuleUpgradeUpdate")
 	logger.Debugf(" in resourceRuleUpgradeUpdate")
 

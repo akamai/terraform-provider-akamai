@@ -7,14 +7,17 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/require"
 )
 
 func TestAkamaiCustomRule_res_basic(t *testing.T) {
+	t.Parallel()
 	t.Run("CustomRule_basic", func(t *testing.T) {
-		client := &appsec.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
 		createCustomRuleResponse := appsec.CreateCustomRuleResponse{}
 		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResCustomRule/CustomRule.json"), &createCustomRuleResponse)
@@ -49,66 +52,66 @@ func TestAkamaiCustomRule_res_basic(t *testing.T) {
 		}
 
 		// mock 3 calls to GetCustomRule: 1) after create; 2) via TestCheckResourceAttr 3) pre-update
-		client.On("GetCustomRule",
+		client.APPSEC.On("GetCustomRule",
 			testutils.MockContext,
 			appsec.GetCustomRuleRequest{ConfigID: 43253, ID: 661699},
 		).Return(&getCustomRuleResponse, nil).Times(3)
 
 		// mock the GetCustomRule call that follows UpdateCustomRule
-		client.On("GetCustomRule",
+		client.APPSEC.On("GetCustomRule",
 			testutils.MockContext,
 			appsec.GetCustomRuleRequest{ConfigID: 43253, ID: 661699},
 		).Return(&getCustomRuleAfterUpdate, nil)
 
 		updateCustomRuleJSON := testutils.LoadFixtureBytes(t, "testdata/TestResCustomRule/UpdateCustomRule.json")
-		client.On("UpdateCustomRule",
+		client.APPSEC.On("UpdateCustomRule",
 			testutils.MockContext,
 			appsec.UpdateCustomRuleRequest{ConfigID: 43253, ID: 661699, Version: 0, JsonPayloadRaw: updateCustomRuleJSON},
 		).Return(&updateCustomRuleResponse, nil)
 
 		createCustomRuleJSON := testutils.LoadFixtureBytes(t, "testdata/TestResCustomRule/CreateCustomRule.json")
-		client.On("CreateCustomRule",
+		client.APPSEC.On("CreateCustomRule",
 			testutils.MockContext,
 			appsec.CreateCustomRuleRequest{ConfigID: 43253, Version: 0, JsonPayloadRaw: createCustomRuleJSON},
 		).Return(&createCustomRuleResponse, nil)
 
-		client.On("RemoveCustomRule",
+		client.APPSEC.On("RemoveCustomRule",
 			testutils.MockContext,
 			appsec.RemoveCustomRuleRequest{ConfigID: 43253, ID: 661699},
 		).Return(&removeCustomRuleResponse, nil)
 
-		mockGetLatestConfiguration(client, 43253, 1)
-		mockGetCustomRulesUsage(client, getCustomRuleUsageRequest, appsec.GetCustomRulesUsageResponse{Rules: []appsec.CustomRuleUsage{}}, 1)
+		mockGetLatestConfiguration(client.APPSEC, 43253, 1)
+		mockGetCustomRulesUsage(client.APPSEC, getCustomRuleUsageRequest, appsec.GetCustomRulesUsageResponse{Rules: []appsec.CustomRuleUsage{}}, 1)
 
-		useClient(client, func() {
-			resource.Test(t, resource.TestCase{
-				IsUnitTest:               true,
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResCustomRule/match_by_id.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_custom_rule.test", "id", "43253:661699"),
-						),
-					},
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResCustomRule/update_by_id.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_custom_rule.test", "id", "43253:661699"),
-						),
-					},
+		mockGetConfigurationVersionDefault(client.APPSEC)
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCustomRule/match_by_id.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_appsec_custom_rule.test", "id", "43253:661699"),
+					),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCustomRule/update_by_id.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_appsec_custom_rule.test", "id", "43253:661699"),
+					),
+				},
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.APPSEC.AssertExpectations(t)
 	})
 
 }
 
 func TestAkamaiCustomRule_res_error_removing_active_rule(t *testing.T) {
+	t.Parallel()
 	t.Run("CustomRule_removing_active_rule", func(t *testing.T) {
-		client := &appsec.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
 		updateCustomRuleResponse := appsec.UpdateCustomRuleResponse{}
 		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResCustomRule/CustomRuleUpdated.json"), &updateCustomRuleResponse)
@@ -143,67 +146,67 @@ func TestAkamaiCustomRule_res_error_removing_active_rule(t *testing.T) {
 		}
 
 		// mock 3 calls to GetCustomRule: 1) after create; 2) via TestCheckResourceAttr 3) pre-update
-		client.On("GetCustomRule",
+		client.APPSEC.On("GetCustomRule",
 			testutils.MockContext,
 			appsec.GetCustomRuleRequest{ConfigID: 43253, ID: 661699},
 		).Return(&getCustomRuleResponse, nil).Times(3)
 
 		// mock the GetCustomRule call that follows UpdateCustomRule
-		client.On("GetCustomRule",
+		client.APPSEC.On("GetCustomRule",
 			testutils.MockContext,
 			appsec.GetCustomRuleRequest{ConfigID: 43253, ID: 661699},
 		).Return(&getCustomRuleResponseAfterUpdate, nil)
 
 		updateCustomRuleJSON := testutils.LoadFixtureBytes(t, "testdata/TestResCustomRule/UpdateCustomRule.json")
-		client.On("UpdateCustomRule",
+		client.APPSEC.On("UpdateCustomRule",
 			testutils.MockContext,
 			appsec.UpdateCustomRuleRequest{ConfigID: 43253, ID: 661699, Version: 0, JsonPayloadRaw: updateCustomRuleJSON},
 		).Return(nil, fmt.Errorf("RemoveCustomRule request failed"))
 
 		createCustomRuleJSON := testutils.LoadFixtureBytes(t, "testdata/TestResCustomRule/CreateCustomRule.json")
-		client.On("CreateCustomRule",
+		client.APPSEC.On("CreateCustomRule",
 			testutils.MockContext,
 			appsec.CreateCustomRuleRequest{ConfigID: 43253, Version: 0, JsonPayloadRaw: createCustomRuleJSON},
 		).Return(&createCustomRuleResponse, nil)
 
-		client.On("RemoveCustomRule",
+		client.APPSEC.On("RemoveCustomRule",
 			testutils.MockContext,
 			appsec.RemoveCustomRuleRequest{ConfigID: 43253, ID: 661699},
 		).Return(&removeCustomRuleResponse, nil)
 
-		mockGetLatestConfiguration(client, 43253, 1)
-		mockGetCustomRulesUsage(client, getCustomRuleUsageRequest, appsec.GetCustomRulesUsageResponse{Rules: []appsec.CustomRuleUsage{}}, 1)
+		mockGetLatestConfiguration(client.APPSEC, 43253, 1)
+		mockGetCustomRulesUsage(client.APPSEC, getCustomRuleUsageRequest, appsec.GetCustomRulesUsageResponse{Rules: []appsec.CustomRuleUsage{}}, 1)
 
-		useClient(client, func() {
-			resource.Test(t, resource.TestCase{
-				IsUnitTest:               true,
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResCustomRule/match_by_id.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_custom_rule.test", "id", "43253:661699"),
-						),
-					},
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResCustomRule/update_by_id.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_custom_rule.test", "id", "43253:661699"),
-						),
-						ExpectError: regexp.MustCompile(`RemoveCustomRule request failed`),
-					},
+		mockGetConfigurationVersionDefault(client.APPSEC)
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCustomRule/match_by_id.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_appsec_custom_rule.test", "id", "43253:661699"),
+					),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCustomRule/update_by_id.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_appsec_custom_rule.test", "id", "43253:661699"),
+					),
+					ExpectError: regexp.MustCompile(`RemoveCustomRule request failed`),
+				},
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.APPSEC.AssertExpectations(t)
 	})
 
 }
 
 func TestAkamaiCustomRule_res_error_deleting_rule_in_use(t *testing.T) {
+	t.Parallel()
 	t.Run("CustomRule_removing_rule_in_use", func(t *testing.T) {
-		client := &appsec.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
 		createCustomRuleResponse := appsec.CreateCustomRuleResponse{}
 		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResCustomRule/CustomRule.json"), &createCustomRuleResponse)
@@ -217,19 +220,19 @@ func TestAkamaiCustomRule_res_error_deleting_rule_in_use(t *testing.T) {
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResCustomRule/CustomRulesDeleted.json"), &removeCustomRuleResponse)
 		require.NoError(t, err)
 
-		client.On("GetCustomRule",
+		client.APPSEC.On("GetCustomRule",
 			testutils.MockContext,
 			appsec.GetCustomRuleRequest{ConfigID: 43253, ID: 661699},
 		).Return(&getCustomRuleResponse, nil).Times(3)
 
 		createCustomRuleJSON := testutils.LoadFixtureBytes(t, "testdata/TestResCustomRule/CreateCustomRule.json")
-		client.On("CreateCustomRule",
+		client.APPSEC.On("CreateCustomRule",
 			testutils.MockContext,
 			appsec.CreateCustomRuleRequest{ConfigID: 43253, Version: 0, JsonPayloadRaw: createCustomRuleJSON},
 		).Return(&createCustomRuleResponse, nil)
 
-		mockGetLatestConfiguration(client, 43253, 2)
-		client.On("GetCustomRulesUsage",
+		mockGetLatestConfiguration(client.APPSEC, 43253, 2)
+		client.APPSEC.On("GetCustomRulesUsage",
 			testutils.MockContext,
 			appsec.GetCustomRulesUsageRequest{
 				ConfigID: 43253,
@@ -250,7 +253,7 @@ func TestAkamaiCustomRule_res_error_deleting_rule_in_use(t *testing.T) {
 			},
 		}, nil).Once()
 
-		client.On("GetCustomRulesUsage",
+		client.APPSEC.On("GetCustomRulesUsage",
 			testutils.MockContext,
 			appsec.GetCustomRulesUsageRequest{
 				ConfigID: 43253,
@@ -263,28 +266,26 @@ func TestAkamaiCustomRule_res_error_deleting_rule_in_use(t *testing.T) {
 			Rules: []appsec.CustomRuleUsage{},
 		}, nil).Once()
 
-		client.On("RemoveCustomRule",
+		client.APPSEC.On("RemoveCustomRule",
 			testutils.MockContext,
 			appsec.RemoveCustomRuleRequest{ConfigID: 43253, ID: 661699},
 		).Return(&removeCustomRuleResponse, nil)
 
-		useClient(client, func() {
-			resource.Test(t, resource.TestCase{
-				IsUnitTest:               true,
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResCustomRule/match_by_id.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_custom_rule.test", "id", "43253:661699"),
-						),
-					},
-					testutils.TestStepDestroyFailed(testutils.LoadFixtureString(t, "testdata/TestResCustomRule/match_by_id.tf"),
-						regexp.MustCompile(`custom rule with ID: 661699 cannot be deleted, it is either active or in use in the security policies with IDs: p1, p2`)),
+		mockGetConfigurationVersionDefault(client.APPSEC)
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCustomRule/match_by_id.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_appsec_custom_rule.test", "id", "43253:661699"),
+					),
 				},
-			})
+				testutils.TestStepDestroyFailed(testutils.LoadFixtureString(t, "testdata/TestResCustomRule/match_by_id.tf"),
+					regexp.MustCompile(`custom rule with ID: 661699 cannot be deleted, it is either active or in use in the security policies with IDs: p1, p2`)),
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.APPSEC.AssertExpectations(t)
 	})
 }

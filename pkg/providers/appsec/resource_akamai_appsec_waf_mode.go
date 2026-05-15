@@ -84,7 +84,7 @@ func resourceWAFMode() *schema.Resource {
 
 func resourceWAFModeCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceWAFModeCreate")
 	logger.Debugf(" in resourceWAFModeCreate")
 
@@ -125,7 +125,7 @@ func resourceWAFModeCreate(ctx context.Context, d *schema.ResourceData, m interf
 
 func resourceWAFModeRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceWAFModeRead")
 	logger.Debugf(" in resourceWAFModeRead")
 
@@ -191,7 +191,7 @@ func resourceWAFModeRead(ctx context.Context, d *schema.ResourceData, m interfac
 
 func resourceWAFModeUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceWAFModeUpdate")
 	logger.Debugf(" in resourceWAFModeUpdate")
 

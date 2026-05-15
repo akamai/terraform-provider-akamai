@@ -69,7 +69,7 @@ func resourceRule() *schema.Resource {
 
 func resourceRuleCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akameta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceRuleCreate")
 	logger.Debugf("in resourceRuleCreate")
 
@@ -128,7 +128,7 @@ func resourceRuleCreate(ctx context.Context, d *schema.ResourceData, m interface
 
 func resourceRuleRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akameta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceRuleRead")
 	logger.Debugf("in resourceRuleRead")
 
@@ -192,7 +192,7 @@ func resourceRuleRead(ctx context.Context, d *schema.ResourceData, m interface{}
 
 func resourceRuleUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akameta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceRuleUpdate")
 	logger.Debugf("in resourceRuleUpdate")
 
@@ -248,7 +248,7 @@ func resourceRuleUpdate(ctx context.Context, d *schema.ResourceData, m interface
 
 func resourceRuleDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := akameta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceRuleDelete")
 	logger.Debugf("in resourceRuleDelete")
 
