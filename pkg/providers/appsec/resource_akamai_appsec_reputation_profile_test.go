@@ -14,9 +14,13 @@ func TestAkamaiReputationProfile_res_basic(t *testing.T) {
 	t.Run("match by ReputationProfile ID", func(t *testing.T) {
 		client := &appsec.Mock{}
 
-		updateReputationProfileResponse := appsec.UpdateReputationProfileResponse{}
-		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResReputationProfile/ReputationProfileUpdated.json"), &updateReputationProfileResponse)
+		configResponse := appsec.GetConfigurationResponse{}
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &configResponse)
 		require.NoError(t, err)
+		client.On("GetConfiguration",
+			testutils.MockContext,
+			appsec.GetConfigurationRequest{ConfigID: 43253},
+		).Return(&configResponse, nil)
 
 		getReputationProfileResponse := appsec.GetReputationProfileResponse{}
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResReputationProfile/ReputationProfiles.json"), &getReputationProfileResponse)
@@ -30,6 +34,13 @@ func TestAkamaiReputationProfile_res_basic(t *testing.T) {
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResReputationProfile/ReputationProfileCreated.json"), &removeReputationProfileResponse)
 		require.NoError(t, err)
 
+		createReputationProfileJSON := testutils.LoadFixtureBytes(t, "testdata/TestResReputationProfile/CreateReputationProfile.json")
+
+		client.On("CreateReputationProfile",
+			testutils.MockContext,
+			appsec.CreateReputationProfileRequest{ConfigID: 43253, ConfigVersion: 7, JsonPayloadRaw: createReputationProfileJSON},
+		).Return(&createReputationProfileResponse, nil)
+
 		client.On("GetReputationProfile",
 			testutils.MockContext,
 			appsec.GetReputationProfileRequest{ConfigID: 43253, ConfigVersion: 7, ReputationProfileId: 12345},
@@ -40,25 +51,15 @@ func TestAkamaiReputationProfile_res_basic(t *testing.T) {
 			appsec.RemoveReputationProfileRequest{ConfigID: 43253, ConfigVersion: 7, ReputationProfileId: 12345},
 		).Return(&removeReputationProfileResponse, nil)
 
-		client.On("CreateReputationProfile",
-			testutils.MockContext,
-			appsec.CreateReputationProfileRequest{ConfigID: 43253, ConfigVersion: 7},
-		).Return(&createReputationProfileResponse, nil)
-
-		client.On("UpdateReputationProfile",
-			testutils.MockContext,
-			appsec.UpdateReputationProfileRequest{ConfigID: 43253, ConfigVersion: 7, ReputationProfileId: 12345},
-		).Return(&updateReputationProfileResponse, nil)
-
 		useClient(client, func() {
 			resource.Test(t, resource.TestCase{
-				IsUnitTest:               false,
+				IsUnitTest:               true,
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, "testdata/TestResReputationProfile/match_by_id.tf"),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_reputation_profile.test", "id", "12345"),
+							resource.TestCheckResourceAttr("akamai_appsec_reputation_profile.test", "id", "43253:12345"),
 						),
 					},
 				},
