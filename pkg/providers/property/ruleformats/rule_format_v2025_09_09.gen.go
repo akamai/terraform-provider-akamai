@@ -5118,12 +5118,12 @@ func getBehaviorsSchemaV20250909() map[string]*schema.Schema {
 					},
 					"enable_auth_set": {
 						Optional:    true,
-						Description: "Whether to require a specific mutual transport layer security (mTLS) certificate authority (CA) set in a request from a client to the edge network.",
+						Description: "Enables the Enforce mTLS Settings checks for this request.",
 						Type:        schema.TypeBool,
 					},
 					"certificate_authority_set": {
 						Optional:    true,
-						Description: "Specify the client certificate authority (CA) sets you want to support in client requests. Run the `List CA Sets` operation in the mTLS Edge TrustStore API to get the `setId` value and pass it in this option as a string. If a request includes a set not defined here, it will be denied. The preset list items you can select are contingent on the CA sets you've created using the mTLS Edge Truststore, and then associated with a certificate in the `Certificate Provisioning System`.",
+						Description: "Specifies at least one of the CA sets defined in the mTLS Edge Truststore. If a client certificate isn't present or it doesn't match any of the specified CA sets, an error occurs.",
 						Type:        schema.TypeList,
 						Elem: &schema.Schema{
 							Type: schema.TypeString,
@@ -5131,12 +5131,12 @@ func getBehaviorsSchemaV20250909() map[string]*schema.Schema {
 					},
 					"enable_ocsp_status": {
 						Optional:    true,
-						Description: "Whether the mutual transport layer security requests from a client should use the online certificate support protocol (OCSP). OCSP can determine the x.509 certificate revocation status during the TLS handshake.",
+						Description: "Whether to validate if the client certificate successfully passed OCSP revocation checks.",
 						Type:        schema.TypeBool,
 					},
 					"enable_deny_request": {
 						Optional:    true,
-						Description: "This denies a request from a client that doesn't match what you've set for the options in this behavior. When disabled, non-matching requests are allowed, but you can incorporate a custom handling operation, such as reviewing generated log entries to see the discrepancies, enable the `Client-To-Edge` authentication header, or issue a custom message. This behavior only checks the `Certificate Provisioning System` settings. It doesn't check the current client certificate and doesn't deny invalid certs.",
+						Description: "Specifies the action to take if `enableOcspStatus` or `enableAuthSet` fails. Set this to `true` to deny the request and send a generic HTTP 403 Forbidden response to the client. Set it to `false` to allow the property to process the request.",
 						Type:        schema.TypeBool,
 					},
 				},
@@ -5853,7 +5853,7 @@ func getBehaviorsSchemaV20250909() map[string]*schema.Schema {
 		"fips": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Ensures `Federal Information Process Standards (FIPS) 140-2` compliance for a connection to an origin server. For this behavior to work properly, verify that your origin's secure certificate supports Enhanced TLS and is FIPS-compliant. This behavior can be used in includes.",
+			Description: "Ensures `Federal Information Process Standards (FIPS) 140-3` compliance for a connection to an origin server. For this behavior to work properly, verify that your origin's secure certificate supports Enhanced TLS and is FIPS-compliant. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -10043,7 +10043,7 @@ func getBehaviorsSchemaV20250909() map[string]*schema.Schema {
 					},
 					"http2_enabled": {
 						Optional:    true,
-						Description: "Limited Availability. When enabled, the edge server sends multiple HTTP requests over a single HTTP/2 connection to the origin.",
+						Description: "When enabled, the edge server sends multiple HTTP requests over a single HTTP/2 connection to the origin.",
 						Type:        schema.TypeBool,
 					},
 				},
@@ -10111,7 +10111,7 @@ func getBehaviorsSchemaV20250909() map[string]*schema.Schema {
 					"nonce": {
 						ValidateDiagFunc: validateRegexOrVariable("^[0-9a-zA-Z]{1,8}$"),
 						Optional:         true,
-						Description:      "Specifies the nonce.",
+						Description:      "Specifies the nonce. Uniquely identifies the secret key used to encrypt the headers sent to your origin.",
 						Type:             schema.TypeString,
 					},
 					"mslkey": {
@@ -15197,7 +15197,7 @@ func getBehaviorsSchemaV20250909() map[string]*schema.Schema {
 		"web_application_firewall": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior implements a suite of security features that blocks threatening HTTP and HTTPS requests. Use it as your primary firewall, or in addition to existing security measures.  Only one referenced configuration is allowed per property, so this behavior typically belongs as part of its default rule. This behavior cannot be used in includes.",
+			Description: "This behavior assigns an account-wide firewall configuration, named `WAF Security File`, to legacy customers' web traffic. Only one firewall is allowed for the property, so this behavior belongs in the default rule. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -15219,7 +15219,7 @@ func getBehaviorsSchemaV20250909() map[string]*schema.Schema {
 					},
 					"firewall_configuration": {
 						Optional:    true,
-						Description: "An object featuring details about your firewall configuration.",
+						Description: "This reflects the current state of the account-level firewall configuration. Note that any configuration you apply to hostnames in the `Application Security API` overrides this one.",
 						Type:        schema.TypeList,
 						MaxItems:    1,
 						Elem: &schema.Resource{
@@ -15503,7 +15503,7 @@ func getCriteriaSchemaV20250909() map[string]*schema.Schema {
 					},
 					"enforce_mtls": {
 						Optional:    true,
-						Description: "Specifies custom handling of requests if any of the checks in the `enforceMtlsSettings` behavior fail. Enable this and use with behaviors such as `logCustom` so that they execute if the check fails. You need to add the `enforceMtlsSettings` behavior to a parent rule, with its own unique match condition and `enableDenyRequest` option disabled.",
+						Description: "Specifies custom request handling depending on the result of checks in the `enforceMtlsSettings` behavior. For example, logging requests when an invalid client certificate is present. Add the `enforceMtlsSettings` behavior to a parent rule, with its own unique match condition and the `enableDenyRequest` option disabled.",
 						Type:        schema.TypeBool,
 					},
 				},
@@ -17351,7 +17351,7 @@ func getCriteriaSchemaV20250909() map[string]*schema.Schema {
 					},
 					"network_type_values": {
 						Optional:    true,
-						Description: "",
+						Description: "Specifies the basic type of network.",
 						Type:        schema.TypeList,
 						Elem: &schema.Schema{
 							Type: schema.TypeString,

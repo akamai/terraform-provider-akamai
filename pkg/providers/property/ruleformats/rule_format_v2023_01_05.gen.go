@@ -9899,7 +9899,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					"nonce": {
 						ValidateDiagFunc: validateRegexOrVariable("^[0-9a-zA-Z]{1,8}$"),
 						Optional:         true,
-						Description:      "Specifies the nonce.",
+						Description:      "Specifies the nonce. Uniquely identifies the secret key used to encrypt the headers sent to your origin.",
 						Type:             schema.TypeString,
 					},
 					"mslkey": {
@@ -14563,7 +14563,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"web_application_firewall": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "This behavior implements a suite of security features that blocks threatening HTTP and HTTPS requests. Use it as your primary firewall, or in addition to existing security measures.  Only one referenced configuration is allowed per property, so this behavior typically belongs as part of its default rule. This behavior cannot be used in includes.",
+			Description: "This behavior assigns an account-wide firewall configuration, named `WAF Security File`, to legacy customers' web traffic. Only one firewall is allowed for the property, so this behavior belongs in the default rule. This behavior cannot be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -14585,7 +14585,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					},
 					"firewall_configuration": {
 						Optional:    true,
-						Description: "An object featuring details about your firewall configuration.",
+						Description: "This reflects the current state of the account-level firewall configuration. Note that any configuration you apply to hostnames in the `Application Security API` overrides this one.",
 						Type:        schema.TypeList,
 						MaxItems:    1,
 						Elem: &schema.Resource{
@@ -16619,7 +16619,7 @@ func getCriteriaSchemaV20230105() map[string]*schema.Schema {
 					},
 					"network_type_values": {
 						Optional:    true,
-						Description: "",
+						Description: "Specifies the basic type of network.",
 						Type:        schema.TypeList,
 						Elem: &schema.Schema{
 							Type: schema.TypeString,

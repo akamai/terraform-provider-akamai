@@ -81,6 +81,19 @@
 
 
 
+* PAPI
+  * Added support for the new rule format [`v2026-05-05`](https://techdocs.akamai.com/terraform/docs/rule-format-changes#v2026-05-05). Compared to the previous rule format, the following fields are no longer supported:
+    * `continue_on_error_disclaimer`, `create_edge_worker`, `fail_open_title`, `m_pulse_information`, `m_pulse_title` and `resource_tier` from the `edge_worker` behavior.
+    * `custom_sign_string`, `nonce` and `use_custom_sign_string` from the `origin_characteristics` behavior.
+  * Changed the `enabled` option name to `enable` in the `optimize_text_streaming` behavior in the `v2026-01-09` and the `v2026-02-16` rule formats. This is not a breaking change, as the `optimizeTextStreaming` was not publicly available prior to the Property Manager Catalog 26.3.
+
+
+
+
+
+
+
+
 
 
 
