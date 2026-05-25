@@ -3,7 +3,7 @@ provider "akamai" {
 }
 
 data "akamai_cp_code" "test" {
-  name        = "234"
+  cp_code_id  = "234"
   contract_id = "ctr_11"
   group_id    = "grp_22"
 }

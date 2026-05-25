@@ -2,12 +2,14 @@ package property
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/providers/property/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -16,10 +18,18 @@ func dataSourceCPCode() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataCPCodeRead,
 		Schema: map[string]*schema.Schema{
-			"name": {
+			"cp_code_name": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ExactlyOneOf: []string{"cp_code_name", "cp_code_id"},
+			},
+			"cp_code_id": {
 				Type:             schema.TypeString,
-				Required:         true,
-				ValidateDiagFunc: tf.IsNotBlank,
+				Optional:         true,
+				Computed:         true,
+				ExactlyOneOf:     []string{"cp_code_name", "cp_code_id"},
+				DiffSuppressFunc: tf.FieldPrefixSuppress("cpc_"),
 			},
 			"contract_id": {
 				Type:     schema.TypeString,
@@ -48,12 +58,16 @@ func dataCPCodeRead(ctx context.Context, d *schema.ResourceData, m interface{}) 
 	meta := meta.Must(m)
 	log := meta.Log("PAPI", "dataCPCodeRead")
 	log.Debug("Read CP Code")
-
-	var name, groupID, contractID string
+	client := meta.Client().GetPAPI()
+	var cpCodeName, cpCodeID, groupID, contractID string
 	var err error
 
-	if name, err = tf.GetStringValue("name", d); err != nil {
-		return diag.FromErr(err)
+	if v, ok := d.GetOk("cp_code_name"); ok {
+		cpCodeName = v.(string)
+	}
+
+	if v, ok := d.GetOk("cp_code_id"); ok {
+		cpCodeID = v.(string)
 	}
 
 	if groupID, err = tf.GetStringValue("group_id", d); err != nil {
@@ -69,14 +83,35 @@ func dataCPCodeRead(ctx context.Context, d *schema.ResourceData, m interface{}) 
 	if err := d.Set("contract_id", contractID); err != nil {
 		return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
+	var cpCode papi.CPCode
+	if cpCodeID != "" {
+		cpCodeResp, err := client.GetCPCode(ctx, papi.GetCPCodeRequest{
+			CPCodeID:   cpCodeID,
+			ContractID: contractID,
+			GroupID:    groupID,
+		})
+		if err != nil {
+			if errors.Is(err, papi.ErrNotFound) {
+				return diag.FromErr(fmt.Errorf("%w: %w", ErrLookingUpCPCodeByID, err))
+			}
+			return diag.FromErr(fmt.Errorf("could not load CP code: %w", err))
+		}
 
-	cpCode, err := findCPCode(ctx, meta.Client().GetPAPI(), name, contractID, groupID)
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("could not load CP codes: %w", err))
-	}
-
-	if cpCode == nil {
-		return diag.FromErr(fmt.Errorf("%v: invalid CP Code", ErrLookingUpCPCode))
+		cpCode = cpCodeResp.CPCode
+		if err := d.Set("cp_code_name", cpCodeResp.CPCode.Name); err != nil {
+			return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
+		}
+	} else {
+		cpCode, err = tools.FindCPCodeByName(ctx, client, cpCodeName, contractID, groupID)
+		if err != nil {
+			if errors.Is(err, tools.ErrCPCodeNotFound) {
+				return diag.FromErr(fmt.Errorf("%w: %w", ErrLookingUpCPCodeByName, err))
+			}
+			return diag.FromErr(fmt.Errorf("could not load CP codes: %w", err))
+		}
+		if err := d.Set("cp_code_id", cpCode.ID); err != nil {
+			return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
+		}
 	}
 
 	if err := d.Set("product_ids", cpCode.ProductIDs); err != nil {
@@ -90,35 +125,4 @@ func dataCPCodeRead(ctx context.Context, d *schema.ResourceData, m interface{}) 
 	d.SetId(strings.TrimPrefix(cpCode.ID, cpCodePrefix))
 	log.Debugf("Read CP Code: %+v", cpCode)
 	return nil
-}
-
-// findCPCode searches all CP codes for a match against given nameOrID
-func findCPCode(ctx context.Context, client papi.PAPI, nameOrID, contractID, groupID string) (*papi.CPCode, error) {
-	r, err := client.GetCPCodes(ctx, papi.GetCPCodesRequest{
-		ContractID: contractID,
-		GroupID:    groupID,
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	var matchedCPCodes []papi.CPCode
-	for _, cpc := range r.CPCodes.Items {
-		if cpCodeNameOrIDMatches(cpc, nameOrID) {
-			matchedCPCodes = append(matchedCPCodes, cpc)
-		}
-	}
-
-	if len(matchedCPCodes) > 1 {
-		return nil, fmt.Errorf("%w: more than one CP code for name %s was found", ErrMoreCPCodesFound, nameOrID)
-	} else if len(matchedCPCodes) == 1 {
-		return &matchedCPCodes[0], nil
-	}
-
-	return nil, fmt.Errorf("%w: CP code: %s", ErrCPCodeNotFound, nameOrID)
-}
-
-func cpCodeNameOrIDMatches(cpCode papi.CPCode, s string) bool {
-	return cpCode.ID == s || cpCode.ID == "cpc_"+s || cpCode.Name == s
 }

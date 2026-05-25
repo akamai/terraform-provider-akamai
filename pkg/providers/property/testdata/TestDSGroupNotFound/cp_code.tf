@@ -10,9 +10,9 @@ resource "akamai_cp_code" "akacpcode" {
 }
 
 data "akamai_cp_code" "akacpcodeq" {
-  contract_id = var.contractid
-  group_id    = var.groupid
-  name        = akamai_cp_code.akacpcode.id
+  contract_id  = var.contractid
+  group_id     = akamai_cp_code.akacpcode.group_id
+  cp_code_name = akamai_cp_code.akacpcode.name
   # Fetch the newly created CP code
   depends_on = [
     akamai_cp_code.akacpcode

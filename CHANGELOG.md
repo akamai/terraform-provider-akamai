@@ -4,6 +4,11 @@
 
 #### BREAKING CHANGES:
 
+* PAPI
+    * Updated the `akamai_cp_code` datasource to fetch a single CP code directly when using the new `cp_code_id` attribute, instead of filtering from the full list.
+    * Renamed the `name` attribute to `cp_code_name` in the `akamai_cp_code` datasource.
+    * Added the `cp_code_id` attribute to the `akamai_cp_code` datasource as a replacement for passing a CP code ID via the `name` field.
+    * Replaced `ErrLookingUpCPCode` error with `ErrLookingUpCPCodeByName` and `ErrLookingUpCPCodeByID` errors for CP code lookup failures by `cp_code_name` and `cp_code_id` in the `akamai_cp_code` data source. 
 
 
 
