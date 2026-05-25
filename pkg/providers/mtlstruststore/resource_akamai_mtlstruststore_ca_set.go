@@ -42,7 +42,7 @@ var (
 )
 
 type caSetResource struct {
-	meta          meta.Meta
+	meta.Resource
 	deleteTimeout time.Duration
 }
 
@@ -261,28 +261,10 @@ func certificatesSchema() schema.SetNestedAttribute {
 	}
 }
 
-func (r *caSetResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		// ProviderData is nil when Configure is run first time as part of ValidateDataSourceConfig in framework provider.
-		return
-	}
-
-	defer func() {
-		if rec := recover(); rec != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Resource Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-			)
-		}
-	}()
-
-	r.meta = meta.Must(req.ProviderData)
-}
-
 func (r *caSetResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
 	tflog.Debug(ctx, "Validating CA set resource configuration")
 
-	if r.meta == nil {
+	if r.Client == nil {
 		return
 	}
 	var config caSetResourceModel
@@ -296,7 +278,7 @@ func (r *caSetResource) ValidateConfig(ctx context.Context, req resource.Validat
 		return
 	}
 
-	client = Client(r.meta)
+	client := r.Client.GetMTLSTruststore()
 	if diags := validateCerts(ctx, client, &config); diags.HasError() {
 		resp.Diagnostics.Append(diags...)
 		return
@@ -406,7 +388,7 @@ func (r *caSetResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanR
 			return
 		}
 
-		client = Client(r.meta)
+		client := r.Client.GetMTLSTruststore()
 
 		associationsResponse, err := client.ListCASetAssociations(ctx, mtlstruststore.ListCASetAssociationsRequest{
 			CASetID: state.ID.ValueString(),
@@ -482,6 +464,7 @@ Details:
 	}
 
 	if modifiers.IsUpdate(req) {
+		client := r.Client.GetMTLSTruststore()
 		var state, plan *caSetResourceModel
 		resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 		if resp.Diagnostics.HasError() {
@@ -640,7 +623,7 @@ func (r *caSetResource) Create(ctx context.Context, req resource.CreateRequest, 
 		return
 	}
 
-	client = Client(r.meta)
+	client := r.Client.GetMTLSTruststore()
 	if diags := validateCerts(ctx, client, &plan); diags.HasError() {
 		resp.Diagnostics.Append(diags...)
 		return
@@ -671,7 +654,7 @@ func (r *caSetResource) Create(ctx context.Context, req resource.CreateRequest, 
 }
 
 func (r *caSetResource) create(ctx context.Context, plan *caSetResourceModel) (*caSetCreateResult, diag.Diagnostics) {
-	client = Client(r.meta)
+	client := r.Client.GetMTLSTruststore()
 
 	result := caSetCreateResult{}
 
@@ -781,7 +764,7 @@ func (r *caSetResource) Read(ctx context.Context, req resource.ReadRequest, resp
 		return
 	}
 
-	client = Client(r.meta)
+	client := r.Client.GetMTLSTruststore()
 
 	caSetResp, err := client.GetCASet(ctx, mtlstruststore.GetCASetRequest{
 		CASetID: state.ID.ValueString(),
@@ -852,7 +835,7 @@ func (r *caSetResource) Update(ctx context.Context, req resource.UpdateRequest, 
 	}
 	state.Timeouts = plan.Timeouts
 
-	client = Client(r.meta)
+	client := r.Client.GetMTLSTruststore()
 	if diags := validateCerts(ctx, client, &plan); diags.HasError() {
 		resp.Diagnostics.Append(diags...)
 		return
@@ -867,7 +850,7 @@ func (r *caSetResource) Update(ctx context.Context, req resource.UpdateRequest, 
 }
 
 func (r *caSetResource) update(ctx context.Context, plan, state *caSetResourceModel) diag.Diagnostics {
-	client = Client(r.meta)
+	client := r.Client.GetMTLSTruststore()
 
 	// We cannot update CA Set if it is active, or it was activated in the past.
 	// In such a situation we need to clone the current version and update the new one.
@@ -938,7 +921,7 @@ func (r *caSetResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 		return
 	}
 
-	client = Client(r.meta)
+	client := r.Client.GetMTLSTruststore()
 	// Check if the CA set is in use before deleting.
 	associationsResponse, err := client.ListCASetAssociations(ctx, mtlstruststore.ListCASetAssociationsRequest{
 		CASetID: state.ID.ValueString(),
@@ -1041,7 +1024,7 @@ func (r *caSetResource) ImportState(ctx context.Context, req resource.ImportStat
 		return
 	}
 
-	client = Client(r.meta)
+	client := r.Client.GetMTLSTruststore()
 	caSetResp, err := client.GetCASet(ctx, mtlstruststore.GetCASetRequest{
 		CASetID: caSetID,
 	})

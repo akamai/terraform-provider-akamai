@@ -2,7 +2,6 @@ package mtlstruststore
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/mtlstruststore"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
@@ -23,7 +22,7 @@ var (
 
 type (
 	caSetAssociationsDataSource struct {
-		meta meta.Meta
+		meta.DataSource
 	}
 
 	caSetAssociationsModel struct {
@@ -64,22 +63,6 @@ func NewCASetAssociationsDataSource() datasource.DataSource {
 // Metadata configures data source's meta information.
 func (d *caSetAssociationsDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "akamai_mtlstruststore_ca_set_associations"
-}
-
-// Configure configures data source at the beginning of the lifecycle.
-func (d *caSetAssociationsDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Data Source Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.",
-					req.ProviderData))
-		}
-	}()
-	d.meta = meta.Must(req.ProviderData)
 }
 
 // Schema is used to define data source's terraform schema.
@@ -198,7 +181,7 @@ func (d *caSetAssociationsDataSource) Read(ctx context.Context, req datasource.R
 		return
 	}
 
-	client = Client(d.meta)
+	client := d.Client.GetMTLSTruststore()
 
 	if !data.Name.IsNull() {
 		caSet, err := findNotDeletedCASetByName(ctx, client, data.Name.ValueString())

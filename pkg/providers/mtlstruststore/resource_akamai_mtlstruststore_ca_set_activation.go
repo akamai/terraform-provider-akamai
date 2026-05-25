@@ -36,7 +36,7 @@ var (
 )
 
 type caSetActivationResource struct {
-	meta meta.Meta
+	meta.Resource
 	CASetActivationResourceConfig
 }
 
@@ -149,23 +149,6 @@ func (c *caSetActivationResource) Schema(ctx context.Context, _ resource.SchemaR
 	}
 }
 
-func (c *caSetActivationResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Resource Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-			)
-		}
-	}()
-
-	c.meta = meta.Must(req.ProviderData)
-}
-
 func (c *caSetActivationResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	tflog.Debug(ctx, "Creating CASetActivation resource")
 
@@ -227,7 +210,7 @@ func (c *caSetActivationResource) Update(ctx context.Context, req resource.Updat
 }
 
 func (c *caSetActivationResource) upsert(ctx context.Context, plan *caSetActivationResourceModel, activationTimeout time.Duration) error {
-	client = Client(c.meta)
+	client := c.Client.GetMTLSTruststore()
 
 	caSetID := plan.CASetID.ValueString()
 	version := plan.Version.ValueInt64()
@@ -339,7 +322,7 @@ func (c *caSetActivationResource) Read(ctx context.Context, req resource.ReadReq
 }
 
 func (c *caSetActivationResource) read(ctx context.Context, data *caSetActivationResourceModel) (remove bool, err error) {
-	client := Client(c.meta)
+	client := c.Client.GetMTLSTruststore()
 
 	caSetID := data.CASetID.ValueString()
 	version := data.Version.ValueInt64()
@@ -408,7 +391,7 @@ func (c *caSetActivationResource) Delete(ctx context.Context, req resource.Delet
 		return
 	}
 
-	client = Client(c.meta)
+	client := c.Client.GetMTLSTruststore()
 
 	caSetID := state.CASetID.ValueString()
 	version := state.Version.ValueInt64()
@@ -602,7 +585,7 @@ func (c *caSetActivationResource) ImportState(ctx context.Context, req resource.
 		return
 	}
 
-	client := Client(c.meta)
+	client := c.Client.GetMTLSTruststore()
 
 	activationsResp, err := client.ListCASetActivations(ctx, mtlstruststore.ListCASetActivationsRequest{
 		CASetID: caSetID,
@@ -691,7 +674,7 @@ func (c *caSetActivationResource) ModifyPlan(ctx context.Context, req resource.M
 		if resp.Diagnostics.HasError() {
 			return
 		}
-		client := Client(c.meta)
+		client := c.Client.GetMTLSTruststore()
 
 		versionResp, err := client.GetCASetVersion(ctx, mtlstruststore.GetCASetVersionRequest{
 			CASetID: state.CASetID.ValueString(),

@@ -10,6 +10,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/hapi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/iam"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/mtlskeystore"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/mtlstruststore"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/papi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/reportinggroups"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/session"
@@ -32,6 +33,8 @@ type Client interface {
 	GetIAM() iam.IAM
 
 	GetMTLSKeystore() mtlskeystore.MTLSKeystore
+
+	GetMTLSTruststore() mtlstruststore.MTLSTruststore
 
 	GetPAPI() papi.PAPI
 
@@ -92,6 +95,11 @@ func (c *ClientImpl) GetIAM() iam.IAM {
 // GetMTLSKeystore returns the MTLS Keystore client for managing mTLS keystores.
 func (c *ClientImpl) GetMTLSKeystore() mtlskeystore.MTLSKeystore {
 	return mtlskeystore.Client(c.sess)
+}
+
+// GetMTLSTruststore returns the MTLS Truststore client for managing mTLS truststores.
+func (c *ClientImpl) GetMTLSTruststore() mtlstruststore.MTLSTruststore {
+	return mtlstruststore.Client(c.sess)
 }
 
 // GetPAPI returns the PAPI client for managing property APIs.

@@ -23,7 +23,7 @@ var (
 
 type (
 	caSetActivationDataSource struct {
-		meta meta.Meta
+		meta.DataSource
 	}
 
 	caSetActivationDataSourceModel struct {
@@ -49,22 +49,6 @@ func NewCASetActivationDataSource() datasource.DataSource {
 // Metadata configures data source's meta information.
 func (d *caSetActivationDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "akamai_mtlstruststore_ca_set_activation"
-}
-
-// Configure configures data source at the beginning of the lifecycle.
-func (d *caSetActivationDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Data Source Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.",
-					req.ProviderData))
-		}
-	}()
-	d.meta = meta.Must(req.ProviderData)
 }
 
 // Schema is used to define data source's terraform schema.
@@ -140,7 +124,7 @@ func (d *caSetActivationDataSource) Read(ctx context.Context, req datasource.Rea
 		return
 	}
 
-	client = Client(d.meta)
+	client := d.Client.GetMTLSTruststore()
 	if !data.CASetName.IsNull() {
 		tflog.Debug(ctx, "'ca_set_name' provided, attempting to find CA set ID")
 		caSet, err := findNotDeletedCASetByName(ctx, client, data.CASetName.ValueString())

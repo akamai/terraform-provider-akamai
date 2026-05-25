@@ -2,8 +2,6 @@
 package mtlstruststore
 
 import (
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/mtlstruststore"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/subprovider"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -18,8 +16,7 @@ type (
 )
 
 var (
-	_      subprovider.Subprovider = &Subprovider{}
-	client mtlstruststore.MTLSTruststore
+	_ subprovider.Subprovider = &Subprovider{}
 )
 
 // NewSubproviderWithConfig returns a new MTLS Truststore subprovider with the given configuration.
@@ -32,14 +29,6 @@ func NewSubproviderWithConfig(config CASetActivationResourceConfig) *Subprovider
 // NewSubprovider returns a new MTLS Truststore subprovider with default configuration.
 func NewSubprovider() *Subprovider {
 	return NewSubproviderWithConfig(DefaultCASetActivationResourceConfig())
-}
-
-// Client returns the MTLS Truststore interface.
-func Client(meta meta.Meta) mtlstruststore.MTLSTruststore {
-	if client != nil {
-		return client
-	}
-	return mtlstruststore.Client(meta.Session())
 }
 
 // SDKResources returns the MTLS Truststore resources implemented using terraform-plugin-sdk.

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/mtlstruststore"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	tst "github.com/akamai/terraform-provider-akamai/v10/internal/test"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/test"
@@ -16,6 +17,7 @@ import (
 )
 
 func TestCASetActivationResource(t *testing.T) {
+	t.Parallel()
 	mockListCASetActivations := func(client *mtlstruststore.Mock, testData commonDataForResource, activated bool) *mock.Call {
 		var activations []mtlstruststore.ActivateCASetVersionResponse
 		if activated {
@@ -1200,22 +1202,21 @@ func TestCASetActivationResource(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &mtlstruststore.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 			if tc.init != nil {
-				tc.init(client, tc.mockData)
+				tc.init(client.MTLSTruststore, tc.mockData)
 			}
-			useClient(client, func() {
-				cfg := DefaultCASetActivationResourceConfig()
-				cfg.pollingInterval = 1 * time.Millisecond
-				cfg.ccmMTLSDetachTimeout = 100 * time.Millisecond
-				cfg.ccmMTLSDetachPollInterval = 10 * time.Millisecond
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubproviderWithConfig(cfg)),
-					IsUnitTest:               true,
-					Steps:                    tc.steps,
-				})
+			cfg := DefaultCASetActivationResourceConfig()
+			cfg.pollingInterval = 1 * time.Millisecond
+			cfg.ccmMTLSDetachTimeout = 100 * time.Millisecond
+			cfg.ccmMTLSDetachPollInterval = 10 * time.Millisecond
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubproviderWithConfig(cfg)),
+				IsUnitTest:               true,
+				Steps:                    tc.steps,
 			})
-			client.AssertExpectations(t)
+			client.MTLSTruststore.AssertExpectations(t)
 		})
 	}
 }

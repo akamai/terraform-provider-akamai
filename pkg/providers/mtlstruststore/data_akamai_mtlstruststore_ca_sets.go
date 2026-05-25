@@ -2,7 +2,6 @@ package mtlstruststore
 
 import (
 	"context"
-	"fmt"
 	"slices"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/mtlstruststore"
@@ -26,7 +25,7 @@ var (
 
 type (
 	caSetsDataSource struct {
-		meta meta.Meta
+		meta.DataSource
 	}
 
 	caSetsDataSourceModel struct {
@@ -152,22 +151,6 @@ func (d *caSetsDataSource) Schema(_ context.Context, _ datasource.SchemaRequest,
 	}
 }
 
-// Configure configures data source at the beginning of the lifecycle.
-func (d *caSetsDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Data Source Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.",
-					req.ProviderData))
-		}
-	}()
-	d.meta = meta.Must(req.ProviderData)
-}
-
 func (d *caSetsDataSource) ValidateConfig(ctx context.Context, req datasource.ValidateConfigRequest, resp *datasource.ValidateConfigResponse) {
 	tflog.Debug(ctx, "MTLS TrustStore CA Sets DataSource ValidateConfig")
 
@@ -200,7 +183,7 @@ func (d *caSetsDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	if resp.Diagnostics.Append(req.Config.Get(ctx, &data)...); resp.Diagnostics.HasError() {
 		return
 	}
-	client = Client(d.meta)
+	client := d.Client.GetMTLSTruststore()
 
 	var statuses []string
 	if !data.CASetStatuses.IsNull() {

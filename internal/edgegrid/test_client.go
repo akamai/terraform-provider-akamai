@@ -9,6 +9,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/hapi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/iam"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/mtlskeystore"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/mtlstruststore"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/papi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/reportinggroups"
 )
@@ -27,6 +28,7 @@ type TestClient struct {
 	HAPI              *hapi.Mock
 	IAM               *iam.Mock
 	MTLSKeystore      *mtlskeystore.Mock
+	MTLSTruststore    *mtlstruststore.Mock
 	PAPI              *papi.Mock
 	ReportingGroups   *reportinggroups.Mock
 }
@@ -42,6 +44,7 @@ func NewTestClient() *TestClient {
 		HAPI:              &hapi.Mock{},
 		IAM:               &iam.Mock{},
 		MTLSKeystore:      &mtlskeystore.Mock{},
+		MTLSTruststore:    &mtlstruststore.Mock{},
 		PAPI:              &papi.Mock{},
 		ReportingGroups:   &reportinggroups.Mock{},
 	}
@@ -85,6 +88,11 @@ func (c *TestClient) GetIAM() iam.IAM {
 // GetMTLSKeystore returns the mock MTLS Keystore client.
 func (c *TestClient) GetMTLSKeystore() mtlskeystore.MTLSKeystore {
 	return c.MTLSKeystore
+}
+
+// GetMTLSTruststore returns the mock MTLS Truststore client.
+func (c *TestClient) GetMTLSTruststore() mtlstruststore.MTLSTruststore {
+	return c.MTLSTruststore
 }
 
 // GetPAPI returns the mock PAPI client.

@@ -8,6 +8,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/mtlstruststore"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/ptr"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	tst "github.com/akamai/terraform-provider-akamai/v10/internal/test"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
@@ -206,18 +207,16 @@ func TestCASetActivitiesDataSource(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			client := &mtlstruststore.Mock{}
+			client := edgegrid.NewTestClient()
 			if tc.init != nil {
-				tc.init(client)
+				tc.init(client.MTLSTruststore)
 			}
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps:                    tc.steps,
-				})
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				IsUnitTest:               true,
+				Steps:                    tc.steps,
 			})
-			client.AssertExpectations(t)
+			client.MTLSTruststore.AssertExpectations(t)
 		})
 	}
 }
