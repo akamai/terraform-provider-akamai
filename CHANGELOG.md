@@ -159,6 +159,9 @@
 * Cloud Access
     * Fixed issue in the `akamai_cloudaccess_key` resource that using variables to pass credentials could break the processing ([I#750](https://github.com/akamai/terraform-provider-akamai/issues/750)).
 
+* IAM
+  * Fixed a value conversion error in the `akamai_iam_api_client` resource that occurred when `api_access.apis` elements were unknown at plan ([I#744](https://github.com/akamai/terraform-provider-akamai/issues/744)).
+
 
 
 

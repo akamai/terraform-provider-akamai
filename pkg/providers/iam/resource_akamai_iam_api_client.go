@@ -1171,13 +1171,13 @@ func (r *apiClientResource) ValidateConfig(ctx context.Context, req resource.Val
 		}
 	}
 
-	apis, diags := data.apisFromModel(ctx)
+	apis, isModelUnknown, diags := data.apisFromModel(ctx)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	if tf.IsKnown(data.APIAccess) {
+	if tf.IsKnown(data.APIAccess) && !isModelUnknown {
 		var apiAccess apiAccessModel
 		resp.Diagnostics.Append(data.APIAccess.As(ctx, &apiAccess, basetypes.ObjectAsOptions{})...)
 		if resp.Diagnostics.HasError() {
@@ -1782,7 +1782,8 @@ func (m *apiClientResourceModel) getAPIAccessRequest(ctx context.Context) (*iam.
 	// we should modify the list of apis only when all_accessible_apis is false
 	if !planAPIAccess.AllAccessibleAPIs.ValueBool() {
 		var diags diag.Diagnostics
-		apis, diags = m.apisFromModel(ctx)
+		// as this function is used in create and update, we need to get APIs from the model every time, and they have to be known.
+		apis, _, diags = m.apisFromModel(ctx)
 		if diags.HasError() {
 			return nil, diags
 		}
@@ -1795,26 +1796,32 @@ func (m *apiClientResourceModel) getAPIAccessRequest(ctx context.Context) (*iam.
 	return &apiAccess, nil
 }
 
-func (m *apiClientResourceModel) apisFromModel(ctx context.Context) ([]iam.APIRequestItem, diag.Diagnostics) {
+// apisFromModel returns the list of APIs from the model, a boolean indicating if any model element is unknown, and any diagnostics.
+func (m *apiClientResourceModel) apisFromModel(ctx context.Context) ([]iam.APIRequestItem, bool, diag.Diagnostics) {
 	apis := make([]iam.APIRequestItem, 0)
-	if !tf.IsKnown(m.APIAccess) {
-		return apis, nil
+	if m.APIAccess.IsUnknown() {
+		return apis, true, nil
 	}
 
 	var apiAccess apiAccessModel
 	diags := m.APIAccess.As(ctx, &apiAccess, basetypes.ObjectAsOptions{})
 	if diags.HasError() {
-		return nil, diags
+		return nil, false, diags
 	}
 
-	if !tf.IsKnown(apiAccess.APIs) {
-		return apis, nil
+	if apiAccess.APIs.IsUnknown() {
+		return apis, true, nil
+	}
+
+	setElemntsKnown, diags := apisSetElementsAreKnown(ctx, apiAccess.APIs)
+	if !setElemntsKnown {
+		return nil, true, diags
 	}
 
 	var apiModel []apiClientAPIModel
 	diags = apiAccess.APIs.ElementsAs(ctx, &apiModel, false)
 	if diags.HasError() {
-		return nil, diags
+		return nil, false, diags
 	}
 
 	for _, api := range apiModel {
@@ -1824,7 +1831,32 @@ func (m *apiClientResourceModel) apisFromModel(ctx context.Context) ([]iam.APIRe
 		})
 	}
 
-	return apis, nil
+	return apis, false, nil
+}
+
+func apisSetElementsAreKnown(ctx context.Context, apiElements types.Set) (bool, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	for _, v := range apiElements.Elements() {
+		if v.IsUnknown() {
+			return false, nil
+		}
+		obj, ok := v.(types.Object)
+		if !ok {
+			diags.Append(diag.NewErrorDiagnostic(
+				"Invalid internal API set element type",
+				fmt.Sprintf("Expected object element in api_access.apis, got %T", v),
+			))
+			return false, diags
+		}
+		var api apiClientAPIModel
+		if diags = obj.As(ctx, &api, basetypes.ObjectAsOptions{}); diags.HasError() {
+			return false, diags
+		}
+		if api.AccessLevel.IsUnknown() || api.APIID.IsUnknown() {
+			return false, nil
+		}
+	}
+	return true, nil
 }
 
 func (m *apiClientResourceModel) getIPACL(ctx context.Context) (*iam.IPACL, diag.Diagnostics) {

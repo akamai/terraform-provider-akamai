@@ -1,0 +1,48 @@
+provider "akamai" {
+  edgerc = "../../common/testutils/edgerc"
+}
+
+resource "akamai_iam_api_client" "test" {
+  authorized_users = ["mw+2"]
+  client_type      = "CLIENT"
+  client_name      = "mw+2_1"
+  lock             = false
+  credential       = {}
+  group_access = {
+    clone_authorized_user_groups = false
+    groups = [
+      {
+        group_id = 123
+        role_id  = 340
+        sub_groups = [
+          {
+            group_id = 333
+            role_id  = 540
+          }
+        ]
+      }
+    ]
+  }
+  api_access = {
+    all_accessible_apis = false
+    apis = [
+      {
+        api_id       = random_integer.api_id.result > 999 ? 1 : 0
+        access_level = "READ-ONLY"
+      }
+    ]
+  }
+  purge_options = {
+    can_purge_by_cp_code   = true
+    can_purge_by_cache_tag = true
+    cp_code_access = {
+      all_current_and_new_cp_codes = false
+      cp_codes                     = [101]
+    }
+  }
+}
+
+resource "random_integer" "api_id" {
+  min = 0
+  max = 1
+}
