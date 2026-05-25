@@ -10,6 +10,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudaccess"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -64,6 +65,70 @@ type (
 )
 
 var (
+	// baseAccessKeyChecker provides common attribute checks shared across most test cases.
+	baseAccessKeyChecker = test.NewStateChecker("akamai_cloudaccess_key.test").
+				CheckEqual("access_key_uid", "12345").
+				CheckEqual("access_key_name", "test_key_name").
+				CheckEqual("contract_id", "1-CTRACT").
+				CheckEqual("group_id", "12345").
+				CheckEqual("network_configuration.security_network", "ENHANCED_TLS").
+				CheckEqual("network_configuration.additional_cdn", "CHINA_CDN")
+
+	// accessCheckerWithoutCDN extends baseAccessKeyChecker with network configuration checks for keys without additional CDN.
+	accessCheckerWithoutCDN = baseAccessKeyChecker.
+				CheckMissing("network_configuration.additional_cdn")
+
+	// credentialsABatch contains default attribute values for the credentials_a block (AWS style).
+	credentialsABatch = test.AttributeBatch{
+		"cloud_access_key_id":     "test_key_id",
+		"cloud_secret_access_key": "test_secret",
+		"primary_key":             "true",
+		"version":                 "1",
+		"version_guid":            "asde-efdr-reded",
+	}
+
+	// credentialsBBatch contains default attribute values for the credentials_b block (AWS style).
+	credentialsBBatch = test.AttributeBatch{
+		"cloud_access_key_id":     "test_key_id_2",
+		"cloud_secret_access_key": "test_secret_2",
+		"primary_key":             "false",
+		"version":                 "2",
+		"version_guid":            "asdd-ads-dasdas",
+	}
+
+	// credentialsANoKeyIDBatch contains default values for credentials_a without cloud_access_key_id (VP_QUEUE_IT / AVM_CLOUDINARY style).
+	credentialsANoKeyIDBatch = test.AttributeBatch{
+		"cloud_secret_access_key": "test_secret",
+		"primary_key":             "true",
+		"version":                 "1",
+		"version_guid":            "asde-efdr-reded",
+	}
+
+	// credentialsBNoKeyIDBatch contains default values for credentials_b without cloud_access_key_id.
+	credentialsBNoKeyIDBatch = test.AttributeBatch{
+		"cloud_secret_access_key": "test_secret_2",
+		"primary_key":             "false",
+		"version":                 "2",
+		"version_guid":            "asdd-ads-dasdas",
+	}
+
+	// credentialsVersion3Batch contains attribute values for credentials at version 3 (AWS style with cloud_access_key_id).
+	credentialsVersion3Batch = test.AttributeBatch{
+		"cloud_access_key_id":     "test_key_id_3",
+		"cloud_secret_access_key": "test_secret_3",
+		"primary_key":             "true",
+		"version":                 "3",
+		"version_guid":            "ffff_eeee-ffffddd",
+	}
+
+	// credentialsVersion3NoKeyIDBatch contains attribute values for credentials at version 3 without cloud_access_key_id.
+	credentialsVersion3NoKeyIDBatch = test.AttributeBatch{
+		"cloud_secret_access_key": "test_secret_3",
+		"primary_key":             "true",
+		"version":                 "3",
+		"version_guid":            "ffff_eeee-ffffddd",
+	}
+
 	accessKeyMock = commonDataForAccessKey{
 		accessKeyName:        "test_key_name",
 		accessKeyUID:         12345,
@@ -229,21 +294,11 @@ func TestAccessKeyResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "AWS4_HMAC_SHA256"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_access_key_id", "test_key_id"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_secret_access_key", "test_secret"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.primary_key", "true"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.additional_cdn", "CHINA_CDN"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
+					Check: baseAccessKeyChecker.
+						CheckEqual("authentication_method", "AWS4_HMAC_SHA256").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_a.", credentialsABatch).
+						Build(),
 				},
 			},
 		},
@@ -258,19 +313,11 @@ func TestAccessKeyResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create_missing_cloud_access_key.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "VP_QUEUE_IT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_secret_access_key", "test_secret"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.primary_key", "true"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
+					Check: accessCheckerWithoutCDN.
+						CheckEqual("authentication_method", "VP_QUEUE_IT").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_a.", credentialsANoKeyIDBatch).
+						Build(),
 				},
 			},
 		},
@@ -285,19 +332,11 @@ func TestAccessKeyResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create_missing_cloud_access_key_avm_cloudinary.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "AVM_CLOUDINARY"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_secret_access_key", "test_secret"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.primary_key", "true"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
+					Check: accessCheckerWithoutCDN.
+						CheckEqual("authentication_method", "AVM_CLOUDINARY").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_a.", credentialsANoKeyIDBatch).
+						Build(),
 				},
 			},
 		},
@@ -311,26 +350,12 @@ func TestAccessKeyResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create_2_versions.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "AWS4_HMAC_SHA256"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_access_key_id", "test_key_id"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_secret_access_key", "test_secret"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.primary_key", "true"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_access_key_id", "test_key_id_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_secret_access_key", "test_secret_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.primary_key", "false"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version", "2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version_guid", "asdd-ads-dasdas"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.additional_cdn", "CHINA_CDN"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
+					Check: baseAccessKeyChecker.
+						CheckEqual("authentication_method", "AWS4_HMAC_SHA256").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_a.", credentialsABatch).
+						CheckEqualBatch("credentials_b.", credentialsBBatch).
+						Build(),
 				},
 			},
 		},
@@ -345,23 +370,12 @@ func TestAccessKeyResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create_2_versions_missing_cloud_access_key.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "VP_QUEUE_IT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_secret_access_key", "test_secret"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.primary_key", "true"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_secret_access_key", "test_secret_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.primary_key", "false"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version", "2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version_guid", "asdd-ads-dasdas"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
+					Check: accessCheckerWithoutCDN.
+						CheckEqual("authentication_method", "VP_QUEUE_IT").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_a.", credentialsANoKeyIDBatch).
+						CheckEqualBatch("credentials_b.", credentialsBNoKeyIDBatch).
+						Build(),
 				},
 			},
 		},
@@ -403,21 +417,11 @@ func TestAccessKeyResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create_using_credB.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "AWS4_HMAC_SHA256"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_access_key_id", "test_key_id"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_secret_access_key", "test_secret"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.primary_key", "true"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.additional_cdn", "CHINA_CDN"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
+					Check: baseAccessKeyChecker.
+						CheckEqual("authentication_method", "AWS4_HMAC_SHA256").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_b.", credentialsABatch).
+						Build(),
 				},
 			},
 		},
@@ -466,34 +470,18 @@ func TestAccessKeyResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create_using_credB.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "AWS4_HMAC_SHA256"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_access_key_id", "test_key_id"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_secret_access_key", "test_secret"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.primary_key", "true"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.additional_cdn", "CHINA_CDN"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
+					Check: baseAccessKeyChecker.
+						CheckEqual("authentication_method", "AWS4_HMAC_SHA256").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_b.", credentialsABatch).
+						Build(),
 				},
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/creation_no_credentials.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "AWS4_HMAC_SHA256"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", ""),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.additional_cdn", "CHINA_CDN"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
+					Check: baseAccessKeyChecker.
+						CheckEqual("authentication_method", "AWS4_HMAC_SHA256").
+						CheckEqual("primary_guid", "").
+						Build(),
 				},
 			},
 		},
@@ -512,39 +500,20 @@ func TestAccessKeyResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "AWS4_HMAC_SHA256"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_access_key_id", "test_key_id"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_secret_access_key", "test_secret"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.primary_key", "true"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.additional_cdn", "CHINA_CDN"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
+					Check: baseAccessKeyChecker.
+						CheckEqual("authentication_method", "AWS4_HMAC_SHA256").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_a.", credentialsABatch).
+						Build(),
 				},
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/updated_name.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "updated_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "AWS4_HMAC_SHA256"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_access_key_id", "test_key_id"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_secret_access_key", "test_secret"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.primary_key", "true"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.additional_cdn", "CHINA_CDN"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
+					Check: baseAccessKeyChecker.
+						CheckEqual("access_key_name", "updated_key_name").
+						CheckEqual("authentication_method", "AWS4_HMAC_SHA256").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_a.", credentialsABatch).
+						Build(),
 				},
 			},
 		},
@@ -564,27 +533,25 @@ func TestAccessKeyResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_access_key_id", "test_key_id"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckNoResourceAttr("akamai_cloudaccess_key.test", "timeouts.create"),
-						resource.TestCheckNoResourceAttr("akamai_cloudaccess_key.test", "timeouts.update"),
-						resource.TestCheckNoResourceAttr("akamai_cloudaccess_key.test", "timeouts.delete"),
-					),
+					Check: baseAccessKeyChecker.
+						CheckEqual("authentication_method", "AWS4_HMAC_SHA256").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_a.", credentialsABatch).
+						CheckMissing("timeouts.create").
+						CheckMissing("timeouts.update").
+						CheckMissing("timeouts.delete").
+						Build(),
 				},
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create_with_timeout.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_access_key_id", "test_key_id"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "timeouts.create", "12ms"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "timeouts.update", "1ms"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "timeouts.delete", "20m"),
-					),
+					Check: baseAccessKeyChecker.
+						CheckEqual("authentication_method", "AWS4_HMAC_SHA256").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_a.", credentialsABatch).
+						CheckEqual("timeouts.create", "12ms").
+						CheckEqual("timeouts.update", "1ms").
+						CheckEqual("timeouts.delete", "20m").
+						Build(),
 					ConfigPlanChecks: resource.ConfigPlanChecks{
 						PreApply: []plancheck.PlanCheck{
 							plancheck.ExpectKnownValue("akamai_cloudaccess_key.test", tfjsonpath.New("timeouts").AtMapKey("create"), knownvalue.StringExact("12ms")),
@@ -614,27 +581,25 @@ func TestAccessKeyResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create_with_timeout.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_access_key_id", "test_key_id"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "timeouts.create", "12ms"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "timeouts.update", "1ms"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "timeouts.delete", "20m"),
-					),
+					Check: baseAccessKeyChecker.
+						CheckEqual("authentication_method", "AWS4_HMAC_SHA256").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_a.", credentialsABatch).
+						CheckEqual("timeouts.create", "12ms").
+						CheckEqual("timeouts.update", "1ms").
+						CheckEqual("timeouts.delete", "20m").
+						Build(),
 				},
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_access_key_id", "test_key_id"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckNoResourceAttr("akamai_cloudaccess_key.test", "timeouts.create"),
-						resource.TestCheckNoResourceAttr("akamai_cloudaccess_key.test", "timeouts.update"),
-						resource.TestCheckNoResourceAttr("akamai_cloudaccess_key.test", "timeouts.delete"),
-					),
+					Check: baseAccessKeyChecker.
+						CheckEqual("authentication_method", "AWS4_HMAC_SHA256").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_a.", credentialsABatch).
+						CheckMissing("timeouts.create").
+						CheckMissing("timeouts.update").
+						CheckMissing("timeouts.delete").
+						Build(),
 					ConfigPlanChecks: resource.ConfigPlanChecks{
 						PreApply: []plancheck.PlanCheck{
 							plancheck.ExpectKnownValue("akamai_cloudaccess_key.test", tfjsonpath.New("timeouts"), knownvalue.Null()),
@@ -662,27 +627,25 @@ func TestAccessKeyResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create_with_timeout.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_access_key_id", "test_key_id"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "timeouts.create", "12ms"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "timeouts.update", "1ms"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "timeouts.delete", "20m"),
-					),
+					Check: baseAccessKeyChecker.
+						CheckEqual("authentication_method", "AWS4_HMAC_SHA256").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_a.", credentialsABatch).
+						CheckEqual("timeouts.create", "12ms").
+						CheckEqual("timeouts.update", "1ms").
+						CheckEqual("timeouts.delete", "20m").
+						Build(),
 				},
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create_with_timeout2.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_access_key_id", "test_key_id"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "timeouts.create", "30ms"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "timeouts.update", "2ms"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "timeouts.delete", "40m"),
-					),
+					Check: baseAccessKeyChecker.
+						CheckEqual("authentication_method", "AWS4_HMAC_SHA256").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_a.", credentialsABatch).
+						CheckEqual("timeouts.create", "30ms").
+						CheckEqual("timeouts.update", "2ms").
+						CheckEqual("timeouts.delete", "40m").
+						Build(),
 					ConfigPlanChecks: resource.ConfigPlanChecks{
 						PreApply: []plancheck.PlanCheck{
 							plancheck.ExpectKnownValue("akamai_cloudaccess_key.test", tfjsonpath.New("timeouts").AtMapKey("create"), knownvalue.StringExact("30ms")),
@@ -711,27 +674,26 @@ func TestAccessKeyResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_access_key_id", "test_key_id"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckNoResourceAttr("akamai_cloudaccess_key.test", "timeouts.create"),
-						resource.TestCheckNoResourceAttr("akamai_cloudaccess_key.test", "timeouts.update"),
-						resource.TestCheckNoResourceAttr("akamai_cloudaccess_key.test", "timeouts.delete"),
-					),
+					Check: baseAccessKeyChecker.
+						CheckEqual("authentication_method", "AWS4_HMAC_SHA256").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_a.", credentialsABatch).
+						CheckMissing("timeouts.create").
+						CheckMissing("timeouts.update").
+						CheckMissing("timeouts.delete").
+						Build(),
 				},
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/updated_name_and_timeout.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "updated_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_access_key_id", "test_key_id"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "timeouts.create", "12ms"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "timeouts.update", "1ms"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "timeouts.delete", "20m"),
-					),
+					Check: baseAccessKeyChecker.
+						CheckEqual("authentication_method", "AWS4_HMAC_SHA256").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_a.", credentialsABatch).
+						CheckEqual("access_key_name", "updated_key_name").
+						CheckEqual("timeouts.create", "12ms").
+						CheckEqual("timeouts.update", "1ms").
+						CheckEqual("timeouts.delete", "20m").
+						Build(),
 					ConfigPlanChecks: resource.ConfigPlanChecks{
 						PreApply: []plancheck.PlanCheck{
 							plancheck.ExpectKnownValue("akamai_cloudaccess_key.test", tfjsonpath.New("timeouts").AtMapKey("create"), knownvalue.StringExact("12ms")),
@@ -864,49 +826,21 @@ func TestAccessKeyResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create_2_versions.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "AWS4_HMAC_SHA256"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_access_key_id", "test_key_id"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_secret_access_key", "test_secret"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.primary_key", "true"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_access_key_id", "test_key_id_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_secret_access_key", "test_secret_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.primary_key", "false"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version", "2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version_guid", "asdd-ads-dasdas"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.additional_cdn", "CHINA_CDN"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
+					Check: baseAccessKeyChecker.
+						CheckEqual("authentication_method", "AWS4_HMAC_SHA256").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_a.", credentialsABatch).
+						CheckEqualBatch("credentials_b.", credentialsBBatch).
+						Build(),
 				},
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/single_credentials_rotation.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "AWS4_HMAC_SHA256"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "ffff_eeee-ffffddd"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_access_key_id", "test_key_id_3"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_secret_access_key", "test_secret_3"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.primary_key", "true"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "3"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version_guid", "ffff_eeee-ffffddd"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_access_key_id", "test_key_id_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_secret_access_key", "test_secret_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.primary_key", "false"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version", "2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version_guid", "asdd-ads-dasdas"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.additional_cdn", "CHINA_CDN"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
+					Check: baseAccessKeyChecker.
+						CheckEqual("authentication_method", "AWS4_HMAC_SHA256").
+						CheckEqual("primary_guid", "ffff_eeee-ffffddd").
+						CheckEqualBatch("credentials_a.", credentialsVersion3Batch).
+						CheckEqualBatch("credentials_b.", credentialsBBatch).
+						Build(),
 				},
 			},
 		},
@@ -950,43 +884,21 @@ func TestAccessKeyResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create_2_versions_missing_cloud_access_key.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "VP_QUEUE_IT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_secret_access_key", "test_secret"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.primary_key", "true"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_secret_access_key", "test_secret_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.primary_key", "false"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version", "2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version_guid", "asdd-ads-dasdas"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
+					Check: accessCheckerWithoutCDN.
+						CheckEqual("authentication_method", "VP_QUEUE_IT").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_a.", credentialsANoKeyIDBatch).
+						CheckEqualBatch("credentials_b.", credentialsBNoKeyIDBatch).
+						Build(),
 				},
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/single_credentials_rotation_missing_cloud_access_key.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "VP_QUEUE_IT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "ffff_eeee-ffffddd"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_secret_access_key", "test_secret_3"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.primary_key", "true"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "3"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version_guid", "ffff_eeee-ffffddd"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_secret_access_key", "test_secret_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.primary_key", "false"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version", "2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version_guid", "asdd-ads-dasdas"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
+					Check: accessCheckerWithoutCDN.
+						CheckEqual("authentication_method", "VP_QUEUE_IT").
+						CheckEqual("primary_guid", "ffff_eeee-ffffddd").
+						CheckEqualBatch("credentials_a.", credentialsVersion3NoKeyIDBatch).
+						CheckEqualBatch("credentials_b.", credentialsBNoKeyIDBatch).
+						Build(),
 				},
 			},
 		},
@@ -1111,49 +1023,22 @@ func TestAccessKeyResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create_2_versions.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "AWS4_HMAC_SHA256"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_access_key_id", "test_key_id"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_secret_access_key", "test_secret"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.primary_key", "true"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_access_key_id", "test_key_id_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_secret_access_key", "test_secret_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.primary_key", "false"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version", "2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version_guid", "asdd-ads-dasdas"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.additional_cdn", "CHINA_CDN"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
+					Check: baseAccessKeyChecker.
+						CheckEqual("authentication_method", "AWS4_HMAC_SHA256").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_a.", credentialsABatch).
+						CheckEqualBatch("credentials_b.", credentialsBBatch).
+						Build(),
 				},
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/cross_credentials_rotation.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "AWS4_HMAC_SHA256"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "ffff_eeee-ffffddd"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_access_key_id", "test_key_id"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_secret_access_key", "test_secret"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.primary_key", "false"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_access_key_id", "test_key_id_3"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_secret_access_key", "test_secret_3"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.primary_key", "true"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version", "3"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version_guid", "ffff_eeee-ffffddd"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.additional_cdn", "CHINA_CDN"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
+					Check: baseAccessKeyChecker.
+						CheckEqual("authentication_method", "AWS4_HMAC_SHA256").
+						CheckEqual("primary_guid", "ffff_eeee-ffffddd").
+						CheckEqualBatch("credentials_a.", credentialsABatch).
+						CheckEqual("credentials_a.primary_key", "false").
+						CheckEqualBatch("credentials_b.", credentialsVersion3Batch).
+						Build(),
 				},
 			},
 		},
@@ -1198,43 +1083,22 @@ func TestAccessKeyResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create_2_versions_missing_cloud_access_key.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "VP_QUEUE_IT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_secret_access_key", "test_secret"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.primary_key", "true"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_secret_access_key", "test_secret_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.primary_key", "false"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version", "2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version_guid", "asdd-ads-dasdas"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
+					Check: accessCheckerWithoutCDN.
+						CheckEqual("authentication_method", "VP_QUEUE_IT").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_a.", credentialsANoKeyIDBatch).
+						CheckEqualBatch("credentials_b.", credentialsBNoKeyIDBatch).
+						Build(),
 				},
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/cross_credentials_rotation_missing_cloud_access_key.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "VP_QUEUE_IT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "ffff_eeee-ffffddd"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_secret_access_key", "test_secret"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.primary_key", "false"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_secret_access_key", "test_secret_3"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.primary_key", "true"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version", "3"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version_guid", "ffff_eeee-ffffddd"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
+					Check: accessCheckerWithoutCDN.
+						CheckEqual("authentication_method", "VP_QUEUE_IT").
+						CheckEqual("primary_guid", "ffff_eeee-ffffddd").
+						CheckEqualBatch("credentials_a.", credentialsANoKeyIDBatch).
+						CheckEqual("credentials_a.primary_key", "false").
+						CheckEqualBatch("credentials_b.", credentialsVersion3NoKeyIDBatch).
+						Build(),
 				},
 			},
 		},
@@ -1252,49 +1116,23 @@ func TestAccessKeyResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create_2_versions.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "AWS4_HMAC_SHA256"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_access_key_id", "test_key_id"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_secret_access_key", "test_secret"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.primary_key", "true"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_access_key_id", "test_key_id_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_secret_access_key", "test_secret_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.primary_key", "false"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version", "2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version_guid", "asdd-ads-dasdas"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.additional_cdn", "CHINA_CDN"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
+					Check: baseAccessKeyChecker.
+						CheckEqual("authentication_method", "AWS4_HMAC_SHA256").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_a.", credentialsABatch).
+						CheckEqualBatch("credentials_b.", credentialsBBatch).
+						Build(),
 				},
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/swap_primary_key.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "AWS4_HMAC_SHA256"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "asdd-ads-dasdas"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_access_key_id", "test_key_id"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_secret_access_key", "test_secret"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.primary_key", "false"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_access_key_id", "test_key_id_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_secret_access_key", "test_secret_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.primary_key", "true"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version", "2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version_guid", "asdd-ads-dasdas"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.additional_cdn", "CHINA_CDN"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
+					Check: baseAccessKeyChecker.
+						CheckEqual("authentication_method", "AWS4_HMAC_SHA256").
+						CheckEqual("primary_guid", "asdd-ads-dasdas").
+						CheckEqualBatch("credentials_a.", credentialsABatch).
+						CheckEqual("credentials_a.primary_key", "false").
+						CheckEqualBatch("credentials_b.", credentialsBBatch).
+						CheckEqual("credentials_b.primary_key", "true").
+						Build(),
 				},
 			},
 		},
@@ -1313,43 +1151,23 @@ func TestAccessKeyResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create_2_versions_missing_cloud_access_key.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "VP_QUEUE_IT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_secret_access_key", "test_secret"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.primary_key", "true"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_secret_access_key", "test_secret_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.primary_key", "false"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version", "2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version_guid", "asdd-ads-dasdas"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
+					Check: accessCheckerWithoutCDN.
+						CheckEqual("authentication_method", "VP_QUEUE_IT").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_a.", credentialsANoKeyIDBatch).
+						CheckEqualBatch("credentials_b.", credentialsBNoKeyIDBatch).
+						Build(),
 				},
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/swap_primary_key_no_cloud_access_key_id.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "VP_QUEUE_IT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "asdd-ads-dasdas"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_secret_access_key", "test_secret"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.primary_key", "false"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_secret_access_key", "test_secret_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.primary_key", "true"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version", "2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version_guid", "asdd-ads-dasdas"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
+					Check: accessCheckerWithoutCDN.
+						CheckEqual("authentication_method", "VP_QUEUE_IT").
+						CheckEqual("primary_guid", "asdd-ads-dasdas").
+						CheckEqualBatch("credentials_a.", credentialsANoKeyIDBatch).
+						CheckEqual("credentials_a.primary_key", "false").
+						CheckEqualBatch("credentials_b.", credentialsBNoKeyIDBatch).
+						CheckEqual("credentials_b.primary_key", "true").
+						Build(),
 				},
 			},
 		},
@@ -1381,44 +1199,20 @@ func TestAccessKeyResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create_2_versions.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "AWS4_HMAC_SHA256"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_access_key_id", "test_key_id"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_secret_access_key", "test_secret"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.primary_key", "true"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_access_key_id", "test_key_id_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_secret_access_key", "test_secret_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.primary_key", "false"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version", "2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version_guid", "asdd-ads-dasdas"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.additional_cdn", "CHINA_CDN"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
+					Check: baseAccessKeyChecker.
+						CheckEqual("authentication_method", "AWS4_HMAC_SHA256").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_a.", credentialsABatch).
+						CheckEqualBatch("credentials_b.", credentialsBBatch).
+						Build(),
 				},
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "AWS4_HMAC_SHA256"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_access_key_id", "test_key_id"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_secret_access_key", "test_secret"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.primary_key", "true"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.additional_cdn", "CHINA_CDN"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
+					Check: baseAccessKeyChecker.
+						CheckEqual("authentication_method", "AWS4_HMAC_SHA256").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_a.", credentialsABatch).
+						Build(),
 				},
 			},
 		},
@@ -1451,39 +1245,19 @@ func TestAccessKeyResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create_2_versions.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "AWS4_HMAC_SHA256"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_access_key_id", "test_key_id"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_secret_access_key", "test_secret"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.primary_key", "true"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_access_key_id", "test_key_id_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_secret_access_key", "test_secret_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.primary_key", "false"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version", "2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version_guid", "asdd-ads-dasdas"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.additional_cdn", "CHINA_CDN"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
+					Check: baseAccessKeyChecker.
+						CheckEqual("authentication_method", "AWS4_HMAC_SHA256").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_a.", credentialsABatch).
+						CheckEqualBatch("credentials_b.", credentialsBBatch).
+						Build(),
 				},
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create_no_versions.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "AWS4_HMAC_SHA256"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", ""),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.additional_cdn", "CHINA_CDN"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
+					Check: baseAccessKeyChecker.
+						CheckEqual("authentication_method", "AWS4_HMAC_SHA256").
+						CheckEqual("primary_guid", "").
+						Build(),
 				},
 			},
 		},
@@ -1498,26 +1272,12 @@ func TestAccessKeyResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create_2_versions.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "AWS4_HMAC_SHA256"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_access_key_id", "test_key_id"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_secret_access_key", "test_secret"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.primary_key", "true"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_access_key_id", "test_key_id_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_secret_access_key", "test_secret_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.primary_key", "false"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version", "2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version_guid", "asdd-ads-dasdas"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.additional_cdn", "CHINA_CDN"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
+					Check: baseAccessKeyChecker.
+						CheckEqual("authentication_method", "AWS4_HMAC_SHA256").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_a.", credentialsABatch).
+						CheckEqualBatch("credentials_b.", credentialsBBatch).
+						Build(),
 				},
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResAccessKey/changed_order.tf"),
@@ -1537,23 +1297,12 @@ func TestAccessKeyResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create_2_versions_missing_cloud_access_key.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "VP_QUEUE_IT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_secret_access_key", "test_secret"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.primary_key", "true"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_secret_access_key", "test_secret_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.primary_key", "false"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version", "2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version_guid", "asdd-ads-dasdas"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
+					Check: accessCheckerWithoutCDN.
+						CheckEqual("authentication_method", "VP_QUEUE_IT").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_a.", credentialsANoKeyIDBatch).
+						CheckEqualBatch("credentials_b.", credentialsBNoKeyIDBatch).
+						Build(),
 				},
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResAccessKey/changed_order_no_cloud_access_key_id.tf"),
@@ -1573,23 +1322,12 @@ func TestAccessKeyResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create_2_versions_missing_cloud_access_key_avm_cloudinary.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "AVM_CLOUDINARY"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_secret_access_key", "test_secret"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.primary_key", "true"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_secret_access_key", "test_secret_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.primary_key", "false"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version", "2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version_guid", "asdd-ads-dasdas"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
+					Check: accessCheckerWithoutCDN.
+						CheckEqual("authentication_method", "AVM_CLOUDINARY").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_a.", credentialsANoKeyIDBatch).
+						CheckEqualBatch("credentials_b.", credentialsBNoKeyIDBatch).
+						Build(),
 				},
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResAccessKey/changed_order_no_cloud_access_key_id_avm_cloudinary.tf"),
@@ -1608,26 +1346,12 @@ func TestAccessKeyResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create_2_versions.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "AWS4_HMAC_SHA256"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_access_key_id", "test_key_id"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_secret_access_key", "test_secret"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.primary_key", "true"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_access_key_id", "test_key_id_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_secret_access_key", "test_secret_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.primary_key", "false"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version", "2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version_guid", "asdd-ads-dasdas"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.additional_cdn", "CHINA_CDN"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
+					Check: baseAccessKeyChecker.
+						CheckEqual("authentication_method", "AWS4_HMAC_SHA256").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_a.", credentialsABatch).
+						CheckEqualBatch("credentials_b.", credentialsBBatch).
+						Build(),
 				},
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResAccessKey/changed_secret.tf"),
@@ -1672,26 +1396,13 @@ func TestAccessKeyResource(t *testing.T) {
 				},
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/changed_secret.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "AWS4_HMAC_SHA256"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_access_key_id", "test_key_id"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_secret_access_key", "changed_secret"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.primary_key", "true"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_access_key_id", "test_key_id_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_secret_access_key", "test_secret_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.primary_key", "false"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version", "2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version_guid", "asdd-ads-dasdas"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.additional_cdn", "CHINA_CDN"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
+					Check: baseAccessKeyChecker.
+						CheckEqual("authentication_method", "AWS4_HMAC_SHA256").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_a.", credentialsABatch).
+						CheckEqual("credentials_a.cloud_secret_access_key", "changed_secret").
+						CheckEqualBatch("credentials_b.", credentialsBBatch).
+						Build(),
 				},
 			},
 		},
@@ -1716,49 +1427,21 @@ func TestAccessKeyResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create_2_versions.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "AWS4_HMAC_SHA256"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_access_key_id", "test_key_id"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_secret_access_key", "test_secret"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.primary_key", "true"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_access_key_id", "test_key_id_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_secret_access_key", "test_secret_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.primary_key", "false"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version", "2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version_guid", "asdd-ads-dasdas"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.additional_cdn", "CHINA_CDN"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
+					Check: baseAccessKeyChecker.
+						CheckEqual("authentication_method", "AWS4_HMAC_SHA256").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_a.", credentialsABatch).
+						CheckEqualBatch("credentials_b.", credentialsBBatch).
+						Build(),
 				},
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create_2_versions.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "AWS4_HMAC_SHA256"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_access_key_id", "test_key_id"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_secret_access_key", "test_secret"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.primary_key", "true"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_access_key_id", "test_key_id_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_secret_access_key", "test_secret_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.primary_key", "false"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version", "2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version_guid", "asdd-ads-dasdas"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.additional_cdn", "CHINA_CDN"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
+					Check: baseAccessKeyChecker.
+						CheckEqual("authentication_method", "AWS4_HMAC_SHA256").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_a.", credentialsABatch).
+						CheckEqualBatch("credentials_b.", credentialsBBatch).
+						Build(),
 				},
 			},
 		},
@@ -1784,43 +1467,21 @@ func TestAccessKeyResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create_2_versions_missing_cloud_access_key.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "VP_QUEUE_IT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_secret_access_key", "test_secret"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.primary_key", "true"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_secret_access_key", "test_secret_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.primary_key", "false"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version", "2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version_guid", "asdd-ads-dasdas"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
+					Check: accessCheckerWithoutCDN.
+						CheckEqual("authentication_method", "VP_QUEUE_IT").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_a.", credentialsANoKeyIDBatch).
+						CheckEqualBatch("credentials_b.", credentialsBNoKeyIDBatch).
+						Build(),
 				},
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create_2_versions_missing_cloud_access_key.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "VP_QUEUE_IT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_secret_access_key", "test_secret"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.primary_key", "true"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_secret_access_key", "test_secret_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.primary_key", "false"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version", "2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version_guid", "asdd-ads-dasdas"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
+					Check: accessCheckerWithoutCDN.
+						CheckEqual("authentication_method", "VP_QUEUE_IT").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_a.", credentialsANoKeyIDBatch).
+						CheckEqualBatch("credentials_b.", credentialsBNoKeyIDBatch).
+						Build(),
 				},
 			},
 		},
@@ -1847,39 +1508,19 @@ func TestAccessKeyResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "AWS4_HMAC_SHA256"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_access_key_id", "test_key_id"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_secret_access_key", "test_secret"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.primary_key", "true"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.additional_cdn", "CHINA_CDN"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
+					Check: baseAccessKeyChecker.
+						CheckEqual("authentication_method", "AWS4_HMAC_SHA256").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_a.", credentialsABatch).
+						Build(),
 				},
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "AWS4_HMAC_SHA256"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_access_key_id", "test_key_id"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_secret_access_key", "test_secret"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.primary_key", "true"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.additional_cdn", "CHINA_CDN"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
+					Check: baseAccessKeyChecker.
+						CheckEqual("authentication_method", "AWS4_HMAC_SHA256").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_a.", credentialsABatch).
+						Build(),
 				},
 			},
 		},
@@ -1907,35 +1548,19 @@ func TestAccessKeyResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create_missing_cloud_access_key.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "VP_QUEUE_IT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_secret_access_key", "test_secret"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.primary_key", "true"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
+					Check: accessCheckerWithoutCDN.
+						CheckEqual("authentication_method", "VP_QUEUE_IT").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_a.", credentialsANoKeyIDBatch).
+						Build(),
 				},
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create_missing_cloud_access_key.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "VP_QUEUE_IT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_secret_access_key", "test_secret"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.primary_key", "true"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
+					Check: accessCheckerWithoutCDN.
+						CheckEqual("authentication_method", "VP_QUEUE_IT").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_a.", credentialsANoKeyIDBatch).
+						Build(),
 				},
 			},
 		},
@@ -1958,49 +1583,21 @@ func TestAccessKeyResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create_2_versions.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "AWS4_HMAC_SHA256"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_access_key_id", "test_key_id"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_secret_access_key", "test_secret"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.primary_key", "true"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_access_key_id", "test_key_id_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_secret_access_key", "test_secret_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.primary_key", "false"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version", "2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version_guid", "asdd-ads-dasdas"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.additional_cdn", "CHINA_CDN"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
+					Check: baseAccessKeyChecker.
+						CheckEqual("authentication_method", "AWS4_HMAC_SHA256").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_a.", credentialsABatch).
+						CheckEqualBatch("credentials_b.", credentialsBBatch).
+						Build(),
 				},
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create_2_versions.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "AWS4_HMAC_SHA256"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_access_key_id", "test_key_id"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_secret_access_key", "test_secret"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.primary_key", "true"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_access_key_id", "test_key_id_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_secret_access_key", "test_secret_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.primary_key", "false"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version", "2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version_guid", "asdd-ads-dasdas"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.additional_cdn", "CHINA_CDN"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
+					Check: baseAccessKeyChecker.
+						CheckEqual("authentication_method", "AWS4_HMAC_SHA256").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_a.", credentialsABatch).
+						CheckEqualBatch("credentials_b.", credentialsBBatch).
+						Build(),
 				},
 			},
 		},
@@ -2024,43 +1621,21 @@ func TestAccessKeyResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create_2_versions_missing_cloud_access_key.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "VP_QUEUE_IT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_secret_access_key", "test_secret"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.primary_key", "true"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_secret_access_key", "test_secret_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.primary_key", "false"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version", "2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version_guid", "asdd-ads-dasdas"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
+					Check: accessCheckerWithoutCDN.
+						CheckEqual("authentication_method", "VP_QUEUE_IT").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_a.", credentialsANoKeyIDBatch).
+						CheckEqualBatch("credentials_b.", credentialsBNoKeyIDBatch).
+						Build(),
 				},
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create_2_versions_missing_cloud_access_key.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "VP_QUEUE_IT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_secret_access_key", "test_secret"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.primary_key", "true"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_secret_access_key", "test_secret_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.primary_key", "false"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version", "2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version_guid", "asdd-ads-dasdas"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
+					Check: accessCheckerWithoutCDN.
+						CheckEqual("authentication_method", "VP_QUEUE_IT").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_a.", credentialsANoKeyIDBatch).
+						CheckEqualBatch("credentials_b.", credentialsBNoKeyIDBatch).
+						Build(),
 				},
 			},
 		},
@@ -2074,21 +1649,11 @@ func TestAccessKeyResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "AWS4_HMAC_SHA256"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_access_key_id", "test_key_id"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_secret_access_key", "test_secret"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.primary_key", "true"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.additional_cdn", "CHINA_CDN"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
+					Check: baseAccessKeyChecker.
+						CheckEqual("authentication_method", "AWS4_HMAC_SHA256").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_a.", credentialsABatch).
+						Build(),
 					ConfigPlanChecks: resource.ConfigPlanChecks{
 						PreApply: []plancheck.PlanCheck{
 							plancheck.ExpectSensitiveValue("akamai_cloudaccess_key.test", tfjsonpath.New("credentials_a").AtMapKey("cloud_secret_access_key")),
@@ -2112,32 +1677,70 @@ func TestAccessKeyResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "AWS4_HMAC_SHA256"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_access_key_id", "test_key_id"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_secret_access_key", "test_secret"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.primary_key", "true"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.additional_cdn", "CHINA_CDN"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
+					Check: baseAccessKeyChecker.
+						CheckEqual("authentication_method", "AWS4_HMAC_SHA256").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_a.", credentialsABatch).
+						Build(),
 				},
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/updated_name.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-					),
+					Check: test.NewStateChecker("akamai_cloudaccess_key.test").
+						CheckEqual("access_key_uid", "12345").
+						Build(),
 					ConfigPlanChecks: resource.ConfigPlanChecks{
 						PreApply: []plancheck.PlanCheck{
 							plancheck.ExpectKnownValue("akamai_cloudaccess_key.test", tfjsonpath.New("access_key_uid"), knownvalue.Int64Exact(12345)),
 						},
 					},
+				},
+			},
+		},
+		"all fields provided externally": {
+			init: func(m *cloudaccess.Mock, resourceData commonDataForResource) {
+				mockCreationAccessKeyWith1Version(m, resourceData)
+				mockReadAccessKeyWith1Version(m, resourceData)
+				mockDeletionAccessKeyWith1Version(m, resourceData)
+			},
+			mockData: resourceMock,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/all_external_fields.tf"),
+					Check: test.NewStateChecker("akamai_cloudaccess_key.test.0").
+						CheckEqual("authentication_method", "AWS4_HMAC_SHA256").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqual("access_key_uid", "12345").
+						CheckEqual("access_key_name", "test_key_name").
+						CheckEqual("contract_id", "1-CTRACT").
+						CheckEqual("group_id", "12345").
+						CheckEqualBatch("credentials_a.", credentialsABatch).
+						CheckEqual("network_configuration.additional_cdn", "CHINA_CDN").
+						CheckEqual("network_configuration.security_network", "ENHANCED_TLS").
+						Build(),
+				},
+			},
+		},
+		"single external credential": {
+			init: func(m *cloudaccess.Mock, resourceData commonDataForResource) {
+				mockCreationAccessKeyWith1Version(m, resourceData)
+				mockReadAccessKeyWith1Version(m, resourceData)
+				mockDeletionAccessKeyWith1Version(m, resourceData)
+			},
+			mockData: resourceMock,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/single_external_credential.tf"),
+					Check: test.NewStateChecker("akamai_cloudaccess_key.test").
+						CheckEqual("authentication_method", "AWS4_HMAC_SHA256").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqual("access_key_uid", "12345").
+						CheckEqual("access_key_name", "test_key_name").
+						CheckEqual("contract_id", "1-CTRACT").
+						CheckEqual("group_id", "12345").
+						CheckEqualBatch("credentials_a.", credentialsABatch).
+						CheckEqual("network_configuration.additional_cdn", "CHINA_CDN").
+						CheckEqual("network_configuration.security_network", "ENHANCED_TLS").
+						Build(),
 				},
 			},
 		},
@@ -2267,26 +1870,12 @@ func TestAccessKeyResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create_2_versions_with_timeouts.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "AWS4_HMAC_SHA256"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_access_key_id", "test_key_id"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_secret_access_key", "test_secret"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.primary_key", "true"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_access_key_id", "test_key_id_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_secret_access_key", "test_secret_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.primary_key", "false"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version", "2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version_guid", "asdd-ads-dasdas"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.additional_cdn", "CHINA_CDN"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
+					Check: baseAccessKeyChecker.
+						CheckEqual("authentication_method", "AWS4_HMAC_SHA256").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_a.", credentialsABatch).
+						CheckEqualBatch("credentials_b.", credentialsBBatch).
+						Build(),
 				},
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create_with_timeout.tf"),
@@ -2326,26 +1915,12 @@ func TestAccessKeyResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create_2_versions.tf"),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "AWS4_HMAC_SHA256"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_access_key_id", "test_key_id"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_secret_access_key", "test_secret"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.primary_key", "true"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_access_key_id", "test_key_id_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_secret_access_key", "test_secret_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.primary_key", "false"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version", "2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version_guid", "asdd-ads-dasdas"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.additional_cdn", "CHINA_CDN"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
+					Check: baseAccessKeyChecker.
+						CheckEqual("authentication_method", "AWS4_HMAC_SHA256").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_a.", credentialsABatch).
+						CheckEqualBatch("credentials_b.", credentialsBBatch).
+						Build(),
 				},
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create.tf"),
@@ -2384,26 +1959,12 @@ func TestAccessKeyResource(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create_2_versions.tf"),
 					Taint:  []string{"akamai_cloudaccess_key.test"},
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_name", "test_key_name"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "authentication_method", "AWS4_HMAC_SHA256"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "contract_id", "1-CTRACT"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "group_id", "12345"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "primary_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_access_key_id", "test_key_id"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.cloud_secret_access_key", "test_secret"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.primary_key", "true"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version", "1"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_a.version_guid", "asde-efdr-reded"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_access_key_id", "test_key_id_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.cloud_secret_access_key", "test_secret_2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.primary_key", "false"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version", "2"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "credentials_b.version_guid", "asdd-ads-dasdas"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.additional_cdn", "CHINA_CDN"),
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "network_configuration.security_network", "ENHANCED_TLS"),
-					),
+					Check: baseAccessKeyChecker.
+						CheckEqual("authentication_method", "AWS4_HMAC_SHA256").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_a.", credentialsABatch).
+						CheckEqualBatch("credentials_b.", credentialsBBatch).
+						Build(),
 				},
 			},
 		},
@@ -3231,9 +2792,9 @@ func TestAccessKeyResource_ImportState(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create_2_versions.tf"),
 
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-					),
+					Check: test.NewStateChecker("akamai_cloudaccess_key.test").
+						CheckEqual("access_key_uid", "12345").
+						Build(),
 				},
 				{
 					ImportState:                          true,
@@ -3264,9 +2825,9 @@ func TestAccessKeyResource_ImportState(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create_missing_cloud_access_key.tf"),
 
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-					),
+					Check: test.NewStateChecker("akamai_cloudaccess_key.test").
+						CheckEqual("access_key_uid", "12345").
+						Build(),
 				},
 				{
 					ImportState:                          true,
@@ -3297,9 +2858,9 @@ func TestAccessKeyResource_ImportState(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create_2_versions_missing_cloud_access_key.tf"),
 
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-					),
+					Check: test.NewStateChecker("akamai_cloudaccess_key.test").
+						CheckEqual("access_key_uid", "12345").
+						Build(),
 				},
 				{
 					ImportState:                          true,
@@ -3331,9 +2892,9 @@ func TestAccessKeyResource_ImportState(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create.tf"),
 
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-					),
+					Check: test.NewStateChecker("akamai_cloudaccess_key.test").
+						CheckEqual("access_key_uid", "12345").
+						Build(),
 				},
 				{
 					ImportState:                          true,
@@ -3406,9 +2967,9 @@ func TestAccessKeyResource_ImportState(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create.tf"),
 
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-					),
+					Check: test.NewStateChecker("akamai_cloudaccess_key.test").
+						CheckEqual("access_key_uid", "12345").
+						Build(),
 				},
 				{
 					ImportState:             true,
@@ -3437,9 +2998,9 @@ func TestAccessKeyResource_ImportState(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create.tf"),
 
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-					),
+					Check: test.NewStateChecker("akamai_cloudaccess_key.test").
+						CheckEqual("access_key_uid", "12345").
+						Build(),
 				},
 				{
 					ImportState:             true,
@@ -3471,9 +3032,9 @@ func TestAccessKeyResource_ImportState(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create.tf"),
 
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-					),
+					Check: test.NewStateChecker("akamai_cloudaccess_key.test").
+						CheckEqual("access_key_uid", "12345").
+						Build(),
 				},
 				{
 					ImportState:             true,
@@ -3500,9 +3061,9 @@ func TestAccessKeyResource_ImportState(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create.tf"),
 
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-					),
+					Check: test.NewStateChecker("akamai_cloudaccess_key.test").
+						CheckEqual("access_key_uid", "12345").
+						Build(),
 				},
 				{
 					ImportState:             true,
@@ -3528,9 +3089,9 @@ func TestAccessKeyResource_ImportState(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create.tf"),
 
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-					),
+					Check: test.NewStateChecker("akamai_cloudaccess_key.test").
+						CheckEqual("access_key_uid", "12345").
+						Build(),
 				},
 				{
 					ImportState:             true,
@@ -3556,9 +3117,9 @@ func TestAccessKeyResource_ImportState(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create.tf"),
 
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-					),
+					Check: test.NewStateChecker("akamai_cloudaccess_key.test").
+						CheckEqual("access_key_uid", "12345").
+						Build(),
 				},
 				{
 					ImportState:             true,
@@ -3584,9 +3145,9 @@ func TestAccessKeyResource_ImportState(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create.tf"),
 
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-					),
+					Check: test.NewStateChecker("akamai_cloudaccess_key.test").
+						CheckEqual("access_key_uid", "12345").
+						Build(),
 				},
 				{
 					ImportState:             true,
@@ -3615,9 +3176,9 @@ func TestAccessKeyResource_ImportState(t *testing.T) {
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create.tf"),
 
-					Check: resource.ComposeAggregateTestCheckFunc(
-						resource.TestCheckResourceAttr("akamai_cloudaccess_key.test", "access_key_uid", "12345"),
-					),
+					Check: test.NewStateChecker("akamai_cloudaccess_key.test").
+						CheckEqual("access_key_uid", "12345").
+						Build(),
 				},
 				{
 					ImportState:             true,
@@ -3833,194 +3394,164 @@ func checkImportSingleCredentialNoCloudAccessKeyID() resource.ImportStateCheckFu
 
 func TestChangedOrderOfCredentials(t *testing.T) {
 	tests := []struct {
-		label    string
-		oldState *KeyResourceModel
-		plan     *KeyResourceModel
-		expected bool
+		label      string
+		stateCredA *Credentials
+		stateCredB *Credentials
+		planCredA  *Credentials
+		planCredB  *Credentials
+		expected   bool
 	}{
 		{
-			label: "nil oldState.CredentialsA returns false",
-			oldState: &KeyResourceModel{
-				CredentialsA: nil,
-				CredentialsB: &Credentials{
-					CloudAccessKeyID:     types.StringValue("key-B"),
-					CloudSecretAccessKey: types.StringValue("secret-B"),
-				},
+			label:      "nil oldState.CredentialsA returns false",
+			stateCredA: nil,
+			stateCredB: &Credentials{
+				CloudAccessKeyID:     types.StringValue("key-B"),
+				CloudSecretAccessKey: types.StringValue("secret-B"),
 			},
-			plan: &KeyResourceModel{
-				CredentialsA: &Credentials{
-					CloudAccessKeyID:     types.StringValue("key-B"),
-					CloudSecretAccessKey: types.StringValue("secret-B"),
-				},
-				CredentialsB: &Credentials{
-					CloudAccessKeyID:     types.StringValue("key-A"),
-					CloudSecretAccessKey: types.StringValue("secret-A"),
-				},
+			planCredA: &Credentials{
+				CloudAccessKeyID:     types.StringValue("key-B"),
+				CloudSecretAccessKey: types.StringValue("secret-B"),
+			},
+			planCredB: &Credentials{
+				CloudAccessKeyID:     types.StringValue("key-A"),
+				CloudSecretAccessKey: types.StringValue("secret-A"),
 			},
 			expected: false,
 		},
 		{
 			label: "nil plan.CredentialsA returns false",
-			oldState: &KeyResourceModel{
-				CredentialsA: &Credentials{
-					CloudAccessKeyID:     types.StringValue("key-A"),
-					CloudSecretAccessKey: types.StringValue("secret-A"),
-				},
-				CredentialsB: &Credentials{
-					CloudAccessKeyID:     types.StringValue("key-B"),
-					CloudSecretAccessKey: types.StringValue("secret-B"),
-				},
+			stateCredA: &Credentials{
+				CloudAccessKeyID:     types.StringValue("key-A"),
+				CloudSecretAccessKey: types.StringValue("secret-A"),
 			},
-			plan: &KeyResourceModel{
-				CredentialsA: nil,
-				CredentialsB: &Credentials{
-					CloudAccessKeyID:     types.StringValue("key-A"),
-					CloudSecretAccessKey: types.StringValue("secret-A"),
-				},
+			stateCredB: &Credentials{
+				CloudAccessKeyID:     types.StringValue("key-B"),
+				CloudSecretAccessKey: types.StringValue("secret-B"),
+			},
+			planCredA: nil,
+			planCredB: &Credentials{
+				CloudAccessKeyID:     types.StringValue("key-A"),
+				CloudSecretAccessKey: types.StringValue("secret-A"),
 			},
 			expected: false,
 		},
 		{
 			label: "key IDs present and swapped returns true",
-			oldState: &KeyResourceModel{
-				CredentialsA: &Credentials{
-					CloudAccessKeyID:     types.StringValue("key-A"),
-					CloudSecretAccessKey: types.StringValue("secret-A"),
-				},
-				CredentialsB: &Credentials{
-					CloudAccessKeyID:     types.StringValue("key-B"),
-					CloudSecretAccessKey: types.StringValue("secret-B"),
-				},
+			stateCredA: &Credentials{
+				CloudAccessKeyID:     types.StringValue("key-A"),
+				CloudSecretAccessKey: types.StringValue("secret-A"),
 			},
-			plan: &KeyResourceModel{
-				CredentialsA: &Credentials{
-					CloudAccessKeyID:     types.StringValue("key-B"),
-					CloudSecretAccessKey: types.StringValue("secret-B"),
-				},
-				CredentialsB: &Credentials{
-					CloudAccessKeyID:     types.StringValue("key-A"),
-					CloudSecretAccessKey: types.StringValue("secret-A"),
-				},
+			stateCredB: &Credentials{
+				CloudAccessKeyID:     types.StringValue("key-B"),
+				CloudSecretAccessKey: types.StringValue("secret-B"),
+			},
+			planCredA: &Credentials{
+				CloudAccessKeyID:     types.StringValue("key-B"),
+				CloudSecretAccessKey: types.StringValue("secret-B"),
+			},
+			planCredB: &Credentials{
+				CloudAccessKeyID:     types.StringValue("key-A"),
+				CloudSecretAccessKey: types.StringValue("secret-A"),
 			},
 			expected: true,
 		},
 		{
 			label: "key IDs present and swapped and new secrets returns true",
-			oldState: &KeyResourceModel{
-				CredentialsA: &Credentials{
-					CloudAccessKeyID:     types.StringValue("key-A"),
-					CloudSecretAccessKey: types.StringValue("secret-A"),
-				},
-				CredentialsB: &Credentials{
-					CloudAccessKeyID:     types.StringValue("key-B"),
-					CloudSecretAccessKey: types.StringValue("secret-B"),
-				},
+			stateCredA: &Credentials{
+				CloudAccessKeyID:     types.StringValue("key-A"),
+				CloudSecretAccessKey: types.StringValue("secret-A"),
 			},
-			plan: &KeyResourceModel{
-				CredentialsA: &Credentials{
-					CloudAccessKeyID:     types.StringValue("key-B"),
-					CloudSecretAccessKey: types.StringValue("secret-C"),
-				},
-				CredentialsB: &Credentials{
-					CloudAccessKeyID:     types.StringValue("key-A"),
-					CloudSecretAccessKey: types.StringValue("secret-D"),
-				},
+			stateCredB: &Credentials{
+				CloudAccessKeyID:     types.StringValue("key-B"),
+				CloudSecretAccessKey: types.StringValue("secret-B"),
+			},
+			planCredA: &Credentials{
+				CloudAccessKeyID:     types.StringValue("key-B"),
+				CloudSecretAccessKey: types.StringValue("secret-C"),
+			},
+			planCredB: &Credentials{
+				CloudAccessKeyID:     types.StringValue("key-A"),
+				CloudSecretAccessKey: types.StringValue("secret-D"),
 			},
 			expected: true,
 		},
 		{
 			label: "key IDs present and not swapped returns false",
-			oldState: &KeyResourceModel{
-				CredentialsA: &Credentials{
-					CloudAccessKeyID:     types.StringValue("key-A"),
-					CloudSecretAccessKey: types.StringValue("secret-A"),
-				},
-				CredentialsB: &Credentials{
-					CloudAccessKeyID:     types.StringValue("key-B"),
-					CloudSecretAccessKey: types.StringValue("secret-B"),
-				},
+			stateCredA: &Credentials{
+				CloudAccessKeyID:     types.StringValue("key-A"),
+				CloudSecretAccessKey: types.StringValue("secret-A"),
 			},
-			plan: &KeyResourceModel{
-				CredentialsA: &Credentials{
-					CloudAccessKeyID:     types.StringValue("key-A"),
-					CloudSecretAccessKey: types.StringValue("secret-A"),
-				},
-				CredentialsB: &Credentials{
-					CloudAccessKeyID:     types.StringValue("key-B"),
-					CloudSecretAccessKey: types.StringValue("secret-B"),
-				},
+			stateCredB: &Credentials{
+				CloudAccessKeyID:     types.StringValue("key-B"),
+				CloudSecretAccessKey: types.StringValue("secret-B"),
+			},
+			planCredA: &Credentials{
+				CloudAccessKeyID:     types.StringValue("key-A"),
+				CloudSecretAccessKey: types.StringValue("secret-A"),
+			},
+			planCredB: &Credentials{
+				CloudAccessKeyID:     types.StringValue("key-B"),
+				CloudSecretAccessKey: types.StringValue("secret-B"),
 			},
 			expected: false,
 		},
 		{
 			label: "key IDs null and secrets swapped returns true",
-			oldState: &KeyResourceModel{
-				CredentialsA: &Credentials{
-					CloudAccessKeyID:     types.StringNull(),
-					CloudSecretAccessKey: types.StringValue("secret-A"),
-				},
-				CredentialsB: &Credentials{
-					CloudAccessKeyID:     types.StringNull(),
-					CloudSecretAccessKey: types.StringValue("secret-B"),
-				},
+			stateCredA: &Credentials{
+				CloudAccessKeyID:     types.StringNull(),
+				CloudSecretAccessKey: types.StringValue("secret-A"),
 			},
-			plan: &KeyResourceModel{
-				CredentialsA: &Credentials{
-					CloudAccessKeyID:     types.StringNull(),
-					CloudSecretAccessKey: types.StringValue("secret-B"),
-				},
-				CredentialsB: &Credentials{
-					CloudAccessKeyID:     types.StringNull(),
-					CloudSecretAccessKey: types.StringValue("secret-A"),
-				},
+			stateCredB: &Credentials{
+				CloudAccessKeyID:     types.StringNull(),
+				CloudSecretAccessKey: types.StringValue("secret-B"),
+			},
+			planCredA: &Credentials{
+				CloudAccessKeyID:     types.StringNull(),
+				CloudSecretAccessKey: types.StringValue("secret-B"),
+			},
+			planCredB: &Credentials{
+				CloudAccessKeyID:     types.StringNull(),
+				CloudSecretAccessKey: types.StringValue("secret-A"),
 			},
 			expected: true,
 		},
 		{
 			label: "key IDs null and secrets identical returns false",
-			oldState: &KeyResourceModel{
-				CredentialsA: &Credentials{
-					CloudAccessKeyID:     types.StringNull(),
-					CloudSecretAccessKey: types.StringValue("same-secret"),
-				},
-				CredentialsB: &Credentials{
-					CloudAccessKeyID:     types.StringNull(),
-					CloudSecretAccessKey: types.StringValue("same-secret"),
-				},
+			stateCredA: &Credentials{
+				CloudAccessKeyID:     types.StringNull(),
+				CloudSecretAccessKey: types.StringValue("same-secret"),
 			},
-			plan: &KeyResourceModel{
-				CredentialsA: &Credentials{
-					CloudAccessKeyID:     types.StringNull(),
-					CloudSecretAccessKey: types.StringValue("same-secret"),
-				},
-				CredentialsB: &Credentials{
-					CloudAccessKeyID:     types.StringNull(),
-					CloudSecretAccessKey: types.StringValue("same-secret"),
-				},
+			stateCredB: &Credentials{
+				CloudAccessKeyID:     types.StringNull(),
+				CloudSecretAccessKey: types.StringValue("same-secret"),
+			},
+			planCredA: &Credentials{
+				CloudAccessKeyID:     types.StringNull(),
+				CloudSecretAccessKey: types.StringValue("same-secret"),
+			},
+			planCredB: &Credentials{
+				CloudAccessKeyID:     types.StringNull(),
+				CloudSecretAccessKey: types.StringValue("same-secret"),
 			},
 			expected: false,
 		},
 		{
 			label: "key IDs null and secrets not swapped returns false",
-			oldState: &KeyResourceModel{
-				CredentialsA: &Credentials{
-					CloudAccessKeyID:     types.StringNull(),
-					CloudSecretAccessKey: types.StringValue("secret-A"),
-				},
-				CredentialsB: &Credentials{
-					CloudAccessKeyID:     types.StringNull(),
-					CloudSecretAccessKey: types.StringValue("secret-B"),
-				},
+			stateCredA: &Credentials{
+				CloudAccessKeyID:     types.StringNull(),
+				CloudSecretAccessKey: types.StringValue("secret-A"),
 			},
-			plan: &KeyResourceModel{
-				CredentialsA: &Credentials{
-					CloudAccessKeyID:     types.StringNull(),
-					CloudSecretAccessKey: types.StringValue("secret-A"),
-				},
-				CredentialsB: &Credentials{
-					CloudAccessKeyID:     types.StringNull(),
-					CloudSecretAccessKey: types.StringValue("secret-B"),
-				},
+			stateCredB: &Credentials{
+				CloudAccessKeyID:     types.StringNull(),
+				CloudSecretAccessKey: types.StringValue("secret-B"),
+			},
+			planCredA: &Credentials{
+				CloudAccessKeyID:     types.StringNull(),
+				CloudSecretAccessKey: types.StringValue("secret-A"),
+			},
+			planCredB: &Credentials{
+				CloudAccessKeyID:     types.StringNull(),
+				CloudSecretAccessKey: types.StringValue("secret-B"),
 			},
 			expected: false,
 		},
@@ -4028,7 +3559,7 @@ func TestChangedOrderOfCredentials(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.label, func(t *testing.T) {
-			result := changedOrderOfCredentials(tc.oldState, tc.plan)
+			result := changedOrderOfCredentials(tc.stateCredA, tc.stateCredB, tc.planCredA, tc.planCredB)
 			assert.Equal(t, tc.expected, result)
 		})
 	}

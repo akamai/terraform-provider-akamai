@@ -131,7 +131,8 @@
 
 
 
-
+* Cloud Access
+    * Fixed issue in the `akamai_cloudaccess_key` resource that using variables to pass credentials could break the processing ([I#750](https://github.com/akamai/terraform-provider-akamai/issues/750)).
 
 
 
