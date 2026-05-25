@@ -138,6 +138,10 @@
 
 
 
+* mTLS Truststore
+  * Fixed an issue in the `akamai_mtlstruststore_ca_set_activation` resource where the `created_date` attribute was incorrectly preserved from a previous activation when activating a new version ([I#729](https://github.com/akamai/terraform-provider-akamai/issues/729)).
+
+
 
 
 

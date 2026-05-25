@@ -785,6 +785,78 @@ func TestCASetActivationResource(t *testing.T) {
 				},
 			},
 		},
+		"update ca set activation - created_date reflects new activation on version change": {
+			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
+				// create: activate version 1 with created_date = 2023-01-01.
+				mockGetCASetVersion(m, resourceData).Once()
+				mockListCASetActivations(m, resourceData, true).Once()
+				mockActivateCASetVersion(m, resourceData, 1, "STAGING")
+				mockGetCASetVersionActivation(m, resourceData, 1, "COMPLETE", "ACTIVATE", 1)
+				resourceData.stagingStatus = "ACTIVE"
+
+				// read.
+				mockGetCASet(m, resourceData).Twice()
+				mockListCASetVersionActivations(m, resourceData, true)
+
+				// update: activate version 2 with a different created_date (2025-01-01) to verify the fix.
+				updateActivationData := resourceData
+				updateActivationData.version = 2
+				updateActivationData.stagingStatus = "INACTIVE"
+				mockGetCASetVersion(m, updateActivationData).Once()
+				mockListCASetActivations(m, updateActivationData, true)
+				mockActivateCASetVersion(m, updateActivationData, 2, "STAGING")
+				m.On("GetCASetVersionActivation", testutils.MockContext, mtlstruststore.GetCASetVersionActivationRequest{
+					ActivationID: 2,
+					CASetID:      updateActivationData.caSetID,
+					Version:      2,
+				}).Return(&mtlstruststore.GetCASetVersionActivationResponse{
+					ActivationID:     2,
+					CASetID:          updateActivationData.caSetID,
+					Version:          2,
+					ActivationStatus: "COMPLETE",
+					ActivationType:   "ACTIVATE",
+					CreatedBy:        "user2",
+					CreatedDate:      time.Date(2025, time.January, 1, 0, 0, 0, 0, time.UTC),
+					ModifiedBy:       ptr.To("user2"),
+					ModifiedDate:     ptr.To(time.Date(2025, time.January, 1, 0, 0, 0, 0, time.UTC)),
+				}, nil).Once()
+
+				// read after update.
+				mockGetCASet(m, updateActivationData).Once()
+				mockListCASetVersionActivations(m, updateActivationData, true)
+
+				// delete.
+				mockListCASetActivations(m, updateActivationData, true)
+				mockGetCASetVersion(m, updateActivationData).Once()
+				mockGetCASetVersionActivation(m, updateActivationData, 1, "COMPLETE", "DEACTIVATE", 1)
+				mockDeactivateCASetActivation(m, updateActivationData, 1)
+			},
+			mockData: createActivationData,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCASetActivation/create.tf"),
+					Check: test.NewStateChecker("akamai_mtlstruststore_ca_set_activation.test").
+						CheckEqual("ca_set_id", "12345").
+						CheckEqual("id", "1").
+						CheckEqual("version", "1").
+						CheckEqual("network", "STAGING").
+						CheckEqual("created_by", "user1").
+						CheckEqual("created_date", "2023-01-01T00:00:00Z").Build(),
+				},
+				{
+					// After activating version 2, created_date and created_by should reflect the new activation,
+					// not the previous activation's values.
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCASetActivation/update.tf"),
+					Check: test.NewStateChecker("akamai_mtlstruststore_ca_set_activation.test").
+						CheckEqual("ca_set_id", "12345").
+						CheckEqual("id", "2").
+						CheckEqual("version", "2").
+						CheckEqual("network", "STAGING").
+						CheckEqual("created_by", "user2").
+						CheckEqual("created_date", "2025-01-01T00:00:00Z").Build(),
+				},
+			},
+		},
 		"update ca set activation - updating `timeout` only ": {
 			init: func(m *mtlstruststore.Mock, resourceData commonDataForResource) {
 				// create.

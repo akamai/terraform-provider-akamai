@@ -19,7 +19,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -125,16 +124,10 @@ func (c *caSetActivationResource) Schema(ctx context.Context, _ resource.SchemaR
 			"created_by": schema.StringAttribute{
 				Computed:    true,
 				Description: "User who submitted the activation request.",
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
 			},
 			"created_date": schema.StringAttribute{
 				Computed:    true,
 				Description: "Date the activation request was submitted in ISO-8601 format.",
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
 			},
 			"modified_by": schema.StringAttribute{
 				Computed:    true,
