@@ -816,17 +816,33 @@ func resourceSecureEdgeHostNameImport(ctx context.Context, d *schema.ResourceDat
 	logger := meta.Log("PAPI", "resourceSecureEdgeHostNameImport")
 
 	parts := strings.Split(d.Id(), ",")
-	if len(parts) < 3 || len(parts) > 4 {
+	lenParts := len(parts)
+	if lenParts < 3 || lenParts > 5 {
 		return nil, fmt.Errorf("expected import identifier with format: "+
-			`"EdgehostNameID,contractID,groupID[,productID]". Got: %q`, d.Id())
+			`"EdgehostNameID,contractID,groupID[,[productID][,certificate]]". Got: %q`, d.Id())
 	}
 	var productID string
-	if len(parts) == 4 {
-		if len(parts[3]) == 0 {
+	if lenParts >= 4 {
+		if len(parts[3]) == 0 && lenParts != 5 {
 			return nil, fmt.Errorf("productID is empty for the import ID=%q", d.Id())
 		}
 		productID = str.AddPrefix(parts[3], "prd_")
 		logger.Debugf("Setting product_id=%s", productID)
+	}
+
+	var certificate int64
+	if lenParts == 5 {
+		if len(parts[4]) == 0 {
+			return nil, fmt.Errorf("certificate is empty for the import ID=%q", d.Id())
+		}
+		certificateID, err := strconv.ParseInt(parts[4], 10, 64)
+		if err != nil {
+			return nil, err
+		}
+		if certificateID <= 0 {
+			return nil, fmt.Errorf("invalid certificate for the import ID=%q", d.Id())
+		}
+		certificate = certificateID
 	}
 
 	edgehostID := parts[0]
@@ -868,8 +884,8 @@ func resourceSecureEdgeHostNameImport(ctx context.Context, d *schema.ResourceDat
 	}
 
 	// get certificate id when network is ENHANCED-TLS
-	if edgeHostnameResp.SecurityType == "ENHANCED-TLS" {
-		certificate, err := meta.Client().GetHAPI().GetCertificate(ctx, hapi.GetCertificateRequest{
+	if edgeHostnameResp.SecurityType == "ENHANCED-TLS" && certificate == 0 {
+		cert, err := meta.Client().GetHAPI().GetCertificate(ctx, hapi.GetCertificateRequest{
 			DNSZone:    edgeHostnameResp.DNSZone,
 			RecordName: edgeHostnameResp.RecordName,
 		})
@@ -878,13 +894,18 @@ func resourceSecureEdgeHostNameImport(ctx context.Context, d *schema.ResourceDat
 				return nil, err
 			}
 		} else {
-			certificateID, err := strconv.ParseInt(certificate.CertificateID, 10, 64)
+			certificateID, err := strconv.ParseInt(cert.CertificateID, 10, 64)
 			if err != nil {
 				return nil, err
 			}
-			if err := d.Set("certificate", certificateID); err != nil {
-				return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
-			}
+			certificate = certificateID
+		}
+	}
+
+	if certificate != 0 {
+		logger.Debugf("Setting certificate=%d", certificate)
+		if err := d.Set("certificate", certificate); err != nil {
+			return nil, fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 		}
 	}
 
@@ -984,8 +1005,8 @@ func validateImmutableFields(_ context.Context, diff *schema.ResourceDiff, _ int
 		o := oldValue.(string)
 		n := newValue.(string)
 
-		if diff.HasChange("certificate") || str.AddPrefix(o, "prd_") != str.AddPrefix(n, "prd_") {
-			return fmt.Errorf("error: Changes to non-updatable fields 'product_id' and 'certificate' are not permitted")
+		if str.AddPrefix(o, "prd_") != str.AddPrefix(n, "prd_") {
+			return fmt.Errorf("error: Changes to non-updatable field 'product_id' is not permitted")
 		}
 	}
 	return nil

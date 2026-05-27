@@ -148,7 +148,9 @@
 
 
 
-
+* PAPI
+  * Recreate edge hostname automatically when the associated certificate changes in the `akamai_edge_hostname` resource ([I#338](https://github.com/akamai/terraform-provider-akamai/issues/338)).
+  * Added a new optional param to the import id of the `akamai_edge_hostname` resource. It allows to specify the certificate of the imported hostname and save it in the state ([I#338](https://github.com/akamai/terraform-provider-akamai/issues/338)).
 
 
 
