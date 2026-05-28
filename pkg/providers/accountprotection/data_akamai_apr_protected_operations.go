@@ -42,7 +42,7 @@ func dataSourceProtectedOperations() *schema.Resource {
 
 func readDataSourceProtectedOperations(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAccountProtection()
 	logger := meta.Log("accountprotection", "readDataSourceProtectedOperations")
 	logger.Debugf("in readDataSourceProtectedOperations")
 

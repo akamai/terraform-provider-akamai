@@ -51,7 +51,7 @@ func resourceBotManagementSettings() *schema.Resource {
 
 func resourceBotManagementSettingsCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceBotManagementSettingsCreate")
 	logger.Debugf("in resourceBotManagementSettingsCreate")
 
@@ -95,7 +95,7 @@ func resourceBotManagementSettingsCreate(ctx context.Context, d *schema.Resource
 
 func resourceBotManagementSettingsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceBotManagementSettingsRead")
 	logger.Debugf("in resourceBotManagementSettingsRead")
 
@@ -147,7 +147,7 @@ func resourceBotManagementSettingsRead(ctx context.Context, d *schema.ResourceDa
 
 func resourceBotManagementSettingsUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceBotManagementSettingsUpdate")
 	logger.Debugf("in resourceBotManagementSettingsUpdate")
 

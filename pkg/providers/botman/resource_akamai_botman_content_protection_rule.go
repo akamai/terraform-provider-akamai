@@ -58,7 +58,7 @@ func resourceContentProtectionRule() *schema.Resource {
 
 func resourceContentProtectionRuleCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceContentProtectionRuleCreateAction")
 
 	configID, err := tf.GetIntValueAsInt64("config_id", d)
@@ -105,7 +105,7 @@ func resourceContentProtectionRuleRead(ctx context.Context, d *schema.ResourceDa
 // ContentProtectionRuleRead read content protector rule
 func ContentProtectionRuleRead(ctx context.Context, d *schema.ResourceData, m interface{}, readFromCache bool) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceContentProtectionRuleRead")
 
 	idParts, err := id.Split(d.Id(), 3, "configID:securityPolicyID:contentProtectionRuleID")
@@ -178,7 +178,7 @@ func ContentProtectionRuleRead(ctx context.Context, d *schema.ResourceData, m in
 
 func resourceContentProtectionRuleUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceContentProtectionRuleUpdateAction")
 
 	idParts, err := id.Split(d.Id(), 3, "configID:securityPolicyID:contentProtectionRuleID")
@@ -223,7 +223,7 @@ func resourceContentProtectionRuleUpdate(ctx context.Context, d *schema.Resource
 
 func resourceContentProtectionRuleDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceContentProtectionRuleDeleteAction")
 
 	idParts, err := id.Split(d.Id(), 3, "configID:securityPolicyID:contentProtectionRuleID")

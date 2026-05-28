@@ -57,7 +57,7 @@ func resourceCustomBotCategoryAction() *schema.Resource {
 
 func resourceCustomBotCategoryActionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceCustomBotCategoryActionCreate")
 	logger.Debugf("in resourceCustomBotCategoryActionCreate")
 
@@ -111,7 +111,7 @@ func resourceCustomBotCategoryActionRead(ctx context.Context, d *schema.Resource
 
 func customBotCategoryActionRead(ctx context.Context, d *schema.ResourceData, m interface{}, readFromCache bool) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceCustomBotCategoryActionRead")
 	logger.Debugf("in resourceCustomBotCategoryActionRead")
 
@@ -176,7 +176,7 @@ func customBotCategoryActionRead(ctx context.Context, d *schema.ResourceData, m 
 
 func resourceCustomBotCategoryActionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceCustomBotCategoryActionUpdate")
 	logger.Debugf("in resourceCustomBotCategoryActionUpdate")
 

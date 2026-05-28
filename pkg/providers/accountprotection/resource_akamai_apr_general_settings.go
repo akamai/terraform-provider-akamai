@@ -53,7 +53,7 @@ func resourceGeneralSettings() *schema.Resource {
 
 func createResourceGeneralSettings(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAccountProtection()
 	logger := meta.Log("accountprotection", "createResourceGeneralSettings")
 	logger.Debugf("in createResourceGeneralSettings")
 
@@ -97,7 +97,7 @@ func createResourceGeneralSettings(ctx context.Context, d *schema.ResourceData, 
 
 func readResourceGeneralSettings(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAccountProtection()
 	logger := meta.Log("accountprotection", "readResourceGeneralSettings")
 	logger.Debugf("in readResourceGeneralSettings")
 
@@ -151,7 +151,7 @@ func readResourceGeneralSettings(ctx context.Context, d *schema.ResourceData, m 
 
 func updateResourceGeneralSettings(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAccountProtection()
 	logger := meta.Log("accountprotection", "updateResourceGeneralSettings")
 	logger.Debugf("in updateResourceGeneralSettings")
 

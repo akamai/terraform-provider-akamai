@@ -2,9 +2,11 @@
 package edgegrid
 
 import (
+	apr "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/accountprotection"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/apidefinitions"
 	v0 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/apidefinitions/v0"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/botman"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/clientlists"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudaccess"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudcertificates"
@@ -29,11 +31,15 @@ import (
 
 // Client is the interface for the Akamai Edgegrid client.
 type Client interface {
+	GetAccountProtection() apr.AccountProtection
+
 	GetAPIDefinitions() apidefinitions.APIDefinitions
 
 	GetAPIDefinitionsV0() v0.APIDefinitions
 
 	GetAPPSEC() appsec.APPSEC
+
+	GetBotMan() botman.BotMan
 
 	GetClientLists() clientlists.ClientLists
 
@@ -90,6 +96,11 @@ func NewClientImpl(sess session.Session) *ClientImpl {
 	}
 }
 
+// GetAccountProtection returns the Account Protection client for managing account security.
+func (c *ClientImpl) GetAccountProtection() apr.AccountProtection {
+	return apr.Client(c.sess)
+}
+
 // GetAPIDefinitions returns the API Definitions client for managing API definitions.
 func (c *ClientImpl) GetAPIDefinitions() apidefinitions.APIDefinitions {
 	return apidefinitions.Client(c.sess)
@@ -103,6 +114,11 @@ func (c *ClientImpl) GetAPIDefinitionsV0() v0.APIDefinitions {
 // GetAPPSEC returns the APPSEC client for managing application security.
 func (c *ClientImpl) GetAPPSEC() appsec.APPSEC {
 	return appsec.Client(c.sess)
+}
+
+// GetBotMan returns the Bot Manager client for managing bot mitigation.
+func (c *ClientImpl) GetBotMan() botman.BotMan {
+	return botman.Client(c.sess)
 }
 
 // GetClientLists returns the Client Lists client for managing client lists.

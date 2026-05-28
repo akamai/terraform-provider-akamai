@@ -51,7 +51,7 @@ func resourceJavascriptInjection() *schema.Resource {
 
 func resourceJavascriptInjectionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceJavascriptInjectionCreate")
 	logger.Debugf("in resourceJavascriptInjectionCreate")
 
@@ -95,7 +95,7 @@ func resourceJavascriptInjectionCreate(ctx context.Context, d *schema.ResourceDa
 
 func resourceJavascriptInjectionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceJavascriptInjectionRead")
 	logger.Debugf("in resourceJavascriptInjectionRead")
 
@@ -143,7 +143,7 @@ func resourceJavascriptInjectionRead(ctx context.Context, d *schema.ResourceData
 
 func resourceJavascriptInjectionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceJavascriptInjectionUpdate")
 	logger.Debugf("in resourceJavascriptInjectionUpdate")
 

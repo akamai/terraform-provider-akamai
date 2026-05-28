@@ -49,7 +49,7 @@ func resourceCustomBotCategoryItemSequence() *schema.Resource {
 }
 func resourceCustomBotCategoryItemSequenceUpsert(ctx context.Context, d *schema.ResourceData, m interface{}) (int64, diag.Diagnostics) {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceCustomBotCategoryItemSequenceUpsert")
 
 	configID, err := tf.GetIntValueAsInt64("config_id", d)
@@ -112,7 +112,7 @@ func resourceCustomBotCategoryItemSequenceUpdate(ctx context.Context, d *schema.
 
 func resourceCustomBotCategoryItemSequenceRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceCustomBotCategoryItemSequenceRead")
 
 	idParts, err := id.Split(d.Id(), 2, "configID:categoryID")

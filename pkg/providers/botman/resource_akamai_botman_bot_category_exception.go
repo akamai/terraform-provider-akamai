@@ -51,7 +51,7 @@ func resourceBotCategoryException() *schema.Resource {
 
 func resourceBotCategoryExceptionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceBotCategoryExceptionCreate")
 	logger.Debugf("in resourceBotCategoryExceptionCreate")
 
@@ -95,7 +95,7 @@ func resourceBotCategoryExceptionCreate(ctx context.Context, d *schema.ResourceD
 
 func resourceBotCategoryExceptionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceBotCategoryExceptionRead")
 	logger.Debugf("in resourceBotCategoryExceptionRead")
 
@@ -147,7 +147,7 @@ func resourceBotCategoryExceptionRead(ctx context.Context, d *schema.ResourceDat
 
 func resourceBotCategoryExceptionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceBotCategoryExceptionUpdate")
 	logger.Debugf("in resourceBotCategoryExceptionUpdate")
 

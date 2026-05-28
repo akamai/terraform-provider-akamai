@@ -55,7 +55,7 @@ func resourceTransactionalEndpoint() *schema.Resource {
 
 func resourceTransactionalEndpointCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceTransactionalEndpointCreateAction")
 	logger.Debugf("in resourceTransactionalEndpointCreateAction")
 
@@ -108,7 +108,7 @@ func resourceTransactionalEndpointRead(ctx context.Context, d *schema.ResourceDa
 
 func transactionalEndpointRead(ctx context.Context, d *schema.ResourceData, m interface{}, readFromCache bool) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceTransactionalEndpointReadAction")
 	logger.Debugf("in resourceTransactionalEndpointReadAction")
 
@@ -183,7 +183,7 @@ func transactionalEndpointRead(ctx context.Context, d *schema.ResourceData, m in
 
 func resourceTransactionalEndpointUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceTransactionalEndpointUpdateAction")
 	logger.Debugf("in resourceTransactionalEndpointUpdateAction")
 
@@ -230,7 +230,7 @@ func resourceTransactionalEndpointUpdate(ctx context.Context, d *schema.Resource
 
 func resourceTransactionalEndpointDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceTransactionalEndpointDeleteAction")
 	logger.Debugf("in resourceTransactionalEndpointDeleteAction")
 

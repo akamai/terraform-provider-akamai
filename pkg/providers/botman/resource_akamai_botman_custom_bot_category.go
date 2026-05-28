@@ -51,7 +51,7 @@ func resourceCustomBotCategory() *schema.Resource {
 
 func resourceCustomBotCategoryCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceCustomBotCategoryCreateAction")
 	logger.Debugf("in resourceCustomBotCategoryCreateAction")
 
@@ -89,7 +89,7 @@ func resourceCustomBotCategoryCreate(ctx context.Context, d *schema.ResourceData
 
 func resourceCustomBotCategoryRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceCustomBotCategoryRead")
 	logger.Debugf("in resourceCustomBotCategoryRead")
 
@@ -147,7 +147,7 @@ func resourceCustomBotCategoryRead(ctx context.Context, d *schema.ResourceData, 
 
 func resourceCustomBotCategoryUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceCustomBotCategoryUpdate")
 	logger.Debugf("in resourceCustomBotCategoryUpdate")
 
@@ -191,7 +191,7 @@ func resourceCustomBotCategoryUpdate(ctx context.Context, d *schema.ResourceData
 
 func resourceCustomBotCategoryDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceCustomBotCategoryDelete")
 	logger.Debugf("in resourceCustomBotCategoryDelete")
 

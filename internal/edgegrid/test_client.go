@@ -1,9 +1,11 @@
 package edgegrid
 
 import (
+	apr "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/accountprotection"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/apidefinitions"
 	v0 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/apidefinitions/v0"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/botman"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/clientlists"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudaccess"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudcertificates"
@@ -31,9 +33,11 @@ var (
 
 // TestClient is a mock implementation of the Client interface for testing purposes.
 type TestClient struct {
+	AccountProtection *apr.Mock
 	APIDefinitions    *apidefinitions.Mock
 	APIDefinitionsV0  *v0.Mock
 	APPSEC            *appsec.Mock
+	BotMan            *botman.Mock
 	ClientLists       *clientlists.Mock
 	CloudAccess       *cloudaccess.Mock
 	CloudCertificates *cloudcertificates.Mock
@@ -58,9 +62,11 @@ type TestClient struct {
 // NewTestClient creates a new instance of TestClient with mock implementations.
 func NewTestClient() *TestClient {
 	return &TestClient{
+		AccountProtection: &apr.Mock{},
 		APIDefinitions:    &apidefinitions.Mock{},
 		APIDefinitionsV0:  &v0.Mock{},
 		APPSEC:            &appsec.Mock{},
+		BotMan:            &botman.Mock{},
 		ClientLists:       &clientlists.Mock{},
 		CloudAccess:       &cloudaccess.Mock{},
 		CloudCertificates: &cloudcertificates.Mock{},
@@ -83,6 +89,11 @@ func NewTestClient() *TestClient {
 	}
 }
 
+// GetAccountProtection returns the mock Account Protection client.
+func (c *TestClient) GetAccountProtection() apr.AccountProtection {
+	return c.AccountProtection
+}
+
 // GetAPIDefinitions returns the mock API Definitions client.
 func (c *TestClient) GetAPIDefinitions() apidefinitions.APIDefinitions {
 	return c.APIDefinitions
@@ -96,6 +107,11 @@ func (c *TestClient) GetAPIDefinitionsV0() v0.APIDefinitions {
 // GetAPPSEC returns the mock APPSEC client.
 func (c *TestClient) GetAPPSEC() appsec.APPSEC {
 	return c.APPSEC
+}
+
+// GetBotMan returns the mock BotMan client.
+func (c *TestClient) GetBotMan() botman.BotMan {
+	return c.BotMan
 }
 
 // GetClientLists returns the mock Client Lists client.

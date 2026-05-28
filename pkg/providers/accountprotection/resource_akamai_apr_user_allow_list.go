@@ -44,7 +44,7 @@ func resourceUserAllowList() *schema.Resource {
 
 func createResourceUserAllowList(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAccountProtection()
 	logger := meta.Log("accountprotection", "createResourceUserAllowList")
 	logger.Debugf("in createResourceUserAllowList")
 
@@ -82,7 +82,7 @@ func createResourceUserAllowList(ctx context.Context, d *schema.ResourceData, m 
 
 func readResourceUserAllowList(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAccountProtection()
 	logger := meta.Log("accountprotection", "readResourceUserAllowList")
 	logger.Debugf("in readResourceUserAllowList")
 
@@ -135,7 +135,7 @@ func readResourceUserAllowList(ctx context.Context, d *schema.ResourceData, m in
 
 func updateResourceUserAllowList(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAccountProtection()
 	logger := meta.Log("accountprotection", "updateResourceUserAllowList")
 	logger.Debugf("in updateResourceUserAllowList")
 
@@ -171,7 +171,7 @@ func updateResourceUserAllowList(ctx context.Context, d *schema.ResourceData, m 
 
 func deleteResourceUserAllowList(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAccountProtection()
 	logger := meta.Log("accountprotection", "deleteResourceUserAllowList")
 	logger.Debugf("in accountprotection deleteResourceUserAllowList")
 

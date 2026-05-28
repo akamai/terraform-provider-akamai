@@ -31,7 +31,7 @@ func dataSourceUserAllowList() *schema.Resource {
 
 func readDataSourceUserAllowList(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAccountProtection()
 	logger := meta.Log("accountprotection", "readDataSourceUserAllowList")
 	logger.Debugf("in readDataSourceUserAllowList")
 

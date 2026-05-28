@@ -58,7 +58,7 @@ func resourceContentProtectionJavaScriptInjectionRule() *schema.Resource {
 
 func resourceContentProtectionJavaScriptInjectionRuleCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceContentProtectionJavaScriptInjectionRuleCreateAction")
 
 	configID, err := tf.GetIntValueAsInt64("config_id", d)
@@ -105,7 +105,7 @@ func resourceContentProtectionJavaScriptInjectionRuleRead(ctx context.Context, d
 // ContentProtectionJavaScriptInjectionRuleRead read JavaScript injection rule for content protector
 func ContentProtectionJavaScriptInjectionRuleRead(ctx context.Context, d *schema.ResourceData, m interface{}, readFromCache bool) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceContentProtectionJavaScriptInjectionRuleRead")
 
 	iDParts, err := id.Split(d.Id(), 3, "configID:securityPolicyID:contentProtectionJavaScriptInjectionRuleID")
@@ -178,7 +178,7 @@ func ContentProtectionJavaScriptInjectionRuleRead(ctx context.Context, d *schema
 
 func resourceContentProtectionJavaScriptInjectionRuleUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceContentProtectionJavaScriptInjectionRuleUpdateAction")
 
 	iDParts, err := id.Split(d.Id(), 3, "configID:securityPolicyID:contentProtectionJavaScriptInjectionRuleID")
@@ -223,7 +223,7 @@ func resourceContentProtectionJavaScriptInjectionRuleUpdate(ctx context.Context,
 
 func resourceContentProtectionJavaScriptInjectionRuleDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceContentProtectionJavaScriptInjectionRuleDeleteAction")
 
 	iDParts, err := id.Split(d.Id(), 3, "configID:securityPolicyID:contentProtectionJavaScriptInjectionRuleID")

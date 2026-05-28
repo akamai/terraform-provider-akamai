@@ -59,7 +59,7 @@ var matchBotDetectionActionExpRegex = regexp.MustCompile(`(Bot detection with id
 
 func resourceBotDetectionActionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceBotDetectionActionCreate")
 	logger.Debugf("in resourceBotDetectionActionCreate")
 
@@ -112,7 +112,7 @@ func resourceBotDetectionActionRead(ctx context.Context, d *schema.ResourceData,
 }
 func botDetectionActionRead(ctx context.Context, d *schema.ResourceData, m interface{}, readFromCache bool) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceBotDetectionActionRead")
 	logger.Debugf("in resourceBotDetectionActionRead")
 
@@ -190,7 +190,7 @@ func botDetectionActionRead(ctx context.Context, d *schema.ResourceData, m inter
 
 func resourceBotDetectionActionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceBotDetectionActionUpdate")
 	logger.Debugf("in resourceBotDetectionActionUpdate")
 

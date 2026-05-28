@@ -44,7 +44,7 @@ func resourceChallengeInjectionRules() *schema.Resource {
 
 func resourceChallengeInjectionRulesCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceChallengeInjectionRulesCreate")
 	logger.Debugf("in resourceChallengeInjectionRulesCreate")
 
@@ -82,7 +82,7 @@ func resourceChallengeInjectionRulesCreate(ctx context.Context, d *schema.Resour
 
 func resourceChallengeInjectionRulesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceChallengeInjectionRulesRead")
 	logger.Debugf("in resourceChallengeInjectionRulesRead")
 
@@ -125,7 +125,7 @@ func resourceChallengeInjectionRulesRead(ctx context.Context, d *schema.Resource
 
 func resourceChallengeInjectionRulesUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceChallengeInjectionRulesUpdate")
 	logger.Debugf("in resourceChallengeInjectionRulesUpdate")
 

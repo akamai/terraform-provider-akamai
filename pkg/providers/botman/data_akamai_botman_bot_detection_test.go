@@ -4,13 +4,17 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func TestDataBotDetection(t *testing.T) {
+	t.Parallel()
 	t.Run("DataBotDetection", func(t *testing.T) {
-		mockedBotmanClient := &botman.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+		mockGetConfigVersion(client)
 
 		response := botman.GetBotDetectionListResponse{
 			Detections: []map[string]interface{}{
@@ -31,28 +35,27 @@ func TestDataBotDetection(t *testing.T) {
 		{"detectionId":"4d64d85a-a07f-485a-bbac-24c60658a1b8", "detectionName": "Test name 5", "testKey":"testValue5"}
 	]
 }`
-		mockedBotmanClient.On("GetBotDetectionList",
+		client.BotMan.On("GetBotDetectionList",
 			testutils.MockContext,
 			botman.GetBotDetectionListRequest{},
 		).Return(&response, nil)
-		useClient(mockedBotmanClient, func() {
-			resource.Test(t, resource.TestCase{
-				IsUnitTest:               true,
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestDataBotDetection/basic.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("data.akamai_botman_bot_detection.test", "json", compactJSON(expectedJSON))),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataBotDetection/basic.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("data.akamai_botman_bot_detection.test", "json", compactJSON(expectedJSON))),
 				},
-			})
+			},
 		})
 
-		mockedBotmanClient.AssertExpectations(t)
+		client.BotMan.AssertExpectations(t)
 	})
 	t.Run("DataBotDetection filter by BotName", func(t *testing.T) {
-		mockedBotmanClient := &botman.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+		mockGetConfigVersion(client)
 
 		response := botman.GetBotDetectionListResponse{
 			Detections: []map[string]interface{}{
@@ -65,24 +68,21 @@ func TestDataBotDetection(t *testing.T) {
 		{"detectionId":"cc9c3f89-e179-4892-89cf-d5e623ba9dc7", "detectionName": "Test name 3", "testKey":"testValue3"}
 	]
 }`
-		mockedBotmanClient.On("GetBotDetectionList",
+		client.BotMan.On("GetBotDetectionList",
 			testutils.MockContext,
 			botman.GetBotDetectionListRequest{DetectionName: "Test name 3"},
 		).Return(&response, nil)
-		useClient(mockedBotmanClient, func() {
-			resource.Test(t, resource.TestCase{
-				IsUnitTest:               true,
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestDataBotDetection/filter_by_name.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("data.akamai_botman_bot_detection.test", "json", compactJSON(expectedJSON))),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataBotDetection/filter_by_name.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("data.akamai_botman_bot_detection.test", "json", compactJSON(expectedJSON))),
 				},
-			})
+			},
 		})
 
-		mockedBotmanClient.AssertExpectations(t)
+		client.BotMan.AssertExpectations(t)
 	})
 }

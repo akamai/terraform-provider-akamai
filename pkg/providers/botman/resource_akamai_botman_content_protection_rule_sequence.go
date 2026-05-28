@@ -50,7 +50,7 @@ func resourceContentProtectionRuleSequence() *schema.Resource {
 
 func resourceContentProtectionRuleSequenceUpsert(ctx context.Context, d *schema.ResourceData, m interface{}) (int64, diag.Diagnostics) {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceContentProtectionRuleSequenceUpsert")
 
 	configID, err := tf.GetIntValueAsInt64("config_id", d)
@@ -113,7 +113,7 @@ func resourceContentProtectionRuleSequenceUpdate(ctx context.Context, d *schema.
 
 func resourceContentProtectionRuleSequenceRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceContentProtectionRuleSequenceRead")
 
 	idParts, err := id.Split(d.Id(), 2, "configID:securityPolicyID")

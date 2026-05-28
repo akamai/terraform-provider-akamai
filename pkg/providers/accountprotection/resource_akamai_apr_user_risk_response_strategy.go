@@ -44,7 +44,7 @@ func resourceUserRiskResponseStrategy() *schema.Resource {
 
 func createResourceUserRiskResponseStrategy(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAccountProtection()
 	logger := meta.Log("accountprotection", "createResourceUserRiskResponseStrategy")
 	logger.Debugf("in createResourceUserRiskResponseStrategy")
 
@@ -82,7 +82,7 @@ func createResourceUserRiskResponseStrategy(ctx context.Context, d *schema.Resou
 
 func readResourceUserRiskResponseStrategy(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAccountProtection()
 	logger := meta.Log("accountprotection", "readResourceUserRiskResponseStrategy")
 	logger.Debugf("in readResourceUserRiskResponseStrategy")
 
@@ -127,7 +127,7 @@ func readResourceUserRiskResponseStrategy(ctx context.Context, d *schema.Resourc
 
 func updateResourceUserRiskResponseStrategy(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAccountProtection()
 	logger := meta.Log("accountprotection", "updateResourceUserRiskResponseStrategy")
 	logger.Debugf("in updateResourceUserRiskResponseStrategy")
 

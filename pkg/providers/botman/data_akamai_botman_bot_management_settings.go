@@ -34,7 +34,7 @@ func dataSourceBotManagementSettings() *schema.Resource {
 
 func dataSourceBotManagementSettingsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "dataSourceBotManagementSettingsRead")
 	logger.Debugf("in dataSourceBotManagementSettingsRead")
 

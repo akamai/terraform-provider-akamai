@@ -4,14 +4,18 @@ import (
 	"testing"
 
 	apr "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/accountprotection"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func TestDataAprProtectedOperations(t *testing.T) {
+	t.Parallel()
 	t.Run("TestDataAprProtectedOperations", func(t *testing.T) {
+		t.Parallel()
 
-		mockedAprClient := &apr.Mock{}
+		client := edgegrid.NewTestClient()
+		mockGetConfigVersion(client)
 		response := apr.ListProtectedOperationsResponse{
 			Metadata: apr.Metadata{ConfigID: 43253, ConfigVersion: 15, SecurityPolicyID: "AAAA_81230"},
 			Operations: []map[string]interface{}{
@@ -37,26 +41,22 @@ func TestDataAprProtectedOperations(t *testing.T) {
 						{"operationId":"4d64d85a-a07f-485a-bbac-24c60658a1b8", "testKey":"testValue5"}
 					]
 				}`
-		mockedAprClient.On("ListProtectedOperations",
+		client.AccountProtection.On("ListProtectedOperations",
 			testutils.MockContext,
 			apr.ListProtectedOperationsRequest{ConfigID: 43253, Version: 15, SecurityPolicyID: "AAAA_81230"},
 		).Return(&response, nil)
 
-		useClient(mockedAprClient, func() {
-
-			resource.Test(t, resource.TestCase{
-				IsUnitTest:               true,
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestDataProtectedOperations/basic.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("data.akamai_apr_protected_operations.test", "json", compactJSON(expectedJSON))),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataProtectedOperations/basic.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("data.akamai_apr_protected_operations.test", "json", compactJSON(expectedJSON))),
 				},
-			})
+			},
 		})
 
-		mockedAprClient.AssertExpectations(t)
+		client.AccountProtection.AssertExpectations(t)
 	})
 }

@@ -2,10 +2,6 @@
 package botman
 
 import (
-	"sync"
-
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/providers/appsec"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/subprovider"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -15,18 +11,10 @@ import (
 
 type (
 	// Subprovider gathers botman resources and data sources
-	Subprovider struct {
-		client botman.BotMan
-	}
-
-	option func(p *Subprovider)
+	Subprovider struct{}
 )
 
 var (
-	once sync.Once
-
-	inst *Subprovider
-
 	getLatestConfigVersion     = appsec.GetLatestConfigVersion
 	getModifiableConfigVersion = appsec.GetModifiableConfigVersion
 )
@@ -34,24 +22,8 @@ var (
 var _ subprovider.Subprovider = &Subprovider{}
 
 // NewSubprovider returns a new botman subprovider
-func NewSubprovider(opts ...option) *Subprovider {
-	once.Do(func() {
-		inst = &Subprovider{}
-
-		for _, opt := range opts {
-			opt(inst)
-		}
-	})
-
-	return inst
-}
-
-// Client returns the BotMan interface
-func (p *Subprovider) Client(meta meta.Meta) botman.BotMan {
-	if p.client != nil {
-		return p.client
-	}
-	return botman.Client(meta.Session())
+func NewSubprovider() *Subprovider {
+	return &Subprovider{}
 }
 
 // SDKResources returns the botman resources implemented using terraform-plugin-sdk

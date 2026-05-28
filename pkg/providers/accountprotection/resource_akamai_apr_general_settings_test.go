@@ -4,17 +4,21 @@ import (
 	"testing"
 
 	apr "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/accountprotection"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func TestResourceAprGeneralSettings(t *testing.T) {
+	t.Parallel()
 	t.Run("TestResourceAprGeneralSettings", func(t *testing.T) {
+		t.Parallel()
 
-		mockedAprClient := &apr.Mock{}
+		client := edgegrid.NewTestClient()
+		mockGetConfigVersion(client)
 		createResponse := map[string]interface{}{"testKey": "testValue3"}
 		createRequest := testutils.LoadFixtureBytes(t, "testdata/JsonPayload/create.json")
-		mockedAprClient.On("UpsertGeneralSettings",
+		client.AccountProtection.On("UpsertGeneralSettings",
 			testutils.MockContext,
 			apr.UpsertGeneralSettingsRequest{
 				ConfigID:         43253,
@@ -24,7 +28,7 @@ func TestResourceAprGeneralSettings(t *testing.T) {
 			},
 		).Return(createResponse, nil).Once()
 
-		mockedAprClient.On("GetGeneralSettings",
+		client.AccountProtection.On("GetGeneralSettings",
 			testutils.MockContext,
 			apr.GetGeneralSettingsRequest{
 				ConfigID:         43253,
@@ -36,7 +40,7 @@ func TestResourceAprGeneralSettings(t *testing.T) {
 
 		updateResponse := map[string]interface{}{"testKey": "updated_testValue3"}
 		updateRequest := testutils.LoadFixtureBytes(t, "testdata/JsonPayload/update.json")
-		mockedAprClient.On("UpsertGeneralSettings",
+		client.AccountProtection.On("UpsertGeneralSettings",
 			testutils.MockContext,
 			apr.UpsertGeneralSettingsRequest{
 				ConfigID:         43253,
@@ -46,7 +50,7 @@ func TestResourceAprGeneralSettings(t *testing.T) {
 			},
 		).Return(updateResponse, nil).Once()
 
-		mockedAprClient.On("GetGeneralSettings",
+		client.AccountProtection.On("GetGeneralSettings",
 			testutils.MockContext,
 			apr.GetGeneralSettingsRequest{
 				ConfigID:         43253,
@@ -56,28 +60,24 @@ func TestResourceAprGeneralSettings(t *testing.T) {
 		).Return(updateResponse, nil).Times(2)
 		expectedUpdateJSON := `{"testKey":"updated_testValue3"}`
 
-		useClient(mockedAprClient, func() {
-
-			resource.Test(t, resource.TestCase{
-				IsUnitTest:               true,
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResourceAprGeneralSettings/create.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_apr_general_settings.test", "id", "43253:AAAA_81230"),
-							resource.TestCheckResourceAttr("akamai_apr_general_settings.test", "general_settings", expectedCreateJSON)),
-					},
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResourceAprGeneralSettings/update.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_apr_general_settings.test", "id", "43253:AAAA_81230"),
-							resource.TestCheckResourceAttr("akamai_apr_general_settings.test", "general_settings", expectedUpdateJSON)),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceAprGeneralSettings/create.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_apr_general_settings.test", "id", "43253:AAAA_81230"),
+						resource.TestCheckResourceAttr("akamai_apr_general_settings.test", "general_settings", expectedCreateJSON)),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceAprGeneralSettings/update.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_apr_general_settings.test", "id", "43253:AAAA_81230"),
+						resource.TestCheckResourceAttr("akamai_apr_general_settings.test", "general_settings", expectedUpdateJSON)),
+				},
+			},
 		})
 
-		mockedAprClient.AssertExpectations(t)
+		client.AccountProtection.AssertExpectations(t)
 	})
 }

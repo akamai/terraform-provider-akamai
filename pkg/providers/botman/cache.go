@@ -27,7 +27,7 @@ var (
 // getBotDetectionAction reads from the cache if present, or makes a getAll call to fetch all Bot Detection Actions for a security policy, stores in the cache and filters the required Bot Detection Action using ID.
 func getBotDetectionAction(ctx context.Context, request botman.GetBotDetectionActionRequest, m interface{}) (map[string]interface{}, error) {
 	meta := akameta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("BotMan", "getBotDetectionAction")
 
 	cacheKey := fmt.Sprintf("%s:%d:%d:%s", "getBotDetectionAction", request.ConfigID, request.Version, request.SecurityPolicyID)
@@ -89,7 +89,7 @@ func filterBotDetectionAction(botDetectionActions *botman.GetBotDetectionActionL
 // getCustomBotCategoryAction reads from the cache if present, or makes a getAll call to fetch all Custom Bot Category Actions for a security policy, stores in the cache and filters the required Custom Bot Category Action using ID.
 func getCustomBotCategoryAction(ctx context.Context, request botman.GetCustomBotCategoryActionRequest, m interface{}) (map[string]interface{}, error) {
 	meta := akameta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("BotMan", "getCustomBotCategoryAction")
 
 	cacheKey := fmt.Sprintf("%s:%d:%d:%s", "getCustomBotCategoryAction", request.ConfigID, request.Version, request.SecurityPolicyID)
@@ -151,7 +151,7 @@ func filterCustomBotCategoryAction(customBotCategoryActions *botman.GetCustomBot
 // getAkamaiBotCategoryAction reads from the cache if present, or makes a getAll call to fetch all Akamai Bot Category Actions for a security policy, stores in the cache and filters the required Akamai Bot Category Action using ID.
 func getAkamaiBotCategoryAction(ctx context.Context, request botman.GetAkamaiBotCategoryActionRequest, m interface{}) (map[string]interface{}, error) {
 	meta := akameta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("BotMan", "getAkamaiBotCategoryAction")
 
 	cacheKey := fmt.Sprintf("%s:%d:%d:%s", "getAkamaiBotCategoryAction", request.ConfigID, request.Version, request.SecurityPolicyID)
@@ -213,7 +213,7 @@ func filterAkamaiBotCategoryAction(akamaiBotCategoryActions *botman.GetAkamaiBot
 // getTransactionalEndpoint reads from the cache if present, or makes a getAll call to fetch all Transactional Endpoints for a security policy, stores in the cache and filters the required Transactional Endpoint using ID.
 func getTransactionalEndpoint(ctx context.Context, request botman.GetTransactionalEndpointRequest, m interface{}) (map[string]interface{}, error) {
 	meta := akameta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("BotMan", "getTransactionalEndpoint")
 
 	cacheKey := fmt.Sprintf("%s:%d:%d:%s", "getTransactionalEndpoint", request.ConfigID, request.Version, request.SecurityPolicyID)
@@ -274,7 +274,7 @@ func filterTransactionalEndpoint(transactionalEndpoints *botman.GetTransactional
 
 func getAkamaiBotCategoryList(ctx context.Context, request botman.GetAkamaiBotCategoryListRequest, m interface{}) (*botman.GetAkamaiBotCategoryListResponse, error) {
 	meta := akameta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("BotMan", "getAkamaiBotCategory")
 
 	cacheKey := "getAkamaiBotCategory"
@@ -336,7 +336,7 @@ func filterAkamaiBotCategoryList(akamaiBotCategoryList *botman.GetAkamaiBotCateg
 
 func getAkamaiDefinedBotList(ctx context.Context, request botman.GetAkamaiDefinedBotListRequest, m interface{}) (*botman.GetAkamaiDefinedBotListResponse, error) {
 	meta := akameta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("BotMan", "getAkamaiDefinedBot")
 
 	cacheKey := "getAkamaiDefinedBot"
@@ -397,7 +397,7 @@ func filterAkamaiDefinedBotList(akamaiDefinedBotList *botman.GetAkamaiDefinedBot
 }
 func getBotDetectionList(ctx context.Context, request botman.GetBotDetectionListRequest, m interface{}) (*botman.GetBotDetectionListResponse, error) {
 	meta := akameta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("BotMan", "getBotDetection")
 
 	cacheKey := "getBotDetection"
@@ -460,7 +460,7 @@ func filterBotDetectionList(botDetectionList *botman.GetBotDetectionListResponse
 // getContentProtectionRule reads from the cache if present, or makes a getAll call to fetch all Content Protection Rules for a security policy, stores in the cache and filters the required Content Protection Rule using ID.
 func getContentProtectionRule(ctx context.Context, request botman.GetContentProtectionRuleRequest, m interface{}) (map[string]interface{}, error) {
 	meta := akameta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("BotMan", "getContentProtectionRule")
 
 	cacheKey := fmt.Sprintf("%s:%d:%d:%s", "getContentProtectionRule", request.ConfigID, request.Version, request.SecurityPolicyID)
@@ -522,7 +522,7 @@ func filterContentProtectionRule(contentProtectionRules *botman.GetContentProtec
 // getContentProtectionRule reads from the cache if present, or makes a getAll call to fetch all Content Protection Rules for a security policy, stores in the cache and filters the required Content Protection Rule using ID.
 func getContentProtectionJavaScriptInjectionRule(ctx context.Context, request botman.GetContentProtectionJavaScriptInjectionRuleRequest, m interface{}) (map[string]interface{}, error) {
 	meta := akameta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("BotMan", "getContentProtectionJavaScriptInjectionRule")
 
 	cacheKey := fmt.Sprintf("%s:%d:%d:%s", "getContentProtectionJavaScriptInjectionRule", request.ConfigID, request.Version, request.SecurityPolicyID)

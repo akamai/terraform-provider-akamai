@@ -2,10 +2,6 @@
 package accountprotection
 
 import (
-	"sync"
-
-	apr "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/accountprotection"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/providers/appsec"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/subprovider"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -15,43 +11,19 @@ import (
 
 type (
 	// Subprovider gathers account protection resources and data sources
-	Subprovider struct {
-		client apr.AccountProtection
-	}
-
-	option func(p *Subprovider)
+	Subprovider struct{}
 )
 
 var (
-	once sync.Once
-
-	inst *Subprovider
-
 	getLatestConfigVersion     = appsec.GetLatestConfigVersion
 	getModifiableConfigVersion = appsec.GetModifiableConfigVersion
 )
 
 var _ subprovider.Subprovider = &Subprovider{}
 
-// NewSubprovider returns a new botman subprovider
-func NewSubprovider(opts ...option) *Subprovider {
-	once.Do(func() {
-		inst = &Subprovider{}
-
-		for _, opt := range opts {
-			opt(inst)
-		}
-	})
-
-	return inst
-}
-
-// Client returns the BotMan interface
-func (p *Subprovider) Client(meta meta.Meta) apr.AccountProtection {
-	if p.client != nil {
-		return p.client
-	}
-	return apr.Client(meta.Session())
+// NewSubprovider returns a new account protection subprovider
+func NewSubprovider() *Subprovider {
+	return &Subprovider{}
 }
 
 // SDKResources returns the botman resources implemented using terraform-plugin-sdk

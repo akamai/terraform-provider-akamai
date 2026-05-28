@@ -49,7 +49,7 @@ func resourceCustomDefinedBot() *schema.Resource {
 
 func resourceCustomDefinedBotCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceCustomDefinedBotCreate")
 	logger.Debugf("in resourceCustomDefinedBotCreate")
 
@@ -87,7 +87,7 @@ func resourceCustomDefinedBotCreate(ctx context.Context, d *schema.ResourceData,
 
 func resourceCustomDefinedBotRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceCustomDefinedBotRead")
 	logger.Debugf("in resourceCustomDefinedBotRead")
 
@@ -141,7 +141,7 @@ func resourceCustomDefinedBotRead(ctx context.Context, d *schema.ResourceData, m
 
 func resourceCustomDefinedBotUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceCustomDefinedBotUpdate")
 	logger.Debugf("in resourceCustomDefinedBotUpdate")
 
@@ -185,7 +185,7 @@ func resourceCustomDefinedBotUpdate(ctx context.Context, d *schema.ResourceData,
 
 func resourceCustomDefinedBotDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceCustomDefinedBotDelete")
 	logger.Debugf("in resourceCustomDefinedBotDelete")
 

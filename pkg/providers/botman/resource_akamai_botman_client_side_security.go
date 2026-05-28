@@ -44,7 +44,7 @@ func resourceClientSideSecurity() *schema.Resource {
 
 func resourceClientSideSecurityCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceClientSideSecurityCreate")
 	logger.Debugf("in resourceClientSideSecurityCreate")
 
@@ -82,7 +82,7 @@ func resourceClientSideSecurityCreate(ctx context.Context, d *schema.ResourceDat
 
 func resourceClientSideSecurityRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceClientSideSecurityRead")
 	logger.Debugf("in resourceClientSideSecurityRead")
 
@@ -125,7 +125,7 @@ func resourceClientSideSecurityRead(ctx context.Context, d *schema.ResourceData,
 
 func resourceClientSideSecurityUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceClientSideSecurityUpdate")
 	logger.Debugf("in resourceClientSideSecurityUpdate")
 

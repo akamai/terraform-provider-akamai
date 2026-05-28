@@ -19,7 +19,7 @@ var (
 // getProtectedOperations reads from the cache if present, or makes a getAll call to fetch all Protected Operations for a security policy, stores in the cache and filters the required Transactional Endpoint using ID.
 func getProtectedOperations(ctx context.Context, request apr.GetProtectedOperationByIDRequest, m interface{}) (map[string]interface{}, error) {
 	meta := akameta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAccountProtection()
 	logger := meta.Log("accountprotection", "cache-getProtectedOperations")
 
 	cacheKey := fmt.Sprintf("%s:%d:%d:%s", "aprGetProtectedOperations", request.ConfigID, request.Version, request.SecurityPolicyID)
