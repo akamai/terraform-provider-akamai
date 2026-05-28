@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/internal/test"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
@@ -15,6 +16,7 @@ import (
 )
 
 func TestUsersAffectedByMovingGroup(t *testing.T) {
+	t.Parallel()
 
 	mockListAffectedUsers := func(client *iam.Mock, userType string, users []iam.GroupUser) *mock.Call {
 		return client.On("ListAffectedUsers", testutils.MockContext, iam.ListAffectedUsersRequest{SourceGroupID: 123, DestinationGroupID: 321, UserType: userType}).
@@ -138,24 +140,23 @@ func TestUsersAffectedByMovingGroup(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &iam.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 			if tc.init != nil {
-				tc.init(client)
+				tc.init(client.IAM)
 			}
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps: []resource.TestStep{
-						{
-							Config:      testutils.LoadFixtureString(t, tc.config),
-							Check:       tc.expectedChecks,
-							ExpectError: tc.expectedError,
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				IsUnitTest:               true,
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureString(t, tc.config),
+						Check:       tc.expectedChecks,
+						ExpectError: tc.expectedError,
 					},
-				})
+				},
 			})
-			client.AssertExpectations(t)
+			client.IAM.AssertExpectations(t)
 		})
 	}
 }

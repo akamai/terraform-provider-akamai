@@ -26,7 +26,7 @@ var (
 )
 
 type cidrBlockResource struct {
-	meta meta.Meta
+	meta.Resource
 }
 
 // NewCIDRBlockResource returns new akamai_iam_cidr_block resource.
@@ -119,24 +119,6 @@ func (r *cidrBlockResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 	}
 }
 
-func (r *cidrBlockResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		// ProviderData is nil when Configure is run first time as part of ValidateDataSourceConfig in framework provider
-		return
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Resource Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-			)
-		}
-	}()
-
-	r.meta = meta.Must(req.ProviderData)
-}
-
 func (r *cidrBlockResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	tflog.Debug(ctx, "Creating CIDR Block resource")
 	var plan cidrBlockResourceModel
@@ -156,7 +138,7 @@ func (r *cidrBlockResource) Create(ctx context.Context, req resource.CreateReque
 }
 
 func (r *cidrBlockResource) create(ctx context.Context, plan *cidrBlockResourceModel) error {
-	client := inst.Client(r.meta)
+	client := r.Client.GetIAM()
 
 	resp, err := client.CreateCIDRBlock(ctx, iam.CreateCIDRBlockRequest{
 		CIDRBlock: plan.CIDR.ValueString(),
@@ -199,7 +181,7 @@ func (r *cidrBlockResource) Read(ctx context.Context, req resource.ReadRequest, 
 }
 
 func (r *cidrBlockResource) read(ctx context.Context, data *cidrBlockResourceModel) error {
-	client := inst.Client(r.meta)
+	client := r.Client.GetIAM()
 
 	cidr, err := client.GetCIDRBlock(ctx, iam.GetCIDRBlockRequest{
 		CIDRBlockID: data.CIDRBlockID.ValueInt64(),
@@ -232,7 +214,7 @@ func (r *cidrBlockResource) Update(ctx context.Context, req resource.UpdateReque
 }
 
 func (r *cidrBlockResource) update(ctx context.Context, plan *cidrBlockResourceModel) error {
-	client := inst.Client(r.meta)
+	client := r.Client.GetIAM()
 
 	_, err := client.UpdateCIDRBlock(ctx, iam.UpdateCIDRBlockRequest{
 		CIDRBlockID: plan.CIDRBlockID.ValueInt64(),
@@ -258,7 +240,7 @@ func (r *cidrBlockResource) Delete(ctx context.Context, req resource.DeleteReque
 		return
 	}
 
-	client := inst.Client(r.meta)
+	client := r.Client.GetIAM()
 
 	if err := client.DeleteCIDRBlock(ctx, iam.DeleteCIDRBlockRequest{
 		CIDRBlockID: state.CIDRBlockID.ValueInt64(),

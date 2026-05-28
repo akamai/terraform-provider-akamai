@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
@@ -176,23 +177,23 @@ func TestIPAllowlistResource(t *testing.T) {
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &iam.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 			if tc.init != nil {
-				tc.init(client)
+				tc.init(client.IAM)
 			}
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps:                    tc.steps,
-				})
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				IsUnitTest:               true,
+				Steps:                    tc.steps,
 			})
-			client.AssertExpectations(t)
+			client.IAM.AssertExpectations(t)
 		})
 	}
 }
 
 func TestImportIPAllowlistResource(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		importID   string
 		configPath string
@@ -211,25 +212,24 @@ func TestImportIPAllowlistResource(t *testing.T) {
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &iam.Mock{}
-			test.init(client)
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							ImportStateCheck: test.stateCheck,
-							ImportStateId:    test.importID,
-							ImportState:      true,
-							ResourceName:     "akamai_iam_ip_allowlist.test",
-							Config:           testutils.LoadFixtureString(t, "./testdata/TestResIPAllowlist/enable.tf"),
-							Check: resource.ComposeAggregateTestCheckFunc(
-								resource.TestCheckResourceAttr("akamai_iam_ip_allowlist.test", "enable", "true")),
-						},
+			t.Parallel()
+			client := edgegrid.NewTestClient()
+			test.init(client.IAM)
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						ImportStateCheck: test.stateCheck,
+						ImportStateId:    test.importID,
+						ImportState:      true,
+						ResourceName:     "akamai_iam_ip_allowlist.test",
+						Config:           testutils.LoadFixtureString(t, "./testdata/TestResIPAllowlist/enable.tf"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("akamai_iam_ip_allowlist.test", "enable", "true")),
 					},
-				})
+				},
 			})
-			client.AssertExpectations(t)
+			client.IAM.AssertExpectations(t)
 		})
 	}
 }

@@ -28,7 +28,7 @@ func dataIAMContactTypesRead(ctx context.Context, d *schema.ResourceData, m inte
 	meta := meta.Must(m)
 	logger := meta.Log("IAM", "dataIAMContactTypesRead")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
+	client := meta.Client().GetIAM()
 
 	logger.Debug("Fetching supported contact types")
 

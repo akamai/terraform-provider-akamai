@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/internal/test"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
@@ -19,6 +20,7 @@ import (
 )
 
 func TestResourceUser(t *testing.T) {
+	t.Parallel()
 	basicUserInfo := iam.UserBasicInfo{
 		FirstName:                "John",
 		LastName:                 "Smith",
@@ -938,18 +940,17 @@ func TestResourceUser(t *testing.T) {
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &iam.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 			if tc.init != nil {
-				tc.init(client)
+				tc.init(client.IAM)
 			}
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps:                    tc.steps,
-				})
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+				IsUnitTest:               true,
+				Steps:                    tc.steps,
 			})
-			client.AssertExpectations(t)
+			client.IAM.AssertExpectations(t)
 		})
 	}
 }
@@ -1055,6 +1056,7 @@ func expectResourceIAMUserDeletePhase(m *iam.Mock, user iam.User, anError error)
 }
 
 func TestCanonicalPhone(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		phone         string
 		expectedPhone string
@@ -1119,6 +1121,7 @@ func TestCanonicalPhone(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			actualPhone := canonicalPhone(test.phone)
 
 			assert.Equal(t, test.expectedPhone, actualPhone)

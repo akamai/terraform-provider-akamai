@@ -7,11 +7,13 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func TestRoleDataSource(t *testing.T) {
+	t.Parallel()
 	createdDate := time.Date(2017, time.July, 27, 18, 11, 25, 0, time.UTC)
 	modifiedDate := time.Date(2017, time.August, 27, 18, 11, 25, 0, time.UTC)
 
@@ -254,10 +256,11 @@ func TestRoleDataSource(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &iam.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 
 			if tc.init != nil {
-				tc.init(client)
+				tc.init(client.IAM)
 			}
 			var checkFuncs []resource.TestCheckFunc
 			for k, v := range tc.expectedAttributes {
@@ -266,18 +269,16 @@ func TestRoleDataSource(t *testing.T) {
 			for _, v := range tc.expectedMissingAttributes {
 				checkFuncs = append(checkFuncs, resource.TestCheckNoResourceAttr("data.akamai_iam_role.test", v))
 			}
-			useClient(client, func() {
-				resource.Test(t, resource.TestCase{
-					IsUnitTest:               true,
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{{
-						Config:      testutils.LoadFixtureStringf(t, "testdata/TestDataRole/%s", tc.givenTF),
-						Check:       resource.ComposeAggregateTestCheckFunc(checkFuncs...),
-						ExpectError: tc.expectError,
-					}},
-				})
+			resource.Test(t, resource.TestCase{
+				IsUnitTest:               true,
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				Steps: []resource.TestStep{{
+					Config:      testutils.LoadFixtureStringf(t, "testdata/TestDataRole/%s", tc.givenTF),
+					Check:       resource.ComposeAggregateTestCheckFunc(checkFuncs...),
+					ExpectError: tc.expectError,
+				}},
 			})
-			client.AssertExpectations(t)
+			client.IAM.AssertExpectations(t)
 		})
 	}
 }

@@ -2,7 +2,6 @@ package iam
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/iam"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
@@ -19,7 +18,7 @@ var (
 
 type (
 	authorizedUsersDataSource struct {
-		meta meta.Meta
+		meta.DataSource
 	}
 
 	authorizedUsersModel struct {
@@ -42,21 +41,6 @@ func NewAuthorizedUsersDataSource() datasource.DataSource {
 
 func (a *authorizedUsersDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "akamai_iam_authorized_users"
-}
-
-func (a *authorizedUsersDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Data Source Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.",
-					req.ProviderData))
-		}
-	}()
-	a.meta = meta.Must(req.ProviderData)
 }
 
 func (a *authorizedUsersDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
@@ -101,7 +85,7 @@ func (a *authorizedUsersDataSource) Read(ctx context.Context, req datasource.Rea
 	if resp.Diagnostics.Append(req.Config.Get(ctx, &data)...); resp.Diagnostics.HasError() {
 		return
 	}
-	client := inst.Client(a.meta)
+	client := a.Client.GetIAM()
 
 	users, err := client.ListAuthorizedUsers(ctx)
 	if err != nil {

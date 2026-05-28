@@ -43,7 +43,7 @@ var (
 )
 
 type apiClientResource struct {
-	meta meta.Meta
+	meta.Resource
 }
 
 const (
@@ -662,24 +662,6 @@ func actionsSchema() schema.SingleNestedAttribute {
 	}
 }
 
-func (r *apiClientResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		// ProviderData is nil when Configure is run first time as part of ValidateDataSourceConfig in framework provider
-		return
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Resource Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-			)
-		}
-	}()
-
-	r.meta = meta.Must(req.ProviderData)
-}
-
 func (r *apiClientResource) validateCPCodes(ctx context.Context, plan *apiClientResourceModel, response *resource.ModifyPlanResponse) {
 	tflog.Debug(ctx, "If 'cp_codes' and `group_access.groups` is not empty, we should verify that CP codes are available for a user under these groups")
 
@@ -724,7 +706,7 @@ func (r *apiClientResource) validateCPCodes(ctx context.Context, plan *apiClient
 		response.Diagnostics.Append(diags...)
 		return
 	}
-	client := inst.Client(r.meta)
+	client := r.Client.GetIAM()
 	allowedCPCodes, err := client.ListAllowedCPCodes(ctx, iam.ListAllowedCPCodesRequest{
 		UserName: authorizedUsers[0],
 		Body: iam.ListAllowedCPCodesRequestBody{
@@ -765,7 +747,7 @@ func (r *apiClientResource) hasCCUAPI(ctx context.Context, plan *apiClientResour
 		return false, fmt.Errorf("no authorized users found")
 	}
 
-	client := inst.Client(r.meta)
+	client := r.Client.GetIAM()
 	allowedAPIs, err := client.ListAllowedAPIs(ctx, iam.ListAllowedAPIsRequest{
 		UserName:   authorizedUsers[0],
 		ClientType: iam.ClientType(plan.ClientType.ValueString()),
@@ -1218,7 +1200,7 @@ func (r *apiClientResource) ValidateConfig(ctx context.Context, req resource.Val
 				return
 			}
 
-			if r.meta != nil && !apiAccess.AllAccessibleAPIs.ValueBool() && !data.PurgeOptions.IsNull() {
+			if r.Client != nil && !apiAccess.AllAccessibleAPIs.ValueBool() && !data.PurgeOptions.IsNull() {
 				var apiModel []apiClientAPIModel
 				diags := apiAccess.APIs.ElementsAs(ctx, &apiModel, false)
 				if diags.HasError() {
@@ -1333,7 +1315,7 @@ func (r *apiClientResource) create(ctx context.Context, plan *apiClientResourceM
 	if diags.HasError() {
 		return fmt.Errorf("failed to get ip acl: %v", diags)
 	}
-	client := inst.Client(r.meta)
+	client := r.Client.GetIAM()
 	createAPIClientResponse, err := client.CreateAPIClient(ctx, iam.CreateAPIClientRequest{
 		AllowAccountSwitch:      plan.AllowAccountSwitch.ValueBool(),
 		APIAccess:               *access,
@@ -1467,7 +1449,7 @@ func (r *apiClientResource) Read(ctx context.Context, req resource.ReadRequest, 
 }
 
 func (r *apiClientResource) read(ctx context.Context, data *apiClientResourceModel) error {
-	client := inst.Client(r.meta)
+	client := r.Client.GetIAM()
 
 	apiClient, err := client.GetAPIClient(ctx, iam.GetAPIClientRequest{
 		ClientID:    data.ClientID.ValueString(),
@@ -1507,7 +1489,7 @@ func (r *apiClientResource) Update(ctx context.Context, req resource.UpdateReque
 
 	if !plannedLock && state.Lock.ValueBool() {
 		tflog.Debug(ctx, "Unlocking API Client Resource")
-		client := inst.Client(r.meta)
+		client := r.Client.GetIAM()
 		_, err := client.UnlockAPIClient(ctx, iam.UnlockAPIClientRequest{
 			ClientID: plan.ClientID.ValueString(),
 		})
@@ -1567,7 +1549,7 @@ func (r *apiClientResource) Update(ctx context.Context, req resource.UpdateReque
 				updateCredentialReq.Body.ExpiresOn = expiresOn
 			}
 
-			client := inst.Client(r.meta)
+			client := r.Client.GetIAM()
 			_, err := client.UpdateCredential(ctx, updateCredentialReq)
 			if err != nil {
 				resp.Diagnostics.AddError("Updating API Client Resource failed", err.Error())
@@ -1605,7 +1587,7 @@ func (r *apiClientResource) Update(ctx context.Context, req resource.UpdateReque
 
 	if plannedLock && !state.Lock.ValueBool() {
 		tflog.Debug(ctx, "Locking API Client Resource")
-		client := inst.Client(r.meta)
+		client := r.Client.GetIAM()
 		_, err := client.LockAPIClient(ctx, iam.LockAPIClientRequest{
 			ClientID: plan.ClientID.ValueString(),
 		})
@@ -1663,7 +1645,7 @@ func (r *apiClientResource) update(ctx context.Context, plan *apiClientResourceM
 	if diags.HasError() {
 		return fmt.Errorf("failed to get ip acl: %v", diags)
 	}
-	client := inst.Client(r.meta)
+	client := r.Client.GetIAM()
 	resp, err := client.UpdateAPIClient(ctx, iam.UpdateAPIClientRequest{
 		ClientID: plan.ClientID.ValueString(),
 		Body: iam.UpdateAPIClientRequestBody{
@@ -1704,7 +1686,7 @@ func (r *apiClientResource) Delete(ctx context.Context, req resource.DeleteReque
 		return
 	}
 
-	client := inst.Client(r.meta)
+	client := r.Client.GetIAM()
 	if !state.Credential.IsNull() {
 		credential, diags := credentialObjectToModel(ctx, state.Credential)
 		if diags.HasError() {
@@ -1742,7 +1724,7 @@ func (r *apiClientResource) ImportState(ctx context.Context, req resource.Import
 	clientID := strings.TrimSpace(req.ID)
 	// Fetch the API client to check if there are any credentials.
 	// If there are no credentials, we cannot import the API client.
-	client := inst.Client(r.meta)
+	client := r.Client.GetIAM()
 	apiClient, err := client.GetAPIClient(ctx, iam.GetAPIClientRequest{
 		ClientID:    strings.TrimSpace(req.ID),
 		Actions:     true,

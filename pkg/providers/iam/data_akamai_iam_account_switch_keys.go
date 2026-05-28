@@ -2,7 +2,6 @@ package iam
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/iam"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
@@ -21,7 +20,7 @@ var (
 
 type (
 	accountSwitchKeysDataSource struct {
-		meta meta.Meta
+		meta.DataSource
 	}
 
 	accountSwitchKeysModel struct {
@@ -43,21 +42,6 @@ func NewAccountSwitchKeysDataSource() datasource.DataSource {
 
 func (d *accountSwitchKeysDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "akamai_iam_account_switch_keys"
-}
-
-func (d *accountSwitchKeysDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Data Source Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.",
-					req.ProviderData))
-		}
-	}()
-	d.meta = meta.Must(req.ProviderData)
 }
 
 func (d *accountSwitchKeysDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
@@ -101,7 +85,7 @@ func (d *accountSwitchKeysDataSource) Read(ctx context.Context, req datasource.R
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	client := inst.Client(d.meta)
+	client := d.Client.GetIAM()
 	accountSwitchKeysResponse, err := client.ListAccountSwitchKeys(ctx, iam.ListAccountSwitchKeysRequest{
 		ClientID: data.ClientID.ValueString(),
 		Search:   data.Filter.ValueString(),

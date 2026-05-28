@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/internal/test"
 	tst "github.com/akamai/terraform-provider-akamai/v10/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
@@ -1424,24 +1425,22 @@ func TestResourceAPIClient(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			client := &iam.Mock{}
+			client := edgegrid.NewTestClient()
 			if tc.init != nil {
-				tc.init(client, tc.createData, tc.updateData)
+				tc.init(client.IAM, tc.createData, tc.updateData)
 			}
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ExternalProviders: map[string]resource.ExternalProvider{
-						"random": {
-							Source:            "registry.terraform.io/hashicorp/random",
-							VersionConstraint: "3.1.0",
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"random": {
+						Source:            "registry.terraform.io/hashicorp/random",
+						VersionConstraint: "3.1.0",
 					},
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps:                    tc.steps,
-				})
+				},
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				IsUnitTest:               true,
+				Steps:                    tc.steps,
 			})
-			client.AssertExpectations(t)
+			client.IAM.AssertExpectations(t)
 		})
 	}
 
@@ -1847,17 +1846,15 @@ func TestImportAPIClientResource(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			client := &iam.Mock{}
+			client := edgegrid.NewTestClient()
 			if tc.init != nil {
-				tc.init(client, tc.importData, tc.updateData)
+				tc.init(client.IAM, tc.importData, tc.updateData)
 			}
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps:                    tc.steps,
-				})
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				Steps:                    tc.steps,
 			})
-			client.AssertExpectations(t)
+			client.IAM.AssertExpectations(t)
 		})
 	}
 }
@@ -3089,6 +3086,7 @@ var fullDataChecker = tst.NewStateChecker("akamai_iam_api_client.test").
 	CheckEqual("purge_options.cp_code_access.cp_codes.0", "101")
 
 func TestCheckCPCodesAllowed(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name     string
 		cpCodes  []int64
@@ -3129,6 +3127,7 @@ func TestCheckCPCodesAllowed(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			result := checkAllowedCPCodes(tt.cpCodes, tt.allowed)
 			if result != tt.expected {
 				t.Errorf("Expected %v, got %v", tt.expected, result)

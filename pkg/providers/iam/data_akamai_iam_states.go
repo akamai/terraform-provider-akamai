@@ -34,7 +34,7 @@ func dataIAMStatesRead(ctx context.Context, d *schema.ResourceData, m interface{
 	meta := meta.Must(m)
 	logger := meta.Log("IAM", "dataIAMStatesRead")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
+	client := meta.Client().GetIAM()
 
 	logger.Debug("Fetching states")
 

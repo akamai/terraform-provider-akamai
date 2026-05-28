@@ -2,7 +2,6 @@ package iam
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -18,7 +17,7 @@ var (
 
 type (
 	passwordPolicyDataSource struct {
-		meta meta.Meta
+		meta.DataSource
 	}
 
 	passwordPolicyModel struct {
@@ -41,21 +40,6 @@ func NewPasswordPolicyDataSource() datasource.DataSource {
 
 func (d *passwordPolicyDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "akamai_iam_password_policy"
-}
-
-func (d *passwordPolicyDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Data Source Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.",
-					req.ProviderData))
-		}
-	}()
-	d.meta = meta.Must(req.ProviderData)
 }
 
 func (d *passwordPolicyDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
@@ -110,7 +94,7 @@ func (d *passwordPolicyDataSource) Read(ctx context.Context, req datasource.Read
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	client := inst.Client(d.meta)
+	client := d.Client.GetIAM()
 	passwordPolicyResponse, err := client.GetPasswordPolicy(ctx)
 	if err != nil {
 		resp.Diagnostics.AddError("Reading IAM Password Policy Failed", err.Error())

@@ -31,7 +31,7 @@ func NewRoleDataSource() datasource.DataSource {
 
 type (
 	roleDataSource struct {
-		meta meta.Meta
+		meta.DataSource
 	}
 
 	roleModel struct {
@@ -183,24 +183,6 @@ func (d *roleDataSource) Metadata(_ context.Context, _ datasource.MetadataReques
 	resp.TypeName = "akamai_iam_role"
 }
 
-func (d *roleDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		// ProviderData is nil when Configure is run first time as part of ValidateDataSourceConfig in framework provider
-		return
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Data Source Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-			)
-		}
-	}()
-
-	d.meta = meta.Must(req.ProviderData)
-}
-
 func (d *roleDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	tflog.Debug(ctx, "IAM Role DataSource Read")
 
@@ -209,7 +191,7 @@ func (d *roleDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 		return
 	}
 
-	client := inst.Client(d.meta)
+	client := d.Client.GetIAM()
 
 	if data.RoleID.IsNull() {
 		roles, err := client.ListRoles(ctx, iam.ListRolesRequest{})

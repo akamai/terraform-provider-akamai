@@ -2,7 +2,6 @@ package iam
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -19,7 +18,7 @@ var (
 )
 
 type ipAllowlistResource struct {
-	meta meta.Meta
+	meta.Resource
 }
 
 // NewIPAllowlistResource returns new akamai_iam_ip_allowlist resource.
@@ -29,24 +28,6 @@ func NewIPAllowlistResource() resource.Resource {
 
 type ipAllowlistModel struct {
 	Enable types.Bool `tfsdk:"enable"`
-}
-
-func (r *ipAllowlistResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	// Prevent panic if the provider has not been configured.
-	if req.ProviderData == nil {
-		return
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"unexpected resource configure type",
-				fmt.Sprintf("expected meta.Meta, got: %T. please report this issue to the provider developers.", req.ProviderData),
-			)
-		}
-	}()
-
-	r.meta = meta.Must(req.ProviderData)
 }
 
 func (r *ipAllowlistResource) Metadata(_ context.Context, _ resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -88,7 +69,7 @@ func (r *ipAllowlistResource) Create(ctx context.Context, req resource.CreateReq
 
 func (r *ipAllowlistResource) enableIPAllowlist(ctx context.Context) diag.Diagnostics {
 	var diags diag.Diagnostics
-	client := inst.Client(r.meta)
+	client := r.Client.GetIAM()
 	status, err := client.GetIPAllowlistStatus(ctx)
 	if err != nil {
 		diags.AddError("cannot fetch IP Allowlist status", err.Error())
@@ -106,7 +87,7 @@ func (r *ipAllowlistResource) enableIPAllowlist(ctx context.Context) diag.Diagno
 
 func (r *ipAllowlistResource) disableIPAllowlist(ctx context.Context) diag.Diagnostics {
 	var diags diag.Diagnostics
-	client := inst.Client(r.meta)
+	client := r.Client.GetIAM()
 	status, err := client.GetIPAllowlistStatus(ctx)
 	if err != nil {
 		diags.AddError("cannot fetch IP Allowlist status", err.Error())
@@ -125,7 +106,7 @@ func (r *ipAllowlistResource) disableIPAllowlist(ctx context.Context) diag.Diagn
 func (r *ipAllowlistResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	tflog.Debug(ctx, "Reading IP Allowlist Resource")
 	var oldState *ipAllowlistModel
-	client := inst.Client(r.meta)
+	client := r.Client.GetIAM()
 	resp.Diagnostics.Append(req.State.Get(ctx, &oldState)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -188,7 +169,7 @@ func (r *ipAllowlistResource) Delete(ctx context.Context, req resource.DeleteReq
 
 func (r *ipAllowlistResource) ImportState(ctx context.Context, _ resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	tflog.Debug(ctx, "Importing IP Allowlist Resource")
-	client := inst.Client(r.meta)
+	client := r.Client.GetIAM()
 	status, err := client.GetIPAllowlistStatus(ctx)
 	if err != nil {
 		resp.Diagnostics.AddError("cannot fetch IP Allowlist status", err.Error())

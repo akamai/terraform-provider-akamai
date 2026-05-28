@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/internal/test"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -14,14 +15,17 @@ import (
 )
 
 func TestDataGroups(t *testing.T) {
+	t.Parallel()
 
 	t.Run("groups can nest 50 levels deep", func(t *testing.T) {
+		t.Parallel()
 		assert.Equal(t, 50, groupsNestingDepth(dataSourceIAMGroups()), "incorrect nesting depth")
 	})
 
 	t.Run("happy path", func(t *testing.T) {
-		client := &iam.Mock{}
-		client.Test(testutils.TattleT{T: t})
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+		client.IAM.Test(testutils.TattleT{T: t})
 
 		{
 			req := iam.ListGroupsRequest{}
@@ -33,73 +37,70 @@ func TestDataGroups(t *testing.T) {
 			group2 := makeGroup(t, "test group 2", 102, 100, []iam.Group{group3, group5}, nil)
 			res := []iam.Group{group1, group2, group3}
 
-			client.On("ListGroups", testutils.MockContext, req).Return(res, nil)
+			client.IAM.On("ListGroups", testutils.MockContext, req).Return(res, nil)
 		}
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "testdata/%s/step0.tf", t.Name()),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "id", "akamai_iam_groups"),
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "testdata/%s/step0.tf", t.Name()),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "id", "akamai_iam_groups"),
 
-							// First level groups
-							resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.0.name", "test group 1"),
-							resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.0.group_id", "101"),
-							resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.0.parent_group_id", "100"),
-							resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.0.time_created", "2020-01-01T00:00:00Z"),
-							resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.0.time_modified", "2020-01-01T00:00:00Z"),
-							resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.0.modified_by", "modifier@akamai.net"),
-							resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.0.created_by", "creator@akamai.net"),
-							resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.1.name", "test group 2"),
-							resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.1.group_id", "102"),
-							resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.1.parent_group_id", "100"),
-							resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.1.time_created", "2020-01-01T00:00:00Z"),
-							resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.1.time_modified", "2020-01-01T00:00:00Z"),
-							resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.1.modified_by", "modifier@akamai.net"),
-							resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.1.created_by", "creator@akamai.net"),
-							resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.2.name", "test group 3"),
-							resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.2.group_id", "103"),
-							resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.2.parent_group_id", "102"),
-							resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.2.time_created", "2020-01-01T00:00:00Z"),
-							resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.2.time_modified", "2020-01-01T00:00:00Z"),
-							resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.2.modified_by", "modifier@akamai.net"),
-							resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.2.created_by", "creator@akamai.net"),
-						),
-					},
+						// First level groups
+						resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.0.name", "test group 1"),
+						resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.0.group_id", "101"),
+						resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.0.parent_group_id", "100"),
+						resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.0.time_created", "2020-01-01T00:00:00Z"),
+						resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.0.time_modified", "2020-01-01T00:00:00Z"),
+						resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.0.modified_by", "modifier@akamai.net"),
+						resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.0.created_by", "creator@akamai.net"),
+						resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.1.name", "test group 2"),
+						resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.1.group_id", "102"),
+						resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.1.parent_group_id", "100"),
+						resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.1.time_created", "2020-01-01T00:00:00Z"),
+						resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.1.time_modified", "2020-01-01T00:00:00Z"),
+						resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.1.modified_by", "modifier@akamai.net"),
+						resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.1.created_by", "creator@akamai.net"),
+						resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.2.name", "test group 3"),
+						resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.2.group_id", "103"),
+						resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.2.parent_group_id", "102"),
+						resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.2.time_created", "2020-01-01T00:00:00Z"),
+						resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.2.time_modified", "2020-01-01T00:00:00Z"),
+						resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.2.modified_by", "modifier@akamai.net"),
+						resource.TestCheckResourceAttr("data.akamai_iam_groups.test", "groups.2.created_by", "creator@akamai.net"),
+					),
 				},
-			})
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.IAM.AssertExpectations(t)
 	})
 
 	t.Run("fail path", func(t *testing.T) {
+		t.Parallel()
 
-		client := &iam.Mock{}
-		client.Test(testutils.TattleT{T: t})
+		client := edgegrid.NewTestClient()
+		client.IAM.Test(testutils.TattleT{T: t})
 
 		{
 			req := iam.ListGroupsRequest{}
 
-			client.On("ListGroups", testutils.MockContext, req).Return(nil, errors.New("failed to list groups"))
+			client.IAM.On("ListGroups", testutils.MockContext, req).Return(nil, errors.New("failed to list groups"))
 		}
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureStringf(t, "testdata/%s/step0.tf", t.Name()),
-						ExpectError: regexp.MustCompile(`failed to list groups`),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureStringf(t, "testdata/%s/step0.tf", t.Name()),
+					ExpectError: regexp.MustCompile(`failed to list groups`),
 				},
-			})
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.IAM.AssertExpectations(t)
 	})
 }
 

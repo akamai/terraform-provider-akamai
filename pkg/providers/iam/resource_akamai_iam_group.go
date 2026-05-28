@@ -47,7 +47,7 @@ func resourceIAMGroupCreate(ctx context.Context, rd *schema.ResourceData, m inte
 	meta := meta.Must(m)
 	logger := meta.Log("IAM", "resourceIAMGroupCreate")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
+	client := meta.Client().GetIAM()
 
 	logger.Debug("Creating group")
 
@@ -75,7 +75,7 @@ func resourceIAMGroupRead(ctx context.Context, rd *schema.ResourceData, m interf
 	meta := meta.Must(m)
 	logger := meta.Log("IAM", "resourceIAMGroupRead")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
+	client := meta.Client().GetIAM()
 
 	groupID, err := strconv.ParseInt(rd.Id(), 10, 64)
 	if err != nil {
@@ -108,7 +108,7 @@ func resourceIAMGroupUpdate(ctx context.Context, rd *schema.ResourceData, m inte
 	meta := meta.Must(m)
 	logger := meta.Log("IAM", "resourceIAMGroupUpdate")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
+	client := meta.Client().GetIAM()
 
 	groupID, err := strconv.ParseInt(rd.Id(), 10, 64)
 	if err != nil {
@@ -145,7 +145,7 @@ func resourceIAMGroupDelete(ctx context.Context, rd *schema.ResourceData, m inte
 	meta := meta.Must(m)
 	logger := meta.Log("IAM", "resourceIAMGroupDelete")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
+	client := meta.Client().GetIAM()
 
 	groupID, err := strconv.ParseInt(rd.Id(), 10, 64)
 	if err != nil {

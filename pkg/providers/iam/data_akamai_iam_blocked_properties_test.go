@@ -7,11 +7,13 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/iam"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func TestBlockedPropertiesDataSource(t *testing.T) {
+	t.Parallel()
 	propertyName1 := "example1.com"
 	propertyName2 := "example2.com"
 	propertyID1 := "prp_123456"
@@ -98,24 +100,23 @@ func TestBlockedPropertiesDataSource(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &iam.Mock{}
-			papiClient := &papi.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 
 			if tc.init != nil {
-				tc.init(client, papiClient)
+				tc.init(client.IAM, client.PAPI)
 			}
-			useIAMandPAPIClient(client, papiClient, func() {
-				resource.Test(t, resource.TestCase{
-					IsUnitTest:               true,
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{{
-						Config:      testutils.LoadFixtureStringf(t, "testdata/TestDataBlockedProperties/%s", tc.givenTF),
-						Check:       tc.expectedCheck,
-						ExpectError: tc.expectError,
-					}},
-				})
+			resource.Test(t, resource.TestCase{
+				IsUnitTest:               true,
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				Steps: []resource.TestStep{{
+					Config:      testutils.LoadFixtureStringf(t, "testdata/TestDataBlockedProperties/%s", tc.givenTF),
+					Check:       tc.expectedCheck,
+					ExpectError: tc.expectError,
+				}},
 			})
-			client.AssertExpectations(t)
+			client.IAM.AssertExpectations(t)
+			client.PAPI.AssertExpectations(t)
 		})
 	}
 }

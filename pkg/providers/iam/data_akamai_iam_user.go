@@ -25,7 +25,7 @@ var (
 
 type (
 	userDataSource struct {
-		meta meta.Meta
+		meta.DataSource
 	}
 
 	userModel struct {
@@ -101,21 +101,6 @@ func NewUserDataSource() datasource.DataSource {
 
 func (d *userDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "akamai_iam_user"
-}
-
-func (d *userDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Data Source Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.",
-					req.ProviderData))
-		}
-	}()
-	d.meta = meta.Must(req.ProviderData)
 }
 
 func (d *userDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
@@ -380,7 +365,7 @@ func (d *userDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	if resp.Diagnostics.Append(req.Config.Get(ctx, &data)...); resp.Diagnostics.HasError() {
 		return
 	}
-	client := inst.Client(d.meta)
+	client := d.Client.GetIAM()
 
 	usr, err := client.GetUser(ctx, iam.GetUserRequest{
 		IdentityID:    data.UIIdentityID.ValueString(),
