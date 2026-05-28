@@ -70,7 +70,7 @@ func resourceAdvancedSettingsPrefetchCreate(ctx context.Context, d *schema.Resou
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "prefetchSetting", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "prefetchSetting", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -126,7 +126,7 @@ func resourceAdvancedSettingsPrefetchRead(ctx context.Context, d *schema.Resourc
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -171,7 +171,7 @@ func resourceAdvancedSettingsPrefetchUpdate(ctx context.Context, d *schema.Resou
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "prefetchSetting", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "prefetchSetting", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -225,7 +225,7 @@ func resourceAdvancedSettingsPrefetchDelete(ctx context.Context, d *schema.Resou
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "prefetchSetting", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "prefetchSetting", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}

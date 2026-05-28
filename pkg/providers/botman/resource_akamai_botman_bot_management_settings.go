@@ -60,7 +60,7 @@ func resourceBotManagementSettingsCreate(ctx context.Context, d *schema.Resource
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "botManagementSettings", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "botManagementSettings", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -109,7 +109,7 @@ func resourceBotManagementSettingsRead(ctx context.Context, d *schema.ResourceDa
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -161,7 +161,7 @@ func resourceBotManagementSettingsUpdate(ctx context.Context, d *schema.Resource
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "botManagementSettings", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "botManagementSettings", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}

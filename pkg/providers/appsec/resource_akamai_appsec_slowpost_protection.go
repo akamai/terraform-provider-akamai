@@ -65,7 +65,7 @@ func resourceSlowPostProtectionCreate(ctx context.Context, d *schema.ResourceDat
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "slowpostProtection", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "slowpostProtection", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -108,7 +108,7 @@ func resourceSlowPostProtectionRead(ctx context.Context, d *schema.ResourceData,
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -163,7 +163,7 @@ func resourceSlowPostProtectionUpdate(ctx context.Context, d *schema.ResourceDat
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "slowpostProtection", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "slowpostProtection", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -202,7 +202,7 @@ func resourceSlowPostProtectionDelete(ctx context.Context, d *schema.ResourceDat
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "slowpostProtection", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "slowpostProtection", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}

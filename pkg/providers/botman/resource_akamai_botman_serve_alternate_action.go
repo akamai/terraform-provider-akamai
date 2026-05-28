@@ -60,7 +60,7 @@ func resourceServeAlternateActionCreate(ctx context.Context, d *schema.ResourceD
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "ServeAlternateAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ServeAlternateAction", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -103,7 +103,7 @@ func resourceServeAlternateActionRead(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -158,7 +158,7 @@ func resourceServeAlternateActionUpdate(ctx context.Context, d *schema.ResourceD
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "ServeAlternateAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ServeAlternateAction", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -202,7 +202,7 @@ func resourceServeAlternateActionDelete(ctx context.Context, d *schema.ResourceD
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "ServeAlternateAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ServeAlternateAction", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}

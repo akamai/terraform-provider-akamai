@@ -69,7 +69,7 @@ func dataSourceAttackGroupsRead(ctx context.Context, d *schema.ResourceData, m i
 	}
 	getAttackGroups.ConfigID = configID
 
-	if getAttackGroups.Version, err = getLatestConfigVersion(ctx, configID, m); err != nil {
+	if getAttackGroups.Version, err = getLatestConfigVersion(ctx, configID, client); err != nil {
 		return diag.FromErr(err)
 	}
 

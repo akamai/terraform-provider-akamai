@@ -33,7 +33,7 @@ const securityPolicyProtectionsResourceName = "akamai_appsec_security_policy_pro
 // such as akamai_appsec_waf_protection, akamai_appsec_rate_protection,
 // akamai_appsec_reputation_protection, and akamai_appsec_url_protection.
 type securityPolicyProtectionsResource struct {
-	meta meta.Meta
+	meta.Resource
 }
 
 // securityPolicyProtectionsModel maps Terraform state/plan for full policy protections.
@@ -61,24 +61,6 @@ func NewSecurityPolicyProtectionsResource() resource.Resource {
 // Metadata sets the Terraform type name for the full protections resource.
 func (r *securityPolicyProtectionsResource) Metadata(_ context.Context, _ resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = securityPolicyProtectionsResourceName
-}
-
-// Configure wires provider metadata into the full protections resource.
-func (r *securityPolicyProtectionsResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-
-	defer func() {
-		if recovered := recover(); recovered != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Resource Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T.", req.ProviderData),
-			)
-		}
-	}()
-
-	r.meta = meta.Must(req.ProviderData)
 }
 
 // Schema defines the full protections resource schema.
@@ -237,13 +219,13 @@ func (r *securityPolicyProtectionsResource) ImportState(ctx context.Context, req
 // Related resources: intended as a single update path instead of multiple
 // per-control resources.
 func (r *securityPolicyProtectionsResource) updatePolicyProtections(ctx context.Context, data securityPolicyProtectionsModel, diags *diag.Diagnostics) {
-	version, err := getModifiableConfigVersion(ctx, int(data.ConfigID.ValueInt64()), "securityPolicyProtections", r.meta)
+	version, err := getModifiableConfigVersion(ctx, int(data.ConfigID.ValueInt64()), "securityPolicyProtections", r.Client.GetAPPSEC())
 	if err != nil {
 		diags.AddError("Failed to retrieve modifiable config version", err.Error())
 		return
 	}
 
-	client := r.meta.Client().GetAPPSEC()
+	client := r.Client.GetAPPSEC()
 
 	_, err = client.UpdatePolicyProtections(ctx, appsec.UpdatePolicyProtectionsRequest{
 		ConfigID:                       int(data.ConfigID.ValueInt64()),
@@ -270,13 +252,13 @@ func (r *securityPolicyProtectionsResource) updatePolicyProtections(ctx context.
 func (r *securityPolicyProtectionsResource) readState(ctx context.Context, data *securityPolicyProtectionsModel) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	version, err := getLatestConfigVersion(ctx, int(data.ConfigID.ValueInt64()), r.meta)
+	version, err := getLatestConfigVersion(ctx, int(data.ConfigID.ValueInt64()), r.Client.GetAPPSEC())
 	if err != nil {
 		diags.AddError("Unable to read latest config version", err.Error())
 		return diags
 	}
 
-	client := r.meta.Client().GetAPPSEC()
+	client := r.Client.GetAPPSEC()
 	result, err := client.GetPolicyProtections(ctx, appsec.GetPolicyProtectionsRequest{
 		ConfigID: int(data.ConfigID.ValueInt64()),
 		Version:  version,

@@ -53,7 +53,7 @@ func dataSourceCustomRuleActionsRead(ctx context.Context, d *schema.ResourceData
 	}
 	getCustomRuleActions.ConfigID = configID
 
-	if getCustomRuleActions.Version, err = getLatestConfigVersion(ctx, configID, m); err != nil {
+	if getCustomRuleActions.Version, err = getLatestConfigVersion(ctx, configID, client); err != nil {
 		return diag.FromErr(err)
 	}
 

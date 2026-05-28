@@ -65,7 +65,7 @@ func resourceReputationAnalysisCreate(ctx context.Context, d *schema.ResourceDat
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "reputationProfileAnalysis", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "reputationProfileAnalysis", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -115,7 +115,7 @@ func resourceReputationAnalysisRead(ctx context.Context, d *schema.ResourceData,
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -163,7 +163,7 @@ func resourceReputationAnalysisUpdate(ctx context.Context, d *schema.ResourceDat
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "reputationProfileAnalysis", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "reputationProfileAnalysis", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -208,7 +208,7 @@ func resourceReputationAnalysisDelete(ctx context.Context, d *schema.ResourceDat
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "reputationProfileAnalysis", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "reputationProfileAnalysis", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}

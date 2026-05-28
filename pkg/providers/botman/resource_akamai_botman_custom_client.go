@@ -58,7 +58,7 @@ func resourceCustomClientCreate(ctx context.Context, d *schema.ResourceData, m i
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "CustomClient", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "CustomClient", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -101,7 +101,7 @@ func resourceCustomClientRead(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -155,7 +155,7 @@ func resourceCustomClientUpdate(ctx context.Context, d *schema.ResourceData, m i
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "CustomClient", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "CustomClient", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -199,7 +199,7 @@ func resourceCustomClientDelete(ctx context.Context, d *schema.ResourceData, m i
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "CustomClient", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "CustomClient", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}

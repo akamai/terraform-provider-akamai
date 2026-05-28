@@ -65,7 +65,7 @@ func resourceAdvancedSettingsLoggingCreate(ctx context.Context, d *schema.Resour
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "loggingSetting", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "loggingSetting", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -115,7 +115,7 @@ func resourceAdvancedSettingsLoggingRead(ctx context.Context, d *schema.Resource
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version, err := getLatestConfigVersion(ctx, configID, m)
+		version, err := getLatestConfigVersion(ctx, configID, client)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -129,7 +129,7 @@ func resourceAdvancedSettingsLoggingRead(ctx context.Context, d *schema.Resource
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version, err := getLatestConfigVersion(ctx, configID, m)
+		version, err := getLatestConfigVersion(ctx, configID, client)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -177,7 +177,7 @@ func resourceAdvancedSettingsLoggingUpdate(ctx context.Context, d *schema.Resour
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version, err := getModifiableConfigVersion(ctx, configID, "loggingSetting", m)
+		version, err := getModifiableConfigVersion(ctx, configID, "loggingSetting", client)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -191,7 +191,7 @@ func resourceAdvancedSettingsLoggingUpdate(ctx context.Context, d *schema.Resour
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version, err := getModifiableConfigVersion(ctx, configID, "loggingSetting", m)
+		version, err := getModifiableConfigVersion(ctx, configID, "loggingSetting", client)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -230,7 +230,7 @@ func resourceAdvancedSettingsLoggingDelete(ctx context.Context, d *schema.Resour
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version, err := getModifiableConfigVersion(ctx, configID, "loggingSetting", m)
+		version, err := getModifiableConfigVersion(ctx, configID, "loggingSetting", client)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -245,7 +245,7 @@ func resourceAdvancedSettingsLoggingDelete(ctx context.Context, d *schema.Resour
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version, err := getModifiableConfigVersion(ctx, configID, "loggingSetting", m)
+		version, err := getModifiableConfigVersion(ctx, configID, "loggingSetting", client)
 		if err != nil {
 			return diag.FromErr(err)
 		}

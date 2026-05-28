@@ -17,7 +17,7 @@ func TestDataContentProtectionRule(t *testing.T) {
 		t.Parallel()
 
 		client := edgegrid.NewTestClient()
-		mockGetConfigVersion(client)
+		mockGetConfigVersion(client.APPSEC)
 		response := botman.GetContentProtectionRuleListResponse{
 			ContentProtectionRules: []map[string]interface{}{
 				{"contentProtectionRuleId": "fake3eaa-d334-466d-857e-33308ce416be", "testKey": "testValue1"},
@@ -60,7 +60,7 @@ func TestDataContentProtectionRule(t *testing.T) {
 		t.Parallel()
 
 		client := edgegrid.NewTestClient()
-		mockGetConfigVersion(client)
+		mockGetConfigVersion(client.APPSEC)
 		response := botman.GetContentProtectionRuleListResponse{
 			ContentProtectionRules: []map[string]interface{}{
 				{"contentProtectionRuleId": "fake3f89-e179-4892-89cf-d5e623ba9dc7", "testKey": "testValue3"},
@@ -94,7 +94,7 @@ func TestDataContentProtectionRule(t *testing.T) {
 	t.Run("DataContentProtectionRule error", func(t *testing.T) {
 		t.Parallel()
 		client := edgegrid.NewTestClient()
-		mockGetConfigVersion(client)
+		mockGetConfigVersion(client.APPSEC)
 		client.BotMan.On("GetContentProtectionRuleList",
 			testutils.MockContext,
 			botman.GetContentProtectionRuleListRequest{ConfigID: 43253, Version: 15, SecurityPolicyID: "AAAA_81230"},
@@ -121,7 +121,7 @@ func TestDataContentProtectionRule(t *testing.T) {
 	t.Run("DataContentProtectionRule missing required fields", func(t *testing.T) {
 		t.Parallel()
 		client := edgegrid.NewTestClient()
-		mockGetConfigVersion(client)
+		mockGetConfigVersion(client.APPSEC)
 		resource.UnitTest(t, resource.TestCase{
 			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
 			Steps: []resource.TestStep{

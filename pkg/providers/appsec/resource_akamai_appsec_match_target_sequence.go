@@ -55,7 +55,7 @@ func resourceMatchTargetSequenceCreate(ctx context.Context, d *schema.ResourceDa
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "matchTargetSequence", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "matchTargetSequence", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -93,7 +93,7 @@ func resourceMatchTargetSequenceRead(ctx context.Context, d *schema.ResourceData
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -141,7 +141,7 @@ func resourceMatchTargetSequenceUpdate(ctx context.Context, d *schema.ResourceDa
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "matchTargetSequence", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "matchTargetSequence", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}

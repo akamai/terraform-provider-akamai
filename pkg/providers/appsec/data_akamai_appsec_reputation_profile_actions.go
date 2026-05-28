@@ -64,7 +64,7 @@ func dataSourceReputationProfileActionsRead(ctx context.Context, d *schema.Resou
 	}
 	getReputationProfileActions.ConfigID = configID
 
-	if getReputationProfileActions.Version, err = getLatestConfigVersion(ctx, configID, m); err != nil {
+	if getReputationProfileActions.Version, err = getLatestConfigVersion(ctx, configID, client); err != nil {
 		return diag.FromErr(err)
 	}
 

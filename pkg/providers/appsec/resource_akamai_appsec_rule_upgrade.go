@@ -81,7 +81,7 @@ func resourceRuleUpgradeCreate(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "krsRuleUgrade", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "krsRuleUgrade", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -128,7 +128,7 @@ func resourceRuleUpgradeRead(ctx context.Context, d *schema.ResourceData, m inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -179,7 +179,7 @@ func resourceRuleUpgradeUpdate(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "securityPolicyRename", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "securityPolicyRename", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}

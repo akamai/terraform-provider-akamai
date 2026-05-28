@@ -66,7 +66,7 @@ func resourceCustomClientSequenceUpsert(ctx context.Context, d *schema.ResourceD
 		return configID, diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "customClientSequence", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "customClientSequence", meta.Client().GetAPPSEC())
 	if err != nil {
 		return configID, diag.FromErr(err)
 	}
@@ -105,7 +105,7 @@ func resourceCustomClientSequenceRead(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}

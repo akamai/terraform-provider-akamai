@@ -61,7 +61,7 @@ func resourceAdvancedSettingsPragmaHeaderCreate(ctx context.Context, d *schema.R
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "pragmaSetting", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "pragmaSetting", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -111,7 +111,7 @@ func resourceAdvancedSettingsPragmaHeaderRead(ctx context.Context, d *schema.Res
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version, err := getLatestConfigVersion(ctx, configID, m)
+		version, err := getLatestConfigVersion(ctx, configID, client)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -125,7 +125,7 @@ func resourceAdvancedSettingsPragmaHeaderRead(ctx context.Context, d *schema.Res
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version, err := getLatestConfigVersion(ctx, configID, m)
+		version, err := getLatestConfigVersion(ctx, configID, client)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -180,7 +180,7 @@ func resourceAdvancedSettingsPragmaHeaderDelete(ctx context.Context, d *schema.R
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version, err := getModifiableConfigVersion(ctx, configID, "pragmaSetting", m)
+		version, err := getModifiableConfigVersion(ctx, configID, "pragmaSetting", client)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -195,7 +195,7 @@ func resourceAdvancedSettingsPragmaHeaderDelete(ctx context.Context, d *schema.R
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version, err := getModifiableConfigVersion(ctx, configID, "pragmaSetting", m)
+		version, err := getModifiableConfigVersion(ctx, configID, "pragmaSetting", client)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -228,7 +228,7 @@ func resourceAdvancedSettingsPragmaHeaderUpdate(ctx context.Context, d *schema.R
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version, err := getModifiableConfigVersion(ctx, configID, "pragmaSetting", m)
+		version, err := getModifiableConfigVersion(ctx, configID, "pragmaSetting", client)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -243,7 +243,7 @@ func resourceAdvancedSettingsPragmaHeaderUpdate(ctx context.Context, d *schema.R
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version, err := getModifiableConfigVersion(ctx, configID, "pragmaSetting", m)
+		version, err := getModifiableConfigVersion(ctx, configID, "pragmaSetting", client)
 		if err != nil {
 			return diag.FromErr(err)
 		}

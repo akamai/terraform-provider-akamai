@@ -59,7 +59,7 @@ func dataSourceAPIRequestConstraintsRead(ctx context.Context, d *schema.Resource
 	}
 	getAPIiRequestConstraints.ConfigID = configID
 
-	if getAPIiRequestConstraints.Version, err = getLatestConfigVersion(ctx, configID, m); err != nil {
+	if getAPIiRequestConstraints.Version, err = getLatestConfigVersion(ctx, configID, client); err != nil {
 		return diag.FromErr(err)
 	}
 

@@ -53,7 +53,7 @@ func dataSourceSlowPostProtectionSettingsRead(ctx context.Context, d *schema.Res
 	}
 	getSlowPostProtectionSettings.ConfigID = configID
 
-	if getSlowPostProtectionSettings.Version, err = getLatestConfigVersion(ctx, configID, m); err != nil {
+	if getSlowPostProtectionSettings.Version, err = getLatestConfigVersion(ctx, configID, client); err != nil {
 		return diag.FromErr(err)
 	}
 

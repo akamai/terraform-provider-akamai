@@ -53,7 +53,7 @@ func resourceCustomCodeCreate(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "customCode", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "customCode", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -91,7 +91,7 @@ func resourceCustomCodeRead(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -134,7 +134,7 @@ func resourceCustomCodeUpdate(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "customCode", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "customCode", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}

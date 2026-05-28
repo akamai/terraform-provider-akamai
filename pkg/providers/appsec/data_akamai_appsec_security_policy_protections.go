@@ -103,7 +103,7 @@ func dataSourcePolicyProtectionsRead(ctx context.Context, d *schema.ResourceData
 	}
 	getPolicyProtections.ConfigID = configID
 
-	if getPolicyProtections.Version, err = getLatestConfigVersion(ctx, configID, m); err != nil {
+	if getPolicyProtections.Version, err = getLatestConfigVersion(ctx, configID, client); err != nil {
 		return diag.FromErr(err)
 	}
 

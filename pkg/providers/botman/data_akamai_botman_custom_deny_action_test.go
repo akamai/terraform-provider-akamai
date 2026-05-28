@@ -15,7 +15,7 @@ func TestDataCustomDenyAction(t *testing.T) {
 		t.Parallel()
 
 		client := edgegrid.NewTestClient()
-		mockGetConfigVersion(client)
+		mockGetConfigVersion(client.APPSEC)
 		response := botman.GetCustomDenyActionListResponse{
 			CustomDenyActions: []map[string]interface{}{
 				{"actionId": "b85e3eaa-d334-466d-857e-33308ce416be", "testKey": "testValue1"},
@@ -57,7 +57,7 @@ func TestDataCustomDenyAction(t *testing.T) {
 		t.Parallel()
 
 		client := edgegrid.NewTestClient()
-		mockGetConfigVersion(client)
+		mockGetConfigVersion(client.APPSEC)
 		response := botman.GetCustomDenyActionListResponse{
 			CustomDenyActions: []map[string]interface{}{
 				{"actionId": "cc9c3f89-e179-4892-89cf-d5e623ba9dc7", "testKey": "testValue3"},

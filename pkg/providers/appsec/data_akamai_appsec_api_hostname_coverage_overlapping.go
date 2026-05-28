@@ -53,7 +53,7 @@ func dataSourceAPIHostnameCoverageOverlappingRead(ctx context.Context, d *schema
 	}
 	getAPIHostnameCoverageOverlapping.ConfigID = configID
 
-	if getAPIHostnameCoverageOverlapping.Version, err = getLatestConfigVersion(ctx, configID, m); err != nil {
+	if getAPIHostnameCoverageOverlapping.Version, err = getLatestConfigVersion(ctx, configID, client); err != nil {
 		return diag.FromErr(err)
 	}
 

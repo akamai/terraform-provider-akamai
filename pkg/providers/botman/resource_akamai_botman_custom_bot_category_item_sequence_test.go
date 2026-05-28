@@ -18,7 +18,7 @@ func TestResourceCustomBotCategoryItemSequenceMissingInput(t *testing.T) {
 		t.Parallel()
 
 		client := edgegrid.NewTestClient()
-		mockGetConfigVersion(client)
+		mockGetConfigVersion(client.APPSEC)
 		resource.UnitTest(t, resource.TestCase{
 			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
 			Steps: []resource.TestStep{
@@ -39,7 +39,7 @@ func TestResourceCustomBotCategoryItemSequenceError(t *testing.T) {
 		t.Parallel()
 
 		client := edgegrid.NewTestClient()
-		mockGetConfigVersion(client)
+		mockGetConfigVersion(client.APPSEC)
 		createCategoryIDs := botman.UUIDSequence{Sequence: []string{"fake3f89-e179-4892-89cf-d5e623ba9dc7", "fake85df-e399-43e8-bb0f-c0d980a88e4f", "fake09b8-4fd5-430e-a061-1c61df1d2ac2"}}
 		client.BotMan.On("UpdateCustomBotCategoryItemSequence",
 			testutils.MockContext,
@@ -80,7 +80,7 @@ func TestResourceCustomBotCategoryItemSequence(t *testing.T) {
 		t.Parallel()
 
 		client := edgegrid.NewTestClient()
-		mockGetConfigVersion(client)
+		mockGetConfigVersion(client.APPSEC)
 		createCategoryIDs := botman.UUIDSequence{Sequence: []string{"fake3f89-e179-4892-89cf-d5e623ba9dc7", "fake85df-e399-43e8-bb0f-c0d980a88e4f", "fake09b8-4fd5-430e-a061-1c61df1d2ac2"}}
 		updateCategoryIDs := botman.UUIDSequence{Sequence: []string{createCategoryIDs.Sequence[1], createCategoryIDs.Sequence[0], createCategoryIDs.Sequence[2]}}
 		createResponse := botman.UpdateCustomBotCategoryItemSequenceResponse(createCategoryIDs)

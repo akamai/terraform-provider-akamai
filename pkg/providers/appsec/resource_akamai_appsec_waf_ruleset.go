@@ -33,7 +33,7 @@ var (
 
 // wafRulesetResource represents akamai_appsec_waf_ruleset resource
 type wafRulesetResource struct {
-	meta meta.Meta
+	meta.Resource
 }
 
 // wafRulesetResourceModel is a model for akamai_appsec_waf_ruleset resource
@@ -175,25 +175,6 @@ func attackGroupsType() types.ObjectType {
 	}
 }
 
-// Configure implements resource.ResourceWithConfigure.
-func (r *wafRulesetResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		// ProviderData is nil when Configure is run first time as part of ValidateDataSourceConfig in framework provider
-		return
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Resource Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-			)
-		}
-	}()
-
-	r.meta = meta.Must(req.ProviderData)
-}
-
 // ValidateConfig implements resource.ResourceWithValidateConfig.
 func (r *wafRulesetResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
 	var data wafRulesetResourceModel
@@ -248,13 +229,13 @@ func (r *wafRulesetResource) Create(ctx context.Context, req resource.CreateRequ
 	configID := data.ConfigID.ValueInt64()
 
 	// Get modifiable version of the configuration
-	version, err := getModifiableConfigVersion(ctx, int(configID), wafRulesetResourceName, r.meta)
+	version, err := getModifiableConfigVersion(ctx, int(configID), wafRulesetResourceName, r.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError(readConfigVersionError, err.Error())
 		return
 	}
 
-	client := r.meta.Client().GetAPPSEC()
+	client := r.Client.GetAPPSEC()
 
 	// Build composite ruleset update request with all rules and attack groups
 	updateRequest := appsec.UpdateWAFCompositeRulesetRequest{
@@ -346,7 +327,7 @@ func (r *wafRulesetResource) Read(ctx context.Context, req resource.ReadRequest,
 
 	configID := data.ConfigID.ValueInt64()
 
-	version, err := getLatestConfigVersion(ctx, int(configID), r.meta)
+	version, err := getLatestConfigVersion(ctx, int(configID), r.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("invalid config version: ", err.Error())
 		return
@@ -354,7 +335,7 @@ func (r *wafRulesetResource) Read(ctx context.Context, req resource.ReadRequest,
 
 	getWAFRulesetRequest := buildGetWAFRulesetRequest(data, version)
 
-	client := r.meta.Client().GetAPPSEC()
+	client := r.Client.GetAPPSEC()
 	wafRuleset, err := client.GetWAFCompositeRuleset(ctx, getWAFRulesetRequest)
 	if err != nil {
 		// If the WAF Ruleset or security policy is not found, remove the resource from state.
@@ -401,13 +382,13 @@ func (r *wafRulesetResource) Update(ctx context.Context, req resource.UpdateRequ
 	configID := int(plan.ConfigID.ValueInt64())
 
 	// Get modifiable version of the configuration
-	version, err := getModifiableConfigVersion(ctx, configID, wafRulesetResourceName, r.meta)
+	version, err := getModifiableConfigVersion(ctx, configID, wafRulesetResourceName, r.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError(readConfigVersionError, err.Error())
 		return
 	}
 
-	client := r.meta.Client().GetAPPSEC()
+	client := r.Client.GetAPPSEC()
 
 	// Build composite ruleset update request
 	updateRequest := appsec.UpdateWAFCompositeRulesetRequest{
@@ -570,13 +551,13 @@ func (r *wafRulesetResource) Delete(ctx context.Context, req resource.DeleteRequ
 	configID := int(data.ConfigID.ValueInt64())
 
 	// Get modifiable version of the configuration
-	version, err := getModifiableConfigVersion(ctx, configID, wafRulesetResourceName, r.meta)
+	version, err := getModifiableConfigVersion(ctx, configID, wafRulesetResourceName, r.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError(readConfigVersionError, err.Error())
 		return
 	}
 
-	client := r.meta.Client().GetAPPSEC()
+	client := r.Client.GetAPPSEC()
 
 	// Build update request to reset only managed rules and attack groups to action="none"
 	updateRequest := appsec.UpdateWAFCompositeRulesetRequest{
@@ -660,7 +641,7 @@ func (r *wafRulesetResource) ImportState(ctx context.Context, req resource.Impor
 		return
 	}
 
-	version, err := getLatestConfigVersion(ctx, int(configID), r.meta)
+	version, err := getLatestConfigVersion(ctx, int(configID), r.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("invalid config version: ", err.Error())
 		return
@@ -677,7 +658,7 @@ func (r *wafRulesetResource) ImportState(ctx context.Context, req resource.Impor
 		PolicyID: policyID,
 	}
 
-	client := r.meta.Client().GetAPPSEC()
+	client := r.Client.GetAPPSEC()
 	wafRuleset, err := client.GetWAFCompositeRuleset(ctx, getWAFRulesetRequest)
 	if err != nil {
 		resp.Diagnostics.AddError(readWAFRulesetError, err.Error())

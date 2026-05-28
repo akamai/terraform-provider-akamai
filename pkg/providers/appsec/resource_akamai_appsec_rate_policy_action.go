@@ -72,7 +72,7 @@ func resourceRatePolicyActionCreate(ctx context.Context, d *schema.ResourceData,
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "ratePolicyAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ratePolicyAction", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -128,7 +128,7 @@ func resourceRatePolicyActionRead(ctx context.Context, d *schema.ResourceData, m
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -188,7 +188,7 @@ func resourceRatePolicyActionUpdate(ctx context.Context, d *schema.ResourceData,
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "ratePolicyAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ratePolicyAction", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -238,7 +238,7 @@ func resourceRatePolicyActionDelete(ctx context.Context, d *schema.ResourceData,
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "ratePolicyAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ratePolicyAction", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}

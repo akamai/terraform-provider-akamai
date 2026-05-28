@@ -65,7 +65,7 @@ func resourceAPIConstraintsProtectionCreate(ctx context.Context, d *schema.Resou
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "apiConstraintsProtection", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "apiConstraintsProtection", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -108,7 +108,7 @@ func resourceAPIConstraintsProtectionRead(ctx context.Context, d *schema.Resourc
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -163,7 +163,7 @@ func resourceAPIConstraintsProtectionUpdate(ctx context.Context, d *schema.Resou
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "apiConstraintsProtection", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "apiConstraintsProtection", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -202,7 +202,7 @@ func resourceAPIConstraintsProtectionDelete(ctx context.Context, d *schema.Resou
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "apiConstraintsProtection", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "apiConstraintsProtection", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}

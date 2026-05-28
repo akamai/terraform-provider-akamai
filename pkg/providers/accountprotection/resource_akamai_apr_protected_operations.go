@@ -68,7 +68,7 @@ func createResourceProtectedOperations(ctx context.Context, d *schema.ResourceDa
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "ProtectedOperation", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ProtectedOperation", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -128,7 +128,7 @@ func readProtectedOperations(ctx context.Context, d *schema.ResourceData, m inte
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -209,7 +209,7 @@ func updateResourceProtectedOperation(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "ProtectedOperation", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ProtectedOperation", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -257,7 +257,7 @@ func deleteResourceProtectedOperation(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "ProtectedOperation", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ProtectedOperation", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}

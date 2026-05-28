@@ -53,7 +53,7 @@ func dataSourceRuleUpgradeRead(ctx context.Context, d *schema.ResourceData, m in
 	}
 	getRuleUpgrade.ConfigID = configID
 
-	if getRuleUpgrade.Version, err = getLatestConfigVersion(ctx, configID, m); err != nil {
+	if getRuleUpgrade.Version, err = getLatestConfigVersion(ctx, configID, client); err != nil {
 		return diag.FromErr(err)
 	}
 

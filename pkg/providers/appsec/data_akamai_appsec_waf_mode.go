@@ -78,7 +78,7 @@ func dataSourceWAFModeRead(ctx context.Context, d *schema.ResourceData, m interf
 	}
 	getWAFMode.ConfigID = configID
 
-	if getWAFMode.Version, err = getLatestConfigVersion(ctx, configID, m); err != nil {
+	if getWAFMode.Version, err = getLatestConfigVersion(ctx, configID, client); err != nil {
 		return diag.FromErr(err)
 	}
 

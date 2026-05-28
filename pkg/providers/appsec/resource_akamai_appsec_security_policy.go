@@ -80,7 +80,7 @@ func resourceSecurityPolicyCreate(ctx context.Context, d *schema.ResourceData, m
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "securityPolicy", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "securityPolicy", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -160,7 +160,7 @@ func resourceSecurityPolicyRead(ctx context.Context, d *schema.ResourceData, m i
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -213,7 +213,7 @@ func resourceSecurityPolicyUpdate(ctx context.Context, d *schema.ResourceData, m
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "securityPolicy", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "securityPolicy", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -260,17 +260,17 @@ func resourceSecurityPolicyDelete(ctx context.Context, d *schema.ResourceData, m
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "securityPolicy", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "securityPolicy", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	securityPolicyID := iDParts[1]
 
-	latestVersion, err := getLatestConfigVersion(ctx, configID, m)
+	latestVersion, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	stagingVersion, productionVersion, err := getActiveConfigVersions(ctx, configID, m)
+	stagingVersion, productionVersion, err := getActiveConfigVersions(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}

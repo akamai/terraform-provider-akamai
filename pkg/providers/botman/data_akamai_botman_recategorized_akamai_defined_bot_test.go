@@ -15,7 +15,7 @@ func TestDataRecategorizedAkamaiDefinedBot(t *testing.T) {
 		t.Parallel()
 
 		client := edgegrid.NewTestClient()
-		mockGetConfigVersion(client)
+		mockGetConfigVersion(client.APPSEC)
 		response := botman.GetRecategorizedAkamaiDefinedBotListResponse{
 			Bots: []botman.RecategorizedAkamaiDefinedBotResponse{
 				{BotID: "b85e3eaa-d334-466d-857e-33308ce416be", CategoryID: "39cbadc6-c5ef-42d1-9290-7895f24316ad"},
@@ -57,7 +57,7 @@ func TestDataRecategorizedAkamaiDefinedBot(t *testing.T) {
 		t.Parallel()
 
 		client := edgegrid.NewTestClient()
-		mockGetConfigVersion(client)
+		mockGetConfigVersion(client.APPSEC)
 		response := botman.GetRecategorizedAkamaiDefinedBotListResponse{
 			Bots: []botman.RecategorizedAkamaiDefinedBotResponse{
 				{BotID: "cc9c3f89-e179-4892-89cf-d5e623ba9dc7", CategoryID: "0d38d0fe-b05d-42f6-a58f-bc98c821793e"},

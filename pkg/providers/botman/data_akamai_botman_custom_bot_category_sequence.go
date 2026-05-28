@@ -39,7 +39,7 @@ func dataSourceCustomBotCategorySequenceRead(ctx context.Context, d *schema.Reso
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}

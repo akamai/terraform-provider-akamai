@@ -89,7 +89,7 @@ func TestResourceAkamaiBotCategoryAction(t *testing.T) {
 
 func setupMockedAkamaiBotCategoryActionBotmanClient(errScenario bool) *edgegrid.TestClient {
 	client := edgegrid.NewTestClient()
-	mockGetConfigVersion(client)
+	mockGetConfigVersion(client.APPSEC)
 	createResponse := map[string]interface{}{"categoryId": "cc9c3f89-e179-4892-89cf-d5e623ba9dc7", "testKey": "testValue3"}
 	createRequest := `{"categoryId":"cc9c3f89-e179-4892-89cf-d5e623ba9dc7", "testKey":"testValue3"}`
 	client.BotMan.On("UpdateAkamaiBotCategoryAction",

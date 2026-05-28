@@ -63,7 +63,7 @@ func TestResourceProtectedOperations(t *testing.T) {
 		}
 
 		client := edgegrid.NewTestClient()
-		mockGetConfigVersion(client)
+		mockGetConfigVersion(client.APPSEC)
 		client.AccountProtection.On("CreateProtectedOperations",
 			testutils.MockContext,
 			apr.CreateProtectedOperationsRequest{

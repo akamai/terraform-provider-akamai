@@ -53,7 +53,7 @@ func resourceClientSideSecurityCreate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "clientSideSecurity", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "clientSideSecurity", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -91,7 +91,7 @@ func resourceClientSideSecurityRead(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -134,7 +134,7 @@ func resourceClientSideSecurityUpdate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "clientSideSecurity", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "clientSideSecurity", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}

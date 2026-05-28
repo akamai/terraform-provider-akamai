@@ -60,7 +60,7 @@ func resourceConditionalActionCreate(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "ConditionalAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ConditionalAction", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -103,7 +103,7 @@ func resourceConditionalActionRead(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -158,7 +158,7 @@ func resourceConditionalActionUpdate(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "ConditionalAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ConditionalAction", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -202,7 +202,7 @@ func resourceConditionalActionDelete(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "ConditionalAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ConditionalAction", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}

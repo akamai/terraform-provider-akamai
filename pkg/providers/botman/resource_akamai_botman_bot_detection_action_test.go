@@ -85,7 +85,7 @@ func TestResourceBotDetectionAction(t *testing.T) {
 }
 func setupMockedBotDetectionActionBotmanClient(errScenario bool) *edgegrid.TestClient {
 	client := edgegrid.NewTestClient()
-	mockGetConfigVersion(client)
+	mockGetConfigVersion(client.APPSEC)
 	createResponse := map[string]interface{}{"detectionId": "cc9c3f89-e179-4892-89cf-d5e623ba9dc7", "testKey": "testValue3"}
 	createRequest := `{"detectionId":"cc9c3f89-e179-4892-89cf-d5e623ba9dc7", "testKey":"testValue3"}`
 	client.BotMan.On("UpdateBotDetectionAction",

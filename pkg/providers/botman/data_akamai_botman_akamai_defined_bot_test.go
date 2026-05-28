@@ -14,7 +14,7 @@ func TestDataAkamaiDefinedBot(t *testing.T) {
 	t.Run("DataAkamaiDefinedBot", func(t *testing.T) {
 		t.Parallel()
 		client := edgegrid.NewTestClient()
-		mockGetConfigVersion(client)
+		mockGetConfigVersion(client.APPSEC)
 
 		response := botman.GetAkamaiDefinedBotListResponse{
 			Bots: []map[string]interface{}{
@@ -55,7 +55,7 @@ func TestDataAkamaiDefinedBot(t *testing.T) {
 	t.Run("DataAkamaiDefinedBot filter by name", func(t *testing.T) {
 		t.Parallel()
 		client := edgegrid.NewTestClient()
-		mockGetConfigVersion(client)
+		mockGetConfigVersion(client.APPSEC)
 
 		response := botman.GetAkamaiDefinedBotListResponse{
 			Bots: []map[string]interface{}{

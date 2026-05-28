@@ -48,7 +48,7 @@ func dataSourceAdvancedSettingsJA4FingerprintRead(ctx context.Context, d *schema
 	}
 	getAdvancedSettingsJA4FingerprintReq.ConfigID = configID
 
-	if getAdvancedSettingsJA4FingerprintReq.Version, err = getLatestConfigVersion(ctx, configID, m); err != nil {
+	if getAdvancedSettingsJA4FingerprintReq.Version, err = getLatestConfigVersion(ctx, configID, client); err != nil {
 		return diag.FromErr(err)
 	}
 

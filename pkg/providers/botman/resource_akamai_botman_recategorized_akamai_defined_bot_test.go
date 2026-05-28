@@ -15,7 +15,7 @@ func TestResourceRecategorizedAkamaiDefinedBot(t *testing.T) {
 		t.Parallel()
 
 		client := edgegrid.NewTestClient()
-		mockGetConfigVersion(client)
+		mockGetConfigVersion(client.APPSEC)
 		createResponse := botman.RecategorizedAkamaiDefinedBotResponse{BotID: "cc9c3f89-e179-4892-89cf-d5e623ba9dc7", CategoryID: "87fb601b-4d30-4e0d-a74f-dc77e2b1bb74"}
 		client.BotMan.On("CreateRecategorizedAkamaiDefinedBot",
 			testutils.MockContext,

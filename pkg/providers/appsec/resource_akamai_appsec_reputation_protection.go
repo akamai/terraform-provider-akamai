@@ -65,7 +65,7 @@ func resourceReputationProtectionCreate(ctx context.Context, d *schema.ResourceD
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "reputationProtection", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "reputationProtection", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -109,7 +109,7 @@ func resourceReputationProtectionRead(ctx context.Context, d *schema.ResourceDat
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -163,7 +163,7 @@ func resourceReputationProtectionUpdate(ctx context.Context, d *schema.ResourceD
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "reputationProtection", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "reputationProtection", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -202,7 +202,7 @@ func resourceReputationProtectionDelete(ctx context.Context, d *schema.ResourceD
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "reputationProtection", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "reputationProtection", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}

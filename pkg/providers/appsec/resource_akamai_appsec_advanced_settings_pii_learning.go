@@ -49,7 +49,7 @@ func resourceAdvancedSettingsPIILearningCreate(ctx context.Context, d *schema.Re
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "piiLearningSetting", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "piiLearningSetting", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -84,7 +84,7 @@ func resourceAdvancedSettingsPIILearningRead(ctx context.Context, d *schema.Reso
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -119,7 +119,7 @@ func resourceAdvancedSettingsPIILearningUpdate(ctx context.Context, d *schema.Re
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "piiLearningSetting", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "piiLearningSetting", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -152,7 +152,7 @@ func resourceAdvancedSettingsPIILearningDelete(ctx context.Context, d *schema.Re
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "piiLearningSetting", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "piiLearningSetting", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}

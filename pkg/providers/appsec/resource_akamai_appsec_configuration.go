@@ -203,7 +203,7 @@ func resourceConfigurationRead(ctx context.Context, d *schema.ResourceData, m in
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -273,7 +273,7 @@ func resourceConfigurationUpdate(ctx context.Context, d *schema.ResourceData, m 
 			hostnames = append(hostnames, hostname)
 		}
 
-		version, err := getModifiableConfigVersion(ctx, configID, "configuration", m)
+		version, err := getModifiableConfigVersion(ctx, configID, "configuration", client)
 		if err != nil {
 			return diag.FromErr(err)
 		}

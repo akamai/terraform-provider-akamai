@@ -52,7 +52,7 @@ func resourceBotAnalyticsCookieCreate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "botAnalyticsCookie", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "botAnalyticsCookie", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -90,7 +90,7 @@ func resourceBotAnalyticsCookieRead(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -132,7 +132,7 @@ func resourceBotAnalyticsCookieUpdate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "botAnalyticsCookie", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "botAnalyticsCookie", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}

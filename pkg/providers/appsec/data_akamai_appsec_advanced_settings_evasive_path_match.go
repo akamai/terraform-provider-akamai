@@ -54,7 +54,7 @@ func dataSourceAdvancedSettingsEvasivePathMatchRead(ctx context.Context, d *sche
 	}
 	getAdvancedSettingsEvasivePathMatch.ConfigID = configID
 
-	if getAdvancedSettingsEvasivePathMatch.Version, err = getLatestConfigVersion(ctx, configID, m); err != nil {
+	if getAdvancedSettingsEvasivePathMatch.Version, err = getLatestConfigVersion(ctx, configID, client); err != nil {
 		return diag.FromErr(err)
 	}
 

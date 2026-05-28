@@ -2,7 +2,6 @@ package appsec
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
@@ -14,7 +13,7 @@ import (
 
 type (
 	urlProtectionPoliciesDataSource struct {
-		meta meta.Meta
+		meta.DataSource
 	}
 
 	// urlProtectionPoliciesDataSourceModel maps the url protection policies data source schema data
@@ -212,22 +211,6 @@ func (d *urlProtectionPoliciesDataSource) Schema(_ context.Context, _ datasource
 	}
 }
 
-// Configure configures data source at the beginning of the lifecycle
-func (d *urlProtectionPoliciesDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Data Source Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.",
-					req.ProviderData))
-		}
-	}()
-	d.meta = meta.Must(req.ProviderData)
-}
-
 func (d *urlProtectionPoliciesDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	tflog.Debug(ctx, "URLProtectionPoliciesDataSource Read")
 
@@ -240,10 +223,10 @@ func (d *urlProtectionPoliciesDataSource) Read(ctx context.Context, req datasour
 		return
 	}
 
-	client := d.meta.Client().GetAPPSEC()
+	client := d.Client.GetAPPSEC()
 	configID := data.ConfigID.ValueInt64()
 
-	version, err := getLatestConfigVersion(ctx, int(configID), d.meta)
+	version, err := getLatestConfigVersion(ctx, int(configID), d.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("invalid config version", err.Error())
 		return

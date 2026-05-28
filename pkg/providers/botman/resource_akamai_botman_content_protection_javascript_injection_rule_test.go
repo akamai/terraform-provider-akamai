@@ -18,7 +18,7 @@ func TestResourceContentProtectionJavaScriptInjectionRule(t *testing.T) {
 		t.Parallel()
 
 		client := edgegrid.NewTestClient()
-		mockGetConfigVersion(client)
+		mockGetConfigVersion(client.APPSEC)
 		createResponse := map[string]interface{}{"contentProtectionJavaScriptInjectionRuleId": "fake3f89-e179-4892-89cf-d5e623ba9dc7", "testKey": "testValue3"}
 		createRequest := testutils.LoadFixtureBytes(t, "testdata/JsonPayload/create.json")
 		client.BotMan.On("CreateContentProtectionJavaScriptInjectionRule",
@@ -100,7 +100,7 @@ func TestResourceContentProtectionJavaScriptInjectionRule(t *testing.T) {
 	t.Run("ResourceContentProtectionJavaScriptInjectionRule missing required fields", func(t *testing.T) {
 		t.Parallel()
 		client := edgegrid.NewTestClient()
-		mockGetConfigVersion(client)
+		mockGetConfigVersion(client.APPSEC)
 		resource.UnitTest(t, resource.TestCase{
 			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
 			Steps: []resource.TestStep{
@@ -121,7 +121,7 @@ func TestResourceContentProtectionJavaScriptInjectionRule(t *testing.T) {
 	t.Run("ResourceContentProtectionJavaScriptInjectionRule error", func(t *testing.T) {
 		t.Parallel()
 		client := edgegrid.NewTestClient()
-		mockGetConfigVersion(client)
+		mockGetConfigVersion(client.APPSEC)
 		createRequest := testutils.LoadFixtureBytes(t, "testdata/JsonPayload/create.json")
 		client.BotMan.On("CreateContentProtectionJavaScriptInjectionRule",
 			testutils.MockContext,

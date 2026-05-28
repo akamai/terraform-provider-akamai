@@ -60,7 +60,7 @@ func resourceBotCategoryExceptionCreate(ctx context.Context, d *schema.ResourceD
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "botCategoryException", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "botCategoryException", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -109,7 +109,7 @@ func resourceBotCategoryExceptionRead(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -161,7 +161,7 @@ func resourceBotCategoryExceptionUpdate(ctx context.Context, d *schema.ResourceD
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "botCategoryException", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "botCategoryException", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}

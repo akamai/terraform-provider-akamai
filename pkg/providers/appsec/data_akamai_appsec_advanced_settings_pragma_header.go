@@ -54,7 +54,7 @@ func dataSourceAdvancedSettingsPragmaHeaderRead(ctx context.Context, d *schema.R
 	}
 	getAdvancedSettingsPragma.ConfigID = configID
 
-	if getAdvancedSettingsPragma.Version, err = getLatestConfigVersion(ctx, configID, m); err != nil {
+	if getAdvancedSettingsPragma.Version, err = getLatestConfigVersion(ctx, configID, client); err != nil {
 		return diag.FromErr(err)
 	}
 

@@ -67,7 +67,7 @@ func resourceAkamaiBotCategoryActionCreate(ctx context.Context, d *schema.Resour
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "akamaiBotCategoryAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "akamaiBotCategoryAction", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -129,7 +129,7 @@ func akamaiBotCategoryActionRead(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -209,7 +209,7 @@ func resourceAkamaiBotCategoryActionUpdate(ctx context.Context, d *schema.Resour
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "akamaiBotCategoryAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "akamaiBotCategoryAction", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}

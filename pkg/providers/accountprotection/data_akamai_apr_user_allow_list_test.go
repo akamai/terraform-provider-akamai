@@ -80,7 +80,7 @@ func TestDataUserAllowList(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			client := edgegrid.NewTestClient()
-			mockGetConfigVersion(client)
+			mockGetConfigVersion(client.APPSEC)
 			test.setupMock(client.AccountProtection)
 
 			resource.UnitTest(t, resource.TestCase{

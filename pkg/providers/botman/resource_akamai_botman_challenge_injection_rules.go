@@ -53,7 +53,7 @@ func resourceChallengeInjectionRulesCreate(ctx context.Context, d *schema.Resour
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "challengeInjectionRules", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "challengeInjectionRules", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -91,7 +91,7 @@ func resourceChallengeInjectionRulesRead(ctx context.Context, d *schema.Resource
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -134,7 +134,7 @@ func resourceChallengeInjectionRulesUpdate(ctx context.Context, d *schema.Resour
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "challengeInjectionRules", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "challengeInjectionRules", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}

@@ -53,7 +53,7 @@ func createResourceUserRiskResponseStrategy(ctx context.Context, d *schema.Resou
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "userRiskResponseStrategy", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "userRiskResponseStrategy", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -91,7 +91,7 @@ func readResourceUserRiskResponseStrategy(ctx context.Context, d *schema.Resourc
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -136,7 +136,7 @@ func updateResourceUserRiskResponseStrategy(ctx context.Context, d *schema.Resou
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "userRiskResponseStrategy", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "userRiskResponseStrategy", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}

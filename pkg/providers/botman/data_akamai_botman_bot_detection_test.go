@@ -14,7 +14,7 @@ func TestDataBotDetection(t *testing.T) {
 	t.Run("DataBotDetection", func(t *testing.T) {
 		t.Parallel()
 		client := edgegrid.NewTestClient()
-		mockGetConfigVersion(client)
+		mockGetConfigVersion(client.APPSEC)
 
 		response := botman.GetBotDetectionListResponse{
 			Detections: []map[string]interface{}{
@@ -55,7 +55,7 @@ func TestDataBotDetection(t *testing.T) {
 	t.Run("DataBotDetection filter by BotName", func(t *testing.T) {
 		t.Parallel()
 		client := edgegrid.NewTestClient()
-		mockGetConfigVersion(client)
+		mockGetConfigVersion(client.APPSEC)
 
 		response := botman.GetBotDetectionListResponse{
 			Detections: []map[string]interface{}{

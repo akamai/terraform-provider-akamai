@@ -60,7 +60,7 @@ func resourceCustomBotCategoryCreate(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "CustomBotCategory", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "CustomBotCategory", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -103,7 +103,7 @@ func resourceCustomBotCategoryRead(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -161,7 +161,7 @@ func resourceCustomBotCategoryUpdate(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "CustomBotCategory", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "CustomBotCategory", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -205,7 +205,7 @@ func resourceCustomBotCategoryDelete(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "CustomBotCategory", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "CustomBotCategory", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}

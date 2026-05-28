@@ -77,7 +77,7 @@ func resourceRuleCreate(ctx context.Context, d *schema.ResourceData, m interface
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "rule", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "rule", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -140,7 +140,7 @@ func resourceRuleRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -205,7 +205,7 @@ func resourceRuleUpdate(ctx context.Context, d *schema.ResourceData, m interface
 		return diag.FromErr(err)
 	}
 	policyID := iDParts[1]
-	version, err := getModifiableConfigVersion(ctx, configID, "rule", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "rule", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -260,7 +260,7 @@ func resourceRuleDelete(ctx context.Context, d *schema.ResourceData, m interface
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "rule", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "rule", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}

@@ -15,7 +15,7 @@ func TestResourceChallengeInjectionRules(t *testing.T) {
 		t.Parallel()
 
 		client := edgegrid.NewTestClient()
-		mockGetConfigVersion(client)
+		mockGetConfigVersion(client.APPSEC)
 		createResponse := map[string]interface{}{"testKey": "testValue3"}
 		createRequest := testutils.LoadFixtureBytes(t, "testdata/JsonPayload/create.json")
 		client.BotMan.On("UpdateChallengeInjectionRules",

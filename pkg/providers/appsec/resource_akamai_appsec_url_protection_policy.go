@@ -36,7 +36,7 @@ var (
 // urlProtectionPolicyResource represents akamai_appsec_url_protection_policy resource.
 // Import format: "<config_id>:<url_protection_policy_id>".
 type urlProtectionPolicyResource struct {
-	meta meta.Meta
+	meta.Resource
 }
 
 type urlProtectionPolicyResourceModel struct {
@@ -249,23 +249,6 @@ func intelligentLoadSheddingAttrTypes() map[string]attr.Type {
 	return intelligentLoadSheddingSchema().GetType().(attr.TypeWithAttributeTypes).AttributeTypes()
 }
 
-func (r *urlProtectionPolicyResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-
-	defer func() {
-		if rec := recover(); rec != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Resource Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-			)
-		}
-	}()
-
-	r.meta = meta.Must(req.ProviderData)
-}
-
 func (r *urlProtectionPolicyResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
 	var data urlProtectionPolicyResourceModel
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
@@ -460,7 +443,7 @@ func (r *urlProtectionPolicyResource) Create(ctx context.Context, req resource.C
 
 	configID := plan.ConfigID.ValueInt64()
 
-	version, err := getModifiableConfigVersion(ctx, int(configID), urlProtectionPolicyResourceName, r.meta)
+	version, err := getModifiableConfigVersion(ctx, int(configID), urlProtectionPolicyResourceName, r.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("Unable to read latest config version from API", err.Error())
 		return
@@ -472,7 +455,7 @@ func (r *urlProtectionPolicyResource) Create(ctx context.Context, req resource.C
 		return
 	}
 
-	client := r.meta.Client().GetAPPSEC()
+	client := r.Client.GetAPPSEC()
 	out, err := client.CreateURLProtectionPolicy(ctx, *createReq)
 	if err != nil {
 		resp.Diagnostics.AddError("Error creating URL Protection Policy", err.Error())
@@ -550,7 +533,7 @@ func (r *urlProtectionPolicyResource) Read(ctx context.Context, req resource.Rea
 	configID := state.ConfigID.ValueInt64()
 	urlProtectionID := state.URLProtectionID.ValueInt64()
 
-	version, err := getLatestConfigVersion(ctx, int(configID), r.meta)
+	version, err := getLatestConfigVersion(ctx, int(configID), r.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("invalid config version", err.Error())
 		return
@@ -562,7 +545,7 @@ func (r *urlProtectionPolicyResource) Read(ctx context.Context, req resource.Rea
 		URLProtectionPolicyID: urlProtectionID,
 	}
 
-	client := r.meta.Client().GetAPPSEC()
+	client := r.Client.GetAPPSEC()
 	out, err := client.GetURLProtectionPolicy(ctx, getReq)
 	if err != nil {
 		resp.Diagnostics.AddError("calling 'GetURLProtectionPolicy'", err.Error())
@@ -645,7 +628,7 @@ func (r *urlProtectionPolicyResource) Update(ctx context.Context, req resource.U
 	configID := plan.ConfigID.ValueInt64()
 	urlProtectionID := state.URLProtectionID.ValueInt64()
 
-	version, err := getModifiableConfigVersion(ctx, int(configID), urlProtectionPolicyResourceName, r.meta)
+	version, err := getModifiableConfigVersion(ctx, int(configID), urlProtectionPolicyResourceName, r.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("Unable to read latest config version from API", err.Error())
 		return
@@ -657,7 +640,7 @@ func (r *urlProtectionPolicyResource) Update(ctx context.Context, req resource.U
 		return
 	}
 
-	client := r.meta.Client().GetAPPSEC()
+	client := r.Client.GetAPPSEC()
 	out, err := client.UpdateURLProtectionPolicy(ctx, *updateReq)
 	if err != nil {
 		resp.Diagnostics.AddError("Error updating URL Protection Policy", err.Error())
@@ -735,7 +718,7 @@ func (r *urlProtectionPolicyResource) Delete(ctx context.Context, req resource.D
 	configID := state.ConfigID.ValueInt64()
 	urlProtectionID := state.URLProtectionID.ValueInt64()
 
-	version, err := getModifiableConfigVersion(ctx, int(configID), urlProtectionPolicyResourceName, r.meta)
+	version, err := getModifiableConfigVersion(ctx, int(configID), urlProtectionPolicyResourceName, r.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("Unable to read latest config version from API", err.Error())
 		return
@@ -747,7 +730,7 @@ func (r *urlProtectionPolicyResource) Delete(ctx context.Context, req resource.D
 		URLProtectionPolicyID: urlProtectionID,
 	}
 
-	client := r.meta.Client().GetAPPSEC()
+	client := r.Client.GetAPPSEC()
 	if err := client.RemoveURLProtectionPolicy(ctx, deleteReq); err != nil {
 		resp.Diagnostics.AddError("Error deleting URL Protection Policy", err.Error())
 		return

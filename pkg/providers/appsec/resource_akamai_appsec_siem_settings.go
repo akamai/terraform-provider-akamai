@@ -173,7 +173,7 @@ func resourceSiemSettingsCreate(ctx context.Context, d *schema.ResourceData, m i
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "siemSetting", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "siemSetting", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -250,7 +250,7 @@ func resourceSiemSettingsRead(ctx context.Context, d *schema.ResourceData, m int
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -305,7 +305,7 @@ func resourceSiemSettingsUpdate(ctx context.Context, d *schema.ResourceData, m i
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "siemSetting", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "siemSetting", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -381,7 +381,7 @@ func resourceSiemSettingsDelete(ctx context.Context, d *schema.ResourceData, m i
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "siemSetting", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "siemSetting", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}

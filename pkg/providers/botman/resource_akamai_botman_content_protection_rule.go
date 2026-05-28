@@ -66,7 +66,7 @@ func resourceContentProtectionRuleCreate(ctx context.Context, d *schema.Resource
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, int(configID), "ContentProtectionRule", m)
+	version, err := getModifiableConfigVersion(ctx, int(configID), "ContentProtectionRule", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -118,7 +118,7 @@ func ContentProtectionRuleRead(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, int(configID), m)
+	version, err := getLatestConfigVersion(ctx, int(configID), meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -191,7 +191,7 @@ func resourceContentProtectionRuleUpdate(ctx context.Context, d *schema.Resource
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, int(configID), "ContentProtectionRule", m)
+	version, err := getModifiableConfigVersion(ctx, int(configID), "ContentProtectionRule", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -236,7 +236,7 @@ func resourceContentProtectionRuleDelete(ctx context.Context, d *schema.Resource
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, int(configID), "ContentProtectionRule", m)
+	version, err := getModifiableConfigVersion(ctx, int(configID), "ContentProtectionRule", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}

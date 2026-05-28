@@ -66,7 +66,7 @@ func resourceCustomRuleActionCreate(ctx context.Context, d *schema.ResourceData,
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "customRuleAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "customRuleAction", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -116,7 +116,7 @@ func resourceCustomRuleActionRead(ctx context.Context, d *schema.ResourceData, m
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -168,7 +168,7 @@ func resourceCustomRuleActionUpdate(ctx context.Context, d *schema.ResourceData,
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "customRuleAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "customRuleAction", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -213,7 +213,7 @@ func resourceCustomRuleActionDelete(ctx context.Context, d *schema.ResourceData,
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "customRuleAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "customRuleAction", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}

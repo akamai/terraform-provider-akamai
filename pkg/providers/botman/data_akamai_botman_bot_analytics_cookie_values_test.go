@@ -13,7 +13,7 @@ func TestDataBotAnalyticsCookieValue(t *testing.T) {
 	t.Run("DataBotAnalyticsCookieValues", func(t *testing.T) {
 		t.Parallel()
 		client := edgegrid.NewTestClient()
-		mockGetConfigVersion(client)
+		mockGetConfigVersion(client.APPSEC)
 
 		response := map[string]interface{}{
 			"values": []interface{}{

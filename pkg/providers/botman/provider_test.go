@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 )
 
@@ -16,14 +15,14 @@ func TestMain(m *testing.M) {
 
 // mockGetConfigVersion sets up the APPSEC mock to return version 15 for config 43253,
 // which is needed because botman resources call getLatestConfigVersion/getModifiableConfigVersion.
-func mockGetConfigVersion(client *edgegrid.TestClient) {
-	client.APPSEC.On("GetConfiguration", testutils.MockContext,
+func mockGetConfigVersion(client *appsec.Mock) {
+	client.On("GetConfiguration", testutils.MockContext,
 		appsec.GetConfigurationRequest{ConfigID: 43253},
 	).Return(&appsec.GetConfigurationResponse{
 		ID:            43253,
 		LatestVersion: 15,
 	}, nil).Maybe()
-	client.APPSEC.On("GetConfigurationVersion", testutils.MockContext,
+	client.On("GetConfigurationVersion", testutils.MockContext,
 		appsec.GetConfigurationVersionRequest{ConfigID: 43253, Version: 15},
 	).Return(&appsec.GetConfigurationVersionResponse{
 		ConfigID:   43253,

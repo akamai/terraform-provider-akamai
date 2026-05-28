@@ -97,7 +97,7 @@ func resourceEvalCreate(ctx context.Context, d *schema.ResourceData, m interface
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "ruleevaluation", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ruleevaluation", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -148,7 +148,7 @@ func resourceEvalRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -202,7 +202,7 @@ func resourceEvalUpdate(ctx context.Context, d *schema.ResourceData, m interface
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "ruleevaluation", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ruleevaluation", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -247,7 +247,7 @@ func resourceEvalDelete(ctx context.Context, d *schema.ResourceData, m interface
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "ruleevaluation", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ruleevaluation", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}

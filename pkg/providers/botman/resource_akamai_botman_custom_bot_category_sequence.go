@@ -49,7 +49,7 @@ func resourceCustomBotCategorySequenceCreate(ctx context.Context, d *schema.Reso
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "customBotCategorySequence", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "customBotCategorySequence", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -91,7 +91,7 @@ func resourceCustomBotCategorySequenceUpdate(ctx context.Context, d *schema.Reso
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "customBotCategorySequence", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "customBotCategorySequence", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -131,7 +131,7 @@ func resourceCustomBotCategorySequenceRead(ctx context.Context, d *schema.Resour
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}

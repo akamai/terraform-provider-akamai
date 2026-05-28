@@ -76,7 +76,7 @@ func resourceEvalGroupCreate(ctx context.Context, d *schema.ResourceData, m inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "atackGroup", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "atackGroup", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -137,7 +137,7 @@ func resourceEvalGroupRead(ctx context.Context, d *schema.ResourceData, m interf
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -197,7 +197,7 @@ func resourceEvalGroupUpdate(ctx context.Context, d *schema.ResourceData, m inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "evalGroup", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "evalGroup", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -251,7 +251,7 @@ func resourceEvalGroupDelete(ctx context.Context, d *schema.ResourceData, m inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "evalGroup", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "evalGroup", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}

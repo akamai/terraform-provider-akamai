@@ -69,7 +69,7 @@ func dataSourceEvalRulesRead(ctx context.Context, d *schema.ResourceData, m inte
 	}
 	getEvalRules.ConfigID = configID
 
-	if getEvalRules.Version, err = getLatestConfigVersion(ctx, configID, m); err != nil {
+	if getEvalRules.Version, err = getLatestConfigVersion(ctx, configID, client); err != nil {
 		return diag.FromErr(err)
 	}
 

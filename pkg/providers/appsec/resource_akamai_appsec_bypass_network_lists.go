@@ -70,7 +70,7 @@ func resourceBypassNetworkListsCreate(ctx context.Context, d *schema.ResourceDat
 		networkListIDList = append(networkListIDList, networkListID.(string))
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "bypassnetworklists", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "bypassnetworklists", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -105,7 +105,7 @@ func resourceBypassNetworkListsRead(ctx context.Context, d *schema.ResourceData,
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -159,7 +159,7 @@ func resourceBypassNetworkListsUpdate(ctx context.Context, d *schema.ResourceDat
 		networkListIDList = append(networkListIDList, networkListID.(string))
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "bypassnetworklists", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "bypassnetworklists", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -199,7 +199,7 @@ func resourceBypassNetworkListsDelete(ctx context.Context, d *schema.ResourceDat
 	// Send an empty list to remove the entire current list.
 	networkListIDList := make([]string, 0)
 
-	version, err := getModifiableConfigVersion(ctx, configID, "bypassnetworklists", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "bypassnetworklists", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}

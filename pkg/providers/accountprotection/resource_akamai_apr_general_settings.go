@@ -62,7 +62,7 @@ func createResourceGeneralSettings(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "aprGeneralSettings", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "aprGeneralSettings", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -112,7 +112,7 @@ func readResourceGeneralSettings(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -165,7 +165,7 @@ func updateResourceGeneralSettings(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "aprGeneralSettings", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "aprGeneralSettings", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}

@@ -89,7 +89,7 @@ func dataSourceSelectableHostnamesRead(ctx context.Context, d *schema.ResourceDa
 
 	var version int
 	if configID != 0 {
-		if version, err = getLatestConfigVersion(ctx, configID, m); err != nil {
+		if version, err = getLatestConfigVersion(ctx, configID, client); err != nil {
 			return diag.FromErr(err)
 		}
 	}

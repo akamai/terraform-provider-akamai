@@ -125,7 +125,7 @@ func dataSourceIPGeoRead(ctx context.Context, d *schema.ResourceData, m interfac
 	}
 	getIPGeo.ConfigID = configID
 
-	if getIPGeo.Version, err = getLatestConfigVersion(ctx, configID, m); err != nil {
+	if getIPGeo.Version, err = getLatestConfigVersion(ctx, configID, client); err != nil {
 		return diag.FromErr(err)
 	}
 

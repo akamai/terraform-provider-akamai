@@ -52,7 +52,7 @@ func resourceAdvancedSettingsJA4FingerprintCreate(ctx context.Context, d *schema
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "ja4Fingerprint", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ja4Fingerprint", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -90,7 +90,7 @@ func resourceAdvancedSettingsJA4FingerprintRead(ctx context.Context, d *schema.R
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -124,7 +124,7 @@ func resourceAdvancedSettingsJA4FingerprintUpdate(ctx context.Context, d *schema
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "ja4Fingerprint", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ja4Fingerprint", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -160,7 +160,7 @@ func resourceAdvancedSettingsJA4FingerprintDelete(ctx context.Context, d *schema
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "ja4Fingerprint", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ja4Fingerprint", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}

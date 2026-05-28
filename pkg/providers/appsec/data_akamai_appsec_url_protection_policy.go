@@ -16,7 +16,7 @@ import (
 
 type (
 	urlProtectionPolicyDataSource struct {
-		meta meta.Meta
+		meta.DataSource
 	}
 
 	// urlProtectionPolicyDataSourceModel maps the API response to a structure that can be used in the Terraform schema
@@ -247,22 +247,6 @@ func (d *urlProtectionPolicyDataSource) Schema(_ context.Context, _ datasource.S
 	}
 }
 
-// Configure configures data source at the beginning of the lifecycle
-func (d *urlProtectionPolicyDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Data Source Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.",
-					req.ProviderData))
-		}
-	}()
-	d.meta = meta.Must(req.ProviderData)
-}
-
 func (d *urlProtectionPolicyDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	tflog.Debug(ctx, "URLProtectionPolicyDataSource Read")
 
@@ -273,11 +257,11 @@ func (d *urlProtectionPolicyDataSource) Read(ctx context.Context, req datasource
 		return
 	}
 
-	client := d.meta.Client().GetAPPSEC()
+	client := d.Client.GetAPPSEC()
 	configID := data.ConfigID.ValueInt64()
 	urlProtectionID := data.URLProtectionID.ValueInt64()
 
-	version, err := getLatestConfigVersion(ctx, int(configID), d.meta)
+	version, err := getLatestConfigVersion(ctx, int(configID), d.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("invalid config version", err.Error())
 		return

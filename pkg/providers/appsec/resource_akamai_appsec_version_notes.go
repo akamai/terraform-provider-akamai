@@ -59,7 +59,7 @@ func resourceVersionNotesCreate(ctx context.Context, d *schema.ResourceData, m i
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "editVersionNotes", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "editVersionNotes", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -95,7 +95,7 @@ func resourceVersionNotesRead(ctx context.Context, d *schema.ResourceData, m int
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -140,7 +140,7 @@ func resourceVersionNotesUpdate(ctx context.Context, d *schema.ResourceData, m i
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "editVersionNotes", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "editVersionNotes", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}

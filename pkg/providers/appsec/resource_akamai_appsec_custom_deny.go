@@ -66,7 +66,7 @@ func resourceCustomDenyCreate(ctx context.Context, d *schema.ResourceData, m int
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "customDeny", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "customDeny", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -113,7 +113,7 @@ func resourceCustomDenyRead(ctx context.Context, d *schema.ResourceData, m inter
 	}
 	customDenyID := iDParts[1]
 
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -174,7 +174,7 @@ func resourceCustomDenyUpdate(ctx context.Context, d *schema.ResourceData, m int
 	jsonPayloadRaw := []byte(jsonpostpayload.(string))
 	rawJSON := (json.RawMessage)(jsonPayloadRaw)
 
-	version, err := getModifiableConfigVersion(ctx, configID, "customDeny", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "customDeny", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -211,7 +211,7 @@ func resourceCustomDenyDelete(ctx context.Context, d *schema.ResourceData, m int
 	}
 	customDenyID := iDParts[1]
 
-	version, err := getModifiableConfigVersion(ctx, configID, "customDeny", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "customDeny", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}

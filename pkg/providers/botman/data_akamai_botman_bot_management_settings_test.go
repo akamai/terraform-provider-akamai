@@ -15,7 +15,7 @@ func TestDataBotManagementSettings(t *testing.T) {
 		t.Parallel()
 
 		client := edgegrid.NewTestClient()
-		mockGetConfigVersion(client)
+		mockGetConfigVersion(client.APPSEC)
 		response := map[string]interface{}{"testKey": "testValue3"}
 		expectedJSON := `{"testKey":"testValue3"}`
 		client.BotMan.On("GetBotManagementSetting",

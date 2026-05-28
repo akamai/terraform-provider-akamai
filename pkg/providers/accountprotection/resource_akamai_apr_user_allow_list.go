@@ -53,7 +53,7 @@ func createResourceUserAllowList(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "aprUserAllowList", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "aprUserAllowList", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -91,7 +91,7 @@ func readResourceUserAllowList(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -144,7 +144,7 @@ func updateResourceUserAllowList(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "userAllowListId", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "userAllowListId", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -180,7 +180,7 @@ func deleteResourceUserAllowList(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "userAllowListId", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "userAllowListId", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}

@@ -65,7 +65,7 @@ func dataSourceAPIEndpointsRead(ctx context.Context, d *schema.ResourceData, m i
 	}
 	getAPIEndpoints.ConfigID = configID
 
-	if getAPIEndpoints.Version, err = getLatestConfigVersion(ctx, configID, m); err != nil {
+	if getAPIEndpoints.Version, err = getLatestConfigVersion(ctx, configID, client); err != nil {
 		return diag.FromErr(err)
 	}
 

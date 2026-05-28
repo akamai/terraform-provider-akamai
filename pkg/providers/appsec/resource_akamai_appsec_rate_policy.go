@@ -63,7 +63,7 @@ func resourceRatePolicyCreate(ctx context.Context, d *schema.ResourceData, m int
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "ratePolicy", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ratePolicy", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -103,7 +103,7 @@ func resourceRatePolicyRead(ctx context.Context, d *schema.ResourceData, m inter
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -165,7 +165,7 @@ func resourceRatePolicyUpdate(ctx context.Context, d *schema.ResourceData, m int
 	jsonPayloadRaw := []byte(jsonpostpayload.(string))
 	rawJSON := (json.RawMessage)(jsonPayloadRaw)
 
-	version, err := getModifiableConfigVersion(ctx, configID, "ratePolicy", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ratePolicy", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -200,7 +200,7 @@ func resourceRatePolicyDelete(ctx context.Context, d *schema.ResourceData, m int
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "ratePolicy", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ratePolicy", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}

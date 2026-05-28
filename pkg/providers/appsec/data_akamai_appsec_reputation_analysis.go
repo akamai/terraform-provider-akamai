@@ -53,7 +53,7 @@ func dataSourceReputationAnalysisRead(ctx context.Context, d *schema.ResourceDat
 	}
 	getReputationAnalysis.ConfigID = configID
 
-	if getReputationAnalysis.Version, err = getLatestConfigVersion(ctx, configID, m); err != nil {
+	if getReputationAnalysis.Version, err = getLatestConfigVersion(ctx, configID, client); err != nil {
 		return diag.FromErr(err)
 	}
 

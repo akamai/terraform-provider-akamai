@@ -15,7 +15,7 @@ func TestDataAprProtectedOperations(t *testing.T) {
 		t.Parallel()
 
 		client := edgegrid.NewTestClient()
-		mockGetConfigVersion(client)
+		mockGetConfigVersion(client.APPSEC)
 		response := apr.ListProtectedOperationsResponse{
 			Metadata: apr.Metadata{ConfigID: 43253, ConfigVersion: 15, SecurityPolicyID: "AAAA_81230"},
 			Operations: []map[string]interface{}{

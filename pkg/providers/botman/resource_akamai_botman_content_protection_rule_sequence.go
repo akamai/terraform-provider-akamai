@@ -58,7 +58,7 @@ func resourceContentProtectionRuleSequenceUpsert(ctx context.Context, d *schema.
 		return configID, diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, int(configID), "ContentProtectionRuleSequence", m)
+	version, err := getModifiableConfigVersion(ctx, int(configID), "ContentProtectionRuleSequence", meta.Client().GetAPPSEC())
 	if err != nil {
 		return configID, diag.FromErr(err)
 	}
@@ -126,7 +126,7 @@ func resourceContentProtectionRuleSequenceRead(ctx context.Context, d *schema.Re
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, int(configID), m)
+	version, err := getLatestConfigVersion(ctx, int(configID), meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}

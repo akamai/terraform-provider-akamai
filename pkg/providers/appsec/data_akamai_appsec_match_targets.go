@@ -67,7 +67,7 @@ func dataSourceMatchTargetsRead(ctx context.Context, d *schema.ResourceData, m i
 	}
 	getMatchTargets.ConfigID = configID
 
-	if getMatchTargets.ConfigVersion, err = getLatestConfigVersion(ctx, configID, m); err != nil {
+	if getMatchTargets.ConfigVersion, err = getLatestConfigVersion(ctx, configID, client); err != nil {
 		return diag.FromErr(err)
 	}
 

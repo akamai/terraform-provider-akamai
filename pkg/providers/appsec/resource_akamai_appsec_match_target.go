@@ -65,7 +65,7 @@ func resourceMatchTargetCreate(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "matchTarget", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "matchTarget", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -104,7 +104,7 @@ func resourceMatchTargetRead(ctx context.Context, d *schema.ResourceData, m inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -169,7 +169,7 @@ func resourceMatchTargetImport(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		return nil, err
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return nil, err
 	}
@@ -223,7 +223,7 @@ func resourceMatchTargetUpdate(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "matchTarget", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "matchTarget", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -266,7 +266,7 @@ func resourceMatchTargetDelete(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "matchTarget", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "matchTarget", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}

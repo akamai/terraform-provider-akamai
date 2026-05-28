@@ -39,7 +39,7 @@ func dataSourceCustomClientSequenceRead(ctx context.Context, d *schema.ResourceD
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}

@@ -79,7 +79,7 @@ func upsertAdvancedSettingsAsePenaltyBox(ctx context.Context, d *schema.Resource
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "AsePenaltyBoxSetting", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "AsePenaltyBoxSetting", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -158,7 +158,7 @@ func resourceAdvancedSettingsAsePenaltyBoxRead(ctx context.Context, d *schema.Re
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -202,7 +202,7 @@ func resourceAdvancedSettingsAsePenaltyBoxDelete(ctx context.Context, d *schema.
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "AsePenaltyBoxSetting", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "AsePenaltyBoxSetting", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}

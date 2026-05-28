@@ -48,7 +48,7 @@ func dataSourceSiemSettingsRead(ctx context.Context, d *schema.ResourceData, m i
 	}
 	getSiemSettings.ConfigID = configID
 
-	if getSiemSettings.Version, err = getLatestConfigVersion(ctx, configID, m); err != nil {
+	if getSiemSettings.Version, err = getLatestConfigVersion(ctx, configID, client); err != nil {
 		return diag.FromErr(err)
 	}
 

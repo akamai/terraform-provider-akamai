@@ -53,7 +53,7 @@ func dataSourceAPIHostnameCoverageMatchTargetsRead(ctx context.Context, d *schem
 	}
 	getAPIHostnameCoverageMatchTargets.ConfigID = configID
 
-	if getAPIHostnameCoverageMatchTargets.Version, err = getLatestConfigVersion(ctx, configID, m); err != nil {
+	if getAPIHostnameCoverageMatchTargets.Version, err = getLatestConfigVersion(ctx, configID, client); err != nil {
 		return diag.FromErr(err)
 	}
 

@@ -60,7 +60,7 @@ func resourceJavascriptInjectionCreate(ctx context.Context, d *schema.ResourceDa
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "javascriptInjection", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "javascriptInjection", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -107,7 +107,7 @@ func resourceJavascriptInjectionRead(ctx context.Context, d *schema.ResourceData
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -157,7 +157,7 @@ func resourceJavascriptInjectionUpdate(ctx context.Context, d *schema.ResourceDa
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "javascriptInjection", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "javascriptInjection", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}

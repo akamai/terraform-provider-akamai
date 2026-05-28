@@ -53,7 +53,7 @@ func resourceTransactionalEndpointProtectionCreate(ctx context.Context, d *schem
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "transactionalEndpointProtection", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "transactionalEndpointProtection", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -91,7 +91,7 @@ func resourceTransactionalEndpointProtectionRead(ctx context.Context, d *schema.
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -136,7 +136,7 @@ func resourceTransactionalEndpointProtectionUpdate(ctx context.Context, d *schem
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "transactionalEndpointProtection", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "transactionalEndpointProtection", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}

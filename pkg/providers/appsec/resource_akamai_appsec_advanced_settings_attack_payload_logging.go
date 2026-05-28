@@ -69,7 +69,7 @@ func resourceAdvancedSettingsAttackPayloadLoggingImport(ctx context.Context, d *
 		if err != nil {
 			return nil, err
 		}
-		version, err := getLatestConfigVersion(ctx, configID, m)
+		version, err := getLatestConfigVersion(ctx, configID, client)
 		if err != nil {
 			return nil, err
 		}
@@ -83,7 +83,7 @@ func resourceAdvancedSettingsAttackPayloadLoggingImport(ctx context.Context, d *
 		if err != nil {
 			return nil, err
 		}
-		version, err := getLatestConfigVersion(ctx, configID, m)
+		version, err := getLatestConfigVersion(ctx, configID, client)
 		if err != nil {
 			return nil, err
 		}
@@ -127,7 +127,7 @@ func resourceAdvancedSettingsAttackPayloadLoggingCreate(ctx context.Context, d *
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "attackPayloadLoggingSetting", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "attackPayloadLoggingSetting", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -166,7 +166,7 @@ func resourceAdvancedSettingsAttackPayloadLoggingRead(ctx context.Context, d *sc
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -212,7 +212,7 @@ func resourceAdvancedSettingsAttackPayloadLoggingUpdate(ctx context.Context, d *
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "attackPayloadLoggingSetting", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "attackPayloadLoggingSetting", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -248,7 +248,7 @@ func resourceAdvancedSettingsAttackPayloadLoggingDelete(ctx context.Context, d *
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "attackPayloadLoggingSetting", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "attackPayloadLoggingSetting", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}

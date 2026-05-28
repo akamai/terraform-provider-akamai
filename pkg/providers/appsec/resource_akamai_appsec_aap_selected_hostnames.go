@@ -94,7 +94,7 @@ func resourceAAPSelectedHostnamesCreate(ctx context.Context, d *schema.ResourceD
 		evalHostnames = make([]string, 0)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "wapSelectedHostnames", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "wapSelectedHostnames", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -144,7 +144,7 @@ func resourceAAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceDat
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -214,7 +214,7 @@ func resourceAAPSelectedHostnamesUpdate(ctx context.Context, d *schema.ResourceD
 		evalHostnames = make([]string, 0)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "wapSelectedHostnames", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "wapSelectedHostnames", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}

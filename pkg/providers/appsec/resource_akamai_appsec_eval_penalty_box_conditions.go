@@ -63,7 +63,7 @@ func resourceEvalPenaltyBoxConditionsCreate(ctx context.Context, d *schema.Resou
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "evalPenaltyBoxConditions", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "evalPenaltyBoxConditions", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -111,7 +111,7 @@ func resourceEvalPenaltyBoxConditionsRead(ctx context.Context, d *schema.Resourc
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -160,7 +160,7 @@ func resourceEvalPenaltyBoxConditionsUpdate(ctx context.Context, d *schema.Resou
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "evalPenaltyBoxConditions", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "evalPenaltyBoxConditions", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -203,7 +203,7 @@ func resourceEvalPenaltyBoxConditionsDelete(ctx context.Context, d *schema.Resou
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "evalPenaltyBoxConditions", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "evalPenaltyBoxConditions", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}

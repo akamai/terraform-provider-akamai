@@ -47,7 +47,7 @@ func dataSourceEvalRead(ctx context.Context, d *schema.ResourceData, m interface
 	}
 	getEval.ConfigID = configID
 
-	if getEval.Version, err = getLatestConfigVersion(ctx, configID, m); err != nil {
+	if getEval.Version, err = getLatestConfigVersion(ctx, configID, client); err != nil {
 		return diag.FromErr(err)
 	}
 

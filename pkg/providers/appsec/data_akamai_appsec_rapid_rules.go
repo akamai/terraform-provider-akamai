@@ -16,7 +16,7 @@ import (
 
 type (
 	rapidRulesDataSource struct {
-		meta meta.Meta
+		meta.DataSource
 	}
 
 	// rapidRulesDataSourceModel describes the data source data model for RapidRulesDataSource.
@@ -143,22 +143,6 @@ func (d *rapidRulesDataSource) Schema(_ context.Context, _ datasource.SchemaRequ
 	}
 }
 
-// Configure configures data source at the beginning of the lifecycle
-func (d *rapidRulesDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Data Source Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.",
-					req.ProviderData))
-		}
-	}()
-	d.meta = meta.Must(req.ProviderData)
-}
-
 func (d *rapidRulesDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	tflog.Debug(ctx, "RapidRulesDataSource Read")
 
@@ -169,7 +153,7 @@ func (d *rapidRulesDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		return
 	}
 
-	client := d.meta.Client().GetAPPSEC()
+	client := d.Client.GetAPPSEC()
 	configID := data.ConfigID.ValueInt64()
 	ruleID := getRuleID(data.RuleID)
 	policyID := data.PolicyID.ValueString()
@@ -182,7 +166,7 @@ func (d *rapidRulesDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		IncludeExpiryDetails: includeExpiry,
 	}
 
-	version, err := getLatestConfigVersion(ctx, int(configID), d.meta)
+	version, err := getLatestConfigVersion(ctx, int(configID), d.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("invalid config version", err.Error())
 		return

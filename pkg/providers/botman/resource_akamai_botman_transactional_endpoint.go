@@ -64,7 +64,7 @@ func resourceTransactionalEndpointCreate(ctx context.Context, d *schema.Resource
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "TransactionalEndpoint", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "TransactionalEndpoint", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -122,7 +122,7 @@ func transactionalEndpointRead(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -197,7 +197,7 @@ func resourceTransactionalEndpointUpdate(ctx context.Context, d *schema.Resource
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "TransactionalEndpoint", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "TransactionalEndpoint", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -244,7 +244,7 @@ func resourceTransactionalEndpointDelete(ctx context.Context, d *schema.Resource
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "TransactionalEndpoint", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "TransactionalEndpoint", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}

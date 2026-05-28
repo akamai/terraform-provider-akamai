@@ -53,7 +53,7 @@ func dataSourceCustomDenyRead(ctx context.Context, d *schema.ResourceData, m int
 	}
 	getCustomDeny.ConfigID = configID
 
-	if getCustomDeny.Version, err = getLatestConfigVersion(ctx, configID, m); err != nil {
+	if getCustomDeny.Version, err = getLatestConfigVersion(ctx, configID, client); err != nil {
 		return diag.FromErr(err)
 	}
 

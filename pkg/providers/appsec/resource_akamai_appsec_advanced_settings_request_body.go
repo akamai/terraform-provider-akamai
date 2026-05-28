@@ -71,7 +71,7 @@ func resourceAdvancedSettingsRequestBodyImport(ctx context.Context, d *schema.Re
 		if err != nil {
 			return nil, err
 		}
-		version, err := getLatestConfigVersion(ctx, configID, m)
+		version, err := getLatestConfigVersion(ctx, configID, client)
 		if err != nil {
 			return nil, err
 		}
@@ -85,7 +85,7 @@ func resourceAdvancedSettingsRequestBodyImport(ctx context.Context, d *schema.Re
 		if err != nil {
 			return nil, err
 		}
-		version, err := getLatestConfigVersion(ctx, configID, m)
+		version, err := getLatestConfigVersion(ctx, configID, client)
 		if err != nil {
 			return nil, err
 		}
@@ -135,7 +135,7 @@ func upsertAdvancedSettingsRequestBody(ctx context.Context, d *schema.ResourceDa
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "requestBodySetting", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "requestBodySetting", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -180,7 +180,7 @@ func resourceAdvancedSettingsRequestBodyRead(ctx context.Context, d *schema.Reso
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -235,7 +235,7 @@ func resourceAdvancedSettingsRequestBodyDelete(ctx context.Context, d *schema.Re
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "requestBodySetting", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "requestBodySetting", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}

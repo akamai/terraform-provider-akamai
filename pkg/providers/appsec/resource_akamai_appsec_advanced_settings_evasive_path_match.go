@@ -61,7 +61,7 @@ func resourceAdvancedSettingsEvasivePathMatchCreate(ctx context.Context, d *sche
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "evasivePathMatchSetting", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "evasivePathMatchSetting", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -112,7 +112,7 @@ func resourceAdvancedSettingsEvasivePathMatchRead(ctx context.Context, d *schema
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version, err := getLatestConfigVersion(ctx, configID, m)
+		version, err := getLatestConfigVersion(ctx, configID, client)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -126,7 +126,7 @@ func resourceAdvancedSettingsEvasivePathMatchRead(ctx context.Context, d *schema
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version, err := getLatestConfigVersion(ctx, configID, m)
+		version, err := getLatestConfigVersion(ctx, configID, client)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -170,7 +170,7 @@ func resourceAdvancedSettingsEvasivePathMatchUpdate(ctx context.Context, d *sche
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version, err := getModifiableConfigVersion(ctx, configID, "evasivePathMatchSetting", m)
+		version, err := getModifiableConfigVersion(ctx, configID, "evasivePathMatchSetting", client)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -184,7 +184,7 @@ func resourceAdvancedSettingsEvasivePathMatchUpdate(ctx context.Context, d *sche
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version, err := getModifiableConfigVersion(ctx, configID, "evasivePathMatchSetting", m)
+		version, err := getModifiableConfigVersion(ctx, configID, "evasivePathMatchSetting", client)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -223,7 +223,7 @@ func resourceAdvancedSettingsEvasivePathMatchDelete(ctx context.Context, d *sche
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version, err := getModifiableConfigVersion(ctx, configID, "evasivePathMatchSetting", m)
+		version, err := getModifiableConfigVersion(ctx, configID, "evasivePathMatchSetting", client)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -237,7 +237,7 @@ func resourceAdvancedSettingsEvasivePathMatchDelete(ctx context.Context, d *sche
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version, err := getModifiableConfigVersion(ctx, configID, "evasivePathMatchSetting", m)
+		version, err := getModifiableConfigVersion(ctx, configID, "evasivePathMatchSetting", client)
 		if err != nil {
 			return diag.FromErr(err)
 		}

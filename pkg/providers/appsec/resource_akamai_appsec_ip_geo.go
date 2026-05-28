@@ -299,7 +299,7 @@ func resourceIPGeoCreate(ctx context.Context, d *schema.ResourceData, m interfac
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "ipgeo", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ipgeo", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -391,7 +391,7 @@ func resourceIPGeoRead(ctx context.Context, d *schema.ResourceData, m interface{
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -531,7 +531,7 @@ func resourceIPGeoUpdate(ctx context.Context, d *schema.ResourceData, m interfac
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "ipgeo", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ipgeo", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -618,7 +618,7 @@ func resourceIPGeoDelete(ctx context.Context, d *schema.ResourceData, m interfac
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "ipgeo", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ipgeo", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}

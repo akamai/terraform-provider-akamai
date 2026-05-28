@@ -47,7 +47,7 @@ func dataSourceBotEndpointCoverageReportRead(ctx context.Context, d *schema.Reso
 
 	var version int
 	if configID != 0 {
-		version, err = getLatestConfigVersion(ctx, configID, m)
+		version, err = getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 		if err != nil {
 			return diag.FromErr(err)
 		}

@@ -2,7 +2,6 @@ package appsec
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
@@ -14,7 +13,7 @@ import (
 
 type (
 	urlProtectionPolicyActionsDataSource struct {
-		meta meta.Meta
+		meta.DataSource
 	}
 
 	urlProtectionPolicyActionsDataSourceModel struct {
@@ -70,22 +69,6 @@ func (d *urlProtectionPolicyActionsDataSource) Schema(_ context.Context, _ datas
 	}
 }
 
-// Configure configures data source at the beginning of the lifecycle.
-func (d *urlProtectionPolicyActionsDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Data Source Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.",
-					req.ProviderData))
-		}
-	}()
-	d.meta = meta.Must(req.ProviderData)
-}
-
 // Read is called when the provider must read data source values in order to update state.
 func (d *urlProtectionPolicyActionsDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	tflog.Debug(ctx, "URLProtectionPolicyActionsDataSource Read")
@@ -95,12 +78,12 @@ func (d *urlProtectionPolicyActionsDataSource) Read(ctx context.Context, req dat
 		return
 	}
 
-	client := d.meta.Client().GetAPPSEC()
+	client := d.Client.GetAPPSEC()
 	configID := data.ConfigID.ValueInt64()
 	policyID := data.SecurityPolicyID.ValueString()
 	urlProtectionID := data.URLProtectionPolicyID.ValueInt64()
 
-	version, err := getLatestConfigVersion(ctx, int(configID), d.meta)
+	version, err := getLatestConfigVersion(ctx, int(configID), d.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("Read URL Protection Policy Actions failed", err.Error())
 		return

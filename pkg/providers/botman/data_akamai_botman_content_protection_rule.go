@@ -57,7 +57,7 @@ func dataSourceContentProtectionRuleRead(ctx context.Context, d *schema.Resource
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, int(configID), m)
+	version, err := getLatestConfigVersion(ctx, int(configID), meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}

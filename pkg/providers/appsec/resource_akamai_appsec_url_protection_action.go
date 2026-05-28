@@ -30,7 +30,7 @@ var (
 
 // urlProtectionActionResource represents akamai_appsec_url_protection_action resource
 type urlProtectionActionResource struct {
-	meta meta.Meta
+	meta.Resource
 }
 
 // urlProtectionActionResourceModel is a model for akamai_appsec_url_protection_action resource
@@ -112,30 +112,12 @@ func (r *urlProtectionActionResource) Schema(_ context.Context, _ resource.Schem
 	}
 }
 
-// Configure implements resource's Configure method
-func (r *urlProtectionActionResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Resource Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-			)
-		}
-	}()
-
-	r.meta = meta.Must(req.ProviderData)
-}
-
 // ValidateConfig implements resource's ValidateConfig method
 func (r *urlProtectionActionResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
 
 	tflog.Debug(ctx, "Validating URL Protection Action resource configuration")
 
-	if r.meta == nil {
+	if r.Client == nil {
 		return
 	}
 
@@ -150,9 +132,9 @@ func (r *urlProtectionActionResource) ValidateConfig(ctx context.Context, req re
 		return
 	}
 
-	client := r.meta.Client().GetAPPSEC()
+	client := r.Client.GetAPPSEC()
 
-	version, err := getModifiableConfigVersion(ctx, int(config.ConfigID.ValueInt64()), "urlProtectionAction", r.meta)
+	version, err := getModifiableConfigVersion(ctx, int(config.ConfigID.ValueInt64()), "urlProtectionAction", r.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("Unable to read latest config version from API", err.Error())
 		return
@@ -207,13 +189,13 @@ func (r *urlProtectionActionResource) Create(ctx context.Context, req resource.C
 	}
 
 	configID := data.ConfigID.ValueInt64()
-	version, err := getModifiableConfigVersion(ctx, int(configID), "urlProtectionAction", r.meta)
+	version, err := getModifiableConfigVersion(ctx, int(configID), "urlProtectionAction", r.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("Unable to read latest config version from API", err.Error())
 		return
 	}
 
-	client := r.meta.Client().GetAPPSEC()
+	client := r.Client.GetAPPSEC()
 
 	loadSheddingAction := data.LoadSheddingAction.ValueString()
 	if data.LoadSheddingAction.IsNull() || data.LoadSheddingAction.ValueString() == "" {
@@ -272,7 +254,7 @@ func (r *urlProtectionActionResource) Read(ctx context.Context, req resource.Rea
 	}
 
 	configID := data.ConfigID.ValueInt64()
-	version, err := getLatestConfigVersion(ctx, int(configID), r.meta)
+	version, err := getLatestConfigVersion(ctx, int(configID), r.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("Unable to read config version", err.Error())
 		return
@@ -285,7 +267,7 @@ func (r *urlProtectionActionResource) Read(ctx context.Context, req resource.Rea
 		URLProtectionPolicyID: data.URLProtectionPolicyID.ValueInt64(),
 	}
 
-	client := r.meta.Client().GetAPPSEC()
+	client := r.Client.GetAPPSEC()
 	actionResponse, err := client.GetURLProtectionPolicyActions(ctx, readRequest)
 	if err != nil {
 		// If the URL Protection Policy or its actions are not found, remove the resource from state. May happen if url protection policy is not present in latest config version.
@@ -324,13 +306,13 @@ func (r *urlProtectionActionResource) Update(ctx context.Context, req resource.U
 	}
 
 	configID := data.ConfigID.ValueInt64()
-	version, err := getModifiableConfigVersion(ctx, int(configID), "urlProtectionAction", r.meta)
+	version, err := getModifiableConfigVersion(ctx, int(configID), "urlProtectionAction", r.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("Unable to read latest config version from API", err.Error())
 		return
 	}
 
-	client := r.meta.Client().GetAPPSEC()
+	client := r.Client.GetAPPSEC()
 
 	loadSheddingAction := data.LoadSheddingAction.ValueString()
 	if data.LoadSheddingAction.IsNull() || data.LoadSheddingAction.ValueString() == "" {
@@ -402,7 +384,7 @@ func (r *urlProtectionActionResource) Delete(ctx context.Context, req resource.D
 	}
 
 	configID := data.ConfigID.ValueInt64()
-	version, err := getModifiableConfigVersion(ctx, int(configID), "urlProtectionAction", r.meta)
+	version, err := getModifiableConfigVersion(ctx, int(configID), "urlProtectionAction", r.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("Unable to read latest config version from API", err.Error())
 		return
@@ -420,7 +402,7 @@ func (r *urlProtectionActionResource) Delete(ctx context.Context, req resource.D
 		},
 	}
 
-	client := r.meta.Client().GetAPPSEC()
+	client := r.Client.GetAPPSEC()
 	_, err = client.UpdateURLProtectionPolicyActions(ctx, deleteRequest)
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to delete URL protection action", err.Error())
