@@ -62,13 +62,8 @@ func TestDataClientList(t *testing.T) {
 	err = json.Unmarshal(testutils.LoadFixtureBytes(t, getPath(testDir, "user_client_list_items_user_id.json")), &getClientListItemsResponseUserID)
 	require.NoError(t, err)
 
-	tests := map[string]struct {
-		listType clientlists.ClientListType
-		init     func(*clientlists.Mock)
-		steps    []resource.TestStep
-	}{
+	tests := map[string]clientListTestCase{
 		"IP client list": {
-			listType: clientlists.IP,
 			init: func(m *clientlists.Mock) {
 				mockGetClientList(m, getClientListResponseIP, clientlists.GetClientListRequest{
 					ListID:       "180991_TESTNLMIGRATION123",
@@ -92,7 +87,6 @@ func TestDataClientList(t *testing.T) {
 			},
 		},
 		"GEO client list": {
-			listType: clientlists.GEO,
 			init: func(m *clientlists.Mock) {
 				mockGetClientList(m, getClientListResponseGEO, clientlists.GetClientListRequest{
 					ListID:       "115165_PAVITHRALISTGEO",
@@ -117,7 +111,6 @@ func TestDataClientList(t *testing.T) {
 			},
 		},
 		"ASN client list": {
-			listType: clientlists.ASN,
 			init: func(m *clientlists.Mock) {
 				mockGetClientList(m, getClientListResponseASN, clientlists.GetClientListRequest{
 					ListID:       "164730_SECKSD28365ASNKONAQAAA",
@@ -142,7 +135,6 @@ func TestDataClientList(t *testing.T) {
 			},
 		},
 		"TLS_FINGERPRINT client list": {
-			listType: clientlists.TLSFingerprint,
 			init: func(m *clientlists.Mock) {
 				mockGetClientList(m, getClientListResponseTLS, clientlists.GetClientListRequest{
 					ListID:       "183799_TESTLISTDIPESH",
@@ -164,7 +156,6 @@ func TestDataClientList(t *testing.T) {
 			},
 		},
 		"FILE_HASH client list": {
-			listType: clientlists.FileHash,
 			init: func(m *clientlists.Mock) {
 				mockGetClientList(m, getClientListResponseFileHash, clientlists.GetClientListRequest{
 					ListID:       "164579_SECKSD28365FILEHASHKONA",
@@ -186,7 +177,6 @@ func TestDataClientList(t *testing.T) {
 			},
 		},
 		"USER client list - show usernames enabled": {
-			listType: clientlists.USER,
 			init: func(m *clientlists.Mock) {
 				mockGetClientList(m, *getClientListResponseUsername, clientlists.GetClientListRequest{
 					ListID:       "193203_VPUSERTYPECLIENTLISTUS",
@@ -214,7 +204,6 @@ func TestDataClientList(t *testing.T) {
 			},
 		},
 		"USER client list - show usernames disabled": {
-			listType: clientlists.USER,
 			init: func(m *clientlists.Mock) {
 				mockGetClientList(m, getClientListResponseUserID, clientlists.GetClientListRequest{
 					ListID:       "193089_VPTERRAFORM2",
@@ -239,7 +228,6 @@ func TestDataClientList(t *testing.T) {
 			},
 		},
 		"DOMAIN client list": {
-			listType: clientlists.GEO,
 			init: func(m *clientlists.Mock) {
 				mockGetClientList(m, getClientListResponseDomain, clientlists.GetClientListRequest{
 					ListID:       "206535_MAIL",
@@ -260,8 +248,37 @@ func TestDataClientList(t *testing.T) {
 				},
 			},
 		},
+		"REQUEST_HEADER_NAME_VALUE client list": {
+			init: func(m *clientlists.Mock) {
+				getClientListResponseRHNV := clientlists.GetClientListResponse{}
+				err := json.Unmarshal(testutils.LoadFixtureBytes(t, getPath(testDir, "rhnv_client_list.json")), &getClientListResponseRHNV)
+				require.NoError(t, err)
+				mockGetClientList(m, getClientListResponseRHNV, clientlists.GetClientListRequest{
+					ListID:       "12345_RHNVLIST",
+					IncludeItems: true,
+				}, 3)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString(getPath(testDir, "rhnv_list.tf")),
+					Check: baseChecker.
+						CheckEqual("list.list_id", "12345_RHNVLIST").
+						CheckEqual("list.items.#", "2").
+						CheckEqual("list.items.0.key", "X-Auth-Token").
+						CheckEqual("list.items.0.values.#", "1").
+						CheckEqual("list.items.0.values.0", "token123").
+						CheckEqual("list.items.1.key", "X-Custom-Header").
+						CheckEqual("list.items.1.values.#", "2").
+						CheckEqual("list.items.1.values.0", "value1").
+						CheckEqual("list.items.1.values.1", "value2").
+						CheckEqual("list.items.1.description", "custom header").
+						CheckEqual("output_text", loadText(t, getPath(testDir, "rhnv_output_text.txt"))).
+						CheckEqual("json", loadJSON(t, getPath(testDir, "rhnv_output_json.txt"))).
+						Build(),
+				},
+			},
+		},
 		"error response from GetClientList api": {
-			listType: clientlists.IP,
 			init: func(m *clientlists.Mock) {
 				mockGetClientListFailure(m, clientlists.GetClientListRequest{
 					ListID:       "180991_TESTNLMIGRATION123",
@@ -276,7 +293,6 @@ func TestDataClientList(t *testing.T) {
 			},
 		},
 		"error response from GetClientListItems api": {
-			listType: clientlists.USER,
 			init: func(m *clientlists.Mock) {
 				err := json.Unmarshal(testutils.LoadFixtureBytes(t, getPath(testDir, "user_client_list.json")), &getClientListResponseUsername)
 				require.NoError(t, err)
@@ -297,24 +313,7 @@ func TestDataClientList(t *testing.T) {
 		},
 	}
 
-	for name, test := range tests {
-		t.Run(name, func(t *testing.T) {
-			client := &clientlists.Mock{}
-			if test.init != nil {
-				test.init(client)
-			}
-
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps:                    test.steps,
-				})
-			})
-
-			client.AssertExpectations(t)
-		})
-	}
+	runClientListTestCases(t, tests)
 }
 
 func mockGetClientList(m *clientlists.Mock, response clientlists.GetClientListResponse, request clientlists.GetClientListRequest, times int) {

@@ -35,6 +35,8 @@ type (
 
 	clientListItemModel struct {
 		Value            types.String `tfsdk:"value"`
+		Key              types.String `tfsdk:"key"`
+		Values           types.List   `tfsdk:"values"`
 		Tags             types.List   `tfsdk:"tags"`
 		Description      types.String `tfsdk:"description"`
 		ExpirationDate   types.String `tfsdk:"expiration_date"`
@@ -81,7 +83,7 @@ func (d *clientListDataSource) Schema(_ context.Context, _ datasource.SchemaRequ
 					},
 					"type": schema.StringAttribute{
 						Computed:    true,
-						Description: "The type of the client list.",
+						Description: "Type of client list, which can be IP, GEO, ASN, TLS_FINGERPRINT, FILE_HASH, USER_ID, DOMAIN, or REQUEST_HEADER_NAME_VALUE.",
 					},
 					"notes": schema.StringAttribute{
 						Computed:    true,
@@ -187,11 +189,20 @@ func (d *clientListDataSource) Schema(_ context.Context, _ datasource.SchemaRequ
 								},
 								"type": schema.StringAttribute{
 									Computed:    true,
-									Description: "Type of client list, which can be IP, GEO, ASN, TLS_FINGERPRINT, FILE_HASH, or USER.",
+									Description: "Type of client list, which can be IP, GEO, ASN, TLS_FINGERPRINT, FILE_HASH, USER_ID, DOMAIN, or REQUEST_HEADER_NAME_VALUE.",
 								},
 								"value": schema.StringAttribute{
 									Computed:    true,
-									Description: "Value of the item, which is either an IP address, an Autonomous System Number (ASN), a Geo location, a TLS fingerprint, a file hash, or User ID.",
+									Description: "Value of the item (e.g. IP address, AS Number, GEO, domain, TLS fingerprint, file hash, user ID). Not applicable for REQUEST_HEADER_NAME_VALUE list type.",
+								},
+								"key": schema.StringAttribute{
+									Computed:    true,
+									Description: "Key of the item (e.g. request header name). Applicable only for REQUEST_HEADER_NAME_VALUE list type.",
+								},
+								"values": schema.ListAttribute{
+									ElementType: types.StringType,
+									Computed:    true,
+									Description: "Values of the item (e.g. request header name values). Applicable only for REQUEST_HEADER_NAME_VALUE list type.",
 								},
 								"tags": schema.ListAttribute{
 									ElementType: types.StringType,
@@ -222,7 +233,7 @@ func (d *clientListDataSource) Configure(ctx context.Context, request datasource
 		return
 	}
 
-	meta, ok := request.ProviderData.(meta.Meta)
+	metaInfo, ok := request.ProviderData.(meta.Meta)
 	if !ok {
 		response.Diagnostics.AddError(
 			"Unexpected Data Source Configure Type",
@@ -231,7 +242,7 @@ func (d *clientListDataSource) Configure(ctx context.Context, request datasource
 		return
 	}
 
-	d.meta = meta
+	d.meta = metaInfo
 }
 
 func (d *clientListDataSource) Read(ctx context.Context, request datasource.ReadRequest, response *datasource.ReadResponse) {
@@ -304,7 +315,7 @@ func (d *clientListDataSource) Read(ctx context.Context, request datasource.Read
 
 	items, diags := convertListItemContentModel(ctx, cl.Items)
 	if diags.HasError() {
-		response.Diagnostics.AddError("Error converting list items to model", err.Error())
+		response.Diagnostics.Append(diags...)
 		return
 	}
 	clientList.Items = items
@@ -337,16 +348,22 @@ func (d *clientListDataSource) Read(ctx context.Context, request datasource.Read
 }
 
 func convertListItemContentModel(ctx context.Context, src []clientlists.ListItemContent) ([]clientListItemModel, diag.Diagnostics) {
-	var diags diag.Diagnostics
 	result := make([]clientListItemModel, 0, len(src))
 	for _, item := range src {
-		tags, diagnostics := basetypes.NewListValueFrom(ctx, types.StringType, item.Tags)
-		if diagnostics.HasError() {
-			diags.Append(diagnostics...)
+		tags, diags := basetypes.NewListValueFrom(ctx, types.StringType, item.Tags)
+		if diags.HasError() {
 			return nil, diags
 		}
-		itemModel := clientListItemModel{
-			Value:            types.StringValue(calculateValue(item)),
+
+		value, key, values, diags := getItemFields(ctx, item)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		result = append(result, clientListItemModel{
+			Value:            value,
+			Key:              key,
+			Values:           values,
 			Tags:             tags,
 			Description:      types.StringValue(item.Description),
 			ExpirationDate:   types.StringValue(item.ExpirationDate),
@@ -358,10 +375,36 @@ func convertListItemContentModel(ctx context.Context, src []clientlists.ListItem
 			Type:             types.StringValue(string(item.Type)),
 			UpdateDate:       types.StringValue(item.UpdateDate),
 			UpdatedBy:        types.StringValue(item.UpdatedBy),
-		}
-		result = append(result, itemModel)
+		})
 	}
-	return result, diags
+	return result, nil
+}
+
+func getItemFields(ctx context.Context, item clientlists.ListItemContent) (types.String, types.String, types.List, diag.Diagnostics) {
+	if isKeyValuesItem(string(item.Type)) {
+		return getKeyValuesItemFields(ctx, item)
+	}
+	return getValueItemFields(item)
+}
+
+func getKeyValuesItemFields(ctx context.Context, item clientlists.ListItemContent) (types.String, types.String, types.List, diag.Diagnostics) {
+	key := stringValueOrNull(item.Key)
+	if len(item.Values) == 0 {
+		return types.StringNull(), key, types.ListNull(types.StringType), nil
+	}
+	values, diags := basetypes.NewListValueFrom(ctx, types.StringType, item.Values)
+	return types.StringNull(), key, values, diags
+}
+
+func getValueItemFields(item clientlists.ListItemContent) (types.String, types.String, types.List, diag.Diagnostics) {
+	return stringValueOrNull(calculateValue(item)), types.StringNull(), types.ListNull(types.StringType), nil
+}
+
+func stringValueOrNull(s string) types.String {
+	if s == "" {
+		return types.StringNull()
+	}
+	return types.StringValue(s)
 }
 
 func processListItemContent(src []clientlists.ListItemContent) []clientlists.ListItemContent {
@@ -409,6 +452,8 @@ func getClientListItemsTemplateName(listType clientlists.ClientListType) string 
 		return "fileHashClientListItemsDS"
 	case clientlists.DOMAIN:
 		return "domainClientListItemsDS"
+	case clientlists.RequestHeaderNameValue:
+		return "requestHeaderNameValueClientListItemsDS"
 	default:
 		return "unknownClientListItemsDS" // fallback or handle error
 	}

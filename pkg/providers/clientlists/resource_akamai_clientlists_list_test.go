@@ -9,7 +9,9 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/clientlists"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestResourceClientList(t *testing.T) {
@@ -34,6 +36,20 @@ func TestResourceClientList(t *testing.T) {
 			for _, v := range items {
 				result = append(result, clientlists.ListItemContent{
 					Value:          v.Value,
+					Description:    v.Description,
+					Tags:           v.Tags,
+					ExpirationDate: v.ExpirationDate,
+				})
+			}
+			return result
+		}
+
+		mapKeyValuesItemsPayloadToContent = func(items []clientlists.ListItemPayload) []clientlists.ListItemContent {
+			result := make([]clientlists.ListItemContent, 0, len(items))
+			for _, v := range items {
+				result = append(result, clientlists.ListItemContent{
+					Key:            v.Key,
+					Values:         v.Values,
 					Description:    v.Description,
 					Tags:           v.Tags,
 					ExpirationDate: v.ExpirationDate,
@@ -209,6 +225,74 @@ func TestResourceClientList(t *testing.T) {
 			Description: "Item 1 Desc",
 			Tags:        []string{"item1Tag2", "item1Tag1"},
 		}
+
+		asnItems = []clientlists.ListItemPayload{
+			{Value: "1", Description: "Item 1 Desc", Tags: []string{"item1Tag2", "item1Tag1"}},
+			{Value: "123", ExpirationDate: "2026-12-26T01:00:00+00:00", Tags: []string{}},
+			{Value: "12", Description: "Item 12 Desc", Tags: []string{"item12Tag1", "item12Tag2"}},
+		}
+
+		asnUpdatedItems = []clientlists.ListItemPayload{
+			{Value: "1", Description: "Item 1 Desc", Tags: []string{"item1Tag2", "item1Tag1"}},
+			{Value: "12", Description: "Item 12 Desc Updated", Tags: []string{"item12Tag1", "item12Tag2"}},
+			{Value: "1234", Description: "Item 1234 Desc", Tags: []string{"1234Tag"}},
+		}
+
+		testListUpdateScenario = func(t *testing.T, listType clientlists.ClientListType, typeString, createFixtureFile, updateFixtureFile string) {
+			t.Helper()
+			client := new(clientlists.Mock)
+			clientList := expectCreateList(client, clientlists.CreateClientListRequest{
+				Name:       "List Name",
+				Notes:      "List Notes",
+				Tags:       []string{"a", "b"},
+				Type:       listType,
+				ContractID: "12_ABC",
+				GroupID:    12,
+				Items:      []clientlists.ListItemPayload{},
+			})
+			expectReadList(client, clientList.ListContent, []clientlists.ListItemContent{}, 3)
+			updateResponse := expectUpdateList(client, listType, 0, clientlists.UpdateClientListRequest{
+				UpdateClientList: clientlists.UpdateClientList{
+					Name:  "List Name Updated",
+					Notes: "List Notes Updated",
+					Tags:  []string{"a", "c", "d"},
+				},
+				ListID: clientList.ListID,
+			})
+			expectReadList(client, updateResponse.ListContent, []clientlists.ListItemContent{}, 2)
+			expectDeleteList(client, clientList.ListContent)
+
+			runResourceTest(t, client, []resource.TestStep{
+				{
+					Config: loadFixtureString(fmt.Sprintf("%s/%s", testDir, createFixtureFile)),
+					Check: checkAttributes(listAttributes{
+						ListID:     clientList.ListID,
+						Name:       "List Name",
+						Notes:      "List Notes",
+						Tags:       []string{"a", "b"},
+						Type:       typeString,
+						ContractID: "12_ABC",
+						GroupID:    12,
+						Version:    1,
+						ItemsCount: 0,
+					}),
+				},
+				{
+					Config: loadFixtureString(fmt.Sprintf("%s/%s", testDir, updateFixtureFile)),
+					Check: checkAttributes(listAttributes{
+						ListID:     clientList.ListID,
+						Name:       "List Name Updated",
+						Notes:      "List Notes Updated",
+						Tags:       []string{"a", "c", "d"},
+						Type:       typeString,
+						ContractID: "12_ABC",
+						GroupID:    12,
+						Version:    1,
+						ItemsCount: 0,
+					}),
+				},
+			})
+		}
 	)
 
 	t.Run("Create a new client list", func(t *testing.T) {
@@ -225,90 +309,27 @@ func TestResourceClientList(t *testing.T) {
 		expectReadList(client, clientList.ListContent, []clientlists.ListItemContent{}, 2)
 		expectDeleteList(client, clientList.ListContent)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: loadFixtureString(fmt.Sprintf("%s/list_create.tf", testDir)),
-						Check: checkAttributes(listAttributes{
-							ListID:     clientList.ListID,
-							Name:       "List Name",
-							Notes:      "List Notes",
-							Tags:       []string{"a", "b"},
-							Type:       "ASN",
-							ContractID: "12_ABC",
-							GroupID:    12,
-							Version:    1,
-							ItemsCount: 0,
-							Items:      []clientlists.ListItemPayload{},
-						}),
-					},
-				},
-			})
+		runResourceTest(t, client, []resource.TestStep{
+			{
+				Config: loadFixtureString(fmt.Sprintf("%s/list_create.tf", testDir)),
+				Check: checkAttributes(listAttributes{
+					ListID:     clientList.ListID,
+					Name:       "List Name",
+					Notes:      "List Notes",
+					Tags:       []string{"a", "b"},
+					Type:       "ASN",
+					ContractID: "12_ABC",
+					GroupID:    12,
+					Version:    1,
+					ItemsCount: 0,
+					Items:      []clientlists.ListItemPayload{},
+				}),
+			},
 		})
-		client.AssertExpectations(t)
 	})
 
 	t.Run("Update client list", func(t *testing.T) {
-		client := new(clientlists.Mock)
-		clientList := expectCreateList(client, clientlists.CreateClientListRequest{
-			Name:       "List Name",
-			Notes:      "List Notes",
-			Tags:       []string{"a", "b"},
-			Type:       clientlists.ASN,
-			ContractID: "12_ABC",
-			GroupID:    12,
-			Items:      []clientlists.ListItemPayload{},
-		})
-		expectReadList(client, clientList.ListContent, []clientlists.ListItemContent{}, 3)
-		updateResponse := expectUpdateList(client, clientlists.ASN, 0, clientlists.UpdateClientListRequest{
-			UpdateClientList: clientlists.UpdateClientList{
-				Name:  "List Name Updated",
-				Notes: "List Notes Updated",
-				Tags:  []string{"a", "c", "d"},
-			},
-			ListID: clientList.ListID,
-		})
-		expectReadList(client, updateResponse.ListContent, []clientlists.ListItemContent{}, 2)
-		expectDeleteList(client, clientList.ListContent)
-
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: loadFixtureString(fmt.Sprintf("%s/list_create.tf", testDir)),
-						Check: checkAttributes(listAttributes{
-							ListID:     clientList.ListID,
-							Name:       "List Name",
-							Notes:      "List Notes",
-							Tags:       []string{"a", "b"},
-							Type:       "ASN",
-							ContractID: "12_ABC",
-							GroupID:    12,
-							Version:    1,
-							ItemsCount: 0,
-						}),
-					},
-					{
-						Config: loadFixtureString(fmt.Sprintf("%s/list_update.tf", testDir)),
-						Check: checkAttributes(listAttributes{
-							ListID:     clientList.ListID,
-							Name:       "List Name Updated",
-							Notes:      "List Notes Updated",
-							Tags:       []string{"a", "c", "d"},
-							Type:       "ASN",
-							ContractID: "12_ABC",
-							GroupID:    12,
-							Version:    1,
-							ItemsCount: 0,
-						}),
-					},
-				},
-			})
-		})
-		client.AssertExpectations(t)
+		testListUpdateScenario(t, clientlists.ASN, "ASN", "list_create.tf", "list_update.tf")
 	})
 
 	t.Run("Update client list not expected when empty tags list removed", func(t *testing.T) {
@@ -325,41 +346,35 @@ func TestResourceClientList(t *testing.T) {
 		expectReadList(client, clientList.ListContent, []clientlists.ListItemContent{}, 4)
 		expectDeleteList(client, clientList.ListContent)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: loadFixtureString(fmt.Sprintf("%s/list_create_empty_tags.tf", testDir)),
-						Check: checkAttributes(listAttributes{
-							ListID:     clientList.ListID,
-							Name:       "List Name",
-							Notes:      "List Notes",
-							Type:       "IP",
-							ContractID: "12_ABC",
-							GroupID:    12,
-							Version:    1,
-							ItemsCount: 0,
-						}),
-					},
-					{
-						Config: loadFixtureString(fmt.Sprintf("%s/list_update_remove_tags.tf", testDir)),
-						Check: checkAttributes(listAttributes{
-							ListID:     clientList.ListID,
-							Name:       "List Name",
-							Notes:      "List Notes",
-							Tags:       []string{},
-							Type:       "IP",
-							ContractID: "12_ABC",
-							GroupID:    12,
-							Version:    1,
-							ItemsCount: 0,
-						}),
-					},
-				},
-			})
+		runResourceTest(t, client, []resource.TestStep{
+			{
+				Config: loadFixtureString(fmt.Sprintf("%s/list_create_empty_tags.tf", testDir)),
+				Check: checkAttributes(listAttributes{
+					ListID:     clientList.ListID,
+					Name:       "List Name",
+					Notes:      "List Notes",
+					Type:       "IP",
+					ContractID: "12_ABC",
+					GroupID:    12,
+					Version:    1,
+					ItemsCount: 0,
+				}),
+			},
+			{
+				Config: loadFixtureString(fmt.Sprintf("%s/list_update_remove_tags.tf", testDir)),
+				Check: checkAttributes(listAttributes{
+					ListID:     clientList.ListID,
+					Name:       "List Name",
+					Notes:      "List Notes",
+					Tags:       []string{},
+					Type:       "IP",
+					ContractID: "12_ABC",
+					GroupID:    12,
+					Version:    1,
+					ItemsCount: 0,
+				}),
+			},
 		})
-		client.AssertExpectations(t)
 	})
 
 	t.Run("Get client list returns an API error", func(t *testing.T) {
@@ -380,18 +395,12 @@ func TestResourceClientList(t *testing.T) {
 		})
 		expectDeleteList(client, clientList.ListContent)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      loadFixtureString(fmt.Sprintf("%s/list_create.tf", testDir)),
-						ExpectError: regexp.MustCompile(getAPIError),
-					},
-				},
-			})
+		runResourceTest(t, client, []resource.TestStep{
+			{
+				Config:      loadFixtureString(fmt.Sprintf("%s/list_create.tf", testDir)),
+				ExpectError: regexp.MustCompile(getAPIError),
+			},
 		})
-		client.AssertExpectations(t)
 	})
 
 	t.Run("Update client list returns an API error", func(t *testing.T) {
@@ -417,32 +426,26 @@ func TestResourceClientList(t *testing.T) {
 		})
 		expectDeleteList(client, clientList.ListContent)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: loadFixtureString(fmt.Sprintf("%s/list_create.tf", testDir)),
-						Check: checkAttributes(listAttributes{
-							ListID:     clientList.ListID,
-							Name:       "List Name",
-							Notes:      "List Notes",
-							Tags:       []string{"a", "b"},
-							Type:       "ASN",
-							ContractID: "12_ABC",
-							GroupID:    12,
-							Version:    1,
-							ItemsCount: 0,
-						}),
-					},
-					{
-						Config:      loadFixtureString(fmt.Sprintf("%s/list_update.tf", testDir)),
-						ExpectError: regexp.MustCompile(updateAPIError),
-					},
-				},
-			})
+		runResourceTest(t, client, []resource.TestStep{
+			{
+				Config: loadFixtureString(fmt.Sprintf("%s/list_create.tf", testDir)),
+				Check: checkAttributes(listAttributes{
+					ListID:     clientList.ListID,
+					Name:       "List Name",
+					Notes:      "List Notes",
+					Tags:       []string{"a", "b"},
+					Type:       "ASN",
+					ContractID: "12_ABC",
+					GroupID:    12,
+					Version:    1,
+					ItemsCount: 0,
+				}),
+			},
+			{
+				Config:      loadFixtureString(fmt.Sprintf("%s/list_update.tf", testDir)),
+				ExpectError: regexp.MustCompile(updateAPIError),
+			},
 		})
-		client.AssertExpectations(t)
 	})
 
 	t.Run("Create a new client list with items", func(t *testing.T) {
@@ -476,65 +479,29 @@ func TestResourceClientList(t *testing.T) {
 		expectReadList(client, clientList.ListContent, mapItemsPayloadToContent(items), 2)
 		expectDeleteList(client, clientList.ListContent)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: loadFixtureString(fmt.Sprintf("%s/list_and_items_create.tf", testDir)),
-						Check: checkAttributes(listAttributes{
-							ListID:     clientList.ListID,
-							Name:       "List Name",
-							Notes:      "List Notes",
-							Tags:       []string{"a", "b"},
-							Type:       "ASN",
-							ContractID: "12_ABC",
-							GroupID:    12,
-							Version:    1,
-							ItemsCount: len(items),
-							Items:      items,
-						}),
-					},
-				},
-			})
+		runResourceTest(t, client, []resource.TestStep{
+			{
+				Config: loadFixtureString(fmt.Sprintf("%s/list_and_items_create.tf", testDir)),
+				Check: checkAttributes(listAttributes{
+					ListID:     clientList.ListID,
+					Name:       "List Name",
+					Notes:      "List Notes",
+					Tags:       []string{"a", "b"},
+					Type:       "ASN",
+					ContractID: "12_ABC",
+					GroupID:    12,
+					Version:    1,
+					ItemsCount: len(items),
+					Items:      items,
+				}),
+			},
 		})
-		client.AssertExpectations(t)
 	})
 
 	t.Run("Update client list items and list", func(t *testing.T) {
 		client := new(clientlists.Mock)
-		items := append([]clientlists.ListItemPayload{},
-			clientlists.ListItemPayload{
-				Value:       "1",
-				Description: "Item 1 Desc",
-				Tags:        []string{"item1Tag2", "item1Tag1"},
-			},
-			clientlists.ListItemPayload{
-				Value:          "123",
-				ExpirationDate: "2026-12-26T01:00:00+00:00",
-				Tags:           []string{},
-			},
-			clientlists.ListItemPayload{
-				Value:       "12",
-				Description: "Item 12 Desc",
-				Tags:        []string{"item12Tag1", "item12Tag2"},
-			})
-		updatedItems := append([]clientlists.ListItemPayload{},
-			clientlists.ListItemPayload{
-				Value:       "1",
-				Description: "Item 1 Desc",
-				Tags:        []string{"item1Tag2", "item1Tag1"},
-			},
-			clientlists.ListItemPayload{
-				Value:       "12",
-				Description: "Item 12 Desc Updated",
-				Tags:        []string{"item12Tag1", "item12Tag2"},
-			},
-			clientlists.ListItemPayload{
-				Value:       "1234",
-				Description: "Item 1234 Desc",
-				Tags:        []string{"1234Tag"},
-			})
+		items := asnItems
+		updatedItems := asnUpdatedItems
 
 		clientList := expectCreateList(client, clientlists.CreateClientListRequest{
 			Name:       "List Name",
@@ -581,80 +548,44 @@ func TestResourceClientList(t *testing.T) {
 		expectReadList(client, updateResponse.ListContent, mapItemsPayloadToContent(updatedItems), 2)
 		expectDeleteList(client, clientList.ListContent)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: loadFixtureString(fmt.Sprintf("%s/list_and_items_create.tf", testDir)),
-						Check: checkAttributes(listAttributes{
-							ListID:     clientList.ListID,
-							Name:       "List Name",
-							Notes:      "List Notes",
-							Tags:       []string{"a", "b"},
-							Type:       "ASN",
-							ContractID: "12_ABC",
-							GroupID:    12,
-							Version:    1,
-							ItemsCount: 3,
-							Items:      items,
-						}),
-					},
-					{
-						Config: loadFixtureString(fmt.Sprintf("%s/list_and_items_update.tf", testDir)),
-						Check: checkAttributes(listAttributes{
-							ListID:     clientList.ListID,
-							Name:       "List Name Updated",
-							Notes:      "List Notes Updated",
-							Tags:       []string{"a", "c", "d"},
-							Type:       "ASN",
-							ContractID: "12_ABC",
-							GroupID:    12,
-							Version:    1,
-							ItemsCount: 3,
-							Items:      updatedItems,
-						}),
-					},
-				},
-			})
+		runResourceTest(t, client, []resource.TestStep{
+			{
+				Config: loadFixtureString(fmt.Sprintf("%s/list_and_items_create.tf", testDir)),
+				Check: checkAttributes(listAttributes{
+					ListID:     clientList.ListID,
+					Name:       "List Name",
+					Notes:      "List Notes",
+					Tags:       []string{"a", "b"},
+					Type:       "ASN",
+					ContractID: "12_ABC",
+					GroupID:    12,
+					Version:    1,
+					ItemsCount: 3,
+					Items:      items,
+				}),
+			},
+			{
+				Config: loadFixtureString(fmt.Sprintf("%s/list_and_items_update.tf", testDir)),
+				Check: checkAttributes(listAttributes{
+					ListID:     clientList.ListID,
+					Name:       "List Name Updated",
+					Notes:      "List Notes Updated",
+					Tags:       []string{"a", "c", "d"},
+					Type:       "ASN",
+					ContractID: "12_ABC",
+					GroupID:    12,
+					Version:    1,
+					ItemsCount: 3,
+					Items:      updatedItems,
+				}),
+			},
 		})
-		client.AssertExpectations(t)
 	})
 
 	t.Run("Update client list items only", func(t *testing.T) {
 		client := new(clientlists.Mock)
-		items := append([]clientlists.ListItemPayload{},
-			clientlists.ListItemPayload{
-				Value:       "1",
-				Description: "Item 1 Desc",
-				Tags:        []string{"item1Tag2", "item1Tag1"},
-			},
-			clientlists.ListItemPayload{
-				Value:          "123",
-				ExpirationDate: "2026-12-26T01:00:00+00:00",
-				Tags:           []string{},
-			},
-			clientlists.ListItemPayload{
-				Value:       "12",
-				Description: "Item 12 Desc",
-				Tags:        []string{"item12Tag1", "item12Tag2"},
-			})
-		updatedItems := append([]clientlists.ListItemPayload{},
-			clientlists.ListItemPayload{
-				Value:       "1",
-				Description: "Item 1 Desc",
-				Tags:        []string{"item1Tag2", "item1Tag1"},
-			},
-			clientlists.ListItemPayload{
-				Value:       "12",
-				Description: "Item 12 Desc Updated",
-				Tags:        []string{"item12Tag1", "item12Tag2"},
-			},
-			clientlists.ListItemPayload{
-				Value:       "1234",
-				Description: "Item 1234 Desc",
-				Tags:        []string{"1234Tag"},
-			})
+		items := asnItems
+		updatedItems := asnUpdatedItems
 
 		clientList := expectCreateList(client, clientlists.CreateClientListRequest{
 			Name:       "List Name",
@@ -693,44 +624,38 @@ func TestResourceClientList(t *testing.T) {
 		expectReadList(client, clientList.ListContent, mapItemsPayloadToContent(updatedItems), 2)
 		expectDeleteList(client, clientList.ListContent)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: loadFixtureString(fmt.Sprintf("%s/list_and_items_create.tf", testDir)),
-						Check: checkAttributes(listAttributes{
-							ListID:     clientList.ListID,
-							Name:       "List Name",
-							Notes:      "List Notes",
-							Tags:       []string{"a", "b"},
-							Type:       "ASN",
-							ContractID: "12_ABC",
-							GroupID:    12,
-							Version:    1,
-							ItemsCount: 3,
-							Items:      items,
-						}),
-					},
-					{
-						Config: loadFixtureString(fmt.Sprintf("%s/list_items_only_update.tf", testDir)),
-						Check: checkAttributes(listAttributes{
-							ListID:     clientList.ListID,
-							Name:       "List Name",
-							Notes:      "List Notes",
-							Tags:       []string{"a", "b"},
-							Type:       "ASN",
-							ContractID: "12_ABC",
-							GroupID:    12,
-							Version:    1,
-							ItemsCount: 3,
-							Items:      updatedItems,
-						}),
-					},
-				},
-			})
+		runResourceTest(t, client, []resource.TestStep{
+			{
+				Config: loadFixtureString(fmt.Sprintf("%s/list_and_items_create.tf", testDir)),
+				Check: checkAttributes(listAttributes{
+					ListID:     clientList.ListID,
+					Name:       "List Name",
+					Notes:      "List Notes",
+					Tags:       []string{"a", "b"},
+					Type:       "ASN",
+					ContractID: "12_ABC",
+					GroupID:    12,
+					Version:    1,
+					ItemsCount: 3,
+					Items:      items,
+				}),
+			},
+			{
+				Config: loadFixtureString(fmt.Sprintf("%s/list_items_only_update.tf", testDir)),
+				Check: checkAttributes(listAttributes{
+					ListID:     clientList.ListID,
+					Name:       "List Name",
+					Notes:      "List Notes",
+					Tags:       []string{"a", "b"},
+					Type:       "ASN",
+					ContractID: "12_ABC",
+					GroupID:    12,
+					Version:    1,
+					ItemsCount: 3,
+					Items:      updatedItems,
+				}),
+			},
 		})
-		client.AssertExpectations(t)
 	})
 
 	t.Run("Update items set new computed version", func(t *testing.T) {
@@ -741,7 +666,7 @@ func TestResourceClientList(t *testing.T) {
 				Description: "Item 1 Desc",
 				Tags:        []string{"item1Tag2", "item1Tag1"},
 			})
-		updatedItems := []clientlists.ListItemPayload{}
+		var updatedItems []clientlists.ListItemPayload
 
 		clientList := expectCreateList(client, clientlists.CreateClientListRequest{
 			Name:       "List Name",
@@ -768,26 +693,20 @@ func TestResourceClientList(t *testing.T) {
 		expectReadList(client, updatedClientList, mapItemsPayloadToContent(updatedItems), 2)
 		expectDeleteList(client, clientList.ListContent)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: loadFixtureString(fmt.Sprintf("%s/list_and_items_create_one_item.tf", testDir)),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckOutput("version", "1"),
-						),
-					},
-					{
-						Config: loadFixtureString(fmt.Sprintf("%s/list_items_update_compute_version.tf", testDir)),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckOutput("version", "2"),
-						),
-					},
-				},
-			})
+		runResourceTest(t, client, []resource.TestStep{
+			{
+				Config: loadFixtureString(fmt.Sprintf("%s/list_and_items_create_one_item.tf", testDir)),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckOutput("version", "1"),
+				),
+			},
+			{
+				Config: loadFixtureString(fmt.Sprintf("%s/list_items_update_compute_version.tf", testDir)),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckOutput("version", "2"),
+				),
+			},
 		})
-		client.AssertExpectations(t)
 	})
 
 	t.Run("Update items NOT set new computed version", func(t *testing.T) {
@@ -829,43 +748,31 @@ func TestResourceClientList(t *testing.T) {
 		expectReadList(client, clientList.ListContent, mapItemsPayloadToContent(updatedItems), 2)
 		expectDeleteList(client, clientList.ListContent)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: loadFixtureString(fmt.Sprintf("%s/list_and_items_create_one_item.tf", testDir)),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckOutput("version", "1"),
-						),
-					},
-					{
-						Config: loadFixtureString(fmt.Sprintf("%s/list_items_update_not_compute_version.tf", testDir)),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckOutput("version", "1"),
-						),
-					},
-				},
-			})
+		runResourceTest(t, client, []resource.TestStep{
+			{
+				Config: loadFixtureString(fmt.Sprintf("%s/list_and_items_create_one_item.tf", testDir)),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckOutput("version", "1"),
+				),
+			},
+			{
+				Config: loadFixtureString(fmt.Sprintf("%s/list_items_update_not_compute_version.tf", testDir)),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckOutput("version", "1"),
+				),
+			},
 		})
-		client.AssertExpectations(t)
 	})
 
 	t.Run("Create list with duplicate items fails", func(t *testing.T) {
 		client := new(clientlists.Mock)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      loadFixtureString(fmt.Sprintf("%s/list_and_duplicate_items_create.tf", testDir)),
-						ExpectError: regexp.MustCompile("Error: 'Items' collection contains duplicate values for 'value' field. Duplicate value: 12"),
-					},
-				},
-			})
+		runResourceTest(t, client, []resource.TestStep{
+			{
+				Config:      loadFixtureString(fmt.Sprintf("%s/list_and_duplicate_items_create.tf", testDir)),
+				ExpectError: regexp.MustCompile("Error: 'Items' collection contains duplicate values for 'value' field. Duplicate value: 12"),
+			},
 		})
-		client.AssertExpectations(t)
 	})
 
 	t.Run("Import clientlist resource", func(t *testing.T) {
@@ -883,23 +790,17 @@ func TestResourceClientList(t *testing.T) {
 		expectReadList(client, clientList.ListContent, []clientlists.ListItemContent{}, 3)
 		expectDeleteList(client, clientList.ListContent)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: loadFixtureString(fmt.Sprintf("%s/list_create.tf", testDir)),
-					},
-					{
-						ImportState:       true,
-						ImportStateVerify: true,
-						ImportStateId:     "1_AB",
-						ResourceName:      "akamai_clientlist_list.test_list",
-					},
-				},
-			})
+		runResourceTest(t, client, []resource.TestStep{
+			{
+				Config: loadFixtureString(fmt.Sprintf("%s/list_create.tf", testDir)),
+			},
+			{
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateId:     "1_AB",
+				ResourceName:      "akamai_clientlist_list.test_list",
+			},
 		})
-		client.AssertExpectations(t)
 	})
 
 	t.Run("Create a new USER type client list without items - no username translation", func(t *testing.T) {
@@ -917,29 +818,23 @@ func TestResourceClientList(t *testing.T) {
 		expectReadItems(client, clientList.ListContent, []clientlists.ListItemContent{}, 2)
 		expectDeleteList(client, clientList.ListContent)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: loadFixtureString(fmt.Sprintf("%s/user_type_list_create.tf", testDir)),
-						Check: checkAttributes(listAttributes{
-							ListID:     clientList.ListID,
-							Name:       "List Name",
-							Notes:      "List Notes",
-							Tags:       []string{"a", "b"},
-							Type:       "USER_ID",
-							ContractID: "12_ABC",
-							GroupID:    12,
-							Version:    1,
-							ItemsCount: 0,
-							Items:      []clientlists.ListItemPayload{},
-						}),
-					},
-				},
-			})
+		runResourceTest(t, client, []resource.TestStep{
+			{
+				Config: loadFixtureString(fmt.Sprintf("%s/user_type_list_create.tf", testDir)),
+				Check: checkAttributes(listAttributes{
+					ListID:     clientList.ListID,
+					Name:       "List Name",
+					Notes:      "List Notes",
+					Tags:       []string{"a", "b"},
+					Type:       "USER_ID",
+					ContractID: "12_ABC",
+					GroupID:    12,
+					Version:    1,
+					ItemsCount: 0,
+					Items:      []clientlists.ListItemPayload{},
+				}),
+			},
 		})
-		client.AssertExpectations(t)
 	})
 
 	t.Run("Create a new USER type client list with items - Username as value, require username translation", func(t *testing.T) {
@@ -985,29 +880,23 @@ func TestResourceClientList(t *testing.T) {
 			}, 3)
 		expectDeleteList(client, clientList.ListContent)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: loadFixtureString(fmt.Sprintf("%s/user_type_list_and_items_create.tf", testDir)),
-						Check: checkAttributes(listAttributes{
-							ListID:     clientList.ListID,
-							Name:       "List Name",
-							Notes:      "List Notes",
-							Tags:       []string{"a", "b"},
-							Type:       "USER_ID",
-							ContractID: "12_ABC",
-							GroupID:    12,
-							Version:    1,
-							ItemsCount: len(items),
-							Items:      items,
-						}),
-					},
-				},
-			})
+		runResourceTest(t, client, []resource.TestStep{
+			{
+				Config: loadFixtureString(fmt.Sprintf("%s/user_type_list_and_items_create.tf", testDir)),
+				Check: checkAttributes(listAttributes{
+					ListID:     clientList.ListID,
+					Name:       "List Name",
+					Notes:      "List Notes",
+					Tags:       []string{"a", "b"},
+					Type:       "USER_ID",
+					ContractID: "12_ABC",
+					GroupID:    12,
+					Version:    1,
+					ItemsCount: len(items),
+					Items:      items,
+				}),
+			},
 		})
-		client.AssertExpectations(t)
 	})
 
 	t.Run("Create a new USER type client list with items - UserID as value, no username translation", func(t *testing.T) {
@@ -1035,29 +924,23 @@ func TestResourceClientList(t *testing.T) {
 		expectReadItems(client, clientList.ListContent, []clientlists.ListItemContent{}, 2)
 		expectDeleteList(client, clientList.ListContent)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: loadFixtureString(fmt.Sprintf("%s/user_type_list_and_items_user_id_create.tf", testDir)),
-						Check: checkAttributes(listAttributes{
-							ListID:     clientList.ListID,
-							Name:       "List Name",
-							Notes:      "List Notes",
-							Tags:       []string{"a", "b"},
-							Type:       "USER_ID",
-							ContractID: "12_ABC",
-							GroupID:    12,
-							Version:    1,
-							ItemsCount: len(items),
-							Items:      items,
-						}),
-					},
-				},
-			})
+		runResourceTest(t, client, []resource.TestStep{
+			{
+				Config: loadFixtureString(fmt.Sprintf("%s/user_type_list_and_items_user_id_create.tf", testDir)),
+				Check: checkAttributes(listAttributes{
+					ListID:     clientList.ListID,
+					Name:       "List Name",
+					Notes:      "List Notes",
+					Tags:       []string{"a", "b"},
+					Type:       "USER_ID",
+					ContractID: "12_ABC",
+					GroupID:    12,
+					Version:    1,
+					ItemsCount: len(items),
+					Items:      items,
+				}),
+			},
 		})
-		client.AssertExpectations(t)
 	})
 	t.Run("Create a new USER type client list with items - mix UserID, Username as value, require username translation", func(t *testing.T) {
 		client := new(clientlists.Mock)
@@ -1092,29 +975,23 @@ func TestResourceClientList(t *testing.T) {
 			}, 3)
 		expectDeleteList(client, clientList.ListContent)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: loadFixtureString(fmt.Sprintf("%s/user_type_list_and_items_mix_username_user_id_create.tf", testDir)),
-						Check: checkAttributes(listAttributes{
-							ListID:     clientList.ListID,
-							Name:       "List Name",
-							Notes:      "List Notes",
-							Tags:       []string{"a", "b"},
-							Type:       "USER_ID",
-							ContractID: "12_ABC",
-							GroupID:    12,
-							Version:    1,
-							ItemsCount: len(items),
-							Items:      items,
-						}),
-					},
-				},
-			})
+		runResourceTest(t, client, []resource.TestStep{
+			{
+				Config: loadFixtureString(fmt.Sprintf("%s/user_type_list_and_items_mix_username_user_id_create.tf", testDir)),
+				Check: checkAttributes(listAttributes{
+					ListID:     clientList.ListID,
+					Name:       "List Name",
+					Notes:      "List Notes",
+					Tags:       []string{"a", "b"},
+					Type:       "USER_ID",
+					ContractID: "12_ABC",
+					GroupID:    12,
+					Version:    1,
+					ItemsCount: len(items),
+					Items:      items,
+				}),
+			},
 		})
-		client.AssertExpectations(t)
 	})
 
 	t.Run("Update USER type client list items and list - mix UserID, Username as value, require username translation", func(t *testing.T) {
@@ -1196,44 +1073,38 @@ func TestResourceClientList(t *testing.T) {
 			}, 3)
 		expectDeleteList(client, clientList.ListContent)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: loadFixtureString(fmt.Sprintf("%s/user_type_list_and_items_mix_username_user_id_create.tf", testDir)),
-						Check: checkAttributes(listAttributes{
-							ListID:     clientList.ListID,
-							Name:       "List Name",
-							Notes:      "List Notes",
-							Tags:       []string{"a", "b"},
-							Type:       "USER_ID",
-							ContractID: "12_ABC",
-							GroupID:    12,
-							Version:    1,
-							ItemsCount: len(items),
-							Items:      items,
-						}),
-					},
-					{
-						Config: loadFixtureString(fmt.Sprintf("%s/user_type_list_and_items_mix_username_user_id_update.tf", testDir)),
-						Check: checkAttributes(listAttributes{
-							ListID:     clientList.ListID,
-							Name:       "List Name Updated",
-							Notes:      "List Notes Updated",
-							Tags:       []string{"a", "c", "d"},
-							Type:       "USER_ID",
-							ContractID: "12_ABC",
-							GroupID:    12,
-							Version:    1,
-							ItemsCount: 3,
-							Items:      updatedItems,
-						}),
-					},
-				},
-			})
+		runResourceTest(t, client, []resource.TestStep{
+			{
+				Config: loadFixtureString(fmt.Sprintf("%s/user_type_list_and_items_mix_username_user_id_create.tf", testDir)),
+				Check: checkAttributes(listAttributes{
+					ListID:     clientList.ListID,
+					Name:       "List Name",
+					Notes:      "List Notes",
+					Tags:       []string{"a", "b"},
+					Type:       "USER_ID",
+					ContractID: "12_ABC",
+					GroupID:    12,
+					Version:    1,
+					ItemsCount: len(items),
+					Items:      items,
+				}),
+			},
+			{
+				Config: loadFixtureString(fmt.Sprintf("%s/user_type_list_and_items_mix_username_user_id_update.tf", testDir)),
+				Check: checkAttributes(listAttributes{
+					ListID:     clientList.ListID,
+					Name:       "List Name Updated",
+					Notes:      "List Notes Updated",
+					Tags:       []string{"a", "c", "d"},
+					Type:       "USER_ID",
+					ContractID: "12_ABC",
+					GroupID:    12,
+					Version:    1,
+					ItemsCount: 3,
+					Items:      updatedItems,
+				}),
+			},
 		})
-		client.AssertExpectations(t)
 	})
 
 	t.Run("Create a new USER type client list without permission - returns an 403 API error", func(t *testing.T) {
@@ -1248,18 +1119,12 @@ func TestResourceClientList(t *testing.T) {
 			Items:      []clientlists.ListItemPayload{},
 		})
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      loadFixtureString(fmt.Sprintf("%s/user_type_list_create.tf", testDir)),
-						ExpectError: regexp.MustCompile(cannotUseUserTypeError),
-					},
-				},
-			})
+		runResourceTest(t, client, []resource.TestStep{
+			{
+				Config:      loadFixtureString(fmt.Sprintf("%s/user_type_list_create.tf", testDir)),
+				ExpectError: regexp.MustCompile(cannotUseUserTypeError),
+			},
 		})
-		client.AssertExpectations(t)
 	})
 
 	t.Run("Create a new domain type client list", func(t *testing.T) {
@@ -1276,90 +1141,27 @@ func TestResourceClientList(t *testing.T) {
 		expectReadList(client, clientList.ListContent, []clientlists.ListItemContent{}, 2)
 		expectDeleteList(client, clientList.ListContent)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: loadFixtureString(fmt.Sprintf("%s/domain_type_list_create.tf", testDir)),
-						Check: checkAttributes(listAttributes{
-							ListID:     clientList.ListID,
-							Name:       "List Name",
-							Notes:      "List Notes",
-							Tags:       []string{"a", "b"},
-							Type:       "DOMAIN",
-							ContractID: "12_ABC",
-							GroupID:    12,
-							Version:    1,
-							ItemsCount: 0,
-							Items:      []clientlists.ListItemPayload{},
-						}),
-					},
-				},
-			})
+		runResourceTest(t, client, []resource.TestStep{
+			{
+				Config: loadFixtureString(fmt.Sprintf("%s/domain_type_list_create.tf", testDir)),
+				Check: checkAttributes(listAttributes{
+					ListID:     clientList.ListID,
+					Name:       "List Name",
+					Notes:      "List Notes",
+					Tags:       []string{"a", "b"},
+					Type:       "DOMAIN",
+					ContractID: "12_ABC",
+					GroupID:    12,
+					Version:    1,
+					ItemsCount: 0,
+					Items:      []clientlists.ListItemPayload{},
+				}),
+			},
 		})
-		client.AssertExpectations(t)
 	})
 
 	t.Run("Update domain type client list", func(t *testing.T) {
-		client := new(clientlists.Mock)
-		clientList := expectCreateList(client, clientlists.CreateClientListRequest{
-			Name:       "List Name",
-			Notes:      "List Notes",
-			Tags:       []string{"a", "b"},
-			Type:       clientlists.DOMAIN,
-			ContractID: "12_ABC",
-			GroupID:    12,
-			Items:      []clientlists.ListItemPayload{},
-		})
-		expectReadList(client, clientList.ListContent, []clientlists.ListItemContent{}, 3)
-		updateResponse := expectUpdateList(client, clientlists.DOMAIN, 0, clientlists.UpdateClientListRequest{
-			UpdateClientList: clientlists.UpdateClientList{
-				Name:  "List Name Updated",
-				Notes: "List Notes Updated",
-				Tags:  []string{"a", "c", "d"},
-			},
-			ListID: clientList.ListID,
-		})
-		expectReadList(client, updateResponse.ListContent, []clientlists.ListItemContent{}, 2)
-		expectDeleteList(client, clientList.ListContent)
-
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: loadFixtureString(fmt.Sprintf("%s/domain_type_list_create.tf", testDir)),
-						Check: checkAttributes(listAttributes{
-							ListID:     clientList.ListID,
-							Name:       "List Name",
-							Notes:      "List Notes",
-							Tags:       []string{"a", "b"},
-							Type:       "DOMAIN",
-							ContractID: "12_ABC",
-							GroupID:    12,
-							Version:    1,
-							ItemsCount: 0,
-						}),
-					},
-					{
-						Config: loadFixtureString(fmt.Sprintf("%s/domain_type_list_update.tf", testDir)),
-						Check: checkAttributes(listAttributes{
-							ListID:     clientList.ListID,
-							Name:       "List Name Updated",
-							Notes:      "List Notes Updated",
-							Tags:       []string{"a", "c", "d"},
-							Type:       "DOMAIN",
-							ContractID: "12_ABC",
-							GroupID:    12,
-							Version:    1,
-							ItemsCount: 0,
-						}),
-					},
-				},
-			})
-		})
-		client.AssertExpectations(t)
+		testListUpdateScenario(t, clientlists.DOMAIN, "DOMAIN", "domain_type_list_create.tf", "domain_type_list_update.tf")
 	})
 
 	t.Run("Create a new domain type client list with items", func(t *testing.T) {
@@ -1393,28 +1195,473 @@ func TestResourceClientList(t *testing.T) {
 		expectReadList(client, clientList.ListContent, mapItemsPayloadToContent(items), 2)
 		expectDeleteList(client, clientList.ListContent)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: loadFixtureString(fmt.Sprintf("%s/domain_type_list_and_items_create.tf", testDir)),
-						Check: checkAttributes(listAttributes{
-							ListID:     clientList.ListID,
-							Name:       "List Name",
-							Notes:      "List Notes",
-							Tags:       []string{"a", "b"},
-							Type:       "DOMAIN",
-							ContractID: "12_ABC",
-							GroupID:    12,
-							Version:    1,
-							ItemsCount: len(items),
-							Items:      items,
-						}),
-					},
-				},
-			})
+		runResourceTest(t, client, []resource.TestStep{
+			{
+				Config: loadFixtureString(fmt.Sprintf("%s/domain_type_list_and_items_create.tf", testDir)),
+				Check: checkAttributes(listAttributes{
+					ListID:     clientList.ListID,
+					Name:       "List Name",
+					Notes:      "List Notes",
+					Tags:       []string{"a", "b"},
+					Type:       "DOMAIN",
+					ContractID: "12_ABC",
+					GroupID:    12,
+					Version:    1,
+					ItemsCount: len(items),
+					Items:      items,
+				}),
+			},
 		})
-		client.AssertExpectations(t)
+	})
+
+	t.Run("Create a new REQUEST_HEADER_NAME_VALUE type client list", func(t *testing.T) {
+		client := new(clientlists.Mock)
+		clientList := expectCreateList(client, clientlists.CreateClientListRequest{
+			Name:       "List Name",
+			Notes:      "List Notes",
+			Tags:       []string{"a", "b"},
+			Type:       clientlists.RequestHeaderNameValue,
+			ContractID: "12_ABC",
+			GroupID:    12,
+			Items:      []clientlists.ListItemPayload{},
+		})
+		expectReadList(client, clientList.ListContent, []clientlists.ListItemContent{}, 2)
+		expectDeleteList(client, clientList.ListContent)
+
+		runResourceTest(t, client, []resource.TestStep{
+			{
+				Config: loadFixtureString(fmt.Sprintf("%s/rhnv_type_list_create.tf", testDir)),
+				Check: checkAttributes(listAttributes{
+					ListID:     clientList.ListID,
+					Name:       "List Name",
+					Notes:      "List Notes",
+					Tags:       []string{"a", "b"},
+					Type:       "REQUEST_HEADER_NAME_VALUE",
+					ContractID: "12_ABC",
+					GroupID:    12,
+					Version:    1,
+					ItemsCount: 0,
+					Items:      []clientlists.ListItemPayload{},
+				}),
+			},
+		})
+	})
+
+	t.Run("Create a new REQUEST_HEADER_NAME_VALUE type client list with items", func(t *testing.T) {
+		client := new(clientlists.Mock)
+		items := []clientlists.ListItemPayload{
+			{Key: "header1", Values: []string{"val1"}, Description: "Header 1 Desc", Tags: []string{}},
+			{Key: "header3", Values: []string{"val3"}, ExpirationDate: "2026-12-26T01:00:00+00:00", Tags: []string{}},
+			{Key: "header2", Values: []string{"val2"}, Description: "Header 2 Desc", Tags: []string{}},
+		}
+		clientList := expectCreateList(client, clientlists.CreateClientListRequest{
+			Name:       "List Name",
+			Notes:      "List Notes",
+			Tags:       []string{"a", "b"},
+			Type:       clientlists.RequestHeaderNameValue,
+			ContractID: "12_ABC",
+			GroupID:    12,
+			Items:      items,
+		})
+		expectReadList(client, clientList.ListContent, mapKeyValuesItemsPayloadToContent(items), 2)
+		expectDeleteList(client, clientList.ListContent)
+
+		runResourceTest(t, client, []resource.TestStep{
+			{
+				Config: loadFixtureString(fmt.Sprintf("%s/rhnv_type_list_and_items_create.tf", testDir)),
+				Check: checkAttributes(listAttributes{
+					ListID:     clientList.ListID,
+					Name:       "List Name",
+					Notes:      "List Notes",
+					Tags:       []string{"a", "b"},
+					Type:       "REQUEST_HEADER_NAME_VALUE",
+					ContractID: "12_ABC",
+					GroupID:    12,
+					Version:    1,
+					ItemsCount: len(items),
+					Items:      items,
+				}),
+			},
+		})
+	})
+
+	t.Run("Update REQUEST_HEADER_NAME_VALUE client list", func(t *testing.T) {
+		testListUpdateScenario(t, clientlists.RequestHeaderNameValue, "REQUEST_HEADER_NAME_VALUE", "rhnv_type_list_create.tf", "rhnv_type_list_update.tf")
+	})
+
+	t.Run("Create REQUEST_HEADER_NAME_VALUE list with duplicate key items fails", func(t *testing.T) {
+		client := new(clientlists.Mock)
+		runResourceTest(t, client, []resource.TestStep{
+			{
+				Config:      loadFixtureString(fmt.Sprintf("%s/rhnv_type_list_and_duplicate_items_create.tf", testDir)),
+				ExpectError: regexp.MustCompile("Error: 'Items' collection contains duplicate values for 'key' field. Duplicate value: header1"),
+			},
+		})
+	})
+
+	t.Run("Update REQUEST_HEADER_NAME_VALUE client list items", func(t *testing.T) {
+		client := new(clientlists.Mock)
+		items := []clientlists.ListItemPayload{
+			{Key: "header1", Values: []string{"val1"}, Description: "Header 1 Desc", Tags: []string{}},
+			{Key: "header3", Values: []string{"val3"}, ExpirationDate: "2026-12-26T01:00:00+00:00", Tags: []string{}},
+			{Key: "header2", Values: []string{"val2"}, Description: "Header 2 Desc", Tags: []string{}},
+		}
+		updatedItems := []clientlists.ListItemPayload{
+			{Key: "header1", Values: []string{"val1"}, Description: "Header 1 Desc Updated", Tags: []string{}},
+			{Key: "header2", Values: []string{"val2"}, Description: "Header 2 Desc", Tags: []string{}},
+			{Key: "header4", Values: []string{"val4"}, Description: "Header 4 Desc", Tags: []string{}},
+		}
+		clientList := expectCreateList(client, clientlists.CreateClientListRequest{
+			Name:       "List Name",
+			Notes:      "List Notes",
+			Tags:       []string{"a", "b"},
+			Type:       clientlists.RequestHeaderNameValue,
+			ContractID: "12_ABC",
+			GroupID:    12,
+			Items:      items,
+		})
+		updatedListContent := clientlists.ListContent{
+			ListID:     clientList.ListID,
+			Name:       clientList.Name,
+			Notes:      clientList.Notes,
+			Tags:       clientList.Tags,
+			Type:       clientList.Type,
+			Version:    2,
+			ItemsCount: int64(len(updatedItems)),
+		}
+		expectReadList(client, clientList.ListContent, mapKeyValuesItemsPayloadToContent(items), 4)
+		expectUpdateListItems(client, clientlists.UpdateClientListItemsRequest{
+			ListID: clientList.ListID,
+			UpdateClientListItems: clientlists.UpdateClientListItems{
+				Append: []clientlists.ListItemPayload{
+					{Key: "header4", Values: []string{"val4"}, Description: "Header 4 Desc", Tags: []string{}},
+				},
+				Update: []clientlists.ListItemPayload{
+					{Key: "header1", Values: []string{"val1"}, Description: "Header 1 Desc Updated", Tags: []string{}},
+				},
+				Delete: []clientlists.ListItemPayload{
+					{Key: "header3"},
+				},
+			},
+		})
+		expectReadList(client, updatedListContent, mapKeyValuesItemsPayloadToContent(updatedItems), 2)
+		expectDeleteList(client, clientList.ListContent)
+
+		runResourceTest(t, client, []resource.TestStep{
+			{
+				Config: loadFixtureString(fmt.Sprintf("%s/rhnv_type_list_and_items_create.tf", testDir)),
+				Check: checkAttributes(listAttributes{
+					ListID:     clientList.ListID,
+					Name:       "List Name",
+					Notes:      "List Notes",
+					Tags:       []string{"a", "b"},
+					Type:       "REQUEST_HEADER_NAME_VALUE",
+					ContractID: "12_ABC",
+					GroupID:    12,
+					Version:    1,
+					ItemsCount: len(items),
+					Items:      items,
+				}),
+			},
+			{
+				Config: loadFixtureString(fmt.Sprintf("%s/rhnv_type_list_and_items_update.tf", testDir)),
+				Check: checkAttributes(listAttributes{
+					ListID:     clientList.ListID,
+					Name:       "List Name",
+					Notes:      "List Notes",
+					Tags:       []string{"a", "b"},
+					Type:       "REQUEST_HEADER_NAME_VALUE",
+					ContractID: "12_ABC",
+					GroupID:    12,
+					Version:    2,
+					ItemsCount: len(updatedItems),
+					Items:      updatedItems,
+				}),
+			},
+		})
+	})
+
+	t.Run("Create REQUEST_HEADER_NAME_VALUE list item with 'value' field fails", func(t *testing.T) {
+		client := new(clientlists.Mock)
+		runResourceTest(t, client, []resource.TestStep{
+			{
+				Config:      loadFixtureString(fmt.Sprintf("%s/rhnv_type_item_with_value.tf", testDir)),
+				ExpectError: regexp.MustCompile(`invalid item: unsupported field 'value'`),
+			},
+		})
+	})
+
+	t.Run("Create REQUEST_HEADER_NAME_VALUE list item with missing 'key' fails", func(t *testing.T) {
+		client := new(clientlists.Mock)
+		runResourceTest(t, client, []resource.TestStep{
+			{
+				Config:      loadFixtureString(fmt.Sprintf("%s/rhnv_type_item_missing_key.tf", testDir)),
+				ExpectError: regexp.MustCompile(`invalid item: missing required field 'key'`),
+			},
+		})
+	})
+
+	t.Run("Create REQUEST_HEADER_NAME_VALUE list item with missing 'values' fails", func(t *testing.T) {
+		client := new(clientlists.Mock)
+		runResourceTest(t, client, []resource.TestStep{
+			{
+				Config:      loadFixtureString(fmt.Sprintf("%s/rhnv_type_item_missing_values.tf", testDir)),
+				ExpectError: regexp.MustCompile(`invalid item: missing required field 'values'`),
+			},
+		})
+	})
+
+	t.Run("Create ASN list item with 'key' field fails", func(t *testing.T) {
+		client := new(clientlists.Mock)
+		runResourceTest(t, client, []resource.TestStep{
+			{
+				Config:      loadFixtureString(fmt.Sprintf("%s/asn_type_item_with_key.tf", testDir)),
+				ExpectError: regexp.MustCompile(`invalid item: unsupported field 'key'`),
+			},
+		})
+	})
+
+	t.Run("Create ASN list item with 'values' field fails", func(t *testing.T) {
+		client := new(clientlists.Mock)
+		runResourceTest(t, client, []resource.TestStep{
+			{
+				Config:      loadFixtureString(fmt.Sprintf("%s/asn_type_item_with_values.tf", testDir)),
+				ExpectError: regexp.MustCompile(`invalid item: unsupported field 'values'`),
+			},
+		})
+	})
+
+	t.Run("Create ASN list item with missing 'value' fails", func(t *testing.T) {
+		client := new(clientlists.Mock)
+		runResourceTest(t, client, []resource.TestStep{
+			{
+				Config:      loadFixtureString(fmt.Sprintf("%s/asn_type_item_missing_value.tf", testDir)),
+				ExpectError: regexp.MustCompile(`invalid item: missing required field 'value'`),
+			},
+		})
+	})
+}
+
+func TestIsVersionUpdateRequired(t *testing.T) {
+	t.Run("nil values", func(t *testing.T) {
+		required, err := isVersionUpdateRequired(nil, nil, false)
+		assert.NoError(t, err)
+		assert.False(t, required)
+
+		oldSet := schema.NewSet(valueItemHashFn, []interface{}{})
+		required, err = isVersionUpdateRequired(oldSet, nil, false)
+		assert.NoError(t, err)
+		assert.True(t, required)
+
+		required, err = isVersionUpdateRequired(nil, oldSet, false)
+		assert.NoError(t, err)
+		assert.True(t, required)
+	})
+
+	t.Run("value items - no changes", func(t *testing.T) {
+		oldSet := schema.NewSet(valueItemHashFn, []interface{}{
+			map[string]interface{}{
+				"value":           "1.2.3.4",
+				"expiration_date": "2026-12-31",
+				"description":     "Test IP",
+				"tags":            schema.NewSet(schema.HashString, []interface{}{"tag1"}),
+			},
+		})
+		newSet := schema.NewSet(valueItemHashFn, []interface{}{
+			map[string]interface{}{
+				"value":           "1.2.3.4",
+				"expiration_date": "2026-12-31",
+				"description":     "Test IP",
+				"tags":            schema.NewSet(schema.HashString, []interface{}{"tag1"}),
+			},
+		})
+
+		required, err := isVersionUpdateRequired(oldSet, newSet, false)
+		assert.NoError(t, err)
+		assert.False(t, required)
+	})
+
+	t.Run("value items - expiration_date changed", func(t *testing.T) {
+		oldSet := schema.NewSet(valueItemHashFn, []interface{}{
+			map[string]interface{}{
+				"value":           "1.2.3.4",
+				"expiration_date": "2026-12-31",
+				"description":     "Test IP",
+				"tags":            schema.NewSet(schema.HashString, []interface{}{"tag1"}),
+			},
+		})
+		newSet := schema.NewSet(valueItemHashFn, []interface{}{
+			map[string]interface{}{
+				"value":           "1.2.3.4",
+				"expiration_date": "2027-01-01",
+				"description":     "Test IP",
+				"tags":            schema.NewSet(schema.HashString, []interface{}{"tag1"}),
+			},
+		})
+
+		required, err := isVersionUpdateRequired(oldSet, newSet, false)
+		assert.NoError(t, err)
+		assert.True(t, required)
+	})
+
+	t.Run("value items - new item added", func(t *testing.T) {
+		oldSet := schema.NewSet(valueItemHashFn, []interface{}{
+			map[string]interface{}{
+				"value":           "1.2.3.4",
+				"expiration_date": "2026-12-31",
+				"description":     "Test IP",
+				"tags":            schema.NewSet(schema.HashString, []interface{}{}),
+			},
+		})
+		newSet := schema.NewSet(valueItemHashFn, []interface{}{
+			map[string]interface{}{
+				"value":           "1.2.3.4",
+				"expiration_date": "2026-12-31",
+				"description":     "Test IP",
+				"tags":            schema.NewSet(schema.HashString, []interface{}{}),
+			},
+			map[string]interface{}{
+				"value":           "5.6.7.8",
+				"expiration_date": "2026-12-31",
+				"description":     "Another IP",
+				"tags":            schema.NewSet(schema.HashString, []interface{}{}),
+			},
+		})
+
+		required, err := isVersionUpdateRequired(oldSet, newSet, false)
+		assert.NoError(t, err)
+		assert.True(t, required)
+	})
+
+	t.Run("key-value items - no changes", func(t *testing.T) {
+		oldSet := schema.NewSet(keyValuesItemHashFn, []interface{}{
+			map[string]interface{}{
+				"key":             "User-Agent",
+				"values":          schema.NewSet(schema.HashString, []interface{}{"Mozilla", "Chrome"}),
+				"expiration_date": "2026-12-31",
+				"description":     "Test header",
+				"tags":            schema.NewSet(schema.HashString, []interface{}{}),
+			},
+		})
+		newSet := schema.NewSet(keyValuesItemHashFn, []interface{}{
+			map[string]interface{}{
+				"key":             "User-Agent",
+				"values":          schema.NewSet(schema.HashString, []interface{}{"Mozilla", "Chrome"}),
+				"expiration_date": "2026-12-31",
+				"description":     "Test header",
+				"tags":            schema.NewSet(schema.HashString, []interface{}{}),
+			},
+		})
+
+		required, err := isVersionUpdateRequired(oldSet, newSet, true)
+		assert.NoError(t, err)
+		assert.False(t, required)
+	})
+
+	t.Run("key-value items - values changed", func(t *testing.T) {
+		oldSet := schema.NewSet(keyValuesItemHashFn, []interface{}{
+			map[string]interface{}{
+				"key":             "User-Agent",
+				"values":          schema.NewSet(schema.HashString, []interface{}{"Mozilla", "Chrome"}),
+				"expiration_date": "2026-12-31",
+				"description":     "Test header",
+				"tags":            schema.NewSet(schema.HashString, []interface{}{}),
+			},
+		})
+		newSet := schema.NewSet(keyValuesItemHashFn, []interface{}{
+			map[string]interface{}{
+				"key":             "User-Agent",
+				"values":          schema.NewSet(schema.HashString, []interface{}{"Firefox", "Safari"}),
+				"expiration_date": "2026-12-31",
+				"description":     "Test header",
+				"tags":            schema.NewSet(schema.HashString, []interface{}{}),
+			},
+		})
+
+		required, err := isVersionUpdateRequired(oldSet, newSet, true)
+		assert.NoError(t, err)
+		assert.True(t, required, "changing values for REQUEST_HEADER_NAME_VALUE should require version update")
+	})
+
+	t.Run("key-value items - values order changed (should not trigger update)", func(t *testing.T) {
+		oldSet := schema.NewSet(keyValuesItemHashFn, []interface{}{
+			map[string]interface{}{
+				"key":             "User-Agent",
+				"values":          schema.NewSet(schema.HashString, []interface{}{"Chrome", "Mozilla"}),
+				"expiration_date": "2026-12-31",
+				"description":     "Test header",
+				"tags":            schema.NewSet(schema.HashString, []interface{}{}),
+			},
+		})
+		newSet := schema.NewSet(keyValuesItemHashFn, []interface{}{
+			map[string]interface{}{
+				"key":             "User-Agent",
+				"values":          schema.NewSet(schema.HashString, []interface{}{"Mozilla", "Chrome"}),
+				"expiration_date": "2026-12-31",
+				"description":     "Test header",
+				"tags":            schema.NewSet(schema.HashString, []interface{}{}),
+			},
+		})
+
+		required, err := isVersionUpdateRequired(oldSet, newSet, true)
+		assert.NoError(t, err)
+		assert.False(t, required, "reordering values should not trigger version update")
+	})
+
+	t.Run("key-value items - expiration_date changed", func(t *testing.T) {
+		oldSet := schema.NewSet(keyValuesItemHashFn, []interface{}{
+			map[string]interface{}{
+				"key":             "User-Agent",
+				"values":          schema.NewSet(schema.HashString, []interface{}{"Mozilla", "Chrome"}),
+				"expiration_date": "2026-12-31",
+				"description":     "Test header",
+				"tags":            schema.NewSet(schema.HashString, []interface{}{}),
+			},
+		})
+		newSet := schema.NewSet(keyValuesItemHashFn, []interface{}{
+			map[string]interface{}{
+				"key":             "User-Agent",
+				"values":          schema.NewSet(schema.HashString, []interface{}{"Mozilla", "Chrome"}),
+				"expiration_date": "2027-01-01",
+				"description":     "Test header",
+				"tags":            schema.NewSet(schema.HashString, []interface{}{}),
+			},
+		})
+
+		required, err := isVersionUpdateRequired(oldSet, newSet, true)
+		assert.NoError(t, err)
+		assert.True(t, required)
+	})
+
+	t.Run("key-value items - new key added", func(t *testing.T) {
+		oldSet := schema.NewSet(keyValuesItemHashFn, []interface{}{
+			map[string]interface{}{
+				"key":             "User-Agent",
+				"values":          schema.NewSet(schema.HashString, []interface{}{"Mozilla"}),
+				"expiration_date": "2026-12-31",
+				"description":     "Test header",
+				"tags":            schema.NewSet(schema.HashString, []interface{}{}),
+			},
+		})
+		newSet := schema.NewSet(keyValuesItemHashFn, []interface{}{
+			map[string]interface{}{
+				"key":             "User-Agent",
+				"values":          schema.NewSet(schema.HashString, []interface{}{"Mozilla"}),
+				"expiration_date": "2026-12-31",
+				"description":     "Test header",
+				"tags":            schema.NewSet(schema.HashString, []interface{}{}),
+			},
+			map[string]interface{}{
+				"key":             "Accept",
+				"values":          schema.NewSet(schema.HashString, []interface{}{"application/json"}),
+				"expiration_date": "2026-12-31",
+				"description":     "Accept header",
+				"tags":            schema.NewSet(schema.HashString, []interface{}{}),
+			},
+		})
+
+		required, err := isVersionUpdateRequired(oldSet, newSet, true)
+		assert.NoError(t, err)
+		assert.True(t, required)
 	})
 }

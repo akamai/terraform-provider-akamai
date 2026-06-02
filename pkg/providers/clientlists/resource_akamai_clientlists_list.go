@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"reflect"
 	"sort"
+	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/clientlists"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf"
@@ -26,6 +27,7 @@ func resourceClientList() *schema.Resource {
 		DeleteContext: resourceClientListDelete,
 		CustomizeDiff: customdiff.All(
 			markVersionComputedIfListModified,
+			validateItems,
 		),
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -84,13 +86,25 @@ func resourceClientList() *schema.Resource {
 			"items": {
 				Type:        schema.TypeSet,
 				Optional:    true,
+				Set:         itemsHashFunc,
 				Description: "Set of items containing item information.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"value": {
 							Type:        schema.TypeString,
-							Required:    true,
-							Description: "Value of the item. (i.e. IP address, AS Number, GEO, ...etc)",
+							Optional:    true,
+							Description: "Value of the item (e.g. IP address, AS Number, GEO, domain, TLS fingerprint, file hash, user ID). Not applicable for REQUEST_HEADER_NAME_VALUE list type.",
+						},
+						"key": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "Key of the item (e.g. request header name). Applicable only for REQUEST_HEADER_NAME_VALUE list type.",
+						},
+						"values": {
+							Type:        schema.TypeSet,
+							Optional:    true,
+							Description: "Values of the item (e.g. request header name values). Applicable only for REQUEST_HEADER_NAME_VALUE list type.",
+							Elem:        &schema.Schema{Type: schema.TypeString},
 						},
 						"description": {
 							Type:        schema.TypeString,
@@ -118,9 +132,9 @@ func resourceClientList() *schema.Resource {
 }
 
 func resourceClientListRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := meta.Must(m)
-	client := inst.Client(meta)
-	logger := meta.Log("CLIENTLIST", "resourceClientListRead")
+	metaInfo := meta.Must(m)
+	client := inst.Client(metaInfo)
+	logger := metaInfo.Log("CLIENTLIST", "resourceClientListRead")
 	logger.Debug("Reading client list")
 
 	getClientListReq := clientlists.GetClientListRequest{
@@ -129,12 +143,16 @@ func resourceClientListRead(ctx context.Context, d *schema.ResourceData, m inter
 	}
 
 	list, err := client.GetClientList(ctx, getClientListReq)
-	if e, ok := err.(*clientlists.Error); ok && e.StatusCode == http.StatusNotFound || (list != nil && list.Deprecated) {
+	var clientListErr *clientlists.Error
+	if errors.As(err, &clientListErr) && clientListErr.StatusCode == http.StatusNotFound || (list != nil && list.Deprecated) {
 		d.SetId("")
 		return nil
 	} else if err != nil {
 		logger.Errorf("calling 'getClientList' failed: %s", err.Error())
 		return diag.FromErr(err)
+	}
+	if list == nil {
+		return diag.Errorf("unexpected nil response from GetClientList")
 	}
 
 	if list.Type == clientlists.USER {
@@ -176,9 +194,9 @@ func resourceClientListRead(ctx context.Context, d *schema.ResourceData, m inter
 }
 
 func resourceClientListCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := meta.Must(m)
-	client := inst.Client(meta)
-	logger := meta.Log("CLIENTLIST", "resourceClientListCreate")
+	metaInfo := meta.Must(m)
+	client := inst.Client(metaInfo)
+	logger := metaInfo.Log("CLIENTLIST", "resourceClientListCreate")
 	logger.Debug("Creating client list")
 
 	diags := validateItemsUniqueness(ctx, d, client)
@@ -191,7 +209,7 @@ func resourceClientListCreate(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 
-	createCLientListRequest := clientlists.CreateClientListRequest{
+	createClientListRequest := clientlists.CreateClientListRequest{
 		Name:       listAttrs.Name,
 		Type:       clientlists.ClientListType(listAttrs.ListType),
 		Notes:      listAttrs.Notes,
@@ -201,7 +219,7 @@ func resourceClientListCreate(ctx context.Context, d *schema.ResourceData, m int
 		Items:      listAttrs.Items,
 	}
 
-	list, err := client.CreateClientList(ctx, createCLientListRequest)
+	list, err := client.CreateClientList(ctx, createClientListRequest)
 	if err != nil {
 		logger.Errorf("calling 'createClientList' failed: %s", err.Error())
 		return diag.FromErr(err)
@@ -213,9 +231,9 @@ func resourceClientListCreate(ctx context.Context, d *schema.ResourceData, m int
 }
 
 func resourceClientListUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := meta.Must(m)
-	client := inst.Client(meta)
-	logger := meta.Log("CLIENTLIST", "resourceClientListUpdate")
+	metaInfo := meta.Must(m)
+	client := inst.Client(metaInfo)
+	logger := metaInfo.Log("CLIENTLIST", "resourceClientListUpdate")
 	logger.Debug("Updating client list")
 
 	diags := validateItemsUniqueness(ctx, d, client)
@@ -272,16 +290,16 @@ func resourceClientListUpdate(ctx context.Context, d *schema.ResourceData, m int
 }
 
 func resourceClientListDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := meta.Must(m)
-	client := inst.Client(meta)
-	logger := meta.Log("CLIENTLIST", "resourceClientListDelete")
+	metaInfo := meta.Must(m)
+	client := inst.Client(metaInfo)
+	logger := metaInfo.Log("CLIENTLIST", "resourceClientListDelete")
 	logger.Debug("Deleting client list")
 
-	deleteCLientListRequest := clientlists.DeleteClientListRequest{
+	deleteClientListRequest := clientlists.DeleteClientListRequest{
 		ListID: d.Id(),
 	}
 
-	err := client.DeleteClientList(ctx, deleteCLientListRequest)
+	err := client.DeleteClientList(ctx, deleteClientListRequest)
 	if err != nil {
 		logger.Errorf("calling 'deleteClientList' failed: %s", err.Error())
 		return diag.FromErr(err)
@@ -341,14 +359,7 @@ func getClientListAttr(d *schema.ResourceData) (*clientListAttrs, error) {
 	items := make([]clientlists.ListItemPayload, 0, itemsSet.Len())
 	for _, v := range itemsSet.List() {
 		itemMap := v.(map[string]interface{})
-
-		t := itemMap["tags"].(*schema.Set)
-		items = append(items, clientlists.ListItemPayload{
-			Value:          itemMap["value"].(string),
-			Description:    itemMap["description"].(string),
-			Tags:           tf.SetToStringSlice(t),
-			ExpirationDate: itemMap["expiration_date"].(string),
-		})
+		items = append(items, buildItemPayload(itemMap, listType))
 	}
 
 	return &clientListAttrs{
@@ -367,24 +378,14 @@ func getListItemsUpdateReq(list clientlists.GetClientListResponse, d *schema.Res
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return nil, err
 	}
-	// Map of item value to ListItemPayload representing items in the config
-	configItemsMap := make(map[string]clientlists.ListItemPayload)
-	for _, v := range itemsSet.List() {
-		itemMap := v.(map[string]interface{})
-
-		configItemsMap[itemMap["value"].(string)] = clientlists.ListItemPayload{
-			Value:          itemMap["value"].(string),
-			Description:    itemMap["description"].(string),
-			Tags:           tf.SetToStringSlice(itemMap["tags"].(*schema.Set)),
-			ExpirationDate: itemMap["expiration_date"].(string),
-		}
+	listType, err := tf.GetStringValue("type", d)
+	if err != nil {
+		return nil, err
 	}
+	isKeyValuesItem := isKeyValuesItem(listType)
 
-	// Map of item value to item representing list of item in remote state
-	listItemsMap := make(map[string]clientlists.ListItemContent)
-	for _, v := range list.Items {
-		listItemsMap[v.Value] = v
-	}
+	configItemsMap := buildConfigItemsMap(itemsSet, listType, isKeyValuesItem)
+	listItemsMap := buildListItemsMap(list.Items, isKeyValuesItem)
 
 	res := &clientlists.UpdateClientListItemsRequest{
 		ListID: list.ListID,
@@ -395,9 +396,9 @@ func getListItemsUpdateReq(list clientlists.GetClientListResponse, d *schema.Res
 		},
 	}
 
-	for _, configItem := range configItemsMap {
-		if listItem, ok := listItemsMap[configItem.Value]; ok {
-			if shouldUpdateItem(configItem, listItem) {
+	for id, configItem := range configItemsMap {
+		if listItem, ok := listItemsMap[id]; ok {
+			if shouldUpdateItem(configItem, listItem, isKeyValuesItem) {
 				res.Update = append(res.Update, configItem)
 			}
 		} else {
@@ -405,28 +406,69 @@ func getListItemsUpdateReq(list clientlists.GetClientListResponse, d *schema.Res
 		}
 	}
 
-	for _, listItem := range listItemsMap {
-		if _, ok := configItemsMap[listItem.Value]; !ok {
-			res.Delete = append(res.Delete, clientlists.ListItemPayload{
-				Value: listItem.Value,
-			})
+	for id, listItem := range listItemsMap {
+		if _, ok := configItemsMap[id]; !ok {
+			res.Delete = append(res.Delete, toDeletePayload(listItem, isKeyValuesItem))
 		}
 	}
 
 	return res, nil
 }
 
-func shouldUpdateItem(a clientlists.ListItemPayload, b clientlists.ListItemContent) bool {
-	if a.Value == b.Value &&
-		a.Description == b.Description &&
-		a.ExpirationDate == b.ExpirationDate &&
-		isEqualTags(a.Tags, b.Tags) {
-		return false
+func buildConfigItemsMap(itemsSet *schema.Set, listType string, isRequestHeaderNameValue bool) map[string]clientlists.ListItemPayload {
+	result := make(map[string]clientlists.ListItemPayload, itemsSet.Len())
+	for _, v := range itemsSet.List() {
+		itemMap := v.(map[string]interface{})
+		payload := buildItemPayload(itemMap, listType)
+		result[configItemID(itemMap, isRequestHeaderNameValue)] = payload
 	}
-	return true
+	return result
 }
 
-func isEqualTags(t1, t2 []string) bool {
+func buildListItemsMap(items []clientlists.ListItemContent, isRequestHeaderNameValue bool) map[string]clientlists.ListItemContent {
+	result := make(map[string]clientlists.ListItemContent, len(items))
+	for _, item := range items {
+		result[listItemID(item, isRequestHeaderNameValue)] = item
+	}
+	return result
+}
+
+func configItemID(item map[string]interface{}, isRequestHeaderNameValue bool) string {
+	if isRequestHeaderNameValue {
+		return item["key"].(string)
+	}
+	return item["value"].(string)
+}
+
+func listItemID(item clientlists.ListItemContent, isRequestHeaderNameValue bool) string {
+	if isRequestHeaderNameValue {
+		return item.Key
+	}
+	return item.Value
+}
+
+func toDeletePayload(item clientlists.ListItemContent, isRequestHeaderNameValue bool) clientlists.ListItemPayload {
+	if isRequestHeaderNameValue {
+		return clientlists.ListItemPayload{Key: item.Key}
+	}
+	return clientlists.ListItemPayload{Value: item.Value}
+}
+
+func shouldUpdateItem(a clientlists.ListItemPayload, b clientlists.ListItemContent, isKeyValuesItem bool) bool {
+	if isKeyValuesItem {
+		return a.Key != b.Key ||
+			!isEqual(a.Values, b.Values) ||
+			a.Description != b.Description ||
+			a.ExpirationDate != b.ExpirationDate ||
+			!isEqual(a.Tags, b.Tags)
+	}
+	return a.Value != b.Value ||
+		a.Description != b.Description ||
+		a.ExpirationDate != b.ExpirationDate ||
+		!isEqual(a.Tags, b.Tags)
+}
+
+func isEqual(t1, t2 []string) bool {
 	if len(t1) != len(t2) {
 		return false
 	}
@@ -458,18 +500,25 @@ func validateItemsUniqueness(ctx context.Context, d *schema.ResourceData, client
 	values := map[string]interface{}{}
 	for _, v := range itemsSet.List() {
 		itemMap := v.(map[string]interface{})
-		value := itemMap["value"].(string)
+
+		var value, duplicateFieldName string
+		if isKeyValuesItem(listType) {
+			value = itemMap["key"].(string)
+			duplicateFieldName = "key"
+		} else {
+			value = itemMap["value"].(string)
+			duplicateFieldName = "value"
+		}
 		originalValue := value
 
-		if listType == string(clientlists.USER) && translatedUsernames != nil && len(translatedUsernames) > 0 {
-			userID := translatedUsernames[value]
-			if userID != "" {
+		if listType == string(clientlists.USER) && len(translatedUsernames) > 0 {
+			if userID := translatedUsernames[value]; userID != "" {
 				value = userID
 			}
 		}
 
 		if _, ok := values[value]; ok {
-			return diag.FromErr(fmt.Errorf("'Items' collection contains duplicate values for 'value' field. Duplicate value: %s", originalValue))
+			return diag.FromErr(fmt.Errorf("'Items' collection contains duplicate values for '%s' field. Duplicate value: %s", duplicateFieldName, originalValue))
 		}
 		values[value] = itemMap
 	}
@@ -477,16 +526,68 @@ func validateItemsUniqueness(ctx context.Context, d *schema.ResourceData, client
 	return nil
 }
 
-// markVersionComputedIfListModified sets 'version' field as new computed
-// if a new version of client list is expected to be created.
+func validateItems(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
+	listType := d.Get("type").(string)
+	isKeyValuesItem := isKeyValuesItem(listType)
+
+	var errs []error
+	for _, v := range d.Get("items").(*schema.Set).List() {
+		item := v.(map[string]interface{})
+		if isKeyValuesItem {
+			errs = append(errs, validateKeyValuesItem(item))
+		} else {
+			errs = append(errs, validateValueItem(item))
+		}
+	}
+
+	return errors.Join(errs...)
+}
+
+func validateKeyValuesItem(item map[string]interface{}) error {
+	key := item["key"].(string)
+	value := item["value"].(string)
+	valuesSet := item["values"].(*schema.Set)
+
+	var errs []error
+	if key == "" {
+		errs = append(errs, fmt.Errorf("invalid item: missing required field 'key'"))
+	}
+	if valuesSet.Len() == 0 {
+		errs = append(errs, fmt.Errorf("invalid item: missing required field 'values'"))
+	}
+	if value != "" {
+		errs = append(errs, fmt.Errorf("invalid item: unsupported field 'value'"))
+	}
+	return errors.Join(errs...)
+}
+
+func validateValueItem(item map[string]interface{}) error {
+	key := item["key"].(string)
+	value := item["value"].(string)
+	valuesSet := item["values"].(*schema.Set)
+
+	var errs []error
+	if value == "" {
+		errs = append(errs, fmt.Errorf("invalid item: missing required field 'value'"))
+	}
+	if key != "" {
+		errs = append(errs, fmt.Errorf("invalid item: unsupported field 'key'"))
+	}
+	if valuesSet.Len() > 0 {
+		errs = append(errs, fmt.Errorf("invalid item: unsupported field 'values'"))
+	}
+	return errors.Join(errs...)
+}
+
 func markVersionComputedIfListModified(_ context.Context, d *schema.ResourceDiff, m interface{}) error {
-	meta := meta.Must(m)
-	logger := meta.Log("CLIENTLIST", "markVersionComputedIfListModified")
+	metaInfo := meta.Must(m)
+	logger := metaInfo.Log("CLIENTLIST", "markVersionComputedIfListModified")
 
 	itemsHasChange := d.HasChange("items")
 	oldItems, newItems := d.GetChange("items")
+	isKeyValues := isKeyValuesItem(d.Get("type").(string))
 
-	isVersionUpdateRequired, err := isVersionUpdateRequired(oldItems, newItems)
+	isVersionUpdateRequired, err := isVersionUpdateRequired(oldItems, newItems, isKeyValues)
 	if err != nil {
 		return err
 	}
@@ -502,7 +603,7 @@ func markVersionComputedIfListModified(_ context.Context, d *schema.ResourceDiff
 }
 
 // isVersionUpdateRequired determines if list version update is required based on items changes
-func isVersionUpdateRequired(oldValue, newValue interface{}) (bool, error) {
+func isVersionUpdateRequired(oldValue, newValue interface{}, isKeyValues bool) (bool, error) {
 	if oldValue == nil || newValue == nil {
 		return oldValue != newValue, nil
 	}
@@ -520,13 +621,14 @@ func isVersionUpdateRequired(oldValue, newValue interface{}) (bool, error) {
 		return true, nil
 	}
 
-	oldMap := mapExpirationDateToValue(o)
-	newMap := mapExpirationDateToValue(n)
+	oldMap := buildVersionComparisonMap(o, isKeyValues)
+	newMap := buildVersionComparisonMap(n, isKeyValues)
 
-	for newValue, newExpDate := range newMap {
-		// if value does not exist or expiration dates are different,
+	for id, newSignature := range newMap {
+		// if item does not exist (new key for key-value items, new value for value items)
+		// or signature is different (expiration_date or values changed),
 		// then version update is required
-		if oldExpDate, ok := oldMap[newValue]; !ok || oldExpDate != newExpDate {
+		if oldSignature, ok := oldMap[id]; !ok || oldSignature != newSignature {
 			return true, nil
 		}
 	}
@@ -534,12 +636,35 @@ func isVersionUpdateRequired(oldValue, newValue interface{}) (bool, error) {
 	return false, nil
 }
 
-func mapExpirationDateToValue(items *schema.Set) map[string]string {
-	res := make(map[string]string)
-
+// buildVersionComparisonMap creates a map of item ID to version-affecting fields signature.
+// This map is used to determine if list version update is required by comparing old vs new items.
+//
+// For key-value items (e.g. REQUEST_HEADER_NAME_VALUE):
+//   - ID: item's "key" field (e.g., "User-Agent")
+//   - Signature: "expiration_date|sorted_values" (e.g., "2026-12-31|Chrome,Mozilla")
+//
+// For value items (IP, GEO, ASN, etc.):
+//   - ID: item's "value" field (e.g., "1.2.3.4")
+//   - Signature: "expiration_date" (e.g., "2026-12-31")
+//
+// The signature includes only fields that, when changed, should trigger a list version update.
+// Changes to description or tags do not affect the version.
+func buildVersionComparisonMap(items *schema.Set, isKeyValues bool) map[string]string {
+	res := make(map[string]string, items.Len())
 	for _, v := range items.List() {
 		item := v.(map[string]interface{})
-		res[item["value"].(string)] = item["expiration_date"].(string)
+		var id, signature string
+		if isKeyValues {
+			id, _ = item["key"].(string)
+			// Include sorted values to detect changes in values field for key-value items (e.g. REQUEST_HEADER_NAME_VALUE)
+			values := tf.SetToStringSlice(item["values"].(*schema.Set))
+			sort.Strings(values)
+			signature = fmt.Sprintf("%s|%s", item["expiration_date"].(string), strings.Join(values, ","))
+		} else {
+			id, _ = item["value"].(string)
+			signature = item["expiration_date"].(string)
+		}
+		res[id] = signature
 	}
 
 	return res
@@ -613,16 +738,79 @@ func extractItems(ctx context.Context, d *schema.ResourceData, client clientlist
 			}
 		}
 
-		i := map[string]interface{}{
-			"value":           v.Value,
-			"description":     v.Description,
-			"expiration_date": v.ExpirationDate,
-			"tags":            v.Tags,
-		}
-
-		items = append(items, i)
+		items = append(items, buildItem(v, list.Type))
 	}
+
 	return items, nil
+}
+
+func buildItem(itemContent clientlists.ListItemContent, listType clientlists.ClientListType) interface{} {
+	if isKeyValuesItem(string(listType)) {
+		return map[string]interface{}{
+			"key":             itemContent.Key,
+			"values":          itemContent.Values,
+			"description":     itemContent.Description,
+			"expiration_date": itemContent.ExpirationDate,
+			"tags":            itemContent.Tags,
+		}
+	}
+
+	return map[string]interface{}{
+		"value":           itemContent.Value,
+		"description":     itemContent.Description,
+		"expiration_date": itemContent.ExpirationDate,
+		"tags":            itemContent.Tags,
+	}
+}
+
+// valueItemHashFn hashes value items (IP, GEO, ASN, TLS_FINGERPRINT, FILE_HASH, USER_ID, DOMAIN)
+var valueItemHashFn = schema.HashResource(&schema.Resource{Schema: map[string]*schema.Schema{
+	"value":           {Type: schema.TypeString, Optional: true, Default: ""},
+	"description":     {Type: schema.TypeString, Optional: true, Default: ""},
+	"tags":            {Type: schema.TypeSet, Optional: true, Elem: &schema.Schema{Type: schema.TypeString}},
+	"expiration_date": {Type: schema.TypeString, Optional: true, Default: ""},
+}})
+
+// keyValuesItemHashFn hashes key-values items (REQUEST_HEADER_NAME_VALUE)
+var keyValuesItemHashFn = schema.HashResource(&schema.Resource{Schema: map[string]*schema.Schema{
+	"key":             {Type: schema.TypeString, Optional: true, Default: ""},
+	"values":          {Type: schema.TypeSet, Optional: true, Elem: &schema.Schema{Type: schema.TypeString}},
+	"description":     {Type: schema.TypeString, Optional: true, Default: ""},
+	"tags":            {Type: schema.TypeSet, Optional: true, Elem: &schema.Schema{Type: schema.TypeString}},
+	"expiration_date": {Type: schema.TypeString, Optional: true, Default: ""},
+}})
+
+// itemsHashFunc is a custom hash function for the items TypeSet.
+func itemsHashFunc(v interface{}) int {
+	m := v.(map[string]interface{})
+	key, _ := m["key"].(string)
+	if key != "" {
+		return keyValuesItemHashFn(m)
+	}
+	return valueItemHashFn(m)
+}
+
+func buildItemPayload(itemMap map[string]interface{}, listType string) clientlists.ListItemPayload {
+	if isKeyValuesItem(listType) {
+		return clientlists.ListItemPayload{
+			Key:            itemMap["key"].(string),
+			Values:         tf.SetToStringSlice(itemMap["values"].(*schema.Set)),
+			Description:    itemMap["description"].(string),
+			Tags:           tf.SetToStringSlice(itemMap["tags"].(*schema.Set)),
+			ExpirationDate: itemMap["expiration_date"].(string),
+		}
+	}
+
+	return clientlists.ListItemPayload{
+		Value:          itemMap["value"].(string),
+		Description:    itemMap["description"].(string),
+		Tags:           tf.SetToStringSlice(itemMap["tags"].(*schema.Set)),
+		ExpirationDate: itemMap["expiration_date"].(string),
+	}
+}
+
+func isKeyValuesItem(listType string) bool {
+	return listType == string(clientlists.RequestHeaderNameValue)
 }
 
 func translateUsernames(ctx context.Context, d *schema.ResourceData, client clientlists.ClientLists) (clientlists.TranslateUsernamesResponse, diag.Diagnostics) {

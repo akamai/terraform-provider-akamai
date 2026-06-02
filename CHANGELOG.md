@@ -60,7 +60,8 @@
 
 
 #### FEATURES/ENHANCEMENTS:
-
+* ClientLists
+  * Added support for `REQUEST_HEADER_NAME_VALUE` type client lists.
 
 
 
