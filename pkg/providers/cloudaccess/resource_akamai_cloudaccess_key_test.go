@@ -60,6 +60,7 @@ type (
 		emptySecretKey     commonDataForAccessKey // credentials_a with empty secret (post-import)
 		noCloudKeyIDKey    commonDataForAccessKey // VP_QUEUE_IT, no cloud_access_key_id
 		noCloudKeyIDAVMKey commonDataForAccessKey // AVM_CLOUDINARY, no cloud_access_key_id
+		g2oKey             commonDataForAccessKey // G2O, key_id 1-8 chars, secret 32-64 chars
 		propertyData       commonDataForProperty
 	}
 )
@@ -127,6 +128,15 @@ var (
 		"primary_key":             "true",
 		"version":                 "3",
 		"version_guid":            "ffff_eeee-ffffddd",
+	}
+
+	// credentialsAG2OBatch contains attribute values for credentials_a in G2O style (key_id 1-8 chars, secret 32-64 chars).
+	credentialsAG2OBatch = test.AttributeBatch{
+		"cloud_access_key_id":     "g2okey1",
+		"cloud_secret_access_key": "12345678901234567890123456789012",
+		"primary_key":             "true",
+		"version":                 "1",
+		"version_guid":            "asde-efdr-reded",
 	}
 
 	accessKeyMock = commonDataForAccessKey{
@@ -244,6 +254,22 @@ var (
 		},
 	}
 
+	g2oAccessKeyMock = commonDataForAccessKey{
+		accessKeyName:        "test_key_name",
+		accessKeyUID:         12345,
+		authenticationMethod: string(cloudaccess.AuthG2O),
+		contractID:           "1-CTRACT",
+		groupID:              12345,
+		networkConfig: networkConfiguration{
+			securityNetwork: string(cloudaccess.NetworkEnhanced),
+		},
+		credentialsA: credentials{
+			cloudAccessKeyID:     "g2okey1",
+			cloudSecretAccessKey: "12345678901234567890123456789012",
+			primaryKey:           true,
+		},
+	}
+
 	propertyMock = commonDataForProperty{
 		accessKeyUID:      12345,
 		propertyID:        "123123",
@@ -259,6 +285,7 @@ var (
 		emptySecretKey:     emptySecretMock,
 		noCloudKeyIDKey:    noCloudAccessKeyIDMock,
 		noCloudKeyIDAVMKey: noCloudAccessKeyIDAVMMock,
+		g2oKey:             g2oAccessKeyMock,
 		propertyData:       propertyMock,
 	}
 
@@ -422,6 +449,130 @@ func TestAccessKeyResource(t *testing.T) {
 						CheckEqual("primary_guid", "asde-efdr-reded").
 						CheckEqualBatch("credentials_b.", credentialsABatch).
 						Build(),
+				},
+			},
+		},
+		"g2o - create access key with valid credentials": {
+			init: func(m *cloudaccess.Mock, resourceData commonDataForResource) {
+				accessKey := resourceData.g2oKey
+				// creation
+				mockCreateAccessKey(m, accessKey).Once()
+				mockGetAccessKeyStatus(m, 12345, accessKey).Once()
+				mockGetAccessKeyVersion(m, accessKey, cloudaccess.Active, firstAccessKeyVersion).Once()
+				// read
+				mockGetAccessKey(m, accessKey).Once()
+				m.On("ListAccessKeyVersions", testutils.MockContext, cloudaccess.ListAccessKeyVersionsRequest{
+					AccessKeyUID: accessKey.accessKeyUID,
+				}).Return(&cloudaccess.ListAccessKeyVersionsResponse{AccessKeyVersions: []cloudaccess.AccessKeyVersion{
+					{
+						AccessKeyUID:     accessKey.accessKeyUID,
+						CloudAccessKeyID: ptr.To(accessKey.credentialsA.cloudAccessKeyID),
+						CreatedBy:        "dev-user",
+						CreatedTime:      time.Date(2024, 1, 10, 11, 9, 10, 67708, time.UTC),
+						DeploymentStatus: cloudaccess.Active,
+						Version:          firstAccessKeyVersion,
+						VersionGUID:      "asde-efdr-reded",
+					},
+				}}, nil).Once()
+				// delete
+				m.On("ListAccessKeyVersions", testutils.MockContext, cloudaccess.ListAccessKeyVersionsRequest{
+					AccessKeyUID: accessKey.accessKeyUID,
+				}).Return(&cloudaccess.ListAccessKeyVersionsResponse{AccessKeyVersions: []cloudaccess.AccessKeyVersion{
+					{
+						AccessKeyUID:     accessKey.accessKeyUID,
+						CloudAccessKeyID: ptr.To(accessKey.credentialsA.cloudAccessKeyID),
+						CreatedBy:        "dev-user",
+						CreatedTime:      time.Date(2024, 1, 10, 11, 9, 10, 67708, time.UTC),
+						DeploymentStatus: cloudaccess.Active,
+						Version:          firstAccessKeyVersion,
+						VersionGUID:      "asde-efdr-reded",
+					},
+				}}, nil).Once()
+				mockLookupsPropertiesNoProperties(m, resourceData.propertyData, firstAccessKeyVersion).Once()
+				mockDeleteAccessKeyVersion(m, accessKey, firstAccessKeyVersion).Once()
+				mockGetAccessKeyVersion(m, accessKey, cloudaccess.PendingDeletion, firstAccessKeyVersion).Once()
+				m.On("ListAccessKeyVersions", testutils.MockContext, cloudaccess.ListAccessKeyVersionsRequest{
+					AccessKeyUID: accessKey.accessKeyUID,
+				}).Return(&cloudaccess.ListAccessKeyVersionsResponse{AccessKeyVersions: []cloudaccess.AccessKeyVersion{}}, nil).Once()
+				mockDeleteAccessKey(m, accessKey).Once()
+				mockListAccessKeys(m, []commonDataForAccessKey{resourceData.secondKey}).Once()
+			},
+			mockData: resourceMock,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/create_g2o.tf"),
+					Check: accessCheckerWithoutCDN.
+						CheckEqual("authentication_method", "G2O").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_a.", credentialsAG2OBatch).
+						Build(),
+				},
+			},
+		},
+		"g2o - external credentials from another resource delays validation": {
+			init: func(m *cloudaccess.Mock, resourceData commonDataForResource) {
+				accessKey := resourceData.g2oKey
+				// creation
+				mockCreateAccessKey(m, accessKey).Once()
+				mockGetAccessKeyStatus(m, 12345, accessKey).Once()
+				mockGetAccessKeyVersion(m, accessKey, cloudaccess.Active, firstAccessKeyVersion).Once()
+				// read
+				mockGetAccessKey(m, accessKey).Once()
+				m.On("ListAccessKeyVersions", testutils.MockContext, cloudaccess.ListAccessKeyVersionsRequest{
+					AccessKeyUID: accessKey.accessKeyUID,
+				}).Return(&cloudaccess.ListAccessKeyVersionsResponse{AccessKeyVersions: []cloudaccess.AccessKeyVersion{
+					{
+						AccessKeyUID:     accessKey.accessKeyUID,
+						CloudAccessKeyID: ptr.To(accessKey.credentialsA.cloudAccessKeyID),
+						CreatedBy:        "dev-user",
+						CreatedTime:      time.Date(2024, 1, 10, 11, 9, 10, 67708, time.UTC),
+						DeploymentStatus: cloudaccess.Active,
+						Version:          firstAccessKeyVersion,
+						VersionGUID:      "asde-efdr-reded",
+					},
+				}}, nil).Once()
+				// delete
+				m.On("ListAccessKeyVersions", testutils.MockContext, cloudaccess.ListAccessKeyVersionsRequest{
+					AccessKeyUID: accessKey.accessKeyUID,
+				}).Return(&cloudaccess.ListAccessKeyVersionsResponse{AccessKeyVersions: []cloudaccess.AccessKeyVersion{
+					{
+						AccessKeyUID:     accessKey.accessKeyUID,
+						CloudAccessKeyID: ptr.To(accessKey.credentialsA.cloudAccessKeyID),
+						CreatedBy:        "dev-user",
+						CreatedTime:      time.Date(2024, 1, 10, 11, 9, 10, 67708, time.UTC),
+						DeploymentStatus: cloudaccess.Active,
+						Version:          firstAccessKeyVersion,
+						VersionGUID:      "asde-efdr-reded",
+					},
+				}}, nil).Once()
+				mockLookupsPropertiesNoProperties(m, resourceData.propertyData, firstAccessKeyVersion).Once()
+				mockDeleteAccessKeyVersion(m, accessKey, firstAccessKeyVersion).Once()
+				mockGetAccessKeyVersion(m, accessKey, cloudaccess.PendingDeletion, firstAccessKeyVersion).Once()
+				m.On("ListAccessKeyVersions", testutils.MockContext, cloudaccess.ListAccessKeyVersionsRequest{
+					AccessKeyUID: accessKey.accessKeyUID,
+				}).Return(&cloudaccess.ListAccessKeyVersionsResponse{AccessKeyVersions: []cloudaccess.AccessKeyVersion{}}, nil).Once()
+				mockDeleteAccessKey(m, accessKey).Once()
+				mockListAccessKeys(m, []commonDataForAccessKey{resourceData.secondKey}).Once()
+			},
+			mockData: resourceMock,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/g2o_external_credentials.tf"),
+					Check: accessCheckerWithoutCDN.
+						CheckEqual("authentication_method", "G2O").
+						CheckEqual("primary_guid", "asde-efdr-reded").
+						CheckEqualBatch("credentials_a.", credentialsAG2OBatch).
+						Build(),
+				},
+			},
+		},
+		"g2o - external invalid credentials from another resource fails validation after resolving": {
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/g2o_external_invalid_credentials.tf"),
+					ExpectError: regexp.MustCompile("(?s)" +
+						"`cloud_access_key_id`\\s+in\\s+`credentials_a`\\s+should be between 1 and 8 characters long.*" +
+						"`cloud_secret_access_key`\\s+in\\s+`credentials_a`\\s+should be between 32 and 64 characters long"),
 				},
 			},
 		},
@@ -1778,7 +1929,7 @@ func TestAccessKeyResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResAccessKey/missing_cloud_access_key.tf"),
-					ExpectError: regexp.MustCompile(`cloud access key id missing error`),
+					ExpectError: regexp.MustCompile("`cloud_access_key_id`\\s+in\\s+`credentials_a`\\s+cannot be empty"),
 				},
 			},
 		},
@@ -1819,6 +1970,98 @@ func TestAccessKeyResource(t *testing.T) {
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResAccessKey/avm_cloudinary_with_additional_cdn.tf"),
 					ExpectError: regexp.MustCompile(`additional cdn not allowed error`),
+				},
+			},
+		},
+		"g2o - cloud_access_key_id empty in credentials_a": {
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResAccessKey/g2o_key_id_empty_cred_a.tf"),
+					ExpectError: regexp.MustCompile("`cloud_access_key_id`\\s+in\\s+`credentials_a`\\s+should be between 1 and 8 characters long"),
+				},
+			},
+		},
+		"g2o - cloud_access_key_id empty in credentials_b": {
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResAccessKey/g2o_key_id_empty_cred_b.tf"),
+					ExpectError: regexp.MustCompile("`cloud_access_key_id`\\s+in\\s+`credentials_b`\\s+should be between 1 and 8 characters long"),
+				},
+			},
+		},
+		"g2o - cloud_secret_access_key empty in credentials_a": {
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResAccessKey/g2o_secret_empty_cred_a.tf"),
+					ExpectError: regexp.MustCompile("`cloud_secret_access_key`\\s+in\\s+`credentials_a`\\s+should be between 32 and 64 characters long"),
+				},
+			},
+		},
+		"g2o - cloud_secret_access_key empty in credentials_b": {
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResAccessKey/g2o_secret_empty_cred_b.tf"),
+					ExpectError: regexp.MustCompile("`cloud_secret_access_key`\\s+in\\s+`credentials_b`\\s+should be between 32 and 64 characters long"),
+				},
+			},
+		},
+		"g2o - cloud_access_key_id too long in credentials_a": {
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResAccessKey/g2o_key_id_too_long_cred_a.tf"),
+					ExpectError: regexp.MustCompile("`cloud_access_key_id`\\s+in\\s+`credentials_a`\\s+should be between 1 and 8 characters long"),
+				},
+			},
+		},
+		"g2o - cloud_secret_access_key too short in credentials_a": {
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResAccessKey/g2o_secret_too_short_cred_a.tf"),
+					ExpectError: regexp.MustCompile("`cloud_secret_access_key`\\s+in\\s+`credentials_a`\\s+should be between 32 and 64 characters long"),
+				},
+			},
+		},
+		"g2o - cloud_secret_access_key too long in credentials_a": {
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResAccessKey/g2o_secret_too_long_cred_a.tf"),
+					ExpectError: regexp.MustCompile("`cloud_secret_access_key`\\s+in\\s+`credentials_a`\\s+should be between 32 and 64 characters long"),
+				},
+			},
+		},
+		"g2o - cloud_access_key_id too long in credentials_b": {
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResAccessKey/g2o_key_id_too_long_cred_b.tf"),
+					ExpectError: regexp.MustCompile("`cloud_access_key_id`\\s+in\\s+`credentials_b`\\s+should be between 1 and 8 characters long"),
+				},
+			},
+		},
+		"g2o - cloud_secret_access_key too short in credentials_b": {
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResAccessKey/g2o_secret_too_short_cred_b.tf"),
+					ExpectError: regexp.MustCompile("`cloud_secret_access_key`\\s+in\\s+`credentials_b`\\s+should be between 32 and 64 characters long"),
+				},
+			},
+		},
+		"g2o - cloud_secret_access_key too long in credentials_b": {
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResAccessKey/g2o_secret_too_long_cred_b.tf"),
+					ExpectError: regexp.MustCompile("`cloud_secret_access_key`\\s+in\\s+`credentials_b`\\s+should be between 32 and 64 characters long"),
+				},
+			},
+		},
+		"g2o - invalid key id and secret in both credentials": {
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResAccessKey/g2o_invalid_both_credentials.tf"),
+					ExpectError: regexp.MustCompile("(?s)" +
+						"`cloud_access_key_id`\\s+in\\s+`credentials_a`\\s+should be between 1 and 8 characters long.*" +
+						"`cloud_secret_access_key`\\s+in\\s+`credentials_a`\\s+should be between 32 and 64 characters long.*" +
+						"`cloud_access_key_id`\\s+in\\s+`credentials_b`\\s+should be between 1 and 8 characters long.*" +
+						"`cloud_secret_access_key`\\s+in\\s+`credentials_b`\\s+should be between 32 and 64 characters long"),
 				},
 			},
 		},
@@ -2053,7 +2296,7 @@ func TestAccessKeyResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResAccessKey/wrong_authentication_method.tf"),
-					ExpectError: regexp.MustCompile(`Attribute authentication_method value must be one of: \["AWS4_HMAC_SHA256"\s*"GOOG4_HMAC_SHA256" "AOS4_HMAC_SHA256" "AVM_CLOUDINARY" "VP_QUEUE_IT"\], got:\s*"TEST"`),
+					ExpectError: regexp.MustCompile(`Attribute authentication_method value must be one of: \["AOS4_HMAC_SHA256"\s*"AVM_CLOUDINARY" "AWS4_HMAC_SHA256" "GOOG4_HMAC_SHA256" "G2O" "VP_QUEUE_IT"],\s*got: "TEST"`),
 				},
 			},
 		},

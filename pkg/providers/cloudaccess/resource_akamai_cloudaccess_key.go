@@ -186,6 +186,7 @@ func (r *KeyResource) ValidateConfig(ctx context.Context, req resource.ValidateC
 
 	verifyCloudAccessKeyIDPresence(config.AuthenticationMethod, credA, credB, &resp.Diagnostics)
 	verifyAdditionalCDNPresence(config.AuthenticationMethod, networkConfig, &resp.Diagnostics)
+	verifyCloudAccessKeyIDAndSecretLength(ctx, config, &resp.Diagnostics)
 }
 
 // ModifyPlan implements resource.ResourceWithModifyPlan
@@ -259,13 +260,19 @@ func (r *KeyResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp
 				},
 			},
 			"authentication_method": schema.StringAttribute{
-				Required:    true,
-				Description: "The type of signing process used to authenticate API requests: AWS4_HMAC_SHA256 for Amazon Web Services, GOOG4_HMAC_SHA256 for Google Cloud Services, AOS4_HMAC_SHA256 for Akamai Object Storage, AVM_CLOUDINARY for Akamai Video Manager Cloudinary, VP_QUEUE_IT for Akamai Visitor Prioritization powered by Queue-it.",
+				Required: true,
+				MarkdownDescription: "The type of signing process used to authenticate API requests:\n" +
+					"  - `AOS4_HMAC_SHA256` — Akamai Object Storage\n" +
+					"  - `AVM_CLOUDINARY` — Akamai Video Manager Cloudinary\n" +
+					"  - `AWS4_HMAC_SHA256` — Amazon Web Services\n" +
+					"  - `GOOG4_HMAC_SHA256` — Google Cloud Services\n" +
+					"  - `G2O` — Akamai Signature Header Authentication\n" +
+					"  - `VP_QUEUE_IT` — Akamai Visitor Prioritization powered by Queue-it",
 				PlanModifiers: []planmodifier.String{
 					modifiers.PreventStringUpdate(),
 				},
 				Validators: []validator.String{
-					stringvalidator.OneOf(string(cloudaccess.AuthAWS), string(cloudaccess.AuthGOOG), string(cloudaccess.AuthAOS), string(cloudaccess.AuthAVMCloudinary), string(cloudaccess.AuthVPQueueIt)),
+					stringvalidator.OneOf(string(cloudaccess.AuthAOS), string(cloudaccess.AuthAVMCloudinary), string(cloudaccess.AuthAWS), string(cloudaccess.AuthGOOG), string(cloudaccess.AuthG2O), string(cloudaccess.AuthVPQueueIt)),
 				},
 			},
 			"contract_id": schema.StringAttribute{
@@ -778,6 +785,44 @@ func verifyAdditionalCDNPresence(authenticationMethod types.String, networkConfi
 	}
 }
 
+// verifyCloudAccessKeyIDAndSecretLength checks length of CloudAccessKeyID and CloudSecretAccessKey for G2O authentication method.
+func verifyCloudAccessKeyIDAndSecretLength(ctx context.Context, data KeyResourceModel, diags *diag.Diagnostics) {
+	if data.AuthenticationMethod.IsUnknown() {
+		return
+	}
+	if data.AuthenticationMethod.ValueString() != string(cloudaccess.AuthG2O) {
+		return
+	}
+	credA, credB, dd := data.credentials(ctx)
+	if dd.HasError() {
+		diags.Append(dd...)
+		return
+	}
+	validateG2OCredentials(credA, "credentials_a", diags)
+	validateG2OCredentials(credB, "credentials_b", diags)
+}
+
+// validateG2OCredentials checks that CloudAccessKeyID is between 1 and 8 characters long and CloudSecretAccessKey is between 32 and 64 characters long for G2O authentication method.
+func validateG2OCredentials(creds *Credentials, credName string, diags *diag.Diagnostics) {
+	if creds == nil || creds.CloudAccessKeyID.IsUnknown() || creds.CloudSecretAccessKey.IsUnknown() {
+		return
+	}
+	if len(creds.CloudAccessKeyID.ValueString()) < cloudaccess.G2OAccessKeyIDMinLength || len(creds.CloudAccessKeyID.ValueString()) > cloudaccess.G2OAccessKeyIDMaxLength {
+		diags.AddAttributeError(
+			path.Root(credName).AtName("cloud_access_key_id"),
+			"cloud access key id value error",
+			fmt.Sprintf("for the selected authentication method `cloud_access_key_id` in `%s` should be between %d and %d characters long", credName, cloudaccess.G2OAccessKeyIDMinLength, cloudaccess.G2OAccessKeyIDMaxLength),
+		)
+	}
+	if len(creds.CloudSecretAccessKey.ValueString()) < cloudaccess.G2OSecretAccessKeyMinLength || len(creds.CloudSecretAccessKey.ValueString()) > cloudaccess.G2OSecretAccessKeyMaxLength {
+		diags.AddAttributeError(
+			path.Root(credName).AtName("cloud_secret_access_key"),
+			"cloud secret access key value error",
+			fmt.Sprintf("for the selected authentication method `cloud_secret_access_key` in `%s` should be between %d and %d characters long", credName, cloudaccess.G2OSecretAccessKeyMinLength, cloudaccess.G2OSecretAccessKeyMaxLength),
+		)
+	}
+}
+
 // verifyCloudAccessKeyIDPresence checks that CloudAccessKeyID is present for authentication
 // methods other than VP_QUEUE_IT and AVM_CLOUDINARY.
 func verifyCloudAccessKeyIDPresence(authenticationMethod types.String, credA, credB *Credentials, diags *diag.Diagnostics) {
@@ -794,14 +839,14 @@ func verifyCloudAccessKeyIDPresence(authenticationMethod types.String, credA, cr
 		diags.AddAttributeError(
 			path.Root("credentials_a").AtName("cloud_access_key_id"),
 			"cloud access key id missing error",
-			"for the selected authentication method `cloud_access_key_id` cannot be empty",
+			"for the selected authentication method `cloud_access_key_id` in `credentials_a` cannot be empty",
 		)
 	}
 	if credB != nil && credB.CloudAccessKeyID.IsNull() {
 		diags.AddAttributeError(
 			path.Root("credentials_b").AtName("cloud_access_key_id"),
 			"cloud access key id missing error",
-			"for the selected authentication method `cloud_access_key_id` cannot be empty",
+			"for the selected authentication method `cloud_access_key_id` in `credentials_b` cannot be empty",
 		)
 	}
 }
