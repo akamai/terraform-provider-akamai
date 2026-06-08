@@ -1,0 +1,19 @@
+{
+  "bypassCondition": { "atomicConditions": [] },
+  "categories": [
+    { "type": "BOTS" },
+    { "type": "CLOUD_PROVIDERS" },
+    { "type": "PROXIES" },
+    { "type": "TOR_EXIT_NODES" },
+    { "type": "PLATFORM_DDOS_INTELLIGENCE" },
+    { "listIds": ["12345_10CLIENTLIST"], "positiveMatch": true, "type": "CLIENT_LIST" }
+  ],
+  "configId": 43007, "configVersion": 40,
+  "createDate": "2023-04-14T18:58:53Z", "createdBy": "jsmith",
+  "description": "URL Protection",
+  "hostnamePaths": [{ "hostname": "custom.com", "paths": ["/asd", "/my-test-path"] }],
+  "intelligentLoadShedding": true, "name": "URL Protection",
+  "policyId": 681, "protectionType": "MULTIPLE", "rateThreshold": 195,
+  "sheddingThresholdHitsPerSec": 150,
+  "updateDate": "2023-04-26T02:42:28Z", "updatedBy": "jperez", "used": true
+}

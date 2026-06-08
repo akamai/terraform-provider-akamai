@@ -1,0 +1,14 @@
+{
+    "configId": 111111,
+    "policies": [
+        {
+            "policyId": "AAAA_81230",
+            "policyName": "akamaitools"
+        },
+        {
+            "policyId": "2222_333333",
+            "policyName": "policy"
+        }
+    ],
+    "version": 2
+}

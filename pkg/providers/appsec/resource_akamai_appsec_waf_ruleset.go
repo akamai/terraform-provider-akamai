@@ -18,6 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -93,7 +94,8 @@ func (r *wafRulesetResource) Schema(_ context.Context, _ resource.SchemaRequest,
 				Description: "Unique identifier of the security policy",
 				Validators:  []validator.String{validators.NotEmptyString()},
 				PlanModifiers: []planmodifier.String{
-					modifiers.PreventStringUpdate(),
+					stringplanmodifier.UseStateForUnknown(),
+					modifiers.PreventStringUpdateIfKnown("security_policy_id"),
 				},
 			},
 			"rules": schema.SetNestedAttribute{

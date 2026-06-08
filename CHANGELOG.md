@@ -174,7 +174,11 @@
 
 
 
-
+* Appsec
+  * Fixed `security_policy_id` immutability enforcement by replacing `modifiers.PreventStringUpdate()` with `modifiers.PreventStringUpdateIfKnown("security_policy_id")`in `akamai_appsec_waf_ruleset` resource, which correctly prevents updates to the field only after it has been set to a known value, avoiding false errors during planning when the value is not yet known.([I#755](https://github.com/akamai/terraform-provider-akamai/issues/755))
+  * Changed the `intelligent_load_shedding` field type from `*intelligentLoadSheddingModel` to `types.Object` in the resource model of `akamai_appsec_url_protection_policy` resource, enabling the Terraform Plugin Framework to correctly handle unknown values during plan.([I#760](https://github.com/akamai/terraform-provider-akamai/issues/760))
+  * Updated `intelligent_load_shedding.custom_criteria` field in `akamai_appsec_url_protection_policy` resource, to ensure the state correctly remains null when the field is not configured, preventing unintended drift and errors during plan when the API returns an empty list for this field.
+  * Changed the size and uniqueness validators of `hostname_paths` and `paths` attributes in `akamai_appsec_url_protection_policy` resource, to not allow empty paths lists in hostname_paths and to ensure that all paths are unique, preventing API errors during apply when empty or duplicate paths are provided.
 
 * PAPI
   * Recreate edge hostname automatically when the associated certificate changes in the `akamai_edge_hostname` resource ([I#338](https://github.com/akamai/terraform-provider-akamai/issues/338)).
