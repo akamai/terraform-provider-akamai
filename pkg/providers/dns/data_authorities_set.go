@@ -50,7 +50,8 @@ func dataSourceAuthoritiesSetRead(ctx context.Context, d *schema.ResourceData, m
 
 	logger.Debug("Start Searching for authority records", "contractid", contractID)
 
-	ns, err := inst.Client(meta).GetNameServerRecordList(ctx, dns.GetNameServerRecordListRequest{
+	client := meta.Client().GetDNS()
+	ns, err := client.GetNameServerRecordList(ctx, dns.GetNameServerRecordListRequest{
 		ContractIDs: contractID,
 	})
 	if err != nil {

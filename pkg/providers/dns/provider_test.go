@@ -1,10 +1,9 @@
 package dns
 
 import (
-	"sync"
 	"testing"
+	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/dns"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 )
 
@@ -12,19 +11,18 @@ func TestMain(m *testing.M) {
 	testutils.TestRunner(m)
 }
 
-// Only allow one test at a time to patch the client via useClient()
-var clientLock sync.Mutex
-
-// useClient swaps out the client on the global instance for the duration of the given func
-func useClient(client dns.DNS, f func()) {
-	clientLock.Lock()
-	orig := inst.client
-	inst.client = client
-
-	defer func() {
-		inst.client = orig
-		clientLock.Unlock()
-	}()
-
-	f()
+// testSubproviderConfig returns a subproviderConfig with timing intervals
+// reduced to milliseconds so tests do not pay the production sleep cost.
+func testSubproviderConfig() subproviderConfig {
+	return subproviderConfig{
+		zone: dnsZoneResourceConfig{
+			postCreateChangeListWait:    time.Millisecond,
+			preSubmitChangeListWait:     time.Millisecond,
+			checkDeletionStatusInterval: time.Millisecond,
+		},
+		record: dnsRecordResourceConfig{
+			conflictRetryInterval:  time.Millisecond,
+			soaSerialRetryInterval: time.Millisecond,
+		},
+	}
 }

@@ -2,10 +2,6 @@
 package dns
 
 import (
-	"sync"
-
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/dns"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/subprovider"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -15,45 +11,44 @@ import (
 type (
 	// Subprovider gathers dns resources and data sources
 	Subprovider struct {
-		client dns.DNS
+		config subproviderConfig
 	}
 
-	option func(p *Subprovider)
-)
-
-var (
-	once sync.Once
-
-	inst *Subprovider
+	// subproviderConfig aggregates the configuration of all DNS resources
+	// so that polling intervals and other timing values can be overridden,
+	// in particular by tests.
+	subproviderConfig struct {
+		zone   dnsZoneResourceConfig
+		record dnsRecordResourceConfig
+	}
 )
 
 var _ subprovider.Subprovider = &Subprovider{}
 
-// NewSubprovider returns a new DNS subprovider
-func NewSubprovider(opts ...option) *Subprovider {
-	once.Do(func() {
-		inst = &Subprovider{}
-		for _, opt := range opts {
-			opt(inst)
-		}
-	})
-
-	return inst
+// defaultSubproviderConfig returns the production defaults for the DNS subprovider.
+func defaultSubproviderConfig() subproviderConfig {
+	return subproviderConfig{
+		zone:   defaultDNSZoneResourceConfig(),
+		record: defaultDNSRecordResourceConfig(),
+	}
 }
 
-// Client returns the DNS interface
-func (p *Subprovider) Client(meta meta.Meta) dns.DNS {
-	if p.client != nil {
-		return p.client
-	}
-	return dns.Client(meta.Session())
+// NewSubprovider returns a new DNS subprovider with the default configuration.
+func NewSubprovider() *Subprovider {
+	return newSubproviderWithConfig(defaultSubproviderConfig())
+}
+
+// newSubproviderWithConfig returns a new DNS subprovider initialized with the
+// given configuration.
+func newSubproviderWithConfig(config subproviderConfig) *Subprovider {
+	return &Subprovider{config: config}
 }
 
 // SDKResources returns the DNS resources implemented using terraform-plugin-sdk
 func (p *Subprovider) SDKResources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
-		"akamai_dns_zone":   resourceDNSv2Zone(),
-		"akamai_dns_record": resourceDNSv2Record(),
+		"akamai_dns_zone":   resourceDNSv2Zone(p.config.zone),
+		"akamai_dns_record": resourceDNSv2Record(p.config.record),
 	}
 }
 
@@ -73,6 +68,6 @@ func (p *Subprovider) FrameworkResources() []func() resource.Resource {
 // FrameworkDataSources returns the DNS data sources implemented using terraform-plugin-framework
 func (p *Subprovider) FrameworkDataSources() []func() datasource.DataSource {
 	return []func() datasource.DataSource{
-		NewZoneDNSSecStatusDataSource,
+		func() datasource.DataSource { return newZoneDNSSecStatusDataSource() },
 	}
 }

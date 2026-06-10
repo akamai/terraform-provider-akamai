@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/dns"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/internal/test"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -13,6 +14,7 @@ import (
 )
 
 func TestDataZoneDnsSecStatus(t *testing.T) {
+	t.Parallel()
 	anyContext := mock.AnythingOfType("*context.valueCtx")
 	request := dns.GetZonesDNSSecStatusRequest{
 		Zones: []string{"test.zone.net"},
@@ -152,28 +154,27 @@ func TestDataZoneDnsSecStatus(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &dns.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 			if test.init != nil {
-				test.init(client)
+				test.init(client.DNS)
 			}
 			var checkFuncs []resource.TestCheckFunc
 			for k, v := range test.expectedAttributes {
 				checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_zone_dnssec_status.test", k, v))
 			}
 
-			useClient(client, func() {
-				resource.Test(t, resource.TestCase{
-					IsUnitTest:               true,
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{{
-						Config:      testutils.LoadFixtureStringf(t, "testdata/TestDataZoneDnsSecStatus/%s", test.givenTF),
-						Check:       resource.ComposeAggregateTestCheckFunc(checkFuncs...),
-						ExpectError: test.expectedError,
-					}},
-				})
+			resource.Test(t, resource.TestCase{
+				IsUnitTest:               true,
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+				Steps: []resource.TestStep{{
+					Config:      testutils.LoadFixtureStringf(t, "testdata/TestDataZoneDnsSecStatus/%s", test.givenTF),
+					Check:       resource.ComposeAggregateTestCheckFunc(checkFuncs...),
+					ExpectError: test.expectedError,
+				}},
 			})
 
-			client.AssertExpectations(t)
+			client.DNS.AssertExpectations(t)
 		})
 	}
 }

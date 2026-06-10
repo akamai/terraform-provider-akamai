@@ -71,7 +71,8 @@ func dataSourceDNSRecordSetRead(ctx context.Context, d *schema.ResourceData, m i
 
 	// Warning or Errors can be collected in a slice type
 	var diags diag.Diagnostics
-	rdata, err := inst.Client(meta).GetRdata(ctx, dns.GetRdataRequest{
+	client := meta.Client().GetDNS()
+	rdata, err := client.GetRdata(ctx, dns.GetRdataRequest{
 		Name:       name,
 		Zone:       zone,
 		RecordType: recordType,

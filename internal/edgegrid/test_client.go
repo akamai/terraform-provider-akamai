@@ -5,6 +5,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudlets"
 	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudlets/v3"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cps"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/dns"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/domainownership"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/gtm"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/hapi"
@@ -25,6 +26,7 @@ type TestClient struct {
 	CloudletsV2       *cloudlets.Mock
 	CloudletsV3       *v3.Mock
 	CPS               *cps.Mock
+	DNS               *dns.Mock
 	DomainOwnership   *domainownership.Mock
 	GTM               *gtm.Mock
 	HAPI              *hapi.Mock
@@ -42,6 +44,7 @@ func NewTestClient() *TestClient {
 		CloudletsV2:       &cloudlets.Mock{},
 		CloudletsV3:       &v3.Mock{},
 		CPS:               &cps.Mock{},
+		DNS:               &dns.Mock{},
 		DomainOwnership:   &domainownership.Mock{},
 		GTM:               &gtm.Mock{},
 		HAPI:              &hapi.Mock{},
@@ -71,6 +74,11 @@ func (c *TestClient) GetCloudletsV3() v3.Cloudlets {
 // GetCPS returns the mock CPS client.
 func (c *TestClient) GetCPS() cps.CPS {
 	return c.CPS
+}
+
+// GetDNS returns the mock DNS client.
+func (c *TestClient) GetDNS() dns.DNS {
+	return c.DNS
 }
 
 // GetDomainOwnership returns the mock Domain Ownership client.

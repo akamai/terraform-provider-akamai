@@ -6,6 +6,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudlets"
 	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudlets/v3"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cps"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/dns"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/domainownership"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/gtm"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/hapi"
@@ -26,6 +27,8 @@ type Client interface {
 	GetCloudletsV3() v3.Cloudlets
 
 	GetCPS() cps.CPS
+
+	GetDNS() dns.DNS
 
 	GetDomainOwnership() domainownership.DomainOwnership
 
@@ -78,6 +81,11 @@ func (c *ClientImpl) GetCloudletsV3() v3.Cloudlets {
 // GetCPS returns the CPS client for managing certificates.
 func (c *ClientImpl) GetCPS() cps.CPS {
 	return cps.Client(c.sess)
+}
+
+// GetDNS returns the DNS client for managing DNS zones.
+func (c *ClientImpl) GetDNS() dns.DNS {
+	return dns.Client(c.sess)
 }
 
 // GetDomainOwnership returns the Domain Ownership client for managing domain ownership.

@@ -44,8 +44,10 @@ var (
 	_ datasource.DataSourceWithConfigure = &zoneDNSSecStatusDataSource{}
 )
 
-// NewZoneDNSSecStatusDataSource returns a new single zone's DNSSEC status data source
-func NewZoneDNSSecStatusDataSource() datasource.DataSource { return &zoneDNSSecStatusDataSource{} }
+// newZoneDNSSecStatusDataSource returns a new single zone's DNSSEC status data source
+func newZoneDNSSecStatusDataSource() datasource.DataSource {
+	return &zoneDNSSecStatusDataSource{}
+}
 
 func (d *zoneDNSSecStatusDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, response *datasource.MetadataResponse) {
 	response.TypeName = "akamai_zone_dnssec_status"
@@ -140,7 +142,7 @@ func (d *zoneDNSSecStatusDataSource) Read(ctx context.Context, req datasource.Re
 		return
 	}
 
-	client := inst.Client(d.meta)
+	client := d.meta.Client().GetDNS()
 	zoneName := data.Zone.ValueString()
 	zonesDNSSecStatus, err := client.GetZonesDNSSecStatus(ctx, dns.GetZonesDNSSecStatusRequest{
 		Zones: []string{zoneName},
