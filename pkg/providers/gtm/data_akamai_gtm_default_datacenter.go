@@ -77,11 +77,11 @@ func dataSourceGTMDefaultDatacenterRead(ctx context.Context, d *schema.ResourceD
 	var defaultDC *gtm.Datacenter
 	switch dcID {
 	case gtm.MapDefaultDC:
-		defaultDC, err = Client(meta).CreateMapsDefaultDatacenter(ctx, domain)
+		defaultDC, err = meta.Client().GetGTM().CreateMapsDefaultDatacenter(ctx, domain)
 	case gtm.Ipv4DefaultDC:
-		defaultDC, err = Client(meta).CreateIPv4DefaultDatacenter(ctx, domain)
+		defaultDC, err = meta.Client().GetGTM().CreateIPv4DefaultDatacenter(ctx, domain)
 	case gtm.Ipv6DefaultDC:
-		defaultDC, err = Client(meta).CreateIPv6DefaultDatacenter(ctx, domain)
+		defaultDC, err = meta.Client().GetGTM().CreateIPv6DefaultDatacenter(ctx, domain)
 	default:
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,

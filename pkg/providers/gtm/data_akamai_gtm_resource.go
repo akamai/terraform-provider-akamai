@@ -2,7 +2,6 @@ package gtm
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/gtm"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
@@ -24,7 +23,7 @@ func NewGTMResourceDataSource() datasource.DataSource {
 
 // resourceDataSource defines the data source implementation for fetching GTM resource information.
 type resourceDataSource struct {
-	meta meta.Meta
+	meta.DataSource
 }
 
 // resourceDataSourceModel describes the data source data model for GTM resource data source.
@@ -50,25 +49,6 @@ type resourceDataSourceModel struct {
 // Metadata configures data source's meta information.
 func (d *resourceDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "akamai_gtm_resource"
-}
-
-// Configure configures data source at the beginning of the lifecycle.
-func (d *resourceDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		// ProviderData is nil when Configure is run first time as part of ValidateDataSourceConfig in framework provider
-		return
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Data Source Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-			)
-		}
-	}()
-
-	d.meta = meta.Must(req.ProviderData)
 }
 
 var (
@@ -194,7 +174,7 @@ func (d *resourceDataSource) Read(ctx context.Context, request datasource.ReadRe
 		return
 	}
 
-	client := Client(d.meta)
+	client := d.Client.GetGTM()
 	resource, err := client.GetResource(ctx, gtm.GetResourceRequest{
 		DomainName:   data.Domain.ValueString(),
 		ResourceName: data.ResourceName.ValueString(),

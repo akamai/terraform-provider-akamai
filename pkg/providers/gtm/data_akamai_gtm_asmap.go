@@ -2,7 +2,6 @@ package gtm
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/gtm"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
@@ -32,24 +31,7 @@ type asMapDataSourceModel struct {
 }
 
 type asMapDataSource struct {
-	meta meta.Meta
-}
-
-// Configure configures data source at the beginning of the lifecycle.
-func (d *asMapDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Data Source Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-			)
-		}
-	}()
-
-	d.meta = meta.Must(req.ProviderData)
+	meta.DataSource
 }
 
 // Metadata configures data source's meta information.
@@ -138,7 +120,7 @@ func (d *asMapDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 		return
 	}
 
-	client := Client(d.meta)
+	client := d.Client.GetGTM()
 	asMap, err := client.GetASMap(ctx, gtm.GetASMapRequest{
 		ASMapName:  data.Name.ValueString(),
 		DomainName: data.Domain.ValueString(),

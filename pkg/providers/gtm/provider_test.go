@@ -1,10 +1,9 @@
 package gtm
 
 import (
-	"sync"
 	"testing"
+	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/gtm"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 )
 
@@ -12,19 +11,24 @@ func TestMain(m *testing.M) {
 	testutils.TestRunner(m)
 }
 
-// Only allow one test at a time to patch the client via useClient()
-var clientLock sync.Mutex
+const (
+	testGTMSleepInterval   = 1 * time.Millisecond
+	testGTMDefaultInterval = 1 * time.Millisecond
+	testGTMRetryInterval   = 1 * time.Millisecond
+	testGTMMaxRetryTimeout = 10 * time.Millisecond
+)
 
-// useClient swaps out the client on the global instance for the duration of the given func
-func useClient(gtmClient gtm.GTM, f func()) {
-	clientLock.Lock()
-	orig := client
-	client = gtmClient
-
-	defer func() {
-		client = orig
-		clientLock.Unlock()
-	}()
-
-	f()
+func testSubproviderConfig() subproviderConfig {
+	return subproviderConfig{
+		domain: gtmDomainResourceConfig{
+			sleepInterval:   testGTMSleepInterval,
+			defaultInterval: testGTMDefaultInterval,
+		},
+		property: gtmPropertyResourceConfig{
+			retryInterval:   testGTMRetryInterval,
+			maxRetryTimeout: testGTMMaxRetryTimeout,
+			defaultInterval: testGTMDefaultInterval,
+		},
+		defaultInterval: testGTMDefaultInterval,
+	}
 }

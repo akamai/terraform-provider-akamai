@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"regexp"
 	"testing"
-	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/gtm"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
@@ -18,344 +18,332 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-var testDomainName = "gtm_terra_testdomain.akadns.net"
+const (
+	testDomainName    = "gtm_terra_testdomain.akadns.net"
+	updatedTestDomain = "gtm_terra_testdomain_updated.akadns.net"
+)
 
 func TestResGTMDomain(t *testing.T) {
-	sleepInterval = 5 * time.Millisecond
-	defaultInterval = 5 * time.Millisecond
-
+	t.Parallel()
 	const resourceName = "akamai_gtm_domain.testdomain"
 
 	t.Run("create domain", func(t *testing.T) {
-		client := &gtm.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
-		mockGetDomain(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+		mockGetDomain(client.GTM, testDomainName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
-		mockCreateDomain(client, getTestDomain(), &gtm.CreateDomainResponse{
-			Resource: getReturnedTestDomain(),
+		mockCreateDomain(client.GTM, getTestDomain(testDomainName), &gtm.CreateDomainResponse{
+			Resource: getReturnedTestDomain(testDomainName),
 			Status:   getDefaultResponseStatus(),
 		}, nil)
 
-		mockGetDomain(client, getReturnedTestDomain(), nil, testutils.FourTimes)
+		mockGetDomain(client.GTM, testDomainName, getReturnedTestDomain(testDomainName), nil, testutils.FourTimes)
 
-		mockGetDomainStatus(client, testutils.Twice)
+		mockGetDomainStatus(client.GTM, testDomainName, testutils.Twice)
 
-		mockUpdateDomain(client, &gtm.UpdateDomainResponse{Status: getDefaultResponseStatus()}, nil)
+		mockUpdateDomain(client.GTM, testDomainName, &gtm.UpdateDomainResponse{Status: getDefaultResponseStatus()}, nil)
 
-		mockGetDomain(client, getTestUpdateDomain(), nil, testutils.Twice)
+		mockGetDomain(client.GTM, testDomainName, getTestUpdateDomain(testDomainName), nil, testutils.Twice)
 
-		mockDeleteDomain(client, nil)
+		mockDeleteDomain(client.GTM, testDomainName, nil)
 
-		mockDeleteDomainStatus(client, nil)
+		mockDeleteDomainStatus(client.GTM, nil)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/create_basic.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(resourceName, "name", "gtm_terra_testdomain.akadns.net"),
-							resource.TestCheckResourceAttr(resourceName, "type", "weighted"),
-							resource.TestCheckResourceAttr(resourceName, "load_imbalance_percentage", "10"),
-							resource.TestCheckResourceAttr(resourceName, "sign_and_serve", "false"),
-							resource.TestCheckNoResourceAttr(resourceName, "sign_and_serve_algorithm"),
-						),
-					},
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/update_basic.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(resourceName, "name", "gtm_terra_testdomain.akadns.net"),
-							resource.TestCheckResourceAttr(resourceName, "type", "weighted"),
-							resource.TestCheckResourceAttr(resourceName, "load_imbalance_percentage", "20"),
-							resource.TestCheckResourceAttr(resourceName, "sign_and_serve", "false"),
-							resource.TestCheckNoResourceAttr(resourceName, "sign_and_serve_algorithm"),
-						),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/create_basic.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(resourceName, "name", "gtm_terra_testdomain.akadns.net"),
+						resource.TestCheckResourceAttr(resourceName, "type", "weighted"),
+						resource.TestCheckResourceAttr(resourceName, "load_imbalance_percentage", "10"),
+						resource.TestCheckResourceAttr(resourceName, "sign_and_serve", "false"),
+						resource.TestCheckNoResourceAttr(resourceName, "sign_and_serve_algorithm"),
+					),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/update_basic.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(resourceName, "name", "gtm_terra_testdomain.akadns.net"),
+						resource.TestCheckResourceAttr(resourceName, "type", "weighted"),
+						resource.TestCheckResourceAttr(resourceName, "load_imbalance_percentage", "20"),
+						resource.TestCheckResourceAttr(resourceName, "sign_and_serve", "false"),
+						resource.TestCheckNoResourceAttr(resourceName, "sign_and_serve_algorithm"),
+					),
+				},
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.GTM.AssertExpectations(t)
 	})
 
 	t.Run("update domain failed", func(t *testing.T) {
-		client := &gtm.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
-		mockGetDomain(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+		mockGetDomain(client.GTM, testDomainName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
-		mockCreateDomain(client, getTestDomain(), &gtm.CreateDomainResponse{
-			Resource: getReturnedTestDomain(),
+		mockCreateDomain(client.GTM, getTestDomain(testDomainName), &gtm.CreateDomainResponse{
+			Resource: getReturnedTestDomain(testDomainName),
 			Status:   getDefaultResponseStatus(),
 		}, nil)
 
-		mockGetDomain(client, getReturnedTestDomain(), nil, testutils.FourTimes)
+		mockGetDomain(client.GTM, testDomainName, getReturnedTestDomain(testDomainName), nil, testutils.FourTimes)
 
-		mockGetDomainStatus(client, testutils.Once)
+		mockGetDomainStatus(client.GTM, testDomainName, testutils.Once)
 
-		mockUpdateDomain(client, nil, &gtm.Error{
+		mockUpdateDomain(client.GTM, testDomainName, nil, &gtm.Error{
 			Type:       "internal_error",
 			Title:      "Internal Server Error",
 			Detail:     "Error updating domain",
 			StatusCode: http.StatusInternalServerError,
 		})
 
-		mockDeleteDomain(client, nil)
+		mockDeleteDomain(client.GTM, testDomainName, nil)
 
-		mockDeleteDomainStatus(client, nil)
+		mockDeleteDomainStatus(client.GTM, nil)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/create_basic.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(resourceName, "name", "gtm_terra_testdomain.akadns.net"),
-							resource.TestCheckResourceAttr(resourceName, "type", "weighted"),
-							resource.TestCheckResourceAttr(resourceName, "load_imbalance_percentage", "10"),
-							resource.TestCheckResourceAttr(resourceName, "sign_and_serve", "false"),
-							resource.TestCheckNoResourceAttr(resourceName, "sign_and_serve_algorithm"),
-						),
-					},
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/update_basic.tf"),
-						ExpectError: regexp.MustCompile("API error"),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/create_basic.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(resourceName, "name", "gtm_terra_testdomain.akadns.net"),
+						resource.TestCheckResourceAttr(resourceName, "type", "weighted"),
+						resource.TestCheckResourceAttr(resourceName, "load_imbalance_percentage", "10"),
+						resource.TestCheckResourceAttr(resourceName, "sign_and_serve", "false"),
+						resource.TestCheckNoResourceAttr(resourceName, "sign_and_serve_algorithm"),
+					),
 				},
-			})
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/update_basic.tf"),
+					ExpectError: regexp.MustCompile("API error"),
+				},
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.GTM.AssertExpectations(t)
 	})
 
 	t.Run("create domain, remove outside of terraform, expect non-empty plan", func(t *testing.T) {
-		client := &gtm.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
-		mockGetDomain(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+		mockGetDomain(client.GTM, testDomainName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
-		mockCreateDomain(client, getTestDomain(), &gtm.CreateDomainResponse{
-			Resource: getReturnedTestDomain(),
+		mockCreateDomain(client.GTM, getTestDomain(testDomainName), &gtm.CreateDomainResponse{
+			Resource: getReturnedTestDomain(testDomainName),
 			Status:   getDefaultResponseStatus(),
 		}, nil)
 
-		mockGetDomain(client, getReturnedTestDomain(), nil, testutils.Twice)
+		mockGetDomain(client.GTM, testDomainName, getReturnedTestDomain(testDomainName), nil, testutils.Twice)
 
-		mockGetDomainStatus(client, testutils.Once)
+		mockGetDomainStatus(client.GTM, testDomainName, testutils.Once)
 
 		// Mock that the domain was deleted outside terraform
-		mockGetDomain(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+		mockGetDomain(client.GTM, testDomainName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
-		mockDeleteDomain(client, nil)
+		mockDeleteDomain(client.GTM, testDomainName, nil)
 
-		mockDeleteDomainStatus(client, nil)
+		mockDeleteDomainStatus(client.GTM, nil)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/create_basic.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(resourceName, "name", "gtm_terra_testdomain.akadns.net"),
-							resource.TestCheckResourceAttr(resourceName, "type", "weighted"),
-							resource.TestCheckResourceAttr(resourceName, "load_imbalance_percentage", "10"),
-							resource.TestCheckResourceAttr(resourceName, "sign_and_serve", "false"),
-							resource.TestCheckNoResourceAttr(resourceName, "sign_and_serve_algorithm"),
-						),
-					},
-					{
-						Config:             testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/create_basic.tf"),
-						ExpectNonEmptyPlan: true,
-						PlanOnly:           true,
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/create_basic.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(resourceName, "name", "gtm_terra_testdomain.akadns.net"),
+						resource.TestCheckResourceAttr(resourceName, "type", "weighted"),
+						resource.TestCheckResourceAttr(resourceName, "load_imbalance_percentage", "10"),
+						resource.TestCheckResourceAttr(resourceName, "sign_and_serve", "false"),
+						resource.TestCheckNoResourceAttr(resourceName, "sign_and_serve_algorithm"),
+					),
 				},
-			})
+				{
+					Config:             testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/create_basic.tf"),
+					ExpectNonEmptyPlan: true,
+					PlanOnly:           true,
+				},
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.GTM.AssertExpectations(t)
 	})
 
 	t.Run("create domain with sign and serve", func(t *testing.T) {
-		client := &gtm.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
-		mockGetDomain(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+		mockGetDomain(client.GTM, testDomainName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
-		mockCreateDomain(client, getTestDomainWithSignAndServe(), &gtm.CreateDomainResponse{
+		mockCreateDomain(client.GTM, getTestDomainWithSignAndServe(), &gtm.CreateDomainResponse{
 			Resource: getTestDomainWithSignAndServe(),
 			Status:   getDefaultResponseStatus(),
 		}, nil)
 
-		mockGetDomain(client, getTestDomainWithSignAndServe(), nil, testutils.Twice)
+		mockGetDomain(client.GTM, testDomainName, getTestDomainWithSignAndServe(), nil, testutils.Twice)
 
-		mockGetDomainStatus(client, testutils.Once)
+		mockGetDomainStatus(client.GTM, testDomainName, testutils.Once)
 
-		mockDeleteDomain(client, nil)
+		mockDeleteDomain(client.GTM, testDomainName, nil)
 
-		mockDeleteDomainStatus(client, nil)
+		mockDeleteDomainStatus(client.GTM, nil)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/create_basic_with_sign_and_serve.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(resourceName, "name", "gtm_terra_testdomain.akadns.net"),
-							resource.TestCheckResourceAttr(resourceName, "type", "weighted"),
-							resource.TestCheckResourceAttr(resourceName, "load_imbalance_percentage", "10"),
-							resource.TestCheckResourceAttr(resourceName, "sign_and_serve", "true"),
-							resource.TestCheckResourceAttr(resourceName, "sign_and_serve_algorithm", "RSA-SHA1"),
-						),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/create_basic_with_sign_and_serve.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(resourceName, "name", "gtm_terra_testdomain.akadns.net"),
+						resource.TestCheckResourceAttr(resourceName, "type", "weighted"),
+						resource.TestCheckResourceAttr(resourceName, "load_imbalance_percentage", "10"),
+						resource.TestCheckResourceAttr(resourceName, "sign_and_serve", "true"),
+						resource.TestCheckResourceAttr(resourceName, "sign_and_serve_algorithm", "RSA-SHA1"),
+					),
 				},
-			})
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.GTM.AssertExpectations(t)
 	})
 
 	t.Run("create, update domain name - delete + create with new name", func(t *testing.T) {
-		client := &gtm.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
-		mockGetDomain(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+		mockGetDomain(client.GTM, testDomainName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
-		mockCreateDomain(client, getTestDomain(), &gtm.CreateDomainResponse{
-			Resource: getReturnedTestDomain(),
+		mockCreateDomain(client.GTM, getTestDomain(testDomainName), &gtm.CreateDomainResponse{
+			Resource: getReturnedTestDomain(testDomainName),
 			Status:   getDefaultResponseStatus(),
 		}, nil)
 
-		mockGetDomain(client, getReturnedTestDomain(), nil, testutils.ThreeTimes)
+		mockGetDomain(client.GTM, testDomainName, getReturnedTestDomain(testDomainName), nil, testutils.ThreeTimes)
 
-		mockGetDomainStatus(client, testutils.Once)
+		mockGetDomainStatus(client.GTM, testDomainName, testutils.Once)
 
-		mockDeleteDomain(client, nil)
+		mockDeleteDomain(client.GTM, testDomainName, nil)
 
-		mockDeleteDomainStatus(client, nil)
+		mockDeleteDomainStatus(client.GTM, nil)
 
-		testDomainName = "gtm_terra_testdomain_updated.akadns.net"
+		domainName := updatedTestDomain
 
-		mockGetDomain(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+		mockGetDomain(client.GTM, domainName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
-		mockCreateDomain(client, getTestDomain(), &gtm.CreateDomainResponse{
-			Resource: getReturnedTestDomain(),
+		mockCreateDomain(client.GTM, getTestDomain(domainName), &gtm.CreateDomainResponse{
+			Resource: getReturnedTestDomain(domainName),
 			Status:   getDefaultResponseStatus(),
 		}, nil)
 
-		mockGetDomain(client, getReturnedTestDomain(), nil, testutils.Twice)
+		mockGetDomain(client.GTM, domainName, getReturnedTestDomain(domainName), nil, testutils.Twice)
 
-		mockGetDomainStatus(client, testutils.Once)
+		mockGetDomainStatus(client.GTM, domainName, testutils.Once)
 
-		mockDeleteDomain(client, nil)
+		mockDeleteDomain(client.GTM, domainName, nil)
 
-		mockDeleteDomainStatus(client, nil)
+		mockDeleteDomainStatus(client.GTM, nil)
 
-		//resets value for other tests
-		testDomainName = "gtm_terra_testdomain.akadns.net"
-
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/create_basic.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(resourceName, "name", "gtm_terra_testdomain.akadns.net"),
-							resource.TestCheckResourceAttr(resourceName, "type", "weighted"),
-							resource.TestCheckResourceAttr(resourceName, "load_imbalance_percentage", "10"),
-							resource.TestCheckResourceAttr(resourceName, "sign_and_serve", "false"),
-							resource.TestCheckNoResourceAttr(resourceName, "sign_and_serve_algorithm"),
-						),
-					},
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/domain_update/updated_domain_name.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(resourceName, "name", "gtm_terra_testdomain_updated.akadns.net"),
-							resource.TestCheckResourceAttr(resourceName, "type", "weighted"),
-							resource.TestCheckResourceAttr(resourceName, "load_imbalance_percentage", "10"),
-							resource.TestCheckResourceAttr(resourceName, "sign_and_serve", "false"),
-							resource.TestCheckNoResourceAttr(resourceName, "sign_and_serve_algorithm"),
-						),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/create_basic.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(resourceName, "name", "gtm_terra_testdomain.akadns.net"),
+						resource.TestCheckResourceAttr(resourceName, "type", "weighted"),
+						resource.TestCheckResourceAttr(resourceName, "load_imbalance_percentage", "10"),
+						resource.TestCheckResourceAttr(resourceName, "sign_and_serve", "false"),
+						resource.TestCheckNoResourceAttr(resourceName, "sign_and_serve_algorithm"),
+					),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/domain_update/updated_domain_name.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(resourceName, "name", "gtm_terra_testdomain_updated.akadns.net"),
+						resource.TestCheckResourceAttr(resourceName, "type", "weighted"),
+						resource.TestCheckResourceAttr(resourceName, "load_imbalance_percentage", "10"),
+						resource.TestCheckResourceAttr(resourceName, "sign_and_serve", "false"),
+						resource.TestCheckNoResourceAttr(resourceName, "sign_and_serve_algorithm"),
+					),
+				},
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.GTM.AssertExpectations(t)
 	})
 
 	t.Run("create domain failed", func(t *testing.T) {
-		client := &gtm.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
-		mockGetDomain(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+		mockGetDomain(client.GTM, testDomainName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
-		mockCreateDomain(client, getTestDomain(), nil, &gtm.Error{StatusCode: http.StatusBadRequest})
+		mockCreateDomain(client.GTM, getTestDomain(testDomainName), nil, &gtm.Error{StatusCode: http.StatusBadRequest})
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/create_basic.tf"),
-						ExpectError: regexp.MustCompile("Domain create error"),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/create_basic.tf"),
+					ExpectError: regexp.MustCompile("Domain create error"),
 				},
-			})
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.GTM.AssertExpectations(t)
 	})
 
 	t.Run("create domain failed - domain already exists", func(t *testing.T) {
-		client := &gtm.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
-		mockGetDomain(client, getReturnedTestDomain(), nil, testutils.Once)
+		mockGetDomain(client.GTM, testDomainName, getReturnedTestDomain(testDomainName), nil, testutils.Once)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/create_basic.tf"),
-						ExpectError: regexp.MustCompile("domain already exists error"),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/create_basic.tf"),
+					ExpectError: regexp.MustCompile("domain already exists error"),
 				},
-			})
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.GTM.AssertExpectations(t)
 	})
 
 	t.Run("create domain denied", func(t *testing.T) {
-		client := &gtm.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
-		mockGetDomain(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+		mockGetDomain(client.GTM, testDomainName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
-		mockCreateDomain(client, getTestDomain(), &gtm.CreateDomainResponse{
-			Resource: getReturnedTestDomain(),
+		mockCreateDomain(client.GTM, getTestDomain(testDomainName), &gtm.CreateDomainResponse{
+			Resource: getReturnedTestDomain(testDomainName),
 			Status:   getDeniedResponseStatus(),
 		}, nil)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/create_basic.tf"),
-						ExpectError: regexp.MustCompile("Request could not be completed. Invalid credentials."),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/create_basic.tf"),
+					ExpectError: regexp.MustCompile("Request could not be completed. Invalid credentials."),
 				},
-			})
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.GTM.AssertExpectations(t)
 	})
 }
 
 func TestGTMDomainOrder(t *testing.T) {
-	sleepInterval = 5 * time.Millisecond
-	defaultInterval = 5 * time.Millisecond
-
+	t.Parallel()
 	tests := map[string]struct {
 		pathForUpdate string
 		nonEmptyPlan  bool
@@ -375,29 +363,29 @@ func TestGTMDomainOrder(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			client := getDomainOrderClient()
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps: []resource.TestStep{
-						{
-							Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/order/email_notification_list/create.tf"),
-						},
-						{
-							Config:             testutils.LoadFixtureString(t, test.pathForUpdate),
-							PlanOnly:           test.planOnly,
-							ExpectNonEmptyPlan: test.nonEmptyPlan,
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+				IsUnitTest:               true,
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/order/email_notification_list/create.tf"),
 					},
-				})
+					{
+						Config:             testutils.LoadFixtureString(t, test.pathForUpdate),
+						PlanOnly:           test.planOnly,
+						ExpectNonEmptyPlan: test.nonEmptyPlan,
+					},
+				},
 			})
-			client.AssertExpectations(t)
+			client.GTM.AssertExpectations(t)
 		})
 	}
 }
 
 func TestResGTMDomainImport(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		domainName  string
 		init        func(*gtm.Mock)
@@ -408,7 +396,7 @@ func TestResGTMDomainImport(t *testing.T) {
 			domainName: testDomainName,
 			init: func(m *gtm.Mock) {
 				// Read
-				mockGetDomain(m, getImportedDomain(), nil, testutils.Once)
+				mockGetDomain(m, testDomainName, getImportedDomain(), nil, testutils.Once)
 			},
 			stateCheck: test.NewImportChecker().
 				CheckEqual("name", "gtm_terra_testdomain.akadns.net").
@@ -450,7 +438,7 @@ func TestResGTMDomainImport(t *testing.T) {
 			domainName: testDomainName + ",12345,54321",
 			init: func(m *gtm.Mock) {
 				// Read
-				mockGetDomain(m, getImportedDomain(), nil, testutils.Once)
+				mockGetDomain(m, testDomainName, getImportedDomain(), nil, testutils.Once)
 			},
 			stateCheck: test.NewImportChecker().
 				CheckEqual("group", "12345").
@@ -460,7 +448,7 @@ func TestResGTMDomainImport(t *testing.T) {
 			domainName: testDomainName,
 			init: func(m *gtm.Mock) {
 				// Read - error
-				mockGetDomain(m, nil, fmt.Errorf("get failed"), testutils.Once)
+				mockGetDomain(m, testDomainName, nil, fmt.Errorf("get failed"), testutils.Once)
 			},
 			expectError: regexp.MustCompile(`get failed`),
 		},
@@ -472,57 +460,56 @@ func TestResGTMDomainImport(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &gtm.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 			if tc.init != nil {
-				tc.init(client)
+				tc.init(client.GTM)
 			}
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							ImportStateCheck: tc.stateCheck,
-							ImportStateId:    tc.domainName,
-							ImportState:      true,
-							ResourceName:     "akamai_gtm_domain.test",
-							Config:           testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/import_basic.tf"),
-							ExpectError:      tc.expectError,
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+				Steps: []resource.TestStep{
+					{
+						ImportStateCheck: tc.stateCheck,
+						ImportStateId:    tc.domainName,
+						ImportState:      true,
+						ResourceName:     "akamai_gtm_domain.test",
+						Config:           testutils.LoadFixtureString(t, "testdata/TestResGtmDomain/import_basic.tf"),
+						ExpectError:      tc.expectError,
 					},
-				})
+				},
 			})
-			client.AssertExpectations(t)
+			client.GTM.AssertExpectations(t)
 		})
 	}
 }
 
 // getDomainOrderClient mocks creation and deletion calls for gtm_domain resource
-func getDomainOrderClient() *gtm.Mock {
-	client := &gtm.Mock{}
+func getDomainOrderClient() *edgegrid.TestClient {
+	client := edgegrid.NewTestClient()
 
-	mockGetDomain(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+	mockGetDomain(client.GTM, testDomainName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
-	mockCreateDomain(client, getTestDomainWithNotifications(), &gtm.CreateDomainResponse{
+	mockCreateDomain(client.GTM, getTestDomainWithNotifications(), &gtm.CreateDomainResponse{
 		Resource: getTestDomainWithNotifications(),
 		Status:   getDefaultResponseStatus(),
 	}, nil)
 
-	mockGetDomain(client, getTestDomainWithNotifications(), nil, testutils.ThreeTimes)
+	mockGetDomain(client.GTM, testDomainName, getTestDomainWithNotifications(), nil, testutils.ThreeTimes)
 
-	mockGetDomainStatus(client, testutils.Once)
+	mockGetDomainStatus(client.GTM, testDomainName, testutils.Once)
 
-	mockDeleteDomain(client, nil)
+	mockDeleteDomain(client.GTM, testDomainName, nil)
 
-	mockDeleteDomainStatus(client, nil)
+	mockDeleteDomainStatus(client.GTM, nil)
 
 	return client
 }
 
-func mockUpdateDomain(client *gtm.Mock, resp *gtm.UpdateDomainResponse, err error) *mock.Call {
+func mockUpdateDomain(client *gtm.Mock, domainName string, resp *gtm.UpdateDomainResponse, err error) *mock.Call {
 	return client.On("UpdateDomain",
 		testutils.MockContext,
 		gtm.UpdateDomainRequest{
-			Domain: getTestUpdateDomain(),
+			Domain: getTestUpdateDomain(domainName),
 			QueryArgs: &gtm.DomainQueryArgs{
 				ContractID: "1-2ABCDEF",
 				GroupID:    "123ABC",
@@ -544,7 +531,7 @@ func mockCreateDomain(client *gtm.Mock, domain *gtm.Domain, resp *gtm.CreateDoma
 	).Return(resp, err).Once()
 }
 
-func mockDeleteDomain(client *gtm.Mock, err error) *mock.Call {
+func mockDeleteDomain(client *gtm.Mock, domainName string, err error) *mock.Call {
 	resp := gtm.DeleteDomainsResponse{
 		RequestID:      "e585a640-0849-4b87-8dd9-91afdaf8851c",
 		ExpirationDate: "2050-01-03T12:00:00Z",
@@ -555,7 +542,7 @@ func mockDeleteDomain(client *gtm.Mock, err error) *mock.Call {
 		gtm.DeleteDomainsRequest{
 			Body: gtm.DeleteDomainsRequestBody{
 				DomainNames: []string{
-					testDomainName,
+					domainName,
 				},
 			},
 		},
@@ -584,14 +571,14 @@ func mockDeleteDomainStatus(client *gtm.Mock, err error) *mock.Call {
 	).Return(&resp, err).Once()
 }
 
-func mockGetDomain(m *gtm.Mock, domain *gtm.Domain, err error, times int) *mock.Call {
+func mockGetDomain(m *gtm.Mock, domainName string, domain *gtm.Domain, err error, times int) *mock.Call {
 	var resp *gtm.GetDomainResponse
 	if domain != nil {
 		r := gtm.GetDomainResponse(*domain)
 		resp = &r
 	}
 	return m.On("GetDomain", testutils.MockContext, gtm.GetDomainRequest{
-		DomainName: testDomainName,
+		DomainName: domainName,
 	}).Return(resp, err).Times(times)
 }
 
@@ -633,9 +620,9 @@ func getImportedDomain() *gtm.Domain {
 	}
 }
 
-func getTestDomain() *gtm.Domain {
+func getTestDomain(domainName string) *gtm.Domain {
 	return &gtm.Domain{
-		Name:                    testDomainName,
+		Name:                    domainName,
 		Type:                    "weighted",
 		LoadImbalancePercentage: 10,
 		DefaultErrorPenalty:     75,
@@ -644,8 +631,8 @@ func getTestDomain() *gtm.Domain {
 	}
 }
 
-func getReturnedTestDomain() *gtm.Domain {
-	domain := getTestDomain()
+func getReturnedTestDomain(domainName string) *gtm.Domain {
+	domain := getTestDomain(domainName)
 	domain.Datacenters = getTestDatacenters()
 	domain.Properties = getDomainTestProperties()
 	domain.Links = getTestDomainLinks()
@@ -657,20 +644,20 @@ func getReturnedTestDomain() *gtm.Domain {
 }
 
 func getTestDomainWithSignAndServe() *gtm.Domain {
-	domain := getTestDomain()
+	domain := getTestDomain(testDomainName)
 	domain.SignAndServe = true
 	domain.SignAndServeAlgorithm = ptr.To("RSA-SHA1")
 	return domain
 }
 
 func getTestDomainWithNotifications() *gtm.Domain {
-	domain := getTestDomain()
+	domain := getTestDomain(testDomainName)
 	domain.EmailNotificationList = []string{"email1@nomail.com", "email3@nomail.com", "email2@nomail.com"}
 	return domain
 }
 
-func getTestUpdateDomain() *gtm.Domain {
-	domain := getTestDomain()
+func getTestUpdateDomain(domainName string) *gtm.Domain {
+	domain := getTestDomain(domainName)
 	domain.LoadImbalancePercentage = 20
 	domain.Datacenters = getTestDatacenters()
 	domain.Properties = getDomainTestProperties()
@@ -843,6 +830,7 @@ func getPendingResponseStatus() *gtm.ResponseStatus {
 }
 
 func TestPreventNameUpdateWithoutContractAndGroup(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		oldName     string
 		newName     string
@@ -887,8 +875,9 @@ func TestPreventNameUpdateWithoutContractAndGroup(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			diff := &schema.ResourceDiff{}
-			d := schema.TestResourceDataRaw(t, resourceGTMv1Domain().Schema, map[string]interface{}{
+			d := schema.TestResourceDataRaw(t, resourceGTMv1Domain(defaultGTMDomainResourceConfig()).Schema, map[string]interface{}{
 				"name":     tc.oldName,
 				"type":     "weighted",
 				"contract": tc.contract,

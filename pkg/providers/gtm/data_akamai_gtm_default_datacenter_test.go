@@ -4,38 +4,39 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/gtm"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
 
 func TestAccDataSourceGTMDefaultDatacenter_basic(t *testing.T) {
+	t.Parallel()
 	t.Run("basic", func(t *testing.T) {
-		client := &gtm.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
 		dc := gtm.Datacenter{
 			DatacenterID: 1000,
 		}
 
-		mockCreateMapsDefaultDatacenter(client, &dc, testutils.ThreeTimes)
+		mockCreateMapsDefaultDatacenter(client.GTM, &dc, testutils.ThreeTimes)
 
 		dataSourceName := "data.akamai_gtm_default_datacenter.test"
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestDataDefaultDatacenter/basic.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttrSet(dataSourceName, "id"),
-						),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataDefaultDatacenter/basic.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttrSet(dataSourceName, "id"),
+					),
 				},
-			})
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.GTM.AssertExpectations(t)
 	})
 }
 

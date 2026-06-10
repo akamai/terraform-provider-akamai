@@ -7,292 +7,289 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/gtm"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
 
-const testASMapName = "tfexample_as_1"
+const (
+	testASMapName          = "tfexample_as_1"
+	defaultASMapDomainName = "gtm_terra_testdomain.akadns.net"
+	updatedASMapDomainName = "gtm_terra_testdomain_updated.akadns.net"
+)
 
 func TestResGTMASMap(t *testing.T) {
+	t.Parallel()
 	t.Run("create asmap", func(t *testing.T) {
-		client := &gtm.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
-		mockGetASMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+		mockGetASMap(client.GTM, defaultASMapDomainName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
-		mockGetDatacenter(client, datacenterID5400, getDefaultDatacenter(), nil, testutils.Once)
+		mockGetDatacenter(client.GTM, testDomainName, datacenterID5400, getDefaultDatacenter(), nil, testutils.Once)
 
-		mockCreateASMap(client, getASMapForTestsForCreate(), &gtm.CreateASMapResponse{
+		mockCreateASMap(client.GTM, defaultASMapDomainName, getASMapForTestsForCreate(), &gtm.CreateASMapResponse{
 			Resource: getASMapForTestsForCreateResponse(),
 			Status:   getDefaultResponseStatus(),
 		}, nil)
 
-		mockGetASMap(client, getASMapForTestsForCreateResponse(), nil, testutils.FourTimes)
+		mockGetASMap(client.GTM, defaultASMapDomainName, getASMapForTestsForCreateResponse(), nil, testutils.FourTimes)
 
-		mockGetDomainStatus(client, testutils.Twice)
+		mockGetDomainStatus(client.GTM, testDomainName, testutils.Twice)
 
-		mockUpdateASMap(client, &gtm.UpdateASMapResponse{Status: getDefaultResponseStatus()}, nil)
+		mockUpdateASMap(client.GTM, defaultASMapDomainName, &gtm.UpdateASMapResponse{Status: getDefaultResponseStatus()}, nil)
 
-		mockGetASMap(client, getASMapUpdateResponse(), nil, testutils.ThreeTimes)
+		mockGetASMap(client.GTM, defaultASMapDomainName, getASMapUpdateResponse(), nil, testutils.ThreeTimes)
 
-		mockDeleteASMap(client)
+		mockDeleteASMap(client.GTM, defaultASMapDomainName)
 
 		resourceName := "akamai_gtm_asmap.tfexample_as_1"
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmAsmap/create_basic.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(resourceName, "name", "tfexample_as_1"),
-						),
-					},
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmAsmap/update_basic.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(resourceName, "name", "tfexample_as_1"),
-						),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmAsmap/create_basic.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(resourceName, "name", "tfexample_as_1"),
+					),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmAsmap/update_basic.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(resourceName, "name", "tfexample_as_1"),
+					),
+				},
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.GTM.AssertExpectations(t)
 	})
 
 	t.Run("update asmap failed", func(t *testing.T) {
-		client := &gtm.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
-		mockGetASMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+		mockGetASMap(client.GTM, defaultASMapDomainName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
-		mockGetDatacenter(client, datacenterID5400, getDefaultDatacenter(), nil, testutils.Once)
+		mockGetDatacenter(client.GTM, testDomainName, datacenterID5400, getDefaultDatacenter(), nil, testutils.Once)
 
-		mockCreateASMap(client, getASMapForTestsForCreate(), &gtm.CreateASMapResponse{
+		mockCreateASMap(client.GTM, defaultASMapDomainName, getASMapForTestsForCreate(), &gtm.CreateASMapResponse{
 			Resource: getASMapForTestsForCreateResponse(),
 			Status:   getDefaultResponseStatus(),
 		}, nil)
 
-		mockGetASMap(client, getASMapForTestsForCreateResponse(), nil, testutils.FourTimes)
+		mockGetASMap(client.GTM, defaultASMapDomainName, getASMapForTestsForCreateResponse(), nil, testutils.FourTimes)
 
-		mockGetDomainStatus(client, testutils.Once)
+		mockGetDomainStatus(client.GTM, testDomainName, testutils.Once)
 
-		mockUpdateASMap(client, nil, &gtm.Error{
+		mockUpdateASMap(client.GTM, defaultASMapDomainName, nil, &gtm.Error{
 			Type:       "internal_error",
 			Title:      "Internal Server Error",
 			Detail:     "Error updating asmap",
 			StatusCode: http.StatusInternalServerError,
 		})
 
-		mockGetASMap(client, getASMapForTestsForCreateResponse(), nil, testutils.Once)
+		mockGetASMap(client.GTM, defaultASMapDomainName, getASMapForTestsForCreateResponse(), nil, testutils.Once)
 
-		mockDeleteASMap(client)
+		mockDeleteASMap(client.GTM, defaultASMapDomainName)
 
 		resourceName := "akamai_gtm_asmap.tfexample_as_1"
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmAsmap/create_basic.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(resourceName, "name", "tfexample_as_1"),
-						),
-					},
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmAsmap/update_basic.tf"),
-						ExpectError: regexp.MustCompile("API error"),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmAsmap/create_basic.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(resourceName, "name", "tfexample_as_1"),
+					),
 				},
-			})
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmAsmap/update_basic.tf"),
+					ExpectError: regexp.MustCompile("API error"),
+				},
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.GTM.AssertExpectations(t)
 	})
 
 	t.Run("update asmap domain name - delete and create new asmap", func(t *testing.T) {
-		client := &gtm.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
-		mockGetASMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+		mockGetASMap(client.GTM, defaultASMapDomainName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
-		mockGetDatacenter(client, datacenterID5400, getDefaultDatacenter(), nil, testutils.Once)
+		mockGetDatacenter(client.GTM, testDomainName, datacenterID5400, getDefaultDatacenter(), nil, testutils.Once)
 
-		mockCreateASMap(client, getASMapForTestsForCreate(), &gtm.CreateASMapResponse{
+		mockCreateASMap(client.GTM, defaultASMapDomainName, getASMapForTestsForCreate(), &gtm.CreateASMapResponse{
 			Resource: getASMapForTestsForCreateResponse(),
 			Status:   getDefaultResponseStatus(),
 		}, nil)
 
-		mockGetASMap(client, getASMapForTestsForCreateResponse(), nil, testutils.FourTimes)
+		mockGetASMap(client.GTM, defaultASMapDomainName, getASMapForTestsForCreateResponse(), nil, testutils.FourTimes)
 
-		mockDeleteASMap(client)
+		mockDeleteASMap(client.GTM, defaultASMapDomainName)
 
-		testDomainName = "gtm_terra_testdomain_updated.akadns.net"
+		domainName := updatedASMapDomainName
 
-		mockGetASMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+		mockGetASMap(client.GTM, domainName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
-		mockGetDatacenter(client, datacenterID5400, getDefaultDatacenter(), nil, testutils.Once)
+		mockGetDatacenter(client.GTM, domainName, datacenterID5400, getDefaultDatacenter(), nil, testutils.Once)
 
-		mockCreateASMap(client, getASMapForTestsForCreate(), &gtm.CreateASMapResponse{
+		mockCreateASMap(client.GTM, domainName, getASMapForTestsForCreate(), &gtm.CreateASMapResponse{
 			Resource: getASMapForTestsForCreateResponse(),
 			Status:   getDefaultResponseStatus(),
 		}, nil)
 
-		mockGetASMap(client, getASMapForTestsForCreateResponse(), nil, testutils.ThreeTimes)
+		mockGetASMap(client.GTM, domainName, getASMapForTestsForCreateResponse(), nil, testutils.ThreeTimes)
 
-		mockDeleteASMap(client)
-
-		// rollback to original domain name for other tests
-		testDomainName = "gtm_terra_testdomain.akadns.net"
+		mockDeleteASMap(client.GTM, domainName)
 
 		resourceName := "akamai_gtm_asmap.tfexample_as_1"
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmAsmap/create_basic.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(resourceName, "name", "tfexample_as_1"),
-							resource.TestCheckResourceAttr(resourceName, "domain", "gtm_terra_testdomain.akadns.net"),
-						),
-					},
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmAsmap/domain_update/updated_domain_name.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(resourceName, "name", "tfexample_as_1"),
-							resource.TestCheckResourceAttr(resourceName, "domain", "gtm_terra_testdomain_updated.akadns.net"),
-						),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmAsmap/create_basic.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(resourceName, "name", "tfexample_as_1"),
+						resource.TestCheckResourceAttr(resourceName, "domain", "gtm_terra_testdomain.akadns.net"),
+					),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmAsmap/domain_update/updated_domain_name.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(resourceName, "name", "tfexample_as_1"),
+						resource.TestCheckResourceAttr(resourceName, "domain", "gtm_terra_testdomain_updated.akadns.net"),
+					),
+				},
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.GTM.AssertExpectations(t)
 	})
 
 	t.Run("create asmap, remove outside of terraform, expect non-empty plan", func(t *testing.T) {
-		client := &gtm.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
-		mockGetASMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+		mockGetASMap(client.GTM, defaultASMapDomainName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
-		mockGetDatacenter(client, datacenterID5400, getDefaultDatacenter(), nil, testutils.Once)
+		mockGetDatacenter(client.GTM, testDomainName, datacenterID5400, getDefaultDatacenter(), nil, testutils.Once)
 
-		mockCreateASMap(client, getASMapForTestsForCreate(), &gtm.CreateASMapResponse{
+		mockCreateASMap(client.GTM, defaultASMapDomainName, getASMapForTestsForCreate(), &gtm.CreateASMapResponse{
 			Resource: getASMapForTestsForCreateResponse(),
 			Status:   getDefaultResponseStatus(),
 		}, nil)
 
-		mockGetASMap(client, getASMapForTestsForCreateResponse(), nil, testutils.Twice)
+		mockGetASMap(client.GTM, defaultASMapDomainName, getASMapForTestsForCreateResponse(), nil, testutils.Twice)
 
 		// Mock that the ASMap was deleted outside terraform
-		mockGetASMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+		mockGetASMap(client.GTM, defaultASMapDomainName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
 		// For terraform test framework, we need to mock GetASMap as it would actually exist before deletion
-		mockGetASMap(client, getASMapForTestsForCreateResponse(), nil, testutils.Once)
+		mockGetASMap(client.GTM, defaultASMapDomainName, getASMapForTestsForCreateResponse(), nil, testutils.Once)
 
-		mockDeleteASMap(client)
+		mockDeleteASMap(client.GTM, defaultASMapDomainName)
 
 		resourceName := "akamai_gtm_asmap.tfexample_as_1"
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmAsmap/create_basic.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(resourceName, "name", "tfexample_as_1"),
-						),
-					},
-					{
-						Config:             testutils.LoadFixtureString(t, "testdata/TestResGtmAsmap/create_basic.tf"),
-						ExpectNonEmptyPlan: true,
-						PlanOnly:           true,
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmAsmap/create_basic.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(resourceName, "name", "tfexample_as_1"),
+					),
 				},
-			})
+				{
+					Config:             testutils.LoadFixtureString(t, "testdata/TestResGtmAsmap/create_basic.tf"),
+					ExpectNonEmptyPlan: true,
+					PlanOnly:           true,
+				},
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.GTM.AssertExpectations(t)
 	})
 
 	t.Run("create asmap failed", func(t *testing.T) {
-		client := &gtm.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
-		mockGetASMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+		mockGetASMap(client.GTM, defaultASMapDomainName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
-		mockCreateASMap(client, getASMapForTestsForCreate(), nil, &gtm.Error{StatusCode: http.StatusBadRequest})
+		mockCreateASMap(client.GTM, defaultASMapDomainName, getASMapForTestsForCreate(), nil, &gtm.Error{StatusCode: http.StatusBadRequest})
 
-		mockGetDatacenter(client, datacenterID5400, getDefaultDatacenter(), nil, testutils.Once)
+		mockGetDatacenter(client.GTM, testDomainName, datacenterID5400, getDefaultDatacenter(), nil, testutils.Once)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmAsmap/create_basic.tf"),
-						ExpectError: regexp.MustCompile("asMap create error"),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmAsmap/create_basic.tf"),
+					ExpectError: regexp.MustCompile("asMap create error"),
 				},
-			})
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.GTM.AssertExpectations(t)
 	})
 
 	t.Run("create asmap failed - asmap already exists", func(t *testing.T) {
-		client := &gtm.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
-		mockGetASMap(client, getASMapForTestsForCreateResponse(), nil, testutils.Once)
+		mockGetASMap(client.GTM, defaultASMapDomainName, getASMapForTestsForCreateResponse(), nil, testutils.Once)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmAsmap/create_basic.tf"),
-						ExpectError: regexp.MustCompile("asMap already exists error"),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmAsmap/create_basic.tf"),
+					ExpectError: regexp.MustCompile("asMap already exists error"),
 				},
-			})
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.GTM.AssertExpectations(t)
 	})
 
 	t.Run("create asmap denied", func(t *testing.T) {
-		client := &gtm.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
-		mockGetASMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+		mockGetASMap(client.GTM, defaultASMapDomainName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
-		mockCreateASMap(client, getASMapForTestsForCreate(), &gtm.CreateASMapResponse{
+		mockCreateASMap(client.GTM, defaultASMapDomainName, getASMapForTestsForCreate(), &gtm.CreateASMapResponse{
 			Resource: getASMapForTestsForCreateResponse(),
 			Status:   getDeniedResponseStatus(),
 		}, nil)
 
-		mockGetDatacenter(client, datacenterID5400, getTestDatacenterResp(), nil, testutils.Once)
+		mockGetDatacenter(client.GTM, testDomainName, datacenterID5400, getTestDatacenterResp(), nil, testutils.Once)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmAsmap/create_basic.tf"),
-						ExpectError: regexp.MustCompile("Request could not be completed. Invalid credentials."),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmAsmap/create_basic.tf"),
+					ExpectError: regexp.MustCompile("Request could not be completed. Invalid credentials."),
 				},
-			})
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.GTM.AssertExpectations(t)
 	})
 }
 
 func TestGTMASMapOrder(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		pathForUpdate string
 		nonEmptyPlan  bool
@@ -347,29 +344,29 @@ func TestGTMASMapOrder(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			client := getASMapMocks()
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps: []resource.TestStep{
-						{
-							Config: testutils.LoadFixtureString(t, "testdata/TestResGtmAsmap/order/create.tf"),
-						},
-						{
-							Config:             testutils.LoadFixtureString(t, test.pathForUpdate),
-							PlanOnly:           test.planOnly,
-							ExpectNonEmptyPlan: test.nonEmptyPlan,
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+				IsUnitTest:               true,
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmAsmap/order/create.tf"),
 					},
-				})
+					{
+						Config:             testutils.LoadFixtureString(t, test.pathForUpdate),
+						PlanOnly:           test.planOnly,
+						ExpectNonEmptyPlan: test.nonEmptyPlan,
+					},
+				},
 			})
-			client.AssertExpectations(t)
+			client.GTM.AssertExpectations(t)
 		})
 	}
 }
 
 func TestResGTMASMapImport(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		domainName  string
 		mapName     string
@@ -378,11 +375,11 @@ func TestResGTMASMapImport(t *testing.T) {
 		stateCheck  resource.ImportStateCheckFunc
 	}{
 		"happy path - import": {
-			domainName: testDomainName,
+			domainName: defaultASMapDomainName,
 			mapName:    testASMapName,
 			init: func(m *gtm.Mock) {
 				// Read
-				mockGetASMap(m, getImportedASMap(), nil, testutils.Twice)
+				mockGetASMap(m, defaultASMapDomainName, getImportedASMap(), nil, testutils.Twice)
 			},
 			stateCheck: test.NewImportChecker().
 				CheckEqual("domain", "gtm_terra_testdomain.akadns.net").
@@ -402,16 +399,16 @@ func TestResGTMASMapImport(t *testing.T) {
 			expectError: regexp.MustCompile(`Error: invalid resource ID: :tfexample_as_1`),
 		},
 		"expect error - no map name, invalid import ID": {
-			domainName:  testDomainName,
+			domainName:  defaultASMapDomainName,
 			mapName:     "",
 			expectError: regexp.MustCompile(`Error: invalid resource ID: gtm_terra_testdomain.akadns.net:`),
 		},
 		"expect error - read": {
-			domainName: testDomainName,
+			domainName: defaultASMapDomainName,
 			mapName:    testASMapName,
 			init: func(m *gtm.Mock) {
 				// Read - error
-				mockGetASMap(m, nil, fmt.Errorf("get failed"), testutils.Once)
+				mockGetASMap(m, defaultASMapDomainName, nil, fmt.Errorf("get failed"), testutils.Once)
 			},
 			expectError: regexp.MustCompile(`get failed`),
 		},
@@ -419,53 +416,52 @@ func TestResGTMASMapImport(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &gtm.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 			if tc.init != nil {
-				tc.init(client)
+				tc.init(client.GTM)
 			}
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							ImportStateCheck: tc.stateCheck,
-							ImportStateId:    fmt.Sprintf("%s:%s", tc.domainName, tc.mapName),
-							ImportState:      true,
-							ResourceName:     "akamai_gtm_asmap.test",
-							Config:           testutils.LoadFixtureString(t, "testdata/TestResGtmAsmap/import_basic.tf"),
-							ExpectError:      tc.expectError,
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+				Steps: []resource.TestStep{
+					{
+						ImportStateCheck: tc.stateCheck,
+						ImportStateId:    fmt.Sprintf("%s:%s", tc.domainName, tc.mapName),
+						ImportState:      true,
+						ResourceName:     "akamai_gtm_asmap.test",
+						Config:           testutils.LoadFixtureString(t, "testdata/TestResGtmAsmap/import_basic.tf"),
+						ExpectError:      tc.expectError,
 					},
-				})
+				},
 			})
-			client.AssertExpectations(t)
+			client.GTM.AssertExpectations(t)
 		})
 	}
 }
 
 // getASMapMocks mocks creation and deletion of a resource
-func getASMapMocks() *gtm.Mock {
-	client := &gtm.Mock{}
+func getASMapMocks() *edgegrid.TestClient {
+	client := edgegrid.NewTestClient()
 
-	mockGetASMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+	mockGetASMap(client.GTM, defaultASMapDomainName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
-	mockGetDatacenter(client, datacenterID5400, getTestDatacenterResp(), nil, testutils.Once)
+	mockGetDatacenter(client.GTM, testDomainName, datacenterID5400, getTestDatacenterResp(), nil, testutils.Once)
 
-	mockCreateASMap(client, getASMapForOrder(), &gtm.CreateASMapResponse{
+	mockCreateASMap(client.GTM, defaultASMapDomainName, getASMapForOrder(), &gtm.CreateASMapResponse{
 		Resource: getASMapForOrderResp(),
 		Status:   getDefaultResponseStatus(),
 	}, nil)
 
-	mockGetASMap(client, getASMapForOrderResp(), nil, testutils.FourTimes)
+	mockGetASMap(client.GTM, defaultASMapDomainName, getASMapForOrderResp(), nil, testutils.FourTimes)
 
-	mockGetDomainStatus(client, testutils.Twice)
+	mockGetDomainStatus(client.GTM, testDomainName, testutils.Twice)
 
-	mockDeleteASMap(client)
+	mockDeleteASMap(client.GTM, defaultASMapDomainName)
 
 	return client
 }
 
-func mockGetASMap(m *gtm.Mock, asMap *gtm.ASMap, err error, times int) *mock.Call {
+func mockGetASMap(m *gtm.Mock, domainName string, asMap *gtm.ASMap, err error, times int) *mock.Call {
 	var resp *gtm.GetASMapResponse
 	if asMap != nil {
 		r := gtm.GetASMapResponse(*asMap)
@@ -473,36 +469,36 @@ func mockGetASMap(m *gtm.Mock, asMap *gtm.ASMap, err error, times int) *mock.Cal
 	}
 	return m.On("GetASMap", testutils.MockContext, gtm.GetASMapRequest{
 		ASMapName:  testASMapName,
-		DomainName: testDomainName,
+		DomainName: domainName,
 	}).Return(resp, err).Times(times)
 }
 
-func mockUpdateASMap(client *gtm.Mock, resp *gtm.UpdateASMapResponse, err error) *mock.Call {
+func mockUpdateASMap(client *gtm.Mock, domainName string, resp *gtm.UpdateASMapResponse, err error) *mock.Call {
 	return client.On("UpdateASMap",
 		testutils.MockContext,
 		gtm.UpdateASMapRequest{
 			ASMap:      getASMapUpdate(),
-			DomainName: testDomainName,
+			DomainName: domainName,
 		},
 	).Return(resp, err).Once()
 }
 
-func mockCreateASMap(client *gtm.Mock, asMap *gtm.ASMap, resp *gtm.CreateASMapResponse, err error) *mock.Call {
+func mockCreateASMap(client *gtm.Mock, domainName string, asMap *gtm.ASMap, resp *gtm.CreateASMapResponse, err error) *mock.Call {
 	return client.On("CreateASMap",
 		testutils.MockContext,
 		gtm.CreateASMapRequest{
 			ASMap:      asMap,
-			DomainName: testDomainName,
+			DomainName: domainName,
 		},
 	).Return(resp, err).Once()
 }
 
-func mockDeleteASMap(client *gtm.Mock) *mock.Call {
+func mockDeleteASMap(client *gtm.Mock, domainName string) *mock.Call {
 	return client.On("DeleteASMap",
 		testutils.MockContext,
 		gtm.DeleteASMapRequest{
 			ASMapName:  testASMapName,
-			DomainName: testDomainName,
+			DomainName: domainName,
 		},
 	).Return(&gtm.DeleteASMapResponse{Status: getDefaultResponseStatus()}, nil).Once()
 }

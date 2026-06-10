@@ -2,7 +2,6 @@ package gtm
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/gtm"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
@@ -94,7 +93,7 @@ var (
 )
 
 type domainsDataSource struct {
-	meta meta.Meta
+	meta.DataSource
 }
 
 type (
@@ -126,21 +125,6 @@ func (d *domainsDataSource) Schema(_ context.Context, _ datasource.SchemaRequest
 	}
 }
 
-// Configure configures data source at the beginning of the lifecycle
-func (d *domainsDataSource) Configure(_ context.Context, request datasource.ConfigureRequest, response *datasource.ConfigureResponse) {
-	if request.ProviderData == nil {
-		return
-	}
-	meta, ok := request.ProviderData.(meta.Meta)
-	if !ok {
-		response.Diagnostics.AddError(
-			"Unexpected Data Source Configure Type",
-			fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.", request.ProviderData),
-		)
-	}
-	d.meta = meta
-}
-
 // Metadata configures data source's meta information
 func (d *domainsDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "akamai_gtm_domains"
@@ -155,7 +139,7 @@ func (d *domainsDataSource) Read(ctx context.Context, request datasource.ReadReq
 		return
 	}
 
-	client := Client(d.meta)
+	client := d.Client.GetGTM()
 	domains, err := client.ListDomains(ctx)
 	if err != nil {
 		response.Diagnostics.AddError("fetching domains failed", err.Error())

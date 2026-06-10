@@ -2,8 +2,8 @@
 package gtm
 
 import (
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/gtm"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
+	"time"
+
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/subprovider"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -12,25 +12,35 @@ import (
 
 type (
 	// Subprovider gathers gtm resources and data sources
-	Subprovider struct{}
+	Subprovider struct {
+		config subproviderConfig
+	}
+	subproviderConfig struct {
+		domain          gtmDomainResourceConfig
+		property        gtmPropertyResourceConfig
+		defaultInterval time.Duration
+	}
 )
 
 var (
-	_      subprovider.Subprovider = &Subprovider{}
-	client gtm.GTM
+	_ subprovider.Subprovider = &Subprovider{}
 )
+
+func defaultSubproviderConfig() subproviderConfig {
+	return subproviderConfig{
+		domain:          defaultGTMDomainResourceConfig(),
+		property:        defaultGTMPropertyResourceConfig(),
+		defaultInterval: 5 * time.Second,
+	}
+}
+
+func newSubproviderWithConfig(config subproviderConfig) *Subprovider {
+	return &Subprovider{config: config}
+}
 
 // NewSubprovider returns a new gtm subprovider
 func NewSubprovider() *Subprovider {
-	return &Subprovider{}
-}
-
-// Client returns the gtm interface
-func Client(meta meta.Meta) gtm.GTM {
-	if client != nil {
-		return client
-	}
-	return gtm.Client(meta.Session())
+	return newSubproviderWithConfig(defaultSubproviderConfig())
 }
 
 // FrameworkResources returns the gtm resources implemented using terraform-plugin-framework
@@ -55,13 +65,13 @@ func (p *Subprovider) FrameworkDataSources() []func() datasource.DataSource {
 // SDKResources returns the gtm resources implemented using terraform-plugin-sdk
 func (p *Subprovider) SDKResources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
-		"akamai_gtm_domain":     resourceGTMv1Domain(),
-		"akamai_gtm_property":   resourceGTMv1Property(),
-		"akamai_gtm_datacenter": resourceGTMv1Datacenter(),
-		"akamai_gtm_resource":   resourceGTMv1Resource(),
-		"akamai_gtm_asmap":      resourceGTMv1ASMap(),
-		"akamai_gtm_geomap":     resourceGTMv1GeoMap(),
-		"akamai_gtm_cidrmap":    resourceGTMv1CIDRMap(),
+		"akamai_gtm_domain":     resourceGTMv1Domain(p.config.domain),
+		"akamai_gtm_property":   resourceGTMv1Property(p.config.property),
+		"akamai_gtm_datacenter": resourceGTMv1Datacenter(p.config.defaultInterval),
+		"akamai_gtm_resource":   resourceGTMv1Resource(p.config.defaultInterval),
+		"akamai_gtm_asmap":      resourceGTMv1ASMap(p.config.defaultInterval),
+		"akamai_gtm_geomap":     resourceGTMv1GeoMap(p.config.defaultInterval),
+		"akamai_gtm_cidrmap":    resourceGTMv1CIDRMap(p.config.defaultInterval),
 	}
 }
 

@@ -7,6 +7,7 @@ import (
 	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudlets/v3"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cps"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/domainownership"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/gtm"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/hapi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/iam"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/mtlskeystore"
@@ -27,6 +28,8 @@ type Client interface {
 	GetCPS() cps.CPS
 
 	GetDomainOwnership() domainownership.DomainOwnership
+
+	GetGTM() gtm.GTM
 
 	GetHAPI() hapi.HAPI
 
@@ -80,6 +83,11 @@ func (c *ClientImpl) GetCPS() cps.CPS {
 // GetDomainOwnership returns the Domain Ownership client for managing domain ownership.
 func (c *ClientImpl) GetDomainOwnership() domainownership.DomainOwnership {
 	return domainownership.Client(c.sess)
+}
+
+// GetGTM returns the GTM client for managing Global Traffic Management.
+func (c *ClientImpl) GetGTM() gtm.GTM {
+	return gtm.Client(c.sess)
 }
 
 // GetHAPI returns the HAPI client for managing hostnames APIs.

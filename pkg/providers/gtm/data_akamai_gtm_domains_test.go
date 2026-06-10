@@ -6,12 +6,14 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/gtm"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
 
 func TestDataGTMDomains(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		givenTF                   string
 		init                      func(*gtm.Mock)
@@ -99,9 +101,10 @@ func TestDataGTMDomains(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &gtm.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 			if test.init != nil {
-				test.init(client)
+				test.init(client.GTM)
 			}
 			var checkFuncs []resource.TestCheckFunc
 			const datasourceName = "data.akamai_gtm_domains.domains"
@@ -111,18 +114,16 @@ func TestDataGTMDomains(t *testing.T) {
 			for _, v := range test.expectedMissingAttributes {
 				checkFuncs = append(checkFuncs, resource.TestCheckNoResourceAttr(datasourceName, v))
 			}
-			useClient(client, func() {
-				resource.Test(t, resource.TestCase{
-					IsUnitTest:               true,
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{{
-						Config:      testutils.LoadFixtureStringf(t, "testdata/TestDataGtmDomains/%s", test.givenTF),
-						Check:       resource.ComposeAggregateTestCheckFunc(checkFuncs...),
-						ExpectError: test.expectError,
-					}},
-				})
+			resource.Test(t, resource.TestCase{
+				IsUnitTest:               true,
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				Steps: []resource.TestStep{{
+					Config:      testutils.LoadFixtureStringf(t, "testdata/TestDataGtmDomains/%s", test.givenTF),
+					Check:       resource.ComposeAggregateTestCheckFunc(checkFuncs...),
+					ExpectError: test.expectError,
+				}},
 			})
-			client.AssertExpectations(t)
+			client.GTM.AssertExpectations(t)
 		})
 	}
 }

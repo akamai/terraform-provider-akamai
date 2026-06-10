@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/gtm"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/session"
@@ -16,14 +17,19 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func resourceGTMv1Datacenter() *schema.Resource {
+type datacenterResource struct {
+	defaultInterval time.Duration
+}
+
+func resourceGTMv1Datacenter(defaultInterval time.Duration) *schema.Resource {
+	r := &datacenterResource{defaultInterval: defaultInterval}
 	return &schema.Resource{
-		CreateContext: resourceGTMv1DatacenterCreate,
-		ReadContext:   resourceGTMv1DatacenterRead,
-		UpdateContext: resourceGTMv1DatacenterUpdate,
-		DeleteContext: resourceGTMv1DatacenterDelete,
+		CreateContext: r.resourceGTMv1DatacenterCreate,
+		ReadContext:   r.resourceGTMv1DatacenterRead,
+		UpdateContext: r.resourceGTMv1DatacenterUpdate,
+		DeleteContext: r.resourceGTMv1DatacenterDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceGTMv1DatacenterImport,
+			State: r.resourceGTMv1DatacenterImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"domain": {
@@ -158,7 +164,7 @@ var (
 )
 
 // Create a new GTM Datacenter
-func resourceGTMv1DatacenterCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (r *datacenterResource) resourceGTMv1DatacenterCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1DatacenterCreate")
 	// create a context with logging for api calls
@@ -188,7 +194,7 @@ func resourceGTMv1DatacenterCreate(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 	logger.Debugf("Proposed New Datacenter: [%v]", newDC)
-	cStatus, err := Client(meta).CreateDatacenter(ctx, gtm.CreateDatacenterRequest{
+	cStatus, err := meta.Client().GetGTM().CreateDatacenter(ctx, gtm.CreateDatacenterRequest{
 		DomainName: domain,
 		Datacenter: newDC,
 	})
@@ -214,7 +220,7 @@ func resourceGTMv1DatacenterCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	if waitOnComplete {
-		done, err := waitForCompletion(ctx, domain, m)
+		done, err := waitForCompletion(ctx, domain, m, r.defaultInterval)
 		if done {
 			logger.Infof("Datacenter create completed")
 		} else {
@@ -235,13 +241,13 @@ func resourceGTMv1DatacenterCreate(ctx context.Context, d *schema.ResourceData, 
 	datacenterID := fmt.Sprintf("%s:%d", domain, cStatus.Resource.DatacenterID)
 	logger.Debugf("Generated DC resource ID: %s", datacenterID)
 	d.SetId(datacenterID)
-	return resourceGTMv1DatacenterRead(ctx, d, m)
+	return r.resourceGTMv1DatacenterRead(ctx, d, m)
 
 }
 
 // Only ever save data from the tf config in the tf state file, to help with
 // api issues. See func unmarshalResourceData for more info.
-func resourceGTMv1DatacenterRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (r *datacenterResource) resourceGTMv1DatacenterRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1DatacenterRead")
 	// create a context with logging for api calls
@@ -262,7 +268,7 @@ func resourceGTMv1DatacenterRead(ctx context.Context, d *schema.ResourceData, m 
 			Detail:   err.Error(),
 		})
 	}
-	dc, err := Client(meta).GetDatacenter(ctx, gtm.GetDatacenterRequest{
+	dc, err := meta.Client().GetGTM().GetDatacenter(ctx, gtm.GetDatacenterRequest{
 		DatacenterID: dcID,
 		DomainName:   domain,
 	})
@@ -284,7 +290,7 @@ func resourceGTMv1DatacenterRead(ctx context.Context, d *schema.ResourceData, m 
 }
 
 // Update GTM Datacenter
-func resourceGTMv1DatacenterUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (r *datacenterResource) resourceGTMv1DatacenterUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1DatacenterUpdate")
 	// create a context with logging for api calls
@@ -306,7 +312,7 @@ func resourceGTMv1DatacenterUpdate(ctx context.Context, d *schema.ResourceData, 
 		})
 	}
 	// Get existing datacenter
-	existDC, err := Client(meta).GetDatacenter(ctx, gtm.GetDatacenterRequest{
+	existDC, err := meta.Client().GetGTM().GetDatacenter(ctx, gtm.GetDatacenterRequest{
 		DatacenterID: dcID,
 		DomainName:   domain,
 	})
@@ -323,7 +329,7 @@ func resourceGTMv1DatacenterUpdate(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 	logger.Debugf("Updating Datacenter PROPOSED: %v", existDC)
-	uStat, err := Client(meta).UpdateDatacenter(ctx, gtm.UpdateDatacenterRequest{
+	uStat, err := meta.Client().GetGTM().UpdateDatacenter(ctx, gtm.UpdateDatacenterRequest{
 		Datacenter: existDC,
 		DomainName: domain,
 	})
@@ -347,7 +353,7 @@ func resourceGTMv1DatacenterUpdate(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	if waitOnComplete {
-		done, err := waitForCompletion(ctx, domain, m)
+		done, err := waitForCompletion(ctx, domain, m, r.defaultInterval)
 		if done {
 			logger.Infof("Datacenter update completed")
 		} else {
@@ -360,10 +366,10 @@ func resourceGTMv1DatacenterUpdate(ctx context.Context, d *schema.ResourceData, 
 		}
 	}
 
-	return resourceGTMv1DatacenterRead(ctx, d, m)
+	return r.resourceGTMv1DatacenterRead(ctx, d, m)
 }
 
-func resourceGTMv1DatacenterImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+func (r *datacenterResource) resourceGTMv1DatacenterImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTMv1", "resourceGTMv1DatacenterImport")
 	// create a context with logging for api calls
@@ -379,7 +385,7 @@ func resourceGTMv1DatacenterImport(d *schema.ResourceData, m interface{}) ([]*sc
 	if err != nil {
 		return nil, fmt.Errorf("invalid datacenter resource ID")
 	}
-	dc, err := Client(meta).GetDatacenter(ctx, gtm.GetDatacenterRequest{
+	dc, err := meta.Client().GetGTM().GetDatacenter(ctx, gtm.GetDatacenterRequest{
 		DatacenterID: dcID,
 		DomainName:   domain,
 	})
@@ -400,7 +406,7 @@ func resourceGTMv1DatacenterImport(d *schema.ResourceData, m interface{}) ([]*sc
 }
 
 // Delete GTM Datacenter.
-func resourceGTMv1DatacenterDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (r *datacenterResource) resourceGTMv1DatacenterDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1DatacenterDelete")
 	// create a context with logging for api calls
@@ -421,7 +427,7 @@ func resourceGTMv1DatacenterDelete(ctx context.Context, d *schema.ResourceData, 
 		})
 	}
 	// Get existing datacenter
-	existDC, err := Client(meta).GetDatacenter(ctx, gtm.GetDatacenterRequest{
+	existDC, err := meta.Client().GetGTM().GetDatacenter(ctx, gtm.GetDatacenterRequest{
 		DatacenterID: dcID,
 		DomainName:   domain,
 	})
@@ -434,7 +440,7 @@ func resourceGTMv1DatacenterDelete(ctx context.Context, d *schema.ResourceData, 
 		})
 	}
 	logger.Debugf("Deleting Datacenter: %v", existDC)
-	uStat, err := Client(meta).DeleteDatacenter(ctx, gtm.DeleteDatacenterRequest{
+	uStat, err := meta.Client().GetGTM().DeleteDatacenter(ctx, gtm.DeleteDatacenterRequest{
 		DatacenterID: dcID,
 		DomainName:   domain,
 	})
@@ -461,7 +467,7 @@ func resourceGTMv1DatacenterDelete(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	if waitOnComplete {
-		done, err := waitForCompletion(ctx, domain, m)
+		done, err := waitForCompletion(ctx, domain, m, r.defaultInterval)
 		if done {
 			logger.Infof("Datacenter delete completed")
 		} else {

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/gtm"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/session"
@@ -17,14 +18,19 @@ import (
 
 const resourceMapAlreadyExistsError = "Resource with provided `name` for specific `domain` already exists. Please import specific resource using following command: terraform import akamai_gtm_resource.<your_resource_name> \"%s:%s\""
 
-func resourceGTMv1Resource() *schema.Resource {
+type gtmResource struct {
+	defaultInterval time.Duration
+}
+
+func resourceGTMv1Resource(defaultInterval time.Duration) *schema.Resource {
+	r := &gtmResource{defaultInterval: defaultInterval}
 	return &schema.Resource{
-		CreateContext: resourceGTMv1ResourceCreate,
-		ReadContext:   resourceGTMv1ResourceRead,
-		UpdateContext: resourceGTMv1ResourceUpdate,
-		DeleteContext: resourceGTMv1ResourceDelete,
+		CreateContext: r.resourceGTMv1ResourceCreate,
+		ReadContext:   r.resourceGTMv1ResourceRead,
+		UpdateContext: r.resourceGTMv1ResourceUpdate,
+		DeleteContext: r.resourceGTMv1ResourceDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceGTMv1ResourceImport,
+			State: r.resourceGTMv1ResourceImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"domain": {
@@ -120,7 +126,7 @@ func resourceGTMv1Resource() *schema.Resource {
 }
 
 // Create a new GTM Resource
-func resourceGTMv1ResourceCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (r *gtmResource) resourceGTMv1ResourceCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1ResourceCreate")
 	// create a context with logging for api calls
@@ -140,7 +146,7 @@ func resourceGTMv1ResourceCreate(ctx context.Context, d *schema.ResourceData, m 
 	}
 
 	var diags diag.Diagnostics
-	rsrc, err := Client(meta).GetResource(ctx, gtm.GetResourceRequest{
+	rsrc, err := meta.Client().GetGTM().GetResource(ctx, gtm.GetResourceRequest{
 		ResourceName: name,
 		DomainName:   domain,
 	})
@@ -168,7 +174,7 @@ func resourceGTMv1ResourceCreate(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 	logger.Debugf("Proposed New Resource: [%v]", newRsrc)
-	cStatus, err := Client(meta).CreateResource(ctx, gtm.CreateResourceRequest{
+	cStatus, err := meta.Client().GetGTM().CreateResource(ctx, gtm.CreateResourceRequest{
 		Resource:   newRsrc,
 		DomainName: domain,
 	})
@@ -195,7 +201,7 @@ func resourceGTMv1ResourceCreate(ctx context.Context, d *schema.ResourceData, m 
 	}
 
 	if waitOnComplete {
-		done, err := waitForCompletion(ctx, domain, m)
+		done, err := waitForCompletion(ctx, domain, m, r.defaultInterval)
 		if done {
 			logger.Infof("Resource create completed")
 		} else {
@@ -216,12 +222,12 @@ func resourceGTMv1ResourceCreate(ctx context.Context, d *schema.ResourceData, m 
 	resourceID := fmt.Sprintf("%s:%s", domain, cStatus.Resource.Name)
 	logger.Debugf("Generated Resource. Resource ID: %s", resourceID)
 	d.SetId(resourceID)
-	return resourceGTMv1ResourceRead(ctx, d, m)
+	return r.resourceGTMv1ResourceRead(ctx, d, m)
 
 }
 
 // read resource. updates state with entire API result configuration.
-func resourceGTMv1ResourceRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (r *gtmResource) resourceGTMv1ResourceRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1ResourceRead")
 	// create a context with logging for api calls
@@ -238,7 +244,7 @@ func resourceGTMv1ResourceRead(ctx context.Context, d *schema.ResourceData, m in
 		logger.Errorf("Invalid resource ID")
 		return diag.FromErr(err)
 	}
-	rsrc, err := Client(meta).GetResource(ctx, gtm.GetResourceRequest{
+	rsrc, err := meta.Client().GetGTM().GetResource(ctx, gtm.GetResourceRequest{
 		ResourceName: resource,
 		DomainName:   domain,
 	})
@@ -266,7 +272,7 @@ func resourceGTMv1ResourceRead(ctx context.Context, d *schema.ResourceData, m in
 }
 
 // Update GTM Resource
-func resourceGTMv1ResourceUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (r *gtmResource) resourceGTMv1ResourceUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1ResourceUpdate")
 	// create a context with logging for api calls
@@ -284,7 +290,7 @@ func resourceGTMv1ResourceUpdate(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 	// Get existing property
-	existRsrc, err := Client(meta).GetResource(ctx, gtm.GetResourceRequest{
+	existRsrc, err := meta.Client().GetGTM().GetResource(ctx, gtm.GetResourceRequest{
 		ResourceName: resource,
 		DomainName:   domain,
 	})
@@ -302,7 +308,7 @@ func resourceGTMv1ResourceUpdate(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 	logger.Debugf("Updating Resource PROPOSED: %v", existRsrc)
-	uStat, err := Client(meta).UpdateResource(ctx, gtm.UpdateResourceRequest{
+	uStat, err := meta.Client().GetGTM().UpdateResource(ctx, gtm.UpdateResourceRequest{
 		Resource:   newRsrc,
 		DomainName: domain,
 	})
@@ -329,7 +335,7 @@ func resourceGTMv1ResourceUpdate(ctx context.Context, d *schema.ResourceData, m 
 	}
 
 	if waitOnComplete {
-		done, err := waitForCompletion(ctx, domain, m)
+		done, err := waitForCompletion(ctx, domain, m, r.defaultInterval)
 		if done {
 			logger.Infof("Resource update completed")
 		} else {
@@ -346,11 +352,11 @@ func resourceGTMv1ResourceUpdate(ctx context.Context, d *schema.ResourceData, m 
 		}
 	}
 
-	return resourceGTMv1ResourceRead(ctx, d, m)
+	return r.resourceGTMv1ResourceRead(ctx, d, m)
 }
 
 // Import GTM Resource.
-func resourceGTMv1ResourceImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+func (r *gtmResource) resourceGTMv1ResourceImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1ResourceImport")
 	// create a context with logging for api calls
@@ -366,7 +372,7 @@ func resourceGTMv1ResourceImport(d *schema.ResourceData, m interface{}) ([]*sche
 	if err != nil {
 		return []*schema.ResourceData{d}, err
 	}
-	rsrc, err := Client(meta).GetResource(ctx, gtm.GetResourceRequest{
+	rsrc, err := meta.Client().GetGTM().GetResource(ctx, gtm.GetResourceRequest{
 		ResourceName: resource,
 		DomainName:   domain,
 	})
@@ -395,7 +401,7 @@ func resourceGTMv1ResourceImport(d *schema.ResourceData, m interface{}) ([]*sche
 }
 
 // Delete GTM Resource.
-func resourceGTMv1ResourceDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (r *gtmResource) resourceGTMv1ResourceDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1ResourceDelete")
 	// create a context with logging for api calls
@@ -412,7 +418,7 @@ func resourceGTMv1ResourceDelete(ctx context.Context, d *schema.ResourceData, m 
 		logger.Errorf("Invalid resource ID")
 		return diag.FromErr(err)
 	}
-	existRsrc, err := Client(meta).GetResource(ctx, gtm.GetResourceRequest{
+	existRsrc, err := meta.Client().GetGTM().GetResource(ctx, gtm.GetResourceRequest{
 		ResourceName: resource,
 		DomainName:   domain,
 	})
@@ -426,7 +432,7 @@ func resourceGTMv1ResourceDelete(ctx context.Context, d *schema.ResourceData, m 
 	}
 	newRsrc := createResourceStruct(existRsrc)
 	logger.Debugf("Deleting Resource: %v", newRsrc)
-	uStat, err := Client(meta).DeleteResource(ctx, gtm.DeleteResourceRequest{
+	uStat, err := meta.Client().GetGTM().DeleteResource(ctx, gtm.DeleteResourceRequest{
 		ResourceName: resource,
 		DomainName:   domain,
 	})
@@ -453,7 +459,7 @@ func resourceGTMv1ResourceDelete(ctx context.Context, d *schema.ResourceData, m 
 	}
 
 	if waitOnComplete {
-		done, err := waitForCompletion(ctx, domain, m)
+		done, err := waitForCompletion(ctx, domain, m, r.defaultInterval)
 		if done {
 			logger.Infof("Resource delete completed")
 		} else {

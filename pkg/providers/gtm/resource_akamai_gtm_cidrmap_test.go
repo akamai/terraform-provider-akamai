@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/gtm"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -16,285 +17,277 @@ import (
 const testCIDRMapName = "tfexample_cidrmap_1"
 
 func TestResGTMCIDRMap(t *testing.T) {
+	t.Parallel()
 	dc := gtm.Datacenter{}
 
 	t.Run("create CIDRMap", func(t *testing.T) {
-		client := &gtm.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
-		mockGetCIDRMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+		mockGetCIDRMap(client.GTM, testDomainName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
-		mockCreateCIDRMap(client, getCIDRMap(), &gtm.CreateCIDRMapResponse{
+		mockCreateCIDRMap(client.GTM, testDomainName, getCIDRMap(), &gtm.CreateCIDRMapResponse{
 			Resource: getCIDRMap(),
 			Status:   getDefaultResponseStatus(),
 		}, nil)
 
-		mockGetCIDRMap(client, getCIDRMap(), nil, testutils.FourTimes)
+		mockGetCIDRMap(client.GTM, testDomainName, getCIDRMap(), nil, testutils.FourTimes)
 
-		mockGetDatacenter(client, datacenterID5400, &dc, nil, testutils.Once)
+		mockGetDatacenter(client.GTM, testDomainName, datacenterID5400, &dc, nil, testutils.Once)
 
-		mockGetDomainStatus(client, testutils.Twice)
+		mockGetDomainStatus(client.GTM, testDomainName, testutils.Twice)
 
-		mockUpdateCIDRMap(client, &gtm.UpdateCIDRMapResponse{Status: getDefaultResponseStatus()}, nil)
+		mockUpdateCIDRMap(client.GTM, testDomainName, &gtm.UpdateCIDRMapResponse{Status: getDefaultResponseStatus()}, nil)
 
-		mockGetCIDRMap(client, getCIDRMapUpdated(), nil, testutils.ThreeTimes)
+		mockGetCIDRMap(client.GTM, testDomainName, getCIDRMapUpdated(), nil, testutils.ThreeTimes)
 
-		mockDeleteCIDRMap(client)
+		mockDeleteCIDRMap(client.GTM, testDomainName)
 
 		resourceName := "akamai_gtm_cidrmap.tfexample_cidrmap_1"
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmCidrmap/create_basic.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(resourceName, "name", "tfexample_cidrmap_1"),
-						),
-					},
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmCidrmap/update_basic.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(resourceName, "name", "tfexample_cidrmap_1"),
-						),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmCidrmap/create_basic.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(resourceName, "name", "tfexample_cidrmap_1"),
+					),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmCidrmap/update_basic.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(resourceName, "name", "tfexample_cidrmap_1"),
+					),
+				},
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.GTM.AssertExpectations(t)
 	})
 
 	t.Run("update CIDRMap failed", func(t *testing.T) {
-		client := &gtm.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
-		mockGetCIDRMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+		mockGetCIDRMap(client.GTM, testDomainName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
-		mockCreateCIDRMap(client, getCIDRMap(), &gtm.CreateCIDRMapResponse{
+		mockCreateCIDRMap(client.GTM, testDomainName, getCIDRMap(), &gtm.CreateCIDRMapResponse{
 			Resource: getCIDRMap(),
 			Status:   getDefaultResponseStatus(),
 		}, nil)
 
-		mockGetCIDRMap(client, getCIDRMap(), nil, testutils.FourTimes)
+		mockGetCIDRMap(client.GTM, testDomainName, getCIDRMap(), nil, testutils.FourTimes)
 
-		mockGetDatacenter(client, datacenterID5400, &dc, nil, testutils.Once)
+		mockGetDatacenter(client.GTM, testDomainName, datacenterID5400, &dc, nil, testutils.Once)
 
-		mockGetDomainStatus(client, testutils.Once)
+		mockGetDomainStatus(client.GTM, testDomainName, testutils.Once)
 
-		mockUpdateCIDRMap(client, nil, &gtm.Error{
+		mockUpdateCIDRMap(client.GTM, testDomainName, nil, &gtm.Error{
 			Type:       "internal_error",
 			Title:      "Internal Server Error",
 			Detail:     "Error updating resource",
 			StatusCode: http.StatusInternalServerError,
 		})
 
-		mockGetCIDRMap(client, getCIDRMap(), nil, testutils.Once)
+		mockGetCIDRMap(client.GTM, testDomainName, getCIDRMap(), nil, testutils.Once)
 
-		mockDeleteCIDRMap(client)
+		mockDeleteCIDRMap(client.GTM, testDomainName)
 
 		resourceName := "akamai_gtm_cidrmap.tfexample_cidrmap_1"
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmCidrmap/create_basic.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(resourceName, "name", "tfexample_cidrmap_1"),
-						),
-					},
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmCidrmap/update_basic.tf"),
-						ExpectError: regexp.MustCompile("API error"),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmCidrmap/create_basic.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(resourceName, "name", "tfexample_cidrmap_1"),
+					),
 				},
-			})
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmCidrmap/update_basic.tf"),
+					ExpectError: regexp.MustCompile("API error"),
+				},
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.GTM.AssertExpectations(t)
 	})
 
 	t.Run("update CIDRMap domain name - delete and create new CIDRMap", func(t *testing.T) {
-		client := &gtm.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
-		mockGetCIDRMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+		mockGetCIDRMap(client.GTM, testDomainName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
-		mockGetDatacenter(client, datacenterID5400, &dc, nil, testutils.Once)
+		mockGetDatacenter(client.GTM, testDomainName, datacenterID5400, &dc, nil, testutils.Once)
 
-		mockCreateCIDRMap(client, getCIDRMap(), &gtm.CreateCIDRMapResponse{
+		mockCreateCIDRMap(client.GTM, testDomainName, getCIDRMap(), &gtm.CreateCIDRMapResponse{
 			Resource: getCIDRMap(),
 			Status:   getDefaultResponseStatus(),
 		}, nil)
 
-		mockGetCIDRMap(client, getCIDRMap(), nil, testutils.FourTimes)
+		mockGetCIDRMap(client.GTM, testDomainName, getCIDRMap(), nil, testutils.FourTimes)
 
-		mockDeleteCIDRMap(client)
+		mockDeleteCIDRMap(client.GTM, testDomainName)
 
-		testDomainName = "gtm_terra_testdomain_updated.akadns.net"
+		domainName := "gtm_terra_testdomain_updated.akadns.net"
 
-		mockGetCIDRMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+		mockGetCIDRMap(client.GTM, domainName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
-		mockGetDatacenter(client, datacenterID5400, &dc, nil, testutils.Once)
+		mockGetDatacenter(client.GTM, domainName, datacenterID5400, &dc, nil, testutils.Once)
 
-		mockCreateCIDRMap(client, getCIDRMap(), &gtm.CreateCIDRMapResponse{
+		mockCreateCIDRMap(client.GTM, domainName, getCIDRMap(), &gtm.CreateCIDRMapResponse{
 			Resource: getCIDRMap(),
 			Status:   getDefaultResponseStatus(),
 		}, nil)
 
-		mockGetCIDRMap(client, getCIDRMap(), nil, testutils.ThreeTimes)
+		mockGetCIDRMap(client.GTM, domainName, getCIDRMap(), nil, testutils.ThreeTimes)
 
-		mockDeleteCIDRMap(client)
-
-		//reset domain name for other tests
-		testDomainName = "gtm_terra_testdomain.akadns.net"
+		mockDeleteCIDRMap(client.GTM, domainName)
 
 		resourceName := "akamai_gtm_cidrmap.tfexample_cidrmap_1"
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmCidrmap/create_basic.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(resourceName, "name", "tfexample_cidrmap_1"),
-							resource.TestCheckResourceAttr(resourceName, "domain", "gtm_terra_testdomain.akadns.net"),
-						),
-					},
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmCidrmap/domain_update/updated_domain_name.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(resourceName, "name", "tfexample_cidrmap_1"),
-							resource.TestCheckResourceAttr(resourceName, "domain", "gtm_terra_testdomain_updated.akadns.net"),
-						),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmCidrmap/create_basic.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(resourceName, "name", "tfexample_cidrmap_1"),
+						resource.TestCheckResourceAttr(resourceName, "domain", "gtm_terra_testdomain.akadns.net"),
+					),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmCidrmap/domain_update/updated_domain_name.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(resourceName, "name", "tfexample_cidrmap_1"),
+						resource.TestCheckResourceAttr(resourceName, "domain", "gtm_terra_testdomain_updated.akadns.net"),
+					),
+				},
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.GTM.AssertExpectations(t)
 	})
 
 	t.Run("create cidrmap, remove outside of terraform, expect non-empty plan", func(t *testing.T) {
-		client := &gtm.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
-		mockGetCIDRMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+		mockGetCIDRMap(client.GTM, testDomainName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
-		mockCreateCIDRMap(client, getCIDRMap(), &gtm.CreateCIDRMapResponse{
+		mockCreateCIDRMap(client.GTM, testDomainName, getCIDRMap(), &gtm.CreateCIDRMapResponse{
 			Resource: getCIDRMap(),
 			Status:   getDefaultResponseStatus(),
 		}, nil)
 
-		mockGetCIDRMap(client, getCIDRMap(), nil, testutils.Twice)
+		mockGetCIDRMap(client.GTM, testDomainName, getCIDRMap(), nil, testutils.Twice)
 
-		mockGetDatacenter(client, datacenterID5400, &dc, nil, testutils.Once)
+		mockGetDatacenter(client.GTM, testDomainName, datacenterID5400, &dc, nil, testutils.Once)
 
 		// Mock that the CIDRMap was deleted outside terraform
-		mockGetCIDRMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+		mockGetCIDRMap(client.GTM, testDomainName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
 		// For terraform test framework, we need to mock GetCIDRMap as it would actually exist before deletion
-		mockGetCIDRMap(client, getCIDRMap(), nil, testutils.Once)
+		mockGetCIDRMap(client.GTM, testDomainName, getCIDRMap(), nil, testutils.Once)
 
-		mockDeleteCIDRMap(client)
+		mockDeleteCIDRMap(client.GTM, testDomainName)
 
 		resourceName := "akamai_gtm_cidrmap.tfexample_cidrmap_1"
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmCidrmap/create_basic.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(resourceName, "name", "tfexample_cidrmap_1"),
-						),
-					},
-					{
-						Config:             testutils.LoadFixtureString(t, "testdata/TestResGtmCidrmap/create_basic.tf"),
-						ExpectNonEmptyPlan: true,
-						PlanOnly:           true,
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmCidrmap/create_basic.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(resourceName, "name", "tfexample_cidrmap_1"),
+					),
 				},
-			})
+				{
+					Config:             testutils.LoadFixtureString(t, "testdata/TestResGtmCidrmap/create_basic.tf"),
+					ExpectNonEmptyPlan: true,
+					PlanOnly:           true,
+				},
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.GTM.AssertExpectations(t)
 	})
 
 	t.Run("create cidrmap failed", func(t *testing.T) {
-		client := &gtm.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
-		mockGetCIDRMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+		mockGetCIDRMap(client.GTM, testDomainName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
-		mockCreateCIDRMap(client, getCIDRMap(), nil, &gtm.Error{StatusCode: http.StatusBadRequest})
+		mockCreateCIDRMap(client.GTM, testDomainName, getCIDRMap(), nil, &gtm.Error{StatusCode: http.StatusBadRequest})
 
-		mockGetDatacenter(client, datacenterID5400, &dc, nil, testutils.Once)
+		mockGetDatacenter(client.GTM, testDomainName, datacenterID5400, &dc, nil, testutils.Once)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmCidrmap/create_basic.tf"),
-						ExpectError: regexp.MustCompile("cidrMap create error"),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmCidrmap/create_basic.tf"),
+					ExpectError: regexp.MustCompile("cidrMap create error"),
 				},
-			})
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.GTM.AssertExpectations(t)
 	})
 
 	t.Run("create cidrmap failed - cidrmap already exists", func(t *testing.T) {
-		client := &gtm.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
-		mockGetCIDRMap(client, getCIDRMap(), nil, testutils.Once)
+		mockGetCIDRMap(client.GTM, testDomainName, getCIDRMap(), nil, testutils.Once)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmCidrmap/create_basic.tf"),
-						ExpectError: regexp.MustCompile("cidrMap already exists error"),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmCidrmap/create_basic.tf"),
+					ExpectError: regexp.MustCompile("cidrMap already exists error"),
 				},
-			})
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.GTM.AssertExpectations(t)
 	})
 
 	t.Run("create cidrmap denied", func(t *testing.T) {
-		client := &gtm.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
-		mockGetCIDRMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+		mockGetCIDRMap(client.GTM, testDomainName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
-		mockCreateCIDRMap(client, getCIDRMap(), &gtm.CreateCIDRMapResponse{
+		mockCreateCIDRMap(client.GTM, testDomainName, getCIDRMap(), &gtm.CreateCIDRMapResponse{
 			Resource: getCIDRMap(),
 			Status:   getDeniedResponseStatus(),
 		}, nil)
 
-		mockGetDatacenter(client, datacenterID5400, &dc, nil, testutils.Once)
+		mockGetDatacenter(client.GTM, testDomainName, datacenterID5400, &dc, nil, testutils.Once)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmCidrmap/create_basic.tf"),
-						ExpectError: regexp.MustCompile("Request could not be completed. Invalid credentials."),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmCidrmap/create_basic.tf"),
+					ExpectError: regexp.MustCompile("Request could not be completed. Invalid credentials."),
 				},
-			})
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.GTM.AssertExpectations(t)
 	})
 }
 
 func TestGTMCIDRMapOrder(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		pathForUpdate string
 		nonEmptyPlan  bool
@@ -349,29 +342,29 @@ func TestGTMCIDRMapOrder(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			client := getCIDRMapMocks()
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps: []resource.TestStep{
-						{
-							Config: testutils.LoadFixtureString(t, "testdata/TestResGtmCidrmap/order/create.tf"),
-						},
-						{
-							Config:             testutils.LoadFixtureString(t, test.pathForUpdate),
-							PlanOnly:           test.planOnly,
-							ExpectNonEmptyPlan: test.nonEmptyPlan,
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+				IsUnitTest:               true,
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmCidrmap/order/create.tf"),
 					},
-				})
+					{
+						Config:             testutils.LoadFixtureString(t, test.pathForUpdate),
+						PlanOnly:           test.planOnly,
+						ExpectNonEmptyPlan: test.nonEmptyPlan,
+					},
+				},
 			})
-			client.AssertExpectations(t)
+			client.GTM.AssertExpectations(t)
 		})
 	}
 }
 
 func TestResGTMCIDRMapImport(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		domainName  string
 		mapName     string
@@ -384,7 +377,7 @@ func TestResGTMCIDRMapImport(t *testing.T) {
 			mapName:    testCIDRMapName,
 			init: func(m *gtm.Mock) {
 				// Read
-				mockGetCIDRMap(m, getImportedCIDRMap(), nil, testutils.Twice)
+				mockGetCIDRMap(m, testDomainName, getImportedCIDRMap(), nil, testutils.Twice)
 			},
 			stateCheck: test.NewImportChecker().
 				CheckEqual("domain", "gtm_terra_testdomain.akadns.net").
@@ -411,7 +404,7 @@ func TestResGTMCIDRMapImport(t *testing.T) {
 			mapName:    testCIDRMapName,
 			init: func(m *gtm.Mock) {
 				// Read - error
-				mockGetCIDRMap(m, nil, fmt.Errorf("get failed"), testutils.Once)
+				mockGetCIDRMap(m, testDomainName, nil, fmt.Errorf("get failed"), testutils.Once)
 			},
 			expectError: regexp.MustCompile(`get failed`),
 		},
@@ -419,53 +412,52 @@ func TestResGTMCIDRMapImport(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &gtm.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 			if tc.init != nil {
-				tc.init(client)
+				tc.init(client.GTM)
 			}
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							ImportStateCheck: tc.stateCheck,
-							ImportStateId:    fmt.Sprintf("%s:%s", tc.domainName, tc.mapName),
-							ImportState:      true,
-							ResourceName:     "akamai_gtm_cidrmap.test",
-							Config:           testutils.LoadFixtureString(t, "testdata/TestResGtmCidrmap/import_basic.tf"),
-							ExpectError:      tc.expectError,
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+				Steps: []resource.TestStep{
+					{
+						ImportStateCheck: tc.stateCheck,
+						ImportStateId:    fmt.Sprintf("%s:%s", tc.domainName, tc.mapName),
+						ImportState:      true,
+						ResourceName:     "akamai_gtm_cidrmap.test",
+						Config:           testutils.LoadFixtureString(t, "testdata/TestResGtmCidrmap/import_basic.tf"),
+						ExpectError:      tc.expectError,
 					},
-				})
+				},
 			})
-			client.AssertExpectations(t)
+			client.GTM.AssertExpectations(t)
 		})
 	}
 }
 
 // getCIDRMapMocks mocks creation and deletion of a resource
-func getCIDRMapMocks() *gtm.Mock {
-	client := &gtm.Mock{}
+func getCIDRMapMocks() *edgegrid.TestClient {
+	client := edgegrid.NewTestClient()
 
-	mockGetCIDRMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+	mockGetCIDRMap(client.GTM, testDomainName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
-	mockCreateCIDRMap(client, getCIDRMapForOrder(), &gtm.CreateCIDRMapResponse{
+	mockCreateCIDRMap(client.GTM, testDomainName, getCIDRMapForOrder(), &gtm.CreateCIDRMapResponse{
 		Resource: getCIDRMapForOrderResp(),
 		Status:   getDefaultResponseStatus(),
 	}, nil)
 
-	mockGetCIDRMap(client, getCIDRMapForOrderResp(), nil, testutils.FourTimes)
+	mockGetCIDRMap(client.GTM, testDomainName, getCIDRMapForOrderResp(), nil, testutils.FourTimes)
 
-	mockGetDatacenter(client, datacenterID5400, getTestDatacenterResp(), nil, testutils.Once)
+	mockGetDatacenter(client.GTM, testDomainName, datacenterID5400, getTestDatacenterResp(), nil, testutils.Once)
 
-	mockGetDomainStatus(client, testutils.Twice)
+	mockGetDomainStatus(client.GTM, testDomainName, testutils.Twice)
 
-	mockDeleteCIDRMap(client)
+	mockDeleteCIDRMap(client.GTM, testDomainName)
 
 	return client
 }
 
-func mockGetCIDRMap(m *gtm.Mock, cidrMap *gtm.CIDRMap, err error, times int) *mock.Call {
+func mockGetCIDRMap(m *gtm.Mock, domainName string, cidrMap *gtm.CIDRMap, err error, times int) *mock.Call {
 	var resp *gtm.GetCIDRMapResponse
 	if cidrMap != nil {
 		r := gtm.GetCIDRMapResponse(*cidrMap)
@@ -473,36 +465,36 @@ func mockGetCIDRMap(m *gtm.Mock, cidrMap *gtm.CIDRMap, err error, times int) *mo
 	}
 	return m.On("GetCIDRMap", testutils.MockContext, gtm.GetCIDRMapRequest{
 		MapName:    testCIDRMapName,
-		DomainName: testDomainName,
+		DomainName: domainName,
 	}).Return(resp, err).Times(times)
 }
 
-func mockUpdateCIDRMap(client *gtm.Mock, resp *gtm.UpdateCIDRMapResponse, err error) *mock.Call {
+func mockUpdateCIDRMap(client *gtm.Mock, domainName string, resp *gtm.UpdateCIDRMapResponse, err error) *mock.Call {
 	return client.On("UpdateCIDRMap",
 		testutils.MockContext,
 		gtm.UpdateCIDRMapRequest{
 			CIDR:       getCIDRMapUpdated(),
-			DomainName: testDomainName,
+			DomainName: domainName,
 		},
 	).Return(resp, err).Once()
 }
 
-func mockCreateCIDRMap(client *gtm.Mock, cidrMap *gtm.CIDRMap, resp *gtm.CreateCIDRMapResponse, err error) *mock.Call {
+func mockCreateCIDRMap(client *gtm.Mock, domainName string, cidrMap *gtm.CIDRMap, resp *gtm.CreateCIDRMapResponse, err error) *mock.Call {
 	return client.On("CreateCIDRMap",
 		testutils.MockContext,
 		gtm.CreateCIDRMapRequest{
 			CIDR:       cidrMap,
-			DomainName: testDomainName,
+			DomainName: domainName,
 		},
 	).Return(resp, err).Once()
 }
 
-func mockDeleteCIDRMap(client *gtm.Mock) *mock.Call {
+func mockDeleteCIDRMap(client *gtm.Mock, domainName string) *mock.Call {
 	return client.On("DeleteCIDRMap",
 		testutils.MockContext,
 		gtm.DeleteCIDRMapRequest{
 			MapName:    testCIDRMapName,
-			DomainName: testDomainName,
+			DomainName: domainName,
 		},
 	).Return(&gtm.DeleteCIDRMapResponse{Status: getDefaultResponseStatus()}, nil).Once()
 }

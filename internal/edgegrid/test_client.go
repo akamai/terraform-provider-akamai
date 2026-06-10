@@ -6,6 +6,7 @@ import (
 	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudlets/v3"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cps"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/domainownership"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/gtm"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/hapi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/iam"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/mtlskeystore"
@@ -25,6 +26,7 @@ type TestClient struct {
 	CloudletsV3       *v3.Mock
 	CPS               *cps.Mock
 	DomainOwnership   *domainownership.Mock
+	GTM               *gtm.Mock
 	HAPI              *hapi.Mock
 	IAM               *iam.Mock
 	MTLSKeystore      *mtlskeystore.Mock
@@ -41,6 +43,7 @@ func NewTestClient() *TestClient {
 		CloudletsV3:       &v3.Mock{},
 		CPS:               &cps.Mock{},
 		DomainOwnership:   &domainownership.Mock{},
+		GTM:               &gtm.Mock{},
 		HAPI:              &hapi.Mock{},
 		IAM:               &iam.Mock{},
 		MTLSKeystore:      &mtlskeystore.Mock{},
@@ -73,6 +76,11 @@ func (c *TestClient) GetCPS() cps.CPS {
 // GetDomainOwnership returns the mock Domain Ownership client.
 func (c *TestClient) GetDomainOwnership() domainownership.DomainOwnership {
 	return c.DomainOwnership
+}
+
+// GetGTM returns the mock GTM client.
+func (c *TestClient) GetGTM() gtm.GTM {
+	return c.GTM
 }
 
 // GetHAPI returns the mock HAPI client.
