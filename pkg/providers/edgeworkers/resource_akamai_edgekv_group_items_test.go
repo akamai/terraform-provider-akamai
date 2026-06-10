@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/edgeworkers"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
@@ -14,8 +16,7 @@ import (
 )
 
 func TestCreateEdgeKVGroupItems(t *testing.T) {
-	// decrease interval for testing
-	pollForConsistentEdgeKVDatabaseInterval = time.Microsecond
+	t.Parallel()
 
 	tests := map[string]struct {
 		configPath string
@@ -181,30 +182,30 @@ func TestCreateEdgeKVGroupItems(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &edgeworkers.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 			if test.init != nil {
-				test.init(client, test.attrs)
+				test.init(client.EdgeWorkers, test.attrs)
 			}
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							Config:      testutils.LoadFixtureString(t, test.configPath),
-							Check:       checkEdgeKVGroupItemsAttrs(test.attrs),
-							ExpectError: test.withError,
-						},
+			config := defaultSubproviderConfig()
+			config.edgekv.pollInterval = time.Microsecond
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureString(t, test.configPath),
+						Check:       checkEdgeKVGroupItemsAttrs(test.attrs),
+						ExpectError: test.withError,
 					},
-				})
+				},
 			})
-			client.AssertExpectations(t)
+			client.EdgeWorkers.AssertExpectations(t)
 		})
 	}
 }
 
 func TestReadEdgeKVGroupItems(t *testing.T) {
-	// decrease interval for testing
-	pollForConsistentEdgeKVDatabaseInterval = time.Microsecond
+	t.Parallel()
 
 	tests := map[string]struct {
 		configPathForCreate string
@@ -348,33 +349,33 @@ func TestReadEdgeKVGroupItems(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &edgeworkers.Mock{}
-			test.init(client, test.attrsForCreate, test.attrsForUpdate)
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							Config:      testutils.LoadFixtureString(t, test.configPathForCreate),
-							Check:       checkEdgeKVGroupItemsAttrs(test.attrsForCreate),
-							ExpectError: test.errorForCreate,
-						},
-						{
-							Config:      testutils.LoadFixtureString(t, test.configPathForUpdate),
-							Check:       checkEdgeKVGroupItemsAttrs(test.attrsForUpdate),
-							ExpectError: test.errorForUpdate,
-						},
+			t.Parallel()
+			client := edgegrid.NewTestClient()
+			test.init(client.EdgeWorkers, test.attrsForCreate, test.attrsForUpdate)
+			config := defaultSubproviderConfig()
+			config.edgekv.pollInterval = time.Microsecond
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureString(t, test.configPathForCreate),
+						Check:       checkEdgeKVGroupItemsAttrs(test.attrsForCreate),
+						ExpectError: test.errorForCreate,
 					},
-				})
+					{
+						Config:      testutils.LoadFixtureString(t, test.configPathForUpdate),
+						Check:       checkEdgeKVGroupItemsAttrs(test.attrsForUpdate),
+						ExpectError: test.errorForUpdate,
+					},
+				},
 			})
-			client.AssertExpectations(t)
+			client.EdgeWorkers.AssertExpectations(t)
 		})
 	}
 }
 
 func TestUpdateEdgeKVGroupItems(t *testing.T) {
-	// decrease interval for testing
-	pollForConsistentEdgeKVDatabaseInterval = time.Microsecond
+	t.Parallel()
 
 	tests := map[string]struct {
 		configPathForCreate string
@@ -833,38 +834,38 @@ func TestUpdateEdgeKVGroupItems(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &edgeworkers.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 			if test.init != nil {
-				test.init(client, test.attrsForCreate, test.attrsForUpdate)
+				test.init(client.EdgeWorkers, test.attrsForCreate, test.attrsForUpdate)
 			}
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps: []resource.TestStep{
-						{
-							PlanOnly:           test.planOnly,
-							ExpectNonEmptyPlan: test.expectNonEmptyPlan,
-							Config:             testutils.LoadFixtureString(t, test.configPathForCreate),
-							Check:              checkEdgeKVGroupItemsAttrs(test.attrsForCreate),
-							ExpectError:        test.errorForCreate,
-						},
-						{
-							Config:      testutils.LoadFixtureString(t, test.configPathForUpdate),
-							Check:       checkEdgeKVGroupItemsAttrs(test.attrsForUpdate),
-							ExpectError: test.errorForUpdate,
-						},
+			config := defaultSubproviderConfig()
+			config.edgekv.pollInterval = time.Microsecond
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
+				IsUnitTest:               true,
+				Steps: []resource.TestStep{
+					{
+						PlanOnly:           test.planOnly,
+						ExpectNonEmptyPlan: test.expectNonEmptyPlan,
+						Config:             testutils.LoadFixtureString(t, test.configPathForCreate),
+						Check:              checkEdgeKVGroupItemsAttrs(test.attrsForCreate),
+						ExpectError:        test.errorForCreate,
 					},
-				})
+					{
+						Config:      testutils.LoadFixtureString(t, test.configPathForUpdate),
+						Check:       checkEdgeKVGroupItemsAttrs(test.attrsForUpdate),
+						ExpectError: test.errorForUpdate,
+					},
+				},
 			})
-			client.AssertExpectations(t)
+			client.EdgeWorkers.AssertExpectations(t)
 		})
 	}
 }
 
 func TestDeleteEdgeKVGroupItems(t *testing.T) {
-	// decrease interval for testing
-	pollForConsistentEdgeKVDatabaseInterval = time.Microsecond
+	t.Parallel()
 
 	tests := map[string]struct {
 		configPath string
@@ -910,26 +911,28 @@ func TestDeleteEdgeKVGroupItems(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &edgeworkers.Mock{}
-			test.init(client, test.attrs)
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							Config:      testutils.LoadFixtureString(t, test.configPath),
-							Check:       checkEdgeKVGroupItemsAttrs(test.attrs),
-							ExpectError: test.error,
-						},
+			t.Parallel()
+			client := edgegrid.NewTestClient()
+			test.init(client.EdgeWorkers, test.attrs)
+			config := defaultSubproviderConfig()
+			config.edgekv.pollInterval = time.Microsecond
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureString(t, test.configPath),
+						Check:       checkEdgeKVGroupItemsAttrs(test.attrs),
+						ExpectError: test.error,
 					},
-				})
+				},
 			})
-			client.AssertExpectations(t)
+			client.EdgeWorkers.AssertExpectations(t)
 		})
 	}
 }
 
 func TestImportEdgeKVGroupItems(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		configPath string
 		attrs      edgeKVConfigurationForTests
@@ -982,28 +985,27 @@ func TestImportEdgeKVGroupItems(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &edgeworkers.Mock{}
-			test.init(client, test.attrs)
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
+			t.Parallel()
+			client := edgegrid.NewTestClient()
+			test.init(client.EdgeWorkers, test.attrs)
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+				IsUnitTest:               true,
 
-					Steps: []resource.TestStep{
-						{
-							Config: testutils.LoadFixtureString(t, test.configPath),
-						},
-						{
-							ImportState:       true,
-							ImportStateId:     "test_namespace:staging:1234",
-							ResourceName:      "akamai_edgekv_group_items.test",
-							ImportStateVerify: true,
-							ExpectError:       nil,
-						},
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, test.configPath),
 					},
-				})
+					{
+						ImportState:       true,
+						ImportStateId:     "test_namespace:staging:1234",
+						ResourceName:      "akamai_edgekv_group_items.test",
+						ImportStateVerify: true,
+						ExpectError:       nil,
+					},
+				},
 			})
-			client.AssertExpectations(t)
+			client.EdgeWorkers.AssertExpectations(t)
 		})
 	}
 }

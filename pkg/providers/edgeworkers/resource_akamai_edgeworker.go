@@ -25,22 +25,29 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-var (
-	defaultBundleURL          = "https://raw.githubusercontent.com/akamai/edgeworkers-examples/master/edgecompute/examples/getting-started/hello-world%20(EW)/helloworld.tgz"
-	defaultBundleDownloadPath = "./bundle/helloworld.tgz"
-)
+type edgeworkerResourceConfig struct {
+	bundleURL          string
+	bundleDownloadPath string
+}
 
-func resourceEdgeWorker() *schema.Resource {
+func defaultEdgeworkerResourceConfig() edgeworkerResourceConfig {
+	return edgeworkerResourceConfig{
+		bundleURL:          "https://raw.githubusercontent.com/akamai/edgeworkers-examples/master/edgecompute/examples/getting-started/hello-world%20(EW)/helloworld.tgz",
+		bundleDownloadPath: "./bundle/helloworld.tgz",
+	}
+}
+
+func resourceEdgeWorker(config edgeworkerResourceConfig, activationConfig edgeworkersActivationResourceConfig) *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceEdgeWorkerCreate,
-		UpdateContext: resourceEdgeWorkerUpdate,
+		CreateContext: resourceEdgeWorkerCreate(config),
+		UpdateContext: resourceEdgeWorkerUpdate(config),
 		ReadContext:   resourceEdgeWorkerRead,
-		DeleteContext: resourceEdgeWorkerDelete,
+		DeleteContext: resourceEdgeWorkerDelete(activationConfig),
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceEdgeWorkerImport,
 		},
 		CustomizeDiff: customdiff.All(
-			bundleHashCustomDiff,
+			bundleHashCustomDiff(config),
 		),
 		Timeouts: &schema.ResourceTimeout{
 			Default: &timeouts.SDKDefaultTimeout,
@@ -72,7 +79,7 @@ func resourceEdgeWorker() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    false,
-				DefaultFunc: schema.EnvDefaultFunc("EW_DEFAULT_BUNDLE_URL", defaultBundleURL),
+				DefaultFunc: schema.EnvDefaultFunc("EW_DEFAULT_BUNDLE_URL", config.bundleURL),
 				Description: "The path to the EdgeWorkers tgz code bundle",
 			},
 			"local_bundle_hash": {
@@ -110,78 +117,80 @@ func resourceEdgeWorker() *schema.Resource {
 	}
 }
 
-func resourceEdgeWorkerCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := meta.Must(m)
-	logger := meta.Log("EdgeWorkers", "resourceEdgeWorkerCreate")
-	// create a context with logging for api calls
-	ctx = session.ContextWithOptions(
-		ctx,
-		session.WithContextLog(logger),
-	)
-	client := inst.Client(meta)
-	logger.Debug("Creating EdgeWorker")
-	name, err := tf.GetStringValue("name", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	resourceTierID, err := tf.GetIntValue("resource_tier_id", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	groupID, err := tf.GetStringValue("group_id", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	groupIDNum, err := str.GetIntID(groupID, "grp_")
-	if err != nil {
-		return diag.Errorf("invalid group_id provided: %s", err)
-	}
-	createEdgeWorkerIDReq := edgeworkers.CreateEdgeWorkerIDRequest{
-		Name:           name,
-		GroupID:        groupIDNum,
-		ResourceTierID: resourceTierID,
-	}
+func resourceEdgeWorkerCreate(config edgeworkerResourceConfig) schema.CreateContextFunc {
+	return func(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+		meta := meta.Must(m)
+		logger := meta.Log("EdgeWorkers", "resourceEdgeWorkerCreate")
+		// create a context with logging for api calls
+		ctx = session.ContextWithOptions(
+			ctx,
+			session.WithContextLog(logger),
+		)
+		client := meta.Client().GetEdgeWorkers()
+		logger.Debug("Creating EdgeWorker")
+		name, err := tf.GetStringValue("name", d)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		resourceTierID, err := tf.GetIntValue("resource_tier_id", d)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		groupID, err := tf.GetStringValue("group_id", d)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		groupIDNum, err := str.GetIntID(groupID, "grp_")
+		if err != nil {
+			return diag.Errorf("invalid group_id provided: %s", err)
+		}
+		createEdgeWorkerIDReq := edgeworkers.CreateEdgeWorkerIDRequest{
+			Name:           name,
+			GroupID:        groupIDNum,
+			ResourceTierID: resourceTierID,
+		}
 
-	localBundlePath, err := tf.GetStringValue("local_bundle", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	bytesArray, err := convertLocalBundleFileIntoBytes(localBundlePath)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	validateBundleResponse, err := client.ValidateBundle(ctx, edgeworkers.ValidateBundleRequest{
-		Bundle: edgeworkers.Bundle{Reader: bytes.NewBuffer(bytesArray)},
-	})
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	if len(validateBundleResponse.Errors) > 0 {
-		return diag.Errorf("local bundle is not valid: %s", validateBundleResponse.Errors)
-	}
-	warnings, err := convertWarningsToListOfStrings(validateBundleResponse)
-	if err != nil {
-		return diag.Errorf("cannot marshal json %s", err)
-	}
-	if err = d.Set("warnings", warnings); err != nil {
-		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
-	}
+		localBundlePath, err := tf.GetStringValue("local_bundle", d)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		bytesArray, err := convertLocalBundleFileIntoBytes(localBundlePath, config)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		validateBundleResponse, err := client.ValidateBundle(ctx, edgeworkers.ValidateBundleRequest{
+			Bundle: edgeworkers.Bundle{Reader: bytes.NewBuffer(bytesArray)},
+		})
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		if len(validateBundleResponse.Errors) > 0 {
+			return diag.Errorf("local bundle is not valid: %s", validateBundleResponse.Errors)
+		}
+		warnings, err := convertWarningsToListOfStrings(validateBundleResponse)
+		if err != nil {
+			return diag.Errorf("cannot marshal json %s", err)
+		}
+		if err = d.Set("warnings", warnings); err != nil {
+			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+		}
 
-	edgeWorkerID, err := client.CreateEdgeWorkerID(ctx, createEdgeWorkerIDReq)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	d.SetId(strconv.Itoa(edgeWorkerID.EdgeWorkerID))
+		edgeWorkerID, err := client.CreateEdgeWorkerID(ctx, createEdgeWorkerIDReq)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		d.SetId(strconv.Itoa(edgeWorkerID.EdgeWorkerID))
 
-	_, err = client.CreateEdgeWorkerVersion(ctx, edgeworkers.CreateEdgeWorkerVersionRequest{
-		EdgeWorkerID:  edgeWorkerID.EdgeWorkerID,
-		ContentBundle: edgeworkers.Bundle{Reader: bytes.NewBuffer(bytesArray)},
-	})
-	if err != nil {
-		return diag.FromErr(err)
-	}
+		_, err = client.CreateEdgeWorkerVersion(ctx, edgeworkers.CreateEdgeWorkerVersionRequest{
+			EdgeWorkerID:  edgeWorkerID.EdgeWorkerID,
+			ContentBundle: edgeworkers.Bundle{Reader: bytes.NewBuffer(bytesArray)},
+		})
+		if err != nil {
+			return diag.FromErr(err)
+		}
 
-	return resourceEdgeWorkerRead(ctx, d, m)
+		return resourceEdgeWorkerRead(ctx, d, m)
+	}
 }
 
 func resourceEdgeWorkerRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -192,7 +201,7 @@ func resourceEdgeWorkerRead(ctx context.Context, d *schema.ResourceData, m inter
 		ctx,
 		session.WithContextLog(logger),
 	)
-	client := inst.Client(meta)
+	client := meta.Client().GetEdgeWorkers()
 	logger.Debug("Reading EdgeWorker")
 
 	edgeWorkerID, err := strconv.Atoi(d.Id())
@@ -243,149 +252,153 @@ func resourceEdgeWorkerRead(ctx context.Context, d *schema.ResourceData, m inter
 	return nil
 }
 
-func resourceEdgeWorkerUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := meta.Must(m)
-	logger := meta.Log("EdgeWorkers", "resourceEdgeWorkerUpdate")
-	// create a context with logging for api calls
-	ctx = session.ContextWithOptions(
-		ctx,
-		session.WithContextLog(logger),
-	)
-	client := inst.Client(meta)
-	logger.Debug("Updating EdgeWorker version")
+func resourceEdgeWorkerUpdate(config edgeworkerResourceConfig) schema.UpdateContextFunc {
+	return func(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+		meta := meta.Must(m)
+		logger := meta.Log("EdgeWorkers", "resourceEdgeWorkerUpdate")
+		// create a context with logging for api calls
+		ctx = session.ContextWithOptions(
+			ctx,
+			session.WithContextLog(logger),
+		)
+		client := meta.Client().GetEdgeWorkers()
+		logger.Debug("Updating EdgeWorker version")
 
-	edgeWorkerID := d.Id()
-	edgeWorkerIDReq, err := strconv.Atoi(edgeWorkerID)
-	if err != nil {
-		return diag.Errorf("%s: %s", tf.ErrInvalidType, err.Error())
-	}
+		edgeWorkerID := d.Id()
+		edgeWorkerIDReq, err := strconv.Atoi(edgeWorkerID)
+		if err != nil {
+			return diag.Errorf("%s: %s", tf.ErrInvalidType, err.Error())
+		}
 
-	localBundlePath, err := tf.GetStringValue("local_bundle", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	bytesArray, err := convertLocalBundleFileIntoBytes(localBundlePath)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	bundleContentHash, err := getSHAFromBundle(&edgeworkers.Bundle{Reader: bytes.NewBuffer(bytesArray)})
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	hash, err := tf.GetStringValue("local_bundle_hash", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	if bundleContentHash != hash {
-		validateBundleResponse, err := client.ValidateBundle(ctx, edgeworkers.ValidateBundleRequest{
-			Bundle: edgeworkers.Bundle{Reader: bytes.NewBuffer(bytesArray)},
+		localBundlePath, err := tf.GetStringValue("local_bundle", d)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		bytesArray, err := convertLocalBundleFileIntoBytes(localBundlePath, config)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		bundleContentHash, err := getSHAFromBundle(&edgeworkers.Bundle{Reader: bytes.NewBuffer(bytesArray)})
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		hash, err := tf.GetStringValue("local_bundle_hash", d)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		if bundleContentHash != hash {
+			validateBundleResponse, err := client.ValidateBundle(ctx, edgeworkers.ValidateBundleRequest{
+				Bundle: edgeworkers.Bundle{Reader: bytes.NewBuffer(bytesArray)},
+			})
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			if len(validateBundleResponse.Errors) > 0 {
+				return diag.Errorf("local bundle is not valid: %s", validateBundleResponse.Errors)
+			}
+			warnings, err := convertWarningsToListOfStrings(validateBundleResponse)
+			if err != nil {
+				return diag.Errorf("cannot marshal json %s", err)
+			}
+			if err = d.Set("warnings", warnings); err != nil {
+				return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+			}
+			_, err = client.CreateEdgeWorkerVersion(ctx, edgeworkers.CreateEdgeWorkerVersionRequest{
+				EdgeWorkerID:  edgeWorkerIDReq,
+				ContentBundle: edgeworkers.Bundle{Reader: bytes.NewBuffer(bytesArray)},
+			})
+			if err != nil {
+				return diag.FromErr(err)
+			}
+		}
+		groupID, err := tf.GetStringValue("group_id", d)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		groupIDNum, err := str.GetIntID(groupID, "grp_")
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		name, err := tf.GetStringValue("name", d)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		resourceTierID, err := tf.GetIntValue("resource_tier_id", d)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		edgeWorkerIDBodyReq := edgeworkers.EdgeWorkerIDRequestBody{
+			Name:           name,
+			GroupID:        groupIDNum,
+			ResourceTierID: resourceTierID,
+		}
+		_, err = client.UpdateEdgeWorkerID(ctx, edgeworkers.UpdateEdgeWorkerIDRequest{
+			Body:         edgeWorkerIDBodyReq,
+			EdgeWorkerID: edgeWorkerIDReq,
 		})
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		if len(validateBundleResponse.Errors) > 0 {
-			return diag.Errorf("local bundle is not valid: %s", validateBundleResponse.Errors)
-		}
-		warnings, err := convertWarningsToListOfStrings(validateBundleResponse)
-		if err != nil {
-			return diag.Errorf("cannot marshal json %s", err)
-		}
-		if err = d.Set("warnings", warnings); err != nil {
-			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
-		}
-		_, err = client.CreateEdgeWorkerVersion(ctx, edgeworkers.CreateEdgeWorkerVersionRequest{
-			EdgeWorkerID:  edgeWorkerIDReq,
-			ContentBundle: edgeworkers.Bundle{Reader: bytes.NewBuffer(bytesArray)},
-		})
-		if err != nil {
-			return diag.FromErr(err)
-		}
+		return resourceEdgeWorkerRead(ctx, d, m)
 	}
-	groupID, err := tf.GetStringValue("group_id", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	groupIDNum, err := str.GetIntID(groupID, "grp_")
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	name, err := tf.GetStringValue("name", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	resourceTierID, err := tf.GetIntValue("resource_tier_id", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	edgeWorkerIDBodyReq := edgeworkers.EdgeWorkerIDRequestBody{
-		Name:           name,
-		GroupID:        groupIDNum,
-		ResourceTierID: resourceTierID,
-	}
-	_, err = client.UpdateEdgeWorkerID(ctx, edgeworkers.UpdateEdgeWorkerIDRequest{
-		Body:         edgeWorkerIDBodyReq,
-		EdgeWorkerID: edgeWorkerIDReq,
-	})
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	return resourceEdgeWorkerRead(ctx, d, m)
 }
 
-func resourceEdgeWorkerDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := meta.Must(m)
-	logger := meta.Log("EdgeWorkers", "resourceEdgeWorkerDelete")
-	// create a context with logging for api calls
-	ctx = session.ContextWithOptions(
-		ctx,
-		session.WithContextLog(logger),
-	)
-	client := inst.Client(meta)
-	logger.Debug("Deleting EdgeWorker and its bundle version")
-	edgeWorkerIDReq, err := strconv.Atoi(d.Id())
-	if err != nil {
-		return diag.FromErr(err)
-	}
+func resourceEdgeWorkerDelete(config edgeworkersActivationResourceConfig) schema.DeleteContextFunc {
+	return func(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+		meta := meta.Must(m)
+		logger := meta.Log("EdgeWorkers", "resourceEdgeWorkerDelete")
+		// create a context with logging for api calls
+		ctx = session.ContextWithOptions(
+			ctx,
+			session.WithContextLog(logger),
+		)
+		client := meta.Client().GetEdgeWorkers()
+		logger.Debug("Deleting EdgeWorker and its bundle version")
+		edgeWorkerIDReq, err := strconv.Atoi(d.Id())
+		if err != nil {
+			return diag.FromErr(err)
+		}
 
-	activations, err := checkEdgeWorkerActivations(ctx, client, edgeWorkerIDReq)
-	if err != nil {
-		return diag.FromErr(err)
-	}
+		activations, err := checkEdgeWorkerActivations(ctx, client, edgeWorkerIDReq, config)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 
-	if err = deactivateEdgeWorkerVersions(ctx, client, activations); err != nil {
-		return diag.FromErr(err)
-	}
+		if err = deactivateEdgeWorkerVersions(ctx, client, activations, config); err != nil {
+			return diag.FromErr(err)
+		}
 
-	versions, err := client.ListEdgeWorkerVersions(ctx, edgeworkers.ListEdgeWorkerVersionsRequest{
-		EdgeWorkerID: edgeWorkerIDReq,
-	})
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	for _, v := range versions.EdgeWorkerVersions {
-		err := client.DeleteEdgeWorkerVersion(ctx, edgeworkers.DeleteEdgeWorkerVersionRequest{
+		versions, err := client.ListEdgeWorkerVersions(ctx, edgeworkers.ListEdgeWorkerVersionsRequest{
 			EdgeWorkerID: edgeWorkerIDReq,
-			Version:      v.Version,
 		})
 		if err != nil {
 			return diag.FromErr(err)
 		}
+		for _, v := range versions.EdgeWorkerVersions {
+			err := client.DeleteEdgeWorkerVersion(ctx, edgeworkers.DeleteEdgeWorkerVersionRequest{
+				EdgeWorkerID: edgeWorkerIDReq,
+				Version:      v.Version,
+			})
+			if err != nil {
+				return diag.FromErr(err)
+			}
+		}
+		err = client.DeleteEdgeWorkerID(ctx, edgeworkers.DeleteEdgeWorkerIDRequest{
+			EdgeWorkerID: edgeWorkerIDReq,
+		})
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		return nil
 	}
-	err = client.DeleteEdgeWorkerID(ctx, edgeworkers.DeleteEdgeWorkerIDRequest{
-		EdgeWorkerID: edgeWorkerIDReq,
-	})
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	return nil
 }
 
 // checkEdgeWorkerActivations checks if there are any completed activations on staging or production networks
-func checkEdgeWorkerActivations(ctx context.Context, client edgeworkers.Edgeworkers, edgeWorkerID int) ([]*edgeworkers.Activation, error) {
+func checkEdgeWorkerActivations(ctx context.Context, client edgeworkers.Edgeworkers, edgeWorkerID int, config edgeworkersActivationResourceConfig) ([]*edgeworkers.Activation, error) {
 	var activations []*edgeworkers.Activation
 
 	for _, network := range validEdgeworkerActivationNetworks {
-		act, err := getCurrentActivation(ctx, client, edgeWorkerID, network, false)
+		act, err := getCurrentActivation(ctx, client, edgeWorkerID, network, false, config)
 		if err != nil && !errors.Is(err, ErrEdgeworkerNoCurrentActivation) {
 			return nil, err
 		}
@@ -397,11 +410,11 @@ func checkEdgeWorkerActivations(ctx context.Context, client edgeworkers.Edgework
 }
 
 // deactivateEdgeWorkerVersions loops through activations and deactivates versions in order to delete the edgeworker
-func deactivateEdgeWorkerVersions(ctx context.Context, client edgeworkers.Edgeworkers, activations []*edgeworkers.Activation) error {
+func deactivateEdgeWorkerVersions(ctx context.Context, client edgeworkers.Edgeworkers, activations []*edgeworkers.Activation, config edgeworkersActivationResourceConfig) error {
 	g, ctxGroup := errgroup.WithContext(ctx)
 	for _, act := range activations {
 		g.Go(func() error {
-			return deactivateEdgeWorkerVersion(ctxGroup, client, act.EdgeWorkerID, act.Network, act.Version)
+			return deactivateEdgeWorkerVersion(ctxGroup, client, act.EdgeWorkerID, act.Network, act.Version, config)
 		})
 	}
 
@@ -413,7 +426,7 @@ func deactivateEdgeWorkerVersions(ctx context.Context, client edgeworkers.Edgewo
 }
 
 // deactivateEdgeWorkerVersion deactivates edgeworker version and waits for its completion
-func deactivateEdgeWorkerVersion(ctx context.Context, client edgeworkers.Edgeworkers, edgeworkerID int, network, version string) error {
+func deactivateEdgeWorkerVersion(ctx context.Context, client edgeworkers.Edgeworkers, edgeworkerID int, network, version string, config edgeworkersActivationResourceConfig) error {
 	deactivation, err := client.DeactivateVersion(ctx, edgeworkers.DeactivateVersionRequest{
 		EdgeWorkerID: edgeworkerID,
 		DeactivateVersion: edgeworkers.DeactivateVersion{
@@ -424,7 +437,7 @@ func deactivateEdgeWorkerVersion(ctx context.Context, client edgeworkers.Edgewor
 	if err != nil {
 		return err
 	}
-	_, err = waitForEdgeworkerDeactivation(ctx, client, edgeworkerID, deactivation.DeactivationID)
+	_, err = waitForEdgeworkerDeactivation(ctx, client, edgeworkerID, deactivation.DeactivationID, config)
 	if err != nil {
 		return err
 	}
@@ -450,13 +463,13 @@ func getLatestEdgeWorkerIDBundleVersion(versions *edgeworkers.ListEdgeWorkerVers
 	return version, nil
 }
 
-func convertLocalBundleFileIntoBytes(localBundlePath string) ([]byte, error) {
+func convertLocalBundleFileIntoBytes(localBundlePath string, config edgeworkerResourceConfig) ([]byte, error) {
 	var filePath string
-	if localBundlePath == defaultBundleURL {
-		if err := downloadFile(defaultBundleDownloadPath, defaultBundleURL); err != nil {
-			return nil, fmt.Errorf("cannot download '%s' from %s: %s", defaultBundleDownloadPath, defaultBundleURL, err.Error())
+	if localBundlePath == config.bundleURL {
+		if err := downloadFile(config.bundleDownloadPath, config.bundleURL); err != nil {
+			return nil, fmt.Errorf("cannot download '%s' from %s: %s", config.bundleDownloadPath, config.bundleURL, err.Error())
 		}
-		filePath = defaultBundleDownloadPath
+		filePath = config.bundleDownloadPath
 	} else {
 		filePath = localBundlePath
 	}
@@ -482,7 +495,7 @@ func resourceEdgeWorkerImport(ctx context.Context, d *schema.ResourceData, m int
 	logger := meta.Log("EdgeWorkers", "resourceEdgeWorkerImport")
 
 	logger.Debug("Importing EdgeWorker version")
-	client := inst.Client(meta)
+	client := meta.Client().GetEdgeWorkers()
 
 	edgeWorkerID, err := strconv.Atoi(d.Id())
 	if err != nil {
@@ -526,57 +539,59 @@ func resourceEdgeWorkerImport(ctx context.Context, d *schema.ResourceData, m int
 	return []*schema.ResourceData{d}, nil
 }
 
-func bundleHashCustomDiff(_ context.Context, diff *schema.ResourceDiff, m interface{}) error {
-	meta := meta.Must(m)
-	logger := meta.Log("EdgeWorkers", "bundleHashCustomDiff")
+func bundleHashCustomDiff(config edgeworkerResourceConfig) schema.CustomizeDiffFunc {
+	return func(_ context.Context, diff *schema.ResourceDiff, m interface{}) error {
+		meta := meta.Must(m)
+		logger := meta.Log("EdgeWorkers", "bundleHashCustomDiff")
 
-	allSetComputed := func(fields ...string) error {
-		for _, f := range fields {
-			if err := diff.SetNewComputed(f); err != nil {
-				return fmt.Errorf("cannot set new computed for '%s': %s", f, err)
+		allSetComputed := func(fields ...string) error {
+			for _, f := range fields {
+				if err := diff.SetNewComputed(f); err != nil {
+					return fmt.Errorf("cannot set new computed for '%s': %s", f, err)
+				}
 			}
+			return nil
 		}
+
+		localBundleHash, err := tf.GetStringValue("local_bundle_hash", diff)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
+			return fmt.Errorf("cannot get 'local_bundle_hash' value: %s", err)
+		}
+		if err != nil && errors.Is(err, tf.ErrNotFound) { // hash may be empty when resource was not created yet
+			return allSetComputed("local_bundle_hash", "version", "warnings")
+		}
+
+		localBundleFileName, err := tf.GetStringValue("local_bundle", diff)
+		if err != nil {
+			return fmt.Errorf("cannot get 'local_bundle' value: %s", err)
+		}
+
+		f, err := openBundleFile(localBundleFileName, config)
+		if err != nil {
+			return err
+		}
+		defer func() {
+			if err := f.Close(); err != nil {
+				logger.Debugf("error closing bundle file in defer: %s", err)
+			}
+		}()
+
+		hash, err := getSHAFromBundle(&edgeworkers.Bundle{Reader: f})
+		if err != nil {
+			return fmt.Errorf("error calculating bundle hash: %s", err)
+		}
+
+		if hash != localBundleHash {
+			return allSetComputed("local_bundle_hash", "version", "warnings")
+		}
+
 		return nil
 	}
-
-	localBundleHash, err := tf.GetStringValue("local_bundle_hash", diff)
-	if err != nil && !errors.Is(err, tf.ErrNotFound) {
-		return fmt.Errorf("cannot get 'local_bundle_hash' value: %s", err)
-	}
-	if err != nil && errors.Is(err, tf.ErrNotFound) { // hash may be empty when resource was not created yet
-		return allSetComputed("local_bundle_hash", "version", "warnings")
-	}
-
-	localBundleFileName, err := tf.GetStringValue("local_bundle", diff)
-	if err != nil {
-		return fmt.Errorf("cannot get 'local_bundle' value: %s", err)
-	}
-
-	f, err := openBundleFile(localBundleFileName)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err := f.Close(); err != nil {
-			logger.Debugf("error closing bundle file in defer: %s", err)
-		}
-	}()
-
-	hash, err := getSHAFromBundle(&edgeworkers.Bundle{Reader: f})
-	if err != nil {
-		return fmt.Errorf("error calculating bundle hash: %s", err)
-	}
-
-	if hash != localBundleHash {
-		return allSetComputed("local_bundle_hash", "version", "warnings")
-	}
-
-	return nil
 }
 
-func openBundleFile(localBundleFileName string) (io.ReadCloser, error) {
-	if localBundleFileName == defaultBundleURL {
-		resp, err := http.Get(defaultBundleURL)
+func openBundleFile(localBundleFileName string, config edgeworkerResourceConfig) (io.ReadCloser, error) {
+	if localBundleFileName == config.bundleURL {
+		resp, err := http.Get(config.bundleURL)
 		if err != nil {
 			return nil, fmt.Errorf("cannot dowload default bundle: %s", err)
 		}

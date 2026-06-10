@@ -85,7 +85,7 @@ func dataEdgeWorkerRead(ctx context.Context, d *schema.ResourceData, m interface
 		session.WithContextLog(logger),
 	)
 
-	client := inst.Client(meta)
+	client := meta.Client().GetEdgeWorkers()
 	logger.Debug("Reading EdgeWorker")
 
 	edgeWorkerID, err := tf.GetIntValue("edgeworker_id", d)

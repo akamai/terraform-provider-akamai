@@ -5,12 +5,15 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/edgeworkers"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func TestDataEdgeworkersResourceTier(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		init  func(*edgeworkers.Mock)
 		steps []resource.TestStep
@@ -157,18 +160,17 @@ func TestDataEdgeworkersResourceTier(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &edgeworkers.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 			if test.init != nil {
-				test.init(client)
+				test.init(client.EdgeWorkers)
 			}
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps:                    test.steps,
-				})
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+				IsUnitTest:               true,
+				Steps:                    test.steps,
 			})
-			client.AssertExpectations(t)
+			client.EdgeWorkers.AssertExpectations(t)
 		})
 	}
 }

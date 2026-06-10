@@ -13,6 +13,7 @@ import (
 )
 
 func TestGetSHA256FromBundle(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		firstBundlePath  string
 		secondBundlePath string
@@ -36,9 +37,10 @@ func TestGetSHA256FromBundle(t *testing.T) {
 	}
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			firstArrayOfBytes, err := convertLocalBundleFileIntoBytes(test.firstBundlePath)
+			t.Parallel()
+			firstArrayOfBytes, err := convertLocalBundleFileIntoBytes(test.firstBundlePath, defaultEdgeworkerResourceConfig())
 			require.NoError(t, err)
-			secondArrayOfBytes, err := convertLocalBundleFileIntoBytes(test.secondBundlePath)
+			secondArrayOfBytes, err := convertLocalBundleFileIntoBytes(test.secondBundlePath, defaultEdgeworkerResourceConfig())
 			require.NoError(t, err)
 			firstBundleShaHash, err := getSHAFromBundle(&edgeworkers.Bundle{Reader: bytes.NewBuffer(firstArrayOfBytes)})
 			require.NoError(t, err)
@@ -53,6 +55,7 @@ func TestGetSHA256FromBundle(t *testing.T) {
 	}
 
 	t.Run("hash should be same when file order changes", func(t *testing.T) {
+		t.Parallel()
 		bundleOrder1 := prepareBundleWithFiles(t, []bundleFile{
 			{
 				Name:    "file1",
@@ -83,6 +86,7 @@ func TestGetSHA256FromBundle(t *testing.T) {
 	})
 
 	t.Run("hash should be different when file name changes", func(t *testing.T) {
+		t.Parallel()
 		bundleOrder1 := prepareBundleWithFiles(t, []bundleFile{
 			{
 				Name:    "fileA",

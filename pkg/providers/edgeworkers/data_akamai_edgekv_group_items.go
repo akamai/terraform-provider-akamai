@@ -52,7 +52,7 @@ func dataEdgeKVGroupItems(ctx context.Context, d *schema.ResourceData, m interfa
 	meta := meta.Must(m)
 	logger := meta.Log("EdgeKV", "dataEdgeKVGroupItems")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
+	client := meta.Client().GetEdgeWorkers()
 	logger.Debug("Reading EdgeKV group items")
 
 	namespace, err := tf.GetStringValue("namespace_name", d)

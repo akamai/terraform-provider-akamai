@@ -7,6 +7,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cps"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/dns"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/domainownership"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/edgeworkers"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/gtm"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/hapi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/iam"
@@ -28,6 +29,7 @@ type TestClient struct {
 	CPS               *cps.Mock
 	DNS               *dns.Mock
 	DomainOwnership   *domainownership.Mock
+	EdgeWorkers       *edgeworkers.Mock
 	GTM               *gtm.Mock
 	HAPI              *hapi.Mock
 	IAM               *iam.Mock
@@ -46,6 +48,7 @@ func NewTestClient() *TestClient {
 		CPS:               &cps.Mock{},
 		DNS:               &dns.Mock{},
 		DomainOwnership:   &domainownership.Mock{},
+		EdgeWorkers:       &edgeworkers.Mock{},
 		GTM:               &gtm.Mock{},
 		HAPI:              &hapi.Mock{},
 		IAM:               &iam.Mock{},
@@ -84,6 +87,11 @@ func (c *TestClient) GetDNS() dns.DNS {
 // GetDomainOwnership returns the mock Domain Ownership client.
 func (c *TestClient) GetDomainOwnership() domainownership.DomainOwnership {
 	return c.DomainOwnership
+}
+
+// GetEdgeWorkers returns the mock EdgeWorkers client.
+func (c *TestClient) GetEdgeWorkers() edgeworkers.Edgeworkers {
+	return c.EdgeWorkers
 }
 
 // GetGTM returns the mock GTM client.

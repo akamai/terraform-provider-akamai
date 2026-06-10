@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/edgeworkers"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
@@ -15,7 +17,7 @@ import (
 )
 
 func TestResourceEdgeKV(t *testing.T) {
-	initWindow = time.Duration(1) * time.Millisecond
+	t.Parallel()
 
 	basicData := edgeKVmockData{
 		network:   "staging",
@@ -425,25 +427,21 @@ func TestResourceEdgeKV(t *testing.T) {
 		},
 	}
 
-	deleteTimeout = 10 * time.Second
-	pollForConsistentEdgeKVDatabaseInterval = time.Second
-	defer func() {
-		deleteTimeout = time.Minute
-		pollForConsistentEdgeKVDatabaseInterval = 5 * time.Second
-	}()
-
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &edgeworkers.Mock{}
-			test.init(client)
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps:                    test.steps,
-				})
+			t.Parallel()
+			client := edgegrid.NewTestClient()
+			test.init(client.EdgeWorkers)
+			config := defaultSubproviderConfig()
+			config.edgekv.initWindow = time.Millisecond
+			config.edgekv.pollInterval = time.Millisecond
+			config.edgekv.deleteTimeout = 10 * time.Second
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
+				IsUnitTest:               true,
+				Steps:                    test.steps,
 			})
-			client.AssertExpectations(t)
+			client.EdgeWorkers.AssertExpectations(t)
 		})
 	}
 }

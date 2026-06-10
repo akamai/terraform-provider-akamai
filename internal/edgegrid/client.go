@@ -8,6 +8,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cps"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/dns"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/domainownership"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/edgeworkers"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/gtm"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/hapi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/iam"
@@ -31,6 +32,8 @@ type Client interface {
 	GetDNS() dns.DNS
 
 	GetDomainOwnership() domainownership.DomainOwnership
+
+	GetEdgeWorkers() edgeworkers.Edgeworkers
 
 	GetGTM() gtm.GTM
 
@@ -91,6 +94,11 @@ func (c *ClientImpl) GetDNS() dns.DNS {
 // GetDomainOwnership returns the Domain Ownership client for managing domain ownership.
 func (c *ClientImpl) GetDomainOwnership() domainownership.DomainOwnership {
 	return domainownership.Client(c.sess)
+}
+
+// GetEdgeWorkers returns the EdgeWorkers client for managing EdgeWorkers.
+func (c *ClientImpl) GetEdgeWorkers() edgeworkers.Edgeworkers {
+	return edgeworkers.Client(c.sess)
 }
 
 // GetGTM returns the GTM client for managing Global Traffic Management.

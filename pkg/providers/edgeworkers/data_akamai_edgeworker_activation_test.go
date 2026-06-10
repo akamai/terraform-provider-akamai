@@ -6,6 +6,9 @@ import (
 	"regexp"
 	"strconv"
 	"testing"
+	"time"
+
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/edgeworkers"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
@@ -128,6 +131,7 @@ var (
 )
 
 func TestDataEdgeWorkersActivation(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		init       func(*edgeworkers.Mock, testDataForEdgeWorkersActivation)
 		mockData   testDataForEdgeWorkersActivation
@@ -188,24 +192,26 @@ func TestDataEdgeWorkersActivation(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &edgeworkers.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 			if test.init != nil {
-				test.init(client, test.mockData)
+				test.init(client.EdgeWorkers, test.mockData)
 			}
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps: []resource.TestStep{
-						{
-							Config:      testutils.LoadFixtureString(t, test.configPath),
-							Check:       checkAttrsForEdgeWorkerActivation(test.mockData),
-							ExpectError: test.error,
-						},
+			config := defaultSubproviderConfig()
+			config.activation.pollMinimum = time.Millisecond
+			config.activation.pollInterval = time.Millisecond
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
+				IsUnitTest:               true,
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureString(t, test.configPath),
+						Check:       checkAttrsForEdgeWorkerActivation(test.mockData),
+						ExpectError: test.error,
 					},
-				})
+				},
 			})
-			client.AssertExpectations(t)
+			client.EdgeWorkers.AssertExpectations(t)
 		})
 	}
 }

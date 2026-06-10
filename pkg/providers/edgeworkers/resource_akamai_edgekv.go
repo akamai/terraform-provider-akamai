@@ -19,17 +19,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-var (
-	initWindow    = time.Duration(10) * time.Second
-	deleteTimeout = time.Minute
-)
-
-func resourceEdgeKV() *schema.Resource {
+func resourceEdgeKV(config edgeKVGroupItemsResourceConfig) *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceEdgeKVCreate,
+		CreateContext: resourceEdgeKVCreate(config),
 		ReadContext:   resourceEdgeKVRead,
 		UpdateContext: resourceEdgeKVUpdate,
-		DeleteContext: resourceEdgeKVDelete,
+		DeleteContext: resourceEdgeKVDelete(config),
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},
@@ -82,13 +77,13 @@ func resourceEdgeKV() *schema.Resource {
 	}
 }
 
-func waitForEdgeKVInitialization(ctx context.Context, client edgeworkers.Edgeworkers) error {
+func waitForEdgeKVInitialization(ctx context.Context, client edgeworkers.Edgeworkers, config edgeKVGroupItemsResourceConfig) error {
 	status := &edgeworkers.EdgeKVInitializationStatus{}
 	var err error
 
 	for status.AccountStatus != "INITIALIZED" {
 		select {
-		case <-time.After(initWindow):
+		case <-time.After(config.initWindow):
 			status, err = client.GetEdgeKVInitializationStatus(ctx)
 			if err != nil {
 				return fmt.Errorf("could not get EdgeKV initialization status: %s", err)
@@ -101,86 +96,88 @@ func waitForEdgeKVInitialization(ctx context.Context, client edgeworkers.Edgewor
 	return nil
 }
 
-func resourceEdgeKVCreate(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := meta.Must(m)
-	logger := meta.Log("EdgeKV", "resourceEdgeKVCreate")
-	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
-	logger.Debug("Creating EdgeKV namespace configuration")
+func resourceEdgeKVCreate(config edgeKVGroupItemsResourceConfig) schema.CreateContextFunc {
+	return func(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
+		meta := meta.Must(m)
+		logger := meta.Log("EdgeKV", "resourceEdgeKVCreate")
+		ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
+		client := meta.Client().GetEdgeWorkers()
+		logger.Debug("Creating EdgeKV namespace configuration")
 
-	retention64, err := tf.GetInt64Value("retention_in_seconds", tf.NewRawConfig(rd))
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	retention := int(retention64)
-	geoLocation, err := tf.GetStringValue("geo_location", rd)
-	if err != nil && !errors.Is(err, tf.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-
-	groupID, err := tf.GetIntValue("group_id", rd)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	name, err := tf.GetStringValue("namespace_name", rd)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	network, err := tf.GetStringValue("network", rd)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	status, err := client.GetEdgeKVInitializationStatus(ctx)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	// If the status is "UNINITIALIZED", we have to send initialization request and wait for "INITIALIZED" status. If the
-	// status is "PENDING" we have to wait. If the status is "INITIALIZED" we can proceed.
-	switch status.AccountStatus {
-	case "UNINITIALIZED":
-		// initialize edgekv
-		logger.Debugf("Initializing EdgeKV...")
-		_, err = client.InitializeEdgeKV(ctx)
+		retention64, err := tf.GetInt64Value("retention_in_seconds", tf.NewRawConfig(rd))
 		if err != nil {
-			return diag.Errorf("could not initialize edgeKV: %s", err)
-		}
-		if err = waitForEdgeKVInitialization(ctx, client); err != nil {
 			return diag.FromErr(err)
 		}
-	case "PENDING":
-		if err = waitForEdgeKVInitialization(ctx, client); err != nil {
+		retention := int(retention64)
+		geoLocation, err := tf.GetStringValue("geo_location", rd)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
 			return diag.FromErr(err)
 		}
+
+		groupID, err := tf.GetIntValue("group_id", rd)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		name, err := tf.GetStringValue("namespace_name", rd)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		network, err := tf.GetStringValue("network", rd)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		status, err := client.GetEdgeKVInitializationStatus(ctx)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		// If the status is "UNINITIALIZED", we have to send initialization request and wait for "INITIALIZED" status. If the
+		// status is "PENDING" we have to wait. If the status is "INITIALIZED" we can proceed.
+		switch status.AccountStatus {
+		case "UNINITIALIZED":
+			// initialize edgekv
+			logger.Debugf("Initializing EdgeKV...")
+			_, err = client.InitializeEdgeKV(ctx)
+			if err != nil {
+				return diag.Errorf("could not initialize edgeKV: %s", err)
+			}
+			if err = waitForEdgeKVInitialization(ctx, client, config); err != nil {
+				return diag.FromErr(err)
+			}
+		case "PENDING":
+			if err = waitForEdgeKVInitialization(ctx, client, config); err != nil {
+				return diag.FromErr(err)
+			}
+		}
+
+		// create namespace
+		namespace, err := client.CreateEdgeKVNamespace(ctx, edgeworkers.CreateEdgeKVNamespaceRequest{
+			Network: edgeworkers.NamespaceNetwork(network),
+			NamespaceRequest: edgeworkers.NamespaceRequest{
+				Name:        name,
+				GeoLocation: geoLocation,
+				Retention:   ptr.To(retention),
+				GroupID:     ptr.To(groupID),
+			},
+		})
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		rd.SetId(fmt.Sprintf("%s:%s", namespace.Name, network))
+
+		return resourceEdgeKVRead(ctx, rd, m)
 	}
-
-	// create namespace
-	namespace, err := client.CreateEdgeKVNamespace(ctx, edgeworkers.CreateEdgeKVNamespaceRequest{
-		Network: edgeworkers.NamespaceNetwork(network),
-		NamespaceRequest: edgeworkers.NamespaceRequest{
-			Name:        name,
-			GeoLocation: geoLocation,
-			Retention:   ptr.To(retention),
-			GroupID:     ptr.To(groupID),
-		},
-	})
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	rd.SetId(fmt.Sprintf("%s:%s", namespace.Name, network))
-
-	return resourceEdgeKVRead(ctx, rd, m)
 }
 
 func resourceEdgeKVRead(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("EdgeKV", "resourceEdgeKVRead")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
+	client := meta.Client().GetEdgeWorkers()
 	logger.Debug("Reading EdgeKV namespace configuration")
 
 	id := strings.Split(rd.Id(), ":")
@@ -226,7 +223,7 @@ func resourceEdgeKVUpdate(ctx context.Context, rd *schema.ResourceData, m interf
 	meta := meta.Must(m)
 	logger := meta.Log("EdgeKV", "resourceEdgeKVUpdate")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
+	client := meta.Client().GetEdgeWorkers()
 	logger.Debug("Updating EdgeKV namespace configuration")
 
 	// at this point, just retention_in_seconds may be updated
@@ -269,52 +266,54 @@ func resourceEdgeKVUpdate(ctx context.Context, rd *schema.ResourceData, m interf
 	return resourceEdgeKVRead(ctx, rd, m)
 }
 
-func resourceEdgeKVDelete(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := meta.Must(m)
-	logger := meta.Log("EdgeKV", "resourceEdgeKVDelete")
-	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
-	logger.Debug("Deleting EdgeKV namespace configuration")
+func resourceEdgeKVDelete(config edgeKVGroupItemsResourceConfig) schema.DeleteContextFunc {
+	return func(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
+		meta := meta.Must(m)
+		logger := meta.Log("EdgeKV", "resourceEdgeKVDelete")
+		ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
+		client := meta.Client().GetEdgeWorkers()
+		logger.Debug("Deleting EdgeKV namespace configuration")
 
-	name, err := tf.GetStringValue("namespace_name", rd)
-	if err != nil {
-		return diag.Errorf("could not get 'namespace_name' attribute: %s", err)
+		name, err := tf.GetStringValue("namespace_name", rd)
+		if err != nil {
+			return diag.Errorf("could not get 'namespace_name' attribute: %s", err)
+		}
+
+		network, err := tf.GetStringValue("network", rd)
+		if err != nil {
+			return diag.Errorf("could not get 'network' attribute: %s", err)
+		}
+
+		// We do not delete the namespace if there are any items in it: they should have been removed
+		// while deleting corresponding akamai_edgekv_group_items resources.
+		//
+		// We need to wait in a loop since EdgeKV is a distributed database and checks for empty
+		// groups from akamai_edgekv_group_items' delete may have been done on a different replica.
+		//
+		// We also need to retry when 400 Bad Request is returned. This applies to the case when
+		// the namespace is being deleted just after creation. It may be not yet visible on the
+		// current replica.
+		//
+		// Timeout is set to 1 minute (deleteTimeout), because the user may have not deleted all groups
+		// anyway (controlled outside TF) and there is no point in waiting 20 minutes in such case.
+		err = waitUntilNoGroupsInNamespace(ctx, client, name, network, config)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		_, err = client.DeleteEdgeKVNamespace(ctx, edgeworkers.DeleteEdgeKVNamespaceRequest{
+			Network: edgeworkers.NamespaceNetwork(network),
+			Name:    name,
+			Sync:    true, // remove immediately
+		})
+		if err != nil {
+			return diag.Errorf("could not delete namespace '%s' in network '%s': %s",
+				name, network, err)
+		}
+
+		rd.SetId("")
+		return nil
 	}
-
-	network, err := tf.GetStringValue("network", rd)
-	if err != nil {
-		return diag.Errorf("could not get 'network' attribute: %s", err)
-	}
-
-	// We do not delete the namespace if there are any items in it: they should have been removed
-	// while deleting corresponding akamai_edgekv_group_items resources.
-	//
-	// We need to wait in a loop since EdgeKV is a distributed database and checks for empty
-	// groups from akamai_edgekv_group_items' delete may have been done on a different replica.
-	//
-	// We also need to retry when 400 Bad Request is returned. This applies to the case when
-	// the namespace is being deleted just after creation. It may be not yet visible on the
-	// current replica.
-	//
-	// Timeout is set to 1 minute (deleteTimeout), because the user may have not deleted all groups
-	// anyway (controlled outside TF) and there is no point in waiting 20 minutes in such case.
-	err = waitUntilNoGroupsInNamespace(ctx, client, name, network)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	_, err = client.DeleteEdgeKVNamespace(ctx, edgeworkers.DeleteEdgeKVNamespaceRequest{
-		Network: edgeworkers.NamespaceNetwork(network),
-		Name:    name,
-		Sync:    true, // remove immediately
-	})
-	if err != nil {
-		return diag.Errorf("could not delete namespace '%s' in network '%s': %s",
-			name, network, err)
-	}
-
-	rd.SetId("")
-	return nil
 }
 
 func displayGroupIDWarning() schema.SchemaValidateDiagFunc {
@@ -330,13 +329,13 @@ func displayGroupIDWarning() schema.SchemaValidateDiagFunc {
 }
 
 // waitUntilNoGroupsInNamespace waits until there are no groups in the namespace
-func waitUntilNoGroupsInNamespace(ctx context.Context, client edgeworkers.Edgeworkers, name string, network string) error {
-	ctx, cancel := context.WithTimeout(ctx, deleteTimeout)
+func waitUntilNoGroupsInNamespace(ctx context.Context, client edgeworkers.Edgeworkers, name string, network string, config edgeKVGroupItemsResourceConfig) error {
+	ctx, cancel := context.WithTimeout(ctx, config.deleteTimeout)
 	defer cancel()
 	var badRequestErr error
 	for {
 		select {
-		case <-time.After(pollForConsistentEdgeKVDatabaseInterval):
+		case <-time.After(config.pollInterval):
 			groups, err := client.ListGroupsWithinNamespace(ctx, edgeworkers.ListGroupsWithinNamespaceRequest{
 				Network:     edgeworkers.NamespaceNetwork(network),
 				NamespaceID: name,

@@ -2,10 +2,6 @@
 package edgeworkers
 
 import (
-	"sync"
-
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/edgeworkers"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/subprovider"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -15,48 +11,42 @@ import (
 type (
 	// Subprovider gathers edgeworkers resources and data sources
 	Subprovider struct {
-		client edgeworkers.Edgeworkers
+		config subproviderConfig
 	}
 
-	option func(p *Subprovider)
-)
-
-var (
-	once sync.Once
-
-	inst *Subprovider
+	subproviderConfig struct {
+		activation edgeworkersActivationResourceConfig
+		edgekv     edgeKVGroupItemsResourceConfig
+		edgeworker edgeworkerResourceConfig
+	}
 )
 
 var _ subprovider.Subprovider = &Subprovider{}
 
-// NewSubprovider returns a new edgeworkers subprovider
-func NewSubprovider(opts ...option) *Subprovider {
-	once.Do(func() {
-		inst = &Subprovider{}
-
-		for _, opt := range opts {
-			opt(inst)
-		}
-	})
-
-	return inst
+func defaultSubproviderConfig() subproviderConfig {
+	return subproviderConfig{
+		activation: defaultEdgeworkersActivationResourceConfig(),
+		edgekv:     defaultEdgeKVGroupItemsResourceConfig(),
+		edgeworker: defaultEdgeworkerResourceConfig(),
+	}
 }
 
-// Client returns the edgeworkers interface
-func (p *Subprovider) Client(meta meta.Meta) edgeworkers.Edgeworkers {
-	if p.client != nil {
-		return p.client
-	}
-	return edgeworkers.Client(meta.Session())
+func newSubproviderWithConfig(config subproviderConfig) *Subprovider {
+	return &Subprovider{config: config}
+}
+
+// NewSubprovider returns a new edgeworkers subprovider
+func NewSubprovider() *Subprovider {
+	return newSubproviderWithConfig(defaultSubproviderConfig())
 }
 
 // SDKResources returns the edgeworkers resources implemented using terraform-plugin-sdk
 func (p *Subprovider) SDKResources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
-		"akamai_edgekv":                 resourceEdgeKV(),
-		"akamai_edgekv_group_items":     resourceEdgeKVGroupItems(),
-		"akamai_edgeworkers_activation": resourceEdgeworkersActivation(),
-		"akamai_edgeworker":             resourceEdgeWorker(),
+		"akamai_edgekv":                 resourceEdgeKV(p.config.edgekv),
+		"akamai_edgekv_group_items":     resourceEdgeKVGroupItems(p.config.edgekv),
+		"akamai_edgeworkers_activation": resourceEdgeworkersActivation(p.config.activation),
+		"akamai_edgeworker":             resourceEdgeWorker(p.config.edgeworker, p.config.activation),
 	}
 }
 
@@ -68,7 +58,7 @@ func (p *Subprovider) SDKDataSources() map[string]*schema.Resource {
 		"akamai_edgeworkers_resource_tier":  dataSourceEdgeworkersResourceTier(),
 		"akamai_edgeworkers_property_rules": dataSourceEdgeworkersPropertyRules(),
 		"akamai_edgeworker":                 dataSourceEdgeWorker(),
-		"akamai_edgeworker_activation":      dataSourceEdgeWorkerActivation(),
+		"akamai_edgeworker_activation":      dataSourceEdgeWorkerActivation(p.config.activation),
 	}
 }
 

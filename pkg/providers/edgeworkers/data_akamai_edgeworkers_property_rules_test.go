@@ -3,11 +3,14 @@ package edgeworkers
 import (
 	"testing"
 
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
+
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func TestDataEdgeworkersPropertyRules(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		configPath       string
 		expectedJSONPath string
@@ -20,8 +23,10 @@ func TestDataEdgeworkersPropertyRules(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
 				Steps: []resource.TestStep{
 					{
 						Config: testutils.LoadFixtureString(t, test.configPath),
