@@ -10,6 +10,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/edgeworkers"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/retry"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
@@ -19,7 +20,29 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-func resourceEdgeKV(config edgeKVGroupItemsResourceConfig) *schema.Resource {
+type edgeKVResourceConfig struct {
+	pollInterval                time.Duration
+	initWindow                  time.Duration
+	deleteTimeout               time.Duration
+	nowFn                       func() time.Time
+	namespaceDeleteRescheduleBy time.Duration
+	namespaceDeleteSafetyBuffer time.Duration
+	namespaceDeleteTimeout      time.Duration
+}
+
+func defaultEdgeKVResourceConfig() edgeKVResourceConfig {
+	return edgeKVResourceConfig{
+		pollInterval:                5 * time.Second,
+		initWindow:                  10 * time.Second,
+		deleteTimeout:               time.Minute,
+		nowFn:                       time.Now,
+		namespaceDeleteRescheduleBy: 5 * time.Minute,
+		namespaceDeleteSafetyBuffer: 30 * time.Second,
+		namespaceDeleteTimeout:      20 * time.Minute,
+	}
+}
+
+func resourceEdgeKV(config edgeKVResourceConfig) *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceEdgeKVCreate(config),
 		ReadContext:   resourceEdgeKVRead,
@@ -33,7 +56,7 @@ func resourceEdgeKV(config edgeKVGroupItemsResourceConfig) *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Name for the EKV namespace",
+				Description: "Name for the EKV namespace.",
 			},
 			"network": {
 				Type:     schema.TypeString,
@@ -42,7 +65,7 @@ func resourceEdgeKV(config edgeKVGroupItemsResourceConfig) *schema.Resource {
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{
 					string(edgeworkers.NamespaceStagingNetwork), string(edgeworkers.NamespaceProductionNetwork),
 				}, false)),
-				Description: "The network on which the namespace will be activated",
+				Description: "The network on which the namespace will be activated.",
 			},
 			"group_id": {
 				Type:        schema.TypeInt,
@@ -70,14 +93,17 @@ func resourceEdgeKV(config edgeKVGroupItemsResourceConfig) *schema.Resource {
 			"geo_location": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Storage location for data",
+				Description: "Storage location for data.",
 				ForceNew:    true,
 			},
+		},
+		Timeouts: &schema.ResourceTimeout{
+			Delete: ptr.To(config.namespaceDeleteTimeout),
 		},
 	}
 }
 
-func waitForEdgeKVInitialization(ctx context.Context, client edgeworkers.Edgeworkers, config edgeKVGroupItemsResourceConfig) error {
+func waitForEdgeKVInitialization(ctx context.Context, client edgeworkers.Edgeworkers, config edgeKVResourceConfig) error {
 	status := &edgeworkers.EdgeKVInitializationStatus{}
 	var err error
 
@@ -96,7 +122,7 @@ func waitForEdgeKVInitialization(ctx context.Context, client edgeworkers.Edgewor
 	return nil
 }
 
-func resourceEdgeKVCreate(config edgeKVGroupItemsResourceConfig) schema.CreateContextFunc {
+func resourceEdgeKVCreate(config edgeKVResourceConfig) schema.CreateContextFunc {
 	return func(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
 		meta := meta.Must(m)
 		logger := meta.Log("EdgeKV", "resourceEdgeKVCreate")
@@ -266,7 +292,7 @@ func resourceEdgeKVUpdate(ctx context.Context, rd *schema.ResourceData, m interf
 	return resourceEdgeKVRead(ctx, rd, m)
 }
 
-func resourceEdgeKVDelete(config edgeKVGroupItemsResourceConfig) schema.DeleteContextFunc {
+func resourceEdgeKVDelete(config edgeKVResourceConfig) schema.DeleteContextFunc {
 	return func(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
 		meta := meta.Must(m)
 		logger := meta.Log("EdgeKV", "resourceEdgeKVDelete")
@@ -304,11 +330,42 @@ func resourceEdgeKVDelete(config edgeKVGroupItemsResourceConfig) schema.DeleteCo
 		_, err = client.DeleteEdgeKVNamespace(ctx, edgeworkers.DeleteEdgeKVNamespaceRequest{
 			Network: edgeworkers.NamespaceNetwork(network),
 			Name:    name,
-			Sync:    true, // remove immediately
 		})
 		if err != nil {
 			return diag.Errorf("could not delete namespace '%s' in network '%s': %s",
 				name, network, err)
+		}
+
+		rescheduledDeleteTime := config.nowFn().UTC().Add(config.namespaceDeleteRescheduleBy + config.namespaceDeleteSafetyBuffer)
+		err = rescheduleNamespaceDelete(ctx, client, name, network, rescheduledDeleteTime, config)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		// Calculate deadline for polling based on context deadline or fall back to default timeout
+		pollDeadline := config.namespaceDeleteTimeout
+		if deadline, ok := ctx.Deadline(); ok {
+			pollDeadline = time.Until(deadline)
+		}
+
+		_, err = retry.Poll(ctx, retry.PollingOpts[edgeworkers.GetNamespaceResponse]{
+			Fn: func(ctx context.Context) (*edgeworkers.GetNamespaceResponse, error) {
+				return client.GetEdgeKVNamespace(ctx, edgeworkers.GetEdgeKVNamespaceRequest{
+					Network: edgeworkers.NamespaceNetwork(network),
+					Name:    name,
+				})
+			},
+			ShouldRetryData: func(_ edgeworkers.GetNamespaceResponse) bool {
+				return true
+			},
+			ShouldRetryError: func(err error) bool {
+				return !errors.Is(err, edgeworkers.ErrNamespaceNotFound)
+			},
+			Interval: config.pollInterval,
+			Deadline: pollDeadline,
+		})
+		if err != nil && !errors.Is(err, edgeworkers.ErrNamespaceNotFound) {
+			return diag.FromErr(err)
 		}
 
 		rd.SetId("")
@@ -329,7 +386,7 @@ func displayGroupIDWarning() schema.SchemaValidateDiagFunc {
 }
 
 // waitUntilNoGroupsInNamespace waits until there are no groups in the namespace
-func waitUntilNoGroupsInNamespace(ctx context.Context, client edgeworkers.Edgeworkers, name string, network string, config edgeKVGroupItemsResourceConfig) error {
+func waitUntilNoGroupsInNamespace(ctx context.Context, client edgeworkers.Edgeworkers, name string, network string, config edgeKVResourceConfig) error {
 	ctx, cancel := context.WithTimeout(ctx, config.deleteTimeout)
 	defer cancel()
 	var badRequestErr error
@@ -367,6 +424,36 @@ func waitUntilNoGroupsInNamespace(ctx context.Context, client edgeworkers.Edgewo
 			return fmt.Errorf("namespace '%s' in network '%s' has groups, "+
 				"please remove all items from this namespace before trying to delete the resource",
 				name, network)
+		}
+	}
+}
+
+func rescheduleNamespaceDelete(ctx context.Context, client edgeworkers.Edgeworkers, name, network string, scheduledDeleteTime time.Time, config edgeKVResourceConfig) error {
+
+	for {
+		_, err := client.RescheduleNamespaceDelete(ctx, edgeworkers.RescheduleNamespaceDeleteRequest{
+			Network: edgeworkers.NamespaceNetwork(network),
+			Name:    name,
+			Body: &edgeworkers.ScheduledDeleteTimeRequest{
+				ScheduledDeleteTime: scheduledDeleteTime,
+			},
+		})
+		if err == nil {
+			return nil
+		}
+
+		if errors.Is(err, edgeworkers.ErrNamespaceNotFound) {
+			return nil
+		}
+
+		if !errors.Is(err, edgeworkers.ErrNamespaceNoScheduledDelete) {
+			return fmt.Errorf("could not reschedule delete for namespace '%s' in network '%s': %w", name, network, err)
+		}
+
+		select {
+		case <-time.After(config.pollInterval):
+		case <-ctx.Done():
+			return fmt.Errorf("timed out waiting for namespace '%s' in network '%s' scheduled delete to become available for reschedule: %w", name, network, ctx.Err())
 		}
 	}
 }

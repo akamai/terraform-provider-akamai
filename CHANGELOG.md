@@ -86,6 +86,8 @@
 
 
 
+* EdgeKV
+    * Improved namespace deletion in the `akamai_edgekv` resource to use the asynchronous EdgeKV API delete flow.
 
 
 

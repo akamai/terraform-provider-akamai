@@ -15,9 +15,10 @@ type (
 	}
 
 	subproviderConfig struct {
-		activation edgeworkersActivationResourceConfig
-		edgekv     edgeKVGroupItemsResourceConfig
-		edgeworker edgeworkerResourceConfig
+		activation       edgeworkersActivationResourceConfig
+		edgekv           edgeKVResourceConfig
+		edgekvGroupItems edgeKVGroupItemsResourceConfig
+		edgeworker       edgeworkerResourceConfig
 	}
 )
 
@@ -25,9 +26,10 @@ var _ subprovider.Subprovider = &Subprovider{}
 
 func defaultSubproviderConfig() subproviderConfig {
 	return subproviderConfig{
-		activation: defaultEdgeworkersActivationResourceConfig(),
-		edgekv:     defaultEdgeKVGroupItemsResourceConfig(),
-		edgeworker: defaultEdgeworkerResourceConfig(),
+		activation:       defaultEdgeworkersActivationResourceConfig(),
+		edgekv:           defaultEdgeKVResourceConfig(),
+		edgekvGroupItems: defaultEdgeKVGroupItemsResourceConfig(),
+		edgeworker:       defaultEdgeworkerResourceConfig(),
 	}
 }
 
@@ -44,7 +46,7 @@ func NewSubprovider() *Subprovider {
 func (p *Subprovider) SDKResources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
 		"akamai_edgekv":                 resourceEdgeKV(p.config.edgekv),
-		"akamai_edgekv_group_items":     resourceEdgeKVGroupItems(p.config.edgekv),
+		"akamai_edgekv_group_items":     resourceEdgeKVGroupItems(p.config.edgekvGroupItems),
 		"akamai_edgeworkers_activation": resourceEdgeworkersActivation(p.config.activation),
 		"akamai_edgeworker":             resourceEdgeWorker(p.config.edgeworker, p.config.activation),
 	}
