@@ -43,7 +43,7 @@ func TestDataContentProtectionJavaScriptInjectionRule(t *testing.T) {
 		).Return(&response, nil)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDataContentProtectionJavaScriptInjectionRule/basic.tf"),
@@ -78,7 +78,7 @@ func TestDataContentProtectionJavaScriptInjectionRule(t *testing.T) {
 		).Return(&response, nil)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDataContentProtectionJavaScriptInjectionRule/filter_by_id.tf"),
@@ -106,7 +106,7 @@ func TestDataContentProtectionJavaScriptInjectionRule(t *testing.T) {
 		}).Once()
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
 			Steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestDataContentProtectionJavaScriptInjectionRule/basic.tf"),
@@ -123,7 +123,7 @@ func TestDataContentProtectionJavaScriptInjectionRule(t *testing.T) {
 		client := edgegrid.NewTestClient()
 		mockGetConfigVersion(client.APPSEC)
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
 			Steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestDataContentProtectionJavaScriptInjectionRule/missing_config_id.tf"),

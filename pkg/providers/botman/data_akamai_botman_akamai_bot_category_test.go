@@ -40,7 +40,7 @@ func TestDataAkamaiBotCategory(t *testing.T) {
 			botman.GetAkamaiBotCategoryListRequest{},
 		).Return(&response, nil)
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDataAkamaiBotCategory/basic.tf"),
@@ -73,7 +73,7 @@ func TestDataAkamaiBotCategory(t *testing.T) {
 			botman.GetAkamaiBotCategoryListRequest{CategoryName: "Test name 3"},
 		).Return(&response, nil)
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDataAkamaiBotCategory/filter_by_name.tf"),

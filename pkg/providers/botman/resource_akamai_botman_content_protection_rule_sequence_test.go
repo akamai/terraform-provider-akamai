@@ -63,7 +63,7 @@ func TestResourceContentProtectionRuleSequence(t *testing.T) {
 		).Return(&readResponseAfterUpdate, nil).Times(2)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResourceContentProtectionRuleSequence/create.tf"),
@@ -94,7 +94,7 @@ func TestResourceContentProtectionRuleSequence(t *testing.T) {
 		client := edgegrid.NewTestClient()
 		mockGetConfigVersion(client.APPSEC)
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
 			Steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResourceContentProtectionRuleSequence/missing_config_id.tf"),
@@ -131,7 +131,7 @@ func TestResourceContentProtectionRuleSequence(t *testing.T) {
 		}).Once()
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
 			Steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResourceContentProtectionRuleSequence/create.tf"),

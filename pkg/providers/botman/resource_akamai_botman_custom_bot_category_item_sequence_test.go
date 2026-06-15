@@ -20,7 +20,7 @@ func TestResourceCustomBotCategoryItemSequenceMissingInput(t *testing.T) {
 		client := edgegrid.NewTestClient()
 		mockGetConfigVersion(client.APPSEC)
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
 			Steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResourceCustomBotCategoryItemSequence/missing_config_id.tf"),
@@ -61,7 +61,7 @@ func TestResourceCustomBotCategoryItemSequenceError(t *testing.T) {
 				print(err)
 				return err
 			},
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
 			Steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResourceCustomBotCategoryItemSequence/create.tf"),
@@ -126,7 +126,7 @@ func TestResourceCustomBotCategoryItemSequence(t *testing.T) {
 		).Return(&readResponse2, nil).Times(2)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResourceCustomBotCategoryItemSequence/create.tf"),

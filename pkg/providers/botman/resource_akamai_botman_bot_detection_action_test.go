@@ -21,7 +21,7 @@ func TestResourceBotDetectionAction(t *testing.T) {
 		expectedUpdateJSON := `{"testKey":"updated_testValue3"}`
 		client := setupMockedBotDetectionActionBotmanClient(false)
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResourceBotDetectionAction/create.tf"),
@@ -45,7 +45,7 @@ func TestResourceBotDetectionAction(t *testing.T) {
 		client := setupMockedBotDetectionActionBotmanClient(true)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResourceBotDetectionAction/create.tf"),
@@ -67,7 +67,7 @@ func TestResourceBotDetectionAction(t *testing.T) {
 		client := setupMockedBotDetectionActionBotmanClient(true)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResourceBotDetectionAction/create.tf"),

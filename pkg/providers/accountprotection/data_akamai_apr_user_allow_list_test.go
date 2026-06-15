@@ -84,7 +84,7 @@ func TestDataUserAllowList(t *testing.T) {
 			test.setupMock(client.AccountProtection)
 
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
 				Steps:                    test.steps,
 			})
 

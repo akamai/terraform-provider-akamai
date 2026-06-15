@@ -22,7 +22,7 @@ func TestResourceAkamaiBotCategoryAction(t *testing.T) {
 		client := setupMockedAkamaiBotCategoryActionBotmanClient(false)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResourceAkamaiBotCategoryAction/create.tf"),
@@ -46,7 +46,7 @@ func TestResourceAkamaiBotCategoryAction(t *testing.T) {
 		expectedCreateJSON := `{"testKey":"testValue3"}`
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResourceAkamaiBotCategoryAction/create.tf"),
@@ -69,7 +69,7 @@ func TestResourceAkamaiBotCategoryAction(t *testing.T) {
 		client := setupMockedAkamaiBotCategoryActionBotmanClient(true)
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResourceAkamaiBotCategoryAction/create.tf"),
