@@ -168,7 +168,10 @@
 
 
 
-
+* DNS
+  * Fixed problem when removing quotation marks in TXT records does not count as infrastructure change 
+    ([I#665](https://github.com/akamai/terraform-provider-akamai/issues/665)) and ([PR#684](https://github.com/akamai/terraform-provider-akamai/pull/684)).
+  * Fixed typo in the NormalizeTarget error message ([PR#722](https://github.com/akamai/terraform-provider-akamai/pull/722)).
 
 
 

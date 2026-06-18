@@ -557,6 +557,27 @@ func diffQuotedDNSRecord(oldTargetList []string, newTargetList []string, o strin
 		return false
 	}
 
+	if recordType == RRTypeTxt {
+		baseForNorm := o
+		if baseForNorm == "" {
+			baseForNorm = n
+		}
+		normalizedBase, err := txtrecord.NormalizeTarget(baseForNorm)
+		if err != nil {
+			return false
+		}
+		for _, compval := range compList {
+			normalizedComp, errComp := txtrecord.NormalizeTarget(compval)
+			if errComp != nil {
+				continue
+			}
+			if normalizedBase == normalizedComp {
+				return true
+			}
+		}
+		return false
+	}
+
 	for _, compval := range compList {
 		if compTrim && strings.Contains(compval, backslashQuote) {
 			compval = strings.ReplaceAll(compval, backslashQuote, singleQuote)
@@ -1214,10 +1235,9 @@ func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 	if len(targets) == 0 {
 		return diag.Errorf("[ERROR] [Akamai DNSv2] READ -  Invalid RData Returned for Recordset %s %s %s", zone, host, recordType)
 	}
-
-	sort.Strings(targets)
 	if recordType == RRTypeSoa {
 		log.Debug("READ SOA RECORD")
+		sort.Strings(targets)
 		rdataSerial, ok := rdataFieldMap["serial"].(int)
 		if !ok {
 			return diag.Errorf("'serial' is of invalid type; should be 'int'")
@@ -1236,6 +1256,7 @@ func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 		}
 	}
 	if recordType == RRTypeAkamaiTlc {
+		sort.Strings(targets)
 		extractTlcString := strings.Join(targets, " ")
 		sha1hash = hash.GetSHAString(extractTlcString)
 	}

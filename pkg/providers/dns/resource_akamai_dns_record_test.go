@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/dns"
+	akalog "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/log"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/ptr"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
@@ -317,36 +318,38 @@ func TestResDnsRecord(t *testing.T) {
 		client.DNS.AssertExpectations(t)
 	})
 
-	t.Run("TXT record test - update target", func(t *testing.T) {
+	t.Run("TXT record test - update single line target", func(t *testing.T) {
+		t.Parallel()
 
-		target := "\"v=spf1 mx include:spf.domain.com include:spf.protection.outlook.com -all\""
 		name := "infrastructure.domain.net"
+		target := []string{"\"v=spf1 mx include:spf.domain.com include:spf.protection.outlook.com -all\""}
+		normalizedUpdatedTarget := []string{"\"v=spf1\" \"mx\" \"include:spf.domain.com\" \"include:spf.protection.outlook.com\" \"-all\""}
 
-		normalizedTarget := fmt.Sprintf("%q", target)
+		client := edgegrid.NewTestClient()
 
-		client := &dns.Mock{}
-
-		client.On("GetRecord",
+		// create.
+		client.DNS.On("GetRecord",
 			testutils.MockContext,
 			dns.GetRecordRequest{Zone: name, Name: name, RecordType: "TXT"},
 		).Return(nil, notFound).Once()
 
-		client.On("CreateRecord",
+		client.DNS.On("CreateRecord",
 			testutils.MockContext,
 			dns.CreateRecordRequest{
 				Record: &dns.RecordBody{
 					Name:       name,
 					RecordType: "TXT",
-					TTL:        300,
+					TTL:        ptr.To(1800),
 					Active:     false,
-					Target:     []string{normalizedTarget},
+					Target:     target,
 				},
 				Zone:    name,
 				RecLock: []bool{false},
 			},
 		).Return(nil)
 
-		client.On("GetRecord",
+		// read 3 times: 2 after create (read + check) + 1 before update (refresh)
+		client.DNS.On("GetRecord",
 			testutils.MockContext,
 			dns.GetRecordRequest{Zone: name, Name: name, RecordType: "TXT"},
 		).Return(&dns.GetRecordResponse{
@@ -354,66 +357,225 @@ func TestResDnsRecord(t *testing.T) {
 			RecordType: "TXT",
 			TTL:        300,
 			Active:     false,
-			Target:     []string{normalizedTarget},
-		}, nil).Once()
+			Target:     target,
+		}, nil).Times(4)
 
-		client.On("ParseRData",
+		client.DNS.On("ParseRData",
 			testutils.MockContext,
 			"TXT",
-			[]string{normalizedTarget},
+			target,
 		).Return(map[string]interface{}{
-			"target": []string{normalizedTarget},
+			"target": target,
+		}).Times(3)
+
+		client.DNS.On("ProcessRdata",
+			testutils.MockContext,
+			target,
+			"TXT",
+		).Return(target).Times(4)
+
+		// update.
+		client.DNS.On("UpdateRecord",
+			testutils.MockContext,
+			dns.UpdateRecordRequest{
+				Record: &dns.RecordBody{
+					Name:       name,
+					RecordType: "TXT",
+					TTL:        ptr.To(1800),
+					Active:     false,
+					Target:     normalizedUpdatedTarget,
+				},
+				Zone:    name,
+				RecLock: []bool{false},
+			},
+		).Return(nil)
+
+		// read 2 times after update: post-update read + final check
+		client.DNS.On("GetRecord",
+			testutils.MockContext,
+			dns.GetRecordRequest{Zone: name, Name: name, RecordType: "TXT"},
+		).Return(&dns.GetRecordResponse{
+			Name:       name,
+			RecordType: "TXT",
+			TTL:        300,
+			Active:     false,
+			Target:     normalizedUpdatedTarget,
+		}, nil).Times(2)
+
+		client.DNS.On("ParseRData",
+			testutils.MockContext,
+			"TXT",
+			normalizedUpdatedTarget,
+		).Return(map[string]interface{}{
+			"target": normalizedUpdatedTarget,
 		}).Times(2)
 
-		client.On("ProcessRdata",
+		client.DNS.On("ProcessRdata",
 			testutils.MockContext,
-			[]string{normalizedTarget},
+			normalizedUpdatedTarget,
 			"TXT",
-		).Return([]string{normalizedTarget}).Times(2)
+		).Return(normalizedUpdatedTarget).Times(2)
 
-		client.On("GetRecord",
-			testutils.MockContext,
-			dns.GetRecordRequest{Zone: name, Name: name, RecordType: "TXT"},
-		).Return(&dns.GetRecordResponse{
-			Name:       name,
-			RecordType: "TXT",
-			TTL:        300,
-			Active:     false,
-			Target:     []string{normalizedTarget},
-		}, nil).Once()
-
-		client.On("DeleteRecord",
+		// delete.
+		client.DNS.On("DeleteRecord",
 			testutils.MockContext,
 			dns.DeleteRecordRequest{Zone: name, Name: name, RecordType: "TXT", RecLock: []bool{false}},
 		).Return(nil)
 
 		resourceName := "akamai_dns_record.txt_record"
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResDnsRecord/quotation_marks/create.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(resourceName, "recordtype", "TXT"),
-							resource.TestCheckResourceAttr(resourceName, "target.#", "1"),
-							resource.TestCheckResourceAttr(resourceName, "target.0", "\"v=spf1 mx include:spf.domain.com include:spf.protection.outlook.com -all\""),
-						),
-					},
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResDnsRecord/quotation_marks/update.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(resourceName, "recordtype", "TXT"),
-							resource.TestCheckResourceAttr(resourceName, "target.#", "1"),
-							resource.TestCheckResourceAttr(resourceName, "target.0", "v=spf1 mx include:spf.domain.com include:spf.protection.outlook.com -all"),
-						),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDnsRecord/quotation_marks/create_txt_sl.tf"),
+					Check: test.NewStateChecker(resourceName).
+						CheckEqual("recordtype", "TXT").
+						CheckEqual("target.#", "1").
+						CheckEqual("target.0", target[0]).Build(),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDnsRecord/quotation_marks/update_txt_sl.tf"),
+					Check: test.NewStateChecker(resourceName).
+						CheckEqual("recordtype", "TXT").
+						CheckEqual("target.#", "1").
+						CheckEqual("target.0", "v=spf1 mx include:spf.domain.com include:spf.protection.outlook.com -all").Build(),
+				},
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.DNS.AssertExpectations(t)
+	})
+
+	t.Run("TXT record test - update multi line target", func(t *testing.T) {
+		t.Parallel()
+
+		name := "infrastructure.domain.net"
+		target := []string{"\"v=spf1 mx include:spf.domain.com include:spf.protection.outlook.com -all\"", "\"foo\" \"foo\""}
+		normalizedUpdatedTarget := []string{"\"v=spf1\" \"mx\" \"include:spf.domain.com\" \"include:spf.protection.outlook.com\" \"-all\"", "\"foo\" \"foo\""}
+
+		client := edgegrid.NewTestClient()
+
+		// create.
+		client.DNS.On("GetRecord",
+			testutils.MockContext,
+			dns.GetRecordRequest{Zone: name, Name: name, RecordType: "TXT"},
+		).Return(nil, notFound).Once()
+
+		client.DNS.On("CreateRecord",
+			testutils.MockContext,
+			dns.CreateRecordRequest{
+				Record: &dns.RecordBody{
+					Name:       name,
+					RecordType: "TXT",
+					TTL:        ptr.To(1800),
+					Active:     false,
+					Target:     target,
+				},
+				Zone:    name,
+				RecLock: []bool{false},
+			},
+		).Return(nil)
+
+		// read 3 times: 2 after create (read + check) + 1 before update (refresh)
+		client.DNS.On("GetRecord",
+			testutils.MockContext,
+			dns.GetRecordRequest{Zone: name, Name: name, RecordType: "TXT"},
+		).Return(&dns.GetRecordResponse{
+			Name:       name,
+			RecordType: "TXT",
+			TTL:        300,
+			Active:     false,
+			Target:     target,
+		}, nil).Times(4)
+
+		client.DNS.On("ParseRData",
+			testutils.MockContext,
+			"TXT",
+			target,
+		).Return(map[string]interface{}{
+			"target": target,
+		}).Times(3)
+
+		client.DNS.On("ProcessRdata",
+			testutils.MockContext,
+			target,
+			"TXT",
+		).Return(target).Times(4)
+
+		// update.
+		client.DNS.On("UpdateRecord",
+			testutils.MockContext,
+			dns.UpdateRecordRequest{
+				Record: &dns.RecordBody{
+					Name:       name,
+					RecordType: "TXT",
+					TTL:        ptr.To(1800),
+					Active:     false,
+					Target:     normalizedUpdatedTarget,
+				},
+				Zone:    name,
+				RecLock: []bool{false},
+			},
+		).Return(nil)
+
+		// read 2 times after update: post-update read + final check
+		client.DNS.On("GetRecord",
+			testutils.MockContext,
+			dns.GetRecordRequest{Zone: name, Name: name, RecordType: "TXT"},
+		).Return(&dns.GetRecordResponse{
+			Name:       name,
+			RecordType: "TXT",
+			TTL:        300,
+			Active:     false,
+			Target:     normalizedUpdatedTarget,
+		}, nil).Times(2)
+
+		client.DNS.On("ParseRData",
+			testutils.MockContext,
+			"TXT",
+			normalizedUpdatedTarget,
+		).Return(map[string]interface{}{
+			"target": normalizedUpdatedTarget,
+		}).Times(2)
+
+		client.DNS.On("ProcessRdata",
+			testutils.MockContext,
+			normalizedUpdatedTarget,
+			"TXT",
+		).Return(normalizedUpdatedTarget).Times(2)
+
+		// delete.
+		client.DNS.On("DeleteRecord",
+			testutils.MockContext,
+			dns.DeleteRecordRequest{Zone: name, Name: name, RecordType: "TXT", RecLock: []bool{false}},
+		).Return(nil)
+
+		resourceName := "akamai_dns_record.txt_record"
+
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDnsRecord/quotation_marks/create_txt_ml.tf"),
+					Check: test.NewStateChecker(resourceName).
+						CheckEqual("recordtype", "TXT").
+						CheckEqual("target.#", "2").
+						CheckEqual("target.0", target[0]).
+						CheckEqual("target.1", "foo foo").Build(), // this value is normalized
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDnsRecord/quotation_marks/update_txt_ml.tf"),
+					Check: test.NewStateChecker(resourceName).
+						CheckEqual("recordtype", "TXT").
+						CheckEqual("target.#", "2").
+						CheckEqual("target.0", "v=spf1 mx include:spf.domain.com include:spf.protection.outlook.com -all").
+						CheckEqual("target.1", "foo foo").Build(),
+				},
+			},
+		})
+
+		client.DNS.AssertExpectations(t)
 	})
 
 	t.Run("SRV record with default values", func(t *testing.T) {
@@ -1535,6 +1697,122 @@ func TestTargetDiffSuppress(t *testing.T) {
 		config := schema.TestResourceDataRaw(t, getResourceDNSRecordSchema(), map[string]interface{}{"recordtype": "AAAA"})
 		assert.False(t, dnsRecordTargetSuppress("target.#", "0", "", config))
 	})
+}
+
+func TestDiffQuotedDNSRecordTXT(t *testing.T) {
+	logger := akalog.NOPLogger()
+
+	spfValue := "v=spf1 mx include:spf.domain.com include:spf.protection.outlook.com -all"
+	spfQuoted := "\"v=spf1 mx include:spf.domain.com include:spf.protection.outlook.com -all\""
+	spfNormalizedChunks := "\"v=spf1\" \"mx\" \"include:spf.domain.com\" \"include:spf.protection.outlook.com\" \"-all\""
+
+	tests := []struct {
+		name           string
+		recordType     string
+		oldTargetList  []string
+		newTargetList  []string
+		oldVal         string
+		newVal         string
+		expectSuppress bool
+	}{
+		{
+			name:           "TXT: removing outer quotes triggers diff",
+			recordType:     RRTypeTxt,
+			oldTargetList:  []string{spfQuoted},
+			newTargetList:  []string{spfValue},
+			oldVal:         spfQuoted,
+			newVal:         spfValue,
+			expectSuppress: false,
+		},
+		{
+			name:           "TXT: same quoted value suppresses diff",
+			recordType:     RRTypeTxt,
+			oldTargetList:  []string{spfQuoted},
+			newTargetList:  []string{spfQuoted},
+			oldVal:         spfQuoted,
+			newVal:         spfQuoted,
+			expectSuppress: true,
+		},
+		{
+			name:           "TXT: same unquoted value suppresses diff",
+			recordType:     RRTypeTxt,
+			oldTargetList:  []string{spfValue},
+			newTargetList:  []string{spfValue},
+			oldVal:         spfValue,
+			newVal:         spfValue,
+			expectSuppress: true,
+		},
+		{
+			name:           "TXT: normalized chunked form vs normalized chunked form suppresses diff",
+			recordType:     RRTypeTxt,
+			oldTargetList:  []string{spfNormalizedChunks},
+			newTargetList:  []string{spfNormalizedChunks},
+			oldVal:         spfNormalizedChunks,
+			newVal:         spfNormalizedChunks,
+			expectSuppress: true,
+		},
+		{
+			name:           "TXT: adding outer quotes triggers diff",
+			recordType:     RRTypeTxt,
+			oldTargetList:  []string{spfValue},
+			newTargetList:  []string{spfQuoted},
+			oldVal:         spfValue,
+			newVal:         spfQuoted,
+			expectSuppress: false,
+		},
+		{
+			name:           "TXT: order change suppresses diff (set behavior)",
+			recordType:     RRTypeTxt,
+			oldTargetList:  []string{"\"one\"", "\"two\""},
+			newTargetList:  []string{"\"two\"", "\"one\""},
+			oldVal:         "\"two\"",
+			newVal:         "\"one\"",
+			expectSuppress: true,
+		},
+		{
+			name:           "TXT: different values trigger diff",
+			recordType:     RRTypeTxt,
+			oldTargetList:  []string{spfQuoted},
+			newTargetList:  []string{"\"v=spf1 include:other.com ~all\""},
+			oldVal:         spfQuoted,
+			newVal:         "\"v=spf1 include:other.com ~all\"",
+			expectSuppress: false,
+		},
+		{
+			name:           "TXT: different list lengths trigger diff",
+			recordType:     RRTypeTxt,
+			oldTargetList:  []string{spfQuoted},
+			newTargetList:  []string{spfQuoted, "\"another\""},
+			oldVal:         spfQuoted,
+			newVal:         "\"another\"",
+			expectSuppress: false,
+		},
+		{
+			name:           "TXT: adding quotes should not trigger diff",
+			recordType:     RRTypeTxt,
+			oldTargetList:  []string{"abc"},
+			newTargetList:  []string{"\"abc\""},
+			oldVal:         "abc",
+			newVal:         "\"abc\"",
+			expectSuppress: true,
+		},
+		{
+			name:           "TXT: removing quotes should not trigger diff",
+			recordType:     RRTypeTxt,
+			oldTargetList:  []string{"\"abc\""},
+			newTargetList:  []string{"abc"},
+			oldVal:         "\"abc\"",
+			newVal:         "abc",
+			expectSuppress: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result := diffQuotedDNSRecord(tc.oldTargetList, tc.newTargetList, tc.oldVal, tc.newVal, tc.recordType, logger)
+			assert.Equal(t, tc.expectSuppress, result)
+		})
+	}
 }
 
 func TestResolveTxtRecordTargets(t *testing.T) {
