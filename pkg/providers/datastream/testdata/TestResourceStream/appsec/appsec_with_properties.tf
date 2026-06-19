@@ -1,0 +1,40 @@
+provider "akamai" {
+  edgerc = "../../common/testutils/edgerc"
+}
+
+
+resource "akamai_datastream" "s" {
+  log_type = "APPSEC"
+  active   = false
+
+  stream_name = "test-app-sec-stream-create"
+  group_id    = "42"
+  contract_id = "test_contract"
+
+  notification_emails = [
+    "nobody@akamai.com"
+  ]
+
+  # appsec streams cannot have properties
+  properties = [1]
+
+  trafficpeak_connector {
+    authentication_type = "BASIC"
+    display_name        = "TrafficPeakTest"
+    endpoint            = "https://example.com/ingest/event?table=unit_test&token=1234"
+    content_type        = "application/json"
+    compress_logs       = true
+    user_name           = "username"
+    password            = "password"
+  }
+
+  delivery_configuration {
+    format = "JSON"
+
+    frequency {
+      interval_in_secs = 30
+    }
+  }
+}
+
+

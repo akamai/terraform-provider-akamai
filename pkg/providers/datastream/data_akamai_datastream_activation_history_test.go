@@ -15,13 +15,33 @@ import (
 func TestDataAkamaiDatastreamActivationHistoryRead(t *testing.T) {
 	tests := map[string]struct {
 		configPath                 string
+		expectedLogType            datastream.LogType
 		getActivationHistoryReturn []datastream.ActivationHistoryEntry
 		checkFuncs                 []resource.TestCheckFunc
 		edgegridError              error
 		withError                  *regexp.Regexp
 	}{
+		"validate activation history response - appsec log type": {
+			configPath:      "testdata/TestDataAkamaiDatastreamActivationHistoryRead/activation_history_appsec.tf",
+			expectedLogType: datastream.LogTypeAppSec,
+			getActivationHistoryReturn: []datastream.ActivationHistoryEntry{
+				{
+					ModifiedBy:    "user1",
+					ModifiedDate:  "16-01-2020 11:07:12 GMT",
+					Status:        datastream.StreamStatusDeactivated,
+					StreamID:      7050,
+					StreamVersion: 2,
+				},
+			},
+			checkFuncs: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttr("data.akamai_datastream_activation_history.test", "activations.0.modified_by", "user1"),
+				resource.TestCheckResourceAttr("data.akamai_datastream_activation_history.test", "activations.0.stream_id", "7050"),
+				resource.TestCheckResourceAttr("data.akamai_datastream_activation_history.test", "activations.0.status", "DEACTIVATED"),
+			},
+		},
 		"validate activation history response": {
-			configPath: "testdata/TestDataAkamaiDatastreamActivationHistoryRead/activation_history.tf",
+			configPath:      "testdata/TestDataAkamaiDatastreamActivationHistoryRead/activation_history.tf",
+			expectedLogType: datastream.LogTypeCDN,
 			getActivationHistoryReturn: []datastream.ActivationHistoryEntry{
 				{
 					ModifiedBy:    "user1",
@@ -54,15 +74,17 @@ func TestDataAkamaiDatastreamActivationHistoryRead(t *testing.T) {
 		},
 		"validate empty response": {
 			configPath:                 "testdata/TestDataAkamaiDatastreamActivationHistoryRead/empty_activation_history.tf",
+			expectedLogType:            datastream.LogTypeCDN,
 			getActivationHistoryReturn: []datastream.ActivationHistoryEntry{},
 			checkFuncs: []resource.TestCheckFunc{
 				resource.TestCheckResourceAttr("data.akamai_datastream_activation_history.test", "stream_id", "7051"),
 			},
 		},
 		"edgegrid error": {
-			configPath:    "testdata/TestDataAkamaiDatastreamActivationHistoryRead/empty_activation_history.tf",
-			edgegridError: fmt.Errorf("%w: request failed: %s", datastream.ErrGetActivationHistory, errors.New("500")),
-			withError:     regexp.MustCompile("view activation history: request failed: 500"),
+			configPath:      "testdata/TestDataAkamaiDatastreamActivationHistoryRead/empty_activation_history.tf",
+			expectedLogType: datastream.LogTypeCDN,
+			edgegridError:   fmt.Errorf("%w: request failed: %s", datastream.ErrGetActivationHistory, errors.New("500")),
+			withError:       regexp.MustCompile("view activation history: request failed: 500"),
 		},
 	}
 
@@ -70,10 +92,13 @@ func TestDataAkamaiDatastreamActivationHistoryRead(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			client := datastream.Mock{}
 			useClient(&client, func() {
+				reqMatcher := mock.MatchedBy(func(r datastream.GetActivationHistoryRequest) bool {
+					return r.LogType == test.expectedLogType
+				})
 				if test.edgegridError != nil {
-					client.On("GetActivationHistory", testutils.MockContext, mock.Anything).Return(nil, test.edgegridError).Once()
+					client.On("GetActivationHistory", testutils.MockContext, reqMatcher).Return(nil, test.edgegridError).Once()
 				} else {
-					client.On("GetActivationHistory", testutils.MockContext, mock.Anything).Return(test.getActivationHistoryReturn, nil)
+					client.On("GetActivationHistory", testutils.MockContext, reqMatcher).Return(test.getActivationHistoryReturn, nil)
 				}
 				resource.UnitTest(t, resource.TestCase{
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),

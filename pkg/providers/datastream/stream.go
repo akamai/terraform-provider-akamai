@@ -128,6 +128,17 @@ func PropertyToList(properties []datastream.Property) []string {
 	return ids
 }
 
+// AppSecConfigsToIDsList converts a list of AppSecConfig structs to a list of IDs
+func AppSecConfigsToIDsList(configs []datastream.AppSecConfig) []int {
+	ids := make([]int, 0, len(configs))
+
+	for _, config := range configs {
+		ids = append(ids, config.AppSecID)
+	}
+
+	return ids
+}
+
 // GetPropertiesList converts propertyIDs with and without "prp_" prefix to slice of ints
 func GetPropertiesList(properties []interface{}) ([]datastream.PropertyID, error) {
 	ids := make([]datastream.PropertyID, 0, len(properties))
@@ -140,6 +151,20 @@ func GetPropertiesList(properties []interface{}) ([]datastream.PropertyID, error
 		ids = append(ids, datastream.PropertyID{PropertyID: propertyID})
 	}
 
+	return ids, nil
+}
+
+// GetAppSecConfigIDs converts a list of AppSec config IDs to a slice of AppSecConfigID types
+func GetAppSecConfigIDs(appSecConfigs []interface{}) ([]datastream.AppSecConfigID, error) {
+	ids := make([]datastream.AppSecConfigID, 0, len(appSecConfigs))
+
+	for _, config := range appSecConfigs {
+		appSecID, ok := config.(int)
+		if !ok {
+			return nil, fmt.Errorf("expected `app_sec_id` to be an integer but got %T", config)
+		}
+		ids = append(ids, datastream.AppSecConfigID{AppSecID: appSecID})
+	}
 	return ids, nil
 }
 

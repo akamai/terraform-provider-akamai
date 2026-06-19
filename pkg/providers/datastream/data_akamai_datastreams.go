@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
@@ -13,6 +14,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/datastream"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func dataAkamaiDatastreamStreams() *schema.Resource {
@@ -20,6 +22,16 @@ func dataAkamaiDatastreamStreams() *schema.Resource {
 		Description: "Retrieves a list of all streams optionally by the specified GroupID.",
 		ReadContext: dataDatastreamStreamsRead,
 		Schema: map[string]*schema.Schema{
+			"log_type": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The log type of the stream. Valid values are 'cdn' and 'appsec'. If not specified, defaults to 'cdn'.",
+				Default:     string(datastream.LogTypeCDN),
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{
+					string(datastream.LogTypeCDN),
+					string(datastream.LogTypeAppSec),
+				}, true)),
+			},
 			"group_id": {
 				Type:        schema.TypeInt,
 				Optional:    true,
@@ -31,6 +43,11 @@ func dataAkamaiDatastreamStreams() *schema.Resource {
 				Description: "List of streams",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
+						"log_type": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The log type of the stream.",
+						},
 						"stream_name": {
 							Type:        schema.TypeString,
 							Computed:    true,
@@ -76,6 +93,25 @@ func dataAkamaiDatastreamStreams() *schema.Resource {
 										Type:        schema.TypeString,
 										Computed:    true,
 										Description: "The integration mode for the property in datastream (e.g., PM_DEPENDENT, HYBRID, DS_MANAGED).",
+									},
+								},
+							},
+						},
+						"app_sec_configs": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "List of AppSec configs associated with the stream.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"app_sec_id": {
+										Type:        schema.TypeInt,
+										Computed:    true,
+										Description: "The identifier of the AppSec config.",
+									},
+									"app_sec_name": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The descriptive label for the AppSec config.",
 									},
 								},
 							},
@@ -144,7 +180,13 @@ func dataDatastreamStreamsRead(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 
+	logType, err := tf.GetStringValue("log_type", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+
 	req := datastream.ListStreamsRequest{}
+	req.LogType = datastream.LogType(strings.ToUpper(logType))
 	resID := "akamai_datastreams"
 	if groupIDInt != 0 {
 
@@ -173,19 +215,21 @@ func createStreamsAttrs(streams []datastream.StreamDetails) []interface{} {
 	streamsAttrs := make([]interface{}, 0, len(streams))
 	for _, stream := range streams {
 		streamAttr := map[string]interface{}{
-			"stream_status":  stream.StreamStatus,
-			"contract_id":    stream.ContractID,
-			"created_by":     stream.CreatedBy,
-			"created_date":   stream.CreatedDate,
-			"modified_by":    stream.ModifiedBy,
-			"modified_date":  stream.ModifiedDate,
-			"group_id":       stream.GroupID,
-			"latest_version": stream.LatestVersion,
-			"product_id":     stream.ProductID,
-			"properties":     createPropertiesAttrs(stream.Properties),
-			"stream_id":      stream.StreamID,
-			"stream_name":    stream.StreamName,
-			"stream_version": stream.StreamVersion,
+			"stream_status":   stream.StreamStatus,
+			"contract_id":     stream.ContractID,
+			"created_by":      stream.CreatedBy,
+			"created_date":    stream.CreatedDate,
+			"modified_by":     stream.ModifiedBy,
+			"modified_date":   stream.ModifiedDate,
+			"group_id":        stream.GroupID,
+			"latest_version":  stream.LatestVersion,
+			"product_id":      stream.ProductID,
+			"properties":      createPropertiesAttrs(stream.Properties),
+			"stream_id":       stream.StreamID,
+			"stream_name":     stream.StreamName,
+			"stream_version":  stream.StreamVersion,
+			"log_type":        string(stream.LogType),
+			"app_sec_configs": createAppSecConfigsAttrs(stream.AppSecConfigs),
 		}
 		// Only set integration_type if it's non-empty (API may not return the field)
 		if stream.IntegrationType != "" {
@@ -195,6 +239,19 @@ func createStreamsAttrs(streams []datastream.StreamDetails) []interface{} {
 	}
 
 	return streamsAttrs
+}
+
+func createAppSecConfigsAttrs(configs []datastream.AppSecConfig) []interface{} {
+	configsAttrs := make([]interface{}, 0, len(configs))
+	for _, config := range configs {
+		configAttr := map[string]interface{}{
+			"app_sec_id":   config.AppSecID,
+			"app_sec_name": config.AppSecName,
+		}
+		configsAttrs = append(configsAttrs, configAttr)
+	}
+
+	return configsAttrs
 }
 
 func createPropertiesAttrs(properties []datastream.Property) []interface{} {

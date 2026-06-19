@@ -86,6 +86,25 @@ var (
 	}
 
 	streamListForSpecificGroup = []datastream.StreamDetails{streamList[1]}
+
+	appSecStreamList = []datastream.StreamDetails{
+		{
+			LogType:       datastream.LogTypeAppSec,
+			StreamID:      10,
+			StreamName:    "AppSecStream1",
+			StreamStatus:  datastream.StreamStatusActivated,
+			StreamVersion: 1,
+			LatestVersion: 1,
+			GroupID:       1234,
+			ContractID:    "1-ABCDE",
+			ProductID:     "KSD",
+			CreatedBy:     "user1",
+			CreatedDate:   "01-01-2024 00:00:00 GMT",
+			AppSecConfigs: []datastream.AppSecConfig{
+				{AppSecID: 12345, AppSecName: "WAF Security File"},
+			},
+		},
+	}
 )
 
 func TestDataDatastreams(t *testing.T) {
@@ -109,6 +128,7 @@ func TestDataDatastreams(t *testing.T) {
 			init: func(m *datastream.Mock) {
 				m.On("ListStreams", testutils.MockContext, datastream.ListStreamsRequest{
 					GroupID: ptr.To(1234),
+					LogType: datastream.LogTypeCDN, // default log type
 				}).Return(streamListForSpecificGroup, nil)
 			},
 			steps: []resource.TestStep{
@@ -121,6 +141,7 @@ func TestDataDatastreams(t *testing.T) {
 		"list streams with specified group id using grp prefix": {
 			init: func(m *datastream.Mock) {
 				m.On("ListStreams", testutils.MockContext, datastream.ListStreamsRequest{
+					LogType: datastream.LogTypeCDN, // default log type
 					GroupID: ptr.To(1234),
 				}).Return(streamListForSpecificGroup, nil)
 			},
@@ -141,7 +162,7 @@ func TestDataDatastreams(t *testing.T) {
 		},
 		"list streams - empty list": {
 			init: func(m *datastream.Mock) {
-				m.On("ListStreams", testutils.MockContext, datastream.ListStreamsRequest{}).
+				m.On("ListStreams", testutils.MockContext, datastream.ListStreamsRequest{LogType: datastream.LogTypeCDN}).
 					Return([]datastream.StreamDetails{}, nil)
 			},
 			steps: []resource.TestStep{
@@ -172,6 +193,27 @@ func TestDataDatastreams(t *testing.T) {
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestDataDatastreams/list_streams_without_groupid.tf"),
 					ExpectError: regexp.MustCompile("failed to get stream list"),
+				},
+			},
+		},
+		"list appsec streams": {
+			init: func(m *datastream.Mock) {
+				m.On("ListStreams", testutils.MockContext, datastream.ListStreamsRequest{
+					LogType: datastream.LogTypeAppSec,
+				}).Return(appSecStreamList, nil)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataDatastreams/list_streams_appsec.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("data.akamai_datastreams.test", "streams_details.#", "1"),
+						resource.TestCheckResourceAttr("data.akamai_datastreams.test", "streams_details.0.stream_id", "10"),
+						resource.TestCheckResourceAttr("data.akamai_datastreams.test", "streams_details.0.stream_name", "AppSecStream1"),
+						resource.TestCheckResourceAttr("data.akamai_datastreams.test", "streams_details.0.properties.#", "0"),
+						resource.TestCheckResourceAttr("data.akamai_datastreams.test", "streams_details.0.app_sec_configs.#", "1"),
+						resource.TestCheckResourceAttr("data.akamai_datastreams.test", "streams_details.0.app_sec_configs.0.app_sec_id", "12345"),
+						resource.TestCheckResourceAttr("data.akamai_datastreams.test", "streams_details.0.app_sec_configs.0.app_sec_name", "WAF Security File"),
+					),
 				},
 			},
 		},

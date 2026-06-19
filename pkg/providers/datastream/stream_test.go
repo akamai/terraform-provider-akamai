@@ -267,3 +267,25 @@ func TestGetPropertiesList(t *testing.T) {
 	}
 	assert.Equal(t, []int{1, 2, 3, 4, 5}, propertyIDs)
 }
+
+func TestAppSecConfigsToList(t *testing.T) {
+	configs := []datastream.AppSecConfig{
+		{AppSecID: 16536, AppSecName: "WAF Security File"},
+		{AppSecID: 67890, AppSecName: "Bot Manager Config"},
+	}
+
+	assert.Equal(t, []int{16536, 67890}, AppSecConfigsToIDsList(configs))
+}
+
+func TestGetAppSecConfigIDs(t *testing.T) {
+	configs := []interface{}{16536, 67890}
+
+	result, err := GetAppSecConfigIDs(configs)
+	require.NoError(t, err)
+
+	ids := make([]int, len(result))
+	for i, r := range result {
+		ids[i] = r.AppSecID
+	}
+	assert.Equal(t, []int{16536, 67890}, ids)
+}

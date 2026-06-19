@@ -61,6 +61,7 @@ func (p *Subprovider) SDKResources() map[string]*schema.Resource {
 func (p *Subprovider) SDKDataSources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
 		"akamai_datastream_activation_history": dataAkamaiDatastreamActivationHistory(),
+		"akamai_datastream_appsec_configs":     dataSourceAppSecConfigs(),
 		"akamai_datastream_dataset_fields":     dataSourceDatasetFields(),
 		"akamai_datastreams":                   dataAkamaiDatastreamStreams(),
 	}

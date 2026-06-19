@@ -72,6 +72,13 @@
 * Global
   * Migrated Terraform to version `1.15.5`.
 
+* DataStream
+  * Added support for SIEM/AppSec streams by adding a `log_type` field to the `akamai_datastream` resource. Supported values are `APPSEC` and `CDN`.
+  * Added `app_sec_configs` for associating SIEM/AppSec streams with AppSec configurations.
+  * Added validation for log-type-specific fields. `CDN` streams require `properties` and `dataset_fields`; `APPSEC` streams require `app_sec_configs`.
+  * Added log-type-aware read and import behavior so existing streams can be imported and managed with the `akamai_datastream` resource.
+  * Preserved backward compatibility for existing CDN stream configurations by defaulting omitted `log_type` values to `CDN`.
+
 
 
 
