@@ -15714,7 +15714,7 @@ func getCriteriaSchemaV20250909() map[string]*schema.Schema {
 		"debug_mode": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "The match applies when the request is debugged using the `enhancedDebug` behavior. This criterion is for internal usage only. This criterion can be used in includes.",
+			Description: "The match applies when the request is debugged using the `enhancedDebug` behavior. This criterion can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{

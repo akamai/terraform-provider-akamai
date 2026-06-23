@@ -100,6 +100,17 @@
 
 
 
+* PAPI
+  * Added support for the new rule format [`v2026-06-09`](https://techdocs.akamai.com/terraform/docs/rule-format-changes#v2026-06-09). Compared to the previous rule format, the following fields are no longer supported:
+    * `policySet` from the `imageManager` and `imageManagerVideo` behaviors.
+    * `pqcClientHelloKeys` from the `pqcOrigin` behavior.
+
+
+
+
+
+
+
 
 
 
