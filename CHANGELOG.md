@@ -63,11 +63,14 @@
 * ClientLists
   * Added support for `REQUEST_HEADER_NAME_VALUE` type client lists.
 
+* General
+  * Updated various dependencies.
 
 
 
 
-
+* Global
+  * Migrated Terraform to version `1.15.5`.
 
 
 
