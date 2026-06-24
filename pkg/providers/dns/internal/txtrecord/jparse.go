@@ -64,7 +64,7 @@ func NormalizeTarget(r string) (string, error) {
 		return normalized, nil
 	}
 
-	return "", fmt.Errorf("normalizing txt record targed '%s' failed", r)
+	return "", fmt.Errorf("normalizing txt record target '%s' failed", r)
 }
 
 // normalizeTarget is a txt record target normalization func compliant with akamai api
