@@ -1,228 +1,62 @@
 # RELEASE NOTES
 
-## X.X.X (X X, X)
-
-#### BREAKING CHANGES:
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+## 10.3.0 (Jul 1, 2026)
 
 #### FEATURES/ENHANCEMENTS:
-* ClientLists
-  * Added support for `REQUEST_HEADER_NAME_VALUE` type client lists.
 
 * General
   * Updated various dependencies.
-
-
-
-
-* Global
   * Migrated Terraform to version `1.15.5`.
 
+* ClientLists
+  * Added support for the `REQUEST_HEADER_NAME_VALUE` client lists type.
+
+* Cloud Access
+  * Added support for the new authentication method `G2O` (Akamai Signature Header Authentication) in the `akamai_cloudaccess_key` resource.
+
 * DataStream
+  * Added data source `akamai_datastream_appsec_configs` to list all AppSec configurations.
   * Added support for SIEM/AppSec streams by adding a `log_type` field to the `akamai_datastream` resource. Supported values are `APPSEC` and `CDN`.
   * Added `app_sec_configs` for associating SIEM/AppSec streams with AppSec configurations.
   * Added validation for log-type-specific fields. `CDN` streams require `properties` and `dataset_fields`; `APPSEC` streams require `app_sec_configs`.
   * Added log-type-aware read and import behavior so existing streams can be imported and managed with the `akamai_datastream` resource.
   * Preserved backward compatibility for existing CDN stream configurations by defaulting omitted `log_type` values to `CDN`.
 
-
-
-
-
-
-
-
 * EdgeKV
-    * Improved namespace deletion in the `akamai_edgekv` resource to use the asynchronous EdgeKV API delete flow.
-
-
-
-
-
+  * Improved namespace deletion in the `akamai_edgekv` resource to use the asynchronous EdgeKV API delete flow.
+  * Added a customizable `delete` timeout to the `akamai_edgekv` resource (default: 20 minutes).
 
 * PAPI
-  * Added support for the new rule format [`v2026-05-05`](https://techdocs.akamai.com/terraform/docs/rule-format-changes#v2026-05-05). Compared to the previous rule format, the following fields are no longer supported:
-    * `continue_on_error_disclaimer`, `create_edge_worker`, `fail_open_title`, `m_pulse_information`, `m_pulse_title` and `resource_tier` from the `edge_worker` behavior.
-    * `custom_sign_string`, `nonce` and `use_custom_sign_string` from the `origin_characteristics` behavior.
   * Changed the `enabled` option name to `enable` in the `optimize_text_streaming` behavior in the `v2026-01-09` and the `v2026-02-16` rule formats. This is not a breaking change, as the `optimizeTextStreaming` was not publicly available prior to the Property Manager Catalog 26.3.
-
-
-
-
-
-
-
-
-
-
-* PAPI
-  * Added support for the new rule format [`v2026-06-09`](https://techdocs.akamai.com/terraform/docs/rule-format-changes#v2026-06-09). Compared to the previous rule format, the following fields are no longer supported:
-    * `policySet` from the `imageManager` and `imageManagerVideo` behaviors.
-    * `pqcClientHelloKeys` from the `pqcOrigin` behavior.
-
-
-
-
-
-
-
-
-
-
-
-
-
-* Cloud Access
-  * Added support for the new authentication method `G2O` (Akamai Signature Header Authentication) in the `akamai_cloudaccess_key` resource.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  * Added a new optional param to the import id of the `akamai_edge_hostname` resource. It allows to specify the certificate of the imported hostname and save it in the state ([I#338](https://github.com/akamai/terraform-provider-akamai/issues/338)).
+  * Added support for the new rule format [`v2026-05-05`](https://techdocs.akamai.com/terraform/docs/rule-format-changes#v2026-05-05). 
+  * Added support for the new rule format [`v2026-06-09`](https://techdocs.akamai.com/terraform/docs/rule-format-changes#v2026-06-09).
 
 #### BUG FIXES:
 
-
-
-
-
-* Cloud Access
-    * Fixed issue in the `akamai_cloudaccess_key` resource that using variables to pass credentials could break the processing ([I#750](https://github.com/akamai/terraform-provider-akamai/issues/750)).
 * Appsec
   * Fixed issue in the `akamai_appsec_rapid_rules` resource where `plan` and `apply` were showing diff due to a change in the rule ordering.
+  * Fixed `security_policy_id` immutability enforcement by replacing `modifiers.PreventStringUpdate()` with `modifiers.PreventStringUpdateIfKnown("security_policy_id")` in the `akamai_appsec_waf_ruleset` resource, which correctly prevents updates to the field only after it has been set to a known value, avoiding false errors during planning when the value is not yet known ([I#755](https://github.com/akamai/terraform-provider-akamai/issues/755)).
+  * Changed the `intelligent_load_shedding` field type from `*intelligentLoadSheddingModel` to `types.Object` in the `akamai_appsec_url_protection_policy` resource, enabling the Terraform Plugin Framework to correctly handle unknown values during plan ([I#760](https://github.com/akamai/terraform-provider-akamai/issues/760)).
+  * Updated `intelligent_load_shedding.custom_criteria` field in the `akamai_appsec_url_protection_policy` resource, to ensure the state correctly remains null when the field is not configured, preventing unintended drift and errors during plan when the API returns an empty list for this field.
+  * Changed the size and uniqueness validators of `hostname_paths` and `paths` attributes in the `akamai_appsec_url_protection_policy` resource, to not allow empty paths lists in `hostname_paths` and to ensure that all paths are unique, preventing API errors during apply when empty or duplicate paths are provided.
 
-* IAM
-  * Fixed a value conversion error in the `akamai_iam_api_client` resource that occurred when `api_access.apis` elements were unknown at plan ([I#744](https://github.com/akamai/terraform-provider-akamai/issues/744)).
-
-
-
-
-
-
-* mTLS Truststore
-  * Fixed an issue in the `akamai_mtlstruststore_ca_set_activation` resource where the `created_date` attribute was incorrectly preserved from a previous activation when activating a new version ([I#729](https://github.com/akamai/terraform-provider-akamai/issues/729)).
-
-
-
-
-
-* Appsec
-  * Fixed `security_policy_id` immutability enforcement by replacing `modifiers.PreventStringUpdate()` with `modifiers.PreventStringUpdateIfKnown("security_policy_id")`in `akamai_appsec_waf_ruleset` resource, which correctly prevents updates to the field only after it has been set to a known value, avoiding false errors during planning when the value is not yet known.([I#755](https://github.com/akamai/terraform-provider-akamai/issues/755))
-  * Changed the `intelligent_load_shedding` field type from `*intelligentLoadSheddingModel` to `types.Object` in the resource model of `akamai_appsec_url_protection_policy` resource, enabling the Terraform Plugin Framework to correctly handle unknown values during plan.([I#760](https://github.com/akamai/terraform-provider-akamai/issues/760))
-  * Updated `intelligent_load_shedding.custom_criteria` field in `akamai_appsec_url_protection_policy` resource, to ensure the state correctly remains null when the field is not configured, preventing unintended drift and errors during plan when the API returns an empty list for this field.
-  * Changed the size and uniqueness validators of `hostname_paths` and `paths` attributes in `akamai_appsec_url_protection_policy` resource, to not allow empty paths lists in hostname_paths and to ensure that all paths are unique, preventing API errors during apply when empty or duplicate paths are provided.
-
-* PAPI
-  * Recreate edge hostname automatically when the associated certificate changes in the `akamai_edge_hostname` resource ([I#338](https://github.com/akamai/terraform-provider-akamai/issues/338)).
-  * Added a new optional param to the import id of the `akamai_edge_hostname` resource. It allows to specify the certificate of the imported hostname and save it in the state ([I#338](https://github.com/akamai/terraform-provider-akamai/issues/338)).
-
-
-
-
-
-
-
-
-
-
-
+* Cloud Access
+  * Fixed issue in the `akamai_cloudaccess_key` resource that using variables to pass credentials could break the processing ([I#750](https://github.com/akamai/terraform-provider-akamai/issues/750)).
 
 * DNS
   * Fixed problem when removing quotation marks in TXT records does not count as infrastructure change 
     ([I#665](https://github.com/akamai/terraform-provider-akamai/issues/665)) and ([PR#684](https://github.com/akamai/terraform-provider-akamai/pull/684)).
   * Fixed typo in the NormalizeTarget error message ([PR#722](https://github.com/akamai/terraform-provider-akamai/pull/722)).
 
+* IAM
+  * Fixed a value conversion error in the `akamai_iam_api_client` resource that occurred when `api_access.apis` elements were unknown at plan ([I#744](https://github.com/akamai/terraform-provider-akamai/issues/744)).
 
+* mTLS Truststore
+  * Fixed an issue in the `akamai_mtlstruststore_ca_set_activation` resource where the `created_date` attribute was incorrectly preserved from a previous activation when activating a new version ([I#729](https://github.com/akamai/terraform-provider-akamai/issues/729)).
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+* PAPI
+  * Recreate edge hostname automatically when the associated certificate changes in the `akamai_edge_hostname` resource ([I#338](https://github.com/akamai/terraform-provider-akamai/issues/338)).
 
 ## 10.2.0 (May 13, 2026)
 
