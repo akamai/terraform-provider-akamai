@@ -91,7 +91,7 @@ func resourcePolicyImageCreate(ctx context.Context, d *schema.ResourceData, m in
 		ctx,
 		session.WithContextLog(logger),
 	)
-	client := inst.Client(meta)
+	client := meta.Client().GetImaging()
 	logger.Debug("Creating policy")
 
 	return upsertPolicyImage(ctx, d, m, client)
@@ -165,7 +165,7 @@ func resourcePolicyImageRead(ctx context.Context, d *schema.ResourceData, m inte
 		ctx,
 		session.WithContextLog(logger),
 	)
-	client := inst.Client(meta)
+	client := meta.Client().GetImaging()
 
 	logger.Debug("Reading policy")
 	policyID, err := tf.GetStringValue("policy_id", d)
@@ -285,7 +285,7 @@ func resourcePolicyImageUpdate(ctx context.Context, d *schema.ResourceData, m in
 		ctx,
 		session.WithContextLog(logger),
 	)
-	client := inst.Client(meta)
+	client := meta.Client().GetImaging()
 	logger.Debug("Updating policy")
 
 	return upsertPolicyImage(ctx, d, m, client)
@@ -298,7 +298,7 @@ func resourcePolicyImageDelete(ctx context.Context, d *schema.ResourceData, m in
 		ctx,
 		session.WithContextLog(logger),
 	)
-	client := inst.Client(meta)
+	client := meta.Client().GetImaging()
 	logger.Debug("Deleting policy")
 
 	policyID, err := tf.GetStringValue("policy_id", d)
@@ -359,7 +359,7 @@ func resourcePolicyImageImport(ctx context.Context, d *schema.ResourceData, m in
 		ctx,
 		session.WithContextLog(logger),
 	)
-	client := inst.Client(meta)
+	client := meta.Client().GetImaging()
 
 	parts := strings.Split(d.Id(), ":")
 	if len(parts) != 3 {

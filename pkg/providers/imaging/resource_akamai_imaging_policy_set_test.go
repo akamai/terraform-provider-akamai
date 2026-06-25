@@ -7,12 +7,14 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/imaging"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestResourceImagingPolicySet(t *testing.T) {
+	t.Parallel()
 	var (
 		anError = errors.New("oops")
 
@@ -339,20 +341,20 @@ func TestResourceImagingPolicySet(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &imaging.Mock{}
-			test.init(client)
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps:                    test.steps,
-				})
+			t.Parallel()
+			client := edgegrid.NewTestClient()
+			test.init(client.Imaging)
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+				Steps:                    test.steps,
 			})
-			client.AssertExpectations(t)
+			client.Imaging.AssertExpectations(t)
 		})
 	}
 }
 
 func Test_filterRemainingPolicies(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		input          *imaging.ListPoliciesResponse
 		expectedOutput int
@@ -391,6 +393,7 @@ func Test_filterRemainingPolicies(t *testing.T) {
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			assert.Equal(t, test.expectedOutput, filterRemainingPolicies(test.input))
 		})
 	}

@@ -12,6 +12,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/gtm"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/hapi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/imaging"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/mtlskeystore"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/mtlstruststore"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/papi"
@@ -35,6 +36,7 @@ type TestClient struct {
 	GTM               *gtm.Mock
 	HAPI              *hapi.Mock
 	IAM               *iam.Mock
+	Imaging           *imaging.Mock
 	MTLSKeystore      *mtlskeystore.Mock
 	MTLSTruststore    *mtlstruststore.Mock
 	PAPI              *papi.Mock
@@ -55,6 +57,7 @@ func NewTestClient() *TestClient {
 		GTM:               &gtm.Mock{},
 		HAPI:              &hapi.Mock{},
 		IAM:               &iam.Mock{},
+		Imaging:           &imaging.Mock{},
 		MTLSKeystore:      &mtlskeystore.Mock{},
 		MTLSTruststore:    &mtlstruststore.Mock{},
 		PAPI:              &papi.Mock{},
@@ -115,6 +118,11 @@ func (c *TestClient) GetHAPI() hapi.HAPI {
 // GetIAM returns the mock IAM client.
 func (c *TestClient) GetIAM() iam.IAM {
 	return c.IAM
+}
+
+// GetImaging returns the mock Imaging client.
+func (c *TestClient) GetImaging() imaging.Imaging {
+	return c.Imaging
 }
 
 // GetMTLSKeystore returns the mock MTLS Keystore client.

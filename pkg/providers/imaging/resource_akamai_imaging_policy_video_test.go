@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/imaging"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -15,6 +16,7 @@ import (
 )
 
 func TestResourcePolicyVideo(t *testing.T) {
+	t.Parallel()
 
 	type policyAttributes struct {
 		version              string
@@ -171,515 +173,503 @@ func TestResourcePolicyVideo(t *testing.T) {
 	)
 
 	t.Run("regular policy create", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicyVideo/regular_policy"
 
-		client := new(imaging.Mock)
-		expectUpsertPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyInput)
-		expectReadPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyOutput, 2)
+		client := edgegrid.NewTestClient()
+		expectUpsertPolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyInput)
+		expectReadPolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyOutput, 2)
 
-		expectDeletePolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging)
+		expectDeletePolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging)
 		// it is faster to attempt to delete on production than checking if there is policy on production first
-		expectDeletePolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction)
+		expectDeletePolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
-						Check: checkPolicyAttributes(policyAttributes{
-							version:              "1",
-							policyID:             "test_policy",
-							policySetID:          "test_policy_set",
-							activateOnProduction: "false",
-							policyPath:           fmt.Sprintf("%s/policy/policy_create.json", testDir),
-						}),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
+					Check: checkPolicyAttributes(policyAttributes{
+						version:              "1",
+						policyID:             "test_policy",
+						policySetID:          "test_policy_set",
+						activateOnProduction: "false",
+						policyPath:           fmt.Sprintf("%s/policy/policy_create.json", testDir),
+					}),
 				},
-			})
+			},
 		})
-		client.AssertExpectations(t)
+		client.Imaging.AssertExpectations(t)
 	})
 	t.Run("regular policy create and later activate on production", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicyVideo/regular_policy"
 
-		client := new(imaging.Mock)
-		expectUpsertPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyInput)
-		expectReadPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyOutput, 3)
+		client := edgegrid.NewTestClient()
+		expectUpsertPolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyInput)
+		expectReadPolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyOutput, 3)
 
 		// `activate_on_production` should not trigger Upsert for staging if the policy has not changed
-		expectUpsertPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction, &policyInput)
-		expectReadPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction, &policyOutput, 2)
+		expectUpsertPolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction, &policyInput)
+		expectReadPolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction, &policyOutput, 2)
 
-		expectDeletePolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging)
-		expectDeletePolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction)
+		expectDeletePolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging)
+		expectDeletePolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
-						Check: checkPolicyAttributes(policyAttributes{
-							version:              "1",
-							policyID:             "test_policy",
-							policySetID:          "test_policy_set",
-							activateOnProduction: "false",
-							policyPath:           fmt.Sprintf("%s/policy/policy_create.json", testDir),
-						}),
-					},
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/policy_update.tf", testDir),
-						Check: checkPolicyAttributes(policyAttributes{
-							version:              "1",
-							policyID:             "test_policy",
-							policySetID:          "test_policy_set",
-							activateOnProduction: "true",
-							policyPath:           fmt.Sprintf("%s/policy/policy_update.json", testDir),
-						}),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
+					Check: checkPolicyAttributes(policyAttributes{
+						version:              "1",
+						policyID:             "test_policy",
+						policySetID:          "test_policy_set",
+						activateOnProduction: "false",
+						policyPath:           fmt.Sprintf("%s/policy/policy_create.json", testDir),
+					}),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/policy_update.tf", testDir),
+					Check: checkPolicyAttributes(policyAttributes{
+						version:              "1",
+						policyID:             "test_policy",
+						policySetID:          "test_policy_set",
+						activateOnProduction: "true",
+						policyPath:           fmt.Sprintf("%s/policy/policy_update.json", testDir),
+					}),
+				},
+			},
 		})
-		client.AssertExpectations(t)
+		client.Imaging.AssertExpectations(t)
 	})
 	t.Run("regular policy create and activate on production, later update both", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicyVideo/regular_policy_activate_same_time"
 
-		client := new(imaging.Mock)
-		expectReadPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction, &policyOutput, 2)
+		client := edgegrid.NewTestClient()
+		expectReadPolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction, &policyOutput, 2)
 
-		expectUpsertPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyInput)
-		expectUpsertPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction, &policyInput)
+		expectUpsertPolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyInput)
+		expectUpsertPolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction, &policyInput)
 
 		// update
-		expectReadPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction, &policyOutput, 1)
+		expectReadPolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction, &policyOutput, 1)
 
 		policyInputV2 := getPolicyInputVideoV2(policyInput)
 		policyOutputV2 := getPolicyOutputVideoV2(policyOutput)
 
-		expectReadPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction, &policyOutputV2, 2)
-		expectUpsertPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyInputV2)
-		expectUpsertPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction, &policyInputV2)
+		expectReadPolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction, &policyOutputV2, 2)
+		expectUpsertPolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyInputV2)
+		expectUpsertPolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction, &policyInputV2)
 
-		expectDeletePolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging)
-		expectDeletePolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction)
+		expectDeletePolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging)
+		expectDeletePolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
-						Check: checkPolicyAttributes(policyAttributes{
-							version:              "1",
-							policyID:             "test_policy",
-							policySetID:          "test_policy_set",
-							activateOnProduction: "true",
-							policyPath:           fmt.Sprintf("%s/policy/policy_create.json", testDir),
-						}),
-					},
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/policy_update.tf", testDir),
-						Check: checkPolicyAttributes(policyAttributes{
-							version:              "2",
-							policyID:             "test_policy",
-							policySetID:          "test_policy_set",
-							activateOnProduction: "true",
-							policyPath:           fmt.Sprintf("%s/policy/policy_update.json", testDir),
-						}),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
+					Check: checkPolicyAttributes(policyAttributes{
+						version:              "1",
+						policyID:             "test_policy",
+						policySetID:          "test_policy_set",
+						activateOnProduction: "true",
+						policyPath:           fmt.Sprintf("%s/policy/policy_create.json", testDir),
+					}),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/policy_update.tf", testDir),
+					Check: checkPolicyAttributes(policyAttributes{
+						version:              "2",
+						policyID:             "test_policy",
+						policySetID:          "test_policy_set",
+						activateOnProduction: "true",
+						policyPath:           fmt.Sprintf("%s/policy/policy_update.json", testDir),
+					}),
+				},
+			},
 		})
-		client.AssertExpectations(t)
+		client.Imaging.AssertExpectations(t)
 	})
 	t.Run("regular policy create with activate_on_production=true, update immediately, fails on production", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicyVideo/regular_policy_activate_same_time"
 
-		client := new(imaging.Mock)
-		expectReadPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction, &policyOutput, 2)
+		client := edgegrid.NewTestClient()
+		expectReadPolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction, &policyOutput, 2)
 
-		expectUpsertPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyInput)
-		expectUpsertPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction, &policyInput)
+		expectUpsertPolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyInput)
+		expectUpsertPolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction, &policyInput)
 
-		expectReadPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction, &policyOutput, 1)
+		expectReadPolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction, &policyOutput, 1)
 
 		// update
 		policyInputV2 := getPolicyInputVideoV2(policyInput)
 
-		expectUpsertPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyInputV2)
-		expectUpsertPolicyFailure(client, "test_policy", "test_policy_set", "test_contract", imaging.PolicyNetworkProduction, &policyInputV2)
+		expectUpsertPolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyInputV2)
+		expectUpsertPolicyFailure(client.Imaging, "test_policy", "test_policy_set", "test_contract", imaging.PolicyNetworkProduction, &policyInputV2)
 
-		expectDeletePolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging)
-		expectDeletePolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction)
+		expectDeletePolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging)
+		expectDeletePolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
-						Check: checkPolicyAttributes(policyAttributes{
-							version:              "1",
-							policyID:             "test_policy",
-							policySetID:          "test_policy_set",
-							activateOnProduction: "true",
-							policyPath:           fmt.Sprintf("%s/policy/policy_create.json", testDir),
-						}),
-					},
-					{
-						Config:      testutils.LoadFixtureStringf(t, "%s/policy_update.tf", testDir),
-						ExpectError: regexp.MustCompile(`Error: API error: Conflict \(409\)`),
-						Check: checkPolicyAttributes(policyAttributes{
-							version:              "1",
-							policyID:             "test_policy",
-							policySetID:          "test_policy_set",
-							activateOnProduction: "true",
-							policyPath:           fmt.Sprintf("%s/policy/policy_create.json", testDir),
-						}),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
+					Check: checkPolicyAttributes(policyAttributes{
+						version:              "1",
+						policyID:             "test_policy",
+						policySetID:          "test_policy_set",
+						activateOnProduction: "true",
+						policyPath:           fmt.Sprintf("%s/policy/policy_create.json", testDir),
+					}),
 				},
-			})
+				{
+					Config:      testutils.LoadFixtureStringf(t, "%s/policy_update.tf", testDir),
+					ExpectError: regexp.MustCompile(`Error: API error: Conflict \(409\)`),
+					Check: checkPolicyAttributes(policyAttributes{
+						version:              "1",
+						policyID:             "test_policy",
+						policySetID:          "test_policy_set",
+						activateOnProduction: "true",
+						policyPath:           fmt.Sprintf("%s/policy/policy_create.json", testDir),
+					}),
+				},
+			},
 		})
-		client.AssertExpectations(t)
+		client.Imaging.AssertExpectations(t)
 	})
 
 	t.Run("regular policy create and later change policy set id (force new)", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicyVideo/change_policyset_id"
 
-		client := new(imaging.Mock)
-		expectUpsertPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyInput)
-		expectReadPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyOutput, 3)
+		client := edgegrid.NewTestClient()
+		expectUpsertPolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyInput)
+		expectReadPolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyOutput, 3)
 
 		// remove original policy
-		expectDeletePolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging)
-		expectDeletePolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction)
+		expectDeletePolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging)
+		expectDeletePolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction)
 
 		// update
-		expectUpsertPolicy(client, "test_policy", "test_contract", "test_policy_set_update", imaging.PolicyNetworkStaging, &policyInput)
-		expectReadPolicy(client, "test_policy", "test_contract", "test_policy_set_update", imaging.PolicyNetworkStaging, &policyOutput, 2)
+		expectUpsertPolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set_update", imaging.PolicyNetworkStaging, &policyInput)
+		expectReadPolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set_update", imaging.PolicyNetworkStaging, &policyOutput, 2)
 
 		// remove new policy
-		expectDeletePolicy(client, "test_policy", "test_contract", "test_policy_set_update", imaging.PolicyNetworkStaging)
-		expectDeletePolicy(client, "test_policy", "test_contract", "test_policy_set_update", imaging.PolicyNetworkProduction)
+		expectDeletePolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set_update", imaging.PolicyNetworkStaging)
+		expectDeletePolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set_update", imaging.PolicyNetworkProduction)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
-						Check: checkPolicyAttributes(policyAttributes{
-							version:              "1",
-							policyID:             "test_policy",
-							policySetID:          "test_policy_set",
-							activateOnProduction: "false",
-							policyPath:           fmt.Sprintf("%s/policy/policy_create.json", testDir),
-						}),
-					},
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/policy_update.tf", testDir),
-						Check: checkPolicyAttributes(policyAttributes{
-							version:              "1",
-							policyID:             "test_policy",
-							policySetID:          "test_policy_set_update",
-							activateOnProduction: "false",
-							policyPath:           fmt.Sprintf("%s/policy/policy_update.json", testDir),
-						}),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
+					Check: checkPolicyAttributes(policyAttributes{
+						version:              "1",
+						policyID:             "test_policy",
+						policySetID:          "test_policy_set",
+						activateOnProduction: "false",
+						policyPath:           fmt.Sprintf("%s/policy/policy_create.json", testDir),
+					}),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/policy_update.tf", testDir),
+					Check: checkPolicyAttributes(policyAttributes{
+						version:              "1",
+						policyID:             "test_policy",
+						policySetID:          "test_policy_set_update",
+						activateOnProduction: "false",
+						policyPath:           fmt.Sprintf("%s/policy/policy_update.json", testDir),
+					}),
+				},
+			},
 		})
-		client.AssertExpectations(t)
+		client.Imaging.AssertExpectations(t)
 	})
 	t.Run("regular policy create, later activate on production and later modify on staging only", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicyVideo/regular_policy_update_staging"
 
-		client := new(imaging.Mock)
-		expectUpsertPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyInput)
-		expectReadPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyOutput, 3)
+		client := edgegrid.NewTestClient()
+		expectUpsertPolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyInput)
+		expectReadPolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyOutput, 3)
 
 		// `activate_on_production` should not trigger Upsert for staging if the policy has not changed
-		expectUpsertPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction, &policyInput)
-		expectReadPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction, &policyOutput, 3)
+		expectUpsertPolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction, &policyInput)
+		expectReadPolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction, &policyOutput, 3)
 
 		policyInputV2 := getPolicyInputVideoV2(policyInput)
 		policyOutputV2 := getPolicyOutputVideoV2(policyOutput)
 
-		expectReadPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyOutputV2, 2)
-		expectUpsertPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyInputV2)
+		expectReadPolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyOutputV2, 2)
+		expectUpsertPolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyInputV2)
 
-		expectDeletePolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging)
-		expectDeletePolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction)
+		expectDeletePolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging)
+		expectDeletePolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
-						Check: checkPolicyAttributes(policyAttributes{
-							version:              "1",
-							policyID:             "test_policy",
-							policySetID:          "test_policy_set",
-							activateOnProduction: "false",
-							policyPath:           fmt.Sprintf("%s/policy/policy_create.json", testDir),
-						}),
-					},
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/policy_update.tf", testDir),
-						Check: checkPolicyAttributes(policyAttributes{
-							version:              "1",
-							policyID:             "test_policy",
-							policySetID:          "test_policy_set",
-							activateOnProduction: "true",
-							policyPath:           fmt.Sprintf("%s/policy/policy_update.json", testDir),
-						}),
-					},
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/policy_update_staging.tf", testDir),
-						Check: checkPolicyAttributes(policyAttributes{
-							version:              "2",
-							policyID:             "test_policy",
-							policySetID:          "test_policy_set",
-							activateOnProduction: "false",
-							policyPath:           fmt.Sprintf("%s/policy/policy_update_staging.json", testDir),
-						}),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
+					Check: checkPolicyAttributes(policyAttributes{
+						version:              "1",
+						policyID:             "test_policy",
+						policySetID:          "test_policy_set",
+						activateOnProduction: "false",
+						policyPath:           fmt.Sprintf("%s/policy/policy_create.json", testDir),
+					}),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/policy_update.tf", testDir),
+					Check: checkPolicyAttributes(policyAttributes{
+						version:              "1",
+						policyID:             "test_policy",
+						policySetID:          "test_policy_set",
+						activateOnProduction: "true",
+						policyPath:           fmt.Sprintf("%s/policy/policy_update.json", testDir),
+					}),
+				},
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/policy_update_staging.tf", testDir),
+					Check: checkPolicyAttributes(policyAttributes{
+						version:              "2",
+						policyID:             "test_policy",
+						policySetID:          "test_policy_set",
+						activateOnProduction: "false",
+						policyPath:           fmt.Sprintf("%s/policy/policy_update_staging.json", testDir),
+					}),
+				},
+			},
 		})
-		client.AssertExpectations(t)
+		client.Imaging.AssertExpectations(t)
 	})
 	t.Run("auto policy create and later activate on production, cannot delete", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicyVideo/auto_policy"
 
-		client := new(imaging.Mock)
-		expectUpsertPolicy(client, ".auto", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyInput)
-		expectReadPolicy(client, ".auto", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyOutput, 3)
+		client := edgegrid.NewTestClient()
+		expectUpsertPolicy(client.Imaging, ".auto", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyInput)
+		expectReadPolicy(client.Imaging, ".auto", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyOutput, 3)
 
 		// `activate_on_production` should not trigger Upsert for staging if the policy has not changed
-		expectUpsertPolicy(client, ".auto", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction, &policyInput)
-		expectReadPolicy(client, ".auto", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction, &policyOutput, 2)
+		expectUpsertPolicy(client.Imaging, ".auto", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction, &policyInput)
+		expectReadPolicy(client.Imaging, ".auto", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction, &policyOutput, 2)
 
 		// .auto policy cannot be removed alone, only via removal of policy set
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
-						Check: checkPolicyAttributes(policyAttributes{
-							version:              "1",
-							policyID:             ".auto",
-							policySetID:          "test_policy_set",
-							activateOnProduction: "false",
-							policyPath:           fmt.Sprintf("%s/policy/policy_create.json", testDir),
-						}),
-					},
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/policy_update.tf", testDir),
-						Check: checkPolicyAttributes(policyAttributes{
-							version:              "1",
-							policyID:             ".auto",
-							policySetID:          "test_policy_set",
-							activateOnProduction: "true",
-							policyPath:           fmt.Sprintf("%s/policy/policy_update.json", testDir),
-						}),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
+					Check: checkPolicyAttributes(policyAttributes{
+						version:              "1",
+						policyID:             ".auto",
+						policySetID:          "test_policy_set",
+						activateOnProduction: "false",
+						policyPath:           fmt.Sprintf("%s/policy/policy_create.json", testDir),
+					}),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/policy_update.tf", testDir),
+					Check: checkPolicyAttributes(policyAttributes{
+						version:              "1",
+						policyID:             ".auto",
+						policySetID:          "test_policy_set",
+						activateOnProduction: "true",
+						policyPath:           fmt.Sprintf("%s/policy/policy_update.json", testDir),
+					}),
+				},
+			},
 		})
-		client.AssertExpectations(t)
+		client.Imaging.AssertExpectations(t)
 	})
 	t.Run("import policy with activate_on_production=true", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicyVideo/regular_policy"
 
-		client := new(imaging.Mock)
-		expectUpsertPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyInput)
-		expectUpsertPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction, &policyInput)
-		expectReadPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyOutput, 3)
+		client := edgegrid.NewTestClient()
+		expectUpsertPolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyInput)
+		expectUpsertPolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction, &policyInput)
+		expectReadPolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyOutput, 3)
 
-		expectReadPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction, &policyOutput, 4)
-		expectReadPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyOutput, 1)
+		expectReadPolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction, &policyOutput, 4)
+		expectReadPolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyOutput, 1)
 
-		expectDeletePolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging)
-		expectDeletePolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction)
+		expectDeletePolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging)
+		expectDeletePolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
-					},
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/policy_update.tf", testDir),
-					},
-					{
-						ImportState:       true,
-						ImportStateId:     "test_policy:test_policy_set:test_contract",
-						ResourceName:      "akamai_imaging_policy_video.policy",
-						ImportStateVerify: true,
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/policy_update.tf", testDir),
+				},
+				{
+					ImportState:       true,
+					ImportStateId:     "test_policy:test_policy_set:test_contract",
+					ResourceName:      "akamai_imaging_policy_video.policy",
+					ImportStateVerify: true,
+				},
+			},
 		})
-		client.AssertExpectations(t)
+		client.Imaging.AssertExpectations(t)
 	})
 	t.Run("regular policy create, check diff for breakpoints.Widths, hosts, variables", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicyVideo/diff_suppress/fields"
 
-		client := new(imaging.Mock)
-		expectUpsertPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyInputDiff)
-		expectReadPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyOutputDiff, 2)
+		client := edgegrid.NewTestClient()
+		expectUpsertPolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyInputDiff)
+		expectReadPolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyOutputDiff, 2)
 
 		// remove original policy
-		expectDeletePolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging)
-		expectDeletePolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction)
+		expectDeletePolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging)
+		expectDeletePolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction)
 
-		expectReadPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyOutputDiff, 2)
+		expectReadPolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyOutputDiff, 2)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/default.tf", testDir),
-						Check: checkPolicyAttributes(policyAttributes{
-							version:              "1",
-							policyID:             "test_policy",
-							policySetID:          "test_policy_set",
-							activateOnProduction: "false",
-							policyPath:           fmt.Sprintf("%s/policy.json", testDir),
-						}),
-					},
-					{
-						Config:             testutils.LoadFixtureStringf(t, "%s/diff_order.tf", testDir),
-						ExpectNonEmptyPlan: false,
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/default.tf", testDir),
+					Check: checkPolicyAttributes(policyAttributes{
+						version:              "1",
+						policyID:             "test_policy",
+						policySetID:          "test_policy_set",
+						activateOnProduction: "false",
+						policyPath:           fmt.Sprintf("%s/policy.json", testDir),
+					}),
 				},
-			})
+				{
+					Config:             testutils.LoadFixtureStringf(t, "%s/diff_order.tf", testDir),
+					ExpectNonEmptyPlan: false,
+				},
+			},
 		})
-		client.AssertExpectations(t)
+		client.Imaging.AssertExpectations(t)
 	})
 	t.Run("import policy with activate_on_production=false", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicyVideo/regular_policy"
 		policyOutputV2 := getPolicyOutputVideoV2(policyOutput)
 
-		client := new(imaging.Mock)
-		expectUpsertPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyInput)
-		expectReadPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyOutput, 3)
-		expectReadPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction, &policyOutputV2, 1)
-		expectReadPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyOutput, 1)
-		expectDeletePolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging)
-		expectDeletePolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction)
+		client := edgegrid.NewTestClient()
+		expectUpsertPolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyInput)
+		expectReadPolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyOutput, 3)
+		expectReadPolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction, &policyOutputV2, 1)
+		expectReadPolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyOutput, 1)
+		expectDeletePolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging)
+		expectDeletePolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
-					},
-					{
-						ImportState:       true,
-						ImportStateId:     "test_policy:test_policy_set:test_contract",
-						ResourceName:      "akamai_imaging_policy_video.policy",
-						ImportStateVerify: true,
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 				},
-			})
+				{
+					ImportState:       true,
+					ImportStateId:     "test_policy:test_policy_set:test_contract",
+					ResourceName:      "akamai_imaging_policy_video.policy",
+					ImportStateVerify: true,
+				},
+			},
 		})
-		client.AssertExpectations(t)
+		client.Imaging.AssertExpectations(t)
 	})
 	t.Run("import policy with activate_on_production=false and no policy on production", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicyVideo/regular_policy"
 
-		client := new(imaging.Mock)
-		expectUpsertPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyInput)
-		expectReadPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyOutput, 3)
-		client.On("GetPolicy", testutils.MockContext, imaging.GetPolicyRequest{
+		client := edgegrid.NewTestClient()
+		expectUpsertPolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyInput)
+		expectReadPolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyOutput, 3)
+		client.Imaging.On("GetPolicy", testutils.MockContext, imaging.GetPolicyRequest{
 			PolicyID:    "test_policy",
 			Network:     imaging.PolicyNetworkProduction,
 			ContractID:  "test_contract",
 			PolicySetID: "test_policy_set",
 		}).Return(nil, fmt.Errorf("%s: %w", imaging.ErrGetPolicy, &imaging.Error{Status: http.StatusNotFound})).Once()
-		expectReadPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyOutput, 1)
+		expectReadPolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyOutput, 1)
 
-		expectDeletePolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging)
-		expectDeletePolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction)
+		expectDeletePolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging)
+		expectDeletePolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
-					},
-					{
-						ImportState:       true,
-						ImportStateId:     "test_policy:test_policy_set:test_contract",
-						ResourceName:      "akamai_imaging_policy_video.policy",
-						ImportStateVerify: true,
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 				},
-			})
+				{
+					ImportState:       true,
+					ImportStateId:     "test_policy:test_policy_set:test_contract",
+					ResourceName:      "akamai_imaging_policy_video.policy",
+					ImportStateVerify: true,
+				},
+			},
 		})
-		client.AssertExpectations(t)
+		client.Imaging.AssertExpectations(t)
 	})
 	t.Run("policy with invalid policy structure", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicyVideo/invalid_policy"
 
-		client := new(imaging.Mock)
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
-						ExpectError: regexp.MustCompile("\"json\" contains an invalid JSON: invalid character '6' looking for beginning of object key string"),
-					},
+		client := edgegrid.NewTestClient()
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
+					ExpectError: regexp.MustCompile("\"json\" contains an invalid JSON: invalid character '6' looking for beginning of object key string"),
 				},
-			})
+			},
 		})
-		client.AssertExpectations(t)
+		client.Imaging.AssertExpectations(t)
 	})
 	t.Run("policy with unexpected transformation", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicyVideo/invalid_field_transformation_policy"
 
-		client := new(imaging.Mock)
-		expectUpsertPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyInput)
-		expectReadPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyOutput, 2)
+		client := edgegrid.NewTestClient()
+		expectUpsertPolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyInput)
+		expectReadPolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyOutput, 2)
 
-		expectDeletePolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging)
-		expectDeletePolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction)
+		expectDeletePolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging)
+		expectDeletePolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
-						Check: checkPolicyAttributes(policyAttributes{
-							version:              "1",
-							policyID:             "test_policy",
-							policySetID:          "test_policy_set",
-							activateOnProduction: "false",
-							policyPath:           fmt.Sprintf("%s/policy/policy_create.json", testDir),
-						}),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
+					Check: checkPolicyAttributes(policyAttributes{
+						version:              "1",
+						policyID:             "test_policy",
+						policySetID:          "test_policy_set",
+						activateOnProduction: "false",
+						policyPath:           fmt.Sprintf("%s/policy/policy_create.json", testDir),
+					}),
 				},
-			})
+			},
 		})
-		client.AssertExpectations(t)
+		client.Imaging.AssertExpectations(t)
 	})
 	t.Run("error when creating policy", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicyVideo/regular_policy"
 
-		client := new(imaging.Mock)
+		client := edgegrid.NewTestClient()
 		var withError = imaging.Error{
 			Type:      "/imaging/error-types/IVM_9000",
 			Title:     "Bad Request",
@@ -688,49 +678,46 @@ func TestResourcePolicyVideo(t *testing.T) {
 			Detail:    "Unable to parse element 'output' in JSON.",
 			ProblemID: "52a21f40-9861-4d35-95d0-a603c85cb2ad",
 		}
-		expectUpsertPolicyWithError(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyInput, &withError)
+		expectUpsertPolicyWithError(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyInput, &withError)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
-						ExpectError: regexp.MustCompile("\"detail\": \"Unable to parse element 'output' in JSON.\","),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
+					ExpectError: regexp.MustCompile("\"detail\": \"Unable to parse element 'output' in JSON.\","),
 				},
-			})
+			},
 		})
-		client.AssertExpectations(t)
+		client.Imaging.AssertExpectations(t)
 	})
 	t.Run("invalid import id", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResPolicyVideo/regular_policy"
 
-		client := new(imaging.Mock)
-		expectUpsertPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyInput)
-		expectReadPolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyOutput, 2)
+		client := edgegrid.NewTestClient()
+		expectUpsertPolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyInput)
+		expectReadPolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging, &policyOutput, 2)
 
-		expectDeletePolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging)
-		expectDeletePolicy(client, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction)
+		expectDeletePolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkStaging)
+		expectDeletePolicy(client.Imaging, "test_policy", "test_contract", "test_policy_set", imaging.PolicyNetworkProduction)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
-					},
-					{
-						ImportState:       true,
-						ImportStateId:     "test_policy,test_policy_set",
-						ResourceName:      "akamai_imaging_policy_video.policy",
-						ImportStateVerify: true,
-						ExpectError:       regexp.MustCompile("colon-separated list of policy ID, policy set ID and contract ID has to be supplied in import: test_policy,test_policy_set"),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
 				},
-			})
+				{
+					ImportState:       true,
+					ImportStateId:     "test_policy,test_policy_set",
+					ResourceName:      "akamai_imaging_policy_video.policy",
+					ImportStateVerify: true,
+					ExpectError:       regexp.MustCompile("colon-separated list of policy ID, policy set ID and contract ID has to be supplied in import: test_policy,test_policy_set"),
+				},
+			},
 		})
-		client.AssertExpectations(t)
+		client.Imaging.AssertExpectations(t)
 	})
 }
 
@@ -756,6 +743,7 @@ func getPolicyInputVideoV2(policyInput imaging.PolicyInputVideo) imaging.PolicyI
 }
 
 func TestDiffSuppressPolicyVideo(t *testing.T) {
+	t.Parallel()
 	basePath := "testdata/TestResPolicyVideo/diff_suppress"
 	tests := map[string]struct {
 		oldPath, newPath string
@@ -790,6 +778,7 @@ func TestDiffSuppressPolicyVideo(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			oldJSON := testutils.LoadFixtureStringf(t, "%s/%s", basePath, test.oldPath)
 			newJSON := testutils.LoadFixtureStringf(t, "%s/%s", basePath, test.newPath)
 			res := diffSuppressPolicyVideo("", oldJSON, newJSON, nil)

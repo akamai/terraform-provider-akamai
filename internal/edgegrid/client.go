@@ -13,6 +13,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/gtm"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/hapi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/imaging"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/mtlskeystore"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/mtlstruststore"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/papi"
@@ -43,6 +44,8 @@ type Client interface {
 	GetHAPI() hapi.HAPI
 
 	GetIAM() iam.IAM
+
+	GetImaging() imaging.Imaging
 
 	GetMTLSKeystore() mtlskeystore.MTLSKeystore
 
@@ -122,6 +125,11 @@ func (c *ClientImpl) GetHAPI() hapi.HAPI {
 // GetIAM returns the IAM client for managing identity and access management.
 func (c *ClientImpl) GetIAM() iam.IAM {
 	return iam.Client(c.sess)
+}
+
+// GetImaging returns the Imaging client for managing images and videos.
+func (c *ClientImpl) GetImaging() imaging.Imaging {
+	return imaging.Client(c.sess)
 }
 
 // GetMTLSKeystore returns the MTLS Keystore client for managing mTLS keystores.
