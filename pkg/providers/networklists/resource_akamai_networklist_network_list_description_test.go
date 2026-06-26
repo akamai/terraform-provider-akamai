@@ -35,14 +35,15 @@ func TestAccAkamaiNetworkListDescription_res_basic(t *testing.T) {
 			networklists.UpdateNetworkListDescriptionRequest{UniqueID: "2275_VOYAGERCALLCENTERWHITELI", Name: "Voyager Call Center Whitelist", Description: "Notes about this network list"},
 		).Return(&cu, nil)
 
-		resource.Test(t, resource.TestCase{
-			IsUnitTest:               false,
+		resource.UnitTest(t, resource.TestCase{
 			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResNetworkListDescription/match_by_id.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_networklist_description.test", "id", "2275_VOYAGERCALLCENTERWHITELI"),
+						resource.TestCheckResourceAttr("akamai_networklist_description.test", "name", "Voyager Call Center Whitelist"),
+						resource.TestCheckResourceAttr("akamai_networklist_description.test", "description", "Notes about this network list"),
 					),
 				},
 			},
