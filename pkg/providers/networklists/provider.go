@@ -2,10 +2,6 @@
 package networklists
 
 import (
-	"sync"
-
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/networklists"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/subprovider"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -16,45 +12,40 @@ import (
 type (
 	// Subprovider gathers networklists resources and data sources
 	Subprovider struct {
-		client networklists.NetworkList
+		config subproviderConfig
 	}
 
-	option func(p *Subprovider)
-)
-
-var (
-	once sync.Once
-
-	inst *Subprovider
+	// subproviderConfig aggregates the configuration of all networklists resources
+	// so that polling intervals and other timing values can be overridden,
+	// in particular by tests.
+	subproviderConfig struct {
+		activations resourceActivationsConfig
+	}
 )
 
 var _ subprovider.Subprovider = &Subprovider{}
 
-// NewSubprovider returns new networklists subprovider
-func NewSubprovider(opts ...option) *Subprovider {
-	once.Do(func() {
-		inst = &Subprovider{}
-
-		for _, opt := range opts {
-			opt(inst)
-		}
-	})
-
-	return inst
+// defaultSubproviderConfig returns the production defaults for the networklists subprovider.
+func defaultSubproviderConfig() subproviderConfig {
+	return subproviderConfig{
+		activations: defaultResourceActivationsConfig(),
+	}
 }
 
-// Client returns the NetworkList interface
-func (p *Subprovider) Client(meta meta.Meta) networklists.NetworkList {
-	if p.client != nil {
-		return p.client
-	}
-	return networklists.Client(meta.Session())
+// NewSubprovider returns a new networklists subprovider with the default configuration.
+func NewSubprovider() *Subprovider {
+	return newSubproviderWithConfig(defaultSubproviderConfig())
+}
+
+// newSubproviderWithConfig returns a new networklists subprovider initialized with the given configuration.
+func newSubproviderWithConfig(config subproviderConfig) *Subprovider {
+	return &Subprovider{config: config}
 }
 
 // SDKResources returns the networklists resources implemented using terraform-plugin-sdk
 func (p *Subprovider) SDKResources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
-		"akamai_networklist_activations":  resourceActivations(),
+		"akamai_networklist_activations":  resourceActivations(p.config.activations),
 		"akamai_networklist_description":  resourceNetworkListDescription(),
 		"akamai_networklist_subscription": resourceNetworkListSubscription(),
 		"akamai_networklist_network_list": resourceNetworkList(),

@@ -17,6 +17,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/imaging"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/mtlskeystore"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/mtlstruststore"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/networklists"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/papi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/reportinggroups"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/session"
@@ -53,6 +54,8 @@ type Client interface {
 	GetMTLSKeystore() mtlskeystore.MTLSKeystore
 
 	GetMTLSTruststore() mtlstruststore.MTLSTruststore
+
+	GetNetworkLists() networklists.NetworkList
 
 	GetPAPI() papi.PAPI
 
@@ -148,6 +151,11 @@ func (c *ClientImpl) GetMTLSKeystore() mtlskeystore.MTLSKeystore {
 // GetMTLSTruststore returns the MTLS Truststore client for managing mTLS truststores.
 func (c *ClientImpl) GetMTLSTruststore() mtlstruststore.MTLSTruststore {
 	return mtlstruststore.Client(c.sess)
+}
+
+// GetNetworkLists returns the Network Lists client for managing network lists.
+func (c *ClientImpl) GetNetworkLists() networklists.NetworkList {
+	return networklists.Client(c.sess)
 }
 
 // GetPAPI returns the PAPI client for managing property APIs.

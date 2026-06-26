@@ -39,7 +39,7 @@ func resourceNetworkListSubscription() *schema.Resource {
 
 func resourceNetworkListSubscriptionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetNetworkLists()
 	logger := meta.Log("NETWORKLIST", "resourceNetworkListSubscriptionRead")
 
 	getNetworkListSubscription := networklists.GetNetworkListSubscriptionRequest{}
@@ -80,7 +80,7 @@ func resourceNetworkListSubscriptionRead(ctx context.Context, d *schema.Resource
 func resourceNetworkListSubscriptionDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetNetworkLists()
 	logger := meta.Log("NETWORKLIST", "resourceNetworkListSubscriptionDelete")
 
 	removeNetworkListSubscription := networklists.RemoveNetworkListSubscriptionRequest{}
@@ -110,7 +110,7 @@ func resourceNetworkListSubscriptionDelete(ctx context.Context, d *schema.Resour
 
 func resourceNetworkListSubscriptionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetNetworkLists()
 	logger := meta.Log("NETWORKLIST", "resourceNetworkListSubscriptionUpdate")
 
 	updateNetworkListSubscription := networklists.UpdateNetworkListSubscriptionRequest{}

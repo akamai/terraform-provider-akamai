@@ -16,6 +16,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/imaging"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/mtlskeystore"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/mtlstruststore"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/networklists"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/papi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/reportinggroups"
 )
@@ -41,6 +42,7 @@ type TestClient struct {
 	Imaging           *imaging.Mock
 	MTLSKeystore      *mtlskeystore.Mock
 	MTLSTruststore    *mtlstruststore.Mock
+	NetworkLists      *networklists.Mock
 	PAPI              *papi.Mock
 	ReportingGroups   *reportinggroups.Mock
 }
@@ -63,6 +65,7 @@ func NewTestClient() *TestClient {
 		Imaging:           &imaging.Mock{},
 		MTLSKeystore:      &mtlskeystore.Mock{},
 		MTLSTruststore:    &mtlstruststore.Mock{},
+		NetworkLists:      &networklists.Mock{},
 		PAPI:              &papi.Mock{},
 		ReportingGroups:   &reportinggroups.Mock{},
 	}
@@ -141,6 +144,11 @@ func (c *TestClient) GetMTLSKeystore() mtlskeystore.MTLSKeystore {
 // GetMTLSTruststore returns the mock MTLS Truststore client.
 func (c *TestClient) GetMTLSTruststore() mtlstruststore.MTLSTruststore {
 	return c.MTLSTruststore
+}
+
+// GetNetworkLists returns the mock Network Lists client.
+func (c *TestClient) GetNetworkLists() networklists.NetworkList {
+	return c.NetworkLists
 }
 
 // GetPAPI returns the mock PAPI client.

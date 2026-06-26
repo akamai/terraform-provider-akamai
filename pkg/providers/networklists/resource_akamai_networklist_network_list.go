@@ -102,7 +102,7 @@ func resourceNetworkList() *schema.Resource {
 
 func resourceNetworkListCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetNetworkLists()
 	logger := meta.Log("NETWORKLIST", "resourceNetworkListCreate")
 
 	attrs, err := getAttributes(d)
@@ -215,7 +215,7 @@ func resourceNetworkListCreate(ctx context.Context, d *schema.ResourceData, m in
 
 func resourceNetworkListUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetNetworkLists()
 	logger := meta.Log("NETWORKLIST", "resourceNetworkListUpdate")
 
 	attrs, err := getAttributes(d)
@@ -309,7 +309,7 @@ func resourceNetworkListUpdate(ctx context.Context, d *schema.ResourceData, m in
 
 func resourceNetworkListDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetNetworkLists()
 	logger := meta.Log("NETWORKLIST", "resourceNetworkListRemove")
 
 	removeNetworkList := networklists.RemoveNetworkListRequest{}
@@ -326,7 +326,7 @@ func resourceNetworkListDelete(ctx context.Context, d *schema.ResourceData, m in
 
 func resourceNetworkListRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetNetworkLists()
 	logger := meta.Log("NETWORKLIST", "resourceNetworkListRead")
 
 	getNetworkList := networklists.GetNetworkListRequest{}

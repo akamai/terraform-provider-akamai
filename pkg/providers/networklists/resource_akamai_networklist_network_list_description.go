@@ -42,7 +42,7 @@ func resourceNetworkListDescription() *schema.Resource {
 
 func resourceNetworkListDescriptionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetNetworkLists()
 	logger := meta.Log("NETWORKLIST", "resourceNetworkListDescriptionRead")
 
 	getNetworkListDescriptionRequest := networklists.GetNetworkListDescriptionRequest{}
@@ -67,7 +67,7 @@ func resourceNetworkListDescriptionDelete(ctx context.Context, d *schema.Resourc
 
 func resourceNetworkListDescriptionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetNetworkLists()
 	logger := meta.Log("NETWORKLIST", "resourceNetworkListDescriptionUpdate")
 
 	updateNetworkListDescriptionRequest := networklists.UpdateNetworkListDescriptionRequest{}
