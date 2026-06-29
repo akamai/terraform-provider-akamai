@@ -2,10 +2,9 @@ package clientlists
 
 import (
 	"os"
-	"sync"
 	"testing"
+	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/clientlists"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 )
 
@@ -13,21 +12,18 @@ func TestMain(m *testing.M) {
 	testutils.TestRunner(m)
 }
 
-// Only allow one test at a time to patch the client via useClient()
-var clientLock sync.Mutex
-
-// useClient swaps out the client on the global instance for the duration of the given func
-func useClient(client clientlists.ClientLists, f func()) {
-	clientLock.Lock()
-	orig := inst.client
-	inst.client = client
-
-	defer func() {
-		inst.client = orig
-		clientLock.Unlock()
-	}()
-
-	f()
+// testSubproviderConfig returns a subproviderConfig with timing intervals
+// that are reduced so tests do not pay the production sleep cost.
+func testSubproviderConfig() subproviderConfig {
+	return subproviderConfig{
+		activation: clientListActivationConfig{
+			pollActivationInterval:          1 * time.Microsecond,
+			activationRetryBaseDelay:        1 * time.Microsecond,
+			waitActivationCompletionTimeout: 2 * time.Second,
+			activationRetryTimeout:          1 * time.Second,
+			activationRetryMaxAttempts:      3,
+		},
+	}
 }
 
 // loadFixtureBytes returns the entire contents of the given file as a byte slice

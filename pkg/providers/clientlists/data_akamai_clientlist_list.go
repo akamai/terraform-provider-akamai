@@ -17,7 +17,7 @@ import (
 
 type (
 	clientListDataSource struct {
-		meta meta.Meta
+		meta.DataSource
 	}
 
 	// clientListDataSourceModel describes the data source data model for ClientListDataSource.
@@ -226,25 +226,6 @@ func (d *clientListDataSource) Schema(_ context.Context, _ datasource.SchemaRequ
 	}
 }
 
-func (d *clientListDataSource) Configure(ctx context.Context, request datasource.ConfigureRequest, response *datasource.ConfigureResponse) {
-	tflog.Debug(ctx, "Configuring Client List data source")
-
-	if request.ProviderData == nil {
-		return
-	}
-
-	metaInfo, ok := request.ProviderData.(meta.Meta)
-	if !ok {
-		response.Diagnostics.AddError(
-			"Unexpected Data Source Configure Type",
-			fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.", request.ProviderData),
-		)
-		return
-	}
-
-	d.meta = metaInfo
-}
-
 func (d *clientListDataSource) Read(ctx context.Context, request datasource.ReadRequest, response *datasource.ReadResponse) {
 	tflog.Debug(ctx, "Reading Client List data source")
 
@@ -254,7 +235,7 @@ func (d *clientListDataSource) Read(ctx context.Context, request datasource.Read
 		return
 	}
 
-	client := inst.Client(d.meta)
+	client := d.Client.GetClientLists()
 
 	getClientListReq := clientlists.GetClientListRequest{
 		ListID:       data.ListID.ValueString(),

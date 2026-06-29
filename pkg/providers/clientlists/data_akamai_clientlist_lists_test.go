@@ -15,6 +15,7 @@ import (
 )
 
 func TestDataClientLists(t *testing.T) {
+	t.Parallel()
 	allListsResponse := clientlists.GetClientListsResponse{}
 	err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testData/TestDSClientList/ClientLists.json"), &allListsResponse)
 	require.NoError(t, err)
@@ -152,7 +153,7 @@ func TestDataClientLists(t *testing.T) {
 		},
 	}
 
-	runClientListTestCases(t, tests)
+	runClientListFrameworkTestCases(t, tests)
 }
 
 func mockGetClientLists(m *clientlists.Mock, response clientlists.GetClientListsResponse, request clientlists.GetClientListsRequest, times int) {
