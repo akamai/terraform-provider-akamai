@@ -25,10 +25,7 @@ func TestDataClientLists(t *testing.T) {
 
 	baseChecker := test.NewStateChecker("data.akamai_clientlist_lists.lists")
 
-	tests := map[string]struct {
-		init  func(*clientlists.Mock)
-		steps []resource.TestStep
-	}{
+	tests := map[string]clientListTestCase{
 		"happy path - all lists": {
 			init: func(m *clientlists.Mock) {
 				mockGetClientLists(m, allListsResponse, clientlists.GetClientListsRequest{}, 3)
@@ -107,6 +104,26 @@ func TestDataClientLists(t *testing.T) {
 				},
 			},
 		},
+		"happy path - request_header_name_value type lists": {
+			init: func(m *clientlists.Mock) {
+				mockGetClientLists(m, allListsResponse, clientlists.GetClientListsRequest{
+					Name: "test",
+					Type: []clientlists.ClientListType{clientlists.RequestHeaderNameValue},
+				}, 3)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testData/TestDSClientList/rhnv_type.tf"),
+					Check: baseChecker.
+						CheckEqual("name", "test").
+						CheckEqual("type.#", "1").
+						CheckEqual("type.0", string(clientlists.RequestHeaderNameValue)).
+						CheckEqual("list_ids.#", "11").
+						CheckEqual("lists.#", "11").
+						Build(),
+				},
+			},
+		},
 		"happy path - empty content list": {
 			init: func(m *clientlists.Mock) {
 				mockGetClientLists(m, emptyListsResponse, clientlists.GetClientListsRequest{}, 3)
@@ -135,24 +152,7 @@ func TestDataClientLists(t *testing.T) {
 		},
 	}
 
-	for name, test := range tests {
-		t.Run(name, func(t *testing.T) {
-			client := &clientlists.Mock{}
-			if test.init != nil {
-				test.init(client)
-			}
-
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps:                    test.steps,
-				})
-			})
-
-			client.AssertExpectations(t)
-		})
-	}
+	runClientListTestCases(t, tests)
 }
 
 func mockGetClientLists(m *clientlists.Mock, response clientlists.GetClientListsResponse, request clientlists.GetClientListsRequest, times int) {

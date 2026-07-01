@@ -1,0 +1,34 @@
+provider "akamai" {
+  edgerc = "../../common/testutils/edgerc"
+}
+
+resource "akamai_iam_api_client" "test" {
+  authorized_users = ["mw+2"]
+  client_type      = "CLIENT"
+  client_name      = "mw+2_1"
+  lock             = false
+  credential       = {}
+  group_access = {
+    clone_authorized_user_groups = false
+    groups = [
+      {
+        group_id = 123
+        role_id  = 340
+      }
+    ]
+  }
+  api_access = {
+    all_accessible_apis = false
+    apis = [
+      {
+        api_id       = 5580
+        access_level = random_string.access_level.result == "x" ? "" : ""
+      }
+    ]
+  }
+}
+
+resource "random_string" "access_level" {
+  length  = 8
+  special = false
+}

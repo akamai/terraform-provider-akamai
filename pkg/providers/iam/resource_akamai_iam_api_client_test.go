@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/internal/test"
 	tst "github.com/akamai/terraform-provider-akamai/v10/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
@@ -120,6 +121,137 @@ func TestResourceAPIClient(t *testing.T) {
 						CheckEqual("group_access.groups.0.sub_groups.0.role_description", "group description").
 						CheckEqual("group_access.groups.0.sub_groups.0.role_id", "540").
 						CheckEqual("group_access.groups.0.sub_groups.0.role_name", "role 2").
+						Build(),
+				},
+			},
+		},
+		"happy path - create with all fields set but apis unknown at plan": {
+			init: func(m *iam.Mock, createData, _ testData) {
+				mockListAllowedCPCodes(m).Times(4)
+				mockListAllowedAPIs(m, createData).Times(3)
+				// Create
+				mockCreateAPIClient(m, createData)
+				mockGetAPIClient(m, createData)
+				// Read
+				mockGetAPIClient(m, createData)
+				// Delete
+				mockDeactivateCredential(m, createData)
+				mockDeleteAPIClient(m, createData)
+			},
+			createData: fullData,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/create_all_apis_unknown.tf"),
+					Check: fullDataChecker.
+						CheckEqual("group_access.groups.0.sub_groups.#", "1").
+						CheckEqual("group_access.groups.0.sub_groups.0.group_id", "333").
+						CheckEqual("group_access.groups.0.sub_groups.0.group_name", "group2_1").
+						CheckEqual("group_access.groups.0.sub_groups.0.is_blocked", "false").
+						CheckEqual("group_access.groups.0.sub_groups.0.parent_group_id", "0").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_description", "group description").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_id", "540").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_name", "role 2").
+						Build(),
+				},
+			},
+		},
+		"happy path - create with all fields set but apis access level unknown at plan": {
+			init: func(m *iam.Mock, createData, _ testData) {
+				mockListAllowedCPCodes(m).Times(4)
+				mockListAllowedAPIs(m, createData).Times(3)
+				// Create
+				mockCreateAPIClient(m, createData)
+				mockGetAPIClient(m, createData)
+				// Read
+				mockGetAPIClient(m, createData)
+				// Delete
+				mockDeactivateCredential(m, createData)
+				mockDeleteAPIClient(m, createData)
+			},
+			createData: fullData,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/create_all_apis_access_level_unknown.tf"),
+					Check: fullDataChecker.
+						CheckEqual("group_access.groups.0.sub_groups.#", "1").
+						CheckEqual("group_access.groups.0.sub_groups.0.group_id", "333").
+						CheckEqual("group_access.groups.0.sub_groups.0.group_name", "group2_1").
+						CheckEqual("group_access.groups.0.sub_groups.0.is_blocked", "false").
+						CheckEqual("group_access.groups.0.sub_groups.0.parent_group_id", "0").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_description", "group description").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_id", "540").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_name", "role 2").
+						Build(),
+				},
+			},
+		},
+		"expect error - individual api set element unknown at plan": {
+			steps: []resource.TestStep{
+				{
+					// This test is expected to fail because of missing required attribute. This behavior is related to current version of Terraform library and may change in the future.
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/create_all_apis_individual_element_unknown.tf"),
+					ExpectError: regexp.MustCompile(`Missing Configuration for Required Attribute`),
+				},
+			},
+		},
+		"happy path - create with all fields set but all apis access levels unknown at plan": {
+			init: func(m *iam.Mock, createData, _ testData) {
+				mockListAllowedCPCodes(m).Times(4)
+				mockListAllowedAPIs(m, createData).Times(3)
+				// Create
+				mockCreateAPIClient(m, createData)
+				mockGetAPIClient(m, createData)
+				// Read
+				mockGetAPIClient(m, createData)
+				// Delete
+				mockDeactivateCredential(m, createData)
+				mockDeleteAPIClient(m, createData)
+			},
+			createData: fullData,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/create_all_apis_all_access_levels_unknown.tf"),
+					Check: fullDataChecker.
+						CheckEqual("group_access.groups.0.sub_groups.#", "1").
+						CheckEqual("group_access.groups.0.sub_groups.0.group_id", "333").
+						CheckEqual("group_access.groups.0.sub_groups.0.group_name", "group2_1").
+						CheckEqual("group_access.groups.0.sub_groups.0.is_blocked", "false").
+						CheckEqual("group_access.groups.0.sub_groups.0.parent_group_id", "0").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_description", "group description").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_id", "540").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_name", "role 2").
+						Build(),
+				},
+			},
+		},
+		"happy path - create with min set of fields, apis access level unknown at plan": {
+			init: func(m *iam.Mock, createData, _ testData) {
+				// Create
+				mockCreateAPIClient(m, createData)
+				mockUpdateAPIClientNotificationEmails(m, createData)
+				mockLockAPIClient(m, createData)
+				mockGetAPIClient(m, createData)
+				// Read
+				mockGetAPIClient(m, createData)
+				// Delete
+				mockDeactivateCredential(m, createData)
+				mockDeleteAPIClient(m, createData)
+			},
+			createData: minData,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/create_min_apis_access_level_unknown.tf"),
+					Check: fullDataChecker.
+						CheckEqual("lock", "true").
+						CheckEqual("group_access.groups.0.sub_groups.#", "0").
+						CheckEqual("client_description", "").
+						CheckMissing("notification_emails.0").
+						CheckMissing("ip_acl.enable").
+						CheckMissing("ip_acl.cidr.0").
+						CheckMissing("purge_options.can_purge_by_cache_tag").
+						CheckMissing("purge_options.can_purge_by_cp_code").
+						CheckMissing("purge_options.cp_code_access.all_current_and_new_cp_codes").
+						CheckMissing("purge_options.cp_code_access.cp_codes.0").
 						Build(),
 				},
 			},
@@ -1305,6 +1437,80 @@ func TestResourceAPIClient(t *testing.T) {
 				},
 			},
 		},
+		"happy path - 'apis' null with 'all_accessible_apis' true succeeds validation and creates": {
+			init: func(m *iam.Mock, createData, _ testData) {
+				mockListAllowedCPCodes(m).Times(4)
+				purgeOptions := iam.PurgeOptions{
+					CanPurgeByCacheTag: true,
+					CanPurgeByCPCode:   true,
+					CPCodeAccess: iam.CPCodeAccess{
+						AllCurrentAndNewCPCodes: false,
+						CPCodes:                 []int64{101},
+					},
+				}
+				createData.createAPIClientRequest.APIAccess.AllAccessibleAPIs = true
+				createData.createAPIClientRequest.APIAccess.APIs = nil
+				createData.createAPIClientRequest.PurgeOptions = &purgeOptions
+				createData.createAPIClientResponse.APIAccess.AllAccessibleAPIs = true
+				createData.createAPIClientResponse.APIAccess.APIs = nil
+				createData.createAPIClientResponse.PurgeOptions = &purgeOptions
+				createData.getAPIClientResponse.APIAccess.AllAccessibleAPIs = true
+				createData.getAPIClientResponse.APIAccess.APIs = nil
+				createData.getAPIClientResponse.PurgeOptions = &purgeOptions
+
+				mockCreateAPIClient(m, createData)
+				mockGetAPIClient(m, createData)
+				// Read
+				mockGetAPIClient(m, createData)
+				// Delete
+				mockDeactivateCredential(m, createData)
+				mockDeleteAPIClient(m, createData)
+			},
+			createData: fullData,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/create_all_all_accessible_apis_true_apis_null.tf"),
+					Check: tst.NewStateChecker("akamai_iam_api_client.test").
+						CheckEqual("api_access.all_accessible_apis", "true").
+						CheckEqual("api_access.apis.#", "0").
+						CheckEqual("purge_options.can_purge_by_cache_tag", "true").
+						CheckEqual("purge_options.can_purge_by_cp_code", "true").
+						CheckEqual("purge_options.cp_code_access.all_current_and_new_cp_codes", "false").
+						CheckEqual("purge_options.cp_code_access.cp_codes.0", "101").
+						Build(),
+				},
+			},
+		},
+		"happy path - create with all fields set but apis set unknown at plan": {
+			init: func(m *iam.Mock, createData, _ testData) {
+				mockListAllowedCPCodes(m).Times(4)
+				mockListAllowedAPIs(m, createData).Times(3)
+				// Create
+				mockCreateAPIClient(m, createData)
+				mockGetAPIClient(m, createData)
+				// Read
+				mockGetAPIClient(m, createData)
+				// Delete
+				mockDeactivateCredential(m, createData)
+				mockDeleteAPIClient(m, createData)
+			},
+			createData: fullData,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/create_all_apis_set_unknown.tf"),
+					Check: fullDataChecker.
+						CheckEqual("group_access.groups.0.sub_groups.#", "1").
+						CheckEqual("group_access.groups.0.sub_groups.0.group_id", "333").
+						CheckEqual("group_access.groups.0.sub_groups.0.group_name", "group2_1").
+						CheckEqual("group_access.groups.0.sub_groups.0.is_blocked", "false").
+						CheckEqual("group_access.groups.0.sub_groups.0.parent_group_id", "0").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_description", "group description").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_id", "540").
+						CheckEqual("group_access.groups.0.sub_groups.0.role_name", "role 2").
+						Build(),
+				},
+			},
+		},
 		"validation error - 'groups' should be provided when 'clone_authorized_user_groups' is true": {
 			steps: []resource.TestStep{
 				{
@@ -1369,6 +1575,14 @@ func TestResourceAPIClient(t *testing.T) {
 				},
 			},
 		},
+		"validation error - 'apis' null with 'all_accessible_apis' false triggers validation unlike unknown": {
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/create_all_accessible_apis_false_apis_null.tf"),
+					ExpectError: regexp.MustCompile(`You must specify at least one API when 'all_accessible_apis' is false`),
+				},
+			},
+		},
 		"expect error - create": {
 			init: func(m *iam.Mock, _, _ testData) {
 				m.On("CreateAPIClient", testutils.MockContext, createAPIClientRequestMin).Return(nil, fmt.Errorf("create failed")).Once()
@@ -1419,29 +1633,48 @@ func TestResourceAPIClient(t *testing.T) {
 				},
 			},
 		},
+		"expect error - access_level unknown at plan, empty string after apply fails schema validation": {
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/create_apis_access_level_unknown_empty_after_apply.tf"),
+					ExpectError: regexp.MustCompile(`Invalid Attribute Value Match`),
+				},
+			},
+		},
+		"expect error - api_id unknown at plan, zero after apply not in allowed list": {
+			init: func(m *iam.Mock, createData, _ testData) {
+				mockListAllowedCPCodes(m)
+				mockListAllowedAPIs(m, createData)
+			},
+			createData: minData,
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/create_apis_id_unknown_zero_after_apply.tf"),
+					ExpectError: regexp.MustCompile(`Could not verify APIs due to an unexpected error: the following API IDs are\s+configured but not allowed for the user 'mw\+2': 0`),
+				},
+			},
+		},
 	}
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			client := &iam.Mock{}
+			client := edgegrid.NewTestClient()
 			if tc.init != nil {
-				tc.init(client, tc.createData, tc.updateData)
+				tc.init(client.IAM, tc.createData, tc.updateData)
 			}
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ExternalProviders: map[string]resource.ExternalProvider{
-						"random": {
-							Source:            "registry.terraform.io/hashicorp/random",
-							VersionConstraint: "3.1.0",
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"random": {
+						Source:            "registry.terraform.io/hashicorp/random",
+						VersionConstraint: "3.1.0",
 					},
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps:                    tc.steps,
-				})
+				},
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				IsUnitTest:               true,
+				Steps:                    tc.steps,
 			})
-			client.AssertExpectations(t)
+			client.IAM.AssertExpectations(t)
 		})
 	}
 
@@ -1847,17 +2080,15 @@ func TestImportAPIClientResource(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			client := &iam.Mock{}
+			client := edgegrid.NewTestClient()
 			if tc.init != nil {
-				tc.init(client, tc.importData, tc.updateData)
+				tc.init(client.IAM, tc.importData, tc.updateData)
 			}
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps:                    tc.steps,
-				})
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				Steps:                    tc.steps,
 			})
-			client.AssertExpectations(t)
+			client.IAM.AssertExpectations(t)
 		})
 	}
 }
@@ -3089,6 +3320,7 @@ var fullDataChecker = tst.NewStateChecker("akamai_iam_api_client.test").
 	CheckEqual("purge_options.cp_code_access.cp_codes.0", "101")
 
 func TestCheckCPCodesAllowed(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name     string
 		cpCodes  []int64
@@ -3129,6 +3361,7 @@ func TestCheckCPCodesAllowed(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			result := checkAllowedCPCodes(tt.cpCodes, tt.allowed)
 			if result != tt.expected {
 				t.Errorf("Expected %v, got %v", tt.expected, result)

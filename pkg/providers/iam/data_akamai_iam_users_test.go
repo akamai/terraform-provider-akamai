@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -94,6 +95,7 @@ var (
 )
 
 func TestDataUsers(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		configPath    string
 		init          func(*iam.Mock, []iam.UserListItem, *int64)
@@ -136,24 +138,23 @@ func TestDataUsers(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &iam.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 			if tc.init != nil {
-				tc.init(client, tc.mockData, tc.groupID)
+				tc.init(client.IAM, tc.mockData, tc.groupID)
 			}
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps: []resource.TestStep{
-						{
-							Config:      testutils.LoadFixtureString(t, tc.configPath),
-							Check:       checkUsersAttrs(tc.groupID, len(tc.mockData) == 0),
-							ExpectError: tc.expectedError,
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				IsUnitTest:               true,
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureString(t, tc.configPath),
+						Check:       checkUsersAttrs(tc.groupID, len(tc.mockData) == 0),
+						ExpectError: tc.expectedError,
 					},
-				})
+				},
 			})
-			client.AssertExpectations(t)
+			client.IAM.AssertExpectations(t)
 		})
 	}
 }

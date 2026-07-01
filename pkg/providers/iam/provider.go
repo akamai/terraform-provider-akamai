@@ -2,62 +2,20 @@
 package iam
 
 import (
-	"sync"
-
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/iam"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/subprovider"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-type (
-	// Subprovider gathers IAM resources and data sources
-	Subprovider struct {
-		client     iam.IAM
-		papiClient papi.PAPI
-	}
-
-	option func(p *Subprovider)
-)
-
-var (
-	once sync.Once
-
-	inst *Subprovider
-)
+// Subprovider gathers IAM resources and data sources
+type Subprovider struct{}
 
 var _ subprovider.Subprovider = &Subprovider{}
 
 // NewSubprovider returns a new IAM subprovider
-func NewSubprovider(opts ...option) *Subprovider {
-	once.Do(func() {
-		inst = &Subprovider{}
-
-		for _, opt := range opts {
-			opt(inst)
-		}
-	})
-
-	return inst
-}
-
-// Client returns the IAM interface
-func (p *Subprovider) Client(meta meta.Meta) iam.IAM {
-	if p.client != nil {
-		return p.client
-	}
-	return iam.Client(meta.Session())
-}
-
-// PapiClient returns the PAPI interface
-func (p *Subprovider) PapiClient(meta meta.Meta) papi.PAPI {
-	if p.client != nil {
-		return p.papiClient
-	}
-	return papi.Client(meta.Session())
+func NewSubprovider() *Subprovider {
+	return &Subprovider{}
 }
 
 // SDKResources returns the IAM resources implemented using terraform-plugin-sdk

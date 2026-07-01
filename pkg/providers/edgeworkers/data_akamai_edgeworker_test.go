@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/edgeworkers"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -51,7 +53,7 @@ var (
 			Version:      latestVersion,
 		}
 
-		bytesArray, err := convertLocalBundleFileIntoBytes(data.ExpectedBundleFile)
+		bytesArray, err := convertLocalBundleFileIntoBytes(data.ExpectedBundleFile, defaultEdgeworkerResourceConfig())
 		require.NoError(t, err)
 
 		edgeWorkerValidateBundleRes := edgeworkers.ValidateBundleResponse{
@@ -299,6 +301,7 @@ type testDataForEdgeWorker struct {
 }
 
 func TestDataEdgeWorkersEdgeWorker(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		init       func(*testing.T, *edgeworkers.Mock, testDataForEdgeWorker)
 		mockData   testDataForEdgeWorker
@@ -395,34 +398,35 @@ func TestDataEdgeWorkersEdgeWorker(t *testing.T) {
 			error:      regexp.MustCompile(`expected "name" to not be an empty string`),
 		},
 	}
+	t.Cleanup(func() {
+		if _, err := os.Stat("default_name.tgz"); err == nil {
+			err = os.Remove("default_name.tgz")
+			if err != nil {
+				t.Errorf("unable to remove temp bundle file (%s): %s", "default_name.tgz", err)
+			}
+		}
+	})
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &edgeworkers.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 			if test.init != nil {
-				test.init(t, client, test.mockData)
+				test.init(t, client.EdgeWorkers, test.mockData)
 			}
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps: []resource.TestStep{
-						{
-							Config:      testutils.LoadFixtureString(t, test.configPath),
-							Check:       checkAttrsForEdgeWorker(test.mockData),
-							ExpectError: test.error,
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+				IsUnitTest:               true,
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureString(t, test.configPath),
+						Check:       checkAttrsForEdgeWorker(test.mockData),
+						ExpectError: test.error,
 					},
-				})
+				},
 			})
-			client.AssertExpectations(t)
+			client.EdgeWorkers.AssertExpectations(t)
 		})
-	}
-	if _, err := os.Stat("default_name.tgz"); err == nil {
-		err = os.Remove("default_name.tgz")
-		if err != nil {
-			t.Fatalf("unable to remove temp bundle file (%s): %s", "default_name.tgz", err)
-		}
 	}
 
 }

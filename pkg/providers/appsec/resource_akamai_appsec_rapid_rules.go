@@ -102,6 +102,7 @@ func (r *rapidRulesResource) Schema(_ context.Context, _ resource.SchemaRequest,
 				Validators:  []validator.String{validators.NotEmptyString()},
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
+					modifiers.PreventJSONReorder(),
 				},
 				Default: stringdefault.StaticString("null"),
 			},

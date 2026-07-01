@@ -6,11 +6,13 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func TestDataPropertyUsers(t *testing.T) {
+	t.Parallel()
 	userJohn := iam.UsersForProperty{
 		FirstName:    "John",
 		LastName:     "Smith",
@@ -180,24 +182,23 @@ func TestDataPropertyUsers(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			iamMock := iam.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 			if tc.init != nil {
-				tc.init(&iamMock)
+				tc.init(client.IAM)
 			}
 
-			useClient(&iamMock, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							Config:      testutils.LoadFixtureString(t, tc.configPath),
-							Check:       tc.check,
-							ExpectError: tc.error,
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureString(t, tc.configPath),
+						Check:       tc.check,
+						ExpectError: tc.error,
 					},
-				})
+				},
 			})
-			iamMock.AssertExpectations(t)
+			client.IAM.AssertExpectations(t)
 		})
 	}
 }

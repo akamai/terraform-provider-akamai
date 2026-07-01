@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/gtm"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -21,241 +22,235 @@ const (
 )
 
 func TestResGTMDatacenter(t *testing.T) {
+	t.Parallel()
 
 	t.Run("create datacenter", func(t *testing.T) {
-		client := &gtm.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
-		mockCreateDatacenter(client, &gtm.CreateDatacenterResponse{
+		mockCreateDatacenter(client.GTM, testDomainName, &gtm.CreateDatacenterResponse{
 			Resource: getTestDatacenterResp(),
 			Status:   getPendingResponseStatus(),
 		}, nil)
 
-		mockGetDatacenter(client, datacenterID3132, getTestDatacenterResp(), nil, testutils.FourTimes)
+		mockGetDatacenter(client.GTM, testDomainName, datacenterID3132, getTestDatacenterResp(), nil, testutils.FourTimes)
 
-		mockGetDomainStatus(client, testutils.Twice)
+		mockGetDomainStatus(client.GTM, testDomainName, testutils.Twice)
 
-		mockUpdateDatacenter(client, &gtm.UpdateDatacenterResponse{Status: getDefaultResponseStatus()}, nil)
+		mockUpdateDatacenter(client.GTM, testDomainName, &gtm.UpdateDatacenterResponse{Status: getDefaultResponseStatus()}, nil)
 
-		mockGetDatacenter(client, datacenterID3132, getTestDatacenterUpdate(), nil, testutils.ThreeTimes)
+		mockGetDatacenter(client.GTM, testDomainName, datacenterID3132, getTestDatacenterUpdate(), nil, testutils.ThreeTimes)
 
-		mockDeleteDatacenter(client)
+		mockDeleteDatacenter(client.GTM, testDomainName)
 
 		resourceName := "akamai_gtm_datacenter.tfexample_dc_1"
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDatacenter/create_basic.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(resourceName, "nickname", "tfexample_dc_1"),
-							resource.TestCheckResourceAttr(resourceName, "continent", "EU"),
-						),
-					},
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDatacenter/update_basic.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(resourceName, "nickname", "tfexample_dc_1"),
-							resource.TestCheckResourceAttr(resourceName, "continent", "NA"),
-						),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDatacenter/create_basic.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(resourceName, "nickname", "tfexample_dc_1"),
+						resource.TestCheckResourceAttr(resourceName, "continent", "EU"),
+					),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDatacenter/update_basic.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(resourceName, "nickname", "tfexample_dc_1"),
+						resource.TestCheckResourceAttr(resourceName, "continent", "NA"),
+					),
+				},
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.GTM.AssertExpectations(t)
 	})
 
 	t.Run("update datacenter failed", func(t *testing.T) {
-		client := &gtm.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
-		mockCreateDatacenter(client, &gtm.CreateDatacenterResponse{
+		mockCreateDatacenter(client.GTM, testDomainName, &gtm.CreateDatacenterResponse{
 			Resource: getTestDatacenterResp(),
 			Status:   getPendingResponseStatus(),
 		}, nil)
 
-		mockGetDatacenter(client, datacenterID3132, getTestDatacenterResp(), nil, testutils.FourTimes)
+		mockGetDatacenter(client.GTM, testDomainName, datacenterID3132, getTestDatacenterResp(), nil, testutils.FourTimes)
 
-		mockGetDomainStatus(client, testutils.Once)
+		mockGetDomainStatus(client.GTM, testDomainName, testutils.Once)
 
-		mockUpdateDatacenter(client, nil, &gtm.Error{
+		mockUpdateDatacenter(client.GTM, testDomainName, nil, &gtm.Error{
 			Type:       "internal_error",
 			Title:      "Internal Server Error",
 			Detail:     "Error updating datacenter",
 			StatusCode: http.StatusInternalServerError,
 		})
 
-		mockGetDatacenter(client, datacenterID3132, getTestDatacenterResp(), nil, testutils.Once)
+		mockGetDatacenter(client.GTM, testDomainName, datacenterID3132, getTestDatacenterResp(), nil, testutils.Once)
 
-		mockDeleteDatacenter(client)
+		mockDeleteDatacenter(client.GTM, testDomainName)
 
 		resourceName := "akamai_gtm_datacenter.tfexample_dc_1"
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDatacenter/create_basic.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(resourceName, "nickname", "tfexample_dc_1"),
-							resource.TestCheckResourceAttr(resourceName, "continent", "EU"),
-						),
-					},
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmDatacenter/update_basic.tf"),
-						ExpectError: regexp.MustCompile("API error"),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDatacenter/create_basic.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(resourceName, "nickname", "tfexample_dc_1"),
+						resource.TestCheckResourceAttr(resourceName, "continent", "EU"),
+					),
 				},
-			})
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmDatacenter/update_basic.tf"),
+					ExpectError: regexp.MustCompile("API error"),
+				},
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.GTM.AssertExpectations(t)
 	})
 
 	t.Run("update datacenter domain name - delete and create new datacenter", func(t *testing.T) {
-		client := &gtm.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
-		mockCreateDatacenter(client, &gtm.CreateDatacenterResponse{
+		mockCreateDatacenter(client.GTM, testDomainName, &gtm.CreateDatacenterResponse{
 			Resource: getTestDatacenterResp(),
 			Status:   getPendingResponseStatus(),
 		}, nil)
 
-		mockGetDatacenter(client, datacenterID3132, getTestDatacenterResp(), nil, testutils.FourTimes)
+		mockGetDatacenter(client.GTM, testDomainName, datacenterID3132, getTestDatacenterResp(), nil, testutils.FourTimes)
 
-		mockDeleteDatacenter(client)
+		mockDeleteDatacenter(client.GTM, testDomainName)
 
-		testDomainName = "gtm_terra_testdomain_updated.akadns.net"
+		domainName := "gtm_terra_testdomain_updated.akadns.net"
 
-		mockCreateDatacenter(client, &gtm.CreateDatacenterResponse{
+		mockCreateDatacenter(client.GTM, domainName, &gtm.CreateDatacenterResponse{
 			Resource: getTestDatacenterResp(),
 			Status:   getPendingResponseStatus(),
 		}, nil)
 
-		mockGetDatacenter(client, datacenterID3132, getTestDatacenterResp(), nil, testutils.ThreeTimes)
+		mockGetDatacenter(client.GTM, domainName, datacenterID3132, getTestDatacenterResp(), nil, testutils.ThreeTimes)
 
-		mockDeleteDatacenter(client)
-
-		testDomainName = "gtm_terra_testdomain.akadns.net"
+		mockDeleteDatacenter(client.GTM, domainName)
 
 		resourceName := "akamai_gtm_datacenter.tfexample_dc_1"
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDatacenter/create_basic.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(resourceName, "nickname", "tfexample_dc_1"),
-							resource.TestCheckResourceAttr(resourceName, "continent", "EU"),
-							resource.TestCheckResourceAttr(resourceName, "domain", "gtm_terra_testdomain.akadns.net"),
-						),
-					},
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDatacenter/domain_update/updated_domain_name.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(resourceName, "nickname", "tfexample_dc_1"),
-							resource.TestCheckResourceAttr(resourceName, "continent", "EU"),
-							resource.TestCheckResourceAttr(resourceName, "domain", "gtm_terra_testdomain_updated.akadns.net"),
-						),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDatacenter/create_basic.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(resourceName, "nickname", "tfexample_dc_1"),
+						resource.TestCheckResourceAttr(resourceName, "continent", "EU"),
+						resource.TestCheckResourceAttr(resourceName, "domain", "gtm_terra_testdomain.akadns.net"),
+					),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDatacenter/domain_update/updated_domain_name.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(resourceName, "nickname", "tfexample_dc_1"),
+						resource.TestCheckResourceAttr(resourceName, "continent", "EU"),
+						resource.TestCheckResourceAttr(resourceName, "domain", "gtm_terra_testdomain_updated.akadns.net"),
+					),
+				},
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.GTM.AssertExpectations(t)
 	})
 
 	t.Run("create datacenter, remove outside of terraform, expect non-empty plan", func(t *testing.T) {
-		client := &gtm.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
-		mockCreateDatacenter(client, &gtm.CreateDatacenterResponse{
+		mockCreateDatacenter(client.GTM, testDomainName, &gtm.CreateDatacenterResponse{
 			Resource: getTestDatacenterResp(),
 			Status:   getPendingResponseStatus(),
 		}, nil)
 
-		mockGetDatacenter(client, datacenterID3132, getTestDatacenterResp(), nil, testutils.Twice)
+		mockGetDatacenter(client.GTM, testDomainName, datacenterID3132, getTestDatacenterResp(), nil, testutils.Twice)
 
 		// Mock that the datacenter was deleted outside terraform
-		mockGetDatacenter(client, datacenterID3132, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+		mockGetDatacenter(client.GTM, testDomainName, datacenterID3132, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
 		// For terraform test framework, we need to mock GetDatacenter as it would actually exist before deletion
-		mockGetDatacenter(client, datacenterID3132, getTestDatacenterResp(), nil, testutils.Once)
+		mockGetDatacenter(client.GTM, testDomainName, datacenterID3132, getTestDatacenterResp(), nil, testutils.Once)
 
-		mockDeleteDatacenter(client)
+		mockDeleteDatacenter(client.GTM, testDomainName)
 
 		resourceName := "akamai_gtm_datacenter.tfexample_dc_1"
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDatacenter/create_basic.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(resourceName, "nickname", "tfexample_dc_1"),
-							resource.TestCheckResourceAttr(resourceName, "continent", "EU"),
-						),
-					},
-					{
-						Config:             testutils.LoadFixtureString(t, "testdata/TestResGtmDatacenter/create_basic.tf"),
-						ExpectNonEmptyPlan: true,
-						PlanOnly:           true,
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmDatacenter/create_basic.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(resourceName, "nickname", "tfexample_dc_1"),
+						resource.TestCheckResourceAttr(resourceName, "continent", "EU"),
+					),
 				},
-			})
+				{
+					Config:             testutils.LoadFixtureString(t, "testdata/TestResGtmDatacenter/create_basic.tf"),
+					ExpectNonEmptyPlan: true,
+					PlanOnly:           true,
+				},
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.GTM.AssertExpectations(t)
 	})
 
 	t.Run("create datacenter failed", func(t *testing.T) {
-		client := &gtm.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
-		mockCreateDatacenter(client, nil, &gtm.Error{StatusCode: http.StatusBadRequest})
+		mockCreateDatacenter(client.GTM, testDomainName, nil, &gtm.Error{StatusCode: http.StatusBadRequest})
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmDatacenter/create_basic.tf"),
-						ExpectError: regexp.MustCompile("Datacenter create error"),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmDatacenter/create_basic.tf"),
+					ExpectError: regexp.MustCompile("Datacenter create error"),
 				},
-			})
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.GTM.AssertExpectations(t)
 	})
 
 	t.Run("create datacenter denied", func(t *testing.T) {
-		client := &gtm.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
-		mockCreateDatacenter(client, &gtm.CreateDatacenterResponse{
+		mockCreateDatacenter(client.GTM, testDomainName, &gtm.CreateDatacenterResponse{
 			Resource: getTestDatacenterResp(),
 			Status:   getDeniedResponseStatus(),
 		}, nil)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmDatacenter/create_basic.tf"),
-						ExpectError: regexp.MustCompile("Request could not be completed. Invalid credentials."),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmDatacenter/create_basic.tf"),
+					ExpectError: regexp.MustCompile("Request could not be completed. Invalid credentials."),
 				},
-			})
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.GTM.AssertExpectations(t)
 	})
 }
 
 func TestResGTMDatacenterImport(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		domainName   string
 		datacenterID string
@@ -268,7 +263,7 @@ func TestResGTMDatacenterImport(t *testing.T) {
 			datacenterID: "3132",
 			init: func(m *gtm.Mock) {
 				// Read
-				mockGetDatacenter(m, datacenterID3132, getImportedDatacenter(), nil, testutils.Twice)
+				mockGetDatacenter(m, testDomainName, datacenterID3132, getImportedDatacenter(), nil, testutils.Twice)
 			},
 			stateCheck: test.NewImportChecker().
 				CheckEqual("domain", "gtm_terra_testdomain.akadns.net").
@@ -311,7 +306,7 @@ func TestResGTMDatacenterImport(t *testing.T) {
 			datacenterID: "3132",
 			init: func(m *gtm.Mock) {
 				// Read - error
-				mockGetDatacenter(m, datacenterID3132, nil, fmt.Errorf("get failed"), testutils.Once)
+				mockGetDatacenter(m, testDomainName, datacenterID3132, nil, fmt.Errorf("get failed"), testutils.Once)
 			},
 			expectError: regexp.MustCompile(`get failed`),
 		},
@@ -319,63 +314,62 @@ func TestResGTMDatacenterImport(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &gtm.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 			if tc.init != nil {
-				tc.init(client)
+				tc.init(client.GTM)
 			}
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							ImportStateCheck: tc.stateCheck,
-							ImportStateId:    fmt.Sprintf("%s:%s", tc.domainName, tc.datacenterID),
-							ImportState:      true,
-							ResourceName:     "akamai_gtm_datacenter.test",
-							Config:           testutils.LoadFixtureString(t, "testdata/TestResGtmDatacenter/import_basic.tf"),
-							ExpectError:      tc.expectError,
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+				Steps: []resource.TestStep{
+					{
+						ImportStateCheck: tc.stateCheck,
+						ImportStateId:    fmt.Sprintf("%s:%s", tc.domainName, tc.datacenterID),
+						ImportState:      true,
+						ResourceName:     "akamai_gtm_datacenter.test",
+						Config:           testutils.LoadFixtureString(t, "testdata/TestResGtmDatacenter/import_basic.tf"),
+						ExpectError:      tc.expectError,
 					},
-				})
+				},
 			})
-			client.AssertExpectations(t)
+			client.GTM.AssertExpectations(t)
 		})
 	}
 }
 
-func mockGetDatacenter(m *gtm.Mock, datacenterID int, resp *gtm.Datacenter, err error, times int) *mock.Call {
+func mockGetDatacenter(m *gtm.Mock, domainName string, datacenterID int, resp *gtm.Datacenter, err error, times int) *mock.Call {
 	return m.On("GetDatacenter", testutils.MockContext, gtm.GetDatacenterRequest{
 		DatacenterID: datacenterID,
-		DomainName:   testDomainName,
+		DomainName:   domainName,
 	}).Return(resp, err).Times(times)
 }
 
-func mockUpdateDatacenter(client *gtm.Mock, resp *gtm.UpdateDatacenterResponse, err error) *mock.Call {
+func mockUpdateDatacenter(client *gtm.Mock, domainName string, resp *gtm.UpdateDatacenterResponse, err error) *mock.Call {
 	return client.On("UpdateDatacenter",
 		testutils.MockContext,
 		gtm.UpdateDatacenterRequest{
 			Datacenter: getTestDatacenterUpdate(),
-			DomainName: testDomainName,
+			DomainName: domainName,
 		},
 	).Return(resp, err).Once()
 }
 
-func mockCreateDatacenter(client *gtm.Mock, resp *gtm.CreateDatacenterResponse, err error) *mock.Call {
+func mockCreateDatacenter(client *gtm.Mock, domainName string, resp *gtm.CreateDatacenterResponse, err error) *mock.Call {
 	return client.On("CreateDatacenter",
 		testutils.MockContext,
 		gtm.CreateDatacenterRequest{
 			Datacenter: getTestDatacenter(),
-			DomainName: testDomainName,
+			DomainName: domainName,
 		},
 	).Return(resp, err).Once()
 }
 
-func mockDeleteDatacenter(client *gtm.Mock) *mock.Call {
+func mockDeleteDatacenter(client *gtm.Mock, domainName string) *mock.Call {
 	return client.On("DeleteDatacenter",
 		testutils.MockContext,
 		gtm.DeleteDatacenterRequest{
 			DatacenterID: datacenterID3132,
-			DomainName:   testDomainName,
+			DomainName:   domainName,
 		},
 	).Return(&gtm.DeleteDatacenterResponse{
 		Status: getDefaultResponseStatus(),

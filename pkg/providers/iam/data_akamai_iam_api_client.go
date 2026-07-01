@@ -2,7 +2,6 @@ package iam
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/iam"
@@ -20,7 +19,7 @@ var (
 )
 
 type apiClientDataSource struct {
-	meta meta.Meta
+	meta.DataSource
 }
 
 type (
@@ -65,21 +64,6 @@ func NewAPIClientDataSource() datasource.DataSource {
 
 func (d *apiClientDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "akamai_iam_api_client"
-}
-
-func (d *apiClientDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Data Source Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.",
-					req.ProviderData))
-		}
-	}()
-	d.meta = meta.Must(req.ProviderData)
 }
 
 func (d *apiClientDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
@@ -361,7 +345,7 @@ func (d *apiClientDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 func (d *apiClientDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	tflog.Debug(ctx, "IAM API Client DataSource Read")
 
-	client := inst.Client(d.meta)
+	client := d.Client.GetIAM()
 
 	var data clientModel
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)

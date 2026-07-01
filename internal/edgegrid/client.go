@@ -6,10 +6,14 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudlets"
 	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudlets/v3"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cps"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/dns"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/domainownership"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/edgeworkers"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/gtm"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/hapi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/iam"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/mtlskeystore"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/mtlstruststore"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/papi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/reportinggroups"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/session"
@@ -25,13 +29,21 @@ type Client interface {
 
 	GetCPS() cps.CPS
 
+	GetDNS() dns.DNS
+
 	GetDomainOwnership() domainownership.DomainOwnership
+
+	GetEdgeWorkers() edgeworkers.Edgeworkers
+
+	GetGTM() gtm.GTM
 
 	GetHAPI() hapi.HAPI
 
 	GetIAM() iam.IAM
 
 	GetMTLSKeystore() mtlskeystore.MTLSKeystore
+
+	GetMTLSTruststore() mtlstruststore.MTLSTruststore
 
 	GetPAPI() papi.PAPI
 
@@ -74,9 +86,24 @@ func (c *ClientImpl) GetCPS() cps.CPS {
 	return cps.Client(c.sess)
 }
 
+// GetDNS returns the DNS client for managing DNS zones.
+func (c *ClientImpl) GetDNS() dns.DNS {
+	return dns.Client(c.sess)
+}
+
 // GetDomainOwnership returns the Domain Ownership client for managing domain ownership.
 func (c *ClientImpl) GetDomainOwnership() domainownership.DomainOwnership {
 	return domainownership.Client(c.sess)
+}
+
+// GetEdgeWorkers returns the EdgeWorkers client for managing EdgeWorkers.
+func (c *ClientImpl) GetEdgeWorkers() edgeworkers.Edgeworkers {
+	return edgeworkers.Client(c.sess)
+}
+
+// GetGTM returns the GTM client for managing Global Traffic Management.
+func (c *ClientImpl) GetGTM() gtm.GTM {
+	return gtm.Client(c.sess)
 }
 
 // GetHAPI returns the HAPI client for managing hostnames APIs.
@@ -92,6 +119,11 @@ func (c *ClientImpl) GetIAM() iam.IAM {
 // GetMTLSKeystore returns the MTLS Keystore client for managing mTLS keystores.
 func (c *ClientImpl) GetMTLSKeystore() mtlskeystore.MTLSKeystore {
 	return mtlskeystore.Client(c.sess)
+}
+
+// GetMTLSTruststore returns the MTLS Truststore client for managing mTLS truststores.
+func (c *ClientImpl) GetMTLSTruststore() mtlstruststore.MTLSTruststore {
+	return mtlstruststore.Client(c.sess)
 }
 
 // GetPAPI returns the PAPI client for managing property APIs.

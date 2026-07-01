@@ -6,11 +6,13 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func TestPasswordPolicy(t *testing.T) {
+	t.Parallel()
 	expectGetPasswordPolicy := func(client *iam.Mock, timesToRun int) {
 		passwordPolicyResponse := iam.GetPasswordPolicyResponse{
 			CaseDiff:        0,
@@ -49,25 +51,24 @@ func TestPasswordPolicy(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &iam.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 			if tc.init != nil {
-				tc.init(client)
+				tc.init(client.IAM)
 			}
 
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps: []resource.TestStep{
-						{
-							Config:      testutils.LoadFixtureString(t, "testdata/TestDataPasswordPolicy/default.tf"),
-							Check:       checkPasswordPolicyAttrs(),
-							ExpectError: tc.error,
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				IsUnitTest:               true,
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureString(t, "testdata/TestDataPasswordPolicy/default.tf"),
+						Check:       checkPasswordPolicyAttrs(),
+						ExpectError: tc.error,
 					},
-				})
+				},
 			})
-			client.AssertExpectations(t)
+			client.IAM.AssertExpectations(t)
 		})
 	}
 }

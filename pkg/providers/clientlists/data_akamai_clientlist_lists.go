@@ -79,7 +79,7 @@ func (d *clientListsDataSource) Schema(_ context.Context, _ datasource.SchemaReq
 			"type": schema.SetAttribute{
 				Optional:    true,
 				ElementType: types.StringType,
-				Description: "Filter client lists by type. Valid values: IP, GEO, ASN, TLS_FINGERPRINT, FILE_HASH.",
+				Description: "Filter client lists by type. Valid values: IP, GEO, ASN, TLS_FINGERPRINT, FILE_HASH, USER_ID, DOMAIN, or REQUEST_HEADER_NAME_VALUE.",
 				Validators: []validator.Set{
 					setvalidator.ValueStringsAre(stringvalidator.OneOf(getValidListTypes()...)),
 				},
@@ -100,7 +100,7 @@ func (d *clientListsDataSource) Schema(_ context.Context, _ datasource.SchemaReq
 						},
 						"type": schema.StringAttribute{
 							Computed:    true,
-							Description: "The type of the client list",
+							Description: "Type of client list, which can be IP, GEO, ASN, TLS_FINGERPRINT, FILE_HASH, USER_ID, DOMAIN, or REQUEST_HEADER_NAME_VALUE.",
 						},
 						"notes": schema.StringAttribute{
 							Computed:    true,
@@ -189,7 +189,7 @@ func (d *clientListsDataSource) Configure(ctx context.Context, request datasourc
 		return
 	}
 
-	meta, ok := request.ProviderData.(meta.Meta)
+	metaInfo, ok := request.ProviderData.(meta.Meta)
 	if !ok {
 		response.Diagnostics.AddError(
 			"Unexpected Data Source Configure Type",
@@ -198,7 +198,7 @@ func (d *clientListsDataSource) Configure(ctx context.Context, request datasourc
 		return
 	}
 
-	d.meta = meta
+	d.meta = metaInfo
 }
 
 func (d *clientListsDataSource) Read(ctx context.Context, request datasource.ReadRequest, response *datasource.ReadResponse) {
@@ -293,5 +293,6 @@ func getValidListTypes() []string {
 		string(clientlists.FileHash),
 		string(clientlists.USER),
 		string(clientlists.DOMAIN),
+		string(clientlists.RequestHeaderNameValue),
 	}
 }

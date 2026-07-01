@@ -20,20 +20,39 @@ import (
 
 // HashiAcc is Hack for Hashicorp Acceptance Tests
 var HashiAcc = false
-var sleepInterval = 5 * time.Second
-var defaultInterval = 5 * time.Second
 
 const domainMapAlreadyExistsError = "Domain with provided `name` already exists. Please import specific domain using following command: terraform import akamai_gtm_domain.<your_resource_name> \"%s\""
 
-func resourceGTMv1Domain() *schema.Resource {
+type gtmDomainResourceConfig struct {
+	sleepInterval   time.Duration
+	defaultInterval time.Duration
+}
+
+func defaultGTMDomainResourceConfig() gtmDomainResourceConfig {
+	return gtmDomainResourceConfig{
+		sleepInterval:   5 * time.Second,
+		defaultInterval: 5 * time.Second,
+	}
+}
+
+type gtmDomainResource struct {
+	sleepInterval   time.Duration
+	defaultInterval time.Duration
+}
+
+func resourceGTMv1Domain(config gtmDomainResourceConfig) *schema.Resource {
+	r := &gtmDomainResource{
+		sleepInterval:   config.sleepInterval,
+		defaultInterval: config.defaultInterval,
+	}
 	return &schema.Resource{
-		CreateContext: resourceGTMv1DomainCreate,
-		ReadContext:   resourceGTMv1DomainRead,
-		UpdateContext: resourceGTMv1DomainUpdate,
-		DeleteContext: resourceGTMv1DomainDelete,
+		CreateContext: r.resourceGTMv1DomainCreate,
+		ReadContext:   r.resourceGTMv1DomainRead,
+		UpdateContext: r.resourceGTMv1DomainUpdate,
+		DeleteContext: r.resourceGTMv1DomainDelete,
 		CustomizeDiff: preventNameUpdateWithoutContractAndGroup,
 		Importer: &schema.ResourceImporter{
-			StateContext: resourceGTMv1DomainImport,
+			StateContext: r.resourceGTMv1DomainImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"contract": {
@@ -233,7 +252,7 @@ func GetQueryArgs(d *schema.ResourceData) (*gtm.DomainQueryArgs, error) {
 }
 
 // Create a new GTM Domain
-func resourceGTMv1DomainCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (r *gtmDomainResource) resourceGTMv1DomainCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1DomainCreate")
 	// create a context with logging for api calls
@@ -248,7 +267,7 @@ func resourceGTMv1DomainCreate(ctx context.Context, d *schema.ResourceData, m in
 		logger.Errorf("Domain name not found in ResourceData")
 		return diag.FromErr(err)
 	}
-	dom, err := Client(meta).GetDomain(ctx, gtm.GetDomainRequest{
+	dom, err := meta.Client().GetGTM().GetDomain(ctx, gtm.GetDomainRequest{
 		DomainName: dname,
 	})
 	if err != nil && !errors.Is(err, gtm.ErrNotFound) {
@@ -284,7 +303,7 @@ func resourceGTMv1DomainCreate(ctx context.Context, d *schema.ResourceData, m in
 			Detail:   err.Error(),
 		})
 	}
-	cStatus, err := Client(meta).CreateDomain(ctx, gtm.CreateDomainRequest{
+	cStatus, err := meta.Client().GetGTM().CreateDomain(ctx, gtm.CreateDomainRequest{
 		Domain:    newDom,
 		QueryArgs: queryArgs,
 	})
@@ -334,7 +353,7 @@ func resourceGTMv1DomainCreate(ctx context.Context, d *schema.ResourceData, m in
 		}
 
 		if waitOnComplete {
-			done, err := waitForCompletion(ctx, dname, m)
+			done, err := waitForCompletion(ctx, dname, m, r.defaultInterval)
 			if done {
 				logger.Infof("Domain create completed")
 			} else {
@@ -353,13 +372,13 @@ func resourceGTMv1DomainCreate(ctx context.Context, d *schema.ResourceData, m in
 	}
 	// Give terraform the ID
 	d.SetId(dname)
-	return resourceGTMv1DomainRead(ctx, d, m)
+	return r.resourceGTMv1DomainRead(ctx, d, m)
 
 }
 
 // Only ever save data from the tf config in the tf state file, to help with
 // api issues. See func unmarshalResourceData for more info.
-func resourceGTMv1DomainRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (r *gtmDomainResource) resourceGTMv1DomainRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1DomainRead")
 	// create a context with logging for api calls
@@ -371,7 +390,7 @@ func resourceGTMv1DomainRead(ctx context.Context, d *schema.ResourceData, m inte
 	logger.Debugf("Reading Domain: %s", d.Id())
 	var diags diag.Diagnostics
 	// retrieve the domain
-	dom, err := Client(meta).GetDomain(ctx, gtm.GetDomainRequest{
+	dom, err := meta.Client().GetGTM().GetDomain(ctx, gtm.GetDomainRequest{
 		DomainName: d.Id(),
 	})
 	if errors.Is(err, gtm.ErrNotFound) {
@@ -392,7 +411,7 @@ func resourceGTMv1DomainRead(ctx context.Context, d *schema.ResourceData, m inte
 }
 
 // Update GTM Domain
-func resourceGTMv1DomainUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (r *gtmDomainResource) resourceGTMv1DomainUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1DomainUpdate")
 	// create a context with logging for api calls
@@ -404,7 +423,7 @@ func resourceGTMv1DomainUpdate(ctx context.Context, d *schema.ResourceData, m in
 	logger.Debugf("Updating Domain: %s", d.Id())
 	var diags diag.Diagnostics
 	// Get existing domain
-	existDom, err := Client(meta).GetDomain(ctx, gtm.GetDomainRequest{
+	existDom, err := meta.Client().GetGTM().GetDomain(ctx, gtm.GetDomainRequest{
 		DomainName: d.Id(),
 	})
 	if err != nil {
@@ -432,7 +451,7 @@ func resourceGTMv1DomainUpdate(ctx context.Context, d *schema.ResourceData, m in
 		})
 	}
 
-	uStat, err := Client(meta).UpdateDomain(ctx, gtm.UpdateDomainRequest{
+	uStat, err := meta.Client().GetGTM().UpdateDomain(ctx, gtm.UpdateDomainRequest{
 		Domain:    newDom,
 		QueryArgs: args,
 	})
@@ -459,7 +478,7 @@ func resourceGTMv1DomainUpdate(ctx context.Context, d *schema.ResourceData, m in
 	}
 
 	if waitOnComplete {
-		done, err := waitForCompletion(ctx, d.Id(), m)
+		done, err := waitForCompletion(ctx, d.Id(), m, r.defaultInterval)
 		if done {
 			logger.Infof("Domain update completed")
 		} else {
@@ -477,12 +496,12 @@ func resourceGTMv1DomainUpdate(ctx context.Context, d *schema.ResourceData, m in
 
 	}
 
-	return resourceGTMv1DomainRead(ctx, d, m)
+	return r.resourceGTMv1DomainRead(ctx, d, m)
 
 }
 
 // Delete an existing GTM Domain
-func resourceGTMv1DomainDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (r *gtmDomainResource) resourceGTMv1DomainDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1DomainDelete")
 	ctx = session.ContextWithOptions(
@@ -494,7 +513,7 @@ func resourceGTMv1DomainDelete(ctx context.Context, d *schema.ResourceData, m in
 	var domainName = d.Id()
 	logger.Debugf("Initiating delete request for GTM domain: %s", domainName)
 
-	resp, err := Client(meta).DeleteDomains(ctx, gtm.DeleteDomainsRequest{
+	resp, err := meta.Client().GetGTM().DeleteDomains(ctx, gtm.DeleteDomainsRequest{
 		Body: gtm.DeleteDomainsRequestBody{
 			DomainNames: []string{domainName},
 		},
@@ -511,7 +530,7 @@ func resourceGTMv1DomainDelete(ctx context.Context, d *schema.ResourceData, m in
 
 	logger.Debugf("Check Delete Domain Status for requestID: %v", resp.RequestID)
 
-	status, err := waitForDeletion(ctx, resp.RequestID, meta)
+	status, err := r.waitForDeletion(ctx, resp.RequestID, meta)
 
 	if err != nil {
 		logger.Errorf("Domain delete error: %s", err.Error())
@@ -537,7 +556,7 @@ func resourceGTMv1DomainDelete(ctx context.Context, d *schema.ResourceData, m in
 }
 
 // waitForDeletion waits for the deletion process to complete by polling the status.
-func waitForDeletion(ctx context.Context, requestID string, meta meta.Meta) (*gtm.DeleteDomainsStatusResponse, error) {
+func (r *gtmDomainResource) waitForDeletion(ctx context.Context, requestID string, meta meta.Meta) (*gtm.DeleteDomainsStatusResponse, error) {
 	logger := meta.Log("Akamai GTM", "waitForDeletion")
 
 	const timeoutDuration = 300 * time.Second
@@ -545,7 +564,7 @@ func waitForDeletion(ctx context.Context, requestID string, meta meta.Meta) (*gt
 	ctx, cancel := context.WithTimeout(ctx, timeoutDuration)
 	defer cancel()
 
-	ticker := time.NewTicker(sleepInterval)
+	ticker := time.NewTicker(r.sleepInterval)
 	defer ticker.Stop()
 
 	for {
@@ -553,7 +572,7 @@ func waitForDeletion(ctx context.Context, requestID string, meta meta.Meta) (*gt
 		case <-ctx.Done():
 			return nil, fmt.Errorf("context cancelled while waiting for domain deletion: %w", ctx.Err())
 		case <-ticker.C:
-			status, err := Client(meta).GetDeleteDomainsStatus(ctx, gtm.DeleteDomainsStatusRequest{
+			status, err := meta.Client().GetGTM().GetDeleteDomainsStatus(ctx, gtm.DeleteDomainsStatusRequest{
 				RequestID: requestID,
 			})
 
@@ -572,7 +591,7 @@ func waitForDeletion(ctx context.Context, requestID string, meta meta.Meta) (*gt
 	}
 }
 
-func resourceGTMv1DomainImport(_ context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+func (r *gtmDomainResource) resourceGTMv1DomainImport(_ context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1DomainImport")
 
@@ -931,13 +950,13 @@ func createDomainStruct(domain *gtm.GetDomainResponse) *gtm.Domain {
 }
 
 // Util function to wait for change deployment. return true if complete. false if not - error or nil (timeout)
-func waitForCompletion(ctx context.Context, domain string, m interface{}) (bool, error) {
+func waitForCompletion(ctx context.Context, domain string, m interface{}, defaultInterval time.Duration) (bool, error) {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTMv1", "waitForCompletion")
 
 	var defaultTimeout = 300 * time.Second
-	var sleepInterval = defaultInterval // seconds. TODO:Should be configurable by user ...
-	var sleepTimeout = defaultTimeout   // seconds. TODO: Should be configurable by user ...
+	sleepInterval := defaultInterval  // seconds. TODO:Should be configurable by user ...
+	var sleepTimeout = defaultTimeout // seconds. TODO: Should be configurable by user ...
 	if HashiAcc {
 		// Override for ACC tests
 		sleepTimeout = sleepInterval
@@ -945,7 +964,7 @@ func waitForCompletion(ctx context.Context, domain string, m interface{}) (bool,
 	logger.Debugf("WAIT: Sleep Interval [%v]", sleepInterval/time.Second)
 	logger.Debugf("WAIT: Sleep Timeout [%v]", sleepTimeout/time.Second)
 	for {
-		propStat, err := Client(meta).GetDomainStatus(ctx, gtm.GetDomainStatusRequest{
+		propStat, err := meta.Client().GetGTM().GetDomainStatus(ctx, gtm.GetDomainStatusRequest{
 			DomainName: domain,
 		})
 		if err != nil {

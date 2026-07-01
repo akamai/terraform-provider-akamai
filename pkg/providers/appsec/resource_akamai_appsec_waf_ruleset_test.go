@@ -45,6 +45,10 @@ func TestWAFRulesetResource(t *testing.T) {
 	err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResWAFRuleset/WAFRuleset_import_no_changes_delete_request.json"), &importNoChangesDeleteRequest)
 	require.NoError(t, err)
 
+	getSecurityPoliciesResponse := appsec.GetSecurityPoliciesResponse{}
+	err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResWAFRuleset/SecurityPolicyWafRuleset.json"), &getSecurityPoliciesResponse)
+	require.NoError(t, err)
+
 	baseChecker := test.NewStateChecker("akamai_appsec_waf_ruleset.test").
 		CheckEqual("config_id", "111111").
 		CheckEqual("security_policy_id", "2222_333333")
@@ -120,6 +124,239 @@ func TestWAFRulesetResource(t *testing.T) {
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResWAFRuleset/waf_ruleset_create_with_duplicate_attack_groups.tf"),
 					ExpectError: regexp.MustCompile("duplicate attack_group"),
+				},
+			},
+		},
+
+		"update security_policy_id - should fail with error": {
+			init: func(m *appsec.Mock) {
+				// Step 1: create
+				mockGetConfiguration(m, 1)
+				mockGetWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
+				mockUpdateWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
+
+				// Step 1: read (post-create)
+				mockGetConfiguration(m, 1)
+				mockGetWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
+
+				// Step 1: read (plan before step 2)
+				mockGetConfiguration(m, 1)
+				mockGetWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
+
+				// Step 2: plan fails with error — framework still runs delete cleanup for step 1 resource
+				mockGetConfiguration(m, 1)
+				mockUpdateWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
+			},
+			steps: []resource.TestStep{
+				{
+					// Create with original policy ID
+					Config: testutils.LoadFixtureString(t, "testdata/TestResWAFRuleset/waf_ruleset.tf"),
+					Check:  baseChecker.Build(),
+				},
+				{
+					// Attempt to change security_policy_id to a different known value —
+					// PreventStringUpdateIfKnown must reject this during plan
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResWAFRuleset/waf_ruleset_updated_security_policy_id.tf"),
+					ExpectError: regexp.MustCompile("updating 'security_policy_id' is not allowed"),
+				},
+			},
+		},
+		"update security_policy_id with variable reference - should fail": {
+			init: func(m *appsec.Mock) {
+				// Step 1: create with variable reference (policy_id is known value "2222_333333")
+				mockGetConfiguration(m, 1)
+				mockGetWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
+				mockUpdateWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
+
+				// Step 1: read (post-create)
+				mockGetConfiguration(m, 1)
+				mockGetWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
+
+				// Step 1: read (plan before step 2)
+				mockGetConfiguration(m, 1)
+				mockGetWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
+
+				// Step 2: plan fails with error — attempt to update to different policy_id
+				// PreventStringUpdateIfKnown detects both old and new values are known
+				mockGetConfiguration(m, 1)
+				mockUpdateWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
+			},
+			steps: []resource.TestStep{
+				{
+					// Create with original policy ID via variable reference
+					Config: testutils.LoadFixtureString(t, "testdata/TestResWAFRuleset/waf_ruleset_with_variable_reference.tf"),
+					Check:  baseChecker.Build(),
+				},
+				{
+					// Attempt to change security_policy_id via different variable reference —
+					// PreventStringUpdateIfKnown must reject this during plan when both values are known
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResWAFRuleset/waf_ruleset_change_variable_reference.tf"),
+					ExpectError: regexp.MustCompile("updating 'security_policy_id' is not allowed"),
+				},
+			},
+		},
+		"update security_policy_id to local reference with same value - no update triggered": {
+			init: func(m *appsec.Mock) {
+				// Step 1: create with inline literal
+				mockGetConfiguration(m, 1)
+				mockGetWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
+				mockUpdateWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
+
+				// Step 1: read (post-create)
+				mockGetConfiguration(m, 1)
+				mockGetWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
+
+				// Step 2: read (refresh)
+				mockGetConfiguration(m, 1)
+				mockGetWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
+
+				// Step 2: plan — PreventStringUpdateIfKnown sees equal values, no diff, no update
+				mockGetConfiguration(m, 1)
+				mockGetWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
+
+				// Delete
+				mockGetConfiguration(m, 1)
+				mockUpdateWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
+			},
+			steps: []resource.TestStep{
+				{
+					// Create with inline literal "2222_333333"
+					Config: testutils.LoadFixtureString(t, "testdata/TestResWAFRuleset/waf_ruleset.tf"),
+					Check:  baseChecker.Build(),
+				},
+				{
+					// Switch to local reference resolving to the same "2222_333333" —
+					// PreventStringUpdateIfKnown must allow this (values are equal) and no API update should be called
+					Config: testutils.LoadFixtureString(t, "testdata/TestResWAFRuleset/waf_ruleset_security_policy_id_from_local.tf"),
+					Check:  baseChecker.Build(),
+				},
+			},
+		},
+		"security_policy_id idempotent with local reference - UseStateForUnknown preserves value": {
+			init: func(m *appsec.Mock) {
+				// Step 1: create with local reference (value is "2222_333333", known at plan time)
+				mockGetConfiguration(m, 1)
+				mockGetWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
+				mockUpdateWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
+
+				// Step 1: read (post-create)
+				mockGetConfiguration(m, 1)
+				mockGetWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
+
+				// Step 2: read (refresh) — UseStateForUnknown ensures state value is carried into plan
+				mockGetConfiguration(m, 1)
+				mockGetWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
+
+				// Step 2: plan — no diff, no update
+				mockGetConfiguration(m, 1)
+				mockGetWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
+
+				// Delete
+				mockGetConfiguration(m, 1)
+				mockUpdateWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResWAFRuleset/waf_ruleset_security_policy_id_from_local.tf"),
+					Check:  baseChecker.Build(),
+				},
+				{
+					// Re-apply identical config — UseStateForUnknown + PreventStringUpdateIfKnown must not trigger any update
+					Config: testutils.LoadFixtureString(t, "testdata/TestResWAFRuleset/waf_ruleset_security_policy_id_from_local.tf"),
+					Check:  baseChecker.Build(),
+				},
+			},
+		},
+		"updating security policy in the waf ruleset resource which is imported already - should fail": {
+			init: func(m *appsec.Mock) {
+				// Step 1: ImportState call
+				mockGetConfiguration(m, 1)
+				mockGetWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
+
+				// Step 1: Read call (framework reads after import to normalize state)
+				mockGetConfiguration(m, 1)
+				mockGetWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
+
+				// Step 2: refresh (reads imported state with policy "2222_333333")
+				mockGetConfiguration(m, 1)
+				mockGetWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
+
+				// Step 2: data source plan — GetSecurityPolicies returns policy "AAAA_81230"
+				mockGetConfiguration(m, 1)
+				mockGetSecurityPolicies(m, getSecurityPoliciesResponse, 1)
+
+				// Step 2: plan fails — PreventStringUpdateIfKnown detects "2222_333333" → "AAAA_81230"
+				// framework runs delete cleanup for the imported resource
+				mockGetConfiguration(m, 1)
+				mockUpdateWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
+			},
+			steps: []resource.TestStep{
+				{
+					Config:             testutils.LoadFixtureString(t, "testdata/TestResWAFRuleset/waf_ruleset.tf"),
+					ImportState:        true,
+					ImportStateId:      "111111:2222_333333",
+					ResourceName:       "akamai_appsec_waf_ruleset.test",
+					ImportStatePersist: true,
+					ImportStateCheck:   baseImportChecker.CheckEqual("rules.#", "308").CheckEqual("attack_groups.#", "9").Build(),
+				},
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResWAFRuleset/waf_ruleset_reference_changed.tf"),
+					ExpectError: regexp.MustCompile("updating 'security_policy_id' is not allowed"),
+				},
+			},
+		},
+
+		"same security policy in the waf ruleset resource which is imported already - should not fail": {
+			init: func(m *appsec.Mock) {
+				// Step 1: ImportState call
+				mockGetConfiguration(m, 1)
+				mockGetWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
+
+				// Step 1: Read call (framework reads after import to normalize state)
+				mockGetConfiguration(m, 1)
+				mockGetWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
+
+				// Step 2: refresh (reads imported state with policy "2222_333333")
+				mockGetConfiguration(m, 1)
+				mockGetWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
+
+				// Step 2: data source read (plan) — GetSecurityPolicies returns policy "2222_333333"
+				mockGetConfiguration(m, 1)
+				mockGetSecurityPolicies(m, getSecurityPoliciesResponse, 1)
+
+				// Step 2: plan — PreventStringUpdateIfKnown sees equal values, no diff, no update
+				mockGetConfiguration(m, 1)
+				mockGetWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
+
+				// Step 2: data source read (apply) — Terraform re-reads data sources during apply
+				mockGetConfiguration(m, 1)
+				mockGetSecurityPolicies(m, getSecurityPoliciesResponse, 1)
+
+				// Step 2: data source read (post-apply idempotency check)
+				mockGetConfiguration(m, 1)
+				mockGetSecurityPolicies(m, getSecurityPoliciesResponse, 1)
+
+				// Step 2: resource read (post-apply idempotency check)
+				mockGetConfiguration(m, 1)
+				mockGetWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
+				mockUpdateWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
+
+				// Delete
+				mockGetConfiguration(m, 1)
+				mockUpdateWAFCompositeRulesetForResource(m, wafRulesetResponse, 1)
+			},
+			steps: []resource.TestStep{
+				{
+					Config:             testutils.LoadFixtureString(t, "testdata/TestResWAFRuleset/waf_ruleset.tf"),
+					ImportState:        true,
+					ImportStateId:      "111111:2222_333333",
+					ResourceName:       "akamai_appsec_waf_ruleset.test",
+					ImportStatePersist: true,
+					ImportStateCheck:   baseImportChecker.CheckEqual("rules.#", "308").CheckEqual("attack_groups.#", "9").Build(),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResWAFRuleset/waf_ruleset_reference_unchanged.tf"),
+					Check:  baseChecker.Build(),
 				},
 			},
 		},
@@ -502,6 +739,13 @@ func mockGetWAFCompositeRulesetFailureForResource(m *appsec.Mock) {
 		Version:  2,
 		PolicyID: "2222_333333",
 	}).Return(nil, &wafRulesetResourceServerError).Once()
+}
+
+func mockGetSecurityPolicies(m *appsec.Mock, response appsec.GetSecurityPoliciesResponse, times int) {
+	m.On("GetSecurityPolicies",
+		mock.Anything,
+		appsec.GetSecurityPoliciesRequest{ConfigID: 111111, Version: 2},
+	).Return(&response, nil).Times(times)
 }
 
 // mockUpdateWAFCompositeRulesetForResource mocks the UpdateWAFCompositeRuleset API call for resource tests

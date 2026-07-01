@@ -159,4 +159,10 @@ func InitTemplates(otm map[string]*OutputTemplate) {
 		TableTitle:     "Domain|Description|Tags|CreateDate|UpdateDate|ExpirationDate",
 		TemplateString: `{{range $index, $element := .Items}}{{if $index}}<<>>{{end}}{{.Value}}|{{.Description}}|{{tags .Tags}}|{{.CreateDate}}|{{.UpdateDate}}|{{noExpiration .ExpirationDate}}{{end}}`,
 	}
+	otm["requestHeaderNameValueClientListItemsDS"] = &OutputTemplate{
+		TemplateType:   "TABULAR",
+		TemplateName:   clientListItemsTemplateName,
+		TableTitle:     "Key|Values|Description|Tags|CreateDate|UpdateDate|ExpirationDate",
+		TemplateString: `{{range $index, $element := .Items}}{{if $index}}<<>>{{end}}{{.Key}}|{{tags .Values}}|{{.Description}}|{{tags .Tags}}|{{.CreateDate}}|{{.UpdateDate}}|{{noExpiration .ExpirationDate}}{{end}}`,
+	}
 }

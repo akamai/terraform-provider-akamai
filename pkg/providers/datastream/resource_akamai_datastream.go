@@ -101,6 +101,17 @@ func resourceDatastream() *schema.Resource {
 }
 
 var datastreamResourceSchema = map[string]*schema.Schema{
+	"log_type": {
+		Type:        schema.TypeString,
+		ForceNew:    true,
+		Optional:    true,
+		Default:     string(datastream.LogTypeCDN),
+		Description: "Type of logs for the stream",
+		ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{
+			string(datastream.LogTypeCDN),
+			string(datastream.LogTypeAppSec),
+		}, true)),
+	},
 	"active": {
 		Type:        schema.TypeBool,
 		Required:    true,
@@ -149,7 +160,7 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 	},
 	"dataset_fields": {
 		Type:             schema.TypeList,
-		Required:         true,
+		Optional:         true,
 		DiffSuppressFunc: isOrderDifferent,
 		Elem: &schema.Schema{
 			Type: schema.TypeInt,
@@ -193,12 +204,20 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 	},
 	"properties": {
 		Type:     schema.TypeList,
-		Required: true,
+		Optional: true,
 		Elem: &schema.Schema{
 			Type:             schema.TypeString,
 			DiffSuppressFunc: tf.FieldPrefixSuppress("prp_"),
 		},
 		Description: "Identifies the properties monitored in the stream",
+	},
+	"app_sec_configs": {
+		Type:     schema.TypeList,
+		Optional: true,
+		Elem: &schema.Schema{
+			Type: schema.TypeInt,
+		},
+		Description: "Identifies the application security configurations monitored in the stream",
 	},
 	"stream_name": {
 		Type:        schema.TypeString,
@@ -1046,6 +1065,92 @@ var configResource = &schema.Resource{
 	},
 }
 
+// Helper function for extracting the log type from terraform schema and applying default value if not set.
+func getLogType(d *schema.ResourceData) (datastream.LogType, error) {
+	logTypeVal, err := tf.GetStringValue("log_type", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return "", err
+	}
+
+	// default the log type to CDN if not provided for backwards compatibility
+	var logType = datastream.LogTypeCDN
+	if logTypeVal != "" {
+		logType = datastream.LogType(strings.ToUpper(logTypeVal))
+	}
+
+	return logType, nil
+}
+
+// Helper function for validating the stream type specific configuration based on the log type and returning the extracted configuration values.
+func getStreamTypeConfig(d *schema.ResourceData, logType datastream.LogType) (
+	[]datastream.DatasetFieldID,
+	[]datastream.PropertyID,
+	[]datastream.AppSecConfigID,
+	error,
+) {
+	// need to default all return values to empty slices instead of nil to avoid null values in API requests which causes them to fail validation
+	var datasetFieldsIDs []datastream.DatasetFieldID
+	var propertyIDs []datastream.PropertyID
+	var appSecConfigIDs []datastream.AppSecConfigID
+
+	datasetFieldsIDsList, err := tf.GetListValue("dataset_fields", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return nil, nil, nil, err
+	}
+	datasetFieldsIDs = DatasetFieldListToDatasetFields(datasetFieldsIDsList)
+
+	propertyIDsList, propertyIDsErr := tf.GetListValue("properties", d)
+	if propertyIDsErr != nil && !errors.Is(propertyIDsErr, tf.ErrNotFound) {
+		return nil, nil, nil, propertyIDsErr
+	}
+
+	appSecConfigsList, appSecConfigsErr := tf.GetListValue("app_sec_configs", d)
+	if appSecConfigsErr != nil && !errors.Is(appSecConfigsErr, tf.ErrNotFound) {
+		return nil, nil, nil, appSecConfigsErr
+	}
+
+	switch logType {
+	case datastream.LogTypeCDN:
+		if len(datasetFieldsIDs) == 0 {
+			return nil, nil, nil, fmt.Errorf("`dataset_fields` are required for log_type %q", datastream.LogTypeCDN)
+		}
+		if len(appSecConfigsList) > 0 {
+			return nil, nil, nil, fmt.Errorf("cannot set `app_sec_configs` when log_type is %q", datastream.LogTypeCDN)
+		}
+		if errors.Is(propertyIDsErr, tf.ErrNotFound) || len(propertyIDsList) == 0 {
+			return nil, nil, nil, fmt.Errorf("`properties` are required for log_type %q", datastream.LogTypeCDN)
+		}
+
+		propertyIDs, err := GetPropertiesList(propertyIDsList)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+
+		return datasetFieldsIDs, propertyIDs, appSecConfigIDs, nil
+
+	case datastream.LogTypeAppSec:
+		if len(datasetFieldsIDs) > 0 {
+			return nil, nil, nil, fmt.Errorf("cannot set `dataset_fields` when log_type is %q", datastream.LogTypeAppSec)
+		}
+		if len(propertyIDsList) > 0 {
+			return nil, nil, nil, fmt.Errorf("cannot set `properties` when log_type is %q", datastream.LogTypeAppSec)
+		}
+		if errors.Is(appSecConfigsErr, tf.ErrNotFound) || len(appSecConfigsList) == 0 {
+			return nil, nil, nil, fmt.Errorf("`app_sec_configs` are required for log_type %q", datastream.LogTypeAppSec)
+		}
+
+		appSecConfigIDs, err := GetAppSecConfigIDs(appSecConfigsList)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+
+		return datasetFieldsIDs, propertyIDs, appSecConfigIDs, nil
+
+	default:
+		return nil, nil, nil, fmt.Errorf("unsupported log_type %q", logType)
+	}
+}
+
 func resourceDatastreamCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("Datastream", "resourceDatastreamCreate")
@@ -1057,6 +1162,11 @@ func resourceDatastreamCreate(ctx context.Context, d *schema.ResourceData, m int
 
 	client := inst.Client(meta)
 	logger.Debug("Creating stream")
+
+	logType, err := getLogType(d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	active, err := tf.GetBoolValue("active", d)
 	if err != nil {
@@ -1074,15 +1184,7 @@ func resourceDatastreamCreate(ctx context.Context, d *schema.ResourceData, m int
 	}
 	contractID = strings.TrimPrefix(contractID, "ctr_")
 
-	datasetFieldsIDsList, err := tf.GetListValue("dataset_fields", d)
-
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	datasetFieldsIDs := DatasetFieldListToDatasetFields(datasetFieldsIDsList)
-
 	emailIDsList, err := tf.GetListValue("notification_emails", d)
-
 	if err != nil {
 		if !errors.Is(err, tf.ErrNotFound) {
 			return diag.FromErr(err)
@@ -1103,11 +1205,7 @@ func resourceDatastreamCreate(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 
-	propertyIDsList, err := tf.GetListValue("properties", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	propertyIDs, err := GetPropertiesList(propertyIDsList)
+	datasetFieldsIDs, propertyIDs, appSecConfigIDs, err := getStreamTypeConfig(d, logType)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -1153,8 +1251,10 @@ func resourceDatastreamCreate(ctx context.Context, d *schema.ResourceData, m int
 			Properties:            propertyIDs,
 			StreamName:            streamName,
 			SamplingPercentage:    samplingPercentage,
+			AppSecConfigs:         appSecConfigIDs,
 		},
 		Activate: active,
+		LogType:  logType,
 	}
 
 	res, err := client.CreateStream(ctx, req)
@@ -1166,7 +1266,7 @@ func resourceDatastreamCreate(ctx context.Context, d *schema.ResourceData, m int
 	d.SetId(strconv.FormatInt(streamID, 10))
 
 	if active {
-		_, err = waitForStreamStatusChange(ctx, client, streamID, datastream.StreamStatusActivated)
+		_, err = waitForStreamStatusChange(ctx, client, streamID, logType, datastream.StreamStatusActivated)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -1203,15 +1303,18 @@ func resourceDatastreamRead(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.FromErr(err)
 	}
 
-	streamDetails, err := client.GetStream(ctx, datastream.GetStreamRequest{
-		StreamID: streamID,
-	})
+	val, err := tf.GetStringValue("log_type", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+
+	streamDetails, logType, err := getStreamForRead(ctx, client, logger, streamID, val)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	attrs := make(map[string]interface{})
-
+	attrs["log_type"] = string(logType)
 	attrs["active"] = streamDetails.StreamStatus == datastream.StreamStatusActivated
 	attrs["collect_midgress"] = streamDetails.CollectMidgress
 	attrs["contract_id"] = streamDetails.ContractID
@@ -1230,7 +1333,6 @@ func resourceDatastreamRead(ctx context.Context, d *schema.ResourceData, m inter
 	filteredDatasetFields := filterMidgressDatasetField(datasetFieldsInterface)
 
 	attrs["dataset_fields"] = filteredDatasetFields
-	attrs["contract_id"] = streamDetails.ContractID
 	attrs["notification_emails"] = streamDetails.NotificationEmails
 	attrs["latest_version"] = streamDetails.LatestVersion
 
@@ -1239,7 +1341,16 @@ func resourceDatastreamRead(ctx context.Context, d *schema.ResourceData, m inter
 	attrs["modified_date"] = streamDetails.ModifiedDate
 	attrs["papi_json"] = StreamIDToPapiJSON(streamDetails.StreamID)
 	attrs["product_id"] = streamDetails.ProductID
-	attrs["properties"] = PropertyToList(streamDetails.Properties)
+
+	if logType == datastream.LogTypeAppSec {
+		attrs["app_sec_configs"] = AppSecConfigsToIDsList(streamDetails.AppSecConfigs)
+		attrs["properties"] = []interface{}{}
+	}
+
+	if logType == datastream.LogTypeCDN {
+		attrs["properties"] = PropertyToList(streamDetails.Properties)
+		attrs["app_sec_configs"] = []interface{}{}
+	}
 	attrs["stream_name"] = streamDetails.StreamName
 	attrs["stream_version"] = streamDetails.StreamVersion
 	// Only set sampling_percentage if it's non-zero (API may not return the field; zero indicates not set)
@@ -1282,6 +1393,85 @@ func resourceDatastreamRead(ctx context.Context, d *schema.ResourceData, m inter
 	return nil
 }
 
+// getStreamForRead fetches stream details, honoring explicit log_type when provided.
+// If log_type is unavailable (for example, during import refresh), it probes known
+// log types to determine the correct API path.
+func getStreamForRead(ctx context.Context, client datastream.DS, logger akalog.Interface, streamID int64, configuredLogType string) (*datastream.DetailedStreamVersion, datastream.LogType, error) {
+	// if the log type is known, then we can try to fetch the stream.
+	if configuredLogType != "" {
+		logType := datastream.LogType(strings.ToUpper(configuredLogType))
+		streamDetails, err := client.GetStream(ctx, datastream.GetStreamRequest{
+			StreamID: streamID,
+			LogType:  logType,
+		})
+		if err != nil {
+			logger.Errorf("read stream '%d' with log_type %s failed: %T: %v", streamID, logType, err, err)
+			return nil, "", err
+		}
+		return streamDetails, logType, nil
+	}
+
+	// if it's not known (e.g. during import refresh), we need to probe for it by trying to fetch stream details with known log types and seeing which one succeeds.
+	streamDetails, logType, err := probeForStream(ctx, client, logger, streamID)
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to determine log type for stream '%d': %w", streamID, err)
+	}
+	return streamDetails, logType, nil
+
+}
+
+// probeForStream attempts to fetch stream details for known log types to determine the correct log type for the stream.
+// This is used in cases where log type is not provided (e.g. during import refresh) to still be able to read stream details and populate state.
+// If the API returns an unrecoverable error (e.g. 5xx status code) for a log type, it stops probing and returns the error instead of continuing to probe other log types.
+func probeForStream(ctx context.Context, client datastream.DS, logger akalog.Interface, streamID int64) (*datastream.DetailedStreamVersion, datastream.LogType, error) {
+
+	var lastErr error
+	for _, logType := range []datastream.LogType{datastream.LogTypeCDN, datastream.LogTypeAppSec} {
+		logger.Debugf("probing for stream '%d' with log_type %s", streamID, logType)
+		streamDetails, err := client.GetStream(ctx, datastream.GetStreamRequest{
+			StreamID: streamID,
+			LogType:  logType,
+		})
+		if err == nil {
+			return streamDetails, logType, nil
+		}
+
+		// debug print the error
+		logger.Errorf("read stream '%d' with log_type %s failed: %T: %v", streamID, logType, err, err)
+
+		if !shouldContinueProbingForLogType(err) {
+			return nil, "", fmt.Errorf("received unrecoverable error while probing for stream '%d' with log_type %s: %w", streamID, logType, err)
+		}
+
+		lastErr = err
+	}
+
+	return nil, "", lastErr
+}
+
+// shouldContinueProbingForLogType determines whether to continue probing for stream log type based on the error returned from the API.
+func shouldContinueProbingForLogType(err error) bool {
+	apiErr, ok := extractDatastreamAPIError(err)
+	if !ok {
+		return true
+	}
+	// if the status code that comes back indicates a 5xx error, we should stop probing for the stream.
+	if apiErr.StatusCode >= 500 && apiErr.StatusCode < 600 {
+		return false
+	}
+	return true
+}
+
+// extractDatastreamAPIError attempts to extract a typed datastream API error.
+// If the error is not of the expected type, it returns ok=false.
+func extractDatastreamAPIError(err error) (*datastream.Error, bool) {
+	var apiErr *datastream.Error
+	if !errors.As(err, &apiErr) {
+		return nil, false
+	}
+	return apiErr, true
+}
+
 func resourceDatastreamUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("Datastream", "resourceDatastreamUpdate")
@@ -1299,8 +1489,13 @@ func resourceDatastreamUpdate(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 
+	logType, err := getLogType(d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	// it is not possible to edit stream while it is (de)activating
-	currentStreamStatus, err := waitForStreamStatusChange(ctx, client, streamID,
+	currentStreamStatus, err := waitForStreamStatusChange(ctx, client, streamID, logType,
 		datastream.StreamStatusDeactivated,
 		datastream.StreamStatusActivated,
 		datastream.StreamStatusInactive,
@@ -1327,14 +1522,14 @@ func resourceDatastreamUpdate(ctx context.Context, d *schema.ResourceData, m int
 			// stream is active and should be still active
 
 			// update details
-			err = updateStream(ctx, client, logger, streamID, d, isStreamActive)
+			err = updateStream(ctx, client, logger, streamID, d, isStreamActive, logType)
 			if err != nil {
 				return diag.FromErr(err)
 			}
 
 			// wait until stream is activated because updating active stream causes its reactivation
 			logger.Debugf("waiting for stream #%d activation", streamID)
-			_, err = waitForStreamStatusChange(ctx, client, streamID, datastream.StreamStatusActivated)
+			_, err = waitForStreamStatusChange(ctx, client, streamID, logType, datastream.StreamStatusActivated)
 			if err != nil {
 				return diag.FromErr(err)
 			}
@@ -1342,20 +1537,20 @@ func resourceDatastreamUpdate(ctx context.Context, d *schema.ResourceData, m int
 			// stream is active and should be deactivated
 
 			// deactivate stream first
-			err = deactivateStream(ctx, client, logger, streamID)
+			err = deactivateStream(ctx, client, logger, streamID, logType)
 			if err != nil {
 				return diag.FromErr(err)
 			}
 
 			// wait until stream is deactivated
 			logger.Debugf("waiting for stream #%d deactivation", streamID)
-			_, err = waitForStreamStatusChange(ctx, client, streamID, datastream.StreamStatusDeactivated)
+			_, err = waitForStreamStatusChange(ctx, client, streamID, logType, datastream.StreamStatusDeactivated)
 			if err != nil {
 				return diag.FromErr(err)
 			}
 
 			// update details (no waiting needed because stream is inactive)
-			err = updateStream(ctx, client, logger, streamID, d, false)
+			err = updateStream(ctx, client, logger, streamID, d, false, logType)
 			if err != nil {
 				return diag.FromErr(err)
 			}
@@ -1363,7 +1558,7 @@ func resourceDatastreamUpdate(ctx context.Context, d *schema.ResourceData, m int
 	} else {
 		// update details (no waiting needed because stream is inactive)
 
-		err = updateStream(ctx, client, logger, streamID, d, isStreamActive)
+		err = updateStream(ctx, client, logger, streamID, d, isStreamActive, logType)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -1372,14 +1567,14 @@ func resourceDatastreamUpdate(ctx context.Context, d *schema.ResourceData, m int
 			//stream is inactive and should be activated
 
 			// activate stream first
-			err = activateStream(ctx, client, logger, streamID)
+			err = activateStream(ctx, client, logger, streamID, logType)
 			if err != nil {
 				return diag.FromErr(err)
 			}
 
 			// wait until stream is deactivated
 			logger.Debugf("waiting for stream #%d activation", streamID)
-			_, err = waitForStreamStatusChange(ctx, client, streamID, datastream.StreamStatusActivated)
+			_, err = waitForStreamStatusChange(ctx, client, streamID, logType, datastream.StreamStatusActivated)
 			if err != nil {
 				return diag.FromErr(err)
 			}
@@ -1389,7 +1584,7 @@ func resourceDatastreamUpdate(ctx context.Context, d *schema.ResourceData, m int
 	return resourceDatastreamRead(ctx, d, m)
 }
 
-func updateStream(ctx context.Context, client datastream.DS, logger akalog.Interface, streamID int64, d *schema.ResourceData, isStreamActive bool) error {
+func updateStream(ctx context.Context, client datastream.DS, logger akalog.Interface, streamID int64, d *schema.ResourceData, isStreamActive bool, logType datastream.LogType) error {
 	// if some configuration details changed
 	if d.HasChangeExcept("active") {
 
@@ -1397,12 +1592,6 @@ func updateStream(ctx context.Context, client datastream.DS, logger akalog.Inter
 		if err != nil {
 			return err
 		}
-
-		datasetFieldsIDsList, err := tf.GetListValue("dataset_fields", d)
-		if err != nil {
-			return err
-		}
-		datasetFieldsIDs := DatasetFieldListToDatasetFields(datasetFieldsIDsList)
 
 		emailIDsList, err := tf.GetListValue("notification_emails", d)
 		if err != nil {
@@ -1412,12 +1601,7 @@ func updateStream(ctx context.Context, client datastream.DS, logger akalog.Inter
 		}
 		emailIDs := tf.InterfaceSliceToStringSlice(emailIDsList)
 
-		propertyIDsList, err := tf.GetListValue("properties", d)
-
-		if err != nil {
-			return err
-		}
-		propertyIDs, err := GetPropertiesList(propertyIDsList)
+		datasetFieldsIDs, propertyIDs, appSecConfigIDs, err := getStreamTypeConfig(d, logType)
 		if err != nil {
 			return err
 		}
@@ -1470,8 +1654,10 @@ func updateStream(ctx context.Context, client datastream.DS, logger akalog.Inter
 				Properties:            propertyIDs,
 				StreamName:            streamName,
 				SamplingPercentage:    samplingPercentage,
+				AppSecConfigs:         appSecConfigIDs,
 			},
 			Activate: isStreamActive,
+			LogType:  logType,
 		}
 
 		_, err = client.UpdateStream(ctx, req)
@@ -1483,31 +1669,32 @@ func updateStream(ctx context.Context, client datastream.DS, logger akalog.Inter
 	return nil
 }
 
-func deactivateStream(ctx context.Context, client datastream.DS, logger akalog.Interface, streamID int64) error {
+func deactivateStream(ctx context.Context, client datastream.DS, logger akalog.Interface, streamID int64, logType datastream.LogType) error {
 	logger.Debug("deactivating stream")
 	_, err := client.DeactivateStream(ctx, datastream.DeactivateStreamRequest{
 		StreamID: streamID,
+		LogType:  logType,
 	})
 	if err != nil {
 		return err
 	}
 
 	logger.Debugf("waiting for the stream #%d to be deactivated", streamID)
-	_, err = waitForStreamStatusChange(ctx, client, streamID, datastream.StreamStatusDeactivated)
+	_, err = waitForStreamStatusChange(ctx, client, streamID, logType, datastream.StreamStatusDeactivated)
 	return err
 }
 
-func activateStream(ctx context.Context, client datastream.DS, logger akalog.Interface, streamID int64) error {
+func activateStream(ctx context.Context, client datastream.DS, logger akalog.Interface, streamID int64, logType datastream.LogType) error {
 	logger.Info("activating stream")
 	_, err := client.ActivateStream(ctx, datastream.ActivateStreamRequest{
 		StreamID: streamID,
+		LogType:  logType,
 	})
 	if err != nil {
 		return err
 	}
-
 	logger.Debugf("waiting for the stream #%d to be activated", streamID)
-	_, err = waitForStreamStatusChange(ctx, client, streamID, datastream.StreamStatusActivated)
+	_, err = waitForStreamStatusChange(ctx, client, streamID, logType, datastream.StreamStatusActivated)
 	return err
 }
 
@@ -1523,6 +1710,11 @@ func resourceDatastreamDelete(ctx context.Context, d *schema.ResourceData, m int
 	client := inst.Client(meta)
 	logger.Debug("Deleting stream")
 
+	logType, err := getLogType(d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	streamID, err := strconv.ParseInt(d.Id(), 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
@@ -1530,6 +1722,7 @@ func resourceDatastreamDelete(ctx context.Context, d *schema.ResourceData, m int
 
 	streamDetails, err := client.GetStream(ctx, datastream.GetStreamRequest{
 		StreamID: streamID,
+		LogType:  logType,
 	})
 	if err != nil {
 		return diag.FromErr(err)
@@ -1544,7 +1737,7 @@ func resourceDatastreamDelete(ctx context.Context, d *schema.ResourceData, m int
 
 	// if stream is activating we have to wait until activation finishes
 	if activationStatus == datastream.StreamStatusActivating {
-		_, err := waitForStreamStatusChange(ctx, client, streamID, datastream.StreamStatusActivated)
+		_, err := waitForStreamStatusChange(ctx, client, streamID, logType, datastream.StreamStatusActivated)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -1556,6 +1749,7 @@ func resourceDatastreamDelete(ctx context.Context, d *schema.ResourceData, m int
 	if activationStatus == datastream.StreamStatusActivated {
 		_, err := client.DeactivateStream(ctx, datastream.DeactivateStreamRequest{
 			StreamID: streamID,
+			LogType:  logType,
 		})
 		if err != nil {
 			return diag.FromErr(err)
@@ -1566,7 +1760,7 @@ func resourceDatastreamDelete(ctx context.Context, d *schema.ResourceData, m int
 
 	// if stream is deactivating phase - wait until it completes
 	if activationStatus == datastream.StreamStatusDeactivating {
-		_, err := waitForStreamStatusChange(ctx, client, streamID, datastream.StreamStatusDeactivated)
+		_, err := waitForStreamStatusChange(ctx, client, streamID, logType, datastream.StreamStatusDeactivated)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -1578,6 +1772,7 @@ func resourceDatastreamDelete(ctx context.Context, d *schema.ResourceData, m int
 	if activationStatus == datastream.StreamStatusDeactivated || activationStatus == datastream.StreamStatusInactive {
 		err := client.DeleteStream(ctx, datastream.DeleteStreamRequest{
 			StreamID: streamID,
+			LogType:  logType,
 		})
 
 		if err != nil {
@@ -1589,7 +1784,7 @@ func resourceDatastreamDelete(ctx context.Context, d *schema.ResourceData, m int
 	return nil
 }
 
-func waitForStreamStatusChange(ctx context.Context, client datastream.DS, streamID int64, expectedStatuses ...datastream.StreamStatus) (*datastream.StreamStatus, error) {
+func waitForStreamStatusChange(ctx context.Context, client datastream.DS, streamID int64, logType datastream.LogType, expectedStatuses ...datastream.StreamStatus) (*datastream.StreamStatus, error) {
 	expectedStatusesMap := map[datastream.StreamStatus]bool{}
 	for _, status := range expectedStatuses {
 		expectedStatusesMap[status] = true
@@ -1597,6 +1792,7 @@ func waitForStreamStatusChange(ctx context.Context, client datastream.DS, stream
 
 	getStreamReq := datastream.GetStreamRequest{
 		StreamID: streamID,
+		LogType:  logType,
 	}
 
 	streamDetails, err := client.GetStream(ctx, getStreamReq)

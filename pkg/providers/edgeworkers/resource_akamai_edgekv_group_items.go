@@ -18,12 +18,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-func resourceEdgeKVGroupItems() *schema.Resource {
+func resourceEdgeKVGroupItems(config edgeKVGroupItemsResourceConfig) *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceEdgeKVGroupItemsCreate,
+		CreateContext: resourceEdgeKVGroupItemsCreate(config),
 		ReadContext:   resourceEdgeKVGroupItemsRead,
-		UpdateContext: resourceEdgeKVGroupItemsUpdate,
-		DeleteContext: resourceEdgeKVGroupItemsDelete,
+		UpdateContext: resourceEdgeKVGroupItemsUpdate(config),
+		DeleteContext: resourceEdgeKVGroupItemsDelete(config),
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},
@@ -79,54 +79,56 @@ func resourceEdgeKVGroupItems() *schema.Resource {
 	}
 }
 
-func resourceEdgeKVGroupItemsCreate(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := meta.Must(m)
-	logger := meta.Log("EdgeKV", "resourceEdgeKVGroupItemsCreate")
-	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
-	logger.Debug("Creating EdgeKV group items")
+func resourceEdgeKVGroupItemsCreate(config edgeKVGroupItemsResourceConfig) schema.CreateContextFunc {
+	return func(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
+		meta := meta.Must(m)
+		logger := meta.Log("EdgeKV", "resourceEdgeKVGroupItemsCreate")
+		ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
+		client := meta.Client().GetEdgeWorkers()
+		logger.Debug("Creating EdgeKV group items")
 
-	attrs, err := getAttributes(rd)
-	if err != nil {
-		return diag.Errorf("could not get attributes: %s", err)
-	}
-
-	for key, valueRaw := range attrs.items {
-		value, ok := valueRaw.(string)
-		if !ok {
-			return diag.Errorf("could not cast value of type %T into string", value)
-		}
-		_, err = client.UpsertItem(ctx, edgeworkers.UpsertItemRequest{
-			ItemID:   key,
-			ItemData: edgeworkers.Item(value),
-			ItemsRequestParams: edgeworkers.ItemsRequestParams{
-				Network:     attrs.network,
-				NamespaceID: attrs.namespace,
-				GroupID:     attrs.groupName,
-			},
-		})
+		attrs, err := getAttributes(rd)
 		if err != nil {
-			return diag.Errorf("could not upsert an item with key '%s': %s", key, err)
+			return diag.Errorf("could not get attributes: %s", err)
 		}
-	}
 
-	if err = waitForEdgeKVGroupCreation(ctx, client, attrs.groupName, attrs); err != nil {
-		return diag.Errorf("waitForEdgeKVGroupCreation error: %s", err)
-	}
+		for key, valueRaw := range attrs.items {
+			value, ok := valueRaw.(string)
+			if !ok {
+				return diag.Errorf("could not cast value of type %T into string", value)
+			}
+			_, err = client.UpsertItem(ctx, edgeworkers.UpsertItemRequest{
+				ItemID:   key,
+				ItemData: edgeworkers.Item(value),
+				ItemsRequestParams: edgeworkers.ItemsRequestParams{
+					Network:     attrs.network,
+					NamespaceID: attrs.namespace,
+					GroupID:     attrs.groupName,
+				},
+			})
+			if err != nil {
+				return diag.Errorf("could not upsert an item with key '%s': %s", key, err)
+			}
+		}
 
-	if err = waitForConsistentEdgeKVDatabase(ctx, client, nil, attrs); err != nil {
-		return diag.Errorf("waitForConsistentEdgeKVDatabase error: %s", err)
-	}
-	rd.SetId(fmt.Sprintf("%s:%s:%s", attrs.namespace, attrs.network, attrs.groupName))
+		if err = waitForEdgeKVGroupCreation(ctx, client, attrs.groupName, attrs, config); err != nil {
+			return diag.Errorf("waitForEdgeKVGroupCreation error: %s", err)
+		}
 
-	return resourceEdgeKVGroupItemsRead(ctx, rd, m)
+		if err = waitForConsistentEdgeKVDatabase(ctx, client, nil, attrs, config); err != nil {
+			return diag.Errorf("waitForConsistentEdgeKVDatabase error: %s", err)
+		}
+		rd.SetId(fmt.Sprintf("%s:%s:%s", attrs.namespace, attrs.network, attrs.groupName))
+
+		return resourceEdgeKVGroupItemsRead(ctx, rd, m)
+	}
 }
 
 func resourceEdgeKVGroupItemsRead(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("EdgeKV", "resourceEdgeKVGroupItemsRead")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
+	client := meta.Client().GetEdgeWorkers()
 	logger.Debug("Reading EdgeKV group items")
 
 	rdID := rd.Id()
@@ -166,140 +168,122 @@ func resourceEdgeKVGroupItemsRead(ctx context.Context, rd *schema.ResourceData, 
 	return nil
 }
 
-func resourceEdgeKVGroupItemsUpdate(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := meta.Must(m)
-	logger := meta.Log("EdgeKV", "resourceEdgeKVGroupItemsUpdate")
-	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
-	logger.Debug("Updating EdgeKV group items")
+func resourceEdgeKVGroupItemsUpdate(config edgeKVGroupItemsResourceConfig) schema.UpdateContextFunc {
+	return func(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
+		meta := meta.Must(m)
+		logger := meta.Log("EdgeKV", "resourceEdgeKVGroupItemsUpdate")
+		ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
+		client := meta.Client().GetEdgeWorkers()
+		logger.Debug("Updating EdgeKV group items")
 
-	if !rd.HasChangeExcept("timeouts") {
-		logger.Debug("Only timeouts were updated, skipping")
-		return nil
-	}
+		if !rd.HasChangeExcept("timeouts") {
+			logger.Debug("Only timeouts were updated, skipping")
+			return nil
+		}
 
-	if !rd.HasChanges("items") {
+		if !rd.HasChanges("items") {
+			return resourceEdgeKVGroupItemsRead(ctx, rd, m)
+		}
+
+		attrs, err := getAttributes(rd)
+		if err != nil {
+			return diag.Errorf("could not get attributes: %s", err)
+		}
+
+		remoteStateItems, err := client.ListItems(ctx, edgeworkers.ListItemsRequest{
+			ItemsRequestParams: edgeworkers.ItemsRequestParams{
+				NamespaceID: attrs.namespace,
+				GroupID:     attrs.groupName,
+				Network:     attrs.network,
+			},
+		})
+		if err != nil {
+			return diag.Errorf("could not list items: %s", err)
+		}
+
+		remoteStateItemsArray := []string(*remoteStateItems)
+		var deletedItems []string
+
+		// first loop for creating items, where the loop iterates through items specified in config
+		for key, valueRaw := range attrs.items {
+			value, ok := valueRaw.(string)
+			if !ok {
+				return diag.Errorf("could not cast value of type %T to string", valueRaw)
+			}
+			if !collections.StringInSlice(remoteStateItemsArray, key) {
+				_, err = client.UpsertItem(ctx, edgeworkers.UpsertItemRequest{
+					ItemID:   key,
+					ItemData: edgeworkers.Item(value),
+					ItemsRequestParams: edgeworkers.ItemsRequestParams{
+						Network:     attrs.network,
+						NamespaceID: attrs.namespace,
+						GroupID:     attrs.groupName,
+					},
+				})
+				if err != nil {
+					return diag.Errorf("could not upsert an item with key '%s': %s", key, err)
+				}
+			}
+		}
+
+		// second loop updates or deletes items, where the loop iterates through items present in the remote state
+		for _, remoteStateItemKey := range remoteStateItemsArray {
+			if val, ok := attrs.items[remoteStateItemKey]; ok {
+				strVal, ok := val.(string)
+				if !ok {
+					return diag.Errorf("could not cast value of type %T to string", val)
+				}
+
+				_, err = client.UpsertItem(ctx, edgeworkers.UpsertItemRequest{
+					ItemID:   remoteStateItemKey,
+					ItemData: edgeworkers.Item(strVal),
+					ItemsRequestParams: edgeworkers.ItemsRequestParams{
+						Network:     attrs.network,
+						NamespaceID: attrs.namespace,
+						GroupID:     attrs.groupName,
+					},
+				})
+				if err != nil {
+					return diag.Errorf("could not upsert an item with key '%s': %s", remoteStateItemKey, err)
+				}
+			} else {
+				_, err = client.DeleteItem(ctx, edgeworkers.DeleteItemRequest{
+					ItemID: remoteStateItemKey,
+					ItemsRequestParams: edgeworkers.ItemsRequestParams{
+						Network:     attrs.network,
+						NamespaceID: attrs.namespace,
+						GroupID:     attrs.groupName,
+					},
+				})
+				if err != nil {
+					return diag.Errorf("could not delete an item with key '%s': %s", remoteStateItemKey, err)
+				}
+				deletedItems = append(deletedItems, remoteStateItemKey)
+			}
+		}
+
+		if err = waitForConsistentEdgeKVDatabase(ctx, client, deletedItems, attrs, config); err != nil {
+			return diag.Errorf("waitForConsistentEdgeKVDatabase error: %s", err)
+		}
+
 		return resourceEdgeKVGroupItemsRead(ctx, rd, m)
 	}
-
-	attrs, err := getAttributes(rd)
-	if err != nil {
-		return diag.Errorf("could not get attributes: %s", err)
-	}
-
-	remoteStateItems, err := client.ListItems(ctx, edgeworkers.ListItemsRequest{
-		ItemsRequestParams: edgeworkers.ItemsRequestParams{
-			NamespaceID: attrs.namespace,
-			GroupID:     attrs.groupName,
-			Network:     attrs.network,
-		},
-	})
-	if err != nil {
-		return diag.Errorf("could not list items: %s", err)
-	}
-
-	remoteStateItemsArray := []string(*remoteStateItems)
-	var deletedItems []string
-
-	// first loop for creating items, where the loop iterates through items specified in config
-	for key, valueRaw := range attrs.items {
-		value, ok := valueRaw.(string)
-		if !ok {
-			return diag.Errorf("could not cast value of type %T to string", valueRaw)
-		}
-		if !collections.StringInSlice(remoteStateItemsArray, key) {
-			_, err = client.UpsertItem(ctx, edgeworkers.UpsertItemRequest{
-				ItemID:   key,
-				ItemData: edgeworkers.Item(value),
-				ItemsRequestParams: edgeworkers.ItemsRequestParams{
-					Network:     attrs.network,
-					NamespaceID: attrs.namespace,
-					GroupID:     attrs.groupName,
-				},
-			})
-			if err != nil {
-				return diag.Errorf("could not upsert an item with key '%s': %s", key, err)
-			}
-		}
-	}
-
-	// second loop updates or deletes items, where the loop iterates through items present in the remote state
-	for _, remoteStateItemKey := range remoteStateItemsArray {
-		if val, ok := attrs.items[remoteStateItemKey]; ok {
-			strVal, ok := val.(string)
-			if !ok {
-				return diag.Errorf("could not cast value of type %T to string", val)
-			}
-
-			_, err = client.UpsertItem(ctx, edgeworkers.UpsertItemRequest{
-				ItemID:   remoteStateItemKey,
-				ItemData: edgeworkers.Item(strVal),
-				ItemsRequestParams: edgeworkers.ItemsRequestParams{
-					Network:     attrs.network,
-					NamespaceID: attrs.namespace,
-					GroupID:     attrs.groupName,
-				},
-			})
-			if err != nil {
-				return diag.Errorf("could not upsert an item with key '%s': %s", remoteStateItemKey, err)
-			}
-		} else {
-			_, err = client.DeleteItem(ctx, edgeworkers.DeleteItemRequest{
-				ItemID: remoteStateItemKey,
-				ItemsRequestParams: edgeworkers.ItemsRequestParams{
-					Network:     attrs.network,
-					NamespaceID: attrs.namespace,
-					GroupID:     attrs.groupName,
-				},
-			})
-			if err != nil {
-				return diag.Errorf("could not delete an item with key '%s': %s", remoteStateItemKey, err)
-			}
-			deletedItems = append(deletedItems, remoteStateItemKey)
-		}
-	}
-
-	if err = waitForConsistentEdgeKVDatabase(ctx, client, deletedItems, attrs); err != nil {
-		return diag.Errorf("waitForConsistentEdgeKVDatabase error: %s", err)
-	}
-
-	return resourceEdgeKVGroupItemsRead(ctx, rd, m)
 }
 
-func resourceEdgeKVGroupItemsDelete(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := meta.Must(m)
-	logger := meta.Log("EdgeKV", "resourceEdgeKVGroupItemsDelete")
-	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
-	logger.Debug("Deleting EdgeKV group items")
+func resourceEdgeKVGroupItemsDelete(config edgeKVGroupItemsResourceConfig) schema.DeleteContextFunc {
+	return func(ctx context.Context, rd *schema.ResourceData, m interface{}) diag.Diagnostics {
+		meta := meta.Must(m)
+		logger := meta.Log("EdgeKV", "resourceEdgeKVGroupItemsDelete")
+		ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
+		client := meta.Client().GetEdgeWorkers()
+		logger.Debug("Deleting EdgeKV group items")
 
-	attrs, err := getAttributes(rd)
-	if err != nil {
-		return diag.Errorf("could not get attributes: %s", err)
-	}
-
-	remoteStateItems, err := client.ListItems(ctx, edgeworkers.ListItemsRequest{
-		ItemsRequestParams: edgeworkers.ItemsRequestParams{
-			Network:     attrs.network,
-			NamespaceID: attrs.namespace,
-			GroupID:     attrs.groupName,
-		},
-	})
-	if err != nil {
-		return diag.Errorf("could not list items: %s", err)
-	}
-
-	remoteStateItemsArray := []string(*remoteStateItems)
-	if len(attrs.items) != len(remoteStateItemsArray) {
-		return diag.Errorf("in order to delete whole group of items, number of items in the configuration and remote state should be the same")
-	}
-
-	for key := range attrs.items {
-		if !collections.StringInSlice(remoteStateItemsArray, key) {
-			return diag.Errorf("item with key '%s' does not exist in the remote state of the database", key)
+		attrs, err := getAttributes(rd)
+		if err != nil {
+			return diag.Errorf("could not get attributes: %s", err)
 		}
-		_, err = client.DeleteItem(ctx, edgeworkers.DeleteItemRequest{
-			ItemID: key,
+
+		remoteStateItems, err := client.ListItems(ctx, edgeworkers.ListItemsRequest{
 			ItemsRequestParams: edgeworkers.ItemsRequestParams{
 				Network:     attrs.network,
 				NamespaceID: attrs.namespace,
@@ -307,29 +291,60 @@ func resourceEdgeKVGroupItemsDelete(ctx context.Context, rd *schema.ResourceData
 			},
 		})
 		if err != nil {
-			return diag.Errorf("could not delete an item with key '%s': %s", key, err)
+			return diag.Errorf("could not list items: %s", err)
 		}
-	}
-	if err = waitForEdgeKVGroupDeletion(ctx, client, attrs.groupName, attrs); err != nil {
-		return diag.Errorf("waitForEdgeKVGroupDeletion error: %s", err)
-	}
 
-	rd.SetId("")
-	return nil
+		remoteStateItemsArray := []string(*remoteStateItems)
+		if len(attrs.items) != len(remoteStateItemsArray) {
+			return diag.Errorf("in order to delete whole group of items, number of items in the configuration and remote state should be the same")
+		}
+
+		for key := range attrs.items {
+			if !collections.StringInSlice(remoteStateItemsArray, key) {
+				return diag.Errorf("item with key '%s' does not exist in the remote state of the database", key)
+			}
+			_, err = client.DeleteItem(ctx, edgeworkers.DeleteItemRequest{
+				ItemID: key,
+				ItemsRequestParams: edgeworkers.ItemsRequestParams{
+					Network:     attrs.network,
+					NamespaceID: attrs.namespace,
+					GroupID:     attrs.groupName,
+				},
+			})
+			if err != nil {
+				return diag.Errorf("could not delete an item with key '%s': %s", key, err)
+			}
+		}
+		if err = waitForEdgeKVGroupDeletion(ctx, client, attrs.groupName, attrs, config); err != nil {
+			return diag.Errorf("waitForEdgeKVGroupDeletion error: %s", err)
+		}
+
+		rd.SetId("")
+		return nil
+	}
 }
 
-var (
-	// pollForConsistentEdgeKVDatabaseInterval defines retry interval for listing items or getting and item
-	pollForConsistentEdgeKVDatabaseInterval = 5 * time.Second
-)
+type edgeKVGroupItemsResourceConfig struct {
+	pollInterval  time.Duration
+	initWindow    time.Duration
+	deleteTimeout time.Duration
+}
+
+func defaultEdgeKVGroupItemsResourceConfig() edgeKVGroupItemsResourceConfig {
+	return edgeKVGroupItemsResourceConfig{
+		pollInterval:  5 * time.Second,
+		initWindow:    10 * time.Second,
+		deleteTimeout: time.Minute,
+	}
+}
 
 // waitForEdgeKVGroupCreation waits for the group to be created in the remote state
-func waitForEdgeKVGroupCreation(ctx context.Context, client edgeworkers.Edgeworkers, groupName string, attrs *edgeKVGroupItemsAttrs) error {
+func waitForEdgeKVGroupCreation(ctx context.Context, client edgeworkers.Edgeworkers, groupName string, attrs *edgeKVGroupItemsAttrs, config edgeKVGroupItemsResourceConfig) error {
 	var groupExists bool
 
 	for !groupExists {
 		select {
-		case <-time.After(pollForConsistentEdgeKVDatabaseInterval):
+		case <-time.After(config.pollInterval):
 			groups, err := client.ListGroupsWithinNamespace(ctx, edgeworkers.ListGroupsWithinNamespaceRequest{
 				Network:     edgeworkers.NamespaceNetwork(attrs.network),
 				NamespaceID: attrs.namespace,
@@ -350,12 +365,12 @@ func waitForEdgeKVGroupCreation(ctx context.Context, client edgeworkers.Edgework
 }
 
 // waitForEdgeKVGroupDeletion waits for the group to be deleted from the remote state
-func waitForEdgeKVGroupDeletion(ctx context.Context, client edgeworkers.Edgeworkers, groupName string, attrs *edgeKVGroupItemsAttrs) error {
+func waitForEdgeKVGroupDeletion(ctx context.Context, client edgeworkers.Edgeworkers, groupName string, attrs *edgeKVGroupItemsAttrs, config edgeKVGroupItemsResourceConfig) error {
 	groupExists := true
 
 	for groupExists {
 		select {
-		case <-time.After(pollForConsistentEdgeKVDatabaseInterval):
+		case <-time.After(config.pollInterval):
 			groups, err := client.ListGroupsWithinNamespace(ctx, edgeworkers.ListGroupsWithinNamespaceRequest{
 				Network:     edgeworkers.NamespaceNetwork(attrs.network),
 				NamespaceID: attrs.namespace,
@@ -377,7 +392,7 @@ func waitForEdgeKVGroupDeletion(ctx context.Context, client edgeworkers.Edgework
 
 // waitForConsistentEdgeKVDatabase waits until all items specified in the config are propagated in the remote state, as well as all
 // the deleted items from the config are removed from the remote state.
-func waitForConsistentEdgeKVDatabase(ctx context.Context, client edgeworkers.Edgeworkers, deletedItems []string, attrs *edgeKVGroupItemsAttrs) error {
+func waitForConsistentEdgeKVDatabase(ctx context.Context, client edgeworkers.Edgeworkers, deletedItems []string, attrs *edgeKVGroupItemsAttrs, config edgeKVGroupItemsResourceConfig) error {
 	for itemKey, itemRaw := range attrs.items {
 		itemVal, ok := itemRaw.(string)
 		if !ok {
@@ -387,7 +402,7 @@ func waitForConsistentEdgeKVDatabase(ctx context.Context, client edgeworkers.Edg
 		var isPresent bool
 		for !isPresent {
 			select {
-			case <-time.After(pollForConsistentEdgeKVDatabaseInterval):
+			case <-time.After(config.pollInterval):
 				stateVal, err := client.GetItem(ctx, edgeworkers.GetItemRequest{
 					ItemID: itemKey,
 					ItemsRequestParams: edgeworkers.ItemsRequestParams{
@@ -411,7 +426,7 @@ func waitForConsistentEdgeKVDatabase(ctx context.Context, client edgeworkers.Edg
 		var isDeleted bool
 		for !isDeleted {
 			select {
-			case <-time.After(pollForConsistentEdgeKVDatabaseInterval):
+			case <-time.After(config.pollInterval):
 				_, err := client.GetItem(ctx, edgeworkers.GetItemRequest{
 					ItemID: itemKey,
 					ItemsRequestParams: edgeworkers.ItemsRequestParams{

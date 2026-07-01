@@ -7,15 +7,22 @@ import (
 	"testing"
 	"time"
 
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
+	"github.com/stretchr/testify/mock"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/edgeworkers"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestResourceEdgeKV(t *testing.T) {
-	initWindow = time.Duration(1) * time.Millisecond
+	t.Parallel()
+	rescheduleBy := time.Millisecond
+	safetyBuffer := time.Duration(0)
+
+	fixedNow := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	expectedScheduledDeleteTime := fixedNow.UTC().Add(rescheduleBy + safetyBuffer)
 
 	basicData := edgeKVmockData{
 		network:   "staging",
@@ -37,7 +44,7 @@ func TestResourceEdgeKV(t *testing.T) {
 				mockEdgeKVRead(m, basicData).Times(2)
 				// delete
 				mockNoGroupsInNamespace(m, basicData)
-				mockEdgeKVDelete(m, basicData)
+				mockEdgeKVDelete(m, basicData, expectedScheduledDeleteTime)
 			},
 			steps: []resource.TestStep{
 				{
@@ -62,7 +69,7 @@ func TestResourceEdgeKV(t *testing.T) {
 				mockEdgeKVRead(m, data).Times(2)
 				// delete
 				mockNoGroupsInNamespace(m, basicData)
-				mockEdgeKVDelete(m, basicData)
+				mockEdgeKVDelete(m, basicData, expectedScheduledDeleteTime)
 			},
 			steps: []resource.TestStep{
 				{
@@ -106,7 +113,7 @@ func TestResourceEdgeKV(t *testing.T) {
 				mockEdgeKVRead(m, basicData).Times(2)
 				// delete
 				mockNoGroupsInNamespace(m, basicData)
-				mockEdgeKVDelete(m, basicData)
+				mockEdgeKVDelete(m, basicData, expectedScheduledDeleteTime)
 			},
 			steps: []resource.TestStep{
 				{
@@ -131,7 +138,7 @@ func TestResourceEdgeKV(t *testing.T) {
 				mockEdgeKVRead(m, basicData).Times(2)
 				// delete
 				mockNoGroupsInNamespace(m, basicData)
-				mockEdgeKVDelete(m, basicData)
+				mockEdgeKVDelete(m, basicData, expectedScheduledDeleteTime)
 			},
 			steps: []resource.TestStep{
 				{
@@ -181,7 +188,7 @@ func TestResourceEdgeKV(t *testing.T) {
 				}).Return(nil, fmt.Errorf("error reading edgekv namespace")).Once()
 				// delete
 				mockNoGroupsInNamespace(m, basicData)
-				mockEdgeKVDelete(m, basicData)
+				mockEdgeKVDelete(m, basicData, expectedScheduledDeleteTime)
 			},
 			steps: []resource.TestStep{
 				{
@@ -199,7 +206,7 @@ func TestResourceEdgeKV(t *testing.T) {
 				// delete
 				mockListTwoGroupsInNamespace(m, basicData)
 				mockNoGroupsInNamespace(m, basicData)
-				mockEdgeKVDelete(m, basicData)
+				mockEdgeKVDelete(m, basicData, expectedScheduledDeleteTime)
 			},
 			steps: []resource.TestStep{
 				{
@@ -223,7 +230,7 @@ func TestResourceEdgeKV(t *testing.T) {
 				// delete
 				mockNoNamespaceWhenListingGroups(m, basicData)
 				mockNoGroupsInNamespace(m, basicData)
-				mockEdgeKVDelete(m, basicData)
+				mockEdgeKVDelete(m, basicData, expectedScheduledDeleteTime)
 			},
 			steps: []resource.TestStep{
 				{
@@ -248,7 +255,7 @@ func TestResourceEdgeKV(t *testing.T) {
 				mockNoNamespaceWhenListingGroups(m, basicData)
 				mockListTwoGroupsInNamespace(m, basicData)
 				mockNoGroupsInNamespace(m, basicData)
-				mockEdgeKVDelete(m, basicData)
+				mockEdgeKVDelete(m, basicData, expectedScheduledDeleteTime)
 			},
 			steps: []resource.TestStep{
 				{
@@ -263,6 +270,72 @@ func TestResourceEdgeKV(t *testing.T) {
 				},
 			},
 		},
+		"waiting in delete until scheduled delete is available for reschedule": {
+			init: func(m *edgeworkers.Mock) {
+				// create
+				mockEdgeKVCreate(m, basicData)
+				// read
+				mockEdgeKVRead(m, basicData).Times(2)
+				// delete
+				mockNoGroupsInNamespace(m, basicData)
+				mockEdgeKVDeleteWithDelayedReschedule(m, basicData, expectedScheduledDeleteTime)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "id", "DevExpTest:staging"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "namespace_name", "DevExpTest"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "network", "staging"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "group_id", "1234"),
+						resource.TestCheckResourceAttr("akamai_edgekv.test", "retention_in_seconds", "86401"),
+					),
+				},
+			},
+		},
+		"error deleting namespace": {
+			init: func(m *edgeworkers.Mock) {
+				mockEdgeKVCreate(m, basicData)
+				mockEdgeKVRead(m, basicData).Times(2) // step 1: post-apply + refresh plan
+				mockEdgeKVRead(m, basicData)          // step 2: pre-apply plan refresh (terraform plan -destroy)
+				mockNoGroupsInNamespace(m, basicData) // step 2: wait for no groups before delete
+				mockEdgeKVDeleteError(m, basicData)   // step 2: delete fails
+				// cleanup destroy (Refresh=false, so no read; delete must succeed):
+				mockNoGroupsInNamespace(m, basicData)
+				mockEdgeKVDelete(m, basicData, expectedScheduledDeleteTime)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
+				},
+				{
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
+					Destroy:     true,
+					ExpectError: regexp.MustCompile("could not delete namespace 'DevExpTest' in network 'staging': error deleting edgekv namespace"),
+				},
+			},
+		},
+		"unexpected error while listing groups during delete": {
+			init: func(m *edgeworkers.Mock) {
+				mockEdgeKVCreate(m, basicData)
+				mockEdgeKVRead(m, basicData).Times(2)              // step 1: post-apply + refresh plan
+				mockEdgeKVRead(m, basicData)                       // step 2: pre-apply plan refresh (terraform plan -destroy)
+				mockUnexpectedErrorWhenListingGroups(m, basicData) // step 2: list groups fails
+				// cleanup destroy (Refresh=false, so no read; delete must succeed):
+				mockNoGroupsInNamespace(m, basicData)
+				mockEdgeKVDelete(m, basicData, expectedScheduledDeleteTime)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
+				},
+				{
+					Config:      testutils.LoadFixtureString(t, "./testdata/TestResourceEdgeWorkersEdgeKV/basic.tf"),
+					Destroy:     true,
+					ExpectError: regexp.MustCompile("could not get groups within namespace 'DevExpTest' in network 'staging': error listing groups"),
+				},
+			},
+		},
 		"basic no diff no update": {
 			init: func(m *edgeworkers.Mock) {
 				// create
@@ -273,7 +346,7 @@ func TestResourceEdgeKV(t *testing.T) {
 				mockEdgeKVRead(m, basicData).Times(2)
 				// delete
 				mockNoGroupsInNamespace(m, basicData)
-				mockEdgeKVDelete(m, basicData)
+				mockEdgeKVDelete(m, basicData, expectedScheduledDeleteTime)
 			},
 			steps: []resource.TestStep{
 				{
@@ -308,7 +381,7 @@ func TestResourceEdgeKV(t *testing.T) {
 				mockEdgeKVRead(m, basicData).Times(2)
 				// delete
 				mockNoGroupsInNamespace(m, basicData)
-				mockEdgeKVDelete(m, basicData)
+				mockEdgeKVDelete(m, basicData, expectedScheduledDeleteTime)
 			},
 			steps: []resource.TestStep{
 				{
@@ -351,7 +424,7 @@ func TestResourceEdgeKV(t *testing.T) {
 				mockEdgeKVRead(m, data).Times(2)
 				// delete
 				mockNoGroupsInNamespace(m, basicData)
-				mockEdgeKVDelete(m, basicData)
+				mockEdgeKVDelete(m, basicData, expectedScheduledDeleteTime)
 			},
 			steps: []resource.TestStep{
 				{
@@ -386,7 +459,7 @@ func TestResourceEdgeKV(t *testing.T) {
 				mockEdgeKVRead(m, basicData)
 				// delete
 				mockNoGroupsInNamespace(m, basicData)
-				mockEdgeKVDelete(m, basicData)
+				mockEdgeKVDelete(m, basicData, expectedScheduledDeleteTime)
 			},
 			steps: []resource.TestStep{
 				{
@@ -408,7 +481,7 @@ func TestResourceEdgeKV(t *testing.T) {
 				mockEdgeKVRead(m, basicData).Times(2)
 				// delete
 				mockNoGroupsInNamespace(m, basicData)
-				mockEdgeKVDelete(m, basicData)
+				mockEdgeKVDelete(m, basicData, expectedScheduledDeleteTime)
 			},
 			steps: []resource.TestStep{
 				{
@@ -425,25 +498,25 @@ func TestResourceEdgeKV(t *testing.T) {
 		},
 	}
 
-	deleteTimeout = 10 * time.Second
-	pollForConsistentEdgeKVDatabaseInterval = time.Second
-	defer func() {
-		deleteTimeout = time.Minute
-		pollForConsistentEdgeKVDatabaseInterval = 5 * time.Second
-	}()
-
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &edgeworkers.Mock{}
-			test.init(client)
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps:                    test.steps,
-				})
+			t.Parallel()
+			client := edgegrid.NewTestClient()
+			test.init(client.EdgeWorkers)
+			config := defaultSubproviderConfig()
+			config.edgekv.initWindow = time.Millisecond
+			config.edgekv.pollInterval = time.Millisecond
+			config.edgekv.deleteTimeout = 10 * time.Second
+			config.edgekv.nowFn = func() time.Time { return fixedNow }
+			config.edgekv.namespaceDeleteRescheduleBy = rescheduleBy
+			config.edgekv.namespaceDeleteSafetyBuffer = safetyBuffer
+			config.edgekv.namespaceDeleteTimeout = 10 * time.Second
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
+				IsUnitTest:               true,
+				Steps:                    test.steps,
 			})
-			client.AssertExpectations(t)
+			client.EdgeWorkers.AssertExpectations(t)
 		})
 	}
 }
@@ -570,12 +643,67 @@ func mockNoNamespaceWhenListingGroups(m *edgeworkers.Mock, data edgeKVmockData) 
 	}).Return(nil, &err).Once()
 }
 
-func mockEdgeKVDelete(m *edgeworkers.Mock, data edgeKVmockData) {
+func mockUnexpectedErrorWhenListingGroups(m *edgeworkers.Mock, data edgeKVmockData) {
+	m.On("ListGroupsWithinNamespace", testutils.MockContext, edgeworkers.ListGroupsWithinNamespaceRequest{
+		Network:     data.network,
+		NamespaceID: data.name,
+	}).Return(nil, fmt.Errorf("error listing groups")).Once()
+}
+
+func mockEdgeKVDelete(m *edgeworkers.Mock, data edgeKVmockData, expectedScheduledDeleteTime time.Time) {
 	m.On("DeleteEdgeKVNamespace", testutils.MockContext, edgeworkers.DeleteEdgeKVNamespaceRequest{
 		Network: data.network,
 		Name:    data.name,
-		Sync:    true,
 	}).Return(&edgeworkers.DeleteEdgeKVNamespacesResponse{
 		ScheduledDeleteTime: nil,
-	}, nil)
+	}, nil).Once()
+
+	m.On("RescheduleNamespaceDelete", testutils.MockContext, edgeworkers.RescheduleNamespaceDeleteRequest{
+		Network: data.network,
+		Name:    data.name,
+		Body: &edgeworkers.ScheduledDeleteTimeRequest{
+			ScheduledDeleteTime: expectedScheduledDeleteTime,
+		},
+	}).Return(&edgeworkers.RescheduleNamespaceDeleteResponse{}, nil).Once()
+
+	m.On("GetEdgeKVNamespace", testutils.MockContext, edgeworkers.GetEdgeKVNamespaceRequest{
+		Network: data.network,
+		Name:    data.name,
+	}).Return(nil, edgeworkers.ErrNamespaceNotFound).Once()
+}
+
+func mockEdgeKVDeleteError(m *edgeworkers.Mock, data edgeKVmockData) {
+	m.On("DeleteEdgeKVNamespace", testutils.MockContext, edgeworkers.DeleteEdgeKVNamespaceRequest{
+		Network: data.network,
+		Name:    data.name,
+	}).Return(nil, fmt.Errorf("error deleting edgekv namespace")).Once()
+}
+
+func mockEdgeKVDeleteWithDelayedReschedule(m *edgeworkers.Mock, data edgeKVmockData, expectedScheduledDeleteTime time.Time) {
+	m.On("DeleteEdgeKVNamespace", testutils.MockContext, edgeworkers.DeleteEdgeKVNamespaceRequest{
+		Network: data.network,
+		Name:    data.name,
+	}).Return(&edgeworkers.DeleteEdgeKVNamespacesResponse{
+		ScheduledDeleteTime: nil,
+	}, nil).Once()
+
+	rescheduleReq := edgeworkers.RescheduleNamespaceDeleteRequest{
+		Network: data.network,
+		Name:    data.name,
+		Body: &edgeworkers.ScheduledDeleteTimeRequest{
+			ScheduledDeleteTime: expectedScheduledDeleteTime,
+		},
+	}
+
+	rescheduleErr := edgeworkers.Error{}
+	rescheduleErr.Status = http.StatusBadRequest
+	rescheduleErr.ErrorCode = "EKV_9000"
+	rescheduleErr.Detail = fmt.Sprintf("No current scheduled delete for %s. Must first schedule the delete before modifying it.", data.name)
+	m.On("RescheduleNamespaceDelete", testutils.MockContext, rescheduleReq).Return(nil, &rescheduleErr).Once()
+	m.On("RescheduleNamespaceDelete", testutils.MockContext, rescheduleReq).Return(&edgeworkers.RescheduleNamespaceDeleteResponse{}, nil).Once()
+
+	m.On("GetEdgeKVNamespace", testutils.MockContext, edgeworkers.GetEdgeKVNamespaceRequest{
+		Network: data.network,
+		Name:    data.name,
+	}).Return(nil, edgeworkers.ErrNamespaceNotFound).Once()
 }

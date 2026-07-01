@@ -8,11 +8,13 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func TestResourceIAMRole(t *testing.T) {
+	t.Parallel()
 	type roleAttributes struct {
 		name, description string
 		grantedRoles      []int
@@ -127,192 +129,186 @@ func TestResourceIAMRole(t *testing.T) {
 	)
 
 	t.Run("create a new role lifecycle", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResourceRoleLifecycle"
-		client := new(iam.Mock)
-		role := expectCreateRole(client, "role name", "role description", []int{12345, 54321, 67890})
-		expectReadRole(client, role.RoleID, role.RoleName, role.RoleDescription, role.GrantedRoles, 2)
-		expectDeleteRole(client, role.RoleID)
+		client := edgegrid.NewTestClient()
+		role := expectCreateRole(client.IAM, "role name", "role description", []int{12345, 54321, 67890})
+		expectReadRole(client.IAM, role.RoleID, role.RoleName, role.RoleDescription, role.GrantedRoles, 2)
+		expectDeleteRole(client.IAM, role.RoleID)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/role_create.tf", testDir),
-						Check: checkAttributes(roleAttributes{
-							name:         "role name",
-							description:  "role description",
-							grantedRoles: []int{12345, 54321, 67890},
-						}),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/role_create.tf", testDir),
+					Check: checkAttributes(roleAttributes{
+						name:         "role name",
+						description:  "role description",
+						grantedRoles: []int{12345, 54321, 67890},
+					}),
 				},
-			})
+			},
 		})
-		client.AssertExpectations(t)
+		client.IAM.AssertExpectations(t)
 	})
 
 	t.Run("update a role lifecycle", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResourceRoleLifecycle"
-		client := new(iam.Mock)
-		role := expectCreateRole(client, "role name", "role description", []int{12345, 54321, 67890})
-		expectReadRole(client, role.RoleID, role.RoleName, role.RoleDescription, role.GrantedRoles, 3)
+		client := edgegrid.NewTestClient()
+		role := expectCreateRole(client.IAM, "role name", "role description", []int{12345, 54321, 67890})
+		expectReadRole(client.IAM, role.RoleID, role.RoleName, role.RoleDescription, role.GrantedRoles, 3)
 
-		updatedRole := expectUpdateRole(client, role.RoleID, "role name update", "role description update", []int{12345, 1000, 54321, 67890})
-		expectReadRole(client, role.RoleID, updatedRole.RoleName, updatedRole.RoleDescription, updatedRole.GrantedRoles, 2)
+		updatedRole := expectUpdateRole(client.IAM, role.RoleID, "role name update", "role description update", []int{12345, 1000, 54321, 67890})
+		expectReadRole(client.IAM, role.RoleID, updatedRole.RoleName, updatedRole.RoleDescription, updatedRole.GrantedRoles, 2)
 
-		expectDeleteRole(client, updatedRole.RoleID)
+		expectDeleteRole(client.IAM, updatedRole.RoleID)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/role_create.tf", testDir),
-						Check: checkAttributes(roleAttributes{
-							name:         "role name",
-							description:  "role description",
-							grantedRoles: []int{12345, 54321, 67890},
-						}),
-					},
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/role_update.tf", testDir),
-						Check: checkAttributes(roleAttributes{
-							name:         "role name update",
-							description:  "role description update",
-							grantedRoles: []int{12345, 54321, 67890, 1000},
-						}),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/role_create.tf", testDir),
+					Check: checkAttributes(roleAttributes{
+						name:         "role name",
+						description:  "role description",
+						grantedRoles: []int{12345, 54321, 67890},
+					}),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/role_update.tf", testDir),
+					Check: checkAttributes(roleAttributes{
+						name:         "role name update",
+						description:  "role description update",
+						grantedRoles: []int{12345, 54321, 67890, 1000},
+					}),
+				},
+			},
 		})
-		client.AssertExpectations(t)
+		client.IAM.AssertExpectations(t)
 	})
 
 	t.Run("role update is not expected if granted roles are reordered lifecycle", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResourceRoleLifecycle"
-		client := new(iam.Mock)
-		role := expectCreateRole(client, "role name", "role description", []int{12345, 54321, 67890})
-		expectReadRole(client, role.RoleID, role.RoleName, role.RoleDescription, role.GrantedRoles, 4)
+		client := edgegrid.NewTestClient()
+		role := expectCreateRole(client.IAM, "role name", "role description", []int{12345, 54321, 67890})
+		expectReadRole(client.IAM, role.RoleID, role.RoleName, role.RoleDescription, role.GrantedRoles, 4)
 
-		expectDeleteRole(client, role.RoleID)
+		expectDeleteRole(client.IAM, role.RoleID)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/role_create.tf", testDir),
-						Check: checkAttributes(roleAttributes{
-							name:         "role name",
-							description:  "role description",
-							grantedRoles: []int{12345, 54321, 6789},
-						}),
-					},
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/role_with_reordered_granted_roles.tf", testDir),
-						Check: checkAttributes(roleAttributes{
-							name:         "role name",
-							description:  "role description",
-							grantedRoles: []int{12345, 67890, 54321},
-						}),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/role_create.tf", testDir),
+					Check: checkAttributes(roleAttributes{
+						name:         "role name",
+						description:  "role description",
+						grantedRoles: []int{12345, 54321, 6789},
+					}),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/role_with_reordered_granted_roles.tf", testDir),
+					Check: checkAttributes(roleAttributes{
+						name:         "role name",
+						description:  "role description",
+						grantedRoles: []int{12345, 67890, 54321},
+					}),
+				},
+			},
 		})
-		client.AssertExpectations(t)
+		client.IAM.AssertExpectations(t)
 	})
 
 	t.Run("update a role returns an API error lifecycle", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResourceRoleLifecycle"
-		client := new(iam.Mock)
-		role := expectCreateRole(client, "role name", "role description", []int{12345, 54321, 67890})
-		expectReadRole(client, role.RoleID, role.RoleName, role.RoleDescription, role.GrantedRoles, 3)
+		client := edgegrid.NewTestClient()
+		role := expectCreateRole(client.IAM, "role name", "role description", []int{12345, 54321, 67890})
+		expectReadRole(client.IAM, role.RoleID, role.RoleName, role.RoleDescription, role.GrantedRoles, 3)
 
-		expectAPIErrorWithUpdateRole(client, role.RoleID, "role name update", "role description update", []int{12345, 1000, 54321, 67890})
-		expectReadRole(client, role.RoleID, role.RoleName, role.RoleDescription, role.GrantedRoles, 1)
+		expectAPIErrorWithUpdateRole(client.IAM, role.RoleID, "role name update", "role description update", []int{12345, 1000, 54321, 67890})
+		expectReadRole(client.IAM, role.RoleID, role.RoleName, role.RoleDescription, role.GrantedRoles, 1)
 
-		expectDeleteRole(client, role.RoleID)
+		expectDeleteRole(client.IAM, role.RoleID)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/role_create.tf", testDir),
-						Check: checkAttributes(roleAttributes{
-							name:         "role name",
-							description:  "role description",
-							grantedRoles: []int{12345, 54321, 67890},
-						}),
-					},
-					{
-						Config:      testutils.LoadFixtureStringf(t, "%s/role_update.tf", testDir),
-						ExpectError: regexp.MustCompile(updateAPIError),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/role_create.tf", testDir),
+					Check: checkAttributes(roleAttributes{
+						name:         "role name",
+						description:  "role description",
+						grantedRoles: []int{12345, 54321, 67890},
+					}),
 				},
-			})
+				{
+					Config:      testutils.LoadFixtureStringf(t, "%s/role_update.tf", testDir),
+					ExpectError: regexp.MustCompile(updateAPIError),
+				},
+			},
 		})
-		client.AssertExpectations(t)
+		client.IAM.AssertExpectations(t)
 	})
 
 	t.Run("update a role returns an API error lifecycle with error in Read", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResourceRoleLifecycle"
-		client := new(iam.Mock)
-		role := expectCreateRole(client, "role name", "role description", []int{12345, 54321, 67890})
-		expectReadRole(client, role.RoleID, role.RoleName, role.RoleDescription, role.GrantedRoles, 3)
+		client := edgegrid.NewTestClient()
+		role := expectCreateRole(client.IAM, "role name", "role description", []int{12345, 54321, 67890})
+		expectReadRole(client.IAM, role.RoleID, role.RoleName, role.RoleDescription, role.GrantedRoles, 3)
 
-		expectAPIErrorWithUpdateRole(client, role.RoleID, "role name update", "role description update", []int{12345, 1000, 54321, 67890})
-		expectReadRoleAPIError(client, role.RoleID)
+		expectAPIErrorWithUpdateRole(client.IAM, role.RoleID, "role name update", "role description update", []int{12345, 1000, 54321, 67890})
+		expectReadRoleAPIError(client.IAM, role.RoleID)
 
-		expectDeleteRole(client, role.RoleID)
+		expectDeleteRole(client.IAM, role.RoleID)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/role_create.tf", testDir),
-						Check: checkAttributes(roleAttributes{
-							name:         "role name",
-							description:  "role description",
-							grantedRoles: []int{12345, 54321, 67890},
-						}),
-					},
-					{
-						Config:      testutils.LoadFixtureStringf(t, "%s/role_update.tf", testDir),
-						ExpectError: regexp.MustCompile(readAPIError),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/role_create.tf", testDir),
+					Check: checkAttributes(roleAttributes{
+						name:         "role name",
+						description:  "role description",
+						grantedRoles: []int{12345, 54321, 67890},
+					}),
 				},
-			})
+				{
+					Config:      testutils.LoadFixtureStringf(t, "%s/role_update.tf", testDir),
+					ExpectError: regexp.MustCompile(readAPIError),
+				},
+			},
 		})
-		client.AssertExpectations(t)
+		client.IAM.AssertExpectations(t)
 	})
 
 	t.Run("import", func(t *testing.T) {
+		t.Parallel()
 		testDir := "testdata/TestResourceRoleLifecycle"
-		client := new(iam.Mock)
-		role := expectCreateRole(client, "role name", "role description", []int{12345, 54321, 67890})
-		expectReadRole(client, role.RoleID, role.RoleName, role.RoleDescription, role.GrantedRoles, 3)
+		client := edgegrid.NewTestClient()
+		role := expectCreateRole(client.IAM, "role name", "role description", []int{12345, 54321, 67890})
+		expectReadRole(client.IAM, role.RoleID, role.RoleName, role.RoleDescription, role.GrantedRoles, 3)
 
-		expectDeleteRole(client, role.RoleID)
+		expectDeleteRole(client.IAM, role.RoleID)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "%s/role_create.tf", testDir),
-					},
-					{
-						ImportState:       true,
-						ImportStateId:     fmt.Sprint(role.RoleID),
-						ResourceName:      "akamai_iam_role.role",
-						ImportStateVerify: true,
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/role_create.tf", testDir),
 				},
-			})
+				{
+					ImportState:       true,
+					ImportStateId:     fmt.Sprint(role.RoleID),
+					ResourceName:      "akamai_iam_role.role",
+					ImportStateVerify: true,
+				},
+			},
 		})
-		client.AssertExpectations(t)
+		client.IAM.AssertExpectations(t)
 	})
 }
 

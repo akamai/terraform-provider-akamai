@@ -28,7 +28,7 @@ func NewGroupDataSource() datasource.DataSource {
 
 type (
 	groupDataSource struct {
-		meta meta.Meta
+		meta.DataSource
 	}
 
 	groupModel struct {
@@ -115,24 +115,6 @@ func (d *groupDataSource) Metadata(_ context.Context, _ datasource.MetadataReque
 	resp.TypeName = "akamai_iam_group"
 }
 
-func (d *groupDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		// ProviderData is nil when Configure is run first time as part of ValidateDataSourceConfig in framework provider
-		return
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Data Source Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-			)
-		}
-	}()
-
-	d.meta = meta.Must(req.ProviderData)
-}
-
 func (d *groupDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	tflog.Debug(ctx, "IAM Group DataSource Read")
 
@@ -141,7 +123,7 @@ func (d *groupDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 		return
 	}
 
-	client := inst.Client(d.meta)
+	client := d.Client.GetIAM()
 
 	getGroupResp, err := client.GetGroup(ctx, iam.GetGroupRequest{
 		GroupID: data.GroupID.ValueInt64(),

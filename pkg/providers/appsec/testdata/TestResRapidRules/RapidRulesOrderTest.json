@@ -1,0 +1,34 @@
+{
+    "policyRules": [
+        {
+            "id": 3000214,
+            "action": "deny_custom_858380",
+            "lock": false,
+            "version": 3,
+            "conditionException": {
+                "exception": {
+                    "specificHeaderCookieParamXmlOrJsonNames": [
+                        {
+                            "names": [
+                                "Auth"
+                            ],
+                            "selector": "REQUEST_HEADERS",
+                            "wildcard": false
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "action": "alert",
+            "conditionException": {},
+            "id": 3000998,
+            "version": 3,
+            "lock": false,
+            "riskScoreGroups": [
+                "PLATFORM"
+            ],
+            "title": "Citrix Virtual Apps and Desktops (XEN) Unauthenticated RCE (CVE-2024-8068 and CVE-2024-8069) Attack Detected"
+        }
+    ]
+}

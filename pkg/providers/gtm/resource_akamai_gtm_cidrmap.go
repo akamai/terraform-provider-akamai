@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/gtm"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/session"
@@ -16,14 +17,19 @@ import (
 
 const cidrMapAlreadyExistsError = "CidrMap with provided `name` for specific `domain` already exists. Please import specific cidrmap using following command: terraform import akamai_gtm_cidrmap.<your_resource_name> \"%s:%s\""
 
-func resourceGTMv1CIDRMap() *schema.Resource {
+type cidrMapResource struct {
+	defaultInterval time.Duration
+}
+
+func resourceGTMv1CIDRMap(defaultInterval time.Duration) *schema.Resource {
+	r := &cidrMapResource{defaultInterval: defaultInterval}
 	return &schema.Resource{
-		CreateContext: resourceGTMv1CIDRMapCreate,
-		ReadContext:   resourceGTMv1CIDRMapRead,
-		UpdateContext: resourceGTMv1CIDRMapUpdate,
-		DeleteContext: resourceGTMv1CIDRMapDelete,
+		CreateContext: r.resourceGTMv1CIDRMapCreate,
+		ReadContext:   r.resourceGTMv1CIDRMapRead,
+		UpdateContext: r.resourceGTMv1CIDRMapUpdate,
+		DeleteContext: r.resourceGTMv1CIDRMapDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceGTMv1CIDRMapImport,
+			State: r.resourceGTMv1CIDRMapImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"domain": {
@@ -83,7 +89,7 @@ func resourceGTMv1CIDRMap() *schema.Resource {
 	}
 }
 
-func resourceGTMv1CIDRMapCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (r *cidrMapResource) resourceGTMv1CIDRMapCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMCIDRMapCreate")
 	// create a context with logging for api calls
@@ -103,7 +109,7 @@ func resourceGTMv1CIDRMapCreate(ctx context.Context, d *schema.ResourceData, m i
 		return diag.FromErr(err)
 	}
 
-	cidr, err := Client(meta).GetCIDRMap(ctx, gtm.GetCIDRMapRequest{
+	cidr, err := meta.Client().GetGTM().GetCIDRMap(ctx, gtm.GetCIDRMapRequest{
 		DomainName: domain,
 		MapName:    name,
 	})
@@ -143,7 +149,7 @@ func resourceGTMv1CIDRMapCreate(ctx context.Context, d *schema.ResourceData, m i
 
 	newCidr := populateNewCIDRMapObject(meta, d, m)
 	logger.Debugf("Proposed New cidrMap: [%v]", newCidr)
-	cStatus, err := Client(meta).CreateCIDRMap(ctx, gtm.CreateCIDRMapRequest{
+	cStatus, err := meta.Client().GetGTM().CreateCIDRMap(ctx, gtm.CreateCIDRMapRequest{
 		CIDR:       newCidr,
 		DomainName: domain,
 	})
@@ -167,7 +173,7 @@ func resourceGTMv1CIDRMapCreate(ctx context.Context, d *schema.ResourceData, m i
 		return diag.FromErr(err)
 	}
 	if waitOnComplete {
-		done, err := waitForCompletion(ctx, domain, m)
+		done, err := waitForCompletion(ctx, domain, m, r.defaultInterval)
 		if done {
 			logger.Infof("cidrMap create completed")
 		} else {
@@ -188,11 +194,11 @@ func resourceGTMv1CIDRMapCreate(ctx context.Context, d *schema.ResourceData, m i
 	cidrMapID := fmt.Sprintf("%s:%s", domain, cStatus.Resource.Name)
 	logger.Debugf("Generated cidrMap resource Id: %s", cidrMapID)
 	d.SetId(cidrMapID)
-	return resourceGTMv1CIDRMapRead(ctx, d, m)
+	return r.resourceGTMv1CIDRMapRead(ctx, d, m)
 
 }
 
-func resourceGTMv1CIDRMapRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (r *cidrMapResource) resourceGTMv1CIDRMapRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMCIDRMapRead")
 	// create a context with logging for api calls
@@ -209,7 +215,7 @@ func resourceGTMv1CIDRMapRead(ctx context.Context, d *schema.ResourceData, m int
 		logger.Errorf("Invalid cidrMap ID: %s", d.Id())
 		return diag.FromErr(err)
 	}
-	cidr, err := Client(meta).GetCIDRMap(ctx, gtm.GetCIDRMapRequest{
+	cidr, err := meta.Client().GetGTM().GetCIDRMap(ctx, gtm.GetCIDRMapRequest{
 		DomainName: domain,
 		MapName:    cidrMap,
 	})
@@ -230,7 +236,7 @@ func resourceGTMv1CIDRMapRead(ctx context.Context, d *schema.ResourceData, m int
 	return nil
 }
 
-func resourceGTMv1CIDRMapUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (r *cidrMapResource) resourceGTMv1CIDRMapUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMCIDRMapUpdate")
 	// create a context with logging for api calls
@@ -248,7 +254,7 @@ func resourceGTMv1CIDRMapUpdate(ctx context.Context, d *schema.ResourceData, m i
 		return diag.FromErr(err)
 	}
 	// Get existingCidrMap
-	existCidr, err := Client(meta).GetCIDRMap(ctx, gtm.GetCIDRMapRequest{
+	existCidr, err := meta.Client().GetGTM().GetCIDRMap(ctx, gtm.GetCIDRMapRequest{
 		DomainName: domain,
 		MapName:    cidrMap,
 	})
@@ -264,7 +270,7 @@ func resourceGTMv1CIDRMapUpdate(ctx context.Context, d *schema.ResourceData, m i
 	logger.Debugf("Updating cidrMap BEFORE: %v", newCidr)
 	populateCIDRMapObject(d, newCidr, m)
 	logger.Debugf("Updating cidrMap PROPOSED: %v", existCidr)
-	uStat, err := Client(meta).UpdateCIDRMap(ctx, gtm.UpdateCIDRMapRequest{
+	uStat, err := meta.Client().GetGTM().UpdateCIDRMap(ctx, gtm.UpdateCIDRMapRequest{
 		CIDR:       newCidr,
 		DomainName: domain,
 	})
@@ -288,7 +294,7 @@ func resourceGTMv1CIDRMapUpdate(ctx context.Context, d *schema.ResourceData, m i
 		return diag.FromErr(err)
 	}
 	if waitOnComplete {
-		done, err := waitForCompletion(ctx, domain, m)
+		done, err := waitForCompletion(ctx, domain, m, r.defaultInterval)
 		if done {
 			logger.Infof("cidrMap update completed")
 		} else {
@@ -305,10 +311,10 @@ func resourceGTMv1CIDRMapUpdate(ctx context.Context, d *schema.ResourceData, m i
 		}
 	}
 
-	return resourceGTMv1CIDRMapRead(ctx, d, m)
+	return r.resourceGTMv1CIDRMapRead(ctx, d, m)
 }
 
-func resourceGTMv1CIDRMapImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+func (r *cidrMapResource) resourceGTMv1CIDRMapImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMCIDRMapImport")
 	// create a context with logging for api calls
@@ -324,7 +330,7 @@ func resourceGTMv1CIDRMapImport(d *schema.ResourceData, m interface{}) ([]*schem
 	if err != nil {
 		return []*schema.ResourceData{d}, err
 	}
-	cidr, err := Client(meta).GetCIDRMap(ctx, gtm.GetCIDRMapRequest{
+	cidr, err := meta.Client().GetGTM().GetCIDRMap(ctx, gtm.GetCIDRMapRequest{
 		DomainName: domain,
 		MapName:    cidrMap,
 	})
@@ -344,7 +350,7 @@ func resourceGTMv1CIDRMapImport(d *schema.ResourceData, m interface{}) ([]*schem
 	return []*schema.ResourceData{d}, nil
 }
 
-func resourceGTMv1CIDRMapDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (r *cidrMapResource) resourceGTMv1CIDRMapDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMCIDRMapDelete")
 	// create a context with logging for api calls
@@ -361,7 +367,7 @@ func resourceGTMv1CIDRMapDelete(ctx context.Context, d *schema.ResourceData, m i
 		logger.Errorf("Invalid cidrMap ID: %s", d.Id())
 		return diag.FromErr(err)
 	}
-	existCidr, err := Client(meta).GetCIDRMap(ctx, gtm.GetCIDRMapRequest{
+	existCidr, err := meta.Client().GetGTM().GetCIDRMap(ctx, gtm.GetCIDRMapRequest{
 		DomainName: domain,
 		MapName:    cidrMap,
 	})
@@ -375,7 +381,7 @@ func resourceGTMv1CIDRMapDelete(ctx context.Context, d *schema.ResourceData, m i
 	}
 	newCidr := createCIDRMapStruct(existCidr)
 	logger.Debugf("Deleting cidrMap: %v", newCidr)
-	uStat, err := Client(meta).DeleteCIDRMap(ctx, gtm.DeleteCIDRMapRequest{
+	uStat, err := meta.Client().GetGTM().DeleteCIDRMap(ctx, gtm.DeleteCIDRMapRequest{
 		MapName:    cidrMap,
 		DomainName: domain,
 	})
@@ -399,7 +405,7 @@ func resourceGTMv1CIDRMapDelete(ctx context.Context, d *schema.ResourceData, m i
 		return diag.FromErr(err)
 	}
 	if waitOnComplete {
-		done, err := waitForCompletion(ctx, domain, m)
+		done, err := waitForCompletion(ctx, domain, m, r.defaultInterval)
 		if done {
 			logger.Infof("cidrMap delete completed")
 		} else {

@@ -28,7 +28,7 @@ func dataIAMTimeoutPoliciesRead(ctx context.Context, d *schema.ResourceData, m i
 	meta := meta.Must(m)
 	logger := meta.Log("IAM", "dataIAMTimeoutPoliciesRead")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
+	client := meta.Client().GetIAM()
 
 	logger.Debug("Fetching supported timeout policies")
 

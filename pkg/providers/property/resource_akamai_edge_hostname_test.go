@@ -2196,102 +2196,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 				},
 				{
 					Config:      testutils.LoadFixtureStringf(t, "%s/%s", testDir, "new_akamaized_net_different_product_id.tf"),
-					ExpectError: regexp.MustCompile(`Changes to non-updatable fields 'product_id' and 'certificate' are not permitted`),
-				},
-			},
-		},
-		"error on updating certificate": {
-			init: func(mp *papi.Mock, mh *hapi.Mock) {
-				// Create
-				mp.On("GetEdgeHostnames", testutils.MockContext, papi.GetEdgeHostnamesRequest{
-					ContractID: "ctr_2",
-					GroupID:    "grp_2",
-				}).Return(&papi.GetEdgeHostnamesResponse{
-					ContractID: "ctr_2",
-					GroupID:    "grp_2",
-					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
-						{
-							ID:                "ehn_123",
-							Domain:            "test.edgesuite.net",
-							ProductID:         "prd_2",
-							DomainPrefix:      "test2",
-							DomainSuffix:      "edgesuite.net",
-							IPVersionBehavior: "IPV6_PERFORMANCE",
-						},
-						{
-							ID:                "ehn_2",
-							Domain:            "test.edgesuite.net",
-							ProductID:         "prd_2",
-							DomainPrefix:      "test3",
-							DomainSuffix:      "edgesuite.net",
-							IPVersionBehavior: "IPV6_PERFORMANCE",
-						},
-					}},
-				}, nil).Once()
-				mp.On("CreateEdgeHostname", testutils.MockContext, papi.CreateEdgeHostnameRequest{
-					ContractID: "ctr_2",
-					GroupID:    "grp_2",
-					EdgeHostname: papi.EdgeHostnameCreate{
-						ProductID:         "prd_2",
-						DomainPrefix:      "test",
-						DomainSuffix:      "edgekey.net",
-						SecureNetwork:     "ENHANCED_TLS",
-						IPVersionBehavior: "IPV6_PERFORMANCE",
-						CertEnrollmentID:  123,
-						SlotNumber:        123,
-					},
-				}).Return(&papi.CreateEdgeHostnameResponse{
-					EdgeHostnameID: "ehn_456",
-				}, nil).Once()
-				mp.On("GetEdgeHostname", testutils.MockContext, papi.GetEdgeHostnameRequest{
-					EdgeHostnameID: "ehn_456",
-					ContractID:     "ctr_2",
-					GroupID:        "grp_2",
-				}).Return(&papi.GetEdgeHostnamesResponse{
-					ContractID: "ctr_2",
-					GroupID:    "grp_2",
-					EdgeHostname: papi.EdgeHostnameGetItem{
-						ID:                "ehn_456",
-						ProductID:         "prd_2",
-						DomainPrefix:      "test",
-						DomainSuffix:      "edgekey.net",
-						Domain:            "test.edgekey.net",
-						IPVersionBehavior: "IPV6_PERFORMANCE",
-					},
-				}, nil).Once()
-				// Read + refresh
-				mp.On("GetEdgeHostname", testutils.MockContext, papi.GetEdgeHostnameRequest{
-					EdgeHostnameID: "ehn_456",
-					ContractID:     "ctr_2",
-					GroupID:        "grp_2",
-				}).Return(&papi.GetEdgeHostnamesResponse{
-					ContractID: "ctr_2",
-					GroupID:    "grp_2",
-					EdgeHostname: papi.EdgeHostnameGetItem{
-						ID:                "ehn_456",
-						ProductID:         "prd_2",
-						DomainPrefix:      "test",
-						DomainSuffix:      "edgekey.net",
-						Domain:            "test.edgekey.net",
-						IPVersionBehavior: "IPV6_PERFORMANCE",
-					},
-				}, nil).Times(3)
-
-				mockData := createEdgeHostnameMockDataBuilder(456).
-					withDNSZone("edgekey.net").
-					withRecordName("test").build()
-				// Delete
-				mockData.mockGetEdgeHostname(mh)
-				mockData.mockDeleteEdgeHostname(mh)
-				mockData.mockGetChangeStatus(mh, changeRequestStatusSucceeded)
-			},
-			steps: []resource.TestStep{
-				{
-					Config: testutils.LoadFixtureStringf(t, "%s/%s", testDir, "new_edgekey_net.tf"),
-				},
-				{
-					Config:      testutils.LoadFixtureStringf(t, "%s/%s", testDir, "new_edgekey_net_different_certificate.tf"),
-					ExpectError: regexp.MustCompile(`Changes to non-updatable fields 'product_id' and 'certificate' are not permitted`),
+					ExpectError: regexp.MustCompile(`Changes to non-updatable field 'product_id' is not permitted`),
 				},
 			},
 		},
@@ -2435,6 +2340,193 @@ func TestResourceEdgeHostname(t *testing.T) {
 					Check: akamaizedNetIPv4Checker.
 						CheckEqual("ip_behavior", "IPV6_COMPLIANCE").
 						CheckMissing("status_update_email").
+						Build(),
+				},
+			},
+		},
+		"update edge hostname certificate": {
+			init: func(mp *papi.Mock, mh *hapi.Mock) {
+				// Create
+				mp.On("GetEdgeHostnames", testutils.MockContext, papi.GetEdgeHostnamesRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+				}).Return(&papi.GetEdgeHostnamesResponse{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
+						{
+							ID:                "ehn_123",
+							Domain:            "test1.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test1",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
+						},
+						{
+							ID:                "ehn_2",
+							Domain:            "test2.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test2",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
+						},
+					}},
+				}, nil).Once()
+
+				mp.On("CreateEdgeHostname", testutils.MockContext, papi.CreateEdgeHostnameRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostname: papi.EdgeHostnameCreate{
+						ProductID:         "prd_2",
+						DomainPrefix:      "test",
+						DomainSuffix:      "akamaized.net",
+						SecureNetwork:     "SHARED_CERT",
+						IPVersionBehavior: "IPV4",
+						CertEnrollmentID:  123456,
+						SlotNumber:        123456,
+					},
+				}).Return(&papi.CreateEdgeHostnameResponse{
+					EdgeHostnameID: "ehn_123",
+				}, nil).Once()
+
+				mp.On("GetEdgeHostname", testutils.MockContext, papi.GetEdgeHostnameRequest{
+					EdgeHostnameID: "ehn_123",
+					ContractID:     "ctr_2",
+					GroupID:        "grp_2",
+				}).Return(&papi.GetEdgeHostnamesResponse{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostname: papi.EdgeHostnameGetItem{
+						ID:                "ehn_123",
+						ProductID:         "prd_2",
+						DomainPrefix:      "test",
+						DomainSuffix:      "akamaized.net",
+						Domain:            "test.akamaized.net",
+						IPVersionBehavior: "IPV4",
+					},
+				}, nil).Once()
+
+				// Read + refresh
+				mp.On("GetEdgeHostname", testutils.MockContext, papi.GetEdgeHostnameRequest{
+					EdgeHostnameID: "ehn_123",
+					ContractID:     "ctr_2",
+					GroupID:        "grp_2",
+				}).Return(&papi.GetEdgeHostnamesResponse{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostname: papi.EdgeHostnameGetItem{
+						ID:                "ehn_123",
+						ProductID:         "prd_2",
+						DomainPrefix:      "test",
+						DomainSuffix:      "akamaized.net",
+						Domain:            "test.akamaized.net",
+						IPVersionBehavior: "IPV4",
+					},
+				}, nil).Times(3)
+
+				// 2nd step - ForceNew
+				mockData := createEdgeHostnameMockDataBuilder(123).
+					withDNSZone("akamaized.net").
+					withRecordName("test").build()
+
+				// Delete
+				mockData.mockGetEdgeHostname(mh)
+				mockData.mockDeleteEdgeHostname(mh)
+				mockData.mockGetChangeStatus(mh, changeRequestStatusSucceeded)
+
+				// Create
+				mp.On("GetEdgeHostnames", testutils.MockContext, papi.GetEdgeHostnamesRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+				}).Return(&papi.GetEdgeHostnamesResponse{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostnames: papi.EdgeHostnameItems{Items: []papi.EdgeHostnameGetItem{
+						{
+							ID:                "ehn_123",
+							Domain:            "test1.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test1",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
+						},
+						{
+							ID:                "ehn_2",
+							Domain:            "test2.akamaized.net",
+							ProductID:         "prd_2",
+							DomainPrefix:      "test2",
+							DomainSuffix:      "akamaized.net",
+							IPVersionBehavior: "IPV4",
+						},
+					}},
+				}, nil).Once()
+
+				mp.On("CreateEdgeHostname", testutils.MockContext, papi.CreateEdgeHostnameRequest{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostname: papi.EdgeHostnameCreate{
+						ProductID:         "prd_2",
+						DomainPrefix:      "test",
+						DomainSuffix:      "akamaized.net",
+						SecureNetwork:     "SHARED_CERT",
+						IPVersionBehavior: "IPV4",
+						CertEnrollmentID:  654321,
+						SlotNumber:        654321,
+					},
+				}).Return(&papi.CreateEdgeHostnameResponse{
+					EdgeHostnameID: "ehn_123",
+				}, nil).Once()
+
+				mp.On("GetEdgeHostname", testutils.MockContext, papi.GetEdgeHostnameRequest{
+					EdgeHostnameID: "ehn_123",
+					ContractID:     "ctr_2",
+					GroupID:        "grp_2",
+				}).Return(&papi.GetEdgeHostnamesResponse{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostname: papi.EdgeHostnameGetItem{
+						ID:                "ehn_123",
+						ProductID:         "prd_2",
+						DomainPrefix:      "test",
+						DomainSuffix:      "akamaized.net",
+						Domain:            "test.akamaized.net",
+						IPVersionBehavior: "IPV4",
+					},
+				}, nil).Once()
+
+				// Read + refresh
+				mp.On("GetEdgeHostname", testutils.MockContext, papi.GetEdgeHostnameRequest{
+					EdgeHostnameID: "ehn_123",
+					ContractID:     "ctr_2",
+					GroupID:        "grp_2",
+				}).Return(&papi.GetEdgeHostnamesResponse{
+					ContractID: "ctr_2",
+					GroupID:    "grp_2",
+					EdgeHostname: papi.EdgeHostnameGetItem{
+						ID:                "ehn_123",
+						ProductID:         "prd_2",
+						DomainPrefix:      "test",
+						DomainSuffix:      "akamaized.net",
+						Domain:            "test.akamaized.net",
+						IPVersionBehavior: "IPV4",
+					},
+				}, nil).Times(2)
+
+				// Delete
+				mockData.mockGetEdgeHostname(mh)
+				mockData.mockDeleteEdgeHostname(mh)
+				mockData.mockGetChangeStatus(mh, changeRequestStatusSucceeded)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/%s", testDir, "create_edgehostname_with_certificate.tf"),
+					Check: akamaizedNetIPv4Checker.
+						CheckEqual("certificate", "123456").Build(),
+				},
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/%s", testDir, "update_edgehostname_with_certificate.tf"),
+					Check: akamaizedNetIPv4Checker.
+						CheckEqual("certificate", "654321").
 						Build(),
 				},
 			},
@@ -4812,6 +4904,78 @@ func TestResourceEdgeHostname_WithImport(t *testing.T) {
 		client.PAPI.AssertExpectations(t)
 		client.HAPI.AssertExpectations(t)
 	})
+	t.Run("import existing edgehostname with certificate and productId provided by user", func(t *testing.T) {
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+
+		// import
+		expectGetEdgeHostname(client.PAPI, "ehn_1", "ctr_1", "grp_2").Once()
+		expectGetEdgeHostnameHAPIByID(client.HAPI, 1).Once()
+
+		// read
+		expectGetEdgeHostnameAfterCreate(client.PAPI, "ctr_1", "grp_2").Once()
+
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResourceEdgeHostname/import_edgehostname_with_certificate.tf"),
+					ImportState: true,
+					ImportStateCheck: func(s []*terraform.InstanceState) error {
+						assert.Len(t, s, 1)
+						rs := s[0]
+						assert.Equal(t, "ctr_1", rs.Attributes["contract_id"])
+						assert.Equal(t, "grp_2", rs.Attributes["group_id"])
+						assert.Equal(t, "prd_2", rs.Attributes["product_id"])
+						assert.Equal(t, "123456", rs.Attributes["certificate"])
+						return nil
+					},
+					ImportStateId: "ehn_1,1,2,prd_2,123456",
+					ResourceName:  "akamai_edge_hostname.importedgehostname",
+					// ImportStateVerify is set to false. Because of validation it can't use create context, which means it doesn't have old state.
+					ImportStateVerify: false,
+				},
+			},
+		})
+		client.PAPI.AssertExpectations(t)
+		client.HAPI.AssertExpectations(t)
+	})
+	t.Run("import existing edgehostname with certificate provided by user but without productID", func(t *testing.T) {
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+
+		// import
+		expectGetEdgeHostname(client.PAPI, "ehn_1", "ctr_1", "grp_2").Once()
+		expectGetEdgeHostnameHAPIByID(client.HAPI, 1).Once()
+
+		// read
+		expectGetEdgeHostnameAfterCreate(client.PAPI, "ctr_1", "grp_2").Once()
+
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResourceEdgeHostname/import_edgehostname_with_certificate.tf"),
+					ImportState: true,
+					ImportStateCheck: func(s []*terraform.InstanceState) error {
+						assert.Len(t, s, 1)
+						rs := s[0]
+						assert.Equal(t, "ctr_1", rs.Attributes["contract_id"])
+						assert.Equal(t, "grp_2", rs.Attributes["group_id"])
+						assert.Equal(t, "prd_2", rs.Attributes["product_id"])
+						assert.Equal(t, "123456", rs.Attributes["certificate"])
+						return nil
+					},
+					ImportStateId: "ehn_1,1,2,,123456",
+					ResourceName:  "akamai_edge_hostname.importedgehostname",
+					// ImportStateVerify is set to false. Because of validation it can't use create context, which means it doesn't have old state.
+					ImportStateVerify: false,
+				},
+			},
+		})
+		client.PAPI.AssertExpectations(t)
+		client.HAPI.AssertExpectations(t)
+	})
 	t.Run("import error - too few parts of id", func(t *testing.T) {
 		t.Parallel()
 		resource.UnitTest(t, resource.TestCase{
@@ -4823,7 +4987,7 @@ func TestResourceEdgeHostname_WithImport(t *testing.T) {
 					ImportStateId: "ehn_1,1",
 					ResourceName:  "akamai_edge_hostname.importedgehostname",
 					ExpectError: regexp.MustCompile("expected import identifier with format: " +
-						`"EdgehostNameID,contractID,groupID\[,productID]". Got: "ehn_1,1"`),
+						`"EdgehostNameID,contractID,groupID\[,\[productID]\[,certificate]]". Got: "ehn_1,1"`),
 				},
 			},
 		})
@@ -4836,10 +5000,10 @@ func TestResourceEdgeHostname_WithImport(t *testing.T) {
 				{
 					Config:        testutils.LoadFixtureString(t, "testdata/TestResourceEdgeHostname/import_edgehostname_akamaized_product_id.tf"),
 					ImportState:   true,
-					ImportStateId: "ehn_1,1,2,prd_2,foo",
+					ImportStateId: "ehn_1,1,2,prd_2,123456,foo",
 					ResourceName:  "akamai_edge_hostname.importedgehostname",
 					ExpectError: regexp.MustCompile("expected import identifier with format: " +
-						`"EdgehostNameID,contractID,groupID\[,productID]". Got: "ehn_1,1,2,prd_2,foo"`),
+						`"EdgehostNameID,contractID,groupID\[,\[productID]\[,certificate]]". Got: "ehn_1,1,2,prd_2,123456,foo"`),
 				},
 			},
 		})
@@ -4855,6 +5019,36 @@ func TestResourceEdgeHostname_WithImport(t *testing.T) {
 					ImportStateId: "ehn_1,1,2,",
 					ResourceName:  "akamai_edge_hostname.importedgehostname",
 					ExpectError:   regexp.MustCompile(`productID is empty for the import ID="ehn_1,1,2,"`),
+				},
+			},
+		})
+	})
+	t.Run("import error - empty certificate", func(t *testing.T) {
+		t.Parallel()
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(nil, newSubproviderWithConfig(config)),
+			Steps: []resource.TestStep{
+				{
+					Config:        testutils.LoadFixtureString(t, "testdata/TestResourceEdgeHostname/import_edgehostname_akamaized_product_id.tf"),
+					ImportState:   true,
+					ImportStateId: "ehn_1,1,2,prd_2,",
+					ResourceName:  "akamai_edge_hostname.importedgehostname",
+					ExpectError:   regexp.MustCompile(`certificate is empty for the import ID="ehn_1,1,2,prd_2,"`),
+				},
+			},
+		})
+	})
+	t.Run("import error - invalid certificate", func(t *testing.T) {
+		t.Parallel()
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(nil, newSubproviderWithConfig(config)),
+			Steps: []resource.TestStep{
+				{
+					Config:        testutils.LoadFixtureString(t, "testdata/TestResourceEdgeHostname/import_edgehostname_akamaized_product_id.tf"),
+					ImportState:   true,
+					ImportStateId: "ehn_1,1,2,prd_2,-3",
+					ResourceName:  "akamai_edge_hostname.importedgehostname",
+					ExpectError:   regexp.MustCompile(`invalid certificate for the import ID="ehn_1,1,2,prd_2,-3"`),
 				},
 			},
 		})

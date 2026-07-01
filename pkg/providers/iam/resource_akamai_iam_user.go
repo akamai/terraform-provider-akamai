@@ -249,7 +249,7 @@ func resourceIAMUserCreate(ctx context.Context, d *schema.ResourceData, m interf
 	meta := meta.Must(m)
 	logger := meta.Log("IAM", "resourceIAMUserCreate")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
+	client := meta.Client().GetIAM()
 
 	logger.Debug("Creating User")
 
@@ -408,7 +408,7 @@ func resourceIAMUserRead(ctx context.Context, d *schema.ResourceData, m interfac
 	meta := meta.Must(m)
 	logger := meta.Log("IAM", "resourceIAMUserRead")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
+	client := meta.Client().GetIAM()
 
 	logger.Debug("Reading User")
 
@@ -490,7 +490,7 @@ func resourceIAMUserUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	meta := meta.Must(m)
 	logger := meta.Log("IAM", "resourceIAMUserUpdate")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
+	client := meta.Client().GetIAM()
 
 	logger.Debug("Updating User")
 
@@ -660,7 +660,7 @@ func resourceIAMUserDelete(ctx context.Context, d *schema.ResourceData, m interf
 	meta := meta.Must(m)
 	logger := meta.Log("IAM", "resourceIAMUserDelete")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
+	client := meta.Client().GetIAM()
 
 	logger.Debug("Deleting User")
 

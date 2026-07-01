@@ -29,7 +29,7 @@ var (
 
 type (
 	caSetCertificatesDataSource struct {
-		meta meta.Meta
+		meta.DataSource
 	}
 
 	caSetCertificatesDataSourceModel struct {
@@ -98,21 +98,6 @@ func NewCASetCertificatesDataSource() datasource.DataSource {
 // Metadata configures data source's meta information.
 func (d *caSetCertificatesDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "akamai_mtlstruststore_ca_set_certificates"
-}
-
-func (d *caSetCertificatesDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Data Source Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.",
-					req.ProviderData))
-		}
-	}()
-	d.meta = meta.Must(req.ProviderData)
 }
 
 func (d *caSetCertificatesDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
@@ -232,7 +217,7 @@ func (d *caSetCertificatesDataSource) Read(ctx context.Context, req datasource.R
 		return
 	}
 
-	client = Client(d.meta)
+	client := d.Client.GetMTLSTruststore()
 
 	if err := data.resolveDefaults(ctx, client); err != nil {
 		resp.Diagnostics.AddError("Resolving CA set inputs failed", err.Error())

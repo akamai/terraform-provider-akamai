@@ -8,9 +8,11 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/framework/modifiers"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -20,6 +22,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
@@ -37,19 +40,19 @@ type urlProtectionPolicyResource struct {
 }
 
 type urlProtectionPolicyResourceModel struct {
-	ConfigID                types.Int64                   `tfsdk:"config_id"`
-	URLProtectionID         types.Int64                   `tfsdk:"url_protection_policy_id"`
-	Name                    types.String                  `tfsdk:"name"`
-	Description             types.String                  `tfsdk:"description"`
-	BypassConditions        types.List                    `tfsdk:"bypass_conditions"`
-	MaxRateThreshold        types.Int64                   `tfsdk:"max_rate_threshold"`
-	APIDefinitions          types.List                    `tfsdk:"api_definitions"`
-	HostnamePaths           types.List                    `tfsdk:"hostname_paths"`
-	IntelligentLoadShedding *intelligentLoadSheddingModel `tfsdk:"intelligent_load_shedding"`
-	CreateDate              types.String                  `tfsdk:"create_date"`
-	CreatedBy               types.String                  `tfsdk:"created_by"`
-	UpdateDate              types.String                  `tfsdk:"update_date"`
-	UpdatedBy               types.String                  `tfsdk:"updated_by"`
+	ConfigID                types.Int64  `tfsdk:"config_id"`
+	URLProtectionID         types.Int64  `tfsdk:"url_protection_policy_id"`
+	Name                    types.String `tfsdk:"name"`
+	Description             types.String `tfsdk:"description"`
+	BypassConditions        types.List   `tfsdk:"bypass_conditions"`
+	MaxRateThreshold        types.Int64  `tfsdk:"max_rate_threshold"`
+	APIDefinitions          types.List   `tfsdk:"api_definitions"`
+	HostnamePaths           types.List   `tfsdk:"hostname_paths"`
+	IntelligentLoadShedding types.Object `tfsdk:"intelligent_load_shedding"`
+	CreateDate              types.String `tfsdk:"create_date"`
+	CreatedBy               types.String `tfsdk:"created_by"`
+	UpdateDate              types.String `tfsdk:"update_date"`
+	UpdatedBy               types.String `tfsdk:"updated_by"`
 }
 
 const urlProtectionPolicyResourceName = "urlProtectionPolicy"
@@ -156,8 +159,8 @@ func (r *urlProtectionPolicyResource) Schema(_ context.Context, _ resource.Schem
 			},
 			"hostname_paths": schema.ListNestedAttribute{
 				Optional:    true,
-				Validators:  []validator.List{listvalidator.SizeBetween(1, 5)},
 				Description: "List of hostname and path configurations",
+				Validators:  []validator.List{listvalidator.SizeAtLeast(1), listvalidator.UniqueValues()},
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"hostname": schema.StringAttribute{
@@ -170,49 +173,13 @@ func (r *urlProtectionPolicyResource) Schema(_ context.Context, _ resource.Schem
 						"paths": schema.ListAttribute{
 							ElementType: types.StringType,
 							Required:    true,
-							Validators:  []validator.List{listvalidator.SizeAtMost(5), listvalidator.UniqueValues()},
+							Validators:  []validator.List{listvalidator.SizeAtLeast(1), listvalidator.UniqueValues()},
 							Description: "List of paths associated with the hostname",
 						},
 					},
 				},
 			},
-			"intelligent_load_shedding": schema.SingleNestedAttribute{
-				Optional:    true,
-				Description: "Intelligent load shedding configuration",
-				Attributes: map[string]schema.Attribute{
-					"hits_per_sec": schema.Int64Attribute{
-						Required:    true,
-						Description: "Number of hits per second threshold",
-					},
-					"categories": schema.ListAttribute{
-						ElementType: types.StringType,
-						Optional:    true,
-						Description: "List of categories for intelligent load shedding",
-					},
-					"custom_criteria": schema.ListNestedAttribute{
-						Computed:    true,
-						Optional:    true,
-						Description: "Custom criteria for intelligent load shedding",
-						NestedObject: schema.NestedAttributeObject{
-							Attributes: map[string]schema.Attribute{
-								"type": schema.StringAttribute{
-									Required:    true,
-									Description: "Type of custom criteria (e.g., CLIENT_LIST)",
-								},
-								"list_ids": schema.ListAttribute{
-									ElementType: types.StringType,
-									Required:    true,
-									Description: "List of client list IDs",
-								},
-								"positive_match": schema.BoolAttribute{
-									Required:    true,
-									Description: "Whether this is a positive match condition",
-								},
-							},
-						},
-					},
-				},
-			},
+			"intelligent_load_shedding": intelligentLoadSheddingSchema(),
 			"create_date": schema.StringAttribute{
 				Computed: true,
 				PlanModifiers: []planmodifier.String{
@@ -237,6 +204,49 @@ func (r *urlProtectionPolicyResource) Schema(_ context.Context, _ resource.Schem
 			},
 		},
 	}
+}
+
+func intelligentLoadSheddingSchema() schema.SingleNestedAttribute {
+	return schema.SingleNestedAttribute{
+		Optional:    true,
+		Description: "Intelligent load shedding configuration",
+		Attributes: map[string]schema.Attribute{
+			"hits_per_sec": schema.Int64Attribute{
+				Required:    true,
+				Description: "Number of hits per second threshold",
+			},
+			"categories": schema.ListAttribute{
+				ElementType: types.StringType,
+				Optional:    true,
+				Description: "List of categories for intelligent load shedding",
+			},
+			"custom_criteria": schema.ListNestedAttribute{
+				Optional:    true,
+				Description: "Custom criteria for intelligent load shedding",
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"type": schema.StringAttribute{
+							Required:    true,
+							Description: "Type of custom criteria (e.g., CLIENT_LIST)",
+						},
+						"list_ids": schema.ListAttribute{
+							ElementType: types.StringType,
+							Required:    true,
+							Description: "List of client list IDs",
+						},
+						"positive_match": schema.BoolAttribute{
+							Required:    true,
+							Description: "Whether this is a positive match condition",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func intelligentLoadSheddingAttrTypes() map[string]attr.Type {
+	return intelligentLoadSheddingSchema().GetType().(attr.TypeWithAttributeTypes).AttributeTypes()
 }
 
 func (r *urlProtectionPolicyResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
@@ -307,10 +317,18 @@ func (r *urlProtectionPolicyResource) validateHostnameOrAPIDefinitions(_ context
 }
 
 func (r *urlProtectionPolicyResource) validateIntelligentLoadShedding(ctx context.Context, data *urlProtectionPolicyResourceModel, resp *resource.ValidateConfigResponse) {
-	ils := data.IntelligentLoadShedding
-	if ils == nil {
+
+	if !tf.IsKnown(data.IntelligentLoadShedding) {
 		return
 	}
+
+	var ils intelligentLoadSheddingModel
+
+	resp.Diagnostics.Append(data.IntelligentLoadShedding.As(ctx, &ils, basetypes.ObjectAsOptions{})...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	if ils.HitsPerSec.IsUnknown() || ils.HitsPerSec.IsNull() {
 		resp.Diagnostics.AddError(
 			"Invalid Configuration",
@@ -514,8 +532,8 @@ func (r *urlProtectionPolicyResource) Create(ctx context.Context, req resource.C
 		state.HostnamePaths = dsModel.HostnamePaths
 	}
 
-	// Always use the API response for intelligent_load_shedding to ensure computed fields match
-	state.IntelligentLoadShedding = dsModel.IntelligentLoadShedding
+	// ILS has no Computed fields: use plan value so state always matches the config.
+	state.IntelligentLoadShedding = plan.IntelligentLoadShedding
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
@@ -595,10 +613,15 @@ func (r *urlProtectionPolicyResource) Read(ctx context.Context, req resource.Rea
 		newState.HostnamePaths = dsModel.HostnamePaths
 	}
 
-	if state.IntelligentLoadShedding != nil {
+	if tf.IsKnown(state.IntelligentLoadShedding) {
 		newState.IntelligentLoadShedding = state.IntelligentLoadShedding
 	} else if dsModel.IntelligentLoadShedding != nil {
-		newState.IntelligentLoadShedding = dsModel.IntelligentLoadShedding
+		ilsObj, ilsDiags := types.ObjectValueFrom(ctx, intelligentLoadSheddingAttrTypes(), dsModel.IntelligentLoadShedding)
+		resp.Diagnostics.Append(ilsDiags...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		newState.IntelligentLoadShedding = ilsObj
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &newState)...)
@@ -694,8 +717,8 @@ func (r *urlProtectionPolicyResource) Update(ctx context.Context, req resource.U
 		newState.HostnamePaths = dsModel.HostnamePaths
 	}
 
-	// Always use the API response for intelligent_load_shedding to ensure computed fields match
-	newState.IntelligentLoadShedding = dsModel.IntelligentLoadShedding
+	// ILS has no Computed fields: use plan value so state always matches the config.
+	newState.IntelligentLoadShedding = plan.IntelligentLoadShedding
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &newState)...)
 }
@@ -958,29 +981,35 @@ func buildHostnamePaths(ctx context.Context, plan *urlProtectionPolicyResourceMo
 
 // buildIntelligentLoadShedding processes intelligent load shedding configuration from the plan and adds it to the request body
 func buildIntelligentLoadShedding(ctx context.Context, plan *urlProtectionPolicyResourceModel, body *appsec.URLProtectionPolicyRequestBody, diags *diag.Diagnostics) error {
-	if plan.IntelligentLoadShedding == nil {
+	if plan.IntelligentLoadShedding.IsNull() || plan.IntelligentLoadShedding.IsUnknown() {
 		return nil
 	}
 
+	var ils intelligentLoadSheddingModel
+	diags.Append(plan.IntelligentLoadShedding.As(ctx, &ils, basetypes.ObjectAsOptions{})...)
+	if diags.HasError() {
+		return fmt.Errorf("failed to parse intelligent_load_shedding object")
+	}
+
 	body.IntelligentLoadShedding = true
-	if !plan.IntelligentLoadShedding.HitsPerSec.IsNull() && !plan.IntelligentLoadShedding.HitsPerSec.IsUnknown() {
-		v := plan.IntelligentLoadShedding.HitsPerSec.ValueInt64()
+	if !ils.HitsPerSec.IsNull() && !ils.HitsPerSec.IsUnknown() {
+		v := ils.HitsPerSec.ValueInt64()
 		body.SheddingThresholdHitsPerSec = &v
 	}
 
 	var loadSheddingCategories []appsec.Category
 
 	// Process standard categories
-	if !plan.IntelligentLoadShedding.Categories.IsNull() && !plan.IntelligentLoadShedding.Categories.IsUnknown() {
+	if !ils.Categories.IsNull() && !ils.Categories.IsUnknown() {
 		var categories []string
-		diags.Append(plan.IntelligentLoadShedding.Categories.ElementsAs(ctx, &categories, false)...)
+		diags.Append(ils.Categories.ElementsAs(ctx, &categories, false)...)
 		for _, category := range categories {
 			loadSheddingCategories = append(loadSheddingCategories, appsec.Category{Type: category})
 		}
 	}
 
 	// Process custom criteria
-	if err := buildCustomCriteria(ctx, plan, &loadSheddingCategories, diags); err != nil {
+	if err := buildCustomCriteria(ctx, ils, &loadSheddingCategories, diags); err != nil {
 		return err
 	}
 
@@ -989,13 +1018,13 @@ func buildIntelligentLoadShedding(ctx context.Context, plan *urlProtectionPolicy
 }
 
 // buildCustomCriteria processes custom criteria for intelligent load shedding
-func buildCustomCriteria(ctx context.Context, plan *urlProtectionPolicyResourceModel, loadSheddingCategories *[]appsec.Category, diags *diag.Diagnostics) error {
-	if plan.IntelligentLoadShedding.CustomCriteria.IsNull() || plan.IntelligentLoadShedding.CustomCriteria.IsUnknown() {
+func buildCustomCriteria(ctx context.Context, ils intelligentLoadSheddingModel, loadSheddingCategories *[]appsec.Category, diags *diag.Diagnostics) error {
+	if ils.CustomCriteria.IsNull() || ils.CustomCriteria.IsUnknown() {
 		return nil
 	}
 
 	var customCriteria []customCriteriaModel
-	diags.Append(plan.IntelligentLoadShedding.CustomCriteria.ElementsAs(ctx, &customCriteria, false)...)
+	diags.Append(ils.CustomCriteria.ElementsAs(ctx, &customCriteria, false)...)
 	if diags.HasError() {
 		return fmt.Errorf("failed to parse custom criteria")
 	}

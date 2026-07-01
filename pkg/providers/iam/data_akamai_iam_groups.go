@@ -77,7 +77,7 @@ func dataIAMGroupsRead(ctx context.Context, d *schema.ResourceData, m interface{
 	meta := meta.Must(m)
 	logger := meta.Log("IAM", "dataIAMGroupsRead")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
+	client := meta.Client().GetIAM()
 
 	logger.Debug("Fetching groups")
 	res, err := client.ListGroups(ctx, iam.ListGroupsRequest{})

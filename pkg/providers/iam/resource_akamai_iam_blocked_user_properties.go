@@ -51,7 +51,7 @@ func resourceIAMBlockedUserPropertiesCreate(ctx context.Context, d *schema.Resou
 	meta := meta.Must(m)
 	logger := meta.Log("IAM", "resourceIAMBlockedUserPropertiesCreate")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
+	client := meta.Client().GetIAM()
 
 	logger.Debug("Creating blocked user properties")
 
@@ -104,7 +104,7 @@ func resourceIAMBlockedUserPropertiesRead(ctx context.Context, d *schema.Resourc
 	meta := meta.Must(m)
 	logger := meta.Log("IAM", "resourceIAMBlockedUserPropertiesRead")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
+	client := meta.Client().GetIAM()
 
 	logger.Debug("Reading blocked user properties")
 
@@ -147,7 +147,7 @@ func resourceIAMBlockedUserPropertiesUpdate(ctx context.Context, d *schema.Resou
 	meta := meta.Must(m)
 	logger := meta.Log("IAM", "resourceIAMBlockedUserPropertiesUpdate")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
+	client := meta.Client().GetIAM()
 
 	logger.Debug("Updating blocked user properties")
 

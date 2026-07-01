@@ -2,7 +2,6 @@ package gtm
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/gtm"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
@@ -14,7 +13,7 @@ import (
 )
 
 type cidrMapDataSource struct {
-	meta meta.Meta
+	meta.DataSource
 }
 
 type cidrMapDataSourceModel struct {
@@ -35,21 +34,6 @@ func NewGTMCIDRMapDataSource() datasource.DataSource { return &cidrMapDataSource
 
 func (d *cidrMapDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, response *datasource.MetadataResponse) {
 	response.TypeName = "akamai_gtm_cidrmap"
-}
-
-func (d *cidrMapDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Data Source Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.",
-					req.ProviderData))
-		}
-	}()
-	d.meta = meta.Must(req.ProviderData)
 }
 
 var (
@@ -132,7 +116,7 @@ func (d *cidrMapDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		return
 	}
 
-	client := Client(d.meta)
+	client := d.Client.GetGTM()
 	cidrMap, err := client.GetCIDRMap(ctx, gtm.GetCIDRMapRequest{
 		DomainName: data.Domain.ValueString(),
 		MapName:    data.Name.ValueString(),

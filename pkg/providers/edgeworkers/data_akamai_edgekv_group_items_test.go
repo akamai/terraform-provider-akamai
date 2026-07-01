@@ -5,14 +5,14 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/edgeworkers"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
 
 func TestEdgeKVGroupItems(t *testing.T) {
-	client := &edgeworkers.Mock{}
-	client.Test(testutils.TattleT{T: t})
+	t.Parallel()
 
 	items := map[string]string{
 		"TestItem1": "TestValue1",
@@ -21,7 +21,10 @@ func TestEdgeKVGroupItems(t *testing.T) {
 	}
 
 	t.Run("happy path", func(t *testing.T) {
-		client.On("ListItems", testutils.MockContext, edgeworkers.ListItemsRequest{
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+
+		client.EdgeWorkers.On("ListItems", testutils.MockContext, edgeworkers.ListItemsRequest{
 			ItemsRequestParams: edgeworkers.ItemsRequestParams{
 				Network:     "staging",
 				NamespaceID: "test_namespace",
@@ -30,103 +33,104 @@ func TestEdgeKVGroupItems(t *testing.T) {
 		}).Return(&edgeworkers.ListItemsResponse{"TestItem1", "TestItem2", "TestItem3"}, nil).Times(3)
 
 		for k, v := range items {
-			mockGetItemReq(client, k, edgeworkers.Item(v))
+			mockGetItemReq(client.EdgeWorkers, k, edgeworkers.Item(v))
 		}
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				IsUnitTest:               true,
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestDataEdgeKVGroupItems/basic.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttrSet("data.akamai_edgekv_group_items.test", "id"),
-							resource.TestCheckResourceAttr("data.akamai_edgekv_group_items.test", "id", "test_namespace:staging:TestGroup"),
-							resource.TestCheckResourceAttr("data.akamai_edgekv_group_items.test", "items.%", "3"),
-							resource.TestCheckResourceAttr("data.akamai_edgekv_group_items.test", "items.TestItem1", "TestValue1"),
-							resource.TestCheckResourceAttr("data.akamai_edgekv_group_items.test", "items.TestItem2", "TestValue2"),
-							resource.TestCheckResourceAttr("data.akamai_edgekv_group_items.test", "items.TestItem3", "TestValue3"),
-						),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			IsUnitTest:               true,
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataEdgeKVGroupItems/basic.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttrSet("data.akamai_edgekv_group_items.test", "id"),
+						resource.TestCheckResourceAttr("data.akamai_edgekv_group_items.test", "id", "test_namespace:staging:TestGroup"),
+						resource.TestCheckResourceAttr("data.akamai_edgekv_group_items.test", "items.%", "3"),
+						resource.TestCheckResourceAttr("data.akamai_edgekv_group_items.test", "items.TestItem1", "TestValue1"),
+						resource.TestCheckResourceAttr("data.akamai_edgekv_group_items.test", "items.TestItem2", "TestValue2"),
+						resource.TestCheckResourceAttr("data.akamai_edgekv_group_items.test", "items.TestItem3", "TestValue3"),
+					),
 				},
-			})
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.EdgeWorkers.AssertExpectations(t)
 	})
 
 	t.Run("missed required `namespace_name` field", func(t *testing.T) {
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				IsUnitTest:               true,
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestDataEdgeKVGroupItems/missed_namespace_name.tf"),
-						ExpectError: regexp.MustCompile(`The argument "namespace_name" is required, but no definition was found.`),
-					},
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			IsUnitTest:               true,
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDataEdgeKVGroupItems/missed_namespace_name.tf"),
+					ExpectError: regexp.MustCompile(`The argument "namespace_name" is required, but no definition was found.`),
 				},
-			})
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.EdgeWorkers.AssertExpectations(t)
 	})
 
 	t.Run("missed required `network` field", func(t *testing.T) {
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				IsUnitTest:               true,
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestDataEdgeKVGroupItems/missed_network.tf"),
-						ExpectError: regexp.MustCompile(`The argument "network" is required, but no definition was found.`),
-					},
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			IsUnitTest:               true,
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDataEdgeKVGroupItems/missed_network.tf"),
+					ExpectError: regexp.MustCompile(`The argument "network" is required, but no definition was found.`),
 				},
-			})
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.EdgeWorkers.AssertExpectations(t)
 	})
 
 	t.Run("missed required `group_name` field", func(t *testing.T) {
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				IsUnitTest:               true,
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestDataEdgeKVGroupItems/missed_group.tf"),
-						ExpectError: regexp.MustCompile(`The argument "group_name" is required, but no definition was found.`),
-					},
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			IsUnitTest:               true,
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDataEdgeKVGroupItems/missed_group.tf"),
+					ExpectError: regexp.MustCompile(`The argument "group_name" is required, but no definition was found.`),
 				},
-			})
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.EdgeWorkers.AssertExpectations(t)
 	})
 
 	t.Run("incorrect `network` field", func(t *testing.T) {
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				IsUnitTest:               true,
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestDataEdgeKVGroupItems/incorrect_network.tf"),
-						ExpectError: regexp.MustCompile(`expected network to be one of \["staging" "production"], got incorrect_network`),
-					},
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			IsUnitTest:               true,
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestDataEdgeKVGroupItems/incorrect_network.tf"),
+					ExpectError: regexp.MustCompile(`expected network to be one of \["staging" "production"], got incorrect_network`),
 				},
-			})
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.EdgeWorkers.AssertExpectations(t)
 	})
 }
 
 func mockGetItemReq(client *edgeworkers.Mock, itemID string, itemValue edgeworkers.Item) *mock.Call {
-
 	return client.On("GetItem", testutils.MockContext, edgeworkers.GetItemRequest{
 		ItemID: itemID,
 		ItemsRequestParams: edgeworkers.ItemsRequestParams{

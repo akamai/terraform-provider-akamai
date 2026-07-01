@@ -6,11 +6,13 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/gtm"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func TestDataGTMASMap(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		givenTF            string
 		init               func(*gtm.Mock)
@@ -20,7 +22,7 @@ func TestDataGTMASMap(t *testing.T) {
 		"happy path": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				mockGetASMap(m, &gtm.ASMap{
+				mockGetASMap(m, defaultASMapDomainName, &gtm.ASMap{
 					Name: "TestName",
 					DefaultDatacenter: &gtm.DatacenterBase{
 						Nickname:     "TestDefaultDatacenterNickname",
@@ -69,14 +71,14 @@ func TestDataGTMASMap(t *testing.T) {
 		"error response from api": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				mockGetASMap(m, nil, fmt.Errorf("test error"), testutils.Once)
+				mockGetASMap(m, defaultASMapDomainName, nil, fmt.Errorf("test error"), testutils.Once)
 			},
 			expectError: regexp.MustCompile("test error"),
 		},
 		"no assignments": {
 			givenTF: "valid.tf",
 			init: func(m *gtm.Mock) {
-				mockGetASMap(m, &gtm.ASMap{
+				mockGetASMap(m, defaultASMapDomainName, &gtm.ASMap{
 					Name: "TestName",
 					DefaultDatacenter: &gtm.DatacenterBase{
 						Nickname:     "TestDefaultDatacenterNickname",
@@ -104,28 +106,27 @@ func TestDataGTMASMap(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &gtm.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 			if test.init != nil {
-				test.init(client)
+				test.init(client.GTM)
 			}
 			var checkFuncs []resource.TestCheckFunc
 			for k, v := range test.expectedAttributes {
 				checkFuncs = append(checkFuncs, resource.TestCheckResourceAttr("data.akamai_gtm_asmap.my_gtm_asmap", k, v))
 			}
 
-			useClient(client, func() {
-				resource.Test(t, resource.TestCase{
-					IsUnitTest:               true,
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{{
-						Config:      testutils.LoadFixtureStringf(t, "testdata/TestDataGtmAsmap/%s", test.givenTF),
-						Check:       resource.ComposeAggregateTestCheckFunc(checkFuncs...),
-						ExpectError: test.expectError,
-					}},
-				})
+			resource.Test(t, resource.TestCase{
+				IsUnitTest:               true,
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				Steps: []resource.TestStep{{
+					Config:      testutils.LoadFixtureStringf(t, "testdata/TestDataGtmAsmap/%s", test.givenTF),
+					Check:       resource.ComposeAggregateTestCheckFunc(checkFuncs...),
+					ExpectError: test.expectError,
+				}},
 			})
 
-			client.AssertExpectations(t)
+			client.GTM.AssertExpectations(t)
 		})
 	}
 }

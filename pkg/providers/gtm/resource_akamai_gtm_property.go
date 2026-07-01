@@ -25,22 +25,45 @@ import (
 
 const propertyAlreadyExistsError = "Property with provided `name` for specific `domain` already exists. Please import specific property using following command: terraform import akamai_gtm_property.<your_resource_name> \"%s:%s\""
 
-var (
-	// Initial backoff interval
-	retryInterval = time.Second * 10
-	// Maximum retry interval
-	maxRetryTimeout = time.Minute * 10
+const (
+	defaultPropertyRetryInterval   = 10 * time.Second
+	defaultPropertyMaxRetryTimeout = 10 * time.Minute
 )
 
-func resourceGTMv1Property() *schema.Resource {
+type gtmPropertyResourceConfig struct {
+	retryInterval   time.Duration
+	maxRetryTimeout time.Duration
+	defaultInterval time.Duration
+}
+
+func defaultGTMPropertyResourceConfig() gtmPropertyResourceConfig {
+	return gtmPropertyResourceConfig{
+		retryInterval:   defaultPropertyRetryInterval,
+		maxRetryTimeout: defaultPropertyMaxRetryTimeout,
+		defaultInterval: 5 * time.Second,
+	}
+}
+
+type propertyResource struct {
+	retryInterval   time.Duration
+	maxRetryTimeout time.Duration
+	defaultInterval time.Duration
+}
+
+func resourceGTMv1Property(config gtmPropertyResourceConfig) *schema.Resource {
+	r := &propertyResource{
+		retryInterval:   config.retryInterval,
+		maxRetryTimeout: config.maxRetryTimeout,
+		defaultInterval: config.defaultInterval,
+	}
 	return &schema.Resource{
-		CreateContext: resourceGTMv1PropertyCreate,
-		ReadContext:   resourceGTMv1PropertyRead,
-		UpdateContext: resourceGTMv1PropertyUpdate,
-		DeleteContext: resourceGTMv1PropertyDelete,
+		CreateContext: r.resourceGTMv1PropertyCreate,
+		ReadContext:   r.resourceGTMv1PropertyRead,
+		UpdateContext: r.resourceGTMv1PropertyUpdate,
+		DeleteContext: r.resourceGTMv1PropertyDelete,
 		CustomizeDiff: customDiffGTMProperty,
 		Importer: &schema.ResourceImporter{
-			State: resourceGTMv1PropertyImport,
+			State: r.resourceGTMv1PropertyImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"domain": {
@@ -512,7 +535,7 @@ func validateTTL(v interface{}, path cty.Path) diag.Diagnostics {
 }
 
 // Create a new GTM Property
-func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (r *propertyResource) resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1PropertyCreate")
 	// create a context with logging for api calls
@@ -531,7 +554,7 @@ func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 
-	prop, err := Client(meta).GetProperty(ctx, gtm.GetPropertyRequest{
+	prop, err := meta.Client().GetGTM().GetProperty(ctx, gtm.GetPropertyRequest{
 		PropertyName: propertyName,
 		DomainName:   domain,
 	})
@@ -560,7 +583,7 @@ func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 	logger.Debugf("Proposed New Property: [%v]", newProp)
-	cStatus, err := createPropertyWithRetry(ctx, meta, logger, gtm.CreatePropertyRequest{
+	cStatus, err := r.createPropertyWithRetry(ctx, meta, logger, gtm.CreatePropertyRequest{
 		Property:   newProp,
 		DomainName: domain,
 	})
@@ -581,7 +604,7 @@ func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m 
 	}
 
 	if waitOnComplete {
-		done, err := waitForCompletion(ctx, domain, m)
+		done, err := waitForCompletion(ctx, domain, m, r.defaultInterval)
 		if done {
 			logger.Infof("Property create completed")
 		} else {
@@ -616,7 +639,7 @@ func resourceGTMv1PropertyCreate(ctx context.Context, d *schema.ResourceData, m 
 	propertyResourceID := fmt.Sprintf("%s:%s", domain, cStatus.Resource.Name)
 	logger.Debugf("Generated Property resource ID: %s", propertyResourceID)
 	d.SetId(propertyResourceID)
-	return resourceGTMv1PropertyRead(ctx, d, m)
+	return r.resourceGTMv1PropertyRead(ctx, d, m)
 
 }
 
@@ -634,10 +657,11 @@ func validatePropertyTypeForTrafficTarget(d *schema.ResourceData, logger akalog.
 	return nil
 }
 
-func createPropertyWithRetry(ctx context.Context, meta meta.Meta, logger akalog.Interface, createPropertyRequest gtm.CreatePropertyRequest) (*gtm.CreatePropertyResponse, error) {
+func (r *propertyResource) createPropertyWithRetry(ctx context.Context, meta meta.Meta, logger akalog.Interface, createPropertyRequest gtm.CreatePropertyRequest) (*gtm.CreatePropertyResponse, error) {
+	retryInterval := r.retryInterval
 	for {
 		// Attempt to create the property
-		cStatus, err := Client(meta).CreateProperty(ctx, createPropertyRequest)
+		cStatus, err := meta.Client().GetGTM().CreateProperty(ctx, createPropertyRequest)
 		if err == nil {
 			// Success, return the created property
 			return cStatus, nil
@@ -654,8 +678,8 @@ func createPropertyWithRetry(ctx context.Context, meta meta.Meta, logger akalog.
 		case <-time.After(retryInterval):
 			// exponential backoff
 			retryInterval = 2 * retryInterval
-			if retryInterval > maxRetryTimeout {
-				retryInterval = maxRetryTimeout
+			if retryInterval > r.maxRetryTimeout {
+				retryInterval = r.maxRetryTimeout
 			}
 			logger.Debugf("Retrying property creation after %s", retryInterval)
 		case <-ctx.Done():
@@ -672,7 +696,7 @@ func createPropertyWithRetry(ctx context.Context, meta meta.Meta, logger akalog.
 
 // Only ever save data from the tf config in the tf state file, to help with
 // api issues. See func unmarshalResourceData for more info.
-func resourceGTMv1PropertyRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (r *propertyResource) resourceGTMv1PropertyRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1PropertyRead")
 	// create a context with logging for api calls
@@ -687,7 +711,7 @@ func resourceGTMv1PropertyRead(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	prop, err := Client(meta).GetProperty(ctx, gtm.GetPropertyRequest{
+	prop, err := meta.Client().GetGTM().GetProperty(ctx, gtm.GetPropertyRequest{
 		PropertyName: property,
 		DomainName:   domain,
 	})
@@ -705,7 +729,7 @@ func resourceGTMv1PropertyRead(ctx context.Context, d *schema.ResourceData, m in
 }
 
 // Update GTM Property
-func resourceGTMv1PropertyUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (r *propertyResource) resourceGTMv1PropertyUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1PropertyUpdate")
 	// create a context with logging for api calls
@@ -721,7 +745,7 @@ func resourceGTMv1PropertyUpdate(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 	// Get existing property
-	existProp, err := Client(meta).GetProperty(ctx, gtm.GetPropertyRequest{
+	existProp, err := meta.Client().GetGTM().GetProperty(ctx, gtm.GetPropertyRequest{
 		PropertyName: property,
 		DomainName:   domain,
 	})
@@ -751,7 +775,7 @@ func resourceGTMv1PropertyUpdate(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 	logger.Debugf("Updating Property PROPOSED: %v", newProp)
-	uStat, err := Client(meta).UpdateProperty(ctx, gtm.UpdatePropertyRequest{
+	uStat, err := meta.Client().GetGTM().UpdateProperty(ctx, gtm.UpdatePropertyRequest{
 		Property:   newProp,
 		DomainName: domain,
 	})
@@ -771,7 +795,7 @@ func resourceGTMv1PropertyUpdate(ctx context.Context, d *schema.ResourceData, m 
 	}
 
 	if waitOnComplete {
-		done, err := waitForCompletion(ctx, domain, m)
+		done, err := waitForCompletion(ctx, domain, m, r.defaultInterval)
 		if done {
 			logger.Infof("Property update completed")
 		} else {
@@ -784,11 +808,11 @@ func resourceGTMv1PropertyUpdate(ctx context.Context, d *schema.ResourceData, m 
 		}
 	}
 
-	return resourceGTMv1PropertyRead(ctx, d, m)
+	return r.resourceGTMv1PropertyRead(ctx, d, m)
 }
 
 // Import GTM Property.
-func resourceGTMv1PropertyImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+func (r *propertyResource) resourceGTMv1PropertyImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1PropertyImport")
 	// create a context with logging for api calls
@@ -803,7 +827,7 @@ func resourceGTMv1PropertyImport(d *schema.ResourceData, m interface{}) ([]*sche
 	if err != nil {
 		return []*schema.ResourceData{d}, err
 	}
-	prop, err := Client(meta).GetProperty(ctx, gtm.GetPropertyRequest{
+	prop, err := meta.Client().GetGTM().GetProperty(ctx, gtm.GetPropertyRequest{
 		PropertyName: property,
 		DomainName:   domain,
 	})
@@ -824,7 +848,7 @@ func resourceGTMv1PropertyImport(d *schema.ResourceData, m interface{}) ([]*sche
 }
 
 // Delete GTM Property.
-func resourceGTMv1PropertyDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (r *propertyResource) resourceGTMv1PropertyDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1PropertyDelete")
 	// create a context with logging for api calls
@@ -839,7 +863,7 @@ func resourceGTMv1PropertyDelete(ctx context.Context, d *schema.ResourceData, m 
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	existProp, err := Client(meta).GetProperty(ctx, gtm.GetPropertyRequest{
+	existProp, err := meta.Client().GetGTM().GetProperty(ctx, gtm.GetPropertyRequest{
 		PropertyName: property,
 		DomainName:   domain,
 	})
@@ -849,7 +873,7 @@ func resourceGTMv1PropertyDelete(ctx context.Context, d *schema.ResourceData, m 
 	}
 	newProp := createPropertyStruct(existProp)
 	logger.Debugf("Deleting Property: %v", newProp)
-	uStat, err := Client(meta).DeleteProperty(ctx, gtm.DeletePropertyRequest{
+	uStat, err := meta.Client().GetGTM().DeleteProperty(ctx, gtm.DeletePropertyRequest{
 		PropertyName: property,
 		DomainName:   domain,
 	})
@@ -869,7 +893,7 @@ func resourceGTMv1PropertyDelete(ctx context.Context, d *schema.ResourceData, m 
 	}
 
 	if waitOnComplete {
-		done, err := waitForCompletion(ctx, domain, m)
+		done, err := waitForCompletion(ctx, domain, m, r.defaultInterval)
 		if done {
 			logger.Infof("Property delete completed")
 		} else {

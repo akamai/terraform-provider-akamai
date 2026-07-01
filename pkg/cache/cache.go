@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sync/atomic"
 	"time"
 
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/log"
@@ -22,7 +23,7 @@ var defaultCache = newCache(10 * time.Minute)
 
 type cache struct {
 	cache   *bigcache.BigCache
-	enabled bool
+	enabled atomic.Bool
 }
 
 // BucketName can be used as a bucket argument to Set and Get functions
@@ -49,19 +50,19 @@ func newCache(eviction time.Duration) *cache {
 
 // Enable is used to enable or disable cache
 func Enable(enabled bool) {
-	defaultCache.enabled = enabled
+	defaultCache.enabled.Store(enabled)
 }
 
 // IsEnabled returns whether cache is enabled
 func IsEnabled() bool {
-	return defaultCache.enabled
+	return defaultCache.enabled.Load()
 }
 
 // Set sets the given value under the key in cache
 func Set(bucket Bucket, key string, val any) error {
 	log := log.Get("cache", "CacheSet")
 
-	if !defaultCache.enabled {
+	if !defaultCache.enabled.Load() {
 		log.Debug("cache disabled")
 		return ErrDisabled
 	}
@@ -82,7 +83,7 @@ func Set(bucket Bucket, key string, val any) error {
 func Get(bucket Bucket, key string, out any) error {
 	log := log.Get("cache", "CacheGet")
 
-	if !defaultCache.enabled {
+	if !defaultCache.enabled.Load() {
 		log.Debug("cache disabled")
 		return ErrDisabled
 	}

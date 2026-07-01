@@ -2,7 +2,6 @@ package iam
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/iam"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/date"
@@ -21,7 +20,7 @@ var (
 
 type (
 	usersDataSource struct {
-		meta meta.Meta
+		meta.DataSource
 	}
 
 	usersModel struct {
@@ -67,21 +66,6 @@ func NewUsersDataSource() datasource.DataSource {
 
 func (d *usersDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "akamai_iam_users"
-}
-
-func (d *usersDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Data Source Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.",
-					req.ProviderData))
-		}
-	}()
-	d.meta = meta.Must(req.ProviderData)
 }
 
 func (d *usersDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
@@ -235,7 +219,7 @@ func (d *usersDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 	if resp.Diagnostics.Append(req.Config.Get(ctx, &data)...); resp.Diagnostics.HasError() {
 		return
 	}
-	client := inst.Client(d.meta)
+	client := d.Client.GetIAM()
 
 	groupID := data.GroupID.ValueInt64Pointer()
 

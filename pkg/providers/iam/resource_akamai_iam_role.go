@@ -57,7 +57,7 @@ func resourceIAMRoleCreate(ctx context.Context, d *schema.ResourceData, m interf
 		ctx,
 		session.WithContextLog(logger),
 	)
-	client := inst.Client(meta)
+	client := meta.Client().GetIAM()
 	logger.Debug("Creating Role")
 
 	name, err := tf.GetStringValue("name", d)
@@ -94,7 +94,7 @@ func resourceIAMRoleRead(ctx context.Context, d *schema.ResourceData, m interfac
 		ctx,
 		session.WithContextLog(logger),
 	)
-	client := inst.Client(meta)
+	client := meta.Client().GetIAM()
 	logger.Debug("Reading Role")
 
 	roleID, err := strconv.Atoi(d.Id())
@@ -133,7 +133,7 @@ func resourceIAMRoleUpdate(ctx context.Context, d *schema.ResourceData, m interf
 		ctx,
 		session.WithContextLog(logger),
 	)
-	client := inst.Client(meta)
+	client := meta.Client().GetIAM()
 	logger.Debug("Updating Role")
 	roleID := d.Id()
 	roleIDReq, err := strconv.Atoi(roleID)
@@ -180,7 +180,7 @@ func resourceIAMRoleDelete(ctx context.Context, d *schema.ResourceData, m interf
 		ctx,
 		session.WithContextLog(logger),
 	)
-	client := inst.Client(meta)
+	client := meta.Client().GetIAM()
 	logger.Debug("Deleting Role")
 	roleID := d.Id()
 	roleIDReq, err := strconv.Atoi(roleID)

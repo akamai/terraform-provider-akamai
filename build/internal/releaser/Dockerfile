@@ -8,7 +8,7 @@ ENV PATH=$PATH:/usr/local/go/bin:/root/go/bin
 ARG SSH_PRV_KEY
 ARG SSH_PUB_KEY
 ARG SSH_KNOWN_HOSTS
-ARG TERRAFORM_VERSION="1.13.5"
+ARG TERRAFORM_VERSION="1.15.5"
 
 COPY AkamaiCorpRoot-G1.pem /usr/local/share/ca-certificates/AkamaiCorpRoot-G1.pem
 COPY .edgerc /root/.edgerc

@@ -81,6 +81,7 @@ func TestResourceStream(t *testing.T) {
 		createStreamRequest := datastream.CreateStreamRequest{
 			StreamConfiguration: streamConfiguration,
 			Activate:            true,
+			LogType:             datastream.LogTypeCDN,
 		}
 
 		updateStreamResponse := &datastream.DetailedStreamVersion{
@@ -150,6 +151,7 @@ func TestResourceStream(t *testing.T) {
 		updateStreamRequest := datastream.UpdateStreamRequest{
 			StreamID: 12321,
 			Activate: true,
+			LogType:  datastream.LogTypeCDN,
 			StreamConfiguration: datastream.StreamConfiguration{
 				DeliveryConfiguration: datastream.DeliveryConfiguration{
 					Delimiter: datastream.DelimiterTypePtr(datastream.DelimiterTypeSpace),
@@ -319,6 +321,7 @@ func TestResourceStream(t *testing.T) {
 
 		getStreamRequest := datastream.GetStreamRequest{
 			StreamID: streamID,
+			LogType:  datastream.LogTypeCDN,
 		}
 
 		client.On("CreateStream", testutils.MockContext, createStreamRequest).
@@ -355,10 +358,12 @@ func TestResourceStream(t *testing.T) {
 
 		client.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
 			StreamID: streamID,
+			LogType:  datastream.LogTypeCDN,
 		}).Return(' ', nil).Once()
 
 		client.On("DeactivateStream", testutils.MockContext, datastream.DeactivateStreamRequest{
 			StreamID: 12321,
+			LogType:  datastream.LogTypeCDN,
 		}).Return(&datastream.DetailedStreamVersion{
 			StreamID:      streamID,
 			StreamVersion: 1,
@@ -516,6 +521,7 @@ func TestResourceUpdate(t *testing.T) {
 
 	createStreamRequestFactory := func(activateNow bool) datastream.CreateStreamRequest {
 		return datastream.CreateStreamRequest{
+			LogType:             datastream.LogTypeCDN,
 			StreamConfiguration: streamConfigurationFactory(),
 			Activate:            activateNow,
 		}
@@ -970,6 +976,7 @@ func TestEmailIDs(t *testing.T) {
 		return datastream.CreateStreamRequest{
 			StreamConfiguration: streamConfigurationWithEmailIDs,
 			Activate:            false,
+			LogType:             datastream.LogTypeCDN,
 		}
 	}
 
@@ -1010,6 +1017,7 @@ func TestEmailIDs(t *testing.T) {
 
 	getStreamRequest := datastream.GetStreamRequest{
 		StreamID: streamID,
+		LogType:  datastream.LogTypeCDN,
 	}
 
 	tests := map[string]struct {
@@ -1065,6 +1073,7 @@ func TestEmailIDs(t *testing.T) {
 
 			client.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
 				StreamID: streamID,
+				LogType:  datastream.LogTypeCDN,
 			}).Return(' ', nil)
 
 			useClient(client, func() {
@@ -1235,6 +1244,7 @@ func TestDatasetIDsDiff(t *testing.T) {
 		createStreamRequest := datastream.CreateStreamRequest{
 			StreamConfiguration: streamConfiguration,
 			Activate:            false,
+			LogType:             datastream.LogTypeCDN,
 		}
 
 		createStreamResponse := &datastream.DetailedStreamVersion{
@@ -1244,6 +1254,7 @@ func TestDatasetIDsDiff(t *testing.T) {
 
 		getStreamRequest := datastream.GetStreamRequest{
 			StreamID: streamID,
+			LogType:  datastream.LogTypeCDN,
 		}
 
 		// Build DatasetFields based on serverDatasetIDsOrder
@@ -1279,6 +1290,7 @@ func TestDatasetIDsDiff(t *testing.T) {
 
 		deleteStreamRequest := datastream.DeleteStreamRequest{
 			StreamID: streamID,
+			LogType:  datastream.LogTypeCDN,
 		}
 
 		t.Run(name, func(t *testing.T) {
@@ -1365,6 +1377,7 @@ func TestCustomHeaders(t *testing.T) {
 		return datastream.CreateStreamRequest{
 			StreamConfiguration: streamConfigurationWithConnector,
 			Activate:            false,
+			LogType:             datastream.LogTypeCDN,
 		}
 	}
 
@@ -1396,6 +1409,7 @@ func TestCustomHeaders(t *testing.T) {
 
 	getStreamRequest := datastream.GetStreamRequest{
 		StreamID: streamID,
+		LogType:  datastream.LogTypeCDN,
 	}
 
 	updateStreamResponse := &datastream.DetailedStreamVersion{
@@ -1609,6 +1623,7 @@ func TestCustomHeaders(t *testing.T) {
 
 			client.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
 				StreamID: streamID,
+				LogType:  datastream.LogTypeCDN,
 			}).Return(' ', nil)
 
 			useClient(client, func() {
@@ -1661,6 +1676,7 @@ func TestMTLS(t *testing.T) {
 		return datastream.CreateStreamRequest{
 			StreamConfiguration: streamConfigurationWithConnector,
 			Activate:            false,
+			LogType:             datastream.LogTypeCDN,
 		}
 	}
 
@@ -1692,6 +1708,7 @@ func TestMTLS(t *testing.T) {
 
 	getStreamRequest := datastream.GetStreamRequest{
 		StreamID: streamID,
+		LogType:  datastream.LogTypeCDN,
 	}
 
 	updateStreamResponse := &datastream.DetailedStreamVersion{
@@ -1834,6 +1851,7 @@ func TestMTLS(t *testing.T) {
 
 			client.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
 				StreamID: streamID,
+				LogType:  datastream.LogTypeCDN,
 			}).Return(' ', nil)
 
 			useClient(client, func() {
@@ -1890,12 +1908,14 @@ func TestUrlSuppressor(t *testing.T) {
 		return datastream.CreateStreamRequest{
 			StreamConfiguration: streamConfigurationFactory(connector),
 			Activate:            false,
+		LogType:             datastream.LogTypeCDN,
 		}
 	}
 
 	updateStreamRequestFactory := func(connector datastream.AbstractConnector) datastream.UpdateStreamRequest {
 		req := datastream.UpdateStreamRequest{
 			StreamID:            streamID,
+			LogType:             datastream.LogTypeCDN,
 			StreamConfiguration: streamConfigurationFactory(connector),
 		}
 		req.StreamConfiguration.GroupID = 1337
@@ -2250,6 +2270,7 @@ func TestConnectors(t *testing.T) {
 		return datastream.CreateStreamRequest{
 			StreamConfiguration: streamConfigurationWithConnector,
 			Activate:            false,
+			LogType:             datastream.LogTypeCDN,
 		}
 	}
 
@@ -2281,6 +2302,7 @@ func TestConnectors(t *testing.T) {
 
 	getStreamRequest := datastream.GetStreamRequest{
 		StreamID: streamID,
+		LogType:  datastream.LogTypeCDN,
 	}
 
 	updateStreamResponse := &datastream.DetailedStreamVersion{
@@ -2600,6 +2622,7 @@ func TestResourceStreamSamplingPercentage(t *testing.T) {
 			createReq := datastream.CreateStreamRequest{
 				StreamConfiguration: streamConfig,
 				Activate:            false,
+				LogType:             datastream.LogTypeCDN,
 			}
 
 			streamResponse := &datastream.DetailedStreamVersion{
@@ -2649,10 +2672,12 @@ func TestResourceStreamSamplingPercentage(t *testing.T) {
 
 				client.On("GetStream", testutils.MockContext, datastream.GetStreamRequest{
 					StreamID: streamID,
+					LogType:  datastream.LogTypeCDN,
 				}).Return(streamResponse, nil)
 
 				client.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
 					StreamID: streamID,
+					LogType:  datastream.LogTypeCDN,
 				}).Return(' ', nil).Once()
 			}
 
@@ -2814,10 +2839,12 @@ func TestResourceStreamSamplingPercentageIdempotency(t *testing.T) {
 			createReq := datastream.CreateStreamRequest{
 				StreamConfiguration: streamConfig,
 				Activate:            false,
+				LogType:             datastream.LogTypeCDN,
 			}
 
 			// API response always includes sampling_percentage (either default or configured value)
 			streamResponse := &datastream.DetailedStreamVersion{
+				LogType:            datastream.LogTypeCDN,
 				StreamID:           streamID,
 				StreamVersion:      1,
 				StreamName:         "test_stream",
@@ -2859,10 +2886,12 @@ func TestResourceStreamSamplingPercentageIdempotency(t *testing.T) {
 
 			client.On("GetStream", testutils.MockContext, datastream.GetStreamRequest{
 				StreamID: streamID,
+				LogType:  datastream.LogTypeCDN,
 			}).Return(streamResponse, nil)
 
 			client.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
 				StreamID: streamID,
+				LogType:  datastream.LogTypeCDN,
 			}).Return(' ', nil).Once()
 
 			// Build terraform config
@@ -3020,6 +3049,7 @@ func TestResourceStreamIntegrationType(t *testing.T) {
 			createReq := datastream.CreateStreamRequest{
 				StreamConfiguration: streamConfig,
 				Activate:            false,
+				LogType:             datastream.LogTypeCDN,
 			}
 
 			streamResponse := &datastream.DetailedStreamVersion{
@@ -3066,9 +3096,11 @@ func TestResourceStreamIntegrationType(t *testing.T) {
 
 			client.On("GetStream", testutils.MockContext, datastream.GetStreamRequest{
 				StreamID: streamID,
+				LogType:  datastream.LogTypeCDN,
 			}).Return(streamResponse, nil)
 
 			client.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
+				LogType:  datastream.LogTypeCDN,
 				StreamID: streamID,
 			}).Return(' ', nil).Once()
 
@@ -3148,4 +3180,128 @@ resource "akamai_datastream" "s" {
 			client.AssertExpectations(t)
 		})
 	}
+}
+
+func TestResourceImportLogTypeProbing(t *testing.T) {
+	streamConfiguration := datastream.StreamConfiguration{
+		DeliveryConfiguration: datastream.DeliveryConfiguration{
+			Format: datastream.FormatTypeJson,
+			Frequency: datastream.Frequency{
+				IntervalInSeconds: datastream.IntervalInSeconds30,
+			},
+		},
+		Destination: datastream.AbstractConnector(
+			&datastream.TrafficPeakConnector{
+				ContentType:        "application/json",
+				AuthenticationType: datastream.AuthenticationTypeBasic,
+				CompressLogs:       true,
+				DisplayName:        "TrafficPeakTest",
+				Endpoint:           "https://example.com/ingest/event?table=unit_test&token=1234",
+				UserName:           "username",
+				Password:           "password",
+			},
+		),
+		DatasetFields:      []datastream.DatasetFieldID{},
+		ContractID:         "test_contract",
+		GroupID:            42,
+		AppSecConfigs:      []datastream.AppSecConfigID{{AppSecID: 16536}},
+		StreamName:         "test-app-sec-stream-create",
+		NotificationEmails: []string{"nobody@akamai.com"},
+	}
+
+	getReqAppSec := datastream.GetStreamRequest{
+		StreamID: streamID,
+		LogType:  datastream.LogTypeAppSec,
+	}
+
+	getReqCDN := datastream.GetStreamRequest{
+		StreamID: streamID,
+		LogType:  datastream.LogTypeCDN,
+	}
+
+	appSecResponse := func() *datastream.DetailedStreamVersion {
+		return &datastream.DetailedStreamVersion{
+			LogType:               datastream.LogTypeAppSec,
+			StreamStatus:          datastream.StreamStatusInactive,
+			DeliveryConfiguration: streamConfiguration.DeliveryConfiguration,
+			Destination: datastream.Destination{
+				DestinationType:    datastream.DestinationTypeTrafficPeak,
+				AuthenticationType: datastream.AuthenticationTypeBasic,
+				CompressLogs:       true,
+				DisplayName:        "TrafficPeakTest",
+				Endpoint:           "https://example.com/ingest/event?table=unit_test&token=1234",
+				ContentType:        "application/json",
+			},
+			ContractID: streamConfiguration.ContractID,
+			GroupID:    streamConfiguration.GroupID,
+			AppSecConfigs: []datastream.AppSecConfig{
+				{
+					AppSecID:   16536,
+					AppSecName: "WAF Security File",
+				},
+			},
+			StreamID:           streamID,
+			StreamName:         streamConfiguration.StreamName,
+			StreamVersion:      1,
+			LatestVersion:      1,
+			NotificationEmails: streamConfiguration.NotificationEmails,
+			ModifiedDate:       "01-01-2020 12:00:00 GMT",
+		}
+	}
+
+	t.Run("continues probing on 404 and resolves APPSEC", func(t *testing.T) {
+		client := &datastream.Mock{}
+
+		// Import path should attempt to GET the stream with our test id.
+		client.On("GetStream", testutils.MockContext, getReqAppSec).
+			Return(appSecResponse(), nil)
+
+		// Here's the initial CDN probe request, which fails with a recoverable error, then probing should continue to APPSEC.
+		// Note: the error is wrapped the same way as in the datastream client code.
+		client.On("GetStream", testutils.MockContext, getReqCDN).
+			Return(nil, fmt.Errorf("%s: %w", datastream.ErrGetStream, &datastream.Error{StatusCode: 404, Type: "not-found", Title: "Not Found", Detail: "stream not found for log type CDN"})).Once()
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config:            testutils.LoadFixtureString(t, "testdata/TestResourceStream/appsec/create_app_sec_stream.tf"),
+						ImportState:       true,
+						ImportStateId:     strconv.FormatInt(streamID, 10),
+						ResourceName:      "akamai_datastream.s",
+						ImportStateVerify: false,
+					},
+				},
+			})
+
+			client.AssertExpectations(t)
+		})
+	})
+
+	t.Run("stops probing on 5xx", func(t *testing.T) {
+		client := &datastream.Mock{}
+
+		// In this case, the initial CDN probe request fails with an unrecoverable error, so probing should stop.
+		// Note: the error is wrapped the same way as in the datastream client code.
+		client.On("GetStream", testutils.MockContext, getReqCDN).
+			Return(nil, fmt.Errorf("%s: %w", datastream.ErrGetStream, &datastream.Error{StatusCode: 503, Type: "internal-error", Title: "Service Unavailable", Detail: "upstream unavailable"})).Once()
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config:        testutils.LoadFixtureString(t, "testdata/TestResourceStream/appsec/create_app_sec_stream.tf"),
+						ImportState:   true,
+						ImportStateId: strconv.FormatInt(streamID, 10),
+						ResourceName:  "akamai_datastream.s",
+						ExpectError:   regexp.MustCompile(`received unrecoverable error while probing for stream '12321' with log_type CDN`),
+					},
+				},
+			})
+
+			client.AssertExpectations(t)
+		})
+	})
 }

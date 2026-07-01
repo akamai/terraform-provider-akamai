@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/gtm"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -16,79 +17,80 @@ import (
 const testResourceName = "tfexample_resource_1"
 
 func TestResGTMResource(t *testing.T) {
+	t.Parallel()
 
 	t.Run("create resource", func(t *testing.T) {
-		client := &gtm.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
 		// Create
-		mockGetResource(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+		mockGetResource(client.GTM, testDomainName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
-		mockCreateResource(client, getDefaultResource(), &gtm.CreateResourceResponse{
+		mockCreateResource(client.GTM, testDomainName, getDefaultResource(), &gtm.CreateResourceResponse{
 			Resource: getDefaultResource(),
 			Status:   getDefaultResponseStatus(),
 		}, nil)
 
 		// Read after create + refresh
-		mockGetResource(client, getDefaultResource(), nil, testutils.ThreeTimes)
+		mockGetResource(client.GTM, testDomainName, getDefaultResource(), nil, testutils.ThreeTimes)
 
 		// Update
-		mockGetResource(client, getUpdatedResource(), nil, testutils.Once)
+		mockGetResource(client.GTM, testDomainName, getUpdatedResource(), nil, testutils.Once)
 
-		mockUpdateResource(client, &gtm.UpdateResourceResponse{Status: getDefaultResponseStatus()}, nil)
+		mockUpdateResource(client.GTM, testDomainName, &gtm.UpdateResourceResponse{Status: getDefaultResponseStatus()}, nil)
 
-		mockGetDomainStatus(client, testutils.Once)
+		mockGetDomainStatus(client.GTM, testDomainName, testutils.Once)
 
 		// Read after create + refresh
-		mockGetResource(client, getUpdatedResource(), nil, testutils.ThreeTimes)
+		mockGetResource(client.GTM, testDomainName, getUpdatedResource(), nil, testutils.ThreeTimes)
 
-		mockDeleteResource(client)
-		mockGetDomainStatus(client, testutils.Once)
+		mockDeleteResource(client.GTM, testDomainName)
+		mockGetDomainStatus(client.GTM, testDomainName, testutils.Once)
 
 		resourceName := "akamai_gtm_resource.tfexample_resource_1"
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmResource/create_basic.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(resourceName, "name", "tfexample_resource_1"),
-							resource.TestCheckResourceAttr(resourceName, "aggregation_type", "latest"),
-						),
-					},
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmResource/update_basic.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(resourceName, "name", "tfexample_resource_1"),
-							resource.TestCheckResourceAttr(resourceName, "aggregation_type", "latest"),
-						),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmResource/create_basic.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(resourceName, "name", "tfexample_resource_1"),
+						resource.TestCheckResourceAttr(resourceName, "aggregation_type", "latest"),
+					),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmResource/update_basic.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(resourceName, "name", "tfexample_resource_1"),
+						resource.TestCheckResourceAttr(resourceName, "aggregation_type", "latest"),
+					),
+				},
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.GTM.AssertExpectations(t)
 	})
 
 	t.Run("update resource failed", func(t *testing.T) {
-		client := &gtm.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
 		// Create
-		mockGetResource(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+		mockGetResource(client.GTM, testDomainName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
-		mockCreateResource(client, getDefaultResource(), &gtm.CreateResourceResponse{
+		mockCreateResource(client.GTM, testDomainName, getDefaultResource(), &gtm.CreateResourceResponse{
 			Resource: getDefaultResource(),
 			Status:   getDefaultResponseStatus(),
 		}, nil)
 
 		// Read after create + refresh
-		mockGetResource(client, getDefaultResource(), nil, testutils.ThreeTimes)
+		mockGetResource(client.GTM, testDomainName, getDefaultResource(), nil, testutils.ThreeTimes)
 
 		// Update
-		mockGetResource(client, getUpdatedResource(), nil, testutils.Once)
+		mockGetResource(client.GTM, testDomainName, getUpdatedResource(), nil, testutils.Once)
 
-		mockUpdateResource(client, nil, &gtm.Error{
+		mockUpdateResource(client.GTM, testDomainName, nil, &gtm.Error{
 			Type:       "internal_error",
 			Title:      "Internal Server Error",
 			Detail:     "Error updating resource",
@@ -96,231 +98,222 @@ func TestResGTMResource(t *testing.T) {
 		})
 
 		// Read after create + refresh
-		mockGetResource(client, getDefaultResource(), nil, testutils.Once)
+		mockGetResource(client.GTM, testDomainName, getDefaultResource(), nil, testutils.Once)
 
-		mockDeleteResource(client)
-		mockGetDomainStatus(client, testutils.Once)
+		mockDeleteResource(client.GTM, testDomainName)
+		mockGetDomainStatus(client.GTM, testDomainName, testutils.Once)
 
 		resourceName := "akamai_gtm_resource.tfexample_resource_1"
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmResource/create_basic.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(resourceName, "name", "tfexample_resource_1"),
-							resource.TestCheckResourceAttr(resourceName, "aggregation_type", "latest"),
-						),
-					},
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmResource/update_basic.tf"),
-						ExpectError: regexp.MustCompile("API error"),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmResource/create_basic.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(resourceName, "name", "tfexample_resource_1"),
+						resource.TestCheckResourceAttr(resourceName, "aggregation_type", "latest"),
+					),
 				},
-			})
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmResource/update_basic.tf"),
+					ExpectError: regexp.MustCompile("API error"),
+				},
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.GTM.AssertExpectations(t)
 	})
 
 	t.Run("update resource domain name - delete and create new resource", func(t *testing.T) {
-		client := &gtm.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
 		// Create
-		mockGetResource(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+		mockGetResource(client.GTM, testDomainName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
-		mockCreateResource(client, getDefaultResource(), &gtm.CreateResourceResponse{
+		mockCreateResource(client.GTM, testDomainName, getDefaultResource(), &gtm.CreateResourceResponse{
 			Resource: getDefaultResource(),
 			Status:   getDefaultResponseStatus(),
 		}, nil)
 
 		// Read after create + refresh
-		mockGetResource(client, getDefaultResource(), nil, testutils.FourTimes)
+		mockGetResource(client.GTM, testDomainName, getDefaultResource(), nil, testutils.FourTimes)
 
-		mockDeleteResource(client)
+		mockDeleteResource(client.GTM, testDomainName)
 
-		testDomainName = "gtm_terra_testdomain_updated.akadns.net"
+		domainName := updatedTestDomain
 
 		// Create
-		mockGetResource(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+		mockGetResource(client.GTM, domainName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
-		mockCreateResource(client, getDefaultResource(), &gtm.CreateResourceResponse{
+		mockCreateResource(client.GTM, domainName, getDefaultResource(), &gtm.CreateResourceResponse{
 			Resource: getDefaultResource(),
 			Status:   getDefaultResponseStatus(),
 		}, nil)
 
 		// Read after create + refresh
-		mockGetResource(client, getDefaultResource(), nil, testutils.ThreeTimes)
+		mockGetResource(client.GTM, domainName, getDefaultResource(), nil, testutils.ThreeTimes)
 
-		mockDeleteResource(client)
-
-		testDomainName = "gtm_terra_testdomain.akadns.net"
+		mockDeleteResource(client.GTM, domainName)
 
 		resourceName := "akamai_gtm_resource.tfexample_resource_1"
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmResource/create_basic.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(resourceName, "name", "tfexample_resource_1"),
-							resource.TestCheckResourceAttr(resourceName, "aggregation_type", "latest"),
-							resource.TestCheckResourceAttr(resourceName, "domain", "gtm_terra_testdomain.akadns.net"),
-						),
-					},
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmResource/domain_update/updated_domain_name.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(resourceName, "name", "tfexample_resource_1"),
-							resource.TestCheckResourceAttr(resourceName, "aggregation_type", "latest"),
-							resource.TestCheckResourceAttr(resourceName, "domain", "gtm_terra_testdomain_updated.akadns.net"),
-						),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmResource/create_basic.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(resourceName, "name", "tfexample_resource_1"),
+						resource.TestCheckResourceAttr(resourceName, "aggregation_type", "latest"),
+						resource.TestCheckResourceAttr(resourceName, "domain", "gtm_terra_testdomain.akadns.net"),
+					),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmResource/domain_update/updated_domain_name.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(resourceName, "name", "tfexample_resource_1"),
+						resource.TestCheckResourceAttr(resourceName, "aggregation_type", "latest"),
+						resource.TestCheckResourceAttr(resourceName, "domain", "gtm_terra_testdomain_updated.akadns.net"),
+					),
+				},
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.GTM.AssertExpectations(t)
 	})
 
 	t.Run("create resource, remove outside of terraform, expect non-empty plan", func(t *testing.T) {
-		client := &gtm.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
-		mockGetResource(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+		mockGetResource(client.GTM, testDomainName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
-		mockCreateResource(client, getDefaultResource(), &gtm.CreateResourceResponse{
+		mockCreateResource(client.GTM, testDomainName, getDefaultResource(), &gtm.CreateResourceResponse{
 			Resource: getDefaultResource(),
 			Status:   getDefaultResponseStatus(),
 		}, nil)
 
-		mockGetResource(client, getDefaultResource(), nil, testutils.Twice)
+		mockGetResource(client.GTM, testDomainName, getDefaultResource(), nil, testutils.Twice)
 
 		// Mock that the resource was deleted outside terraform
-		mockGetResource(client, nil, gtm.ErrNotFound, testutils.Once)
+		mockGetResource(client.GTM, testDomainName, nil, gtm.ErrNotFound, testutils.Once)
 
 		// For terraform test framework, we need to mock GetResource as it would actually exist before deletion
-		mockGetResource(client, getDefaultResource(), nil, testutils.Once)
+		mockGetResource(client.GTM, testDomainName, getDefaultResource(), nil, testutils.Once)
 
-		mockDeleteResource(client)
+		mockDeleteResource(client.GTM, testDomainName)
 
 		resourceName := "akamai_gtm_resource.tfexample_resource_1"
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmResource/create_basic.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(resourceName, "name", "tfexample_resource_1"),
-							resource.TestCheckResourceAttr(resourceName, "aggregation_type", "latest"),
-						),
-					},
-					{
-						Config:             testutils.LoadFixtureString(t, "testdata/TestResGtmResource/create_basic.tf"),
-						ExpectNonEmptyPlan: true,
-						PlanOnly:           true,
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmResource/create_basic.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(resourceName, "name", "tfexample_resource_1"),
+						resource.TestCheckResourceAttr(resourceName, "aggregation_type", "latest"),
+					),
 				},
-			})
+				{
+					Config:             testutils.LoadFixtureString(t, "testdata/TestResGtmResource/create_basic.tf"),
+					ExpectNonEmptyPlan: true,
+					PlanOnly:           true,
+				},
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.GTM.AssertExpectations(t)
 	})
 
 	t.Run("create resource failed", func(t *testing.T) {
-		client := &gtm.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
-		mockGetResource(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+		mockGetResource(client.GTM, testDomainName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
-		mockCreateResource(client, getDefaultResource(), nil, &gtm.Error{StatusCode: http.StatusBadRequest})
+		mockCreateResource(client.GTM, testDomainName, getDefaultResource(), nil, &gtm.Error{StatusCode: http.StatusBadRequest})
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmResource/create_basic.tf"),
-						ExpectError: regexp.MustCompile("Resource create error"),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmResource/create_basic.tf"),
+					ExpectError: regexp.MustCompile("Resource create error"),
 				},
-			})
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.GTM.AssertExpectations(t)
 	})
 
 	t.Run("create resource failed - resource already exists", func(t *testing.T) {
-		client := &gtm.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
-		mockGetResource(client, getDefaultResource(), nil, testutils.Once)
+		mockGetResource(client.GTM, testDomainName, getDefaultResource(), nil, testutils.Once)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmResource/create_basic.tf"),
-						ExpectError: regexp.MustCompile("resource already exists error"),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmResource/create_basic.tf"),
+					ExpectError: regexp.MustCompile("resource already exists error"),
 				},
-			})
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.GTM.AssertExpectations(t)
 	})
 
 	t.Run("create resource denied", func(t *testing.T) {
-		client := &gtm.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
-		mockGetResource(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+		mockGetResource(client.GTM, testDomainName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
-		mockCreateResource(client, getDefaultResource(), &gtm.CreateResourceResponse{
+		mockCreateResource(client.GTM, testDomainName, getDefaultResource(), &gtm.CreateResourceResponse{
 			Resource: getDefaultResource(),
 			Status:   getDeniedResponseStatus(),
 		}, nil)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmResource/create_basic.tf"),
-						ExpectError: regexp.MustCompile("Request could not be completed. Invalid credentials."),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmResource/create_basic.tf"),
+					ExpectError: regexp.MustCompile("Request could not be completed. Invalid credentials."),
 				},
-			})
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.GTM.AssertExpectations(t)
 	})
 }
 
-func mockUpdateResource(client *gtm.Mock, resp *gtm.UpdateResourceResponse, err error) *mock.Call {
+func mockUpdateResource(client *gtm.Mock, domainName string, resp *gtm.UpdateResourceResponse, err error) *mock.Call {
 	return client.On("UpdateResource",
 		testutils.MockContext,
 		gtm.UpdateResourceRequest{
 			Resource:   getUpdatedResource(),
-			DomainName: testDomainName,
+			DomainName: domainName,
 		},
 	).Return(resp, err).Once()
 }
 
-func mockCreateResource(client *gtm.Mock, resource *gtm.Resource, resp *gtm.CreateResourceResponse, err error) *mock.Call {
+func mockCreateResource(client *gtm.Mock, domainName string, resource *gtm.Resource, resp *gtm.CreateResourceResponse, err error) *mock.Call {
 	return client.On("CreateResource",
 		testutils.MockContext,
 		gtm.CreateResourceRequest{
 			Resource:   resource,
-			DomainName: testDomainName,
+			DomainName: domainName,
 		},
 	).Return(resp, err).Once()
 }
 
-func mockGetResource(client *gtm.Mock, resource *gtm.Resource, err error, times int) *mock.Call {
+func mockGetResource(client *gtm.Mock, domainName string, resource *gtm.Resource, err error, times int) *mock.Call {
 	var resp *gtm.GetResourceResponse
 	if resource != nil {
 		r := gtm.GetResourceResponse(*resource)
@@ -330,7 +323,7 @@ func mockGetResource(client *gtm.Mock, resource *gtm.Resource, err error, times 
 		testutils.MockContext,
 		gtm.GetResourceRequest{
 			ResourceName: testResourceName,
-			DomainName:   testDomainName,
+			DomainName:   domainName,
 		},
 	).Return(resp, err).Times(times)
 }
@@ -374,6 +367,7 @@ func getUpdatedResource() *gtm.Resource {
 }
 
 func TestGTMResourceOrder(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		pathForUpdate string
 		nonEmptyPlan  bool
@@ -413,29 +407,29 @@ func TestGTMResourceOrder(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			testClient := getGTMResourceMocks()
-			useClient(testClient, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps: []resource.TestStep{
-						{
-							Config: testutils.LoadFixtureString(t, "testdata/TestResGtmResource/order/create.tf"),
-						},
-						{
-							Config:             testutils.LoadFixtureString(t, test.pathForUpdate),
-							PlanOnly:           test.planOnly,
-							ExpectNonEmptyPlan: test.nonEmptyPlan,
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(testClient, newSubproviderWithConfig(testSubproviderConfig())),
+				IsUnitTest:               true,
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmResource/order/create.tf"),
 					},
-				})
+					{
+						Config:             testutils.LoadFixtureString(t, test.pathForUpdate),
+						PlanOnly:           test.planOnly,
+						ExpectNonEmptyPlan: test.nonEmptyPlan,
+					},
+				},
 			})
-			testClient.AssertExpectations(t)
+			testClient.GTM.AssertExpectations(t)
 		})
 	}
 }
 
 func TestResGTMResourceImport(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		domainName   string
 		resourceName string
@@ -448,7 +442,7 @@ func TestResGTMResourceImport(t *testing.T) {
 			resourceName: testResourceName,
 			init: func(m *gtm.Mock) {
 				// Read
-				mockGetResource(m, getImportedResource(), nil, testutils.Twice)
+				mockGetResource(m, testDomainName, getImportedResource(), nil, testutils.Twice)
 			},
 			stateCheck: test.NewImportChecker().
 				CheckEqual("domain", "gtm_terra_testdomain.akadns.net").
@@ -488,7 +482,7 @@ func TestResGTMResourceImport(t *testing.T) {
 			resourceName: testResourceName,
 			init: func(m *gtm.Mock) {
 				// Read - error
-				mockGetResource(m, nil, fmt.Errorf("get failed"), testutils.Once)
+				mockGetResource(m, testDomainName, nil, fmt.Errorf("get failed"), testutils.Once)
 			},
 			expectError: regexp.MustCompile(`get failed`),
 		},
@@ -496,44 +490,43 @@ func TestResGTMResourceImport(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &gtm.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 			if tc.init != nil {
-				tc.init(client)
+				tc.init(client.GTM)
 			}
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							ImportStateCheck: tc.stateCheck,
-							ImportStateId:    fmt.Sprintf("%s:%s", tc.domainName, tc.resourceName),
-							ImportState:      true,
-							ResourceName:     "akamai_gtm_resource.test",
-							Config:           testutils.LoadFixtureString(t, "testdata/TestResGtmResource/import_basic.tf"),
-							ExpectError:      tc.expectError,
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+				Steps: []resource.TestStep{
+					{
+						ImportStateCheck: tc.stateCheck,
+						ImportStateId:    fmt.Sprintf("%s:%s", tc.domainName, tc.resourceName),
+						ImportState:      true,
+						ResourceName:     "akamai_gtm_resource.test",
+						Config:           testutils.LoadFixtureString(t, "testdata/TestResGtmResource/import_basic.tf"),
+						ExpectError:      tc.expectError,
 					},
-				})
+				},
 			})
-			client.AssertExpectations(t)
+			client.GTM.AssertExpectations(t)
 		})
 	}
 }
 
 // getGTMResourceMocks mocks creation and deletion calls for the gtm_resource
-func getGTMResourceMocks() *gtm.Mock {
-	client := &gtm.Mock{}
+func getGTMResourceMocks() *edgegrid.TestClient {
+	client := edgegrid.NewTestClient()
 
-	mockGetResource(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+	mockGetResource(client.GTM, testDomainName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
-	mockCreateResource(client, getCreatedResource(), &gtm.CreateResourceResponse{
+	mockCreateResource(client.GTM, testDomainName, getCreatedResource(), &gtm.CreateResourceResponse{
 		Resource: getCreatedResourceResp(),
 		Status:   getDefaultResponseStatus(),
 	}, nil)
 
-	mockGetResource(client, getCreatedResourceResp(), nil, testutils.FourTimes)
+	mockGetResource(client.GTM, testDomainName, getCreatedResourceResp(), nil, testutils.FourTimes)
 
-	mockDeleteResource(client)
+	mockDeleteResource(client.GTM, testDomainName)
 
 	return client
 }
@@ -566,12 +559,12 @@ func getImportedResource() *gtm.Resource {
 	}
 }
 
-func mockDeleteResource(client *gtm.Mock) *mock.Call {
+func mockDeleteResource(client *gtm.Mock, domainName string) *mock.Call {
 	return client.On("DeleteResource",
 		testutils.MockContext,
 		gtm.DeleteResourceRequest{
 			ResourceName: testResourceName,
-			DomainName:   testDomainName,
+			DomainName:   domainName,
 		},
 	).Return(&gtm.DeleteResourceResponse{
 		Status: getDefaultResponseStatus(),

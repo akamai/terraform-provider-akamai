@@ -28,7 +28,7 @@ func dataIAMLanguagesRead(ctx context.Context, d *schema.ResourceData, m interfa
 	meta := meta.Must(m)
 	logger := meta.Log("IAM", "dataIAMLanguagesRead")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
+	client := meta.Client().GetIAM()
 
 	logger.Debug("Fetching supported supported languages")
 	res, err := client.SupportedLanguages(ctx)

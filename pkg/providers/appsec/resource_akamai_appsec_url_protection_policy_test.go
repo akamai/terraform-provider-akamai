@@ -1,6 +1,7 @@
 package appsec
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"regexp"
@@ -9,10 +10,164 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	fwresource "github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
+
+func TestValidateIntelligentLoadShedding_NullAndUnknown(t *testing.T) {
+	t.Parallel()
+
+	r := &urlProtectionPolicyResource{}
+
+	// ── NULL case ──────────────────────────────────────────────────────────────
+	// When intelligent_load_shedding is not set in HCL, Terraform gives the field a
+	// null typed object.  tf.IsKnown(null) == false → the early-return is NOT taken →
+	// validation erroneously runs on a null object → multiple errors are added.
+	t.Run("null IntelligentLoadShedding - validation must be skipped", func(t *testing.T) {
+		data := &urlProtectionPolicyResourceModel{
+			IntelligentLoadShedding: types.ObjectNull(intelligentLoadSheddingAttrTypes()),
+		}
+		resp := &fwresource.ValidateConfigResponse{}
+
+		r.validateIntelligentLoadShedding(context.Background(), data, resp)
+
+		assert.False(t, resp.Diagnostics.HasError(),
+			"ValidateConfig should produce no errors when intelligent_load_shedding is null (not configured). "+
+				"Got: %v", resp.Diagnostics)
+	})
+
+	// ── UNKNOWN case ──────────────────────────────────────────────────────────────
+	// When intelligent_load_shedding references an output that is not yet known at
+	// plan time, Terraform marks the whole object as unknown.
+
+	// Expected (correct) behaviour: unknown means "will be determined later"; skip all
+	// validation now; Terraform will re-validate once the value is resolved.
+	t.Run("unknown IntelligentLoadShedding - validation must be skipped", func(t *testing.T) {
+		data := &urlProtectionPolicyResourceModel{
+			IntelligentLoadShedding: types.ObjectUnknown(intelligentLoadSheddingAttrTypes()),
+		}
+		resp := &fwresource.ValidateConfigResponse{}
+
+		r.validateIntelligentLoadShedding(context.Background(), data, resp)
+
+		assert.False(t, resp.Diagnostics.HasError(),
+			"ValidateConfig should produce no errors when intelligent_load_shedding is unknown (value not yet known). "+
+				"Got: %v", resp.Diagnostics)
+	})
+
+	// ── valid case ─────────────────────────────────────
+	t.Run("known valid IntelligentLoadShedding - no validation errors", func(t *testing.T) {
+		categories, _ := types.ListValueFrom(context.Background(), types.StringType, []string{"BOTS"})
+		customCriteria, _ := types.ListValue(types.ObjectType{AttrTypes: map[string]attr.Type{
+			"type":           types.StringType,
+			"list_ids":       types.ListType{ElemType: types.StringType},
+			"positive_match": types.BoolType,
+		}}, []attr.Value{})
+
+		ilsObj, _ := types.ObjectValueFrom(context.Background(), intelligentLoadSheddingAttrTypes(),
+			intelligentLoadSheddingModel{
+				HitsPerSec:     types.Int64Value(100),
+				Categories:     categories,
+				CustomCriteria: customCriteria,
+			})
+
+		data := &urlProtectionPolicyResourceModel{
+			MaxRateThreshold:        types.Int64Value(195),
+			IntelligentLoadShedding: ilsObj,
+		}
+		resp := &fwresource.ValidateConfigResponse{}
+
+		r.validateIntelligentLoadShedding(context.Background(), data, resp)
+
+		assert.False(t, resp.Diagnostics.HasError(),
+			"ValidateConfig should produce no errors for a valid intelligent_load_shedding object. "+
+				"Got: %v", resp.Diagnostics)
+	})
+}
+
+func TestCustomCriteriaNotComputed_StateMustMatchPlan(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	ccObjType := types.ObjectType{AttrTypes: map[string]attr.Type{
+		"type":           types.StringType,
+		"list_ids":       types.ListType{ElemType: types.StringType},
+		"positive_match": types.BoolType,
+	}}
+
+	// Non-null custom_criteria from API (CLIENT_LIST category mapped by populateCategoriesAndCustomCriteria)
+	listIDs, _ := types.ListValueFrom(ctx, types.StringType, []string{"12345_10CLIENTLIST"})
+	positiveMatch := true
+	ccFromAPI, _ := types.ListValueFrom(ctx, ccObjType, []customCriteriaModel{
+		{Type: types.StringValue("CLIENT_LIST"), ListIDs: listIDs, PositiveMatch: types.BoolValue(positiveMatch)},
+	})
+
+	catFromPlan, _ := types.ListValueFrom(ctx, types.StringType,
+		[]string{"BOTS", "CLOUD_PROVIDERS", "PROXIES", "TOR_EXIT_NODES", "PLATFORM_DDOS_INTELLIGENCE"})
+
+	// ── Test 1: plan null, API non-null → bug and fix ────────────────────────────
+	t.Run("plan.custom_criteria is null - state must stay null (API value must NOT be used)", func(t *testing.T) {
+		dsILS := &intelligentLoadSheddingModel{
+			HitsPerSec:     types.Int64Value(150),
+			Categories:     catFromPlan,
+			CustomCriteria: ccFromAPI, // API returned CLIENT_LIST
+		}
+		planCCNull := types.ListNull(ccObjType) // user did not set custom_criteria
+
+		// Current (buggy) approach: ObjectValueFrom(dsModel.ILS) copies API value
+		buggyObj, _ := types.ObjectValueFrom(ctx, intelligentLoadSheddingAttrTypes(), dsILS)
+		var buggyILS intelligentLoadSheddingModel
+		_ = buggyObj.As(ctx, &buggyILS, basetypes.ObjectAsOptions{})
+		assert.False(t, buggyILS.CustomCriteria.IsNull(),
+			"BUG confirmed: using dsModel directly makes state.custom_criteria non-null "+
+				"while plan had null → triggers 'Provider produced inconsistent result'.")
+
+		// Fixed approach: preserve plan's custom_criteria when building state ILS
+		fixedILS := intelligentLoadSheddingModel{
+			HitsPerSec:     dsILS.HitsPerSec,
+			Categories:     dsILS.Categories,
+			CustomCriteria: planCCNull, // use plan value, not dsModel
+		}
+		fixedObj, _ := types.ObjectValueFrom(ctx, intelligentLoadSheddingAttrTypes(), fixedILS)
+		var resultILS intelligentLoadSheddingModel
+		_ = fixedObj.As(ctx, &resultILS, basetypes.ObjectAsOptions{})
+		assert.True(t, resultILS.CustomCriteria.IsNull(),
+			"FIXED: state.custom_criteria must be null when plan had null.")
+	})
+
+	// ── Test 2: plan has custom_criteria set → state must equal plan ─────────────
+	t.Run("plan.custom_criteria is set - state must reflect plan value exactly", func(t *testing.T) {
+		listIDsPlan, _ := types.ListValueFrom(ctx, types.StringType, []string{"54321_MYLIST"})
+		ccFromPlan, _ := types.ListValueFrom(ctx, ccObjType, []customCriteriaModel{
+			{Type: types.StringValue("CLIENT_LIST"), ListIDs: listIDsPlan, PositiveMatch: types.BoolValue(true)},
+		})
+
+		stateILS := intelligentLoadSheddingModel{
+			HitsPerSec:     types.Int64Value(150),
+			Categories:     catFromPlan,
+			CustomCriteria: ccFromPlan,
+		}
+		obj, _ := types.ObjectValueFrom(ctx, intelligentLoadSheddingAttrTypes(), stateILS)
+		var resultILS intelligentLoadSheddingModel
+		_ = obj.As(ctx, &resultILS, basetypes.ObjectAsOptions{})
+		assert.Equal(t, ccFromPlan, resultILS.CustomCriteria,
+			"state.custom_criteria must match the plan value exactly.")
+	})
+
+	// ── Test 3: no ILS in plan → state.IntelligentLoadShedding must be null ──────
+	t.Run("no intelligent_load_shedding in plan - state object must be null", func(t *testing.T) {
+		nilILS := types.ObjectNull(intelligentLoadSheddingAttrTypes())
+		assert.True(t, nilILS.IsNull(),
+			"When ILS is not configured, state.IntelligentLoadShedding must be null.")
+	})
+}
 
 func TestURLProtectionPolicyResource(t *testing.T) {
 	t.Parallel()
@@ -42,6 +197,15 @@ func TestURLProtectionPolicyResource(t *testing.T) {
 	createResponse := appsec.CreateURLProtectionPolicyResponse{
 		URLProtectionPolicyID: 681,
 	}
+
+	ilsWithCCResponse := appsec.GetURLProtectionPolicyResponse{}
+	errCustomCriteria := json.Unmarshal(
+		testutils.LoadFixtureBytes(t, "testdata/TestResURLProtectionPolicy/URLProtectionPolicyILSWithCustomCriteria.json"),
+		&ilsWithCCResponse,
+	)
+	require.NoError(t, errCustomCriteria)
+
+	createResponseForCustomCriteria := appsec.CreateURLProtectionPolicyResponse{URLProtectionPolicyID: 681}
 
 	var tests = map[string]struct {
 		init  func(*appsec.Mock)
@@ -84,6 +248,38 @@ func TestURLProtectionPolicyResource(t *testing.T) {
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResURLProtectionPolicy/missing_hostname_and_api.tf"),
 					ExpectError: regexp.MustCompile("Either 'hostname_paths' or 'api_definitions' must be specified"),
+				},
+			},
+		},
+		"validate config - duplicate paths in hostname_paths.paths": {
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResURLProtectionPolicy/invalid_hostname_duplicate_paths.tf"),
+					ExpectError: regexp.MustCompile("This attribute contains duplicate values"),
+				},
+			},
+		},
+		"validate config - duplicate hostnames in hostname_paths": {
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResURLProtectionPolicy/invalid_hostname_duplicate.tf"),
+					ExpectError: regexp.MustCompile("Duplicate List Value"),
+				},
+			},
+		},
+		"validate config - empty hostnames array": {
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResURLProtectionPolicy/empty_hostname_array.tf"),
+					ExpectError: regexp.MustCompile("Attribute hostname_paths list must contain at least 1 elements"),
+				},
+			},
+		},
+		"validate config - empty paths in hostname_paths": {
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResURLProtectionPolicy/empty_hostnames_paths_path.tf"),
+					ExpectError: regexp.MustCompile("list must contain at least 1 elements"),
 				},
 			},
 		},
@@ -166,6 +362,28 @@ func TestURLProtectionPolicyResource(t *testing.T) {
 				Config:      testutils.LoadFixtureString(t, "testdata/TestResURLProtectionPolicy/invalid_intelligent_load_shedding_hits_per_sec_missing.tf"),
 				ExpectError: regexp.MustCompile("Incorrect attribute value type"),
 			}},
+		},
+		"create ILS without custom_criteria - API returns CLIENT_LIST - no inconsistency": {
+			init: func(m *appsec.Mock) {
+				// GetConfiguration: 1 for Create, 1 for pre-destroy Read, 1 for Delete cleanup
+				mockGetConfigurationURLProtectionPolicy(m, 3)
+				mockCreateURLProtectionPolicySuccess(m, createResponseForCustomCriteria, 1)
+				// GET response has CLIENT_LIST → dsModel.CustomCriteria is non-null
+				// Called twice: once after Create, once for pre-destroy refresh
+				mockGetURLProtectionPolicyData(m, ilsWithCCResponse, 2)
+				mockRemoveURLProtectionPolicySuccess(m, 1)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResURLProtectionPolicy/ils_no_custom_criteria.tf"),
+					// plan.ILS.CustomCriteria = null (not in config, not Computed)
+					// Create uses plan value for ILS → state.custom_criteria stays null → no inconsistency
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_appsec_url_protection_policy.test", "config_id", "43007"),
+						resource.TestCheckResourceAttr("akamai_appsec_url_protection_policy.test", "url_protection_policy_id", "681"),
+					),
+				},
+			},
 		},
 		"create url protection Policy with hostname paths - success": {
 			init: func(m *appsec.Mock) {

@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
+
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/edgeworkers"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/test"
@@ -17,6 +19,7 @@ import (
 )
 
 func TestResourceEdgeworkersActivation(t *testing.T) {
+	t.Parallel()
 	workdir := "./testdata/TestResourceEdgeWorkersActivation"
 	edgeworkerID := 1234
 	baseChecker := test.NewStateChecker("akamai_edgeworkers_activation.test").
@@ -1362,26 +1365,25 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 	}
 
 	// redefining times to accelerate tests
-	activationPollMinimum = time.Millisecond * 1
-	activationPollInterval = activationPollMinimum
-
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &edgeworkers.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 			if !test.omitDefaultMock {
-				expectListEdgeWorkersID(client, nil, edgeworkerID)
+				expectListEdgeWorkersID(client.EdgeWorkers, nil, edgeworkerID)
 			}
 			if test.init != nil {
-				test.init(client)
+				test.init(client.EdgeWorkers)
 			}
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps:                    test.steps,
-				})
+			config := defaultSubproviderConfig()
+			config.activation.pollMinimum = time.Millisecond * 1
+			config.activation.pollInterval = config.activation.pollMinimum
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
+				IsUnitTest:               true,
+				Steps:                    test.steps,
 			})
-			client.AssertExpectations(t)
+			client.EdgeWorkers.AssertExpectations(t)
 		})
 	}
 }
@@ -1567,6 +1569,7 @@ func createStubEdgeworkerVersion(edgeworkerID int, version string) *edgeworkers.
 }
 
 func TestUpgradeEdgeworkersActivationV1(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		rawState map[string]interface{}
 		expected map[string]interface{}
@@ -1624,6 +1627,7 @@ func TestUpgradeEdgeworkersActivationV1(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			result, err := upgradeEdgeworkersActivationV1(context.Background(), tc.rawState, nil)
 			assert.NoError(t, err)
 			assert.Equal(t, tc.expected, result)

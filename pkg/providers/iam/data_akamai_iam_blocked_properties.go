@@ -2,7 +2,6 @@ package iam
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/iam"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/papi"
@@ -26,7 +25,7 @@ func NewBlockedPropertiesDataSource() datasource.DataSource {
 
 type (
 	blockedPropertiesDataSource struct {
-		meta meta.Meta
+		meta.DataSource
 	}
 
 	blockedPropertiesModel struct {
@@ -82,24 +81,6 @@ func (d *blockedPropertiesDataSource) Schema(_ context.Context, _ datasource.Sch
 	}
 }
 
-func (d *blockedPropertiesDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		// ProviderData is nil when Configure is run first time as part of ValidateDataSourceConfig in framework provider
-		return
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Data Source Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-			)
-		}
-	}()
-
-	d.meta = meta.Must(req.ProviderData)
-}
-
 func (d *blockedPropertiesDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	tflog.Debug(ctx, "Blocked Properties DataSource Read")
 
@@ -108,8 +89,8 @@ func (d *blockedPropertiesDataSource) Read(ctx context.Context, req datasource.R
 		return
 	}
 
-	client := inst.Client(d.meta)
-	papiClient := inst.PapiClient(d.meta)
+	client := d.Client.GetIAM()
+	papiClient := d.Client.GetPAPI()
 
 	listBlockedPropertiesResp, err := client.ListBlockedProperties(ctx, iam.ListBlockedPropertiesRequest{
 		IdentityID: data.UIIdentityID.ValueString(),

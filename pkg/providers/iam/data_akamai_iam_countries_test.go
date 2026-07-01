@@ -5,57 +5,56 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func TestDataCountries(t *testing.T) {
+	t.Parallel()
 	t.Run("happy path", func(t *testing.T) {
-		client := &iam.Mock{}
-		client.Test(testutils.TattleT{T: t})
-		client.On("SupportedCountries", testutils.MockContext).Return([]string{"first", "second", "third"}, nil)
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+		client.IAM.Test(testutils.TattleT{T: t})
+		client.IAM.On("SupportedCountries", testutils.MockContext).Return([]string{"first", "second", "third"}, nil)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				IsUnitTest:               true,
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureStringf(t, "testdata/%s/step0.tf", t.Name()),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttrSet("data.akamai_iam_countries.test", "id"),
-							resource.TestCheckResourceAttr("data.akamai_iam_countries.test", "countries.#", "3"),
-							resource.TestCheckResourceAttr("data.akamai_iam_countries.test", "countries.0", "first"),
-							resource.TestCheckResourceAttr("data.akamai_iam_countries.test", "countries.1", "second"),
-							resource.TestCheckResourceAttr("data.akamai_iam_countries.test", "countries.2", "third"),
-						),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			IsUnitTest:               true,
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "testdata/%s/step0.tf", t.Name()),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttrSet("data.akamai_iam_countries.test", "id"),
+						resource.TestCheckResourceAttr("data.akamai_iam_countries.test", "countries.#", "3"),
+						resource.TestCheckResourceAttr("data.akamai_iam_countries.test", "countries.0", "first"),
+						resource.TestCheckResourceAttr("data.akamai_iam_countries.test", "countries.1", "second"),
+						resource.TestCheckResourceAttr("data.akamai_iam_countries.test", "countries.2", "third"),
+					),
 				},
-			})
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.IAM.AssertExpectations(t)
 	})
 
 	t.Run("fail path", func(t *testing.T) {
-		client := &iam.Mock{}
-		client.Test(testutils.TattleT{T: t})
-		client.On("SupportedCountries", testutils.MockContext).Return([]string{}, errors.New("Could not get supported countries"))
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+		client.IAM.Test(testutils.TattleT{T: t})
+		client.IAM.On("SupportedCountries", testutils.MockContext).Return([]string{}, errors.New("Could not get supported countries"))
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				IsUnitTest:               true,
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureStringf(t, "testdata/%s/step0.tf", t.Name()),
-						ExpectError: regexp.MustCompile(`Could not get supported countries`),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			IsUnitTest:               true,
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureStringf(t, "testdata/%s/step0.tf", t.Name()),
+					ExpectError: regexp.MustCompile(`Could not get supported countries`),
 				},
-			})
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.IAM.AssertExpectations(t)
 	})
 }

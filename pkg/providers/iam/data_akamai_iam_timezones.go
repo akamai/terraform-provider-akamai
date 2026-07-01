@@ -51,7 +51,7 @@ func dataIAMTimezonesRead(ctx context.Context, d *schema.ResourceData, m interfa
 	meta := meta.Must(m)
 	logger := meta.Log("IAM", "dataIAMTimezonesRead")
 	ctx = session.ContextWithOptions(ctx, session.WithContextLog(logger))
-	client := inst.Client(meta)
+	client := meta.Client().GetIAM()
 
 	logger.Debug("Fetching time zones")
 

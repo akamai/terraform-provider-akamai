@@ -2,7 +2,6 @@ package gtm
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/gtm"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
@@ -14,7 +13,7 @@ import (
 )
 
 type geoMapDataSource struct {
-	meta meta.Meta
+	meta.DataSource
 }
 
 type geoMapDataSourceModel struct {
@@ -35,21 +34,6 @@ func NewGTMGeoMapDataSource() datasource.DataSource { return &geoMapDataSource{}
 
 func (d *geoMapDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, response *datasource.MetadataResponse) {
 	response.TypeName = "akamai_gtm_geomap"
-}
-
-func (d *geoMapDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Data Source Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.",
-					req.ProviderData))
-		}
-	}()
-	d.meta = meta.Must(req.ProviderData)
 }
 
 func (d *geoMapDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
@@ -131,7 +115,7 @@ func (d *geoMapDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		return
 	}
 
-	client := Client(d.meta)
+	client := d.Client.GetGTM()
 	geoMap, err := client.GetGeoMap(ctx, gtm.GetGeoMapRequest{
 		MapName:    data.Name.ValueString(),
 		DomainName: data.Domain.ValueString()})

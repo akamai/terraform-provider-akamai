@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/gtm"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -16,284 +17,277 @@ import (
 const testGeomapName = "tfexample_geomap_1"
 
 func TestResGTMGeoMap(t *testing.T) {
+	t.Parallel()
 	t.Run("create geomap", func(t *testing.T) {
-		client := &gtm.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
-		mockGetGeoMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+		mockGetGeoMap(client.GTM, testDomainName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
-		mockCreateGeoMap(client, getDefaultGeomap(), &gtm.CreateGeoMapResponse{
+		mockCreateGeoMap(client.GTM, testDomainName, getDefaultGeomap(), &gtm.CreateGeoMapResponse{
 			Resource: getDefaultGeomap(),
 			Status:   getDefaultResponseStatus(),
 		}, nil)
 
-		mockGetGeoMap(client, getDefaultGeomap(), nil, testutils.FourTimes)
+		mockGetGeoMap(client.GTM, testDomainName, getDefaultGeomap(), nil, testutils.FourTimes)
 
-		mockGetDatacenter(client, datacenterID5400, getTestDatacenterResp(), nil, testutils.Once)
+		mockGetDatacenter(client.GTM, testDomainName, datacenterID5400, getTestDatacenterResp(), nil, testutils.Once)
 
-		mockUpdateGeoMap(client, getDefaultUpdatedGeomap(), &gtm.UpdateGeoMapResponse{Status: getDefaultResponseStatus()}, nil)
+		mockUpdateGeoMap(client.GTM, testDomainName, getDefaultUpdatedGeomap(), &gtm.UpdateGeoMapResponse{Status: getDefaultResponseStatus()}, nil)
 
-		mockGetDomainStatus(client, testutils.Once)
+		mockGetDomainStatus(client.GTM, testDomainName, testutils.Once)
 
-		mockGetGeoMap(client, getDefaultUpdatedGeomap(), nil, testutils.ThreeTimes)
+		mockGetGeoMap(client.GTM, testDomainName, getDefaultUpdatedGeomap(), nil, testutils.ThreeTimes)
 
-		mockDeleteGeoMap(client)
+		mockDeleteGeoMap(client.GTM, testDomainName)
 
-		mockGetDomainStatus(client, testutils.Once)
+		mockGetDomainStatus(client.GTM, testDomainName, testutils.Once)
 
 		resourceName := "akamai_gtm_geomap.tfexample_geomap_1"
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmGeomap/create_basic.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(resourceName, "name", "tfexample_geomap_1"),
-						),
-					},
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmGeomap/update_basic.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(resourceName, "name", "tfexample_geomap_1"),
-						),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmGeomap/create_basic.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(resourceName, "name", "tfexample_geomap_1"),
+					),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmGeomap/update_basic.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(resourceName, "name", "tfexample_geomap_1"),
+					),
+				},
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.GTM.AssertExpectations(t)
 	})
 
 	t.Run("update geomap failed", func(t *testing.T) {
-		client := &gtm.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
-		mockGetGeoMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+		mockGetGeoMap(client.GTM, testDomainName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
-		mockCreateGeoMap(client, getDefaultGeomap(), &gtm.CreateGeoMapResponse{
+		mockCreateGeoMap(client.GTM, testDomainName, getDefaultGeomap(), &gtm.CreateGeoMapResponse{
 			Resource: getDefaultGeomap(),
 			Status:   getDefaultResponseStatus(),
 		}, nil)
 
-		mockGetGeoMap(client, getDefaultGeomap(), nil, testutils.FourTimes)
+		mockGetGeoMap(client.GTM, testDomainName, getDefaultGeomap(), nil, testutils.FourTimes)
 
-		mockGetDatacenter(client, datacenterID5400, getTestDatacenterResp(), nil, testutils.Once)
+		mockGetDatacenter(client.GTM, testDomainName, datacenterID5400, getTestDatacenterResp(), nil, testutils.Once)
 
-		mockUpdateGeoMap(client, getDefaultUpdatedGeomap(), nil, &gtm.Error{
+		mockUpdateGeoMap(client.GTM, testDomainName, getDefaultUpdatedGeomap(), nil, &gtm.Error{
 			Type:       "internal_error",
 			Title:      "Internal Server Error",
 			Detail:     "Error updating geomap",
 			StatusCode: http.StatusInternalServerError,
 		})
 
-		mockGetGeoMap(client, getDefaultGeomap(), nil, testutils.Once)
+		mockGetGeoMap(client.GTM, testDomainName, getDefaultGeomap(), nil, testutils.Once)
 
-		mockDeleteGeoMap(client)
+		mockDeleteGeoMap(client.GTM, testDomainName)
 
-		mockGetDomainStatus(client, testutils.Once)
+		mockGetDomainStatus(client.GTM, testDomainName, testutils.Once)
 
 		resourceName := "akamai_gtm_geomap.tfexample_geomap_1"
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmGeomap/create_basic.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(resourceName, "name", "tfexample_geomap_1"),
-						),
-					},
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmGeomap/update_basic.tf"),
-						ExpectError: regexp.MustCompile("API error"),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmGeomap/create_basic.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(resourceName, "name", "tfexample_geomap_1"),
+					),
 				},
-			})
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmGeomap/update_basic.tf"),
+					ExpectError: regexp.MustCompile("API error"),
+				},
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.GTM.AssertExpectations(t)
 	})
 
 	t.Run("update geomap domain name - delete and create new", func(t *testing.T) {
-		client := &gtm.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
-		mockGetGeoMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+		mockGetGeoMap(client.GTM, testDomainName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
-		mockGetDatacenter(client, datacenterID5400, getTestDatacenterResp(), nil, testutils.Once)
+		mockGetDatacenter(client.GTM, testDomainName, datacenterID5400, getTestDatacenterResp(), nil, testutils.Once)
 
-		mockCreateGeoMap(client, getDefaultGeomap(), &gtm.CreateGeoMapResponse{
+		mockCreateGeoMap(client.GTM, testDomainName, getDefaultGeomap(), &gtm.CreateGeoMapResponse{
 			Resource: getDefaultGeomap(),
 			Status:   getDefaultResponseStatus(),
 		}, nil)
 
-		mockGetGeoMap(client, getDefaultGeomap(), nil, testutils.FourTimes)
+		mockGetGeoMap(client.GTM, testDomainName, getDefaultGeomap(), nil, testutils.FourTimes)
 
-		mockDeleteGeoMap(client)
+		mockDeleteGeoMap(client.GTM, testDomainName)
 
-		testDomainName = "gtm_terra_testdomain_updated.akadns.net"
+		domainName := updatedTestDomain
 
-		mockGetGeoMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+		mockGetGeoMap(client.GTM, domainName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
-		mockCreateGeoMap(client, getDefaultGeomap(), &gtm.CreateGeoMapResponse{
+		mockCreateGeoMap(client.GTM, domainName, getDefaultGeomap(), &gtm.CreateGeoMapResponse{
 			Resource: getDefaultGeomap(),
 			Status:   getDefaultResponseStatus(),
 		}, nil)
 
-		mockGetGeoMap(client, getDefaultGeomap(), nil, testutils.ThreeTimes)
+		mockGetGeoMap(client.GTM, domainName, getDefaultGeomap(), nil, testutils.ThreeTimes)
 
-		mockGetDatacenter(client, datacenterID5400, getTestDatacenterResp(), nil, testutils.Once)
+		mockGetDatacenter(client.GTM, domainName, datacenterID5400, getTestDatacenterResp(), nil, testutils.Once)
 
-		mockDeleteGeoMap(client)
-
-		testDomainName = "gtm_terra_testdomain.akadns.net"
+		mockDeleteGeoMap(client.GTM, domainName)
 
 		resourceName := "akamai_gtm_geomap.tfexample_geomap_1"
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmGeomap/create_basic.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(resourceName, "name", "tfexample_geomap_1"),
-							resource.TestCheckResourceAttr(resourceName, "domain", "gtm_terra_testdomain.akadns.net"),
-						),
-					},
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmGeomap/domain_update/updated_domain_name.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(resourceName, "name", "tfexample_geomap_1"),
-							resource.TestCheckResourceAttr(resourceName, "domain", "gtm_terra_testdomain_updated.akadns.net"),
-						),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmGeomap/create_basic.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(resourceName, "name", "tfexample_geomap_1"),
+						resource.TestCheckResourceAttr(resourceName, "domain", "gtm_terra_testdomain.akadns.net"),
+					),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmGeomap/domain_update/updated_domain_name.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(resourceName, "name", "tfexample_geomap_1"),
+						resource.TestCheckResourceAttr(resourceName, "domain", "gtm_terra_testdomain_updated.akadns.net"),
+					),
+				},
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.GTM.AssertExpectations(t)
 	})
 
 	t.Run("create GEO map, remove outside of terraform, expect non-empty plan", func(t *testing.T) {
-		client := &gtm.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
-		mockGetGeoMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+		mockGetGeoMap(client.GTM, testDomainName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
-		mockCreateGeoMap(client, getDefaultGeomap(), &gtm.CreateGeoMapResponse{
+		mockCreateGeoMap(client.GTM, testDomainName, getDefaultGeomap(), &gtm.CreateGeoMapResponse{
 			Resource: getDefaultGeomap(),
 			Status:   getDefaultResponseStatus(),
 		}, nil)
 
-		mockGetGeoMap(client, getDefaultGeomap(), nil, testutils.Twice)
+		mockGetGeoMap(client.GTM, testDomainName, getDefaultGeomap(), nil, testutils.Twice)
 
-		mockGetDatacenter(client, datacenterID5400, getTestDatacenterResp(), nil, testutils.Once)
+		mockGetDatacenter(client.GTM, testDomainName, datacenterID5400, getTestDatacenterResp(), nil, testutils.Once)
 
 		// Mock that the GEOMap was deleted outside terraform
-		mockGetGeoMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+		mockGetGeoMap(client.GTM, testDomainName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
 		// For terraform test framework, we need to mock GetGEOMap as it would actually exist before deletion
-		mockGetGeoMap(client, getDefaultGeomap(), nil, testutils.Once)
+		mockGetGeoMap(client.GTM, testDomainName, getDefaultGeomap(), nil, testutils.Once)
 
-		mockDeleteGeoMap(client)
+		mockDeleteGeoMap(client.GTM, testDomainName)
 
 		resourceName := "akamai_gtm_geomap.tfexample_geomap_1"
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmGeomap/create_basic.tf"),
-						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr(resourceName, "name", "tfexample_geomap_1"),
-						),
-					},
-					{
-						Config:             testutils.LoadFixtureString(t, "testdata/TestResGtmGeomap/create_basic.tf"),
-						ExpectNonEmptyPlan: true,
-						PlanOnly:           true,
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmGeomap/create_basic.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(resourceName, "name", "tfexample_geomap_1"),
+					),
 				},
-			})
+				{
+					Config:             testutils.LoadFixtureString(t, "testdata/TestResGtmGeomap/create_basic.tf"),
+					ExpectNonEmptyPlan: true,
+					PlanOnly:           true,
+				},
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.GTM.AssertExpectations(t)
 	})
 
 	t.Run("create geomap failed", func(t *testing.T) {
-		client := &gtm.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
-		mockGetGeoMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+		mockGetGeoMap(client.GTM, testDomainName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
-		mockCreateGeoMap(client, getDefaultGeomap(), nil, &gtm.Error{StatusCode: http.StatusBadRequest})
+		mockCreateGeoMap(client.GTM, testDomainName, getDefaultGeomap(), nil, &gtm.Error{StatusCode: http.StatusBadRequest})
 
-		mockGetDatacenter(client, datacenterID5400, getTestDatacenterResp(), nil, testutils.Once)
+		mockGetDatacenter(client.GTM, testDomainName, datacenterID5400, getTestDatacenterResp(), nil, testutils.Once)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmGeomap/create_basic.tf"),
-						ExpectError: regexp.MustCompile("geoMap create error"),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmGeomap/create_basic.tf"),
+					ExpectError: regexp.MustCompile("geoMap create error"),
 				},
-			})
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.GTM.AssertExpectations(t)
 	})
 
 	t.Run("create geomap failed - geomap already exists", func(t *testing.T) {
-		client := &gtm.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
-		mockGetGeoMap(client, getDefaultGeomap(), nil, testutils.Once)
+		mockGetGeoMap(client.GTM, testDomainName, getDefaultGeomap(), nil, testutils.Once)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmGeomap/create_basic.tf"),
-						ExpectError: regexp.MustCompile("geoMap already exists error"),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmGeomap/create_basic.tf"),
+					ExpectError: regexp.MustCompile("geoMap already exists error"),
 				},
-			})
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.GTM.AssertExpectations(t)
 	})
 
 	t.Run("create geomap denied", func(t *testing.T) {
-		client := &gtm.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
-		mockGetGeoMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+		mockGetGeoMap(client.GTM, testDomainName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
-		mockCreateGeoMap(client, getDefaultGeomap(), &gtm.CreateGeoMapResponse{
+		mockCreateGeoMap(client.GTM, testDomainName, getDefaultGeomap(), &gtm.CreateGeoMapResponse{
 			Resource: getDefaultGeomap(),
 			Status:   getDeniedResponseStatus(),
 		}, nil)
 
-		mockGetDatacenter(client, datacenterID5400, getTestDatacenterResp(), nil, testutils.Once)
+		mockGetDatacenter(client.GTM, testDomainName, datacenterID5400, getTestDatacenterResp(), nil, testutils.Once)
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmGeomap/create_basic.tf"),
-						ExpectError: regexp.MustCompile("Request could not be completed. Invalid credentials."),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmGeomap/create_basic.tf"),
+					ExpectError: regexp.MustCompile("Request could not be completed. Invalid credentials."),
 				},
-			})
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.GTM.AssertExpectations(t)
 	})
 }
 
 func TestGTMGeoMapOrder(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		pathForUpdate string
 		nonEmptyPlan  bool
@@ -343,29 +337,29 @@ func TestGTMGeoMapOrder(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			client := getGeoMapOrderingTestMock()
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps: []resource.TestStep{
-						{
-							Config: testutils.LoadFixtureString(t, "testdata/TestResGtmGeomap/order/create.tf"),
-						},
-						{
-							Config:             testutils.LoadFixtureString(t, test.pathForUpdate),
-							PlanOnly:           test.planOnly,
-							ExpectNonEmptyPlan: test.nonEmptyPlan,
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+				IsUnitTest:               true,
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResGtmGeomap/order/create.tf"),
 					},
-				})
+					{
+						Config:             testutils.LoadFixtureString(t, test.pathForUpdate),
+						PlanOnly:           test.planOnly,
+						ExpectNonEmptyPlan: test.nonEmptyPlan,
+					},
+				},
 			})
-			client.AssertExpectations(t)
+			client.GTM.AssertExpectations(t)
 		})
 	}
 }
 
 func TestResGTMGeoMapImport(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		domainName  string
 		mapName     string
@@ -378,7 +372,7 @@ func TestResGTMGeoMapImport(t *testing.T) {
 			mapName:    testGeomapName,
 			init: func(m *gtm.Mock) {
 				// Read
-				mockGetGeoMap(m, getImportedGeoMap(), nil, testutils.Twice)
+				mockGetGeoMap(m, testDomainName, getImportedGeoMap(), nil, testutils.Twice)
 			},
 			stateCheck: test.NewImportChecker().
 				CheckEqual("domain", "gtm_terra_testdomain.akadns.net").
@@ -405,7 +399,7 @@ func TestResGTMGeoMapImport(t *testing.T) {
 			mapName:    testGeomapName,
 			init: func(m *gtm.Mock) {
 				// Read - error
-				mockGetGeoMap(m, nil, fmt.Errorf("get failed"), testutils.Once)
+				mockGetGeoMap(m, testDomainName, nil, fmt.Errorf("get failed"), testutils.Once)
 			},
 			expectError: regexp.MustCompile(`get failed`),
 		},
@@ -413,55 +407,54 @@ func TestResGTMGeoMapImport(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &gtm.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 			if tc.init != nil {
-				tc.init(client)
+				tc.init(client.GTM)
 			}
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							ImportStateCheck: tc.stateCheck,
-							ImportStateId:    fmt.Sprintf("%s:%s", tc.domainName, tc.mapName),
-							ImportState:      true,
-							ResourceName:     "akamai_gtm_geomap.test",
-							Config:           testutils.LoadFixtureString(t, "testdata/TestResGtmGeomap/import_basic.tf"),
-							ExpectError:      tc.expectError,
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+				Steps: []resource.TestStep{
+					{
+						ImportStateCheck: tc.stateCheck,
+						ImportStateId:    fmt.Sprintf("%s:%s", tc.domainName, tc.mapName),
+						ImportState:      true,
+						ResourceName:     "akamai_gtm_geomap.test",
+						Config:           testutils.LoadFixtureString(t, "testdata/TestResGtmGeomap/import_basic.tf"),
+						ExpectError:      tc.expectError,
 					},
-				})
+				},
 			})
-			client.AssertExpectations(t)
+			client.GTM.AssertExpectations(t)
 		})
 	}
 }
 
 // getGeoMapOrderingTestMock mock creation and deletion calls for gtm_geomap resource
-func getGeoMapOrderingTestMock() *gtm.Mock {
-	client := &gtm.Mock{}
+func getGeoMapOrderingTestMock() *edgegrid.TestClient {
+	client := edgegrid.NewTestClient()
 
-	mockGetGeoMap(client, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+	mockGetGeoMap(client.GTM, testDomainName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
 
-	mockCreateGeoMap(client, getDiffOrderGeoMap(), &gtm.CreateGeoMapResponse{
+	mockCreateGeoMap(client.GTM, testDomainName, getDiffOrderGeoMap(), &gtm.CreateGeoMapResponse{
 		Resource: getDiffOrderGeoMapForResponse(),
 		Status:   getDefaultResponseStatus(),
 	}, nil)
 
-	mockGetDomainStatus(client, testutils.Once)
+	mockGetDomainStatus(client.GTM, testDomainName, testutils.Once)
 
-	mockGetGeoMap(client, getDiffOrderGeoMapForResponse(), nil, testutils.FourTimes)
+	mockGetGeoMap(client.GTM, testDomainName, getDiffOrderGeoMapForResponse(), nil, testutils.FourTimes)
 
-	mockGetDatacenter(client, datacenterID5400, getTestDatacenterResp(), nil, testutils.Once)
+	mockGetDatacenter(client.GTM, testDomainName, datacenterID5400, getTestDatacenterResp(), nil, testutils.Once)
 
-	mockGetDomainStatus(client, testutils.Once)
+	mockGetDomainStatus(client.GTM, testDomainName, testutils.Once)
 
-	mockDeleteGeoMap(client)
+	mockDeleteGeoMap(client.GTM, testDomainName)
 
 	return client
 }
 
-func mockGetGeoMap(client *gtm.Mock, geoMap *gtm.GeoMap, err error, times int) *mock.Call {
+func mockGetGeoMap(client *gtm.Mock, domainName string, geoMap *gtm.GeoMap, err error, times int) *mock.Call {
 	var resp *gtm.GetGeoMapResponse
 	if geoMap != nil {
 		r := gtm.GetGeoMapResponse(*geoMap)
@@ -469,31 +462,31 @@ func mockGetGeoMap(client *gtm.Mock, geoMap *gtm.GeoMap, err error, times int) *
 	}
 	return client.On("GetGeoMap",
 		testutils.MockContext,
-		gtm.GetGeoMapRequest{MapName: testGeomapName, DomainName: testDomainName},
+		gtm.GetGeoMapRequest{MapName: testGeomapName, DomainName: domainName},
 	).Return(resp, err).Times(times)
 }
 
-func mockCreateGeoMap(client *gtm.Mock, reqGeomap *gtm.GeoMap, response *gtm.CreateGeoMapResponse, err error) *mock.Call {
+func mockCreateGeoMap(client *gtm.Mock, domainName string, reqGeomap *gtm.GeoMap, response *gtm.CreateGeoMapResponse, err error) *mock.Call {
 	return client.On("CreateGeoMap", testutils.MockContext, gtm.CreateGeoMapRequest{
 		GeoMap:     reqGeomap,
-		DomainName: testDomainName,
+		DomainName: domainName,
 	}).Return(response, err).Once()
 }
 
-func mockUpdateGeoMap(client *gtm.Mock, updateGeoMap *gtm.GeoMap, resp *gtm.UpdateGeoMapResponse, err error) *mock.Call {
+func mockUpdateGeoMap(client *gtm.Mock, domainName string, updateGeoMap *gtm.GeoMap, resp *gtm.UpdateGeoMapResponse, err error) *mock.Call {
 	return client.On("UpdateGeoMap",
 		testutils.MockContext,
 		gtm.UpdateGeoMapRequest{
 			GeoMap:     updateGeoMap,
-			DomainName: testDomainName,
+			DomainName: domainName,
 		},
 	).Return(resp, err).Once()
 }
 
-func mockDeleteGeoMap(client *gtm.Mock) *mock.Call {
+func mockDeleteGeoMap(client *gtm.Mock, domainName string) *mock.Call {
 	return client.On("DeleteGeoMap",
 		testutils.MockContext,
-		gtm.DeleteGeoMapRequest{MapName: testGeomapName, DomainName: testDomainName},
+		gtm.DeleteGeoMapRequest{MapName: testGeomapName, DomainName: domainName},
 	).Return(&gtm.DeleteGeoMapResponse{
 		Status: getDefaultResponseStatus(),
 	}, nil).Once()

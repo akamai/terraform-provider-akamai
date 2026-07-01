@@ -23,7 +23,7 @@ var (
 
 type (
 	propertyUsersDataSource struct {
-		meta meta.Meta
+		meta.DataSource
 	}
 
 	propertyUsersModel struct {
@@ -48,21 +48,6 @@ func NewPropertyUsersDataSource() datasource.DataSource {
 
 func (d *propertyUsersDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "akamai_iam_property_users"
-}
-
-func (d *propertyUsersDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Data Source Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.",
-					req.ProviderData))
-		}
-	}()
-	d.meta = meta.Must(req.ProviderData)
 }
 
 func (d *propertyUsersDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
@@ -139,7 +124,7 @@ func (d *propertyUsersDataSource) Read(ctx context.Context, req datasource.ReadR
 		return
 	}
 
-	client := inst.Client(d.meta)
+	client := d.Client.GetIAM()
 
 	users, err := client.ListUsersForProperty(ctx, iam.ListUsersForPropertyRequest{
 		PropertyID: int64(id),

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"sort"
+	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/gtm"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/session"
@@ -18,14 +19,19 @@ import (
 
 const asMapAlreadyExistsError = "AsMap with provided `name` for specific `domain` already exists. Please import specific asmap using following command: terraform import akamai_gtm_asmap.<your_resource_name> \"%s:%s\""
 
-func resourceGTMv1ASMap() *schema.Resource {
+type asmapResource struct {
+	defaultInterval time.Duration
+}
+
+func resourceGTMv1ASMap(defaultInterval time.Duration) *schema.Resource {
+	r := &asmapResource{defaultInterval: defaultInterval}
 	return &schema.Resource{
-		CreateContext: resourceGTMv1ASMapCreate,
-		ReadContext:   resourceGTMv1ASMapRead,
-		UpdateContext: resourceGTMv1ASMapUpdate,
-		DeleteContext: resourceGTMv1ASMapDelete,
+		CreateContext: r.resourceGTMv1ASMapCreate,
+		ReadContext:   r.resourceGTMv1ASMapRead,
+		UpdateContext: r.resourceGTMv1ASMapUpdate,
+		DeleteContext: r.resourceGTMv1ASMapDelete,
 		Importer: &schema.ResourceImporter{
-			StateContext: resourceGTMv1ASMapImport,
+			StateContext: r.resourceGTMv1ASMapImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"domain": {
@@ -106,7 +112,7 @@ func validateDefaultDC(ctx context.Context, meta meta.Meta, ddcField []interface
 	if !ok || dcID == 0 {
 		return fmt.Errorf("default Datacenter ID invalid")
 	}
-	dc, err := Client(meta).GetDatacenter(ctx, gtm.GetDatacenterRequest{
+	dc, err := meta.Client().GetGTM().GetDatacenter(ctx, gtm.GetDatacenterRequest{
 		DomainName:   domain,
 		DatacenterID: dcID,
 	})
@@ -121,7 +127,7 @@ func validateDefaultDC(ctx context.Context, meta meta.Meta, ddcField []interface
 		if ddc["datacenter_id"].(int) != gtm.MapDefaultDC {
 			return fmt.Errorf("default datacenter %d does not exist", ddc["datacenter_id"].(int))
 		}
-		_, err := Client(meta).CreateMapsDefaultDatacenter(ctx, domain) // create if not already.
+		_, err := meta.Client().GetGTM().CreateMapsDefaultDatacenter(ctx, domain) // create if not already.
 		if err != nil {
 			return fmt.Errorf("MapCreate failed on Default Datacenter check: %s", err.Error())
 		}
@@ -130,7 +136,7 @@ func validateDefaultDC(ctx context.Context, meta meta.Meta, ddcField []interface
 	return nil
 }
 
-func resourceGTMv1ASMapCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (r *asmapResource) resourceGTMv1ASMapCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1ASmapCreate")
 	// create a context with logging for api calls
@@ -152,7 +158,7 @@ func resourceGTMv1ASMapCreate(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 
-	as, err := Client(meta).GetASMap(ctx, gtm.GetASMapRequest{
+	as, err := meta.Client().GetGTM().GetASMap(ctx, gtm.GetASMapRequest{
 		ASMapName:  name,
 		DomainName: domain,
 	})
@@ -200,7 +206,7 @@ func resourceGTMv1ASMapCreate(ctx context.Context, d *schema.ResourceData, m int
 		})
 	}
 	logger.Debugf("Proposed New asMap: [%v]", newAS)
-	cStatus, err := Client(meta).CreateASMap(ctx, gtm.CreateASMapRequest{
+	cStatus, err := meta.Client().GetGTM().CreateASMap(ctx, gtm.CreateASMapRequest{
 		ASMap:      newAS,
 		DomainName: domain,
 	})
@@ -224,7 +230,7 @@ func resourceGTMv1ASMapCreate(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 	if waitOnComplete {
-		done, err := waitForCompletion(ctx, domain, m)
+		done, err := waitForCompletion(ctx, domain, m, r.defaultInterval)
 		if done {
 			logger.Infof("asMap create completed")
 		} else {
@@ -245,11 +251,11 @@ func resourceGTMv1ASMapCreate(ctx context.Context, d *schema.ResourceData, m int
 	asMapID := fmt.Sprintf("%s:%s", domain, cStatus.Resource.Name)
 	logger.Debugf("Generated asMap Id: %s", asMapID)
 	d.SetId(asMapID)
-	return resourceGTMv1ASMapRead(ctx, d, m)
+	return r.resourceGTMv1ASMapRead(ctx, d, m)
 
 }
 
-func resourceGTMv1ASMapRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (r *asmapResource) resourceGTMv1ASMapRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1ASMapRead")
 	// create a context with logging for api calls
@@ -265,7 +271,7 @@ func resourceGTMv1ASMapRead(ctx context.Context, d *schema.ResourceData, m inter
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	as, err := Client(meta).GetASMap(ctx, gtm.GetASMapRequest{
+	as, err := meta.Client().GetGTM().GetASMap(ctx, gtm.GetASMapRequest{
 		ASMapName:  asMap,
 		DomainName: domain,
 	})
@@ -287,7 +293,7 @@ func resourceGTMv1ASMapRead(ctx context.Context, d *schema.ResourceData, m inter
 	return nil
 }
 
-func resourceGTMv1ASMapUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (r *asmapResource) resourceGTMv1ASMapUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1ASMapUpdate")
 	// create a context with logging for api calls
@@ -305,7 +311,7 @@ func resourceGTMv1ASMapUpdate(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 	// Get existingASmap
-	existAs, err := Client(meta).GetASMap(ctx, gtm.GetASMapRequest{
+	existAs, err := meta.Client().GetGTM().GetASMap(ctx, gtm.GetASMapRequest{
 		ASMapName:  asMap,
 		DomainName: domain,
 	})
@@ -321,7 +327,7 @@ func resourceGTMv1ASMapUpdate(ctx context.Context, d *schema.ResourceData, m int
 	newAs := createASMapStruct(existAs)
 	populateASMapObject(d, newAs, m)
 	logger.Debugf("asMap PROPOSED: %v", existAs)
-	uStat, err := Client(meta).UpdateASMap(ctx, gtm.UpdateASMapRequest{
+	uStat, err := meta.Client().GetGTM().UpdateASMap(ctx, gtm.UpdateASMapRequest{
 		ASMap:      newAs,
 		DomainName: domain,
 	})
@@ -346,7 +352,7 @@ func resourceGTMv1ASMapUpdate(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 	if waitOnComplete {
-		done, err := waitForCompletion(ctx, domain, m)
+		done, err := waitForCompletion(ctx, domain, m, r.defaultInterval)
 		if done {
 			logger.Infof("asMap update completed")
 		} else {
@@ -363,10 +369,10 @@ func resourceGTMv1ASMapUpdate(ctx context.Context, d *schema.ResourceData, m int
 		}
 	}
 
-	return resourceGTMv1ASMapRead(ctx, d, m)
+	return r.resourceGTMv1ASMapRead(ctx, d, m)
 }
 
-func resourceGTMv1ASMapImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+func (r *asmapResource) resourceGTMv1ASMapImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1ASMapImport")
 	// create a context with logging for api calls
@@ -381,7 +387,7 @@ func resourceGTMv1ASMapImport(ctx context.Context, d *schema.ResourceData, m int
 	if err != nil {
 		return []*schema.ResourceData{d}, err
 	}
-	as, err := Client(meta).GetASMap(ctx, gtm.GetASMapRequest{
+	as, err := meta.Client().GetGTM().GetASMap(ctx, gtm.GetASMapRequest{
 		ASMapName:  asMap,
 		DomainName: domain,
 	})
@@ -401,7 +407,7 @@ func resourceGTMv1ASMapImport(ctx context.Context, d *schema.ResourceData, m int
 	return []*schema.ResourceData{d}, nil
 }
 
-func resourceGTMv1ASMapDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (r *asmapResource) resourceGTMv1ASMapDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1ASMapDelete")
 	// create a context with logging for api calls
@@ -418,7 +424,7 @@ func resourceGTMv1ASMapDelete(ctx context.Context, d *schema.ResourceData, m int
 		logger.Errorf("asMap delete error: %s", err.Error())
 		return diag.FromErr(err)
 	}
-	existAs, err := Client(meta).GetASMap(ctx, gtm.GetASMapRequest{
+	existAs, err := meta.Client().GetGTM().GetASMap(ctx, gtm.GetASMapRequest{
 		ASMapName:  asMap,
 		DomainName: domain,
 	})
@@ -432,7 +438,7 @@ func resourceGTMv1ASMapDelete(ctx context.Context, d *schema.ResourceData, m int
 	}
 	newAs := createASMapStruct(existAs)
 	logger.Debugf("Deleting asMap: %v", newAs)
-	uStat, err := Client(meta).DeleteASMap(ctx, gtm.DeleteASMapRequest{
+	uStat, err := meta.Client().GetGTM().DeleteASMap(ctx, gtm.DeleteASMapRequest{
 		ASMapName:  asMap,
 		DomainName: domain,
 	})
@@ -457,7 +463,7 @@ func resourceGTMv1ASMapDelete(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 	if waitOnComplete {
-		done, err := waitForCompletion(ctx, domain, m)
+		done, err := waitForCompletion(ctx, domain, m, r.defaultInterval)
 		if done {
 			logger.Infof("asMap delete completed")
 		} else {

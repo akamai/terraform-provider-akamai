@@ -2,12 +2,15 @@ package datastream
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/datastream"
 )
@@ -20,6 +23,15 @@ func dataAkamaiDatastreamActivationHistory() *schema.Resource {
 				Type:        schema.TypeInt,
 				Required:    true,
 				Description: "Identifies the stream",
+			},
+			"log_type": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The type of logs for which to retrieve activation history. Valid values are `CDN` and `APPSEC`. If not specified, defaults to `CDN`.",
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{
+					string(datastream.LogTypeCDN),
+					string(datastream.LogTypeAppSec),
+				}, true)),
 			},
 			"activations": {
 				Type:        schema.TypeList,
@@ -96,9 +108,21 @@ func dataAkamaiDatastreamActivationHistoryRead(ctx context.Context, d *schema.Re
 		return diag.FromErr(err)
 	}
 
+	val, err := tf.GetStringValue("log_type", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+
+	// For backwards compatibility, default to CDN logs if log_type was not set.
+	var logType = datastream.LogTypeCDN
+	if val != "" {
+		logType = datastream.LogType(strings.ToUpper(val))
+	}
+
 	log.Debug("Getting activation history")
 	activationHistory, err := client.GetActivationHistory(ctx, datastream.GetActivationHistoryRequest{
 		StreamID: int64(streamID),
+		LogType:  logType,
 	})
 	if err != nil {
 		return diag.FromErr(err)

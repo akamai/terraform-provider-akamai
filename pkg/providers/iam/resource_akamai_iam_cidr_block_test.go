@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/internal/test"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
@@ -271,23 +272,22 @@ func TestCIDRBlockResource(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			client := &iam.Mock{}
+			client := edgegrid.NewTestClient()
 			if tc.init != nil {
-				tc.init(client, tc.createData, tc.updateData)
+				tc.init(client.IAM, tc.createData, tc.updateData)
 			}
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps:                    tc.steps,
-				})
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				Steps:                    tc.steps,
 			})
-			client.AssertExpectations(t)
+			client.IAM.AssertExpectations(t)
 		})
 	}
 
 }
 
 func TestImportCIDRBlockResource(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		importID    string
 		init        func(*iam.Mock, commonDataForResource)
@@ -329,26 +329,25 @@ func TestImportCIDRBlockResource(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &iam.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 			if tc.init != nil {
-				tc.init(client, tc.mockData)
+				tc.init(client.IAM, tc.mockData)
 			}
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							ImportStateCheck: checkImportCIDRBlock(tc.mockData),
-							ImportStateId:    tc.importID,
-							ImportState:      true,
-							ResourceName:     "akamai_iam_cidr_block.test",
-							Config:           testutils.LoadFixtureString(t, "testdata/TestResCIDRBlock/importable.tf"),
-							ExpectError:      tc.expectError,
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						ImportStateCheck: checkImportCIDRBlock(tc.mockData),
+						ImportStateId:    tc.importID,
+						ImportState:      true,
+						ResourceName:     "akamai_iam_cidr_block.test",
+						Config:           testutils.LoadFixtureString(t, "testdata/TestResCIDRBlock/importable.tf"),
+						ExpectError:      tc.expectError,
 					},
-				})
+				},
 			})
-			client.AssertExpectations(t)
+			client.IAM.AssertExpectations(t)
 		})
 	}
 }

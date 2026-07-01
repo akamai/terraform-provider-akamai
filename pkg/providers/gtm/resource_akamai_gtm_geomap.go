@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/gtm"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/session"
@@ -16,14 +17,19 @@ import (
 
 const geoMapAlreadyExistsError = "GeoMap with provided `name` for specific `domain` already exists. Please import specific geomap using following command: terraform import akamai_gtm_geomap.<your_resource_name> \"%s:%s\""
 
-func resourceGTMv1GeoMap() *schema.Resource {
+type geoMapResource struct {
+	defaultInterval time.Duration
+}
+
+func resourceGTMv1GeoMap(defaultInterval time.Duration) *schema.Resource {
+	r := &geoMapResource{defaultInterval: defaultInterval}
 	return &schema.Resource{
-		CreateContext: resourceGTMv1GeoMapCreate,
-		ReadContext:   resourceGTMv1GeoMapRead,
-		UpdateContext: resourceGTMv1GeoMapUpdate,
-		DeleteContext: resourceGTMv1GeoMapDelete,
+		CreateContext: r.resourceGTMv1GeoMapCreate,
+		ReadContext:   r.resourceGTMv1GeoMapRead,
+		UpdateContext: r.resourceGTMv1GeoMapUpdate,
+		DeleteContext: r.resourceGTMv1GeoMapDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceGTMv1GeoMapImport,
+			State: r.resourceGTMv1GeoMapImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"domain": {
@@ -84,7 +90,7 @@ func resourceGTMv1GeoMap() *schema.Resource {
 	}
 }
 
-func resourceGTMv1GeoMapCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (r *geoMapResource) resourceGTMv1GeoMapCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1GeoMapCreate")
 	// create a context with logging for api calls
@@ -104,7 +110,7 @@ func resourceGTMv1GeoMapCreate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 
-	geo, err := Client(meta).GetGeoMap(ctx, gtm.GetGeoMapRequest{
+	geo, err := meta.Client().GetGTM().GetGeoMap(ctx, gtm.GetGeoMapRequest{
 		MapName:    name,
 		DomainName: domain,
 	})
@@ -152,7 +158,7 @@ func resourceGTMv1GeoMapCreate(ctx context.Context, d *schema.ResourceData, m in
 		})
 	}
 	logger.Debugf("Proposed New geoMap: [%v]", newGeo)
-	cStatus, err := Client(meta).CreateGeoMap(ctx, gtm.CreateGeoMapRequest{
+	cStatus, err := meta.Client().GetGTM().CreateGeoMap(ctx, gtm.CreateGeoMapRequest{
 		GeoMap:     newGeo,
 		DomainName: domain,
 	})
@@ -178,7 +184,7 @@ func resourceGTMv1GeoMapCreate(ctx context.Context, d *schema.ResourceData, m in
 	}
 
 	if waitOnComplete {
-		done, err := waitForCompletion(ctx, domain, m)
+		done, err := waitForCompletion(ctx, domain, m, r.defaultInterval)
 		if done {
 			logger.Infof("geoMap create completed")
 		} else {
@@ -200,10 +206,10 @@ func resourceGTMv1GeoMapCreate(ctx context.Context, d *schema.ResourceData, m in
 	geoMapID := fmt.Sprintf("%s:%s", domain, cStatus.Resource.Name)
 	logger.Debugf("Generated geoMap resource ID: %s", geoMapID)
 	d.SetId(geoMapID)
-	return resourceGTMv1GeoMapRead(ctx, d, m)
+	return r.resourceGTMv1GeoMapRead(ctx, d, m)
 }
 
-func resourceGTMv1GeoMapRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (r *geoMapResource) resourceGTMv1GeoMapRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1GeoMapRead")
 	// create a context with logging for api calls
@@ -220,7 +226,7 @@ func resourceGTMv1GeoMapRead(ctx context.Context, d *schema.ResourceData, m inte
 		logger.Errorf("Invalid geoMap ID")
 		return diag.FromErr(err)
 	}
-	geo, err := Client(meta).GetGeoMap(ctx, gtm.GetGeoMapRequest{
+	geo, err := meta.Client().GetGTM().GetGeoMap(ctx, gtm.GetGeoMapRequest{
 		MapName:    geoMap,
 		DomainName: domain,
 	})
@@ -247,7 +253,7 @@ func resourceGTMv1GeoMapRead(ctx context.Context, d *schema.ResourceData, m inte
 	return nil
 }
 
-func resourceGTMv1GeoMapUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (r *geoMapResource) resourceGTMv1GeoMapUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1GeoMapUpdate")
 	// create a context with logging for api calls
@@ -265,7 +271,7 @@ func resourceGTMv1GeoMapUpdate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 	// Get existingGeoMap
-	existGeo, err := Client(meta).GetGeoMap(ctx, gtm.GetGeoMapRequest{
+	existGeo, err := meta.Client().GetGTM().GetGeoMap(ctx, gtm.GetGeoMapRequest{
 		MapName:    geoMap,
 		DomainName: domain,
 	})
@@ -281,7 +287,7 @@ func resourceGTMv1GeoMapUpdate(ctx context.Context, d *schema.ResourceData, m in
 	logger.Debugf("Updating geoMap BEFORE: %v", newGeo)
 	populateGeoMapObject(d, newGeo, m)
 	logger.Debugf("Updating geoMap PROPOSED: %v", existGeo)
-	uStat, err := Client(meta).UpdateGeoMap(ctx, gtm.UpdateGeoMapRequest{
+	uStat, err := meta.Client().GetGTM().UpdateGeoMap(ctx, gtm.UpdateGeoMapRequest{
 		GeoMap:     newGeo,
 		DomainName: domain,
 	})
@@ -308,7 +314,7 @@ func resourceGTMv1GeoMapUpdate(ctx context.Context, d *schema.ResourceData, m in
 	}
 
 	if waitOnComplete {
-		done, err := waitForCompletion(ctx, domain, m)
+		done, err := waitForCompletion(ctx, domain, m, r.defaultInterval)
 		if done {
 			logger.Infof("geoMap update completed")
 		} else {
@@ -326,10 +332,10 @@ func resourceGTMv1GeoMapUpdate(ctx context.Context, d *schema.ResourceData, m in
 
 	}
 
-	return resourceGTMv1GeoMapRead(ctx, d, m)
+	return r.resourceGTMv1GeoMapRead(ctx, d, m)
 }
 
-func resourceGTMv1GeoMapImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+func (r *geoMapResource) resourceGTMv1GeoMapImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1GeoMapImport")
 	// create a context with logging for api calls
@@ -345,7 +351,7 @@ func resourceGTMv1GeoMapImport(d *schema.ResourceData, m interface{}) ([]*schema
 	if err != nil {
 		return []*schema.ResourceData{d}, err
 	}
-	geo, err := Client(meta).GetGeoMap(ctx, gtm.GetGeoMapRequest{
+	geo, err := meta.Client().GetGTM().GetGeoMap(ctx, gtm.GetGeoMapRequest{
 		MapName:    geoMap,
 		DomainName: domain,
 	})
@@ -371,7 +377,7 @@ func resourceGTMv1GeoMapImport(d *schema.ResourceData, m interface{}) ([]*schema
 	return []*schema.ResourceData{d}, nil
 }
 
-func resourceGTMv1GeoMapDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (r *geoMapResource) resourceGTMv1GeoMapDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1GeoMapDelete")
 	// create a context with logging for api calls
@@ -388,7 +394,7 @@ func resourceGTMv1GeoMapDelete(ctx context.Context, d *schema.ResourceData, m in
 		logger.Errorf("Invalid geoMap ID: %s", d.Id())
 		return diag.FromErr(err)
 	}
-	existGeo, err := Client(meta).GetGeoMap(ctx, gtm.GetGeoMapRequest{
+	existGeo, err := meta.Client().GetGTM().GetGeoMap(ctx, gtm.GetGeoMapRequest{
 		MapName:    geoMap,
 		DomainName: domain,
 	})
@@ -402,7 +408,7 @@ func resourceGTMv1GeoMapDelete(ctx context.Context, d *schema.ResourceData, m in
 	}
 	newGeo := createGeoMapStruct(existGeo)
 	logger.Debugf("Deleting geoMap: %v", newGeo)
-	uStat, err := Client(meta).DeleteGeoMap(ctx, gtm.DeleteGeoMapRequest{
+	uStat, err := meta.Client().GetGTM().DeleteGeoMap(ctx, gtm.DeleteGeoMapRequest{
 		MapName:    geoMap,
 		DomainName: domain,
 	})
@@ -429,7 +435,7 @@ func resourceGTMv1GeoMapDelete(ctx context.Context, d *schema.ResourceData, m in
 	}
 
 	if waitOnComplete {
-		done, err := waitForCompletion(ctx, domain, m)
+		done, err := waitForCompletion(ctx, domain, m, r.defaultInterval)
 		if done {
 			logger.Infof("geoMap delete completed")
 		} else {
