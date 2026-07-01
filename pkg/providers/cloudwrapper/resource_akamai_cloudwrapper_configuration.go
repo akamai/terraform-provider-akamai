@@ -221,7 +221,7 @@ func (*ConfigurationResource) ModifyPlan(ctx context.Context, req resource.Modif
 	// config will be deleted
 	if req.Plan.Raw.IsNull() {
 		resp.Diagnostics.AddWarning("Deletion May Not Succeed",
-			"Only Akamai internal users can delete configurations. I you are not internal user, "+
+			"Only Akamai internal users can delete configurations. If you are not internal user, "+
 				"the configuration will only be removed from state")
 		return
 	}
