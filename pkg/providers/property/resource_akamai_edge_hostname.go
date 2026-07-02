@@ -894,11 +894,15 @@ func resourceSecureEdgeHostNameImport(ctx context.Context, d *schema.ResourceDat
 				return nil, err
 			}
 		} else {
-			certificateID, err := strconv.ParseInt(cert.CertificateID, 10, 64)
-			if err != nil {
-				return nil, err
+			if cert.CertificateID != "" {
+				certificateID, err := strconv.ParseInt(cert.CertificateID, 10, 64)
+				if err != nil {
+					return nil, err
+				}
+				certificate = certificateID
+			} else {
+				certificate = 0
 			}
-			certificate = certificateID
 		}
 	}
 

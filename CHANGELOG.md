@@ -63,6 +63,14 @@
 
 
 
+* PAPI
+  * Fixed issue that importing a property which Enhanced-TLS edge hostname has missing `certificateID` field (e.g. in Secure by Default flow), would fail processing.
+
+
+
+
+
+
 
 
 
