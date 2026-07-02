@@ -56,6 +56,11 @@
 
 
 
+* Edgeworkers
+  * Clarified the description of the `local_bundle` field in the `akamai_edgeworker` resource regarding behavior when no value is provided ([I#740](https://github.com/akamai/terraform-provider-akamai/issues/740)).
+
+
+
 
 
 
