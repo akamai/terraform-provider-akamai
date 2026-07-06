@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudaccess"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
@@ -300,10 +301,6 @@ var (
 
 func TestAccessKeyResource(t *testing.T) {
 	t.Parallel()
-	pollingInterval = 1 * time.Millisecond
-	deleteTimeout = 40 * time.Millisecond
-	updateTimeout = 20 * time.Millisecond
-	activationTimeout = 20 * time.Millisecond
 	tests := map[string]struct {
 		configPath string
 		init       func(*cloudaccess.Mock, commonDataForResource)
@@ -2304,18 +2301,17 @@ func TestAccessKeyResource(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &cloudaccess.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 			if test.init != nil {
-				test.init(client, test.mockData)
+				test.init(client.CloudAccess, test.mockData)
 			}
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps:                    test.steps,
-				})
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, newTestSubprovider()),
+				IsUnitTest:               true,
+				Steps:                    test.steps,
 			})
-			client.AssertExpectations(t)
+			client.CloudAccess.AssertExpectations(t)
 		})
 	}
 }
@@ -3009,10 +3005,6 @@ func mockDeletionNoCloudAccessKeyIDAfterCrossRotation(m *cloudaccess.Mock, acces
 
 func TestAccessKeyResource_ImportState(t *testing.T) {
 	t.Parallel()
-	pollingInterval = 1 * time.Millisecond
-	deleteTimeout = 40 * time.Minute
-	updateTimeout = 20 * time.Minute
-	activationTimeout = 20 * time.Millisecond
 	tests := map[string]struct {
 		init     func(*cloudaccess.Mock, commonDataForResource)
 		steps    []resource.TestStep
@@ -3437,18 +3429,19 @@ func TestAccessKeyResource_ImportState(t *testing.T) {
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &cloudaccess.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 			if test.init != nil {
-				test.init(client, test.mockData)
+				test.init(client.CloudAccess, test.mockData)
 			}
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps:                    test.steps,
-				})
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, newTestSubprovider().withTimeouts(
+					20*time.Millisecond, 20*time.Minute, 40*time.Minute, 1*time.Millisecond,
+				)),
+				IsUnitTest: true,
+				Steps:      test.steps,
 			})
-			client.AssertExpectations(t)
+			client.CloudAccess.AssertExpectations(t)
 		})
 	}
 }
@@ -3636,6 +3629,7 @@ func checkImportSingleCredentialNoCloudAccessKeyID() resource.ImportStateCheckFu
 }
 
 func TestChangedOrderOfCredentials(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		label      string
 		stateCredA *Credentials
@@ -3802,6 +3796,7 @@ func TestChangedOrderOfCredentials(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.label, func(t *testing.T) {
+			t.Parallel()
 			result := changedOrderOfCredentials(tc.stateCredA, tc.stateCredB, tc.planCredA, tc.planCredB)
 			assert.Equal(t, tc.expected, result)
 		})

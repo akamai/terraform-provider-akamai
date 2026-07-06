@@ -2,6 +2,7 @@ package edgegrid
 
 import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/clientlists"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudaccess"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudcertificates"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudlets"
 	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudlets/v3"
@@ -26,6 +27,7 @@ var (
 // TestClient is a mock implementation of the Client interface for testing purposes.
 type TestClient struct {
 	ClientLists       *clientlists.Mock
+	CloudAccess       *cloudaccess.Mock
 	CloudCertificates *cloudcertificates.Mock
 	CloudletsV2       *cloudlets.Mock
 	CloudletsV3       *v3.Mock
@@ -47,6 +49,7 @@ type TestClient struct {
 func NewTestClient() *TestClient {
 	return &TestClient{
 		ClientLists:       &clientlists.Mock{},
+		CloudAccess:       &cloudaccess.Mock{},
 		CloudCertificates: &cloudcertificates.Mock{},
 		CloudletsV2:       &cloudlets.Mock{},
 		CloudletsV3:       &v3.Mock{},
@@ -68,6 +71,11 @@ func NewTestClient() *TestClient {
 // GetClientLists returns the mock Client Lists client.
 func (c *TestClient) GetClientLists() clientlists.ClientLists {
 	return c.ClientLists
+}
+
+// GetCloudAccess returns the mock Cloud Access client.
+func (c *TestClient) GetCloudAccess() cloudaccess.CloudAccess {
+	return c.CloudAccess
 }
 
 // GetCloudCertificates returns the mock CCM client.

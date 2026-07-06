@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudaccess"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -28,6 +29,7 @@ type (
 )
 
 func TestDataKeyProperties(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		configPath string
 		init       func(*cloudaccess.Mock, testDataForKeyProperties)
@@ -147,25 +149,24 @@ func TestDataKeyProperties(t *testing.T) {
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &cloudaccess.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 			if test.init != nil {
-				test.init(client, test.mockData)
+				test.init(client.CloudAccess, test.mockData)
 			}
 
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps: []resource.TestStep{
-						{
-							Config:      testutils.LoadFixtureString(t, test.configPath),
-							Check:       checkKeyPropertiesAttrs(test.mockData),
-							ExpectError: test.error,
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				IsUnitTest:               true,
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureString(t, test.configPath),
+						Check:       checkKeyPropertiesAttrs(test.mockData),
+						ExpectError: test.error,
 					},
-				})
+				},
 			})
-			client.AssertExpectations(t)
+			client.CloudAccess.AssertExpectations(t)
 		})
 	}
 }

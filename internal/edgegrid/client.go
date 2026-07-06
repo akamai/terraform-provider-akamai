@@ -3,6 +3,7 @@ package edgegrid
 
 import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/clientlists"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudaccess"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudcertificates"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudlets"
 	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudlets/v3"
@@ -24,6 +25,8 @@ import (
 // Client is the interface for the Akamai Edgegrid client.
 type Client interface {
 	GetClientLists() clientlists.ClientLists
+
+	GetCloudAccess() cloudaccess.CloudAccess
 
 	GetCloudCertificates() cloudcertificates.CloudCertificates
 
@@ -75,6 +78,11 @@ func NewClientImpl(sess session.Session) *ClientImpl {
 // GetClientLists returns the Client Lists client for managing client lists.
 func (c *ClientImpl) GetClientLists() clientlists.ClientLists {
 	return clientlists.Client(c.sess)
+}
+
+// GetCloudAccess returns the Cloud Access client for managing cloud access.
+func (c *ClientImpl) GetCloudAccess() cloudaccess.CloudAccess {
+	return cloudaccess.Client(c.sess)
 }
 
 // GetCloudCertificates returns the CCM client for managing cloud certificates.
