@@ -33,6 +33,18 @@ func TestResDNSZone(t *testing.T) {
 		ActivationState: "PENDING",
 	}
 
+	multiSignerZone := dns.GetZoneResponse{
+		ContractID:      "ctr1",
+		Zone:            "multisignerexampleterraform.io",
+		Type:            "primary",
+		Comment:         "This is a test zone with multi-signer DNSSEC",
+		SignAndServe:    false,
+		ActivationState: "PENDING",
+		MultiProviderDnssec: &dns.MultiProviderDnssec{
+			Enabled: true,
+		},
+	}
+
 	secondaryZone := dns.GetZoneResponse{
 		ContractID:      "ctr1",
 		Zone:            "secondaryexampleterraform.io",
@@ -84,6 +96,12 @@ func TestResDNSZone(t *testing.T) {
 	getDeleteResultRespSecondaryGroup := dns.GetBulkZoneDeleteResultResponse{
 		RequestID:                "1234567890",
 		SuccessfullyDeletedZones: []string{"secondaryexampleterraform.io"},
+		FailedZones:              []dns.BulkFailedZone{},
+	}
+
+	getDeleteResultRespMultiSigner := dns.GetBulkZoneDeleteResultResponse{
+		RequestID:                "1234567890",
+		SuccessfullyDeletedZones: []string{"multisignerexampleterraform.io"},
 		FailedZones:              []dns.BulkFailedZone{},
 	}
 
@@ -753,6 +771,96 @@ func TestResDNSZone(t *testing.T) {
 					Config: testutils.LoadFixtureString(t, "testdata/TestResDnsZone/update_secondary.tf"),
 					Check: resource.ComposeTestCheckFunc(
 						resource.TestCheckResourceAttr(resourceName, "zone", "secondaryexampleterraform.io"),
+					),
+				},
+			},
+		})
+
+		client.DNS.AssertExpectations(t)
+	})
+	// This test performs a full life-cycle (CRUD) test for a zone with multi-signer DNSSEC enabled
+	t.Run("lifecycle test with multi-signer DNSSEC", func(t *testing.T) {
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+
+		multiSignerZone := multiSignerZone
+		client.DNS.On("GetZone",
+			testutils.MockContext,
+			mock.AnythingOfType("dns.GetZoneRequest"),
+		).Return(nil, &dns.Error{
+			StatusCode: http.StatusNotFound,
+		}).Times(1)
+
+		client.DNS.On("CreateZone",
+			testutils.MockContext,
+			mock.AnythingOfType("dns.CreateZoneRequest"),
+		).Return(nil)
+
+		client.DNS.On("GetZone",
+			testutils.MockContext,
+			mock.AnythingOfType("dns.GetZoneRequest"),
+		).Return(&multiSignerZone, nil)
+
+		client.DNS.On("UpdateZone",
+			testutils.MockContext,
+			mock.AnythingOfType("dns.UpdateZoneRequest"),
+		).Return(nil).Run(func(_ mock.Arguments) {
+			multiSignerZone.Comment = "This is an updated test zone with multi-signer DNSSEC"
+		})
+
+		client.DNS.On("SaveChangeList",
+			testutils.MockContext,
+			mock.AnythingOfType("dns.SaveChangeListRequest"),
+		).Return(nil)
+
+		client.DNS.On("SubmitChangeList",
+			testutils.MockContext,
+			mock.AnythingOfType("dns.SubmitChangeListRequest"),
+		).Return(nil)
+
+		client.DNS.On("GetRecordSets",
+			testutils.MockContext,
+			mock.AnythingOfType("dns.GetRecordSetsRequest"),
+		).Return(recordSetsResp, nil)
+
+		multiSignerResourceName := "akamai_dns_zone.multi_signer_test_zone"
+
+		client.DNS.On("DeleteBulkZones",
+			testutils.MockContext,
+			dns.DeleteBulkZonesRequest{ZonesList: &dns.ZoneNameListResponse{
+				Zones: []string{"multisignerexampleterraform.io"},
+			},
+			},
+		).Return(deleteBulkResp, nil)
+
+		client.DNS.On("GetBulkZoneDeleteStatus",
+			testutils.MockContext,
+			dns.GetBulkZoneDeleteStatusRequest{RequestID: "1234567890"},
+		).Return(&getDeleteStatusResp, nil)
+
+		client.DNS.On("GetBulkZoneDeleteResult",
+			testutils.MockContext,
+			dns.GetBulkZoneDeleteResultRequest{RequestID: "1234567890"},
+		).Return(&getDeleteResultRespMultiSigner, nil)
+
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDnsZone/create_multisigner.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(multiSignerResourceName, "zone", "multisignerexampleterraform.io"),
+						resource.TestCheckResourceAttr(multiSignerResourceName, "contract", "ctr1"),
+						resource.TestCheckResourceAttr(multiSignerResourceName, "comment", "This is a test zone with multi-signer DNSSEC"),
+						resource.TestCheckResourceAttr(multiSignerResourceName, "group", "grp1"),
+						resource.TestCheckResourceAttr(multiSignerResourceName, "multi_provider_dnssec.0.enabled", "true"),
+					),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDnsZone/update_multisigner.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(multiSignerResourceName, "zone", "multisignerexampleterraform.io"),
+						resource.TestCheckResourceAttr(multiSignerResourceName, "multi_provider_dnssec.0.enabled", "true"),
 					),
 				},
 			},

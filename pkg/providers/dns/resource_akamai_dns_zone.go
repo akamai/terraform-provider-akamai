@@ -185,6 +185,21 @@ func resourceDNSv2Zone(config dnsZoneResourceConfig) *schema.Resource {
 					},
 				},
 			},
+			"multi_provider_dnssec": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "Multi-signer DNSSEC properties.",
+				MaxItems:    1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"enabled": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Description: "Enables multi-signer DNSSEC for the zone.",
+						},
+					},
+				},
+			},
 			"version_id": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -484,6 +499,7 @@ func resourceDNSv2ZoneUpdate(ctx context.Context, d *schema.ResourceData, m inte
 	zoneCreate.EndCustomerID = zone.EndCustomerID
 	zoneCreate.ContractID = zone.ContractID
 	zoneCreate.TSIGKey = zone.TSIGKey
+	zoneCreate.MultiProviderDnssec = zone.MultiProviderDnssec
 	if err := populateDNSv2ZoneObject(d, zoneCreate, logger); err != nil {
 		return diag.FromErr(err)
 	}
@@ -701,6 +717,18 @@ func populateDNSv2ZoneState(d *schema.ResourceData, zoneresp *dns.GetZoneRespons
 		return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 
+	multiProviderDnssecListNew := make([]interface{}, 0)
+	if zoneresp.MultiProviderDnssec != nil {
+		multiProviderDnssecNew := map[string]interface{}{
+			"enabled": zoneresp.MultiProviderDnssec.Enabled,
+		}
+		multiProviderDnssecListNew = append(multiProviderDnssecListNew, multiProviderDnssecNew)
+	}
+
+	if err := d.Set("multi_provider_dnssec", multiProviderDnssecListNew); err != nil {
+		return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
+	}
+
 	tsigListNew := make([]interface{}, 0)
 	if zoneresp.TSIGKey != nil {
 		tsigNew := map[string]interface{}{
@@ -797,6 +825,20 @@ func populateDNSv2ZoneObject(d *schema.ResourceData, zone *dns.ZoneCreate, logge
 				Algorithm: TSIGKey[0].(map[string]interface{})["algorithm"].(string),
 				Secret:    TSIGKey[0].(map[string]interface{})["secret"].(string),
 			}
+		}
+	}
+
+	multiProviderDnssec, err := tf.GetListValue("multi_provider_dnssec", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return err
+	}
+	if (err == nil || d.HasChange("multi_provider_dnssec")) && len(multiProviderDnssec) > 0 {
+		multiProviderDnssecMap, ok := multiProviderDnssec[0].(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("'multi_provider_dnssec' entry is of invalid type; should be 'map[string]interface{}'")
+		}
+		zone.MultiProviderDnssec = &dns.MultiProviderDnssec{
+			Enabled: multiProviderDnssecMap["enabled"].(bool),
 		}
 	}
 

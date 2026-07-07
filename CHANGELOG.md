@@ -1,5 +1,12 @@
 # RELEASE NOTES
 
+## Unreleased
+
+#### FEATURES/ENHANCEMENTS:
+
+* DNS
+  * Added `multi_provider_dnssec` field to the `akamai_dns_zone` resource to support multi-signer DNSSEC configuration.
+
 ## 10.3.0 (Jul 1, 2026)
 
 #### FEATURES/ENHANCEMENTS:

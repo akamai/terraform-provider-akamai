@@ -92,10 +92,9 @@ require (
 )
 
 replace (
+	github.com/akamai/AkamaiOPEN-edgegrid-golang/v13 => /code/github/AkamaiOPEN-edgegrid-golang
 	github.com/go-jose/go-jose/v4 v4.1.3 => github.com/go-jose/go-jose/v4 v4.1.4 // Fix security vulnerability; can be removed once github.com/hashicorp/terraform-plugin-testing bumps this dependency
 	github.com/stretchr/testify v1.4.0 => github.com/stretchr/testify v1.10.0 // Fix security vulnerability; can be removed once github.com/go-ozzo/ozzo-validation/v4 bumps this dependency
 	github.com/yuin/goldmark v1.4.13 => github.com/yuin/goldmark v1.8.2 // Fix security vulnerability; can be removed once golang.org/x/tools bumps this dependency
 	go.opentelemetry.io/otel/sdk/metric v1.40.0 => go.opentelemetry.io/otel/sdk/metric v1.43.0 // Fix security vulnerability; can be removed once github.com/hashicorp/terraform-plugin-go bumps this dependency
 )
-
-// replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v13 => ../AkamaiOPEN-edgegrid-golang
