@@ -2,7 +2,6 @@ package cloudwrapper
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudwrapper"
@@ -75,16 +74,12 @@ var (
 )
 
 type capacitiesDataSource struct {
-	client cloudwrapper.CloudWrapper
+	meta.DataSource
 }
 
 // NewCapacitiesDataSource returns a new capacity data source
 func NewCapacitiesDataSource() datasource.DataSource {
 	return &capacitiesDataSource{}
-}
-
-func (d *capacitiesDataSource) setClient(client cloudwrapper.CloudWrapper) {
-	d.client = client
 }
 
 // Metadata configures data source's meta information
@@ -94,26 +89,6 @@ func (d *capacitiesDataSource) Metadata(_ context.Context, _ datasource.Metadata
 
 func (d *capacitiesDataSource) name() string {
 	return "akamai_cloudwrapper_capacities"
-}
-
-// Configure configures data source at the beginning of the lifecycle
-func (d *capacitiesDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-
-	if d.client != nil {
-		return
-	}
-
-	m, ok := req.ProviderData.(meta.Meta)
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected Data Source Configure Type",
-			fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-		)
-	}
-	d.client = cloudwrapper.Client(m.Session())
 }
 
 // Schema is used to define data source's terraform schema
@@ -191,7 +166,7 @@ func (d *capacitiesDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		return
 	}
 
-	listCapacitiesResponse, err := d.client.ListCapacities(ctx, cloudwrapper.ListCapacitiesRequest{
+	listCapacitiesResponse, err := d.Client.GetCloudWrapper().ListCapacities(ctx, cloudwrapper.ListCapacitiesRequest{
 		ContractIDs: contractIDs,
 	})
 	if err != nil {

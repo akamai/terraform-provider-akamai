@@ -2,9 +2,7 @@ package cloudwrapper
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudwrapper"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -19,7 +17,7 @@ var (
 
 type (
 	configurationsDataSource struct {
-		client cloudwrapper.CloudWrapper
+		meta.DataSource
 	}
 
 	configurationsDataSourceModel struct {
@@ -32,35 +30,9 @@ func NewConfigurationsDataSource() datasource.DataSource {
 	return &configurationsDataSource{}
 }
 
-// setClient assigns given client to properties data source
-func (d *configurationsDataSource) setClient(client cloudwrapper.CloudWrapper) {
-	d.client = client
-}
-
 // Metadata configures data source meta information
 func (d *configurationsDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "akamai_cloudwrapper_configurations"
-}
-
-// Configure configures data source at the beginning of the lifecycle
-func (d *configurationsDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		// ProviderData is nil when Configure is run first time as part of ValidateDataSourceConfig in framework provider
-		return
-	}
-
-	if d.client != nil {
-		return
-	}
-
-	m, ok := req.ProviderData.(meta.Meta)
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected Data Source Configure Type",
-			fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-		)
-	}
-	d.client = cloudwrapper.Client(m.Session())
 }
 
 // Schema is used to define data source terraform schema
@@ -142,7 +114,7 @@ func (d *configurationsDataSource) Read(ctx context.Context, req datasource.Read
 		return
 	}
 
-	configs, err := d.client.ListConfigurations(ctx)
+	configs, err := d.Client.GetCloudWrapper().ListConfigurations(ctx)
 	if err != nil {
 		resp.Diagnostics.AddError("Reading CloudWrapper Configurations", err.Error())
 		return

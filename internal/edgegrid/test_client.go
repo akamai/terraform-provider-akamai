@@ -6,6 +6,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudcertificates"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudlets"
 	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudlets/v3"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudwrapper"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cps"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/dns"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/domainownership"
@@ -32,6 +33,7 @@ type TestClient struct {
 	CloudCertificates *cloudcertificates.Mock
 	CloudletsV2       *cloudlets.Mock
 	CloudletsV3       *v3.Mock
+	CloudWrapper      *cloudwrapper.Mock
 	CPS               *cps.Mock
 	DNS               *dns.Mock
 	DomainOwnership   *domainownership.Mock
@@ -55,6 +57,7 @@ func NewTestClient() *TestClient {
 		CloudCertificates: &cloudcertificates.Mock{},
 		CloudletsV2:       &cloudlets.Mock{},
 		CloudletsV3:       &v3.Mock{},
+		CloudWrapper:      &cloudwrapper.Mock{},
 		CPS:               &cps.Mock{},
 		DNS:               &dns.Mock{},
 		DomainOwnership:   &domainownership.Mock{},
@@ -94,6 +97,11 @@ func (c *TestClient) GetCloudletsV2() cloudlets.Cloudlets {
 // GetCloudletsV3 returns the mock Cloudlets V3 client.
 func (c *TestClient) GetCloudletsV3() v3.Cloudlets {
 	return c.CloudletsV3
+}
+
+// GetCloudWrapper returns the mock CloudWrapper client.
+func (c *TestClient) GetCloudWrapper() cloudwrapper.CloudWrapper {
+	return c.CloudWrapper
 }
 
 // GetCPS returns the mock CPS client.

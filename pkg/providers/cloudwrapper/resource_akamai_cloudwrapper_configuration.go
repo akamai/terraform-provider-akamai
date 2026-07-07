@@ -38,17 +38,9 @@ var (
 
 // ConfigurationResource represents akamai_cloudwrapper_configuration resource
 type ConfigurationResource struct {
-	client        cloudwrapper.CloudWrapper
+	meta.Resource
 	deleteTimeout time.Duration
 	pollInterval  time.Duration
-}
-
-func (r *ConfigurationResource) setClient(client cloudwrapper.CloudWrapper) {
-	r.client = client
-}
-
-func (r *ConfigurationResource) setPollInterval(duration time.Duration) {
-	r.pollInterval = duration
 }
 
 // NewConfigurationResource returns new cloud wrapper configuration resource
@@ -193,29 +185,6 @@ func (r *ConfigurationResource) Schema(ctx context.Context, _ resource.SchemaReq
 	}
 }
 
-// Configure implements resource.ResourceWithConfigure.
-func (r *ConfigurationResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	// Prevent panic if the provider has not been configured.
-	if req.ProviderData == nil {
-		return
-	}
-
-	if r.client != nil {
-		return
-	}
-
-	meta, ok := req.ProviderData.(meta.Meta)
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *http.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-		)
-		return
-	}
-
-	r.client = cloudwrapper.Client(meta.Session())
-}
-
 // ModifyPlan implements resource.ResourceWithModifyPlan.
 func (*ConfigurationResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
 	// config will be deleted
@@ -277,7 +246,7 @@ func (r *ConfigurationResource) Create(ctx context.Context, req resource.CreateR
 func (r *ConfigurationResource) create(ctx context.Context, data *ConfigurationResourceModel) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	resp, err := r.client.CreateConfiguration(ctx, data.buildCreateRequest(ctx))
+	resp, err := r.Client.GetCloudWrapper().CreateConfiguration(ctx, data.buildCreateRequest(ctx))
 	if err != nil {
 		diags.AddError("Create Failed", err.Error())
 		return diags
@@ -315,7 +284,7 @@ func (r *ConfigurationResource) Read(ctx context.Context, req resource.ReadReque
 func (r *ConfigurationResource) read(ctx context.Context, data *ConfigurationResourceModel) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	result, err := r.client.GetConfiguration(ctx, cloudwrapper.GetConfigurationRequest{
+	result, err := r.Client.GetCloudWrapper().GetConfiguration(ctx, cloudwrapper.GetConfigurationRequest{
 		ConfigID: data.ID.ValueInt64(),
 	})
 	if errors.Is(err, cloudwrapper.ErrConfigurationNotFound) {
@@ -372,7 +341,7 @@ func (r *ConfigurationResource) Update(ctx context.Context, req resource.UpdateR
 func (r *ConfigurationResource) update(ctx context.Context, data *ConfigurationResourceModel) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	resp, err := r.client.UpdateConfiguration(ctx, data.buildUpdateRequest(ctx))
+	resp, err := r.Client.GetCloudWrapper().UpdateConfiguration(ctx, data.buildUpdateRequest(ctx))
 	if err != nil {
 		diags.AddError("Update Failed", err.Error())
 		return diags
@@ -411,7 +380,7 @@ func (r *ConfigurationResource) Delete(ctx context.Context, req resource.DeleteR
 		return
 	}
 
-	err := r.client.DeleteConfiguration(ctx, cloudwrapper.DeleteConfigurationRequest{
+	err := r.Client.GetCloudWrapper().DeleteConfiguration(ctx, cloudwrapper.DeleteConfigurationRequest{
 		ConfigID: data.ID.ValueInt64(),
 	})
 	if errors.Is(err, cloudwrapper.ErrDeletionNotAllowed) {
@@ -430,7 +399,7 @@ func (r *ConfigurationResource) Delete(ctx context.Context, req resource.DeleteR
 
 func (r *ConfigurationResource) isPendingDelete(ctx context.Context, id int64) (bool, diag.Diagnostics) {
 	var diags diag.Diagnostics
-	resp, err := r.client.GetConfiguration(ctx, cloudwrapper.GetConfigurationRequest{
+	resp, err := r.Client.GetCloudWrapper().GetConfiguration(ctx, cloudwrapper.GetConfigurationRequest{
 		ConfigID: id,
 	})
 	if err != nil {
@@ -444,7 +413,7 @@ func (r *ConfigurationResource) isPendingDelete(ctx context.Context, id int64) (
 func (r *ConfigurationResource) waitForDelete(ctx context.Context, id int64) diag.Diagnostics {
 	var diags diag.Diagnostics
 	for {
-		_, err := r.client.GetConfiguration(ctx, cloudwrapper.GetConfigurationRequest{
+		_, err := r.Client.GetCloudWrapper().GetConfiguration(ctx, cloudwrapper.GetConfigurationRequest{
 			ConfigID: id,
 		})
 		if errors.Is(err, cloudwrapper.ErrConfigurationNotFound) {
@@ -474,7 +443,7 @@ func (r *ConfigurationResource) ImportState(ctx context.Context, req resource.Im
 		return
 	}
 
-	result, err := r.client.GetConfiguration(ctx, cloudwrapper.GetConfigurationRequest{
+	result, err := r.Client.GetCloudWrapper().GetConfiguration(ctx, cloudwrapper.GetConfigurationRequest{
 		ConfigID: configID,
 	})
 	if err != nil {

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudwrapper"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/jinzhu/copier"
@@ -15,7 +16,7 @@ func TestConfigurationResource(t *testing.T) {
 	t.Parallel()
 	t.Run("create basic", func(t *testing.T) {
 		t.Parallel()
-		client := &cloudwrapper.Mock{}
+		client := edgegrid.NewTestClient()
 
 		configuration := cloudwrapper.CreateConfigurationRequest{
 			Body: cloudwrapper.CreateConfigurationRequestBody{
@@ -38,16 +39,15 @@ func TestConfigurationResource(t *testing.T) {
 			},
 		}
 
-		expecter := newExpecter(t, client)
+		expecter := newExpecter(t, client.CloudWrapper)
 
 		expecter.ExpectCreate(configuration)
 
 		expecter.ExpectRefresh()
 		expecter.ExpectDelete()
 
-		resource.Test(t, resource.TestCase{
-			IsUnitTest:               true,
-			ProtoV6ProviderFactories: newProviderFactory(withMockClient(client)),
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: newProviderFactory(client),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/create.tf"),
@@ -70,11 +70,11 @@ func TestConfigurationResource(t *testing.T) {
 			},
 		})
 
-		client.AssertExpectations(t)
+		client.CloudWrapper.AssertExpectations(t)
 	})
 	t.Run("email will be computed when not provided", func(t *testing.T) {
 		t.Parallel()
-		client := &cloudwrapper.Mock{}
+		client := edgegrid.NewTestClient()
 
 		configuration := cloudwrapper.CreateConfigurationRequest{
 			Body: cloudwrapper.CreateConfigurationRequestBody{
@@ -96,16 +96,15 @@ func TestConfigurationResource(t *testing.T) {
 			},
 		}
 
-		expecter := newExpecter(t, client)
+		expecter := newExpecter(t, client.CloudWrapper)
 
 		expecter.ExpectCreate(configuration)
 
 		expecter.ExpectRefresh()
 		expecter.ExpectDelete()
 
-		resource.Test(t, resource.TestCase{
-			IsUnitTest:               true,
-			ProtoV6ProviderFactories: newProviderFactory(withMockClient(client)),
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: newProviderFactory(client),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/computed_email.tf"),
@@ -119,11 +118,11 @@ func TestConfigurationResource(t *testing.T) {
 			},
 		})
 
-		client.AssertExpectations(t)
+		client.CloudWrapper.AssertExpectations(t)
 	})
 	t.Run("retain_idle_objects has default when not provided", func(t *testing.T) {
 		t.Parallel()
-		client := &cloudwrapper.Mock{}
+		client := edgegrid.NewTestClient()
 
 		configuration := cloudwrapper.CreateConfigurationRequest{
 			Body: cloudwrapper.CreateConfigurationRequestBody{
@@ -145,16 +144,15 @@ func TestConfigurationResource(t *testing.T) {
 			},
 		}
 
-		expecter := newExpecter(t, client)
+		expecter := newExpecter(t, client.CloudWrapper)
 
 		expecter.ExpectCreate(configuration)
 
 		expecter.ExpectRefresh()
 		expecter.ExpectDelete()
 
-		resource.Test(t, resource.TestCase{
-			IsUnitTest:               true,
-			ProtoV6ProviderFactories: newProviderFactory(withMockClient(client)),
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: newProviderFactory(client),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/computed_email.tf"),
@@ -168,11 +166,11 @@ func TestConfigurationResource(t *testing.T) {
 			},
 		})
 
-		client.AssertExpectations(t)
+		client.CloudWrapper.AssertExpectations(t)
 	})
 	t.Run("force new on config name change", func(t *testing.T) {
 		t.Parallel()
-		client := &cloudwrapper.Mock{}
+		client := edgegrid.NewTestClient()
 
 		configuration := cloudwrapper.CreateConfigurationRequest{
 			Body: cloudwrapper.CreateConfigurationRequestBody{
@@ -195,7 +193,7 @@ func TestConfigurationResource(t *testing.T) {
 			},
 		}
 
-		expecter := newExpecter(t, client)
+		expecter := newExpecter(t, client.CloudWrapper)
 
 		expecter.ExpectCreate(configuration)
 		expecter.ExpectRefresh()
@@ -223,16 +221,15 @@ func TestConfigurationResource(t *testing.T) {
 			},
 		}
 
-		expecter = newExpecter(t, client)
+		expecter = newExpecter(t, client.CloudWrapper)
 
 		expecter.ExpectCreate(configUpdate)
 
 		expecter.ExpectRefresh()
 		expecter.ExpectDelete()
 
-		resource.Test(t, resource.TestCase{
-			IsUnitTest:               true,
-			ProtoV6ProviderFactories: newProviderFactory(withMockClient(client)),
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: newProviderFactory(client),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/create.tf"),
@@ -251,11 +248,11 @@ func TestConfigurationResource(t *testing.T) {
 			},
 		})
 
-		client.AssertExpectations(t)
+		client.CloudWrapper.AssertExpectations(t)
 	})
 	t.Run("force new on contract_id change", func(t *testing.T) {
 		t.Parallel()
-		client := &cloudwrapper.Mock{}
+		client := edgegrid.NewTestClient()
 
 		configuration := cloudwrapper.CreateConfigurationRequest{
 			Body: cloudwrapper.CreateConfigurationRequestBody{
@@ -278,7 +275,7 @@ func TestConfigurationResource(t *testing.T) {
 			},
 		}
 
-		expecter := newExpecter(t, client)
+		expecter := newExpecter(t, client.CloudWrapper)
 
 		expecter.ExpectCreate(configuration)
 
@@ -308,16 +305,15 @@ func TestConfigurationResource(t *testing.T) {
 			},
 		}
 
-		expecter = newExpecter(t, client)
+		expecter = newExpecter(t, client.CloudWrapper)
 
 		expecter.ExpectCreate(configUpdate)
 
 		expecter.ExpectRefresh()
 		expecter.ExpectDelete()
 
-		resource.Test(t, resource.TestCase{
-			IsUnitTest:               true,
-			ProtoV6ProviderFactories: newProviderFactory(withMockClient(client)),
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: newProviderFactory(client),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/create.tf"),
@@ -338,11 +334,11 @@ func TestConfigurationResource(t *testing.T) {
 			},
 		})
 
-		client.AssertExpectations(t)
+		client.CloudWrapper.AssertExpectations(t)
 	})
 	t.Run("force new on contract_id change", func(t *testing.T) {
 		t.Parallel()
-		client := &cloudwrapper.Mock{}
+		client := edgegrid.NewTestClient()
 
 		configuration := cloudwrapper.CreateConfigurationRequest{
 			Body: cloudwrapper.CreateConfigurationRequestBody{
@@ -365,7 +361,7 @@ func TestConfigurationResource(t *testing.T) {
 			},
 		}
 
-		expecter := newExpecter(t, client)
+		expecter := newExpecter(t, client.CloudWrapper)
 
 		expecter.ExpectCreate(configuration)
 
@@ -395,16 +391,15 @@ func TestConfigurationResource(t *testing.T) {
 			},
 		}
 
-		expecter = newExpecter(t, client)
+		expecter = newExpecter(t, client.CloudWrapper)
 
 		expecter.ExpectCreate(configUpdate)
 
 		expecter.ExpectRefresh()
 		expecter.ExpectDelete()
 
-		resource.Test(t, resource.TestCase{
-			IsUnitTest:               true,
-			ProtoV6ProviderFactories: newProviderFactory(withMockClient(client)),
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: newProviderFactory(client),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/create.tf"),
@@ -425,11 +420,11 @@ func TestConfigurationResource(t *testing.T) {
 			},
 		})
 
-		client.AssertExpectations(t)
+		client.CloudWrapper.AssertExpectations(t)
 	})
 	t.Run("import", func(t *testing.T) {
 		t.Parallel()
-		client := &cloudwrapper.Mock{}
+		client := edgegrid.NewTestClient()
 
 		configuration := cloudwrapper.CreateConfigurationRequest{
 			Body: cloudwrapper.CreateConfigurationRequestBody{
@@ -452,7 +447,7 @@ func TestConfigurationResource(t *testing.T) {
 			},
 		}
 
-		expecter := newExpecter(t, client)
+		expecter := newExpecter(t, client.CloudWrapper)
 
 		expecter.ExpectCreate(configuration)
 
@@ -463,9 +458,8 @@ func TestConfigurationResource(t *testing.T) {
 		expecter.ExpectRefresh()
 		expecter.ExpectDelete()
 
-		resource.Test(t, resource.TestCase{
-			IsUnitTest:               true,
-			ProtoV6ProviderFactories: newProviderFactory(withMockClient(client)),
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: newProviderFactory(client),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/create.tf"),
@@ -483,11 +477,11 @@ func TestConfigurationResource(t *testing.T) {
 			},
 		})
 
-		client.AssertExpectations(t)
+		client.CloudWrapper.AssertExpectations(t)
 	})
 	t.Run("basic update", func(t *testing.T) {
 		t.Parallel()
-		client := &cloudwrapper.Mock{}
+		client := edgegrid.NewTestClient()
 
 		configuration := cloudwrapper.CreateConfigurationRequest{
 			Body: cloudwrapper.CreateConfigurationRequestBody{
@@ -510,7 +504,7 @@ func TestConfigurationResource(t *testing.T) {
 			},
 		}
 
-		expecter := newExpecter(t, client)
+		expecter := newExpecter(t, client.CloudWrapper)
 
 		expecter.ExpectCreate(configuration)
 
@@ -570,9 +564,8 @@ func TestConfigurationResource(t *testing.T) {
 		expecter.ExpectRefresh()
 		expecter.ExpectDelete()
 
-		resource.Test(t, resource.TestCase{
-			IsUnitTest:               true,
-			ProtoV6ProviderFactories: newProviderFactory(withMockClient(client)),
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: newProviderFactory(client),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/create.tf"),
@@ -606,7 +599,7 @@ func TestConfigurationResource(t *testing.T) {
 	})
 	t.Run("drift - config got removed", func(t *testing.T) {
 		t.Parallel()
-		client := &cloudwrapper.Mock{}
+		client := edgegrid.NewTestClient()
 
 		configuration := cloudwrapper.CreateConfigurationRequest{
 			Body: cloudwrapper.CreateConfigurationRequestBody{
@@ -629,21 +622,20 @@ func TestConfigurationResource(t *testing.T) {
 			},
 		}
 
-		expecter := newExpecter(t, client)
+		expecter := newExpecter(t, client.CloudWrapper)
 		expecter.ExpectCreate(configuration)
 
 		expecter.ExpectRefresh()
 
 		expecter.ExpectDriftRefresh(nil, cloudwrapper.ErrConfigurationNotFound)
-		expecter = newExpecter(t, client)
+		expecter = newExpecter(t, client.CloudWrapper)
 		expecter.ExpectCreate(configuration)
 
 		expecter.ExpectRefresh()
 		expecter.ExpectDelete()
 
-		resource.Test(t, resource.TestCase{
-			IsUnitTest:               true,
-			ProtoV6ProviderFactories: newProviderFactory(withMockClient(client)),
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: newProviderFactory(client),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/create.tf"),
@@ -666,11 +658,11 @@ func TestConfigurationResource(t *testing.T) {
 			},
 		})
 
-		client.AssertExpectations(t)
+		client.CloudWrapper.AssertExpectations(t)
 	})
 	t.Run("contract_id remove prefix expect no diff", func(t *testing.T) {
 		t.Parallel()
-		client := &cloudwrapper.Mock{}
+		client := edgegrid.NewTestClient()
 
 		configuration := cloudwrapper.CreateConfigurationRequest{
 			Body: cloudwrapper.CreateConfigurationRequestBody{
@@ -693,7 +685,7 @@ func TestConfigurationResource(t *testing.T) {
 			},
 		}
 
-		expecter := newExpecter(t, client)
+		expecter := newExpecter(t, client.CloudWrapper)
 		expecter.ExpectCreate(configuration)
 
 		expecter.ExpectRefresh()
@@ -703,9 +695,8 @@ func TestConfigurationResource(t *testing.T) {
 		expecter.ExpectRefresh()
 		expecter.ExpectDelete()
 
-		resource.Test(t, resource.TestCase{
-			IsUnitTest:               true,
-			ProtoV6ProviderFactories: newProviderFactory(withMockClient(client)),
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: newProviderFactory(client),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/create.tf"),
@@ -726,11 +717,11 @@ func TestConfigurationResource(t *testing.T) {
 			},
 		})
 
-		client.AssertExpectations(t)
+		client.CloudWrapper.AssertExpectations(t)
 	})
 	t.Run("property_ids with prefix", func(t *testing.T) {
 		t.Parallel()
-		client := &cloudwrapper.Mock{}
+		client := edgegrid.NewTestClient()
 
 		configuration := cloudwrapper.CreateConfigurationRequest{
 			Body: cloudwrapper.CreateConfigurationRequestBody{
@@ -753,7 +744,7 @@ func TestConfigurationResource(t *testing.T) {
 			},
 		}
 
-		expecter := newExpecter(t, client)
+		expecter := newExpecter(t, client.CloudWrapper)
 		expecter.ExpectCreate(configuration)
 		expecter.ExpectRefresh()
 
@@ -802,9 +793,8 @@ func TestConfigurationResource(t *testing.T) {
 		expecter.ExpectRefresh()
 		expecter.ExpectDelete()
 
-		resource.Test(t, resource.TestCase{
-			IsUnitTest:               true,
-			ProtoV6ProviderFactories: newProviderFactory(withMockClient(client)),
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: newProviderFactory(client),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/property_ids_with_prefix.tf"),
@@ -825,11 +815,11 @@ func TestConfigurationResource(t *testing.T) {
 			},
 		})
 
-		client.AssertExpectations(t)
+		client.CloudWrapper.AssertExpectations(t)
 	})
 	t.Run("multicdn drift error", func(t *testing.T) {
 		t.Parallel()
-		client := &cloudwrapper.Mock{}
+		client := edgegrid.NewTestClient()
 
 		configuration := cloudwrapper.CreateConfigurationRequest{
 			Body: cloudwrapper.CreateConfigurationRequestBody{
@@ -852,7 +842,7 @@ func TestConfigurationResource(t *testing.T) {
 			},
 		}
 
-		expecter := newExpecter(t, client)
+		expecter := newExpecter(t, client.CloudWrapper)
 		expecter.ExpectCreate(configuration)
 		expecter.ExpectRefresh()
 
@@ -880,9 +870,8 @@ func TestConfigurationResource(t *testing.T) {
 
 		expecter.ExpectDelete()
 
-		resource.Test(t, resource.TestCase{
-			IsUnitTest:               true,
-			ProtoV6ProviderFactories: newProviderFactory(withMockClient(client)),
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: newProviderFactory(client),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/property_ids_with_prefix.tf"),
@@ -904,11 +893,11 @@ func TestConfigurationResource(t *testing.T) {
 			},
 		})
 
-		client.AssertExpectations(t)
+		client.CloudWrapper.AssertExpectations(t)
 	})
 	t.Run("contract_id prefix drift", func(t *testing.T) {
 		t.Parallel()
-		client := &cloudwrapper.Mock{}
+		client := edgegrid.NewTestClient()
 
 		configuration := cloudwrapper.CreateConfigurationRequest{
 			Body: cloudwrapper.CreateConfigurationRequestBody{
@@ -931,7 +920,7 @@ func TestConfigurationResource(t *testing.T) {
 			},
 		}
 
-		expecter := newExpecter(t, client)
+		expecter := newExpecter(t, client.CloudWrapper)
 		expecter.ExpectCreate(configuration)
 		expecter.ExpectRefresh()
 
@@ -959,9 +948,8 @@ func TestConfigurationResource(t *testing.T) {
 		expecter.ExpectRefresh()
 		expecter.ExpectDelete()
 
-		resource.Test(t, resource.TestCase{
-			IsUnitTest:               true,
-			ProtoV6ProviderFactories: newProviderFactory(withMockClient(client)),
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: newProviderFactory(client),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/create.tf"),
@@ -982,7 +970,7 @@ func TestConfigurationResource(t *testing.T) {
 			},
 		})
 
-		client.AssertExpectations(t)
+		client.CloudWrapper.AssertExpectations(t)
 	})
 	t.Run("expect missing required errors", func(t *testing.T) {
 		t.Parallel()
@@ -1031,13 +1019,12 @@ func TestConfigurationResource(t *testing.T) {
 				expectErr: regexp.MustCompile(`capacity {\n\nThe argument "unit" is required, but no definition was found.`),
 			},
 		}
-		fact := newProviderFactory()
+		fact := newProviderFactory(edgegrid.NewTestClient())
 
 		for name, tc := range tests {
 			t.Run(name, func(t *testing.T) {
 				t.Parallel()
-				resource.Test(t, resource.TestCase{
-					IsUnitTest:               true,
+				resource.UnitTest(t, resource.TestCase{
 					ProtoV6ProviderFactories: fact,
 					Steps: []resource.TestStep{
 						{

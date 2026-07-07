@@ -7,6 +7,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudcertificates"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudlets"
 	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudlets/v3"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudwrapper"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cps"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/dns"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/domainownership"
@@ -34,6 +35,8 @@ type Client interface {
 	GetCloudletsV2() cloudlets.Cloudlets
 
 	GetCloudletsV3() v3.Cloudlets
+
+	GetCloudWrapper() cloudwrapper.CloudWrapper
 
 	GetCPS() cps.CPS
 
@@ -101,6 +104,11 @@ func (c *ClientImpl) GetCloudletsV2() cloudlets.Cloudlets {
 // GetCloudletsV3 returns the Cloudlets V3 client for managing cloudlets.
 func (c *ClientImpl) GetCloudletsV3() v3.Cloudlets {
 	return v3.Client(c.sess)
+}
+
+// GetCloudWrapper returns the CloudWrapper client for managing cloud wrapper.
+func (c *ClientImpl) GetCloudWrapper() cloudwrapper.CloudWrapper {
+	return cloudwrapper.Client(c.sess)
 }
 
 // GetCPS returns the CPS client for managing certificates.
