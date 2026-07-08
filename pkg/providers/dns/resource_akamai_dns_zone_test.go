@@ -38,7 +38,7 @@ func TestResDNSZone(t *testing.T) {
 		Zone:            "multisignerexampleterraform.io",
 		Type:            "primary",
 		Comment:         "This is a test zone with multi-signer DNSSEC",
-		SignAndServe:    false,
+		SignAndServe:    true,
 		ActivationState: "PENDING",
 		MultiProviderDnssec: &dns.MultiProviderDnssec{
 			Enabled: true,
@@ -862,6 +862,23 @@ func TestResDNSZone(t *testing.T) {
 						resource.TestCheckResourceAttr(multiSignerResourceName, "zone", "multisignerexampleterraform.io"),
 						resource.TestCheckResourceAttr(multiSignerResourceName, "multi_provider_dnssec.0.enabled", "true"),
 					),
+				},
+			},
+		})
+
+		client.DNS.AssertExpectations(t)
+	})
+
+	t.Run("multi-signer DNSSEC without sign_and_serve is rejected", func(t *testing.T) {
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResDnsZone/create_multisigner_without_sign_and_serve.tf"),
+					ExpectError: regexp.MustCompile("multi_provider_dnssec.enabled requires sign_and_serve to be true"),
 				},
 			},
 		})

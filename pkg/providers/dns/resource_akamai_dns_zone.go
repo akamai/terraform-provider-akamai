@@ -892,6 +892,10 @@ func checkDNSv2Zone(d tf.ResourceDataFetcher) error {
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
+	multiProviderDnssec, err := tf.GetListValue("multi_provider_dnssec", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return err
+	}
 	ztype := strings.ToUpper(zoneType)
 	masters := mastersSet.List()
 	if ztype == "SECONDARY" && len(masters) == 0 {
@@ -908,6 +912,12 @@ func checkDNSv2Zone(d tf.ResourceDataFetcher) error {
 	}
 	if signandserve && ztype == "ALIAS" {
 		return fmt.Errorf("sign_and_serve is not valid in %s zone %s configuration", ztype, zone)
+	}
+	if len(multiProviderDnssec) > 0 {
+		multiProviderDnssecMap, ok := multiProviderDnssec[0].(map[string]interface{})
+		if ok && multiProviderDnssecMap["enabled"].(bool) && !signandserve {
+			return fmt.Errorf("multi_provider_dnssec.enabled requires sign_and_serve to be true in zone %s configuration", zone)
+		}
 	}
 	if ztype != "SECONDARY" && len(tsig) > 0 {
 		return fmt.Errorf("tsig_key can not be populated in %s zone %s configuration", ztype, zone)
