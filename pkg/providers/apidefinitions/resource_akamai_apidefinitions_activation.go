@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/apidefinitions"
-	v0 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/apidefinitions/v0"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/framework/modifiers"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf/validators"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
@@ -27,11 +27,19 @@ import (
 
 var (
 	_ resource.Resource                = &activationResource{}
-	_ resource.ResourceWithConfigure   = &activationResource{}
 	_ resource.ResourceWithImportState = &activationResource{}
+	_ resource.ResourceWithConfigure   = &activationResource{}
 )
 
-type activationResource struct{}
+type activationResource struct {
+	meta.Resource
+	activationResourceConfig
+}
+
+type activationResourceConfig struct {
+	pollInterval    time.Duration
+	activationRetry time.Duration
+}
 
 type activationResourceModel struct {
 	EndpointID             types.Int64  `tfsdk:"api_id"`
@@ -44,36 +52,24 @@ type activationResourceModel struct {
 }
 
 // NewActivationResource returns new api definition activation resource
-func NewActivationResource() resource.Resource {
-	return &activationResource{}
+func NewActivationResource(config activationResourceConfig) func() resource.Resource {
+	return func() resource.Resource {
+		return &activationResource{
+			activationResourceConfig: config,
+		}
+	}
+}
+
+func defaultActivationResourceConfig() activationResourceConfig {
+	return activationResourceConfig{
+		pollInterval:    30 * time.Second,
+		activationRetry: 5 * time.Second,
+	}
 }
 
 // Metadata implements datasource.DataSource.
 func (r *activationResource) Metadata(_ context.Context, _ resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = "akamai_apidefinitions_activation"
-}
-
-// Configure implements datasource.DataSource.
-func (r *activationResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-
-	metaConfig, ok := req.ProviderData.(meta.Meta)
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *http.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-		)
-		return
-	}
-
-	if client == nil {
-		client = apidefinitions.Client(metaConfig.Session())
-	}
-	if clientV0 == nil {
-		clientV0 = v0.Client(metaConfig.Session())
-	}
 }
 
 // Schema implements datasource.DataSource.
@@ -184,7 +180,7 @@ func (r *activationResource) Read(ctx context.Context, req resource.ReadRequest,
 func (r *activationResource) read(ctx context.Context, data *activationResourceModel) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	endpoint, err := getEndpoint(ctx, data.EndpointID.ValueInt64())
+	endpoint, err := getEndpoint(ctx, r.Client.GetAPIDefinitions(), data.EndpointID.ValueInt64())
 	if err != nil {
 		diags.AddError("Unable to read Endpoint", err.Error())
 		return diags
@@ -235,7 +231,7 @@ func (r *activationResource) Delete(ctx context.Context, req resource.DeleteRequ
 
 	network := apidefinitions.NetworkType(state.Network.ValueString())
 
-	diags := deactivateEndpointOnNetwork(ctx, state.EndpointID.ValueInt64(), network)
+	diags := deactivateEndpointOnNetwork(ctx, r.Client.GetAPIDefinitions(), state.EndpointID.ValueInt64(), network, r.activationRetry, r.pollInterval)
 	resp.Diagnostics.Append(diags...)
 }
 
@@ -262,7 +258,7 @@ func (r *activationResource) ImportState(ctx context.Context, req resource.Impor
 		return
 	}
 
-	endpoint, err := getEndpoint(ctx, endpointID)
+	endpoint, err := getEndpoint(ctx, r.Client.GetAPIDefinitions(), endpointID)
 	if err != nil {
 		resp.Diagnostics.AddError("Unable to read Endpoint", err.Error())
 		return
@@ -292,7 +288,7 @@ func (r *activationResource) handleActivation(ctx context.Context, state *activa
 	tflog.Debug(ctx, "handleActivation")
 
 	var diags diag.Diagnostics
-	endpoint, err := getEndpoint(ctx, state.EndpointID.ValueInt64())
+	endpoint, err := getEndpoint(ctx, r.Client.GetAPIDefinitions(), state.EndpointID.ValueInt64())
 	if err != nil {
 		diags.AddError("Unable to read Endpoint", err.Error())
 		return diags
@@ -312,7 +308,7 @@ func (r *activationResource) handleActivation(ctx context.Context, state *activa
 	networkState := getStateOnNetwork(network, *endpoint)
 
 	if networkState.Status != nil && *networkState.Status == apidefinitions.ActivationStatusFailed {
-		resp, err := client.CloneEndpointVersion(ctx, apidefinitions.CloneEndpointVersionRequest{
+		resp, err := r.Client.GetAPIDefinitions().CloneEndpointVersion(ctx, apidefinitions.CloneEndpointVersionRequest{
 			VersionNumber: versionToActivate,
 			APIEndpointID: endpointID,
 		})
@@ -346,7 +342,7 @@ func (r *activationResource) handleActivation(ctx context.Context, state *activa
 			},
 		}
 
-		alerts, err := client.VerifyVersion(ctx, verifyRequest)
+		alerts, err := r.Client.GetAPIDefinitions().VerifyVersion(ctx, verifyRequest)
 
 		if err != nil {
 			diags.AddError("Activation Verification Failed", err.Error())
@@ -367,13 +363,13 @@ func (r *activationResource) handleActivation(ctx context.Context, state *activa
 			return diags
 		}
 
-		err = startActivation(ctx, activationRequest)
+		err = startActivation(ctx, r.Client.GetAPIDefinitions(), activationRequest, r.activationRetry)
 		if err != nil {
 			diags.AddError("Activation Failed", err.Error())
 			return diags
 		}
 
-		endpoint, diags = pollActivation(ctx, endpointID, versionToActivate, network)
+		endpoint, diags = pollActivation(ctx, r.Client.GetAPIDefinitions(), endpointID, versionToActivate, network, r.pollInterval)
 		if diags != nil {
 			diags.Append(diags...)
 			return diags

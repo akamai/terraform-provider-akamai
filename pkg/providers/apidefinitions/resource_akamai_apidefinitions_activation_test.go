@@ -8,9 +8,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	v0 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/apidefinitions/v0"
-
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/apidefinitions"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -20,7 +19,9 @@ import (
 
 func TestActivationResource(t *testing.T) {
 	t.Parallel()
-	pollInterval = time.Millisecond * 10
+	config := defaultSubproviderConfig()
+	config.activation.pollInterval = 10 * time.Millisecond
+	config.activation.activationRetry = 5 * time.Millisecond
 
 	var tests = map[string]struct {
 		configPath   string
@@ -232,20 +233,18 @@ func TestActivationResource(t *testing.T) {
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &apidefinitions.Mock{}
-			clientV0 := &v0.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 			if test.init != nil {
-				test.init(client)
+				test.init(client.APIDefinitions)
 			}
-			useClient(client, clientV0, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps:                    test.steps,
-					CheckDestroy:             test.checkDestroy,
-				})
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, newSubproviderWithConfig(config)),
+				IsUnitTest:               true,
+				Steps:                    test.steps,
+				CheckDestroy:             test.checkDestroy,
 			})
-			client.AssertExpectations(t)
+			client.APIDefinitions.AssertExpectations(t)
 		})
 	}
 }

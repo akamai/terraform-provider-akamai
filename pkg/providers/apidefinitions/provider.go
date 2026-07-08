@@ -2,10 +2,6 @@
 package apidefinitions
 
 import (
-	"sync"
-
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/apidefinitions"
-	v0 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/apidefinitions/v0"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/subprovider"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -14,30 +10,32 @@ import (
 
 type (
 	// SubProvider gathers apidefinitions resources and data sources
-	SubProvider struct{}
-	option      func(p *SubProvider)
+	SubProvider struct {
+		config subproviderConfig
+	}
+
+	subproviderConfig struct {
+		activation activationResourceConfig
+		api        apiResourceConfig
+	}
 )
 
-var (
-	once     sync.Once
-	client   apidefinitions.APIDefinitions
-	clientV0 v0.APIDefinitions
-	inst     *SubProvider
-)
+func defaultSubproviderConfig() subproviderConfig {
+	return subproviderConfig{
+		activation: defaultActivationResourceConfig(),
+		api:        defaultAPIResourceConfig(),
+	}
+}
 
 var _ subprovider.Subprovider = &SubProvider{}
 
+func newSubproviderWithConfig(config subproviderConfig) *SubProvider {
+	return &SubProvider{config: config}
+}
+
 // NewSubprovider returns a new apidefinitions subprovider
-func NewSubprovider(opts ...option) *SubProvider {
-	once.Do(func() {
-		inst = &SubProvider{}
-
-		for _, opt := range opts {
-			opt(inst)
-		}
-	})
-
-	return inst
+func NewSubprovider() *SubProvider {
+	return newSubproviderWithConfig(defaultSubproviderConfig())
 }
 
 // SDKResources returns the apidefinitions resources implemented using terraform-plugin-sdk
@@ -48,8 +46,8 @@ func (p *SubProvider) SDKResources() map[string]*schema.Resource {
 // FrameworkResources returns the apidefinitions resources implemented using terraform-plugin-framework
 func (p *SubProvider) FrameworkResources() []func() resource.Resource {
 	return []func() resource.Resource{
-		NewActivationResource,
-		NewAPIResource,
+		NewActivationResource(p.config.activation),
+		NewAPIResource(p.config.api),
 		NewAPIResourceOperationResource,
 	}
 }

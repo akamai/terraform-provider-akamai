@@ -1,6 +1,8 @@
 package edgegrid
 
 import (
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/apidefinitions"
+	v0 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/apidefinitions/v0"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/clientlists"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudaccess"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudcertificates"
@@ -28,6 +30,8 @@ var (
 
 // TestClient is a mock implementation of the Client interface for testing purposes.
 type TestClient struct {
+	APIDefinitions    *apidefinitions.Mock
+	APIDefinitionsV0  *v0.Mock
 	ClientLists       *clientlists.Mock
 	CloudAccess       *cloudaccess.Mock
 	CloudCertificates *cloudcertificates.Mock
@@ -52,6 +56,8 @@ type TestClient struct {
 // NewTestClient creates a new instance of TestClient with mock implementations.
 func NewTestClient() *TestClient {
 	return &TestClient{
+		APIDefinitions:    &apidefinitions.Mock{},
+		APIDefinitionsV0:  &v0.Mock{},
 		ClientLists:       &clientlists.Mock{},
 		CloudAccess:       &cloudaccess.Mock{},
 		CloudCertificates: &cloudcertificates.Mock{},
@@ -72,6 +78,16 @@ func NewTestClient() *TestClient {
 		PAPI:              &papi.Mock{},
 		ReportingGroups:   &reportinggroups.Mock{},
 	}
+}
+
+// GetAPIDefinitions returns the mock API Definitions client.
+func (c *TestClient) GetAPIDefinitions() apidefinitions.APIDefinitions {
+	return c.APIDefinitions
+}
+
+// GetAPIDefinitionsV0 returns the mock API Definitions V0 client.
+func (c *TestClient) GetAPIDefinitionsV0() v0.APIDefinitions {
+	return c.APIDefinitionsV0
 }
 
 // GetClientLists returns the mock Client Lists client.

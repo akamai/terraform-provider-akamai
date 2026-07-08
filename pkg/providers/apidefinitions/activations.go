@@ -13,14 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
-var (
-	pollInterval    = time.Second * 30
-	activationRetry = time.Second * 5
-)
-
-func startActivation(ctx context.Context, activationRequest apidefinitions.ActivateVersionRequest) error {
-
-	activationRetry := activationRetry
+func startActivation(ctx context.Context, client apidefinitions.APIDefinitions, activationRequest apidefinitions.ActivateVersionRequest, activationRetry time.Duration) error {
 
 	for {
 		tflog.Debug(ctx, "starting activation")
@@ -47,9 +40,7 @@ func startActivation(ctx context.Context, activationRequest apidefinitions.Activ
 	}
 }
 
-func startDeactivation(ctx context.Context, deactivationRequest apidefinitions.DeactivateVersionRequest) error {
-
-	deactivationRetry := activationRetry
+func startDeactivation(ctx context.Context, client apidefinitions.APIDefinitions, deactivationRequest apidefinitions.DeactivateVersionRequest, deactivationRetry time.Duration) error {
 
 	for {
 		tflog.Debug(ctx, "starting deactivation")
@@ -77,27 +68,27 @@ func startDeactivation(ctx context.Context, deactivationRequest apidefinitions.D
 
 }
 
-func deactivateEndpoint(ctx context.Context, endpoint apidefinitions.EndpointDetail) diag.Diagnostics {
-	return deactivateOnNetworks(ctx, endpoint, []apidefinitions.NetworkType{apidefinitions.ActivationNetworkStaging, apidefinitions.ActivationNetworkProduction})
+func deactivateEndpoint(ctx context.Context, client apidefinitions.APIDefinitions, endpoint apidefinitions.EndpointDetail, deactivationRetry, pollInterval time.Duration) diag.Diagnostics {
+	return deactivateOnNetworks(ctx, client, endpoint, []apidefinitions.NetworkType{apidefinitions.ActivationNetworkStaging, apidefinitions.ActivationNetworkProduction}, deactivationRetry, pollInterval)
 }
 
-func deactivateEndpointOnNetwork(ctx context.Context, endpointID int64, network apidefinitions.NetworkType) diag.Diagnostics {
-	return deactivateEndpointOnNetworks(ctx, endpointID, []apidefinitions.NetworkType{network})
+func deactivateEndpointOnNetwork(ctx context.Context, client apidefinitions.APIDefinitions, endpointID int64, network apidefinitions.NetworkType, deactivationRetry, pollInterval time.Duration) diag.Diagnostics {
+	return deactivateEndpointOnNetworks(ctx, client, endpointID, []apidefinitions.NetworkType{network}, deactivationRetry, pollInterval)
 }
 
-func deactivateEndpointOnNetworks(ctx context.Context, endpointID int64, scope []apidefinitions.NetworkType) diag.Diagnostics {
+func deactivateEndpointOnNetworks(ctx context.Context, client apidefinitions.APIDefinitions, endpointID int64, scope []apidefinitions.NetworkType, deactivationRetry, pollInterval time.Duration) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	endpoint, err := getEndpoint(ctx, endpointID)
+	endpoint, err := getEndpoint(ctx, client, endpointID)
 	if err != nil {
 		diags.AddError("Unable to read Endpoint", err.Error())
 		return diags
 	}
 
-	return deactivateOnNetworks(ctx, *endpoint, scope)
+	return deactivateOnNetworks(ctx, client, *endpoint, scope, deactivationRetry, pollInterval)
 }
 
-func deactivateOnNetworks(ctx context.Context, endpoint apidefinitions.EndpointDetail, scope []apidefinitions.NetworkType) diag.Diagnostics {
+func deactivateOnNetworks(ctx context.Context, client apidefinitions.APIDefinitions, endpoint apidefinitions.EndpointDetail, scope []apidefinitions.NetworkType, deactivationRetry, pollInterval time.Duration) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	var networkToDeactivate []apidefinitions.NetworkType
@@ -110,7 +101,7 @@ func deactivateOnNetworks(ctx context.Context, endpoint apidefinitions.EndpointD
 				Networks: []apidefinitions.NetworkType{apidefinitions.ActivationNetworkStaging},
 			},
 		}
-		err := startDeactivation(ctx, request)
+		err := startDeactivation(ctx, client, request, deactivationRetry)
 		if err != nil {
 			diags.AddError("Deactivation on Staging Failed", err.Error())
 			return diags
@@ -127,7 +118,7 @@ func deactivateOnNetworks(ctx context.Context, endpoint apidefinitions.EndpointD
 				Networks: []apidefinitions.NetworkType{apidefinitions.ActivationNetworkProduction},
 			},
 		}
-		err := startDeactivation(ctx, request)
+		err := startDeactivation(ctx, client, request, deactivationRetry)
 		if err != nil {
 			diags.AddError("Deactivation on Production Failed", err.Error())
 			return diags
@@ -136,12 +127,12 @@ func deactivateOnNetworks(ctx context.Context, endpoint apidefinitions.EndpointD
 	}
 
 	if len(networkToDeactivate) > 0 {
-		pollDeactivation(ctx, endpoint.APIEndpointID, networkToDeactivate)
+		pollDeactivation(ctx, client, endpoint.APIEndpointID, networkToDeactivate, pollInterval)
 	}
 	return nil
 }
 
-func getEndpoint(ctx context.Context, endpointID int64) (*apidefinitions.EndpointDetail, error) {
+func getEndpoint(ctx context.Context, client apidefinitions.APIDefinitions, endpointID int64) (*apidefinitions.EndpointDetail, error) {
 	endpoint, err := client.GetEndpoint(ctx, apidefinitions.GetEndpointRequest{APIEndpointID: endpointID})
 	if err != nil {
 		return nil, err
@@ -150,13 +141,13 @@ func getEndpoint(ctx context.Context, endpointID int64) (*apidefinitions.Endpoin
 	return (*apidefinitions.EndpointDetail)(endpoint), nil
 }
 
-func pollActivation(ctx context.Context, endpointID, version int64, network apidefinitions.NetworkType) (*apidefinitions.EndpointDetail, diag.Diagnostics) {
+func pollActivation(ctx context.Context, client apidefinitions.APIDefinitions, endpointID, version int64, network apidefinitions.NetworkType, pollInterval time.Duration) (*apidefinitions.EndpointDetail, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	for {
 		select {
 		case <-time.After(pollInterval):
-			endpoint, err := getEndpoint(ctx, endpointID)
+			endpoint, err := getEndpoint(ctx, client, endpointID)
 			if err != nil {
 				continue
 			}
@@ -174,12 +165,12 @@ func pollActivation(ctx context.Context, endpointID, version int64, network apid
 	}
 }
 
-func pollDeactivation(ctx context.Context, endpointID int64, networkToDeactivate []apidefinitions.NetworkType) (*apidefinitions.EndpointDetail, diag.Diagnostics) {
+func pollDeactivation(ctx context.Context, client apidefinitions.APIDefinitions, endpointID int64, networkToDeactivate []apidefinitions.NetworkType, pollInterval time.Duration) (*apidefinitions.EndpointDetail, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	for {
 		select {
 		case <-time.After(pollInterval):
-			endpoint, err := getEndpoint(ctx, endpointID)
+			endpoint, err := getEndpoint(ctx, client, endpointID)
 			if err != nil {
 				continue
 			}
