@@ -102,7 +102,7 @@ func resourceContentProtectionJavaScriptInjectionRuleRead(ctx context.Context, d
 	return ContentProtectionJavaScriptInjectionRuleRead(ctx, d, m, true)
 }
 
-// ContentProtectionJavaScriptInjectionRuleRead read JavaScript injection rule for content protector
+// ContentProtectionJavaScriptInjectionRuleRead read JavaScript injection rule for content protector.
 func ContentProtectionJavaScriptInjectionRuleRead(ctx context.Context, d *schema.ResourceData, m interface{}, readFromCache bool) diag.Diagnostics {
 	meta := meta.Must(m)
 	client := meta.Client().GetBotMan()

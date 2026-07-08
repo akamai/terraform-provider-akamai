@@ -13,7 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-// MatchTargetOutputText holds data for templates
+// MatchTargetOutputText holds data for templates.
 type MatchTargetOutputText struct {
 	TargetID int
 	PolicyID string

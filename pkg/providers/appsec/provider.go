@@ -1,4 +1,4 @@
-// Package appsec contains implementation for Akamai Terraform sub-provider responsible for Application Security
+// Package appsec contains implementation for Akamai Terraform sub-provider responsible for Application Security.
 package appsec
 
 import (
@@ -33,12 +33,12 @@ func newSubproviderWithConfig(config subproviderConfig) *Subprovider {
 	}
 }
 
-// NewSubprovider returns a new appsec subprovider
+// NewSubprovider returns a new appsec subprovider.
 func NewSubprovider() *Subprovider {
 	return newSubproviderWithConfig(defaultSubproviderConfig())
 }
 
-// SDKResources returns the appsec resources implemented using terraform-plugin-sdk
+// SDKResources returns the appsec resources implemented using terraform-plugin-sdk.
 func (p *Subprovider) SDKResources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
 		"akamai_appsec_aap_selected_hostnames":                   resourceAAPSelectedHostnames(),
@@ -98,7 +98,7 @@ func (p *Subprovider) SDKResources() map[string]*schema.Resource {
 	}
 }
 
-// SDKDataSources returns the appsec data sources implemented using terraform-plugin-sdk
+// SDKDataSources returns the appsec data sources implemented using terraform-plugin-sdk.
 func (p *Subprovider) SDKDataSources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
 		"akamai_appsec_aap_selected_hostnames":                   dataSourceAAPSelectedHostnames(),
@@ -158,7 +158,7 @@ func (p *Subprovider) SDKDataSources() map[string]*schema.Resource {
 	}
 }
 
-// FrameworkResources returns the appsec resources implemented using terraform-plugin-framework
+// FrameworkResources returns the appsec resources implemented using terraform-plugin-framework.
 func (p *Subprovider) FrameworkResources() []func() resource.Resource {
 	return []func() resource.Resource{
 		NewRapidRulesResource,
@@ -169,7 +169,7 @@ func (p *Subprovider) FrameworkResources() []func() resource.Resource {
 	}
 }
 
-// FrameworkDataSources returns the appsec data sources implemented using terraform-plugin-framework
+// FrameworkDataSources returns the appsec data sources implemented using terraform-plugin-framework.
 func (p *Subprovider) FrameworkDataSources() []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewCustomRulesUsageDataSource,

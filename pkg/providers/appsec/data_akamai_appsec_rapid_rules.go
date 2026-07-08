@@ -50,15 +50,15 @@ var (
 	_ datasource.DataSourceWithConfigure = &rapidRulesDataSource{}
 )
 
-// NewRapidRulesDataSource returns a new rapid rules data source
+// NewRapidRulesDataSource returns a new rapid rules data source.
 func NewRapidRulesDataSource() datasource.DataSource { return &rapidRulesDataSource{} }
 
-// Metadata configures data source's meta information
+// Metadata configures data source's meta information.
 func (d *rapidRulesDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, response *datasource.MetadataResponse) {
 	response.TypeName = "akamai_appsec_rapid_rules"
 }
 
-// Schema is used to define data source's terraform schema
+// Schema is used to define data source's terraform schema.
 func (d *rapidRulesDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Rapid rules data source.",

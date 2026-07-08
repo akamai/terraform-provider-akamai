@@ -1,4 +1,4 @@
-// Package botman contains implementation for Akamai Terraform sub-provider responsible for maintaining Bot Manager
+// Package botman contains implementation for Akamai Terraform sub-provider responsible for maintaining Bot Manager.
 package botman
 
 import (
@@ -21,12 +21,12 @@ var (
 
 var _ subprovider.Subprovider = &Subprovider{}
 
-// NewSubprovider returns a new botman subprovider
+// NewSubprovider returns a new botman subprovider.
 func NewSubprovider() *Subprovider {
 	return &Subprovider{}
 }
 
-// SDKResources returns the botman resources implemented using terraform-plugin-sdk
+// SDKResources returns the botman resources implemented using terraform-plugin-sdk.
 func (p *Subprovider) SDKResources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
 		"akamai_botman_akamai_bot_category_action":                   resourceAkamaiBotCategoryAction(),
@@ -58,7 +58,7 @@ func (p *Subprovider) SDKResources() map[string]*schema.Resource {
 	}
 }
 
-// SDKDataSources returns the botman data sources implemented using terraform-plugin-sdk
+// SDKDataSources returns the botman data sources implemented using terraform-plugin-sdk.
 func (p *Subprovider) SDKDataSources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
 		"akamai_botman_akamai_bot_category":                          dataSourceAkamaiBotCategory(),
@@ -96,12 +96,12 @@ func (p *Subprovider) SDKDataSources() map[string]*schema.Resource {
 	}
 }
 
-// FrameworkResources returns the botman resources implemented using terraform-plugin-framework
+// FrameworkResources returns the botman resources implemented using terraform-plugin-framework.
 func (p *Subprovider) FrameworkResources() []func() resource.Resource {
 	return []func() resource.Resource{}
 }
 
-// FrameworkDataSources returns the botman data sources implemented using terraform-plugin-framework
+// FrameworkDataSources returns the botman data sources implemented using terraform-plugin-framework.
 func (p *Subprovider) FrameworkDataSources() []func() datasource.DataSource {
 	return []func() datasource.DataSource{}
 }

@@ -46,17 +46,17 @@ const (
 	urlProtectionActionResourceName = "akamai_appsec_url_protection_action"
 )
 
-// NewURLProtectionActionResource returns a new URL Protection Action resource
+// NewURLProtectionActionResource returns a new URL Protection Action resource.
 func NewURLProtectionActionResource() resource.Resource {
 	return &urlProtectionActionResource{}
 }
 
-// Metadata implements resource's Metadata method
+// Metadata implements resource's Metadata method.
 func (r *urlProtectionActionResource) Metadata(_ context.Context, _ resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = urlProtectionActionResourceName
 }
 
-// Schema implements resource's Schema method
+// Schema implements resource's Schema method.
 func (r *urlProtectionActionResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: "Manage URL Protection Actions for Application Security",
@@ -112,7 +112,7 @@ func (r *urlProtectionActionResource) Schema(_ context.Context, _ resource.Schem
 	}
 }
 
-// ValidateConfig implements resource's ValidateConfig method
+// ValidateConfig implements resource's ValidateConfig method.
 func (r *urlProtectionActionResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
 
 	tflog.Debug(ctx, "Validating URL Protection Action resource configuration")
@@ -177,7 +177,7 @@ func (r *urlProtectionActionResource) ValidateConfig(ctx context.Context, req re
 	}
 }
 
-// Create implements resource's Create method
+// Create implements resource's Create method.
 func (r *urlProtectionActionResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	tflog.Debug(ctx, "Creating URL Protection Action Resource")
 
@@ -242,7 +242,7 @@ func (r *urlProtectionActionResource) Create(ctx context.Context, req resource.C
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-// Read implements resource's Read method
+// Read implements resource's Read method.
 func (r *urlProtectionActionResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	tflog.Debug(ctx, "Reading URL Protection Action Resource")
 
@@ -294,7 +294,7 @@ func (r *urlProtectionActionResource) Read(ctx context.Context, req resource.Rea
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-// Update implements resource's Update method
+// Update implements resource's Update method.
 func (r *urlProtectionActionResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	tflog.Debug(ctx, "Updating URL Protection Action Resource")
 
@@ -371,7 +371,7 @@ func (r *urlProtectionActionResource) Update(ctx context.Context, req resource.U
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-// Delete implements resource's Delete method
+// Delete implements resource's Delete method.
 func (r *urlProtectionActionResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 
 	tflog.Debug(ctx, "Deleting URL Protection Action Resource")
@@ -410,7 +410,7 @@ func (r *urlProtectionActionResource) Delete(ctx context.Context, req resource.D
 	}
 }
 
-// ImportState implements resource's ImportState method
+// ImportState implements resource's ImportState method.
 func (r *urlProtectionActionResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	tflog.Debug(ctx, "Importing URL Protection Action resource")
 

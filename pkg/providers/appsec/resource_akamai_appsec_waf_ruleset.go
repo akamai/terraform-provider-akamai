@@ -67,7 +67,7 @@ const (
 	wafRulesetResourceName                  = "wafRuleset"
 )
 
-// NewWAFRulesetResource returns new appsec WAF ruleset resource
+// NewWAFRulesetResource returns new appsec WAF ruleset resource.
 func NewWAFRulesetResource() resource.Resource {
 	return &wafRulesetResource{}
 }
@@ -77,7 +77,7 @@ func (r *wafRulesetResource) Metadata(_ context.Context, _ resource.MetadataRequ
 	resp.TypeName = "akamai_appsec_waf_ruleset"
 }
 
-// Schema implements resource's Schema
+// Schema implements resource's Schema.
 func (r *wafRulesetResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "WAF ruleset resource.",
@@ -215,7 +215,7 @@ func (r *wafRulesetResource) ValidateConfig(ctx context.Context, req resource.Va
 	}
 }
 
-// Create implements resource's Create method
+// Create implements resource's Create method.
 func (r *wafRulesetResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	tflog.Debug(ctx, "Creating WAF Ruleset Resource")
 
@@ -314,7 +314,7 @@ func (r *wafRulesetResource) Create(ctx context.Context, req resource.CreateRequ
 	resp.Diagnostics.Append(resp.State.Set(ctx, data)...)
 }
 
-// Read implements resource's Read method
+// Read implements resource's Read method.
 func (r *wafRulesetResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	tflog.Debug(ctx, "Reading WAF Ruleset Resource")
 
@@ -363,7 +363,7 @@ func (r *wafRulesetResource) Read(ctx context.Context, req resource.ReadRequest,
 	resp.Diagnostics.Append(resp.State.Set(ctx, updatedData)...)
 }
 
-// Update implements resource's Update method
+// Update implements resource's Update method.
 func (r *wafRulesetResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	tflog.Debug(ctx, "Updating WAF Ruleset Resource")
 
@@ -618,7 +618,7 @@ func (r *wafRulesetResource) Delete(ctx context.Context, req resource.DeleteRequ
 	tflog.Info(ctx, "WAF Ruleset resource removed from state")
 }
 
-// ImportState implements resource's ImportState method
+// ImportState implements resource's ImportState method.
 func (r *wafRulesetResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	tflog.Debug(ctx, "Importing WAF Ruleset resource")
 

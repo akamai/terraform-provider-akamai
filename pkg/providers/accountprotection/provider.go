@@ -1,4 +1,4 @@
-// Package accountprotection contains implementation for Akamai Terraform sub-provider responsible for maintaining Bot Manager
+// Package accountprotection contains implementation for Akamai Terraform sub-provider responsible for maintaining Bot Manager.
 package accountprotection
 
 import (
@@ -21,12 +21,12 @@ var (
 
 var _ subprovider.Subprovider = &Subprovider{}
 
-// NewSubprovider returns a new account protection subprovider
+// NewSubprovider returns a new account protection subprovider.
 func NewSubprovider() *Subprovider {
 	return &Subprovider{}
 }
 
-// SDKResources returns the botman resources implemented using terraform-plugin-sdk
+// SDKResources returns the account protection resources implemented using terraform-plugin-sdk.
 func (p *Subprovider) SDKResources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
 		"akamai_apr_protected_operations":        resourceProtectedOperations(),
@@ -36,7 +36,7 @@ func (p *Subprovider) SDKResources() map[string]*schema.Resource {
 	}
 }
 
-// SDKDataSources returns the botman data sources implemented using terraform-plugin-sdk
+// SDKDataSources returns the account protection data sources implemented using terraform-plugin-sdk.
 func (p *Subprovider) SDKDataSources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
 		"akamai_apr_protected_operations":        dataSourceProtectedOperations(),
@@ -46,12 +46,12 @@ func (p *Subprovider) SDKDataSources() map[string]*schema.Resource {
 	}
 }
 
-// FrameworkResources returns the botman resources implemented using terraform-plugin-framework
+// FrameworkResources returns the account protection resources implemented using terraform-plugin-framework.
 func (p *Subprovider) FrameworkResources() []func() resource.Resource {
 	return []func() resource.Resource{}
 }
 
-// FrameworkDataSources returns the botman data sources implemented using terraform-plugin-framework
+// FrameworkDataSources returns the account protection data sources implemented using terraform-plugin-framework.
 func (p *Subprovider) FrameworkDataSources() []func() datasource.DataSource {
 	return []func() datasource.DataSource{}
 }

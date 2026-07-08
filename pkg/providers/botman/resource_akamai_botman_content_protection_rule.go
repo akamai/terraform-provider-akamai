@@ -102,7 +102,7 @@ func resourceContentProtectionRuleRead(ctx context.Context, d *schema.ResourceDa
 	return ContentProtectionRuleRead(ctx, d, m, true)
 }
 
-// ContentProtectionRuleRead read content protector rule
+// ContentProtectionRuleRead read content protector rule.
 func ContentProtectionRuleRead(ctx context.Context, d *schema.ResourceData, m interface{}, readFromCache bool) diag.Diagnostics {
 	meta := meta.Must(m)
 	client := meta.Client().GetBotMan()

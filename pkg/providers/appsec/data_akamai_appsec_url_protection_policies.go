@@ -28,17 +28,17 @@ var (
 	_ datasource.DataSourceWithConfigure = &urlProtectionPoliciesDataSource{}
 )
 
-// NewURLProtectionPoliciesDataSource returns a new url protection policies data source
+// NewURLProtectionPoliciesDataSource returns a new url protection policies data source.
 func NewURLProtectionPoliciesDataSource() datasource.DataSource {
 	return &urlProtectionPoliciesDataSource{}
 }
 
-// Metadata configures data source's meta information
+// Metadata configures data source's meta information.
 func (d *urlProtectionPoliciesDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, response *datasource.MetadataResponse) {
 	response.TypeName = "akamai_appsec_url_protection_policies"
 }
 
-// Schema is used to define data source's terraform schema
+// Schema is used to define data source's terraform schema.
 func (d *urlProtectionPoliciesDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "URL Protection Policies data source.",

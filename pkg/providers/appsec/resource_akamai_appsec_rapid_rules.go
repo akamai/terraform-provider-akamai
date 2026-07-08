@@ -56,7 +56,7 @@ const (
 	resourceName                        = "rapidRules"
 )
 
-// NewRapidRulesResource returns new appsec rapid rules resource
+// NewRapidRulesResource returns new appsec rapid rules resource.
 func NewRapidRulesResource() resource.Resource {
 	return &rapidRulesResource{}
 }
@@ -66,7 +66,7 @@ func (r *rapidRulesResource) Metadata(_ context.Context, _ resource.MetadataRequ
 	resp.TypeName = "akamai_appsec_rapid_rules"
 }
 
-// Schema implements resource's Schema
+// Schema implements resource's Schema.
 func (r *rapidRulesResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Rapid rule resource.",
@@ -155,7 +155,7 @@ func (r *rapidRulesResource) ValidateConfig(ctx context.Context, req resource.Va
 	}
 }
 
-// Create implements resource's Create method
+// Create implements resource's Create method.
 func (r *rapidRulesResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	tflog.Debug(ctx, "Creating Rapid Rules Resource")
 
@@ -259,7 +259,7 @@ func (r *rapidRulesResource) Create(ctx context.Context, req resource.CreateRequ
 	resp.Diagnostics.Append(resp.State.Set(ctx, data)...)
 }
 
-// Read implements resource's Read method
+// Read implements resource's Read method.
 func (r *rapidRulesResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	tflog.Debug(ctx, "Reading Rapid Rules Resource")
 
@@ -334,7 +334,7 @@ func (r *rapidRulesResource) Read(ctx context.Context, req resource.ReadRequest,
 	resp.Diagnostics.Append(resp.State.Set(ctx, data)...)
 }
 
-// Update implements resource's Update method
+// Update implements resource's Update method.
 func (r *rapidRulesResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state *rapidRulesResourceModel
 
@@ -447,7 +447,7 @@ func (r *rapidRulesResource) Update(ctx context.Context, req resource.UpdateRequ
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
-// Delete implements resource's Delete method
+// Delete implements resource's Delete method.
 func (r *rapidRulesResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	tflog.Debug(ctx, "Deleting Rapid Rules Resource")
 
@@ -475,7 +475,7 @@ func (r *rapidRulesResource) Delete(ctx context.Context, req resource.DeleteRequ
 	}
 }
 
-// ImportState implements resource's ImportState method
+// ImportState implements resource's ImportState method.
 func (r *rapidRulesResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	tflog.Debug(ctx, "Importing Rapid Rules resource")
 

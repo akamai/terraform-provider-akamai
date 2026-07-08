@@ -44,17 +44,17 @@ var (
 	_ datasource.DataSourceWithConfigure = &wafRulesetDataSource{}
 )
 
-// NewWAFRulesetDataSource returns a new WAF ruleset data source
+// NewWAFRulesetDataSource returns a new WAF ruleset data source.
 func NewWAFRulesetDataSource() datasource.DataSource {
 	return &wafRulesetDataSource{}
 }
 
-// Metadata configures data source's meta information
+// Metadata configures data source's meta information.
 func (d *wafRulesetDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, response *datasource.MetadataResponse) {
 	response.TypeName = "akamai_appsec_waf_ruleset"
 }
 
-// Schema is used to define data source's terraform schema
+// Schema is used to define data source's terraform schema.
 func (d *wafRulesetDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "WAF ruleset data source.",
@@ -111,7 +111,7 @@ func (d *wafRulesetDataSource) Schema(_ context.Context, _ datasource.SchemaRequ
 	}
 }
 
-// Read is called when the provider must read data source values in order to update state
+// Read is called when the provider must read data source values in order to update state.
 func (d *wafRulesetDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	tflog.Debug(ctx, "WAFRulesetDataSource Read")
 

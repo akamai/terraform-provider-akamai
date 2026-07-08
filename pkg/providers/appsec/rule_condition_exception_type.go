@@ -88,7 +88,7 @@ func (v ruleConditionExceptionStateValue) Type(context.Context) attr.Type {
 	return ruleConditionExceptionStateType{}
 }
 
-// StringSemanticEquals compares rule condition exceptions semantically by unmarshaling to RuleConditionException
+// StringSemanticEquals compares rule condition exceptions semantically by unmarshaling to RuleConditionException.
 func (v ruleConditionExceptionStateValue) StringSemanticEquals(ctx context.Context, valuable basetypes.StringValuable) (bool, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	stringAttribute, diagnostics := valuable.ToStringValue(ctx)

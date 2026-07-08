@@ -88,7 +88,7 @@ func (v attackGroupConditionExceptionStateValue) Type(context.Context) attr.Type
 	return attackGroupConditionExceptionStateType{}
 }
 
-// StringSemanticEquals compares attack group condition exceptions semantically by unmarshaling to AttackGroupConditionException
+// StringSemanticEquals compares attack group condition exceptions semantically by unmarshaling to AttackGroupConditionException.
 func (v attackGroupConditionExceptionStateValue) StringSemanticEquals(ctx context.Context, valuable basetypes.StringValuable) (bool, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	stringAttribute, diagnostics := valuable.ToStringValue(ctx)

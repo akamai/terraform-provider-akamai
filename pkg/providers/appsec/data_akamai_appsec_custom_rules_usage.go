@@ -52,15 +52,15 @@ var (
 	_ datasource.DataSourceWithConfigure = &customRulesUsageDataSource{}
 )
 
-// NewCustomRulesUsageDataSource returns a new custom rules usage data source
+// NewCustomRulesUsageDataSource returns a new custom rules usage data source.
 func NewCustomRulesUsageDataSource() datasource.DataSource { return &customRulesUsageDataSource{} }
 
-// Metadata configures data source's meta information
+// Metadata configures data source's meta information.
 func (d *customRulesUsageDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, response *datasource.MetadataResponse) {
 	response.TypeName = "akamai_appsec_custom_rules_usage"
 }
 
-// Schema is used to define data source's terraform schema
+// Schema is used to define data source's terraform schema.
 func (d *customRulesUsageDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Custom rules usage data source.",
