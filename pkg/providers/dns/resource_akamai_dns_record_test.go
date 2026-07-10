@@ -920,7 +920,7 @@ func TestResDnsRecord(t *testing.T) {
 				Zone:    "exampleterraform.io",
 				RecLock: []bool{false},
 			},
-		).Return(nil)
+		).Return(nil).Once()
 
 		// read 4 times: 2 after create (read + check) + 2 before update (refresh)
 		// The mock returns abbreviated form, matching what the real Akamai API returns.
@@ -965,7 +965,7 @@ func TestResDnsRecord(t *testing.T) {
 				Zone:    "exampleterraform.io",
 				RecLock: []bool{false},
 			},
-		).Return(nil)
+		).Return(nil).Once()
 
 		// read 2 times after update: post-update read + final check
 		client.DNS.On("GetRecord",
@@ -996,7 +996,7 @@ func TestResDnsRecord(t *testing.T) {
 		client.DNS.On("DeleteRecord",
 			testutils.MockContext,
 			dns.DeleteRecordRequest{Zone: "exampleterraform.io", Name: "exampleterraform.io", RecordType: "AAAA", RecLock: []bool{false}},
-		).Return(nil)
+		).Return(nil).Once()
 
 		resourceName := "akamai_dns_record.aaaa_record_full"
 
@@ -1081,7 +1081,7 @@ func TestResDnsRecord(t *testing.T) {
 				Zone:    "exampleterraform.io",
 				RecLock: []bool{false},
 			},
-		).Return(nil)
+		).Return(nil).Once()
 
 		// read 4 times: 2 after create (read + check) + 2 before update (refresh)
 		// The mock returns abbreviated form, matching what the real Akamai API returns.
@@ -1126,7 +1126,7 @@ func TestResDnsRecord(t *testing.T) {
 				Zone:    "exampleterraform.io",
 				RecLock: []bool{false},
 			},
-		).Return(nil)
+		).Return(nil).Once()
 
 		// read 2 times after update: post-update read + final check
 		client.DNS.On("GetRecord",
@@ -1157,7 +1157,7 @@ func TestResDnsRecord(t *testing.T) {
 		client.DNS.On("DeleteRecord",
 			testutils.MockContext,
 			dns.DeleteRecordRequest{Zone: "exampleterraform.io", Name: "exampleterraform.io", RecordType: "AAAA", RecLock: []bool{false}},
-		).Return(nil)
+		).Return(nil).Once()
 
 		resourceName := "akamai_dns_record.aaaa_record_abbrev"
 
@@ -1183,6 +1183,166 @@ func TestResDnsRecord(t *testing.T) {
 						CheckEqual("target.1", "1000:0:0:0:0:0:0:2").
 						CheckEqual("target.2", "1000:0:0:0:0:0:0:3").
 						CheckEqual("target.3", "1000:0:0:0:0:0:0:4").Build(),
+				},
+			},
+		})
+
+		client.DNS.AssertExpectations(t)
+	})
+
+	// CAA records: the Akamai API stores/returns values with surrounding
+	// double-quotes (e.g. `0 issue "ca.example.net"`) while users typically
+	// omit the quotes in their Terraform config.  Without normalisation in
+	// the Read function, state would hold the quoted form, causing every plan
+	// that also changes the list length to show the existing record as being
+	// removed-and-re-added — exactly the "nasty diff" the user reported.
+	t.Run("CAA record – API quoted form normalised to unquoted in state", func(t *testing.T) {
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+
+		// buildRecordsList always adds quotes, so the API receives quoted values.
+		createTargetSent := []string{`0 issue "ca.example.net"`}
+
+		// The Akamai API returns values with literal double-quotes.
+		apiTarget1 := []string{`0 issue "ca.example.net"`}
+
+		// After expanding to 3 records the update sends all three (quoted, sorted).
+		updateTargetSent := []string{
+			`0 iodef "https://example.com/iodef"`,
+			`0 issue "ca.example.net"`,
+			`0 issuewild "ca.example.net"`,
+		}
+		// API returns all three (with quotes).
+		apiTarget3 := []string{
+			`0 iodef "https://example.com/iodef"`,
+			`0 issue "ca.example.net"`,
+			`0 issuewild "ca.example.net"`,
+		}
+
+		// --- Step 1 mocks (create + 2 post-create reads) ---
+
+		client.DNS.On("GetRecord",
+			testutils.MockContext,
+			dns.GetRecordRequest{Zone: "exampleterraform.io", Name: "exampleterraform.io", RecordType: "CAA"},
+		).Return(nil, notFound).Once()
+
+		client.DNS.On("CreateRecord",
+			testutils.MockContext,
+			dns.CreateRecordRequest{
+				Record: &dns.RecordBody{
+					Name:       "exampleterraform.io",
+					RecordType: "CAA",
+					TTL:        ptr.To(300),
+					Active:     false,
+					Target:     createTargetSent,
+				},
+				Zone:    "exampleterraform.io",
+				RecLock: []bool{false},
+			},
+		).Return(nil).Once()
+
+		// read 3 times: 2 post-create + 1 pre-update refresh
+		client.DNS.On("GetRecord",
+			testutils.MockContext,
+			dns.GetRecordRequest{Zone: "exampleterraform.io", Name: "exampleterraform.io", RecordType: "CAA"},
+		).Return(&dns.GetRecordResponse{
+			Name:       "exampleterraform.io",
+			RecordType: "CAA",
+			TTL:        300,
+			Active:     false,
+			Target:     apiTarget1,
+		}, nil).Times(3)
+
+		// ParseRData / ProcessRdata are called for every successful GetRecord.
+		// The CAA Read case overrides the results, so the return value is unused
+		// except for satisfying the interface — anything non-nil is fine.
+		client.DNS.On("ParseRData",
+			testutils.MockContext,
+			"CAA",
+			apiTarget1,
+		).Return(map[string]interface{}{
+			"target": apiTarget1,
+		}).Times(3)
+
+		client.DNS.On("ProcessRdata",
+			testutils.MockContext,
+			apiTarget1,
+			"CAA",
+		).Return(apiTarget1).Times(3)
+
+		// --- Step 2 mocks (update + 2 post-update reads) ---
+
+		client.DNS.On("UpdateRecord",
+			testutils.MockContext,
+			dns.UpdateRecordRequest{
+				Record: &dns.RecordBody{
+					Name:       "exampleterraform.io",
+					RecordType: "CAA",
+					TTL:        ptr.To(300),
+					Active:     false,
+					Target:     updateTargetSent,
+				},
+				Zone:    "exampleterraform.io",
+				RecLock: []bool{false},
+			},
+		).Return(nil).Once()
+
+		client.DNS.On("GetRecord",
+			testutils.MockContext,
+			dns.GetRecordRequest{Zone: "exampleterraform.io", Name: "exampleterraform.io", RecordType: "CAA"},
+		).Return(&dns.GetRecordResponse{
+			Name:       "exampleterraform.io",
+			RecordType: "CAA",
+			TTL:        300,
+			Active:     false,
+			Target:     apiTarget3,
+		}, nil).Times(3)
+
+		client.DNS.On("ParseRData",
+			testutils.MockContext,
+			"CAA",
+			apiTarget3,
+		).Return(map[string]interface{}{
+			"target": apiTarget3,
+		}).Times(2)
+
+		client.DNS.On("ProcessRdata",
+			testutils.MockContext,
+			apiTarget3,
+			"CAA",
+		).Return(apiTarget3).Times(3)
+
+		client.DNS.On("DeleteRecord",
+			testutils.MockContext,
+			dns.DeleteRecordRequest{Zone: "exampleterraform.io", Name: "exampleterraform.io", RecordType: "CAA", RecLock: []bool{false}},
+		).Return(nil).Once()
+
+		resourceName := "akamai_dns_record.caa_record"
+
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					// After create the Read early-returns (API matches config logically),
+					// so state preserves the exact config value — the quoted form
+					// 0 issue "ca.example.net".
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDnsRecord/caa/create_caa_quoted.tf"),
+					Check: test.NewStateChecker(resourceName).
+						CheckEqual("recordtype", "CAA").
+						CheckEqual("target.#", "1").
+						CheckEqual("target.0", `0 issue "ca.example.net"`).Build(),
+				},
+				{
+					// Expanding to 3 records: element 0 stays in its original quoted
+					// form (early return preserves state); DiffSuppressFunc handles
+					// format differences so only the 2 new records appear in the plan.
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDnsRecord/caa/update_caa_quoted.tf"),
+					Check: test.NewStateChecker(resourceName).
+						CheckEqual("recordtype", "CAA").
+						CheckEqual("target.#", "3").
+						CheckEqual("target.0", `0 issue "ca.example.net"`).
+						CheckEqual("target.1", `0 issuewild "ca.example.net"`).
+						CheckEqual("target.2", `0 iodef "https://example.com/iodef"`).Build(),
 				},
 			},
 		})
@@ -2493,6 +2653,169 @@ func TestDiffQuotedDNSRecordCNAME(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			result := diffQuotedDNSRecord(tc.oldTargetList, tc.newTargetList, tc.oldVal, tc.newVal, RRTypeCname, logger)
+			assert.Equal(t, tc.expectSuppress, result)
+		})
+	}
+}
+
+// TestDiffQuotedDNSRecordCAA verifies the two-step suppress logic for CAA
+// records.  The only format variation for CAA is whether the value part carries
+// surrounding double-quotes (e.g. `0 issue "letsencrypt.org"` vs
+// `0 issue letsencrypt.org`).  The old membership-search approach had a
+// sliding-window bug where a genuine change could be hidden when the old value
+// appeared at a different index in the new list.
+func TestDiffQuotedDNSRecordCAA(t *testing.T) {
+	t.Parallel()
+	logger := akalog.NOPLogger()
+
+	tests := []struct {
+		name           string
+		oldTargetList  []string
+		newTargetList  []string
+		oldVal         string
+		newVal         string
+		expectSuppress bool
+	}{
+		{
+			name:           "CAA: identical value suppresses diff",
+			oldTargetList:  []string{`0 issue "letsencrypt.org"`},
+			newTargetList:  []string{`0 issue "letsencrypt.org"`},
+			oldVal:         `0 issue "letsencrypt.org"`,
+			newVal:         `0 issue "letsencrypt.org"`,
+			expectSuppress: true,
+		},
+		{
+			name:           "CAA: quoted vs unquoted value suppresses diff (format-only)",
+			oldTargetList:  []string{`0 issue letsencrypt.org`},
+			newTargetList:  []string{`0 issue "letsencrypt.org"`},
+			oldVal:         `0 issue letsencrypt.org`,
+			newVal:         `0 issue "letsencrypt.org"`,
+			expectSuppress: true,
+		},
+		{
+			name:           "CAA: different value triggers diff",
+			oldTargetList:  []string{`0 issue "letsencrypt.org"`},
+			newTargetList:  []string{`0 issue "digicert.com"`},
+			oldVal:         `0 issue "letsencrypt.org"`,
+			newVal:         `0 issue "digicert.com"`,
+			expectSuppress: false,
+		},
+		{
+			name: "CAA: pure reorder suppresses diff",
+			oldTargetList: []string{
+				`0 issue "letsencrypt.org"`,
+				`0 issuewild "letsencrypt.org"`,
+			},
+			newTargetList: []string{
+				`0 issuewild "letsencrypt.org"`,
+				`0 issue "letsencrypt.org"`,
+			},
+			oldVal:         `0 issue "letsencrypt.org"`,
+			newVal:         `0 issuewild "letsencrypt.org"`,
+			expectSuppress: true,
+		},
+		{
+			name:           "CAA: different list lengths trigger diff",
+			oldTargetList:  []string{`0 issue "letsencrypt.org"`},
+			newTargetList:  []string{`0 issue "letsencrypt.org"`, `0 issuewild "letsencrypt.org"`},
+			oldVal:         `0 issue "letsencrypt.org"`,
+			newVal:         `0 issuewild "letsencrypt.org"`,
+			expectSuppress: false,
+		},
+		// Sliding-window: old value "b" present in new list at a different index
+		// must NOT suppress the genuinely-changed element that now holds "c".
+		{
+			name: "CAA: sliding-window update — old value at different index must not suppress genuine change",
+			oldTargetList: []string{
+				`0 issue "a.com"`,
+				`0 issue "b.com"`,
+			},
+			newTargetList: []string{
+				`0 issue "b.com"`,
+				`0 issue "c.com"`,
+			},
+			// target.1 is genuinely changing b→c; old "b.com" is in new list at
+			// index 0, but the per-element check must not suppress this.
+			oldVal:         `0 issue "b.com"`,
+			newVal:         `0 issue "c.com"`,
+			expectSuppress: false,
+		},
+		// Per-element suppress: when some records genuinely change, elements
+		// whose only difference is a quote format should not appear as plan noise.
+		{
+			// entry[0] is unchanged (just quote format), entry[1] is a genuine change.
+			// Checking entry[0]: should be suppressed.
+			name: "CAA: quote-format element suppressed when another CAA genuinely changes",
+			oldTargetList: []string{
+				`0 issue letsencrypt.org`,
+				`0 issue "b.com"`,
+				`0 issuewild "letsencrypt.org"`,
+			},
+			newTargetList: []string{
+				`0 issue "letsencrypt.org"`,
+				`0 issue "c.com"`,
+				`0 issuewild "letsencrypt.org"`,
+			},
+			oldVal:         `0 issue letsencrypt.org`,
+			newVal:         `0 issue "letsencrypt.org"`,
+			expectSuppress: true,
+		},
+		{
+			// entry[1] b→c is genuine; must not be suppressed.
+			name: "CAA: genuinely changed element not suppressed when another CAA is format-only",
+			oldTargetList: []string{
+				`0 issue letsencrypt.org`,
+				`0 issue "b.com"`,
+				`0 issuewild "letsencrypt.org"`,
+			},
+			newTargetList: []string{
+				`0 issue "letsencrypt.org"`,
+				`0 issue "c.com"`,
+				`0 issuewild "letsencrypt.org"`,
+			},
+			oldVal:         `0 issue "b.com"`,
+			newVal:         `0 issue "c.com"`,
+			expectSuppress: false,
+		},
+		// Backslash-quote form: the Akamai bind-zone renderer may produce
+		// `0 issue \"ca.example.net\"` (literal `\` + `"` two-char sequence)
+		// in the Go string even though the JSON layer uses standard `\"`.
+		{
+			name:           "CAA: backslash-quoted vs plain unquoted suppresses diff",
+			oldTargetList:  []string{`0 issue \"ca.example.net\"`},
+			newTargetList:  []string{`0 issue ca.example.net`},
+			oldVal:         `0 issue \"ca.example.net\"`,
+			newVal:         `0 issue ca.example.net`,
+			expectSuppress: true,
+		},
+		{
+			name:           "CAA: backslash-quoted vs plain-quoted suppresses diff",
+			oldTargetList:  []string{`0 issue \"ca.example.net\"`},
+			newTargetList:  []string{`0 issue "ca.example.net"`},
+			oldVal:         `0 issue \"ca.example.net\"`,
+			newVal:         `0 issue "ca.example.net"`,
+			expectSuppress: true,
+		},
+		{
+			// Different-length list: backslash-quoted old element vs plain new.
+			name: "CAA: backslash-quoted element suppressed when list grows",
+			oldTargetList: []string{
+				`0 issue \"ca.example.net\"`,
+			},
+			newTargetList: []string{
+				`0 issue "ca.example.net"`,
+				`0 issuewild "ca.example.net"`,
+			},
+			oldVal:         `0 issue \"ca.example.net\"`,
+			newVal:         `0 issue "ca.example.net"`,
+			expectSuppress: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			result := diffQuotedDNSRecord(tc.oldTargetList, tc.newTargetList, tc.oldVal, tc.newVal, RRTypeCaa, logger)
 			assert.Equal(t, tc.expectSuppress, result)
 		})
 	}

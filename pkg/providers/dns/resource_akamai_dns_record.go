@@ -480,15 +480,74 @@ func diffQuotedDNSRecord(oldTargetList []string, newTargetList []string, o strin
 		singleQuote    = `"`
 		backslashQuote = `\"`
 	)
-	if len(oldTargetList) != len(newTargetList) {
-		return false
-	}
 
 	logger.Debugf("diffQuotedDNSRecord Suppress. recodtype: %v", recordType)
 	logger.Debugf("diffQuotedDNSRecord Suppress. oldTargetList: [%v]", oldTargetList)
 	logger.Debugf("diffQuotedDNSRecord Suppress. newTargetList: [%v]", newTargetList)
 	logger.Debugf("diffQuotedDNSRecord Suppress. old: [%v]", o)
 	logger.Debugf("diffQuotedDNSRecord Suppress. new: [%v]", n)
+
+	// For CAA records the only format variation is whether the value field
+	// carries surrounding double-quotes and how those quotes are encoded.
+	// The Akamai API returns the rdata in bind-zone format:
+	//   JSON:  "0 issue \"ca.example.net\""  (standard JSON `\"` escaping)
+	//   Go string after json.Unmarshal: `0 issue "ca.example.net"`
+	// Some bind-zone renderings additionally use a backslash-escape inside
+	// the string itself, producing the literal two-character sequence `\"`
+	// in the Go string: `0 issue \"ca.example.net\"`.
+	//
+	// Normalise by first removing backslash-quote pairs (`\"`), then any
+	// remaining plain double-quote characters.  This covers both forms:
+	//   `0 issue "ca.example.net"`   → `0 issue ca.example.net`
+	//   `0 issue \"ca.example.net\"` → `0 issue ca.example.net`
+	//
+	// This block MUST appear BEFORE the equal-length guard below so that
+	// format-only differences are suppressed even when the list grows or
+	// shrinks (e.g. adding two new CAA records: the existing one that only
+	// differs in quote style must not be shown as "removed and re-added").
+	//
+	// Two-step strategy:
+	//   Step 1 – full sorted-set comparison (equal-length only): if every
+	//            element matches after normalisation the whole change is
+	//            suppressed.  Handles pure reorders and quote-only diffs.
+	//   Step 2 – per-element fallback: suppress this element if its only
+	//            difference is quote formatting.  Works for both equal and
+	//            different list lengths.
+	if recordType == RRTypeCaa {
+		normCAA := func(s string) string {
+			s = strings.ReplaceAll(s, backslashQuote, "") // strip \" pairs first
+			return strings.ReplaceAll(s, singleQuote, "") // then plain "
+		}
+		if len(oldTargetList) == len(newTargetList) {
+			normOld := make([]string, len(oldTargetList))
+			for i, v := range oldTargetList {
+				normOld[i] = normCAA(v)
+			}
+			normNew := make([]string, len(newTargetList))
+			for i, v := range newTargetList {
+				normNew[i] = normCAA(v)
+			}
+			sort.Strings(normOld)
+			sort.Strings(normNew)
+			listsEqual := true
+			for i := range normOld {
+				if normOld[i] != normNew[i] {
+					listsEqual = false
+					break
+				}
+			}
+			if listsEqual {
+				return true
+			}
+		}
+		// Per-element: suppress if the sole difference is quote formatting.
+		return normCAA(o) == normCAA(n)
+	}
+
+	// All other record types require equal-length lists for meaningful comparison.
+	if len(oldTargetList) != len(newTargetList) {
+		return false
+	}
 
 	var compList []string
 	var baseVal string
@@ -545,19 +604,6 @@ func diffQuotedDNSRecord(oldTargetList []string, newTargetList []string, o strin
 			return false
 		}
 		return FullIPv6(ipO) == FullIPv6(ipN)
-	}
-
-	if recordType == RRTypeCaa {
-		baseVal = strings.ReplaceAll(baseVal, singleQuote, "")
-		for _, compval := range compList {
-			compval = strings.ReplaceAll(compval, singleQuote, "")
-			logger.Debugf("updated baseVal: %v", baseVal)
-			logger.Debugf("compval: %v", compval)
-			if baseVal == compval {
-				return true
-			}
-		}
-		return false
 	}
 
 	if recordType == RRTypeMx {
@@ -1306,6 +1352,42 @@ func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 			return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 		}
 		targets = normAPITargets
+	case RRTypeCaa:
+		// The Akamai API returns CAA values with double-quoted value fields
+		// (e.g. `0 issue "ca.example.net"`) while users typically write them
+		// without quotes in config (e.g. `0 issue ca.example.net`).
+		//
+		// Normalize both sides (strip `\"` and `"`) so the SHA comparison
+		// is format-independent, then:
+		//  • If the logical sets match → early return (preserve existing state
+		//    format unchanged).  Without this, every refresh would mutate state
+		//    from the API's quoted form to the unquoted form, which Terraform
+		//    reports as "objects changed outside of Terraform".
+		//  • If they genuinely differ → store the unquoted canonical form.
+		//
+		// DiffSuppressFunc (which is now length-agnostic for CAA) handles any
+		// remaining format differences (quoted vs. unquoted) for both same-length
+		// and different-length list changes.
+		normCAATarget := func(s string) string {
+			s = strings.ReplaceAll(s, `\"`, "")   // strip backslash-quote pairs first
+			return strings.ReplaceAll(s, `"`, "") // then plain double-quotes
+		}
+		normAPITargets := make([]string, len(record.Target))
+		for i, v := range record.Target {
+			normAPITargets[i] = normCAATarget(v)
+		}
+		sort.Strings(normAPITargets)
+		normConfigTargets := make([]string, len(recordCreate.Target))
+		for i, v := range recordCreate.Target {
+			normConfigTargets[i] = normCAATarget(v)
+		}
+		sort.Strings(normConfigTargets)
+		if hash.GetSHAString(strings.Join(normAPITargets, " ")) == hash.GetSHAString(strings.Join(normConfigTargets, " ")) {
+			return nil
+		}
+		if err := d.Set("target", normAPITargets); err != nil {
+			return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
+		}
 	case RRTypeTxt:
 		oldTargets, err := tf.GetTypedListValue[string]("target", d)
 		if err != nil && !errors.Is(err, tf.ErrNotFound) {
@@ -2976,12 +3058,12 @@ func checkCaaRecord(d *schema.ResourceData) error {
 
 		flag, err := strconv.Atoi(caaparts[0])
 		if err != nil || flag < 0 || flag > 255 {
-			return fmt.Errorf("configuration argument CAA target %s is invalid. flag value must be <= 0 and >= 255", caaStr)
+			return fmt.Errorf("configuration argument CAA target %s is invalid. flag value must be >= 0 and <= 255", caaStr)
 		}
 		re := regexp.MustCompile(`[^a-zA-Z0-9]+`)
 		submatchall := re.FindAllString(caaparts[1], -1)
 		if len(submatchall) > 0 {
-			return fmt.Errorf("configuration argument  CAA target %s is invalid. tag contains invalid characters", caaStr)
+			return fmt.Errorf("configuration argument CAA target %s is invalid. tag contains invalid characters", caaStr)
 		}
 	}
 
