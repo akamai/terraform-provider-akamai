@@ -239,6 +239,42 @@ func TestAkamaiConfiguration_Clone_txt_group_id(t *testing.T) {
 	})
 }
 
+func TestAkamaiConfiguration_Import_NoDrift(t *testing.T) {
+	t.Run("no drift on group_id and contract_id after import", func(t *testing.T) {
+		client := appsec.Mock{}
+
+		setGetConfiguration(&client, t)
+		setGetSelectedHostnames(&client, t)
+		setGetConfigurationVersions(&client, t)
+		setRemoveConfiguration(&client, t)
+
+		useClient(&client, func() {
+			resource.Test(t, resource.TestCase{
+				IsUnitTest:               true,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						// Simulate `terraform import akamai_appsec_configuration.test 43253`.
+						// Read does not populate contract_id/group_id, so they are empty in state.
+						Config:             testutils.LoadFixtureString(t, "testdata/TestResConfiguration/match_by_id.tf"),
+						ImportState:        true,
+						ImportStateId:      "43253",
+						ResourceName:       "akamai_appsec_configuration.test",
+						ImportStatePersist: true,
+					},
+					{
+						// Simulate `terraform plan` after import: DiffSuppressFuncs must suppress the
+						// contract_id / group_id diff caused by the empty post-import state.
+						Config:             testutils.LoadFixtureString(t, "testdata/TestResConfiguration/match_by_id.tf"),
+						ExpectNonEmptyPlan: false,
+					},
+				},
+			})
+		})
+		client.AssertExpectations(t)
+	})
+}
+
 func setGetConfiguration(mock *appsec.Mock, test *testing.T) {
 	obj := appsec.GetConfigurationResponse{}
 	err := json.Unmarshal(testutils.LoadFixtureBytes(test, "testdata/TestResConfiguration/Configuration.json"), &obj)

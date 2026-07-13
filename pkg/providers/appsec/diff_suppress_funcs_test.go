@@ -45,6 +45,102 @@ func TestUkraineGeoControlActionEqual(t *testing.T) {
 	}
 }
 
+func TestSuppressFieldForContractID(t *testing.T) {
+	resourceSchema := map[string]*schema.Schema{
+		"contract_id": {Type: schema.TypeString},
+	}
+
+	tests := map[string]struct {
+		oldValue string
+		newValue string
+		id       string
+		expected bool
+	}{
+		"post-import: old empty, resource exists": {
+			oldValue: "",
+			newValue: "ctr_12345",
+			id:       "some-id",
+			expected: true,
+		},
+		"new resource: old empty, no resource id": {
+			oldValue: "",
+			newValue: "ctr_12345",
+			id:       "",
+			expected: false,
+		},
+		"values match": {
+			oldValue: "ctr_12345",
+			newValue: "ctr_12345",
+			id:       "some-id",
+			expected: true,
+		},
+		"values differ": {
+			oldValue: "ctr_12345",
+			newValue: "ctr_99999",
+			id:       "some-id",
+			expected: false,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			d := schema.TestResourceDataRaw(t, resourceSchema, map[string]interface{}{
+				"contract_id": test.oldValue,
+			})
+			d.SetId(test.id)
+			assert.Equal(t, test.expected, suppressFieldForContractID("", test.oldValue, test.newValue, d))
+		})
+	}
+}
+
+func TestSuppressFieldForPrefixedGroupIDPostImport(t *testing.T) {
+	resourceSchema := map[string]*schema.Schema{
+		"group_id": {Type: schema.TypeString},
+	}
+
+	tests := map[string]struct {
+		oldValue string
+		newValue string
+		id       string
+		expected bool
+	}{
+		"post-import: old empty, resource exists": {
+			oldValue: "",
+			newValue: "grp_12345",
+			id:       "some-id",
+			expected: true,
+		},
+		"new resource: old empty, no resource id": {
+			oldValue: "",
+			newValue: "grp_12345",
+			id:       "",
+			expected: false,
+		},
+		"values match": {
+			oldValue: "grp_12345",
+			newValue: "grp_12345",
+			id:       "some-id",
+			expected: true,
+		},
+		"values differ": {
+			oldValue: "grp_12345",
+			newValue: "grp_99999",
+			id:       "some-id",
+			expected: false,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			d := schema.TestResourceDataRaw(t, resourceSchema, map[string]interface{}{
+				"group_id": test.oldValue,
+			})
+			d.SetId(test.id)
+			assert.Equal(t, test.expected, suppressFieldForPrefixedGroupID("", test.oldValue, test.newValue, d))
+		})
+	}
+}
+
 func TestAreReputationProfilesEqual(t *testing.T) {
 	deepCopyProfile := func(profile appsec.CreateReputationProfileResponse) appsec.CreateReputationProfileResponse {
 		b, _ := json.Marshal(profile)

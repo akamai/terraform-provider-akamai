@@ -38,9 +38,10 @@ func resourceConfiguration() *schema.Resource {
 				Description: "Brief description of the new configuration",
 			},
 			"contract_id": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "Unique identifier of the Akamai contract associated with the new configuration",
+				Type:             schema.TypeString,
+				Required:         true,
+				DiffSuppressFunc: suppressFieldForContractID,
+				Description:      "Unique identifier of the Akamai contract associated with the new configuration",
 			},
 			"group_id": {
 				Type:             schema.TypeString,
