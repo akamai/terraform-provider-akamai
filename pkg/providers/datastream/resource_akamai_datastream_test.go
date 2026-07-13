@@ -32,7 +32,7 @@ func TestResourceStream(t *testing.T) {
 				Delimiter: datastream.DelimiterTypePtr(datastream.DelimiterTypeSpace),
 				Format:    datastream.FormatTypeStructured,
 				Frequency: datastream.Frequency{
-					IntervalInSeconds: datastream.IntervalInSeconds30,
+					IntervalInSeconds: 30,
 				},
 				UploadFilePrefix: "pre",
 				UploadFileSuffix: "suf",
@@ -157,7 +157,7 @@ func TestResourceStream(t *testing.T) {
 					Delimiter: datastream.DelimiterTypePtr(datastream.DelimiterTypeSpace),
 					Format:    datastream.FormatTypeStructured,
 					Frequency: datastream.Frequency{
-						IntervalInSeconds: datastream.IntervalInSeconds30,
+						IntervalInSeconds: 30,
 					},
 					UploadFilePrefix: "prefix_updated",
 					UploadFileSuffix: "suf_updated",
@@ -485,7 +485,7 @@ func TestResourceUpdate(t *testing.T) {
 			Delimiter: datastream.DelimiterTypePtr(datastream.DelimiterTypeSpace),
 			Format:    datastream.FormatTypeStructured,
 			Frequency: datastream.Frequency{
-				IntervalInSeconds: datastream.IntervalInSeconds30,
+				IntervalInSeconds: 30,
 			},
 			UploadFilePrefix: "pre",
 			UploadFileSuffix: "suf",
@@ -571,7 +571,7 @@ func TestResourceUpdate(t *testing.T) {
 				Delimiter: datastream.DelimiterTypePtr(datastream.DelimiterTypeSpace),
 				Format:    datastream.FormatTypeStructured,
 				Frequency: datastream.Frequency{
-					IntervalInSeconds: datastream.IntervalInSeconds30,
+					IntervalInSeconds: 30,
 				},
 				UploadFilePrefix: "pre",
 				UploadFileSuffix: "suf",
@@ -846,6 +846,14 @@ func TestResourceStreamErrors(t *testing.T) {
 			tfFile:    "testdata/TestResourceStream/errors/invalid_field_format/invalid_trafficpeak_authentication_type.tf",
 			withError: regexp.MustCompile(`Error: expected authentication_type to be one of \["BASIC"\], got NONE`),
 		},
+		"missing required parameter in netstorage destination": {
+			tfFile:    "testdata/TestResourceStream/errors/missing_required_argument/netstorage_missing_parameter.tf",
+			withError: regexp.MustCompile(`The argument "cp_code" is required, but no definition was found\.`),
+		},
+		"invalid cp code in netstorage destination": {
+			tfFile:    "testdata/TestResourceStream/errors/invalid_field_format/netstorage_invalid_cp_code.tf",
+			withError: regexp.MustCompile(`invalid value for cp_code \(cp_code must be a positive integer\)`),
+		},
 	}
 
 	for name, test := range tests {
@@ -940,7 +948,7 @@ func TestEmailIDs(t *testing.T) {
 			Delimiter: datastream.DelimiterTypePtr(datastream.DelimiterTypeSpace),
 			Format:    datastream.FormatTypeStructured,
 			Frequency: datastream.Frequency{
-				IntervalInSeconds: datastream.IntervalInSeconds30,
+				IntervalInSeconds: 30,
 			},
 			//	UploadFilePrefix: DefaultUploadFilePrefix,
 			//	UploadFileSuffix: DefaultUploadFileSuffix,
@@ -1215,7 +1223,7 @@ func TestDatasetIDsDiff(t *testing.T) {
 			DeliveryConfiguration: datastream.DeliveryConfiguration{
 				Format: test.format,
 				Frequency: datastream.Frequency{
-					IntervalInSeconds: datastream.IntervalInSeconds30,
+					IntervalInSeconds: 30,
 				},
 			},
 			Destination: datastream.AbstractConnector(
@@ -1351,7 +1359,7 @@ func TestCustomHeaders(t *testing.T) {
 		DeliveryConfiguration: datastream.DeliveryConfiguration{
 			Format: datastream.FormatTypeJson,
 			Frequency: datastream.Frequency{
-				IntervalInSeconds: datastream.IntervalInSeconds30,
+				IntervalInSeconds: 30,
 			},
 			//UploadFilePrefix: DefaultUploadFilePrefix,
 			//UploadFileSuffix: DefaultUploadFileSuffix,
@@ -1650,7 +1658,7 @@ func TestMTLS(t *testing.T) {
 		DeliveryConfiguration: datastream.DeliveryConfiguration{
 			Format: datastream.FormatTypeJson,
 			Frequency: datastream.Frequency{
-				IntervalInSeconds: datastream.IntervalInSeconds30,
+				IntervalInSeconds: 30,
 			},
 			//UploadFilePrefix: DefaultUploadFilePrefix,
 			//UploadFileSuffix: DefaultUploadFileSuffix,
@@ -2236,7 +2244,7 @@ func TestConnectors(t *testing.T) {
 		DeliveryConfiguration: datastream.DeliveryConfiguration{
 			Format: datastream.FormatTypeJson,
 			Frequency: datastream.Frequency{
-				IntervalInSeconds: datastream.IntervalInSeconds30,
+				IntervalInSeconds: 30,
 			},
 			UploadFilePrefix: DefaultUploadFilePrefix,
 			UploadFileSuffix: DefaultUploadFileSuffix,
@@ -2454,6 +2462,35 @@ func TestConnectors(t *testing.T) {
 				resource.TestCheckResourceAttr("akamai_datastream.s", "s3_compatible_connector.0.endpoint", "endpoint"),
 			},
 		},
+		"netstorage": {
+			Filename: "netstorage.tf",
+			Connector: &datastream.NetStorageConnector{
+				UserName:        "user_name",
+				DisplayName:     "display_name",
+				Endpoint:        "domain_prefix",
+				SecretAccessKey: "secret_access_key",
+				Bucket:          "1234",
+				Path:            "path",
+			},
+			Response: datastream.Destination{
+				DestinationType: datastream.DestinationTypeNetStorage,
+				CompressLogs:    true,
+				DisplayName:     "display_name",
+				Endpoint:        "domain_prefix",
+				Bucket:          "1234",
+				Path:            "path",
+			},
+			TestChecks: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttr("akamai_datastream.s", "netstorage_connector.#", "1"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "netstorage_connector.0.compress_logs", "true"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "netstorage_connector.0.cp_code", "1234"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "netstorage_connector.0.display_name", "display_name"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "netstorage_connector.0.domain_prefix", "domain_prefix"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "netstorage_connector.0.path", "path"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "netstorage_connector.0.secret_access_key", "secret_access_key"),
+				resource.TestCheckResourceAttr("akamai_datastream.s", "netstorage_connector.0.user_name", "user_name"),
+			},
+		},
 	}
 
 	for name, test := range tests {
@@ -2490,7 +2527,7 @@ func TestEmptyFilePrefixSuffixSetForHttpsDestination(t *testing.T) {
 	configurationOfPrefixSuffixNotSupportedDest := datastream.DeliveryConfiguration{
 		Format: datastream.FormatTypeJson,
 		Frequency: datastream.Frequency{
-			IntervalInSeconds: datastream.IntervalInSeconds30,
+			IntervalInSeconds: 30,
 		},
 		UploadFilePrefix: DefaultUploadFilePrefix,
 		UploadFileSuffix: DefaultUploadFileSuffix,
@@ -2507,7 +2544,7 @@ func TestFilePrefixSuffixSetForObjectStorageDestination(t *testing.T) {
 	configurationOfPrefixSuffixSupportedDest := datastream.DeliveryConfiguration{
 		Format: datastream.FormatTypeJson,
 		Frequency: datastream.Frequency{
-			IntervalInSeconds: datastream.IntervalInSeconds30,
+			IntervalInSeconds: 30,
 		},
 		UploadFilePrefix: "pre",
 		UploadFileSuffix: "suf",
@@ -2586,7 +2623,7 @@ func TestResourceStreamSamplingPercentage(t *testing.T) {
 				DeliveryConfiguration: datastream.DeliveryConfiguration{
 					Format: datastream.FormatTypeStructured,
 					Frequency: datastream.Frequency{
-						IntervalInSeconds: datastream.IntervalInSeconds30,
+						IntervalInSeconds: 30,
 					},
 					UploadFilePrefix: "ak",
 					UploadFileSuffix: "ds",
@@ -2808,7 +2845,7 @@ func TestResourceStreamSamplingPercentageIdempotency(t *testing.T) {
 				DeliveryConfiguration: datastream.DeliveryConfiguration{
 					Format: datastream.FormatTypeStructured,
 					Frequency: datastream.Frequency{
-						IntervalInSeconds: datastream.IntervalInSeconds30,
+						IntervalInSeconds: 30,
 					},
 					UploadFilePrefix: "ak",
 					UploadFileSuffix: "ds",
@@ -3018,7 +3055,7 @@ func TestResourceStreamIntegrationType(t *testing.T) {
 				DeliveryConfiguration: datastream.DeliveryConfiguration{
 					Format: datastream.FormatTypeStructured,
 					Frequency: datastream.Frequency{
-						IntervalInSeconds: datastream.IntervalInSeconds30,
+						IntervalInSeconds: 30,
 					},
 					UploadFilePrefix: "ak",
 					UploadFileSuffix: "ds",
@@ -3187,7 +3224,7 @@ func TestResourceImportLogTypeProbing(t *testing.T) {
 		DeliveryConfiguration: datastream.DeliveryConfiguration{
 			Format: datastream.FormatTypeJson,
 			Frequency: datastream.Frequency{
-				IntervalInSeconds: datastream.IntervalInSeconds30,
+				IntervalInSeconds: 30,
 			},
 		},
 		Destination: datastream.AbstractConnector(

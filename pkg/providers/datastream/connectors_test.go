@@ -9,7 +9,8 @@ import (
 )
 
 var resourceSchema = map[string]*schema.Schema{
-	"sumologic_connector": datastreamResourceSchema["sumologic_connector"],
+	"sumologic_connector":  datastreamResourceSchema["sumologic_connector"],
+	"netstorage_connector": datastreamResourceSchema["netstorage_connector"],
 	"invalid_connector": {
 		Type:     schema.TypeSet,
 		MaxItems: 1,
@@ -79,6 +80,64 @@ func TestConnectorToMap(t *testing.T) {
 				},
 			},
 		},
+		"netstorage connector - no connector in local resource": {
+			connectorDetails: datastream.Destination{
+				CompressLogs:    true,
+				DisplayName:     "test-display-name",
+				DestinationType: datastream.DestinationTypeNetStorage,
+				Endpoint:        "testEndpoint",
+				Bucket:          "123456",
+				Path:            "testPath",
+			},
+			resourceMap: nil,
+			expectedResult: expectedResult{
+				key: "netstorage_connector",
+				props: map[string]interface{}{
+					"compress_logs":     true,
+					"display_name":      "test-display-name",
+					"domain_prefix":     "testEndpoint",
+					"cp_code":           "123456",
+					"path":              "testPath",
+					"user_name":         "",
+					"secret_access_key": "",
+				},
+			},
+		},
+		"netstorage connector - proper configuration": {
+			connectorDetails: datastream.Destination{
+				CompressLogs:    true,
+				DisplayName:     "test-display-name",
+				DestinationType: datastream.DestinationTypeNetStorage,
+				Endpoint:        "testEndpoint",
+				Bucket:          "123456",
+				Path:            "testPath",
+			},
+			resourceMap: map[string]interface{}{
+				"netstorage_connector": []interface{}{
+					map[string]interface{}{
+						"compress_logs":     true,
+						"display_name":      "test-display-name",
+						"domain_prefix":     "testEndpoint",
+						"cp_code":           "123456",
+						"path":              "testPath",
+						"user_name":         "testUser",
+						"secret_access_key": "testSecretKey",
+					},
+				},
+			},
+			expectedResult: expectedResult{
+				key: "netstorage_connector",
+				props: map[string]interface{}{
+					"compress_logs":     true,
+					"display_name":      "test-display-name",
+					"domain_prefix":     "testEndpoint",
+					"cp_code":           "123456",
+					"path":              "testPath",
+					"user_name":         "testUser",
+					"secret_access_key": "testSecretKey",
+				},
+			},
+		},
 		"proper configuration": {
 			connectorDetails: datastream.Destination{
 				CompressLogs:      true,
@@ -137,11 +196,13 @@ func TestConnectorToMap(t *testing.T) {
 func TestGetConnectors(t *testing.T) {
 	tests := map[string]struct {
 		resourceMap    map[string]interface{}
+		keys           []string
 		expectedResult datastream.AbstractConnector
 		errorMessage   string
 	}{
 		"missing connector definition": {
 			resourceMap:  nil,
+			keys:         []string{"sumologic_connector", "invalid_connector"},
 			errorMessage: "missing connector",
 		},
 		"proper configuration": {
@@ -158,6 +219,7 @@ func TestGetConnectors(t *testing.T) {
 					},
 				},
 			},
+			keys: []string{"sumologic_connector", "invalid_connector"},
 			expectedResult: &datastream.SumoLogicConnector{
 				CollectorCode:     "sumologic_collector_code",
 				CompressLogs:      true,
@@ -168,11 +230,35 @@ func TestGetConnectors(t *testing.T) {
 				CustomHeaderValue: "custom_header_value",
 			},
 		},
+		"netstorage connector": {
+			resourceMap: map[string]interface{}{
+				"netstorage_connector": []interface{}{
+					map[string]interface{}{
+						"display_name":      "test-display-name",
+						"domain_prefix":     "testEndpoint",
+						"user_name":         "testUser",
+						"path":              "testPath",
+						"cp_code":           "123456",
+						"compress_logs":     true,
+						"secret_access_key": "testSecretKey",
+					},
+				},
+			},
+			keys: []string{"netstorage_connector", "invalid_connector"},
+			expectedResult: &datastream.NetStorageConnector{
+				DisplayName:     "test-display-name",
+				Endpoint:        "testEndpoint",
+				UserName:        "testUser",
+				Path:            "testPath",
+				Bucket:          "123456",
+				SecretAccessKey: "testSecretKey",
+			},
+		},
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			d := schema.TestResourceDataRaw(t, resourceSchema, test.resourceMap)
-			connectors, err := GetConnectors(d, []string{"sumologic_connector", "invalid_connector"})
+			connectors, err := GetConnectors(d, test.keys)
 
 			errMessage := test.errorMessage
 			if errMessage != "" {

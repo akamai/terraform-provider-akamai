@@ -15,7 +15,8 @@
 
 #### FEATURES/ENHANCEMENTS:
 
-
+* DataStream
+  * Added support for the DataStream NetStorage (`NS4`) destination type.
 
 
 
