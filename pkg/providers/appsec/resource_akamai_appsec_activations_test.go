@@ -9,6 +9,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
 	akalog "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/log"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
@@ -149,6 +150,156 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "note", "Test Notes"),
 							resource.TestCheckResourceAttr("akamai_appsec_activations.test", "status", "ACTIVATED"),
 						),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	// SECKSD-40899: "note" is write-only. The platform augments it server-side
+	// (appends hostname migration history), so on refresh it must not be read
+	// back into state - state must keep the user's configured value.
+	t.Run("note is not overwritten by server-augmented value on read", func(t *testing.T) {
+		client := &appsec.Mock{}
+
+		getActivationsResponse := appsec.GetActivationsResponse{}
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/Activations.json"), &getActivationsResponse)
+		require.NoError(t, err)
+
+		createActivationsResponse := appsec.CreateActivationsResponse{}
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/Activations.json"), &createActivationsResponse)
+		require.NoError(t, err)
+
+		removeActivationsResponse := appsec.RemoveActivationsResponse{}
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/ActivationsDelete.json"), &removeActivationsResponse)
+		require.NoError(t, err)
+
+		getActivationsDeleteResponse := appsec.GetActivationsResponse{}
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/ActivationsDelete.json"), &getActivationsDeleteResponse)
+		require.NoError(t, err)
+
+		getActivationHistoryResponseCreate := appsec.GetActivationHistoryResponse{}
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/ActivationHistoryCreate.json"), &getActivationHistoryResponseCreate)
+		require.NoError(t, err)
+
+		// Activation history whose "notes" carries the server-appended migration history.
+		getActivationHistoryResponseAugmented := appsec.GetActivationHistoryResponse{}
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/ActivationHistoryAfterAugmentedNote.json"), &getActivationHistoryResponseAugmented)
+		require.NoError(t, err)
+
+		createActivationsRequest := appsec.CreateActivationsRequest{}
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/CreateActivationsRequest.json"), &createActivationsRequest)
+		require.NoError(t, err)
+
+		// In create method
+		client.On("GetActivationHistory",
+			testutils.MockContext,
+			appsec.GetActivationHistoryRequest{ConfigID: 43253},
+		).Return(&getActivationHistoryResponseCreate, nil).Once()
+
+		getHostMoveValidationResponse := appsec.GetHostMoveValidationResponse{
+			HostsToMove: []appsec.HostToMove{},
+		}
+		client.On("GetHostMoveValidation",
+			testutils.MockContext,
+			appsec.GetHostMoveValidationRequest{
+				ConfigID:      43253,
+				ConfigVersion: 7,
+				Network:       appsec.NetworkValue("STAGING"),
+			},
+		).Return(&getHostMoveValidationResponse, nil).Once()
+
+		client.On("CreateActivations",
+			testutils.MockContext,
+			createActivationsRequest,
+		).Return(&createActivationsResponse, nil).Once()
+
+		client.On("GetActivations",
+			testutils.MockContext,
+			appsec.GetActivationsRequest{ActivationID: 547694},
+		).Return(&getActivationsResponse, nil).Once()
+
+		// Every read after create (refresh, delete) returns the augmented note.
+		client.On("GetActivationHistory",
+			testutils.MockContext,
+			appsec.GetActivationHistoryRequest{ConfigID: 43253},
+		).Return(&getActivationHistoryResponseAugmented, nil)
+
+		// In Delete method (cleanup) - matched loosely; this test asserts state, not the delete payload.
+		client.On("RemoveActivations",
+			testutils.MockContext,
+			mock.AnythingOfType("appsec.RemoveActivationsRequest"),
+		).Return(&removeActivationsResponse, nil).Maybe()
+
+		client.On("GetActivations",
+			testutils.MockContext,
+			appsec.GetActivationsRequest{ActivationID: 547695},
+		).Return(&getActivationsDeleteResponse, nil).Maybe()
+
+		useClient(client, func() {
+			resource.Test(t, resource.TestCase{
+				IsUnitTest:               true,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, "testdata/TestResActivations/match_by_id.tf"),
+						Check: test.NewStateChecker("akamai_appsec_activations.test").
+							CheckEqual("note", "Test Notes").
+							CheckEqual("status", "ACTIVATED").
+							Build(),
+					},
+					{
+						// Refresh must not overwrite note with the server-augmented value.
+						RefreshState: true,
+						Check: test.NewStateChecker("akamai_appsec_activations.test").
+							CheckEqual("note", "Test Notes").
+							Build(),
+					},
+				},
+			})
+		})
+
+		client.AssertExpectations(t)
+	})
+
+	// SECKSD-40899: "note" is write-only, so it must not be imported from the
+	// server; the imported state must not contain it, while the other attributes
+	// round-trip.
+	t.Run("note is not imported from the server", func(t *testing.T) {
+		client := &appsec.Mock{}
+
+		// Activation history whose "notes" carries the server-appended migration history.
+		getActivationHistoryResponseAugmented := appsec.GetActivationHistoryResponse{}
+		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResActivations/ActivationHistoryAfterAugmentedNote.json"), &getActivationHistoryResponseAugmented)
+		require.NoError(t, err)
+
+		// The importer and the follow-up read fetch the activation history.
+		client.On("GetActivationHistory",
+			testutils.MockContext,
+			appsec.GetActivationHistoryRequest{ConfigID: 43253},
+		).Return(&getActivationHistoryResponseAugmented, nil)
+
+		// note is write-only, so it must not be present in the imported state; the
+		// other attributes are imported from the server.
+		importChecker := test.NewImportChecker().
+			CheckMissing("note").
+			CheckEqual("config_id", "43253").
+			CheckEqual("version", "7").
+			CheckEqual("network", "STAGING")
+
+		useClient(client, func() {
+			resource.Test(t, resource.TestCase{
+				IsUnitTest:               true,
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config:           testutils.LoadFixtureString(t, "testdata/TestResActivations/match_by_id.tf"),
+						ImportState:      true,
+						ImportStateId:    "43253:7:STAGING",
+						ResourceName:     "akamai_appsec_activations.test",
+						ImportStateCheck: importChecker.Build(),
 					},
 				},
 			})
@@ -2729,13 +2880,15 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 			Status:       appsec.StatusDeactivated,
 			Network:      appsec.NetworkValue("STAGING"),
 		}
+		// "note" is write-only and not read back on the failure-revert, so cleanup
+		// sends the user's configured "Test Notes" (SECKSD-40899).
 		client.On("RemoveActivations",
 			testutils.MockContext,
 			appsec.RemoveActivationsRequest{
 				ActivationID:       547693,
 				Action:             "DEACTIVATE",
 				Network:            "STAGING",
-				Note:               "Previous Active Version Notes",
+				Note:               "Test Notes",
 				NotificationEmails: []string{"user@example.com"},
 				ActivationConfigs: []struct {
 					ConfigID      int `json:"configId"`

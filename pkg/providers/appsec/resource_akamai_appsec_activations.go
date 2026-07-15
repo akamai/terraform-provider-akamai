@@ -193,9 +193,7 @@ func resourceActivationsRead(ctx context.Context, d *schema.ResourceData, m inte
 	if err := d.Set("version", currentActiveVersion.Version); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
-	if err := d.Set("note", currentActiveVersion.Notes); err != nil {
-		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
-	}
+	// "note" is write-only field: the platform augments it server-side
 	if err := d.Set("notification_emails", currentActiveVersion.NotificationEmails); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
@@ -350,9 +348,8 @@ func resourceImporter(ctx context.Context, d *schema.ResourceData, m interface{}
 			if err = d.Set("network", network); err != nil {
 				return nil, err
 			}
-			if err = d.Set("note", activation.Notes); err != nil {
-				return nil, err
-			}
+			// "note" is write-only and not imported; the platform augments it
+			// server-side
 			if err = d.Set("version", version); err != nil {
 				return nil, err
 			}

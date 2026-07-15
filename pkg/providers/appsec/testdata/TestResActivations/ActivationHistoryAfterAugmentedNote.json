@@ -1,0 +1,14 @@
+{
+    "activationHistory": [
+        {
+            "activationId": 547694,
+            "version": 7,
+            "network": "STAGING",
+            "status": "ACTIVATED",
+            "notes": "Test Notes [Hostname www.example.com moved from config 98765 to config 43253]",
+            "notificationEmails": ["user@example.com"],
+            "createDate": "2020-10-07T12:30:49Z",
+            "createdBy": "lap2lreucgguhekn"
+        }
+    ]
+}
