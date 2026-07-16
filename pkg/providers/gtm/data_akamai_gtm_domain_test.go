@@ -261,6 +261,33 @@ func TestDataGtmDomain(t *testing.T) {
 			},
 			expectError: regexp.MustCompile("oops"),
 		},
+		"success - datacenter default_load_object without load_servers": {
+			givenTF: "valid.tf",
+			init: func(m *gtm.Mock) {
+				mockGetDomain(m, testDomainName, &gtm.Domain{
+					Name: testDomainName,
+					Datacenters: []gtm.Datacenter{{
+						DatacenterID: 3131,
+						Nickname:     "terraform_datacenter_test",
+						DefaultLoadObject: &gtm.LoadObject{
+							LoadObject:     "",
+							LoadObjectPort: 6379,
+							LoadServers:    nil,
+						},
+					}},
+				}, nil, testutils.ThreeTimes)
+			},
+			expectedAttributes: map[string]string{
+				"name":                        testDomainName,
+				"datacenters.0.datacenter_id": "3131",
+				"datacenters.0.nickname":      "terraform_datacenter_test",
+				"datacenters.0.default_load_object.0.load_object":      "",
+				"datacenters.0.default_load_object.0.load_object_port": "6379",
+			},
+			expectedMissingAttributes: []string{
+				"datacenters.0.default_load_object.0.load_servers.0",
+			},
+		},
 	}
 
 	for name, test := range tests {

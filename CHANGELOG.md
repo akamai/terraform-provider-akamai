@@ -41,10 +41,11 @@
 
 
 
-
 #### BUG FIXES:
 
 
+* GTM
+  * Fixed an issue in the `akamai_gtm_domain` datasource where an empty `load_servers` list caused a value conversion error.
 
 
 
