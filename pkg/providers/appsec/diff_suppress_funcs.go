@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/jsonutil"
 	logger "github.com/akamai/terraform-provider-akamai/v10/pkg/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -89,6 +90,10 @@ func jsonBytesEqual(b1, b2 []byte) bool {
 	}
 
 	return reflect.DeepEqual(o1, o2)
+}
+
+func suppressJSONDiffsIgnoringArrayOrder(_, oldString, newString string, _ *schema.ResourceData) bool {
+	return jsonutil.EqualIgnoringArrayOrder(oldString, newString)
 }
 
 func suppressEquivalentReputationProfileDiffs(_, oldVal, newVal string, _ *schema.ResourceData) bool {

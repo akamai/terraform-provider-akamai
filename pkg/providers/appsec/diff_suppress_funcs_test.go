@@ -143,6 +143,77 @@ func TestSuppressFieldForPrefixedGroupIDPostImport(t *testing.T) {
 	}
 }
 
+func TestSuppressJSONDiffsIgnoringArrayOrder(t *testing.T) {
+	tests := map[string]struct {
+		old      string
+		new      string
+		expected bool
+	}{
+		"identical flat objects": {
+			old:      `{"a":1,"b":2}`,
+			new:      `{"a":1,"b":2}`,
+			expected: true,
+		},
+		"flat arrays same order": {
+			old:      `[1,2,3]`,
+			new:      `[1,2,3]`,
+			expected: true,
+		},
+		"flat arrays different order": {
+			old:      `[1,2,3]`,
+			new:      `[3,1,2]`,
+			expected: true,
+		},
+		"object with array field reordered": {
+			old:      `{"tags":["b","a","c"]}`,
+			new:      `{"tags":["a","b","c"]}`,
+			expected: true,
+		},
+		"deeply nested arrays reordered": {
+			old:      `{"x":{"items":[{"id":2},{"id":1}]}}`,
+			new:      `{"x":{"items":[{"id":1},{"id":2}]}}`,
+			expected: true,
+		},
+		"objects with different values": {
+			old:      `{"a":1}`,
+			new:      `{"a":2}`,
+			expected: false,
+		},
+		"objects with extra key": {
+			old:      `{"a":1}`,
+			new:      `{"a":1,"b":2}`,
+			expected: false,
+		},
+		"arrays with different values": {
+			old:      `[1,2,3]`,
+			new:      `[1,2,4]`,
+			expected: false,
+		},
+		"arrays with different lengths": {
+			old:      `[1,2]`,
+			new:      `[1,2,3]`,
+			expected: false,
+		},
+		"invalid old JSON": {
+			old:      `not-json`,
+			new:      `{"a":1}`,
+			expected: false,
+		},
+		"invalid new JSON": {
+			old:      `{"a":1}`,
+			new:      `not-json`,
+			expected: false,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			result := suppressJSONDiffsIgnoringArrayOrder("", test.old, test.new, nil)
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}
+
 func TestAreReputationProfilesEqual(t *testing.T) {
 	t.Parallel()
 	deepCopyProfile := func(profile appsec.CreateReputationProfileResponse) appsec.CreateReputationProfileResponse {

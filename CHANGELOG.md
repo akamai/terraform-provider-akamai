@@ -45,6 +45,7 @@
 * Appsec
   * Fixed an issue in the `akamai_appsec_configuration` resource where `terraform plan` and `terraform apply` were showing spurious diff for `group_id` and `contract_id` after a `terraform import`.
   * Fixed issue in the `akamai_appsec_activations` resource where `plan` and `apply` were showing spurious diff for `note` after terraform import, caused by the platform appending hostname migration history to the note server-side.
+  * Fixed an issue in the `akamai_appsec_custom_rule` resource where `terraform plan` and `terraform apply` were showing spurious diff after terraform import or resource create
 
 * GTM
   * Fixed an issue in the `akamai_gtm_domain` datasource where an empty `load_servers` list caused a value conversion error.
