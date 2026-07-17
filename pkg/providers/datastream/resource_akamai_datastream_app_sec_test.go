@@ -11,6 +11,7 @@ import (
 )
 
 func TestResourceStreamLogTypeValidation(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		tfFile    string
 		withError *regexp.Regexp
@@ -22,6 +23,46 @@ func TestResourceStreamLogTypeValidation(t *testing.T) {
 		"appsec with properties": {
 			tfFile:    "testdata/TestResourceStream/appsec/appsec_with_properties.tf",
 			withError: regexp.MustCompile("cannot set `properties` when log_type is \"APPSEC\""),
+		},
+		"appsec missing contract_id": {
+			tfFile:    "testdata/TestResourceStream/appsec/appsec_missing_contract_id.tf",
+			withError: regexp.MustCompile("`contract_id` is required for log_type \"APPSEC\""),
+		},
+		"appsec missing group_id": {
+			tfFile:    "testdata/TestResourceStream/appsec/appsec_missing_group_id.tf",
+			withError: regexp.MustCompile("`group_id` is required for log_type \"APPSEC\""),
+		},
+		"appsec whitespace contract_id": {
+			tfFile:    "testdata/TestResourceStream/appsec/appsec_whitespace_contract_id.tf",
+			withError: regexp.MustCompile("`contract_id` is required for log_type \"APPSEC\""),
+		},
+		"appsec group_id zero": {
+			tfFile:    "testdata/TestResourceStream/appsec/appsec_group_id_zero.tf",
+			withError: regexp.MustCompile("`group_id` must be at least 1 for log_type \"APPSEC\""),
+		},
+		"appsec group_id negative": {
+			tfFile:    "testdata/TestResourceStream/appsec/appsec_group_id_negative.tf",
+			withError: regexp.MustCompile("`group_id` must be at least 1 for log_type \"APPSEC\""),
+		},
+		"appsec whitespace group_id": {
+			tfFile:    "testdata/TestResourceStream/appsec/appsec_whitespace_group_id.tf",
+			withError: regexp.MustCompile("`group_id` is required for log_type \"APPSEC\""),
+		},
+		"appsec invalid group_id": {
+			tfFile:    "testdata/TestResourceStream/appsec/appsec_invalid_group_id.tf",
+			withError: regexp.MustCompile("invalid `group_id`"),
+		},
+		"cdn group_id zero": {
+			tfFile:    "testdata/TestResourceStream/cdn/cdn_group_id_zero.tf",
+			withError: regexp.MustCompile("`group_id` must be at least 1 for log_type \"CDN\""),
+		},
+		"cdn group_id negative": {
+			tfFile:    "testdata/TestResourceStream/cdn/cdn_group_id_negative.tf",
+			withError: regexp.MustCompile("`group_id` must be at least 1 for log_type \"CDN\""),
+		},
+		"cdn invalid group_id": {
+			tfFile:    "testdata/TestResourceStream/cdn/cdn_group_id_invalid.tf",
+			withError: regexp.MustCompile("invalid `group_id`"),
 		},
 	}
 
@@ -47,6 +88,7 @@ func TestResourceStreamLogTypeValidation(t *testing.T) {
 }
 
 func TestResourceStreamAppSecCreateRead(t *testing.T) {
+	t.Parallel()
 	client := &datastream.Mock{}
 
 	streamConfiguration := datastream.StreamConfiguration{
@@ -209,6 +251,8 @@ func TestResourceStreamAppSecCreateRead(t *testing.T) {
 						resource.TestCheckResourceAttr("akamai_datastream.s", "properties.#", "0"),
 						resource.TestCheckResourceAttr("akamai_datastream.s", "app_sec_configs.#", "1"),
 						resource.TestCheckResourceAttr("akamai_datastream.s", "app_sec_configs.0", "16536"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "contract_id", "test_contract"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "group_id", "42"),
 					),
 				},
 				{

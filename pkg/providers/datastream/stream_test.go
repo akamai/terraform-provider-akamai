@@ -106,6 +106,67 @@ func TestConfigToSet(t *testing.T) {
 	assert.Equal(t, expected, configSet)
 }
 
+func testResourceDataWithDeliveryConfig(t *testing.T, prefix, suffix string) *schema.ResourceData {
+	t.Helper()
+
+	d := schema.TestResourceDataRaw(t, datastreamResourceSchema, map[string]interface{}{
+		"active":      true,
+		"stream_name": "test_stream",
+	})
+
+	if err := d.Set("delivery_configuration", newSet(map[string]interface{}{
+		"field_delimiter":    "SPACE",
+		"format":             "STRUCTURED",
+		"upload_file_prefix": prefix,
+		"upload_file_suffix": suffix,
+		"frequency": newSet(map[string]interface{}{
+			"interval_in_secs": 30,
+		}),
+	})); err != nil {
+		t.Fatalf("setting delivery_configuration: %v", err)
+	}
+
+	return d
+}
+
+func TestResolveUploadFilePrefixSuffixForRead(t *testing.T) {
+	t.Parallel()
+
+	d := testResourceDataWithDeliveryConfig(t, "pre", "suf")
+
+	t.Run("prefers API values when present", func(t *testing.T) {
+		assert.Equal(t, "api-pre", resolveUploadFilePrefixForRead("api-pre", d))
+		assert.Equal(t, "api-suf", resolveUploadFileSuffixForRead("api-suf", d))
+	})
+
+	t.Run("preserves configured values when API omits prefix and suffix", func(t *testing.T) {
+		assert.Equal(t, "pre", resolveUploadFilePrefixForRead("", d))
+		assert.Equal(t, "suf", resolveUploadFileSuffixForRead("", d))
+	})
+
+	t.Run("uses defaults when API and config omit prefix and suffix", func(t *testing.T) {
+		empty := schema.TestResourceDataRaw(t, datastreamResourceSchema, map[string]interface{}{})
+		assert.Equal(t, DefaultUploadFilePrefix, resolveUploadFilePrefixForRead("", empty))
+		assert.Equal(t, DefaultUploadFileSuffix, resolveUploadFileSuffixForRead("", empty))
+	})
+}
+
+func TestApplyDeliveryConfigurationForRead(t *testing.T) {
+	t.Parallel()
+
+	d := testResourceDataWithDeliveryConfig(t, "pre", "suf")
+
+	cfg := datastream.DeliveryConfiguration{}
+	applyDeliveryConfigurationForRead(&cfg, d, "s3_connector")
+	assert.Equal(t, "pre", cfg.UploadFilePrefix)
+	assert.Equal(t, "suf", cfg.UploadFileSuffix)
+
+	sumologicCfg := datastream.DeliveryConfiguration{}
+	applyDeliveryConfigurationForRead(&sumologicCfg, d, "sumologic_connector")
+	assert.Equal(t, DefaultUploadFilePrefix, sumologicCfg.UploadFilePrefix)
+	assert.Equal(t, DefaultUploadFileSuffix, sumologicCfg.UploadFileSuffix)
+}
+
 func TestGetFrequency(t *testing.T) {
 	tests := map[string]struct {
 		frequencyElements *schema.Set
@@ -289,3 +350,83 @@ func TestGetAppSecConfigIDs(t *testing.T) {
 	}
 	assert.Equal(t, []int{16536, 67890}, ids)
 }
+
+func TestNormalizePropertyID(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, "12345", normalizePropertyID("prp_12345"))
+	assert.Equal(t, "prp_12345", normalizePropertyID("  prp_12345  "))
+	assert.Equal(t, "42", normalizePropertyID("42"))
+}
+
+func TestPropertiesSameSet(t *testing.T) {
+	t.Parallel()
+
+	tests := map[string]struct {
+		old      []interface{}
+		new      []interface{}
+		expected bool
+	}{
+		"same order": {
+			old:      []interface{}{"1", "2", "3"},
+			new:      []interface{}{"1", "2", "3"},
+			expected: true,
+		},
+		"different order": {
+			old:      []interface{}{"1", "2", "3"},
+			new:      []interface{}{"3", "1", "2"},
+			expected: true,
+		},
+		"prp_ prefix normalized": {
+			old:      []interface{}{"prp_1", "2"},
+			new:      []interface{}{"1", "prp_2"},
+			expected: true,
+		},
+		"different members": {
+			old:      []interface{}{"1", "2"},
+			new:      []interface{}{"1", "3"},
+			expected: false,
+		},
+		"different lengths": {
+			old:      []interface{}{"1", "2"},
+			new:      []interface{}{"1"},
+			expected: false,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			same, ok := propertiesSameSet(test.old, test.new)
+			require.True(t, ok)
+			assert.Equal(t, test.expected, same)
+		})
+	}
+}
+
+func TestPropertiesSameSet_invalidType(t *testing.T) {
+	t.Parallel()
+
+	same, ok := propertiesSameSet([]interface{}{1, "2"}, []interface{}{"1", "2"})
+	assert.False(t, ok)
+	assert.False(t, same)
+}
+
+func TestIsPropertiesOrderDifferent(t *testing.T) {
+	t.Parallel()
+
+	t.Run("falls back to hash comparison when properties attribute unchanged", func(t *testing.T) {
+		d := schema.TestResourceDataRaw(t, datastreamResourceSchema, map[string]interface{}{
+			"log_type":    "CDN",
+			"active":      false,
+			"stream_name": "test_stream",
+			"properties":  []interface{}{"1", "2"},
+		})
+
+		assert.True(t, isPropertiesOrderDifferent("properties", "same-hash", "same-hash", d))
+		assert.False(t, isPropertiesOrderDifferent("properties", "old-hash", "new-hash", d))
+	})
+}
+
+// Reordering coverage for DiffSuppressFunc is exercised by
+// TestResourceStreamPropertiesOrderDiffSuppress (PlanOnly with reordered properties).
