@@ -852,12 +852,337 @@ func TestResDnsRecord(t *testing.T) {
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResDnsRecord/aaaa/create_valid_aaaa.tf"),
-					Check: resource.ComposeTestCheckFunc(
-						resource.TestCheckResourceAttr(resourceName, "recordtype", "AAAA"),
-						resource.TestCheckResourceAttr(resourceName, "target.#", "2"),
-						resource.TestCheckResourceAttr(resourceName, "target.0", "2001:db8:0:0:0:0:0:68"),
-						resource.TestCheckResourceAttr(resourceName, "target.1", "::ffff:192.0.2.1"),
-					),
+					// After the logic fix the AAAA Read normalizes both sides to full
+					// form before the SHA comparison.  When the addresses are identical
+					// the early-return path is taken and the state keeps the config
+					// values unchanged – i.e. the abbreviated forms typed by the user.
+					Check: test.NewStateChecker(resourceName).
+						CheckEqual("recordtype", "AAAA").
+						CheckEqual("target.#", "2").
+						CheckEqual("target.0", "2001:db8::68").
+						CheckEqual("target.1", "::ffff:192.0.2.1").Build(),
+				},
+			},
+		})
+
+		client.DNS.AssertExpectations(t)
+	})
+
+	t.Run("AAAA record update with full IPv6 form", func(t *testing.T) {
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+
+		// Full-form addresses already in sorted order after FullIPv6 expansion
+		createTargetSent := []string{
+			"1000:0000:0000:0000:0000:0000:0000:0001",
+			"1000:0000:0000:0000:0000:0000:0000:0002",
+			"1000:0000:0000:0000:0000:0000:0000:0003",
+			"1000:0000:0000:0000:0000:0000:0000:0004",
+		}
+		// The real Akamai API returns addresses in abbreviated form (leading zeros
+		// dropped per group, no "::" compression used).
+		targetReceived := []string{
+			"1000:0:0:0:0:0:0:1",
+			"1000:0:0:0:0:0:0:2",
+			"1000:0:0:0:0:0:0:3",
+			"1000:0:0:0:0:0:0:4",
+		}
+
+		// Sorted full form of update targets
+		updateTargetSent := []string{
+			"1000:0000:0000:0000:0000:0000:0000:0002",
+			"1000:0000:0000:0000:0000:0000:0000:0004",
+			"1000:0000:0000:0000:0000:0000:0000:0005",
+			"1000:0000:0000:0000:0000:0000:0000:0007",
+		}
+		targetReceivedUpdated := []string{
+			"1000:0:0:0:0:0:0:2",
+			"1000:0:0:0:0:0:0:4",
+			"1000:0:0:0:0:0:0:5",
+			"1000:0:0:0:0:0:0:7",
+		}
+
+		client.DNS.On("GetRecord",
+			testutils.MockContext,
+			dns.GetRecordRequest{Zone: "exampleterraform.io", Name: "exampleterraform.io", RecordType: "AAAA"},
+		).Return(nil, notFound).Once()
+
+		client.DNS.On("CreateRecord",
+			testutils.MockContext,
+			dns.CreateRecordRequest{
+				Record: &dns.RecordBody{
+					Name:       "exampleterraform.io",
+					RecordType: "AAAA",
+					TTL:        ptr.To(300),
+					Active:     false,
+					Target:     createTargetSent,
+				},
+				Zone:    "exampleterraform.io",
+				RecLock: []bool{false},
+			},
+		).Return(nil)
+
+		// read 4 times: 2 after create (read + check) + 2 before update (refresh)
+		// The mock returns abbreviated form, matching what the real Akamai API returns.
+		client.DNS.On("GetRecord",
+			testutils.MockContext,
+			dns.GetRecordRequest{Zone: "exampleterraform.io", Name: "exampleterraform.io", RecordType: "AAAA"},
+		).Return(&dns.GetRecordResponse{
+			Name:       "exampleterraform.io",
+			RecordType: "AAAA",
+			TTL:        300,
+			Active:     false,
+			Target:     targetReceived,
+		}, nil).Times(4)
+
+		// ParseRData / ProcessRdata receive the raw API response (abbreviated).
+		// Their return values are not used for AAAA – the switch-case overrides them.
+		client.DNS.On("ParseRData",
+			testutils.MockContext,
+			"AAAA",
+			targetReceived,
+		).Return(map[string]interface{}{
+			"target": targetReceived,
+		}).Times(3)
+
+		client.DNS.On("ProcessRdata",
+			testutils.MockContext,
+			targetReceived,
+			"AAAA",
+		).Return(targetReceived).Times(4)
+
+		// update
+		client.DNS.On("UpdateRecord",
+			testutils.MockContext,
+			dns.UpdateRecordRequest{
+				Record: &dns.RecordBody{
+					Name:       "exampleterraform.io",
+					RecordType: "AAAA",
+					TTL:        ptr.To(300),
+					Active:     false,
+					Target:     updateTargetSent,
+				},
+				Zone:    "exampleterraform.io",
+				RecLock: []bool{false},
+			},
+		).Return(nil)
+
+		// read 2 times after update: post-update read + final check
+		client.DNS.On("GetRecord",
+			testutils.MockContext,
+			dns.GetRecordRequest{Zone: "exampleterraform.io", Name: "exampleterraform.io", RecordType: "AAAA"},
+		).Return(&dns.GetRecordResponse{
+			Name:       "exampleterraform.io",
+			RecordType: "AAAA",
+			TTL:        300,
+			Active:     false,
+			Target:     targetReceivedUpdated,
+		}, nil).Times(2)
+
+		client.DNS.On("ParseRData",
+			testutils.MockContext,
+			"AAAA",
+			targetReceivedUpdated,
+		).Return(map[string]interface{}{
+			"target": targetReceivedUpdated,
+		}).Times(2)
+
+		client.DNS.On("ProcessRdata",
+			testutils.MockContext,
+			targetReceivedUpdated,
+			"AAAA",
+		).Return(targetReceivedUpdated).Times(2)
+
+		client.DNS.On("DeleteRecord",
+			testutils.MockContext,
+			dns.DeleteRecordRequest{Zone: "exampleterraform.io", Name: "exampleterraform.io", RecordType: "AAAA", RecLock: []bool{false}},
+		).Return(nil)
+
+		resourceName := "akamai_dns_record.aaaa_record_full"
+
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDnsRecord/aaaa/create_full_form_aaaa.tf"),
+					Check: test.NewStateChecker(resourceName).
+						CheckEqual("recordtype", "AAAA").
+						CheckEqual("target.#", "4").
+						CheckEqual("target.0", "1000:0000:0000:0000:0000:0000:0000:0001").
+						CheckEqual("target.1", "1000:0000:0000:0000:0000:0000:0000:0002").
+						CheckEqual("target.2", "1000:0000:0000:0000:0000:0000:0000:0003").
+						CheckEqual("target.3", "1000:0000:0000:0000:0000:0000:0000:0004").Build(),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDnsRecord/aaaa/update_full_form_aaaa.tf"),
+					Check: test.NewStateChecker(resourceName).
+						CheckEqual("recordtype", "AAAA").
+						CheckEqual("target.#", "4").
+						CheckEqual("target.0", "1000:0000:0000:0000:0000:0000:0000:0005").
+						CheckEqual("target.1", "1000:0000:0000:0000:0000:0000:0000:0002").
+						CheckEqual("target.2", "1000:0000:0000:0000:0000:0000:0000:0007").
+						CheckEqual("target.3", "1000:0000:0000:0000:0000:0000:0000:0004").Build(),
+				},
+			},
+		})
+
+		client.DNS.AssertExpectations(t)
+	})
+
+	t.Run("AAAA record update with abbreviated IPv6 form", func(t *testing.T) {
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+
+		// Full sorted form sent to the API (after FullIPv6 expansion + sort)
+		createTargetSent := []string{
+			"1000:0000:0000:0000:0000:0000:0000:0002",
+			"1000:0000:0000:0000:0000:0000:0000:0004",
+			"1000:0000:0000:0000:0000:0000:0000:0005",
+			"1000:0000:0000:0000:0000:0000:0000:0007",
+		}
+		// The real Akamai API returns abbreviated form (leading zeros dropped per
+		// group, no "::" compression used).
+		targetReceived := []string{
+			"1000:0:0:0:0:0:0:2",
+			"1000:0:0:0:0:0:0:4",
+			"1000:0:0:0:0:0:0:5",
+			"1000:0:0:0:0:0:0:7",
+		}
+
+		// Full sorted form of update targets
+		updateTargetSent := []string{
+			"1000:0000:0000:0000:0000:0000:0000:0001",
+			"1000:0000:0000:0000:0000:0000:0000:0002",
+			"1000:0000:0000:0000:0000:0000:0000:0003",
+			"1000:0000:0000:0000:0000:0000:0000:0004",
+		}
+		targetReceivedUpdated := []string{
+			"1000:0:0:0:0:0:0:1",
+			"1000:0:0:0:0:0:0:2",
+			"1000:0:0:0:0:0:0:3",
+			"1000:0:0:0:0:0:0:4",
+		}
+
+		client.DNS.On("GetRecord",
+			testutils.MockContext,
+			dns.GetRecordRequest{Zone: "exampleterraform.io", Name: "exampleterraform.io", RecordType: "AAAA"},
+		).Return(nil, notFound).Once()
+
+		client.DNS.On("CreateRecord",
+			testutils.MockContext,
+			dns.CreateRecordRequest{
+				Record: &dns.RecordBody{
+					Name:       "exampleterraform.io",
+					RecordType: "AAAA",
+					TTL:        ptr.To(300),
+					Active:     false,
+					Target:     createTargetSent,
+				},
+				Zone:    "exampleterraform.io",
+				RecLock: []bool{false},
+			},
+		).Return(nil)
+
+		// read 4 times: 2 after create (read + check) + 2 before update (refresh)
+		// The mock returns abbreviated form, matching what the real Akamai API returns.
+		client.DNS.On("GetRecord",
+			testutils.MockContext,
+			dns.GetRecordRequest{Zone: "exampleterraform.io", Name: "exampleterraform.io", RecordType: "AAAA"},
+		).Return(&dns.GetRecordResponse{
+			Name:       "exampleterraform.io",
+			RecordType: "AAAA",
+			TTL:        300,
+			Active:     false,
+			Target:     targetReceived,
+		}, nil).Times(4)
+
+		// ParseRData / ProcessRdata receive the raw API response (abbreviated).
+		// Their return values are not used for AAAA – the switch-case overrides them.
+		client.DNS.On("ParseRData",
+			testutils.MockContext,
+			"AAAA",
+			targetReceived,
+		).Return(map[string]interface{}{
+			"target": targetReceived,
+		}).Times(3)
+
+		client.DNS.On("ProcessRdata",
+			testutils.MockContext,
+			targetReceived,
+			"AAAA",
+		).Return(targetReceived).Times(4)
+
+		// update
+		client.DNS.On("UpdateRecord",
+			testutils.MockContext,
+			dns.UpdateRecordRequest{
+				Record: &dns.RecordBody{
+					Name:       "exampleterraform.io",
+					RecordType: "AAAA",
+					TTL:        ptr.To(300),
+					Active:     false,
+					Target:     updateTargetSent,
+				},
+				Zone:    "exampleterraform.io",
+				RecLock: []bool{false},
+			},
+		).Return(nil)
+
+		// read 2 times after update: post-update read + final check
+		client.DNS.On("GetRecord",
+			testutils.MockContext,
+			dns.GetRecordRequest{Zone: "exampleterraform.io", Name: "exampleterraform.io", RecordType: "AAAA"},
+		).Return(&dns.GetRecordResponse{
+			Name:       "exampleterraform.io",
+			RecordType: "AAAA",
+			TTL:        300,
+			Active:     false,
+			Target:     targetReceivedUpdated,
+		}, nil).Times(2)
+
+		client.DNS.On("ParseRData",
+			testutils.MockContext,
+			"AAAA",
+			targetReceivedUpdated,
+		).Return(map[string]interface{}{
+			"target": targetReceivedUpdated,
+		}).Times(2)
+
+		client.DNS.On("ProcessRdata",
+			testutils.MockContext,
+			targetReceivedUpdated,
+			"AAAA",
+		).Return(targetReceivedUpdated).Times(2)
+
+		client.DNS.On("DeleteRecord",
+			testutils.MockContext,
+			dns.DeleteRecordRequest{Zone: "exampleterraform.io", Name: "exampleterraform.io", RecordType: "AAAA", RecLock: []bool{false}},
+		).Return(nil)
+
+		resourceName := "akamai_dns_record.aaaa_record_abbrev"
+
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDnsRecord/aaaa/create_abbrev_form_aaaa.tf"),
+					Check: test.NewStateChecker(resourceName).
+						CheckEqual("recordtype", "AAAA").
+						CheckEqual("target.#", "4").
+						CheckEqual("target.0", "1000:0:0:0:0:0:0:5").
+						CheckEqual("target.1", "1000:0:0:0:0:0:0:2").
+						CheckEqual("target.2", "1000:0:0:0:0:0:0:7").
+						CheckEqual("target.3", "1000:0:0:0:0:0:0:4").Build(),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDnsRecord/aaaa/update_abbrev_form_aaaa.tf"),
+					Check: test.NewStateChecker(resourceName).
+						CheckEqual("recordtype", "AAAA").
+						CheckEqual("target.#", "4").
+						CheckEqual("target.0", "1000:0:0:0:0:0:0:1").
+						CheckEqual("target.1", "1000:0:0:0:0:0:0:2").
+						CheckEqual("target.2", "1000:0:0:0:0:0:0:3").
+						CheckEqual("target.3", "1000:0:0:0:0:0:0:4").Build(),
 				},
 			},
 		})
@@ -1700,6 +2025,7 @@ func TestTargetDiffSuppress(t *testing.T) {
 }
 
 func TestDiffQuotedDNSRecordTXT(t *testing.T) {
+	t.Parallel()
 	logger := akalog.NOPLogger()
 
 	spfValue := "v=spf1 mx include:spf.domain.com include:spf.protection.outlook.com -all"
@@ -1809,7 +2135,411 @@ func TestDiffQuotedDNSRecordTXT(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			result := diffQuotedDNSRecord(tc.oldTargetList, tc.newTargetList, tc.oldVal, tc.newVal, tc.recordType, logger)
+			assert.Equal(t, tc.expectSuppress, result)
+		})
+	}
+}
+
+func TestDiffQuotedDNSRecordA(t *testing.T) {
+	t.Parallel()
+	logger := akalog.NOPLogger()
+
+	tests := []struct {
+		name           string
+		oldTargetList  []string
+		newTargetList  []string
+		oldVal         string
+		newVal         string
+		expectSuppress bool
+	}{
+		{
+			name:           "A: sliding-window update — old value present in new list at different index must not suppress new value",
+			oldTargetList:  []string{"10.0.1.1", "10.0.1.2"},
+			newTargetList:  []string{"10.0.1.2", "10.0.1.3"},
+			oldVal:         "10.0.1.2",
+			newVal:         "10.0.1.3",
+			expectSuppress: false,
+		},
+		{
+			name:           "A: identical lists suppress diff",
+			oldTargetList:  []string{"10.0.1.1", "10.0.1.2"},
+			newTargetList:  []string{"10.0.1.1", "10.0.1.2"},
+			oldVal:         "10.0.1.1",
+			newVal:         "10.0.1.1",
+			expectSuppress: true,
+		},
+		{
+			name:           "A: pure reorder suppresses diff",
+			oldTargetList:  []string{"10.0.1.1", "10.0.1.2"},
+			newTargetList:  []string{"10.0.1.2", "10.0.1.1"},
+			oldVal:         "10.0.1.1",
+			newVal:         "10.0.1.2",
+			expectSuppress: true,
+		},
+		{
+			name:           "A: all values replaced triggers diff",
+			oldTargetList:  []string{"10.0.1.1", "10.0.1.2"},
+			newTargetList:  []string{"10.0.1.3", "10.0.1.4"},
+			oldVal:         "10.0.1.1",
+			newVal:         "10.0.1.3",
+			expectSuppress: false,
+		},
+		{
+			name:           "A: different list lengths trigger diff",
+			oldTargetList:  []string{"10.0.1.1"},
+			newTargetList:  []string{"10.0.1.1", "10.0.1.2"},
+			oldVal:         "10.0.1.1",
+			newVal:         "10.0.1.2",
+			expectSuppress: false,
+		},
+		// Per-element suppress: when some IPs genuinely change, an element whose
+		// value is exactly unchanged should be suppressed so it does not appear
+		// as plan noise alongside the real change.
+		{
+			// 10.0.1.2 is unchanged at position 1; 10.0.1.1→10.0.1.5 is genuine.
+			name:           "A: unchanged element suppressed when another IP genuinely changes",
+			oldTargetList:  []string{"10.0.1.1", "10.0.1.2", "10.0.1.3", "10.0.1.4"},
+			newTargetList:  []string{"10.0.1.5", "10.0.1.2", "10.0.1.7", "10.0.1.4"},
+			oldVal:         "10.0.1.2",
+			newVal:         "10.0.1.2",
+			expectSuppress: true,
+		},
+		{
+			// 10.0.1.1→10.0.1.5 is genuine; must not be suppressed.
+			name:           "A: genuinely changed IP not suppressed when another IP is unchanged",
+			oldTargetList:  []string{"10.0.1.1", "10.0.1.2", "10.0.1.3", "10.0.1.4"},
+			newTargetList:  []string{"10.0.1.5", "10.0.1.2", "10.0.1.7", "10.0.1.4"},
+			oldVal:         "10.0.1.1",
+			newVal:         "10.0.1.5",
+			expectSuppress: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			result := diffQuotedDNSRecord(tc.oldTargetList, tc.newTargetList, tc.oldVal, tc.newVal, RRTypeA, logger)
+			assert.Equal(t, tc.expectSuppress, result)
+		})
+	}
+}
+
+func TestDiffQuotedDNSRecordAAAA(t *testing.T) {
+	t.Parallel()
+	logger := akalog.NOPLogger()
+
+	tests := []struct {
+		name           string
+		oldTargetList  []string
+		newTargetList  []string
+		oldVal         string
+		newVal         string
+		expectSuppress bool
+	}{
+		{
+			name:           "AAAA: sliding-window update — old address present in new list at different index must not suppress new address",
+			oldTargetList:  []string{"2001:db8::1", "2001:db8::2"},
+			newTargetList:  []string{"2001:db8::2", "2001:db8::3"},
+			oldVal:         "2001:db8::2",
+			newVal:         "2001:db8::3",
+			expectSuppress: false,
+		},
+		{
+			name:           "AAAA: abbreviated and expanded forms of the same address suppress diff",
+			oldTargetList:  []string{"2001:db8::1"},
+			newTargetList:  []string{"2001:0db8:0000:0000:0000:0000:0000:0001"},
+			oldVal:         "2001:db8::1",
+			newVal:         "2001:0db8:0000:0000:0000:0000:0000:0001",
+			expectSuppress: true,
+		},
+		{
+			name:           "AAAA: identical lists suppress diff",
+			oldTargetList:  []string{"2001:db8::1", "2001:db8::2"},
+			newTargetList:  []string{"2001:db8::1", "2001:db8::2"},
+			oldVal:         "2001:db8::1",
+			newVal:         "2001:db8::1",
+			expectSuppress: true,
+		},
+		{
+			name:           "AAAA: pure reorder suppresses diff",
+			oldTargetList:  []string{"2001:db8::1", "2001:db8::2"},
+			newTargetList:  []string{"2001:db8::2", "2001:db8::1"},
+			oldVal:         "2001:db8::1",
+			newVal:         "2001:db8::2",
+			expectSuppress: true,
+		},
+		{
+			name:           "AAAA: pure reorder with expanded form suppresses diff",
+			oldTargetList:  []string{"2001:db8::1", "2001:db8::2"},
+			newTargetList:  []string{"2001:db8::2", "2001:0db8:0000:0000:0000:0000:0000:0001"},
+			oldVal:         "2001:db8::1",
+			newVal:         "2001:db8::2",
+			expectSuppress: true,
+		},
+		{
+			name:           "AAAA: all addresses replaced triggers diff",
+			oldTargetList:  []string{"2001:db8::1", "2001:db8::2"},
+			newTargetList:  []string{"2001:db8::3", "2001:db8::4"},
+			oldVal:         "2001:db8::1",
+			newVal:         "2001:db8::3",
+			expectSuppress: false,
+		},
+		{
+			name:           "AAAA: different list lengths trigger diff",
+			oldTargetList:  []string{"2001:db8::1"},
+			newTargetList:  []string{"2001:db8::1", "2001:db8::2"},
+			oldVal:         "2001:db8::1",
+			newVal:         "2001:db8::2",
+			expectSuppress: false,
+		},
+		// Per-element suppress: when some addresses genuinely change, elements
+		// that are the same address in a different notation should be suppressed
+		// so they don't appear as noise in the Terraform plan.
+		{
+			// The element under test (0:2 → 0000:0002) is unchanged; two other
+			// addresses in the list genuinely changed (0:1→0:5, 0:3→0:7).
+			name:           "AAAA: format-only element suppressed when other elements change (abbreviated→full)",
+			oldTargetList:  []string{"1000:0:0:0:0:0:0:1", "1000:0:0:0:0:0:0:2", "1000:0:0:0:0:0:0:3", "1000:0:0:0:0:0:0:4"},
+			newTargetList:  []string{"1000:0000:0000:0000:0000:0000:0000:0005", "1000:0000:0000:0000:0000:0000:0000:0002", "1000:0000:0000:0000:0000:0000:0000:0007", "1000:0000:0000:0000:0000:0000:0000:0004"},
+			oldVal:         "1000:0:0:0:0:0:0:2",
+			newVal:         "1000:0000:0000:0000:0000:0000:0000:0002",
+			expectSuppress: true,
+		},
+		{
+			// The element under test (0:1 → 0000:0005) is a genuine change and
+			// must not be suppressed.
+			name:           "AAAA: genuinely changed element not suppressed when other elements also change",
+			oldTargetList:  []string{"1000:0:0:0:0:0:0:1", "1000:0:0:0:0:0:0:2", "1000:0:0:0:0:0:0:3", "1000:0:0:0:0:0:0:4"},
+			newTargetList:  []string{"1000:0000:0000:0000:0000:0000:0000:0005", "1000:0000:0000:0000:0000:0000:0000:0002", "1000:0000:0000:0000:0000:0000:0000:0007", "1000:0000:0000:0000:0000:0000:0000:0004"},
+			oldVal:         "1000:0:0:0:0:0:0:1",
+			newVal:         "1000:0000:0000:0000:0000:0000:0000:0005",
+			expectSuppress: false,
+		},
+		{
+			// Format-only change on last element suppressed while first changes.
+			name:           "AAAA: format-only last element suppressed when first element changes",
+			oldTargetList:  []string{"1000:0:0:0:0:0:0:1", "1000:0:0:0:0:0:0:4"},
+			newTargetList:  []string{"1000:0000:0000:0000:0000:0000:0000:0005", "1000:0000:0000:0000:0000:0000:0000:0004"},
+			oldVal:         "1000:0:0:0:0:0:0:4",
+			newVal:         "1000:0000:0000:0000:0000:0000:0000:0004",
+			expectSuppress: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			result := diffQuotedDNSRecord(tc.oldTargetList, tc.newTargetList, tc.oldVal, tc.newVal, RRTypeAaaa, logger)
+			assert.Equal(t, tc.expectSuppress, result)
+		})
+	}
+}
+
+func TestDiffQuotedDNSRecordNS(t *testing.T) {
+	t.Parallel()
+	logger := akalog.NOPLogger()
+
+	tests := []struct {
+		name           string
+		oldTargetList  []string
+		newTargetList  []string
+		oldVal         string
+		newVal         string
+		expectSuppress bool
+	}{
+		{
+			name:           "NS: sliding-window update — old nameserver present in new list at different index must not suppress new nameserver",
+			oldTargetList:  []string{"ns1.example.com.", "ns2.example.com."},
+			newTargetList:  []string{"ns2.example.com.", "ns3.example.com."},
+			oldVal:         "ns2.example.com.",
+			newVal:         "ns3.example.com.",
+			expectSuppress: false,
+		},
+		{
+			name:           "NS: trailing dot vs no trailing dot suppresses diff",
+			oldTargetList:  []string{"ns1.example.com."},
+			newTargetList:  []string{"ns1.example.com"},
+			oldVal:         "ns1.example.com.",
+			newVal:         "ns1.example.com",
+			expectSuppress: true,
+		},
+		{
+			name:           "NS: identical lists suppress diff",
+			oldTargetList:  []string{"ns1.example.com.", "ns2.example.com."},
+			newTargetList:  []string{"ns1.example.com.", "ns2.example.com."},
+			oldVal:         "ns1.example.com.",
+			newVal:         "ns1.example.com.",
+			expectSuppress: true,
+		},
+		{
+			name:           "NS: pure reorder suppresses diff",
+			oldTargetList:  []string{"ns1.example.com.", "ns2.example.com."},
+			newTargetList:  []string{"ns2.example.com.", "ns1.example.com."},
+			oldVal:         "ns1.example.com.",
+			newVal:         "ns2.example.com.",
+			expectSuppress: true,
+		},
+		{
+			name:           "NS: different nameserver triggers diff",
+			oldTargetList:  []string{"ns1.example.com."},
+			newTargetList:  []string{"ns2.example.com."},
+			oldVal:         "ns1.example.com.",
+			newVal:         "ns2.example.com.",
+			expectSuppress: false,
+		},
+		{
+			name:           "NS: different list lengths trigger diff",
+			oldTargetList:  []string{"ns1.example.com."},
+			newTargetList:  []string{"ns1.example.com.", "ns2.example.com."},
+			oldVal:         "ns1.example.com.",
+			newVal:         "ns2.example.com.",
+			expectSuppress: false,
+		},
+		// Per-element suppress: when some nameservers genuinely change, elements
+		// whose only difference is a trailing dot should not appear as plan noise.
+		{
+			// ns1 is unchanged (just trailing-dot format), ns2→ns4 is genuine change.
+			// Checking ns1: should be suppressed.
+			name:           "NS: trailing-dot element suppressed when another NS genuinely changes",
+			oldTargetList:  []string{"ns1.example.com.", "ns2.example.com.", "ns3.example.com."},
+			newTargetList:  []string{"ns1.example.com", "ns4.example.com.", "ns3.example.com"},
+			oldVal:         "ns1.example.com.",
+			newVal:         "ns1.example.com",
+			expectSuppress: true,
+		},
+		{
+			// ns2→ns4 is genuine; must not be suppressed.
+			name:           "NS: genuinely changed element not suppressed when another NS is format-only",
+			oldTargetList:  []string{"ns1.example.com.", "ns2.example.com.", "ns3.example.com."},
+			newTargetList:  []string{"ns1.example.com", "ns4.example.com.", "ns3.example.com"},
+			oldVal:         "ns2.example.com.",
+			newVal:         "ns4.example.com.",
+			expectSuppress: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			result := diffQuotedDNSRecord(tc.oldTargetList, tc.newTargetList, tc.oldVal, tc.newVal, RRTypeNs, logger)
+			assert.Equal(t, tc.expectSuppress, result)
+		})
+	}
+}
+
+// TestDiffQuotedDNSRecordCNAME exercises the trailing-dot branch for CNAME
+// (which shares the same code path as AFSDB, PTR, and SRV).
+func TestDiffQuotedDNSRecordCNAME(t *testing.T) {
+	t.Parallel()
+	logger := akalog.NOPLogger()
+
+	tests := []struct {
+		name           string
+		oldTargetList  []string
+		newTargetList  []string
+		oldVal         string
+		newVal         string
+		expectSuppress bool
+	}{
+		{
+			name:           "CNAME: identical value suppresses diff",
+			oldTargetList:  []string{"alias.example.com."},
+			newTargetList:  []string{"alias.example.com."},
+			oldVal:         "alias.example.com.",
+			newVal:         "alias.example.com.",
+			expectSuppress: true,
+		},
+		{
+			name:           "CNAME: trailing dot vs no trailing dot suppresses diff",
+			oldTargetList:  []string{"alias.example.com."},
+			newTargetList:  []string{"alias.example.com"},
+			oldVal:         "alias.example.com.",
+			newVal:         "alias.example.com",
+			expectSuppress: true,
+		},
+		{
+			name:           "CNAME: different target triggers diff",
+			oldTargetList:  []string{"alias1.example.com."},
+			newTargetList:  []string{"alias2.example.com."},
+			oldVal:         "alias1.example.com.",
+			newVal:         "alias2.example.com.",
+			expectSuppress: false,
+		},
+		// Per-element suppress: when some targets genuinely change, elements
+		// whose only difference is a trailing dot must not appear as plan noise.
+		{
+			// alias1 is unchanged (trailing-dot only), alias2→alias4 is genuine.
+			name:           "CNAME: trailing-dot element suppressed when another target genuinely changes",
+			oldTargetList:  []string{"alias1.example.com.", "alias2.example.com."},
+			newTargetList:  []string{"alias1.example.com", "alias4.example.com."},
+			oldVal:         "alias1.example.com.",
+			newVal:         "alias1.example.com",
+			expectSuppress: true,
+		},
+		{
+			// alias2→alias4 is genuine; must not be suppressed.
+			name:           "CNAME: genuinely changed element not suppressed when another is format-only",
+			oldTargetList:  []string{"alias1.example.com.", "alias2.example.com."},
+			newTargetList:  []string{"alias1.example.com", "alias4.example.com."},
+			oldVal:         "alias2.example.com.",
+			newVal:         "alias4.example.com.",
+			expectSuppress: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			result := diffQuotedDNSRecord(tc.oldTargetList, tc.newTargetList, tc.oldVal, tc.newVal, RRTypeCname, logger)
+			assert.Equal(t, tc.expectSuppress, result)
+		})
+	}
+}
+
+func TestDiffQuotedDNSRecordSOA(t *testing.T) {
+	t.Parallel()
+	logger := akalog.NOPLogger()
+
+	// SOA has no dedicated branch and falls through to the generic sorted-list
+	// path. SOA records have exactly one target in practice, but the suppress
+	// function still needs to correctly detect value changes.
+	const (
+		soaBase    = "ns1.example.com. hostmaster.example.com. 2024010101 3600 900 604800 300"
+		soaUpdated = "ns1.example.com. hostmaster.example.com. 2024020101 3600 900 604800 300"
+	)
+
+	tests := []struct {
+		name           string
+		oldTargetList  []string
+		newTargetList  []string
+		oldVal         string
+		newVal         string
+		expectSuppress bool
+	}{
+		{
+			name:           "SOA: identical value suppresses diff",
+			oldTargetList:  []string{soaBase},
+			newTargetList:  []string{soaBase},
+			oldVal:         soaBase,
+			newVal:         soaBase,
+			expectSuppress: true,
+		},
+		{
+			name:           "SOA: updated serial triggers diff",
+			oldTargetList:  []string{soaBase},
+			newTargetList:  []string{soaUpdated},
+			oldVal:         soaBase,
+			newVal:         soaUpdated,
+			expectSuppress: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			result := diffQuotedDNSRecord(tc.oldTargetList, tc.newTargetList, tc.oldVal, tc.newVal, RRTypeSoa, logger)
 			assert.Equal(t, tc.expectSuppress, result)
 		})
 	}

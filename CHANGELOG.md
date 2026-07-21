@@ -49,6 +49,10 @@
 
 
 
+* DNS
+  * Fixed issue in the `akamai_dns_record` resource where updates to records with multi-value targets were not handled correctly ([I#767](https://github.com/akamai/terraform-provider-akamai/issues/767)).
+
+
 
 
 
