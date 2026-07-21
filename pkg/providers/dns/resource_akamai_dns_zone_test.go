@@ -40,7 +40,7 @@ func TestResDNSZone(t *testing.T) {
 		Comment:         "This is a test zone with multi-signer DNSSEC",
 		SignAndServe:    true,
 		ActivationState: "PENDING",
-		MultiProviderDnssec: &dns.MultiProviderDnssec{
+		MultiProviderDNSSEC: &dns.MultiProviderDNSSEC{
 			Enabled: true,
 		},
 	}

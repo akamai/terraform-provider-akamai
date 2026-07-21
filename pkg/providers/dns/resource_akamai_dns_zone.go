@@ -499,7 +499,7 @@ func resourceDNSv2ZoneUpdate(ctx context.Context, d *schema.ResourceData, m inte
 	zoneCreate.EndCustomerID = zone.EndCustomerID
 	zoneCreate.ContractID = zone.ContractID
 	zoneCreate.TSIGKey = zone.TSIGKey
-	zoneCreate.MultiProviderDnssec = zone.MultiProviderDnssec
+	zoneCreate.MultiProviderDNSSEC = zone.MultiProviderDNSSEC
 	if err := populateDNSv2ZoneObject(d, zoneCreate, logger); err != nil {
 		return diag.FromErr(err)
 	}
@@ -718,9 +718,9 @@ func populateDNSv2ZoneState(d *schema.ResourceData, zoneresp *dns.GetZoneRespons
 	}
 
 	multiProviderDnssecListNew := make([]interface{}, 0)
-	if zoneresp.MultiProviderDnssec != nil {
+	if zoneresp.MultiProviderDNSSEC != nil {
 		multiProviderDnssecNew := map[string]interface{}{
-			"enabled": zoneresp.MultiProviderDnssec.Enabled,
+			"enabled": zoneresp.MultiProviderDNSSEC.Enabled,
 		}
 		multiProviderDnssecListNew = append(multiProviderDnssecListNew, multiProviderDnssecNew)
 	}
@@ -837,7 +837,7 @@ func populateDNSv2ZoneObject(d *schema.ResourceData, zone *dns.ZoneCreate, logge
 		if !ok {
 			return fmt.Errorf("'multi_provider_dnssec' entry is of invalid type; should be 'map[string]interface{}'")
 		}
-		zone.MultiProviderDnssec = &dns.MultiProviderDnssec{
+		zone.MultiProviderDNSSEC = &dns.MultiProviderDNSSEC{
 			Enabled: multiProviderDnssecMap["enabled"].(bool),
 		}
 	}
