@@ -710,6 +710,9 @@ func TestResDNSZone(t *testing.T) {
 						Algorithm: "hmac-sha512",
 						Secret:    "fakeSecretjVka5cHPEJQIXfLyx5V3PSkFBROAzOn21JumDq6nIpoj6H8rfj5Uo+Ok55ZWQ0Wgrf302fDscHLw==",
 					},
+					MultiProviderDNSSEC: &dns.MultiProviderDNSSEC{
+						Enabled: false,
+					},
 				},
 				ZoneQueryString: dns.ZoneQueryString{
 					Contract: "ctr1",
@@ -778,7 +781,7 @@ func TestResDNSZone(t *testing.T) {
 
 		client.DNS.AssertExpectations(t)
 	})
-	// This test performs a full life-cycle (CRUD) test for a zone with multi-signer DNSSEC enabled
+	// This test performs a full life-cycle (CRUD) test for a zone with multi-signer DNSSEC enabled.
 	t.Run("lifecycle test with multi-signer DNSSEC", func(t *testing.T) {
 		t.Parallel()
 		client := edgegrid.NewTestClient()
@@ -793,8 +796,21 @@ func TestResDNSZone(t *testing.T) {
 
 		client.DNS.On("CreateZone",
 			testutils.MockContext,
-			mock.AnythingOfType("dns.CreateZoneRequest"),
-		).Return(nil)
+			dns.CreateZoneRequest{
+				CreateZone: &dns.ZoneCreate{
+					Zone:         "multisignerexampleterraform.io",
+					Type:         "primary",
+					Masters:      []string{},
+					Comment:      "This is a test zone with multi-signer DNSSEC",
+					SignAndServe: true,
+					MultiProviderDNSSEC: &dns.MultiProviderDNSSEC{
+						Enabled: true,
+					},
+				},
+				ZoneQueryString: dns.ZoneQueryString{Contract: "ctr1", Group: "grp1"},
+				ClearConn:       []bool{true},
+			},
+		).Return(nil).Once()
 
 		client.DNS.On("GetZone",
 			testutils.MockContext,
@@ -853,14 +869,14 @@ func TestResDNSZone(t *testing.T) {
 						resource.TestCheckResourceAttr(multiSignerResourceName, "contract", "ctr1"),
 						resource.TestCheckResourceAttr(multiSignerResourceName, "comment", "This is a test zone with multi-signer DNSSEC"),
 						resource.TestCheckResourceAttr(multiSignerResourceName, "group", "grp1"),
-						resource.TestCheckResourceAttr(multiSignerResourceName, "multi_provider_dnssec.0.enabled", "true"),
+						resource.TestCheckResourceAttr(multiSignerResourceName, "multi_provider_dnssec", "true"),
 					),
 				},
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResDnsZone/update_multisigner.tf"),
 					Check: resource.ComposeTestCheckFunc(
 						resource.TestCheckResourceAttr(multiSignerResourceName, "zone", "multisignerexampleterraform.io"),
-						resource.TestCheckResourceAttr(multiSignerResourceName, "multi_provider_dnssec.0.enabled", "true"),
+						resource.TestCheckResourceAttr(multiSignerResourceName, "multi_provider_dnssec", "true"),
 					),
 				},
 			},
@@ -878,7 +894,7 @@ func TestResDNSZone(t *testing.T) {
 			Steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResDnsZone/create_multisigner_without_sign_and_serve.tf"),
-					ExpectError: regexp.MustCompile("multi_provider_dnssec.enabled requires sign_and_serve to be true"),
+					ExpectError: regexp.MustCompile("multi_provider_dnssec requires sign_and_serve to be true"),
 				},
 			},
 		})
