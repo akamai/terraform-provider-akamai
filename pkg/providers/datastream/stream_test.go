@@ -57,7 +57,7 @@ func TestGetConfig(t *testing.T) {
 				Delimiter: datastream.DelimiterTypePtr(datastream.DelimiterTypeSpace),
 				Format:    datastream.FormatTypeStructured,
 				Frequency: datastream.Frequency{
-					IntervalInSeconds: 30,
+					IntervalInSeconds: datastream.IntervalInSeconds30,
 				},
 				UploadFilePrefix: "pre",
 				UploadFileSuffix: "suf",
@@ -83,7 +83,7 @@ func TestConfigToSet(t *testing.T) {
 		Delimiter: datastream.DelimiterTypePtr(datastream.DelimiterTypeSpace),
 		Format:    datastream.FormatTypeStructured,
 		Frequency: datastream.Frequency{
-			IntervalInSeconds: 30,
+			IntervalInSeconds: datastream.IntervalInSeconds30,
 		},
 		UploadFilePrefix: "pre",
 		UploadFileSuffix: "suf",
@@ -188,7 +188,7 @@ func TestGetFrequency(t *testing.T) {
 				},
 			),
 			expectedResult: datastream.Frequency{
-				IntervalInSeconds: 60,
+				IntervalInSeconds: datastream.IntervalInSeconds60,
 			},
 		},
 	}
@@ -208,7 +208,7 @@ func TestGetFrequency(t *testing.T) {
 
 func TestFrequencyToSet(t *testing.T) {
 	frequency := datastream.Frequency{
-		IntervalInSeconds: 60,
+		IntervalInSeconds: datastream.IntervalInSeconds60,
 	}
 	expected := []map[string]interface{}{
 		{

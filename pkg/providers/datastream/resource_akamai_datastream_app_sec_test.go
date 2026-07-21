@@ -95,7 +95,7 @@ func TestResourceStreamAppSecCreateRead(t *testing.T) {
 		DeliveryConfiguration: datastream.DeliveryConfiguration{
 			Format: datastream.FormatTypeJson,
 			Frequency: datastream.Frequency{
-				IntervalInSeconds: 30,
+				IntervalInSeconds: datastream.IntervalInSeconds30,
 			},
 		},
 		Destination: datastream.AbstractConnector(

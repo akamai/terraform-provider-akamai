@@ -42,7 +42,6 @@ var (
 		"s3_compatible_connector",
 		"trafficpeak_connector",
 		"dynatrace_connector",
-		"netstorage_connector",
 	}
 
 	// ConnectorsWithoutFilenameOptionsConfig defines connectors without option to configure prefix and suffix
@@ -1021,62 +1020,6 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 					Type:        schema.TypeString,
 					Optional:    true,
 					Description: "The custom header's contents passed with the request that contains information about the client connection. For details, see Additional options in the DataStream user guide.",
-				},
-			},
-		},
-	},
-	"netstorage_connector": {
-		Type:         schema.TypeSet,
-		MaxItems:     1,
-		ExactlyOneOf: ExactlyOneConnectorRule,
-		Optional:     true,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
-				"display_name": {
-					Type:             schema.TypeString,
-					Required:         true,
-					Description:      "The destination's name.",
-					ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
-				},
-				"domain_prefix": {
-					Type:             schema.TypeString,
-					Required:         true,
-					Description:      "The NetStorage domain prefix.",
-					ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
-				},
-				"user_name": {
-					Type:             schema.TypeString,
-					Required:         true,
-					Sensitive:        true,
-					Description:      "The NetStorage username.",
-					ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
-				},
-				"path": {
-					Type:        schema.TypeString,
-					Optional:    true,
-					Description: "The NetStorage path.",
-					Default:     "",
-				},
-				"cp_code": {
-					Type:        schema.TypeString,
-					Required:    true,
-					Description: "The NetStorage CP code.",
-					ValidateDiagFunc: validation.ToDiagFunc(validation.StringMatch(
-						regexp.MustCompile(`^[1-9][0-9]*$`),
-						"cp_code must be a positive integer",
-					)),
-				},
-				"secret_access_key": {
-					Type:             schema.TypeString,
-					Required:         true,
-					Sensitive:        true,
-					Description:      "The g2o secret access key for this NetStorage account.",
-					ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
-				},
-				"compress_logs": {
-					Type:        schema.TypeBool,
-					Computed:    true,
-					Description: "Indicates whether the logs should be compressed.",
 				},
 			},
 		},

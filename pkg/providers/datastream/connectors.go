@@ -26,7 +26,6 @@ var (
 		datastream.DestinationTypeS3Compatible:  "s3_compatible_connector",
 		datastream.DestinationTypeTrafficPeak:   "trafficpeak_connector",
 		datastream.DestinationTypeDynatrace:     "dynatrace_connector",
-		datastream.DestinationTypeNetStorage:    "netstorage_connector",
 	}
 
 	connectorMappers = map[datastream.DestinationType]func(datastream.Destination, map[string]interface{}) map[string]interface{}{
@@ -44,7 +43,6 @@ var (
 		datastream.DestinationTypeS3Compatible:  MapS3CompatibleConnector,
 		datastream.DestinationTypeTrafficPeak:   MapTrafficPeakConnector,
 		datastream.DestinationTypeDynatrace:     MapDynatraceConnector,
-		datastream.DestinationTypeNetStorage:    MapNetStorageConnector,
 	}
 
 	connectorGetters = map[string]func(map[string]interface{}) datastream.AbstractConnector{
@@ -62,7 +60,6 @@ var (
 		"s3_compatible_connector": GetS3CompatibleConnector,
 		"trafficpeak_connector":   GetTrafficPeakConnector,
 		"dynatrace_connector":     GetDynatraceConnector,
-		"netstorage_connector":    GetNetStorageConnector,
 	}
 )
 
@@ -509,37 +506,6 @@ func GetTrafficPeakConnector(props map[string]interface{}) datastream.AbstractCo
 		Endpoint:           props["endpoint"].(string),
 		UserName:           props["user_name"].(string),
 	}
-}
-
-// GetNetStorageConnector builds the NetStorageConnector structure
-func GetNetStorageConnector(props map[string]interface{}) datastream.AbstractConnector {
-	return &datastream.NetStorageConnector{
-		DisplayName: props["display_name"].(string),
-
-		// the domain_prefix is mapped to 'endpoint' in the API.
-		Endpoint: props["domain_prefix"].(string),
-		UserName: props["user_name"].(string),
-		Path:     props["path"].(string),
-
-		// The optional CP code field is mapped to 'bucket' in the API.
-		Bucket:          props["cp_code"].(string),
-		SecretAccessKey: props["secret_access_key"].(string),
-	}
-}
-
-// MapNetStorageConnector selects fields needed for NetStorageConnector
-func MapNetStorageConnector(c datastream.Destination, state map[string]interface{}) map[string]interface{} {
-	rv := map[string]interface{}{
-		"user_name":         "",
-		"display_name":      c.DisplayName,
-		"domain_prefix":     c.Endpoint,
-		"path":              c.Path,
-		"compress_logs":     c.CompressLogs,
-		"cp_code":           c.Bucket,
-		"secret_access_key": "",
-	}
-	setNonNilItemsFromState(state, rv, "user_name", "secret_access_key")
-	return rv
 }
 
 // MapTrafficPeakConnector selects fields needed for TrafficPeakConnector

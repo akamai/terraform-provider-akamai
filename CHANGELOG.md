@@ -17,7 +17,6 @@
 #### FEATURES/ENHANCEMENTS:
 
 * DataStream
-  * Added support for the DataStream NetStorage (`NS4`) destination type.
   * Made `contract_id` and `group_id` optional and computed on the `akamai_datastream` resource for CDN log type. Either or both could be omitted when creating or updating CDN streams. Non-CDN log types still require `contract_id` and `group_id`.
   * Fixed an issue where reordering the `properties` list on the `akamai_datastream` resource caused an unnecessary stream update, even though the set of monitored properties was unchanged.
 
