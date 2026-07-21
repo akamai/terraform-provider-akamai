@@ -30,6 +30,7 @@ type (
 		keyType       cloudcertificates.CryptographicAlgorithm
 		keySize       cloudcertificates.KeySize
 		secureNetwork cloudcertificates.SecureNetwork
+		inputGeoClass cloudcertificates.GeoClass
 		sans          []string
 		subject       *cloudcertificates.Subject
 
@@ -46,6 +47,7 @@ type (
 		csrExpirationDate       string
 		csrPEM                  string
 		signedCertNotValidAfter *time.Time
+		outputGeoClass          cloudcertificates.GeoClass
 	}
 )
 
@@ -57,6 +59,7 @@ var (
 		keyType:       "RSA",
 		keySize:       "2048",
 		secureNetwork: "ENHANCED_TLS",
+		inputGeoClass: "",
 		sans:          []string{"test.example.com"},
 
 		// output data
@@ -71,6 +74,7 @@ var (
 		modifiedDate:      "2025-01-01T00:00:00.616267Z",
 		csrExpirationDate: "2027-01-01T00:00:00Z",
 		csrPEM:            "-----BEGIN CERTIFICATE REQUEST-----\nTEST-CSR-PEM\n-----END CERTIFICATE REQUEST-----\n",
+		outputGeoClass:    "STANDARD_WORLDWIDE",
 	}
 
 	minCertificateWithPrefixes = certificateTestData{
@@ -80,6 +84,7 @@ var (
 		keyType:       "RSA",
 		keySize:       "2048",
 		secureNetwork: "ENHANCED_TLS",
+		inputGeoClass: "",
 		sans:          []string{"test.example.com"},
 
 		// output data
@@ -94,6 +99,7 @@ var (
 		modifiedDate:      "2025-01-01T00:00:00.616267Z",
 		csrExpirationDate: "2027-01-01T00:00:00Z",
 		csrPEM:            "-----BEGIN CERTIFICATE REQUEST-----\nTEST-CSR-PEM\n-----END CERTIFICATE REQUEST-----\n",
+		outputGeoClass:    "STANDARD_WORLDWIDE",
 	}
 
 	fullCertificateRSA = certificateTestData{
@@ -104,6 +110,7 @@ var (
 		keyType:       "RSA",
 		keySize:       "2048",
 		secureNetwork: "ENHANCED_TLS",
+		inputGeoClass: "STANDARD_WORLDWIDE",
 		sans:          []string{"test.example.com", "test.example2.com"},
 		subject: &cloudcertificates.Subject{
 			CommonName:   "test.example.com",
@@ -125,6 +132,7 @@ var (
 		modifiedDate:      "2025-01-01T00:00:00.616267Z",
 		csrExpirationDate: "2027-01-01T00:00:00Z",
 		csrPEM:            "-----BEGIN CERTIFICATE REQUEST-----\nTEST-CSR-PEM\n-----END CERTIFICATE REQUEST-----\n",
+		outputGeoClass:    "STANDARD_WORLDWIDE",
 	}
 
 	updateCertificate = certificateTestData{
@@ -135,6 +143,7 @@ var (
 		keyType:       "RSA",
 		keySize:       "2048",
 		secureNetwork: "ENHANCED_TLS",
+		inputGeoClass: "",
 		sans:          []string{"test.example.com", "test.example2.com"},
 		subject: &cloudcertificates.Subject{
 			CommonName:   "test.example.com",
@@ -156,6 +165,7 @@ var (
 		modifiedDate:      "2025-05-01T00:00:00.616267Z",
 		csrExpirationDate: "2027-01-01T00:00:00Z",
 		csrPEM:            "-----BEGIN CERTIFICATE REQUEST-----\nTEST-CSR-PEM\n-----END CERTIFICATE REQUEST-----\n",
+		outputGeoClass:    "STANDARD_WORLDWIDE",
 	}
 
 	fullCertificateECDSA = certificateTestData{
@@ -166,6 +176,7 @@ var (
 		keyType:       "ECDSA",
 		keySize:       "P-256",
 		secureNetwork: "ENHANCED_TLS",
+		inputGeoClass: "CONTIGUOUS_US",
 		sans:          []string{"test.example.com", "test.example2.com"},
 		subject: &cloudcertificates.Subject{
 			State:    "CA",
@@ -184,6 +195,7 @@ var (
 		modifiedDate:      "2025-01-01T00:00:00.616267Z",
 		csrExpirationDate: "2027-01-01T00:00:00Z",
 		csrPEM:            "-----BEGIN CERTIFICATE REQUEST-----\nTEST-CSR-PEM\n-----END CERTIFICATE REQUEST-----\n",
+		outputGeoClass:    "CONTIGUOUS_US",
 	}
 
 	minCertificateECDSAP384 = certificateTestData{
@@ -193,6 +205,7 @@ var (
 		keyType:       "ECDSA",
 		keySize:       "P-384",
 		secureNetwork: "ENHANCED_TLS",
+		inputGeoClass: "",
 		sans:          []string{"test.example.com"},
 
 		// output data
@@ -207,6 +220,7 @@ var (
 		modifiedDate:      "2025-01-01T00:00:00.616267Z",
 		csrExpirationDate: "2027-01-01T00:00:00Z",
 		csrPEM:            "-----BEGIN CERTIFICATE REQUEST-----\nTEST-CSR-PEM\n-----END CERTIFICATE REQUEST-----\n",
+		outputGeoClass:    "STANDARD_WORLDWIDE",
 	}
 
 	minCertificateStandardTLS = certificateTestData{
@@ -216,6 +230,7 @@ var (
 		keyType:       "RSA",
 		keySize:       "2048",
 		secureNetwork: "STANDARD_TLS",
+		inputGeoClass: "",
 		sans:          []string{"test.example.com"},
 
 		// output data
@@ -230,6 +245,57 @@ var (
 		modifiedDate:      "2025-01-01T00:00:00.616267Z",
 		csrExpirationDate: "2027-01-01T00:00:00Z",
 		csrPEM:            "-----BEGIN CERTIFICATE REQUEST-----\nTEST-CSR-PEM\n-----END CERTIFICATE REQUEST-----\n",
+		outputGeoClass:    "STANDARD_WORLDWIDE",
+	}
+
+	minCertificateNonDefaultGeoClass = certificateTestData{
+		// input data
+		contractID:    "test_contract",
+		groupID:       "123",
+		keyType:       "RSA",
+		keySize:       "2048",
+		secureNetwork: "ENHANCED_TLS",
+		inputGeoClass: "CONTIGUOUS_US",
+		sans:          []string{"test.example.com"},
+
+		// output data
+		certificateID:     "12345",
+		certificateType:   "THIRD_PARTY",
+		name:              "test.example.com1234567890",
+		certificateStatus: "CSR_READY",
+		accountID:         "act_789",
+		createdBy:         "test_user",
+		createdDate:       "2025-01-01T00:00:00.168262Z",
+		modifiedBy:        "test_user",
+		modifiedDate:      "2025-01-01T00:00:00.616267Z",
+		csrExpirationDate: "2027-01-01T00:00:00Z",
+		csrPEM:            "-----BEGIN CERTIFICATE REQUEST-----\nTEST-CSR-PEM\n-----END CERTIFICATE REQUEST-----\n",
+		outputGeoClass:    "CONTIGUOUS_US",
+	}
+
+	minCertificateEmptyGeoClassFromAPI = certificateTestData{
+		// input data
+		contractID:    "test_contract",
+		groupID:       "123",
+		keyType:       "RSA",
+		keySize:       "2048",
+		secureNetwork: "ENHANCED_TLS",
+		inputGeoClass: "",
+		sans:          []string{"test.example.com"},
+
+		// output data
+		certificateID:     "12345",
+		certificateType:   "THIRD_PARTY",
+		name:              "test.example.com1234567890",
+		certificateStatus: "CSR_READY",
+		accountID:         "act_789",
+		createdBy:         "test_user",
+		createdDate:       "2025-01-01T00:00:00.168262Z",
+		modifiedBy:        "test_user",
+		modifiedDate:      "2025-01-01T00:00:00.616267Z",
+		csrExpirationDate: "2027-01-01T00:00:00Z",
+		csrPEM:            "-----BEGIN CERTIFICATE REQUEST-----\nTEST-CSR-PEM\n-----END CERTIFICATE REQUEST-----\n",
+		outputGeoClass:    "",
 	}
 )
 
@@ -247,6 +313,7 @@ func TestCertificateResource(t *testing.T) {
 		CheckEqual("key_type", "RSA").
 		CheckEqual("key_size", "2048").
 		CheckEqual("secure_network", "ENHANCED_TLS").
+		CheckEqual("geo_class", "STANDARD_WORLDWIDE").
 		CheckEqual("sans.#", "1").
 		CheckEqual("sans.0", "test.example.com").
 		CheckEqual("certificate_id", "12345").
@@ -279,6 +346,7 @@ func TestCertificateResource(t *testing.T) {
 		CheckEqual("key_type", "RSA").
 		CheckEqual("key_size", "2048").
 		CheckEqual("secure_network", "ENHANCED_TLS").
+		CheckEqual("geo_class", "STANDARD_WORLDWIDE").
 		CheckEqual("sans.#", "1").
 		CheckEqual("sans.0", "test.example.com").
 		CheckEqual("certificate_id", "12345").
@@ -317,6 +385,26 @@ func TestCertificateResource(t *testing.T) {
 					Config: testutils.LoadFixtureString(t, "testdata/TestResCertificate/create/min.tf"),
 					Check: minCertChecker.
 						CheckMissing("subject").
+						Build(),
+				},
+			},
+		},
+		"happy path - create certificate with geo_class not returned by the API": {
+			init: func(m *cloudcertificates.Mock, createData certificateTestData, _ certificateTestData) {
+				// Create
+				mockCreateCertificate(m, createData)
+				// Read before destroy
+				mockGetCertificate(m, createData)
+				// Delete
+				mockDeleteCertificate(m, createData)
+			},
+			createMockData: minCertificateEmptyGeoClassFromAPI,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCertificate/create/min.tf"),
+					Check: minCertChecker.
+						CheckMissing("subject").
+						CheckMissing("geo_class").
 						Build(),
 				},
 			},
@@ -380,6 +468,50 @@ func TestCertificateResource(t *testing.T) {
 				},
 			},
 		},
+		"happy path - create certificate with non-default geo_class": {
+			init: func(m *cloudcertificates.Mock, createData certificateTestData, _ certificateTestData) {
+				// Create
+				mockCreateCertificate(m, createData)
+				// Read before destroy
+				mockGetCertificate(m, createData)
+				// Delete
+				mockDeleteCertificate(m, createData)
+			},
+			createMockData: minCertificateNonDefaultGeoClass,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCertificate/create/min_contiguous_us.tf"),
+					Check: minCertChecker.
+						CheckEqual("geo_class", "CONTIGUOUS_US").
+						CheckMissing("subject").
+						Build(),
+				},
+			},
+		},
+		"happy path - default geo_class, no drift on subsequent plan": {
+			init: func(m *cloudcertificates.Mock, createData certificateTestData, _ certificateTestData) {
+				// Create
+				mockCreateCertificate(m, createData)
+				// Read (PlanOnly refresh + destroy)
+				mockGetCertificate(m, createData).Twice()
+				// Delete
+				mockDeleteCertificate(m, createData)
+			},
+			createMockData: minCertificate,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResCertificate/create/min.tf"),
+					Check: minCertChecker.
+						CheckEqual("geo_class", "STANDARD_WORLDWIDE").
+						CheckMissing("subject").
+						Build(),
+				},
+				{
+					Config:   testutils.LoadFixtureString(t, "testdata/TestResCertificate/create/min.tf"),
+					PlanOnly: true,
+				},
+			},
+		},
 		"happy path - create certificate with optional attributes, different key type, some missing subject fields": {
 			init: func(m *cloudcertificates.Mock, createData certificateTestData, _ certificateTestData) {
 				// Create
@@ -397,6 +529,7 @@ func TestCertificateResource(t *testing.T) {
 					Check: fullCertChecker.
 						CheckEqual("key_size", "P-256").
 						CheckEqual("key_type", "ECDSA").
+						CheckEqual("geo_class", "CONTIGUOUS_US").
 						CheckMissing("subject.common_name").
 						CheckMissing("subject.country").
 						CheckMissing("subject.organization").
@@ -911,6 +1044,7 @@ func TestCertificateResource(t *testing.T) {
 						KeyType:         createData.keyType,
 						KeySize:         createData.keySize,
 						SecureNetwork:   createData.secureNetwork,
+						GeoClass:        createData.inputGeoClass,
 						SANs:            createData.sans,
 					},
 				}).Return(nil, fmt.Errorf("API failed")).Once()
@@ -1154,7 +1288,7 @@ func TestCertificateResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResCertificate/validation/wrong_key_size_p384_with_rsa.tf"),
-					ExpectError: regexp.MustCompile(`The specified value 'P-384' for the RSA key type is invalid. Valid values are(.|\n)*'2048'.`),
+					ExpectError: regexp.MustCompile(`The specified value 'P-384' for the RSA key type is invalid. Valid values(.|\n)are: '2048'.`),
 				},
 			},
 		},
@@ -1175,6 +1309,36 @@ func TestCertificateResource(t *testing.T) {
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResCertificate/validation/wrong_secure_network.tf"),
 					ExpectError: regexp.MustCompile(`Attribute secure_network value must be one of: \["ENHANCED_TLS"(.|\n)*"STANDARD_TLS"\], got:(.|\n)*"WRONG_NETWORK"`),
+				},
+			},
+		},
+		"expect error - wrong geo_class": {
+			init:           func(_ *cloudcertificates.Mock, _ certificateTestData, _ certificateTestData) {},
+			createMockData: minCertificate,
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResCertificate/validation/wrong_geo_class.tf"),
+					ExpectError: regexp.MustCompile(`Attribute geo_class value must be one of: \["CONTIGUOUS_US"(.|\n)*"RESERVED_GLOBAL"(.|\n)*"STANDARD_WORLDWIDE"\], got:(.|\n)*"INVALID_GEO_CLASS"`),
+				},
+			},
+		},
+		"expect error - CONTIGUOUS_US geo_class invalid for STANDARD_TLS network": {
+			init:           func(_ *cloudcertificates.Mock, _ certificateTestData, _ certificateTestData) {},
+			createMockData: minCertificate,
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResCertificate/validation/geo_class_contiguous_us_with_standard_tls.tf"),
+					ExpectError: regexp.MustCompile(`The specified value 'CONTIGUOUS_US' for the STANDARD_TLS network is(.|\n)*invalid.(.|\n)*Valid values are: 'STANDARD_WORLDWIDE'.`),
+				},
+			},
+		},
+		"expect error - RESERVED_GLOBAL geo_class invalid for STANDARD_TLS network": {
+			init:           func(_ *cloudcertificates.Mock, _ certificateTestData, _ certificateTestData) {},
+			createMockData: minCertificate,
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResCertificate/validation/geo_class_reserved_global_with_standard_tls.tf"),
+					ExpectError: regexp.MustCompile(`The specified value 'RESERVED_GLOBAL' for the STANDARD_TLS network is(.|\n)*invalid.(.|\n)*Valid values are: 'STANDARD_WORLDWIDE'.`),
 				},
 			},
 		},
@@ -1768,6 +1932,7 @@ func mockCreateCertificate(m *cloudcertificates.Mock, data certificateTestData) 
 			KeyType:         data.keyType,
 			KeySize:         data.keySize,
 			SecureNetwork:   data.secureNetwork,
+			GeoClass:        data.inputGeoClass,
 			SANs:            data.sans,
 			Subject:         reqSubject,
 		},
@@ -1788,6 +1953,7 @@ func mockCreateCertificate(m *cloudcertificates.Mock, data certificateTestData) 
 			KeyType:                            data.keyType,
 			KeySize:                            data.keySize,
 			SecureNetwork:                      string(data.secureNetwork),
+			GeoClass:                           string(data.outputGeoClass),
 			SANs:                               data.sans,
 			Subject:                            reqSubject,
 			SignedCertificateNotValidAfterDate: data.signedCertNotValidAfter,
@@ -1825,6 +1991,7 @@ func mockGetCertificate(m *cloudcertificates.Mock, data certificateTestData) *mo
 			KeyType:                            data.keyType,
 			KeySize:                            data.keySize,
 			SecureNetwork:                      string(data.secureNetwork),
+			GeoClass:                           string(data.outputGeoClass),
 			SANs:                               data.sans,
 			Subject:                            subject,
 			SignedCertificateNotValidAfterDate: data.signedCertNotValidAfter,
@@ -1869,6 +2036,7 @@ func mockPatchCertificate(m *cloudcertificates.Mock, data certificateTestData) *
 			KeyType:                            data.keyType,
 			KeySize:                            data.keySize,
 			SecureNetwork:                      string(data.secureNetwork),
+			GeoClass:                           string(data.outputGeoClass),
 			SANs:                               data.sans,
 			Subject:                            subject,
 			SignedCertificateNotValidAfterDate: data.signedCertNotValidAfter,

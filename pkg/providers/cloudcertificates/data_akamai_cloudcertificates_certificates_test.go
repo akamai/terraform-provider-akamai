@@ -34,6 +34,7 @@ func TestClientCertificateDataSource(t *testing.T) {
 		CheckEqual("certificates.0.key_type", "RSA").
 		CheckEqual("certificates.0.key_size", "2048").
 		CheckEqual("certificates.0.secure_network", "ENHANCED_TLS").
+		CheckEqual("certificates.0.geo_class", "STANDARD_WORLDWIDE").
 		CheckEqual("certificates.0.account_id", "act_789").
 		CheckEqual("certificates.0.created_date", "2024-01-01T12:00:00Z").
 		CheckEqual("certificates.0.created_by", "test_user").
@@ -68,6 +69,7 @@ func TestClientCertificateDataSource(t *testing.T) {
 				KeyType:                             cloudcertificates.CryptographicAlgorithmRSA,
 				KeySize:                             cloudcertificates.KeySize2048,
 				SecureNetwork:                       string(cloudcertificates.SecureNetworkEnhancedTLS),
+				GeoClass:                            "STANDARD_WORLDWIDE",
 				ContractID:                          "A-123",
 				AccountID:                           "act_789",
 				CreatedDate:                         tst.NewTimeFromStringMust("2024-01-01T12:00:00Z"),
@@ -95,6 +97,7 @@ func TestClientCertificateDataSource(t *testing.T) {
 				KeyType:                             cloudcertificates.CryptographicAlgorithmECDSA,
 				KeySize:                             cloudcertificates.KeySizeP256,
 				SecureNetwork:                       string(cloudcertificates.SecureNetworkEnhancedTLS),
+				GeoClass:                            "STANDARD_WORLDWIDE",
 				ContractID:                          "A-123",
 				AccountID:                           "act_789",
 				CreatedDate:                         tst.NewTimeFromStringMust("2024-05-01T12:00:00Z"),
@@ -122,6 +125,7 @@ func TestClientCertificateDataSource(t *testing.T) {
 				KeyType:           cloudcertificates.CryptographicAlgorithmRSA,
 				KeySize:           cloudcertificates.KeySize2048,
 				SecureNetwork:     string(cloudcertificates.SecureNetworkEnhancedTLS),
+				GeoClass:          "STANDARD_WORLDWIDE",
 				ContractID:        "A-123",
 				AccountID:         "act_789",
 				CreatedDate:       tst.NewTimeFromStringMust("2024-12-01T12:00:00Z"),
@@ -156,6 +160,7 @@ func TestClientCertificateDataSource(t *testing.T) {
 			KeyType:                             cloudcertificates.CryptographicAlgorithmRSA,
 			KeySize:                             cloudcertificates.KeySize2048,
 			SecureNetwork:                       string(cloudcertificates.SecureNetworkEnhancedTLS),
+			GeoClass:                            "STANDARD_WORLDWIDE",
 			ContractID:                          "A-123",
 			AccountID:                           "act_789",
 			CreatedDate:                         tst.NewTimeFromStringMust("2024-01-01T12:00:00Z"),
@@ -270,6 +275,26 @@ func TestClientCertificateDataSource(t *testing.T) {
 						CheckMissing("certificates.0.subject.organization").
 						CheckMissing("certificates.0.subject.state").
 						CheckMissing("certificates.0.subject.locality").
+						Build(),
+				},
+			},
+		},
+		"happy path with empty geo_class": {
+			init: func(m *cloudcertificates.Mock) {
+				certWithEmptyGeoClass := baseResponse.Certificates[0]
+				certWithEmptyGeoClass.GeoClass = ""
+				mockListCertificates(m, cloudcertificates.ListCertificatesRequest{
+					PageSize: 100,
+					Page:     1,
+				}, &cloudcertificates.ListCertificatesResponse{
+					Certificates: []cloudcertificates.Certificate{certWithEmptyGeoClass},
+				}, nil).Times(3)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataCertificates/without_optional_params.tf"),
+					Check: baseCheckerMissingCertMaterials.
+						CheckMissing("certificates.0.geo_class").
 						Build(),
 				},
 			},
@@ -601,6 +626,28 @@ func TestClientCertificateDataSource(t *testing.T) {
 						CheckEqual("certificates.100.signed_certificate_issuer", "O=Test Org101,L=Test City,ST=CA,C=US").
 						CheckEqual("certificates.100.signed_certificate_not_valid_after_date", "2027-12-23T08:19:47Z").
 						CheckEqual("certificates.100.signed_certificate_not_valid_before_date", "2025-09-23T07:19:47Z").
+						Build(),
+				},
+			},
+		},
+		"happy path with non-default geo_class": {
+			init: func(m *cloudcertificates.Mock) {
+				certWithReservedGlobal := baseResponse.Certificates[0]
+				certWithReservedGlobal.GeoClass = "RESERVED_GLOBAL"
+				mockListCertificates(m, cloudcertificates.ListCertificatesRequest{
+					PageSize: 100,
+					Page:     1,
+				}, &cloudcertificates.ListCertificatesResponse{
+					Certificates: []cloudcertificates.Certificate{certWithReservedGlobal},
+				}, nil).Times(3)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataCertificates/without_optional_params.tf"),
+					Check: test.NewStateChecker("data.akamai_cloudcertificates_certificates.test").
+						CheckEqual("certificates.#", "1").
+						CheckEqual("certificates.0.certificate_id", "cert1_1234").
+						CheckEqual("certificates.0.geo_class", "RESERVED_GLOBAL").
 						Build(),
 				},
 			},

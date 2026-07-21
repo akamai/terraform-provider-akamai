@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"regexp"
 	"slices"
-	"sort"
 	"strings"
 	"time"
 
@@ -54,32 +53,6 @@ const renewedNameDateLayout = "2006-01-02T15_04_05Z"
 // Original pattern from API: ^(\*\.)?([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$
 var domainNameRegex = regexp.MustCompile(`^(\*\.)?([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$`)
 
-// validKeyCombinations maps each supported key type to its valid key sizes.
-var validKeyCombinations = map[string][]string{
-	"ECDSA": {"P-256", "P-384"},
-	"RSA":   {"2048"},
-}
-
-// validKeyTypes returns sorted valid key type names derived from validKeyCombinations.
-func validKeyTypes() []string {
-	var keys []string
-	for k := range validKeyCombinations {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	return keys
-}
-
-// validKeySizes returns sorted unique key sizes derived from validKeyCombinations.
-func validKeySizes() []string {
-	var sizes []string
-	for _, t := range validKeyTypes() {
-		sizes = append(sizes, validKeyCombinations[t]...)
-	}
-	sort.Strings(sizes)
-	return sizes
-}
-
 type certificateResourceConfig struct {
 	// timestampFunc returns the current time. It is used to generate unique
 	// names for renewed certificates and to calculate whether a certificate
@@ -101,6 +74,7 @@ type certificateResourceModel struct {
 	KeyType                   types.String `tfsdk:"key_type"`
 	KeySize                   types.String `tfsdk:"key_size"`
 	SecureNetwork             types.String `tfsdk:"secure_network"`
+	GeoClass                  types.String `tfsdk:"geo_class"`
 	SANs                      types.Set    `tfsdk:"sans"`
 	Subject                   types.Object `tfsdk:"subject"`
 	RenewBeforeExpirationDays types.Int64  `tfsdk:"renew_before_expiration_days"`
@@ -118,27 +92,39 @@ type certificateResourceModel struct {
 	CSRExpirationDate         types.String `tfsdk:"csr_expiration_date"`
 }
 
-type subjectModel struct {
-	CommonName   types.String `tfsdk:"common_name"`
-	Organization types.String `tfsdk:"organization"`
-	Country      types.String `tfsdk:"country"`
-	State        types.String `tfsdk:"state"`
-	Locality     types.String `tfsdk:"locality"`
-}
-
 func (m *certificateResourceModel) validateKeyTypeAndSize() diag.Diagnostics {
 	var diags diag.Diagnostics
 	if m.KeyType.IsNull() || m.KeyType.IsUnknown() || m.KeySize.IsNull() || m.KeySize.IsUnknown() {
 		return diags
 	}
 
-	validSizes, ok := validKeyCombinations[m.KeyType.ValueString()]
-	if ok && !slices.Contains(validSizes, m.KeySize.ValueString()) {
+	validSizes, ok := validKeyCombinations[cloudcertificates.CryptographicAlgorithm(m.KeyType.ValueString())]
+	if ok && !slices.Contains(validSizes, cloudcertificates.KeySize(m.KeySize.ValueString())) {
 		diags.AddAttributeError(
 			path.Root("key_size"),
 			fmt.Sprintf("Invalid key size for %s.", m.KeyType.ValueString()),
-			fmt.Sprintf("The specified value '%s' for the %s key type is invalid. Valid values are '%s'.",
-				m.KeySize.ValueString(), m.KeyType.ValueString(), strings.Join(validSizes, "', '")),
+			fmt.Sprintf("The specified value '%s' for the %s key type is invalid. Valid values are: '%s'.",
+				m.KeySize.ValueString(), m.KeyType.ValueString(), text.JoinStringBased(validSizes, "', '")),
+		)
+
+	}
+	return diags
+}
+
+func (m *certificateResourceModel) validateGeoClassAndNetwork() diag.Diagnostics {
+	var diags diag.Diagnostics
+	if m.SecureNetwork.IsNull() || m.SecureNetwork.IsUnknown() || m.GeoClass.IsNull() || m.GeoClass.IsUnknown() {
+		return diags
+	}
+
+	network := cloudcertificates.SecureNetwork(m.SecureNetwork.ValueString())
+	validClasses, ok := validGeoClassesByNetwork[network]
+	if ok && !slices.Contains(validClasses, cloudcertificates.GeoClass(m.GeoClass.ValueString())) {
+		diags.AddAttributeError(
+			path.Root("geo_class"),
+			fmt.Sprintf("Invalid geo_class for %s.", m.SecureNetwork.ValueString()),
+			fmt.Sprintf("The specified value '%s' for the %s network is invalid. Valid values are: '%s'.",
+				m.GeoClass.ValueString(), m.SecureNetwork.ValueString(), text.JoinStringBased(validClasses, "', '")),
 		)
 	}
 	return diags
@@ -195,6 +181,7 @@ func (m *certificateResourceModel) populateCertificateFields(ctx context.Context
 	m.KeySize = types.StringValue(string(cert.KeySize))
 	m.KeyType = types.StringValue(string(cert.KeyType))
 	m.SecureNetwork = types.StringValue(string(cert.SecureNetwork))
+	m.GeoClass = tf.StringValueOrNullIfEmpty(cert.GeoClass)
 	m.AccountID = types.StringValue(cert.AccountID)
 	m.Name = types.StringValue(cert.CertificateName)
 	m.CertificateID = types.StringValue(cert.CertificateID)
@@ -322,6 +309,7 @@ func (c *certificateResource) ValidateConfig(ctx context.Context, req resource.V
 	}
 
 	resp.Diagnostics.Append(config.validateKeyTypeAndSize()...)
+	resp.Diagnostics.Append(config.validateGeoClassAndNetwork()...)
 	resp.Diagnostics.Append(config.validateSubjectAndSANs(ctx)...)
 
 	if config.AutoRenew.ValueBool() && config.RenewBeforeExpirationDays.IsNull() {
@@ -365,24 +353,26 @@ func (c *certificateResource) Schema(_ context.Context, _ resource.SchemaRequest
 			},
 			"key_type": schema.StringAttribute{
 				Required:    true,
-				Description: "The key type for a certificate. Valid values are '" + strings.Join(validKeyTypes(), "', '") + "'.",
+				Description: "The key type for a certificate. Valid values are '" + text.JoinStringBased(validKeyTypes(), "', '") + "'.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
 				Validators: []validator.String{
-					stringvalidator.OneOf(validKeyTypes()...),
+					stringvalidator.OneOf(text.ToStrings(validKeyTypes())...),
 				},
 			},
 			"key_size": schema.StringAttribute{
 				Required: true,
 				Description: "The key size for a certificate. " +
-					"Valid values for key type ECDSA: '" + strings.Join(validKeyCombinations["ECDSA"], "', '") + "'. " +
-					"Valid value for key type RSA: '" + strings.Join(validKeyCombinations["RSA"], "', '") + "'.",
+					"Valid values for key type ECDSA: '" +
+					text.JoinStringBased(validKeyCombinations[cloudcertificates.CryptographicAlgorithmECDSA], "', '") + "'. " +
+					"Valid value for key type RSA: '" +
+					text.JoinStringBased(validKeyCombinations[cloudcertificates.CryptographicAlgorithmRSA], "', '") + "'.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
 				Validators: []validator.String{
-					stringvalidator.OneOf(validKeySizes()...),
+					stringvalidator.OneOf(text.ToStrings(validKeySizes())...),
 				},
 			},
 			"secure_network": schema.StringAttribute{
@@ -393,6 +383,23 @@ func (c *certificateResource) Schema(_ context.Context, _ resource.SchemaRequest
 				},
 				Validators: []validator.String{
 					stringvalidator.OneOf([]string{"ENHANCED_TLS", "STANDARD_TLS"}...),
+				},
+			},
+			"geo_class": schema.StringAttribute{
+				Optional: true,
+				Computed: true,
+				Description: "The geographic network class of the certificate. " +
+					"Valid values for ENHANCED_TLS: '" +
+					text.JoinStringBased(validGeoClassesByNetwork[cloudcertificates.SecureNetworkEnhancedTLS], "', '") + "'. " +
+					"Valid values for STANDARD_TLS: '" +
+					text.JoinStringBased(validGeoClassesByNetwork[cloudcertificates.SecureNetworkStandardTLS], "', '") + "'. " +
+					"If not specified, the API assigns a default value - " + string(cloudcertificates.GeoClassStandardWorldwide),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+					stringplanmodifier.UseStateForUnknown(),
+				},
+				Validators: []validator.String{
+					stringvalidator.OneOf(text.ToStrings(validGeoClasses())...),
 				},
 			},
 			"sans": schema.SetAttribute{
@@ -601,6 +608,7 @@ func (c *certificateResource) Create(ctx context.Context, req resource.CreateReq
 			KeyType:         cloudcertificates.CryptographicAlgorithm(plan.KeyType.ValueString()),
 			KeySize:         cloudcertificates.KeySize(plan.KeySize.ValueString()),
 			SecureNetwork:   cloudcertificates.SecureNetwork(plan.SecureNetwork.ValueString()),
+			GeoClass:        cloudcertificates.GeoClass(plan.GeoClass.ValueString()),
 			SANs:            sans,
 		},
 	}
@@ -835,11 +843,6 @@ func extractBaseName(name string) string {
 	}
 	// Invalid date part, return the original name.
 	return name
-}
-
-func isEmptySubject(subject cloudcertificates.Subject) bool {
-	return subject.CommonName == "" && subject.Organization == "" && subject.Country == "" &&
-		subject.State == "" && subject.Locality == ""
 }
 
 // listCertificateRenewalChain returns the list of certificate names with the same base name, contractID and domain to
