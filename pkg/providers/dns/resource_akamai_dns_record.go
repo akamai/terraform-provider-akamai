@@ -475,6 +475,36 @@ func dnsRecordTargetSuppress(key, oldTarget, newTarget string, d *schema.Resourc
 	return diffQuotedDNSRecord(oldStrList, newStrList, oldTarget, newTarget, recordType, logger)
 }
 
+// slicesEqualNormalized applies norm to every element of a and b, sorts both
+// results, and reports whether they are element-wise equal.
+// Returns false immediately when the slices have different lengths.
+func slicesEqualNormalized(a, b []string, norm func(string) string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	na := normalizeTargets(a, norm)
+	nb := normalizeTargets(b, norm)
+
+	for i := range na {
+		if na[i] != nb[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// normalizeTargets applies norm to every element of targets, sorts the result
+// and returns it.  The original slice is not modified.
+func normalizeTargets(targets []string, norm func(string) string) []string {
+	out := make([]string, len(targets))
+	for i, v := range targets {
+		out[i] = norm(v)
+	}
+	sort.Strings(out)
+	return out
+}
+
 func diffQuotedDNSRecord(oldTargetList []string, newTargetList []string, o string, n string, recordType string, logger akalog.Interface) bool {
 	const (
 		singleQuote    = `"`
@@ -506,11 +536,10 @@ func diffQuotedDNSRecord(oldTargetList []string, newTargetList []string, o strin
 	// shrinks (e.g. adding two new CAA records: the existing one that only
 	// differs in quote style must not be shown as "removed and re-added").
 	//
-	// Two-step strategy:
-	//   Step 1 – full sorted-set comparison (equal-length only): if every
-	//            element matches after normalisation the whole change is
-	//            suppressed.  Handles pure reorders and quote-only diffs.
-	//   Step 2 – per-element fallback: suppress this element if its only
+	// Two-step strategy (via normSortedEqual):
+	//   Step 1 – full sorted-set comparison (equal-length only): suppresses
+	//            pure reorders and quote-only differences.
+	//   Step 2 – per-element fallback: suppresses this element when its only
 	//            difference is quote formatting.  Works for both equal and
 	//            different list lengths.
 	if recordType == RRTypeCaa {
@@ -518,29 +547,9 @@ func diffQuotedDNSRecord(oldTargetList []string, newTargetList []string, o strin
 			s = strings.ReplaceAll(s, backslashQuote, "") // strip \" pairs first
 			return strings.ReplaceAll(s, singleQuote, "") // then plain "
 		}
-		if len(oldTargetList) == len(newTargetList) {
-			normOld := make([]string, len(oldTargetList))
-			for i, v := range oldTargetList {
-				normOld[i] = normCAA(v)
-			}
-			normNew := make([]string, len(newTargetList))
-			for i, v := range newTargetList {
-				normNew[i] = normCAA(v)
-			}
-			sort.Strings(normOld)
-			sort.Strings(normNew)
-			listsEqual := true
-			for i := range normOld {
-				if normOld[i] != normNew[i] {
-					listsEqual = false
-					break
-				}
-			}
-			if listsEqual {
-				return true
-			}
+		if slicesEqualNormalized(oldTargetList, newTargetList, normCAA) {
+			return true
 		}
-		// Per-element: suppress if the sole difference is quote formatting.
 		return normCAA(o) == normCAA(n)
 	}
 
@@ -549,65 +558,28 @@ func diffQuotedDNSRecord(oldTargetList []string, newTargetList []string, o strin
 		return false
 	}
 
-	var compList []string
-	var baseVal string
-	if o == "" {
-		baseVal = n
-		baseVal = strings.Trim(baseVal, singleQuote)
-		compList = oldTargetList
-	} else {
-		baseVal = o
-		baseVal = strings.Trim(baseVal, backslashQuote)
-		baseVal = strings.ReplaceAll(baseVal, backslashQuote, singleQuote)
-		compList = newTargetList
-	}
-
 	// For AAAA record type compare normalized (full-form) IPv6 values.
 	//
-	// Step 1 – full sorted-set comparison: if every address in the old list
-	// appears in the new list (regardless of notation or order) the whole
-	// change is suppressed.  This correctly handles pure reorders and
-	// notation-only differences across the entire target list.
-	//
-	// Step 2 – per-element fallback: when the sets genuinely differ (some
-	// addresses were added/removed) we still want to suppress the diff for
-	// individual elements that are the same address written in a different
-	// notation (e.g. "1000:0:0:0:0:0:0:2" vs "1000:0000:…:0002").  Without
-	// this step Terraform would show every element as changing whenever even
-	// one address is updated, polluting the plan with format noise.
+	// Two-step strategy (via normSortedEqual):
+	//   Step 1 – full sorted-set comparison: suppresses pure reorders and
+	//            notation-only differences across the entire target list.
+	//   Step 2 – per-element fallback: when the sets genuinely differ, still
+	//            suppress elements whose only difference is notation form.
 	if recordType == RRTypeAaaa {
-		normOld := make([]string, len(oldTargetList))
-		for i, v := range oldTargetList {
-			normOld[i] = FullIPv6(net.ParseIP(v))
-		}
-		normNew := make([]string, len(newTargetList))
-		for i, v := range newTargetList {
-			normNew[i] = FullIPv6(net.ParseIP(v))
-		}
-		sort.Strings(normOld)
-		sort.Strings(normNew)
-		listsEqual := true
-		for i := range normOld {
-			if normOld[i] != normNew[i] {
-				listsEqual = false
-				break
+		normAAAA := func(v string) string {
+			if ip := net.ParseIP(v); ip != nil {
+				return FullIPv6(ip)
 			}
+			return v
 		}
-		if listsEqual {
+		if slicesEqualNormalized(oldTargetList, newTargetList, normAAAA) {
 			return true
 		}
-		// The sets differ – genuine change.  Suppress only if this specific
-		// element's old and new values are the same IPv6 address.
-		ipO := net.ParseIP(o)
-		ipN := net.ParseIP(n)
-		if ipO == nil || ipN == nil {
-			return false
-		}
-		return FullIPv6(ipO) == FullIPv6(ipN)
+
+		return normAAAA(o) == normAAAA(n)
 	}
 
 	if recordType == RRTypeMx {
-
 		// lists are same length
 		for i := 0; i < len(oldTargetList); i++ {
 			oldTargetList[i] = strings.TrimRight(oldTargetList[i], ".")
@@ -622,42 +594,27 @@ func diffQuotedDNSRecord(oldTargetList []string, newTargetList []string, o strin
 	// trimming them and use a sorted full-list comparison to avoid falsely
 	// suppressing changes when a value shifts position between old and new.
 	//
-	// Same two-step strategy as AAAA: if the full sorted set is identical,
-	// suppress everything (handles reorders + trailing-dot-only differences).
-	// If sets genuinely differ, fall back to a per-element check so that
-	// elements whose only difference is a trailing dot are not shown as noise
-	// alongside the real changes.
+	// Same two-step strategy as AAAA (via normSortedEqual).
 	if recordType == RRTypeAfsdb || recordType == RRTypeCname || recordType == RRTypePtr || recordType == RRTypeSrv || recordType == RRTypeNs {
-		normOld := make([]string, len(oldTargetList))
-		for i, v := range oldTargetList {
-			normOld[i] = strings.TrimRight(v, ".")
-		}
-		normNew := make([]string, len(newTargetList))
-		for i, v := range newTargetList {
-			normNew[i] = strings.TrimRight(v, ".")
-		}
-		sort.Strings(normOld)
-		sort.Strings(normNew)
-		listsEqual := true
-		for i := range normOld {
-			if normOld[i] != normNew[i] {
-				listsEqual = false
-				break
-			}
-		}
-		if listsEqual {
+		normDot := func(v string) string { return strings.TrimRight(v, ".") }
+		if slicesEqualNormalized(oldTargetList, newTargetList, normDot) {
 			return true
 		}
-		// Sets differ – genuine change somewhere in the list.
-		// Suppress only if this specific element's trailing-dot difference is
-		// the sole distinction between old and new.
-		return strings.TrimRight(o, ".") == strings.TrimRight(n, ".")
+		return normDot(o) == normDot(n)
 	}
 
 	if recordType == RRTypeTxt {
+		// TXT uses raw (unstripped) values for normalisation; compList
+		// selects which side to search for a match.
 		baseForNorm := o
 		if baseForNorm == "" {
 			baseForNorm = n
+		}
+		var compList []string
+		if o == "" {
+			compList = oldTargetList
+		} else {
+			compList = newTargetList
 		}
 		normalizedBase, err := txtrecord.NormalizeTarget(baseForNorm)
 		if err != nil {
@@ -675,45 +632,18 @@ func diffQuotedDNSRecord(oldTargetList []string, newTargetList []string, o strin
 		return false
 	}
 
-	// Compare the full sorted lists rather than scanning the whole new list for
-	// each individual element. The per-element scan causes false suppression when
-	// an old value appears at a different position in the new list — for example,
-	// updating ["10.0.1.1","10.0.1.2"] to ["10.0.1.2","10.0.1.3"] would
-	// incorrectly suppress the change at index 1 because "10.0.1.2" exists
-	// somewhere in the new list. Sorting and comparing the normalized lists
-	// ensures that pure reorders are still suppressed while genuine value
-	// changes are not.
+	// Generic fallback (A records and others): compare the full sorted lists
+	// using quote-stripped normalization.
 	//
-	// Same two-step strategy as AAAA / trailing-dot types: if the full set
-	// is equal, suppress everything; otherwise fall back to per-element so
-	// that format-only differences at unchanged positions don't show as noise.
-	normOld := make([]string, len(oldTargetList))
-	for i, v := range oldTargetList {
-		v = strings.Trim(v, backslashQuote)
+	// Same two-step strategy as AAAA / trailing-dot types (via normSortedEqual).
+	normGeneric := func(v string) string {
 		v = strings.ReplaceAll(v, backslashQuote, singleQuote)
-		normOld[i] = strings.Trim(v, singleQuote)
+		return strings.Trim(v, singleQuote)
 	}
-	normNew := make([]string, len(newTargetList))
-	for i, v := range newTargetList {
-		normNew[i] = strings.Trim(v, singleQuote)
-	}
-	sort.Strings(normOld)
-	sort.Strings(normNew)
-	listsEqual := true
-	for i := range normOld {
-		if normOld[i] != normNew[i] {
-			listsEqual = false
-			break
-		}
-	}
-	if listsEqual {
+	if slicesEqualNormalized(oldTargetList, newTargetList, normGeneric) {
 		return true
 	}
-	// Sets differ — suppress only if this element is unchanged after normalization.
-	normO := strings.Trim(strings.ReplaceAll(strings.Trim(o, backslashQuote), backslashQuote, singleQuote), singleQuote)
-	normN := strings.Trim(n, singleQuote)
-	return normO == normN
-
+	return normGeneric(o) == normGeneric(n)
 }
 
 // Lock per record type
@@ -1323,29 +1253,19 @@ func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 			}
 		}
 	case RRTypeAaaa:
-		// Normalize the API response to full IPv6 form for consistent state storage,
-		// eliminating spurious plan diffs caused by abbreviated vs. full notation.
-		// The Akamai API may return abbreviated addresses (e.g. "1000:0:0:0:0:0:0:1")
-		// while the config uses full form (e.g. "1000:0000:0000:0000:0000:0000:0000:0001"),
-		// or vice-versa — both must resolve to the same canonical representation.
-		normAPITargets := make([]string, len(record.Target))
-		for i, addr := range record.Target {
+		// Normalize the API response to full IPv6 form for consistent state
+		// storage, eliminating spurious plan diffs caused by abbreviated vs.
+		// full notation.  The Akamai API may return abbreviated addresses
+		// (e.g. "1000:0:0:0:0:0:0:1") while the config uses full form.
+		normAAAA := func(addr string) string {
 			if ip := net.ParseIP(addr); ip != nil {
-				normAPITargets[i] = FullIPv6(ip)
-			} else {
-				normAPITargets[i] = addr
+				return FullIPv6(ip)
 			}
+			return addr
 		}
-		sort.Strings(normAPITargets)
-		shaRdata := hash.GetSHAString(strings.Join(normAPITargets, " "))
-
-		// Use sorted, normalized config targets for the SHA comparison so both
-		// sides use the same canonical form regardless of the notation in config.
-		// recordCreate.Target is already full-form (built by buildRecordsList).
-		normConfigTargets := make([]string, len(recordCreate.Target))
-		copy(normConfigTargets, recordCreate.Target)
-		sort.Strings(normConfigTargets)
-		if hash.GetSHAString(strings.Join(normConfigTargets, " ")) == shaRdata {
+		normAPITargets := normalizeTargets(record.Target, normAAAA)
+		normConfigTargets := normalizeTargets(recordCreate.Target, normAAAA)
+		if hash.GetSHAString(strings.Join(normAPITargets, " ")) == hash.GetSHAString(strings.Join(normConfigTargets, " ")) {
 			return nil
 		}
 		if err := d.Set("target", normAPITargets); err != nil {
@@ -1372,22 +1292,15 @@ func resourceDNSRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 			s = strings.ReplaceAll(s, `\"`, "")   // strip backslash-quote pairs first
 			return strings.ReplaceAll(s, `"`, "") // then plain double-quotes
 		}
-		normAPITargets := make([]string, len(record.Target))
-		for i, v := range record.Target {
-			normAPITargets[i] = normCAATarget(v)
-		}
-		sort.Strings(normAPITargets)
-		normConfigTargets := make([]string, len(recordCreate.Target))
-		for i, v := range recordCreate.Target {
-			normConfigTargets[i] = normCAATarget(v)
-		}
-		sort.Strings(normConfigTargets)
+		normAPITargets := normalizeTargets(record.Target, normCAATarget)
+		normConfigTargets := normalizeTargets(recordCreate.Target, normCAATarget)
 		if hash.GetSHAString(strings.Join(normAPITargets, " ")) == hash.GetSHAString(strings.Join(normConfigTargets, " ")) {
 			return nil
 		}
 		if err := d.Set("target", normAPITargets); err != nil {
 			return diag.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 		}
+		targets = normAPITargets
 	case RRTypeTxt:
 		oldTargets, err := tf.GetTypedListValue[string]("target", d)
 		if err != nil && !errors.Is(err, tf.ErrNotFound) {
