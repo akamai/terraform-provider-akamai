@@ -42,7 +42,7 @@ func dataSourceEvalPenaltyBoxConditions() *schema.Resource {
 
 func dataSourceEvalPenaltyBoxConditionsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "dataSourceEvalPenaltyBoxConditionsRead")
 
 	getPenaltyBoxConditions := appsec.GetPenaltyBoxConditionsRequest{}
@@ -53,7 +53,7 @@ func dataSourceEvalPenaltyBoxConditionsRead(ctx context.Context, d *schema.Resou
 	}
 	getPenaltyBoxConditions.ConfigID = configID
 
-	if getPenaltyBoxConditions.Version, err = getLatestConfigVersion(ctx, configID, m); err != nil {
+	if getPenaltyBoxConditions.Version, err = getLatestConfigVersion(ctx, configID, client); err != nil {
 		return diag.FromErr(err)
 	}
 

@@ -12,6 +12,7 @@ import (
 )
 
 func TestOperationsStateValidator(t *testing.T) {
+	t.Parallel()
 	apiValidator := OperationsStateValidator()
 	ctx := context.Background()
 
@@ -52,6 +53,7 @@ func TestOperationsStateValidator(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			request := validator.StringRequest{
 				ConfigValue: tc.input,
 			}

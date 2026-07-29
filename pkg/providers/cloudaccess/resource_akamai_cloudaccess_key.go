@@ -35,11 +35,6 @@ var (
 	_ resource.ResourceWithModifyPlan     = &KeyResource{}
 	_ resource.ResourceWithImportState    = &KeyResource{}
 	_ resource.ResourceWithValidateConfig = &KeyResource{}
-
-	activationTimeout = 60 * time.Minute
-	updateTimeout     = 60 * time.Minute
-	deleteTimeout     = 60 * time.Minute
-	pollingInterval   = 1 * time.Minute
 )
 
 const (
@@ -52,7 +47,11 @@ const (
 
 // KeyResource represents akamai_cloudaccess_key resource
 type KeyResource struct {
-	meta meta.Meta
+	meta.Resource
+	activationTimeout time.Duration
+	updateTimeout     time.Duration
+	deleteTimeout     time.Duration
+	pollingInterval   time.Duration
 }
 
 // KeyResourceModel represents model of akamai_cloudaccess_key resource
@@ -164,7 +163,12 @@ func (m *KeyResourceModel) setNetworkConfig(ctx context.Context, networkConfig *
 
 // NewKeyResource returns new cloudaccess key resource
 func NewKeyResource() resource.Resource {
-	return &KeyResource{}
+	return &KeyResource{
+		activationTimeout: 60 * time.Minute,
+		updateTimeout:     60 * time.Minute,
+		deleteTimeout:     60 * time.Minute,
+		pollingInterval:   1 * time.Minute,
+	}
 }
 
 // ValidateConfig implements resource.ResourceWithValidateConfig.
@@ -378,25 +382,6 @@ func credentialSchema() schema.SingleNestedAttribute {
 	}
 }
 
-// Configure implements resource.ResourceWithConfigure.
-func (r *KeyResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	// Prevent panic if the provider has not been configured.
-	if req.ProviderData == nil {
-		return
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"unexpected resource configure type",
-				fmt.Sprintf("expected meta.Meta, got: %T. please report this issue to the provider developers.", req.ProviderData),
-			)
-		}
-	}()
-
-	r.meta = meta.Must(req.ProviderData)
-}
-
 // isTimeoutChanged defines if timeout changed between plan and state
 func isTimeoutChanged(state, plan *KeyResourceModel) bool {
 	return state != nil && plan != nil &&
@@ -448,7 +433,7 @@ func (r *KeyResource) Create(ctx context.Context, req resource.CreateRequest, re
 		resp.Diagnostics.Append(diags...)
 		return
 	}
-	createTimeout, diags := plan.Timeouts.Create(ctx, activationTimeout)
+	createTimeout, diags := plan.Timeouts.Create(ctx, r.activationTimeout)
 	if diags.HasError() {
 		resp.Diagnostics.Append(diags...)
 		return
@@ -504,7 +489,7 @@ func (r *KeyResource) setupPrimaryGUID(ctx context.Context, state *KeyResourceMo
 
 func (r *KeyResource) create(ctx context.Context, plan *KeyResourceModel) (*KeyResourceModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
-	client := Client(r.meta)
+	client := r.Client.GetCloudAccess()
 	credA, dd := plan.credentialsA(ctx)
 	if diags.Append(dd...); diags.HasError() {
 		return nil, diags
@@ -525,7 +510,7 @@ func (r *KeyResource) create(ctx context.Context, plan *KeyResourceModel) (*KeyR
 
 func (r *KeyResource) createVersion(ctx context.Context, plan *KeyResourceModel, useCredentialA bool) (*KeyResourceModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
-	client := Client(r.meta)
+	client := r.Client.GetCloudAccess()
 
 	req, dd := plan.buildCreateKeyVersionRequest(ctx, useCredentialA)
 	if diags.Append(dd...); diags.HasError() {
@@ -574,7 +559,7 @@ func (r *KeyResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 func (r *KeyResource) read(ctx context.Context, data *KeyResourceModel) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	client := Client(r.meta)
+	client := r.Client.GetCloudAccess()
 
 	result, err := client.GetAccessKey(ctx, cloudaccess.AccessKeyRequest{
 		AccessKeyUID: data.AccessKeyUID.ValueInt64(),
@@ -602,13 +587,13 @@ func (r *KeyResource) Update(ctx context.Context, req resource.UpdateRequest, re
 	tflog.Debug(ctx, "Updating Access Key Resource")
 	var diags diag.Diagnostics
 	var plan *KeyResourceModel
-	client := Client(r.meta)
+	client := r.Client.GetCloudAccess()
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	timeout, diags := plan.Timeouts.Update(ctx, updateTimeout)
+	timeout, diags := plan.Timeouts.Update(ctx, r.updateTimeout)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -980,7 +965,7 @@ func keyVersionRequiresDeletion(stateCredA, stateCredB, planCredA, planCredB *Cr
 func (r *KeyResource) updateAccessKey(ctx context.Context, plan *KeyResourceModel) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	client := Client(r.meta)
+	client := r.Client.GetCloudAccess()
 	resp, err := client.UpdateAccessKey(ctx, plan.buildUpdateRequest(), plan.buildFetchRequest())
 	if err != nil {
 		diags.AddError("update access key failed", err.Error())
@@ -1013,13 +998,13 @@ func isVersionAssignedToProperty(ctx context.Context, client cloudaccess.CloudAc
 func (r *KeyResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	tflog.Debug(ctx, "Deleting Access Key Resource")
 	var oldState *KeyResourceModel
-	client := Client(r.meta)
+	client := r.Client.GetCloudAccess()
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &oldState)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	deleteTimeout, diags := oldState.Timeouts.Delete(ctx, deleteTimeout)
+	deleteTimeout, diags := oldState.Timeouts.Delete(ctx, r.deleteTimeout)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -1063,7 +1048,7 @@ func (r *KeyResource) Delete(ctx context.Context, req resource.DeleteRequest, re
 }
 
 func (r *KeyResource) deleteKeyVersion(ctx context.Context, oldState *KeyResourceModel, versionToDelete int64, diags diag.Diagnostics) diag.Diagnostics {
-	client := Client(r.meta)
+	client := r.Client.GetCloudAccess()
 	_, err := client.DeleteAccessKeyVersion(ctx, oldState.buildDeleteKeyVersionRequest(versionToDelete))
 	if err != nil {
 		diags.AddError(fmt.Sprintf("delete access key version %d failed", versionToDelete), err.Error())
@@ -1085,7 +1070,7 @@ func (r *KeyResource) deleteKeyVersion(ctx context.Context, oldState *KeyResourc
 
 func (r *KeyResource) isPendingDelete(ctx context.Context, accessKeyUID int64, version int64) (bool, diag.Diagnostics) {
 	var diags diag.Diagnostics
-	client := Client(r.meta)
+	client := r.Client.GetCloudAccess()
 
 	resp, err := client.GetAccessKeyVersion(ctx, cloudaccess.GetAccessKeyVersionRequest{
 		AccessKeyUID: accessKeyUID,
@@ -1101,7 +1086,7 @@ func (r *KeyResource) isPendingDelete(ctx context.Context, accessKeyUID int64, v
 
 func (r *KeyResource) waitForDelete(ctx context.Context, accessKeyUID int64) diag.Diagnostics {
 	var diags diag.Diagnostics
-	client := Client(r.meta)
+	client := r.Client.GetCloudAccess()
 	for {
 		keys, err := client.ListAccessKeys(ctx, cloudaccess.ListAccessKeysRequest{})
 		if err != nil {
@@ -1120,7 +1105,7 @@ func (r *KeyResource) waitForDelete(ctx context.Context, accessKeyUID int64) dia
 		}
 
 		select {
-		case <-time.After(pollingInterval):
+		case <-time.After(r.pollingInterval):
 			continue
 		case <-ctx.Done():
 			diags.AddError("deletion terminated",
@@ -1132,7 +1117,7 @@ func (r *KeyResource) waitForDelete(ctx context.Context, accessKeyUID int64) dia
 
 func (r *KeyResource) waitForVersionDelete(ctx context.Context, accessKeyUID int64, version int64) (bool, diag.Diagnostics) {
 	var diags diag.Diagnostics
-	client := Client(r.meta)
+	client := r.Client.GetCloudAccess()
 
 	for {
 		versions, err := client.ListAccessKeyVersions(ctx, cloudaccess.ListAccessKeyVersionsRequest{
@@ -1156,7 +1141,7 @@ func (r *KeyResource) waitForVersionDelete(ctx context.Context, accessKeyUID int
 		}
 
 		select {
-		case <-time.After(pollingInterval):
+		case <-time.After(r.pollingInterval):
 			continue
 		case <-ctx.Done():
 			diags.AddError("deletion terminated",
@@ -1290,8 +1275,7 @@ func (r *KeyResource) ImportState(ctx context.Context, req resource.ImportStateR
 	}
 
 	var data = &KeyResourceModel{}
-	client := Client(r.meta)
-	r.meta.OperationID()
+	client := r.Client.GetCloudAccess()
 	result, err := client.GetAccessKey(ctx, cloudaccess.AccessKeyRequest{
 		AccessKeyUID: accessKeyID,
 	})
@@ -1501,7 +1485,7 @@ func (m *KeyResourceModel) buildFetchRequest() cloudaccess.AccessKeyRequest {
 
 func (r *KeyResource) waitUntilActivationCompleted(ctx context.Context, requestID int64, statusTimeout int64, plan *KeyResourceModel, credA bool) (*KeyResourceModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
-	client := Client(r.meta)
+	client := r.Client.GetCloudAccess()
 	time.Sleep(time.Duration(statusTimeout) * time.Millisecond)
 	for {
 		statusResp, err := client.GetAccessKeyStatus(ctx, cloudaccess.GetAccessKeyStatusRequest{RequestID: requestID})
@@ -1548,7 +1532,7 @@ func (r *KeyResource) waitUntilActivationCompleted(ctx context.Context, requestI
 			return nil, diags
 		}
 		select {
-		case <-time.After(pollingInterval):
+		case <-time.After(r.pollingInterval):
 			continue
 		case <-ctx.Done():
 			diags.AddError("reached activation timeout", ctx.Err().Error())
@@ -1559,7 +1543,7 @@ func (r *KeyResource) waitUntilActivationCompleted(ctx context.Context, requestI
 
 func (r *KeyResource) waitUntilVersionCreatedCompleted(ctx context.Context, requestID int64, statusTimeout int64, plan *KeyResourceModel, credentialA bool) (*KeyResourceModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
-	client := Client(r.meta)
+	client := r.Client.GetCloudAccess()
 	time.Sleep(time.Duration(statusTimeout) * time.Millisecond)
 
 	for {
@@ -1607,7 +1591,7 @@ func (r *KeyResource) waitUntilVersionCreatedCompleted(ctx context.Context, requ
 		}
 
 		select {
-		case <-time.After(pollingInterval):
+		case <-time.After(r.pollingInterval):
 			continue
 		case <-ctx.Done():
 			diags.AddError("reached activation timeout", ctx.Err().Error())

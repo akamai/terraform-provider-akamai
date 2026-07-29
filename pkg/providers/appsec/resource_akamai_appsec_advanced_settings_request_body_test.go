@@ -5,12 +5,14 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/require"
 )
 
 func TestAkamaiAdvancedSettingsRequestBodyResConfig(t *testing.T) {
+	t.Parallel()
 	var (
 		configVersion = func(configId int, client *appsec.Mock) appsec.GetConfigurationResponse {
 			configResponse := appsec.GetConfigurationResponse{}
@@ -61,187 +63,184 @@ func TestAkamaiAdvancedSettingsRequestBodyResConfig(t *testing.T) {
 	)
 
 	t.Run("match by AdvancedSettingsRequestBody ID", func(t *testing.T) {
-		client := &appsec.Mock{}
-		configResponse := configVersion(43253, client)
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+		configResponse := configVersion(43253, client.APPSEC)
 
-		requestBodyRead(43253, 7, "", client, 2, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBody.json")
+		requestBodyRead(43253, 7, "", client.APPSEC, 2, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBody.json")
 
 		updateRequestBodyRequest := appsec.UpdateAdvancedSettingsRequestBodyRequest{ConfigID: configResponse.ID, Version: 7, PolicyID: "", RequestBodyInspectionLimitInKB: appsec.Limit16KB}
 
-		updateRequestBody(updateRequestBodyRequest, client, 1, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBody.json")
+		updateRequestBody(updateRequestBodyRequest, client.APPSEC, 1, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBody.json")
 		removeRequestBodyRequest := appsec.RemoveAdvancedSettingsRequestBodyRequest{ConfigID: configResponse.ID, Version: 7, PolicyID: "", RequestBodyInspectionLimitInKB: appsec.Default}
 
-		removeRequestBody(removeRequestBodyRequest, client, 1, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBody.json")
-		useClient(client, func() {
-			resource.Test(t, resource.TestCase{
-				IsUnitTest:               true,
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResAdvancedSettingsRequestBody/match_by_id.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_advanced_settings_request_body.test", "id", "43253:"),
-						),
-					},
+		removeRequestBody(removeRequestBodyRequest, client.APPSEC, 1, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBody.json")
+		mockGetConfigurationVersionDefault(client.APPSEC)
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResAdvancedSettingsRequestBody/match_by_id.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_appsec_advanced_settings_request_body.test", "id", "43253:"),
+					),
 				},
-			})
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.APPSEC.AssertExpectations(t)
 	})
 
 	t.Run("import", func(t *testing.T) {
-		client := &appsec.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
-		configResponse := configVersion(43253, client)
+		configResponse := configVersion(43253, client.APPSEC)
 
-		requestBodyRead(configResponse.ID, configResponse.LatestVersion, "", client, 4, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBody.json")
+		requestBodyRead(configResponse.ID, configResponse.LatestVersion, "", client.APPSEC, 4, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBody.json")
 
 		updateRequestBodyRequest := appsec.UpdateAdvancedSettingsRequestBodyRequest{ConfigID: configResponse.ID, Version: configResponse.LatestVersion, PolicyID: "", RequestBodyInspectionLimitInKB: appsec.Limit16KB}
 
-		updateRequestBody(updateRequestBodyRequest, client, 1, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBody.json")
+		updateRequestBody(updateRequestBodyRequest, client.APPSEC, 1, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBody.json")
 
 		removeRequestBodyRequest := appsec.RemoveAdvancedSettingsRequestBodyRequest{ConfigID: configResponse.ID, Version: configResponse.LatestVersion, PolicyID: "", RequestBodyInspectionLimitInKB: appsec.Default}
 
-		removeRequestBody(removeRequestBodyRequest, client, 1, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBody.json")
+		removeRequestBody(removeRequestBodyRequest, client.APPSEC, 1, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBody.json")
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResAdvancedSettingsRequestBody/match_by_id.tf"),
-					},
-					{
-						ImportState:             true,
-						ImportStateVerify:       true,
-						ImportStateVerifyIgnore: []string{"request_body_inspection_limit_override"},
-						ImportStateId:           "43253",
-						ResourceName:            "akamai_appsec_advanced_settings_request_body.test",
-					},
+		mockGetConfigurationVersionDefault(client.APPSEC)
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResAdvancedSettingsRequestBody/match_by_id.tf"),
 				},
-			})
+				{
+					ImportState:             true,
+					ImportStateVerify:       true,
+					ImportStateVerifyIgnore: []string{"request_body_inspection_limit_override"},
+					ImportStateId:           "43253",
+					ResourceName:            "akamai_appsec_advanced_settings_request_body.test",
+				},
+			},
 		})
-		client.AssertExpectations(t)
+		client.APPSEC.AssertExpectations(t)
 	})
 	t.Run("import policy", func(t *testing.T) {
-		client := &appsec.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
-		configResponse := configVersion(43253, client)
+		configResponse := configVersion(43253, client.APPSEC)
 
-		requestBodyRead(configResponse.ID, configResponse.LatestVersion, "test_policy", client, 4, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBodyPolicy.json")
+		requestBodyRead(configResponse.ID, configResponse.LatestVersion, "test_policy", client.APPSEC, 4, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBodyPolicy.json")
 
 		updateRequestBodyRequest := appsec.UpdateAdvancedSettingsRequestBodyRequest{ConfigID: configResponse.ID, Version: configResponse.LatestVersion, PolicyID: "test_policy", RequestBodyInspectionLimitInKB: appsec.Limit16KB, RequestBodyInspectionLimitOverride: true}
 
-		updateRequestBody(updateRequestBodyRequest, client, 1, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBody.json")
+		updateRequestBody(updateRequestBodyRequest, client.APPSEC, 1, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBody.json")
 
 		removeRequestBodyRequest := appsec.RemoveAdvancedSettingsRequestBodyRequest{ConfigID: configResponse.ID, Version: configResponse.LatestVersion, PolicyID: "test_policy", RequestBodyInspectionLimitInKB: appsec.Default, RequestBodyInspectionLimitOverride: false}
 
-		removeRequestBody(removeRequestBodyRequest, client, 1, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBodyDisabled.json")
+		removeRequestBody(removeRequestBodyRequest, client.APPSEC, 1, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBodyDisabled.json")
 
-		useClient(client, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResAdvancedSettingsRequestBody/update_by_policy_id.tf"),
-					},
-					{
-						ImportState:       true,
-						ImportStateVerify: true,
-						ImportStateId:     "43253:test_policy",
-						ResourceName:      "akamai_appsec_advanced_settings_request_body.policy",
-					},
+		mockGetConfigurationVersionDefault(client.APPSEC)
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResAdvancedSettingsRequestBody/update_by_policy_id.tf"),
 				},
-			})
+				{
+					ImportState:       true,
+					ImportStateVerify: true,
+					ImportStateId:     "43253:test_policy",
+					ResourceName:      "akamai_appsec_advanced_settings_request_body.policy",
+				},
+			},
 		})
-		client.AssertExpectations(t)
+		client.APPSEC.AssertExpectations(t)
 	})
 	t.Run("match by AdvancedSettingsRequestBodyPolicy ID", func(t *testing.T) {
-		client := &appsec.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
-		configResponse := configVersion(43253, client)
+		configResponse := configVersion(43253, client.APPSEC)
 
-		requestBodyRead(configResponse.ID, configResponse.LatestVersion, "test_policy", client, 5, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBodyPolicy.json")
+		requestBodyRead(configResponse.ID, configResponse.LatestVersion, "test_policy", client.APPSEC, 5, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBodyPolicy.json")
 
 		updateRequestBodyRequest := appsec.UpdateAdvancedSettingsRequestBodyRequest{ConfigID: configResponse.ID, Version: configResponse.LatestVersion, PolicyID: "test_policy", RequestBodyInspectionLimitInKB: appsec.Limit16KB, RequestBodyInspectionLimitOverride: true}
 
-		updateRequestBody(updateRequestBodyRequest, client, 1, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBody.json")
+		updateRequestBody(updateRequestBodyRequest, client.APPSEC, 1, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBody.json")
 
 		updateRequestBodyRequestWithVal := appsec.UpdateAdvancedSettingsRequestBodyRequest{ConfigID: configResponse.ID, Version: configResponse.LatestVersion, PolicyID: "test_policy", RequestBodyInspectionLimitInKB: appsec.Limit32KB, RequestBodyInspectionLimitOverride: true}
 
-		updateRequestBody(updateRequestBodyRequestWithVal, client, 1, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBody32.json")
+		updateRequestBody(updateRequestBodyRequestWithVal, client.APPSEC, 1, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBody32.json")
 
 		removeRequestBodyRequest := appsec.RemoveAdvancedSettingsRequestBodyRequest{ConfigID: configResponse.ID, Version: configResponse.LatestVersion, PolicyID: "test_policy", RequestBodyInspectionLimitInKB: appsec.Default, RequestBodyInspectionLimitOverride: false}
 
-		removeRequestBody(removeRequestBodyRequest, client, 1, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBodyDisabled.json")
+		removeRequestBody(removeRequestBodyRequest, client.APPSEC, 1, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBodyDisabled.json")
 
-		useClient(client, func() {
-			resource.Test(t, resource.TestCase{
-				IsUnitTest:               true,
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResAdvancedSettingsRequestBody/update_by_policy_id.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_advanced_settings_request_body.policy", "id", "43253:test_policy"),
-						),
-					},
-					{
-						Config:             testutils.LoadFixtureString(t, "testdata/TestResAdvancedSettingsRequestBody/update_by_policy_32.tf"),
-						ExpectNonEmptyPlan: true,
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_advanced_settings_request_body.policy", "id", "43253:test_policy"),
-						),
-					},
+		mockGetConfigurationVersionDefault(client.APPSEC)
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResAdvancedSettingsRequestBody/update_by_policy_id.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_appsec_advanced_settings_request_body.policy", "id", "43253:test_policy"),
+					),
 				},
-			})
+				{
+					Config:             testutils.LoadFixtureString(t, "testdata/TestResAdvancedSettingsRequestBody/update_by_policy_32.tf"),
+					ExpectNonEmptyPlan: true,
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_appsec_advanced_settings_request_body.policy", "id", "43253:test_policy"),
+					),
+				},
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.APPSEC.AssertExpectations(t)
 	})
 	t.Run("match by AdvancedSettingsRequestBodyPolicyIDDisable", func(t *testing.T) {
-		client := &appsec.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
-		configResponse := configVersion(43253, client)
+		configResponse := configVersion(43253, client.APPSEC)
 
-		requestBodyRead(configResponse.ID, configResponse.LatestVersion, "test_policy", client, 5, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBodyPolicy.json")
+		requestBodyRead(configResponse.ID, configResponse.LatestVersion, "test_policy", client.APPSEC, 5, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBodyPolicy.json")
 
 		// create
 		updateRequestBodyRequest := appsec.UpdateAdvancedSettingsRequestBodyRequest{ConfigID: configResponse.ID, Version: configResponse.LatestVersion, PolicyID: "test_policy", RequestBodyInspectionLimitInKB: appsec.Limit16KB, RequestBodyInspectionLimitOverride: true}
 
-		updateRequestBody(updateRequestBodyRequest, client, 1, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBodyPolicy.json")
+		updateRequestBody(updateRequestBodyRequest, client.APPSEC, 1, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBodyPolicy.json")
 
 		//update
 		updateRequestBodyRequestDisable := appsec.UpdateAdvancedSettingsRequestBodyRequest{ConfigID: configResponse.ID, Version: configResponse.LatestVersion, PolicyID: "test_policy", RequestBodyInspectionLimitInKB: appsec.Limit32KB, RequestBodyInspectionLimitOverride: false}
 
-		updateRequestBody(updateRequestBodyRequestDisable, client, 1, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBodyDisabled.json")
+		updateRequestBody(updateRequestBodyRequestDisable, client.APPSEC, 1, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBodyDisabled.json")
 
 		//delete
 		removeRequestBodyRequest := appsec.RemoveAdvancedSettingsRequestBodyRequest{ConfigID: configResponse.ID, Version: configResponse.LatestVersion, PolicyID: "test_policy", RequestBodyInspectionLimitInKB: appsec.Default, RequestBodyInspectionLimitOverride: false}
 
-		removeRequestBody(removeRequestBodyRequest, client, 1, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBodyDisabled.json")
+		removeRequestBody(removeRequestBodyRequest, client.APPSEC, 1, "testdata/TestResAdvancedSettingsRequestBody/AdvancedSettingsRequestBodyDisabled.json")
 
-		useClient(client, func() {
-			resource.Test(t, resource.TestCase{
-				IsUnitTest:               true,
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResAdvancedSettingsRequestBody/update_by_policy_id.tf"),
-					},
-					{
-						Config:             testutils.LoadFixtureString(t, "testdata/TestResAdvancedSettingsRequestBody/update_by_policy_id_disable.tf"),
-						ExpectNonEmptyPlan: true,
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_advanced_settings_request_body.policy", "id", "43253:test_policy"),
-						),
-					},
+		mockGetConfigurationVersionDefault(client.APPSEC)
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResAdvancedSettingsRequestBody/update_by_policy_id.tf"),
 				},
-			})
+				{
+					Config:             testutils.LoadFixtureString(t, "testdata/TestResAdvancedSettingsRequestBody/update_by_policy_id_disable.tf"),
+					ExpectNonEmptyPlan: true,
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_appsec_advanced_settings_request_body.policy", "id", "43253:test_policy"),
+					),
+				},
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.APPSEC.AssertExpectations(t)
 	})
 
 }

@@ -1660,13 +1660,15 @@ func populateLoadObject(ctx context.Context, lo *gtm.LoadObject) (loadObject, di
 		LoadObject:     types.StringValue(lo.LoadObject),
 		LoadObjectPort: types.Int64Value(int64(lo.LoadObjectPort)),
 	}
-	if lo.LoadServers != nil {
-		loadServers, diags := types.ListValueFrom(ctx, types.StringType, lo.LoadServers)
-		if diags.HasError() {
-			return loadObj, diags
-		}
-		loadObj.LoadServers = loadServers
+	loadServersInput := lo.LoadServers
+	if loadServersInput == nil {
+		loadServersInput = []string{}
 	}
+	loadServers, diags := types.ListValueFrom(ctx, types.StringType, loadServersInput)
+	if diags.HasError() {
+		return loadObj, diags
+	}
+	loadObj.LoadServers = loadServers
 	return loadObj, nil
 }
 

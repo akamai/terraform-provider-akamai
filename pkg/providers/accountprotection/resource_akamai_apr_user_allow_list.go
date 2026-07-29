@@ -44,7 +44,7 @@ func resourceUserAllowList() *schema.Resource {
 
 func createResourceUserAllowList(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAccountProtection()
 	logger := meta.Log("accountprotection", "createResourceUserAllowList")
 	logger.Debugf("in createResourceUserAllowList")
 
@@ -53,7 +53,7 @@ func createResourceUserAllowList(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "aprUserAllowList", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "aprUserAllowList", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -82,7 +82,7 @@ func createResourceUserAllowList(ctx context.Context, d *schema.ResourceData, m 
 
 func readResourceUserAllowList(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAccountProtection()
 	logger := meta.Log("accountprotection", "readResourceUserAllowList")
 	logger.Debugf("in readResourceUserAllowList")
 
@@ -91,7 +91,7 @@ func readResourceUserAllowList(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -135,7 +135,7 @@ func readResourceUserAllowList(ctx context.Context, d *schema.ResourceData, m in
 
 func updateResourceUserAllowList(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAccountProtection()
 	logger := meta.Log("accountprotection", "updateResourceUserAllowList")
 	logger.Debugf("in updateResourceUserAllowList")
 
@@ -144,7 +144,7 @@ func updateResourceUserAllowList(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "userAllowListId", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "userAllowListId", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -171,7 +171,7 @@ func updateResourceUserAllowList(ctx context.Context, d *schema.ResourceData, m 
 
 func deleteResourceUserAllowList(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAccountProtection()
 	logger := meta.Log("accountprotection", "deleteResourceUserAllowList")
 	logger.Debugf("in accountprotection deleteResourceUserAllowList")
 
@@ -180,7 +180,7 @@ func deleteResourceUserAllowList(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "userAllowListId", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "userAllowListId", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}

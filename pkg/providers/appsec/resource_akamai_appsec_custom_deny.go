@@ -58,7 +58,7 @@ func resourceCustomDeny() *schema.Resource {
 
 func resourceCustomDenyCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceCustomDenyCreate")
 	logger.Debugf("in resourceCustomDenyCreate")
 
@@ -66,7 +66,7 @@ func resourceCustomDenyCreate(ctx context.Context, d *schema.ResourceData, m int
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "customDeny", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "customDeny", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -98,7 +98,7 @@ func resourceCustomDenyCreate(ctx context.Context, d *schema.ResourceData, m int
 
 func resourceCustomDenyRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceCustomDenyRead")
 	logger.Debugf("in resourceCustomDenyRead")
 
@@ -113,7 +113,7 @@ func resourceCustomDenyRead(ctx context.Context, d *schema.ResourceData, m inter
 	}
 	customDenyID := iDParts[1]
 
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -155,7 +155,7 @@ func resourceCustomDenyRead(ctx context.Context, d *schema.ResourceData, m inter
 
 func resourceCustomDenyUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceCustomDenyUpdate")
 	logger.Debugf("in resourceCustomDenyUpdate")
 
@@ -174,7 +174,7 @@ func resourceCustomDenyUpdate(ctx context.Context, d *schema.ResourceData, m int
 	jsonPayloadRaw := []byte(jsonpostpayload.(string))
 	rawJSON := (json.RawMessage)(jsonPayloadRaw)
 
-	version, err := getModifiableConfigVersion(ctx, configID, "customDeny", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "customDeny", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -196,7 +196,7 @@ func resourceCustomDenyUpdate(ctx context.Context, d *schema.ResourceData, m int
 
 func resourceCustomDenyDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceCustomDenyDelete")
 	logger.Debugf("in resourceCustomDenyDelete")
 
@@ -211,7 +211,7 @@ func resourceCustomDenyDelete(ctx context.Context, d *schema.ResourceData, m int
 	}
 	customDenyID := iDParts[1]
 
-	version, err := getModifiableConfigVersion(ctx, configID, "customDeny", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "customDeny", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}

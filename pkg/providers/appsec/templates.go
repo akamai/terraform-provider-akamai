@@ -214,7 +214,7 @@ var (
 	}
 )
 
-// GetTemplate given map of templates and a key, returns template stored under this key
+// GetTemplate given map of templates and a key, returns template stored under this key.
 func GetTemplate(ots map[string]*OutputTemplate, key string) (*OutputTemplate, error) {
 	if f, ok := ots[key]; ok && f != nil {
 		return f, nil
@@ -298,7 +298,7 @@ func RenderTemplates(ots map[string]*OutputTemplate, key string, str interface{}
 	return "", nil
 }
 
-// InitTemplates populates map of templates given as argument with output templates
+// InitTemplates populates map of templates given as argument with output templates.
 func InitTemplates(otm map[string]*OutputTemplate) {
 	otm["advancedSettingsAttackPayloadLoggingDS"] = &OutputTemplate{TemplateName: "advancedSettingsAttackPayloadLoggingDS", TableTitle: "Enabled|Request Body|Response Body", TemplateType: "TABULAR", TemplateString: "{{.Enabled}}|{{.RequestBody.Type}}|{{.ResponseBody.Type}}"}
 	otm["advancedSettingsLoggingDS"] = &OutputTemplate{TemplateName: "advancedSettingsLoggingDS", TableTitle: "Allow Sampling|Cookies|Custom Headers|Standard Headers", TemplateType: "TABULAR", TemplateString: "{{.AllowSampling}}|{{.Cookies.Type}} {{.Cookies.Values}}|{{.CustomHeaders.Type}} {{.CustomHeaders.Values}}|{{.StandardHeaders.Type}} {{.StandardHeaders.Values}}"}

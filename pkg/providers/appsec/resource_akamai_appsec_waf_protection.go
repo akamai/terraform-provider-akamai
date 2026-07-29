@@ -57,7 +57,7 @@ func resourceWAFProtection() *schema.Resource {
 
 func resourceWAFProtectionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceWAFProtectionCreate")
 	logger.Debugf("in resourceWAFProtectionCreate")
 
@@ -65,7 +65,7 @@ func resourceWAFProtectionCreate(ctx context.Context, d *schema.ResourceData, m 
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "wafProtection", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "wafProtection", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -96,7 +96,7 @@ func resourceWAFProtectionCreate(ctx context.Context, d *schema.ResourceData, m 
 
 func resourceWAFProtectionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceWAFProtectionRead")
 	logger.Debugf("in resourceWAFProtectionRead")
 
@@ -108,7 +108,7 @@ func resourceWAFProtectionRead(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -151,7 +151,7 @@ func resourceWAFProtectionRead(ctx context.Context, d *schema.ResourceData, m in
 
 func resourceWAFProtectionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceWAFProtectionUpdate")
 	logger.Debugf("in resourceWAFProtectionUpdate")
 
@@ -163,7 +163,7 @@ func resourceWAFProtectionUpdate(ctx context.Context, d *schema.ResourceData, m 
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "wafProtection", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "wafProtection", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -190,7 +190,7 @@ func resourceWAFProtectionUpdate(ctx context.Context, d *schema.ResourceData, m 
 
 func resourceWAFProtectionDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceWAFProtectionDelete")
 	logger.Debugf("in resourceWAFProtectionDelete")
 
@@ -202,7 +202,7 @@ func resourceWAFProtectionDelete(ctx context.Context, d *schema.ResourceData, m 
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "wafProtection", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "wafProtection", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}

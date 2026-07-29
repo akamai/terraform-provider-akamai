@@ -67,7 +67,7 @@ func dataSourceSelectableHostnames() *schema.Resource {
 
 func dataSourceSelectableHostnamesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "dataSourceSelectableHostnamesRead")
 
 	configID, err := tf.GetIntValue("config_id", d)
@@ -89,7 +89,7 @@ func dataSourceSelectableHostnamesRead(ctx context.Context, d *schema.ResourceDa
 
 	var version int
 	if configID != 0 {
-		if version, err = getLatestConfigVersion(ctx, configID, m); err != nil {
+		if version, err = getLatestConfigVersion(ctx, configID, client); err != nil {
 			return diag.FromErr(err)
 		}
 	}

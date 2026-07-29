@@ -43,7 +43,7 @@ func dataSourceRatePolicies() *schema.Resource {
 
 func dataSourceRatePoliciesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "dataSourceRatePoliciesRead")
 
 	getRatePolicies := appsec.GetRatePoliciesRequest{}
@@ -54,7 +54,7 @@ func dataSourceRatePoliciesRead(ctx context.Context, d *schema.ResourceData, m i
 	}
 	getRatePolicies.ConfigID = configID
 
-	if getRatePolicies.ConfigVersion, err = getLatestConfigVersion(ctx, configID, m); err != nil {
+	if getRatePolicies.ConfigVersion, err = getLatestConfigVersion(ctx, configID, client); err != nil {
 		return diag.FromErr(err)
 	}
 

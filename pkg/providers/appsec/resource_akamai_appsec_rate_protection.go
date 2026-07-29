@@ -56,7 +56,7 @@ func resourceRateProtection() *schema.Resource {
 
 func resourceRateProtectionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceRateProtectionCreate")
 	logger.Debugf("in resourceRateProtectionCreate")
 
@@ -64,7 +64,7 @@ func resourceRateProtectionCreate(ctx context.Context, d *schema.ResourceData, m
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "rateProtection", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "rateProtection", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -96,7 +96,7 @@ func resourceRateProtectionCreate(ctx context.Context, d *schema.ResourceData, m
 
 func resourceRateProtectionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceRateProtectionRead")
 	logger.Debugf("in resourceRateProtectionRead")
 
@@ -108,7 +108,7 @@ func resourceRateProtectionRead(ctx context.Context, d *schema.ResourceData, m i
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -150,7 +150,7 @@ func resourceRateProtectionRead(ctx context.Context, d *schema.ResourceData, m i
 
 func resourceRateProtectionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceRateProtectionUpdate")
 	logger.Debugf("in resourceRateProtectionUpdate")
 
@@ -162,7 +162,7 @@ func resourceRateProtectionUpdate(ctx context.Context, d *schema.ResourceData, m
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "rateProtection", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "rateProtection", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -189,7 +189,7 @@ func resourceRateProtectionUpdate(ctx context.Context, d *schema.ResourceData, m
 
 func resourceRateProtectionDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceRateProtectionDelete")
 	logger.Debugf("in resourceRateProtectionDelete")
 
@@ -201,7 +201,7 @@ func resourceRateProtectionDelete(ctx context.Context, d *schema.ResourceData, m
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "rateProtection", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "rateProtection", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}

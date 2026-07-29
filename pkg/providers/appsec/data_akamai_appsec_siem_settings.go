@@ -37,7 +37,7 @@ func dataSourceSiemSettings() *schema.Resource {
 
 func dataSourceSiemSettingsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "dataSourceSiemSettingsRead")
 
 	getSiemSettings := appsec.GetSiemSettingsRequest{}
@@ -48,7 +48,7 @@ func dataSourceSiemSettingsRead(ctx context.Context, d *schema.ResourceData, m i
 	}
 	getSiemSettings.ConfigID = configID
 
-	if getSiemSettings.Version, err = getLatestConfigVersion(ctx, configID, m); err != nil {
+	if getSiemSettings.Version, err = getLatestConfigVersion(ctx, configID, client); err != nil {
 		return diag.FromErr(err)
 	}
 

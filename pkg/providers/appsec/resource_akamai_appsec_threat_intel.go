@@ -57,7 +57,7 @@ func resourceThreatIntel() *schema.Resource {
 
 func resourceThreatIntelCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceThreatIntelCreate")
 	logger.Debugf("in resourceThreatIntelCreate")
 
@@ -65,7 +65,7 @@ func resourceThreatIntelCreate(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "threatIntel", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "threatIntel", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -98,7 +98,7 @@ func resourceThreatIntelCreate(ctx context.Context, d *schema.ResourceData, m in
 
 func resourceThreatIntelRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceThreatIntelRead")
 	logger.Debugf(" in resourceThreatIntelRead")
 
@@ -110,7 +110,7 @@ func resourceThreatIntelRead(ctx context.Context, d *schema.ResourceData, m inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -143,7 +143,7 @@ func resourceThreatIntelRead(ctx context.Context, d *schema.ResourceData, m inte
 
 func resourceThreatIntelUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceThreatIntelUpdate")
 	logger.Debugf("in resourceThreatIntelUpdate")
 
@@ -155,7 +155,7 @@ func resourceThreatIntelUpdate(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "threatIntel", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "threatIntel", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}

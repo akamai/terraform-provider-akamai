@@ -60,7 +60,7 @@ func resourceAAPSelectedHostnames() *schema.Resource {
 
 func resourceAAPSelectedHostnamesCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAAPSelectedHostnamesCreate")
 	logger.Debugf("in resourceAAPSelectedHostnamesCreate")
 
@@ -94,7 +94,7 @@ func resourceAAPSelectedHostnamesCreate(ctx context.Context, d *schema.ResourceD
 		evalHostnames = make([]string, 0)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "wapSelectedHostnames", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "wapSelectedHostnames", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -132,7 +132,7 @@ func resourceAAPSelectedHostnamesCreate(ctx context.Context, d *schema.ResourceD
 
 func resourceAAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAAPSelectedHostnamesRead")
 	logger.Debugf("in resourceAAPSelectedHostnamesRead")
 
@@ -144,7 +144,7 @@ func resourceAAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceDat
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -180,7 +180,7 @@ func resourceAAPSelectedHostnamesRead(ctx context.Context, d *schema.ResourceDat
 
 func resourceAAPSelectedHostnamesUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAAPSelectedHostnamesUpdate")
 	logger.Debugf("in resourceAAPSelectedHostnamesUpdate")
 
@@ -214,7 +214,7 @@ func resourceAAPSelectedHostnamesUpdate(ctx context.Context, d *schema.ResourceD
 		evalHostnames = make([]string, 0)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "wapSelectedHostnames", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "wapSelectedHostnames", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}

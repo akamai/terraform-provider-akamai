@@ -5,14 +5,17 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/networklists"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/require"
 )
 
 func TestAccAkamaiNetworkListSubscription_res_basic(t *testing.T) {
+	t.Parallel()
 	t.Run("match by NetworkListSubscription ID", func(t *testing.T) {
-		client := &networklists.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
 		cu := networklists.UpdateNetworkListSubscriptionResponse{}
 		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResNetworkListSubscription/NetworkListSubscription.json"), &cu)
@@ -26,37 +29,34 @@ func TestAccAkamaiNetworkListSubscription_res_basic(t *testing.T) {
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResNetworkListSubscription/NetworkListSubscription.json"), &cd)
 		require.NoError(t, err)
 
-		client.On("GetNetworkListSubscription",
+		client.NetworkLists.On("GetNetworkListSubscription",
 			testutils.MockContext,
 			networklists.GetNetworkListSubscriptionRequest{Recipients: []string{"test@email.com"}, UniqueIDs: []string{"79536_MARTINNETWORKLIST"}},
 		).Return(&cr, nil)
 
-		client.On("UpdateNetworkListSubscription",
+		client.NetworkLists.On("UpdateNetworkListSubscription",
 			testutils.MockContext,
 			networklists.UpdateNetworkListSubscriptionRequest{Recipients: []string{"test@email.com"}, UniqueIDs: []string{"79536_MARTINNETWORKLIST"}},
 		).Return(&cu, nil)
 
-		client.On("RemoveNetworkListSubscription",
+		client.NetworkLists.On("RemoveNetworkListSubscription",
 			testutils.MockContext,
 			networklists.RemoveNetworkListSubscriptionRequest{Recipients: []string{"test@email.com"}, UniqueIDs: []string{"79536_MARTINNETWORKLIST"}},
 		).Return(&cd, nil)
 
-		useClient(client, func() {
-			resource.Test(t, resource.TestCase{
-				IsUnitTest:               true,
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResNetworkListSubscription/match_by_id.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_networklist_subscription.test", "id", "f7a36129f691baa1201d963b8537eb69caa28863:dd6085a7b8c8f8efaecbd420aff85a3e865ad5ca"),
-						),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResNetworkListSubscription/match_by_id.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_networklist_subscription.test", "id", "f7a36129f691baa1201d963b8537eb69caa28863:dd6085a7b8c8f8efaecbd420aff85a3e865ad5ca"),
+					),
 				},
-			})
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.NetworkLists.AssertExpectations(t)
 	})
 
 }

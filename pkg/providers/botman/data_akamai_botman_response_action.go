@@ -35,7 +35,7 @@ func dataSourceResponseAction() *schema.Resource {
 
 func dataSourceResponseActionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "dataSourceResponseActionRead")
 	logger.Debugf("in dataSourceResponseActionRead")
 
@@ -44,7 +44,7 @@ func dataSourceResponseActionRead(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}

@@ -42,7 +42,7 @@ func resourceCustomRule() *schema.Resource {
 				Type:             schema.TypeString,
 				Required:         true,
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsJSON),
-				DiffSuppressFunc: suppressEquivalentJSONDiffsGeneric,
+				DiffSuppressFunc: suppressJSONDiffsIgnoringArrayOrder,
 				Description:      "JSON-formatted definition of the custom rule",
 			},
 			"custom_rule_id": {
@@ -55,7 +55,7 @@ func resourceCustomRule() *schema.Resource {
 
 func resourceCustomRuleCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceCustomRuleCreate")
 	logger.Debugf("in resourceCustomRuleCreate")
 
@@ -93,7 +93,7 @@ func resourceCustomRuleCreate(ctx context.Context, d *schema.ResourceData, m int
 
 func resourceCustomRuleRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceCustomRuleRead")
 	logger.Debugf("in resourceCustomRuleRead")
 
@@ -143,7 +143,7 @@ func resourceCustomRuleRead(ctx context.Context, d *schema.ResourceData, m inter
 
 func resourceCustomRuleUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceCustomRuleUpdate")
 	logger.Debugf("in resourceCustomRuleUpdate")
 
@@ -183,7 +183,7 @@ func resourceCustomRuleUpdate(ctx context.Context, d *schema.ResourceData, m int
 
 func resourceCustomRuleDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceCustomRuleDelete")
 	logger.Debugf("in resourceCustomRuleDelete")
 
@@ -202,7 +202,7 @@ func resourceCustomRuleDelete(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}

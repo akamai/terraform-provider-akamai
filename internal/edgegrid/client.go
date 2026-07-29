@@ -2,9 +2,17 @@
 package edgegrid
 
 import (
+	apr "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/accountprotection"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/apidefinitions"
+	v0 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/apidefinitions/v0"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/botman"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/clientlists"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudaccess"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudcertificates"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudlets"
 	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudlets/v3"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudwrapper"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cps"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/dns"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/domainownership"
@@ -12,8 +20,10 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/gtm"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/hapi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/imaging"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/mtlskeystore"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/mtlstruststore"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/networklists"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/papi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/reportinggroups"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/session"
@@ -21,11 +31,27 @@ import (
 
 // Client is the interface for the Akamai Edgegrid client.
 type Client interface {
+	GetAccountProtection() apr.AccountProtection
+
+	GetAPIDefinitions() apidefinitions.APIDefinitions
+
+	GetAPIDefinitionsV0() v0.APIDefinitions
+
+	GetAPPSEC() appsec.APPSEC
+
+	GetBotMan() botman.BotMan
+
+	GetClientLists() clientlists.ClientLists
+
+	GetCloudAccess() cloudaccess.CloudAccess
+
 	GetCloudCertificates() cloudcertificates.CloudCertificates
 
 	GetCloudletsV2() cloudlets.Cloudlets
 
 	GetCloudletsV3() v3.Cloudlets
+
+	GetCloudWrapper() cloudwrapper.CloudWrapper
 
 	GetCPS() cps.CPS
 
@@ -41,9 +67,13 @@ type Client interface {
 
 	GetIAM() iam.IAM
 
+	GetImaging() imaging.Imaging
+
 	GetMTLSKeystore() mtlskeystore.MTLSKeystore
 
 	GetMTLSTruststore() mtlstruststore.MTLSTruststore
+
+	GetNetworkLists() networklists.NetworkList
 
 	GetPAPI() papi.PAPI
 
@@ -66,6 +96,41 @@ func NewClientImpl(sess session.Session) *ClientImpl {
 	}
 }
 
+// GetAccountProtection returns the Account Protection client for managing account security.
+func (c *ClientImpl) GetAccountProtection() apr.AccountProtection {
+	return apr.Client(c.sess)
+}
+
+// GetAPIDefinitions returns the API Definitions client for managing API definitions.
+func (c *ClientImpl) GetAPIDefinitions() apidefinitions.APIDefinitions {
+	return apidefinitions.Client(c.sess)
+}
+
+// GetAPIDefinitionsV0 returns the API Definitions V0 client for managing API definitions.
+func (c *ClientImpl) GetAPIDefinitionsV0() v0.APIDefinitions {
+	return v0.Client(c.sess)
+}
+
+// GetAPPSEC returns the APPSEC client for managing application security.
+func (c *ClientImpl) GetAPPSEC() appsec.APPSEC {
+	return appsec.Client(c.sess)
+}
+
+// GetBotMan returns the Bot Manager client for managing bot mitigation.
+func (c *ClientImpl) GetBotMan() botman.BotMan {
+	return botman.Client(c.sess)
+}
+
+// GetClientLists returns the Client Lists client for managing client lists.
+func (c *ClientImpl) GetClientLists() clientlists.ClientLists {
+	return clientlists.Client(c.sess)
+}
+
+// GetCloudAccess returns the Cloud Access client for managing cloud access.
+func (c *ClientImpl) GetCloudAccess() cloudaccess.CloudAccess {
+	return cloudaccess.Client(c.sess)
+}
+
 // GetCloudCertificates returns the CCM client for managing cloud certificates.
 func (c *ClientImpl) GetCloudCertificates() cloudcertificates.CloudCertificates {
 	return cloudcertificates.Client(c.sess)
@@ -79,6 +144,11 @@ func (c *ClientImpl) GetCloudletsV2() cloudlets.Cloudlets {
 // GetCloudletsV3 returns the Cloudlets V3 client for managing cloudlets.
 func (c *ClientImpl) GetCloudletsV3() v3.Cloudlets {
 	return v3.Client(c.sess)
+}
+
+// GetCloudWrapper returns the CloudWrapper client for managing cloud wrapper.
+func (c *ClientImpl) GetCloudWrapper() cloudwrapper.CloudWrapper {
+	return cloudwrapper.Client(c.sess)
 }
 
 // GetCPS returns the CPS client for managing certificates.
@@ -116,6 +186,11 @@ func (c *ClientImpl) GetIAM() iam.IAM {
 	return iam.Client(c.sess)
 }
 
+// GetImaging returns the Imaging client for managing images and videos.
+func (c *ClientImpl) GetImaging() imaging.Imaging {
+	return imaging.Client(c.sess)
+}
+
 // GetMTLSKeystore returns the MTLS Keystore client for managing mTLS keystores.
 func (c *ClientImpl) GetMTLSKeystore() mtlskeystore.MTLSKeystore {
 	return mtlskeystore.Client(c.sess)
@@ -124,6 +199,11 @@ func (c *ClientImpl) GetMTLSKeystore() mtlskeystore.MTLSKeystore {
 // GetMTLSTruststore returns the MTLS Truststore client for managing mTLS truststores.
 func (c *ClientImpl) GetMTLSTruststore() mtlstruststore.MTLSTruststore {
 	return mtlstruststore.Client(c.sess)
+}
+
+// GetNetworkLists returns the Network Lists client for managing network lists.
+func (c *ClientImpl) GetNetworkLists() networklists.NetworkList {
+	return networklists.Client(c.sess)
 }
 
 // GetPAPI returns the PAPI client for managing property APIs.

@@ -2,7 +2,6 @@ package appsec
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
@@ -14,7 +13,7 @@ import (
 
 type (
 	urlProtectionPoliciesDataSource struct {
-		meta meta.Meta
+		meta.DataSource
 	}
 
 	// urlProtectionPoliciesDataSourceModel maps the url protection policies data source schema data
@@ -29,17 +28,17 @@ var (
 	_ datasource.DataSourceWithConfigure = &urlProtectionPoliciesDataSource{}
 )
 
-// NewURLProtectionPoliciesDataSource returns a new url protection policies data source
+// NewURLProtectionPoliciesDataSource returns a new url protection policies data source.
 func NewURLProtectionPoliciesDataSource() datasource.DataSource {
 	return &urlProtectionPoliciesDataSource{}
 }
 
-// Metadata configures data source's meta information
+// Metadata configures data source's meta information.
 func (d *urlProtectionPoliciesDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, response *datasource.MetadataResponse) {
 	response.TypeName = "akamai_appsec_url_protection_policies"
 }
 
-// Schema is used to define data source's terraform schema
+// Schema is used to define data source's terraform schema.
 func (d *urlProtectionPoliciesDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "URL Protection Policies data source.",
@@ -212,22 +211,6 @@ func (d *urlProtectionPoliciesDataSource) Schema(_ context.Context, _ datasource
 	}
 }
 
-// Configure configures data source at the beginning of the lifecycle
-func (d *urlProtectionPoliciesDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Data Source Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.",
-					req.ProviderData))
-		}
-	}()
-	d.meta = meta.Must(req.ProviderData)
-}
-
 func (d *urlProtectionPoliciesDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	tflog.Debug(ctx, "URLProtectionPoliciesDataSource Read")
 
@@ -240,10 +223,10 @@ func (d *urlProtectionPoliciesDataSource) Read(ctx context.Context, req datasour
 		return
 	}
 
-	client := inst.Client(d.meta)
+	client := d.Client.GetAPPSEC()
 	configID := data.ConfigID.ValueInt64()
 
-	version, err := getLatestConfigVersion(ctx, int(configID), d.meta)
+	version, err := getLatestConfigVersion(ctx, int(configID), d.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("invalid config version", err.Error())
 		return

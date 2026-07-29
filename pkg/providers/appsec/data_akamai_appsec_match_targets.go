@@ -13,7 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-// MatchTargetOutputText holds data for templates
+// MatchTargetOutputText holds data for templates.
 type MatchTargetOutputText struct {
 	TargetID int
 	PolicyID string
@@ -56,7 +56,7 @@ func dataSourceMatchTargets() *schema.Resource {
 
 func dataSourceMatchTargetsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "dataSourceMatchTargetsRead")
 
 	getMatchTargets := appsec.GetMatchTargetsRequest{}
@@ -67,7 +67,7 @@ func dataSourceMatchTargetsRead(ctx context.Context, d *schema.ResourceData, m i
 	}
 	getMatchTargets.ConfigID = configID
 
-	if getMatchTargets.ConfigVersion, err = getLatestConfigVersion(ctx, configID, m); err != nil {
+	if getMatchTargets.ConfigVersion, err = getLatestConfigVersion(ctx, configID, client); err != nil {
 		return diag.FromErr(err)
 	}
 

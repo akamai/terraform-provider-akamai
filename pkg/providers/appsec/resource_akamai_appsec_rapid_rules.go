@@ -34,7 +34,7 @@ var (
 
 // rapidRulesResource represents akamai_appsec_rapid_rule resource
 type rapidRulesResource struct {
-	meta meta.Meta
+	meta.Resource
 }
 
 // rapidRulesResourceModel is a model for akamai_appsec_rapid_rule resource
@@ -56,7 +56,7 @@ const (
 	resourceName                        = "rapidRules"
 )
 
-// NewRapidRulesResource returns new appsec rapid rules resource
+// NewRapidRulesResource returns new appsec rapid rules resource.
 func NewRapidRulesResource() resource.Resource {
 	return &rapidRulesResource{}
 }
@@ -66,7 +66,7 @@ func (r *rapidRulesResource) Metadata(_ context.Context, _ resource.MetadataRequ
 	resp.TypeName = "akamai_appsec_rapid_rules"
 }
 
-// Schema implements resource's Schema
+// Schema implements resource's Schema.
 func (r *rapidRulesResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Rapid rule resource.",
@@ -119,25 +119,6 @@ func (r *rapidRulesResource) Schema(_ context.Context, _ resource.SchemaRequest,
 	}
 }
 
-// Configure implements resource.ResourceWithConfigure.
-func (r *rapidRulesResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		// ProviderData is nil when Configure is run first time as part of ValidateDataSourceConfig in framework provider
-		return
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Resource Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-			)
-		}
-	}()
-
-	r.meta = meta.Must(req.ProviderData)
-}
-
 // ValidateConfig implements resource.ResourceWithValidateConfig.
 func (r *rapidRulesResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
 	var data rapidRulesResourceModel
@@ -174,7 +155,7 @@ func (r *rapidRulesResource) ValidateConfig(ctx context.Context, req resource.Va
 	}
 }
 
-// Create implements resource's Create method
+// Create implements resource's Create method.
 func (r *rapidRulesResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	tflog.Debug(ctx, "Creating Rapid Rules Resource")
 
@@ -188,14 +169,14 @@ func (r *rapidRulesResource) Create(ctx context.Context, req resource.CreateRequ
 	configID := data.ConfigID.ValueInt64()
 	defaultAction := data.DefaultAction.ValueString()
 
-	version, err := getModifiableConfigVersion(ctx, int(configID), resourceName, r.meta)
+	version, err := getModifiableConfigVersion(ctx, int(configID), resourceName, r.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("Unable to read latest config version from API", err.Error())
 		return
 	}
 
 	enableRapidRules := buildUpdateRapidRulesStatusRequest(data, version, true)
-	client := inst.Client(r.meta)
+	client := r.Client.GetAPPSEC()
 	_, err = client.UpdateRapidRulesStatus(ctx, enableRapidRules)
 	if err != nil {
 		resp.Diagnostics.AddError(updateRapidRulesStatusError, err.Error())
@@ -278,7 +259,7 @@ func (r *rapidRulesResource) Create(ctx context.Context, req resource.CreateRequ
 	resp.Diagnostics.Append(resp.State.Set(ctx, data)...)
 }
 
-// Read implements resource's Read method
+// Read implements resource's Read method.
 func (r *rapidRulesResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	tflog.Debug(ctx, "Reading Rapid Rules Resource")
 
@@ -291,7 +272,7 @@ func (r *rapidRulesResource) Read(ctx context.Context, req resource.ReadRequest,
 
 	configID := data.ConfigID.ValueInt64()
 
-	version, err := getLatestConfigVersion(ctx, int(configID), r.meta)
+	version, err := getLatestConfigVersion(ctx, int(configID), r.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("invalid config version: ", err.Error())
 		return
@@ -304,7 +285,7 @@ func (r *rapidRulesResource) Read(ctx context.Context, req resource.ReadRequest,
 		PolicyID: getRulesRequest.PolicyID,
 	}
 
-	client := inst.Client(r.meta)
+	client := r.Client.GetAPPSEC()
 	status, err := client.GetRapidRulesStatus(ctx, getRapidRulesStatusRequest)
 	if err != nil {
 		resp.Diagnostics.AddError("Unable to read rapid rules status", err.Error())
@@ -353,7 +334,7 @@ func (r *rapidRulesResource) Read(ctx context.Context, req resource.ReadRequest,
 	resp.Diagnostics.Append(resp.State.Set(ctx, data)...)
 }
 
-// Update implements resource's Update method
+// Update implements resource's Update method.
 func (r *rapidRulesResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state *rapidRulesResourceModel
 
@@ -370,13 +351,13 @@ func (r *rapidRulesResource) Update(ctx context.Context, req resource.UpdateRequ
 	configID := plan.ConfigID.ValueInt64()
 	defaultAction := plan.DefaultAction.ValueString()
 
-	version, err := getModifiableConfigVersion(ctx, int(configID), resourceName, r.meta)
+	version, err := getModifiableConfigVersion(ctx, int(configID), resourceName, r.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("invalid config version: ", err.Error())
 		return
 	}
 
-	client := inst.Client(r.meta)
+	client := r.Client.GetAPPSEC()
 	if plan.Enabled.ValueBool() != state.Enabled.ValueBool() {
 		enableRapidRules := buildUpdateRapidRulesStatusRequest(plan, version, true)
 		_, err = client.UpdateRapidRulesStatus(ctx, enableRapidRules)
@@ -466,7 +447,7 @@ func (r *rapidRulesResource) Update(ctx context.Context, req resource.UpdateRequ
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
-// Delete implements resource's Delete method
+// Delete implements resource's Delete method.
 func (r *rapidRulesResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	tflog.Debug(ctx, "Deleting Rapid Rules Resource")
 
@@ -479,14 +460,14 @@ func (r *rapidRulesResource) Delete(ctx context.Context, req resource.DeleteRequ
 
 	configID := int(data.ConfigID.ValueInt64())
 
-	version, err := getModifiableConfigVersion(ctx, int(configID), resourceName, r.meta)
+	version, err := getModifiableConfigVersion(ctx, int(configID), resourceName, r.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("invalid config version: ", err.Error())
 		return
 	}
 
 	disableRapidRules := buildUpdateRapidRulesStatusRequest(data, version, false)
-	client := inst.Client(r.meta)
+	client := r.Client.GetAPPSEC()
 	_, err = client.UpdateRapidRulesStatus(ctx, disableRapidRules)
 	if err != nil {
 		resp.Diagnostics.AddError(updateRapidRulesStatusError, err.Error())
@@ -494,7 +475,7 @@ func (r *rapidRulesResource) Delete(ctx context.Context, req resource.DeleteRequ
 	}
 }
 
-// ImportState implements resource's ImportState method
+// ImportState implements resource's ImportState method.
 func (r *rapidRulesResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	tflog.Debug(ctx, "Importing Rapid Rules resource")
 
@@ -517,7 +498,7 @@ func (r *rapidRulesResource) ImportState(ctx context.Context, req resource.Impor
 		return
 	}
 
-	version, err := getLatestConfigVersion(ctx, int(configID), r.meta)
+	version, err := getLatestConfigVersion(ctx, int(configID), r.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("invalid config version: ", err.Error())
 		return
@@ -530,7 +511,7 @@ func (r *rapidRulesResource) ImportState(ctx context.Context, req resource.Impor
 	}
 
 	enableRapidRulesRequest := buildUpdateRapidRulesStatusRequest(&data, version, true)
-	client := inst.Client(r.meta)
+	client := r.Client.GetAPPSEC()
 	_, err = client.UpdateRapidRulesStatus(ctx, enableRapidRulesRequest)
 	if err != nil {
 		resp.Diagnostics.AddError(updateRapidRulesStatusError, err.Error())
@@ -678,7 +659,7 @@ func (r *rapidRulesResource) readDefaultAction(ctx context.Context, status bool,
 	if !status {
 		return defaultAction, diags
 	}
-	client := inst.Client(r.meta)
+	client := r.Client.GetAPPSEC()
 	getRapidRulesDefaultActionRequest := buildGetRapidRuleDefaultActionRequest(data, version)
 	defaultActionResponse, err := client.GetRapidRulesDefaultAction(ctx, getRapidRulesDefaultActionRequest)
 	if err != nil {
@@ -695,7 +676,7 @@ func (r *rapidRulesResource) updateRapidRuleAction(ctx context.Context, data *ra
 	}
 
 	updateActionReq := buildUpdateRapidRuleActionRequest(data, version, *ruleVersion, ruleID, action)
-	client := inst.Client(r.meta)
+	client := r.Client.GetAPPSEC()
 	_, err = client.UpdateRapidRuleAction(ctx, updateActionReq)
 	if err != nil {
 		return fmt.Errorf("calling 'UpdateRapidRuleAction': %s", err.Error())
@@ -705,7 +686,7 @@ func (r *rapidRulesResource) updateRapidRuleAction(ctx context.Context, data *ra
 
 func (r *rapidRulesResource) updateRapidRuleActionLock(ctx context.Context, data *rapidRulesResourceModel, ruleID int64, lock bool, version int) error {
 	updateLockReq := buildUpdateRapidRuleActionLockRequest(data, version, lock, ruleID)
-	client := inst.Client(r.meta)
+	client := r.Client.GetAPPSEC()
 	_, err := client.UpdateRapidRuleActionLock(ctx, updateLockReq)
 	if err != nil {
 		return fmt.Errorf("calling 'UpdateRapidRuleActionLock': %s", err.Error())
@@ -715,7 +696,7 @@ func (r *rapidRulesResource) updateRapidRuleActionLock(ctx context.Context, data
 
 func (r *rapidRulesResource) updateRapidRuleException(ctx context.Context, data *rapidRulesResourceModel, ruleID int64, version int, exception appsec.RuleConditionException) error {
 	updateExceptionReq := buildUpdateRapidRuleExceptionRequest(data, version, ruleID, exception)
-	client := inst.Client(r.meta)
+	client := r.Client.GetAPPSEC()
 	_, err := client.UpdateRapidRuleException(ctx, updateExceptionReq)
 	if err != nil {
 		return fmt.Errorf("calling 'UpdateRapidRuleException': %s", err.Error())

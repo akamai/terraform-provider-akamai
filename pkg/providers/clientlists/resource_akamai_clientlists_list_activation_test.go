@@ -5,11 +5,9 @@ import (
 	"net/http"
 	"regexp"
 	"testing"
-	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/clientlists"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/test"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/stretchr/testify/mock"
@@ -17,8 +15,6 @@ import (
 
 func TestResourceClientListActivation(t *testing.T) {
 	t.Parallel()
-	pollActivationInterval = time.Microsecond
-	activationRetryBaseDelay = time.Microsecond
 
 	const testDir = "testData/TestResActivation"
 
@@ -65,10 +61,7 @@ func TestResourceClientListActivation(t *testing.T) {
 		CheckEqual("list_id", "12_AB").
 		CheckEqual("network", "STAGING")
 
-	var tests = map[string]struct {
-		init  func(*clientlists.Mock)
-		steps []resource.TestStep
-	}{
+	var tests = map[string]clientListTestCase{
 		"create activation": {
 			init: func(m *clientlists.Mock) {
 				activationRes := mockCreateActivation(m, activationReq, 33)
@@ -353,23 +346,7 @@ func TestResourceClientListActivation(t *testing.T) {
 		},
 	}
 
-	for name, test := range tests {
-		t.Run(name, func(t *testing.T) {
-			client := &clientlists.Mock{}
-			if test.init != nil {
-				test.init(client)
-			}
-
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps:                    test.steps,
-				})
-			})
-			client.AssertExpectations(t)
-		})
-	}
+	runClientListSDKTestCases(t, tests)
 }
 
 func mockDestroyResource(m *clientlists.Mock, deactivationReq clientlists.CreateDeactivationRequest, version int64, activationID int64) {

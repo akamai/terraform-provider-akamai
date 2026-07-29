@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudwrapper"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
@@ -14,23 +15,23 @@ import (
 func TestActivation(t *testing.T) {
 	t.Parallel()
 	tests := map[string]struct {
-		init  func() *cloudwrapper.Mock
+		init  func() *edgegrid.TestClient
 		steps []resource.TestStep
 	}{
 		"activation lifecycle": {
-			init: func() *cloudwrapper.Mock {
-				client := &cloudwrapper.Mock{}
+			init: func() *edgegrid.TestClient {
+				client := edgegrid.NewTestClient()
 
-				mockActivateConfig(client, []int{123}, nil).Once()
+				mockActivateConfig(client.CloudWrapper, []int{123}, nil).Once()
 				//not yet activated
-				mockGetConfiguration(client, 123, cloudwrapper.StatusInProgress, "location comment").Once()
+				mockGetConfiguration(client.CloudWrapper, 123, cloudwrapper.StatusInProgress, "location comment").Once()
 				//activated
-				mockGetConfiguration(client, 123, cloudwrapper.StatusActive, "location comment").Times(3)
+				mockGetConfiguration(client.CloudWrapper, 123, cloudwrapper.StatusActive, "location comment").Times(3)
 				//refresh after modifying configuration
-				mockGetConfiguration(client, 123, cloudwrapper.StatusSaved, "other comment").Once()
-				mockActivateConfig(client, []int{123}, nil).Once()
-				mockGetConfiguration(client, 123, cloudwrapper.StatusInProgress, "other comment").Once()
-				mockGetConfiguration(client, 123, cloudwrapper.StatusActive, "other comment").Times(3)
+				mockGetConfiguration(client.CloudWrapper, 123, cloudwrapper.StatusSaved, "other comment").Once()
+				mockActivateConfig(client.CloudWrapper, []int{123}, nil).Once()
+				mockGetConfiguration(client.CloudWrapper, 123, cloudwrapper.StatusInProgress, "other comment").Once()
+				mockGetConfiguration(client.CloudWrapper, 123, cloudwrapper.StatusActive, "other comment").Times(3)
 				return client
 			},
 			steps: []resource.TestStep{
@@ -53,11 +54,11 @@ func TestActivation(t *testing.T) {
 			},
 		},
 		"import": {
-			init: func() *cloudwrapper.Mock {
-				client := &cloudwrapper.Mock{}
+			init: func() *edgegrid.TestClient {
+				client := edgegrid.NewTestClient()
 
-				mockActivateConfig(client, []int{123}, nil).Once()
-				mockGetConfiguration(client, 123, cloudwrapper.StatusActive, "location comment").Times(5)
+				mockActivateConfig(client.CloudWrapper, []int{123}, nil).Once()
+				mockGetConfiguration(client.CloudWrapper, 123, cloudwrapper.StatusActive, "location comment").Times(5)
 				return client
 			},
 			steps: []resource.TestStep{
@@ -82,12 +83,12 @@ func TestActivation(t *testing.T) {
 			},
 		},
 		"import of inactive config": {
-			init: func() *cloudwrapper.Mock {
-				client := &cloudwrapper.Mock{}
+			init: func() *edgegrid.TestClient {
+				client := edgegrid.NewTestClient()
 
-				mockActivateConfig(client, []int{123}, nil).Once()
-				mockGetConfiguration(client, 123, cloudwrapper.StatusActive, "location comment").Times(3)
-				mockGetConfiguration(client, 123, cloudwrapper.StatusFailed, "location comment").Once()
+				mockActivateConfig(client.CloudWrapper, []int{123}, nil).Once()
+				mockGetConfiguration(client.CloudWrapper, 123, cloudwrapper.StatusActive, "location comment").Times(3)
+				mockGetConfiguration(client.CloudWrapper, 123, cloudwrapper.StatusFailed, "location comment").Once()
 				return client
 			},
 			steps: []resource.TestStep{
@@ -108,13 +109,13 @@ func TestActivation(t *testing.T) {
 			},
 		},
 		"force new on config_id": {
-			init: func() *cloudwrapper.Mock {
-				client := &cloudwrapper.Mock{}
+			init: func() *edgegrid.TestClient {
+				client := edgegrid.NewTestClient()
 
-				mockActivateConfig(client, []int{123}, nil).Once()
-				mockGetConfiguration(client, 123, cloudwrapper.StatusActive, "location comment").Times(4)
-				mockActivateConfig(client, []int{321}, nil).Once()
-				mockGetConfiguration(client, 321, cloudwrapper.StatusActive, "location comment").Times(3)
+				mockActivateConfig(client.CloudWrapper, []int{123}, nil).Once()
+				mockGetConfiguration(client.CloudWrapper, 123, cloudwrapper.StatusActive, "location comment").Times(4)
+				mockActivateConfig(client.CloudWrapper, []int{321}, nil).Once()
+				mockGetConfiguration(client.CloudWrapper, 321, cloudwrapper.StatusActive, "location comment").Times(3)
 				return client
 			},
 			steps: []resource.TestStep{
@@ -137,8 +138,8 @@ func TestActivation(t *testing.T) {
 			},
 		},
 		"missing required fields": {
-			init: func() *cloudwrapper.Mock {
-				return &cloudwrapper.Mock{}
+			init: func() *edgegrid.TestClient {
+				return edgegrid.NewTestClient()
 			},
 			steps: []resource.TestStep{
 				{
@@ -148,11 +149,11 @@ func TestActivation(t *testing.T) {
 			},
 		},
 		"timeout on create": {
-			init: func() *cloudwrapper.Mock {
-				client := &cloudwrapper.Mock{}
+			init: func() *edgegrid.TestClient {
+				client := edgegrid.NewTestClient()
 
-				mockActivateConfig(client, []int{123}, nil).Once()
-				mockGetConfiguration(client, 123, cloudwrapper.StatusInProgress, "location comment") //timeout sometimes triggers after 2 calls, sometimes after 3 - no Times(x)
+				mockActivateConfig(client.CloudWrapper, []int{123}, nil).Once()
+				mockGetConfiguration(client.CloudWrapper, 123, cloudwrapper.StatusInProgress, "location comment") //timeout sometimes triggers after 2 calls, sometimes after 3 - no Times(x)
 
 				return client
 			},
@@ -164,14 +165,14 @@ func TestActivation(t *testing.T) {
 			},
 		},
 		"timeout on update": {
-			init: func() *cloudwrapper.Mock {
-				client := &cloudwrapper.Mock{}
+			init: func() *edgegrid.TestClient {
+				client := edgegrid.NewTestClient()
 
-				mockActivateConfig(client, []int{123}, nil).Once()
-				mockGetConfiguration(client, 123, cloudwrapper.StatusActive, "location comment").Times(3)
-				mockGetConfiguration(client, 123, cloudwrapper.StatusSaved, "other comment").Once()
-				mockActivateConfig(client, []int{123}, nil).Once()
-				mockGetConfiguration(client, 123, cloudwrapper.StatusInProgress, "other comment")
+				mockActivateConfig(client.CloudWrapper, []int{123}, nil).Once()
+				mockGetConfiguration(client.CloudWrapper, 123, cloudwrapper.StatusActive, "location comment").Times(3)
+				mockGetConfiguration(client.CloudWrapper, 123, cloudwrapper.StatusSaved, "other comment").Once()
+				mockActivateConfig(client.CloudWrapper, []int{123}, nil).Once()
+				mockGetConfiguration(client.CloudWrapper, 123, cloudwrapper.StatusInProgress, "other comment")
 
 				return client
 			},
@@ -196,12 +197,11 @@ func TestActivation(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			client := test.init()
-			resource.Test(t, resource.TestCase{
-				IsUnitTest:               true,
-				ProtoV6ProviderFactories: newProviderFactory(withMockClient(client), withInterval(time.Second)),
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: newProviderFactory(client, time.Second),
 				Steps:                    test.steps,
 			})
-			client.AssertExpectations(t)
+			client.CloudWrapper.AssertExpectations(t)
 		})
 	}
 }

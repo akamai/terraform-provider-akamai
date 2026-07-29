@@ -36,7 +36,7 @@ func dataSourceEval() *schema.Resource {
 
 func dataSourceEvalRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "dataSourceEvalRead")
 
 	getEval := appsec.GetEvalRequest{}
@@ -47,7 +47,7 @@ func dataSourceEvalRead(ctx context.Context, d *schema.ResourceData, m interface
 	}
 	getEval.ConfigID = configID
 
-	if getEval.Version, err = getLatestConfigVersion(ctx, configID, m); err != nil {
+	if getEval.Version, err = getLatestConfigVersion(ctx, configID, client); err != nil {
 		return diag.FromErr(err)
 	}
 

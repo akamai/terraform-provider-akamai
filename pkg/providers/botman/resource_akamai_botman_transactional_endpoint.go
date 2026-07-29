@@ -55,7 +55,7 @@ func resourceTransactionalEndpoint() *schema.Resource {
 
 func resourceTransactionalEndpointCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceTransactionalEndpointCreateAction")
 	logger.Debugf("in resourceTransactionalEndpointCreateAction")
 
@@ -64,7 +64,7 @@ func resourceTransactionalEndpointCreate(ctx context.Context, d *schema.Resource
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "TransactionalEndpoint", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "TransactionalEndpoint", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -108,7 +108,7 @@ func resourceTransactionalEndpointRead(ctx context.Context, d *schema.ResourceDa
 
 func transactionalEndpointRead(ctx context.Context, d *schema.ResourceData, m interface{}, readFromCache bool) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceTransactionalEndpointReadAction")
 	logger.Debugf("in resourceTransactionalEndpointReadAction")
 
@@ -122,7 +122,7 @@ func transactionalEndpointRead(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -183,7 +183,7 @@ func transactionalEndpointRead(ctx context.Context, d *schema.ResourceData, m in
 
 func resourceTransactionalEndpointUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceTransactionalEndpointUpdateAction")
 	logger.Debugf("in resourceTransactionalEndpointUpdateAction")
 
@@ -197,7 +197,7 @@ func resourceTransactionalEndpointUpdate(ctx context.Context, d *schema.Resource
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "TransactionalEndpoint", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "TransactionalEndpoint", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -230,7 +230,7 @@ func resourceTransactionalEndpointUpdate(ctx context.Context, d *schema.Resource
 
 func resourceTransactionalEndpointDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceTransactionalEndpointDeleteAction")
 	logger.Debugf("in resourceTransactionalEndpointDeleteAction")
 
@@ -244,7 +244,7 @@ func resourceTransactionalEndpointDelete(ctx context.Context, d *schema.Resource
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "TransactionalEndpoint", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "TransactionalEndpoint", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}

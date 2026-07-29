@@ -10,6 +10,7 @@ import (
 )
 
 func TestCheckSemanticEquality_BasePath(t *testing.T) {
+	t.Parallel()
 	var before = base()
 	var after = base()
 
@@ -19,6 +20,7 @@ func TestCheckSemanticEquality_BasePath(t *testing.T) {
 }
 
 func TestCheckSemanticEquality_ConsumeType(t *testing.T) {
+	t.Parallel()
 	var before = base()
 	var after = base()
 
@@ -38,6 +40,7 @@ func TestCheckSemanticEquality_ConsumeType(t *testing.T) {
 }
 
 func TestCheckSemanticEquality_Hostnames(t *testing.T) {
+	t.Parallel()
 	var before = base()
 	var after = base()
 
@@ -48,6 +51,7 @@ func TestCheckSemanticEquality_Hostnames(t *testing.T) {
 }
 
 func TestCheckSemanticEquality_Tags(t *testing.T) {
+	t.Parallel()
 	var before = base()
 	var after = base()
 
@@ -58,6 +62,7 @@ func TestCheckSemanticEquality_Tags(t *testing.T) {
 }
 
 func TestCheckSemanticEquality_ResourcesAndMethodsSame(t *testing.T) {
+	t.Parallel()
 	var before = base()
 	var after = base()
 
@@ -78,6 +83,7 @@ func TestCheckSemanticEquality_ResourcesAndMethodsSame(t *testing.T) {
 }
 
 func TestCheckSemanticEquality_ResourcesDifferentOrder(t *testing.T) {
+	t.Parallel()
 	var before = base()
 	var after = base()
 
@@ -93,6 +99,7 @@ func TestCheckSemanticEquality_ResourcesDifferentOrder(t *testing.T) {
 }
 
 func TestCheckSemanticEquality_ResourceAdded(t *testing.T) {
+	t.Parallel()
 	var before = base()
 	var after = base()
 
@@ -107,6 +114,7 @@ func TestCheckSemanticEquality_ResourceAdded(t *testing.T) {
 }
 
 func TestCheckSemanticEquality_ResourceModified(t *testing.T) {
+	t.Parallel()
 	var before = base()
 	var after = base()
 

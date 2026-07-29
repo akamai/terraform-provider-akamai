@@ -1,9 +1,17 @@
 package edgegrid
 
 import (
+	apr "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/accountprotection"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/apidefinitions"
+	v0 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/apidefinitions/v0"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/botman"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/clientlists"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudaccess"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudcertificates"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudlets"
 	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudlets/v3"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudwrapper"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cps"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/dns"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/domainownership"
@@ -11,8 +19,10 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/gtm"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/hapi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/imaging"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/mtlskeystore"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/mtlstruststore"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/networklists"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/papi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/reportinggroups"
 )
@@ -23,9 +33,17 @@ var (
 
 // TestClient is a mock implementation of the Client interface for testing purposes.
 type TestClient struct {
+	AccountProtection *apr.Mock
+	APIDefinitions    *apidefinitions.Mock
+	APIDefinitionsV0  *v0.Mock
+	APPSEC            *appsec.Mock
+	BotMan            *botman.Mock
+	ClientLists       *clientlists.Mock
+	CloudAccess       *cloudaccess.Mock
 	CloudCertificates *cloudcertificates.Mock
 	CloudletsV2       *cloudlets.Mock
 	CloudletsV3       *v3.Mock
+	CloudWrapper      *cloudwrapper.Mock
 	CPS               *cps.Mock
 	DNS               *dns.Mock
 	DomainOwnership   *domainownership.Mock
@@ -33,8 +51,10 @@ type TestClient struct {
 	GTM               *gtm.Mock
 	HAPI              *hapi.Mock
 	IAM               *iam.Mock
+	Imaging           *imaging.Mock
 	MTLSKeystore      *mtlskeystore.Mock
 	MTLSTruststore    *mtlstruststore.Mock
+	NetworkLists      *networklists.Mock
 	PAPI              *papi.Mock
 	ReportingGroups   *reportinggroups.Mock
 }
@@ -42,9 +62,17 @@ type TestClient struct {
 // NewTestClient creates a new instance of TestClient with mock implementations.
 func NewTestClient() *TestClient {
 	return &TestClient{
+		AccountProtection: &apr.Mock{},
+		APIDefinitions:    &apidefinitions.Mock{},
+		APIDefinitionsV0:  &v0.Mock{},
+		APPSEC:            &appsec.Mock{},
+		BotMan:            &botman.Mock{},
+		ClientLists:       &clientlists.Mock{},
+		CloudAccess:       &cloudaccess.Mock{},
 		CloudCertificates: &cloudcertificates.Mock{},
 		CloudletsV2:       &cloudlets.Mock{},
 		CloudletsV3:       &v3.Mock{},
+		CloudWrapper:      &cloudwrapper.Mock{},
 		CPS:               &cps.Mock{},
 		DNS:               &dns.Mock{},
 		DomainOwnership:   &domainownership.Mock{},
@@ -52,11 +80,48 @@ func NewTestClient() *TestClient {
 		GTM:               &gtm.Mock{},
 		HAPI:              &hapi.Mock{},
 		IAM:               &iam.Mock{},
+		Imaging:           &imaging.Mock{},
 		MTLSKeystore:      &mtlskeystore.Mock{},
 		MTLSTruststore:    &mtlstruststore.Mock{},
+		NetworkLists:      &networklists.Mock{},
 		PAPI:              &papi.Mock{},
 		ReportingGroups:   &reportinggroups.Mock{},
 	}
+}
+
+// GetAccountProtection returns the mock Account Protection client.
+func (c *TestClient) GetAccountProtection() apr.AccountProtection {
+	return c.AccountProtection
+}
+
+// GetAPIDefinitions returns the mock API Definitions client.
+func (c *TestClient) GetAPIDefinitions() apidefinitions.APIDefinitions {
+	return c.APIDefinitions
+}
+
+// GetAPIDefinitionsV0 returns the mock API Definitions V0 client.
+func (c *TestClient) GetAPIDefinitionsV0() v0.APIDefinitions {
+	return c.APIDefinitionsV0
+}
+
+// GetAPPSEC returns the mock APPSEC client.
+func (c *TestClient) GetAPPSEC() appsec.APPSEC {
+	return c.APPSEC
+}
+
+// GetBotMan returns the mock BotMan client.
+func (c *TestClient) GetBotMan() botman.BotMan {
+	return c.BotMan
+}
+
+// GetClientLists returns the mock Client Lists client.
+func (c *TestClient) GetClientLists() clientlists.ClientLists {
+	return c.ClientLists
+}
+
+// GetCloudAccess returns the mock Cloud Access client.
+func (c *TestClient) GetCloudAccess() cloudaccess.CloudAccess {
+	return c.CloudAccess
 }
 
 // GetCloudCertificates returns the mock CCM client.
@@ -72,6 +137,11 @@ func (c *TestClient) GetCloudletsV2() cloudlets.Cloudlets {
 // GetCloudletsV3 returns the mock Cloudlets V3 client.
 func (c *TestClient) GetCloudletsV3() v3.Cloudlets {
 	return c.CloudletsV3
+}
+
+// GetCloudWrapper returns the mock CloudWrapper client.
+func (c *TestClient) GetCloudWrapper() cloudwrapper.CloudWrapper {
+	return c.CloudWrapper
 }
 
 // GetCPS returns the mock CPS client.
@@ -109,6 +179,11 @@ func (c *TestClient) GetIAM() iam.IAM {
 	return c.IAM
 }
 
+// GetImaging returns the mock Imaging client.
+func (c *TestClient) GetImaging() imaging.Imaging {
+	return c.Imaging
+}
+
 // GetMTLSKeystore returns the mock MTLS Keystore client.
 func (c *TestClient) GetMTLSKeystore() mtlskeystore.MTLSKeystore {
 	return c.MTLSKeystore
@@ -117,6 +192,11 @@ func (c *TestClient) GetMTLSKeystore() mtlskeystore.MTLSKeystore {
 // GetMTLSTruststore returns the mock MTLS Truststore client.
 func (c *TestClient) GetMTLSTruststore() mtlstruststore.MTLSTruststore {
 	return c.MTLSTruststore
+}
+
+// GetNetworkLists returns the mock Network Lists client.
+func (c *TestClient) GetNetworkLists() networklists.NetworkList {
+	return c.NetworkLists
 }
 
 // GetPAPI returns the mock PAPI client.

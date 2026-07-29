@@ -62,7 +62,7 @@ func resourceAdvancedSettingsPrefetch() *schema.Resource {
 
 func resourceAdvancedSettingsPrefetchCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPrefetchCreate")
 	logger.Debugf("in resourceAdvancedSettingsPrefetchCreate")
 
@@ -70,7 +70,7 @@ func resourceAdvancedSettingsPrefetchCreate(ctx context.Context, d *schema.Resou
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "prefetchSetting", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "prefetchSetting", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -118,7 +118,7 @@ func resourceAdvancedSettingsPrefetchCreate(ctx context.Context, d *schema.Resou
 
 func resourceAdvancedSettingsPrefetchRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPrefetchRead")
 	logger.Debugf("in resourceAdvancedSettingsPrefetchRead")
 
@@ -126,7 +126,7 @@ func resourceAdvancedSettingsPrefetchRead(ctx context.Context, d *schema.Resourc
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -163,7 +163,7 @@ func resourceAdvancedSettingsPrefetchRead(ctx context.Context, d *schema.Resourc
 
 func resourceAdvancedSettingsPrefetchUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPrefetchUpdate")
 	logger.Debugf("in resourceAdvancedSettingsPrefetchUpdate")
 
@@ -171,7 +171,7 @@ func resourceAdvancedSettingsPrefetchUpdate(ctx context.Context, d *schema.Resou
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "prefetchSetting", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "prefetchSetting", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -217,7 +217,7 @@ func resourceAdvancedSettingsPrefetchUpdate(ctx context.Context, d *schema.Resou
 
 func resourceAdvancedSettingsPrefetchDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPrefetchDelete")
 	logger.Debugf("in resourceAdvancedSettingsPrefetchDelete")
 
@@ -225,7 +225,7 @@ func resourceAdvancedSettingsPrefetchDelete(ctx context.Context, d *schema.Resou
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "prefetchSetting", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "prefetchSetting", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}

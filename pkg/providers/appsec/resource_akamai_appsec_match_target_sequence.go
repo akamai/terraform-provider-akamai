@@ -47,7 +47,7 @@ func resourceMatchTargetSequence() *schema.Resource {
 
 func resourceMatchTargetSequenceCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceMatchTargetSequenceCreate")
 	logger.Debugf("in resourceMatchTargetSequenceCreate")
 
@@ -55,7 +55,7 @@ func resourceMatchTargetSequenceCreate(ctx context.Context, d *schema.ResourceDa
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "matchTargetSequence", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "matchTargetSequence", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -80,7 +80,7 @@ func resourceMatchTargetSequenceCreate(ctx context.Context, d *schema.ResourceDa
 
 func resourceMatchTargetSequenceRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceMatchTargetSequenceRead")
 	logger.Debugf("in resourceMatchTargetSequenceRead")
 
@@ -93,7 +93,7 @@ func resourceMatchTargetSequenceRead(ctx context.Context, d *schema.ResourceData
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -128,7 +128,7 @@ func resourceMatchTargetSequenceRead(ctx context.Context, d *schema.ResourceData
 
 func resourceMatchTargetSequenceUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceMatchTargetSequenceUpdate")
 	logger.Debugf("in resourceMatchTargetSequenceUpdate")
 
@@ -141,7 +141,7 @@ func resourceMatchTargetSequenceUpdate(ctx context.Context, d *schema.ResourceDa
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "matchTargetSequence", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "matchTargetSequence", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}

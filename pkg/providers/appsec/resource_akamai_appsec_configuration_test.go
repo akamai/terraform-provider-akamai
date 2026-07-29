@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
@@ -16,8 +17,10 @@ import (
 )
 
 func TestAkamaiConfiguration_res_basic(t *testing.T) {
+	t.Parallel()
 	t.Run("match by Configuration ID", func(t *testing.T) {
-		client := &appsec.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
 		createConfigResponse := appsec.CreateConfigurationResponse{}
 		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/ConfigurationCreate.json"), &createConfigResponse)
@@ -39,53 +42,53 @@ func TestAkamaiConfiguration_res_basic(t *testing.T) {
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/SelectedHostname.json"), &getSelectedHostnamesResponse)
 		require.NoError(t, err)
 
-		client.On("GetSelectedHostnames",
+		client.APPSEC.On("GetSelectedHostnames",
 			testutils.MockContext,
 			appsec.GetSelectedHostnamesRequest{ConfigID: 43253, Version: 7},
 		).Return(&getSelectedHostnamesResponse, nil)
 
-		client.On("CreateConfiguration",
+		client.APPSEC.On("CreateConfiguration",
 			testutils.MockContext,
 			appsec.CreateConfigurationRequest{Name: "Akamai Tools", Description: "Akamai Tools", ContractID: "C-1FRYVV3", GroupID: 64867, Hostnames: []string{"rinaldi.sandbox.akamaideveloper.com", "sujala.sandbox.akamaideveloper.com"}},
 		).Return(&createConfigResponse, nil)
 
-		client.On("GetConfiguration",
+		client.APPSEC.On("GetConfiguration",
 			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&readConfigResponse, nil)
 
-		client.On("RemoveConfiguration",
+		client.APPSEC.On("RemoveConfiguration",
 			testutils.MockContext,
 			appsec.RemoveConfigurationRequest{ConfigID: 43253},
 		).Return(&deleteConfigResponse, nil)
 
-		client.On("GetConfigurationVersions",
+		client.APPSEC.On("GetConfigurationVersions",
 			testutils.MockContext,
 			appsec.GetConfigurationVersionsRequest{ConfigID: 43253},
 		).Return(&getConfigurationVersionsResponse, nil)
 
-		useClient(client, func() {
-			resource.Test(t, resource.TestCase{
-				IsUnitTest:               true,
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/match_by_id.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_configuration.test", "id", "43253"),
-						),
-					},
+		mockGetConfigurationVersionDefault(client.APPSEC)
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/match_by_id.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_appsec_configuration.test", "id", "43253"),
+					),
 				},
-			})
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.APPSEC.AssertExpectations(t)
 	})
 }
 
 func TestAkamaiConfiguration_res_error_updating_configuration(t *testing.T) {
+	t.Parallel()
 	t.Run("match by Configuration ID", func(t *testing.T) {
-		client := &appsec.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
 		createConfigResponse := appsec.CreateConfigurationResponse{}
 		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/ConfigurationCreate.json"), &createConfigResponse)
@@ -107,135 +110,169 @@ func TestAkamaiConfiguration_res_error_updating_configuration(t *testing.T) {
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/SelectedHostname.json"), &hns)
 		require.NoError(t, err)
 
-		client.On("GetSelectedHostnames",
+		client.APPSEC.On("GetSelectedHostnames",
 			testutils.MockContext,
 			appsec.GetSelectedHostnamesRequest{ConfigID: 43253, Version: 7},
 		).Return(&hns, nil)
 
-		client.On("CreateConfiguration",
+		client.APPSEC.On("CreateConfiguration",
 			testutils.MockContext,
 			appsec.CreateConfigurationRequest{Name: "Akamai Tools", Description: "Akamai Tools", ContractID: "C-1FRYVV3", GroupID: 64867, Hostnames: []string{"rinaldi.sandbox.akamaideveloper.com", "sujala.sandbox.akamaideveloper.com"}},
 		).Return(&createConfigResponse, nil)
 
-		client.On("GetConfiguration",
+		client.APPSEC.On("GetConfiguration",
 			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&readConfigResponse, nil)
 
-		client.On("UpdateConfiguration",
+		client.APPSEC.On("UpdateConfiguration",
 			testutils.MockContext,
 			appsec.UpdateConfigurationRequest{ConfigID: 43253, Name: "Akamai Tools", Description: "Akamai Tools"},
 		).Return(nil, fmt.Errorf("UpdateConfiguration failed"))
 
-		client.On("RemoveConfiguration",
+		client.APPSEC.On("RemoveConfiguration",
 			testutils.MockContext,
 			appsec.RemoveConfigurationRequest{ConfigID: 43253},
 		).Return(&deleteConfigResponse, nil)
 
-		client.On("GetConfigurationVersions",
+		client.APPSEC.On("GetConfigurationVersions",
 			testutils.MockContext,
 			appsec.GetConfigurationVersionsRequest{ConfigID: 43253},
 		).Return(&getConfigurationVersionsResponse, nil)
 
-		useClient(client, func() {
-			resource.Test(t, resource.TestCase{
-				IsUnitTest:               true,
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/match_by_id.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_configuration.test", "id", "43253"),
-						),
-					},
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/modify_contract.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_configuration.test", "id", "43253"),
-						),
-						ExpectError: regexp.MustCompile(`UpdateConfiguration failed`),
-					},
+		mockGetConfigurationVersionDefault(client.APPSEC)
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/match_by_id.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_appsec_configuration.test", "id", "43253"),
+					),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResConfiguration/modify_contract.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_appsec_configuration.test", "id", "43253"),
+					),
+					ExpectError: regexp.MustCompile(`UpdateConfiguration failed`),
+				},
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.APPSEC.AssertExpectations(t)
 	})
 }
 
 func TestAkamaiConfiguration_Create_txt_group_id(t *testing.T) {
+	t.Parallel()
 	t.Run("Config-Create-with-non-numeric-GroupID", func(t *testing.T) {
-		client := appsec.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
-		setGetConfiguration(&client, t)
-		setGetSelectedHostnames(&client, t)
-		setGetConfigurationVersions(&client, t)
-		setRemoveConfiguration(&client, t)
-		setCreateConfiguration(&client, t)
+		setGetConfiguration(client.APPSEC, t)
+		setGetSelectedHostnames(client.APPSEC, t)
+		setGetConfigurationVersions(client.APPSEC, t)
+		setRemoveConfiguration(client.APPSEC, t)
+		setCreateConfiguration(client.APPSEC, t)
 
 		// [Create-Configuration] : 'group_id' is Not-Numeric
 		tfCONFIG := testutils.LoadFixtureString(t, "testdata/TestResConfiguration/match_by_prefixed_group_id_create.tf")
 
-		useClient(&client, func() {
-			resource.Test(t, resource.TestCase{
-				IsUnitTest:               true,
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: tfCONFIG,
-						// 1) verify [terraform plan] will indicate '~ update in-place' of ("64867" -> "grp_64867")
-						ConfigStateChecks: []statecheck.StateCheck{
-							statecheck.ExpectKnownValue(
-								"akamai_appsec_configuration.test",
-								tfjsonpath.New("group_id"),
-								knownvalue.StringExact("64867"),
-							),
-						},
-						// 2) Finally, determining that a Plan: its 'state' is No-Difference from 'config-in-request'.
-						ExpectNonEmptyPlan: false,
+		mockGetConfigurationVersionDefault(client.APPSEC)
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: tfCONFIG,
+					// 1) verify [terraform plan] will indicate '~ update in-place' of ("64867" -> "grp_64867")
+					ConfigStateChecks: []statecheck.StateCheck{
+						statecheck.ExpectKnownValue(
+							"akamai_appsec_configuration.test",
+							tfjsonpath.New("group_id"),
+							knownvalue.StringExact("64867"),
+						),
 					},
+					// 2) Finally, determining that a Plan: its 'state' is No-Difference from 'config-in-request'.
+					ExpectNonEmptyPlan: false,
 				},
-			})
+			},
 		})
-		client.AssertExpectations(t)
+		client.APPSEC.AssertExpectations(t)
 	})
 }
 
 func TestAkamaiConfiguration_Clone_txt_group_id(t *testing.T) {
+	t.Parallel()
 	t.Run("Config-Clone-with-non-numeric-GroupID", func(t *testing.T) {
-		client := appsec.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
-		setGetConfiguration(&client, t)
-		setGetSelectedHostnames(&client, t)
-		setGetConfigurationVersions(&client, t)
-		setRemoveConfiguration(&client, t)
-		setCreateConfigurationClone(&client, t)
+		setGetConfiguration(client.APPSEC, t)
+		setGetSelectedHostnames(client.APPSEC, t)
+		setGetConfigurationVersions(client.APPSEC, t)
+		setRemoveConfiguration(client.APPSEC, t)
+		setCreateConfigurationClone(client.APPSEC, t)
 
 		// [Clone-Configuration] : 'group_id' is Not-Numeric
 		tfCONFIG := testutils.LoadFixtureString(t, "testdata/TestResConfiguration/match_by_prefixed_group_id_clone.tf")
 
-		useClient(&client, func() {
-			resource.Test(t, resource.TestCase{
-				IsUnitTest:               true,
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: tfCONFIG,
-						// 1) verify [terraform plan] will indicate '~ update in-place' of ("64867" -> "grp_64867")
-						ConfigStateChecks: []statecheck.StateCheck{
-							statecheck.ExpectKnownValue(
-								"akamai_appsec_configuration.test",
-								tfjsonpath.New("group_id"),
-								knownvalue.StringExact("64867"),
-							),
-						},
-						// 2) Finally, determining that a Plan: its 'state' is No-Difference from 'config-in-request'.
-						ExpectNonEmptyPlan: false,
+		mockGetConfigurationVersionDefault(client.APPSEC)
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: tfCONFIG,
+					// 1) verify [terraform plan] will indicate '~ update in-place' of ("64867" -> "grp_64867")
+					ConfigStateChecks: []statecheck.StateCheck{
+						statecheck.ExpectKnownValue(
+							"akamai_appsec_configuration.test",
+							tfjsonpath.New("group_id"),
+							knownvalue.StringExact("64867"),
+						),
 					},
+					// 2) Finally, determining that a Plan: its 'state' is No-Difference from 'config-in-request'.
+					ExpectNonEmptyPlan: false,
 				},
-			})
+			},
 		})
-		client.AssertExpectations(t)
+		client.APPSEC.AssertExpectations(t)
+	})
+}
+
+func TestAkamaiConfiguration_Import_NoDrift(t *testing.T) {
+	t.Parallel()
+	t.Run("no drift on group_id and contract_id after import", func(t *testing.T) {
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+
+		setGetConfiguration(client.APPSEC, t)
+		setGetSelectedHostnames(client.APPSEC, t)
+		setGetConfigurationVersions(client.APPSEC, t)
+		setRemoveConfiguration(client.APPSEC, t)
+
+		mockGetConfigurationVersionDefault(client.APPSEC)
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					// Simulate `terraform import akamai_appsec_configuration.test 43253`.
+					// Read does not populate contract_id/group_id, so they are empty in state.
+					Config:             testutils.LoadFixtureString(t, "testdata/TestResConfiguration/match_by_id.tf"),
+					ImportState:        true,
+					ImportStateId:      "43253",
+					ResourceName:       "akamai_appsec_configuration.test",
+					ImportStatePersist: true,
+				},
+				{
+					// Simulate `terraform plan` after import: DiffSuppressFuncs must suppress the
+					// contract_id / group_id diff caused by the empty post-import state.
+					Config:             testutils.LoadFixtureString(t, "testdata/TestResConfiguration/match_by_id.tf"),
+					ExpectNonEmptyPlan: false,
+				},
+			},
+		})
+		client.APPSEC.AssertExpectations(t)
 	})
 }
 

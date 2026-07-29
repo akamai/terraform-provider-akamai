@@ -20,7 +20,15 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
-type apiResourceOperation struct{}
+var (
+	_ resource.Resource                = &apiResourceOperation{}
+	_ resource.ResourceWithImportState = &apiResourceOperation{}
+	_ resource.ResourceWithConfigure   = &apiResourceOperation{}
+)
+
+type apiResourceOperation struct {
+	meta.Resource
+}
 
 type apiResourceOperationModel struct {
 	APIID              types.Int64          `tfsdk:"api_id"`
@@ -36,30 +44,6 @@ func NewAPIResourceOperationResource() resource.Resource {
 // Metadata implements resource.Resource Operations.
 func (r *apiResourceOperation) Metadata(_ context.Context, _ resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = "akamai_apidefinitions_resource_operations"
-}
-
-// Configure implements resource.Resource Operations.
-func (r *apiResourceOperation) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-
-	if req.ProviderData == nil {
-		return
-	}
-
-	metaConfig, ok := req.ProviderData.(meta.Meta)
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *http.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-		)
-		return
-	}
-
-	if client == nil {
-		client = apidefinitions.Client(metaConfig.Session())
-	}
-	if clientV0 == nil {
-		clientV0 = v0.Client(metaConfig.Session())
-	}
 }
 
 // Schema implements resource.Resource Operations.
@@ -110,7 +94,7 @@ func (r *apiResourceOperation) Create(ctx context.Context, req resource.CreateRe
 func (r *apiResourceOperation) upsert(ctx context.Context, data *apiResourceOperationModel) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	result, err := client.ListEndpointVersions(ctx, apidefinitions.ListEndpointVersionsRequest{
+	result, err := r.Client.GetAPIDefinitions().ListEndpointVersions(ctx, apidefinitions.ListEndpointVersionsRequest{
 		APIEndpointID: data.APIID.ValueInt64(),
 	})
 	if err != nil {
@@ -122,7 +106,7 @@ func (r *apiResourceOperation) upsert(ctx context.Context, data *apiResourceOper
 	var latestVersionNumber = latestEndpointVersion.VersionNumber
 
 	if latestEndpointVersion.IsVersionLocked {
-		resp, err := client.CloneEndpointVersion(ctx, apidefinitions.CloneEndpointVersionRequest{
+		resp, err := r.Client.GetAPIDefinitions().CloneEndpointVersion(ctx, apidefinitions.CloneEndpointVersionRequest{
 			VersionNumber: latestVersionNumber,
 			APIEndpointID: data.APIID.ValueInt64(),
 		})
@@ -150,7 +134,7 @@ func (r *apiResourceOperation) upsert(ctx context.Context, data *apiResourceOper
 		Body:          requestBody,
 	}
 
-	resp, err := clientV0.UpdateResourceOperation(ctx, resourceOperationRequest)
+	resp, err := r.Client.GetAPIDefinitionsV0().UpdateResourceOperation(ctx, resourceOperationRequest)
 	if err != nil || resp == nil {
 		diags.AddError("Upsert Resource Operations Failed", err.Error())
 		return diags
@@ -190,7 +174,7 @@ func (r *apiResourceOperation) Read(ctx context.Context, req resource.ReadReques
 func (r *apiResourceOperation) read(ctx context.Context, data *apiResourceOperationModel) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	resourceOperation, err := clientV0.GetResourceOperation(ctx, v0.GetResourceOperationRequest{
+	resourceOperation, err := r.Client.GetAPIDefinitionsV0().GetResourceOperation(ctx, v0.GetResourceOperationRequest{
 		APIID:         data.APIID.ValueInt64(),
 		VersionNumber: data.Version.ValueInt64(),
 	})
@@ -246,7 +230,7 @@ func (r *apiResourceOperation) Delete(ctx context.Context, req resource.DeleteRe
 		return
 	}
 
-	result, err := client.ListEndpointVersions(ctx, apidefinitions.ListEndpointVersionsRequest{
+	result, err := r.Client.GetAPIDefinitions().ListEndpointVersions(ctx, apidefinitions.ListEndpointVersionsRequest{
 		APIEndpointID: data.APIID.ValueInt64(),
 	})
 	if err != nil {
@@ -257,7 +241,7 @@ func (r *apiResourceOperation) Delete(ctx context.Context, req resource.DeleteRe
 	var latestEndpointVersion = getLatestVersion(result)
 	var latestVersionNumber = latestEndpointVersion.VersionNumber
 
-	deleteResponse, err := clientV0.DeleteResourceOperation(ctx, v0.DeleteResourceOperationRequest{
+	deleteResponse, err := r.Client.GetAPIDefinitionsV0().DeleteResourceOperation(ctx, v0.DeleteResourceOperationRequest{
 		APIID:         data.APIID.ValueInt64(),
 		VersionNumber: latestVersionNumber,
 	})

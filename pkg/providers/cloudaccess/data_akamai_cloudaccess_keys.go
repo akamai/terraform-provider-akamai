@@ -21,7 +21,7 @@ var (
 
 type (
 	keysDataSource struct {
-		meta meta.Meta
+		meta.DataSource
 	}
 
 	keysDataSourceModel struct {
@@ -48,22 +48,6 @@ func NewKeysDataSource() datasource.DataSource {
 // Metadata configures data source's meta information
 func (d *keysDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "akamai_cloudaccess_keys"
-}
-
-// Configure configures data source at the beginning of the lifecycle
-func (d *keysDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Data Source Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.",
-					req.ProviderData))
-		}
-	}()
-	d.meta = meta.Must(req.ProviderData)
 }
 
 // Schema is used to define data source's terraform schema
@@ -151,7 +135,7 @@ func (d *keysDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 		return
 	}
 
-	client = Client(d.meta)
+	client := d.Client.GetCloudAccess()
 	keys, err := client.ListAccessKeys(ctx, cloudaccess.ListAccessKeysRequest{})
 	if err != nil {
 		resp.Diagnostics.AddError(fmt.Sprintf("%s: ListAccessKeys failed:", ErrCloudAccessKeys), err.Error())

@@ -43,7 +43,7 @@ func dataSourceAdvancedSettingsPragmaHeader() *schema.Resource {
 
 func dataSourceAdvancedSettingsPragmaHeaderRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "dataSourceAdvancedSettingsPragmaHeaderRead")
 
 	getAdvancedSettingsPragma := appsec.GetAdvancedSettingsPragmaRequest{}
@@ -54,7 +54,7 @@ func dataSourceAdvancedSettingsPragmaHeaderRead(ctx context.Context, d *schema.R
 	}
 	getAdvancedSettingsPragma.ConfigID = configID
 
-	if getAdvancedSettingsPragma.Version, err = getLatestConfigVersion(ctx, configID, m); err != nil {
+	if getAdvancedSettingsPragma.Version, err = getLatestConfigVersion(ctx, configID, client); err != nil {
 		return diag.FromErr(err)
 	}
 

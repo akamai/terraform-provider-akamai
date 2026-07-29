@@ -48,7 +48,7 @@ func dataSourceExportConfiguration() *schema.Resource {
 
 func dataSourceExportConfigurationRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "dataSourceExportConfigurationRead")
 
 	configID, err := tf.GetIntValue("config_id", d)

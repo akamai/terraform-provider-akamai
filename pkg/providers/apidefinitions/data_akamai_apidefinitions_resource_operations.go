@@ -28,8 +28,10 @@ var (
 )
 
 type (
-	resourceOperationsDataSource struct{}
-	resourceOperationsModel      struct {
+	resourceOperationsDataSource struct {
+		meta.DataSource
+	}
+	resourceOperationsModel struct {
 		apiResourceOperationModel
 		ResourcePath types.String `tfsdk:"resource_path"`
 		ResourceName types.String `tfsdk:"resource_name"`
@@ -55,25 +57,6 @@ func NewResourceOperationsDataSource() datasource.DataSource {
 // Metadata configures data source's meta information
 func (r resourceOperationsDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, response *datasource.MetadataResponse) {
 	response.TypeName = "akamai_apidefinitions_resource_operations"
-}
-
-// Configure configures data source at the beginning of the lifecycle
-func (r resourceOperationsDataSource) Configure(_ context.Context, request datasource.ConfigureRequest, response *datasource.ConfigureResponse) {
-	if request.ProviderData == nil {
-		// ProviderData is nil when Configure is run first time as part of ValidateDataSourceConfig in framework provider
-		return
-	}
-
-	metaConfig, ok := request.ProviderData.(meta.Meta)
-	if !ok {
-		response.Diagnostics.AddError(
-			"Unexpected Data Source Configure Type",
-			fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.", request.ProviderData),
-		)
-	}
-	if client == nil {
-		client = apidefinitions.Client(metaConfig.Session())
-	}
 }
 
 func (r resourceOperationsDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, response *datasource.SchemaResponse) {
@@ -117,8 +100,7 @@ func (r resourceOperationsDataSource) Read(ctx context.Context, request datasour
 		return
 	}
 
-	var apiResponse *apidefinitions.SearchResourceOperationsResponse
-	apiResponse, err := searchResourceAndOperations(ctx, data)
+	apiResponse, err := searchResourceAndOperations(ctx, r.Client.GetAPIDefinitions(), data)
 	if err != nil {
 		response.Diagnostics.AddError(
 			"Error retrieving resource operations",
@@ -179,7 +161,7 @@ func (r resourceOperationsDataSource) Read(ctx context.Context, request datasour
 	}
 }
 
-func searchResourceAndOperations(ctx context.Context, data resourceOperationsModel) (*apidefinitions.SearchResourceOperationsResponse, error) {
+func searchResourceAndOperations(ctx context.Context, client apidefinitions.APIDefinitions, data resourceOperationsModel) (*apidefinitions.SearchResourceOperationsResponse, error) {
 	tflog.Debug(ctx, "API Definitions search Resource Operations")
 	cacheKey := fmt.Sprintf("%s:%d", "searchResourceAndOperations", data.APIID.ValueInt64())
 

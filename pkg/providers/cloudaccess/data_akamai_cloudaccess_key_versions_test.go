@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudaccess"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/date"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
@@ -15,6 +16,7 @@ import (
 )
 
 func TestDataKeyVersions(t *testing.T) {
+	t.Parallel()
 	dateString := "2021-02-26T09:09:15.428314Z"
 	dateTime, err := date.Parse(dateString)
 	if err != nil {
@@ -136,25 +138,24 @@ func TestDataKeyVersions(t *testing.T) {
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &cloudaccess.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 			if test.init != nil {
-				test.init(t, client)
+				test.init(t, client.CloudAccess)
 			}
 
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps: []resource.TestStep{
-						{
-							Config:      testutils.LoadFixtureString(t, test.configPath),
-							Check:       checkCloudAccessKeyVersionsAttrs(test.mockData, test.dateString),
-							ExpectError: test.error,
-						},
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				IsUnitTest:               true,
+				Steps: []resource.TestStep{
+					{
+						Config:      testutils.LoadFixtureString(t, test.configPath),
+						Check:       checkCloudAccessKeyVersionsAttrs(test.mockData, test.dateString),
+						ExpectError: test.error,
 					},
-				})
+				},
 			})
-			client.AssertExpectations(t)
+			client.CloudAccess.AssertExpectations(t)
 		})
 	}
 }

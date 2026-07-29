@@ -58,7 +58,7 @@ func resourceContentProtectionRule() *schema.Resource {
 
 func resourceContentProtectionRuleCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceContentProtectionRuleCreateAction")
 
 	configID, err := tf.GetIntValueAsInt64("config_id", d)
@@ -66,7 +66,7 @@ func resourceContentProtectionRuleCreate(ctx context.Context, d *schema.Resource
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, int(configID), "ContentProtectionRule", m)
+	version, err := getModifiableConfigVersion(ctx, int(configID), "ContentProtectionRule", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -102,10 +102,10 @@ func resourceContentProtectionRuleRead(ctx context.Context, d *schema.ResourceDa
 	return ContentProtectionRuleRead(ctx, d, m, true)
 }
 
-// ContentProtectionRuleRead read content protector rule
+// ContentProtectionRuleRead read content protector rule.
 func ContentProtectionRuleRead(ctx context.Context, d *schema.ResourceData, m interface{}, readFromCache bool) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceContentProtectionRuleRead")
 
 	idParts, err := id.Split(d.Id(), 3, "configID:securityPolicyID:contentProtectionRuleID")
@@ -118,7 +118,7 @@ func ContentProtectionRuleRead(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, int(configID), m)
+	version, err := getLatestConfigVersion(ctx, int(configID), meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -178,7 +178,7 @@ func ContentProtectionRuleRead(ctx context.Context, d *schema.ResourceData, m in
 
 func resourceContentProtectionRuleUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceContentProtectionRuleUpdateAction")
 
 	idParts, err := id.Split(d.Id(), 3, "configID:securityPolicyID:contentProtectionRuleID")
@@ -191,7 +191,7 @@ func resourceContentProtectionRuleUpdate(ctx context.Context, d *schema.Resource
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, int(configID), "ContentProtectionRule", m)
+	version, err := getModifiableConfigVersion(ctx, int(configID), "ContentProtectionRule", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -223,7 +223,7 @@ func resourceContentProtectionRuleUpdate(ctx context.Context, d *schema.Resource
 
 func resourceContentProtectionRuleDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceContentProtectionRuleDeleteAction")
 
 	idParts, err := id.Split(d.Id(), 3, "configID:securityPolicyID:contentProtectionRuleID")
@@ -236,7 +236,7 @@ func resourceContentProtectionRuleDelete(ctx context.Context, d *schema.Resource
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, int(configID), "ContentProtectionRule", m)
+	version, err := getModifiableConfigVersion(ctx, int(configID), "ContentProtectionRule", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}

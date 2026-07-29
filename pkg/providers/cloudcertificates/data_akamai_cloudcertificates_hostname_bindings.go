@@ -33,16 +33,10 @@ type (
 		ExpiringInDays types.Int64    `tfsdk:"expiring_in_days"`
 		Bindings       []bindingModel `tfsdk:"bindings"`
 	}
-
-	bindingModel struct {
-		CertificateID types.String `tfsdk:"certificate_id"`
-		Hostname      types.String `tfsdk:"hostname"`
-		Network       types.String `tfsdk:"network"`
-		ResourceType  types.String `tfsdk:"resource_type"`
-	}
 )
 
-var pageSize int64 = 100
+// pageSize is the page size used for paginated ListBindings requests. Exposed as a variable so tests can override it.
+var pageSize = defaultPageSize
 
 // NewCloudCertificatesHostnameBindingsDataSource returns a new cloud certificates hostname bindings data source.
 func NewCloudCertificatesHostnameBindingsDataSource() datasource.DataSource {

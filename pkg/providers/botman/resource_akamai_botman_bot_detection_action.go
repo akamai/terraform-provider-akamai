@@ -59,7 +59,7 @@ var matchBotDetectionActionExpRegex = regexp.MustCompile(`(Bot detection with id
 
 func resourceBotDetectionActionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceBotDetectionActionCreate")
 	logger.Debugf("in resourceBotDetectionActionCreate")
 
@@ -68,7 +68,7 @@ func resourceBotDetectionActionCreate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "botDetectionAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "botDetectionAction", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -112,7 +112,7 @@ func resourceBotDetectionActionRead(ctx context.Context, d *schema.ResourceData,
 }
 func botDetectionActionRead(ctx context.Context, d *schema.ResourceData, m interface{}, readFromCache bool) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceBotDetectionActionRead")
 	logger.Debugf("in resourceBotDetectionActionRead")
 
@@ -126,7 +126,7 @@ func botDetectionActionRead(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -190,7 +190,7 @@ func botDetectionActionRead(ctx context.Context, d *schema.ResourceData, m inter
 
 func resourceBotDetectionActionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceBotDetectionActionUpdate")
 	logger.Debugf("in resourceBotDetectionActionUpdate")
 
@@ -204,7 +204,7 @@ func resourceBotDetectionActionUpdate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "botDetectionAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "botDetectionAction", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}

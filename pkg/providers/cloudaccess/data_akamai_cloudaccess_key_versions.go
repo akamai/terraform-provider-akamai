@@ -19,7 +19,7 @@ var (
 )
 
 type keyVersionsDataSource struct {
-	meta meta.Meta
+	meta.DataSource
 }
 type keyVersionsDataSourceModel struct {
 	AccessKeyName     types.String            `tfsdk:"access_key_name"`
@@ -44,22 +44,6 @@ func NewKeyVersionsDataSource() datasource.DataSource {
 // Metadata configures data source's meta information
 func (d *keyVersionsDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "akamai_cloudaccess_key_versions"
-}
-
-// Configure configures data source at the beginning of the lifecycle
-func (d *keyVersionsDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Data Source Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.",
-					req.ProviderData))
-		}
-	}()
-	d.meta = meta.Must(req.ProviderData)
 }
 
 // Schema is used to define data source's terraform schema
@@ -115,7 +99,7 @@ func (d *keyVersionsDataSource) Schema(_ context.Context, _ datasource.SchemaReq
 // Read is called when the provider must read data source values in order to update state
 func (d *keyVersionsDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	tflog.Debug(ctx, "CloudAccess Key Versions DataSource Read")
-	client = Client(d.meta)
+	client := d.Client.GetCloudAccess()
 
 	var data keyVersionsDataSourceModel
 	if resp.Diagnostics.Append(req.Config.Get(ctx, &data)...); resp.Diagnostics.HasError() {

@@ -133,7 +133,7 @@ func resourceClientList() *schema.Resource {
 
 func resourceClientListRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	metaInfo := meta.Must(m)
-	client := inst.Client(metaInfo)
+	client := metaInfo.Client().GetClientLists()
 	logger := metaInfo.Log("CLIENTLIST", "resourceClientListRead")
 	logger.Debug("Reading client list")
 
@@ -195,7 +195,7 @@ func resourceClientListRead(ctx context.Context, d *schema.ResourceData, m inter
 
 func resourceClientListCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	metaInfo := meta.Must(m)
-	client := inst.Client(metaInfo)
+	client := metaInfo.Client().GetClientLists()
 	logger := metaInfo.Log("CLIENTLIST", "resourceClientListCreate")
 	logger.Debug("Creating client list")
 
@@ -232,7 +232,7 @@ func resourceClientListCreate(ctx context.Context, d *schema.ResourceData, m int
 
 func resourceClientListUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	metaInfo := meta.Must(m)
-	client := inst.Client(metaInfo)
+	client := metaInfo.Client().GetClientLists()
 	logger := metaInfo.Log("CLIENTLIST", "resourceClientListUpdate")
 	logger.Debug("Updating client list")
 
@@ -291,7 +291,7 @@ func resourceClientListUpdate(ctx context.Context, d *schema.ResourceData, m int
 
 func resourceClientListDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	metaInfo := meta.Must(m)
-	client := inst.Client(metaInfo)
+	client := metaInfo.Client().GetClientLists()
 	logger := metaInfo.Log("CLIENTLIST", "resourceClientListDelete")
 	logger.Debug("Deleting client list")
 

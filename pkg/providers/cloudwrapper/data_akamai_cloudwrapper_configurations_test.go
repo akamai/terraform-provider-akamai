@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudwrapper"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
@@ -65,14 +66,13 @@ func TestDataConfigurations(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			client := &cloudwrapper.Mock{}
+			client := edgegrid.NewTestClient()
 			if test.init != nil {
-				test.init(t, client, test.mockData)
+				test.init(t, client.CloudWrapper, test.mockData)
 			}
 
 			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: newProviderFactory(withMockClient(client)),
-				IsUnitTest:               true,
+				ProtoV6ProviderFactories: newProviderFactory(client),
 				Steps: []resource.TestStep{
 					{
 						Config:      testutils.LoadFixtureString(t, test.configPath),
@@ -82,7 +82,7 @@ func TestDataConfigurations(t *testing.T) {
 				},
 			})
 
-			client.AssertExpectations(t)
+			client.CloudWrapper.AssertExpectations(t)
 		})
 	}
 }

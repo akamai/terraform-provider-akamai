@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -705,20 +706,19 @@ func TestWAFRulesetResource(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &appsec.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 			if tc.init != nil {
-				tc.init(client)
+				tc.init(client.APPSEC)
 			}
 
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps:                    tc.steps,
-				})
+			mockGetConfigurationVersionDefault(client.APPSEC)
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				Steps:                    tc.steps,
 			})
 
-			client.AssertExpectations(t)
+			client.APPSEC.AssertExpectations(t)
 		})
 	}
 }

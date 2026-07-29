@@ -58,7 +58,7 @@ var matchAkamaiBotCategoryActionExpRegex = regexp.MustCompile(`(Akamai Bot Categ
 
 func resourceAkamaiBotCategoryActionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceAkamaiBotCategoryActionCreate")
 	logger.Debugf("in resourceAkamaiBotCategoryActionCreate")
 
@@ -67,7 +67,7 @@ func resourceAkamaiBotCategoryActionCreate(ctx context.Context, d *schema.Resour
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "akamaiBotCategoryAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "akamaiBotCategoryAction", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -115,7 +115,7 @@ func resourceAkamaiBotCategoryActionRead(ctx context.Context, d *schema.Resource
 func akamaiBotCategoryActionRead(ctx context.Context, d *schema.ResourceData, m interface{}, readFromCache bool) diag.Diagnostics {
 
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceAkamaiBotCategoryActionRead")
 	logger.Debugf("in resourceAkamaiBotCategoryActionRead")
 
@@ -129,7 +129,7 @@ func akamaiBotCategoryActionRead(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -195,7 +195,7 @@ func akamaiBotCategoryActionRead(ctx context.Context, d *schema.ResourceData, m 
 
 func resourceAkamaiBotCategoryActionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceAkamaiBotCategoryActionUpdate")
 	logger.Debugf("in resourceAkamaiBotCategoryActionUpdate")
 
@@ -209,7 +209,7 @@ func resourceAkamaiBotCategoryActionUpdate(ctx context.Context, d *schema.Resour
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "akamaiBotCategoryAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "akamaiBotCategoryAction", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}

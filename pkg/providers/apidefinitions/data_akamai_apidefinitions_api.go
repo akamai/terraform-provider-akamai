@@ -22,7 +22,10 @@ var (
 )
 
 type (
-	apiDataSource      struct{}
+	apiDataSource struct {
+		meta.DataSource
+	}
+
 	apiDataSourceModel struct {
 		apiResourceModel
 		Name types.String `tfsdk:"name"`
@@ -35,35 +38,12 @@ func NewAPIDataSource() datasource.DataSource {
 }
 
 // Metadata configures data source's meta information
-func (a apiDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, response *datasource.MetadataResponse) {
+func (d apiDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, response *datasource.MetadataResponse) {
 	response.TypeName = "akamai_apidefinitions_api"
 }
 
-// Configure configures data source at the beginning of the lifecycle
-func (a apiDataSource) Configure(_ context.Context, request datasource.ConfigureRequest, response *datasource.ConfigureResponse) {
-	if request.ProviderData == nil {
-		// ProviderData is nil when Configure is run first time as part of ValidateDataSourceConfig in framework provider
-		return
-	}
-
-	metaConfig, ok := request.ProviderData.(meta.Meta)
-	if !ok {
-		response.Diagnostics.AddError(
-			"Unexpected Data Source Configure Type",
-			fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.", request.ProviderData),
-		)
-	}
-	if client == nil {
-		client = apidefinitions.Client(metaConfig.Session())
-	}
-
-	if clientV0 == nil {
-		clientV0 = v0.Client(metaConfig.Session())
-	}
-}
-
 // Schema defines the schema for the API configuration data source
-func (a apiDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, response *datasource.SchemaResponse) {
+func (d apiDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, response *datasource.SchemaResponse) {
 	response.Schema = schema.Schema{
 		Description: "API Definition configuration",
 		Attributes: map[string]schema.Attribute{
@@ -104,7 +84,7 @@ func (a apiDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, res
 	}
 }
 
-func (a apiDataSource) ConfigValidators(_ context.Context) []datasource.ConfigValidator {
+func (d apiDataSource) ConfigValidators(_ context.Context) []datasource.ConfigValidator {
 	return []datasource.ConfigValidator{
 		datasourcevalidator.ExactlyOneOf(
 			path.MatchRoot("id"),
@@ -113,7 +93,7 @@ func (a apiDataSource) ConfigValidators(_ context.Context) []datasource.ConfigVa
 	}
 }
 
-func (a apiDataSource) Read(ctx context.Context, request datasource.ReadRequest, response *datasource.ReadResponse) {
+func (d apiDataSource) Read(ctx context.Context, request datasource.ReadRequest, response *datasource.ReadResponse) {
 	tflog.Debug(ctx, "API Definitions Configuration DataSource Read")
 
 	var data apiDataSourceModel
@@ -122,7 +102,7 @@ func (a apiDataSource) Read(ctx context.Context, request datasource.ReadRequest,
 	}
 	var ID int64
 	if data.ID.IsNull() {
-		byName, err := findAPIByName(ctx, data.Name.ValueString())
+		byName, err := findAPIByName(ctx, d.Client.GetAPIDefinitions(), data.Name.ValueString())
 		if err != nil {
 			response.Diagnostics.AddError("Error retrieving API", err.Error())
 			return
@@ -132,7 +112,7 @@ func (a apiDataSource) Read(ctx context.Context, request datasource.ReadRequest,
 		ID = data.ID.ValueInt64()
 	}
 
-	apiResponse, err := client.ListEndpointVersions(ctx, apidefinitions.ListEndpointVersionsRequest{
+	apiResponse, err := d.Client.GetAPIDefinitions().ListEndpointVersions(ctx, apidefinitions.ListEndpointVersionsRequest{
 		APIEndpointID: ID,
 	})
 	if err != nil {
@@ -148,13 +128,13 @@ func (a apiDataSource) Read(ctx context.Context, request datasource.ReadRequest,
 	}
 
 	var latestVersion = getLatestAPIConfigVersion(apiResponse)
-	endpoint, err := getEndpoint(ctx, ID)
+	endpoint, err := getEndpoint(ctx, d.Client.GetAPIDefinitions(), ID)
 	if err != nil {
 		response.Diagnostics.AddError("Error retrieving API", err.Error())
 		return
 	}
 
-	endpointVersion, err := clientV0.GetAPIVersion(ctx, v0.GetAPIVersionRequest{
+	endpointVersion, err := d.Client.GetAPIDefinitionsV0().GetAPIVersion(ctx, v0.GetAPIVersionRequest{
 		Version: latestVersion.VersionNumber,
 		ID:      ID,
 	})
@@ -173,7 +153,7 @@ func (a apiDataSource) Read(ctx context.Context, request datasource.ReadRequest,
 	}
 }
 
-func findAPIByName(ctx context.Context, expectedName string) (*int64, error) {
+func findAPIByName(ctx context.Context, client apidefinitions.APIDefinitions, expectedName string) (*int64, error) {
 	endpoints, err := client.ListEndpoints(ctx, apidefinitions.ListEndpointsRequest{
 		Contains: expectedName,
 		PageSize: 1000,

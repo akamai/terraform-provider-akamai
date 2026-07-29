@@ -3,14 +3,17 @@ package botman
 import (
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/botman"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func TestDataBotAnalyticsCookieValue(t *testing.T) {
+	t.Parallel()
 	t.Run("DataBotAnalyticsCookieValues", func(t *testing.T) {
-		mockedBotmanClient := &botman.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+		mockGetConfigVersion(client.APPSEC)
 
 		response := map[string]interface{}{
 			"values": []interface{}{
@@ -31,23 +34,20 @@ func TestDataBotAnalyticsCookieValue(t *testing.T) {
 		{"testKey":"testValue5"}
 	]
 }`
-		mockedBotmanClient.On("GetBotAnalyticsCookieValues",
+		client.BotMan.On("GetBotAnalyticsCookieValues",
 			testutils.MockContext,
 		).Return(response, nil)
-		useClient(mockedBotmanClient, func() {
-			resource.Test(t, resource.TestCase{
-				IsUnitTest:               true,
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestDataBotAnalyticsCookieValues/basic.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("data.akamai_botman_bot_analytics_cookie_values.test", "json", compactJSON(expectedJSON))),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataBotAnalyticsCookieValues/basic.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("data.akamai_botman_bot_analytics_cookie_values.test", "json", compactJSON(expectedJSON))),
 				},
-			})
+			},
 		})
 
-		mockedBotmanClient.AssertExpectations(t)
+		client.BotMan.AssertExpectations(t)
 	})
 }

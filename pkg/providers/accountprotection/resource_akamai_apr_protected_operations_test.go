@@ -4,11 +4,13 @@ import (
 	"testing"
 
 	apr "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/accountprotection"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func TestResourceProtectedOperations(t *testing.T) {
+	t.Parallel()
 	const (
 		configID         = 43253
 		configVersion    = 15
@@ -28,6 +30,7 @@ func TestResourceProtectedOperations(t *testing.T) {
 	)
 
 	t.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 		readResponse1 := apr.ListProtectedOperationsResponse{
 			Metadata: apr.Metadata{ConfigID: configID, ConfigVersion: configVersion, SecurityPolicyID: securityPolicyID},
 			Operations: []map[string]any{
@@ -59,8 +62,9 @@ func TestResourceProtectedOperations(t *testing.T) {
 			},
 		}
 
-		clientMock := &apr.Mock{}
-		clientMock.On("CreateProtectedOperations",
+		client := edgegrid.NewTestClient()
+		mockGetConfigVersion(client.APPSEC)
+		client.AccountProtection.On("CreateProtectedOperations",
 			testutils.MockContext,
 			apr.CreateProtectedOperationsRequest{
 				ConfigID:         configID,
@@ -69,7 +73,7 @@ func TestResourceProtectedOperations(t *testing.T) {
 				JsonPayload:      []byte(compactJSON(createPayloadJSON)),
 			},
 		).Return(&readResponse1, nil).Once()
-		clientMock.On("GetProtectedOperationByID",
+		client.AccountProtection.On("GetProtectedOperationByID",
 			testutils.MockContext,
 			apr.GetProtectedOperationByIDRequest{
 				ConfigID:         configID,
@@ -78,7 +82,7 @@ func TestResourceProtectedOperations(t *testing.T) {
 				OperationID:      operationID,
 			},
 		).Return(&readResponse1, nil).Once()
-		clientMock.On("GetProtectedOperationByID",
+		client.AccountProtection.On("GetProtectedOperationByID",
 			testutils.MockContext,
 			apr.GetProtectedOperationByIDRequest{
 				ConfigID:         configID,
@@ -87,7 +91,7 @@ func TestResourceProtectedOperations(t *testing.T) {
 				OperationID:      operationID,
 			},
 		).Return(&readResponse2, nil).Once()
-		clientMock.On("GetProtectedOperationByID",
+		client.AccountProtection.On("GetProtectedOperationByID",
 			testutils.MockContext,
 			apr.GetProtectedOperationByIDRequest{
 				ConfigID:         configID,
@@ -96,7 +100,7 @@ func TestResourceProtectedOperations(t *testing.T) {
 				OperationID:      operationID,
 			},
 		).Return(&readResponse3, nil).Once()
-		clientMock.On("GetProtectedOperationByID",
+		client.AccountProtection.On("GetProtectedOperationByID",
 			testutils.MockContext,
 			apr.GetProtectedOperationByIDRequest{
 				ConfigID:         configID,
@@ -105,7 +109,7 @@ func TestResourceProtectedOperations(t *testing.T) {
 				OperationID:      operationID,
 			},
 		).Return(&readResponse4, nil).Once()
-		clientMock.On("GetProtectedOperationByID",
+		client.AccountProtection.On("GetProtectedOperationByID",
 			testutils.MockContext,
 			apr.GetProtectedOperationByIDRequest{
 				ConfigID:         configID,
@@ -114,7 +118,7 @@ func TestResourceProtectedOperations(t *testing.T) {
 				OperationID:      operationID,
 			},
 		).Return(&readResponse5, nil).Once()
-		clientMock.On("UpdateProtectedOperation",
+		client.AccountProtection.On("UpdateProtectedOperation",
 			testutils.MockContext,
 			apr.UpdateProtectedOperationRequest{
 				ConfigID:         configID,
@@ -124,7 +128,7 @@ func TestResourceProtectedOperations(t *testing.T) {
 				JsonPayload:      []byte(compactJSON(updatePayloadJSON)),
 			},
 		).Return(map[string]any{}, nil).Once()
-		clientMock.On("RemoveProtectedOperation",
+		client.AccountProtection.On("RemoveProtectedOperation",
 			testutils.MockContext,
 			apr.RemoveProtectedOperationRequest{
 				ConfigID:         configID,
@@ -134,24 +138,23 @@ func TestResourceProtectedOperations(t *testing.T) {
 			},
 		).Return(nil).Once()
 
-		useClient(clientMock, func() {
-			resource.UnitTest(t, resource.TestCase{
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResourceProtectedOperations/create.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_apr_protected_operations.test", "protected_operation", `{"testKey":"testValue"}`),
-						),
-					},
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResourceProtectedOperations/update.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_apr_protected_operations.test", "protected_operation", `{"testKey":"testValueUpdated"}`),
-						),
-					},
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceProtectedOperations/create.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_apr_protected_operations.test", "protected_operation", `{"testKey":"testValue"}`),
+					),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceProtectedOperations/update.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_apr_protected_operations.test", "protected_operation", `{"testKey":"testValueUpdated"}`),
+					),
+				},
+			},
 		})
+		client.AccountProtection.AssertExpectations(t)
 	})
 }

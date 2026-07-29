@@ -637,9 +637,26 @@ func TestResourceUpdate(t *testing.T) {
 		repeats int
 	}
 
+	getStreamRequest := datastream.GetStreamRequest{
+		StreamID: streamID,
+		LogType:  datastream.LogTypeCDN,
+	}
+	activateStreamRequest := datastream.ActivateStreamRequest{
+		StreamID: streamID,
+		LogType:  datastream.LogTypeCDN,
+	}
+	deactivateStreamRequest := datastream.DeactivateStreamRequest{
+		StreamID: streamID,
+		LogType:  datastream.LogTypeCDN,
+	}
+	deleteStreamRequest := datastream.DeleteStreamRequest{
+		StreamID: streamID,
+		LogType:  datastream.LogTypeCDN,
+	}
+
 	configureMock := func(m *datastream.Mock, statuses ...mockConfig) {
 		for _, statusConfig := range statuses {
-			m.On("GetStream", testutils.MockContext, mock.Anything).
+			m.On("GetStream", testutils.MockContext, getStreamRequest).
 				Return(responseFactory(statusConfig.status), nil).
 				Times(statusConfig.repeats)
 		}
@@ -678,7 +695,7 @@ func TestResourceUpdate(t *testing.T) {
 						{status: datastream.StreamStatusActivated, repeats: 3},
 					}...)
 				} else {
-					m.On("ActivateStream", testutils.MockContext, mock.Anything).
+					m.On("ActivateStream", testutils.MockContext, activateStreamRequest).
 						Return(&datastream.DetailedStreamVersion{
 							StreamVersion: updateStreamResponse.StreamVersion,
 						}, nil).
@@ -702,7 +719,7 @@ func TestResourceUpdate(t *testing.T) {
 			}
 
 			// DeleteStream method will deactivate the stream
-			m.On("DeactivateStream", testutils.MockContext, mock.Anything).
+			m.On("DeactivateStream", testutils.MockContext, deactivateStreamRequest).
 				Return(&datastream.DetailedStreamVersion{
 					StreamVersion: updateStreamResponse.StreamVersion,
 				}, nil).
@@ -714,7 +731,7 @@ func TestResourceUpdate(t *testing.T) {
 				{status: datastream.StreamStatusDeactivated, repeats: 1},
 			}...)
 
-			m.On("DeleteStream", testutils.MockContext, mock.Anything).
+			m.On("DeleteStream", testutils.MockContext, deleteStreamRequest).
 				Return(' ', nil).
 				Once()
 
@@ -743,6 +760,1195 @@ func TestResourceUpdate(t *testing.T) {
 			})
 		})
 	}
+}
+
+func optionalCDNStreamConfiguration(streamName string) datastream.StreamConfiguration {
+	return datastream.StreamConfiguration{
+		DeliveryConfiguration: datastream.DeliveryConfiguration{
+			Delimiter: datastream.DelimiterTypePtr(datastream.DelimiterTypeSpace),
+			Format:    datastream.FormatTypeStructured,
+			Frequency: datastream.Frequency{
+				IntervalInSeconds: datastream.IntervalInSeconds30,
+			},
+			UploadFilePrefix: "pre",
+			UploadFileSuffix: "suf",
+		},
+		Destination: datastream.AbstractConnector(
+			&datastream.S3Connector{
+				AccessKey:       "s3_test_access_key",
+				Bucket:          "s3_test_bucket",
+				DisplayName:     "s3_test_connector_name",
+				Path:            "s3_test_path",
+				Region:          "s3_test_region",
+				SecretAccessKey: "s3_test_secret_key",
+			},
+		),
+		DatasetFields: []datastream.DatasetFieldID{
+			{DatasetFieldID: 1001},
+			{DatasetFieldID: 1002},
+			{DatasetFieldID: 2000},
+			{DatasetFieldID: 2001},
+		},
+		NotificationEmails: []string{"test_email1@akamai.com", "test_email2@akamai.com"},
+		Properties: []datastream.PropertyID{
+			{PropertyID: 1},
+			{PropertyID: 2},
+			{PropertyID: 3},
+		},
+		StreamName: streamName,
+	}
+}
+
+func TestResourceStreamOptionalContractAndGroup(t *testing.T) {
+	client := &datastream.Mock{}
+
+	PollForActivationStatusChangeInterval = 1 * time.Millisecond
+
+	// reusable response for GetStream – no contractId / groupId
+	// fields must match the fixture exactly to produce an empty plan
+	getStreamResp := &datastream.DetailedStreamVersion{
+		StreamID:      streamID,
+		StreamName:    "test_stream",
+		StreamVersion: 1,
+		LatestVersion: 1,
+		StreamStatus:  datastream.StreamStatusDeactivated,
+		CreatedBy:     "johndoe",
+		CreatedDate:   "10-07-2020 12:19:02 GMT",
+		ModifiedBy:    "janesmith",
+		ModifiedDate:  "15-07-2020 05:51:52 GMT",
+		ProductID:     "Download_Delivery",
+		DatasetFields: []datastream.DataSetField{
+			{DatasetFieldID: 1001},
+			{DatasetFieldID: 1002},
+			{DatasetFieldID: 2000},
+			{DatasetFieldID: 2001},
+		},
+		NotificationEmails: []string{"test_email1@akamai.com", "test_email2@akamai.com"},
+		Properties: []datastream.Property{
+			{PropertyID: 1, PropertyName: "property_1"},
+			{PropertyID: 2, PropertyName: "property_2"},
+			{PropertyID: 3, PropertyName: "property_3"},
+		},
+		Destination: datastream.Destination{
+			DestinationType: datastream.DestinationTypeS3,
+			DisplayName:     "s3_test_connector_name",
+			Bucket:          "s3_test_bucket",
+			Path:            "s3_test_path",
+			Region:          "s3_test_region",
+		},
+		DeliveryConfiguration: datastream.DeliveryConfiguration{
+			Delimiter:        datastream.DelimiterTypePtr(datastream.DelimiterTypeSpace),
+			Format:           datastream.FormatTypeStructured,
+			Frequency:        datastream.Frequency{IntervalInSeconds: datastream.IntervalInSeconds30},
+			UploadFilePrefix: "pre",
+			UploadFileSuffix: "suf",
+		},
+	}
+
+	createStreamRequest := datastream.CreateStreamRequest{
+		LogType:             datastream.LogTypeCDN,
+		Activate:            false,
+		StreamConfiguration: optionalCDNStreamConfiguration("test_stream"),
+	}
+	getStreamRequest := datastream.GetStreamRequest{
+		StreamID: streamID,
+		LogType:  datastream.LogTypeCDN,
+	}
+	deleteStreamRequest := datastream.DeleteStreamRequest{
+		StreamID: streamID,
+		LogType:  datastream.LogTypeCDN,
+	}
+
+	// create
+	client.On("CreateStream", testutils.MockContext, createStreamRequest).
+		Return(&datastream.DetailedStreamVersion{StreamID: streamID}, nil).
+		Once()
+
+	// read (after create and post-apply refresh)
+	client.On("GetStream", testutils.MockContext, getStreamRequest).
+		Return(getStreamResp, nil).
+		Times(2)
+	// read (delete pre-check)
+	client.On("GetStream", testutils.MockContext, getStreamRequest).
+		Return(getStreamResp, nil).
+		Once()
+
+	// delete
+	client.On("DeleteStream", testutils.MockContext, deleteStreamRequest).
+		Return(nil).
+		Once()
+
+	useClient(client, func() {
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/lifecycle/create_stream_optional_ids.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_datastream.s", "contract_id", ""),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "group_id", ""),
+					),
+				},
+			},
+		})
+	})
+
+	client.AssertExpectations(t)
+}
+
+func TestResourceStreamOptionalContractAndGroup_populatedFromAPI(t *testing.T) {
+	client := &datastream.Mock{}
+
+	PollForActivationStatusChangeInterval = 1 * time.Millisecond
+
+	// Config omits contract_id/group_id; API returns them — Computed must store API values.
+	getStreamResp := &datastream.DetailedStreamVersion{
+		StreamID:      streamID,
+		StreamName:    "test_stream",
+		StreamVersion: 1,
+		LatestVersion: 1,
+		StreamStatus:  datastream.StreamStatusDeactivated,
+		CreatedBy:     "johndoe",
+		CreatedDate:   "10-07-2020 12:19:02 GMT",
+		ModifiedBy:    "janesmith",
+		ModifiedDate:  "15-07-2020 05:51:52 GMT",
+		ProductID:     "Download_Delivery",
+		ContractID:    "api_contract",
+		GroupID:       1337,
+		DatasetFields: []datastream.DataSetField{
+			{DatasetFieldID: 1001},
+			{DatasetFieldID: 1002},
+			{DatasetFieldID: 2000},
+			{DatasetFieldID: 2001},
+		},
+		NotificationEmails: []string{"test_email1@akamai.com", "test_email2@akamai.com"},
+		Properties: []datastream.Property{
+			{PropertyID: 1, PropertyName: "property_1"},
+			{PropertyID: 2, PropertyName: "property_2"},
+			{PropertyID: 3, PropertyName: "property_3"},
+		},
+		Destination: datastream.Destination{
+			DestinationType: datastream.DestinationTypeS3,
+			DisplayName:     "s3_test_connector_name",
+			Bucket:          "s3_test_bucket",
+			Path:            "s3_test_path",
+			Region:          "s3_test_region",
+		},
+		DeliveryConfiguration: datastream.DeliveryConfiguration{
+			Delimiter:        datastream.DelimiterTypePtr(datastream.DelimiterTypeSpace),
+			Format:           datastream.FormatTypeStructured,
+			Frequency:        datastream.Frequency{IntervalInSeconds: datastream.IntervalInSeconds30},
+			UploadFilePrefix: "pre",
+			UploadFileSuffix: "suf",
+		},
+	}
+
+	createStreamRequest := datastream.CreateStreamRequest{
+		LogType:             datastream.LogTypeCDN,
+		Activate:            false,
+		StreamConfiguration: optionalCDNStreamConfiguration("test_stream"),
+	}
+	getStreamRequest := datastream.GetStreamRequest{
+		StreamID: streamID,
+		LogType:  datastream.LogTypeCDN,
+	}
+	deleteStreamRequest := datastream.DeleteStreamRequest{
+		StreamID: streamID,
+		LogType:  datastream.LogTypeCDN,
+	}
+
+	// create
+	client.On("CreateStream", testutils.MockContext, createStreamRequest).
+		Return(&datastream.DetailedStreamVersion{StreamID: streamID}, nil).
+		Once()
+
+	// read (after create and post-apply refresh)
+	client.On("GetStream", testutils.MockContext, getStreamRequest).
+		Return(getStreamResp, nil).
+		Times(2)
+	// read (delete pre-check)
+	client.On("GetStream", testutils.MockContext, getStreamRequest).
+		Return(getStreamResp, nil).
+		Once()
+
+	// delete
+	client.On("DeleteStream", testutils.MockContext, deleteStreamRequest).
+		Return(nil).
+		Once()
+
+	useClient(client, func() {
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/lifecycle/create_stream_optional_ids.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_datastream.s", "contract_id", "api_contract"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "group_id", "1337"),
+					),
+				},
+			},
+		})
+	})
+
+	client.AssertExpectations(t)
+}
+
+func TestResourceStreamContractAndGroupPreservedWhenAPIOmitsOnRead(t *testing.T) {
+	client := &datastream.Mock{}
+
+	PollForActivationStatusChangeInterval = 1 * time.Millisecond
+
+	streamConfiguration := optionalCDNStreamConfiguration("test_stream")
+	streamConfiguration.ContractID = "test_contract"
+	streamConfiguration.GroupID = 1337
+
+	getStreamResp := &datastream.DetailedStreamVersion{
+		StreamID:      streamID,
+		StreamName:    "test_stream",
+		StreamVersion: 1,
+		LatestVersion: 1,
+		StreamStatus:  datastream.StreamStatusDeactivated,
+		CreatedBy:     "johndoe",
+		CreatedDate:   "10-07-2020 12:19:02 GMT",
+		ModifiedBy:    "janesmith",
+		ModifiedDate:  "15-07-2020 05:51:52 GMT",
+		ProductID:     "Download_Delivery",
+		DatasetFields: []datastream.DataSetField{
+			{DatasetFieldID: 1001},
+			{DatasetFieldID: 1002},
+			{DatasetFieldID: 2000},
+			{DatasetFieldID: 2001},
+		},
+		NotificationEmails: []string{"test_email1@akamai.com", "test_email2@akamai.com"},
+		Properties: []datastream.Property{
+			{PropertyID: 1, PropertyName: "property_1"},
+			{PropertyID: 2, PropertyName: "property_2"},
+			{PropertyID: 3, PropertyName: "property_3"},
+		},
+		Destination: datastream.Destination{
+			DestinationType: datastream.DestinationTypeS3,
+			DisplayName:     "s3_test_connector_name",
+			Bucket:          "s3_test_bucket",
+			Path:            "s3_test_path",
+			Region:          "s3_test_region",
+		},
+		DeliveryConfiguration: streamConfiguration.DeliveryConfiguration,
+	}
+
+	createStreamRequest := datastream.CreateStreamRequest{
+		LogType:             datastream.LogTypeCDN,
+		Activate:            false,
+		StreamConfiguration: streamConfiguration,
+	}
+	getStreamRequest := datastream.GetStreamRequest{
+		StreamID: streamID,
+		LogType:  datastream.LogTypeCDN,
+	}
+	deleteStreamRequest := datastream.DeleteStreamRequest{
+		StreamID: streamID,
+		LogType:  datastream.LogTypeCDN,
+	}
+
+	// create
+	client.On("CreateStream", testutils.MockContext, createStreamRequest).
+		Return(&datastream.DetailedStreamVersion{StreamID: streamID}, nil).
+		Once()
+
+	// read (after create and post-apply refresh)
+	client.On("GetStream", testutils.MockContext, getStreamRequest).
+		Return(getStreamResp, nil).
+		Times(2)
+	// read (plan-only refresh and delete pre-check)
+	client.On("GetStream", testutils.MockContext, getStreamRequest).
+		Return(getStreamResp, nil).
+		Times(2)
+
+	// delete
+	client.On("DeleteStream", testutils.MockContext, deleteStreamRequest).
+		Return(nil).
+		Once()
+
+	tfConfig := testutils.LoadFixtureString(t, "testdata/TestResourceStream/lifecycle/create_stream_inactive.tf")
+
+	useClient(client, func() {
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: tfConfig,
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_datastream.s", "contract_id", "test_contract"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "group_id", "1337"),
+					),
+				},
+				{
+					Config:   tfConfig,
+					PlanOnly: true,
+				},
+			},
+		})
+	})
+
+	client.AssertExpectations(t)
+}
+
+func TestResourceImportContractAndGroupPreservedWhenAPIOmitsOnRead(t *testing.T) {
+	client := &datastream.Mock{}
+
+	streamConfiguration := optionalCDNStreamConfiguration("test_stream")
+	streamConfiguration.ContractID = "test_contract"
+	streamConfiguration.GroupID = 1337
+
+	getStreamResp := &datastream.DetailedStreamVersion{
+		StreamID:      streamID,
+		StreamName:    "test_stream",
+		StreamVersion: 1,
+		LatestVersion: 1,
+		StreamStatus:  datastream.StreamStatusDeactivated,
+		CreatedBy:     "johndoe",
+		CreatedDate:   "10-07-2020 12:19:02 GMT",
+		ModifiedBy:    "janesmith",
+		ModifiedDate:  "15-07-2020 05:51:52 GMT",
+		ProductID:     "Download_Delivery",
+		DatasetFields: []datastream.DataSetField{
+			{DatasetFieldID: 1001},
+			{DatasetFieldID: 1002},
+			{DatasetFieldID: 2000},
+			{DatasetFieldID: 2001},
+		},
+		NotificationEmails: []string{"test_email1@akamai.com", "test_email2@akamai.com"},
+		Properties: []datastream.Property{
+			{PropertyID: 1, PropertyName: "property_1"},
+			{PropertyID: 2, PropertyName: "property_2"},
+			{PropertyID: 3, PropertyName: "property_3"},
+		},
+		Destination: datastream.Destination{
+			DestinationType: datastream.DestinationTypeS3,
+			DisplayName:     "s3_test_connector_name",
+			Bucket:          "s3_test_bucket",
+			Path:            "s3_test_path",
+			Region:          "s3_test_region",
+		},
+		DeliveryConfiguration: streamConfiguration.DeliveryConfiguration,
+	}
+
+	getStreamRequest := datastream.GetStreamRequest{
+		StreamID: streamID,
+		LogType:  datastream.LogTypeCDN,
+	}
+	deleteStreamRequest := datastream.DeleteStreamRequest{
+		StreamID: streamID,
+		LogType:  datastream.LogTypeCDN,
+	}
+
+	// read (import refresh)
+	client.On("GetStream", testutils.MockContext, getStreamRequest).
+		Return(getStreamResp, nil).
+		Once()
+	// read (delete pre-check)
+	client.On("GetStream", testutils.MockContext, getStreamRequest).
+		Return(getStreamResp, nil).
+		Once()
+	client.On("DeleteStream", testutils.MockContext, deleteStreamRequest).
+		Return(nil).
+		Once()
+
+	tfConfig := testutils.LoadFixtureString(t, "testdata/TestResourceStream/lifecycle/create_stream_inactive.tf")
+
+	// RES-10: import refresh must preserve contract_id/group_id from config when the API omits them.
+	// Post-import empty plan is also covered by TestResourceStreamContractAndGroupPreservedWhenAPIOmitsOnRead
+	// and TestResourceStreamI775NoDriftWhenAPIOmitsFieldsOnRefresh (apply + PlanOnly refresh path).
+	useClient(client, func() {
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config:             tfConfig,
+					ResourceName:       "akamai_datastream.s",
+					ImportState:        true,
+					ImportStateId:      strconv.FormatInt(streamID, 10),
+					ImportStateVerify:  false,
+					ImportStatePersist: true,
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_datastream.s", "id", strconv.FormatInt(streamID, 10)),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "contract_id", "test_contract"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "group_id", "1337"),
+					),
+				},
+			},
+		})
+	})
+
+	client.AssertExpectations(t)
+}
+
+func TestResourceImportUploadFilePrefixPreservedWhenAPIOmitsOnRead(t *testing.T) {
+	client := &datastream.Mock{}
+
+	streamConfiguration := optionalCDNStreamConfiguration("test_stream")
+	streamConfiguration.ContractID = "test_contract"
+	streamConfiguration.GroupID = 1337
+
+	getStreamResp := &datastream.DetailedStreamVersion{
+		StreamID:      streamID,
+		StreamName:    "test_stream",
+		StreamVersion: 1,
+		LatestVersion: 1,
+		StreamStatus:  datastream.StreamStatusDeactivated,
+		CreatedBy:     "johndoe",
+		CreatedDate:   "10-07-2020 12:19:02 GMT",
+		ModifiedBy:    "janesmith",
+		ModifiedDate:  "15-07-2020 05:51:52 GMT",
+		ProductID:     "Download_Delivery",
+		DatasetFields: []datastream.DataSetField{
+			{DatasetFieldID: 1001},
+			{DatasetFieldID: 1002},
+			{DatasetFieldID: 2000},
+			{DatasetFieldID: 2001},
+		},
+		NotificationEmails: []string{"test_email1@akamai.com", "test_email2@akamai.com"},
+		Properties: []datastream.Property{
+			{PropertyID: 1, PropertyName: "property_1"},
+			{PropertyID: 2, PropertyName: "property_2"},
+			{PropertyID: 3, PropertyName: "property_3"},
+		},
+		Destination: datastream.Destination{
+			DestinationType: datastream.DestinationTypeS3,
+			DisplayName:     "s3_test_connector_name",
+			Bucket:          "s3_test_bucket",
+			Path:            "s3_test_path",
+			Region:          "s3_test_region",
+		},
+		DeliveryConfiguration: streamConfiguration.DeliveryConfiguration,
+	}
+	// Import refresh must preserve configured prefix/suffix via RawConfig when state is empty.
+	getStreamResp.DeliveryConfiguration.UploadFilePrefix = ""
+	getStreamResp.DeliveryConfiguration.UploadFileSuffix = ""
+
+	getStreamRequest := datastream.GetStreamRequest{
+		StreamID: streamID,
+		LogType:  datastream.LogTypeCDN,
+	}
+	deleteStreamRequest := datastream.DeleteStreamRequest{
+		StreamID: streamID,
+		LogType:  datastream.LogTypeCDN,
+	}
+
+	// read (import refresh)
+	client.On("GetStream", testutils.MockContext, getStreamRequest).
+		Return(getStreamResp, nil).
+		Once()
+	// read (delete pre-check)
+	client.On("GetStream", testutils.MockContext, getStreamRequest).
+		Return(getStreamResp, nil).
+		Once()
+	client.On("DeleteStream", testutils.MockContext, deleteStreamRequest).
+		Return(nil).
+		Once()
+
+	tfConfig := testutils.LoadFixtureString(t, "testdata/TestResourceStream/lifecycle/create_stream_inactive.tf")
+
+	useClient(client, func() {
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config:             tfConfig,
+					ResourceName:       "akamai_datastream.s",
+					ImportState:        true,
+					ImportStateId:      strconv.FormatInt(streamID, 10),
+					ImportStateVerify:  false,
+					ImportStatePersist: true,
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_datastream.s", "id", strconv.FormatInt(streamID, 10)),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "delivery_configuration.0.upload_file_prefix", "pre"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "delivery_configuration.0.upload_file_suffix", "suf"),
+					),
+				},
+			},
+		})
+	})
+
+	client.AssertExpectations(t)
+}
+
+// TestResourceStreamI775NoDriftWhenAPIOmitsFieldsOnRefresh reproduces
+// https://github.com/akamai/terraform-provider-akamai/issues/775: after apply the
+// API may omit contractId/groupId and later omit integration_type on refresh,
+// which must not cause perpetual in-place updates.
+func TestResourceStreamI775NoDriftWhenAPIOmitsFieldsOnRefresh(t *testing.T) {
+	client := &datastream.Mock{}
+
+	PollForActivationStatusChangeInterval = 1 * time.Millisecond
+
+	streamConfiguration := optionalCDNStreamConfiguration("test_stream")
+	streamConfiguration.ContractID = "test_contract"
+	streamConfiguration.GroupID = 1337
+
+	baseGetStreamResp := func() *datastream.DetailedStreamVersion {
+		return &datastream.DetailedStreamVersion{
+			StreamID:      streamID,
+			StreamName:    "test_stream",
+			StreamVersion: 1,
+			LatestVersion: 1,
+			StreamStatus:  datastream.StreamStatusDeactivated,
+			CreatedBy:     "johndoe",
+			CreatedDate:   "10-07-2020 12:19:02 GMT",
+			ModifiedBy:    "janesmith",
+			ModifiedDate:  "15-07-2020 05:51:52 GMT",
+			ProductID:     "Download_Delivery",
+			DatasetFields: []datastream.DataSetField{
+				{DatasetFieldID: 1001},
+				{DatasetFieldID: 1002},
+				{DatasetFieldID: 2000},
+				{DatasetFieldID: 2001},
+			},
+			NotificationEmails: []string{"test_email1@akamai.com", "test_email2@akamai.com"},
+			Properties: []datastream.Property{
+				{PropertyID: 1, PropertyName: "property_1"},
+				{PropertyID: 2, PropertyName: "property_2"},
+				{PropertyID: 3, PropertyName: "property_3"},
+			},
+			Destination: datastream.Destination{
+				DestinationType: datastream.DestinationTypeS3,
+				DisplayName:     "s3_test_connector_name",
+				Bucket:          "s3_test_bucket",
+				Path:            "s3_test_path",
+				Region:          "s3_test_region",
+			},
+			DeliveryConfiguration: streamConfiguration.DeliveryConfiguration,
+		}
+	}
+
+	getStreamWithIntegrationType := baseGetStreamResp()
+	getStreamWithIntegrationType.IntegrationType = "DS_MANAGED"
+
+	getStreamOmittingIdentifiers := baseGetStreamResp()
+
+	createStreamRequest := datastream.CreateStreamRequest{
+		LogType:             datastream.LogTypeCDN,
+		Activate:            false,
+		StreamConfiguration: streamConfiguration,
+	}
+	getStreamRequest := datastream.GetStreamRequest{
+		StreamID: streamID,
+		LogType:  datastream.LogTypeCDN,
+	}
+	deleteStreamRequest := datastream.DeleteStreamRequest{
+		StreamID: streamID,
+		LogType:  datastream.LogTypeCDN,
+	}
+
+	client.On("CreateStream", testutils.MockContext, createStreamRequest).
+		Return(&datastream.DetailedStreamVersion{StreamID: streamID}, nil).
+		Once()
+	// read after create (integration_type from API)
+	client.On("GetStream", testutils.MockContext, getStreamRequest).
+		Return(getStreamWithIntegrationType, nil).
+		Once()
+	// read (plan-only refresh)
+	client.On("GetStream", testutils.MockContext, getStreamRequest).
+		Return(getStreamOmittingIdentifiers, nil).
+		Once()
+	// read (plan-only refresh and delete pre-check)
+	client.On("GetStream", testutils.MockContext, getStreamRequest).
+		Return(getStreamOmittingIdentifiers, nil).
+		Times(2)
+	client.On("DeleteStream", testutils.MockContext, deleteStreamRequest).
+		Return(nil).
+		Once()
+
+	tfConfig := testutils.LoadFixtureString(t, "testdata/TestResourceStream/lifecycle/create_stream_inactive.tf")
+
+	useClient(client, func() {
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: tfConfig,
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_datastream.s", "contract_id", "test_contract"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "group_id", "1337"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "integration_type", "DS_MANAGED"),
+					),
+				},
+				{
+					Config:   tfConfig,
+					PlanOnly: true,
+				},
+			},
+		})
+	})
+
+	client.AssertExpectations(t)
+}
+
+// TestResourceStreamI775ExactBugReportSymptoms reproduces the exact symptoms from
+// https://github.com/akamai/terraform-provider-akamai/issues/775:
+// config uses ctr_/grp_ prefixes; GET returns empty contractId and groupId 0;
+// state must keep configured IDs and the next plan must be empty.
+func TestResourceStreamI775ExactBugReportSymptoms(t *testing.T) {
+	client := &datastream.Mock{}
+
+	PollForActivationStatusChangeInterval = 1 * time.Millisecond
+
+	streamConfiguration := optionalCDNStreamConfiguration("test_stream")
+	streamConfiguration.ContractID = "test_contract"
+	streamConfiguration.GroupID = 1337
+
+	getStreamResp := &datastream.DetailedStreamVersion{
+		StreamID:      streamID,
+		StreamName:    "test_stream",
+		StreamVersion: 1,
+		LatestVersion: 1,
+		StreamStatus:  datastream.StreamStatusDeactivated,
+		CreatedBy:     "johndoe",
+		CreatedDate:   "10-07-2020 12:19:02 GMT",
+		ModifiedBy:    "janesmith",
+		ModifiedDate:  "15-07-2020 05:51:52 GMT",
+		ProductID:     "Download_Delivery",
+		// Exact I#775 Read symptom: API omits/zeros identifiers.
+		ContractID: "",
+		GroupID:    0,
+		DatasetFields: []datastream.DataSetField{
+			{DatasetFieldID: 1001},
+			{DatasetFieldID: 1002},
+			{DatasetFieldID: 2000},
+			{DatasetFieldID: 2001},
+		},
+		NotificationEmails: []string{"test_email1@akamai.com", "test_email2@akamai.com"},
+		Properties: []datastream.Property{
+			{PropertyID: 1, PropertyName: "property_1"},
+			{PropertyID: 2, PropertyName: "property_2"},
+			{PropertyID: 3, PropertyName: "property_3"},
+		},
+		Destination: datastream.Destination{
+			DestinationType: datastream.DestinationTypeS3,
+			DisplayName:     "s3_test_connector_name",
+			Bucket:          "s3_test_bucket",
+			Path:            "s3_test_path",
+			Region:          "s3_test_region",
+		},
+		DeliveryConfiguration: streamConfiguration.DeliveryConfiguration,
+		IntegrationType:       "DS_MANAGED",
+	}
+
+	createStreamRequest := datastream.CreateStreamRequest{
+		LogType:             datastream.LogTypeCDN,
+		Activate:            false,
+		StreamConfiguration: streamConfiguration,
+	}
+	getStreamRequest := datastream.GetStreamRequest{
+		StreamID: streamID,
+		LogType:  datastream.LogTypeCDN,
+	}
+	deleteStreamRequest := datastream.DeleteStreamRequest{
+		StreamID: streamID,
+		LogType:  datastream.LogTypeCDN,
+	}
+
+	// create
+	client.On("CreateStream", testutils.MockContext, createStreamRequest).
+		Return(&datastream.DetailedStreamVersion{StreamID: streamID}, nil).
+		Once()
+
+	// read (after create and post-apply refresh)
+	client.On("GetStream", testutils.MockContext, getStreamRequest).
+		Return(getStreamResp, nil).
+		Times(2)
+	// read (plan-only refresh and delete pre-check)
+	client.On("GetStream", testutils.MockContext, getStreamRequest).
+		Return(getStreamResp, nil).
+		Times(2)
+
+	// delete
+	client.On("DeleteStream", testutils.MockContext, deleteStreamRequest).
+		Return(nil).
+		Once()
+
+	tfConfig := testutils.LoadFixtureString(t, "testdata/TestResourceStream/lifecycle/create_stream_inactive_prefixed_ids.tf")
+
+	useClient(client, func() {
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: tfConfig,
+					Check: resource.ComposeTestCheckFunc(
+						// DiffSuppress strips prefixes; state stores unprefixed values.
+						resource.TestCheckResourceAttr("akamai_datastream.s", "contract_id", "test_contract"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "group_id", "1337"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "integration_type", "DS_MANAGED"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "stream_version", "1"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "latest_version", "1"),
+					),
+				},
+				{
+					Config:   tfConfig,
+					PlanOnly: true,
+				},
+			},
+		})
+	})
+
+	client.AssertExpectations(t)
+}
+
+// TestResourceStreamI775NoDriftWhenAPIReturnsOnlyGroupZero covers the partial I#775 case
+// where contractId is present on GET but groupId is 0.
+func TestResourceStreamI775NoDriftWhenAPIReturnsOnlyGroupZero(t *testing.T) {
+	client := &datastream.Mock{}
+
+	PollForActivationStatusChangeInterval = 1 * time.Millisecond
+
+	streamConfiguration := optionalCDNStreamConfiguration("test_stream")
+	streamConfiguration.ContractID = "test_contract"
+	streamConfiguration.GroupID = 1337
+
+	getStreamResp := &datastream.DetailedStreamVersion{
+		StreamID:      streamID,
+		StreamName:    "test_stream",
+		StreamVersion: 1,
+		LatestVersion: 1,
+		StreamStatus:  datastream.StreamStatusDeactivated,
+		CreatedBy:     "johndoe",
+		CreatedDate:   "10-07-2020 12:19:02 GMT",
+		ModifiedBy:    "janesmith",
+		ModifiedDate:  "15-07-2020 05:51:52 GMT",
+		ProductID:     "Download_Delivery",
+		ContractID:    "test_contract",
+		GroupID:       0,
+		DatasetFields: []datastream.DataSetField{
+			{DatasetFieldID: 1001},
+			{DatasetFieldID: 1002},
+			{DatasetFieldID: 2000},
+			{DatasetFieldID: 2001},
+		},
+		NotificationEmails: []string{"test_email1@akamai.com", "test_email2@akamai.com"},
+		Properties: []datastream.Property{
+			{PropertyID: 1, PropertyName: "property_1"},
+			{PropertyID: 2, PropertyName: "property_2"},
+			{PropertyID: 3, PropertyName: "property_3"},
+		},
+		Destination: datastream.Destination{
+			DestinationType: datastream.DestinationTypeS3,
+			DisplayName:     "s3_test_connector_name",
+			Bucket:          "s3_test_bucket",
+			Path:            "s3_test_path",
+			Region:          "s3_test_region",
+		},
+		DeliveryConfiguration: streamConfiguration.DeliveryConfiguration,
+		IntegrationType:       "DS_MANAGED",
+	}
+
+	createStreamRequest := datastream.CreateStreamRequest{
+		LogType:             datastream.LogTypeCDN,
+		Activate:            false,
+		StreamConfiguration: streamConfiguration,
+	}
+	getStreamRequest := datastream.GetStreamRequest{
+		StreamID: streamID,
+		LogType:  datastream.LogTypeCDN,
+	}
+	deleteStreamRequest := datastream.DeleteStreamRequest{
+		StreamID: streamID,
+		LogType:  datastream.LogTypeCDN,
+	}
+
+	// create
+	client.On("CreateStream", testutils.MockContext, createStreamRequest).
+		Return(&datastream.DetailedStreamVersion{StreamID: streamID}, nil).
+		Once()
+
+	// read (after create and post-apply refresh)
+	client.On("GetStream", testutils.MockContext, getStreamRequest).
+		Return(getStreamResp, nil).
+		Times(2)
+	// read (plan-only refresh and delete pre-check)
+	client.On("GetStream", testutils.MockContext, getStreamRequest).
+		Return(getStreamResp, nil).
+		Times(2)
+
+	// delete
+	client.On("DeleteStream", testutils.MockContext, deleteStreamRequest).
+		Return(nil).
+		Once()
+
+	tfConfig := testutils.LoadFixtureString(t, "testdata/TestResourceStream/lifecycle/create_stream_inactive.tf")
+
+	useClient(client, func() {
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: tfConfig,
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_datastream.s", "contract_id", "test_contract"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "group_id", "1337"),
+					),
+				},
+				{
+					Config:   tfConfig,
+					PlanOnly: true,
+				},
+			},
+		})
+	})
+
+	client.AssertExpectations(t)
+}
+
+func TestResourceStreamUploadFilePrefixPreservedWhenAPIOmitsOnRead(t *testing.T) {
+	client := &datastream.Mock{}
+
+	PollForActivationStatusChangeInterval = 1 * time.Millisecond
+
+	streamConfiguration := optionalCDNStreamConfiguration("test_stream")
+	streamConfiguration.ContractID = "test_contract"
+	streamConfiguration.GroupID = 1337
+
+	getStreamResp := &datastream.DetailedStreamVersion{
+		StreamID:      streamID,
+		StreamName:    "test_stream",
+		StreamVersion: 1,
+		LatestVersion: 1,
+		StreamStatus:  datastream.StreamStatusDeactivated,
+		CreatedBy:     "johndoe",
+		CreatedDate:   "10-07-2020 12:19:02 GMT",
+		ModifiedBy:    "janesmith",
+		ModifiedDate:  "15-07-2020 05:51:52 GMT",
+		ProductID:     "Download_Delivery",
+		DatasetFields: []datastream.DataSetField{
+			{DatasetFieldID: 1001},
+			{DatasetFieldID: 1002},
+			{DatasetFieldID: 2000},
+			{DatasetFieldID: 2001},
+		},
+		NotificationEmails: []string{"test_email1@akamai.com", "test_email2@akamai.com"},
+		Properties: []datastream.Property{
+			{PropertyID: 1, PropertyName: "property_1"},
+			{PropertyID: 2, PropertyName: "property_2"},
+			{PropertyID: 3, PropertyName: "property_3"},
+		},
+		Destination: datastream.Destination{
+			DestinationType: datastream.DestinationTypeS3,
+			DisplayName:     "s3_test_connector_name",
+			Bucket:          "s3_test_bucket",
+			Path:            "s3_test_path",
+			Region:          "s3_test_region",
+		},
+		DeliveryConfiguration: streamConfiguration.DeliveryConfiguration,
+	}
+	getStreamResp.DeliveryConfiguration.UploadFilePrefix = ""
+	getStreamResp.DeliveryConfiguration.UploadFileSuffix = ""
+
+	createStreamRequest := datastream.CreateStreamRequest{
+		LogType:             datastream.LogTypeCDN,
+		Activate:            false,
+		StreamConfiguration: streamConfiguration,
+	}
+	getStreamRequest := datastream.GetStreamRequest{
+		StreamID: streamID,
+		LogType:  datastream.LogTypeCDN,
+	}
+	deleteStreamRequest := datastream.DeleteStreamRequest{
+		StreamID: streamID,
+		LogType:  datastream.LogTypeCDN,
+	}
+
+	// create
+	client.On("CreateStream", testutils.MockContext, createStreamRequest).
+		Return(&datastream.DetailedStreamVersion{StreamID: streamID}, nil).
+		Once()
+
+	// read (after create and post-apply refresh)
+	client.On("GetStream", testutils.MockContext, getStreamRequest).
+		Return(getStreamResp, nil).
+		Times(2)
+	// read (plan-only refresh and delete pre-check)
+	client.On("GetStream", testutils.MockContext, getStreamRequest).
+		Return(getStreamResp, nil).
+		Times(2)
+
+	// delete
+	client.On("DeleteStream", testutils.MockContext, deleteStreamRequest).
+		Return(nil).
+		Once()
+
+	tfConfig := testutils.LoadFixtureString(t, "testdata/TestResourceStream/lifecycle/create_stream_inactive.tf")
+
+	useClient(client, func() {
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: tfConfig,
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_datastream.s", "delivery_configuration.0.upload_file_prefix", "pre"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "delivery_configuration.0.upload_file_suffix", "suf"),
+					),
+				},
+				{
+					Config:   tfConfig,
+					PlanOnly: true,
+				},
+			},
+		})
+	})
+
+	client.AssertExpectations(t)
+}
+
+func TestResourceStreamPropertiesOrderDiffSuppress(t *testing.T) {
+	client := &datastream.Mock{}
+
+	PollForActivationStatusChangeInterval = 1 * time.Millisecond
+
+	streamConfiguration := datastream.StreamConfiguration{
+		CollectMidgress: false,
+		DeliveryConfiguration: datastream.DeliveryConfiguration{
+			Delimiter: datastream.DelimiterTypePtr(datastream.DelimiterTypeSpace),
+			Format:    datastream.FormatTypeStructured,
+			Frequency: datastream.Frequency{
+				IntervalInSeconds: 30,
+			},
+			UploadFilePrefix: "pre",
+			UploadFileSuffix: "suf",
+		},
+		Destination: datastream.AbstractConnector(
+			&datastream.S3Connector{
+				AccessKey:       "s3_test_access_key",
+				Bucket:          "s3_test_bucket",
+				DisplayName:     "s3_test_connector_name",
+				Path:            "s3_test_path",
+				Region:          "s3_test_region",
+				SecretAccessKey: "s3_test_secret_key",
+			},
+		),
+		ContractID: "test_contract",
+		DatasetFields: []datastream.DatasetFieldID{
+			{DatasetFieldID: 1001},
+			{DatasetFieldID: 1002},
+			{DatasetFieldID: 2000},
+			{DatasetFieldID: 2001},
+		},
+		NotificationEmails: []string{"test_email1@akamai.com", "test_email2@akamai.com"},
+		GroupID:            1337,
+		Properties: []datastream.PropertyID{
+			{PropertyID: 1},
+			{PropertyID: 2},
+			{PropertyID: 3},
+		},
+		StreamName: "test_stream",
+	}
+
+	getStreamResp := &datastream.DetailedStreamVersion{
+		StreamID:      streamID,
+		StreamName:    "test_stream",
+		StreamVersion: 1,
+		LatestVersion: 1,
+		StreamStatus:  datastream.StreamStatusDeactivated,
+		CreatedBy:     "johndoe",
+		CreatedDate:   "10-07-2020 12:19:02 GMT",
+		ModifiedBy:    "janesmith",
+		ModifiedDate:  "15-07-2020 05:51:52 GMT",
+		ProductID:     "Download_Delivery",
+		ContractID:    streamConfiguration.ContractID,
+		GroupID:       streamConfiguration.GroupID,
+		DatasetFields: []datastream.DataSetField{
+			{DatasetFieldID: 1001},
+			{DatasetFieldID: 1002},
+			{DatasetFieldID: 2000},
+			{DatasetFieldID: 2001},
+		},
+		NotificationEmails: streamConfiguration.NotificationEmails,
+		Properties: []datastream.Property{
+			{PropertyID: 1, PropertyName: "property_1"},
+			{PropertyID: 2, PropertyName: "property_2"},
+			{PropertyID: 3, PropertyName: "property_3"},
+		},
+		Destination: datastream.Destination{
+			DestinationType: datastream.DestinationTypeS3,
+			DisplayName:     "s3_test_connector_name",
+			Bucket:          "s3_test_bucket",
+			Path:            "s3_test_path",
+			Region:          "s3_test_region",
+		},
+		DeliveryConfiguration: streamConfiguration.DeliveryConfiguration,
+	}
+
+	createStreamRequest := datastream.CreateStreamRequest{
+		LogType:             datastream.LogTypeCDN,
+		Activate:            false,
+		StreamConfiguration: streamConfiguration,
+	}
+	getStreamRequest := datastream.GetStreamRequest{
+		StreamID: streamID,
+		LogType:  datastream.LogTypeCDN,
+	}
+	deleteStreamRequest := datastream.DeleteStreamRequest{
+		StreamID: streamID,
+		LogType:  datastream.LogTypeCDN,
+	}
+
+	// create
+	client.On("CreateStream", testutils.MockContext, createStreamRequest).
+		Return(&datastream.DetailedStreamVersion{StreamID: streamID}, nil).
+		Once()
+
+	// read (after create and post-apply refresh)
+	client.On("GetStream", testutils.MockContext, getStreamRequest).
+		Return(getStreamResp, nil).
+		Times(2)
+	// read (plan-only refresh and delete pre-check)
+	client.On("GetStream", testutils.MockContext, getStreamRequest).
+		Return(getStreamResp, nil).
+		Times(2)
+
+	// delete
+	client.On("DeleteStream", testutils.MockContext, deleteStreamRequest).
+		Return(nil).
+		Once()
+
+	useClient(client, func() {
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/lifecycle/create_stream_inactive.tf"),
+				},
+				{
+					// Reordered properties with the same membership must not produce a plan.
+					Config:             testutils.LoadFixtureString(t, "testdata/TestResourceStream/lifecycle/create_stream_inactive_properties_reordered.tf"),
+					PlanOnly:           true,
+					ExpectNonEmptyPlan: false,
+				},
+			},
+		})
+	})
+
+	client.AssertExpectations(t)
+}
+
+func TestResourceStreamOptionalContractAndGroup_update(t *testing.T) {
+	client := &datastream.Mock{}
+
+	PollForActivationStatusChangeInterval = 1 * time.Millisecond
+
+	getStreamResp := &datastream.DetailedStreamVersion{
+		StreamID:      streamID,
+		StreamName:    "test_stream",
+		StreamVersion: 1,
+		LatestVersion: 1,
+		StreamStatus:  datastream.StreamStatusDeactivated,
+		CreatedBy:     "johndoe",
+		CreatedDate:   "10-07-2020 12:19:02 GMT",
+		ModifiedBy:    "janesmith",
+		ModifiedDate:  "15-07-2020 05:51:52 GMT",
+		ProductID:     "Download_Delivery",
+		DatasetFields: []datastream.DataSetField{
+			{DatasetFieldID: 1001},
+			{DatasetFieldID: 1002},
+			{DatasetFieldID: 2000},
+			{DatasetFieldID: 2001},
+		},
+		NotificationEmails: []string{"test_email1@akamai.com", "test_email2@akamai.com"},
+		Properties: []datastream.Property{
+			{PropertyID: 1, PropertyName: "property_1"},
+			{PropertyID: 2, PropertyName: "property_2"},
+			{PropertyID: 3, PropertyName: "property_3"},
+		},
+		Destination: datastream.Destination{
+			DestinationType: datastream.DestinationTypeS3,
+			DisplayName:     "s3_test_connector_name",
+			Bucket:          "s3_test_bucket",
+			Path:            "s3_test_path",
+			Region:          "s3_test_region",
+		},
+		DeliveryConfiguration: datastream.DeliveryConfiguration{
+			Delimiter:        datastream.DelimiterTypePtr(datastream.DelimiterTypeSpace),
+			Format:           datastream.FormatTypeStructured,
+			Frequency:        datastream.Frequency{IntervalInSeconds: datastream.IntervalInSeconds30},
+			UploadFilePrefix: "pre",
+			UploadFileSuffix: "suf",
+		},
+	}
+
+	createStreamRequest := datastream.CreateStreamRequest{
+		LogType:             datastream.LogTypeCDN,
+		Activate:            false,
+		StreamConfiguration: optionalCDNStreamConfiguration("test_stream"),
+	}
+	updateStreamRequest := datastream.UpdateStreamRequest{
+		StreamID:            streamID,
+		LogType:             datastream.LogTypeCDN,
+		Activate:            false,
+		StreamConfiguration: optionalCDNStreamConfiguration("test_stream_updated"),
+	}
+	getStreamRequest := datastream.GetStreamRequest{
+		StreamID: streamID,
+		LogType:  datastream.LogTypeCDN,
+	}
+	deleteStreamRequest := datastream.DeleteStreamRequest{
+		StreamID: streamID,
+		LogType:  datastream.LogTypeCDN,
+	}
+
+	// create
+	client.On("CreateStream", testutils.MockContext, createStreamRequest).
+		Return(&datastream.DetailedStreamVersion{StreamID: streamID}, nil).
+		Once()
+	// read (after create and post-apply refresh)
+	client.On("GetStream", testutils.MockContext, getStreamRequest).
+		Return(getStreamResp, nil).
+		Times(2)
+	// update
+	client.On("UpdateStream", testutils.MockContext, updateStreamRequest).
+		Run(func(_ mock.Arguments) {
+			getStreamResp.StreamName = "test_stream_updated"
+			getStreamResp.StreamVersion = 2
+			getStreamResp.LatestVersion = 2
+		}).
+		Return(&datastream.DetailedStreamVersion{StreamID: streamID, StreamVersion: 2}, nil).
+		Once()
+	// read (pre-update refresh, status gate, and post-update refresh)
+	client.On("GetStream", testutils.MockContext, getStreamRequest).
+		Return(getStreamResp, nil).
+		Times(4)
+	// read (delete pre-check)
+	client.On("GetStream", testutils.MockContext, getStreamRequest).
+		Return(getStreamResp, nil).
+		Once()
+	// delete
+	client.On("DeleteStream", testutils.MockContext, deleteStreamRequest).
+		Return(nil).
+		Once()
+
+	useClient(client, func() {
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/lifecycle/create_stream_optional_ids.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_datastream.s", "contract_id", ""),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "group_id", ""),
+					),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceStream/lifecycle/update_stream_optional_ids.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_datastream.s", "stream_name", "test_stream_updated"),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "contract_id", ""),
+						resource.TestCheckResourceAttr("akamai_datastream.s", "group_id", ""),
+					),
+				},
+			},
+		})
+	})
+
+	client.AssertExpectations(t)
 }
 
 func TestResourceStreamErrors(t *testing.T) {
@@ -1938,7 +3144,7 @@ func TestUrlSuppressor(t *testing.T) {
 				},
 			},
 			Destination: connector,
-			ContractID:  "test_contract",
+			ContractID: "test_contract",
 			DatasetFields: []datastream.DataSetField{
 				{
 					DatasetFieldID:          1001,

@@ -38,9 +38,10 @@ func resourceConfiguration() *schema.Resource {
 				Description: "Brief description of the new configuration",
 			},
 			"contract_id": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "Unique identifier of the Akamai contract associated with the new configuration",
+				Type:             schema.TypeString,
+				Required:         true,
+				DiffSuppressFunc: suppressFieldForContractID,
+				Description:      "Unique identifier of the Akamai contract associated with the new configuration",
 			},
 			"group_id": {
 				Type:             schema.TypeString,
@@ -75,7 +76,7 @@ func resourceConfiguration() *schema.Resource {
 
 func resourceConfigurationCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceConfigurationCreate")
 	logger.Debug("in resourceConfigurationCreate")
 
@@ -173,7 +174,7 @@ func resourceConfigurationCreate(ctx context.Context, d *schema.ResourceData, m 
 
 func resourceConfigurationRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceConfigurationRead")
 	logger.Debug("in resourceConfigurationRead")
 
@@ -202,7 +203,7 @@ func resourceConfigurationRead(ctx context.Context, d *schema.ResourceData, m in
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -230,7 +231,7 @@ func resourceConfigurationRead(ctx context.Context, d *schema.ResourceData, m in
 
 func resourceConfigurationUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceConfigurationUpdate")
 	logger.Debug("in resourceConfigurationUpdate")
 
@@ -272,7 +273,7 @@ func resourceConfigurationUpdate(ctx context.Context, d *schema.ResourceData, m 
 			hostnames = append(hostnames, hostname)
 		}
 
-		version, err := getModifiableConfigVersion(ctx, configID, "configuration", m)
+		version, err := getModifiableConfigVersion(ctx, configID, "configuration", client)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -294,7 +295,7 @@ func resourceConfigurationUpdate(ctx context.Context, d *schema.ResourceData, m 
 
 func resourceConfigurationDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceConfigurationDelete")
 	logger.Debug("in resourceConfigurationDelete")
 

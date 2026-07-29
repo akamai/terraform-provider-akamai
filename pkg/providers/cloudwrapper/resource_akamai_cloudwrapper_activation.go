@@ -2,7 +2,6 @@ package cloudwrapper
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 	"time"
 
@@ -27,14 +26,14 @@ var (
 )
 
 var (
-	activationTimeout     = 4 * time.Hour
 	onlyTimeoutChangeWarn = diag.NewWarningDiagnostic("Update with no API calls", "requested only timeout change; API won't be called")
 )
 
 const readError = "could not read Config from API"
 
 type activationResource struct {
-	client                 cloudwrapper.CloudWrapper
+	meta.Resource
+	defaultTimeout         time.Duration
 	activationPollInterval time.Duration
 }
 
@@ -63,20 +62,15 @@ func (a *activationResource) ModifyPlan(ctx context.Context, req resource.Modify
 
 // NewActivationResource returns new cloud wrapper activation resource
 func NewActivationResource() resource.Resource {
-	return &activationResource{}
+	return &activationResource{
+		defaultTimeout:         4 * time.Hour,
+		activationPollInterval: 1 * time.Minute,
+	}
 }
 
 // Metadata implements resource.Resource
 func (a *activationResource) Metadata(_ context.Context, _ resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = "akamai_cloudwrapper_activation"
-}
-
-func (a *activationResource) setClient(client cloudwrapper.CloudWrapper) {
-	a.client = client
-}
-
-func (a *activationResource) setPollInterval(interval time.Duration) {
-	a.activationPollInterval = interval
 }
 
 // Schema implements resource.Resource
@@ -113,35 +107,6 @@ func (a *activationResource) Schema(ctx context.Context, _ resource.SchemaReques
 	}
 }
 
-// Configure implements implements resource.ResourceWithConfigure
-func (a *activationResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	a.configureResource(req, resp)
-	if a.activationPollInterval == 0 {
-		a.activationPollInterval = time.Minute
-	}
-}
-
-func (a *activationResource) configureResource(req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-
-	if a.client != nil {
-		return
-	}
-
-	meta, ok := req.ProviderData.(meta.Meta)
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *http.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-		)
-		return
-	}
-
-	a.client = cloudwrapper.Client(meta.Session())
-}
-
 type activationResourceModel struct {
 	ID       types.String   `tfsdk:"id"`
 	ConfigID types.Int64    `tfsdk:"config_id"`
@@ -160,7 +125,7 @@ func (a *activationResource) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 
-	createTimeout, diags := data.Timeouts.Create(ctx, activationTimeout)
+	createTimeout, diags := data.Timeouts.Create(ctx, a.defaultTimeout)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -181,7 +146,7 @@ func (a *activationResource) upsert(ctx context.Context, data activationResource
 	var diags diag.Diagnostics
 
 	configID := int(data.ConfigID.ValueInt64())
-	err := a.client.ActivateConfiguration(ctx, cloudwrapper.ActivateConfigurationRequest{ConfigurationIDs: []int{configID}})
+	err := a.Client.GetCloudWrapper().ActivateConfiguration(ctx, cloudwrapper.ActivateConfigurationRequest{ConfigurationIDs: []int{configID}})
 	if err != nil {
 		diags.AddError("Activating Configuration Failed", err.Error())
 		return nil, diags
@@ -201,7 +166,7 @@ func (a *activationResource) upsert(ctx context.Context, data activationResource
 }
 
 func (a *activationResource) readStateFromAPI(ctx context.Context, model activationResourceModel, configID int64) (*activationResourceModel, error) {
-	configuration, err := a.client.GetConfiguration(ctx, cloudwrapper.GetConfigurationRequest{ConfigID: configID})
+	configuration, err := a.Client.GetCloudWrapper().GetConfiguration(ctx, cloudwrapper.GetConfigurationRequest{ConfigID: configID})
 	if err != nil {
 		return nil, err
 	}
@@ -222,7 +187,7 @@ func (a *activationResource) waitUntilActivationCompleted(ctx context.Context, c
 	defer cancel()
 
 	for {
-		configuration, err := a.client.GetConfiguration(ctx, cloudwrapper.GetConfigurationRequest{ConfigID: int64(configID)})
+		configuration, err := a.Client.GetCloudWrapper().GetConfiguration(ctx, cloudwrapper.GetConfigurationRequest{ConfigID: int64(configID)})
 		if err != nil {
 			diags.AddError(readError, err.Error())
 			return diags
@@ -287,7 +252,7 @@ func (a *activationResource) Update(ctx context.Context, req resource.UpdateRequ
 		return
 	}
 
-	updateTimeout, diags := plan.Timeouts.Update(ctx, activationTimeout)
+	updateTimeout, diags := plan.Timeouts.Update(ctx, a.defaultTimeout)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return

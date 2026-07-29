@@ -49,7 +49,7 @@ func resourceSecurityPolicyRename() *schema.Resource {
 
 func resourceSecurityPolicyRenameCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyRenameCreate")
 	logger.Debugf("in resourceSecurityPolicyRenameCreate")
 
@@ -57,7 +57,7 @@ func resourceSecurityPolicyRenameCreate(ctx context.Context, d *schema.ResourceD
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "securityPolicyRename", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "securityPolicyRename", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -90,7 +90,7 @@ func resourceSecurityPolicyRenameCreate(ctx context.Context, d *schema.ResourceD
 
 func resourceSecurityPolicyRenameRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyRenameRead")
 	logger.Debugf("in resourceSecurityPolicyRenameRead")
 
@@ -102,7 +102,7 @@ func resourceSecurityPolicyRenameRead(ctx context.Context, d *schema.ResourceDat
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -134,7 +134,7 @@ func resourceSecurityPolicyRenameRead(ctx context.Context, d *schema.ResourceDat
 
 func resourceSecurityPolicyRenameUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyRenameUpdate")
 	logger.Debugf("in resourceSecurityPolicyRenameUpdate")
 
@@ -146,7 +146,7 @@ func resourceSecurityPolicyRenameUpdate(ctx context.Context, d *schema.ResourceD
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "securityPolicyRename", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "securityPolicyRename", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}

@@ -44,7 +44,7 @@ func resourceAdvancedSettingsJA4Fingerprint() *schema.Resource {
 
 func resourceAdvancedSettingsJA4FingerprintCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsJA4FingerprintCreate")
 	logger.Debugf("in resourceAdvancedSettingsJA4FingerprintCreate")
 
@@ -52,7 +52,7 @@ func resourceAdvancedSettingsJA4FingerprintCreate(ctx context.Context, d *schema
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "ja4Fingerprint", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ja4Fingerprint", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -80,7 +80,7 @@ func resourceAdvancedSettingsJA4FingerprintCreate(ctx context.Context, d *schema
 
 func resourceAdvancedSettingsJA4FingerprintRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsJA4FingerprintRead")
 	logger.Debugf("in resourceAdvancedSettingsJA4FingerprintRead")
 
@@ -90,7 +90,7 @@ func resourceAdvancedSettingsJA4FingerprintRead(ctx context.Context, d *schema.R
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -116,7 +116,7 @@ func resourceAdvancedSettingsJA4FingerprintRead(ctx context.Context, d *schema.R
 
 func resourceAdvancedSettingsJA4FingerprintUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsJA4FingerprintUpdate")
 	logger.Debugf("in resourceAdvancedSettingsJA4FingerprintUpdate")
 
@@ -124,7 +124,7 @@ func resourceAdvancedSettingsJA4FingerprintUpdate(ctx context.Context, d *schema
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "ja4Fingerprint", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ja4Fingerprint", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -150,7 +150,7 @@ func resourceAdvancedSettingsJA4FingerprintUpdate(ctx context.Context, d *schema
 
 func resourceAdvancedSettingsJA4FingerprintDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsJA4FingerprintDelete")
 	logger.Debugf("in resourceAdvancedSettingsJA4FingerprintDelete")
 
@@ -160,7 +160,7 @@ func resourceAdvancedSettingsJA4FingerprintDelete(ctx context.Context, d *schema
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "ja4Fingerprint", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ja4Fingerprint", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}

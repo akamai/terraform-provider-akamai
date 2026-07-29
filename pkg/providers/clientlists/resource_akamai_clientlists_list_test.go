@@ -15,6 +15,7 @@ import (
 )
 
 func TestResourceClientList(t *testing.T) {
+	t.Parallel()
 	type listAttributes struct {
 		ListID, Name, Notes, Type, ContractID string
 		Tags                                  []string
@@ -238,1212 +239,1107 @@ func TestResourceClientList(t *testing.T) {
 			{Value: "1234", Description: "Item 1234 Desc", Tags: []string{"1234Tag"}},
 		}
 
-		testListUpdateScenario = func(t *testing.T, listType clientlists.ClientListType, typeString, createFixtureFile, updateFixtureFile string) {
-			t.Helper()
-			client := new(clientlists.Mock)
-			clientList := expectCreateList(client, clientlists.CreateClientListRequest{
-				Name:       "List Name",
-				Notes:      "List Notes",
-				Tags:       []string{"a", "b"},
-				Type:       listType,
-				ContractID: "12_ABC",
-				GroupID:    12,
-				Items:      []clientlists.ListItemPayload{},
-			})
-			expectReadList(client, clientList.ListContent, []clientlists.ListItemContent{}, 3)
-			updateResponse := expectUpdateList(client, listType, 0, clientlists.UpdateClientListRequest{
-				UpdateClientList: clientlists.UpdateClientList{
-					Name:  "List Name Updated",
-					Notes: "List Notes Updated",
-					Tags:  []string{"a", "c", "d"},
-				},
-				ListID: clientList.ListID,
-			})
-			expectReadList(client, updateResponse.ListContent, []clientlists.ListItemContent{}, 2)
-			expectDeleteList(client, clientList.ListContent)
-
-			runResourceTest(t, client, []resource.TestStep{
-				{
-					Config: loadFixtureString(fmt.Sprintf("%s/%s", testDir, createFixtureFile)),
-					Check: checkAttributes(listAttributes{
-						ListID:     clientList.ListID,
-						Name:       "List Name",
-						Notes:      "List Notes",
-						Tags:       []string{"a", "b"},
-						Type:       typeString,
-						ContractID: "12_ABC",
-						GroupID:    12,
-						Version:    1,
-						ItemsCount: 0,
-					}),
-				},
-				{
-					Config: loadFixtureString(fmt.Sprintf("%s/%s", testDir, updateFixtureFile)),
-					Check: checkAttributes(listAttributes{
-						ListID:     clientList.ListID,
-						Name:       "List Name Updated",
-						Notes:      "List Notes Updated",
-						Tags:       []string{"a", "c", "d"},
-						Type:       typeString,
-						ContractID: "12_ABC",
-						GroupID:    12,
-						Version:    1,
-						ItemsCount: 0,
-					}),
-				},
-			})
+		userUsernameItems = []clientlists.ListItemPayload{
+			{Value: "user3", Description: "Item 3 Desc", Tags: []string{"item3Tag2", "item3Tag1"}},
+			{Value: "user1", Description: "Item 1 Desc", Tags: []string{"item1Tag2", "item1Tag1"}},
+			{Value: "user2", ExpirationDate: "2026-12-26T01:00:00+00:00", Tags: []string{}},
 		}
-	)
 
-	t.Run("Create a new client list", func(t *testing.T) {
-		client := new(clientlists.Mock)
-		clientList := expectCreateList(client, clientlists.CreateClientListRequest{
-			Name:       "List Name",
-			Notes:      "List Notes",
-			Tags:       []string{"a", "b"},
-			Type:       clientlists.ASN,
-			ContractID: "12_ABC",
-			GroupID:    12,
-			Items:      []clientlists.ListItemPayload{},
-		})
-		expectReadList(client, clientList.ListContent, []clientlists.ListItemContent{}, 2)
-		expectDeleteList(client, clientList.ListContent)
+		userUserIDItems = []clientlists.ListItemPayload{item3WithUserID, item2WithUserID, item1WithUserID}
 
-		runResourceTest(t, client, []resource.TestStep{
-			{
-				Config: loadFixtureString(fmt.Sprintf("%s/list_create.tf", testDir)),
-				Check: checkAttributes(listAttributes{
-					ListID:     clientList.ListID,
-					Name:       "List Name",
-					Notes:      "List Notes",
-					Tags:       []string{"a", "b"},
-					Type:       "ASN",
-					ContractID: "12_ABC",
-					GroupID:    12,
-					Version:    1,
-					ItemsCount: 0,
-					Items:      []clientlists.ListItemPayload{},
-				}),
-			},
-		})
-	})
-
-	t.Run("Update client list", func(t *testing.T) {
-		testListUpdateScenario(t, clientlists.ASN, "ASN", "list_create.tf", "list_update.tf")
-	})
-
-	t.Run("Update client list not expected when empty tags list removed", func(t *testing.T) {
-		client := new(clientlists.Mock)
-		clientList := expectCreateList(client, clientlists.CreateClientListRequest{
-			Name:       "List Name",
-			Notes:      "List Notes",
-			Tags:       []string{},
-			Type:       clientlists.IP,
-			ContractID: "12_ABC",
-			GroupID:    12,
-			Items:      []clientlists.ListItemPayload{},
-		})
-		expectReadList(client, clientList.ListContent, []clientlists.ListItemContent{}, 4)
-		expectDeleteList(client, clientList.ListContent)
-
-		runResourceTest(t, client, []resource.TestStep{
-			{
-				Config: loadFixtureString(fmt.Sprintf("%s/list_create_empty_tags.tf", testDir)),
-				Check: checkAttributes(listAttributes{
-					ListID:     clientList.ListID,
-					Name:       "List Name",
-					Notes:      "List Notes",
-					Type:       "IP",
-					ContractID: "12_ABC",
-					GroupID:    12,
-					Version:    1,
-					ItemsCount: 0,
-				}),
-			},
-			{
-				Config: loadFixtureString(fmt.Sprintf("%s/list_update_remove_tags.tf", testDir)),
-				Check: checkAttributes(listAttributes{
-					ListID:     clientList.ListID,
-					Name:       "List Name",
-					Notes:      "List Notes",
-					Tags:       []string{},
-					Type:       "IP",
-					ContractID: "12_ABC",
-					GroupID:    12,
-					Version:    1,
-					ItemsCount: 0,
-				}),
-			},
-		})
-	})
-
-	t.Run("Get client list returns an API error", func(t *testing.T) {
-		client := new(clientlists.Mock)
-		clientList := expectCreateList(client, clientlists.CreateClientListRequest{
-			Name:       "List Name",
-			Notes:      "List Notes",
-			Tags:       []string{"a", "b"},
-			Type:       clientlists.ASN,
-			ContractID: "12_ABC",
-			GroupID:    12,
-			Items:      []clientlists.ListItemPayload{},
-		})
-
-		expectAPIErrorWithGetList(client, clientlists.GetClientListRequest{
-			ListID:       clientList.ListID,
-			IncludeItems: true,
-		})
-		expectDeleteList(client, clientList.ListContent)
-
-		runResourceTest(t, client, []resource.TestStep{
-			{
-				Config:      loadFixtureString(fmt.Sprintf("%s/list_create.tf", testDir)),
-				ExpectError: regexp.MustCompile(getAPIError),
-			},
-		})
-	})
-
-	t.Run("Update client list returns an API error", func(t *testing.T) {
-		client := new(clientlists.Mock)
-		clientList := expectCreateList(client, clientlists.CreateClientListRequest{
-			Name:       "List Name",
-			Notes:      "List Notes",
-			Tags:       []string{"a", "b"},
-			Type:       clientlists.ASN,
-			ContractID: "12_ABC",
-			GroupID:    12,
-			Items:      []clientlists.ListItemPayload{},
-		})
-		expectReadList(client, clientList.ListContent, []clientlists.ListItemContent{}, 3)
-
-		expectAPIErrorWithUpdateList(client, clientlists.UpdateClientListRequest{
-			UpdateClientList: clientlists.UpdateClientList{
-				Name:  "List Name Updated",
-				Notes: "List Notes Updated",
-				Tags:  []string{"a", "c", "d"},
-			},
-			ListID: clientList.ListID,
-		})
-		expectDeleteList(client, clientList.ListContent)
-
-		runResourceTest(t, client, []resource.TestStep{
-			{
-				Config: loadFixtureString(fmt.Sprintf("%s/list_create.tf", testDir)),
-				Check: checkAttributes(listAttributes{
-					ListID:     clientList.ListID,
-					Name:       "List Name",
-					Notes:      "List Notes",
-					Tags:       []string{"a", "b"},
-					Type:       "ASN",
-					ContractID: "12_ABC",
-					GroupID:    12,
-					Version:    1,
-					ItemsCount: 0,
-				}),
-			},
-			{
-				Config:      loadFixtureString(fmt.Sprintf("%s/list_update.tf", testDir)),
-				ExpectError: regexp.MustCompile(updateAPIError),
-			},
-		})
-	})
-
-	t.Run("Create a new client list with items", func(t *testing.T) {
-		client := new(clientlists.Mock)
-		items := append([]clientlists.ListItemPayload{},
-			clientlists.ListItemPayload{
-				Value:       "1",
-				Description: "Item 1 Desc",
-				Tags:        []string{"item1Tag2", "item1Tag1"},
-			},
-			clientlists.ListItemPayload{
-				Value:          "123",
-				ExpirationDate: "2026-12-26T01:00:00+00:00",
-				Tags:           []string{},
-			},
-			clientlists.ListItemPayload{
-				Value:       "12",
-				Description: "Item 12 Desc",
-				Tags:        []string{"item12Tag1", "item12Tag2"},
-			})
-
-		clientList := expectCreateList(client, clientlists.CreateClientListRequest{
-			Name:       "List Name",
-			Notes:      "List Notes",
-			Tags:       []string{"a", "b"},
-			Type:       clientlists.ASN,
-			ContractID: "12_ABC",
-			GroupID:    12,
-			Items:      items,
-		})
-		expectReadList(client, clientList.ListContent, mapItemsPayloadToContent(items), 2)
-		expectDeleteList(client, clientList.ListContent)
-
-		runResourceTest(t, client, []resource.TestStep{
-			{
-				Config: loadFixtureString(fmt.Sprintf("%s/list_and_items_create.tf", testDir)),
-				Check: checkAttributes(listAttributes{
-					ListID:     clientList.ListID,
-					Name:       "List Name",
-					Notes:      "List Notes",
-					Tags:       []string{"a", "b"},
-					Type:       "ASN",
-					ContractID: "12_ABC",
-					GroupID:    12,
-					Version:    1,
-					ItemsCount: len(items),
-					Items:      items,
-				}),
-			},
-		})
-	})
-
-	t.Run("Update client list items and list", func(t *testing.T) {
-		client := new(clientlists.Mock)
-		items := asnItems
-		updatedItems := asnUpdatedItems
-
-		clientList := expectCreateList(client, clientlists.CreateClientListRequest{
-			Name:       "List Name",
-			Notes:      "List Notes",
-			Tags:       []string{"a", "b"},
-			Type:       clientlists.ASN,
-			ContractID: "12_ABC",
-			GroupID:    12,
-			Items:      items,
-		})
-		expectReadList(client, clientList.ListContent, mapItemsPayloadToContent(items), 4)
-		updateResponse := expectUpdateList(client, clientlists.ASN, 3, clientlists.UpdateClientListRequest{
-			UpdateClientList: clientlists.UpdateClientList{
-				Name:  "List Name Updated",
-				Notes: "List Notes Updated",
-				Tags:  []string{"a", "c", "d"},
-			},
-			ListID: clientList.ListID,
-		})
-		expectUpdateListItems(client, clientlists.UpdateClientListItemsRequest{
-			ListID: clientList.ListID,
-			UpdateClientListItems: clientlists.UpdateClientListItems{
-				Append: []clientlists.ListItemPayload{
-					{
-						Value:       "1234",
-						Description: "Item 1234 Desc",
-						Tags:        []string{"1234Tag"},
-					},
-				},
-				Update: []clientlists.ListItemPayload{
-					{
-						Value:       "12",
-						Description: "Item 12 Desc Updated",
-						Tags:        []string{"item12Tag1", "item12Tag2"},
-					},
-				},
-				Delete: []clientlists.ListItemPayload{
-					{
-						Value: "123",
-					},
-				},
-			},
-		})
-		expectReadList(client, updateResponse.ListContent, mapItemsPayloadToContent(updatedItems), 2)
-		expectDeleteList(client, clientList.ListContent)
-
-		runResourceTest(t, client, []resource.TestStep{
-			{
-				Config: loadFixtureString(fmt.Sprintf("%s/list_and_items_create.tf", testDir)),
-				Check: checkAttributes(listAttributes{
-					ListID:     clientList.ListID,
-					Name:       "List Name",
-					Notes:      "List Notes",
-					Tags:       []string{"a", "b"},
-					Type:       "ASN",
-					ContractID: "12_ABC",
-					GroupID:    12,
-					Version:    1,
-					ItemsCount: 3,
-					Items:      items,
-				}),
-			},
-			{
-				Config: loadFixtureString(fmt.Sprintf("%s/list_and_items_update.tf", testDir)),
-				Check: checkAttributes(listAttributes{
-					ListID:     clientList.ListID,
-					Name:       "List Name Updated",
-					Notes:      "List Notes Updated",
-					Tags:       []string{"a", "c", "d"},
-					Type:       "ASN",
-					ContractID: "12_ABC",
-					GroupID:    12,
-					Version:    1,
-					ItemsCount: 3,
-					Items:      updatedItems,
-				}),
-			},
-		})
-	})
-
-	t.Run("Update client list items only", func(t *testing.T) {
-		client := new(clientlists.Mock)
-		items := asnItems
-		updatedItems := asnUpdatedItems
-
-		clientList := expectCreateList(client, clientlists.CreateClientListRequest{
-			Name:       "List Name",
-			Notes:      "List Notes",
-			Tags:       []string{"a", "b"},
-			Type:       clientlists.ASN,
-			ContractID: "12_ABC",
-			GroupID:    12,
-			Items:      items,
-		})
-		expectReadList(client, clientList.ListContent, mapItemsPayloadToContent(items), 4)
-		expectUpdateListItems(client, clientlists.UpdateClientListItemsRequest{
-			ListID: clientList.ListID,
-			UpdateClientListItems: clientlists.UpdateClientListItems{
-				Append: []clientlists.ListItemPayload{
-					{
-						Value:       "1234",
-						Description: "Item 1234 Desc",
-						Tags:        []string{"1234Tag"},
-					},
-				},
-				Update: []clientlists.ListItemPayload{
-					{
-						Value:       "12",
-						Description: "Item 12 Desc Updated",
-						Tags:        []string{"item12Tag1", "item12Tag2"},
-					},
-				},
-				Delete: []clientlists.ListItemPayload{
-					{
-						Value: "123",
-					},
-				},
-			},
-		})
-		expectReadList(client, clientList.ListContent, mapItemsPayloadToContent(updatedItems), 2)
-		expectDeleteList(client, clientList.ListContent)
-
-		runResourceTest(t, client, []resource.TestStep{
-			{
-				Config: loadFixtureString(fmt.Sprintf("%s/list_and_items_create.tf", testDir)),
-				Check: checkAttributes(listAttributes{
-					ListID:     clientList.ListID,
-					Name:       "List Name",
-					Notes:      "List Notes",
-					Tags:       []string{"a", "b"},
-					Type:       "ASN",
-					ContractID: "12_ABC",
-					GroupID:    12,
-					Version:    1,
-					ItemsCount: 3,
-					Items:      items,
-				}),
-			},
-			{
-				Config: loadFixtureString(fmt.Sprintf("%s/list_items_only_update.tf", testDir)),
-				Check: checkAttributes(listAttributes{
-					ListID:     clientList.ListID,
-					Name:       "List Name",
-					Notes:      "List Notes",
-					Tags:       []string{"a", "b"},
-					Type:       "ASN",
-					ContractID: "12_ABC",
-					GroupID:    12,
-					Version:    1,
-					ItemsCount: 3,
-					Items:      updatedItems,
-				}),
-			},
-		})
-	})
-
-	t.Run("Update items set new computed version", func(t *testing.T) {
-		client := new(clientlists.Mock)
-		items := append([]clientlists.ListItemPayload{},
-			clientlists.ListItemPayload{
-				Value:       "1",
-				Description: "Item 1 Desc",
-				Tags:        []string{"item1Tag2", "item1Tag1"},
-			})
-		var updatedItems []clientlists.ListItemPayload
-
-		clientList := expectCreateList(client, clientlists.CreateClientListRequest{
-			Name:       "List Name",
-			Notes:      "List Notes",
-			Tags:       []string{"a", "b"},
-			Type:       clientlists.ASN,
-			ContractID: "12_ABC",
-			GroupID:    12,
-			Items:      items,
-		})
-		expectReadList(client, clientList.ListContent, mapItemsPayloadToContent(items), 4)
-		expectUpdateListItems(client, clientlists.UpdateClientListItemsRequest{
-			ListID: clientList.ListID,
-			UpdateClientListItems: clientlists.UpdateClientListItems{
-				Append: []clientlists.ListItemPayload{},
-				Update: []clientlists.ListItemPayload{},
-				Delete: []clientlists.ListItemPayload{{Value: "1"}},
-			},
-		})
-		// Update version
-		updatedClientList := clientList.ListContent
-		updatedClientList.Version = 2
-
-		expectReadList(client, updatedClientList, mapItemsPayloadToContent(updatedItems), 2)
-		expectDeleteList(client, clientList.ListContent)
-
-		runResourceTest(t, client, []resource.TestStep{
-			{
-				Config: loadFixtureString(fmt.Sprintf("%s/list_and_items_create_one_item.tf", testDir)),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckOutput("version", "1"),
-				),
-			},
-			{
-				Config: loadFixtureString(fmt.Sprintf("%s/list_items_update_compute_version.tf", testDir)),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckOutput("version", "2"),
-				),
-			},
-		})
-	})
-
-	t.Run("Update items NOT set new computed version", func(t *testing.T) {
-		client := new(clientlists.Mock)
-		items := append([]clientlists.ListItemPayload{},
-			clientlists.ListItemPayload{
-				Value:       "1",
-				Description: "Item 1 Desc",
-				Tags:        []string{"item1Tag2", "item1Tag1"},
-			})
-		updatedItems := append([]clientlists.ListItemPayload{},
-			clientlists.ListItemPayload{
-				Value: "1",
-			})
-
-		clientList := expectCreateList(client, clientlists.CreateClientListRequest{
-			Name:       "List Name",
-			Notes:      "List Notes",
-			Tags:       []string{"a", "b"},
-			Type:       clientlists.ASN,
-			ContractID: "12_ABC",
-			GroupID:    12,
-			Items:      items,
-		})
-		expectReadList(client, clientList.ListContent, mapItemsPayloadToContent(items), 4)
-		expectUpdateListItems(client, clientlists.UpdateClientListItemsRequest{
-			ListID: clientList.ListID,
-			UpdateClientListItems: clientlists.UpdateClientListItems{
-				Append: []clientlists.ListItemPayload{},
-				Update: []clientlists.ListItemPayload{
-					{
-						Value: "1",
-						Tags:  []string{},
-					},
-				},
-				Delete: []clientlists.ListItemPayload{},
-			},
-		})
-		expectReadList(client, clientList.ListContent, mapItemsPayloadToContent(updatedItems), 2)
-		expectDeleteList(client, clientList.ListContent)
-
-		runResourceTest(t, client, []resource.TestStep{
-			{
-				Config: loadFixtureString(fmt.Sprintf("%s/list_and_items_create_one_item.tf", testDir)),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckOutput("version", "1"),
-				),
-			},
-			{
-				Config: loadFixtureString(fmt.Sprintf("%s/list_items_update_not_compute_version.tf", testDir)),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckOutput("version", "1"),
-				),
-			},
-		})
-	})
-
-	t.Run("Create list with duplicate items fails", func(t *testing.T) {
-		client := new(clientlists.Mock)
-
-		runResourceTest(t, client, []resource.TestStep{
-			{
-				Config:      loadFixtureString(fmt.Sprintf("%s/list_and_duplicate_items_create.tf", testDir)),
-				ExpectError: regexp.MustCompile("Error: 'Items' collection contains duplicate values for 'value' field. Duplicate value: 12"),
-			},
-		})
-	})
-
-	t.Run("Import clientlist resource", func(t *testing.T) {
-		client := new(clientlists.Mock)
-
-		clientList := expectCreateList(client, clientlists.CreateClientListRequest{
-			Name:       "List Name",
-			Notes:      "List Notes",
-			Tags:       []string{"a", "b"},
-			Type:       clientlists.ASN,
-			ContractID: "12_ABC",
-			GroupID:    12,
-			Items:      []clientlists.ListItemPayload{},
-		})
-		expectReadList(client, clientList.ListContent, []clientlists.ListItemContent{}, 3)
-		expectDeleteList(client, clientList.ListContent)
-
-		runResourceTest(t, client, []resource.TestStep{
-			{
-				Config: loadFixtureString(fmt.Sprintf("%s/list_create.tf", testDir)),
-			},
-			{
-				ImportState:       true,
-				ImportStateVerify: true,
-				ImportStateId:     "1_AB",
-				ResourceName:      "akamai_clientlist_list.test_list",
-			},
-		})
-	})
-
-	t.Run("Create a new USER type client list without items - no username translation", func(t *testing.T) {
-		client := new(clientlists.Mock)
-		clientList := expectCreateList(client, clientlists.CreateClientListRequest{
-			Name:       "List Name",
-			Notes:      "List Notes",
-			Tags:       []string{"a", "b"},
-			Type:       clientlists.USER,
-			ContractID: "12_ABC",
-			GroupID:    12,
-			Items:      []clientlists.ListItemPayload{},
-		})
-		expectReadList(client, clientList.ListContent, []clientlists.ListItemContent{}, 2)
-		expectReadItems(client, clientList.ListContent, []clientlists.ListItemContent{}, 2)
-		expectDeleteList(client, clientList.ListContent)
-
-		runResourceTest(t, client, []resource.TestStep{
-			{
-				Config: loadFixtureString(fmt.Sprintf("%s/user_type_list_create.tf", testDir)),
-				Check: checkAttributes(listAttributes{
-					ListID:     clientList.ListID,
-					Name:       "List Name",
-					Notes:      "List Notes",
-					Tags:       []string{"a", "b"},
-					Type:       "USER_ID",
-					ContractID: "12_ABC",
-					GroupID:    12,
-					Version:    1,
-					ItemsCount: 0,
-					Items:      []clientlists.ListItemPayload{},
-				}),
-			},
-		})
-	})
-
-	t.Run("Create a new USER type client list with items - Username as value, require username translation", func(t *testing.T) {
-		client := new(clientlists.Mock)
-		items := append([]clientlists.ListItemPayload{},
-			clientlists.ListItemPayload{
-				Value:       "user3",
-				Description: "Item 3 Desc",
-				Tags:        []string{"item3Tag2", "item3Tag1"},
-			},
-			clientlists.ListItemPayload{
-				Value:       "user1",
-				Description: "Item 1 Desc",
-				Tags:        []string{"item1Tag2", "item1Tag1"},
-			},
-			clientlists.ListItemPayload{
-				Value:          "user2",
-				ExpirationDate: "2026-12-26T01:00:00+00:00",
-				Tags:           []string{},
-			})
-
-		itemsWithUserIDValues := append([]clientlists.ListItemPayload{},
-			item3WithUserID,
+		userMixItems = []clientlists.ListItemPayload{
+			{Value: "user3", Description: "Item 3 Desc", Tags: []string{"item3Tag2", "item3Tag1"}},
+			item2WithUserID,
 			item1WithUserID,
-			item2WithUserID)
+		}
 
-		clientList := expectCreateList(client, clientlists.CreateClientListRequest{
-			Name:       "List Name",
-			Notes:      "List Notes",
-			Tags:       []string{"a", "b"},
-			Type:       clientlists.USER,
-			ContractID: "12_ABC",
-			GroupID:    12,
-			Items:      items,
-		})
-		expectReadList(client, clientList.ListContent, mapItemsPayloadToContent(itemsWithUserIDValues), 2)
-		expectReadItems(client, clientList.ListContent, []clientlists.ListItemContent{}, 2)
-		expectTranslateUsernames(client, []string{"user3", "user1", "user2"},
-			map[string]string{
-				"user1": "3a453537-faa8-4525-b5db-022447bbbf2a",
-				"user2": "07e29045-7739-4bd9-8cfb-9f118e000337",
-				"user3": "e164394a-5ae1-4208-8487-1ac0f368ecf3",
-			}, 3)
-		expectDeleteList(client, clientList.ListContent)
-
-		runResourceTest(t, client, []resource.TestStep{
-			{
-				Config: loadFixtureString(fmt.Sprintf("%s/user_type_list_and_items_create.tf", testDir)),
-				Check: checkAttributes(listAttributes{
-					ListID:     clientList.ListID,
-					Name:       "List Name",
-					Notes:      "List Notes",
-					Tags:       []string{"a", "b"},
-					Type:       "USER_ID",
-					ContractID: "12_ABC",
-					GroupID:    12,
-					Version:    1,
-					ItemsCount: len(items),
-					Items:      items,
-				}),
-			},
-		})
-	})
-
-	t.Run("Create a new USER type client list with items - UserID as value, no username translation", func(t *testing.T) {
-		client := new(clientlists.Mock)
-		items := append([]clientlists.ListItemPayload{},
-			item3WithUserID,
+		userMixUpdatedItems = []clientlists.ListItemPayload{
+			{Value: "user3", Description: "Item 3 Desc Updated", Tags: []string{"item3Tag2", "item3Tag1"}},
 			item2WithUserID,
-			item1WithUserID)
+			{Value: "sales@ubs.com", Description: "Item 1 Desc", Tags: []string{"item1Tag2", "item1Tag1"}},
+		}
 
-		itemsWithUserIDValues := append([]clientlists.ListItemPayload{},
-			item3WithUserID,
-			item2WithUserID,
-			item1WithUserID)
+		domainItems = []clientlists.ListItemPayload{
+			{Value: "b.com", Description: "Domain b", Tags: []string{}},
+			{Value: "a.com", Description: "Domain a", Tags: []string{}},
+			{Value: "c.com", Description: "Domain c", Tags: []string{}},
+		}
 
-		clientList := expectCreateList(client, clientlists.CreateClientListRequest{
-			Name:       "List Name",
-			Notes:      "List Notes",
-			Tags:       []string{"a", "b"},
-			Type:       clientlists.USER,
-			ContractID: "12_ABC",
-			GroupID:    12,
-			Items:      items,
-		})
-		expectReadList(client, clientList.ListContent, mapItemsPayloadToContent(itemsWithUserIDValues), 2)
-		expectReadItems(client, clientList.ListContent, []clientlists.ListItemContent{}, 2)
-		expectDeleteList(client, clientList.ListContent)
-
-		runResourceTest(t, client, []resource.TestStep{
-			{
-				Config: loadFixtureString(fmt.Sprintf("%s/user_type_list_and_items_user_id_create.tf", testDir)),
-				Check: checkAttributes(listAttributes{
-					ListID:     clientList.ListID,
-					Name:       "List Name",
-					Notes:      "List Notes",
-					Tags:       []string{"a", "b"},
-					Type:       "USER_ID",
-					ContractID: "12_ABC",
-					GroupID:    12,
-					Version:    1,
-					ItemsCount: len(items),
-					Items:      items,
-				}),
-			},
-		})
-	})
-	t.Run("Create a new USER type client list with items - mix UserID, Username as value, require username translation", func(t *testing.T) {
-		client := new(clientlists.Mock)
-		items := append([]clientlists.ListItemPayload{},
-			clientlists.ListItemPayload{
-				Value:       "user3",
-				Description: "Item 3 Desc",
-				Tags:        []string{"item3Tag2", "item3Tag1"},
-			},
-			item2WithUserID,
-			item1WithUserID)
-
-		itemsWithUserIDValues := append([]clientlists.ListItemPayload{},
-			item3WithUserID,
-			item2WithUserID,
-			item1WithUserID)
-
-		clientList := expectCreateList(client, clientlists.CreateClientListRequest{
-			Name:       "List Name",
-			Notes:      "List Notes",
-			Tags:       []string{"a", "b"},
-			Type:       clientlists.USER,
-			ContractID: "12_ABC",
-			GroupID:    12,
-			Items:      items,
-		})
-		expectReadList(client, clientList.ListContent, mapItemsPayloadToContent(itemsWithUserIDValues), 2)
-		expectReadItems(client, clientList.ListContent, []clientlists.ListItemContent{}, 2)
-		expectTranslateUsernames(client, []string{"user3"},
-			map[string]string{
-				"user3": "e164394a-5ae1-4208-8487-1ac0f368ecf3",
-			}, 3)
-		expectDeleteList(client, clientList.ListContent)
-
-		runResourceTest(t, client, []resource.TestStep{
-			{
-				Config: loadFixtureString(fmt.Sprintf("%s/user_type_list_and_items_mix_username_user_id_create.tf", testDir)),
-				Check: checkAttributes(listAttributes{
-					ListID:     clientList.ListID,
-					Name:       "List Name",
-					Notes:      "List Notes",
-					Tags:       []string{"a", "b"},
-					Type:       "USER_ID",
-					ContractID: "12_ABC",
-					GroupID:    12,
-					Version:    1,
-					ItemsCount: len(items),
-					Items:      items,
-				}),
-			},
-		})
-	})
-
-	t.Run("Update USER type client list items and list - mix UserID, Username as value, require username translation", func(t *testing.T) {
-		client := new(clientlists.Mock)
-		items := append([]clientlists.ListItemPayload{},
-			clientlists.ListItemPayload{
-				Value:       "user3",
-				Description: "Item 3 Desc",
-				Tags:        []string{"item3Tag2", "item3Tag1"},
-			},
-			item2WithUserID,
-			item1WithUserID)
-		updatedItems := append([]clientlists.ListItemPayload{},
-			clientlists.ListItemPayload{
-				Value:       "user3",
-				Description: "Item 3 Desc Updated",
-				Tags:        []string{"item3Tag2", "item3Tag1"},
-			},
-			item2WithUserID,
-			clientlists.ListItemPayload{
-				Value:       "sales@ubs.com",
-				Description: "Item 1 Desc",
-				Tags:        []string{"item1Tag2", "item1Tag1"},
-			})
-
-		clientList := expectCreateList(client, clientlists.CreateClientListRequest{
-			Name:       "List Name",
-			Notes:      "List Notes",
-			Tags:       []string{"a", "b"},
-			Type:       clientlists.USER,
-			ContractID: "12_ABC",
-			GroupID:    12,
-			Items:      items,
-		})
-		expectReadList(client, clientList.ListContent, mapItemsPayloadToContent(items), 4)
-		expectReadItems(client, clientList.ListContent, []clientlists.ListItemContent{}, 5)
-		expectTranslateUsernames(client, []string{"user3"},
-			map[string]string{
-				"user3": "e164394a-5ae1-4208-8487-1ac0f368ecf3",
-			}, 4)
-
-		updateResponse := expectUpdateList(client, clientlists.USER, 3, clientlists.UpdateClientListRequest{
-			UpdateClientList: clientlists.UpdateClientList{
-				Name:  "List Name Updated",
-				Notes: "List Notes Updated",
-				Tags:  []string{"a", "c", "d"},
-			},
-			ListID: clientList.ListID,
-		})
-		expectUpdateListItems(client, clientlists.UpdateClientListItemsRequest{
-			ListID: clientList.ListID,
-			UpdateClientListItems: clientlists.UpdateClientListItems{
-				Append: []clientlists.ListItemPayload{
-					{
-						Value:       "sales@ubs.com",
-						Description: "Item 1 Desc",
-						Tags:        []string{"item1Tag2", "item1Tag1"},
-					},
-				},
-				Update: []clientlists.ListItemPayload{
-					{
-						Value:       "user3",
-						Description: "Item 3 Desc Updated",
-						Tags:        []string{"item3Tag2", "item3Tag1"},
-					},
-				},
-				Delete: []clientlists.ListItemPayload{
-					{
-						Value: "3a453537-faa8-4525-b5db-022447bbbf2a",
-					},
-				},
-			},
-		})
-		expectReadList(client, updateResponse.ListContent, mapItemsPayloadToContent(updatedItems), 2)
-		expectTranslateUsernames(client, []string{"sales@ubs.com", "user3"},
-			map[string]string{
-				"sales@ubs.com": "c99dddc8-ef8f-46d5-93ee-e85f7aeb0b9a",
-				"user3":         "e164394a-5ae1-4208-8487-1ac0f368ecf3",
-			}, 3)
-		expectDeleteList(client, clientList.ListContent)
-
-		runResourceTest(t, client, []resource.TestStep{
-			{
-				Config: loadFixtureString(fmt.Sprintf("%s/user_type_list_and_items_mix_username_user_id_create.tf", testDir)),
-				Check: checkAttributes(listAttributes{
-					ListID:     clientList.ListID,
-					Name:       "List Name",
-					Notes:      "List Notes",
-					Tags:       []string{"a", "b"},
-					Type:       "USER_ID",
-					ContractID: "12_ABC",
-					GroupID:    12,
-					Version:    1,
-					ItemsCount: len(items),
-					Items:      items,
-				}),
-			},
-			{
-				Config: loadFixtureString(fmt.Sprintf("%s/user_type_list_and_items_mix_username_user_id_update.tf", testDir)),
-				Check: checkAttributes(listAttributes{
-					ListID:     clientList.ListID,
-					Name:       "List Name Updated",
-					Notes:      "List Notes Updated",
-					Tags:       []string{"a", "c", "d"},
-					Type:       "USER_ID",
-					ContractID: "12_ABC",
-					GroupID:    12,
-					Version:    1,
-					ItemsCount: 3,
-					Items:      updatedItems,
-				}),
-			},
-		})
-	})
-
-	t.Run("Create a new USER type client list without permission - returns an 403 API error", func(t *testing.T) {
-		client := new(clientlists.Mock)
-		expectAPIErrorWithCreateList(client, clientlists.CreateClientListRequest{
-			Name:       "List Name",
-			Notes:      "List Notes",
-			Tags:       []string{"a", "b"},
-			Type:       clientlists.USER,
-			ContractID: "12_ABC",
-			GroupID:    12,
-			Items:      []clientlists.ListItemPayload{},
-		})
-
-		runResourceTest(t, client, []resource.TestStep{
-			{
-				Config:      loadFixtureString(fmt.Sprintf("%s/user_type_list_create.tf", testDir)),
-				ExpectError: regexp.MustCompile(cannotUseUserTypeError),
-			},
-		})
-	})
-
-	t.Run("Create a new domain type client list", func(t *testing.T) {
-		client := new(clientlists.Mock)
-		clientList := expectCreateList(client, clientlists.CreateClientListRequest{
-			Name:       "List Name",
-			Notes:      "List Notes",
-			Tags:       []string{"a", "b"},
-			Type:       clientlists.DOMAIN,
-			ContractID: "12_ABC",
-			GroupID:    12,
-			Items:      []clientlists.ListItemPayload{},
-		})
-		expectReadList(client, clientList.ListContent, []clientlists.ListItemContent{}, 2)
-		expectDeleteList(client, clientList.ListContent)
-
-		runResourceTest(t, client, []resource.TestStep{
-			{
-				Config: loadFixtureString(fmt.Sprintf("%s/domain_type_list_create.tf", testDir)),
-				Check: checkAttributes(listAttributes{
-					ListID:     clientList.ListID,
-					Name:       "List Name",
-					Notes:      "List Notes",
-					Tags:       []string{"a", "b"},
-					Type:       "DOMAIN",
-					ContractID: "12_ABC",
-					GroupID:    12,
-					Version:    1,
-					ItemsCount: 0,
-					Items:      []clientlists.ListItemPayload{},
-				}),
-			},
-		})
-	})
-
-	t.Run("Update domain type client list", func(t *testing.T) {
-		testListUpdateScenario(t, clientlists.DOMAIN, "DOMAIN", "domain_type_list_create.tf", "domain_type_list_update.tf")
-	})
-
-	t.Run("Create a new domain type client list with items", func(t *testing.T) {
-		client := new(clientlists.Mock)
-		items := append([]clientlists.ListItemPayload{},
-			clientlists.ListItemPayload{
-				Value:       "b.com",
-				Description: "Domain b",
-				Tags:        []string{},
-			},
-			clientlists.ListItemPayload{
-				Value:       "a.com",
-				Description: "Domain a",
-				Tags:        []string{},
-			},
-			clientlists.ListItemPayload{
-				Value:       "c.com",
-				Description: "Domain c",
-				Tags:        []string{},
-			})
-
-		clientList := expectCreateList(client, clientlists.CreateClientListRequest{
-			Name:       "List Name",
-			Notes:      "List Notes",
-			Tags:       []string{"a", "b"},
-			Type:       clientlists.DOMAIN,
-			ContractID: "12_ABC",
-			GroupID:    12,
-			Items:      items,
-		})
-		expectReadList(client, clientList.ListContent, mapItemsPayloadToContent(items), 2)
-		expectDeleteList(client, clientList.ListContent)
-
-		runResourceTest(t, client, []resource.TestStep{
-			{
-				Config: loadFixtureString(fmt.Sprintf("%s/domain_type_list_and_items_create.tf", testDir)),
-				Check: checkAttributes(listAttributes{
-					ListID:     clientList.ListID,
-					Name:       "List Name",
-					Notes:      "List Notes",
-					Tags:       []string{"a", "b"},
-					Type:       "DOMAIN",
-					ContractID: "12_ABC",
-					GroupID:    12,
-					Version:    1,
-					ItemsCount: len(items),
-					Items:      items,
-				}),
-			},
-		})
-	})
-
-	t.Run("Create a new REQUEST_HEADER_NAME_VALUE type client list", func(t *testing.T) {
-		client := new(clientlists.Mock)
-		clientList := expectCreateList(client, clientlists.CreateClientListRequest{
-			Name:       "List Name",
-			Notes:      "List Notes",
-			Tags:       []string{"a", "b"},
-			Type:       clientlists.RequestHeaderNameValue,
-			ContractID: "12_ABC",
-			GroupID:    12,
-			Items:      []clientlists.ListItemPayload{},
-		})
-		expectReadList(client, clientList.ListContent, []clientlists.ListItemContent{}, 2)
-		expectDeleteList(client, clientList.ListContent)
-
-		runResourceTest(t, client, []resource.TestStep{
-			{
-				Config: loadFixtureString(fmt.Sprintf("%s/rhnv_type_list_create.tf", testDir)),
-				Check: checkAttributes(listAttributes{
-					ListID:     clientList.ListID,
-					Name:       "List Name",
-					Notes:      "List Notes",
-					Tags:       []string{"a", "b"},
-					Type:       "REQUEST_HEADER_NAME_VALUE",
-					ContractID: "12_ABC",
-					GroupID:    12,
-					Version:    1,
-					ItemsCount: 0,
-					Items:      []clientlists.ListItemPayload{},
-				}),
-			},
-		})
-	})
-
-	t.Run("Create a new REQUEST_HEADER_NAME_VALUE type client list with items", func(t *testing.T) {
-		client := new(clientlists.Mock)
-		items := []clientlists.ListItemPayload{
+		rhnvItems = []clientlists.ListItemPayload{
 			{Key: "header1", Values: []string{"val1"}, Description: "Header 1 Desc", Tags: []string{}},
 			{Key: "header3", Values: []string{"val3"}, ExpirationDate: "2026-12-26T01:00:00+00:00", Tags: []string{}},
 			{Key: "header2", Values: []string{"val2"}, Description: "Header 2 Desc", Tags: []string{}},
 		}
-		clientList := expectCreateList(client, clientlists.CreateClientListRequest{
-			Name:       "List Name",
-			Notes:      "List Notes",
-			Tags:       []string{"a", "b"},
-			Type:       clientlists.RequestHeaderNameValue,
-			ContractID: "12_ABC",
-			GroupID:    12,
-			Items:      items,
-		})
-		expectReadList(client, clientList.ListContent, mapKeyValuesItemsPayloadToContent(items), 2)
-		expectDeleteList(client, clientList.ListContent)
 
-		runResourceTest(t, client, []resource.TestStep{
-			{
-				Config: loadFixtureString(fmt.Sprintf("%s/rhnv_type_list_and_items_create.tf", testDir)),
-				Check: checkAttributes(listAttributes{
-					ListID:     clientList.ListID,
-					Name:       "List Name",
-					Notes:      "List Notes",
-					Tags:       []string{"a", "b"},
-					Type:       "REQUEST_HEADER_NAME_VALUE",
-					ContractID: "12_ABC",
-					GroupID:    12,
-					Version:    1,
-					ItemsCount: len(items),
-					Items:      items,
-				}),
-			},
-		})
-	})
-
-	t.Run("Update REQUEST_HEADER_NAME_VALUE client list", func(t *testing.T) {
-		testListUpdateScenario(t, clientlists.RequestHeaderNameValue, "REQUEST_HEADER_NAME_VALUE", "rhnv_type_list_create.tf", "rhnv_type_list_update.tf")
-	})
-
-	t.Run("Create REQUEST_HEADER_NAME_VALUE list with duplicate key items fails", func(t *testing.T) {
-		client := new(clientlists.Mock)
-		runResourceTest(t, client, []resource.TestStep{
-			{
-				Config:      loadFixtureString(fmt.Sprintf("%s/rhnv_type_list_and_duplicate_items_create.tf", testDir)),
-				ExpectError: regexp.MustCompile("Error: 'Items' collection contains duplicate values for 'key' field. Duplicate value: header1"),
-			},
-		})
-	})
-
-	t.Run("Update REQUEST_HEADER_NAME_VALUE client list items", func(t *testing.T) {
-		client := new(clientlists.Mock)
-		items := []clientlists.ListItemPayload{
-			{Key: "header1", Values: []string{"val1"}, Description: "Header 1 Desc", Tags: []string{}},
-			{Key: "header3", Values: []string{"val3"}, ExpirationDate: "2026-12-26T01:00:00+00:00", Tags: []string{}},
-			{Key: "header2", Values: []string{"val2"}, Description: "Header 2 Desc", Tags: []string{}},
-		}
-		updatedItems := []clientlists.ListItemPayload{
+		rhnvUpdatedItems = []clientlists.ListItemPayload{
 			{Key: "header1", Values: []string{"val1"}, Description: "Header 1 Desc Updated", Tags: []string{}},
 			{Key: "header2", Values: []string{"val2"}, Description: "Header 2 Desc", Tags: []string{}},
 			{Key: "header4", Values: []string{"val4"}, Description: "Header 4 Desc", Tags: []string{}},
 		}
-		clientList := expectCreateList(client, clientlists.CreateClientListRequest{
-			Name:       "List Name",
-			Notes:      "List Notes",
-			Tags:       []string{"a", "b"},
-			Type:       clientlists.RequestHeaderNameValue,
-			ContractID: "12_ABC",
-			GroupID:    12,
-			Items:      items,
-		})
-		updatedListContent := clientlists.ListContent{
-			ListID:     clientList.ListID,
-			Name:       clientList.Name,
-			Notes:      clientList.Notes,
-			Tags:       clientList.Tags,
-			Type:       clientList.Type,
-			Version:    2,
-			ItemsCount: int64(len(updatedItems)),
+
+		listUpdateTestCase = func(listType clientlists.ClientListType, typeString, createFixtureFile, updateFixtureFile string) clientListTestCase {
+			return clientListTestCase{
+				init: func(client *clientlists.Mock) {
+					clientList := expectCreateList(client, clientlists.CreateClientListRequest{
+						Name:       "List Name",
+						Notes:      "List Notes",
+						Tags:       []string{"a", "b"},
+						Type:       listType,
+						ContractID: "12_ABC",
+						GroupID:    12,
+						Items:      []clientlists.ListItemPayload{},
+					})
+					expectReadList(client, clientList.ListContent, []clientlists.ListItemContent{}, 3)
+					updateResponse := expectUpdateList(client, listType, 0, clientlists.UpdateClientListRequest{
+						UpdateClientList: clientlists.UpdateClientList{
+							Name:  "List Name Updated",
+							Notes: "List Notes Updated",
+							Tags:  []string{"a", "c", "d"},
+						},
+						ListID: clientList.ListID,
+					})
+					expectReadList(client, updateResponse.ListContent, []clientlists.ListItemContent{}, 2)
+					expectDeleteList(client, clientList.ListContent)
+				},
+				steps: []resource.TestStep{
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/%s", testDir, createFixtureFile)),
+						Check: checkAttributes(listAttributes{
+							ListID:     "1_AB",
+							Name:       "List Name",
+							Notes:      "List Notes",
+							Tags:       []string{"a", "b"},
+							Type:       typeString,
+							ContractID: "12_ABC",
+							GroupID:    12,
+							Version:    1,
+							ItemsCount: 0,
+						}),
+					},
+					{
+						Config: loadFixtureString(fmt.Sprintf("%s/%s", testDir, updateFixtureFile)),
+						Check: checkAttributes(listAttributes{
+							ListID:     "1_AB",
+							Name:       "List Name Updated",
+							Notes:      "List Notes Updated",
+							Tags:       []string{"a", "c", "d"},
+							Type:       typeString,
+							ContractID: "12_ABC",
+							GroupID:    12,
+							Version:    1,
+							ItemsCount: 0,
+						}),
+					},
+				},
+			}
 		}
-		expectReadList(client, clientList.ListContent, mapKeyValuesItemsPayloadToContent(items), 4)
-		expectUpdateListItems(client, clientlists.UpdateClientListItemsRequest{
-			ListID: clientList.ListID,
-			UpdateClientListItems: clientlists.UpdateClientListItems{
-				Append: []clientlists.ListItemPayload{
-					{Key: "header4", Values: []string{"val4"}, Description: "Header 4 Desc", Tags: []string{}},
-				},
-				Update: []clientlists.ListItemPayload{
-					{Key: "header1", Values: []string{"val1"}, Description: "Header 1 Desc Updated", Tags: []string{}},
-				},
-				Delete: []clientlists.ListItemPayload{
-					{Key: "header3"},
-				},
-			},
-		})
-		expectReadList(client, updatedListContent, mapKeyValuesItemsPayloadToContent(updatedItems), 2)
-		expectDeleteList(client, clientList.ListContent)
+	)
 
-		runResourceTest(t, client, []resource.TestStep{
-			{
-				Config: loadFixtureString(fmt.Sprintf("%s/rhnv_type_list_and_items_create.tf", testDir)),
-				Check: checkAttributes(listAttributes{
-					ListID:     clientList.ListID,
+	tests := map[string]clientListTestCase{
+		"Create a new client list": {
+			init: func(client *clientlists.Mock) {
+				clientList := expectCreateList(client, clientlists.CreateClientListRequest{
 					Name:       "List Name",
 					Notes:      "List Notes",
 					Tags:       []string{"a", "b"},
-					Type:       "REQUEST_HEADER_NAME_VALUE",
+					Type:       clientlists.ASN,
 					ContractID: "12_ABC",
 					GroupID:    12,
-					Version:    1,
-					ItemsCount: len(items),
+					Items:      []clientlists.ListItemPayload{},
+				})
+				expectReadList(client, clientList.ListContent, []clientlists.ListItemContent{}, 2)
+				expectDeleteList(client, clientList.ListContent)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString(fmt.Sprintf("%s/list_create.tf", testDir)),
+					Check: checkAttributes(listAttributes{
+						ListID:     "1_AB",
+						Name:       "List Name",
+						Notes:      "List Notes",
+						Tags:       []string{"a", "b"},
+						Type:       "ASN",
+						ContractID: "12_ABC",
+						GroupID:    12,
+						Version:    1,
+						ItemsCount: 0,
+						Items:      []clientlists.ListItemPayload{},
+					}),
+				},
+			},
+		},
+
+		"Update client list": listUpdateTestCase(clientlists.ASN, "ASN", "list_create.tf", "list_update.tf"),
+		"Update client list not expected when empty tags list removed": {
+			init: func(client *clientlists.Mock) {
+				clientList := expectCreateList(client, clientlists.CreateClientListRequest{
+					Name:       "List Name",
+					Notes:      "List Notes",
+					Tags:       []string{},
+					Type:       clientlists.IP,
+					ContractID: "12_ABC",
+					GroupID:    12,
+					Items:      []clientlists.ListItemPayload{},
+				})
+				expectReadList(client, clientList.ListContent, []clientlists.ListItemContent{}, 4)
+				expectDeleteList(client, clientList.ListContent)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString(fmt.Sprintf("%s/list_create_empty_tags.tf", testDir)),
+					Check: checkAttributes(listAttributes{
+						ListID:     "1_AB",
+						Name:       "List Name",
+						Notes:      "List Notes",
+						Type:       "IP",
+						ContractID: "12_ABC",
+						GroupID:    12,
+						Version:    1,
+						ItemsCount: 0,
+					}),
+				},
+				{
+					Config: loadFixtureString(fmt.Sprintf("%s/list_update_remove_tags.tf", testDir)),
+					Check: checkAttributes(listAttributes{
+						ListID:     "1_AB",
+						Name:       "List Name",
+						Notes:      "List Notes",
+						Tags:       []string{},
+						Type:       "IP",
+						ContractID: "12_ABC",
+						GroupID:    12,
+						Version:    1,
+						ItemsCount: 0,
+					}),
+				},
+			},
+		},
+		"Get client list returns an API error": {
+			init: func(client *clientlists.Mock) {
+				clientList := expectCreateList(client, clientlists.CreateClientListRequest{
+					Name:       "List Name",
+					Notes:      "List Notes",
+					Tags:       []string{"a", "b"},
+					Type:       clientlists.ASN,
+					ContractID: "12_ABC",
+					GroupID:    12,
+					Items:      []clientlists.ListItemPayload{},
+				})
+
+				expectAPIErrorWithGetList(client, clientlists.GetClientListRequest{
+					ListID:       clientList.ListID,
+					IncludeItems: true,
+				})
+				expectDeleteList(client, clientList.ListContent)
+			},
+			steps: []resource.TestStep{
+				{
+					Config:      loadFixtureString(fmt.Sprintf("%s/list_create.tf", testDir)),
+					ExpectError: regexp.MustCompile(getAPIError),
+				},
+			},
+		},
+		"Update client list returns an API error": {
+			init: func(client *clientlists.Mock) {
+				clientList := expectCreateList(client, clientlists.CreateClientListRequest{
+					Name:       "List Name",
+					Notes:      "List Notes",
+					Tags:       []string{"a", "b"},
+					Type:       clientlists.ASN,
+					ContractID: "12_ABC",
+					GroupID:    12,
+					Items:      []clientlists.ListItemPayload{},
+				})
+				expectReadList(client, clientList.ListContent, []clientlists.ListItemContent{}, 3)
+
+				expectAPIErrorWithUpdateList(client, clientlists.UpdateClientListRequest{
+					UpdateClientList: clientlists.UpdateClientList{
+						Name:  "List Name Updated",
+						Notes: "List Notes Updated",
+						Tags:  []string{"a", "c", "d"},
+					},
+					ListID: clientList.ListID,
+				})
+				expectDeleteList(client, clientList.ListContent)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString(fmt.Sprintf("%s/list_create.tf", testDir)),
+					Check: checkAttributes(listAttributes{
+						ListID:     "1_AB",
+						Name:       "List Name",
+						Notes:      "List Notes",
+						Tags:       []string{"a", "b"},
+						Type:       "ASN",
+						ContractID: "12_ABC",
+						GroupID:    12,
+						Version:    1,
+						ItemsCount: 0,
+					}),
+				},
+				{
+					Config:      loadFixtureString(fmt.Sprintf("%s/list_update.tf", testDir)),
+					ExpectError: regexp.MustCompile(updateAPIError),
+				},
+			},
+		},
+
+		"Create a new client list with items": {
+			init: func(client *clientlists.Mock) {
+				clientList := expectCreateList(client, clientlists.CreateClientListRequest{
+					Name:       "List Name",
+					Notes:      "List Notes",
+					Tags:       []string{"a", "b"},
+					Type:       clientlists.ASN,
+					ContractID: "12_ABC",
+					GroupID:    12,
+					Items:      asnItems,
+				})
+				expectReadList(client, clientList.ListContent, mapItemsPayloadToContent(asnItems), 2)
+				expectDeleteList(client, clientList.ListContent)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString(fmt.Sprintf("%s/list_and_items_create.tf", testDir)),
+					Check: checkAttributes(listAttributes{
+						ListID:     "1_AB",
+						Name:       "List Name",
+						Notes:      "List Notes",
+						Tags:       []string{"a", "b"},
+						Type:       "ASN",
+						ContractID: "12_ABC",
+						GroupID:    12,
+						Version:    1,
+						ItemsCount: len(asnItems),
+						Items:      asnItems,
+					}),
+				},
+			},
+		},
+		"Update client list items and list": {
+			init: func(client *clientlists.Mock) {
+				clientList := expectCreateList(client, clientlists.CreateClientListRequest{
+					Name:       "List Name",
+					Notes:      "List Notes",
+					Tags:       []string{"a", "b"},
+					Type:       clientlists.ASN,
+					ContractID: "12_ABC",
+					GroupID:    12,
+					Items:      asnItems,
+				})
+				expectReadList(client, clientList.ListContent, mapItemsPayloadToContent(asnItems), 4)
+				updateResponse := expectUpdateList(client, clientlists.ASN, 3, clientlists.UpdateClientListRequest{
+					UpdateClientList: clientlists.UpdateClientList{
+						Name:  "List Name Updated",
+						Notes: "List Notes Updated",
+						Tags:  []string{"a", "c", "d"},
+					},
+					ListID: clientList.ListID,
+				})
+				expectUpdateListItems(client, clientlists.UpdateClientListItemsRequest{
+					ListID: clientList.ListID,
+					UpdateClientListItems: clientlists.UpdateClientListItems{
+						Append: []clientlists.ListItemPayload{
+							{
+								Value:       "1234",
+								Description: "Item 1234 Desc",
+								Tags:        []string{"1234Tag"},
+							},
+						},
+						Update: []clientlists.ListItemPayload{
+							{
+								Value:       "12",
+								Description: "Item 12 Desc Updated",
+								Tags:        []string{"item12Tag1", "item12Tag2"},
+							},
+						},
+						Delete: []clientlists.ListItemPayload{
+							{
+								Value: "123",
+							},
+						},
+					},
+				})
+				expectReadList(client, updateResponse.ListContent, mapItemsPayloadToContent(asnUpdatedItems), 2)
+				expectDeleteList(client, clientList.ListContent)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString(fmt.Sprintf("%s/list_and_items_create.tf", testDir)),
+					Check: checkAttributes(listAttributes{
+						ListID:     "1_AB",
+						Name:       "List Name",
+						Notes:      "List Notes",
+						Tags:       []string{"a", "b"},
+						Type:       "ASN",
+						ContractID: "12_ABC",
+						GroupID:    12,
+						Version:    1,
+						ItemsCount: 3,
+						Items:      asnItems,
+					}),
+				},
+				{
+					Config: loadFixtureString(fmt.Sprintf("%s/list_and_items_update.tf", testDir)),
+					Check: checkAttributes(listAttributes{
+						ListID:     "1_AB",
+						Name:       "List Name Updated",
+						Notes:      "List Notes Updated",
+						Tags:       []string{"a", "c", "d"},
+						Type:       "ASN",
+						ContractID: "12_ABC",
+						GroupID:    12,
+						Version:    1,
+						ItemsCount: 3,
+						Items:      asnUpdatedItems,
+					}),
+				},
+			},
+		},
+
+		"Update client list items only": {
+			init: func(client *clientlists.Mock) {
+				clientList := expectCreateList(client, clientlists.CreateClientListRequest{
+					Name:       "List Name",
+					Notes:      "List Notes",
+					Tags:       []string{"a", "b"},
+					Type:       clientlists.ASN,
+					ContractID: "12_ABC",
+					GroupID:    12,
+					Items:      asnItems,
+				})
+				expectReadList(client, clientList.ListContent, mapItemsPayloadToContent(asnItems), 4)
+				expectUpdateListItems(client, clientlists.UpdateClientListItemsRequest{
+					ListID: clientList.ListID,
+					UpdateClientListItems: clientlists.UpdateClientListItems{
+						Append: []clientlists.ListItemPayload{
+							{
+								Value:       "1234",
+								Description: "Item 1234 Desc",
+								Tags:        []string{"1234Tag"},
+							},
+						},
+						Update: []clientlists.ListItemPayload{
+							{
+								Value:       "12",
+								Description: "Item 12 Desc Updated",
+								Tags:        []string{"item12Tag1", "item12Tag2"},
+							},
+						},
+						Delete: []clientlists.ListItemPayload{
+							{
+								Value: "123",
+							},
+						},
+					},
+				})
+				expectReadList(client, clientList.ListContent, mapItemsPayloadToContent(asnUpdatedItems), 2)
+				expectDeleteList(client, clientList.ListContent)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString(fmt.Sprintf("%s/list_and_items_create.tf", testDir)),
+					Check: checkAttributes(listAttributes{
+						ListID:     "1_AB",
+						Name:       "List Name",
+						Notes:      "List Notes",
+						Tags:       []string{"a", "b"},
+						Type:       "ASN",
+						ContractID: "12_ABC",
+						GroupID:    12,
+						Version:    1,
+						ItemsCount: 3,
+						Items:      asnItems,
+					}),
+				},
+				{
+					Config: loadFixtureString(fmt.Sprintf("%s/list_items_only_update.tf", testDir)),
+					Check: checkAttributes(listAttributes{
+						ListID:     "1_AB",
+						Name:       "List Name",
+						Notes:      "List Notes",
+						Tags:       []string{"a", "b"},
+						Type:       "ASN",
+						ContractID: "12_ABC",
+						GroupID:    12,
+						Version:    1,
+						ItemsCount: 3,
+						Items:      asnUpdatedItems,
+					}),
+				},
+			},
+		},
+		"Update items set new computed version": {
+			init: func(client *clientlists.Mock) {
+				items := append([]clientlists.ListItemPayload{},
+					clientlists.ListItemPayload{
+						Value:       "1",
+						Description: "Item 1 Desc",
+						Tags:        []string{"item1Tag2", "item1Tag1"},
+					})
+				var updatedItems []clientlists.ListItemPayload
+
+				clientList := expectCreateList(client, clientlists.CreateClientListRequest{
+					Name:       "List Name",
+					Notes:      "List Notes",
+					Tags:       []string{"a", "b"},
+					Type:       clientlists.ASN,
+					ContractID: "12_ABC",
+					GroupID:    12,
 					Items:      items,
-				}),
+				})
+				expectReadList(client, clientList.ListContent, mapItemsPayloadToContent(items), 4)
+				expectUpdateListItems(client, clientlists.UpdateClientListItemsRequest{
+					ListID: clientList.ListID,
+					UpdateClientListItems: clientlists.UpdateClientListItems{
+						Append: []clientlists.ListItemPayload{},
+						Update: []clientlists.ListItemPayload{},
+						Delete: []clientlists.ListItemPayload{{Value: "1"}},
+					},
+				})
+				// Update version
+				updatedClientList := clientList.ListContent
+				updatedClientList.Version = 2
+
+				expectReadList(client, updatedClientList, mapItemsPayloadToContent(updatedItems), 2)
+				expectDeleteList(client, clientList.ListContent)
 			},
-			{
-				Config: loadFixtureString(fmt.Sprintf("%s/rhnv_type_list_and_items_update.tf", testDir)),
-				Check: checkAttributes(listAttributes{
-					ListID:     clientList.ListID,
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString(fmt.Sprintf("%s/list_and_items_create_one_item.tf", testDir)),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckOutput("version", "1"),
+					),
+				},
+				{
+					Config: loadFixtureString(fmt.Sprintf("%s/list_items_update_compute_version.tf", testDir)),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckOutput("version", "2"),
+					),
+				},
+			},
+		},
+		"Update items NOT set new computed version": {
+			init: func(client *clientlists.Mock) {
+				items := append([]clientlists.ListItemPayload{},
+					clientlists.ListItemPayload{
+						Value:       "1",
+						Description: "Item 1 Desc",
+						Tags:        []string{"item1Tag2", "item1Tag1"},
+					})
+				updatedItems := append([]clientlists.ListItemPayload{},
+					clientlists.ListItemPayload{
+						Value: "1",
+					})
+
+				clientList := expectCreateList(client, clientlists.CreateClientListRequest{
 					Name:       "List Name",
 					Notes:      "List Notes",
 					Tags:       []string{"a", "b"},
-					Type:       "REQUEST_HEADER_NAME_VALUE",
+					Type:       clientlists.ASN,
 					ContractID: "12_ABC",
 					GroupID:    12,
+					Items:      items,
+				})
+				expectReadList(client, clientList.ListContent, mapItemsPayloadToContent(items), 4)
+				expectUpdateListItems(client, clientlists.UpdateClientListItemsRequest{
+					ListID: clientList.ListID,
+					UpdateClientListItems: clientlists.UpdateClientListItems{
+						Append: []clientlists.ListItemPayload{},
+						Update: []clientlists.ListItemPayload{
+							{
+								Value: "1",
+								Tags:  []string{},
+							},
+						},
+						Delete: []clientlists.ListItemPayload{},
+					},
+				})
+				expectReadList(client, clientList.ListContent, mapItemsPayloadToContent(updatedItems), 2)
+				expectDeleteList(client, clientList.ListContent)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString(fmt.Sprintf("%s/list_and_items_create_one_item.tf", testDir)),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckOutput("version", "1"),
+					),
+				},
+				{
+					Config: loadFixtureString(fmt.Sprintf("%s/list_items_update_not_compute_version.tf", testDir)),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckOutput("version", "1"),
+					),
+				},
+			},
+		},
+
+		"Create list with duplicate items fails": {
+			steps: []resource.TestStep{
+				{
+					Config:      loadFixtureString(fmt.Sprintf("%s/list_and_duplicate_items_create.tf", testDir)),
+					ExpectError: regexp.MustCompile("Error: 'Items' collection contains duplicate values for 'value' field. Duplicate value: 12"),
+				},
+			},
+		},
+		"Import clientlist resource": {
+			init: func(client *clientlists.Mock) {
+				clientList := expectCreateList(client, clientlists.CreateClientListRequest{
+					Name:       "List Name",
+					Notes:      "List Notes",
+					Tags:       []string{"a", "b"},
+					Type:       clientlists.ASN,
+					ContractID: "12_ABC",
+					GroupID:    12,
+					Items:      []clientlists.ListItemPayload{},
+				})
+				expectReadList(client, clientList.ListContent, []clientlists.ListItemContent{}, 3)
+				expectDeleteList(client, clientList.ListContent)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString(fmt.Sprintf("%s/list_create.tf", testDir)),
+				},
+				{
+					ImportState:       true,
+					ImportStateVerify: true,
+					ImportStateId:     "1_AB",
+					ResourceName:      "akamai_clientlist_list.test_list",
+				},
+			},
+		},
+		"Create a new USER type client list without items - no username translation": {
+			init: func(client *clientlists.Mock) {
+				clientList := expectCreateList(client, clientlists.CreateClientListRequest{
+					Name:       "List Name",
+					Notes:      "List Notes",
+					Tags:       []string{"a", "b"},
+					Type:       clientlists.USER,
+					ContractID: "12_ABC",
+					GroupID:    12,
+					Items:      []clientlists.ListItemPayload{},
+				})
+				expectReadList(client, clientList.ListContent, []clientlists.ListItemContent{}, 2)
+				expectReadItems(client, clientList.ListContent, []clientlists.ListItemContent{}, 2)
+				expectDeleteList(client, clientList.ListContent)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString(fmt.Sprintf("%s/user_type_list_create.tf", testDir)),
+					Check: checkAttributes(listAttributes{
+						ListID:     "1_AB",
+						Name:       "List Name",
+						Notes:      "List Notes",
+						Tags:       []string{"a", "b"},
+						Type:       "USER_ID",
+						ContractID: "12_ABC",
+						GroupID:    12,
+						Version:    1,
+						ItemsCount: 0,
+						Items:      []clientlists.ListItemPayload{},
+					}),
+				},
+			},
+		},
+
+		"Create a new USER type client list with items - Username as value, require username translation": {
+			init: func(client *clientlists.Mock) {
+				itemsWithUserIDValues := append([]clientlists.ListItemPayload{},
+					item3WithUserID,
+					item1WithUserID,
+					item2WithUserID)
+
+				clientList := expectCreateList(client, clientlists.CreateClientListRequest{
+					Name:       "List Name",
+					Notes:      "List Notes",
+					Tags:       []string{"a", "b"},
+					Type:       clientlists.USER,
+					ContractID: "12_ABC",
+					GroupID:    12,
+					Items:      userUsernameItems,
+				})
+				expectReadList(client, clientList.ListContent, mapItemsPayloadToContent(itemsWithUserIDValues), 2)
+				expectReadItems(client, clientList.ListContent, []clientlists.ListItemContent{}, 2)
+				expectTranslateUsernames(client, []string{"user3", "user1", "user2"},
+					map[string]string{
+						"user1": "3a453537-faa8-4525-b5db-022447bbbf2a",
+						"user2": "07e29045-7739-4bd9-8cfb-9f118e000337",
+						"user3": "e164394a-5ae1-4208-8487-1ac0f368ecf3",
+					}, 3)
+				expectDeleteList(client, clientList.ListContent)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString(fmt.Sprintf("%s/user_type_list_and_items_create.tf", testDir)),
+					Check: checkAttributes(listAttributes{
+						ListID:     "1_AB",
+						Name:       "List Name",
+						Notes:      "List Notes",
+						Tags:       []string{"a", "b"},
+						Type:       "USER_ID",
+						ContractID: "12_ABC",
+						GroupID:    12,
+						Version:    1,
+						ItemsCount: len(userUsernameItems),
+						Items:      userUsernameItems,
+					}),
+				},
+			},
+		},
+		"Create a new USER type client list with items - UserID as value, no username translation": {
+			init: func(client *clientlists.Mock) {
+				clientList := expectCreateList(client, clientlists.CreateClientListRequest{
+					Name:       "List Name",
+					Notes:      "List Notes",
+					Tags:       []string{"a", "b"},
+					Type:       clientlists.USER,
+					ContractID: "12_ABC",
+					GroupID:    12,
+					Items:      userUserIDItems,
+				})
+				expectReadList(client, clientList.ListContent, mapItemsPayloadToContent(userUserIDItems), 2)
+				expectReadItems(client, clientList.ListContent, []clientlists.ListItemContent{}, 2)
+				expectDeleteList(client, clientList.ListContent)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString(fmt.Sprintf("%s/user_type_list_and_items_user_id_create.tf", testDir)),
+					Check: checkAttributes(listAttributes{
+						ListID:     "1_AB",
+						Name:       "List Name",
+						Notes:      "List Notes",
+						Tags:       []string{"a", "b"},
+						Type:       "USER_ID",
+						ContractID: "12_ABC",
+						GroupID:    12,
+						Version:    1,
+						ItemsCount: len(userUserIDItems),
+						Items:      userUserIDItems,
+					}),
+				},
+			},
+		},
+		"Create a new USER type client list with items - mix UserID, Username as value, require username translation": {
+			init: func(client *clientlists.Mock) {
+				itemsWithUserIDValues := append([]clientlists.ListItemPayload{},
+					item3WithUserID,
+					item2WithUserID,
+					item1WithUserID)
+
+				clientList := expectCreateList(client, clientlists.CreateClientListRequest{
+					Name:       "List Name",
+					Notes:      "List Notes",
+					Tags:       []string{"a", "b"},
+					Type:       clientlists.USER,
+					ContractID: "12_ABC",
+					GroupID:    12,
+					Items:      userMixItems,
+				})
+				expectReadList(client, clientList.ListContent, mapItemsPayloadToContent(itemsWithUserIDValues), 2)
+				expectReadItems(client, clientList.ListContent, []clientlists.ListItemContent{}, 2)
+				expectTranslateUsernames(client, []string{"user3"},
+					map[string]string{
+						"user3": "e164394a-5ae1-4208-8487-1ac0f368ecf3",
+					}, 3)
+				expectDeleteList(client, clientList.ListContent)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString(fmt.Sprintf("%s/user_type_list_and_items_mix_username_user_id_create.tf", testDir)),
+					Check: checkAttributes(listAttributes{
+						ListID:     "1_AB",
+						Name:       "List Name",
+						Notes:      "List Notes",
+						Tags:       []string{"a", "b"},
+						Type:       "USER_ID",
+						ContractID: "12_ABC",
+						GroupID:    12,
+						Version:    1,
+						ItemsCount: len(userMixItems),
+						Items:      userMixItems,
+					}),
+				},
+			},
+		},
+
+		"Update USER type client list items and list - mix UserID, Username as value, require username translation": {
+			init: func(client *clientlists.Mock) {
+				clientList := expectCreateList(client, clientlists.CreateClientListRequest{
+					Name:       "List Name",
+					Notes:      "List Notes",
+					Tags:       []string{"a", "b"},
+					Type:       clientlists.USER,
+					ContractID: "12_ABC",
+					GroupID:    12,
+					Items:      userMixItems,
+				})
+				expectReadList(client, clientList.ListContent, mapItemsPayloadToContent(userMixItems), 4)
+				expectReadItems(client, clientList.ListContent, []clientlists.ListItemContent{}, 5)
+				expectTranslateUsernames(client, []string{"user3"},
+					map[string]string{
+						"user3": "e164394a-5ae1-4208-8487-1ac0f368ecf3",
+					}, 4)
+
+				updateResponse := expectUpdateList(client, clientlists.USER, 3, clientlists.UpdateClientListRequest{
+					UpdateClientList: clientlists.UpdateClientList{
+						Name:  "List Name Updated",
+						Notes: "List Notes Updated",
+						Tags:  []string{"a", "c", "d"},
+					},
+					ListID: clientList.ListID,
+				})
+				expectUpdateListItems(client, clientlists.UpdateClientListItemsRequest{
+					ListID: clientList.ListID,
+					UpdateClientListItems: clientlists.UpdateClientListItems{
+						Append: []clientlists.ListItemPayload{
+							{
+								Value:       "sales@ubs.com",
+								Description: "Item 1 Desc",
+								Tags:        []string{"item1Tag2", "item1Tag1"},
+							},
+						},
+						Update: []clientlists.ListItemPayload{
+							{
+								Value:       "user3",
+								Description: "Item 3 Desc Updated",
+								Tags:        []string{"item3Tag2", "item3Tag1"},
+							},
+						},
+						Delete: []clientlists.ListItemPayload{
+							{
+								Value: "3a453537-faa8-4525-b5db-022447bbbf2a",
+							},
+						},
+					},
+				})
+				expectReadList(client, updateResponse.ListContent, mapItemsPayloadToContent(userMixUpdatedItems), 2)
+				expectTranslateUsernames(client, []string{"sales@ubs.com", "user3"},
+					map[string]string{
+						"sales@ubs.com": "c99dddc8-ef8f-46d5-93ee-e85f7aeb0b9a",
+						"user3":         "e164394a-5ae1-4208-8487-1ac0f368ecf3",
+					}, 3)
+				expectDeleteList(client, clientList.ListContent)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString(fmt.Sprintf("%s/user_type_list_and_items_mix_username_user_id_create.tf", testDir)),
+					Check: checkAttributes(listAttributes{
+						ListID:     "1_AB",
+						Name:       "List Name",
+						Notes:      "List Notes",
+						Tags:       []string{"a", "b"},
+						Type:       "USER_ID",
+						ContractID: "12_ABC",
+						GroupID:    12,
+						Version:    1,
+						ItemsCount: len(userMixItems),
+						Items:      userMixItems,
+					}),
+				},
+				{
+					Config: loadFixtureString(fmt.Sprintf("%s/user_type_list_and_items_mix_username_user_id_update.tf", testDir)),
+					Check: checkAttributes(listAttributes{
+						ListID:     "1_AB",
+						Name:       "List Name Updated",
+						Notes:      "List Notes Updated",
+						Tags:       []string{"a", "c", "d"},
+						Type:       "USER_ID",
+						ContractID: "12_ABC",
+						GroupID:    12,
+						Version:    1,
+						ItemsCount: 3,
+						Items:      userMixUpdatedItems,
+					}),
+				},
+			},
+		},
+		"Create a new USER type client list without permission - returns an 403 API error": {
+			init: func(client *clientlists.Mock) {
+				expectAPIErrorWithCreateList(client, clientlists.CreateClientListRequest{
+					Name:       "List Name",
+					Notes:      "List Notes",
+					Tags:       []string{"a", "b"},
+					Type:       clientlists.USER,
+					ContractID: "12_ABC",
+					GroupID:    12,
+					Items:      []clientlists.ListItemPayload{},
+				})
+			},
+			steps: []resource.TestStep{
+				{
+					Config:      loadFixtureString(fmt.Sprintf("%s/user_type_list_create.tf", testDir)),
+					ExpectError: regexp.MustCompile(cannotUseUserTypeError),
+				},
+			},
+		},
+		"Create a new domain type client list": {
+			init: func(client *clientlists.Mock) {
+				clientList := expectCreateList(client, clientlists.CreateClientListRequest{
+					Name:       "List Name",
+					Notes:      "List Notes",
+					Tags:       []string{"a", "b"},
+					Type:       clientlists.DOMAIN,
+					ContractID: "12_ABC",
+					GroupID:    12,
+					Items:      []clientlists.ListItemPayload{},
+				})
+				expectReadList(client, clientList.ListContent, []clientlists.ListItemContent{}, 2)
+				expectDeleteList(client, clientList.ListContent)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString(fmt.Sprintf("%s/domain_type_list_create.tf", testDir)),
+					Check: checkAttributes(listAttributes{
+						ListID:     "1_AB",
+						Name:       "List Name",
+						Notes:      "List Notes",
+						Tags:       []string{"a", "b"},
+						Type:       "DOMAIN",
+						ContractID: "12_ABC",
+						GroupID:    12,
+						Version:    1,
+						ItemsCount: 0,
+						Items:      []clientlists.ListItemPayload{},
+					}),
+				},
+			},
+		},
+		"Update domain type client list": listUpdateTestCase(clientlists.DOMAIN, "DOMAIN", "domain_type_list_create.tf", "domain_type_list_update.tf"),
+		"Create a new domain type client list with items": {
+			init: func(client *clientlists.Mock) {
+				clientList := expectCreateList(client, clientlists.CreateClientListRequest{
+					Name:       "List Name",
+					Notes:      "List Notes",
+					Tags:       []string{"a", "b"},
+					Type:       clientlists.DOMAIN,
+					ContractID: "12_ABC",
+					GroupID:    12,
+					Items:      domainItems,
+				})
+				expectReadList(client, clientList.ListContent, mapItemsPayloadToContent(domainItems), 2)
+				expectDeleteList(client, clientList.ListContent)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString(fmt.Sprintf("%s/domain_type_list_and_items_create.tf", testDir)),
+					Check: checkAttributes(listAttributes{
+						ListID:     "1_AB",
+						Name:       "List Name",
+						Notes:      "List Notes",
+						Tags:       []string{"a", "b"},
+						Type:       "DOMAIN",
+						ContractID: "12_ABC",
+						GroupID:    12,
+						Version:    1,
+						ItemsCount: len(domainItems),
+						Items:      domainItems,
+					}),
+				},
+			},
+		},
+
+		"Create a new REQUEST_HEADER_NAME_VALUE type client list": {
+			init: func(client *clientlists.Mock) {
+				clientList := expectCreateList(client, clientlists.CreateClientListRequest{
+					Name:       "List Name",
+					Notes:      "List Notes",
+					Tags:       []string{"a", "b"},
+					Type:       clientlists.RequestHeaderNameValue,
+					ContractID: "12_ABC",
+					GroupID:    12,
+					Items:      []clientlists.ListItemPayload{},
+				})
+				expectReadList(client, clientList.ListContent, []clientlists.ListItemContent{}, 2)
+				expectDeleteList(client, clientList.ListContent)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString(fmt.Sprintf("%s/rhnv_type_list_create.tf", testDir)),
+					Check: checkAttributes(listAttributes{
+						ListID:     "1_AB",
+						Name:       "List Name",
+						Notes:      "List Notes",
+						Tags:       []string{"a", "b"},
+						Type:       "REQUEST_HEADER_NAME_VALUE",
+						ContractID: "12_ABC",
+						GroupID:    12,
+						Version:    1,
+						ItemsCount: 0,
+						Items:      []clientlists.ListItemPayload{},
+					}),
+				},
+			},
+		},
+		"Create a new REQUEST_HEADER_NAME_VALUE type client list with items": {
+			init: func(client *clientlists.Mock) {
+				clientList := expectCreateList(client, clientlists.CreateClientListRequest{
+					Name:       "List Name",
+					Notes:      "List Notes",
+					Tags:       []string{"a", "b"},
+					Type:       clientlists.RequestHeaderNameValue,
+					ContractID: "12_ABC",
+					GroupID:    12,
+					Items:      rhnvItems,
+				})
+				expectReadList(client, clientList.ListContent, mapKeyValuesItemsPayloadToContent(rhnvItems), 2)
+				expectDeleteList(client, clientList.ListContent)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString(fmt.Sprintf("%s/rhnv_type_list_and_items_create.tf", testDir)),
+					Check: checkAttributes(listAttributes{
+						ListID:     "1_AB",
+						Name:       "List Name",
+						Notes:      "List Notes",
+						Tags:       []string{"a", "b"},
+						Type:       "REQUEST_HEADER_NAME_VALUE",
+						ContractID: "12_ABC",
+						GroupID:    12,
+						Version:    1,
+						ItemsCount: len(rhnvItems),
+						Items:      rhnvItems,
+					}),
+				},
+			},
+		},
+		"Update REQUEST_HEADER_NAME_VALUE client list": listUpdateTestCase(clientlists.RequestHeaderNameValue, "REQUEST_HEADER_NAME_VALUE", "rhnv_type_list_create.tf", "rhnv_type_list_update.tf"),
+		"Create REQUEST_HEADER_NAME_VALUE list with duplicate key items fails": {
+			steps: []resource.TestStep{
+				{
+					Config:      loadFixtureString(fmt.Sprintf("%s/rhnv_type_list_and_duplicate_items_create.tf", testDir)),
+					ExpectError: regexp.MustCompile("Error: 'Items' collection contains duplicate values for 'key' field. Duplicate value: header1"),
+				},
+			},
+		},
+		"Update REQUEST_HEADER_NAME_VALUE client list items": {
+			init: func(client *clientlists.Mock) {
+				clientList := expectCreateList(client, clientlists.CreateClientListRequest{
+					Name:       "List Name",
+					Notes:      "List Notes",
+					Tags:       []string{"a", "b"},
+					Type:       clientlists.RequestHeaderNameValue,
+					ContractID: "12_ABC",
+					GroupID:    12,
+					Items:      rhnvItems,
+				})
+				updatedListContent := clientlists.ListContent{
+					ListID:     clientList.ListID,
+					Name:       clientList.Name,
+					Notes:      clientList.Notes,
+					Tags:       clientList.Tags,
+					Type:       clientList.Type,
 					Version:    2,
-					ItemsCount: len(updatedItems),
-					Items:      updatedItems,
-				}),
+					ItemsCount: int64(len(rhnvUpdatedItems)),
+				}
+				expectReadList(client, clientList.ListContent, mapKeyValuesItemsPayloadToContent(rhnvItems), 4)
+				expectUpdateListItems(client, clientlists.UpdateClientListItemsRequest{
+					ListID: clientList.ListID,
+					UpdateClientListItems: clientlists.UpdateClientListItems{
+						Append: []clientlists.ListItemPayload{
+							{Key: "header4", Values: []string{"val4"}, Description: "Header 4 Desc", Tags: []string{}},
+						},
+						Update: []clientlists.ListItemPayload{
+							{Key: "header1", Values: []string{"val1"}, Description: "Header 1 Desc Updated", Tags: []string{}},
+						},
+						Delete: []clientlists.ListItemPayload{
+							{Key: "header3"},
+						},
+					},
+				})
+				expectReadList(client, updatedListContent, mapKeyValuesItemsPayloadToContent(rhnvUpdatedItems), 2)
+				expectDeleteList(client, clientList.ListContent)
 			},
-		})
-	})
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString(fmt.Sprintf("%s/rhnv_type_list_and_items_create.tf", testDir)),
+					Check: checkAttributes(listAttributes{
+						ListID:     "1_AB",
+						Name:       "List Name",
+						Notes:      "List Notes",
+						Tags:       []string{"a", "b"},
+						Type:       "REQUEST_HEADER_NAME_VALUE",
+						ContractID: "12_ABC",
+						GroupID:    12,
+						Version:    1,
+						ItemsCount: len(rhnvItems),
+						Items:      rhnvItems,
+					}),
+				},
+				{
+					Config: loadFixtureString(fmt.Sprintf("%s/rhnv_type_list_and_items_update.tf", testDir)),
+					Check: checkAttributes(listAttributes{
+						ListID:     "1_AB",
+						Name:       "List Name",
+						Notes:      "List Notes",
+						Tags:       []string{"a", "b"},
+						Type:       "REQUEST_HEADER_NAME_VALUE",
+						ContractID: "12_ABC",
+						GroupID:    12,
+						Version:    2,
+						ItemsCount: len(rhnvUpdatedItems),
+						Items:      rhnvUpdatedItems,
+					}),
+				},
+			},
+		},
 
-	t.Run("Create REQUEST_HEADER_NAME_VALUE list item with 'value' field fails", func(t *testing.T) {
-		client := new(clientlists.Mock)
-		runResourceTest(t, client, []resource.TestStep{
-			{
-				Config:      loadFixtureString(fmt.Sprintf("%s/rhnv_type_item_with_value.tf", testDir)),
-				ExpectError: regexp.MustCompile(`invalid item: unsupported field 'value'`),
+		"Create REQUEST_HEADER_NAME_VALUE list item with 'value' field fails": {
+			steps: []resource.TestStep{
+				{
+					Config:      loadFixtureString(fmt.Sprintf("%s/rhnv_type_item_with_value.tf", testDir)),
+					ExpectError: regexp.MustCompile(`invalid item: unsupported field 'value'`),
+				},
 			},
-		})
-	})
+		},
+		"Create REQUEST_HEADER_NAME_VALUE list item with missing 'key' fails": {
+			steps: []resource.TestStep{
+				{
+					Config:      loadFixtureString(fmt.Sprintf("%s/rhnv_type_item_missing_key.tf", testDir)),
+					ExpectError: regexp.MustCompile(`invalid item: missing required field 'key'`),
+				},
+			},
+		},
+		"Create REQUEST_HEADER_NAME_VALUE list item with missing 'values' fails": {
+			steps: []resource.TestStep{
+				{
+					Config:      loadFixtureString(fmt.Sprintf("%s/rhnv_type_item_missing_values.tf", testDir)),
+					ExpectError: regexp.MustCompile(`invalid item: missing required field 'values'`),
+				},
+			},
+		},
+		"Create ASN list item with 'key' field fails": {
+			steps: []resource.TestStep{
+				{
+					Config:      loadFixtureString(fmt.Sprintf("%s/asn_type_item_with_key.tf", testDir)),
+					ExpectError: regexp.MustCompile(`invalid item: unsupported field 'key'`),
+				},
+			},
+		},
+		"Create ASN list item with 'values' field fails": {
+			steps: []resource.TestStep{
+				{
+					Config:      loadFixtureString(fmt.Sprintf("%s/asn_type_item_with_values.tf", testDir)),
+					ExpectError: regexp.MustCompile(`invalid item: unsupported field 'values'`),
+				},
+			},
+		},
+		"Create ASN list item with missing 'value' fails": {
+			steps: []resource.TestStep{
+				{
+					Config:      loadFixtureString(fmt.Sprintf("%s/asn_type_item_missing_value.tf", testDir)),
+					ExpectError: regexp.MustCompile(`invalid item: missing required field 'value'`),
+				},
+			},
+		},
+	}
 
-	t.Run("Create REQUEST_HEADER_NAME_VALUE list item with missing 'key' fails", func(t *testing.T) {
-		client := new(clientlists.Mock)
-		runResourceTest(t, client, []resource.TestStep{
-			{
-				Config:      loadFixtureString(fmt.Sprintf("%s/rhnv_type_item_missing_key.tf", testDir)),
-				ExpectError: regexp.MustCompile(`invalid item: missing required field 'key'`),
-			},
-		})
-	})
-
-	t.Run("Create REQUEST_HEADER_NAME_VALUE list item with missing 'values' fails", func(t *testing.T) {
-		client := new(clientlists.Mock)
-		runResourceTest(t, client, []resource.TestStep{
-			{
-				Config:      loadFixtureString(fmt.Sprintf("%s/rhnv_type_item_missing_values.tf", testDir)),
-				ExpectError: regexp.MustCompile(`invalid item: missing required field 'values'`),
-			},
-		})
-	})
-
-	t.Run("Create ASN list item with 'key' field fails", func(t *testing.T) {
-		client := new(clientlists.Mock)
-		runResourceTest(t, client, []resource.TestStep{
-			{
-				Config:      loadFixtureString(fmt.Sprintf("%s/asn_type_item_with_key.tf", testDir)),
-				ExpectError: regexp.MustCompile(`invalid item: unsupported field 'key'`),
-			},
-		})
-	})
-
-	t.Run("Create ASN list item with 'values' field fails", func(t *testing.T) {
-		client := new(clientlists.Mock)
-		runResourceTest(t, client, []resource.TestStep{
-			{
-				Config:      loadFixtureString(fmt.Sprintf("%s/asn_type_item_with_values.tf", testDir)),
-				ExpectError: regexp.MustCompile(`invalid item: unsupported field 'values'`),
-			},
-		})
-	})
-
-	t.Run("Create ASN list item with missing 'value' fails", func(t *testing.T) {
-		client := new(clientlists.Mock)
-		runResourceTest(t, client, []resource.TestStep{
-			{
-				Config:      loadFixtureString(fmt.Sprintf("%s/asn_type_item_missing_value.tf", testDir)),
-				ExpectError: regexp.MustCompile(`invalid item: missing required field 'value'`),
-			},
-		})
-	})
+	runClientListSDKTestCases(t, tests)
 }
 
 func TestIsVersionUpdateRequired(t *testing.T) {
+	t.Parallel()
 	t.Run("nil values", func(t *testing.T) {
+		t.Parallel()
 		required, err := isVersionUpdateRequired(nil, nil, false)
 		assert.NoError(t, err)
 		assert.False(t, required)
@@ -1459,6 +1355,7 @@ func TestIsVersionUpdateRequired(t *testing.T) {
 	})
 
 	t.Run("value items - no changes", func(t *testing.T) {
+		t.Parallel()
 		oldSet := schema.NewSet(valueItemHashFn, []interface{}{
 			map[string]interface{}{
 				"value":           "1.2.3.4",
@@ -1482,6 +1379,7 @@ func TestIsVersionUpdateRequired(t *testing.T) {
 	})
 
 	t.Run("value items - expiration_date changed", func(t *testing.T) {
+		t.Parallel()
 		oldSet := schema.NewSet(valueItemHashFn, []interface{}{
 			map[string]interface{}{
 				"value":           "1.2.3.4",
@@ -1505,6 +1403,7 @@ func TestIsVersionUpdateRequired(t *testing.T) {
 	})
 
 	t.Run("value items - new item added", func(t *testing.T) {
+		t.Parallel()
 		oldSet := schema.NewSet(valueItemHashFn, []interface{}{
 			map[string]interface{}{
 				"value":           "1.2.3.4",
@@ -1534,6 +1433,7 @@ func TestIsVersionUpdateRequired(t *testing.T) {
 	})
 
 	t.Run("key-value items - no changes", func(t *testing.T) {
+		t.Parallel()
 		oldSet := schema.NewSet(keyValuesItemHashFn, []interface{}{
 			map[string]interface{}{
 				"key":             "User-Agent",
@@ -1559,6 +1459,7 @@ func TestIsVersionUpdateRequired(t *testing.T) {
 	})
 
 	t.Run("key-value items - values changed", func(t *testing.T) {
+		t.Parallel()
 		oldSet := schema.NewSet(keyValuesItemHashFn, []interface{}{
 			map[string]interface{}{
 				"key":             "User-Agent",
@@ -1584,6 +1485,7 @@ func TestIsVersionUpdateRequired(t *testing.T) {
 	})
 
 	t.Run("key-value items - values order changed (should not trigger update)", func(t *testing.T) {
+		t.Parallel()
 		oldSet := schema.NewSet(keyValuesItemHashFn, []interface{}{
 			map[string]interface{}{
 				"key":             "User-Agent",
@@ -1609,6 +1511,7 @@ func TestIsVersionUpdateRequired(t *testing.T) {
 	})
 
 	t.Run("key-value items - expiration_date changed", func(t *testing.T) {
+		t.Parallel()
 		oldSet := schema.NewSet(keyValuesItemHashFn, []interface{}{
 			map[string]interface{}{
 				"key":             "User-Agent",
@@ -1634,6 +1537,7 @@ func TestIsVersionUpdateRequired(t *testing.T) {
 	})
 
 	t.Run("key-value items - new key added", func(t *testing.T) {
+		t.Parallel()
 		oldSet := schema.NewSet(keyValuesItemHashFn, []interface{}{
 			map[string]interface{}{
 				"key":             "User-Agent",

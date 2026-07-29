@@ -3,7 +3,6 @@ package appsec
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
@@ -19,7 +18,7 @@ import (
 
 type (
 	customRulesUsageDataSource struct {
-		meta meta.Meta
+		meta.DataSource
 	}
 
 	// customRulesUsageDataSourceModel describes the data source data model for CustomRulesUsageDataSource.
@@ -53,15 +52,15 @@ var (
 	_ datasource.DataSourceWithConfigure = &customRulesUsageDataSource{}
 )
 
-// NewCustomRulesUsageDataSource returns a new custom rules usage data source
+// NewCustomRulesUsageDataSource returns a new custom rules usage data source.
 func NewCustomRulesUsageDataSource() datasource.DataSource { return &customRulesUsageDataSource{} }
 
-// Metadata configures data source's meta information
+// Metadata configures data source's meta information.
 func (d *customRulesUsageDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, response *datasource.MetadataResponse) {
 	response.TypeName = "akamai_appsec_custom_rules_usage"
 }
 
-// Schema is used to define data source's terraform schema
+// Schema is used to define data source's terraform schema.
 func (d *customRulesUsageDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Custom rules usage data source.",
@@ -121,25 +120,6 @@ func (d *customRulesUsageDataSource) Schema(_ context.Context, _ datasource.Sche
 	}
 }
 
-func (d *customRulesUsageDataSource) Configure(ctx context.Context, request datasource.ConfigureRequest, response *datasource.ConfigureResponse) {
-	tflog.Debug(ctx, "Configuring Custom Rules data source")
-
-	if request.ProviderData == nil {
-		return
-	}
-
-	m, ok := request.ProviderData.(meta.Meta)
-	if !ok {
-		response.Diagnostics.AddError(
-			"Unexpected Data Source Configure Type",
-			fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.", request.ProviderData),
-		)
-		return
-	}
-
-	d.meta = m
-}
-
 func (d *customRulesUsageDataSource) Read(ctx context.Context, request datasource.ReadRequest, response *datasource.ReadResponse) {
 	tflog.Debug(ctx, "Reading Custom Rules data source")
 
@@ -149,10 +129,10 @@ func (d *customRulesUsageDataSource) Read(ctx context.Context, request datasourc
 		return
 	}
 
-	client := inst.Client(d.meta)
+	client := d.Client.GetAPPSEC()
 	configID := data.ConfigID.ValueInt64()
 
-	version, err := getLatestConfigVersion(ctx, int(configID), d.meta)
+	version, err := getLatestConfigVersion(ctx, int(configID), d.Client.GetAPPSEC())
 	if err != nil {
 		response.Diagnostics.AddError("get latest config version error", err.Error())
 		return

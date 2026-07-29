@@ -57,7 +57,7 @@ func resourceAdvancedSettingsLogging() *schema.Resource {
 
 func resourceAdvancedSettingsLoggingCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsLoggingCreate")
 	logger.Debugf("in resourceAdvancedSettingsLoggingCreate")
 
@@ -65,7 +65,7 @@ func resourceAdvancedSettingsLoggingCreate(ctx context.Context, d *schema.Resour
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "loggingSetting", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "loggingSetting", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -101,7 +101,7 @@ func resourceAdvancedSettingsLoggingCreate(ctx context.Context, d *schema.Resour
 
 func resourceAdvancedSettingsLoggingRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsLoggingRead")
 	logger.Debugf("in resourceAdvancedSettingsLoggingRead")
 
@@ -115,7 +115,7 @@ func resourceAdvancedSettingsLoggingRead(ctx context.Context, d *schema.Resource
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version, err := getLatestConfigVersion(ctx, configID, m)
+		version, err := getLatestConfigVersion(ctx, configID, client)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -129,7 +129,7 @@ func resourceAdvancedSettingsLoggingRead(ctx context.Context, d *schema.Resource
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version, err := getLatestConfigVersion(ctx, configID, m)
+		version, err := getLatestConfigVersion(ctx, configID, client)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -163,7 +163,7 @@ func resourceAdvancedSettingsLoggingRead(ctx context.Context, d *schema.Resource
 
 func resourceAdvancedSettingsLoggingUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsLoggingUpdate")
 	logger.Debugf("in resourceAdvancedSettingsLoggingUpdate")
 
@@ -177,7 +177,7 @@ func resourceAdvancedSettingsLoggingUpdate(ctx context.Context, d *schema.Resour
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version, err := getModifiableConfigVersion(ctx, configID, "loggingSetting", m)
+		version, err := getModifiableConfigVersion(ctx, configID, "loggingSetting", client)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -191,7 +191,7 @@ func resourceAdvancedSettingsLoggingUpdate(ctx context.Context, d *schema.Resour
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version, err := getModifiableConfigVersion(ctx, configID, "loggingSetting", m)
+		version, err := getModifiableConfigVersion(ctx, configID, "loggingSetting", client)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -216,7 +216,7 @@ func resourceAdvancedSettingsLoggingUpdate(ctx context.Context, d *schema.Resour
 
 func resourceAdvancedSettingsLoggingDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsLoggingDelete")
 	logger.Debugf("in resourceAdvancedSettingsLoggingDelete")
 
@@ -230,7 +230,7 @@ func resourceAdvancedSettingsLoggingDelete(ctx context.Context, d *schema.Resour
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version, err := getModifiableConfigVersion(ctx, configID, "loggingSetting", m)
+		version, err := getModifiableConfigVersion(ctx, configID, "loggingSetting", client)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -245,7 +245,7 @@ func resourceAdvancedSettingsLoggingDelete(ctx context.Context, d *schema.Resour
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version, err := getModifiableConfigVersion(ctx, configID, "loggingSetting", m)
+		version, err := getModifiableConfigVersion(ctx, configID, "loggingSetting", client)
 		if err != nil {
 			return diag.FromErr(err)
 		}

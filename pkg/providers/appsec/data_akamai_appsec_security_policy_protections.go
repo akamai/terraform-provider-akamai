@@ -92,7 +92,7 @@ func dataSourcePolicyProtections() *schema.Resource {
 
 func dataSourcePolicyProtectionsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "dataSourcePolicyProtectionsRead")
 
 	getPolicyProtections := appsec.GetPolicyProtectionsRequest{}
@@ -103,7 +103,7 @@ func dataSourcePolicyProtectionsRead(ctx context.Context, d *schema.ResourceData
 	}
 	getPolicyProtections.ConfigID = configID
 
-	if getPolicyProtections.Version, err = getLatestConfigVersion(ctx, configID, m); err != nil {
+	if getPolicyProtections.Version, err = getLatestConfigVersion(ctx, configID, client); err != nil {
 		return diag.FromErr(err)
 	}
 

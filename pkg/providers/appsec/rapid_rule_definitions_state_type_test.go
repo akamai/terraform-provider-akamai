@@ -9,6 +9,7 @@ import (
 )
 
 func TestCheckSemanticEquality_RuleDefinitions(t *testing.T) {
+	t.Parallel()
 	var before = baseASC()
 	var after = baseDESC()
 

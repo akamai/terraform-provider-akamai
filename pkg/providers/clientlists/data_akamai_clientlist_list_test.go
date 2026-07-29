@@ -313,7 +313,7 @@ func TestDataClientList(t *testing.T) {
 		},
 	}
 
-	runClientListTestCases(t, tests)
+	runClientListFrameworkTestCases(t, tests)
 }
 
 func mockGetClientList(m *clientlists.Mock, response clientlists.GetClientListResponse, request clientlists.GetClientListRequest, times int) {

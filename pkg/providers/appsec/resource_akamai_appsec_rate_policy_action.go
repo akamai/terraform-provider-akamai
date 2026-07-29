@@ -64,7 +64,7 @@ func resourceRatePolicyAction() *schema.Resource {
 
 func resourceRatePolicyActionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceRatePolicyActionCreate")
 	logger.Debugf("in resourceRatePolicyActionCreate")
 
@@ -72,7 +72,7 @@ func resourceRatePolicyActionCreate(ctx context.Context, d *schema.ResourceData,
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "ratePolicyAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ratePolicyAction", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -115,7 +115,7 @@ func resourceRatePolicyActionCreate(ctx context.Context, d *schema.ResourceData,
 
 func resourceRatePolicyActionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceRatePolicyActionRead")
 	logger.Debugf("in resourceRatePolicyActionRead")
 
@@ -128,7 +128,7 @@ func resourceRatePolicyActionRead(ctx context.Context, d *schema.ResourceData, m
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -176,7 +176,7 @@ func resourceRatePolicyActionRead(ctx context.Context, d *schema.ResourceData, m
 
 func resourceRatePolicyActionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceRatePolicyActionUpdate")
 	logger.Debugf("in resourceRatePolicyActionUpdate")
 
@@ -188,7 +188,7 @@ func resourceRatePolicyActionUpdate(ctx context.Context, d *schema.ResourceData,
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "ratePolicyAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ratePolicyAction", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -226,7 +226,7 @@ func resourceRatePolicyActionUpdate(ctx context.Context, d *schema.ResourceData,
 
 func resourceRatePolicyActionDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceRatePolicyActionDelete")
 	logger.Debugf("in resourceRatePolicyActionDelete")
 
@@ -238,7 +238,7 @@ func resourceRatePolicyActionDelete(ctx context.Context, d *schema.ResourceData,
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "ratePolicyAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ratePolicyAction", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
