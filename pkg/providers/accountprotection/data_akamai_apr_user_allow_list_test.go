@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	apr "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/accountprotection"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
@@ -14,6 +15,7 @@ import (
 )
 
 func TestDataUserAllowList(t *testing.T) {
+	t.Parallel()
 	expectedRequest := apr.GetUserAllowListIDRequest{ConfigID: 43253, Version: 15}
 	apiResponse := map[string]any{
 		"metadata": map[string]any{
@@ -76,17 +78,17 @@ func TestDataUserAllowList(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			clientMock := &apr.Mock{}
-			test.setupMock(clientMock)
+			t.Parallel()
+			client := edgegrid.NewTestClient()
+			mockGetConfigVersion(client.APPSEC)
+			test.setupMock(client.AccountProtection)
 
-			useClient(clientMock, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps:                    test.steps,
-				})
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				Steps:                    test.steps,
 			})
 
-			clientMock.AssertExpectations(t)
+			client.AccountProtection.AssertExpectations(t)
 		})
 	}
 }

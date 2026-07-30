@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/jsonutil"
 	logger "github.com/akamai/terraform-provider-akamai/v10/pkg/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -89,6 +90,10 @@ func jsonBytesEqual(b1, b2 []byte) bool {
 	}
 
 	return reflect.DeepEqual(o1, o2)
+}
+
+func suppressJSONDiffsIgnoringArrayOrder(_, oldString, newString string, _ *schema.ResourceData) bool {
+	return jsonutil.EqualIgnoringArrayOrder(oldString, newString)
 }
 
 func suppressEquivalentReputationProfileDiffs(_, oldVal, newVal string, _ *schema.ResourceData) bool {
@@ -481,11 +486,28 @@ func suppressActivationEmailFieldForAppSecActivation(_, _, _ string, d *schema.R
 func suppressFieldForPrefixedGroupID(_, oldValue, newValue string, d *schema.ResourceData) bool {
 	// oldValue: load from DataSource - which can also be freshly Instantiated (to be populated with Inputs);
 	// newValue: from Input (eg. 'grp_12345' ) vs. '12345' Loaded from existing ('old' and 'new' are the same)
+	//
+	// After `terraform import`, the appsec config GET endpoint does not return groupId, so the Read
+	// function cannot populate group_id in state. Suppress the diff in this case: group_id is
+	// immutable after config creation, so the value in HCL is always the authoritative source.
+	if oldValue == "" && d.Id() != "" {
+		return true
+	}
 	if oldValue != newValue && d.HasChanges("group_id") && len(oldValue) > 0 {
 		if _, err := strconv.Atoi(newValue); err != nil {
 			var toSuppress = strings.HasSuffix(newValue, "_"+oldValue)
 			return toSuppress
 		}
+	}
+	return oldValue == newValue
+}
+
+func suppressFieldForContractID(_, oldValue, newValue string, d *schema.ResourceData) bool {
+	// After `terraform import`, the appsec config GET endpoint does not return contractId, so the Read
+	// function cannot populate contract_id in state. Suppress the diff in this case: contract_id is
+	// immutable after config creation, so the value in HCL is always the authoritative source.
+	if oldValue == "" && d.Id() != "" {
+		return true
 	}
 	return oldValue == newValue
 }

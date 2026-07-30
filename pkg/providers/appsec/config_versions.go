@@ -7,9 +7,8 @@ import (
 	"sync"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
-	akalog "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/log"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/cache"
-	akameta "github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
 // Utility functions for determining current and latest versions of a security
@@ -22,12 +21,12 @@ var (
 	// of the given security configuration. If the most recent version is not editable
 	// (because it is active in staging or production) a new version is cloned and the
 	// new version's number is returned. API calls are made using the supplied context
-	// and the API client obtained from m. Log messages are written to m's logger. A
-	// mutex prevents calls made by multiple resources from creating unnecessary clones.
+	// and the passed API client.
+	// A mutex prevents calls made by multiple resources from creating unnecessary clones.
 	GetModifiableConfigVersion = getModifiableConfigVersion
 	// GetLatestConfigVersion returns the latest version number of the given security
-	// configuration. API calls are made using the supplied context and the API client
-	// obtained from m. Log messages are written to m's logger.
+	// configuration. API calls are made using the supplied context
+	// and the passed API client.
 	GetLatestConfigVersion = getLatestConfigVersion
 )
 
@@ -35,48 +34,43 @@ var (
 // of the given security configuration. If the most recent version is not editable
 // (because it is active or was previously active in staging or production) a new
 // version is cloned and the new version's number is returned. API calls are made
-// using the supplied context and the API client obtained from m. Log messages are
-// written to m's logger. A mutex prevents calls made by multiple resources from
-// creating unnecessary clones.
-func getModifiableConfigVersion(ctx context.Context, configID int, resource string, m interface{}) (int, error) {
-	meta := akameta.Must(m)
-	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "getModifiableConfigVersion")
-
+// using the supplied context and the passed API client.
+// A mutex prevents calls made by multiple resources from creating unnecessary clones.
+func getModifiableConfigVersion(ctx context.Context, configID int, resource string, client appsec.APPSEC) (int, error) {
 	// If the version info is in the cache, return it immediately.
 	cacheKey := fmt.Sprintf("%s:%d", "getModifiableConfigVersion", configID)
 	configuration := &appsec.GetConfigurationResponse{}
 	if err := cache.Get(cache.BucketName(SubproviderName), cacheKey, configuration); err == nil {
-		logger.Debugf("Resource %s returning modifiable version %d from cache", resource, configuration.LatestVersion)
+		tflog.Debug(ctx, "returning modifiable version from cache", map[string]any{"resource": resource, "version": configuration.LatestVersion})
 		return configuration.LatestVersion, nil
 	}
 
-	logger.Debugf("Resource %s requesting mutex lock", resource)
+	tflog.Debug(ctx, "requesting mutex lock", map[string]any{"resource": resource})
 	configCloneMutex.Lock()
 	defer func() {
-		logger.Debugf("Resource %s releasing mutex lock", resource)
+		tflog.Debug(ctx, "releasing mutex lock", map[string]any{"resource": resource})
 		configCloneMutex.Unlock()
 	}()
 
 	// If the version info is in the cache, return it immediately.
 	err := cache.Get(cache.BucketName(SubproviderName), cacheKey, configuration)
 	if err == nil {
-		logger.Debugf("Resource %s returning modifiable version %d from cache", resource, configuration.LatestVersion)
+		tflog.Debug(ctx, "returning modifiable version from cache", map[string]any{"resource": resource, "version": configuration.LatestVersion})
 		return configuration.LatestVersion, nil
 	}
 	// Any error response other than 'not found' or 'cache disabled' is a problem.
 	if !errors.Is(err, cache.ErrEntryNotFound) && !errors.Is(err, cache.ErrDisabled) {
-		logger.Errorf("error reading from cache: %s", err.Error())
+		tflog.Error(ctx, "error reading from cache", map[string]any{"error": err.Error()})
 		return 0, err
 	}
 
 	// Check whether the latest version is active in staging or production
-	logger.Debugf("Resource %s calling GetConfigurations", resource)
+	tflog.Debug(ctx, "calling GetConfiguration", map[string]any{"resource": resource})
 	configuration, err = client.GetConfiguration(ctx, appsec.GetConfigurationRequest{
 		ConfigID: configID,
 	})
 	if err != nil {
-		logger.Errorf("error calling 'getConfiguration': %s", err.Error())
+		tflog.Error(ctx, "error calling GetConfiguration", map[string]any{"error": err.Error()})
 		return 0, err
 	}
 	latestVersion := configuration.LatestVersion
@@ -84,144 +78,128 @@ func getModifiableConfigVersion(ctx context.Context, configID int, resource stri
 	productionVersion := configuration.ProductionVersion
 
 	// Check if the latest version is modifiable (not currently active and not previously active)
-	isModifiable, reason := checkIfVersionIsModifiable(ctx, client, configID, latestVersion, stagingVersion, productionVersion, logger)
+	isModifiable, reason := checkIfVersionIsModifiable(ctx, client, configID, latestVersion, stagingVersion, productionVersion)
 
 	if isModifiable {
 		// Latest version is modifiable, cache and return it
 		if err := cache.Set(cache.BucketName(SubproviderName), cacheKey, configuration); err != nil {
 			if !errors.Is(err, cache.ErrDisabled) {
-				logger.Errorf("unable to set latestVersion %d into cache")
+				tflog.Error(ctx, "unable to set latestVersion into cache", map[string]any{"latestVersion": latestVersion, "error": err.Error()})
 			}
 		}
-		logger.Debugf("Resource %s caching and returning latestVersion %d (staging version %d, production version %d)",
-			resource, latestVersion, stagingVersion, productionVersion)
+		tflog.Debug(ctx, "caching and returning latest version", map[string]any{
+			"resource": resource, "latestVersion": latestVersion,
+			"stagingVersion": stagingVersion, "productionVersion": productionVersion,
+		})
 		return latestVersion, nil
 	}
 
 	// Latest version is not modifiable, need to clone a new version
-	logger.Debugf("Resource %s cloning configuration version %d (%s)", resource, latestVersion, reason)
+	tflog.Debug(ctx, "cloning configuration version", map[string]any{"resource": resource, "latestVersion": latestVersion, "reason": reason})
 	ccr, err := client.CreateConfigurationVersionClone(ctx, appsec.CreateConfigurationVersionCloneRequest{
 		ConfigID:          configID,
 		CreateFromVersion: latestVersion,
 	})
 	if err != nil {
-		logger.Errorf("error calling 'createConfigurationVersionClone': %s", err.Error())
+		tflog.Error(ctx, "error calling CreateConfigurationVersionClone", map[string]any{"error": err.Error()})
 		return 0, err
 	}
 
 	configuration.LatestVersion = ccr.Version
 	if err := cache.Set(cache.BucketName(SubproviderName), cacheKey, configuration); err != nil && !errors.Is(err, cache.ErrDisabled) {
-		logger.Errorf("unable to set latestVersion %d into cache: %s", err.Error())
+		tflog.Error(ctx, "unable to set latestVersion into cache", map[string]any{"error": err.Error(), "latestVersion": latestVersion})
 	}
 
-	logger.Debugf("Resource %s caching and returning new cloned version %d as modifiable version", ccr.Version)
+	tflog.Debug(ctx, "caching and returning new cloned version as modifiable version", map[string]any{"resource": resource, "version": ccr.Version})
 	return ccr.Version, nil
 }
 
 // getLatestConfigVersion returns the latest version number of the given security
-// configuration. API calls are made using the supplied context and the API client
-// obtained from m. Log messages are written to m's logger.
-func getLatestConfigVersion(ctx context.Context, configID int, m interface{}) (int, error) {
-	meta := akameta.Must(m)
-	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "getLatestConfigVersion")
-
+// configuration. API calls are made using the supplied context and the passed API client.
+func getLatestConfigVersion(ctx context.Context, configID int, client appsec.APPSEC) (int, error) {
 	// Return the cached value if we have one
 	cacheKey := fmt.Sprintf("%s:%d", "getLatestConfigVersion", configID)
 	configuration := &appsec.GetConfigurationResponse{}
 	if err := cache.Get(cache.BucketName(SubproviderName), cacheKey, configuration); err == nil {
-		logger.Debugf("Found config %d, returning %d as its latest version", configuration.ID, configuration.LatestVersion)
+		tflog.Debug(ctx, "found config in cache, returning latest version", map[string]any{"configID": configuration.ID, "version": configuration.LatestVersion})
 		return configuration.LatestVersion, nil
 	}
 
 	// Wait for any prior call that might be populating the cache for us; if we obtain the lock, fetch the value ourselves
 	latestVersionMutex.Lock()
 	defer func() {
-		logger.Debugf("Unlocking latest version mutex")
+		tflog.Debug(ctx, "unlocking latest version mutex")
 		latestVersionMutex.Unlock()
 	}()
 
 	err := cache.Get(cache.BucketName(SubproviderName), cacheKey, configuration)
 	if err == nil {
-		logger.Debugf("Found config %d, returning %d as its latest version", configuration.ID, configuration.LatestVersion)
+		tflog.Debug(ctx, "found config in cache, returning latest version", map[string]any{"configID": configuration.ID, "version": configuration.LatestVersion})
 		return configuration.LatestVersion, nil
 	}
 	// Any error response other than 'not found' or 'cache disabled' is a problem.
 	if !errors.Is(err, cache.ErrEntryNotFound) && !errors.Is(err, cache.ErrDisabled) {
-		logger.Errorf("error reading from cache: %s", err.Error())
+		tflog.Error(ctx, "error reading from cache", map[string]any{"error": err.Error()})
 		return 0, err
 	}
 
 	configuration, err = client.GetConfiguration(ctx, appsec.GetConfigurationRequest{ConfigID: configID})
 	if err != nil {
-		logger.Errorf("error calling GetConfiguration: %s", err.Error())
+		tflog.Error(ctx, "error calling GetConfiguration", map[string]any{"error": err.Error(), "configID": configID})
 		return 0, err
 	}
 	if err := cache.Set(cache.BucketName(SubproviderName), cacheKey, configuration); err != nil && !errors.Is(err, cache.ErrDisabled) {
-		logger.Errorf("error caching latestVersion into cache: %s", err.Error())
+		tflog.Error(ctx, "error caching latestVersion into cache", map[string]any{"error": err.Error(), "latestVersion": configuration.LatestVersion})
 	}
 
-	logger.Debugf("Caching and returning %d as latest version of config %s", configuration.LatestVersion, configuration.ID)
+	tflog.Debug(ctx, "Caching and returning latest version of config", map[string]any{"configID": configID, "latestVersion": configuration.LatestVersion})
 	return configuration.LatestVersion, nil
 }
 
 // getActiveConfigVersions returns the version numbers of the given security configuration
-// active in staging and production respectively. API calls are made using the supplied
-// context and the API client obtained from m. Log messages are written to m's logger.
-func getActiveConfigVersions(ctx context.Context, configID int, m interface{}) (int, int, error) {
-	meta := akameta.Must(m)
-	client := inst.Client(meta)
-	logger := meta.Log("APPSEC", "getActiveConfigVersions")
-
-	logger.Debugf("getActiveConfigVersions calling GetConfigurations")
+// active in staging and production respectively. API calls are made using the supplied context
+// and the passed API client.
+func getActiveConfigVersions(ctx context.Context, configID int, client appsec.APPSEC) (int, int, error) {
+	tflog.Debug(ctx, "getActiveConfigVersions calling GetConfiguration", map[string]any{"configID": configID})
 	configuration, err := client.GetConfiguration(ctx, appsec.GetConfigurationRequest{
 		ConfigID: configID,
 	})
 	if err != nil {
-		logger.Errorf("error calling getConfiguration: %s", err.Error())
+		tflog.Error(ctx, "error calling GetConfiguration", map[string]any{"error": err.Error()})
 		return 0, 0, err
 	}
-
-	logger.Debugf("Found config %d, returning %d, %d as staging & production versions",
-		configuration.ID, configuration.StagingVersion, configuration.ProductionVersion)
-
+	tflog.Debug(ctx, "Found config, returning versions as staging & production versions",
+		map[string]any{"configID": configID, "stagingVersion": configuration.StagingVersion, "productionVersion": configuration.ProductionVersion})
 	return configuration.StagingVersion, configuration.ProductionVersion, nil
 }
 
 // checkIfVersionIsModifiable checks if a version can be modified by checking:
 // 1. If it's currently active in staging or production
 // 2. If it was previously active (has "Deactivated" status)
-// Returns true if modifiable, false if not, along with a reason string
-func checkIfVersionIsModifiable(ctx context.Context, client appsec.APPSEC, configID, versionToCheck, stagingVersion, productionVersion int, logger akalog.Interface) (bool, string) {
+// Returns true if modifiable, false if not, along with a reason string.
+func checkIfVersionIsModifiable(ctx context.Context, client appsec.APPSEC, configID, versionToCheck, stagingVersion, productionVersion int) (bool, string) {
 	// First check if version is currently active
 	if versionToCheck == stagingVersion || versionToCheck == productionVersion {
 		return false, "version is active in staging or production"
 	}
 
 	// Version is not currently active, check if it was previously active
-	getConfigVersionRequest := appsec.GetConfigurationVersionRequest{
+	configVersion, err := client.GetConfigurationVersion(ctx, appsec.GetConfigurationVersionRequest{
 		ConfigID: configID,
 		Version:  versionToCheck,
-	}
-
-	configVersion, err := client.GetConfigurationVersion(ctx, getConfigVersionRequest)
+	})
 	if err != nil {
-		logger.Warnf("Could not get configuration version for previous activity check: %v", err)
+		tflog.Warn(ctx, "could not get configuration version for previous activity check", map[string]any{"error": err.Error()})
 		// If we can't check previous activity, assume it's modifiable to avoid blocking
 		return true, ""
 	}
 
 	// Check if the specific version has "Deactivated" status in staging or production
-	stagingStatus := configVersion.Staging.Status
-	productionStatus := configVersion.Production.Status
-
 	// Check for "Deactivated" status which indicates the version was previously active
-	if stagingStatus == "Deactivated" || productionStatus == "Deactivated" {
-		logger.Debugf("Version %d has 'Deactivated' status (staging: %s, production: %s) - was previously active",
-			versionToCheck, stagingStatus, productionStatus)
+	if configVersion.Staging.Status == "Deactivated" || configVersion.Production.Status == "Deactivated" {
 		return false, "version was previously active but is now deactivated"
 	}
 
-	logger.Debugf("Version %d is modifiable (not currently active and not previously active)", versionToCheck)
+	tflog.Debug(ctx, fmt.Sprintf("version %d is modifiable (not currently active and not previously active)", versionToCheck))
 	return true, ""
 }

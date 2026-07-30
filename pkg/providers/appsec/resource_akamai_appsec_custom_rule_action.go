@@ -58,7 +58,7 @@ func resourceCustomRuleAction() *schema.Resource {
 
 func resourceCustomRuleActionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceCustomRuleActionCreate")
 	logger.Debugf("in resourceCustomRuleActionCreate")
 
@@ -66,7 +66,7 @@ func resourceCustomRuleActionCreate(ctx context.Context, d *schema.ResourceData,
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "customRuleAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "customRuleAction", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -104,7 +104,7 @@ func resourceCustomRuleActionCreate(ctx context.Context, d *schema.ResourceData,
 
 func resourceCustomRuleActionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceCustomRuleActionRead")
 	logger.Debugf("in resourceCustomRuleActionRead")
 
@@ -116,7 +116,7 @@ func resourceCustomRuleActionRead(ctx context.Context, d *schema.ResourceData, m
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -156,7 +156,7 @@ func resourceCustomRuleActionRead(ctx context.Context, d *schema.ResourceData, m
 
 func resourceCustomRuleActionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceCustomRuleActionUpdate")
 	logger.Debugf("in resourceCustomRuleActionUpdate")
 
@@ -168,7 +168,7 @@ func resourceCustomRuleActionUpdate(ctx context.Context, d *schema.ResourceData,
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "customRuleAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "customRuleAction", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -201,7 +201,7 @@ func resourceCustomRuleActionUpdate(ctx context.Context, d *schema.ResourceData,
 
 func resourceCustomRuleActionDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceCustomRuleActionDelete")
 	logger.Debugf("in resourceCustomRuleActionDelete")
 
@@ -213,7 +213,7 @@ func resourceCustomRuleActionDelete(ctx context.Context, d *schema.ResourceData,
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "customRuleAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "customRuleAction", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}

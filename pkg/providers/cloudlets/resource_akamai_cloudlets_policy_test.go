@@ -3,6 +3,7 @@ package cloudlets
 import (
 	"fmt"
 	"regexp"
+	"slices"
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudlets"
@@ -15,7 +16,6 @@ import (
 	"github.com/jinzhu/copier"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/exp/slices"
 )
 
 func TestResourcePolicyV2(t *testing.T) {

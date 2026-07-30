@@ -58,7 +58,7 @@ func dataSourceEvalRules() *schema.Resource {
 
 func dataSourceEvalRulesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "dataSourceEvalRuleActionsRead")
 
 	getEvalRules := appsec.GetEvalRulesRequest{}
@@ -69,7 +69,7 @@ func dataSourceEvalRulesRead(ctx context.Context, d *schema.ResourceData, m inte
 	}
 	getEvalRules.ConfigID = configID
 
-	if getEvalRules.Version, err = getLatestConfigVersion(ctx, configID, m); err != nil {
+	if getEvalRules.Version, err = getLatestConfigVersion(ctx, configID, client); err != nil {
 		return diag.FromErr(err)
 	}
 

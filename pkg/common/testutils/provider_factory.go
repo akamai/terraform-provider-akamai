@@ -46,10 +46,34 @@ func NewProtoV6ProviderFactory(subproviders ...subprovider.Subprovider) map[stri
 
 // NewTestProtoV6ProviderFactory uses provided subproviders and client to create provider factory for test purposes
 func NewTestProtoV6ProviderFactory(client edgegrid.Client, subproviders ...subprovider.Subprovider) map[string]func() (tfprotov6.ProviderServer, error) {
-	providerFunc := akamai.NewTestFrameworkProvider(client, subproviders...)
+	frameworkProviderFunc := akamai.NewTestFrameworkProvider(client, subproviders...)
 	return map[string]func() (tfprotov6.ProviderServer, error){
 		"akamai": func() (tfprotov6.ProviderServer, error) {
-			return providerserver.NewProtocol6(providerFunc())(), nil
+			ctx := context.Background()
+
+			// SDK subprovider part
+			sdkProvider := akamai.NewSDKProvider(subproviders...)()
+			sdkProvider.ConfigureContextFunc = wrapConfigureContextFunc(sdkProvider.ConfigureContextFunc, client)
+
+			sdkV6Provider, err := tf5to6server.UpgradeServer(
+				context.Background(),
+				sdkProvider.GRPCProvider,
+			)
+			if err != nil {
+				return nil, err
+			}
+
+			// Integrating both parts
+			providers := []func() tfprotov6.ProviderServer{
+				providerserver.NewProtocol6(frameworkProviderFunc()),
+				func() tfprotov6.ProviderServer { return sdkV6Provider },
+			}
+			muxServer, err := tf6muxserver.NewMuxServer(ctx, providers...)
+			if err != nil {
+				return nil, err
+			}
+
+			return muxServer.ProviderServer(), nil
 		},
 	}
 }

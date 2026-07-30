@@ -51,7 +51,7 @@ func resourceConditionalAction() *schema.Resource {
 
 func resourceConditionalActionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceConditionalActionCreateAction")
 	logger.Debugf("in resourceConditionalActionCreateAction")
 
@@ -60,7 +60,7 @@ func resourceConditionalActionCreate(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "ConditionalAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ConditionalAction", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -89,7 +89,7 @@ func resourceConditionalActionCreate(ctx context.Context, d *schema.ResourceData
 
 func resourceConditionalActionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceConditionalActionRead")
 	logger.Debugf("in resourceConditionalActionRead")
 
@@ -103,7 +103,7 @@ func resourceConditionalActionRead(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -144,7 +144,7 @@ func resourceConditionalActionRead(ctx context.Context, d *schema.ResourceData, 
 
 func resourceConditionalActionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceConditionalActionUpdate")
 	logger.Debugf("in resourceConditionalActionUpdate")
 
@@ -158,7 +158,7 @@ func resourceConditionalActionUpdate(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "ConditionalAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ConditionalAction", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -188,7 +188,7 @@ func resourceConditionalActionUpdate(ctx context.Context, d *schema.ResourceData
 
 func resourceConditionalActionDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceConditionalActionDelete")
 	logger.Debugf("in resourceConditionalActionDelete")
 
@@ -202,7 +202,7 @@ func resourceConditionalActionDelete(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "ConditionalAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ConditionalAction", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}

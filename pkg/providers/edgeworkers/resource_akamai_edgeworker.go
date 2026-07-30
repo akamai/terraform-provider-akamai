@@ -80,7 +80,7 @@ func resourceEdgeWorker(config edgeworkerResourceConfig, activationConfig edgewo
 				Optional:    true,
 				ForceNew:    false,
 				DefaultFunc: schema.EnvDefaultFunc("EW_DEFAULT_BUNDLE_URL", config.bundleURL),
-				Description: "The path to the EdgeWorkers tgz code bundle",
+				Description: "The path to the EdgeWorkers tgz code bundle. If the value is not provided, the content of the `EW_DEFAULT_BUNDLE_URL` environment variable is used. If that is also not set, it falls back to the default hello-world package.",
 			},
 			"local_bundle_hash": {
 				Type:        schema.TypeString,

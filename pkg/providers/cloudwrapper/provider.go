@@ -8,14 +8,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-type (
-	// Subprovider gathers cloudwrapper resources and data sources
-	Subprovider struct{}
-)
+// Subprovider gathers cloudwrapper resources and data sources
+type Subprovider struct{}
 
-var (
-	_ subprovider.Subprovider = &Subprovider{}
-)
+var _ subprovider.Subprovider = &Subprovider{}
 
 // NewSubprovider returns a new cloudwrapper subprovider
 func NewSubprovider() *Subprovider {

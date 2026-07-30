@@ -47,7 +47,7 @@ func dataSourceThreatIntel() *schema.Resource {
 
 func dataSourceThreatIntelRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "dataSourceThreatIntelRead")
 
 	getThreatIntel := appsec.GetThreatIntelRequest{}
@@ -58,7 +58,7 @@ func dataSourceThreatIntelRead(ctx context.Context, d *schema.ResourceData, m in
 	}
 	getThreatIntel.ConfigID = configID
 
-	if getThreatIntel.Version, err = getLatestConfigVersion(ctx, configID, m); err != nil {
+	if getThreatIntel.Version, err = getLatestConfigVersion(ctx, configID, client); err != nil {
 		return diag.FromErr(err)
 	}
 

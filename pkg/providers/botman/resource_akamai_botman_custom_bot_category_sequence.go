@@ -40,7 +40,7 @@ func resourceCustomBotCategorySequence() *schema.Resource {
 
 func resourceCustomBotCategorySequenceCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceCustomBotCategorySequenceCreate")
 	logger.Debugf("in resourceCustomBotCategorySequenceCreate")
 
@@ -49,7 +49,7 @@ func resourceCustomBotCategorySequenceCreate(ctx context.Context, d *schema.Reso
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "customBotCategorySequence", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "customBotCategorySequence", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -82,7 +82,7 @@ func resourceCustomBotCategorySequenceCreate(ctx context.Context, d *schema.Reso
 
 func resourceCustomBotCategorySequenceUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceCustomBotCategorySequenceUpdate")
 	logger.Debugf("in resourceCustomBotCategorySequenceUpdate")
 
@@ -91,7 +91,7 @@ func resourceCustomBotCategorySequenceUpdate(ctx context.Context, d *schema.Reso
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "customBotCategorySequence", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "customBotCategorySequence", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -122,7 +122,7 @@ func resourceCustomBotCategorySequenceUpdate(ctx context.Context, d *schema.Reso
 
 func resourceCustomBotCategorySequenceRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceCustomBotCategorySequenceRead")
 	logger.Debugf("in resourceCustomBotCategorySequenceRead")
 
@@ -131,7 +131,7 @@ func resourceCustomBotCategorySequenceRead(ctx context.Context, d *schema.Resour
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}

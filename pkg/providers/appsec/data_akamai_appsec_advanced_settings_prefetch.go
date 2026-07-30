@@ -37,7 +37,7 @@ func dataSourceAdvancedSettingsPrefetch() *schema.Resource {
 
 func dataSourceAdvancedSettingsPrefetchRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "dataSourceAdvancedSettingsPrefetchRead")
 
 	getAdvancedSettingsPrefetch := appsec.GetAdvancedSettingsPrefetchRequest{}
@@ -48,7 +48,7 @@ func dataSourceAdvancedSettingsPrefetchRead(ctx context.Context, d *schema.Resou
 	}
 	getAdvancedSettingsPrefetch.ConfigID = configID
 
-	if getAdvancedSettingsPrefetch.Version, err = getLatestConfigVersion(ctx, configID, m); err != nil {
+	if getAdvancedSettingsPrefetch.Version, err = getLatestConfigVersion(ctx, configID, client); err != nil {
 		return diag.FromErr(err)
 	}
 

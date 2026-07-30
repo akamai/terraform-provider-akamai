@@ -2,10 +2,7 @@
 package clientlists
 
 import (
-	"sync"
-
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/clientlists"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/subprovider"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -14,50 +11,40 @@ import (
 type (
 	// Subprovider gathers clientlists resources and data sources
 	Subprovider struct {
-		client clientlists.ClientLists
+		config subproviderConfig
 	}
-	// Option is a clientlists provider option
-	Option func(p *Subprovider)
+
+	// subproviderConfig aggregates the configuration of all clientlists resources
+	// so that polling intervals and other timing values can be overridden,
+	// in particular by tests.
+	subproviderConfig struct {
+		activation clientListActivationConfig
+	}
 )
 
-var (
-	once sync.Once
+var _ subprovider.Subprovider = &Subprovider{}
 
-	inst *Subprovider
-)
+// defaultSubproviderConfig returns the production defaults for the clientlists subprovider.
+func defaultSubproviderConfig() subproviderConfig {
+	return subproviderConfig{
+		activation: defaultClientListActivationConfig(),
+	}
+}
 
 // NewSubprovider returns a new clientlists subprovider
-func NewSubprovider(opts ...Option) *Subprovider {
-	once.Do(func() {
-		inst = &Subprovider{}
-
-		for _, opt := range opts {
-			opt(inst)
-		}
-	})
-
-	return inst
+func NewSubprovider() *Subprovider {
+	return newSubproviderWithConfig(defaultSubproviderConfig())
 }
 
-// WithClient sets the client interface function, used for mocking and testing
-func WithClient(c clientlists.ClientLists) Option {
-	return func(p *Subprovider) {
-		p.client = c
-	}
-}
-
-// Client returns the ClientLists interface
-func (p *Subprovider) Client(meta meta.Meta) clientlists.ClientLists {
-	if p.client != nil {
-		return p.client
-	}
-	return clientlists.Client(meta.Session())
+// newSubproviderWithConfig returns a clientlists subprovider initialized with the given configuration.
+func newSubproviderWithConfig(config subproviderConfig) *Subprovider {
+	return &Subprovider{config: config}
 }
 
 // SDKResources returns the clientlists resources implemented using terraform-plugin-sdk
 func (p *Subprovider) SDKResources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
-		"akamai_clientlist_activation": resourceClientListActivation(),
+		"akamai_clientlist_activation": resourceClientListActivation(p.config.activation),
 		"akamai_clientlist_list":       resourceClientList(),
 	}
 }

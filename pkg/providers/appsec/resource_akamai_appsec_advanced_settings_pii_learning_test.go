@@ -8,14 +8,17 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/require"
 )
 
 func TestAkamaiAdvancedSettingsPIILearning_res_basic(t *testing.T) {
+	t.Parallel()
 	t.Run("match by AdvancedSettingsPIILearning", func(t *testing.T) {
-		client := &appsec.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
 		configResponse := appsec.GetConfigurationResponse{}
 		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &configResponse)
@@ -37,12 +40,12 @@ func TestAkamaiAdvancedSettingsPIILearning_res_basic(t *testing.T) {
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResAdvancedSettingsPIILearning/PIILearning.json"), &removeResponse)
 		require.NoError(t, err)
 
-		client.On("GetConfiguration",
+		client.APPSEC.On("GetConfiguration",
 			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&configResponse, nil)
 
-		client.On("UpdateAdvancedSettingsPIILearning",
+		client.APPSEC.On("UpdateAdvancedSettingsPIILearning",
 			testutils.MockContext,
 			appsec.UpdateAdvancedSettingsPIILearningRequest{
 				ConfigVersion: appsec.ConfigVersion{
@@ -52,7 +55,7 @@ func TestAkamaiAdvancedSettingsPIILearning_res_basic(t *testing.T) {
 				EnablePIILearning: true},
 		).Return(&updateResponse, nil)
 
-		client.On("GetAdvancedSettingsPIILearning",
+		client.APPSEC.On("GetAdvancedSettingsPIILearning",
 			testutils.MockContext,
 			appsec.GetAdvancedSettingsPIILearningRequest{
 				ConfigVersion: appsec.ConfigVersion{
@@ -61,7 +64,7 @@ func TestAkamaiAdvancedSettingsPIILearning_res_basic(t *testing.T) {
 			},
 		).Return(&getResponse, nil)
 
-		client.On("UpdateAdvancedSettingsPIILearning",
+		client.APPSEC.On("UpdateAdvancedSettingsPIILearning",
 			testutils.MockContext,
 			appsec.UpdateAdvancedSettingsPIILearningRequest{
 				ConfigVersion: appsec.ConfigVersion{
@@ -71,30 +74,30 @@ func TestAkamaiAdvancedSettingsPIILearning_res_basic(t *testing.T) {
 			},
 		).Return(&removeResponse, nil)
 
-		useClient(client, func() {
-			resource.Test(t, resource.TestCase{
-				IsUnitTest:               true,
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResAdvancedSettingsPIILearning/match_by_id.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_advanced_settings_pii_learning.test", "id", "43253"),
-							resource.TestCheckResourceAttr("akamai_appsec_advanced_settings_pii_learning.test", "enable_pii_learning", "true"),
-						),
-					},
+		mockGetConfigurationVersionDefault(client.APPSEC)
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResAdvancedSettingsPIILearning/match_by_id.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_appsec_advanced_settings_pii_learning.test", "id", "43253"),
+						resource.TestCheckResourceAttr("akamai_appsec_advanced_settings_pii_learning.test", "enable_pii_learning", "true"),
+					),
 				},
-			})
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.APPSEC.AssertExpectations(t)
 	})
 
 }
 
 func TestAkamaiAdvancedSettingsPIILearning_res_api_call_failure(t *testing.T) {
+	t.Parallel()
 	t.Run("match by AdvancedSettingsPIILearning", func(t *testing.T) {
-		client := &appsec.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
 		configResponse := appsec.GetConfigurationResponse{}
 		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &configResponse)
@@ -116,12 +119,12 @@ func TestAkamaiAdvancedSettingsPIILearning_res_api_call_failure(t *testing.T) {
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResAdvancedSettingsPIILearning/PIILearning.json"), &removeResponse)
 		require.NoError(t, err)
 
-		client.On("GetConfiguration",
+		client.APPSEC.On("GetConfiguration",
 			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
 		).Return(&configResponse, nil)
 
-		client.On("UpdateAdvancedSettingsPIILearning",
+		client.APPSEC.On("UpdateAdvancedSettingsPIILearning",
 			testutils.MockContext,
 			appsec.UpdateAdvancedSettingsPIILearningRequest{
 				ConfigVersion: appsec.ConfigVersion{
@@ -131,22 +134,20 @@ func TestAkamaiAdvancedSettingsPIILearning_res_api_call_failure(t *testing.T) {
 				EnablePIILearning: true},
 		).Return(nil, errors.New("API call failure"))
 
-		useClient(client, func() {
-			resource.Test(t, resource.TestCase{
-				IsUnitTest:               true,
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResAdvancedSettingsPIILearning/match_by_id.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_advanced_settings_pii_learning.test", "id", "43253"),
-						),
-						ExpectError: regexp.MustCompile(`API call failure`),
-					},
+		mockGetConfigurationVersionDefault(client.APPSEC)
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResAdvancedSettingsPIILearning/match_by_id.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_appsec_advanced_settings_pii_learning.test", "id", "43253"),
+					),
+					ExpectError: regexp.MustCompile(`API call failure`),
 				},
-			})
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.APPSEC.AssertExpectations(t)
 	})
 }

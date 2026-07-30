@@ -6,12 +6,14 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/require"
 )
 
 func TestAkamaiIPGeo_res_block(t *testing.T) {
+	t.Parallel()
 	var (
 		configVersion = func(configId int, client *appsec.Mock) appsec.GetConfigurationResponse {
 			configResponse := appsec.GetConfigurationResponse{}
@@ -64,8 +66,9 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 		}
 	)
 	t.Run("match by IPGeo ID", func(t *testing.T) {
-		client := &appsec.Mock{}
-		configVersion(43253, client)
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+		configVersion(43253, client.APPSEC)
 
 		updateRequest := appsec.UpdateIPGeoRequest{
 			ConfigID: 43253,
@@ -106,32 +109,31 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 				},
 			},
 		}
-		getIPGeoResponse(43253, 7, "AAAA_81230", "testdata/TestResIPGeo/IPGeo.json", client)
-		updateIPGeoResponse("testdata/TestResIPGeo/IPGeo.json", updateRequest, client)
-		updateIPGeoProtectionResponseAllProtectionsFalse(43253, 7, "AAAA_81230", "testdata/TestResIPGeoProtection/PolicyProtections.json", client)
+		getIPGeoResponse(43253, 7, "AAAA_81230", "testdata/TestResIPGeo/IPGeo.json", client.APPSEC)
+		updateIPGeoResponse("testdata/TestResIPGeo/IPGeo.json", updateRequest, client.APPSEC)
+		updateIPGeoProtectionResponseAllProtectionsFalse(43253, 7, "AAAA_81230", "testdata/TestResIPGeoProtection/PolicyProtections.json", client.APPSEC)
 
-		useClient(client, func() {
-			resource.Test(t, resource.TestCase{
-				IsUnitTest:               true,
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResIPGeo/match_by_id.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_ip_geo.test", "id", "43253:AAAA_81230"),
-						),
-					},
+		mockGetConfigurationVersionDefault(client.APPSEC)
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResIPGeo/match_by_id.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_appsec_ip_geo.test", "id", "43253:AAAA_81230"),
+					),
 				},
-			})
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.APPSEC.AssertExpectations(t)
 	})
 
 	t.Run("match by Ukraine Geo ID", func(t *testing.T) {
-		client := &appsec.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
-		configVersion(43253, client)
+		configVersion(43253, client.APPSEC)
 
 		updateRequest := appsec.UpdateIPGeoRequest{
 			ConfigID: 43253,
@@ -175,31 +177,30 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 				Action: "alert",
 			},
 		}
-		getIPGeoResponse(43253, 7, "AAAA_81230", "testdata/TestResIPGeo/IPGeo.json", client)
-		updateIPGeoResponse("testdata/TestResIPGeo/IPGeo.json", updateRequest, client)
-		updateIPGeoProtectionResponseAllProtectionsFalse(43253, 7, "AAAA_81230", "testdata/TestResIPGeoProtection/PolicyProtections.json", client)
-		useClient(client, func() {
-			resource.Test(t, resource.TestCase{
-				IsUnitTest:               true,
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResIPGeo/ukraine_match_by_id.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_ip_geo.test1", "id", "43253:AAAA_81230"),
-						),
-					},
+		getIPGeoResponse(43253, 7, "AAAA_81230", "testdata/TestResIPGeo/IPGeo.json", client.APPSEC)
+		updateIPGeoResponse("testdata/TestResIPGeo/IPGeo.json", updateRequest, client.APPSEC)
+		updateIPGeoProtectionResponseAllProtectionsFalse(43253, 7, "AAAA_81230", "testdata/TestResIPGeoProtection/PolicyProtections.json", client.APPSEC)
+		mockGetConfigurationVersionDefault(client.APPSEC)
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResIPGeo/ukraine_match_by_id.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_appsec_ip_geo.test1", "id", "43253:AAAA_81230"),
+					),
 				},
-			})
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.APPSEC.AssertExpectations(t)
 	})
 
 	t.Run("match by Ukraine Geo ID field not included in config", func(t *testing.T) {
-		client := &appsec.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
-		configVersion(43253, client)
+		configVersion(43253, client.APPSEC)
 
 		updateRequest := appsec.UpdateIPGeoRequest{
 			ConfigID: 43253,
@@ -240,37 +241,36 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 				},
 			},
 		}
-		getIPGeoResponse(43253, 7, "AAAA_81230", "testdata/TestResIPGeo/UkraineGeo.json", client)
-		updateIPGeoResponse("testdata/TestResIPGeo/UkraineGeo.json", updateRequest, client)
-		updateIPGeoProtectionResponseAllProtectionsFalse(43253, 7, "AAAA_81230", "testdata/TestResIPGeoProtection/PolicyProtections.json", client)
-		useClient(client, func() {
-			resource.Test(t, resource.TestCase{
-				IsUnitTest:               true,
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResIPGeo/match_by_id.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_ip_geo.test", "id", "43253:AAAA_81230"),
-						),
-					},
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResIPGeo/match_by_id.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_ip_geo.test", "id", "43253:AAAA_81230"),
-						),
-					},
+		getIPGeoResponse(43253, 7, "AAAA_81230", "testdata/TestResIPGeo/UkraineGeo.json", client.APPSEC)
+		updateIPGeoResponse("testdata/TestResIPGeo/UkraineGeo.json", updateRequest, client.APPSEC)
+		updateIPGeoProtectionResponseAllProtectionsFalse(43253, 7, "AAAA_81230", "testdata/TestResIPGeoProtection/PolicyProtections.json", client.APPSEC)
+		mockGetConfigurationVersionDefault(client.APPSEC)
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResIPGeo/match_by_id.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_appsec_ip_geo.test", "id", "43253:AAAA_81230"),
+					),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResIPGeo/match_by_id.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_appsec_ip_geo.test", "id", "43253:AAAA_81230"),
+					),
+				},
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.APPSEC.AssertExpectations(t)
 	})
 
 	t.Run("match by Ukraine Geo ID field included with same action", func(t *testing.T) {
-		client := &appsec.Mock{}
+		t.Parallel()
+		client := edgegrid.NewTestClient()
 
-		configVersion(43253, client)
+		configVersion(43253, client.APPSEC)
 
 		updateRequest := appsec.UpdateIPGeoRequest{
 			ConfigID: 43253,
@@ -314,38 +314,37 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 				Action: "alert",
 			},
 		}
-		getIPGeoResponse(43253, 7, "AAAA_81230", "testdata/TestResIPGeo/UkraineGeo.json", client)
-		updateIPGeoResponse("testdata/TestResIPGeo/UkraineGeo.json", updateRequest, client)
-		updateIPGeoProtectionResponseAllProtectionsFalse(43253, 7, "AAAA_81230", "testdata/TestResIPGeoProtection/PolicyProtections.json", client)
-		useClient(client, func() {
-			resource.Test(t, resource.TestCase{
-				IsUnitTest:               true,
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResIPGeo/ukraine_match_by_id.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_ip_geo.test1", "id", "43253:AAAA_81230"),
-						),
-					},
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResIPGeo/ukraine_match_by_id.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_ip_geo.test1", "id", "43253:AAAA_81230"),
-						),
-					},
+		getIPGeoResponse(43253, 7, "AAAA_81230", "testdata/TestResIPGeo/UkraineGeo.json", client.APPSEC)
+		updateIPGeoResponse("testdata/TestResIPGeo/UkraineGeo.json", updateRequest, client.APPSEC)
+		updateIPGeoProtectionResponseAllProtectionsFalse(43253, 7, "AAAA_81230", "testdata/TestResIPGeoProtection/PolicyProtections.json", client.APPSEC)
+		mockGetConfigurationVersionDefault(client.APPSEC)
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResIPGeo/ukraine_match_by_id.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_appsec_ip_geo.test1", "id", "43253:AAAA_81230"),
+					),
 				},
-			})
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResIPGeo/ukraine_match_by_id.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_appsec_ip_geo.test1", "id", "43253:AAAA_81230"),
+					),
+				},
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.APPSEC.AssertExpectations(t)
 	})
 
 	t.Run("match by IPGeo Allow ID", func(t *testing.T) {
+		t.Parallel()
 
-		client := &appsec.Mock{}
+		client := edgegrid.NewTestClient()
 
-		configVersion(43253, client)
+		configVersion(43253, client.APPSEC)
 
 		updateRequest := appsec.UpdateIPGeoRequest{
 			ConfigID:       43253,
@@ -362,31 +361,30 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 				},
 			},
 		}
-		getIPGeoResponse(43253, 7, "AAAA_81230", "testdata/TestResIPGeo/IPGeoAllow.json", client)
-		updateIPGeoResponse("testdata/TestResIPGeo/IPGeoAllow.json", updateRequest, client)
-		updateIPGeoProtectionResponseAllProtectionsFalse(43253, 7, "AAAA_81230", "testdata/TestResIPGeoProtection/PolicyProtections.json", client)
-		useClient(client, func() {
-			resource.Test(t, resource.TestCase{
-				IsUnitTest:               true,
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResIPGeo/allow.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_ip_geo.test", "id", "43253:AAAA_81230"),
-						),
-					},
+		getIPGeoResponse(43253, 7, "AAAA_81230", "testdata/TestResIPGeo/IPGeoAllow.json", client.APPSEC)
+		updateIPGeoResponse("testdata/TestResIPGeo/IPGeoAllow.json", updateRequest, client.APPSEC)
+		updateIPGeoProtectionResponseAllProtectionsFalse(43253, 7, "AAAA_81230", "testdata/TestResIPGeoProtection/PolicyProtections.json", client.APPSEC)
+		mockGetConfigurationVersionDefault(client.APPSEC)
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResIPGeo/allow.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_appsec_ip_geo.test", "id", "43253:AAAA_81230"),
+					),
 				},
-			})
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.APPSEC.AssertExpectations(t)
 	})
 
 	t.Run("block with empty lists", func(t *testing.T) {
+		t.Parallel()
 
-		client := &appsec.Mock{}
-		configVersion(43253, client)
+		client := edgegrid.NewTestClient()
+		configVersion(43253, client.APPSEC)
 
 		updateRequest := appsec.UpdateIPGeoRequest{
 			ConfigID: 43253,
@@ -394,32 +392,31 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 			PolicyID: "AAAA_81230",
 			Block:    "blockSpecificIPGeo",
 		}
-		getIPGeoResponse(43253, 7, "AAAA_81230", "testdata/TestResIPGeo/IPGeoBlockOnly.json", client)
-		updateIPGeoResponse("testdata/TestResIPGeo/IPGeoBlockOnly.json", updateRequest, client)
-		updateIPGeoProtectionResponseAllProtectionsFalse(43253, 7, "AAAA_81230", "testdata/TestResIPGeoProtection/PolicyProtections.json", client)
-		useClient(client, func() {
-			resource.Test(t, resource.TestCase{
-				IsUnitTest:               true,
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResIPGeo/block_with_empty_lists.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_ip_geo.test", "id", "43253:AAAA_81230"),
-						),
-					},
+		getIPGeoResponse(43253, 7, "AAAA_81230", "testdata/TestResIPGeo/IPGeoBlockOnly.json", client.APPSEC)
+		updateIPGeoResponse("testdata/TestResIPGeo/IPGeoBlockOnly.json", updateRequest, client.APPSEC)
+		updateIPGeoProtectionResponseAllProtectionsFalse(43253, 7, "AAAA_81230", "testdata/TestResIPGeoProtection/PolicyProtections.json", client.APPSEC)
+		mockGetConfigurationVersionDefault(client.APPSEC)
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResIPGeo/block_with_empty_lists.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_appsec_ip_geo.test", "id", "43253:AAAA_81230"),
+					),
 				},
-			})
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.APPSEC.AssertExpectations(t)
 	})
 
 	t.Run("allow with empty lists", func(t *testing.T) {
+		t.Parallel()
 
-		client := &appsec.Mock{}
+		client := edgegrid.NewTestClient()
 
-		configVersion(43253, client)
+		configVersion(43253, client.APPSEC)
 
 		updateRequest := appsec.UpdateIPGeoRequest{
 			ConfigID:       43253,
@@ -429,65 +426,61 @@ func TestAkamaiIPGeo_res_block(t *testing.T) {
 			Block:          "blockAllTrafficExceptAllowedIPs",
 		}
 
-		getIPGeoResponse(43253, 7, "AAAA_81230", "testdata/TestResIPGeo/IPGeoAllowOnly.json", client)
-		updateIPGeoResponse("testdata/TestResIPGeo/IPGeoAllowOnly.json", updateRequest, client)
-		updateIPGeoProtectionResponseAllProtectionsFalse(43253, 7, "AAAA_81230", "testdata/TestResIPGeoProtection/PolicyProtections.json", client)
-		useClient(client, func() {
-			resource.Test(t, resource.TestCase{
-				IsUnitTest:               true,
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResIPGeo/allow_with_empty_lists.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_ip_geo.test", "id", "43253:AAAA_81230"),
-						),
-					},
+		getIPGeoResponse(43253, 7, "AAAA_81230", "testdata/TestResIPGeo/IPGeoAllowOnly.json", client.APPSEC)
+		updateIPGeoResponse("testdata/TestResIPGeo/IPGeoAllowOnly.json", updateRequest, client.APPSEC)
+		updateIPGeoProtectionResponseAllProtectionsFalse(43253, 7, "AAAA_81230", "testdata/TestResIPGeoProtection/PolicyProtections.json", client.APPSEC)
+		mockGetConfigurationVersionDefault(client.APPSEC)
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResIPGeo/allow_with_empty_lists.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_appsec_ip_geo.test", "id", "43253:AAAA_81230"),
+					),
 				},
-			})
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.APPSEC.AssertExpectations(t)
 	})
 
 	t.Run("empty string in Geo network lists input", func(t *testing.T) {
-		client := &appsec.Mock{}
-		useClient(client, func() {
-			resource.Test(t, resource.TestCase{
-				IsUnitTest:               true,
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResIPGeo/mode_allow_with_empty_geo_network_lists.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_ip_geo.test", "id", "43253:AAAA_81230"),
-						),
-						ExpectError: regexp.MustCompile("Error: empty or invalid string value for config parameter geo_controls"),
-					},
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+		mockGetConfigurationVersionDefault(client.APPSEC)
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResIPGeo/mode_allow_with_empty_geo_network_lists.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_appsec_ip_geo.test", "id", "43253:AAAA_81230"),
+					),
+					ExpectError: regexp.MustCompile("Error: empty or invalid string value for config parameter geo_controls"),
 				},
-			})
+			},
 		})
 
-		client.AssertExpectations(t)
+		client.APPSEC.AssertExpectations(t)
 	})
 
 	t.Run("empty string input in all lists", func(t *testing.T) {
-		client := &appsec.Mock{}
-		useClient(client, func() {
-			resource.Test(t, resource.TestCase{
-				IsUnitTest:               true,
-				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-				Steps: []resource.TestStep{
-					{
-						Config: testutils.LoadFixtureString(t, "testdata/TestResIPGeo/all_lists_with_empty_string_input.tf"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("akamai_appsec_ip_geo.test", "id", "43253:AAAA_81230"),
-						),
-						ExpectError: regexp.MustCompile(`(?s)Error: empty or invalid string value for config parameter geo_controls.*Error: empty or invalid string value for config parameter ip_controls.*Error: empty or invalid string value for config parameter exception_ip_network_lists.*`),
-					},
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+		mockGetConfigurationVersionDefault(client.APPSEC)
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResIPGeo/all_lists_with_empty_string_input.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_appsec_ip_geo.test", "id", "43253:AAAA_81230"),
+					),
+					ExpectError: regexp.MustCompile(`(?s)Error: empty or invalid string value for config parameter geo_controls.*Error: empty or invalid string value for config parameter ip_controls.*Error: empty or invalid string value for config parameter exception_ip_network_lists.*`),
 				},
-			})
+			},
 		})
-		client.AssertExpectations(t)
+		client.APPSEC.AssertExpectations(t)
 	})
 }

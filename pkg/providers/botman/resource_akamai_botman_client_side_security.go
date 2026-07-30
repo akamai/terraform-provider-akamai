@@ -44,7 +44,7 @@ func resourceClientSideSecurity() *schema.Resource {
 
 func resourceClientSideSecurityCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceClientSideSecurityCreate")
 	logger.Debugf("in resourceClientSideSecurityCreate")
 
@@ -53,7 +53,7 @@ func resourceClientSideSecurityCreate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "clientSideSecurity", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "clientSideSecurity", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -82,7 +82,7 @@ func resourceClientSideSecurityCreate(ctx context.Context, d *schema.ResourceDat
 
 func resourceClientSideSecurityRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceClientSideSecurityRead")
 	logger.Debugf("in resourceClientSideSecurityRead")
 
@@ -91,7 +91,7 @@ func resourceClientSideSecurityRead(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -125,7 +125,7 @@ func resourceClientSideSecurityRead(ctx context.Context, d *schema.ResourceData,
 
 func resourceClientSideSecurityUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceClientSideSecurityUpdate")
 	logger.Debugf("in resourceClientSideSecurityUpdate")
 
@@ -134,7 +134,7 @@ func resourceClientSideSecurityUpdate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "clientSideSecurity", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "clientSideSecurity", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}

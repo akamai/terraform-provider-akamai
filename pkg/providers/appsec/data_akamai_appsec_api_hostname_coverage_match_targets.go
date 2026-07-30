@@ -42,7 +42,7 @@ func dataSourceAPIHostnameCoverageMatchTargets() *schema.Resource {
 
 func dataSourceAPIHostnameCoverageMatchTargetsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "dataSourceAPIHostnameCoverageMatchTargetsRead")
 
 	getAPIHostnameCoverageMatchTargets := appsec.GetApiHostnameCoverageMatchTargetsRequest{}
@@ -53,7 +53,7 @@ func dataSourceAPIHostnameCoverageMatchTargetsRead(ctx context.Context, d *schem
 	}
 	getAPIHostnameCoverageMatchTargets.ConfigID = configID
 
-	if getAPIHostnameCoverageMatchTargets.Version, err = getLatestConfigVersion(ctx, configID, m); err != nil {
+	if getAPIHostnameCoverageMatchTargets.Version, err = getLatestConfigVersion(ctx, configID, client); err != nil {
 		return diag.FromErr(err)
 	}
 

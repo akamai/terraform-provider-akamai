@@ -57,7 +57,7 @@ func resourceIPGeoProtection() *schema.Resource {
 
 func resourceIPGeoProtectionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceIPGeoProtectionCreate")
 	logger.Debugf("in resourceIPGeoProtectionCreate")
 
@@ -65,7 +65,7 @@ func resourceIPGeoProtectionCreate(ctx context.Context, d *schema.ResourceData, 
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "ipgeoProtection", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ipgeoProtection", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -95,7 +95,7 @@ func resourceIPGeoProtectionCreate(ctx context.Context, d *schema.ResourceData, 
 
 func resourceIPGeoProtectionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceIPGeoProtectionRead")
 	logger.Debugf("in resourceIPGeoProtectionRead")
 
@@ -107,7 +107,7 @@ func resourceIPGeoProtectionRead(ctx context.Context, d *schema.ResourceData, m 
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -149,7 +149,7 @@ func resourceIPGeoProtectionRead(ctx context.Context, d *schema.ResourceData, m 
 
 func resourceIPGeoProtectionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceIPGeoProtectionUpdate")
 	logger.Debugf("in resourceIPGeoProtectionUpdate")
 
@@ -161,7 +161,7 @@ func resourceIPGeoProtectionUpdate(ctx context.Context, d *schema.ResourceData, 
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "networkProtection", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "networkProtection", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -187,7 +187,7 @@ func resourceIPGeoProtectionUpdate(ctx context.Context, d *schema.ResourceData, 
 
 func resourceIPGeoProtectionDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceIPGeoProtectionDelete")
 	logger.Debugf("in resourceIPGeoProtectionDelete")
 
@@ -199,7 +199,7 @@ func resourceIPGeoProtectionDelete(ctx context.Context, d *schema.ResourceData, 
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "ipgeoProtection", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ipgeoProtection", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}

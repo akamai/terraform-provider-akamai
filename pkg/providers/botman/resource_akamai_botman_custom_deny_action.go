@@ -51,7 +51,7 @@ func resourceCustomDenyAction() *schema.Resource {
 
 func resourceCustomDenyActionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceCustomDenyActionCreateAction")
 	logger.Debugf("in resourceCustomDenyActionCreateAction")
 
@@ -60,7 +60,7 @@ func resourceCustomDenyActionCreate(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "CustomDenyAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "CustomDenyAction", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -89,7 +89,7 @@ func resourceCustomDenyActionCreate(ctx context.Context, d *schema.ResourceData,
 
 func resourceCustomDenyActionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceCustomDenyActionRead")
 	logger.Debugf("in resourceCustomDenyActionRead")
 
@@ -103,7 +103,7 @@ func resourceCustomDenyActionRead(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -144,7 +144,7 @@ func resourceCustomDenyActionRead(ctx context.Context, d *schema.ResourceData, m
 
 func resourceCustomDenyActionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceCustomDenyActionUpdate")
 	logger.Debugf("in resourceCustomDenyActionUpdate")
 
@@ -158,7 +158,7 @@ func resourceCustomDenyActionUpdate(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "CustomDenyAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "CustomDenyAction", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -188,7 +188,7 @@ func resourceCustomDenyActionUpdate(ctx context.Context, d *schema.ResourceData,
 
 func resourceCustomDenyActionDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceCustomDenyActionDelete")
 	logger.Debugf("in resourceCustomDenyActionDelete")
 
@@ -202,7 +202,7 @@ func resourceCustomDenyActionDelete(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "CustomDenyAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "CustomDenyAction", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}

@@ -8,6 +8,7 @@ import (
 )
 
 func TestDataPolicyVideo(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		configPath       string
 		expectedJSONPath string
@@ -24,6 +25,7 @@ func TestDataPolicyVideo(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
 				Steps: []resource.TestStep{

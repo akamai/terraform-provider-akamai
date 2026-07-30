@@ -25,11 +25,11 @@ var (
 // network_lists v2
 //
 // https://techdocs.akamai.com/network-lists/reference/api
-func resourceActivations() *schema.Resource {
+func resourceActivations(config resourceActivationsConfig) *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceActivationsCreate,
+		CreateContext: resourceActivationsCreate(config),
 		ReadContext:   resourceActivationsRead,
-		UpdateContext: resourceActivationsUpdate,
+		UpdateContext: resourceActivationsUpdate(config),
 		DeleteContext: resourceActivationsDelete,
 		Schema: map[string]*schema.Schema{
 			"network_list_id": {
@@ -77,65 +77,73 @@ const (
 	ActivationPollMinimum = time.Minute
 )
 
-var (
-	// ActivationPollInterval is the interval for polling an activation status on creation
-	ActivationPollInterval = ActivationPollMinimum
-
-	// CreateActivationRetry poll wait time code waits between retries for activation creation
-	CreateActivationRetry = 10 * time.Second
-)
-
-func resourceActivationsCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := meta.Must(m)
-	client := inst.Client(meta)
-	logger := meta.Log("NETWORKLIST", "resourceActivationsCreate")
-	logger.Debug("Creating resource activation")
-
-	networkListID, err := tf.GetStringValue("network_list_id", d)
-	if err != nil && !errors.Is(err, tf.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	network, err := tf.GetStringValue("network", d)
-	if err != nil && !errors.Is(err, tf.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	comments, err := tf.GetStringValue("notes", d)
-	if err != nil && !errors.Is(err, tf.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	notificationEmails, ok := d.Get("notification_emails").(*schema.Set)
-	if !ok {
-		return diag.Errorf("Activation Read failed")
-	}
-
-	createResponse, diagErr := createActivation(ctx, client, networklists.CreateActivationsRequest{
-		UniqueID:               networkListID,
-		Network:                network,
-		Comments:               comments,
-		Action:                 string(networklists.ActivationTypeActivate),
-		NotificationRecipients: tf.SetToStringSlice(notificationEmails),
-	})
-	if diagErr != nil {
-		return diagErr
-	}
-	d.SetId(strconv.Itoa(createResponse.ActivationID))
-	if err := d.Set("status", string(createResponse.ActivationStatus)); err != nil {
-		return diag.FromErr(err)
-	}
-
-	lookupResponse, err := lookupActivation(ctx, client, networklists.GetActivationRequest{ActivationID: createResponse.ActivationID})
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	if err = pollActivation(ctx, client, lookupResponse.ActivationStatus, lookupResponse.ActivationID); err != nil {
-		return diag.FromErr(err)
-	}
-
-	return resourceActivationsRead(ctx, d, m)
+type resourceActivationsConfig struct {
+	// activationPollInterval is the polling interval for activation status
+	activationPollInterval time.Duration
+	// createActivationRetry is the wait time between retries for activation creation
+	createActivationRetry time.Duration
 }
 
-func createActivation(ctx context.Context, client networklists.NetworkList, params networklists.CreateActivationsRequest) (*networklists.CreateActivationsResponse, diag.Diagnostics) {
+func defaultResourceActivationsConfig() resourceActivationsConfig {
+	return resourceActivationsConfig{
+		activationPollInterval: ActivationPollMinimum,
+		createActivationRetry:  10 * time.Second,
+	}
+}
+
+func resourceActivationsCreate(config resourceActivationsConfig) schema.CreateContextFunc {
+	return func(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+		meta := meta.Must(m)
+		client := meta.Client().GetNetworkLists()
+		logger := meta.Log("NETWORKLIST", "resourceActivationsCreate")
+		logger.Debug("Creating resource activation")
+
+		networkListID, err := tf.GetStringValue("network_list_id", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		network, err := tf.GetStringValue("network", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		comments, err := tf.GetStringValue("notes", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		notificationEmails, ok := d.Get("notification_emails").(*schema.Set)
+		if !ok {
+			return diag.Errorf("Activation Read failed")
+		}
+
+		createResponse, diagErr := createActivation(ctx, client, networklists.CreateActivationsRequest{
+			UniqueID:               networkListID,
+			Network:                network,
+			Comments:               comments,
+			Action:                 string(networklists.ActivationTypeActivate),
+			NotificationRecipients: tf.SetToStringSlice(notificationEmails),
+		}, config.createActivationRetry)
+		if diagErr != nil {
+			return diagErr
+		}
+		d.SetId(strconv.Itoa(createResponse.ActivationID))
+		if err := d.Set("status", string(createResponse.ActivationStatus)); err != nil {
+			return diag.FromErr(err)
+		}
+
+		lookupResponse, err := lookupActivation(ctx, client, networklists.GetActivationRequest{ActivationID: createResponse.ActivationID})
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		if err = pollActivation(ctx, client, lookupResponse.ActivationStatus, lookupResponse.ActivationID, config.activationPollInterval); err != nil {
+			return diag.FromErr(err)
+		}
+
+		return resourceActivationsRead(ctx, d, m)
+	}
+}
+
+func createActivation(ctx context.Context, client networklists.NetworkList, params networklists.CreateActivationsRequest, retryInterval time.Duration) (*networklists.CreateActivationsResponse, diag.Diagnostics) {
 	createNetworkListActivationMutex.Lock()
 	defer func() {
 		createNetworkListActivationMutex.Unlock()
@@ -151,7 +159,7 @@ func createActivation(ctx context.Context, client networklists.NetworkList, para
 		errMsg = "create deactivation failed"
 	}
 
-	createActivationRetry := CreateActivationRetry
+	createActivationRetry := retryInterval
 
 	for {
 		log.Debug("creating activation")
@@ -179,7 +187,7 @@ func createActivation(ctx context.Context, client networklists.NetworkList, para
 
 func resourceActivationsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetNetworkLists()
 	logger := meta.Log("NETWORKLIST", "resourceActivationsRead")
 	logger.Debug("Reading resource activation")
 
@@ -202,54 +210,56 @@ func resourceActivationsRead(ctx context.Context, d *schema.ResourceData, m inte
 	return nil
 }
 
-func resourceActivationsUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := meta.Must(m)
-	client := inst.Client(meta)
-	logger := meta.Log("NETWORKLIST", "resourceActivationsUpdate")
-	logger.Debug("Updating resource activation")
+func resourceActivationsUpdate(config resourceActivationsConfig) schema.UpdateContextFunc {
+	return func(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+		meta := meta.Must(m)
+		client := meta.Client().GetNetworkLists()
+		logger := meta.Log("NETWORKLIST", "resourceActivationsUpdate")
+		logger.Debug("Updating resource activation")
 
-	networkListID, err := tf.GetStringValue("network_list_id", d)
-	if err != nil && !errors.Is(err, tf.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	network, err := tf.GetStringValue("network", d)
-	if err != nil && !errors.Is(err, tf.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	comments, err := tf.GetStringValue("notes", d)
-	if err != nil && !errors.Is(err, tf.ErrNotFound) {
-		return diag.FromErr(err)
-	}
-	notificationEmails, err := tf.GetSetValue("notification_emails", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
+		networkListID, err := tf.GetStringValue("network_list_id", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		network, err := tf.GetStringValue("network", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		comments, err := tf.GetStringValue("notes", d)
+		if err != nil && !errors.Is(err, tf.ErrNotFound) {
+			return diag.FromErr(err)
+		}
+		notificationEmails, err := tf.GetSetValue("notification_emails", d)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 
-	createResponse, diagErr := createActivation(ctx, client, networklists.CreateActivationsRequest{
-		UniqueID:               networkListID,
-		Network:                network,
-		Comments:               comments,
-		Action:                 string(networklists.ActivationTypeActivate),
-		NotificationRecipients: tf.SetToStringSlice(notificationEmails),
-	})
-	if diagErr != nil {
-		return diagErr
-	}
-	d.SetId(strconv.Itoa(createResponse.ActivationID))
-	if err := d.Set("status", string(createResponse.ActivationStatus)); err != nil {
-		return diag.FromErr(err)
-	}
+		createResponse, diagErr := createActivation(ctx, client, networklists.CreateActivationsRequest{
+			UniqueID:               networkListID,
+			Network:                network,
+			Comments:               comments,
+			Action:                 string(networklists.ActivationTypeActivate),
+			NotificationRecipients: tf.SetToStringSlice(notificationEmails),
+		}, config.createActivationRetry)
+		if diagErr != nil {
+			return diagErr
+		}
+		d.SetId(strconv.Itoa(createResponse.ActivationID))
+		if err := d.Set("status", string(createResponse.ActivationStatus)); err != nil {
+			return diag.FromErr(err)
+		}
 
-	lookupRequest := networklists.GetActivationRequest{ActivationID: createResponse.ActivationID}
-	lookupResponse, err := lookupActivation(ctx, client, lookupRequest)
-	if err != nil {
-		return diag.FromErr(err)
-	}
+		lookupRequest := networklists.GetActivationRequest{ActivationID: createResponse.ActivationID}
+		lookupResponse, err := lookupActivation(ctx, client, lookupRequest)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 
-	if err = pollActivation(ctx, client, lookupResponse.ActivationStatus, lookupResponse.ActivationID); err != nil {
-		return diag.FromErr(err)
+		if err = pollActivation(ctx, client, lookupResponse.ActivationStatus, lookupResponse.ActivationID, config.activationPollInterval); err != nil {
+			return diag.FromErr(err)
+		}
+		return resourceActivationsRead(ctx, d, m)
 	}
-	return resourceActivationsRead(ctx, d, m)
 }
 
 func resourceActivationsDelete(_ context.Context, _ *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -279,13 +289,13 @@ func suppressFieldsForNetworkListActivation(_, oldValue, newValue string, d *sch
 	return true
 }
 
-func pollActivation(ctx context.Context, client networklists.NetworkList, activationStatus string, activationID int) error {
+func pollActivation(ctx context.Context, client networklists.NetworkList, activationStatus string, activationID int, pollInterval time.Duration) error {
 	retriesMax := 5
 	retries5xx := 0
 
 	for activationStatus != string(networklists.StatusActive) {
 		select {
-		case <-time.After(tf.MaxDuration(ActivationPollInterval, ActivationPollMinimum)):
+		case <-time.After(tf.MaxDuration(pollInterval, ActivationPollMinimum)):
 			act, err := client.GetActivation(ctx, networklists.GetActivationRequest{ActivationID: activationID})
 
 			if err != nil {

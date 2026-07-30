@@ -43,7 +43,7 @@ func dataSourceAdvancedSettingsLogging() *schema.Resource {
 
 func dataSourceAdvancedSettingsLoggingRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "dataSourceAdvancedSettingsLoggingRead")
 
 	getAdvancedSettingsLogging := appsec.GetAdvancedSettingsLoggingRequest{}
@@ -54,7 +54,7 @@ func dataSourceAdvancedSettingsLoggingRead(ctx context.Context, d *schema.Resour
 	}
 	getAdvancedSettingsLogging.ConfigID = configID
 
-	if getAdvancedSettingsLogging.Version, err = getLatestConfigVersion(ctx, configID, m); err != nil {
+	if getAdvancedSettingsLogging.Version, err = getLatestConfigVersion(ctx, configID, client); err != nil {
 		return diag.FromErr(err)
 	}
 	policyID, err := tf.GetStringValue("security_policy_id", d)

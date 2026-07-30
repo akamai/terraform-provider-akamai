@@ -31,7 +31,7 @@ func dataSourceUserRiskResponseStrategy() *schema.Resource {
 
 func readDataSourceUserRiskResponseStrategy(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAccountProtection()
 	logger := meta.Log("accountprotection", "readDataSourceUserRiskResponseStrategy")
 	logger.Debugf("in readDataSourceUserRiskResponseStrategy")
 
@@ -40,7 +40,7 @@ func readDataSourceUserRiskResponseStrategy(ctx context.Context, d *schema.Resou
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}

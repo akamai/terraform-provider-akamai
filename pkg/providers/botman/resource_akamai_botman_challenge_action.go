@@ -51,7 +51,7 @@ func resourceChallengeAction() *schema.Resource {
 
 func resourceChallengeActionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceChallengeActionCreateAction")
 	logger.Debugf("in resourceChallengeActionCreateAction")
 
@@ -60,7 +60,7 @@ func resourceChallengeActionCreate(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "ChallengeAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ChallengeAction", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -89,7 +89,7 @@ func resourceChallengeActionCreate(ctx context.Context, d *schema.ResourceData, 
 
 func resourceChallengeActionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceChallengeActionRead")
 	logger.Debugf("in resourceChallengeActionRead")
 
@@ -103,7 +103,7 @@ func resourceChallengeActionRead(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -144,7 +144,7 @@ func resourceChallengeActionRead(ctx context.Context, d *schema.ResourceData, m 
 
 func resourceChallengeActionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceChallengeActionUpdate")
 	logger.Debugf("in resourceChallengeActionUpdate")
 
@@ -158,7 +158,7 @@ func resourceChallengeActionUpdate(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "ChallengeAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ChallengeAction", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -188,7 +188,7 @@ func resourceChallengeActionUpdate(ctx context.Context, d *schema.ResourceData, 
 
 func resourceChallengeActionDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceChallengeActionDelete")
 	logger.Debugf("in resourceChallengeActionDelete")
 
@@ -202,7 +202,7 @@ func resourceChallengeActionDelete(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "ChallengeAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ChallengeAction", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}

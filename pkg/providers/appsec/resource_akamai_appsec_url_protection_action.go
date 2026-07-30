@@ -30,7 +30,7 @@ var (
 
 // urlProtectionActionResource represents akamai_appsec_url_protection_action resource
 type urlProtectionActionResource struct {
-	meta meta.Meta
+	meta.Resource
 }
 
 // urlProtectionActionResourceModel is a model for akamai_appsec_url_protection_action resource
@@ -46,17 +46,17 @@ const (
 	urlProtectionActionResourceName = "akamai_appsec_url_protection_action"
 )
 
-// NewURLProtectionActionResource returns a new URL Protection Action resource
+// NewURLProtectionActionResource returns a new URL Protection Action resource.
 func NewURLProtectionActionResource() resource.Resource {
 	return &urlProtectionActionResource{}
 }
 
-// Metadata implements resource's Metadata method
+// Metadata implements resource's Metadata method.
 func (r *urlProtectionActionResource) Metadata(_ context.Context, _ resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = urlProtectionActionResourceName
 }
 
-// Schema implements resource's Schema method
+// Schema implements resource's Schema method.
 func (r *urlProtectionActionResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: "Manage URL Protection Actions for Application Security",
@@ -112,30 +112,12 @@ func (r *urlProtectionActionResource) Schema(_ context.Context, _ resource.Schem
 	}
 }
 
-// Configure implements resource's Configure method
-func (r *urlProtectionActionResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Resource Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-			)
-		}
-	}()
-
-	r.meta = meta.Must(req.ProviderData)
-}
-
-// ValidateConfig implements resource's ValidateConfig method
+// ValidateConfig implements resource's ValidateConfig method.
 func (r *urlProtectionActionResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
 
 	tflog.Debug(ctx, "Validating URL Protection Action resource configuration")
 
-	if r.meta == nil {
+	if r.Client == nil {
 		return
 	}
 
@@ -150,9 +132,9 @@ func (r *urlProtectionActionResource) ValidateConfig(ctx context.Context, req re
 		return
 	}
 
-	client := inst.Client(r.meta)
+	client := r.Client.GetAPPSEC()
 
-	version, err := getModifiableConfigVersion(ctx, int(config.ConfigID.ValueInt64()), "urlProtectionAction", r.meta)
+	version, err := getModifiableConfigVersion(ctx, int(config.ConfigID.ValueInt64()), "urlProtectionAction", r.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("Unable to read latest config version from API", err.Error())
 		return
@@ -195,7 +177,7 @@ func (r *urlProtectionActionResource) ValidateConfig(ctx context.Context, req re
 	}
 }
 
-// Create implements resource's Create method
+// Create implements resource's Create method.
 func (r *urlProtectionActionResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	tflog.Debug(ctx, "Creating URL Protection Action Resource")
 
@@ -207,13 +189,13 @@ func (r *urlProtectionActionResource) Create(ctx context.Context, req resource.C
 	}
 
 	configID := data.ConfigID.ValueInt64()
-	version, err := getModifiableConfigVersion(ctx, int(configID), "urlProtectionAction", r.meta)
+	version, err := getModifiableConfigVersion(ctx, int(configID), "urlProtectionAction", r.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("Unable to read latest config version from API", err.Error())
 		return
 	}
 
-	client := inst.Client(r.meta)
+	client := r.Client.GetAPPSEC()
 
 	loadSheddingAction := data.LoadSheddingAction.ValueString()
 	if data.LoadSheddingAction.IsNull() || data.LoadSheddingAction.ValueString() == "" {
@@ -260,7 +242,7 @@ func (r *urlProtectionActionResource) Create(ctx context.Context, req resource.C
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-// Read implements resource's Read method
+// Read implements resource's Read method.
 func (r *urlProtectionActionResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	tflog.Debug(ctx, "Reading URL Protection Action Resource")
 
@@ -272,7 +254,7 @@ func (r *urlProtectionActionResource) Read(ctx context.Context, req resource.Rea
 	}
 
 	configID := data.ConfigID.ValueInt64()
-	version, err := getLatestConfigVersion(ctx, int(configID), r.meta)
+	version, err := getLatestConfigVersion(ctx, int(configID), r.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("Unable to read config version", err.Error())
 		return
@@ -285,7 +267,7 @@ func (r *urlProtectionActionResource) Read(ctx context.Context, req resource.Rea
 		URLProtectionPolicyID: data.URLProtectionPolicyID.ValueInt64(),
 	}
 
-	client := inst.Client(r.meta)
+	client := r.Client.GetAPPSEC()
 	actionResponse, err := client.GetURLProtectionPolicyActions(ctx, readRequest)
 	if err != nil {
 		// If the URL Protection Policy or its actions are not found, remove the resource from state. May happen if url protection policy is not present in latest config version.
@@ -312,7 +294,7 @@ func (r *urlProtectionActionResource) Read(ctx context.Context, req resource.Rea
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-// Update implements resource's Update method
+// Update implements resource's Update method.
 func (r *urlProtectionActionResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	tflog.Debug(ctx, "Updating URL Protection Action Resource")
 
@@ -324,13 +306,13 @@ func (r *urlProtectionActionResource) Update(ctx context.Context, req resource.U
 	}
 
 	configID := data.ConfigID.ValueInt64()
-	version, err := getModifiableConfigVersion(ctx, int(configID), "urlProtectionAction", r.meta)
+	version, err := getModifiableConfigVersion(ctx, int(configID), "urlProtectionAction", r.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("Unable to read latest config version from API", err.Error())
 		return
 	}
 
-	client := inst.Client(r.meta)
+	client := r.Client.GetAPPSEC()
 
 	loadSheddingAction := data.LoadSheddingAction.ValueString()
 	if data.LoadSheddingAction.IsNull() || data.LoadSheddingAction.ValueString() == "" {
@@ -389,7 +371,7 @@ func (r *urlProtectionActionResource) Update(ctx context.Context, req resource.U
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-// Delete implements resource's Delete method
+// Delete implements resource's Delete method.
 func (r *urlProtectionActionResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 
 	tflog.Debug(ctx, "Deleting URL Protection Action Resource")
@@ -402,7 +384,7 @@ func (r *urlProtectionActionResource) Delete(ctx context.Context, req resource.D
 	}
 
 	configID := data.ConfigID.ValueInt64()
-	version, err := getModifiableConfigVersion(ctx, int(configID), "urlProtectionAction", r.meta)
+	version, err := getModifiableConfigVersion(ctx, int(configID), "urlProtectionAction", r.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("Unable to read latest config version from API", err.Error())
 		return
@@ -420,7 +402,7 @@ func (r *urlProtectionActionResource) Delete(ctx context.Context, req resource.D
 		},
 	}
 
-	client := inst.Client(r.meta)
+	client := r.Client.GetAPPSEC()
 	_, err = client.UpdateURLProtectionPolicyActions(ctx, deleteRequest)
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to delete URL protection action", err.Error())
@@ -428,7 +410,7 @@ func (r *urlProtectionActionResource) Delete(ctx context.Context, req resource.D
 	}
 }
 
-// ImportState implements resource's ImportState method
+// ImportState implements resource's ImportState method.
 func (r *urlProtectionActionResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	tflog.Debug(ctx, "Importing URL Protection Action resource")
 

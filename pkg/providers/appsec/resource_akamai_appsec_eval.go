@@ -89,7 +89,7 @@ func resourceEval() *schema.Resource {
 
 func resourceEvalCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceEvalCreate")
 	logger.Debugf(" in resourceEvalCreate")
 
@@ -97,7 +97,7 @@ func resourceEvalCreate(ctx context.Context, d *schema.ResourceData, m interface
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "ruleevaluation", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ruleevaluation", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -136,7 +136,7 @@ func resourceEvalCreate(ctx context.Context, d *schema.ResourceData, m interface
 
 func resourceEvalRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceEvalRead")
 	logger.Debugf(" in resourceEvalRead")
 
@@ -148,7 +148,7 @@ func resourceEvalRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -190,7 +190,7 @@ func resourceEvalRead(ctx context.Context, d *schema.ResourceData, m interface{}
 
 func resourceEvalUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceEvalUpdate")
 	logger.Debugf(" in resourceEvalUpdate")
 
@@ -202,7 +202,7 @@ func resourceEvalUpdate(ctx context.Context, d *schema.ResourceData, m interface
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "ruleevaluation", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ruleevaluation", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -235,7 +235,7 @@ func resourceEvalUpdate(ctx context.Context, d *schema.ResourceData, m interface
 
 func resourceEvalDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceEvalDelete")
 	logger.Debugf(" in resourceEvalDelete")
 
@@ -247,7 +247,7 @@ func resourceEvalDelete(ctx context.Context, d *schema.ResourceData, m interface
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "ruleevaluation", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ruleevaluation", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}

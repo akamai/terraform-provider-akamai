@@ -2,7 +2,6 @@ package cloudwrapper
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudwrapper"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
@@ -173,7 +172,7 @@ var (
 
 type (
 	configurationDataSource struct {
-		client cloudwrapper.CloudWrapper
+		meta.DataSource
 	}
 
 	configurationDataSourceModel struct {
@@ -250,34 +249,9 @@ func NewConfigurationDataSource() datasource.DataSource {
 	return &configurationDataSource{}
 }
 
-func (d *configurationDataSource) setClient(client cloudwrapper.CloudWrapper) {
-	d.client = client
-}
-
 // Metadata configures data source's meta information
 func (d *configurationDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "akamai_cloudwrapper_configuration"
-}
-
-// Configure configures data source at the beginning of the lifecycle
-func (d *configurationDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		// ProviderData is nil when Configure is run first time as part of ValidateDataSourceConfig in framework provider
-		return
-	}
-
-	if d.client != nil {
-		return
-	}
-
-	m, ok := req.ProviderData.(meta.Meta)
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected Data Source Configure Type",
-			fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-		)
-	}
-	d.client = cloudwrapper.Client(m.Session())
 }
 
 // Schema is used to define data source's terraform schema
@@ -353,7 +327,7 @@ func (d *configurationDataSource) Read(ctx context.Context, req datasource.ReadR
 		return
 	}
 
-	cfg, err := d.client.GetConfiguration(ctx, cloudwrapper.GetConfigurationRequest{
+	cfg, err := d.Client.GetCloudWrapper().GetConfiguration(ctx, cloudwrapper.GetConfigurationRequest{
 		ConfigID: data.ID.ValueInt64(),
 	})
 	if err != nil {

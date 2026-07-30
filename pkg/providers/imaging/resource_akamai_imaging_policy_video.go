@@ -83,7 +83,7 @@ func resourcePolicyVideoCreate(ctx context.Context, d *schema.ResourceData, m in
 		ctx,
 		session.WithContextLog(logger),
 	)
-	client := inst.Client(meta)
+	client := meta.Client().GetImaging()
 	logger.Debug("Creating policy")
 
 	return upsertPolicyVideo(ctx, d, m, client)
@@ -158,7 +158,7 @@ func resourcePolicyVideoRead(ctx context.Context, d *schema.ResourceData, m inte
 		ctx,
 		session.WithContextLog(logger),
 	)
-	client := inst.Client(meta)
+	client := meta.Client().GetImaging()
 
 	logger.Debug("Reading policy")
 	policyID, err := tf.GetStringValue("policy_id", d)
@@ -253,7 +253,7 @@ func resourcePolicyVideoUpdate(ctx context.Context, d *schema.ResourceData, m in
 		ctx,
 		session.WithContextLog(logger),
 	)
-	client := inst.Client(meta)
+	client := meta.Client().GetImaging()
 	logger.Debug("Updating policy")
 
 	return upsertPolicyVideo(ctx, d, m, client)
@@ -266,7 +266,7 @@ func resourcePolicyVideoDelete(ctx context.Context, d *schema.ResourceData, m in
 		ctx,
 		session.WithContextLog(logger),
 	)
-	client := inst.Client(meta)
+	client := meta.Client().GetImaging()
 	logger.Debug("Deleting policy")
 
 	policyID, err := tf.GetStringValue("policy_id", d)
@@ -328,7 +328,7 @@ func resourcePolicyVideoImport(ctx context.Context, d *schema.ResourceData, m in
 		ctx,
 		session.WithContextLog(logger),
 	)
-	client := inst.Client(meta)
+	client := meta.Client().GetImaging()
 
 	parts := strings.Split(d.Id(), ":")
 	if len(parts) != 3 {

@@ -91,6 +91,7 @@ func resourceDatastream() *schema.Resource {
 		},
 		CustomizeDiff: customdiff.All(
 			validateConfig,
+			validateContractAndGroupIDsByLogType,
 			enforceComputedFieldsChange,
 		),
 		Schema: datastreamResourceSchema,
@@ -144,9 +145,10 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 	},
 	"contract_id": {
 		Type:             schema.TypeString,
-		Required:         true,
+		Optional:         true,
+		Computed:         true,
 		DiffSuppressFunc: tf.FieldPrefixSuppress("ctr_"),
-		Description:      "Identifies the contract that has access to the product",
+		Description:      "Identifies the contract that has access to the product. Optional for CDN log type. Required for APPSEC. Whitespace-only values are treated as omitted for CDN.",
 	},
 	"created_by": {
 		Type:        schema.TypeString,
@@ -178,9 +180,10 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 	},
 	"group_id": {
 		Type:             schema.TypeString,
-		Required:         true,
+		Optional:         true,
+		Computed:         true,
 		DiffSuppressFunc: tf.FieldPrefixSuppress("grp_"),
-		Description:      "Identifies the group that has access to the product and for which the stream configuration was created",
+		Description:      "Identifies the group that has access to the product and for which the stream configuration was created. Optional for CDN log type. Required for APPSEC. On update, this value is not sent to the API.",
 	},
 	"modified_by": {
 		Type:        schema.TypeString,
@@ -203,8 +206,9 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 		Description: "The ID of the product for which the stream was created",
 	},
 	"properties": {
-		Type:     schema.TypeList,
-		Optional: true,
+		Type:             schema.TypeList,
+		Optional:         true,
+		DiffSuppressFunc: isPropertiesOrderDifferent,
 		Elem: &schema.Schema{
 			Type:             schema.TypeString,
 			DiffSuppressFunc: tf.FieldPrefixSuppress("prp_"),
@@ -1054,13 +1058,13 @@ var configResource = &schema.Resource{
 			Type:        schema.TypeString,
 			Optional:    true,
 			Default:     DefaultUploadFilePrefix,
-			Description: "The prefix of the log file that will be send to a destination",
+			Description: "The prefix of the log file sent to a destination. Applies only to file-based connectors such as S3 and Azure. Not used by HTTP-based connectors.",
 		},
 		"upload_file_suffix": {
 			Type:        schema.TypeString,
 			Optional:    true,
 			Default:     DefaultUploadFileSuffix,
-			Description: "The suffix of the log file that will be send to a destination",
+			Description: "The suffix of the log file sent to a destination. Applies only to file-based connectors such as S3 and Azure. Not used by HTTP-based connectors.",
 		},
 	},
 }
@@ -1178,11 +1182,10 @@ func resourceDatastreamCreate(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 
-	contractID, err := tf.GetStringValue("contract_id", d)
+	contractID, err := getContractIDForStream(d, logType)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	contractID = strings.TrimPrefix(contractID, "ctr_")
 
 	emailIDsList, err := tf.GetListValue("notification_emails", d)
 	if err != nil {
@@ -1196,11 +1199,7 @@ func resourceDatastreamCreate(ctx context.Context, d *schema.ResourceData, m int
 		emailIDs = nil
 	}
 
-	groupIDStr, err := tf.GetStringValue("group_id", d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	groupID, err := strconv.Atoi(strings.TrimPrefix(groupIDStr, "grp_"))
+	groupID, err := getGroupIDForStream(d, logType)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -1275,15 +1274,409 @@ func resourceDatastreamCreate(ctx context.Context, d *schema.ResourceData, m int
 	return resourceDatastreamRead(ctx, d, m)
 }
 
-// FilePrefixSuffixSet is used to set the blank value for prefix and suffix for https based destination as https based destination does not support prefix and suffix
+// FilePrefixSuffixSet clears upload file prefix/suffix before create/update for connectors
+// that do not support them (HTTP-based destinations). Those connectors never send these
+// fields to the API. File-based connectors keep the configured values unchanged.
 func FilePrefixSuffixSet(httpsBaseConnectorName string, config *datastream.DeliveryConfiguration) (*datastream.DeliveryConfiguration, error) {
-
 	if collections.StringInSlice(ConnectorsWithoutFilenameOptionsConfig, httpsBaseConnectorName) {
-
 		config.UploadFilePrefix = ""
 		config.UploadFileSuffix = ""
 	}
 	return config, nil
+}
+
+func getOptionalContractID(d *schema.ResourceData) (string, error) {
+	if value, ok := d.GetOk("contract_id"); ok {
+		return normalizeContractID(value.(string)), nil
+	}
+	return "", nil
+}
+
+// resolveContractIDForRead stores the API contract_id when present; otherwise preserves an
+// explicitly configured or prior state value when the API omits contractId (I#775).
+func resolveContractIDForRead(apiContractID string, d *schema.ResourceData) string {
+	if normalized := normalizeContractID(apiContractID); normalized != "" {
+		return normalized
+	}
+
+	if configured, err := getOptionalContractID(d); err == nil && configured != "" {
+		return configured
+	}
+
+	if configured := normalizeContractID(stringAttrFromStateOrConfig(d, "contract_id")); configured != "" {
+		return configured
+	}
+
+	return ""
+}
+
+// resolveGroupIDForRead stores the API group_id when present; otherwise preserves an
+// explicitly configured or prior state value when the API omits or zeroes groupId (I#775).
+func resolveGroupIDForRead(apiGroupID int, d *schema.ResourceData) string {
+	if apiGroupID > 0 {
+		return strconv.Itoa(apiGroupID)
+	}
+
+	// Prefer a valid prior state value, then Terraform config. Config must be consulted after a
+	// stale state of "0" (I#775 upgrade path) because GetOk treats "0" as set and would mask RawConfig.
+	for _, candidate := range []string{
+		groupIDStringFromResourceData(d),
+		rawConfigStringAttr(d, "group_id"),
+	} {
+		if resolved := normalizedGroupIDString(candidate); resolved != "" {
+			return resolved
+		}
+	}
+
+	return ""
+}
+
+func groupIDStringFromResourceData(d *schema.ResourceData) string {
+	value, ok := d.GetOk("group_id")
+	if !ok {
+		return ""
+	}
+	groupIDStr, ok := value.(string)
+	if !ok {
+		return ""
+	}
+	return groupIDStr
+}
+
+func rawConfigStringAttr(d *schema.ResourceData, key string) string {
+	if !rawConfigAvailable(d) {
+		return ""
+	}
+	val, ok := tf.NewRawConfig(d).GetOk(key)
+	if !ok || val == nil {
+		return ""
+	}
+	str, ok := val.(string)
+	if !ok {
+		return ""
+	}
+	return strings.TrimSpace(str)
+}
+
+// rawConfigAvailable reports whether ResourceData has usable raw config.
+// During a standalone Read/refresh, RawConfig may be null/unknown; callers must
+// not assume GetOk will succeed (and must not panic on that path).
+func rawConfigAvailable(d *schema.ResourceData) bool {
+	raw := d.GetRawConfig()
+	return raw.IsKnown() && !raw.IsNull()
+}
+
+func normalizedGroupIDString(groupID string) string {
+	groupIDStr := strings.TrimSpace(strings.TrimPrefix(groupID, "grp_"))
+	if groupIDStr == "" || groupIDStr == "0" {
+		return ""
+	}
+
+	parsedGroupID, err := parseGroupIDString(groupID)
+	if err != nil || parsedGroupID < 1 {
+		return ""
+	}
+
+	return strconv.Itoa(parsedGroupID)
+}
+
+// stringAttrFromStateOrConfig returns a string attribute from prior state or Terraform config (import refresh).
+func stringAttrFromStateOrConfig(d *schema.ResourceData, key string) string {
+	if value, ok := d.GetOk(key); ok {
+		if str, ok := value.(string); ok {
+			if trimmed := strings.TrimSpace(str); trimmed != "" {
+				return trimmed
+			}
+		}
+	}
+
+	if rawConfigAvailable(d) {
+		if val, ok := tf.NewRawConfig(d).GetOk(key); ok {
+			if str, ok := val.(string); ok {
+				return strings.TrimSpace(str)
+			}
+		}
+	}
+
+	return ""
+}
+
+// applyDeliveryConfigurationForRead normalizes delivery configuration from the API for state storage.
+// Upload file prefix/suffix apply only to file-based connectors. For HTTP-based connectors they
+// are not sent to the API; state is aligned to schema defaults solely to avoid perpetual drift
+// from the shared delivery_configuration block. Preserve-when-API-omits runs only for file-based
+// connectors.
+func applyDeliveryConfigurationForRead(cfg *datastream.DeliveryConfiguration, d *schema.ResourceData, connectorKey string) {
+	if cfg == nil {
+		return
+	}
+
+	if collections.StringInSlice(ConnectorsWithoutFilenameOptionsConfig, connectorKey) {
+		cfg.UploadFilePrefix = DefaultUploadFilePrefix
+		cfg.UploadFileSuffix = DefaultUploadFileSuffix
+		return
+	}
+
+	cfg.UploadFilePrefix = resolveUploadFilePrefixForRead(cfg.UploadFilePrefix, d)
+	cfg.UploadFileSuffix = resolveUploadFileSuffixForRead(cfg.UploadFileSuffix, d)
+}
+
+// configuredUploadFilePart returns a single upload_file_prefix or upload_file_suffix
+// value from state or RawConfig (key must be one of those attribute names).
+func configuredUploadFilePart(d *schema.ResourceData, key string) (string, bool) {
+	configSet, err := tf.GetSetValue("delivery_configuration", d)
+	if err == nil && configSet.Len() > 0 {
+		configMap, mapOK := configSet.List()[0].(map[string]interface{})
+		if !mapOK {
+			return "", false
+		}
+
+		value, _ := configMap[key].(string)
+		return value, true
+	}
+
+	if !rawConfigAvailable(d) {
+		return "", false
+	}
+
+	val, ok := tf.NewRawConfig(d).GetOk("delivery_configuration")
+	if !ok {
+		return "", false
+	}
+
+	blocks, ok := val.([]any)
+	if !ok || len(blocks) == 0 {
+		return "", false
+	}
+
+	block, ok := blocks[0].(map[string]any)
+	if !ok {
+		return "", false
+	}
+
+	value, _ := block[key].(string)
+	return value, true
+}
+
+func resolveUploadFilePrefixForRead(apiPrefix string, d *schema.ResourceData) string {
+	if strings.TrimSpace(apiPrefix) != "" {
+		return apiPrefix
+	}
+
+	if prefix, ok := configuredUploadFilePart(d, "upload_file_prefix"); ok && strings.TrimSpace(prefix) != "" {
+		return prefix
+	}
+
+	return DefaultUploadFilePrefix
+}
+
+func resolveUploadFileSuffixForRead(apiSuffix string, d *schema.ResourceData) string {
+	if strings.TrimSpace(apiSuffix) != "" {
+		return apiSuffix
+	}
+
+	if suffix, ok := configuredUploadFilePart(d, "upload_file_suffix"); ok && strings.TrimSpace(suffix) != "" {
+		return suffix
+	}
+
+	return DefaultUploadFileSuffix
+}
+
+// resolveIntegrationTypeForRead stores the API value when present; otherwise preserves prior state/config.
+func resolveIntegrationTypeForRead(apiIntegrationType string, d *schema.ResourceData) (string, bool) {
+	if strings.TrimSpace(apiIntegrationType) != "" {
+		return apiIntegrationType, true
+	}
+
+	if configured := stringAttrFromStateOrConfig(d, "integration_type"); configured != "" {
+		return configured, true
+	}
+
+	return "", false
+}
+
+// resolveSamplingPercentageForRead stores the API value when present; otherwise preserves prior state/config.
+func resolveSamplingPercentageForRead(apiSamplingPercentage int, d *schema.ResourceData) (int, bool) {
+	if apiSamplingPercentage > 0 {
+		return apiSamplingPercentage, true
+	}
+
+	if value, ok := d.GetOk("sampling_percentage"); ok {
+		if sampling, ok := value.(int); ok && sampling > 0 {
+			return sampling, true
+		}
+	}
+
+	if rawConfigAvailable(d) {
+		if val, ok := tf.NewRawConfig(d).GetOk("sampling_percentage"); ok {
+			switch sampling := val.(type) {
+			case int:
+				if sampling > 0 {
+					return sampling, true
+				}
+			case int64:
+				if sampling > 0 {
+					return int(sampling), true
+				}
+			}
+		}
+	}
+
+	return 0, false
+}
+
+func normalizeContractID(contractID string) string {
+	return strings.TrimSpace(strings.TrimPrefix(contractID, "ctr_"))
+}
+
+func parseGroupIDString(groupID string) (int, error) {
+	groupIDStr := strings.TrimSpace(strings.TrimPrefix(groupID, "grp_"))
+	if groupIDStr == "" {
+		return 0, nil
+	}
+
+	parsed, err := strconv.Atoi(groupIDStr)
+	if err != nil {
+		return 0, err
+	}
+
+	return parsed, nil
+}
+
+func logTypeFromDiff(d *schema.ResourceDiff) datastream.LogType {
+	logTypeVal, ok := d.GetOkExists("log_type")
+	if !ok || logTypeVal == nil {
+		return datastream.LogTypeCDN
+	}
+
+	logTypeStr := strings.TrimSpace(logTypeVal.(string))
+	if logTypeStr == "" {
+		return datastream.LogTypeCDN
+	}
+
+	return datastream.LogType(strings.ToUpper(logTypeStr))
+}
+
+func validateContractAndGroupIDsByLogType(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
+	if isDatastreamDestroyDiff(d) {
+		return nil
+	}
+
+	logType := logTypeFromDiff(d)
+	if logType == datastream.LogTypeCDN {
+		return validateCDNGroupIDWhenSet(groupIDStringFromDiff(d))
+	}
+
+	return validateNonCDNContractAndGroupIDValues(
+		contractIDFromDiff(d),
+		groupIDStringFromDiff(d),
+		logType,
+	)
+}
+
+func isDatastreamDestroyDiff(d *schema.ResourceDiff) bool {
+	if d.Id() == "" {
+		return false
+	}
+
+	// Destroy plans clear required configuration; stream_name is always set on a live stream.
+	streamName, ok := d.GetOkExists("stream_name")
+	return isStreamNameUnsetForDestroy(streamName, ok)
+}
+
+func isStreamNameUnsetForDestroy(streamName interface{}, ok bool) bool {
+	return !ok || streamName == nil || strings.TrimSpace(streamName.(string)) == ""
+}
+
+func validateCDNGroupIDWhenSet(groupID string) error {
+	groupIDStr := strings.TrimSpace(strings.TrimPrefix(groupID, "grp_"))
+	if groupIDStr == "" {
+		return nil
+	}
+
+	parsedGroupID, err := parseGroupIDString(groupID)
+	if err != nil {
+		return fmt.Errorf("invalid `group_id` %q: %s", groupIDStr, err)
+	}
+	if parsedGroupID < 1 {
+		return fmt.Errorf("`group_id` must be at least 1 for log_type %q", datastream.LogTypeCDN)
+	}
+
+	return nil
+}
+
+func contractIDFromDiff(d *schema.ResourceDiff) string {
+	contractID, ok := d.GetOkExists("contract_id")
+	if !ok || contractID == nil {
+		return ""
+	}
+	return normalizeContractID(contractID.(string))
+}
+
+func groupIDStringFromDiff(d *schema.ResourceDiff) string {
+	groupID, ok := d.GetOkExists("group_id")
+	if !ok || groupID == nil {
+		return ""
+	}
+	return groupID.(string)
+}
+
+func validateNonCDNContractAndGroupIDValues(contractID, groupID string, logType datastream.LogType) error {
+	if contractID == "" {
+		return fmt.Errorf("`contract_id` is required for log_type %q", logType)
+	}
+
+	groupIDStr := strings.TrimSpace(strings.TrimPrefix(groupID, "grp_"))
+	if groupIDStr == "" {
+		return fmt.Errorf("`group_id` is required for log_type %q", logType)
+	}
+
+	parsedGroupID, err := parseGroupIDString(groupID)
+	if err != nil {
+		return fmt.Errorf("invalid `group_id` %q: %s", groupIDStr, err)
+	}
+	if parsedGroupID < 1 {
+		return fmt.Errorf("`group_id` must be at least 1 for log_type %q", logType)
+	}
+
+	return nil
+}
+
+func getContractIDForStream(d *schema.ResourceData, logType datastream.LogType) (string, error) {
+	contractID, err := getOptionalContractID(d)
+	if err != nil {
+		return "", err
+	}
+	if logType != datastream.LogTypeCDN && contractID == "" {
+		return "", fmt.Errorf("`contract_id` is required for log_type %q", logType)
+	}
+	return contractID, nil
+}
+
+func getGroupIDForStream(d *schema.ResourceData, logType datastream.LogType) (int, error) {
+	if value, ok := d.GetOk("group_id"); ok {
+		groupIDStr := strings.TrimSpace(strings.TrimPrefix(value.(string), "grp_"))
+		if groupIDStr == "" {
+			if logType != datastream.LogTypeCDN {
+				return 0, fmt.Errorf("`group_id` is required for log_type %q", logType)
+			}
+			return 0, nil
+		}
+
+		groupID, err := parseGroupIDString(value.(string))
+		if err != nil {
+			return 0, fmt.Errorf("invalid `group_id` %q: %s", groupIDStr, err)
+		}
+		if groupID < 1 {
+			return 0, fmt.Errorf("`group_id` must be at least 1 for log_type %q", logType)
+		}
+		return groupID, nil
+	}
+
+	if logType != datastream.LogTypeCDN {
+		return 0, fmt.Errorf("`group_id` is required for log_type %q", logType)
+	}
+	return 0, nil
 }
 
 func resourceDatastreamRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -1317,7 +1710,7 @@ func resourceDatastreamRead(ctx context.Context, d *schema.ResourceData, m inter
 	attrs["log_type"] = string(logType)
 	attrs["active"] = streamDetails.StreamStatus == datastream.StreamStatusActivated
 	attrs["collect_midgress"] = streamDetails.CollectMidgress
-	attrs["contract_id"] = streamDetails.ContractID
+	attrs["contract_id"] = resolveContractIDForRead(streamDetails.ContractID, d)
 	attrs["created_by"] = streamDetails.CreatedBy
 	attrs["created_date"] = streamDetails.CreatedDate
 
@@ -1336,7 +1729,7 @@ func resourceDatastreamRead(ctx context.Context, d *schema.ResourceData, m inter
 	attrs["notification_emails"] = streamDetails.NotificationEmails
 	attrs["latest_version"] = streamDetails.LatestVersion
 
-	attrs["group_id"] = strconv.Itoa(streamDetails.GroupID)
+	attrs["group_id"] = resolveGroupIDForRead(streamDetails.GroupID, d)
 	attrs["modified_by"] = streamDetails.ModifiedBy
 	attrs["modified_date"] = streamDetails.ModifiedDate
 	attrs["papi_json"] = StreamIDToPapiJSON(streamDetails.StreamID)
@@ -1353,13 +1746,11 @@ func resourceDatastreamRead(ctx context.Context, d *schema.ResourceData, m inter
 	}
 	attrs["stream_name"] = streamDetails.StreamName
 	attrs["stream_version"] = streamDetails.StreamVersion
-	// Only set sampling_percentage if it's non-zero (API may not return the field; zero indicates not set)
-	if streamDetails.SamplingPercentage > 0 {
-		attrs["sampling_percentage"] = streamDetails.SamplingPercentage
+	if samplingPercentage, ok := resolveSamplingPercentageForRead(streamDetails.SamplingPercentage, d); ok {
+		attrs["sampling_percentage"] = samplingPercentage
 	}
-	// Only set integration_type if it's non-empty (API may not return the field)
-	if streamDetails.IntegrationType != "" {
-		attrs["integration_type"] = streamDetails.IntegrationType
+	if integrationType, ok := resolveIntegrationTypeForRead(streamDetails.IntegrationType, d); ok {
+		attrs["integration_type"] = integrationType
 	}
 
 	connectorKey, connectorProps, err := ConnectorToMap(streamDetails.Destination, d)
@@ -1368,20 +1759,9 @@ func resourceDatastreamRead(ctx context.Context, d *schema.ResourceData, m inter
 	}
 	if connectorKey != "" {
 		attrs[connectorKey] = []interface{}{connectorProps}
-
-		if collections.StringInSlice(ConnectorsWithoutFilenameOptionsConfig, connectorKey) {
-			// some connectors don't allow setting upload file prefix/suffix (API is ignoring them),
-			// but the documentation specifies default value for these fields (ak/ds respectively)
-			// so these fields should have default values in terraform provider too
-
-			// since we do validate connector and prefix/suffix combination in a validateConfig function
-			// we have to take into account the fact that terraform would still see the change between remote (no prefixes set)
-			// and local state (default prefixes set), so we have to ensure that local state has the default prefix/suffix set as well
-			// here we insert default values to satisfy terraform diff
-			streamDetails.DeliveryConfiguration.UploadFilePrefix = DefaultUploadFilePrefix
-			streamDetails.DeliveryConfiguration.UploadFileSuffix = DefaultUploadFileSuffix
-		}
 	}
+
+	applyDeliveryConfigurationForRead(&streamDetails.DeliveryConfiguration, d, connectorKey)
 
 	attrs["delivery_configuration"] = ConfigToSet(streamDetails.DeliveryConfiguration)
 
@@ -1588,7 +1968,7 @@ func updateStream(ctx context.Context, client datastream.DS, logger akalog.Inter
 	// if some configuration details changed
 	if d.HasChangeExcept("active") {
 
-		contractID, err := tf.GetStringValue("contract_id", d)
+		contractID, err := getContractIDForStream(d, logType)
 		if err != nil {
 			return err
 		}
@@ -1890,6 +2270,82 @@ func isOrderDifferent(_, oldIDValue, newIDValue string, d *schema.ResourceData) 
 	return len(oldMap) == 0
 }
 
+func isPropertiesOrderDifferent(_, oldIDValue, newIDValue string, d *schema.ResourceData) bool {
+	const key = "properties"
+
+	logger := log.Get("DataStream", "isPropertiesOrderDifferent")
+
+	defaultDiff := func() bool {
+		return oldIDValue == newIDValue
+	}
+
+	if !d.HasChange(key) {
+		return defaultDiff()
+	}
+
+	oldProperties, newProperties := d.GetChange(key)
+
+	oldPropertyList, ok := oldProperties.([]interface{})
+	if !ok {
+		logger.Warnf("%s in state is incorrect", key)
+		return defaultDiff()
+	}
+
+	newPropertyList, ok := newProperties.([]interface{})
+	if !ok {
+		logger.Warnf("new %s is incorrect", key)
+		return defaultDiff()
+	}
+
+	if len(oldPropertyList) != len(newPropertyList) {
+		return defaultDiff()
+	}
+
+	if same, ok := propertiesSameSet(oldPropertyList, newPropertyList); ok {
+		return same
+	}
+
+	return defaultDiff()
+}
+
+// propertiesSameSet reports whether two property ID lists contain the same members regardless of order.
+// The second return value is false when the lists cannot be compared (invalid element types).
+func propertiesSameSet(oldPropertyList, newPropertyList []interface{}) (same bool, ok bool) {
+	if len(oldPropertyList) != len(newPropertyList) {
+		return false, true
+	}
+
+	oldMap := make(map[string]struct{}, len(oldPropertyList))
+
+	for _, oldV := range oldPropertyList {
+		oldValue, isString := oldV.(string)
+		if !isString {
+			return false, false
+		}
+		oldMap[normalizePropertyID(oldValue)] = struct{}{}
+	}
+
+	for _, newV := range newPropertyList {
+		newValue, isString := newV.(string)
+		if !isString {
+			return false, false
+		}
+
+		normalizedNewValue := normalizePropertyID(newValue)
+		if _, exists := oldMap[normalizedNewValue]; exists {
+			delete(oldMap, normalizedNewValue)
+		} else {
+			return false, true
+		}
+	}
+
+	return len(oldMap) == 0, true
+}
+
+func normalizePropertyID(propertyID string) string {
+	return strings.TrimSpace(strings.TrimPrefix(propertyID, "prp_"))
+}
+
 func validateConfig(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
 	// Validate that users don't manually specify midgress dataset field (2051)
 	datasetFieldsResource, exists := d.GetOkExists("dataset_fields")
@@ -1905,7 +2361,8 @@ func validateConfig(_ context.Context, d *schema.ResourceDiff, _ interface{}) er
 			return fmt.Errorf("dataset_fields has unexpected type, expected []interface{} but got %T", datasetFieldsResource)
 		}
 	}
-	// Validate that upload_file_prefix and upload_file_suffix are not set when using connectors that do not support them
+	// Validate that upload_file_prefix and upload_file_suffix are not customized for
+	// HTTP-based connectors that do not support filename options.
 	connectorName := ""
 	for _, k := range ConnectorsWithoutFilenameOptionsConfig {
 		connectorResource, exists := d.GetOkExists(k)

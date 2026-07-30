@@ -46,7 +46,7 @@ func resourceRecategorizedAkamaiDefinedBot() *schema.Resource {
 
 func resourceRecategorizedAkamaiDefinedBotCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceRecategorizedAkamaiDefinedBotCreateAction")
 	logger.Debugf("in resourceRecategorizedAkamaiDefinedBotCreateAction")
 
@@ -55,7 +55,7 @@ func resourceRecategorizedAkamaiDefinedBotCreate(ctx context.Context, d *schema.
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "RecategorizedAkamaiDefinedBot", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "RecategorizedAkamaiDefinedBot", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -90,7 +90,7 @@ func resourceRecategorizedAkamaiDefinedBotCreate(ctx context.Context, d *schema.
 
 func resourceRecategorizedAkamaiDefinedBotRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceRecategorizedAkamaiDefinedBotReadAction")
 	logger.Debugf("in resourceRecategorizedAkamaiDefinedBotReadAction")
 
@@ -104,7 +104,7 @@ func resourceRecategorizedAkamaiDefinedBotRead(ctx context.Context, d *schema.Re
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -138,7 +138,7 @@ func resourceRecategorizedAkamaiDefinedBotRead(ctx context.Context, d *schema.Re
 
 func resourceRecategorizedAkamaiDefinedBotUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceRecategorizedAkamaiDefinedBotUpdateAction")
 	logger.Debugf("in resourceRecategorizedAkamaiDefinedBotUpdateAction")
 
@@ -152,7 +152,7 @@ func resourceRecategorizedAkamaiDefinedBotUpdate(ctx context.Context, d *schema.
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "RecategorizedAkamaiDefinedBot", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "RecategorizedAkamaiDefinedBot", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -182,7 +182,7 @@ func resourceRecategorizedAkamaiDefinedBotUpdate(ctx context.Context, d *schema.
 
 func resourceRecategorizedAkamaiDefinedBotDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceRecategorizedAkamaiDefinedBotDeleteAction")
 	logger.Debugf("in resourceRecategorizedAkamaiDefinedBotDeleteAction")
 
@@ -196,7 +196,7 @@ func resourceRecategorizedAkamaiDefinedBotDelete(ctx context.Context, d *schema.
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "RecategorizedAkamaiDefinedBot", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "RecategorizedAkamaiDefinedBot", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}

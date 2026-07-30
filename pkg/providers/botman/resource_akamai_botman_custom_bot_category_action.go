@@ -57,7 +57,7 @@ func resourceCustomBotCategoryAction() *schema.Resource {
 
 func resourceCustomBotCategoryActionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceCustomBotCategoryActionCreate")
 	logger.Debugf("in resourceCustomBotCategoryActionCreate")
 
@@ -66,7 +66,7 @@ func resourceCustomBotCategoryActionCreate(ctx context.Context, d *schema.Resour
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "customBotCategoryAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "customBotCategoryAction", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -111,7 +111,7 @@ func resourceCustomBotCategoryActionRead(ctx context.Context, d *schema.Resource
 
 func customBotCategoryActionRead(ctx context.Context, d *schema.ResourceData, m interface{}, readFromCache bool) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceCustomBotCategoryActionRead")
 	logger.Debugf("in resourceCustomBotCategoryActionRead")
 
@@ -125,7 +125,7 @@ func customBotCategoryActionRead(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -176,7 +176,7 @@ func customBotCategoryActionRead(ctx context.Context, d *schema.ResourceData, m 
 
 func resourceCustomBotCategoryActionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceCustomBotCategoryActionUpdate")
 	logger.Debugf("in resourceCustomBotCategoryActionUpdate")
 
@@ -190,7 +190,7 @@ func resourceCustomBotCategoryActionUpdate(ctx context.Context, d *schema.Resour
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "customBotCategoryAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "customBotCategoryAction", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}

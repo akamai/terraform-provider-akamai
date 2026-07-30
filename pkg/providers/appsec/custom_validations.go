@@ -16,7 +16,7 @@ import (
 
 var emailRegex = regexp.MustCompile(`^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$`)
 
-// ValidateActions ensure actions are correct for API call
+// ValidateActions ensure actions are correct for API call.
 func ValidateActions(v interface{}, path cty.Path) diag.Diagnostics {
 	value := v.(string)
 	schemaFieldName, err := tf.GetSchemaFieldNameFromPath(path)

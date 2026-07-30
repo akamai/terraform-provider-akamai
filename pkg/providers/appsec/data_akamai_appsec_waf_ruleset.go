@@ -2,7 +2,6 @@ package appsec
 
 import (
 	"context"
-	"fmt"
 	"sort"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
@@ -16,7 +15,7 @@ import (
 
 type (
 	wafRulesetDataSource struct {
-		meta meta.Meta
+		meta.DataSource
 	}
 
 	// wafRulesetDataSourceModel describes the data source data model for WAFRulesetDataSource.
@@ -45,17 +44,17 @@ var (
 	_ datasource.DataSourceWithConfigure = &wafRulesetDataSource{}
 )
 
-// NewWAFRulesetDataSource returns a new WAF ruleset data source
+// NewWAFRulesetDataSource returns a new WAF ruleset data source.
 func NewWAFRulesetDataSource() datasource.DataSource {
 	return &wafRulesetDataSource{}
 }
 
-// Metadata configures data source's meta information
+// Metadata configures data source's meta information.
 func (d *wafRulesetDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, response *datasource.MetadataResponse) {
 	response.TypeName = "akamai_appsec_waf_ruleset"
 }
 
-// Schema is used to define data source's terraform schema
+// Schema is used to define data source's terraform schema.
 func (d *wafRulesetDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "WAF ruleset data source.",
@@ -112,25 +111,7 @@ func (d *wafRulesetDataSource) Schema(_ context.Context, _ datasource.SchemaRequ
 	}
 }
 
-// Configure configures data source at the beginning of the lifecycle
-func (d *wafRulesetDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Data Source Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.",
-					req.ProviderData))
-		}
-	}()
-
-	d.meta = meta.Must(req.ProviderData)
-}
-
-// Read is called when the provider must read data source values in order to update state
+// Read is called when the provider must read data source values in order to update state.
 func (d *wafRulesetDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	tflog.Debug(ctx, "WAFRulesetDataSource Read")
 
@@ -141,12 +122,12 @@ func (d *wafRulesetDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		return
 	}
 
-	client := inst.Client(d.meta)
+	client := d.Client.GetAPPSEC()
 	configID := data.ConfigID.ValueInt64()
 	policyID := data.SecurityPolicyID.ValueString()
 
 	// Get the latest version for this configuration
-	version, err := getLatestConfigVersion(ctx, int(configID), d.meta)
+	version, err := getLatestConfigVersion(ctx, int(configID), d.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("retrieving config version", err.Error())
 		return

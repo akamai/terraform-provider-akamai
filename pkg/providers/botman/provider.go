@@ -1,11 +1,7 @@
-// Package botman contains implementation for Akamai Terraform sub-provider responsible for maintaining Bot Manager
+// Package botman contains implementation for Akamai Terraform sub-provider responsible for maintaining Bot Manager.
 package botman
 
 import (
-	"sync"
-
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/botman"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/providers/appsec"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/subprovider"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -15,46 +11,22 @@ import (
 
 type (
 	// Subprovider gathers botman resources and data sources
-	Subprovider struct {
-		client botman.BotMan
-	}
-
-	option func(p *Subprovider)
+	Subprovider struct{}
 )
 
 var (
-	once sync.Once
-
-	inst *Subprovider
-
 	getLatestConfigVersion     = appsec.GetLatestConfigVersion
 	getModifiableConfigVersion = appsec.GetModifiableConfigVersion
 )
 
 var _ subprovider.Subprovider = &Subprovider{}
 
-// NewSubprovider returns a new botman subprovider
-func NewSubprovider(opts ...option) *Subprovider {
-	once.Do(func() {
-		inst = &Subprovider{}
-
-		for _, opt := range opts {
-			opt(inst)
-		}
-	})
-
-	return inst
+// NewSubprovider returns a new botman subprovider.
+func NewSubprovider() *Subprovider {
+	return &Subprovider{}
 }
 
-// Client returns the BotMan interface
-func (p *Subprovider) Client(meta meta.Meta) botman.BotMan {
-	if p.client != nil {
-		return p.client
-	}
-	return botman.Client(meta.Session())
-}
-
-// SDKResources returns the botman resources implemented using terraform-plugin-sdk
+// SDKResources returns the botman resources implemented using terraform-plugin-sdk.
 func (p *Subprovider) SDKResources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
 		"akamai_botman_akamai_bot_category_action":                   resourceAkamaiBotCategoryAction(),
@@ -86,7 +58,7 @@ func (p *Subprovider) SDKResources() map[string]*schema.Resource {
 	}
 }
 
-// SDKDataSources returns the botman data sources implemented using terraform-plugin-sdk
+// SDKDataSources returns the botman data sources implemented using terraform-plugin-sdk.
 func (p *Subprovider) SDKDataSources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
 		"akamai_botman_akamai_bot_category":                          dataSourceAkamaiBotCategory(),
@@ -124,12 +96,12 @@ func (p *Subprovider) SDKDataSources() map[string]*schema.Resource {
 	}
 }
 
-// FrameworkResources returns the botman resources implemented using terraform-plugin-framework
+// FrameworkResources returns the botman resources implemented using terraform-plugin-framework.
 func (p *Subprovider) FrameworkResources() []func() resource.Resource {
 	return []func() resource.Resource{}
 }
 
-// FrameworkDataSources returns the botman data sources implemented using terraform-plugin-framework
+// FrameworkDataSources returns the botman data sources implemented using terraform-plugin-framework.
 func (p *Subprovider) FrameworkDataSources() []func() datasource.DataSource {
 	return []func() datasource.DataSource{}
 }

@@ -43,7 +43,7 @@ func dataSourceReputationProfiles() *schema.Resource {
 
 func dataSourceReputationProfilesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "dataSourceReputationProfilesRead")
 
 	getReputationProfiles := appsec.GetReputationProfilesRequest{}
@@ -54,7 +54,7 @@ func dataSourceReputationProfilesRead(ctx context.Context, d *schema.ResourceDat
 	}
 	getReputationProfiles.ConfigID = configID
 
-	if getReputationProfiles.ConfigVersion, err = getLatestConfigVersion(ctx, configID, m); err != nil {
+	if getReputationProfiles.ConfigVersion, err = getLatestConfigVersion(ctx, configID, client); err != nil {
 		return diag.FromErr(err)
 	}
 

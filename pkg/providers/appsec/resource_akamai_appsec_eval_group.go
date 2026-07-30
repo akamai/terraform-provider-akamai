@@ -68,7 +68,7 @@ func resourceEvalGroup() *schema.Resource {
 
 func resourceEvalGroupCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceEvalGroupCreate")
 	logger.Debugf("in resourceEvalGroupCreate")
 
@@ -76,7 +76,7 @@ func resourceEvalGroupCreate(ctx context.Context, d *schema.ResourceData, m inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "atackGroup", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "atackGroup", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -125,7 +125,7 @@ func resourceEvalGroupCreate(ctx context.Context, d *schema.ResourceData, m inte
 
 func resourceEvalGroupRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceEvalGroupRead")
 	logger.Debugf("in resourceEvalGroupRead")
 
@@ -137,7 +137,7 @@ func resourceEvalGroupRead(ctx context.Context, d *schema.ResourceData, m interf
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -185,7 +185,7 @@ func resourceEvalGroupRead(ctx context.Context, d *schema.ResourceData, m interf
 
 func resourceEvalGroupUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceEvalGroupUpdate")
 	logger.Debugf("in resourceEvalGroupUpdate")
 
@@ -197,7 +197,7 @@ func resourceEvalGroupUpdate(ctx context.Context, d *schema.ResourceData, m inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "evalGroup", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "evalGroup", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -239,7 +239,7 @@ func resourceEvalGroupUpdate(ctx context.Context, d *schema.ResourceData, m inte
 
 func resourceEvalGroupDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceEvalgroupDelete")
 	logger.Debugf("in resourceEvalGroupDelete")
 
@@ -251,7 +251,7 @@ func resourceEvalGroupDelete(ctx context.Context, d *schema.ResourceData, m inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "evalGroup", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "evalGroup", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}

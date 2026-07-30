@@ -57,7 +57,7 @@ func resourceCustomClientSequenceUpdate(ctx context.Context, d *schema.ResourceD
 
 func resourceCustomClientSequenceUpsert(ctx context.Context, d *schema.ResourceData, m interface{}, operation string) (int, diag.Diagnostics) {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", operation)
 	logger.Debugf("in %s", operation)
 
@@ -66,7 +66,7 @@ func resourceCustomClientSequenceUpsert(ctx context.Context, d *schema.ResourceD
 		return configID, diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "customClientSequence", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "customClientSequence", meta.Client().GetAPPSEC())
 	if err != nil {
 		return configID, diag.FromErr(err)
 	}
@@ -96,7 +96,7 @@ func resourceCustomClientSequenceUpsert(ctx context.Context, d *schema.ResourceD
 
 func resourceCustomClientSequenceRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceCustomClientSequenceRead")
 	logger.Debugf("in resourceCustomClientSequenceRead")
 
@@ -105,7 +105,7 @@ func resourceCustomClientSequenceRead(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}

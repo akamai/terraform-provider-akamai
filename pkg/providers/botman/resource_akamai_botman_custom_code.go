@@ -44,7 +44,7 @@ func resourceCustomCode() *schema.Resource {
 
 func resourceCustomCodeCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceCustomCodeCreate")
 	logger.Debugf("in resourceCustomCodeCreate")
 
@@ -53,7 +53,7 @@ func resourceCustomCodeCreate(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "customCode", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "customCode", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -82,7 +82,7 @@ func resourceCustomCodeCreate(ctx context.Context, d *schema.ResourceData, m int
 
 func resourceCustomCodeRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceCustomCodeRead")
 	logger.Debugf("in resourceCustomCodeRead")
 
@@ -91,7 +91,7 @@ func resourceCustomCodeRead(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -125,7 +125,7 @@ func resourceCustomCodeRead(ctx context.Context, d *schema.ResourceData, m inter
 
 func resourceCustomCodeUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceCustomCodeUpdate")
 	logger.Debugf("in resourceCustomCodeUpdate")
 
@@ -134,7 +134,7 @@ func resourceCustomCodeUpdate(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "customCode", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "customCode", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}

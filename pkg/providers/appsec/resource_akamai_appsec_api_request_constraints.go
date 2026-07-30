@@ -58,7 +58,7 @@ func resourceAPIRequestConstraints() *schema.Resource {
 
 func resourceAPIRequestConstraintsCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAPIRequestConstraintsCreate")
 	logger.Debugf("in resourceAPIRequestConstraintsCreate")
 
@@ -66,7 +66,7 @@ func resourceAPIRequestConstraintsCreate(ctx context.Context, d *schema.Resource
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "apirequestconstraints", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "apirequestconstraints", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -108,7 +108,7 @@ func resourceAPIRequestConstraintsCreate(ctx context.Context, d *schema.Resource
 
 func resourceAPIRequestConstraintsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAPIRequestConstraintsRead")
 	logger.Debugf("in resourceAPIRequestConstraintsRead")
 
@@ -118,7 +118,7 @@ func resourceAPIRequestConstraintsRead(ctx context.Context, d *schema.ResourceDa
 	if errconv != nil {
 		return diag.FromErr(errconv)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -171,7 +171,7 @@ func resourceAPIRequestConstraintsRead(ctx context.Context, d *schema.ResourceDa
 
 func resourceAPIRequestConstraintsUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAPIRequestConstraintsUpdate")
 	logger.Debugf("in resourceAPIRequestConstraintsUpdate")
 
@@ -181,7 +181,7 @@ func resourceAPIRequestConstraintsUpdate(ctx context.Context, d *schema.Resource
 	if errconv != nil {
 		return diag.FromErr(errconv)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "apirequestconstraints", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "apirequestconstraints", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -216,7 +216,7 @@ func resourceAPIRequestConstraintsUpdate(ctx context.Context, d *schema.Resource
 
 func resourceAPIRequestConstraintsDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAPIRequestConstraintsDelete")
 	logger.Debugf("in resourceAPIRequestConstraintsDelete")
 
@@ -226,7 +226,7 @@ func resourceAPIRequestConstraintsDelete(ctx context.Context, d *schema.Resource
 	if errconv != nil {
 		return diag.FromErr(errconv)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "apirequestconstraints", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "apirequestconstraints", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}

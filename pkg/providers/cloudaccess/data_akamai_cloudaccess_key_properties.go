@@ -20,7 +20,7 @@ var (
 
 type (
 	keyPropertiesDataSource struct {
-		meta meta.Meta
+		meta.DataSource
 	}
 
 	keyPropertiesDataSourceModel struct {
@@ -46,22 +46,6 @@ func NewKeyPropertiesDataSource() datasource.DataSource {
 // Metadata configures data source's meta information
 func (d *keyPropertiesDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "akamai_cloudaccess_key_properties"
-}
-
-// Configure configures data source at the beginning of the lifecycle
-func (d *keyPropertiesDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			resp.Diagnostics.AddError(
-				"Unexpected Data Source Configure Type",
-				fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.",
-					req.ProviderData))
-		}
-	}()
-	d.meta = meta.Must(req.ProviderData)
 }
 
 // Schema is used to define data source's terraform schema
@@ -117,9 +101,9 @@ func (d *keyPropertiesDataSource) Read(ctx context.Context, req datasource.ReadR
 	if resp.Diagnostics.Append(req.Config.Get(ctx, &data)...); resp.Diagnostics.HasError() {
 		return
 	}
-	client = Client(d.meta)
+	client := d.Client.GetCloudAccess()
 
-	if resp.Diagnostics.Append(data.getAccessKey(ctx)...); resp.Diagnostics.HasError() {
+	if resp.Diagnostics.Append(data.getAccessKey(ctx, client)...); resp.Diagnostics.HasError() {
 		return
 	}
 
@@ -138,7 +122,7 @@ func (d *keyPropertiesDataSource) Read(ctx context.Context, req datasource.ReadR
 	resp.Diagnostics.Append(resp.State.Set(ctx, data)...)
 }
 
-func (data *keyPropertiesDataSourceModel) getAccessKey(ctx context.Context) diag.Diagnostics {
+func (data *keyPropertiesDataSourceModel) getAccessKey(ctx context.Context, client cloudaccess.CloudAccess) diag.Diagnostics {
 	var diags diag.Diagnostics
 	accessKeys, err := client.ListAccessKeys(ctx, cloudaccess.ListAccessKeysRequest{})
 	if err != nil {

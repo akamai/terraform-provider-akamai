@@ -51,7 +51,7 @@ func resourceServeAlternateAction() *schema.Resource {
 
 func resourceServeAlternateActionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceServeAlternateActionCreateAction")
 	logger.Debugf("in resourceServeAlternateActionCreateAction")
 
@@ -60,7 +60,7 @@ func resourceServeAlternateActionCreate(ctx context.Context, d *schema.ResourceD
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "ServeAlternateAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ServeAlternateAction", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -89,7 +89,7 @@ func resourceServeAlternateActionCreate(ctx context.Context, d *schema.ResourceD
 
 func resourceServeAlternateActionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceServeAlternateActionRead")
 	logger.Debugf("in resourceServeAlternateActionRead")
 
@@ -103,7 +103,7 @@ func resourceServeAlternateActionRead(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -144,7 +144,7 @@ func resourceServeAlternateActionRead(ctx context.Context, d *schema.ResourceDat
 
 func resourceServeAlternateActionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceServeAlternateActionUpdate")
 	logger.Debugf("in resourceServeAlternateActionUpdate")
 
@@ -158,7 +158,7 @@ func resourceServeAlternateActionUpdate(ctx context.Context, d *schema.ResourceD
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "ServeAlternateAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ServeAlternateAction", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -188,7 +188,7 @@ func resourceServeAlternateActionUpdate(ctx context.Context, d *schema.ResourceD
 
 func resourceServeAlternateActionDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceServeAlternateActionDelete")
 	logger.Debugf("in resourceServeAlternateActionDelete")
 
@@ -202,7 +202,7 @@ func resourceServeAlternateActionDelete(ctx context.Context, d *schema.ResourceD
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "ServeAlternateAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ServeAlternateAction", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}

@@ -8,6 +8,43 @@
   * Added `multi_provider_dnssec` boolean field to the `akamai_dns_zone` resource to support multi-signer DNSSEC configuration.
   * Added validation requiring `sign_and_serve` to be `true` when `multi_provider_dnssec` is `true`, matching the Edge DNS API prerequisite for multi-signer DNSSEC.
 
+## 10.4.0 (Jul 29, 2026)
+
+#### FEATURES/ENHANCEMENTS:
+
+* General
+  * Updated various dependencies.
+
+* Cloud Certificates (Beta)
+  * Added the `geo_class` attribute to the following resources and data sources:
+    * `akamai_cloudcertificates_certificate` resource
+    * `akamai_cloudcertificates_certificate` data source
+    * `akamai_cloudcertificates_certificates` data source
+
+* DataStream
+  * Made `contract_id` and `group_id` optional and computed on the `akamai_datastream` resource for CDN log type. Either or both could be omitted when creating or updating CDN streams. Non-CDN log types still require `contract_id` and `group_id`.
+  * Fixed an issue where reordering the `properties` list on the `akamai_datastream` resource caused an unnecessary stream update, even though the set of monitored properties was unchanged.
+
+#### BUG FIXES:
+
+* Appsec
+  * Fixed an issue in the `akamai_appsec_configuration` resource where `terraform plan` and `terraform apply` were showing spurious diff for `group_id` and `contract_id` after a `terraform import`.
+  * Fixed an issue in the `akamai_appsec_activations` resource where `plan` and `apply` were showing spurious diff for `note` after terraform import, caused by the platform appending hostname migration history to the note server-side.
+  * Fixed an issue in the `akamai_appsec_custom_rule` resource where `terraform plan` and `terraform apply` were showing spurious diff after `terraform import` or resource create.
+
+* DNS
+  * Fixed an issue in the `akamai_dns_record` resource where updates to records with multi-value targets were not handled correctly ([I#767](https://github.com/akamai/terraform-provider-akamai/issues/767)).
+  * Fixed an issue in the `akamai_dns_record` resource where updates to CAA records could cause unnecessary diffs due to normalization of the data.
+
+* Edgeworkers
+  * Clarified the description of the `local_bundle` field in the `akamai_edgeworker` resource regarding behavior when no value is provided ([I#740](https://github.com/akamai/terraform-provider-akamai/issues/740)).
+
+* GTM
+  * Fixed an issue in the `akamai_gtm_domain` data source where an empty `load_servers` list caused a value conversion error.
+
+* PAPI
+  * Fixed an issue where importing a property which Enhanced-TLS edge hostname has a missing `certificateID` field (e.g. in Secure by Default flow) would fail processing.
+
 ## 10.3.0 (Jul 1, 2026)
 
 #### FEATURES/ENHANCEMENTS:

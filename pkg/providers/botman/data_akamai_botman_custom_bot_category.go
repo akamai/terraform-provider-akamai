@@ -35,7 +35,7 @@ func dataSourceCustomBotCategory() *schema.Resource {
 
 func dataSourceCustomBotCategoryRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "dataSourceCustomBotCategoryRead")
 
 	configID, err := tf.GetIntValue("config_id", d)
@@ -43,7 +43,7 @@ func dataSourceCustomBotCategoryRead(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}

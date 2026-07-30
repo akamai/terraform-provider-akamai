@@ -4904,6 +4904,57 @@ func TestResourceEdgeHostname_WithImport(t *testing.T) {
 		client.PAPI.AssertExpectations(t)
 		client.HAPI.AssertExpectations(t)
 	})
+	t.Run("import existing edgehostname with certificate without certificateID", func(t *testing.T) {
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+
+		// import
+		expectGetEdgeHostname(client.PAPI, "ehn_1", "ctr_1", "grp_2").Once()
+		expectGetEdgeHostnameHAPIByID(client.HAPI, 1).Once()
+
+		client.HAPI.On("GetCertificate", testutils.MockContext, hapi.GetCertificateRequest{
+			RecordName: "test",
+			DNSZone:    "edgekey.net",
+		}).Return(&hapi.GetCertificateResponse{
+			AvailableDomains: []string{"DevExpAutomatedTest.2dUlc9.com"},
+			CommonName:       "DevExpAutomatedTest.2dUlc9.com",
+			ExpirationDate:   test.NewTimeFromString(t, "2026-06-26T15:34:04.000+00:00"),
+			SerialNumber:     "fa:ke:5a:e5:a8:c9:8f:0c:28:48:af:db:fa:78:cc:db",
+			SlotNumber:       3250,
+			Status:           "DEPLOYED",
+			ValidationType:   "DOMAIN_VALIDATION",
+		}, nil)
+
+		// read
+		expectGetEdgeHostname(client.PAPI, "ehn_1", "ctr_1", "grp_2").Once()
+
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(config)),
+			Steps: []resource.TestStep{
+				{
+					ImportState:             true,
+					ImportStateId:           "ehn_1,1,2,prd_2",
+					ResourceName:            "akamai_edge_hostname.importedgehostname",
+					ImportStateVerifyIgnore: []string{"certificate"},
+					Config:                  testutils.LoadFixtureString(t, "testdata/TestResourceEdgeHostname/import_edgehostname_product_id.tf"),
+					ImportStateCheck: tst.NewImportChecker().
+						CheckEqual("contract_id", "ctr_1").
+						CheckEqual("product_id", "prd_2").
+						CheckEqual("group_id", "grp_2").
+						CheckEqual("edge_hostname", "test.edgekey.net").
+						CheckMissing("ttl").
+						CheckEqual("ip_behavior", "IPV4").
+						CheckMissing("status_update_email").
+						CheckEqual("use_cases", "").
+						CheckMissing("https_service_binding").
+						CheckMissing("certificate").
+						Build(),
+				},
+			},
+		})
+		client.PAPI.AssertExpectations(t)
+		client.HAPI.AssertExpectations(t)
+	})
 	t.Run("import existing edgehostname with certificate and productId provided by user", func(t *testing.T) {
 		t.Parallel()
 		client := edgegrid.NewTestClient()

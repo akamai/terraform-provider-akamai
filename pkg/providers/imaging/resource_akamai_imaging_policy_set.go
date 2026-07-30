@@ -82,7 +82,7 @@ func resourceImagingPolicySetCreate(ctx context.Context, rd *schema.ResourceData
 		ctx,
 		session.WithContextLog(logger),
 	)
-	client := inst.Client(meta)
+	client := meta.Client().GetImaging()
 
 	logger.Debug("Creating Policy Set")
 
@@ -128,7 +128,7 @@ func resourceImagingPolicySetRead(ctx context.Context, rd *schema.ResourceData, 
 		ctx,
 		session.WithContextLog(logger),
 	)
-	client := inst.Client(meta)
+	client := meta.Client().GetImaging()
 
 	logger.Debugf("Reading Policy Set with ID==%s", rd.Id())
 
@@ -165,7 +165,7 @@ func resourceImagingPolicySetUpdate(ctx context.Context, rd *schema.ResourceData
 		ctx,
 		session.WithContextLog(logger),
 	)
-	client := inst.Client(meta)
+	client := meta.Client().GetImaging()
 
 	logger.Debugf("Updating Policy Set with ID==%s", rd.Id())
 
@@ -205,7 +205,7 @@ func resourceImagingPolicySetDelete(ctx context.Context, rd *schema.ResourceData
 		ctx,
 		session.WithContextLog(logger),
 	)
-	client := inst.Client(meta)
+	client := meta.Client().GetImaging()
 
 	logger.Debugf("Deleting policy set with ID==%s", rd.Id())
 

@@ -1,11 +1,7 @@
-// Package appsec contains implementation for Akamai Terraform sub-provider responsible for Application Security
+// Package appsec contains implementation for Akamai Terraform sub-provider responsible for Application Security.
 package appsec
 
 import (
-	"sync"
-
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/subprovider"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -15,46 +11,38 @@ import (
 type (
 	// Subprovider gathers appsec resources and data sources
 	Subprovider struct {
-		client appsec.APPSEC
+		config subproviderConfig
 	}
 
-	option func(p *Subprovider)
-)
-
-var (
-	once sync.Once
-
-	inst *Subprovider
+	subproviderConfig struct {
+		activation activationResourceConfig
+	}
 )
 
 var _ subprovider.Subprovider = &Subprovider{}
 
-// NewSubprovider returns a new appsec subprovider
-func NewSubprovider(opts ...option) *Subprovider {
-	once.Do(func() {
-		inst = &Subprovider{}
-
-		for _, opt := range opts {
-			opt(inst)
-		}
-	})
-
-	return inst
-}
-
-// Client returns the APPSEC interface
-func (p *Subprovider) Client(meta meta.Meta) appsec.APPSEC {
-	if p.client != nil {
-		return p.client
+func defaultSubproviderConfig() subproviderConfig {
+	return subproviderConfig{
+		activation: defaultActivationResourceConfig(),
 	}
-	return appsec.Client(meta.Session())
 }
 
-// SDKResources returns the appsec resources implemented using terraform-plugin-sdk
+func newSubproviderWithConfig(config subproviderConfig) *Subprovider {
+	return &Subprovider{
+		config: config,
+	}
+}
+
+// NewSubprovider returns a new appsec subprovider.
+func NewSubprovider() *Subprovider {
+	return newSubproviderWithConfig(defaultSubproviderConfig())
+}
+
+// SDKResources returns the appsec resources implemented using terraform-plugin-sdk.
 func (p *Subprovider) SDKResources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
 		"akamai_appsec_aap_selected_hostnames":                   resourceAAPSelectedHostnames(),
-		"akamai_appsec_activations":                              resourceActivations(),
+		"akamai_appsec_activations":                              resourceActivations(p.config.activation),
 		"akamai_appsec_advanced_settings_ase_penalty_box":        resourceAdvancedSettingsAsePenaltyBox(),
 		"akamai_appsec_advanced_settings_attack_payload_logging": resourceAdvancedSettingsAttackPayloadLogging(),
 		"akamai_appsec_advanced_settings_evasive_path_match":     resourceAdvancedSettingsEvasivePathMatch(),
@@ -110,7 +98,7 @@ func (p *Subprovider) SDKResources() map[string]*schema.Resource {
 	}
 }
 
-// SDKDataSources returns the appsec data sources implemented using terraform-plugin-sdk
+// SDKDataSources returns the appsec data sources implemented using terraform-plugin-sdk.
 func (p *Subprovider) SDKDataSources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
 		"akamai_appsec_aap_selected_hostnames":                   dataSourceAAPSelectedHostnames(),
@@ -170,7 +158,7 @@ func (p *Subprovider) SDKDataSources() map[string]*schema.Resource {
 	}
 }
 
-// FrameworkResources returns the appsec resources implemented using terraform-plugin-framework
+// FrameworkResources returns the appsec resources implemented using terraform-plugin-framework.
 func (p *Subprovider) FrameworkResources() []func() resource.Resource {
 	return []func() resource.Resource{
 		NewRapidRulesResource,
@@ -181,7 +169,7 @@ func (p *Subprovider) FrameworkResources() []func() resource.Resource {
 	}
 }
 
-// FrameworkDataSources returns the appsec data sources implemented using terraform-plugin-framework
+// FrameworkDataSources returns the appsec data sources implemented using terraform-plugin-framework.
 func (p *Subprovider) FrameworkDataSources() []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewCustomRulesUsageDataSource,

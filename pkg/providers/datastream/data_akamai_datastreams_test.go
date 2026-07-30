@@ -10,7 +10,8 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -85,6 +86,69 @@ var (
 		},
 	}
 
+	streamListWithOptionalIDs = []datastream.StreamDetails{
+		{
+			StreamID:      4,
+			StreamName:    "Stream4",
+			StreamStatus:  datastream.StreamStatusActivated,
+			StreamVersion: 1,
+			LatestVersion: 1,
+			GroupID:       0,
+			ContractID:    "",
+			ProductID:     "P-1234",
+			CreatedBy:     "user4",
+			CreatedDate:   "02-08-2020 07:07:40 GMT",
+			Properties: []datastream.Property{
+				{
+					PropertyID:   54375437,
+					PropertyName: "property_name_5",
+				},
+			},
+		},
+	}
+
+	streamListWithZeroGroupPopulatedContract = []datastream.StreamDetails{
+		{
+			StreamID:      5,
+			StreamName:    "Stream5",
+			StreamStatus:  datastream.StreamStatusActivated,
+			StreamVersion: 1,
+			LatestVersion: 1,
+			GroupID:       0,
+			ContractID:    "1-ABCDE",
+			ProductID:     "P-1234",
+			CreatedBy:     "user5",
+			CreatedDate:   "03-08-2020 07:07:40 GMT",
+			Properties: []datastream.Property{
+				{
+					PropertyID:   64376437,
+					PropertyName: "property_name_6",
+				},
+			},
+		},
+	}
+
+	streamListWithPopulatedGroupEmptyContract = []datastream.StreamDetails{
+		{
+			StreamID:      6,
+			StreamName:    "Stream6",
+			StreamStatus:  datastream.StreamStatusActivated,
+			StreamVersion: 1,
+			LatestVersion: 1,
+			GroupID:       4321,
+			ContractID:    "",
+			ProductID:     "P-1234",
+			CreatedBy:     "user6",
+			CreatedDate:   "04-08-2020 07:07:40 GMT",
+			Properties: []datastream.Property{
+				{
+					PropertyID:   74377437,
+					PropertyName: "property_name_7",
+				},
+			},
+		},
+	}
+
 	streamListForSpecificGroup = []datastream.StreamDetails{streamList[1]}
 
 	appSecStreamList = []datastream.StreamDetails{
@@ -108,14 +172,16 @@ var (
 )
 
 func TestDataDatastreams(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		init  func(*datastream.Mock)
 		steps []resource.TestStep
 	}{
 		"list streams": {
 			init: func(m *datastream.Mock) {
-				m.On("ListStreams", testutils.MockContext, mock.Anything).
-					Return(streamList, nil)
+				// read
+				m.On("ListStreams", testutils.MockContext, datastream.ListStreamsRequest{LogType: datastream.LogTypeCDN}).
+					Return(streamList, nil).Times(3)
 			},
 			steps: []resource.TestStep{
 				{
@@ -126,10 +192,11 @@ func TestDataDatastreams(t *testing.T) {
 		},
 		"list streams with specified group id": {
 			init: func(m *datastream.Mock) {
+				// read
 				m.On("ListStreams", testutils.MockContext, datastream.ListStreamsRequest{
 					GroupID: ptr.To(1234),
 					LogType: datastream.LogTypeCDN, // default log type
-				}).Return(streamListForSpecificGroup, nil)
+				}).Return(streamListForSpecificGroup, nil).Times(3)
 			},
 			steps: []resource.TestStep{
 				{
@@ -140,10 +207,11 @@ func TestDataDatastreams(t *testing.T) {
 		},
 		"list streams with specified group id using grp prefix": {
 			init: func(m *datastream.Mock) {
+				// read
 				m.On("ListStreams", testutils.MockContext, datastream.ListStreamsRequest{
 					LogType: datastream.LogTypeCDN, // default log type
 					GroupID: ptr.To(1234),
-				}).Return(streamListForSpecificGroup, nil)
+				}).Return(streamListForSpecificGroup, nil).Times(3)
 			},
 			steps: []resource.TestStep{
 				{
@@ -162,8 +230,9 @@ func TestDataDatastreams(t *testing.T) {
 		},
 		"list streams - empty list": {
 			init: func(m *datastream.Mock) {
+				// read
 				m.On("ListStreams", testutils.MockContext, datastream.ListStreamsRequest{LogType: datastream.LogTypeCDN}).
-					Return([]datastream.StreamDetails{}, nil)
+					Return([]datastream.StreamDetails{}, nil).Times(3)
 			},
 			steps: []resource.TestStep{
 				{
@@ -174,8 +243,9 @@ func TestDataDatastreams(t *testing.T) {
 		},
 		"list streams with empty integration_type": {
 			init: func(m *datastream.Mock) {
-				m.On("ListStreams", testutils.MockContext, mock.Anything).
-					Return(streamListWithEmptyFields, nil)
+				// read
+				m.On("ListStreams", testutils.MockContext, datastream.ListStreamsRequest{LogType: datastream.LogTypeCDN}).
+					Return(streamListWithEmptyFields, nil).Times(3)
 			},
 			steps: []resource.TestStep{
 				{
@@ -184,9 +254,49 @@ func TestDataDatastreams(t *testing.T) {
 				},
 			},
 		},
+		"list streams with optional group_id and contract_id": {
+			init: func(m *datastream.Mock) {
+				// read
+				m.On("ListStreams", testutils.MockContext, datastream.ListStreamsRequest{LogType: datastream.LogTypeCDN}).
+					Return(streamListWithOptionalIDs, nil).Times(3)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataDatastreams/list_streams_without_groupid.tf"),
+					Check:  streamsChecks(streamListWithOptionalIDs),
+				},
+			},
+		},
+		"list streams with zero group_id and populated contract_id": {
+			init: func(m *datastream.Mock) {
+				// read
+				m.On("ListStreams", testutils.MockContext, datastream.ListStreamsRequest{LogType: datastream.LogTypeCDN}).
+					Return(streamListWithZeroGroupPopulatedContract, nil).Times(3)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataDatastreams/list_streams_without_groupid.tf"),
+					Check:  streamsChecks(streamListWithZeroGroupPopulatedContract),
+				},
+			},
+		},
+		"list streams with populated group_id and empty contract_id": {
+			init: func(m *datastream.Mock) {
+				// read
+				m.On("ListStreams", testutils.MockContext, datastream.ListStreamsRequest{LogType: datastream.LogTypeCDN}).
+					Return(streamListWithPopulatedGroupEmptyContract, nil).Times(3)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataDatastreams/list_streams_without_groupid.tf"),
+					Check:  streamsChecks(streamListWithPopulatedGroupEmptyContract),
+				},
+			},
+		},
 		"could not fetch stream list": {
 			init: func(m *datastream.Mock) {
-				m.On("ListStreams", testutils.MockContext, mock.Anything).
+				// read
+				m.On("ListStreams", testutils.MockContext, datastream.ListStreamsRequest{LogType: datastream.LogTypeCDN}).
 					Return(nil, fmt.Errorf("failed to get stream list")).Once()
 			},
 			steps: []resource.TestStep{
@@ -198,9 +308,10 @@ func TestDataDatastreams(t *testing.T) {
 		},
 		"list appsec streams": {
 			init: func(m *datastream.Mock) {
+				// read
 				m.On("ListStreams", testutils.MockContext, datastream.ListStreamsRequest{
 					LogType: datastream.LogTypeAppSec,
-				}).Return(appSecStreamList, nil)
+				}).Return(appSecStreamList, nil).Times(3)
 			},
 			steps: []resource.TestStep{
 				{
@@ -283,4 +394,140 @@ func propertiesCheck(key string, properties []datastream.Property) resource.Test
 	}
 
 	return resource.ComposeAggregateTestCheckFunc(checks...)
+}
+
+func TestCreateStreamsAttrs_optionalGroupAndContractIDs(t *testing.T) {
+	t.Parallel()
+
+	attrs := createStreamsAttrs([]datastream.StreamDetails{
+		{
+			StreamID:      99,
+			StreamName:    "optional-ids",
+			StreamStatus:  datastream.StreamStatusActivated,
+			StreamVersion: 1,
+			LatestVersion: 1,
+			GroupID:       0,
+			ContractID:    "",
+			ProductID:     "P-1234",
+			CreatedBy:     "user",
+			CreatedDate:   "01-01-2024 00:00:00 GMT",
+		},
+	})
+
+	require.Len(t, attrs, 1)
+	streamAttr, ok := attrs[0].(map[string]interface{})
+	require.True(t, ok)
+	assert.Equal(t, 0, streamAttr["group_id"])
+	assert.Equal(t, "", streamAttr["contract_id"])
+	_, hasIntegrationType := streamAttr["integration_type"]
+	assert.False(t, hasIntegrationType)
+}
+
+func TestCreateStreamsAttrs_omittedGroupWithPopulatedContract(t *testing.T) {
+	t.Parallel()
+
+	attrs := createStreamsAttrs([]datastream.StreamDetails{
+		{
+			StreamID:      100,
+			StreamName:    "omitted-group",
+			StreamStatus:  datastream.StreamStatusActivated,
+			StreamVersion: 1,
+			LatestVersion: 1,
+			GroupID:       0,
+			ContractID:    "1-ABCDE",
+			ProductID:     "P-1234",
+			CreatedBy:     "user",
+			CreatedDate:   "01-01-2024 00:00:00 GMT",
+		},
+	})
+
+	require.Len(t, attrs, 1)
+	streamAttr := attrs[0].(map[string]interface{})
+	assert.Equal(t, 0, streamAttr["group_id"])
+	assert.Equal(t, "1-ABCDE", streamAttr["contract_id"])
+}
+
+func TestCreateStreamsAttrs_explicitZeroGroupWithPopulatedContract(t *testing.T) {
+	t.Parallel()
+
+	attrs := createStreamsAttrs([]datastream.StreamDetails{
+		{
+			StreamID:      102,
+			StreamName:    "zero-group",
+			StreamStatus:  datastream.StreamStatusActivated,
+			StreamVersion: 1,
+			LatestVersion: 1,
+			GroupID:       0,
+			ContractID:    "1-ABCDE",
+			ProductID:     "P-1234",
+			CreatedBy:     "user",
+			CreatedDate:   "01-01-2024 00:00:00 GMT",
+		},
+	})
+
+	require.Len(t, attrs, 1)
+	streamAttr := attrs[0].(map[string]interface{})
+	assert.Equal(t, 0, streamAttr["group_id"])
+	assert.Equal(t, "1-ABCDE", streamAttr["contract_id"])
+}
+
+func TestCreateStreamsAttrs_populatedGroupWithEmptyContract(t *testing.T) {
+	t.Parallel()
+
+	attrs := createStreamsAttrs([]datastream.StreamDetails{
+		{
+			StreamID:      101,
+			StreamName:    "empty-contract",
+			StreamStatus:  datastream.StreamStatusActivated,
+			StreamVersion: 1,
+			LatestVersion: 1,
+			GroupID:       4321,
+			ContractID:    "",
+			ProductID:     "P-1234",
+			CreatedBy:     "user",
+			CreatedDate:   "01-01-2024 00:00:00 GMT",
+		},
+	})
+
+	require.Len(t, attrs, 1)
+	streamAttr := attrs[0].(map[string]interface{})
+	assert.Equal(t, 4321, streamAttr["group_id"])
+	assert.Equal(t, "", streamAttr["contract_id"])
+}
+
+func TestCreateStreamsAttrs_setsIntegrationTypeOnlyWhenPresent(t *testing.T) {
+	t.Parallel()
+
+	withType := createStreamsAttrs([]datastream.StreamDetails{{
+		StreamID: 1, StreamName: "a", StreamStatus: datastream.StreamStatusActivated,
+		StreamVersion: 1, LatestVersion: 1, ProductID: "P", CreatedBy: "u", CreatedDate: "d",
+		IntegrationType: "HYBRID",
+	}})
+	withoutType := createStreamsAttrs([]datastream.StreamDetails{{
+		StreamID: 2, StreamName: "b", StreamStatus: datastream.StreamStatusActivated,
+		StreamVersion: 1, LatestVersion: 1, ProductID: "P", CreatedBy: "u", CreatedDate: "d",
+	}})
+
+	_, hasWith := withType[0].(map[string]interface{})["integration_type"]
+	_, hasWithout := withoutType[0].(map[string]interface{})["integration_type"]
+	assert.True(t, hasWith)
+	assert.False(t, hasWithout)
+}
+
+func TestCreateStreamsAttrs_alwaysEmitsContractAndGroupIDKeys(t *testing.T) {
+	t.Parallel()
+
+	attrs := createStreamsAttrs([]datastream.StreamDetails{{
+		StreamID: 1, StreamName: "a", StreamStatus: datastream.StreamStatusActivated,
+		StreamVersion: 1, LatestVersion: 1, GroupID: 0, ContractID: "",
+		ProductID: "P", CreatedBy: "u", CreatedDate: "d",
+	}})
+
+	streamAttr := attrs[0].(map[string]interface{})
+	_, hasGroupID := streamAttr["group_id"]
+	_, hasContractID := streamAttr["contract_id"]
+	assert.True(t, hasGroupID, "group_id key must always be present in datasource attrs")
+	assert.True(t, hasContractID, "contract_id key must always be present in datasource attrs")
+	assert.Equal(t, 0, streamAttr["group_id"])
+	assert.Equal(t, "", streamAttr["contract_id"])
 }

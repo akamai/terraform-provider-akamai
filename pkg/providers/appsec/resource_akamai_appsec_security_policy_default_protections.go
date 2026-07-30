@@ -55,14 +55,14 @@ func resourceSecurityPolicyDefaultProtections() *schema.Resource {
 
 func resourceSecurityPolicyDefaultProtectionsCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyDefaultProtectionsCreate")
 
 	configID, err := tf.GetIntValue("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "securityPolicy", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "securityPolicy", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -97,7 +97,7 @@ func resourceSecurityPolicyDefaultProtectionsCreate(ctx context.Context, d *sche
 
 func resourceSecurityPolicyDefaultProtectionsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyDefaultProtectionsRead")
 
 	iDParts, err := id.Split(d.Id(), 2, "configID:policyID")
@@ -109,7 +109,7 @@ func resourceSecurityPolicyDefaultProtectionsRead(ctx context.Context, d *schema
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -146,7 +146,7 @@ func resourceSecurityPolicyDefaultProtectionsRead(ctx context.Context, d *schema
 
 func resourceSecurityPolicyDefaultProtectionsUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyDefaultProtectionsUpdate")
 
 	iDParts, err := id.Split(d.Id(), 2, "configID:policyID")
@@ -158,7 +158,7 @@ func resourceSecurityPolicyDefaultProtectionsUpdate(ctx context.Context, d *sche
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "securityPolicy", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "securityPolicy", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -196,7 +196,7 @@ func resourceSecurityPolicyDefaultProtectionsUpdate(ctx context.Context, d *sche
 
 func resourceSecurityPolicyDefaultProtectionsDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyDefaultProtectionsDelete")
 
 	iDParts, err := id.Split(d.Id(), 2, "configID:policyID")
@@ -208,17 +208,17 @@ func resourceSecurityPolicyDefaultProtectionsDelete(ctx context.Context, d *sche
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "securityPolicy", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "securityPolicy", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	securityPolicyID := iDParts[1]
 
-	latestVersion, err := getLatestConfigVersion(ctx, configID, m)
+	latestVersion, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	stagingVersion, productionVersion, err := getActiveConfigVersions(ctx, configID, m)
+	stagingVersion, productionVersion, err := getActiveConfigVersions(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/apidefinitions"
 	v0 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/apidefinitions/v0"
@@ -26,11 +27,19 @@ import (
 
 var (
 	_ resource.Resource                = &apiResource{}
-	_ resource.ResourceWithConfigure   = &apiResource{}
 	_ resource.ResourceWithImportState = &apiResource{}
+	_ resource.ResourceWithConfigure   = &apiResource{}
 )
 
-type apiResource struct{}
+type apiResource struct {
+	meta.Resource
+	apiResourceConfig
+}
+
+type apiResourceConfig struct {
+	pollInterval    time.Duration
+	activationRetry time.Duration
+}
 
 type apiResourceModel struct {
 	ID                types.Int64   `tfsdk:"id"`
@@ -43,36 +52,24 @@ type apiResourceModel struct {
 }
 
 // NewAPIResource returns new api definition API resource
-func NewAPIResource() resource.Resource {
-	return &apiResource{}
+func NewAPIResource(config apiResourceConfig) func() resource.Resource {
+	return func() resource.Resource {
+		return &apiResource{
+			apiResourceConfig: config,
+		}
+	}
+}
+
+func defaultAPIResourceConfig() apiResourceConfig {
+	return apiResourceConfig{
+		pollInterval:    30 * time.Second,
+		activationRetry: 5 * time.Second,
+	}
 }
 
 // Metadata implements resource.Resource.
 func (r *apiResource) Metadata(_ context.Context, _ resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = "akamai_apidefinitions_api"
-}
-
-// Configure implements resource.Resource.
-func (r *apiResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-
-	metaConfig, ok := req.ProviderData.(meta.Meta)
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *http.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-		)
-		return
-	}
-
-	if client == nil {
-		client = apidefinitions.Client(metaConfig.Session())
-	}
-	if clientV0 == nil {
-		clientV0 = v0.Client(metaConfig.Session())
-	}
 }
 
 // Schema implements resource.Resource.
@@ -170,7 +167,7 @@ func (r *apiResource) create(ctx context.Context, data *apiResourceModel) diag.D
 	}
 	registerEndpointRequest.ContractID = data.ContractID.ValueString()
 	registerEndpointRequest.GroupID = data.GroupID.ValueInt64()
-	resp, err := clientV0.RegisterAPI(ctx, registerEndpointRequest)
+	resp, err := r.Client.GetAPIDefinitionsV0().RegisterAPI(ctx, registerEndpointRequest)
 	if err != nil {
 		diags.AddError("Create API Failed", err.Error())
 		return diags
@@ -205,7 +202,7 @@ func (r *apiResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 func (r *apiResource) read(ctx context.Context, data *apiResourceModel) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	result, err := client.ListEndpointVersions(ctx, apidefinitions.ListEndpointVersionsRequest{
+	result, err := r.Client.GetAPIDefinitions().ListEndpointVersions(ctx, apidefinitions.ListEndpointVersionsRequest{
 		APIEndpointID: data.ID.ValueInt64(),
 	})
 
@@ -220,14 +217,14 @@ func (r *apiResource) read(ctx context.Context, data *apiResourceModel) diag.Dia
 		}
 	}
 
-	endpoint, err := getEndpoint(ctx, data.ID.ValueInt64())
+	endpoint, err := getEndpoint(ctx, r.Client.GetAPIDefinitions(), data.ID.ValueInt64())
 
 	if err != nil {
 		diags.AddError("Unable to read Endpoint", err.Error())
 		return diags
 	}
 
-	endpointVersion, err := clientV0.GetAPIVersion(ctx, v0.GetAPIVersionRequest{
+	endpointVersion, err := r.Client.GetAPIDefinitionsV0().GetAPIVersion(ctx, v0.GetAPIVersionRequest{
 		Version: latestVersion,
 		ID:      data.ID.ValueInt64(),
 	})
@@ -283,7 +280,7 @@ func (r *apiResource) update(ctx context.Context, state *apiResourceModel, data 
 	}
 
 	id := state.ID.ValueInt64()
-	endpointVersion, err := client.GetEndpointVersion(ctx, apidefinitions.GetEndpointVersionRequest{
+	endpointVersion, err := r.Client.GetAPIDefinitions().GetEndpointVersion(ctx, apidefinitions.GetEndpointVersionRequest{
 		VersionNumber: state.LatestVersion.ValueInt64(),
 		APIEndpointID: id,
 	})
@@ -296,7 +293,7 @@ func (r *apiResource) update(ctx context.Context, state *apiResourceModel, data 
 	var versionNumber = state.LatestVersion.ValueInt64()
 
 	if endpointVersion.Locked {
-		resp, err := client.CloneEndpointVersion(ctx, apidefinitions.CloneEndpointVersionRequest{
+		resp, err := r.Client.GetAPIDefinitions().CloneEndpointVersion(ctx, apidefinitions.CloneEndpointVersionRequest{
 			VersionNumber: versionNumber,
 			APIEndpointID: id,
 		})
@@ -317,7 +314,7 @@ func (r *apiResource) update(ctx context.Context, state *apiResourceModel, data 
 		Body:    v0.UpdateAPIVersionRequestBody(body),
 	}
 
-	resp, err := clientV0.UpdateAPIVersion(ctx, updateEndpointVersionReq)
+	resp, err := r.Client.GetAPIDefinitionsV0().UpdateAPIVersion(ctx, updateEndpointVersionReq)
 	if err != nil {
 		diags.AddError("Update API Failed", err.Error())
 		return diags
@@ -337,26 +334,26 @@ func (r *apiResource) Delete(ctx context.Context, req resource.DeleteRequest, re
 		return
 	}
 
-	endpoint, err := getEndpoint(ctx, data.ID.ValueInt64())
+	endpoint, err := getEndpoint(ctx, r.Client.GetAPIDefinitions(), data.ID.ValueInt64())
 	if err != nil {
 		resp.Diagnostics.AddError("Unable to read Endpoint", err.Error())
 		return
 	}
 
-	diags := deactivateEndpoint(ctx, *endpoint)
+	diags := deactivateEndpoint(ctx, r.Client.GetAPIDefinitions(), *endpoint, r.activationRetry, r.pollInterval)
 	if diags != nil {
 		resp.Diagnostics.Append(diags...)
 		return
 	}
 
 	if endpoint.StagingVersion.Status == nil && endpoint.ProductionVersion.Status == nil {
-		err := client.DeleteEndpoint(ctx, apidefinitions.DeleteEndpointRequest{APIEndpointID: data.ID.ValueInt64()})
+		err := r.Client.GetAPIDefinitions().DeleteEndpoint(ctx, apidefinitions.DeleteEndpointRequest{APIEndpointID: data.ID.ValueInt64()})
 		if err != nil {
 			resp.Diagnostics.AddError("Deletion of API Failed", err.Error())
 			return
 		}
 	} else {
-		_, err := client.HideEndpoint(ctx, apidefinitions.HideEndpointRequest{APIEndpointID: data.ID.ValueInt64()})
+		_, err := r.Client.GetAPIDefinitions().HideEndpoint(ctx, apidefinitions.HideEndpointRequest{APIEndpointID: data.ID.ValueInt64()})
 		if err != nil {
 			resp.Diagnostics.AddError("Deletion of API Failed", err.Error())
 			return
@@ -387,13 +384,13 @@ func (r *apiResource) ImportState(ctx context.Context, req resource.ImportStateR
 		return
 	}
 
-	endpoint, err := getEndpoint(ctx, endpointID)
+	endpoint, err := getEndpoint(ctx, r.Client.GetAPIDefinitions(), endpointID)
 	if err != nil {
 		resp.Diagnostics.AddError("Unable to read Endpoint", err.Error())
 		return
 	}
 
-	version, err := clientV0.GetAPIVersion(ctx, v0.GetAPIVersionRequest{ID: endpointID, Version: versionNumber})
+	version, err := r.Client.GetAPIDefinitionsV0().GetAPIVersion(ctx, v0.GetAPIVersionRequest{ID: endpointID, Version: versionNumber})
 	if err != nil {
 		resp.Diagnostics.AddError("Unable to read Version", err.Error())
 		return

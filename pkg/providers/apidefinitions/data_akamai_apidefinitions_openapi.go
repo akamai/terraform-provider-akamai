@@ -2,10 +2,8 @@ package apidefinitions
 
 import (
 	"context"
-	"fmt"
 	"os"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/apidefinitions"
 	v0 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/apidefinitions/v0"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf/validators"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
@@ -22,7 +20,9 @@ var (
 )
 
 type (
-	openAPIDataSource struct{}
+	openAPIDataSource struct {
+		meta.DataSource
+	}
 
 	openAPIModel struct {
 		FilePath    types.String `tfsdk:"file_path"`
@@ -39,28 +39,6 @@ func NewOpenAPIDataSource() datasource.DataSource {
 // Metadata configures data source's meta information
 func (d *openAPIDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "akamai_apidefinitions_openapi"
-}
-
-// Configure configures data source at the beginning of the lifecycle
-func (d *openAPIDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		// ProviderData is nil when Configure is run first time as part of ValidateDataSourceConfig in framework provider
-		return
-	}
-
-	metaConfig, ok := req.ProviderData.(meta.Meta)
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected Data Source Configure Type",
-			fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-		)
-	}
-	if client == nil {
-		client = apidefinitions.Client(metaConfig.Session())
-	}
-	if clientV0 == nil {
-		clientV0 = v0.Client(metaConfig.Session())
-	}
 }
 
 func (d *openAPIDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
@@ -99,7 +77,7 @@ func (d *openAPIDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		return
 	}
 
-	response, err := clientV0.FromOpenAPIFile(ctx, v0.FromOpenAPIFileRequest{
+	response, err := d.Client.GetAPIDefinitionsV0().FromOpenAPIFile(ctx, v0.FromOpenAPIFileRequest{
 		Content:  content,
 		RootFile: data.APIFileName.ValueStringPointer(),
 	})

@@ -55,7 +55,7 @@ func resourcePenaltyBoxConditions() *schema.Resource {
 
 func resourcePenaltyBoxConditionsCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourcePenaltyBoxConditionsCreate")
 	logger.Debugf("in resourcePenaltyBoxConditionsCreate")
 
@@ -67,7 +67,7 @@ func resourcePenaltyBoxConditionsCreate(ctx context.Context, d *schema.ResourceD
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "penaltyBoxConditions", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "penaltyBoxConditions", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -98,7 +98,7 @@ func resourcePenaltyBoxConditionsCreate(ctx context.Context, d *schema.ResourceD
 
 func resourcePenaltyBoxConditionsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourcePenaltyBoxConditionsRead")
 
 	iDParts, err := id.Split(d.Id(), 2, "configID:securityPolicyID")
@@ -109,7 +109,7 @@ func resourcePenaltyBoxConditionsRead(ctx context.Context, d *schema.ResourceDat
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -146,7 +146,7 @@ func resourcePenaltyBoxConditionsRead(ctx context.Context, d *schema.ResourceDat
 
 func resourcePenaltyBoxConditionsUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourcePenaltyBoxConditionsUpdate")
 	logger.Debugf("in resourcePenaltyBoxConditionsUpdate")
 
@@ -158,7 +158,7 @@ func resourcePenaltyBoxConditionsUpdate(ctx context.Context, d *schema.ResourceD
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "penaltyBoxAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "penaltyBoxAction", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -188,7 +188,7 @@ func resourcePenaltyBoxConditionsUpdate(ctx context.Context, d *schema.ResourceD
 
 func resourcePenaltyBoxConditionsDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourcePenaltyBoxConditionsDelete")
 	logger.Debugf("in resourcePenaltyBoxConditionsDelete")
 
@@ -200,7 +200,7 @@ func resourcePenaltyBoxConditionsDelete(ctx context.Context, d *schema.ResourceD
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "penaltyBoxAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "penaltyBoxAction", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}

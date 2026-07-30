@@ -60,7 +60,7 @@ func dataSourceTuningRecommendations() *schema.Resource {
 
 func dataSourceTuningRecommendationsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "dataSourceTuningRecommendationsRead")
 
 	configID, err := tf.GetIntValue("config_id", d)
@@ -101,7 +101,7 @@ func dataSourceTuningRecommendationsRead(ctx context.Context, d *schema.Resource
 
 	var jsonBody []byte
 
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}

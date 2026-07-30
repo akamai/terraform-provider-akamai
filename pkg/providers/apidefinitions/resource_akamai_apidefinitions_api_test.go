@@ -6,12 +6,14 @@ import (
 	"os"
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/apidefinitions"
 	v0 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/apidefinitions/v0"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -24,6 +26,9 @@ type data struct {
 
 func TestAPIResource(t *testing.T) {
 	t.Parallel()
+	config := defaultSubproviderConfig()
+	config.api.pollInterval = 10 * time.Millisecond
+	config.api.activationRetry = 5 * time.Millisecond
 
 	var tests = map[string]struct {
 		configPath string
@@ -292,19 +297,18 @@ func TestAPIResource(t *testing.T) {
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &apidefinitions.Mock{}
-			clientV0 := &v0.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 			if test.init != nil {
-				test.init(client, clientV0)
+				test.init(client.APIDefinitions, client.APIDefinitionsV0)
 			}
-			useClient(client, clientV0, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps:                    test.steps,
-				})
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, newSubproviderWithConfig(config)),
+				IsUnitTest:               true,
+				Steps:                    test.steps,
 			})
-			client.AssertExpectations(t)
+			client.APIDefinitions.AssertExpectations(t)
+			client.APIDefinitionsV0.AssertExpectations(t)
 		})
 	}
 }

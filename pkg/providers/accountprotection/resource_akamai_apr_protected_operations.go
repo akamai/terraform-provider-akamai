@@ -59,7 +59,7 @@ func resourceProtectedOperations() *schema.Resource {
 // createResourceProtectedOperations creates a new protected operation in the specified security policy.
 func createResourceProtectedOperations(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAccountProtection()
 	logger := meta.Log("accountprotection", "createResourceProtectedOperations")
 	logger.Debugf("in createResourceProtectedOperations")
 
@@ -68,7 +68,7 @@ func createResourceProtectedOperations(ctx context.Context, d *schema.ResourceDa
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "ProtectedOperation", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ProtectedOperation", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -114,7 +114,7 @@ func readResourceProtectedOperations(ctx context.Context, d *schema.ResourceData
 // readProtectedOperations reads the protected operations for a given security policy either from cache or directly from the API.
 func readProtectedOperations(ctx context.Context, d *schema.ResourceData, m interface{}, readFromCache bool) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAccountProtection()
 	logger := meta.Log("accountprotection", "readProtectedOperations")
 	logger.Debugf("in readProtectedOperations")
 
@@ -128,7 +128,7 @@ func readProtectedOperations(ctx context.Context, d *schema.ResourceData, m inte
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -195,7 +195,7 @@ func readProtectedOperations(ctx context.Context, d *schema.ResourceData, m inte
 // updateResourceProtectedOperation updates an existing protected operation in the specified security policy.
 func updateResourceProtectedOperation(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAccountProtection()
 	logger := meta.Log("accountprotection", "updateResourceProtectedOperation")
 	logger.Debugf("in updateResourceProtectedOperation")
 
@@ -209,7 +209,7 @@ func updateResourceProtectedOperation(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "ProtectedOperation", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ProtectedOperation", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -243,7 +243,7 @@ func updateResourceProtectedOperation(ctx context.Context, d *schema.ResourceDat
 // deleteResourceProtectedOperation deletes a protected operation from the specified security policy.
 func deleteResourceProtectedOperation(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAccountProtection()
 	logger := meta.Log("accountprotection", "deleteResourceProtectedOperation")
 	logger.Debugf("in deleteResourceProtectedOperation")
 
@@ -257,7 +257,7 @@ func deleteResourceProtectedOperation(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "ProtectedOperation", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "ProtectedOperation", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}

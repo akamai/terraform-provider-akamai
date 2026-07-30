@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"slices"
 
 	v0 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/apidefinitions/v0"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
@@ -14,7 +15,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	orderedmap "github.com/wk8/go-ordered-map/v2"
-	"golang.org/x/exp/slices"
 )
 
 var _ basetypes.StringTypable = apiStateType{}

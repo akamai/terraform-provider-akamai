@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -15,6 +16,7 @@ import (
 )
 
 func TestDataWAFRuleset(t *testing.T) {
+	t.Parallel()
 
 	getWAFRulesetResponse := appsec.CompositeRulesetResponse{}
 	err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestDSWAFRuleset/WAFRuleset.json"), &getWAFRulesetResponse)
@@ -121,20 +123,19 @@ func TestDataWAFRuleset(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			client := &appsec.Mock{}
+			t.Parallel()
+			client := edgegrid.NewTestClient()
 			if test.init != nil {
-				test.init(client)
+				test.init(client.APPSEC)
 			}
 
-			useClient(client, func() {
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					IsUnitTest:               true,
-					Steps:                    test.steps,
-				})
+			mockGetConfigurationVersionDefault(client.APPSEC)
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				Steps:                    test.steps,
 			})
 
-			client.AssertExpectations(t)
+			client.APPSEC.AssertExpectations(t)
 		})
 	}
 }

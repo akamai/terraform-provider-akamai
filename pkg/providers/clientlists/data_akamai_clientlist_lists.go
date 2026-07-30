@@ -3,7 +3,6 @@ package clientlists
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/clientlists"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/hash"
@@ -19,7 +18,7 @@ import (
 
 type (
 	clientListsDataSource struct {
-		meta meta.Meta
+		meta.DataSource
 	}
 
 	// clientListsDataSourceModel describes the data source data model for ClientListsDataSource.
@@ -182,25 +181,6 @@ func (d *clientListsDataSource) Schema(_ context.Context, _ datasource.SchemaReq
 	}
 }
 
-func (d *clientListsDataSource) Configure(ctx context.Context, request datasource.ConfigureRequest, response *datasource.ConfigureResponse) {
-	tflog.Debug(ctx, "Configuring Client Lists data source")
-
-	if request.ProviderData == nil {
-		return
-	}
-
-	metaInfo, ok := request.ProviderData.(meta.Meta)
-	if !ok {
-		response.Diagnostics.AddError(
-			"Unexpected Data Source Configure Type",
-			fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.", request.ProviderData),
-		)
-		return
-	}
-
-	d.meta = metaInfo
-}
-
 func (d *clientListsDataSource) Read(ctx context.Context, request datasource.ReadRequest, response *datasource.ReadResponse) {
 	tflog.Debug(ctx, "Reading Client Lists data source")
 
@@ -210,8 +190,7 @@ func (d *clientListsDataSource) Read(ctx context.Context, request datasource.Rea
 		return
 	}
 
-	client := inst.Client(d.meta)
-	logger := d.meta.Log("CLIENTLIST", "dataSourceClientListRead")
+	client := d.Client.GetClientLists()
 
 	name := data.Name.ValueString()
 
@@ -227,7 +206,9 @@ func (d *clientListsDataSource) Read(ctx context.Context, request datasource.Rea
 		Type: listTypes,
 	})
 	if err != nil {
-		logger.Errorf("calling 'GetClientLists': %s", err.Error())
+		tflog.Error(ctx, "calling 'GetClientLists' failed", map[string]any{
+			"error": err.Error(),
+		})
 		response.Diagnostics.AddError("get client lists error", err.Error())
 		return
 	}

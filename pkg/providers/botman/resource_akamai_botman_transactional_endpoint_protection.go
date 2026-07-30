@@ -44,7 +44,7 @@ func resourceTransactionalEndpointProtection() *schema.Resource {
 
 func resourceTransactionalEndpointProtectionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceTransactionalEndpointProtectionCreate")
 	logger.Debugf("in resourceTransactionalEndpointProtectionCreate")
 
@@ -53,7 +53,7 @@ func resourceTransactionalEndpointProtectionCreate(ctx context.Context, d *schem
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "transactionalEndpointProtection", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "transactionalEndpointProtection", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -82,7 +82,7 @@ func resourceTransactionalEndpointProtectionCreate(ctx context.Context, d *schem
 
 func resourceTransactionalEndpointProtectionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceTransactionalEndpointProtectionRead")
 	logger.Debugf("in resourceTransactionalEndpointProtectionRead")
 
@@ -91,7 +91,7 @@ func resourceTransactionalEndpointProtectionRead(ctx context.Context, d *schema.
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -127,7 +127,7 @@ func resourceTransactionalEndpointProtectionRead(ctx context.Context, d *schema.
 
 func resourceTransactionalEndpointProtectionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "resourceTransactionalEndpointProtectionUpdate")
 	logger.Debugf("in resourceTransactionalEndpointProtectionUpdate")
 
@@ -136,7 +136,7 @@ func resourceTransactionalEndpointProtectionUpdate(ctx context.Context, d *schem
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "transactionalEndpointProtection", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "transactionalEndpointProtection", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}

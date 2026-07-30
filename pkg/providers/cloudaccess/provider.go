@@ -2,35 +2,20 @@
 package cloudaccess
 
 import (
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudaccess"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/subprovider"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-type (
-	// Subprovider gathers cloudaccess resources and data sources
-	Subprovider struct{}
-)
+// Subprovider gathers cloudaccess resources and data sources
+type Subprovider struct{}
 
-var (
-	_      subprovider.Subprovider = &Subprovider{}
-	client cloudaccess.CloudAccess
-)
+var _ subprovider.Subprovider = &Subprovider{}
 
 // NewSubprovider returns a new cloudaccess subprovider
 func NewSubprovider() *Subprovider {
 	return &Subprovider{}
-}
-
-// Client returns the cloudaccess interface
-func Client(meta meta.Meta) cloudaccess.CloudAccess {
-	if client != nil {
-		return client
-	}
-	return cloudaccess.Client(meta.Session())
 }
 
 // SDKResources returns the cloudaccess resources implemented using terraform-plugin-sdk

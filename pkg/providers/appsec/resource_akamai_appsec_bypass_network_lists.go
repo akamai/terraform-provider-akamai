@@ -48,7 +48,7 @@ func resourceBypassNetworkLists() *schema.Resource {
 
 func resourceBypassNetworkListsCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceBypassNetworkListsCreate")
 	logger.Debug("in resourceBypassNetworkListsCreate")
 
@@ -70,7 +70,7 @@ func resourceBypassNetworkListsCreate(ctx context.Context, d *schema.ResourceDat
 		networkListIDList = append(networkListIDList, networkListID.(string))
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "bypassnetworklists", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "bypassnetworklists", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -93,7 +93,7 @@ func resourceBypassNetworkListsCreate(ctx context.Context, d *schema.ResourceDat
 
 func resourceBypassNetworkListsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceBypassNetworkListsRead")
 	logger.Debug("in resourceBypassNetworkListsRead")
 
@@ -105,7 +105,7 @@ func resourceBypassNetworkListsRead(ctx context.Context, d *schema.ResourceData,
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -137,7 +137,7 @@ func resourceBypassNetworkListsRead(ctx context.Context, d *schema.ResourceData,
 
 func resourceBypassNetworkListsUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceBypassNetworkListsUpdate")
 	logger.Debug("in resourceBypassNetworkListsUpdate")
 
@@ -159,7 +159,7 @@ func resourceBypassNetworkListsUpdate(ctx context.Context, d *schema.ResourceDat
 		networkListIDList = append(networkListIDList, networkListID.(string))
 	}
 
-	version, err := getModifiableConfigVersion(ctx, configID, "bypassnetworklists", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "bypassnetworklists", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -183,7 +183,7 @@ func resourceBypassNetworkListsUpdate(ctx context.Context, d *schema.ResourceDat
 func resourceBypassNetworkListsDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceBypassNetworkListsDelete")
 	logger.Debug("in resourceBypassNetworkListsDelete")
 
@@ -199,7 +199,7 @@ func resourceBypassNetworkListsDelete(ctx context.Context, d *schema.ResourceDat
 	// Send an empty list to remove the entire current list.
 	networkListIDList := make([]string, 0)
 
-	version, err := getModifiableConfigVersion(ctx, configID, "bypassnetworklists", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "bypassnetworklists", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}

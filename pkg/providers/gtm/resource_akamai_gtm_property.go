@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -20,7 +21,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"golang.org/x/exp/slices"
 )
 
 const propertyAlreadyExistsError = "Property with provided `name` for specific `domain` already exists. Please import specific property using following command: terraform import akamai_gtm_property.<your_resource_name> \"%s:%s\""

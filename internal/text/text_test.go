@@ -149,3 +149,74 @@ func TestImportIDSplitter(t *testing.T) {
 		})
 	}
 }
+
+func TestToStrings(t *testing.T) {
+	t.Parallel()
+
+	type myString string
+
+	tests := map[string]struct {
+		input    []myString
+		expected []string
+	}{
+		"multiple elements": {
+			input:    []myString{"foo", "bar", "baz"},
+			expected: []string{"foo", "bar", "baz"},
+		},
+		"single element": {
+			input:    []myString{"only"},
+			expected: []string{"only"},
+		},
+		"empty slice": {
+			input:    []myString{},
+			expected: []string{},
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, tc.expected, ToStrings(tc.input))
+		})
+	}
+}
+
+func TestJoinStringBased(t *testing.T) {
+	t.Parallel()
+
+	type myString string
+
+	tests := map[string]struct {
+		input    []myString
+		sep      string
+		expected string
+	}{
+		"multiple elements with comma separator": {
+			input:    []myString{"foo", "bar", "baz"},
+			sep:      ", ",
+			expected: "foo, bar, baz",
+		},
+		"single element": {
+			input:    []myString{"only"},
+			sep:      ", ",
+			expected: "only",
+		},
+		"empty slice": {
+			input:    []myString{},
+			sep:      ", ",
+			expected: "",
+		},
+		"multiple elements with custom separator": {
+			input:    []myString{"a", "b", "c"},
+			sep:      "', '",
+			expected: "a', 'b', 'c",
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, tc.expected, JoinStringBased(tc.input, tc.sep))
+		})
+	}
+}

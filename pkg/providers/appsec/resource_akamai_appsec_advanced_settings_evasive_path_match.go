@@ -53,7 +53,7 @@ func resourceAdvancedSettingsEvasivePathMatch() *schema.Resource {
 
 func resourceAdvancedSettingsEvasivePathMatchCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsEvasivePathMatchCreate")
 	logger.Debugf("in resourceAdvancedSettingsEvasivePathMatchCreate")
 
@@ -61,7 +61,7 @@ func resourceAdvancedSettingsEvasivePathMatchCreate(ctx context.Context, d *sche
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "evasivePathMatchSetting", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "evasivePathMatchSetting", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -98,7 +98,7 @@ func resourceAdvancedSettingsEvasivePathMatchCreate(ctx context.Context, d *sche
 
 func resourceAdvancedSettingsEvasivePathMatchRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsEvasivePathMatchRead")
 	logger.Debugf("in resourceAdvancedSettingsEvasivePathMatchRead")
 
@@ -112,7 +112,7 @@ func resourceAdvancedSettingsEvasivePathMatchRead(ctx context.Context, d *schema
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version, err := getLatestConfigVersion(ctx, configID, m)
+		version, err := getLatestConfigVersion(ctx, configID, client)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -126,7 +126,7 @@ func resourceAdvancedSettingsEvasivePathMatchRead(ctx context.Context, d *schema
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version, err := getLatestConfigVersion(ctx, configID, m)
+		version, err := getLatestConfigVersion(ctx, configID, client)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -156,7 +156,7 @@ func resourceAdvancedSettingsEvasivePathMatchRead(ctx context.Context, d *schema
 
 func resourceAdvancedSettingsEvasivePathMatchUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsEvasivePathMatchUpdate")
 	logger.Debugf("in resourceAdvancedSettingsEvasivePathMatchUpdate")
 
@@ -170,7 +170,7 @@ func resourceAdvancedSettingsEvasivePathMatchUpdate(ctx context.Context, d *sche
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version, err := getModifiableConfigVersion(ctx, configID, "evasivePathMatchSetting", m)
+		version, err := getModifiableConfigVersion(ctx, configID, "evasivePathMatchSetting", client)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -184,7 +184,7 @@ func resourceAdvancedSettingsEvasivePathMatchUpdate(ctx context.Context, d *sche
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version, err := getModifiableConfigVersion(ctx, configID, "evasivePathMatchSetting", m)
+		version, err := getModifiableConfigVersion(ctx, configID, "evasivePathMatchSetting", client)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -209,7 +209,7 @@ func resourceAdvancedSettingsEvasivePathMatchUpdate(ctx context.Context, d *sche
 
 func resourceAdvancedSettingsEvasivePathMatchDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsEvasivePathMatchDelete")
 	logger.Debugf("in resourceAdvancedSettingsEvasivePathMatchDelete")
 
@@ -223,7 +223,7 @@ func resourceAdvancedSettingsEvasivePathMatchDelete(ctx context.Context, d *sche
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version, err := getModifiableConfigVersion(ctx, configID, "evasivePathMatchSetting", m)
+		version, err := getModifiableConfigVersion(ctx, configID, "evasivePathMatchSetting", client)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -237,7 +237,7 @@ func resourceAdvancedSettingsEvasivePathMatchDelete(ctx context.Context, d *sche
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version, err := getModifiableConfigVersion(ctx, configID, "evasivePathMatchSetting", m)
+		version, err := getModifiableConfigVersion(ctx, configID, "evasivePathMatchSetting", client)
 		if err != nil {
 			return diag.FromErr(err)
 		}

@@ -57,7 +57,7 @@ func resourceSlowPostProtection() *schema.Resource {
 
 func resourceSlowPostProtectionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceSlowPostProtectionCreate")
 	logger.Debugf("in resourceSlowPostProtectionCreate")
 
@@ -65,7 +65,7 @@ func resourceSlowPostProtectionCreate(ctx context.Context, d *schema.ResourceDat
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "slowpostProtection", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "slowpostProtection", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -96,7 +96,7 @@ func resourceSlowPostProtectionCreate(ctx context.Context, d *schema.ResourceDat
 
 func resourceSlowPostProtectionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceSlowPostProtectionRead")
 	logger.Debugf("in resourceSlowPostProtectionRead")
 
@@ -108,7 +108,7 @@ func resourceSlowPostProtectionRead(ctx context.Context, d *schema.ResourceData,
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -151,7 +151,7 @@ func resourceSlowPostProtectionRead(ctx context.Context, d *schema.ResourceData,
 
 func resourceSlowPostProtectionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceSlowPostProtectionUpdate")
 	logger.Debugf("in resourceSlowPostProtectionUpdate")
 
@@ -163,7 +163,7 @@ func resourceSlowPostProtectionUpdate(ctx context.Context, d *schema.ResourceDat
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "slowpostProtection", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "slowpostProtection", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -190,7 +190,7 @@ func resourceSlowPostProtectionUpdate(ctx context.Context, d *schema.ResourceDat
 
 func resourceSlowPostProtectionDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceSlowPostProtectionDelete")
 	logger.Debugf("in resourceSlowPostProtectionDelete")
 
@@ -202,7 +202,7 @@ func resourceSlowPostProtectionDelete(ctx context.Context, d *schema.ResourceDat
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "slowpostProtection", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "slowpostProtection", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}

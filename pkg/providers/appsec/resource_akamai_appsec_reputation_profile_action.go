@@ -58,7 +58,7 @@ func resourceReputationProfileAction() *schema.Resource {
 
 func resourceReputationProfileActionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceReputationProfileActionCreate")
 	logger.Debugf("in resourceReputationProfileActionCreate")
 
@@ -66,7 +66,7 @@ func resourceReputationProfileActionCreate(ctx context.Context, d *schema.Resour
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "reputationProfileAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "reputationProfileAction", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -104,7 +104,7 @@ func resourceReputationProfileActionCreate(ctx context.Context, d *schema.Resour
 
 func resourceReputationProfileActionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceReputationProfileActionRead")
 	logger.Debugf("in resourceReputationProfileActionRead")
 
@@ -116,7 +116,7 @@ func resourceReputationProfileActionRead(ctx context.Context, d *schema.Resource
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getLatestConfigVersion(ctx, configID, m)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -158,7 +158,7 @@ func resourceReputationProfileActionRead(ctx context.Context, d *schema.Resource
 
 func resourceReputationProfileActionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceReputationProfileActionUpdate")
 	logger.Debugf("in resourceReputationProfileActionUpdate")
 
@@ -170,7 +170,7 @@ func resourceReputationProfileActionUpdate(ctx context.Context, d *schema.Resour
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "reputationProfileAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "reputationProfileAction", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -203,7 +203,7 @@ func resourceReputationProfileActionUpdate(ctx context.Context, d *schema.Resour
 
 func resourceReputationProfileActionDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
-	client := inst.Client(meta)
+	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceReputationProfileActionDelete")
 	logger.Debugf("in resourceReputationProfileActionDelete")
 
@@ -215,7 +215,7 @@ func resourceReputationProfileActionDelete(ctx context.Context, d *schema.Resour
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := getModifiableConfigVersion(ctx, configID, "reputationProfileAction", m)
+	version, err := getModifiableConfigVersion(ctx, configID, "reputationProfileAction", client)
 	if err != nil {
 		return diag.FromErr(err)
 	}
