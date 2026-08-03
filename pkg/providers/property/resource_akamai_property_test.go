@@ -904,6 +904,151 @@ func TestPropertyLifecycle(t *testing.T) {
 				CheckEqual("rules", `{"rules":{"behaviors":[{"name":"origin","options":{"cacheKeyHostname":"REQUEST_HOST_HEADER","compress":true,"enableTrueClientIp":true,"forwardHostHeader":"REQUEST_HOST_HEADER","hostname":"test.domain","httpPort":80,"httpsPort":443,"originCertificate":"","originSni":true,"originType":"CUSTOMER","ports":"","trueClientIpClientSetting":false,"trueClientIpHeader":"True-Client-IP","verificationMode":"PLATFORM_SETTINGS"}}],"children":[{"behaviors":[{"name":"baseDirectory","options":{"value":"/smth/"}}],"criteria":[{"name":"requestHeader","options":{"headerName":"Accept-Encoding","matchCaseSensitiveValue":true,"matchOperator":"IS_ONE_OF","matchWildcardName":false,"matchWildcardValue":false}}],"name":"change fwd path","options":{},"criteriaMustSatisfy":"all"},{"behaviors":[{"name":"caching","options":{"behavior":"MAX_AGE","mustRevalidate":false,"ttl":"1m"}}],"name":"caching","options":{},"criteriaMustSatisfy":"any"}],"comments":"The behaviors in the Default Rule apply to all requests for the property hostname(s) unless another rule overrides the Default Rule settings.","name":"default","options":{},"variables":[{"description":"","hidden":true,"name":"TEST_EMPTY_FIELDS","sensitive":false,"value":""},{"description":"","hidden":true,"name":"TEST_NIL_FIELD","sensitive":false,"value":""}]}}`).
 				Build(),
 		},
+		"Lifecycle: variables in non-alphabetical order with version_notes set": {
+			init: func(p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicData
+				p.ruleTree = mockRuleTreeData{
+					ruleFormat: "v2023-01-05",
+					rules: papi.Rules{
+						Name: "default",
+						Variables: []papi.RuleVariable{
+							{
+								Name:        "PMUSER_AKHOST",
+								Description: ptr.To("Original Host Header"),
+								Value:       ptr.To(""),
+								Hidden:      false,
+								Sensitive:   false,
+							},
+							{
+								Name:        "PMUSER_ENV",
+								Description: ptr.To("environment indicator"),
+								Value:       ptr.To("DEV"),
+								Hidden:      false,
+								Sensitive:   false,
+							},
+							{
+								Name:        "PMUSER_PATH",
+								Description: ptr.To("Original Request Path"),
+								Value:       ptr.To(""),
+								Hidden:      false,
+								Sensitive:   false,
+							},
+							{
+								Name:        "PMUSER_GRN",
+								Description: ptr.To("Global Request Number"),
+								Value:       ptr.To(""),
+								Hidden:      false,
+								Sensitive:   false,
+							},
+							{
+								Name:        "PMUSER_ACLBLOCKED",
+								Description: ptr.To("User is blocked by access control"),
+								Value:       ptr.To("false"),
+								Hidden:      false,
+								Sensitive:   false,
+							},
+						},
+					},
+					comments: "some comment",
+				}
+				// create
+				mockResourcePropertyFullCreate(p)
+				// read x2
+				mockResourcePropertyRead(p, 2)
+				// read x2 - no UpdateRuleTree expected, only read operations
+				mockResourcePropertyRead(p, 2)
+				// delete
+				p.mockRemoveProperty()
+			},
+			configDir: "not ordered variables with version_notes",
+			checksForCreate: defaultChecker.
+				CheckEqual("rules", `{"comments":"some comment","rules":{"name":"default","options":{},"variables":[{"description":"Original Host Header","hidden":false,"name":"PMUSER_AKHOST","sensitive":false,"value":""},{"description":"environment indicator","hidden":false,"name":"PMUSER_ENV","sensitive":false,"value":"DEV"},{"description":"Original Request Path","hidden":false,"name":"PMUSER_PATH","sensitive":false,"value":""},{"description":"Global Request Number","hidden":false,"name":"PMUSER_GRN","sensitive":false,"value":""},{"description":"User is blocked by access control","hidden":false,"name":"PMUSER_ACLBLOCKED","sensitive":false,"value":"false"}]}}`).
+				Build(),
+			checksForUpdate: defaultChecker.
+				CheckEqual("rules", `{"comments":"some comment","rules":{"name":"default","options":{},"variables":[{"description":"Original Host Header","hidden":false,"name":"PMUSER_AKHOST","sensitive":false,"value":""},{"description":"environment indicator","hidden":false,"name":"PMUSER_ENV","sensitive":false,"value":"DEV"},{"description":"Original Request Path","hidden":false,"name":"PMUSER_PATH","sensitive":false,"value":""},{"description":"Global Request Number","hidden":false,"name":"PMUSER_GRN","sensitive":false,"value":""},{"description":"User is blocked by access control","hidden":false,"name":"PMUSER_ACLBLOCKED","sensitive":false,"value":"false"}]}}`).
+				Build(),
+		},
+		"Lifecycle: variables in non-alphabetical order should not be reordered due to other change in rules": {
+			init: func(p *mockProperty) {
+				// set initial data
+				p.mockPropertyData = basicData
+				p.ruleTree = mockRuleTreeData{
+					ruleFormat: "v2023-01-05",
+					rules: papi.Rules{
+						Name: "default",
+						Behaviors: []papi.RuleBehavior{
+							{
+								Name: "origin",
+								Options: papi.RuleOptionsMap{
+									"httpPort": float64(80),
+								},
+							},
+						},
+						Variables: []papi.RuleVariable{
+							{
+								Name:        "PMUSER_AKHOST",
+								Description: ptr.To("Original Host Header"),
+								Value:       ptr.To(""),
+							},
+							{
+								Name:        "PMUSER_ENV",
+								Description: ptr.To("environment indicator"),
+								Value:       ptr.To("DEV"),
+							},
+							{
+								Name:        "PMUSER_PATH",
+								Description: ptr.To("Original Request Path"),
+								Value:       ptr.To(""),
+							},
+							{
+								Name:        "PMUSER_GRN",
+								Description: ptr.To("Global Request Number"),
+								Value:       ptr.To(""),
+							},
+							{
+								Name:        "PMUSER_ACLBLOCKED",
+								Description: ptr.To("User is blocked by access control"),
+								Value:       ptr.To("false"),
+							},
+						},
+					},
+				}
+				// create
+				mockResourcePropertyFullCreate(p)
+				// read x2
+				mockResourcePropertyRead(p, 3)
+
+				// update
+				p.mockGetPropertyVersion()
+				p.ruleTree.rules.Behaviors = []papi.RuleBehavior{
+					{
+						Name: "origin",
+						Options: papi.RuleOptionsMap{
+							"httpPort": float64(8080),
+						},
+					},
+				}
+				p.mockUpdateRuleTree()
+				// read after update
+				mockResourcePropertyRead(p, 2)
+				// delete
+				p.mockRemoveProperty()
+			},
+			configDir: "not ordered variables",
+			checksForCreate: defaultChecker.
+				CheckEqual("rules", `{"rules":{"behaviors":[{"name":"origin","options":{"httpPort":80}}],"name":"default","options":{},"variables":[{"description":"Original Host Header","hidden":false,"name":"PMUSER_AKHOST","sensitive":false,"value":""},{"description":"environment indicator","hidden":false,"name":"PMUSER_ENV","sensitive":false,"value":"DEV"},{"description":"Original Request Path","hidden":false,"name":"PMUSER_PATH","sensitive":false,"value":""},{"description":"Global Request Number","hidden":false,"name":"PMUSER_GRN","sensitive":false,"value":""},{"description":"User is blocked by access control","hidden":false,"name":"PMUSER_ACLBLOCKED","sensitive":false,"value":"false"}]}}`).
+				Build(),
+			checksForUpdate: defaultChecker.
+				CheckEqual("rules", `{"rules":{"behaviors":[{"name":"origin","options":{"httpPort":8080}}],"name":"default","options":{},"variables":[{"description":"Original Host Header","hidden":false,"name":"PMUSER_AKHOST","sensitive":false,"value":""},{"description":"environment indicator","hidden":false,"name":"PMUSER_ENV","sensitive":false,"value":"DEV"},{"description":"Original Request Path","hidden":false,"name":"PMUSER_PATH","sensitive":false,"value":""},{"description":"Global Request Number","hidden":false,"name":"PMUSER_GRN","sensitive":false,"value":""},{"description":"User is blocked by access control","hidden":false,"name":"PMUSER_ACLBLOCKED","sensitive":false,"value":"false"}]}}`).
+				Build(),
+			configPlanChecks: resource.ConfigPlanChecks{
+				PreApply: []plancheck.PlanCheck{
+					// Plan should maintain the order of variables regardless of any other rule part changes
+					plancheck.ExpectKnownValue("akamai_property.test", tfjsonpath.New("rules"), knownvalue.StringExact(`{"rules":{"behaviors":[{"name":"origin","options":{"httpPort":8080}}],"name":"default","options":{},"variables":[{"description":"Original Host Header","hidden":false,"name":"PMUSER_AKHOST","sensitive":false,"value":""},{"description":"environment indicator","hidden":false,"name":"PMUSER_ENV","sensitive":false,"value":"DEV"},{"description":"Original Request Path","hidden":false,"name":"PMUSER_PATH","sensitive":false,"value":""},{"description":"Global Request Number","hidden":false,"name":"PMUSER_GRN","sensitive":false,"value":""},{"description":"User is blocked by access control","hidden":false,"name":"PMUSER_ACLBLOCKED","sensitive":false,"value":"false"}]}}`)),
+				},
+			},
+		},
 		"Lifecycle: Verify staging_version and production_version known at plan": {
 			init: func(p *mockProperty) {
 				// set initial data

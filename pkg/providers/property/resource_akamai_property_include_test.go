@@ -10,6 +10,8 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -1042,6 +1044,137 @@ func TestResourcePropertyInclude(t *testing.T) {
 				{
 					Config:      testutils.LoadFixtureStringf(t, "%s/rule_format_blank.tf", workdir),
 					ExpectError: regexp.MustCompile(`provided value cannot be blank`),
+				},
+			},
+		},
+		"Lifecycle: variables in non-alphabetical order should not be reordered due to other change in rules": {
+			testData: testData{
+				assetID:          "aid_555",
+				groupID:          "grp_123",
+				rulesPath:        "not_ordered_variables.json",
+				productID:        "prd_test",
+				includeID:        includeID,
+				ruleFormat:       "v2022-06-28",
+				contractID:       "ctr_123",
+				includeName:      "test_include",
+				includeType:      papi.IncludeTypeMicroServices,
+				stagingStatus:    papi.VersionStatusInactive,
+				productionStatus: papi.VersionStatusInactive,
+				rules: papi.RulesUpdate{
+					Rules: papi.Rules{
+						Name: "default",
+						Behaviors: []papi.RuleBehavior{
+							{
+								Name: "origin",
+								Options: papi.RuleOptionsMap{
+									"cacheKeyHostname":          "ORIGIN_HOSTNAME",
+									"compress":                  true,
+									"enableTrueClientIp":        true,
+									"forwardHostHeader":         "REQUEST_HOST_HEADER",
+									"hostname":                  "",
+									"httpPort":                  float64(80),
+									"httpsPort":                 float64(443),
+									"ipVersion":                 "IPV4",
+									"minTlsVersion":             "DYNAMIC",
+									"originCertificate":         "",
+									"originSni":                 true,
+									"originType":                "CUSTOMER",
+									"ports":                     "",
+									"tlsVersionTitle":           "",
+									"trueClientIpClientSetting": false,
+									"trueClientIpHeader":        "True-Client-IP",
+									"verificationMode":          "PLATFORM_SETTINGS",
+								},
+							},
+						},
+						Variables: []papi.RuleVariable{
+							{Description: ptr.To("Original Host Header"), Hidden: false, Name: "PMUSER_AKHOST", Sensitive: false, Value: ptr.To("")},
+							{Description: ptr.To("environment indicator"), Hidden: false, Name: "PMUSER_ENV", Sensitive: false, Value: ptr.To("DEV")},
+							{Description: ptr.To("Original Request Path"), Hidden: false, Name: "PMUSER_PATH", Sensitive: false, Value: ptr.To("")},
+							{Description: ptr.To("Global Request Number"), Hidden: false, Name: "PMUSER_GRN", Sensitive: false, Value: ptr.To("")},
+							{Description: ptr.To("User is blocked by access control"), Hidden: false, Name: "PMUSER_ACLBLOCKED", Sensitive: false, Value: ptr.To("false")},
+						},
+					},
+				},
+			},
+			init: func(m *papi.Mock, testData *testData) {
+				expectCreate(m, testData).Once()
+				expectRead(m, testData).Times(2)
+
+				expectRead(m, testData).Once()
+
+				testData.rulesPath = "not_ordered_variables_updated.json"
+				testData.rules.Rules.Behaviors = []papi.RuleBehavior{
+					{
+						Name: "origin",
+						Options: papi.RuleOptionsMap{
+							"cacheKeyHostname":          "ORIGIN_HOSTNAME",
+							"compress":                  true,
+							"enableTrueClientIp":        true,
+							"forwardHostHeader":         "REQUEST_HOST_HEADER",
+							"hostname":                  "",
+							"httpPort":                  float64(8080),
+							"httpsPort":                 float64(443),
+							"ipVersion":                 "IPV4",
+							"minTlsVersion":             "DYNAMIC",
+							"originCertificate":         "",
+							"originSni":                 true,
+							"originType":                "CUSTOMER",
+							"ports":                     "",
+							"tlsVersionTitle":           "",
+							"trueClientIpClientSetting": false,
+							"trueClientIpHeader":        "True-Client-IP",
+							"verificationMode":          "PLATFORM_SETTINGS",
+						},
+					},
+				}
+				expectUpdate(m, testData).Once()
+				expectRead(m, testData).Times(2)
+
+				expectDelete(m, testData).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/not_ordered_variables.tf", workdir),
+					Check: test.NewStateChecker("akamai_property_include.test").
+						CheckEqual("asset_id", "aid_555").
+						CheckEqual("group_id", "grp_123").
+						CheckEqual("contract_id", "ctr_123").
+						CheckEqual("product_id", "prd_test").
+						CheckEqual("name", "test_include").
+						CheckEqual("rule_format", "v2022-06-28").
+						CheckEqual("type", "MICROSERVICES").
+						CheckEqual("latest_version", "1").
+						CheckEqual("staging_version", "").
+						CheckEqual("production_version", "").
+						CheckEqual("rules", testutils.LoadFixtureStringf(t, "%s/expected/not_ordered_variables.json", workdir)).
+						CheckEqual("rule_errors", "").
+						CheckEqual("rule_warnings", "").
+						Build(),
+				},
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/not_ordered_variables_updated.tf", workdir),
+					ConfigPlanChecks: resource.ConfigPlanChecks{
+						PreApply: []plancheck.PlanCheck{
+							// Plan should maintain the order of variables regardless of any other rule part changes
+							plancheck.ExpectKnownValue("akamai_property_include.test", tfjsonpath.New("rules"), knownvalue.StringExact(`{"rules":{"behaviors":[{"name":"origin","options":{"cacheKeyHostname":"ORIGIN_HOSTNAME","compress":true,"enableTrueClientIp":true,"forwardHostHeader":"REQUEST_HOST_HEADER","hostname":"","httpPort":8080,"httpsPort":443,"ipVersion":"IPV4","minTlsVersion":"DYNAMIC","originCertificate":"","originSni":true,"originType":"CUSTOMER","ports":"","tlsVersionTitle":"","trueClientIpClientSetting":false,"trueClientIpHeader":"True-Client-IP","verificationMode":"PLATFORM_SETTINGS"}}],"name":"default","options":{},"variables":[{"description":"Original Host Header","hidden":false,"name":"PMUSER_AKHOST","sensitive":false,"value":""},{"description":"environment indicator","hidden":false,"name":"PMUSER_ENV","sensitive":false,"value":"DEV"},{"description":"Original Request Path","hidden":false,"name":"PMUSER_PATH","sensitive":false,"value":""},{"description":"Global Request Number","hidden":false,"name":"PMUSER_GRN","sensitive":false,"value":""},{"description":"User is blocked by access control","hidden":false,"name":"PMUSER_ACLBLOCKED","sensitive":false,"value":"false"}]}}`)),
+						},
+					},
+					Check: test.NewStateChecker("akamai_property_include.test").
+						CheckEqual("asset_id", "aid_555").
+						CheckEqual("group_id", "grp_123").
+						CheckEqual("contract_id", "ctr_123").
+						CheckEqual("product_id", "prd_test").
+						CheckEqual("name", "test_include").
+						CheckEqual("rule_format", "v2022-06-28").
+						CheckEqual("type", "MICROSERVICES").
+						CheckEqual("latest_version", "1").
+						CheckEqual("staging_version", "").
+						CheckEqual("production_version", "").
+						CheckEqual("rules", testutils.LoadFixtureStringf(t, "%s/expected/not_ordered_variables_updated.json", workdir)).
+						CheckEqual("rule_errors", "").
+						CheckEqual("rule_warnings", "").
+						Build(),
 				},
 			},
 		},

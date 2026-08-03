@@ -81,13 +81,24 @@ func rulesEqual(oldRules, newRules *papi.Rules) bool {
 		newRules.CriteriaMustSatisfy = "all"
 	}
 
+	oldVars := make([]papi.RuleVariable, len(oldRules.Variables))
+	copy(oldVars, oldRules.Variables)
+	newVars := make([]papi.RuleVariable, len(newRules.Variables))
+	copy(newVars, newRules.Variables)
+
 	oldRules.Variables = orderVariables(oldRules.Variables)
 	newRules.Variables = orderVariables(newRules.Variables)
 
 	removeNilOptions(oldRules)
 	removeNilOptions(newRules)
 
-	return reflect.DeepEqual(oldRules, newRules)
+	result := reflect.DeepEqual(oldRules, newRules)
+
+	// Maintain original order regardless of DeepEqual result
+	oldRules.Variables = oldVars
+	newRules.Variables = newVars
+
+	return result
 }
 
 // PAPI sometimes adds fields (with value null) that are not present in configuration (e.g. exported in cli-terraform)
