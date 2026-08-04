@@ -40,6 +40,11 @@
 
 #### FEATURES/ENHANCEMENTS:
 
+* Appsec (Beta)
+  * Added a new resource:
+    * `akamai_appsec_advanced_settings_url_evasion_defense` - allows managing URL Evasion Defense settings.
+  * Added new data sources:
+    * `data_akamai_appsec_advanced_settings_url_evasion_defense` - retrieves URL Evasion Defense settings.
 
 
 

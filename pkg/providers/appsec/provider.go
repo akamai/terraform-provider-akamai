@@ -163,6 +163,7 @@ func (p *Subprovider) FrameworkResources() []func() resource.Resource {
 	return []func() resource.Resource{
 		NewRapidRulesResource,
 		NewSecurityPolicyProtectionsResource,
+		NewURLEvasionDefenseResource,
 		NewURLProtectionActionResource,
 		NewURLProtectionPolicyResource,
 		NewWAFRulesetResource,
@@ -174,6 +175,7 @@ func (p *Subprovider) FrameworkDataSources() []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewCustomRulesUsageDataSource,
 		NewRapidRulesDataSource,
+		NewURLEvasionDefenseDataSource,
 		NewURLProtectionPoliciesActionsDataSource,
 		NewURLProtectionPoliciesDataSource,
 		NewURLProtectionPolicyActionsDataSource,
