@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/ptr"
 	"github.com/akamai/terraform-provider-akamai/v11/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
@@ -121,6 +122,55 @@ func TestPropertyCCM(t *testing.T) {
 		}
 	}
 
+	// lineageHostnames builds a single CCM hostname bound to a certificate lineage via ccm_cert_id/ccm_cert_link,
+	// replacing the ccm_certificates-based binding used by basicHostnames.
+	lineageHostnames := func(certID, certLink string) papi.HostnameResponseItems {
+		hn := basicHostnames()
+		hn.Items[0].CCMCertificates = nil
+		hn.Items[0].CCMCertStatus = nil
+		hn.Items[0].CCMCertID = ptr.To(certID)
+		hn.Items[0].CCMCertLink = ptr.To(certLink)
+		return hn
+	}
+
+	lineageData := func(certID, certLink string) mockPropertyData {
+		d := basicData()
+		d.hostnames = lineageHostnames(certID, certLink)
+		return d
+	}
+
+	// lineageHostnameAttrs returns the state attributes expected for a lineage-bound hostname.
+	lineageHostnameAttrs := func(certID, certLink string) test.AttributeBatch {
+		return test.AttributeBatch{
+			"hostnames.#":                        "1",
+			"hostnames.0.cname_from":             "example.com",
+			"hostnames.0.cname_to":               "example.com.edgekey.net",
+			"hostnames.0.edge_hostname_id":       "ehn_111",
+			"hostnames.0.cert_provisioning_type": "CCM",
+			"hostnames.0.cname_type":             "EDGE_HOSTNAME",
+			"hostnames.0.ccm_certificates.#":     "0",
+			"hostnames.0.ccm_cert_status.#":      "0",
+			"hostnames.0.ccm_cert_id":            certID,
+			"hostnames.0.ccm_cert_link":          certLink,
+		}
+	}
+
+	lineageCertStatusesAttrs := test.AttributeBatch{
+		"hostnames.0.ccm_cert_statuses.#":          "4",
+		"hostnames.0.ccm_cert_statuses.0.key_type": "RSA",
+		"hostnames.0.ccm_cert_statuses.0.network":  "STAGING",
+		"hostnames.0.ccm_cert_statuses.0.status":   "UNKNOWN",
+		"hostnames.0.ccm_cert_statuses.1.key_type": "RSA",
+		"hostnames.0.ccm_cert_statuses.1.network":  "PRODUCTION",
+		"hostnames.0.ccm_cert_statuses.1.status":   "UNKNOWN",
+		"hostnames.0.ccm_cert_statuses.2.key_type": "ECDSA",
+		"hostnames.0.ccm_cert_statuses.2.network":  "STAGING",
+		"hostnames.0.ccm_cert_statuses.2.status":   "UNKNOWN",
+		"hostnames.0.ccm_cert_statuses.3.key_type": "ECDSA",
+		"hostnames.0.ccm_cert_statuses.3.network":  "PRODUCTION",
+		"hostnames.0.ccm_cert_statuses.3.status":   "UNKNOWN",
+	}
+
 	tests := map[string]struct {
 		init  func(*mockProperty)
 		steps []resource.TestStep
@@ -221,6 +271,121 @@ func TestPropertyCCM(t *testing.T) {
 						CheckEqual("hostnames.0.ccm_certificates.0.ecdsa_cert_id", "765432").
 						CheckEqual("hostnames.0.ccm_cert_status.0.ecdsa_staging_status", "NEEDS_ACTIVATION").
 						CheckEqual("hostnames.0.ccm_cert_status.0.ecdsa_production_status", "NEEDS_ACTIVATION").
+						Build(),
+				},
+			},
+		},
+		"Creating basic property with a hostname bound to a single CCM certificate lineage via ccm_cert_id": {
+			init: func(p *mockProperty) {
+				p.mockPropertyData = lineageData("164877", "/ccm/v2/lineages/164877")
+				p.hostnames.Items[0].CCMCertStatuses = []papi.CCMCertStatusItem{
+					{KeyType: "RSA", Network: "STAGING", Status: "UNKNOWN"},
+					{KeyType: "RSA", Network: "PRODUCTION", Status: "UNKNOWN"},
+					{KeyType: "ECDSA", Network: "STAGING", Status: "UNKNOWN"},
+					{KeyType: "ECDSA", Network: "PRODUCTION", Status: "UNKNOWN"},
+				}
+
+				// create
+				mockResourcePropertyCreateWithVersionHostnames(p)
+				// read from create
+				p.ruleTree.ruleFormat = "v2024-02-12"
+				mockResourcePropertyRead(p)
+				// read
+				mockResourcePropertyRead(p)
+				// delete
+				p.mockRemoveProperty()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/CCM/ccm_property_cert_id.tf"),
+					Check: test.NewStateChecker("akamai_property.test").
+						CheckEqualBatch("", commonPropertyAttrs).
+						CheckEqualBatch("", lineageHostnameAttrs("164877", "/ccm/v2/lineages/164877")).
+						CheckEqualBatch("", lineageCertStatusesAttrs).
+						Build(),
+				},
+			},
+		},
+		"Updating the CCM certificate lineage ID on inactive property - no new version": {
+			init: func(p *mockProperty) {
+				p.mockPropertyData = lineageData("164877", "/ccm/v2/lineages/164877")
+				// create
+				mockResourcePropertyCreateWithVersionHostnames(p)
+				// read from create
+				p.ruleTree.ruleFormat = "v2024-02-12"
+				mockResourcePropertyRead(p)
+				// read x 2
+				mockResourcePropertyRead(p, 2)
+				// update
+				p.mockGetPropertyVersion()
+				p.hostnames = lineageHostnames("987654", "/ccm/v2/lineages/987654")
+				p.mockUpdatePropertyVersionHostnames()
+				// read from update
+				mockResourcePropertyRead(p)
+				// read
+				mockResourcePropertyRead(p)
+				// delete
+				p.mockRemoveProperty()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/CCM/ccm_property_cert_id.tf"),
+					Check: test.NewStateChecker("akamai_property.test").
+						CheckEqualBatch("", commonPropertyAttrs).
+						CheckEqualBatch("", lineageHostnameAttrs("164877", "/ccm/v2/lineages/164877")).
+						Build(),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/CCM/ccm_property_update_cert_id.tf"),
+					Check: test.NewStateChecker("akamai_property.test").
+						CheckEqualBatch("", commonPropertyAttrs).
+						CheckEqualBatch("", lineageHostnameAttrs("987654", "/ccm/v2/lineages/987654")).
+						Build(),
+				},
+			},
+		},
+		"Updating the CCM certificate lineage ID on active property - new version": {
+			init: func(p *mockProperty) {
+				p.mockPropertyData = lineageData("164877", "/ccm/v2/lineages/164877")
+				p.versions.Items[0].StagingStatus = "ACTIVE"
+				// create
+				mockResourcePropertyCreateWithVersionHostnames(p)
+				// read from create
+				p.ruleTree.ruleFormat = "v2024-02-12"
+				mockResourcePropertyRead(p)
+				// read x 2
+				mockResourcePropertyRead(p, 2)
+				// update
+				p.mockGetPropertyVersion()
+				p.createFromVersion = 1
+				p.newVersionID = 2
+				p.mockCreatePropertyVersion()
+				p.hostnames = lineageHostnames("987654", "/ccm/v2/lineages/987654")
+				p.latestVersion = 2
+				p.mockUpdatePropertyVersionHostnames()
+				// read from update
+				mockResourcePropertyRead(p)
+				// read
+				mockResourcePropertyRead(p)
+				// delete
+				p.mockRemoveProperty()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/CCM/ccm_property_cert_id.tf"),
+					Check: test.NewStateChecker("akamai_property.test").
+						CheckEqualBatch("", commonPropertyAttrs).
+						CheckEqual("staging_version", "1").
+						CheckEqualBatch("", lineageHostnameAttrs("164877", "/ccm/v2/lineages/164877")).
+						Build(),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/CCM/ccm_property_update_cert_id.tf"),
+					Check: test.NewStateChecker("akamai_property.test").
+						CheckEqualBatch("", commonPropertyAttrs).
+						CheckEqual("staging_version", "1").
+						CheckEqual("latest_version", "2").
+						CheckEqualBatch("", lineageHostnameAttrs("987654", "/ccm/v2/lineages/987654")).
 						Build(),
 				},
 			},
@@ -588,6 +753,51 @@ func TestPropertyCCM(t *testing.T) {
 				},
 			},
 		},
+		"Creating basic property with a hostname bound to ccm_cert_id, MTLS and TLS configuration": {
+			init: func(p *mockProperty) {
+				p.mockPropertyData = lineageData("164877", "/ccm/v2/lineages/164877")
+				p.hostnames.Items[0].MTLS = &papi.MTLSResp{
+					MTLS: papi.MTLS{
+						CASetID:         "524125",
+						CheckClientOCSP: true,
+						SendCASetClient: true,
+					},
+				}
+				p.hostnames.Items[0].TLSConfiguration = &papi.TLSConfiguration{
+					CipherProfile:            "ak-akamai-2020q1",
+					DisallowedTLSVersions:    []string{"TLSv1_1", "TLSv1"},
+					StapleServerOcspResponse: true,
+					FIPSMode:                 true,
+				}
+				// create
+				mockResourcePropertyCreateWithVersionHostnames(p)
+				// read from create
+				p.ruleTree.ruleFormat = "v2024-02-12"
+				mockResourcePropertyRead(p)
+				// read
+				mockResourcePropertyRead(p)
+				// delete
+				p.mockRemoveProperty()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/CCM/ccm_cert_id_with_mtls_and_tls_configuration.tf"),
+					Check: test.NewStateChecker("akamai_property.test").
+						CheckEqualBatch("", commonPropertyAttrs).
+						CheckEqualBatch("", lineageHostnameAttrs("164877", "/ccm/v2/lineages/164877")).
+						CheckEqual("hostnames.0.mtls.0.ca_set_id", "524125").
+						CheckEqual("hostnames.0.mtls.0.check_client_ocsp", "true").
+						CheckEqual("hostnames.0.mtls.0.send_ca_set_client", "true").
+						CheckEqual("hostnames.0.tls_configuration.0.cipher_profile", "ak-akamai-2020q1").
+						CheckEqual("hostnames.0.tls_configuration.0.disallowed_tls_versions.#", "2").
+						CheckEqual("hostnames.0.tls_configuration.0.disallowed_tls_versions.0", "TLSv1_1").
+						CheckEqual("hostnames.0.tls_configuration.0.disallowed_tls_versions.1", "TLSv1").
+						CheckEqual("hostnames.0.tls_configuration.0.staple_server_ocsp_response", "true").
+						CheckEqual("hostnames.0.tls_configuration.0.fips_mode", "true").
+						Build(),
+				},
+			},
+		},
 		"Importing basic property with CCM RSA certificate": {
 			init: func(p *mockProperty) {
 				p.mockPropertyData = basicData()
@@ -663,11 +873,60 @@ func TestPropertyCCM(t *testing.T) {
 				},
 			},
 		},
+		"Importing basic property with a hostname bound to CCM certificate lineage via ccm_cert_id": {
+			init: func(p *mockProperty) {
+				p.mockPropertyData = lineageData("164877", "/ccm/v2/lineages/164877")
+				// read
+				p.ruleTree.ruleFormat = "v2024-02-12"
+				mockResourcePropertyRead(p, 2)
+
+				// delete
+				p.mockRemoveProperty()
+			},
+			steps: []resource.TestStep{
+				{
+					ImportStateCheck: test.NewImportChecker().
+						CheckEqualBatch("", commonPropertyAttrs).
+						CheckEqualBatch("", lineageHostnameAttrs("164877", "/ccm/v2/lineages/164877")).
+						Build(),
+					ImportStateId:      "prp_222222,ctr_C-0N7RAC7,grp_12345",
+					ImportState:        true,
+					ResourceName:       "akamai_property.test",
+					Config:             testutils.LoadFixtureString(t, "testdata/TestResProperty/CCM/ccm_property_cert_id.tf"),
+					ImportStatePersist: true,
+				},
+				{
+					// Confirm idempotency after import - lineage-based set identity should produce an empty plan
+					Config:   testutils.LoadFixtureString(t, "testdata/TestResProperty/CCM/ccm_property_cert_id.tf"),
+					PlanOnly: true,
+				},
+			},
+		},
+		"Planning a ccm_cert_id supplied by another resource does not fail when it is unknown": {
+			// terraform_data's output is unknown until it's actually created, simulating a ccm_cert_id
+			// that references a lineage created in the same apply. ensureCCMCertificatesConsistency must
+			// not reject it as missing; a plan-only step keeps the value unknown for the whole operation.
+			steps: []resource.TestStep{
+				{
+					Config:             testutils.LoadFixtureString(t, "testdata/TestResProperty/CCM/ccm_cert_id_from_resource.tf"),
+					PlanOnly:           true,
+					ExpectNonEmptyPlan: true,
+				},
+			},
+		},
 		"Error no certificates for CCM": {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResProperty/CCM/ccm_no_cert_section.tf"),
-					ExpectError: regexp.MustCompile(`ccm_certificates is required when cert_provisioning_type is 'CCM'`),
+					ExpectError: regexp.MustCompile(`ccm_certificates or ccm_cert_id is required when cert_provisioning_type is 'CCM'`),
+				},
+			},
+		},
+		"Error empty ccm_cert_id for CCM": {
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResProperty/CCM/ccm_empty_cert_id.tf"),
+					ExpectError: regexp.MustCompile(`ccm_certificates or ccm_cert_id is required when cert_provisioning_type is 'CCM'`),
 				},
 			},
 		},
@@ -676,6 +935,15 @@ func TestPropertyCCM(t *testing.T) {
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResProperty/CCM/cert_section_no_ccm.tf"),
 					ExpectError: regexp.MustCompile(`ccm_certificates is only allowed when cert_provisioning_type is 'CCM'`),
+				},
+			},
+		},
+		"Error ccm_cert_id specified for no CCM": {
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/CCM/cert_id_no_ccm.tf"),
+					ExpectError: regexp.MustCompile(`(?m)^Error: ` + regexp.QuoteMeta(
+						`hostname from.test.domain: ccm_cert_id is only allowed when cert_provisioning_type is 'CCM'`) + `$`),
 				},
 			},
 		},
@@ -700,6 +968,15 @@ func TestPropertyCCM(t *testing.T) {
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResProperty/CCM/ccm_two_cert_sections.tf"),
 					ExpectError: regexp.MustCompile(`Too many ccm_certificates blocks`),
+				},
+			},
+		},
+		"Error both ccm_cert_id and ccm_certificates provided": {
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResProperty/CCM/ccm_both_cert_id_and_certificates.tf"),
+					ExpectError: regexp.MustCompile(`(?m)^Error: ` + regexp.QuoteMeta(
+						`hostname from.test.domain: provide either ccm_cert_id or ccm_certificates, not both`) + `$`),
 				},
 			},
 		},

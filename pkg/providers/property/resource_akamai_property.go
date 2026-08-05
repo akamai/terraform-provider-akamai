@@ -180,13 +180,31 @@ func resourceProperty() *schema.Resource {
 							Optional:    true,
 							MaxItems:    1,
 							Description: "Certificate identifiers and links for the CCM-managed certificates.",
+							Deprecated:  "Use ccm_cert_id instead.",
 							Elem:        ccmCertificatesSchema,
 						},
 						"ccm_cert_status": {
 							Type:        schema.TypeList,
 							Computed:    true,
 							Description: "Deployment status for the RSA and ECDSA certificates created with Cloud Certificate Manager (CCM).",
+							Deprecated:  "Will be replaced by ccm_cert_statuses.",
 							Elem:        ccmCertificateStatusSchema,
+						},
+						"ccm_cert_id": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "The certificate lineage ID of the Cloud Certificate Manager (CCM) certificate to bind to the hostname. It cannot be used together with `ccm_certificates`.",
+						},
+						"ccm_cert_link": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The link to the Cloud Certificate Manager (CCM) certificate lineage bound to the hostname.",
+						},
+						"ccm_cert_statuses": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The deployment statuses of the Cloud Certificate Manager (CCM) certificate lineage bound to the hostname, organized by key type and network.",
+							Elem:        ccmCertStatusesSchema,
 						},
 						"mtls": {
 							Type:        schema.TypeList,
@@ -305,6 +323,9 @@ func hashHostname(v any) int {
 }
 
 func getCCMHashPart(hostname map[string]any) string {
+	if ccmCertID, ok := hostname["ccm_cert_id"].(string); ok && ccmCertID != "" {
+		return fmt.Sprintf(".%s%s", ccmCertID, getMTLSAndTLSHashPart(hostname))
+	}
 	ccmCertificates, ok := hostname["ccm_certificates"]
 	if !ok {
 		return ""
@@ -317,21 +338,25 @@ func getCCMHashPart(hostname map[string]any) string {
 	if !ok {
 		return ""
 	}
-	rsaCertID := ccmCerts["rsa_cert_id"].(string)
-	ecdsaCertID := ccmCerts["ecdsa_cert_id"].(string)
-	mtls := hostname["mtls"].([]any)
+	rsaCertID, _ := ccmCerts["rsa_cert_id"].(string)
+	ecdsaCertID, _ := ccmCerts["ecdsa_cert_id"].(string)
+	return fmt.Sprintf(".%s.%s%s", rsaCertID, ecdsaCertID, getMTLSAndTLSHashPart(hostname))
+}
+
+func getMTLSAndTLSHashPart(hostname map[string]any) string {
 	var caSetID string
-	if len(mtls) > 0 {
-		mtlsMap := mtls[0].(map[string]any)
-		caSetID = mtlsMap["ca_set_id"].(string)
+	if mtls, ok := hostname["mtls"].([]any); ok && len(mtls) > 0 {
+		if mtlsMap, ok := mtls[0].(map[string]any); ok {
+			caSetID, _ = mtlsMap["ca_set_id"].(string)
+		}
 	}
-	tlsConfiguration := hostname["tls_configuration"].([]any)
 	var cipherProfile string
-	if len(tlsConfiguration) > 0 {
-		tlsConfigMap := tlsConfiguration[0].(map[string]any)
-		cipherProfile = tlsConfigMap["cipher_profile"].(string)
+	if tlsConfiguration, ok := hostname["tls_configuration"].([]any); ok && len(tlsConfiguration) > 0 {
+		if tlsConfigMap, ok := tlsConfiguration[0].(map[string]any); ok {
+			cipherProfile, _ = tlsConfigMap["cipher_profile"].(string)
+		}
 	}
-	return fmt.Sprintf(".%s.%s.%s.%s", rsaCertID, ecdsaCertID, caSetID, cipherProfile)
+	return fmt.Sprintf(".%s.%s", caSetID, cipherProfile)
 }
 
 // propertyRulesCustomDiff compares Rules.Criteria and Rules.Children fields from terraform state
@@ -518,6 +543,9 @@ func ensureCCMCertificatesConsistency(_ context.Context, d *schema.ResourceDiff,
 	if !ok {
 		return fmt.Errorf("cannot parse hostnames state properly %v", d.Get("hostnames"))
 	}
+	// d.Get exposes an unknown ccm_cert_id (e.g. referencing a lineage created in the same apply) as "",
+	// indistinguishable from "not set", so the raw config must be consulted to defer that check to apply time.
+	unknownCertID := unknownCCMCertIDByCnameFrom(d)
 	for _, h := range hostnames.List() {
 		m := h.(map[string]any)
 		// Before create CustomDiff is executed twice and each time the certs list below is either:
@@ -526,13 +554,23 @@ func ensureCCMCertificatesConsistency(_ context.Context, d *schema.ResourceDiff,
 		// Therefore, we cannot validate the actual content of rsa_cert_id and ecdsa_cert_id here.
 		certs, ok := m["ccm_certificates"]
 		areCcmCerts := ok && certs != nil && len(certs.([]any)) > 0
+		ccmCertID, _ := m["ccm_cert_id"].(string)
+		cnameFrom, _ := m["cname_from"].(string)
 		if m["cert_provisioning_type"].(string) == string(papi.CertTypeCCM) {
-			if !areCcmCerts {
-				return fmt.Errorf("ccm_certificates is required when cert_provisioning_type is 'CCM'")
+			if areCcmCerts && ccmCertID != "" {
+				return fmt.Errorf("hostname %v: provide either ccm_cert_id or ccm_certificates, not both",
+					m["cname_from"])
+			}
+			if !areCcmCerts && ccmCertID == "" && !unknownCertID[cnameFrom] {
+				return fmt.Errorf("ccm_certificates or ccm_cert_id is required when cert_provisioning_type is 'CCM'")
 			}
 		} else {
 			if areCcmCerts {
 				return fmt.Errorf("ccm_certificates is only allowed when cert_provisioning_type is 'CCM'")
+			}
+			if ccmCertID != "" {
+				return fmt.Errorf("hostname %v: ccm_cert_id is only allowed when cert_provisioning_type is 'CCM'",
+					m["cname_from"])
 			}
 			if len(m["mtls"].([]any)) > 0 {
 				return fmt.Errorf("hostname %v: mtls can only be set when cert_provisioning_type is CCM",
@@ -546,6 +584,35 @@ func ensureCCMCertificatesConsistency(_ context.Context, d *schema.ResourceDiff,
 		}
 	}
 	return nil
+}
+
+// unknownCCMCertIDByCnameFrom reports, keyed by cname_from, which hostnames have a ccm_cert_id
+// that is not yet known in the raw config, e.g. it references an attribute of a resource that
+// hasn't been applied yet.
+func unknownCCMCertIDByCnameFrom(d *schema.ResourceDiff) map[string]bool {
+	unknown := make(map[string]bool)
+	raw := d.GetRawConfig()
+	if raw.IsNull() || !raw.Type().HasAttribute("hostnames") {
+		return unknown
+	}
+	rawHostnames := raw.GetAttr("hostnames")
+	if rawHostnames.IsNull() || !rawHostnames.IsKnown() {
+		return unknown
+	}
+	for it := rawHostnames.ElementIterator(); it.Next(); {
+		_, hostVal := it.Element()
+		if hostVal.IsNull() || !hostVal.Type().HasAttribute("cname_from") || !hostVal.Type().HasAttribute("ccm_cert_id") {
+			continue
+		}
+		cnameFromVal := hostVal.GetAttr("cname_from")
+		if cnameFromVal.IsNull() || !cnameFromVal.IsKnown() {
+			continue
+		}
+		if !hostVal.GetAttr("ccm_cert_id").IsKnown() {
+			unknown[cnameFromVal.AsString()] = true
+		}
+	}
+	return unknown
 }
 
 func propertyVersionNotesDiffSuppress(_, _, _ string, rd *schema.ResourceData) bool {
@@ -1554,16 +1621,19 @@ func mapToHostnames(givenList []interface{}) []papi.Hostname {
 		if len(r) != 0 {
 			var mtls *papi.MTLS
 			var tlsConfig *papi.TLSConfiguration
-			var ccmCerts *papi.CCMCertificates
+			var ccmCerts *papi.CCMCertificates //nolint:staticcheck
+			var ccmCertID string
 			if certProvisioningType.(string) == string(papi.CertTypeCCM) {
 				certs := r["ccm_certificates"].([]any)
 				if len(certs) > 0 {
 					m := certs[0].(map[string]any)
-					ccmCerts = &papi.CCMCertificates{
+					ccmCerts = &papi.CCMCertificates{ //nolint:staticcheck
 						RSACertID:   m["rsa_cert_id"].(string),
 						ECDSACertID: m["ecdsa_cert_id"].(string),
 					}
 				}
+
+				ccmCertID = r["ccm_cert_id"].(string)
 
 				if r["mtls"] != nil {
 					mtlsMap := r["mtls"].([]any)
@@ -1601,7 +1671,8 @@ func mapToHostnames(givenList []interface{}) []papi.Hostname {
 				CnameFrom:            cnameFrom.(string),
 				CnameTo:              cnameTo.(string), // guaranteed by schema to be a string
 				CertProvisioningType: certProvisioningType.(string),
-				CCMCertificates:      ccmCerts,
+				CCMCertificates:      ccmCerts, //nolint:staticcheck
+				CCMCertID:            ccmCertID,
 				MTLS:                 mtls,
 				TLSConfiguration:     tlsConfig,
 			})
@@ -1624,9 +1695,17 @@ func validateAtLeastOneCertIDProvidedCCM(d *schema.ResourceData) error {
 		r := givenMap.(map[string]any)
 		if r["cert_provisioning_type"].(string) == string(papi.CertTypeCCM) {
 			certs := r["ccm_certificates"].([]any)
+			if ccmCertID, ok := r["ccm_cert_id"].(string); ok && ccmCertID != "" {
+				// CustomizeDiff defers this check when ccm_cert_id is unknown at plan time, so it must be re-verified here.
+				if len(certs) > 0 {
+					return fmt.Errorf("hostname %v: provide either ccm_cert_id or ccm_certificates, not both",
+						r["cname_from"])
+				}
+				continue
+			}
 			if len(certs) == 0 {
 				return fmt.Errorf(
-					"hostname %v: ccm_certificates must be provided when cert_provisioning_type is CCM",
+					"hostname %v: ccm_certificates or ccm_cert_id must be provided when cert_provisioning_type is CCM",
 					r["cname_from"])
 			}
 

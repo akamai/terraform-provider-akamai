@@ -7,7 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-// SetToStringSlice converts schema.Set to a slice of strings
+// SetToStringSlice converts schema.Set to a slice of strings.
 func SetToStringSlice(s *schema.Set) []string {
 	list := make([]string, s.Len())
 	for i, v := range s.List() {
@@ -16,7 +16,7 @@ func SetToStringSlice(s *schema.Set) []string {
 	return list
 }
 
-// ConvertListOfIntToInt64 casts slice of any type into slice of int64
+// ConvertListOfIntToInt64 casts slice of any type into slice of int64.
 func ConvertListOfIntToInt64(ints []interface{}) []int64 {
 	var result []int64
 	for _, v := range ints {
@@ -33,7 +33,7 @@ func MaxDuration(x, y time.Duration) time.Duration {
 	return x
 }
 
-// InterfaceSliceToStringSlice converts schema.Set to slice of string
+// InterfaceSliceToStringSlice converts schema.Set to slice of string.
 func InterfaceSliceToStringSlice(list []interface{}) []string {
 	stringList := make([]string, len(list))
 	for i, v := range list {

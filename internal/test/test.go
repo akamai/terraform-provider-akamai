@@ -4,6 +4,8 @@ package test
 import (
 	"math/rand"
 	"net/http"
+	"regexp"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -11,6 +13,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// ErrPattern compiles pattern as a regexp after turning every literal space into `\s+`, so error message
+// assertions read naturally while still tolerating terraform's diagnostic renderer wrapping long messages
+// onto multiple lines.
+func ErrPattern(pattern string) *regexp.Regexp {
+	return regexp.MustCompile(strings.ReplaceAll(pattern, " ", `\s+`))
+}
 
 // NewTimeFromString returns a time value parsed from a string
 // in the RFC3339Nano format.

@@ -272,6 +272,26 @@ var ccmCertificateStatusSchema = &schema.Resource{
 	},
 }
 
+var ccmCertStatusesSchema = &schema.Resource{
+	Schema: map[string]*schema.Schema{
+		"key_type": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "The key algorithm type of the certificate, either `RSA` or `ECDSA`.",
+		},
+		"network": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "The network the status applies to, either `STAGING` or `PRODUCTION`.",
+		},
+		"status": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "The deployment status of the certificate on the given network.",
+		},
+	},
+}
+
 var mtlsSchema = &schema.Resource{
 	Schema: map[string]*schema.Schema{
 		"ca_set_id": {
@@ -334,8 +354,15 @@ func flattenHostnames(Hostnames []papi.HostnameResponseItem) []map[string]interf
 		m["edge_hostname_id"] = hn.EdgeHostnameID
 		m["cname_type"] = hn.CnameType
 		m["cert_status"] = []map[string]any{flattenCertType(&hn.CertStatus)}
-		m["ccm_certificates"] = flattenCCMCertificates(hn.CCMCertificates)
+		m["ccm_certificates"] = flattenCCMCertificates(hn.CCMCertificates) //nolint:staticcheck
 		m["ccm_cert_status"] = flattenCCMCertificateStatus(hn.CCMCertStatus)
+		if hn.CCMCertID != nil {
+			m["ccm_cert_id"] = *hn.CCMCertID
+		}
+		if hn.CCMCertLink != nil {
+			m["ccm_cert_link"] = *hn.CCMCertLink
+		}
+		m["ccm_cert_statuses"] = flattenCCMCertStatuses(hn.CCMCertStatuses)
 		m["mtls"] = flattenMTLS(hn.MTLS)
 		m["tls_configuration"] = flattenTLSConfiguration(hn.TLSConfiguration)
 		if hn.DomainOwnershipVerification != nil {
@@ -358,8 +385,15 @@ func flattenHostnamesWithoutDOM(Hostnames []papi.HostnameResponseItem) []map[str
 		m["edge_hostname_id"] = hn.EdgeHostnameID
 		m["cname_type"] = hn.CnameType
 		m["cert_status"] = []map[string]any{flattenCertType(&hn.CertStatus)}
-		m["ccm_certificates"] = flattenCCMCertificates(hn.CCMCertificates)
+		m["ccm_certificates"] = flattenCCMCertificates(hn.CCMCertificates) //nolint:staticcheck
 		m["ccm_cert_status"] = flattenCCMCertificateStatus(hn.CCMCertStatus)
+		if hn.CCMCertID != nil {
+			m["ccm_cert_id"] = *hn.CCMCertID
+		}
+		if hn.CCMCertLink != nil {
+			m["ccm_cert_link"] = *hn.CCMCertLink
+		}
+		m["ccm_cert_statuses"] = flattenCCMCertStatuses(hn.CCMCertStatuses)
 		m["mtls"] = flattenMTLS(hn.MTLS)
 		m["tls_configuration"] = flattenTLSConfiguration(hn.TLSConfiguration)
 		res = append(res, m)
@@ -431,7 +465,7 @@ func flattenCCMCertificateStatus(status *papi.CCMCertStatus) []map[string]string
 	return []map[string]string{m}
 }
 
-func flattenCCMCertificates(certificates *papi.CCMCertificatesResp) []map[string]string {
+func flattenCCMCertificates(certificates *papi.CCMCertificatesResp) []map[string]string { //nolint:staticcheck
 	if certificates == nil {
 		return nil
 	}
@@ -439,6 +473,21 @@ func flattenCCMCertificates(certificates *papi.CCMCertificatesResp) []map[string
 	m["rsa_cert_id"] = certificates.RSACertID
 	m["ecdsa_cert_id"] = certificates.ECDSACertID
 	return []map[string]string{m}
+}
+
+func flattenCCMCertStatuses(statuses []papi.CCMCertStatusItem) []map[string]string {
+	if statuses == nil {
+		return nil
+	}
+	res := make([]map[string]string, len(statuses))
+	for i, status := range statuses {
+		res[i] = map[string]string{
+			"key_type": status.KeyType,
+			"network":  status.Network,
+			"status":   status.Status,
+		}
+	}
+	return res
 }
 
 func flattenMTLS(mtls *papi.MTLSResp) []map[string]any {

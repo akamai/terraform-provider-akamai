@@ -130,6 +130,22 @@ func dataSourcePropertyHostnames() *schema.Resource {
 								},
 							},
 						},
+						"ccm_cert_id": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The certificate lineage ID of the Cloud Certificate Manager (CCM) certificate bound to the hostname.",
+						},
+						"ccm_cert_link": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The link to the Cloud Certificate Manager (CCM) certificate lineage bound to the hostname.",
+						},
+						"ccm_cert_statuses": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The deployment statuses of the Cloud Certificate Manager (CCM) certificate lineage bound to the hostname are listed by key type and network.",
+							Elem:        ccmCertStatusesSchema,
+						},
 						"mtls": {
 							Type:        schema.TypeList,
 							Computed:    true,

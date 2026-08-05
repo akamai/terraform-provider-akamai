@@ -200,9 +200,10 @@ Each rule has a stable `id` so review tools can reference it.
   func (m *model) nestedObj(ctx context.Context) (*nestedModel, diag.Diagnostics)
   func (m *model) setNestedObj(ctx context.Context, n *nestedModel) diag.Diagnostics
   ```
-- **RES-15** *(suggestion, non-blocking)*: When implementing import, suggest
-  using `text.ImportIDSplitter` to split the ID. Standard separators are `,`
-  (id part separator) and `[` (optional parts follow inside brackets).
+- **RES-15**: When implementing `ImportState`, use `text.ImportIDSplitter` to
+  split the import ID whenever possible, instead of parsing it manually.
+  Standard separators are `,` (id part separator) and `[` (optional parts
+  follow inside brackets).
 
 ## 8. Tests
 
@@ -241,4 +242,9 @@ Each rule has a stable `id` so review tools can reference it.
 - **TST-11**: If a unit test covers a flow involving status changes, timeouts,
   or activations, override the relevant intervals/timeouts (to a significantly
   small value) inside the test.
+- **TST-12**: Pass the full fixture path as a literal string directly to
+  `testutils.LoadFixtureString` at each call site (e.g.
+  `testutils.LoadFixtureString(t, "testdata/TestDataFoo/basic.tf")`). Do not
+  build the path by concatenating a shared `testDir` variable with the file
+  name — literal paths are easier to locate/navigate to from an IDE.
 

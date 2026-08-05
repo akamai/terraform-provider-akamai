@@ -56,6 +56,10 @@ linters:
         path: ruleformats/.*gen\.go
       - linters:
           - staticcheck
+        path: pkg/providers/property/resource_akamai_property_ccm_test\.go
+        text: "SA1019"
+      - linters:
+          - staticcheck
         path: pkg/providers/dns/internal/txtrecord/jparse\.go
 issues:
   max-issues-per-linter: 0
