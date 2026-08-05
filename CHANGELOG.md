@@ -91,6 +91,8 @@
 
 
 
+* EdgeKV
+  * Fixed an issue in the `akamai_edgekv` resource where namespace deletion could fail with an `EKV_9000` error.
 
 
 
@@ -109,6 +111,7 @@
 * PAPI
   * Fixed an issue in the `akamai_property` resource where configs using the `version_notes` field could show a persistent diff of variables ([I#769](https://github.com/akamai/terraform-provider-akamai/issues/769)).
   * Fixed an issue in the `akamai_property` and `akamai_property_include` resources where modifying rules, if variables were present, could result in additional diff around variables.
+
 
 
 

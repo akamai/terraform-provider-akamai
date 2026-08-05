@@ -336,8 +336,7 @@ func resourceEdgeKVDelete(config edgeKVResourceConfig) schema.DeleteContextFunc 
 				name, network, err)
 		}
 
-		rescheduledDeleteTime := config.nowFn().UTC().Add(config.namespaceDeleteRescheduleBy + config.namespaceDeleteSafetyBuffer)
-		err = rescheduleNamespaceDelete(ctx, client, name, network, rescheduledDeleteTime, config)
+		err = rescheduleNamespaceDelete(ctx, client, name, network, config)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -428,9 +427,10 @@ func waitUntilNoGroupsInNamespace(ctx context.Context, client edgeworkers.Edgewo
 	}
 }
 
-func rescheduleNamespaceDelete(ctx context.Context, client edgeworkers.Edgeworkers, name, network string, scheduledDeleteTime time.Time, config edgeKVResourceConfig) error {
+func rescheduleNamespaceDelete(ctx context.Context, client edgeworkers.Edgeworkers, name, network string, config edgeKVResourceConfig) error {
 
 	for {
+		scheduledDeleteTime := config.nowFn().UTC().Add(config.namespaceDeleteRescheduleBy + config.namespaceDeleteSafetyBuffer)
 		_, err := client.RescheduleNamespaceDelete(ctx, edgeworkers.RescheduleNamespaceDeleteRequest{
 			Network: edgeworkers.NamespaceNetwork(network),
 			Name:    name,
