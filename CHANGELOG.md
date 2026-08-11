@@ -52,7 +52,9 @@
 
 
 
-
+* DNS
+  * Added `multi_provider_dnssec` boolean field to the `akamai_dns_zone` resource to support multi-signer DNSSEC configuration.
+  * Added validation requiring `sign_and_serve` to be `true` when `multi_provider_dnssec` is `true`, matching the Edge DNS API prerequisite for multi-signer DNSSEC.
 
 
 
