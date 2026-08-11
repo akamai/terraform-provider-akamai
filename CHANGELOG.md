@@ -4,6 +4,11 @@
 
 #### BREAKING CHANGES:
 
+* ClientLists
+  * Marked the `version` attribute in the `akamai_clientlist_activation` resource's schema as `Required` instead of `Computed` ([I#743](https://github.com/akamai/terraform-provider-akamai/issues/743)).
+
+
+
 * PAPI
     * Updated the `akamai_cp_code` datasource to fetch a single CP code directly when using the new `cp_code_id` attribute, instead of filtering from the full list.
     * Renamed the `name` attribute to `cp_code_name` in the `akamai_cp_code` datasource.

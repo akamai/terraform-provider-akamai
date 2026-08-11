@@ -21,6 +21,7 @@ import (
 )
 
 var errActivationFailed = errors.New("activation failed")
+var errOnlyLatestVersionSupported = errors.New("only latest version can be activated")
 
 type clientListActivationConfig struct {
 	pollActivationInterval          time.Duration
@@ -60,7 +61,7 @@ func resourceClientListActivation(config clientListActivationConfig) *schema.Res
 			},
 			"version": {
 				Type:        schema.TypeInt,
-				Computed:    true,
+				Required:    true,
 				Description: "The client list version.",
 			},
 			"network": {
@@ -195,7 +196,7 @@ func Delete(config clientListActivationConfig) schema.DeleteContextFunc {
 		logger := meta.Log("CLIENTLIST", "Delete")
 		logger.Debug("Deleting client list activation")
 
-		attrs, err := getResourceAttrs(d)
+		attrs, err := getResourceAttrs(d, true)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -228,9 +229,22 @@ func Delete(config clientListActivationConfig) schema.DeleteContextFunc {
 }
 
 func activate(ctx context.Context, d *schema.ResourceData, meta meta.Meta, client clientlists.ClientLists, logger akalog.Interface, config clientListActivationConfig) diag.Diagnostics {
-	attrs, err := getResourceAttrs(d)
+	attrs, err := getResourceAttrs(d, false)
 	if err != nil {
 		return diag.FromErr(err)
+	}
+
+	listRes, err := client.GetClientList(ctx, clientlists.GetClientListRequest{
+		ListID:       attrs.ListID,
+		IncludeItems: false,
+	})
+
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	if attrs.Version != listRes.Version {
+		return diag.FromErr(errOnlyLatestVersionSupported)
 	}
 
 	req := clientlists.CreateActivationRequest{
@@ -265,12 +279,27 @@ type resourceAttrs struct {
 	Comments       string
 	SiebelTicketID string
 	Emails         []string
+	Version        int64
 }
 
-func getResourceAttrs(d *schema.ResourceData) (*resourceAttrs, error) {
+func getResourceAttrs(d *schema.ResourceData, destroy bool) (*resourceAttrs, error) {
 	listID, err := tf.GetStringValue("list_id", d)
 	if err != nil {
 		return nil, err
+	}
+
+	var version int64
+	if destroy { // Don’t Use tf.NewRawConfig(d) in Destroy. It’s intended for config access only, which is unavailable during destroy.
+		ver, ok := d.Get("version").(int)
+		if !ok {
+			return nil, fmt.Errorf("%w: %s", errors.New("value not found"), "version")
+		}
+		version = int64(ver)
+	} else {
+		version, err = tf.GetInt64Value("version", tf.NewRawConfig(d))
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	network, err := tf.GetStringValue("network", d)
@@ -293,6 +322,7 @@ func getResourceAttrs(d *schema.ResourceData) (*resourceAttrs, error) {
 
 	return &resourceAttrs{
 		ListID:         listID,
+		Version:        version,
 		Network:        network,
 		Comments:       comments,
 		SiebelTicketID: siebelTicketID,
@@ -388,7 +418,7 @@ func suppressFieldDiff(_, oldValue, newValue string, d *schema.ResourceData) boo
 	if err != nil {
 		status = ""
 	}
-	if oldValue != newValue && (d.HasChanges("list_id", "network") || status != string(clientlists.Active)) {
+	if oldValue != newValue && (d.HasChanges("list_id", "version", "network") || status != string(clientlists.Active)) {
 		return false
 	}
 	return true
