@@ -40,8 +40,9 @@ func TestResDNSZone(t *testing.T) {
 		Comment:         "This is a test zone with multi-signer DNSSEC",
 		SignAndServe:    true,
 		ActivationState: "PENDING",
-		MultiProviderDnssec: &dns.MultiProviderDnssec{
+		MultiProviderDNSSEC: &dns.MultiProviderDNSSEC{
 			Enabled: true,
+			Webhook: "https://example.com/webhook",
 		},
 	}
 
@@ -802,6 +803,7 @@ func TestResDNSZone(t *testing.T) {
 					SignAndServe: true,
 					MultiProviderDNSSEC: &dns.MultiProviderDNSSEC{
 						Enabled: true,
+						Webhook: "https://example.com/webhook",
 					},
 				},
 				ZoneQueryString: dns.ZoneQueryString{Contract: "ctr1", Group: "grp1"},
@@ -867,6 +869,7 @@ func TestResDNSZone(t *testing.T) {
 						resource.TestCheckResourceAttr(multiSignerResourceName, "comment", "This is a test zone with multi-signer DNSSEC"),
 						resource.TestCheckResourceAttr(multiSignerResourceName, "group", "grp1"),
 						resource.TestCheckResourceAttr(multiSignerResourceName, "multi_provider_dnssec.0.enabled", "true"),
+						resource.TestCheckResourceAttr(multiSignerResourceName, "multi_provider_dnssec.0.webhook", "https://example.com/webhook"),
 					),
 				},
 				{
@@ -874,6 +877,7 @@ func TestResDNSZone(t *testing.T) {
 					Check: resource.ComposeTestCheckFunc(
 						resource.TestCheckResourceAttr(multiSignerResourceName, "zone", "multisignerexampleterraform.io"),
 						resource.TestCheckResourceAttr(multiSignerResourceName, "multi_provider_dnssec.0.enabled", "true"),
+						resource.TestCheckResourceAttr(multiSignerResourceName, "multi_provider_dnssec.0.webhook", "https://example.com/webhook"),
 					),
 				},
 			},
@@ -892,6 +896,23 @@ func TestResDNSZone(t *testing.T) {
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResDnsZone/create_multisigner_without_sign_and_serve.tf"),
 					ExpectError: regexp.MustCompile("multi_provider_dnssec.enabled requires sign_and_serve to be true"),
+				},
+			},
+		})
+
+		client.DNS.AssertExpectations(t)
+	})
+
+	t.Run("enabled is required when multi_provider_dnssec is provided", func(t *testing.T) {
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResDnsZone/create_multisigner_without_enabled.tf"),
+					ExpectError: regexp.MustCompile("The argument \"enabled\" is required, but no definition was found."),
 				},
 			},
 		})

@@ -194,8 +194,13 @@ func resourceDNSv2Zone(config dnsZoneResourceConfig) *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"enabled": {
 							Type:        schema.TypeBool,
-							Optional:    true,
+							Required:    true,
 							Description: "Enables multi-signer DNSSEC for the zone.",
+						},
+						"webhook": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "The URL to call when a new ZSK secret has been generated.",
 						},
 					},
 				},
@@ -499,7 +504,7 @@ func resourceDNSv2ZoneUpdate(ctx context.Context, d *schema.ResourceData, m inte
 	zoneCreate.EndCustomerID = zone.EndCustomerID
 	zoneCreate.ContractID = zone.ContractID
 	zoneCreate.TSIGKey = zone.TSIGKey
-	zoneCreate.MultiProviderDnssec = zone.MultiProviderDnssec
+	zoneCreate.MultiProviderDNSSEC = zone.MultiProviderDNSSEC
 	if err := populateDNSv2ZoneObject(d, zoneCreate, logger); err != nil {
 		return diag.FromErr(err)
 	}
@@ -717,10 +722,11 @@ func populateDNSv2ZoneState(d *schema.ResourceData, zoneresp *dns.GetZoneRespons
 		return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 
-	multiProviderDnssecListNew := make([]interface{}, 0)
-	if zoneresp.MultiProviderDnssec != nil {
-		multiProviderDnssecNew := map[string]interface{}{
-			"enabled": zoneresp.MultiProviderDnssec.Enabled,
+	multiProviderDnssecListNew := make([]any, 0)
+	if zoneresp.MultiProviderDNSSEC != nil {
+		multiProviderDnssecNew := map[string]any{
+			"enabled": zoneresp.MultiProviderDNSSEC.Enabled,
+			"webhook": zoneresp.MultiProviderDNSSEC.Webhook,
 		}
 		multiProviderDnssecListNew = append(multiProviderDnssecListNew, multiProviderDnssecNew)
 	}
@@ -832,13 +838,18 @@ func populateDNSv2ZoneObject(d *schema.ResourceData, zone *dns.ZoneCreate, logge
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
-	if (err == nil || d.HasChange("multi_provider_dnssec")) && len(multiProviderDnssec) > 0 {
-		multiProviderDnssecMap, ok := multiProviderDnssec[0].(map[string]interface{})
-		if !ok {
-			return fmt.Errorf("'multi_provider_dnssec' entry is of invalid type; should be 'map[string]interface{}'")
+	if len(multiProviderDnssec) == 0 {
+		if d.HasChange("multi_provider_dnssec") {
+			zone.MultiProviderDNSSEC = nil
 		}
-		zone.MultiProviderDnssec = &dns.MultiProviderDnssec{
+	} else if err == nil || d.HasChange("multi_provider_dnssec") {
+		multiProviderDnssecMap, ok := multiProviderDnssec[0].(map[string]any)
+		if !ok {
+			return fmt.Errorf("'multi_provider_dnssec' entry is of invalid type; should be 'map[string]any'")
+		}
+		zone.MultiProviderDNSSEC = &dns.MultiProviderDNSSEC{
 			Enabled: multiProviderDnssecMap["enabled"].(bool),
+			Webhook: multiProviderDnssecMap["webhook"].(string),
 		}
 	}
 
@@ -913,11 +924,8 @@ func checkDNSv2Zone(d tf.ResourceDataFetcher) error {
 	if signandserve && ztype == "ALIAS" {
 		return fmt.Errorf("sign_and_serve is not valid in %s zone %s configuration", ztype, zone)
 	}
-	if len(multiProviderDnssec) > 0 {
-		multiProviderDnssecMap, ok := multiProviderDnssec[0].(map[string]interface{})
-		if ok && multiProviderDnssecMap["enabled"].(bool) && !signandserve {
-			return fmt.Errorf("multi_provider_dnssec.enabled requires sign_and_serve to be true in zone %s configuration", zone)
-		}
+	if err := checkMultiProviderDnssec(multiProviderDnssec, signandserve, zone); err != nil {
+		return err
 	}
 	if ztype != "SECONDARY" && len(tsig) > 0 {
 		return fmt.Errorf("tsig_key can not be populated in %s zone %s configuration", ztype, zone)
@@ -925,6 +933,20 @@ func checkDNSv2Zone(d tf.ResourceDataFetcher) error {
 
 	return nil
 
+}
+
+func checkMultiProviderDnssec(multiProviderDnssec []any, signAndServe bool, zone string) error {
+	if len(multiProviderDnssec) == 0 {
+		return nil
+	}
+	multiProviderDnssecMap, ok := multiProviderDnssec[0].(map[string]any)
+	if !ok {
+		return fmt.Errorf("'multi_provider_dnssec' entry is of invalid type; should be 'map[string]any'")
+	}
+	if multiProviderDnssecMap["enabled"].(bool) && !signAndServe {
+		return fmt.Errorf("multi_provider_dnssec.enabled requires sign_and_serve to be true in zone %s configuration", zone)
+	}
+	return nil
 }
 
 // Util func to create SOA and NS records

@@ -12,5 +12,6 @@ resource "akamai_dns_zone" "multi_signer_test_zone" {
 
   multi_provider_dnssec {
     enabled = true
+    webhook = "https://example.com/webhook"
   }
 }
