@@ -12,6 +12,7 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
+	tst "github.com/akamai/terraform-provider-akamai/v10/internal/test"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
@@ -114,6 +115,74 @@ func TestPropertyCreate(t *testing.T) {
 				CheckEqual("hostnames.0.cname_from", "from.test.domain").
 				CheckEqual("hostnames.0.cname_to", "to.test.domain").
 				CheckEqual("hostnames.0.edge_hostname_id", "ehn_123").
+				Build(),
+		},
+		"Create property with hostnames containing authorization data": {
+			init: func(p *mockProperty) {
+				p.mockPropertyData = basicData
+				validUntil := tst.NewTimeFromStringPtr(t, "2024-12-31T23:59:59Z")
+				p.hostnames = papi.HostnameResponseItems{
+					Items: []papi.HostnameResponseItem{
+						{
+							CnameType:            "EDGE_HOSTNAME",
+							EdgeHostnameID:       "ehn_123",
+							CnameFrom:            "from.test.domain",
+							CnameTo:              "to.test.domain",
+							CertProvisioningType: "DEFAULT",
+							CertStatus: papi.CertStatusItem{
+								ValidationCname: papi.ValidationCname{
+									Hostname: "from.test.domain",
+									Target:   "to.test.domain",
+								},
+								Staging: []papi.StatusItem{{
+									Status: "PENDING",
+								}},
+								Production: []papi.StatusItem{{
+									Status: "PENDING",
+								}},
+								Authorization: &papi.Authorization{
+									Status:     "VALID",
+									ValidUntil: validUntil,
+									DNS01: &papi.DNSAuthorization{
+										Value: "dns-token-123",
+										Result: papi.AuthorizationResult{
+											Message:   "DNS challenge generated",
+											Source:    "CPS",
+											Timestamp: *validUntil,
+										},
+									},
+									HTTP01: &papi.HTTPAuthorization{
+										Body: "http-body-123",
+										URL:  "http://example.com/.well-known/acme-challenge",
+										Result: papi.AuthorizationResult{
+											Message:   "HTTP challenge generated",
+											Source:    "CA",
+											Timestamp: *validUntil,
+										},
+									},
+								},
+							},
+						},
+					},
+				}
+
+				mockResourcePropertyCreateWithVersionHostnames(p)
+				p.ruleTree.ruleFormat = "v2024-02-12"
+				mockResourcePropertyRead(p, 2)
+				p.mockRemoveProperty()
+			},
+			configFile: "with_hostname_bucket_false_and_hostnames.tf",
+			check: defaultChecker.
+				CheckEqual("hostnames.0.cname_from", "from.test.domain").
+				CheckEqual("hostnames.0.cname_to", "to.test.domain").
+				CheckEqual("hostnames.0.edge_hostname_id", "ehn_123").
+				CheckEqual("hostnames.0.cert_status.0.authorization.0.status", "VALID").
+				CheckEqual("hostnames.0.cert_status.0.authorization.0.valid_until", "2024-12-31T23:59:59Z").
+				CheckEqual("hostnames.0.cert_status.0.authorization.0.dns01.0.value", "dns-token-123").
+				CheckEqual("hostnames.0.cert_status.0.authorization.0.dns01.0.result.0.message", "DNS challenge generated").
+				CheckEqual("hostnames.0.cert_status.0.authorization.0.http01.0.body", "http-body-123").
+				CheckEqual("hostnames.0.cert_status.0.authorization.0.http01.0.url", "http://example.com/.well-known/acme-challenge").
+				CheckEqual("hostnames.0.cert_status.0.authorization.0.http01.0.result.0.message", "HTTP challenge generated").
 				Build(),
 		},
 	}
