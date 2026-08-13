@@ -73,6 +73,7 @@
 
 
 * PAPI
+  * Added support for the new rule format [`v2026-07-21`](https://techdocs.akamai.com/terraform/docs/rule-format-changes#v2026-07-21).
   * Added the `authorization` attribute to the `cert_status` block in the `akamai_property_hostnames` data source and the `akamai_property` resource's `hostnames` block. This attribute exposes domain validation methods available for certificates, including DNS01 and HTTP01 challenge details with their validation status and expiration information.
 
 
