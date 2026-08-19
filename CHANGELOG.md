@@ -45,7 +45,12 @@
     * `akamai_appsec_advanced_settings_url_evasion_defense` - allows managing URL Evasion Defense settings.
   * Added new data sources:
     * `data_akamai_appsec_advanced_settings_url_evasion_defense` - retrieves URL Evasion Defense settings.
-
+* Botman
+  * Added new data sources: 
+    * `akamai_botman_bot_analytics_settings` - retrieves bot analytics settings.
+    * `akamai_botman_bot_analytics_settings_values`- lists bot analytics settings values.
+  * Added new resource: 
+    * `akamai_botman_bot_analytics_settings` - update and create analytics settings.
 
 
 
