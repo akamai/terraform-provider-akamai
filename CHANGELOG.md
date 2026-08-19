@@ -92,6 +92,9 @@
 
 
 
+* Appsec
+  * Added a new data source `data_akamai_appsec_waf_ai_rules` that retrieves the AI rule status and available AI rules for a security policy.
+  * Added a new resource `resource_akamai_appsec_waf_ai_rules` that either manages the AI rule status for a security policy or the action for a specified AI rule.
 
 * DNS
   * Added `multi_provider_dnssec` block to the `akamai_dns_zone` resource to support multi-signer DNSSEC configuration. 

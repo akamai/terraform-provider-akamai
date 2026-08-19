@@ -166,6 +166,7 @@ func (p *Subprovider) FrameworkResources() []func() resource.Resource {
 		NewURLEvasionDefenseResource,
 		NewURLProtectionActionResource,
 		NewURLProtectionPolicyResource,
+		NewWAFAIRulesResource,
 		NewWAFRulesetResource,
 	}
 }
@@ -180,6 +181,7 @@ func (p *Subprovider) FrameworkDataSources() []func() datasource.DataSource {
 		NewURLProtectionPoliciesDataSource,
 		NewURLProtectionPolicyActionsDataSource,
 		NewURLProtectionPolicyDataSource,
+		NewWAFAIRulesDataSource,
 		NewWAFRulesetDataSource,
 	}
 }

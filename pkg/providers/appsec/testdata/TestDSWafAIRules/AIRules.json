@@ -1,0 +1,47 @@
+{
+  "aiRuleStatus": "ENABLED",
+  "aiRules": [
+    {
+      "ruleId": 3001000,
+      "ruleVersion": 1,
+      "title": "AI-Detected SQL Injection Attack",
+      "riskScoreGroup": "SQL_AI",
+      "ruleDescription": "A SQL Injection attack consists of insertion or injection of a SQL query via the input data from the client to the application.",
+      "action": "alert",
+      "conditionExceptions": [
+        {
+          "exception": {
+            "specificHeaderCookieParamXmlOrJsonNames": [
+              {
+                "names": ["test"],
+                "selector": "REQUEST_COOKIES_NAMES",
+                "wildcard": true
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "ruleId": 3001001,
+      "ruleVersion": 1,
+      "title": "AI-Detected XSS Attack",
+      "riskScoreGroup": "XSS_AI",
+      "ruleDescription": "Cross-Site Scripting attacks are a type of injection problem, in which malicious scripts are injected into otherwise benign web sites.",
+      "action": "deny",
+      "conditionExceptions": [
+        {
+          "exception": {
+            "specificHeaderCookieParamXmlOrJsonNames": [
+              {
+                "names": ["test"],
+                "selector": "REQUEST_COOKIES_NAMES",
+                "wildcard": true
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
