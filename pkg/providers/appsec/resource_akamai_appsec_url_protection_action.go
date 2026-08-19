@@ -134,7 +134,7 @@ func (r *urlProtectionActionResource) ValidateConfig(ctx context.Context, req re
 
 	client := r.Client.GetAPPSEC()
 
-	version, err := getModifiableConfigVersion(ctx, int(config.ConfigID.ValueInt64()), "urlProtectionAction", r.Client.GetAPPSEC())
+	version, err := getLatestConfigVersion(ctx, int(config.ConfigID.ValueInt64()), r.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("Unable to read latest config version from API", err.Error())
 		return

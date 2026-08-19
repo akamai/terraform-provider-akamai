@@ -135,6 +135,53 @@ func TestURLProtectionActionResource(t *testing.T) {
 				},
 			},
 		},
+		// This test verifies the fix where ValidateConfig was changed from getModifiableConfigVersion
+		// to getLatestConfigVersion. When LatestVersion == ProductionVersion == StagingVersion (all = 1),
+		// getModifiableConfigVersion would clone the config on every Create and Update call.
+		// ValidateConfig must NOT clone — it must only read the latest version.
+		// The two different version-sets for GetURLProtectionPolicy (v1) vs
+		// UpdateURLProtectionPolicyActions / GetURLProtectionPolicyActions (v2) prove the split:
+		//   - ValidateConfig path → getLatestConfigVersion → uses v1, no clone
+		//   - Create/Delete path → getModifiableConfigVersion → detects active version → clones v1→v2, uses v2
+		"create url protection action - ValidateConfig uses getLatestConfigVersion, Create/Delete clones active version": {
+			init: func(m *appsec.Mock) {
+				// GetConfiguration always returns LatestVersion = ProductionVersion = StagingVersion = 1.
+				// 4 calls come from ValidateConfig (via getLatestConfigVersion, which just reads LatestVersion).
+				// 1 call comes from Create (via getModifiableConfigVersion, which detects active version → clone).
+				// 1 call comes from Read (via getLatestConfigVersion).
+				// 1 call comes from Delete (via getModifiableConfigVersion → clone).
+				mockGetNonModifiableConfiguration(m, 7)
+
+				// ValidateConfig always uses version 1 because getLatestConfigVersion reads LatestVersion=1
+				// from the locked mock. 4 calls: 2 pre-create (plan+apply) + 2 post-create (plan+apply no-op).
+				// getModifiableConfigVersion does NOT call GetURLProtectionPolicy — only ValidateConfig does.
+				mockGetURLProtectionPolicyAtVersion1(m, urlProtectionPolicyWithoutILS, 4)
+
+				// getModifiableConfigVersion detects LatestVersion==ProductionVersion, triggering a clone.
+				// Create and Delete each clone independently (cache not shared across operations).
+				mockCreateConfigurationVersionClone(m, 2)
+
+				// Call GetURLProtectionPolicyActions at version 2 (the cloned version) after the update, and read them back.
+				mockGetURLProtectionPolicyActionsAtVersion2(m, actionAfterUpdateWithoutILS, 1)
+
+				// Create writes actions to version 2 (the cloned version) and reads them back.
+				mockUpdateURLProtectionPolicyActionsAtVersion2(m, "deny", "none", 1)
+
+				// Read (refresh) uses version 1: getLatestConfigVersion returns LatestVersion=1 from locked mock.
+				mockGetURLProtectionPolicyActionsAtVersion1(m, actionAfterUpdateWithoutILS, 1)
+
+				// Delete resets actions at version 2 (the second clone).
+				mockUpdateURLProtectionPolicyActionsAtVersion2(m, "none", "none", 1)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResURLProtectionAction/update_no_ils.tf"),
+					Check: baseChecker.
+						CheckEqual("max_rate_threshold_action", "deny").
+						Build(),
+				},
+			},
+		},
 		"create url protection action - with load_shedding_action when ILS enabled": {
 			init: func(m *appsec.Mock) {
 				mockGetURLProtectionConfiguration(m, 7) // Called 2 times for ValidateConfig, 1 for update, 1 for Validate config, 1 for Read, 1 for ValidateConfig and 1 for delete
@@ -567,6 +614,91 @@ func mockGetURLProtectionPolicyActionsNotFound(client *appsec.Mock) {
 		PolicyID:              "AAAA_81230",
 		URLProtectionPolicyID: 135355,
 	}).Return(nil, &notFoundError).Once()
+}
+
+// mockGetURLProtectionConfigurationLocked mocks GetConfiguration returning a config where
+// LatestVersion = ProductionVersion = StagingVersion = 1. getModifiableConfigVersion (used by
+// Create/Update/Delete) detects the version is active and immediately triggers a clone; meanwhile
+// ValidateConfig's getLatestConfigVersion just reads and returns version 1 with no clone.
+func mockGetNonModifiableConfiguration(client *appsec.Mock, times int) {
+	// Each call gets its own fresh struct to prevent getModifiableConfigVersion from
+	// mutating the shared pointer (it sets configuration.LatestVersion = clonedVersion
+	// before caching, which would corrupt subsequent GetConfiguration mock returns).
+	for i := 0; i < times; i++ {
+		client.On("GetConfiguration", mock.Anything, appsec.GetConfigurationRequest{ConfigID: 43253}).
+			Return(&appsec.GetConfigurationResponse{
+				FileType:          "RBAC",
+				ID:                43253,
+				LatestVersion:     1,
+				Name:              "Akamai Tools",
+				ProductionVersion: 1,
+				StagingVersion:    1,
+				TargetProduct:     "KSD",
+			}, nil).Once()
+	}
+}
+
+// mockCreateConfigurationVersionClone mocks the clone of version 1 into version 2.
+func mockCreateConfigurationVersionClone(client *appsec.Mock, times int) {
+	client.On("CreateConfigurationVersionClone", mock.Anything, appsec.CreateConfigurationVersionCloneRequest{
+		ConfigID:          43253,
+		CreateFromVersion: 1,
+	}).Return(&appsec.CreateConfigurationVersionCloneResponse{
+		ConfigID: 43253,
+		Version:  2,
+	}, nil).Times(times)
+}
+
+// mockGetURLProtectionPolicyAtVersion1 mocks GetURLProtectionPolicy at config version 1.
+// Used for ValidateConfig calls when getLatestConfigVersion returns version 1.
+func mockGetURLProtectionPolicyAtVersion1(client *appsec.Mock, resp appsec.GetURLProtectionPolicyResponse, times int) {
+	client.On("GetURLProtectionPolicy", mock.Anything, appsec.GetURLProtectionPolicyRequest{
+		ConfigID:              43253,
+		ConfigVersion:         1,
+		URLProtectionPolicyID: 135355,
+	}).Return(&resp, nil).Times(times)
+}
+
+// mockUpdateURLProtectionPolicyActionsAtVersion2 mocks UpdateURLProtectionPolicyActions at
+// config version 2 — the cloned version produced by getModifiableConfigVersion.
+func mockUpdateURLProtectionPolicyActionsAtVersion2(client *appsec.Mock, maxRateAction, loadSheddingAction string, times int) {
+	req := appsec.UpdateURLProtectionPolicyActionsRequest{
+		ConfigID:              43253,
+		ConfigVersion:         2,
+		PolicyID:              "AAAA_81230",
+		URLProtectionPolicyID: 135355,
+		Body: appsec.URLProtectionPolicyActions{
+			MaxRateThresholdAction: maxRateAction,
+			LoadSheddingAction:     loadSheddingAction,
+		},
+	}
+	client.On("UpdateURLProtectionPolicyActions", mock.Anything, req).
+		Return(&appsec.UpdateURLProtectionPolicyActionsResponse{
+			MaxRateThresholdAction: maxRateAction,
+			LoadSheddingAction:     loadSheddingAction,
+		}, nil).Times(times)
+}
+
+// mockGetURLProtectionPolicyActionsAtVersion2 mocks GetURLProtectionPolicyActions at
+// config version 2 — the cloned version used by Create/Update.
+func mockGetURLProtectionPolicyActionsAtVersion2(client *appsec.Mock, resp appsec.GetURLProtectionPolicyActionsResponse, times int) {
+	client.On("GetURLProtectionPolicyActions", mock.Anything, appsec.GetURLProtectionPolicyActionsRequest{
+		ConfigID:              43253,
+		ConfigVersion:         2,
+		PolicyID:              "AAAA_81230",
+		URLProtectionPolicyID: 135355,
+	}).Return(&resp, nil).Times(times)
+}
+
+// mockGetURLProtectionPolicyActionsAtVersion1 mocks GetURLProtectionPolicyActions at
+// config version 1 — used by Read when getLatestConfigVersion returns version 1.
+func mockGetURLProtectionPolicyActionsAtVersion1(client *appsec.Mock, resp appsec.GetURLProtectionPolicyActionsResponse, times int) {
+	client.On("GetURLProtectionPolicyActions", mock.Anything, appsec.GetURLProtectionPolicyActionsRequest{
+		ConfigID:              43253,
+		ConfigVersion:         1,
+		PolicyID:              "AAAA_81230",
+		URLProtectionPolicyID: 135355,
+	}).Return(&resp, nil).Times(times)
 }
 
 var urlProtectionActionResourceReferenceName = "akamai_appsec_url_protection_action.test"

@@ -135,6 +135,8 @@
 
 
 
+* Appsec
+  * Fixed an issue in the `akamai_appsec_url_protection_action` resource where `terraform plan` unnecessarily cloned the security configuration version.
 
 
 
