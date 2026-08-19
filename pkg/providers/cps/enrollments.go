@@ -509,9 +509,22 @@ func waitForVerification(ctx context.Context, logger log.Interface, client cps.C
 					ChangeID:     changeID,
 				})
 				if err != nil {
+					// Even if API claims to be in wait for pre-verification warnings, it can sometimes not return them. After very brief time (usually next check is enough) the state changes.
+					if errors.Is(err, cps.ErrNotFound) {
+						logger.Debug("Skipping due to 404 status on get pre-verification warnings")
+						continue
+					}
 					return err
 				}
 				logger.Debugf("Pre-verification warnings: %s", warnings.Warnings)
+
+				if warnings.Warnings == "" {
+					// Even if API claims to be in wait for pre-verification warnings, it can sometimes return them as empty. After some time (usually several checks) the state changes.
+					// API can hit this scenario even if there are no actual pre-verification warnings to be acknowledged.
+					// Acknowledgment of such "warnings" would result in 409.
+					logger.Debug("Skipping due to empty warnings")
+					continue
+				}
 
 				// for DV autoApproveWarnings is always empty
 				if !acknowledgeWarnings && len(autoApproveWarnings) == 0 {

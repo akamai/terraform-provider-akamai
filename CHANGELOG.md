@@ -135,7 +135,8 @@
 
 
 
-
+* CPS
+  * Fixed the processing of pre-verification warnings in `akamai_cps_dv_enrollment` and `akamai_cps_third_party_enrollment` resources that could result in recoverable errors: a 404 during fetching or a 409 during acknowledgement of pre-verification warnings ([I#765](https://github.com/akamai/terraform-provider-akamai/issues/765)).
 
 
 

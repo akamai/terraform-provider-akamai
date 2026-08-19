@@ -8,6 +8,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cps"
 	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
@@ -1361,6 +1362,710 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 					Check: resource.ComposeTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_cps_third_party_enrollment.third_party", "contract_id", "ctr_1"),
 					),
+				},
+			},
+		})
+		client.CPS.AssertExpectations(t)
+	})
+
+	t.Run("acknowledge warnings, pre-verification returns 404", func(t *testing.T) {
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+		enrollment := newEnrollment(
+			WithEmptySans,
+			WithUpdateFunc(func(e *cps.GetEnrollmentResponse) {
+				e.NetworkConfiguration = &cps.NetworkConfiguration{
+					DNSNameSettings: &cps.DNSNameSettings{
+						CloneDNSNames: false,
+					},
+					Geography:        "core",
+					MustHaveCiphers:  "ak-akamai-2020q1",
+					OCSPStapling:     "on",
+					PreferredCiphers: "ak-akamai-2020q1",
+					QuicEnabled:      false,
+					SecureNetwork:    "enhanced-tls",
+					SNIOnly:          true,
+				}
+			}),
+		)
+		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
+
+		client.CPS.On("CreateEnrollment",
+			testutils.MockContext,
+			cps.CreateEnrollmentRequest{
+				EnrollmentRequestBody: enrollmentReqBody,
+				ContractID:            "1",
+			},
+		).Return(&cps.CreateEnrollmentResponse{
+			ID:         1,
+			Enrollment: "/cps/v2/enrollments/1",
+			Changes:    []string{"/cps/v2/enrollments/1/changes/2"},
+		}, nil).Once()
+
+		enrollmentGet := newEnrollment(WithBase(&enrollment), WithPendingChangeID(2))
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(&enrollmentGet, nil).Once()
+
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{
+			AllowedInput: []cps.AllowedInput{{Type: "pre-verification-warnings-acknowledgement"}},
+			StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: waitReviewPreVerificationSafetyChecks,
+			},
+		}, nil).Twice()
+
+		// GetChangePreVerificationWarnings returns 404: the state suggests warnings exist but the API disagrees.
+		// The provider should continue polling rather than fail.
+		client.CPS.On("GetChangePreVerificationWarnings", testutils.MockContext, cps.GetChangeRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(nil, cps.ErrNotFound).Once()
+
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{
+			AllowedInput: []cps.AllowedInput{{Type: "third-party-certificate"}},
+			StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: waitUploadThirdParty,
+			},
+		}, nil).Once()
+
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(&enrollmentGet, nil).Twice()
+
+		allowCancel := true
+		client.CPS.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
+			EnrollmentID:              1,
+			AllowCancelPendingChanges: &allowCancel,
+		}).Return(&cps.RemoveEnrollmentResponse{
+			Enrollment: "1",
+		}, nil).Once()
+
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(nil, cps.ErrNotFound).Once()
+
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/acknowledge_warnings/create_enrollment.tf"),
+					Check: test.NewStateChecker("akamai_cps_third_party_enrollment.third_party").
+						CheckEqual("contract_id", "ctr_1").
+						CheckEqual("allow_duplicate_common_name", "false").
+						CheckEqual("acknowledge_pre_verification_warnings", "true").
+						CheckEqual("auto_approve_warnings.#", "0").
+						CheckEqual("common_name", "test.akamai.com").
+						CheckEqual("sans.#", "0").
+						CheckEqual("secure_network", "enhanced-tls").
+						CheckEqual("sni_only", "true").
+						CheckEqual("admin_contact.#", "1").
+						CheckEqualBatch("admin_contact.0.", test.AttributeBatch{
+							"first_name":       "R1",
+							"last_name":        "D1",
+							"title":            "",
+							"organization":     "Akamai",
+							"email":            "r1d1@akamai.com",
+							"phone":            "123123123",
+							"address_line_one": "150 Broadway",
+							"address_line_two": "",
+							"city":             "Cambridge",
+							"region":           "MA",
+							"postal_code":      "12345",
+							"country_code":     "US",
+						}).
+						CheckEqual("tech_contact.#", "1").
+						CheckEqualBatch("tech_contact.0.", test.AttributeBatch{
+							"first_name":       "R2",
+							"last_name":        "D2",
+							"title":            "",
+							"organization":     "Akamai",
+							"email":            "r2d2@akamai.com",
+							"phone":            "123123123",
+							"address_line_one": "150 Broadway",
+							"address_line_two": "",
+							"city":             "Cambridge",
+							"region":           "MA",
+							"postal_code":      "12345",
+							"country_code":     "US",
+						}).
+						CheckEqual("csr.#", "1").
+						CheckEqualBatch("csr.0.", test.AttributeBatch{
+							"country_code":          "US",
+							"city":                  "Cambridge",
+							"organization":          "Akamai",
+							"organizational_unit":   "WebEx",
+							"preferred_trust_chain": "",
+							"state":                 "MA",
+						}).
+						CheckEqual("network_configuration.#", "1").
+						CheckEqualBatch("network_configuration.0.", test.AttributeBatch{
+							"disallowed_tls_versions.#": "0",
+							"clone_dns_names":           "false",
+							"geography":                 "core",
+							"must_have_ciphers":         "ak-akamai-2020q1",
+							"ocsp_stapling":             "on",
+							"preferred_ciphers":         "ak-akamai-2020q1",
+							"quic_enabled":              "false",
+						}).
+						CheckEqual("organization.#", "1").
+						CheckEqualBatch("organization.0.", test.AttributeBatch{
+							"name":             "Akamai",
+							"phone":            "321321321",
+							"address_line_one": "150 Broadway",
+							"address_line_two": "",
+							"city":             "Cambridge",
+							"region":           "MA",
+							"postal_code":      "12345",
+							"country_code":     "US",
+						}).
+						CheckEqual("certificate_chain_type", "default").
+						CheckEqual("signature_algorithm", "SHA-256").
+						CheckEqual("change_management", "false").
+						CheckEqual("exclude_sans", "false").
+						Build(),
+				},
+			},
+		})
+		client.CPS.AssertExpectations(t)
+	})
+
+	t.Run("acknowledge warnings, pre-verification returns 404, later actual warns to acknowledge", func(t *testing.T) {
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+		enrollment := newEnrollment(
+			WithEmptySans,
+			WithUpdateFunc(func(e *cps.GetEnrollmentResponse) {
+				e.NetworkConfiguration = &cps.NetworkConfiguration{
+					DNSNameSettings: &cps.DNSNameSettings{
+						CloneDNSNames: false,
+					},
+					Geography:        "core",
+					MustHaveCiphers:  "ak-akamai-2020q1",
+					OCSPStapling:     "on",
+					PreferredCiphers: "ak-akamai-2020q1",
+					QuicEnabled:      false,
+					SecureNetwork:    "enhanced-tls",
+					SNIOnly:          true,
+				}
+			}),
+		)
+		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
+
+		client.CPS.On("CreateEnrollment",
+			testutils.MockContext,
+			cps.CreateEnrollmentRequest{
+				EnrollmentRequestBody: enrollmentReqBody,
+				ContractID:            "1",
+			},
+		).Return(&cps.CreateEnrollmentResponse{
+			ID:         1,
+			Enrollment: "/cps/v2/enrollments/1",
+			Changes:    []string{"/cps/v2/enrollments/1/changes/2"},
+		}, nil).Once()
+
+		enrollmentGet := newEnrollment(WithBase(&enrollment), WithPendingChangeID(2))
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(&enrollmentGet, nil).Once()
+
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{
+			AllowedInput: []cps.AllowedInput{{Type: "pre-verification-warnings-acknowledgement"}},
+			StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: waitReviewPreVerificationSafetyChecks,
+			},
+		}, nil).Twice()
+
+		// GetChangePreVerificationWarnings returns 404: the state suggests warnings exist but the API disagrees.
+		// The provider should continue polling rather than fail.
+		client.CPS.On("GetChangePreVerificationWarnings", testutils.MockContext, cps.GetChangeRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(nil, cps.ErrNotFound).Once()
+
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{
+			AllowedInput: []cps.AllowedInput{{Type: "pre-verification-warnings-acknowledgement"}},
+			StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: waitReviewPreVerificationSafetyChecks,
+			},
+		}, nil).Once()
+
+		client.CPS.On("GetChangePreVerificationWarnings", testutils.MockContext, cps.GetChangeRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.PreVerificationWarnings{Warnings: "some warning"}, nil).Once()
+
+		client.CPS.On("AcknowledgePreVerificationWarnings", testutils.MockContext, cps.AcknowledgementRequest{
+			EnrollmentID:    1,
+			ChangeID:        2,
+			Acknowledgement: cps.Acknowledgement{Acknowledgement: "acknowledge"},
+		}).Return(nil).Once()
+
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{
+			AllowedInput: []cps.AllowedInput{{Type: "third-party-certificate"}},
+			StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: waitUploadThirdParty,
+			},
+		}, nil).Once()
+
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(&enrollmentGet, nil).Twice()
+
+		allowCancel := true
+		client.CPS.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
+			EnrollmentID:              1,
+			AllowCancelPendingChanges: &allowCancel,
+		}).Return(&cps.RemoveEnrollmentResponse{
+			Enrollment: "1",
+		}, nil).Once()
+
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(nil, cps.ErrNotFound).Once()
+
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/acknowledge_warnings/create_enrollment.tf"),
+					Check: test.NewStateChecker("akamai_cps_third_party_enrollment.third_party").
+						CheckEqual("contract_id", "ctr_1").
+						CheckEqual("allow_duplicate_common_name", "false").
+						CheckEqual("acknowledge_pre_verification_warnings", "true").
+						CheckEqual("auto_approve_warnings.#", "0").
+						CheckEqual("common_name", "test.akamai.com").
+						CheckEqual("sans.#", "0").
+						CheckEqual("secure_network", "enhanced-tls").
+						CheckEqual("sni_only", "true").
+						CheckEqual("admin_contact.#", "1").
+						CheckEqualBatch("admin_contact.0.", test.AttributeBatch{
+							"first_name":       "R1",
+							"last_name":        "D1",
+							"title":            "",
+							"organization":     "Akamai",
+							"email":            "r1d1@akamai.com",
+							"phone":            "123123123",
+							"address_line_one": "150 Broadway",
+							"address_line_two": "",
+							"city":             "Cambridge",
+							"region":           "MA",
+							"postal_code":      "12345",
+							"country_code":     "US",
+						}).
+						CheckEqual("tech_contact.#", "1").
+						CheckEqualBatch("tech_contact.0.", test.AttributeBatch{
+							"first_name":       "R2",
+							"last_name":        "D2",
+							"title":            "",
+							"organization":     "Akamai",
+							"email":            "r2d2@akamai.com",
+							"phone":            "123123123",
+							"address_line_one": "150 Broadway",
+							"address_line_two": "",
+							"city":             "Cambridge",
+							"region":           "MA",
+							"postal_code":      "12345",
+							"country_code":     "US",
+						}).
+						CheckEqual("csr.#", "1").
+						CheckEqualBatch("csr.0.", test.AttributeBatch{
+							"country_code":          "US",
+							"city":                  "Cambridge",
+							"organization":          "Akamai",
+							"organizational_unit":   "WebEx",
+							"preferred_trust_chain": "",
+							"state":                 "MA",
+						}).
+						CheckEqual("network_configuration.#", "1").
+						CheckEqualBatch("network_configuration.0.", test.AttributeBatch{
+							"disallowed_tls_versions.#": "0",
+							"clone_dns_names":           "false",
+							"geography":                 "core",
+							"must_have_ciphers":         "ak-akamai-2020q1",
+							"ocsp_stapling":             "on",
+							"preferred_ciphers":         "ak-akamai-2020q1",
+							"quic_enabled":              "false",
+						}).
+						CheckEqual("organization.#", "1").
+						CheckEqualBatch("organization.0.", test.AttributeBatch{
+							"name":             "Akamai",
+							"phone":            "321321321",
+							"address_line_one": "150 Broadway",
+							"address_line_two": "",
+							"city":             "Cambridge",
+							"region":           "MA",
+							"postal_code":      "12345",
+							"country_code":     "US",
+						}).
+						CheckEqual("certificate_chain_type", "default").
+						CheckEqual("signature_algorithm", "SHA-256").
+						CheckEqual("change_management", "false").
+						CheckEqual("exclude_sans", "false").
+						Build(),
+				},
+			},
+		})
+		client.CPS.AssertExpectations(t)
+	})
+
+	t.Run("acknowledge warnings, pre-verification returns empty warnings", func(t *testing.T) {
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+		enrollment := newEnrollment(
+			WithEmptySans,
+			WithUpdateFunc(func(e *cps.GetEnrollmentResponse) {
+				e.NetworkConfiguration = &cps.NetworkConfiguration{
+					DNSNameSettings: &cps.DNSNameSettings{
+						CloneDNSNames: false,
+					},
+					Geography:        "core",
+					MustHaveCiphers:  "ak-akamai-2020q1",
+					OCSPStapling:     "on",
+					PreferredCiphers: "ak-akamai-2020q1",
+					QuicEnabled:      false,
+					SecureNetwork:    "enhanced-tls",
+					SNIOnly:          true,
+				}
+			}),
+		)
+		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
+
+		client.CPS.On("CreateEnrollment",
+			testutils.MockContext,
+			cps.CreateEnrollmentRequest{
+				EnrollmentRequestBody: enrollmentReqBody,
+				ContractID:            "1",
+			},
+		).Return(&cps.CreateEnrollmentResponse{
+			ID:         1,
+			Enrollment: "/cps/v2/enrollments/1",
+			Changes:    []string{"/cps/v2/enrollments/1/changes/2"},
+		}, nil).Once()
+
+		enrollmentGet := newEnrollment(WithBase(&enrollment), WithPendingChangeID(2))
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(&enrollmentGet, nil).Once()
+
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{
+			AllowedInput: []cps.AllowedInput{{Type: "pre-verification-warnings-acknowledgement"}},
+			StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: waitReviewPreVerificationSafetyChecks,
+			},
+		}, nil).Twice()
+
+		client.CPS.On("GetChangePreVerificationWarnings", testutils.MockContext, cps.GetChangeRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.PreVerificationWarnings{Warnings: ""}, nil).Once()
+
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{
+			AllowedInput: []cps.AllowedInput{{Type: "third-party-certificate"}},
+			StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: waitUploadThirdParty,
+			},
+		}, nil).Once()
+
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(&enrollmentGet, nil).Twice()
+
+		allowCancel := true
+		client.CPS.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
+			EnrollmentID:              1,
+			AllowCancelPendingChanges: &allowCancel,
+		}).Return(&cps.RemoveEnrollmentResponse{
+			Enrollment: "1",
+		}, nil).Once()
+
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(nil, cps.ErrNotFound).Once()
+
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/acknowledge_warnings/create_enrollment.tf"),
+					Check: test.NewStateChecker("akamai_cps_third_party_enrollment.third_party").
+						CheckEqual("contract_id", "ctr_1").
+						CheckEqual("allow_duplicate_common_name", "false").
+						CheckEqual("acknowledge_pre_verification_warnings", "true").
+						CheckEqual("auto_approve_warnings.#", "0").
+						CheckEqual("common_name", "test.akamai.com").
+						CheckEqual("sans.#", "0").
+						CheckEqual("secure_network", "enhanced-tls").
+						CheckEqual("sni_only", "true").
+						CheckEqual("admin_contact.#", "1").
+						CheckEqualBatch("admin_contact.0.", test.AttributeBatch{
+							"first_name":       "R1",
+							"last_name":        "D1",
+							"title":            "",
+							"organization":     "Akamai",
+							"email":            "r1d1@akamai.com",
+							"phone":            "123123123",
+							"address_line_one": "150 Broadway",
+							"address_line_two": "",
+							"city":             "Cambridge",
+							"region":           "MA",
+							"postal_code":      "12345",
+							"country_code":     "US",
+						}).
+						CheckEqual("tech_contact.#", "1").
+						CheckEqualBatch("tech_contact.0.", test.AttributeBatch{
+							"first_name":       "R2",
+							"last_name":        "D2",
+							"title":            "",
+							"organization":     "Akamai",
+							"email":            "r2d2@akamai.com",
+							"phone":            "123123123",
+							"address_line_one": "150 Broadway",
+							"address_line_two": "",
+							"city":             "Cambridge",
+							"region":           "MA",
+							"postal_code":      "12345",
+							"country_code":     "US",
+						}).
+						CheckEqual("csr.#", "1").
+						CheckEqualBatch("csr.0.", test.AttributeBatch{
+							"country_code":          "US",
+							"city":                  "Cambridge",
+							"organization":          "Akamai",
+							"organizational_unit":   "WebEx",
+							"preferred_trust_chain": "",
+							"state":                 "MA",
+						}).
+						CheckEqual("network_configuration.#", "1").
+						CheckEqualBatch("network_configuration.0.", test.AttributeBatch{
+							"disallowed_tls_versions.#": "0",
+							"clone_dns_names":           "false",
+							"geography":                 "core",
+							"must_have_ciphers":         "ak-akamai-2020q1",
+							"ocsp_stapling":             "on",
+							"preferred_ciphers":         "ak-akamai-2020q1",
+							"quic_enabled":              "false",
+						}).
+						CheckEqual("organization.#", "1").
+						CheckEqualBatch("organization.0.", test.AttributeBatch{
+							"name":             "Akamai",
+							"phone":            "321321321",
+							"address_line_one": "150 Broadway",
+							"address_line_two": "",
+							"city":             "Cambridge",
+							"region":           "MA",
+							"postal_code":      "12345",
+							"country_code":     "US",
+						}).
+						CheckEqual("certificate_chain_type", "default").
+						CheckEqual("signature_algorithm", "SHA-256").
+						CheckEqual("change_management", "false").
+						CheckEqual("exclude_sans", "false").
+						Build(),
+				},
+			},
+		})
+		client.CPS.AssertExpectations(t)
+	})
+
+	t.Run("acknowledge warnings, pre-verification returns empty warnings", func(t *testing.T) {
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+		enrollment := newEnrollment(
+			WithEmptySans,
+			WithUpdateFunc(func(e *cps.GetEnrollmentResponse) {
+				e.NetworkConfiguration = &cps.NetworkConfiguration{
+					DNSNameSettings: &cps.DNSNameSettings{
+						CloneDNSNames: false,
+					},
+					Geography:        "core",
+					MustHaveCiphers:  "ak-akamai-2020q1",
+					OCSPStapling:     "on",
+					PreferredCiphers: "ak-akamai-2020q1",
+					QuicEnabled:      false,
+					SecureNetwork:    "enhanced-tls",
+					SNIOnly:          true,
+				}
+			}),
+		)
+		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
+
+		client.CPS.On("CreateEnrollment",
+			testutils.MockContext,
+			cps.CreateEnrollmentRequest{
+				EnrollmentRequestBody: enrollmentReqBody,
+				ContractID:            "1",
+			},
+		).Return(&cps.CreateEnrollmentResponse{
+			ID:         1,
+			Enrollment: "/cps/v2/enrollments/1",
+			Changes:    []string{"/cps/v2/enrollments/1/changes/2"},
+		}, nil).Once()
+
+		enrollmentGet := newEnrollment(WithBase(&enrollment), WithPendingChangeID(2))
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(&enrollmentGet, nil).Once()
+
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{
+			AllowedInput: []cps.AllowedInput{{Type: "pre-verification-warnings-acknowledgement"}},
+			StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: waitReviewPreVerificationSafetyChecks,
+			},
+		}, nil).Twice()
+
+		client.CPS.On("GetChangePreVerificationWarnings", testutils.MockContext, cps.GetChangeRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.PreVerificationWarnings{Warnings: ""}, nil).Once()
+
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{
+			AllowedInput: []cps.AllowedInput{{Type: "pre-verification-warnings-acknowledgement"}},
+			StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: waitReviewPreVerificationSafetyChecks,
+			},
+		}, nil).Once()
+
+		client.CPS.On("GetChangePreVerificationWarnings", testutils.MockContext, cps.GetChangeRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.PreVerificationWarnings{Warnings: "some warning"}, nil).Once()
+
+		client.CPS.On("AcknowledgePreVerificationWarnings", testutils.MockContext, cps.AcknowledgementRequest{
+			EnrollmentID:    1,
+			ChangeID:        2,
+			Acknowledgement: cps.Acknowledgement{Acknowledgement: "acknowledge"},
+		}).Return(nil).Once()
+
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{
+			AllowedInput: []cps.AllowedInput{{Type: "third-party-certificate"}},
+			StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: waitUploadThirdParty,
+			},
+		}, nil).Once()
+
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(&enrollmentGet, nil).Twice()
+
+		allowCancel := true
+		client.CPS.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
+			EnrollmentID:              1,
+			AllowCancelPendingChanges: &allowCancel,
+		}).Return(&cps.RemoveEnrollmentResponse{
+			Enrollment: "1",
+		}, nil).Once()
+
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(nil, cps.ErrNotFound).Once()
+
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/acknowledge_warnings/create_enrollment.tf"),
+					Check: test.NewStateChecker("akamai_cps_third_party_enrollment.third_party").
+						CheckEqual("contract_id", "ctr_1").
+						CheckEqual("allow_duplicate_common_name", "false").
+						CheckEqual("acknowledge_pre_verification_warnings", "true").
+						CheckEqual("auto_approve_warnings.#", "0").
+						CheckEqual("common_name", "test.akamai.com").
+						CheckEqual("sans.#", "0").
+						CheckEqual("secure_network", "enhanced-tls").
+						CheckEqual("sni_only", "true").
+						CheckEqual("admin_contact.#", "1").
+						CheckEqualBatch("admin_contact.0.", test.AttributeBatch{
+							"first_name":       "R1",
+							"last_name":        "D1",
+							"title":            "",
+							"organization":     "Akamai",
+							"email":            "r1d1@akamai.com",
+							"phone":            "123123123",
+							"address_line_one": "150 Broadway",
+							"address_line_two": "",
+							"city":             "Cambridge",
+							"region":           "MA",
+							"postal_code":      "12345",
+							"country_code":     "US",
+						}).
+						CheckEqual("tech_contact.#", "1").
+						CheckEqualBatch("tech_contact.0.", test.AttributeBatch{
+							"first_name":       "R2",
+							"last_name":        "D2",
+							"title":            "",
+							"organization":     "Akamai",
+							"email":            "r2d2@akamai.com",
+							"phone":            "123123123",
+							"address_line_one": "150 Broadway",
+							"address_line_two": "",
+							"city":             "Cambridge",
+							"region":           "MA",
+							"postal_code":      "12345",
+							"country_code":     "US",
+						}).
+						CheckEqual("csr.#", "1").
+						CheckEqualBatch("csr.0.", test.AttributeBatch{
+							"country_code":          "US",
+							"city":                  "Cambridge",
+							"organization":          "Akamai",
+							"organizational_unit":   "WebEx",
+							"preferred_trust_chain": "",
+							"state":                 "MA",
+						}).
+						CheckEqual("network_configuration.#", "1").
+						CheckEqualBatch("network_configuration.0.", test.AttributeBatch{
+							"disallowed_tls_versions.#": "0",
+							"clone_dns_names":           "false",
+							"geography":                 "core",
+							"must_have_ciphers":         "ak-akamai-2020q1",
+							"ocsp_stapling":             "on",
+							"preferred_ciphers":         "ak-akamai-2020q1",
+							"quic_enabled":              "false",
+						}).
+						CheckEqual("organization.#", "1").
+						CheckEqualBatch("organization.0.", test.AttributeBatch{
+							"name":             "Akamai",
+							"phone":            "321321321",
+							"address_line_one": "150 Broadway",
+							"address_line_two": "",
+							"city":             "Cambridge",
+							"region":           "MA",
+							"postal_code":      "12345",
+							"country_code":     "US",
+						}).
+						CheckEqual("certificate_chain_type", "default").
+						CheckEqual("signature_algorithm", "SHA-256").
+						CheckEqual("change_management", "false").
+						CheckEqual("exclude_sans", "false").
+						Build(),
 				},
 			},
 		})
