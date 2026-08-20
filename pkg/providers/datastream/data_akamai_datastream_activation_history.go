@@ -27,10 +27,11 @@ func dataAkamaiDatastreamActivationHistory() *schema.Resource {
 			"log_type": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "The type of logs for which to retrieve activation history. Valid values are `CDN` and `APPSEC`. If not specified, defaults to `CDN`.",
+				Description: "The type of logs for which to retrieve activation history. Valid values are `CDN`, `APPSEC`, and `ANSWERX`. If not specified, defaults to `CDN`.",
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{
 					string(datastream.LogTypeCDN),
 					string(datastream.LogTypeAppSec),
+					string(datastream.LogTypeAnswerX),
 				}, true)),
 			},
 			"activations": {

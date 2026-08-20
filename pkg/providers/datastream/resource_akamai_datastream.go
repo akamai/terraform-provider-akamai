@@ -16,6 +16,7 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/log"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
+	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -111,6 +112,7 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 		ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{
 			string(datastream.LogTypeCDN),
 			string(datastream.LogTypeAppSec),
+			string(datastream.LogTypeAnswerX),
 		}, true)),
 	},
 	"active": {
@@ -148,7 +150,7 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 		Optional:         true,
 		Computed:         true,
 		DiffSuppressFunc: tf.FieldPrefixSuppress("ctr_"),
-		Description:      "Identifies the contract that has access to the product. Optional for CDN log type. Required for APPSEC. Whitespace-only values are treated as omitted for CDN.",
+		Description:      "Identifies the contract that has access to the product. Optional for CDN log type. Required for APPSEC and ANSWERX. Whitespace-only values are treated as omitted for CDN.",
 	},
 	"created_by": {
 		Type:        schema.TypeString,
@@ -183,7 +185,7 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 		Optional:         true,
 		Computed:         true,
 		DiffSuppressFunc: tf.FieldPrefixSuppress("grp_"),
-		Description:      "Identifies the group that has access to the product and for which the stream configuration was created. Optional for CDN log type. Required for APPSEC. On update, this value is not sent to the API.",
+		Description:      "Identifies the group that has access to the product and for which the stream configuration was created. Optional for CDN log type. Required for APPSEC and ANSWERX. On update, this value is not sent to the API.",
 	},
 	"modified_by": {
 		Type:        schema.TypeString,
@@ -222,6 +224,15 @@ var datastreamResourceSchema = map[string]*schema.Schema{
 			Type: schema.TypeInt,
 		},
 		Description: "Identifies the application security configurations monitored in the stream",
+	},
+	"service_ids": {
+		Type:     schema.TypeSet,
+		Optional: true,
+		Elem: &schema.Schema{
+			Type:             schema.TypeInt,
+			ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(0)),
+		},
+		Description: "Identifies the AnswerX service IDs monitored in the stream.",
 	},
 	"stream_name": {
 		Type:        schema.TypeString,
@@ -1069,6 +1080,59 @@ var configResource = &schema.Resource{
 	},
 }
 
+// logTypeFieldRequirement defines which fields are required, forbidden, or optional for a log type.
+type logTypeFieldRequirement struct {
+	// fieldName is the Terraform schema field name
+	fieldName string
+	// required indicates whether the field must be provided and non-empty
+	required bool
+	// forbidden indicates whether the field must not be provided (mutually exclusive with required)
+	forbidden bool
+}
+
+// logTypeConfig encapsulates the validation and processing rules for a specific log type.
+type logTypeConfig struct {
+	logType      datastream.LogType
+	requirements []logTypeFieldRequirement
+}
+
+// logTypeConfigs is the configuration registry for all supported log types.
+// NOTE: this registry currently models only collection-shaped requirements
+// (required/forbidden fields with length checks), which matches the existing
+// validation helpers in validateStreamTypeConfig and validateStreamTypeConfigFromDiff.
+// If a new log type needs scalar validation (for example, a non-zero integer or
+// a specific string/enum rule that is not equivalent to a collection presence check),
+// this map alone is not sufficient; the validation logic must be extended as well.
+var logTypeConfigs = map[datastream.LogType]*logTypeConfig{
+	datastream.LogTypeCDN: {
+		logType: datastream.LogTypeCDN,
+		requirements: []logTypeFieldRequirement{
+			{fieldName: "dataset_fields", required: true},
+			{fieldName: "properties", required: true},
+			{fieldName: "app_sec_configs", forbidden: true},
+			{fieldName: "service_ids", forbidden: true},
+		},
+	},
+	datastream.LogTypeAppSec: {
+		logType: datastream.LogTypeAppSec,
+		requirements: []logTypeFieldRequirement{
+			{fieldName: "dataset_fields", forbidden: true},
+			{fieldName: "properties", forbidden: true},
+			{fieldName: "app_sec_configs", required: true},
+			{fieldName: "service_ids", forbidden: true},
+		},
+	},
+	datastream.LogTypeAnswerX: {
+		logType: datastream.LogTypeAnswerX,
+		requirements: []logTypeFieldRequirement{
+			{fieldName: "dataset_fields", required: true},
+			{fieldName: "properties", forbidden: true},
+			{fieldName: "app_sec_configs", forbidden: true},
+			{fieldName: "service_ids", required: true},
+		},
+	},
+}
+
 // Helper function for extracting the log type from terraform schema and applying default value if not set.
 func getLogType(d *schema.ResourceData) (datastream.LogType, error) {
 	logTypeVal, err := tf.GetStringValue("log_type", d)
@@ -1085,74 +1149,110 @@ func getLogType(d *schema.ResourceData) (datastream.LogType, error) {
 	return logType, nil
 }
 
+// validateStreamTypeConfig validates that all required fields are present and forbidden fields are absent.
+func validateStreamTypeConfig(logType datastream.LogType, fields map[string]any) error {
+	config, exists := logTypeConfigs[logType]
+	if !exists {
+		return fmt.Errorf("unsupported log_type %q", logType)
+	}
+
+	for _, req := range config.requirements {
+		value, hasValue := fields[req.fieldName]
+		fieldLen := 0
+		if hasValue {
+			if length, ok := collectionLen(value); ok {
+				fieldLen = length
+			}
+		}
+
+		if req.required && (fieldLen == 0) {
+			return fmt.Errorf("`%s` are required for log_type %q", req.fieldName, logType)
+		}
+
+		if req.forbidden && (fieldLen > 0) {
+			return fmt.Errorf("cannot set `%s` when log_type is %q", req.fieldName, logType)
+		}
+	}
+
+	return nil
+}
+
+// streamTypeConfig holds the log-type-specific fields extracted from the Terraform schema.
+type streamTypeConfig struct {
+	DatasetFields     []datastream.DatasetFieldID
+	Properties        []datastream.PropertyID
+	AppSecConfigs     []datastream.AppSecConfigID
+	AnswerXServiceIDs []datastream.AnswerXServiceID
+}
+
 // Helper function for validating the stream type specific configuration based on the log type and returning the extracted configuration values.
-func getStreamTypeConfig(d *schema.ResourceData, logType datastream.LogType) (
-	[]datastream.DatasetFieldID,
-	[]datastream.PropertyID,
-	[]datastream.AppSecConfigID,
-	error,
-) {
-	// need to default all return values to empty slices instead of nil to avoid null values in API requests which causes them to fail validation
+func getStreamTypeConfig(d *schema.ResourceData, logType datastream.LogType) (*streamTypeConfig, error) {
+	result := &streamTypeConfig{}
 	var datasetFieldsIDs []datastream.DatasetFieldID
 	var propertyIDs []datastream.PropertyID
 	var appSecConfigIDs []datastream.AppSecConfigID
+	var answerXServiceIDs []datastream.AnswerXServiceID
 
 	datasetFieldsIDsList, err := tf.GetListValue("dataset_fields", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
-		return nil, nil, nil, err
+		return nil, err
 	}
 	datasetFieldsIDs = DatasetFieldListToDatasetFields(datasetFieldsIDsList)
 
 	propertyIDsList, propertyIDsErr := tf.GetListValue("properties", d)
 	if propertyIDsErr != nil && !errors.Is(propertyIDsErr, tf.ErrNotFound) {
-		return nil, nil, nil, propertyIDsErr
+		return nil, propertyIDsErr
 	}
 
 	appSecConfigsList, appSecConfigsErr := tf.GetListValue("app_sec_configs", d)
 	if appSecConfigsErr != nil && !errors.Is(appSecConfigsErr, tf.ErrNotFound) {
-		return nil, nil, nil, appSecConfigsErr
+		return nil, appSecConfigsErr
 	}
 
+	answerXServiceIDsSet, answerXServiceIDsErr := tf.GetSetValue("service_ids", d)
+	if answerXServiceIDsErr != nil && !errors.Is(answerXServiceIDsErr, tf.ErrNotFound) {
+		return nil, answerXServiceIDsErr
+	}
+
+	// Build field map for validation
+	validationFields := map[string]any{
+		"dataset_fields":  datasetFieldsIDsList,
+		"properties":      propertyIDsList,
+		"app_sec_configs": appSecConfigsList,
+		"service_ids":     answerXServiceIDsSet,
+	}
+
+	// Validate configuration against log type requirements
+	if err := validateStreamTypeConfig(logType, validationFields); err != nil {
+		return nil, err
+	}
+
+	// Process fields based on log type
 	switch logType {
 	case datastream.LogTypeCDN:
-		if len(datasetFieldsIDs) == 0 {
-			return nil, nil, nil, fmt.Errorf("`dataset_fields` are required for log_type %q", datastream.LogTypeCDN)
-		}
-		if len(appSecConfigsList) > 0 {
-			return nil, nil, nil, fmt.Errorf("cannot set `app_sec_configs` when log_type is %q", datastream.LogTypeCDN)
-		}
-		if errors.Is(propertyIDsErr, tf.ErrNotFound) || len(propertyIDsList) == 0 {
-			return nil, nil, nil, fmt.Errorf("`properties` are required for log_type %q", datastream.LogTypeCDN)
-		}
-
-		propertyIDs, err := GetPropertiesList(propertyIDsList)
+		propertyIDs, err = GetPropertiesList(propertyIDsList)
 		if err != nil {
-			return nil, nil, nil, err
+			return nil, err
 		}
-
-		return datasetFieldsIDs, propertyIDs, appSecConfigIDs, nil
-
 	case datastream.LogTypeAppSec:
-		if len(datasetFieldsIDs) > 0 {
-			return nil, nil, nil, fmt.Errorf("cannot set `dataset_fields` when log_type is %q", datastream.LogTypeAppSec)
-		}
-		if len(propertyIDsList) > 0 {
-			return nil, nil, nil, fmt.Errorf("cannot set `properties` when log_type is %q", datastream.LogTypeAppSec)
-		}
-		if errors.Is(appSecConfigsErr, tf.ErrNotFound) || len(appSecConfigsList) == 0 {
-			return nil, nil, nil, fmt.Errorf("`app_sec_configs` are required for log_type %q", datastream.LogTypeAppSec)
-		}
-
-		appSecConfigIDs, err := GetAppSecConfigIDs(appSecConfigsList)
+		appSecConfigIDs, err = GetAppSecConfigIDs(appSecConfigsList)
 		if err != nil {
-			return nil, nil, nil, err
+			return nil, err
 		}
-
-		return datasetFieldsIDs, propertyIDs, appSecConfigIDs, nil
-
+	case datastream.LogTypeAnswerX:
+		answerXServiceIDs, err = GetAnswerXServiceIDsFromSet(answerXServiceIDsSet)
+		if err != nil {
+			return nil, err
+		}
 	default:
-		return nil, nil, nil, fmt.Errorf("unsupported log_type %q", logType)
+		return nil, fmt.Errorf("unsupported log_type %q", logType)
 	}
+
+	result.DatasetFields = datasetFieldsIDs
+	result.Properties = propertyIDs
+	result.AppSecConfigs = appSecConfigIDs
+	result.AnswerXServiceIDs = answerXServiceIDs
+	return result, nil
 }
 
 func resourceDatastreamCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -1204,7 +1304,7 @@ func resourceDatastreamCreate(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 
-	datasetFieldsIDs, propertyIDs, appSecConfigIDs, err := getStreamTypeConfig(d, logType)
+	streamFields, err := getStreamTypeConfig(d, logType)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -1244,13 +1344,14 @@ func resourceDatastreamCreate(ctx context.Context, d *schema.ResourceData, m int
 			DeliveryConfiguration: *config,
 			Destination:           connectors,
 			ContractID:            contractID,
-			DatasetFields:         datasetFieldsIDs,
+			DatasetFields:         streamFields.DatasetFields,
 			NotificationEmails:    emailIDs,
 			GroupID:               groupID,
-			Properties:            propertyIDs,
+			Properties:            streamFields.Properties,
 			StreamName:            streamName,
 			SamplingPercentage:    samplingPercentage,
-			AppSecConfigs:         appSecConfigIDs,
+			AppSecConfigs:         streamFields.AppSecConfigs,
+			AnswerXServiceIDs:     streamFields.AnswerXServiceIDs,
 		},
 		Activate: active,
 		LogType:  logType,
@@ -1525,6 +1626,81 @@ func resolveSamplingPercentageForRead(apiSamplingPercentage int, d *schema.Resou
 	return 0, false
 }
 
+// validateStreamTypeConfigFromDiff performs plan-time validation of log-type specific requirements.
+// It returns an error if known values violate the requirements, but skips validation for unknown values
+// to allow planning to proceed. This ensures locally knowable constraints fail at plan time.
+func validateStreamTypeConfigFromDiff(d *schema.ResourceDiff, logType datastream.LogType) error {
+	config, exists := logTypeConfigs[logType]
+	if !exists {
+		return fmt.Errorf("unsupported log_type %q", logType)
+	}
+
+	for _, req := range config.requirements {
+		if !d.NewValueKnown(req.fieldName) {
+			// Unknown values are resolved after apply. Defer both required and forbidden checks
+			// so plan-time validation only enforces constraints on known collections.
+			continue
+		}
+
+		val, exists := d.GetOkExists(req.fieldName)
+		if !exists || val == nil {
+			// Field not set in diff
+			if req.required {
+				if rawValueUnknownInDiff(d, req.fieldName) {
+					continue
+				}
+				return fmt.Errorf("`%s` are required for log_type %q", req.fieldName, logType)
+			}
+			continue
+		}
+
+		fieldLen, ok := collectionLen(val)
+		if !ok {
+			// Can't determine length, skip validation for unknown values
+			// This handles the case where values are unknown during planning
+			continue
+		}
+
+		if req.required && fieldLen == 0 {
+			if rawValueUnknownInDiff(d, req.fieldName) {
+				continue
+			}
+			return fmt.Errorf("`%s` are required for log_type %q", req.fieldName, logType)
+		}
+
+		if req.forbidden && fieldLen > 0 {
+			return fmt.Errorf("cannot set `%s` when log_type is %q", req.fieldName, logType)
+		}
+	}
+
+	return nil
+}
+
+func collectionLen(val interface{}) (int, bool) {
+	switch collection := val.(type) {
+	case []interface{}:
+		return len(collection), true
+	case *schema.Set:
+		return collection.Len(), true
+	default:
+		return 0, false
+	}
+}
+
+func rawValueUnknownInDiff(d *schema.ResourceDiff, key string) bool {
+	raw := d.GetRawConfig()
+	if raw.IsNull() {
+		return false
+	}
+
+	rawValue, diags := d.GetRawConfigAt(cty.GetAttrPath(key))
+	if diags.HasError() {
+		return false
+	}
+
+	return !rawValue.IsKnown()
+}
+
 func normalizeContractID(contractID string) string {
 	return strings.TrimSpace(strings.TrimPrefix(contractID, "ctr_"))
 }
@@ -1738,12 +1914,21 @@ func resourceDatastreamRead(ctx context.Context, d *schema.ResourceData, m inter
 	if logType == datastream.LogTypeAppSec {
 		attrs["app_sec_configs"] = AppSecConfigsToIDsList(streamDetails.AppSecConfigs)
 		attrs["properties"] = []interface{}{}
+		attrs["service_ids"] = []interface{}{}
 	}
 
 	if logType == datastream.LogTypeCDN {
 		attrs["properties"] = PropertyToList(streamDetails.Properties)
 		attrs["app_sec_configs"] = []interface{}{}
+		attrs["service_ids"] = []interface{}{}
 	}
+
+	if logType == datastream.LogTypeAnswerX {
+		attrs["service_ids"] = AnswerXServiceIDsToList(streamDetails.AnswerXServiceIDs)
+		attrs["properties"] = []interface{}{}
+		attrs["app_sec_configs"] = []interface{}{}
+	}
+
 	attrs["stream_name"] = streamDetails.StreamName
 	attrs["stream_version"] = streamDetails.StreamVersion
 	if samplingPercentage, ok := resolveSamplingPercentageForRead(streamDetails.SamplingPercentage, d); ok {
@@ -1806,7 +1991,7 @@ func getStreamForRead(ctx context.Context, client datastream.DS, logger akalog.I
 func probeForStream(ctx context.Context, client datastream.DS, logger akalog.Interface, streamID int64) (*datastream.DetailedStreamVersion, datastream.LogType, error) {
 
 	var lastErr error
-	for _, logType := range []datastream.LogType{datastream.LogTypeCDN, datastream.LogTypeAppSec} {
+	for _, logType := range []datastream.LogType{datastream.LogTypeCDN, datastream.LogTypeAppSec, datastream.LogTypeAnswerX} {
 		logger.Debugf("probing for stream '%d' with log_type %s", streamID, logType)
 		streamDetails, err := client.GetStream(ctx, datastream.GetStreamRequest{
 			StreamID: streamID,
@@ -1981,7 +2166,7 @@ func updateStream(ctx context.Context, client datastream.DS, logger akalog.Inter
 		}
 		emailIDs := tf.InterfaceSliceToStringSlice(emailIDsList)
 
-		datasetFieldsIDs, propertyIDs, appSecConfigIDs, err := getStreamTypeConfig(d, logType)
+		streamFields, err := getStreamTypeConfig(d, logType)
 		if err != nil {
 			return err
 		}
@@ -2029,12 +2214,13 @@ func updateStream(ctx context.Context, client datastream.DS, logger akalog.Inter
 				DeliveryConfiguration: *config,
 				Destination:           connectors,
 				ContractID:            contractID,
-				DatasetFields:         datasetFieldsIDs,
+				DatasetFields:         streamFields.DatasetFields,
 				NotificationEmails:    emailIDs,
-				Properties:            propertyIDs,
+				Properties:            streamFields.Properties,
 				StreamName:            streamName,
 				SamplingPercentage:    samplingPercentage,
-				AppSecConfigs:         appSecConfigIDs,
+				AppSecConfigs:         streamFields.AppSecConfigs,
+				AnswerXServiceIDs:     streamFields.AnswerXServiceIDs,
 			},
 			Activate: isStreamActive,
 			LogType:  logType,
@@ -2347,6 +2533,17 @@ func normalizePropertyID(propertyID string) string {
 }
 
 func validateConfig(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
+	// Skip validation for destroy operations
+	if isDatastreamDestroyDiff(d) {
+		return nil
+	}
+
+	// Validate log-type specific field requirements at plan time
+	logType := logTypeFromDiff(d)
+	if err := validateStreamTypeConfigFromDiff(d, logType); err != nil {
+		return err
+	}
+
 	// Validate that users don't manually specify midgress dataset field (2051)
 	datasetFieldsResource, exists := d.GetOkExists("dataset_fields")
 	if exists {

@@ -1,15 +1,19 @@
 package datastream
 
 import (
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/datastream"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -166,6 +170,46 @@ var (
 			CreatedDate:   "01-01-2024 00:00:00 GMT",
 			AppSecConfigs: []datastream.AppSecConfig{
 				{AppSecID: 12345, AppSecName: "WAF Security File"},
+			},
+		},
+	}
+
+	answerXStreamList = []datastream.StreamDetails{
+		{
+			LogType:       datastream.LogTypeAnswerX,
+			StreamID:      20,
+			StreamName:    "AnswerXStream1",
+			StreamStatus:  datastream.StreamStatusActivated,
+			StreamVersion: 1,
+			LatestVersion: 1,
+			GroupID:       4321,
+			ContractID:    "2-ABCDE",
+			ProductID:     "P-5678",
+			CreatedBy:     "user2",
+			CreatedDate:   "02-02-2024 00:00:00 GMT",
+			AnswerXServiceIDs: []datastream.AnswerXServiceDetail{
+				{SSID: 101, Name: "ServiceA", Product: "AnswerX"},
+				{SSID: 202, Name: "ServiceB", Product: "AnswerX"},
+			},
+		},
+	}
+
+	answerXStreamListReorderedServiceIDs = []datastream.StreamDetails{
+		{
+			LogType:       datastream.LogTypeAnswerX,
+			StreamID:      20,
+			StreamName:    "AnswerXStream1",
+			StreamStatus:  datastream.StreamStatusActivated,
+			StreamVersion: 1,
+			LatestVersion: 1,
+			GroupID:       4321,
+			ContractID:    "2-ABCDE",
+			ProductID:     "P-5678",
+			CreatedBy:     "user2",
+			CreatedDate:   "02-02-2024 00:00:00 GMT",
+			AnswerXServiceIDs: []datastream.AnswerXServiceDetail{
+				{SSID: 202, Name: "ServiceB", Product: "AnswerX"},
+				{SSID: 101, Name: "ServiceA", Product: "AnswerX"},
 			},
 		},
 	}
@@ -328,10 +372,69 @@ func TestDataDatastreams(t *testing.T) {
 				},
 			},
 		},
+		"list answerx streams": {
+			init: func(m *datastream.Mock) {
+				m.On("ListStreams", testutils.MockContext, datastream.ListStreamsRequest{
+					LogType: datastream.LogTypeAnswerX,
+				}).Return(answerXStreamList, nil).Times(3)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataDatastreams/list_streams_answerx.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						test.NewStateChecker("data.akamai_datastreams.test").
+							CheckEqual("streams_details.#", "1").
+							CheckEqual("streams_details.0.stream_id", "20").
+							CheckEqual("streams_details.0.stream_name", "AnswerXStream1").
+							CheckEqual("streams_details.0.properties.#", "0").
+							CheckEqual("streams_details.0.service_ids.#", "2").
+							Build(),
+						checkServiceIDsSet("data.akamai_datastreams.test", "streams_details.0.service_ids", []datastream.AnswerXServiceDetail{
+							{SSID: 101, Name: "ServiceA", Product: "AnswerX"},
+							{SSID: 202, Name: "ServiceB", Product: "AnswerX"},
+						}),
+					),
+				},
+			},
+		},
+		"list answerx streams with reordered service IDs has no diff": {
+			init: func(m *datastream.Mock) {
+				m.On("ListStreams", testutils.MockContext, datastream.ListStreamsRequest{
+					LogType: datastream.LogTypeAnswerX,
+				}).Return(answerXStreamList, nil).Times(3)
+				m.On("ListStreams", testutils.MockContext, datastream.ListStreamsRequest{
+					LogType: datastream.LogTypeAnswerX,
+				}).Return(answerXStreamListReorderedServiceIDs, nil).Times(2)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataDatastreams/list_streams_answerx.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						test.NewStateChecker("data.akamai_datastreams.test").
+							CheckEqual("streams_details.#", "1").
+							CheckEqual("streams_details.0.stream_id", "20").
+							CheckEqual("streams_details.0.stream_name", "AnswerXStream1").
+							CheckEqual("streams_details.0.properties.#", "0").
+							CheckEqual("streams_details.0.service_ids.#", "2").
+							Build(),
+						checkServiceIDsSet("data.akamai_datastreams.test", "streams_details.0.service_ids", []datastream.AnswerXServiceDetail{
+							{SSID: 101, Name: "ServiceA", Product: "AnswerX"},
+							{SSID: 202, Name: "ServiceB", Product: "AnswerX"},
+						}),
+					),
+				},
+				{
+					Config:             testutils.LoadFixtureString(t, "testdata/TestDataDatastreams/list_streams_answerx.tf"),
+					PlanOnly:           true,
+					ExpectNonEmptyPlan: false,
+				},
+			},
+		},
 	}
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			client := &datastream.Mock{}
 			if test.init != nil {
 				test.init(client)
@@ -345,6 +448,47 @@ func TestDataDatastreams(t *testing.T) {
 			})
 			client.AssertExpectations(t)
 		})
+	}
+}
+
+func checkServiceIDsSet(resourceName, key string, expected []datastream.AnswerXServiceDetail) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("resource not found: %s", resourceName)
+		}
+
+		expectedByID := make(map[int64]datastream.AnswerXServiceDetail, len(expected))
+		for _, item := range expected {
+			expectedByID[item.SSID] = item
+		}
+
+		actualByID := make(map[int64]datastream.AnswerXServiceDetail, len(expected))
+		for attrKey, value := range rs.Primary.Attributes {
+			if !strings.HasPrefix(attrKey, key+".") || !strings.HasSuffix(attrKey, ".id") {
+				continue
+			}
+
+			elementKey := strings.TrimSuffix(strings.TrimPrefix(attrKey, key+"."), ".id")
+			id, err := strconv.ParseInt(value, 10, 64)
+			if err != nil {
+				return fmt.Errorf("invalid service id for %s: %w", attrKey, err)
+			}
+
+			actualByID[id] = datastream.AnswerXServiceDetail{
+				SSID:    id,
+				Name:    rs.Primary.Attributes[fmt.Sprintf("%s.%s.name", key, elementKey)],
+				Product: rs.Primary.Attributes[fmt.Sprintf("%s.%s.product", key, elementKey)],
+			}
+		}
+
+		if !assert.ObjectsAreEqualValues(expectedByID, actualByID) {
+			expectedJSON, _ := json.Marshal(expectedByID)
+			actualJSON, _ := json.Marshal(actualByID)
+			return fmt.Errorf("unexpected service_ids for %s: expected %s, got %s", key, expectedJSON, actualJSON)
+		}
+
+		return nil
 	}
 }
 

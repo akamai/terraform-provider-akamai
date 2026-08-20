@@ -73,6 +73,12 @@
 
 
 
+* Datastream
+  * Added support for `ANSWERX` as `log_type` in the `akamai_datastream` resource and in the `akamai_datastreams`, `akamai_datastream_activation_history`, and `akamai_datastream_dataset_fields` data sources.
+  * Added the `service_ids` attribute to the `akamai_datastream` resource and the `akamai_datastreams` data source to manage `AnswerX` service IDs.
+  * Added the `akamai_datastream_answerx_service_ids` data source to list available `AnswerX` service IDs for a contract.
+  * Added the `log_type` argument to the `akamai_datastream_dataset_fields` data source with support for `CDN` and `ANSWERX`.
+
 
 
 

@@ -1,0 +1,37 @@
+provider "akamai" {
+  edgerc = "../../common/testutils/edgerc"
+}
+
+# app_sec_configs must not be set for ANSWERX log type
+resource "akamai_datastream" "s" {
+  log_type = "ANSWERX"
+  active   = false
+
+  stream_name = "test-answerx-stream"
+  group_id    = "42"
+  contract_id = "test_contract"
+
+  dataset_fields = [2000]
+
+  service_ids = [101]
+
+  app_sec_configs = [102]
+
+  trafficpeak_connector {
+    authentication_type = "BASIC"
+    display_name        = "TrafficPeakTest"
+    endpoint            = "https://example.com/ingest/event?table=unit_test&token=1234"
+    content_type        = "application/json"
+    compress_logs       = true
+    user_name           = "username"
+    password            = "password"
+  }
+
+  delivery_configuration {
+    format = "JSON"
+
+    frequency {
+      interval_in_secs = 30
+    }
+  }
+}

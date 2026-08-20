@@ -139,8 +139,19 @@ func AppSecConfigsToIDsList(configs []datastream.AppSecConfig) []int {
 	return ids
 }
 
+// AnswerXServiceIDsToList converts a list of AnswerXServiceDetail structs to a list of IDs.
+func AnswerXServiceIDsToList(answerXServiceIDs []datastream.AnswerXServiceDetail) []int {
+	ids := make([]int, 0, len(answerXServiceIDs))
+
+	for _, service := range answerXServiceIDs {
+		ids = append(ids, int(service.SSID))
+	}
+
+	return ids
+}
+
 // GetPropertiesList converts propertyIDs with and without "prp_" prefix to slice of ints
-func GetPropertiesList(properties []interface{}) ([]datastream.PropertyID, error) {
+func GetPropertiesList(properties []any) ([]datastream.PropertyID, error) {
 	ids := make([]datastream.PropertyID, 0, len(properties))
 
 	for _, property := range properties {
@@ -155,7 +166,7 @@ func GetPropertiesList(properties []interface{}) ([]datastream.PropertyID, error
 }
 
 // GetAppSecConfigIDs converts a list of AppSec config IDs to a slice of AppSecConfigID types
-func GetAppSecConfigIDs(appSecConfigs []interface{}) ([]datastream.AppSecConfigID, error) {
+func GetAppSecConfigIDs(appSecConfigs []any) ([]datastream.AppSecConfigID, error) {
 	ids := make([]datastream.AppSecConfigID, 0, len(appSecConfigs))
 
 	for _, config := range appSecConfigs {
@@ -164,6 +175,24 @@ func GetAppSecConfigIDs(appSecConfigs []interface{}) ([]datastream.AppSecConfigI
 			return nil, fmt.Errorf("expected `app_sec_id` to be an integer but got %T", config)
 		}
 		ids = append(ids, datastream.AppSecConfigID{AppSecID: appSecID})
+	}
+	return ids, nil
+}
+
+// GetAnswerXServiceIDsFromSet converts a set of service ID integers to a slice of AnswerXServiceID types.
+func GetAnswerXServiceIDsFromSet(serviceIDs *schema.Set) ([]datastream.AnswerXServiceID, error) {
+	if serviceIDs == nil {
+		return nil, nil
+	}
+
+	ids := make([]datastream.AnswerXServiceID, 0, serviceIDs.Len())
+
+	for _, id := range serviceIDs.List() {
+		ssid, ok := id.(int)
+		if !ok {
+			return nil, fmt.Errorf("expected `service_id` to be an integer, but got %T", id)
+		}
+		ids = append(ids, datastream.AnswerXServiceID{SSID: int64(ssid)})
 	}
 	return ids, nil
 }

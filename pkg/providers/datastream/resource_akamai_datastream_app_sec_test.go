@@ -24,6 +24,10 @@ func TestResourceStreamLogTypeValidation(t *testing.T) {
 			tfFile:    "testdata/TestResourceStream/appsec/appsec_with_properties.tf",
 			withError: regexp.MustCompile("cannot set `properties` when log_type is \"APPSEC\""),
 		},
+		"appsec with service_ids": {
+			tfFile:    "testdata/TestResourceStream/appsec/appsec_with_service_ids.tf",
+			withError: regexp.MustCompile("cannot set `service_ids` when log_type is \"APPSEC\""),
+		},
 		"appsec missing contract_id": {
 			tfFile:    "testdata/TestResourceStream/appsec/appsec_missing_contract_id.tf",
 			withError: regexp.MustCompile("`contract_id` is required for log_type \"APPSEC\""),
@@ -63,6 +67,10 @@ func TestResourceStreamLogTypeValidation(t *testing.T) {
 		"cdn invalid group_id": {
 			tfFile:    "testdata/TestResourceStream/cdn/cdn_group_id_invalid.tf",
 			withError: regexp.MustCompile("invalid `group_id`"),
+		},
+		"cdn with service_ids": {
+			tfFile:    "testdata/TestResourceStream/cdn/cdn_with_service_ids.tf",
+			withError: regexp.MustCompile("cannot set `service_ids` when log_type is \"CDN\""),
 		},
 	}
 
