@@ -65,6 +65,29 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+* CPS
+  * Added `akamai_cps_force_certificate_renewal` action that allows to force early renewal of CPS certificates. Requires Terraform 1.14 or newer ([I#749](https://github.com/akamai/terraform-provider-akamai/issues/749)).
+
+
+
+
+
 * DNS
   * Added `multi_provider_dnssec` block to the `akamai_dns_zone` resource to support multi-signer DNSSEC configuration. 
     The block contains `enabled` (bool) and `webhook` (string) fields.

@@ -9,6 +9,7 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf/validators"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/subprovider"
 	"github.com/akamai/terraform-provider-akamai/v10/version"
+	"github.com/hashicorp/terraform-plugin-framework/action"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
@@ -19,6 +20,7 @@ import (
 )
 
 var _ provider.Provider = &Provider{}
+var _ provider.ProviderWithActions = &Provider{}
 
 // Provider is the implementation of akamai terraform provider which uses terraform-plugin-framework
 type Provider struct {
@@ -238,6 +240,7 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 
 	resp.DataSourceData = meta
 	resp.ResourceData = meta
+	resp.ActionData = meta
 }
 
 // Resources returns slice of functions used to instantiate resource implementations
@@ -260,6 +263,19 @@ func (p *Provider) DataSources(_ context.Context) []func() datasource.DataSource
 	}
 
 	return dataSources
+}
+
+// Actions returns slice of functions used to instantiate action implementations
+func (p *Provider) Actions(_ context.Context) []func() action.Action {
+	actions := make([]func() action.Action, 0)
+
+	for _, sp := range p.subproviders {
+		if spWithActions, ok := sp.(subprovider.WithActions); ok {
+			actions = append(actions, spWithActions.FrameworkActions()...)
+		}
+	}
+
+	return actions
 }
 
 func getFrameworkConfigInt(tfValue types.Int64, envKey string) (int, error) {
