@@ -154,7 +154,7 @@ func resourceGTMv1Property(config gtmPropertyResourceConfig) *schema.Resource {
 				Type:             schema.TypeInt,
 				Optional:         true,
 				ValidateDiagFunc: validateTTL,
-				Default:          300,
+				Default:          60,
 			},
 			"max_unreachable_penalty": {
 				Type:     schema.TypeInt,

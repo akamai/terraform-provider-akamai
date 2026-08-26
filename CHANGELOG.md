@@ -7,6 +7,9 @@
 * ClientLists
   * Marked the `version` attribute in the `akamai_clientlist_activation` resource's schema as `Required` instead of `Computed` ([I#743](https://github.com/akamai/terraform-provider-akamai/issues/743)).
 
+* GTM
+  * Changed the default value of the `dynamic_ttl` attribute in the `akamai_gtm_property` resource from `300` to `60`, aligning it with the API specification ([I#784](https://github.com/akamai/terraform-provider-akamai/issues/784)).
+
 
 
 * PAPI
