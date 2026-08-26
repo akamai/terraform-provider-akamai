@@ -28,7 +28,7 @@ func TestResourceEdgeKV(t *testing.T) {
 		network:   "staging",
 		name:      "DevExpTest",
 		retention: ptr.To(86401),
-		groupID:   ptr.To(1234),
+		groupID:   ptr.To(int64(1234)),
 	}
 
 	tests := map[string]struct {
@@ -527,7 +527,7 @@ type (
 		name        string
 		geoLocation string
 		retention   *int
-		groupID     *int
+		groupID     *int64
 		items       []mockItem
 	}
 

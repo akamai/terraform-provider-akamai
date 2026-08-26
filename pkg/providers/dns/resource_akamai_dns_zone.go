@@ -269,7 +269,7 @@ func resourceDNSv2ZoneCreate(config dnsZoneResourceConfig) schema.CreateContextF
 					return diag.Errorf("no group found. Please provide the group.")
 				}
 				if len(groupList.Groups) == 1 {
-					group = strconv.Itoa(groupList.Groups[0].GroupID)
+					group = strconv.FormatInt(groupList.Groups[0].GroupID, 10)
 					logger.Warnf("Please modify configuration and provide group identifier. It will be required in the future version of the resource.")
 				}
 				if len(groupList.Groups) > 1 {

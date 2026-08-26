@@ -140,7 +140,7 @@ func resourceEdgeWorkerCreate(config edgeworkerResourceConfig) schema.CreateCont
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		groupIDNum, err := str.GetIntID(groupID, "grp_")
+		groupIDNum, err := str.GetInt64ID(groupID, "grp_")
 		if err != nil {
 			return diag.Errorf("invalid group_id provided: %s", err)
 		}
@@ -315,7 +315,7 @@ func resourceEdgeWorkerUpdate(config edgeworkerResourceConfig) schema.UpdateCont
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		groupIDNum, err := str.GetIntID(groupID, "grp_")
+		groupIDNum, err := str.GetInt64ID(groupID, "grp_")
 		if err != nil {
 			return diag.FromErr(err)
 		}

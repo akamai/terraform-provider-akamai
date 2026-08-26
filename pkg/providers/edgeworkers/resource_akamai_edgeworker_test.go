@@ -126,7 +126,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 		expectCreateEdgeWorkerWithVersion = func(client *edgeworkers.Mock, name, localBundlePath, timeForCreation string, groupID, resourceTierID, edgeWorkerID int, workerConfig edgeworkerResourceConfig) (*edgeworkers.EdgeWorkerID, *edgeworkers.EdgeWorkerVersion) {
 			edgeWorkerReq := edgeworkers.CreateEdgeWorkerIDRequest{
 				Name:           name,
-				GroupID:        groupID,
+				GroupID:        int64(groupID),
 				ResourceTierID: resourceTierID,
 			}
 			createdEdgeWorker := edgeworkers.EdgeWorkerID{
@@ -176,7 +176,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 			updateEdgeWorkerID := edgeworkers.UpdateEdgeWorkerIDRequest{
 				Body: edgeworkers.EdgeWorkerIDRequestBody{
 					Name:           name,
-					GroupID:        groupID,
+					GroupID:        int64(groupID),
 					ResourceTierID: resourceTierID,
 				},
 				EdgeWorkerID: edgeWorkerID,
@@ -213,7 +213,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 			updateEdgeWorkerID := edgeworkers.UpdateEdgeWorkerIDRequest{
 				Body: edgeworkers.EdgeWorkerIDRequestBody{
 					Name:           name,
-					GroupID:        groupID,
+					GroupID:        int64(groupID),
 					ResourceTierID: resourceTierID,
 				},
 				EdgeWorkerID: edgeWorkerID,

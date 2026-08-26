@@ -186,7 +186,7 @@ func resourceEdgeKVCreate(config edgeKVResourceConfig) schema.CreateContextFunc 
 				Name:        name,
 				GeoLocation: geoLocation,
 				Retention:   ptr.To(retention),
-				GroupID:     ptr.To(groupID),
+				GroupID:     ptr.To(int64(groupID)),
 			},
 		})
 		if err != nil {
@@ -282,7 +282,7 @@ func resourceEdgeKVUpdate(ctx context.Context, rd *schema.ResourceData, m interf
 		UpdateNamespace: edgeworkers.UpdateNamespace{
 			Name:      name,
 			Retention: ptr.To(retention),
-			GroupID:   ptr.To(groupID),
+			GroupID:   ptr.To(int64(groupID)),
 		},
 	})
 	if err != nil {
