@@ -11,7 +11,7 @@
       "conditionExceptions": [
         {
           "exception": {
-            "specificHeaderCookieParamXmlOrJsonNames": [
+            "selectors": [
               {
                 "names": ["test"],
                 "selector": "REQUEST_COOKIES_NAMES",
@@ -32,7 +32,7 @@
       "conditionExceptions": [
         {
           "exception": {
-            "specificHeaderCookieParamXmlOrJsonNames": [
+            "selectors": [
               {
                 "names": ["test"],
                 "selector": "REQUEST_COOKIES_NAMES",

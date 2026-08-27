@@ -60,12 +60,12 @@ func TestDataWAFAIRules(t *testing.T) {
 						CheckEqual("ai_rules.0.risk_score_group", "SQL_AI").
 						CheckEqual("ai_rules.0.rule_description", "A SQL Injection attack consists of insertion or injection of a SQL query via the input data from the client to the application.").
 						CheckEqual("ai_rules.0.action", "alert").
-						CheckEqual("ai_rules.0.condition_exception", "[\n  {\n    \"exception\": {\n      \"specificHeaderCookieParamXmlOrJsonNames\": [\n        {\n          \"names\": [\n            \"test\"\n          ],\n          \"selector\": \"REQUEST_COOKIES_NAMES\",\n          \"wildcard\": true\n        }\n      ]\n    }\n  }\n]").
+						CheckEqual("ai_rules.0.condition_exception", "[\n  {\n    \"exception\": {\n      \"selectors\": [\n        {\n          \"names\": [\n            \"test\"\n          ],\n          \"selector\": \"REQUEST_COOKIES_NAMES\",\n          \"wildcard\": true,\n          \"type\": \"\"\n        }\n      ]\n    }\n  }\n]").
 						CheckEqual("ai_rules.1.rule_id", "3001001").
 						CheckEqual("ai_rules.1.risk_score_group", "XSS_AI").
 						CheckEqual("ai_rules.1.rule_description", "Cross-Site Scripting attacks are a type of injection problem, in which malicious scripts are injected into otherwise benign web sites.").
 						CheckEqual("ai_rules.1.action", "deny").
-						CheckEqual("ai_rules.1.condition_exception", "[\n  {\n    \"exception\": {\n      \"specificHeaderCookieParamXmlOrJsonNames\": [\n        {\n          \"names\": [\n            \"test\"\n          ],\n          \"selector\": \"REQUEST_COOKIES_NAMES\",\n          \"wildcard\": true\n        }\n      ]\n    }\n  }\n]").
+						CheckEqual("ai_rules.1.condition_exception", "[\n  {\n    \"exception\": {\n      \"selectors\": [\n        {\n          \"names\": [\n            \"test\"\n          ],\n          \"selector\": \"REQUEST_COOKIES_NAMES\",\n          \"wildcard\": true,\n          \"type\": \"\"\n        }\n      ]\n    }\n  }\n]").
 						CheckEqual("output_text", "\n+----------------------------------------------------------------------------------+\n| AIRulesDS                                                                        |\n+---------+---------+----------------------------------+------------------+--------+\n| RULE ID | VERSION | TITLE                            | RISK SCORE GROUP | ACTION |\n+---------+---------+----------------------------------+------------------+--------+\n| 3001000 | 1       | AI-Detected SQL Injection Attack | SQL_AI           | alert  |\n| 3001001 | 1       | AI-Detected XSS Attack           | XSS_AI           | deny   |\n+---------+---------+----------------------------------+------------------+--------+\n").
 						Build(),
 				},

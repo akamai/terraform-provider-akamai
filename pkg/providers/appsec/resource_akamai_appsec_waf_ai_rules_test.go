@@ -28,13 +28,8 @@ func TestWAFAIRulesResource(t *testing.T) {
 	err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResWafAIRules/AIRules.json"), &aiRulesResp)
 	require.NoError(t, err)
 
-	aiRuleActionResp := appsec.GetAIRuleActionResponse{}
-	err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResWafAIRules/AIRuleAction.json"), &aiRuleActionResp)
-	require.NoError(t, err)
-
-	aiRuleActionAlertResp := appsec.GetAIRuleActionResponse{}
-	err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResWafAIRules/AIRuleActionAlert.json"), &aiRuleActionAlertResp)
-	require.NoError(t, err)
+	aiRulesRespDeny := aiRulesRespWithAction(aiRulesResp, 3001000, "deny")
+	aiRulesRespAlert := aiRulesRespWithAction(aiRulesResp, 3001000, "alert")
 
 	statusChecker := test.NewStateChecker("akamai_appsec_waf_ai_rules.test").
 		CheckEqual("config_id", "111111").
@@ -44,7 +39,7 @@ func TestWAFAIRulesResource(t *testing.T) {
 		CheckEqual("config_id", "111111").
 		CheckEqual("security_policy_id", "2222_333333").
 		CheckEqual("rule_id", "3001000").
-		CheckEqual("rule_version_id", "1")
+		CheckEqual("rule_description", `A SQL Injection attack consists of insertion or "injection" of a SQL query via the input data from the client to the application.`)
 
 	tests := map[string]struct {
 		init  func(*appsec.Mock)
@@ -135,13 +130,13 @@ func TestWAFAIRulesResource(t *testing.T) {
 		},
 		"action mode - create and read rule action": {
 			init: func(m *appsec.Mock) {
-				// Create: modifiable version + resolve rule version + update action
+				// Create: modifiable version + findAIRule (version lookup) + update action
 				mockGetConfiguration(m, 1)
 				mockListWAFAIRulesForResource(m, aiRulesResp, 1)
 				mockUpdateAIRuleAction(m, 3001000, 1, "deny", 1)
-				// Post-create Read
+				// Post-create Read: findAIRule returns current action
 				mockGetConfiguration(m, 1)
-				mockGetAIRuleAction(m, 3001000, 1, aiRuleActionResp, 1)
+				mockListWAFAIRulesForResource(m, aiRulesRespDeny, 1)
 				// Destroy: reset action to none
 				mockGetConfiguration(m, 1)
 				mockUpdateAIRuleAction(m, 3001000, 1, "none", 1)
@@ -162,14 +157,14 @@ func TestWAFAIRulesResource(t *testing.T) {
 				mockListWAFAIRulesForResource(m, aiRulesResp, 1)
 				mockUpdateAIRuleAction(m, 3001000, 1, "deny", 1)
 				mockGetConfiguration(m, 1)
-				mockGetAIRuleAction(m, 3001000, 1, aiRuleActionResp, 1)
+				mockListWAFAIRulesForResource(m, aiRulesRespDeny, 1)
 				// Step 2: plan Read + Update alert + post-update Read
 				mockGetConfiguration(m, 1)
-				mockGetAIRuleAction(m, 3001000, 1, aiRuleActionResp, 1)
+				mockListWAFAIRulesForResource(m, aiRulesRespDeny, 1)
 				mockGetConfiguration(m, 1)
 				mockUpdateAIRuleAction(m, 3001000, 1, "alert", 1)
 				mockGetConfiguration(m, 1)
-				mockGetAIRuleAction(m, 3001000, 1, aiRuleActionAlertResp, 1)
+				mockListWAFAIRulesForResource(m, aiRulesRespAlert, 1)
 				// Destroy: reset action to none
 				mockGetConfiguration(m, 1)
 				mockUpdateAIRuleAction(m, 3001000, 1, "none", 1)
@@ -218,13 +213,12 @@ func TestWAFAIRulesResource(t *testing.T) {
 		},
 		"import action mode": {
 			init: func(m *appsec.Mock) {
-				// ImportState: getLatestConfigVersion + GetAIRules + GetAIRuleAction
+				// ImportState: getLatestConfigVersion + findAIRule (ListAIRules)
 				mockGetConfiguration(m, 1)
-				mockListWAFAIRulesForResource(m, aiRulesResp, 1)
-				mockGetAIRuleAction(m, 3001000, 1, aiRuleActionResp, 1)
+				mockListWAFAIRulesForResource(m, aiRulesRespDeny, 1)
 				// Post-import Read
 				mockGetConfiguration(m, 1)
-				mockGetAIRuleAction(m, 3001000, 1, aiRuleActionResp, 1)
+				mockListWAFAIRulesForResource(m, aiRulesRespDeny, 1)
 				// Destroy: reset action to none
 				mockGetConfiguration(m, 1)
 				mockUpdateAIRuleAction(m, 3001000, 1, "none", 1)
@@ -239,8 +233,8 @@ func TestWAFAIRulesResource(t *testing.T) {
 						CheckEqual("config_id", "111111").
 						CheckEqual("security_policy_id", "2222_333333").
 						CheckEqual("rule_id", "3001000").
-						CheckEqual("rule_version_id", "1").
 						CheckEqual("action", "deny").
+						CheckEqual("rule_description", `A SQL Injection attack consists of insertion or "injection" of a SQL query via the input data from the client to the application.`).
 						Build(),
 					ImportStatePersist: true,
 				},
@@ -417,21 +411,24 @@ func mockListWAFAIRulesForResourceFailure(client *appsec.Mock) {
 
 func mockUpdateAIRuleAction(client *appsec.Mock, ruleID, ruleVersionID int64, action string, times int) {
 	client.On("UpdateAIRuleAction", testutils.MockContext, appsec.UpdateAIRuleActionRequest{
-		ConfigID:      111111,
-		Version:       2,
-		PolicyID:      "2222_333333",
-		RuleID:        ruleID,
-		RuleVersionID: ruleVersionID,
-		Body:          appsec.UpdateAIRuleActionRequestBody{Action: action},
+		ConfigID:    111111,
+		Version:     2,
+		PolicyID:    "2222_333333",
+		RuleID:      ruleID,
+		RuleVersion: ruleVersionID,
+		Body:        appsec.UpdateAIRuleActionRequestBody{Action: action},
 	}).Return(&appsec.UpdateAIRuleActionResponse{Action: action}, nil).Times(times)
 }
 
-func mockGetAIRuleAction(client *appsec.Mock, ruleID, ruleVersionID int64, resp appsec.GetAIRuleActionResponse, times int) {
-	client.On("GetAIRuleAction", testutils.MockContext, appsec.GetAIRuleActionRequest{
-		ConfigID:      111111,
-		Version:       2,
-		PolicyID:      "2222_333333",
-		RuleID:        ruleID,
-		RuleVersionID: ruleVersionID,
-	}).Return(&resp, nil).Times(times)
+func aiRulesRespWithAction(base appsec.ListAIRulesResponse, ruleID int64, action string) appsec.ListAIRulesResponse {
+	result := base
+	result.AIRules = make([]appsec.PolicyAIRule, len(base.AIRules))
+	copy(result.AIRules, base.AIRules)
+	for i := range result.AIRules {
+		if result.AIRules[i].RuleID == ruleID {
+			result.AIRules[i].Action = action
+			break
+		}
+	}
+	return result
 }

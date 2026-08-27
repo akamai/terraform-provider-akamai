@@ -17,8 +17,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -48,8 +48,8 @@ type (
 		SecurityPolicyID types.String `tfsdk:"security_policy_id"`
 		AIRuleStatus     types.String `tfsdk:"ai_rule_status"`
 		RuleID           types.Int64  `tfsdk:"rule_id"`
-		RuleVersionID    types.Int64  `tfsdk:"rule_version_id"`
 		Action           types.String `tfsdk:"action"`
+		RuleDescription  types.String `tfsdk:"rule_description"`
 	}
 )
 
@@ -93,19 +93,17 @@ func (r *wafAIRulesResource) Schema(_ context.Context, _ resource.SchemaRequest,
 					modifiers.PreventInt64Update(),
 				},
 			},
-			"rule_version_id": schema.Int64Attribute{
-				Optional:    true,
-				Computed:    true,
-				Description: "Version of the AI rule. Looked up automatically from the rule list if not provided.",
-				PlanModifiers: []planmodifier.Int64{
-					int64planmodifier.UseStateForUnknown(),
-					modifiers.PreventInt64Update(),
-				},
-			},
 			"action": schema.StringAttribute{
 				Optional:    true,
-				Description: "Action to set for the AI rule specified by rule_id. Valid values: alert, deny, deny_<custom_deny_name>, none. Mutually exclusive with ai_rule_status.",
+				Description: "Action to set for the AI rule specified by rule_id. Valid values: alert, deny, deny_custom_<custom_deny_id>, none. Mutually exclusive with ai_rule_status.",
 				Validators:  []validator.String{stringvalidator.RegexMatches(regexp.MustCompile(`^(alert|deny|deny_custom_.+|none)$`), "must be alert, deny, deny_custom_<id>, or none")},
+			},
+			"rule_description": schema.StringAttribute{
+				Computed:    true,
+				Description: "Description of what the AI rule detects. Populated automatically from the rule list.",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 		},
 	}
@@ -201,14 +199,14 @@ func (r *wafAIRulesResource) Create(ctx context.Context, req resource.CreateRequ
 			return
 		}
 		data.RuleID = types.Int64Null()
-		data.RuleVersionID = types.Int64Null()
 		data.Action = types.StringNull()
+		data.RuleDescription = types.StringNull()
 		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 		return
 	}
 
 	ruleID := data.RuleID.ValueInt64()
-	ruleVersionID, err := r.resolveRuleVersionID(ctx, client, configID, version, policyID, ruleID, data.RuleVersionID)
+	rule, err := r.findAIRule(ctx, client, configID, version, policyID, ruleID)
 	if err != nil {
 		resp.Diagnostics.AddError("resolving rule version", err.Error())
 		return
@@ -216,7 +214,7 @@ func (r *wafAIRulesResource) Create(ctx context.Context, req resource.CreateRequ
 
 	_, err = client.UpdateAIRuleAction(ctx, appsec.UpdateAIRuleActionRequest{
 		ConfigID: configID, Version: version, PolicyID: policyID,
-		RuleID: ruleID, RuleVersionID: ruleVersionID,
+		RuleID: ruleID, RuleVersion: rule.RuleVersion,
 		Body: appsec.UpdateAIRuleActionRequestBody{Action: data.Action.ValueString()},
 	})
 	if err != nil {
@@ -225,7 +223,8 @@ func (r *wafAIRulesResource) Create(ctx context.Context, req resource.CreateRequ
 	}
 
 	data.AIRuleStatus = types.StringNull()
-	data.RuleVersionID = types.Int64Value(ruleVersionID)
+	data.RuleDescription = types.StringValue(rule.RuleDescription)
+	resp.Diagnostics.Append(resp.Private.SetKey(ctx, "rule_version", []byte(strconv.FormatInt(rule.RuleVersion, 10)))...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -279,15 +278,15 @@ func (r *wafAIRulesResource) Read(ctx context.Context, req resource.ReadRequest,
 		return
 	}
 
-	actionResp, err := client.GetAIRuleAction(ctx, appsec.GetAIRuleActionRequest{
-		ConfigID: configID, Version: version, PolicyID: policyID,
-		RuleID: data.RuleID.ValueInt64(), RuleVersionID: data.RuleVersionID.ValueInt64(),
-	})
+	ruleID := data.RuleID.ValueInt64()
+	rule, err := r.findAIRule(ctx, client, configID, version, policyID, ruleID)
 	if err != nil {
-		resp.Diagnostics.AddError("reading AI rule action", err.Error())
+		resp.Diagnostics.AddError("reading AI rule", err.Error())
 		return
 	}
-	data.Action = types.StringValue(actionResp.Action)
+	data.Action = types.StringValue(rule.Action)
+	data.RuleDescription = types.StringValue(rule.RuleDescription)
+	resp.Diagnostics.Append(resp.Private.SetKey(ctx, "rule_version", []byte(strconv.FormatInt(rule.RuleVersion, 10)))...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -321,16 +320,26 @@ func (r *wafAIRulesResource) Update(ctx context.Context, req resource.UpdateRequ
 			return
 		}
 		plan.RuleID = types.Int64Null()
-		plan.RuleVersionID = types.Int64Null()
 		plan.Action = types.StringNull()
+		plan.RuleDescription = types.StringNull()
 		resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 		return
 	}
 
 	ruleID := plan.RuleID.ValueInt64()
+	ruleVersionBytes, diags := req.Private.GetKey(ctx, "rule_version")
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ruleVersion, err := strconv.ParseInt(string(ruleVersionBytes), 10, 64)
+	if err != nil {
+		resp.Diagnostics.AddError("parsing rule version from private state", err.Error())
+		return
+	}
 	_, err = client.UpdateAIRuleAction(ctx, appsec.UpdateAIRuleActionRequest{
 		ConfigID: configID, Version: version, PolicyID: policyID,
-		RuleID: ruleID, RuleVersionID: plan.RuleVersionID.ValueInt64(),
+		RuleID: ruleID, RuleVersion: ruleVersion,
 		Body: appsec.UpdateAIRuleActionRequestBody{Action: plan.Action.ValueString()},
 	})
 	if err != nil {
@@ -338,6 +347,7 @@ func (r *wafAIRulesResource) Update(ctx context.Context, req resource.UpdateRequ
 		return
 	}
 	plan.AIRuleStatus = types.StringNull()
+	resp.Diagnostics.Append(resp.Private.SetKey(ctx, "rule_version", ruleVersionBytes)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
@@ -361,13 +371,24 @@ func (r *wafAIRulesResource) Delete(ctx context.Context, req resource.DeleteRequ
 			resp.Diagnostics.AddError("fetching modifiable config version", err.Error())
 			return
 		}
+		ruleVersionBytes, diags := req.Private.GetKey(ctx, "rule_version")
+		resp.Diagnostics.Append(diags...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		ruleVersion, err := strconv.ParseInt(string(ruleVersionBytes), 10, 64)
+		if err != nil {
+			resp.Diagnostics.AddError("parsing rule version from private state", err.Error())
+			return
+		}
+		ruleID := data.RuleID.ValueInt64()
 		_, err = client.UpdateAIRuleAction(ctx, appsec.UpdateAIRuleActionRequest{
 			ConfigID: configID, Version: version, PolicyID: policyID,
-			RuleID: data.RuleID.ValueInt64(), RuleVersionID: data.RuleVersionID.ValueInt64(),
+			RuleID: ruleID, RuleVersion: ruleVersion,
 			Body: appsec.UpdateAIRuleActionRequestBody{Action: "none"},
 		})
 		if err != nil {
-			resp.Diagnostics.AddError(fmt.Sprintf("resetting action for AI rule %d", data.RuleID.ValueInt64()), err.Error())
+			resp.Diagnostics.AddError(fmt.Sprintf("resetting action for AI rule %d", ruleID), err.Error())
 		}
 		return
 	}
@@ -453,8 +474,8 @@ func (r *wafAIRulesResource) ImportState(ctx context.Context, req resource.Impor
 			SecurityPolicyID: types.StringValue(policyID),
 			AIRuleStatus:     types.StringValue(statusResp.AIRuleStatus),
 			RuleID:           types.Int64Null(),
-			RuleVersionID:    types.Int64Null(),
 			Action:           types.StringNull(),
+			RuleDescription:  types.StringNull(),
 		})...)
 		return
 	}
@@ -465,32 +486,9 @@ func (r *wafAIRulesResource) ImportState(ctx context.Context, req resource.Impor
 		return
 	}
 
-	rulesResp, err := client.ListAIRules(ctx, appsec.ListAIRulesRequest{
-		ConfigID: configID, Version: version, PolicyID: policyID,
-	})
+	importedRule, err := r.findAIRule(ctx, client, configID, version, policyID, ruleID)
 	if err != nil {
-		resp.Diagnostics.AddError("reading AI rules", err.Error())
-		return
-	}
-
-	var ruleVersionID int64
-	for _, rule := range rulesResp.AIRules {
-		if rule.RuleID == ruleID {
-			ruleVersionID = rule.RuleVersion
-			break
-		}
-	}
-	if ruleVersionID == 0 {
-		resp.Diagnostics.AddError(fmt.Sprintf("AI rule %d not found in policy %q", ruleID, policyID), "")
-		return
-	}
-
-	actionResp, err := client.GetAIRuleAction(ctx, appsec.GetAIRuleActionRequest{
-		ConfigID: configID, Version: version, PolicyID: policyID,
-		RuleID: ruleID, RuleVersionID: ruleVersionID,
-	})
-	if err != nil {
-		resp.Diagnostics.AddError("reading AI rule action", err.Error())
+		resp.Diagnostics.AddError(fmt.Sprintf("AI rule %d not found in policy %q", ruleID, policyID), err.Error())
 		return
 	}
 
@@ -499,25 +497,23 @@ func (r *wafAIRulesResource) ImportState(ctx context.Context, req resource.Impor
 		SecurityPolicyID: types.StringValue(policyID),
 		AIRuleStatus:     types.StringNull(),
 		RuleID:           types.Int64Value(ruleID),
-		RuleVersionID:    types.Int64Value(ruleVersionID),
-		Action:           types.StringValue(actionResp.Action),
+		Action:           types.StringValue(importedRule.Action),
+		RuleDescription:  types.StringValue(importedRule.RuleDescription),
 	})...)
+	resp.Diagnostics.Append(resp.Private.SetKey(ctx, "rule_version", []byte(strconv.FormatInt(importedRule.RuleVersion, 10)))...)
 }
 
-func (r *wafAIRulesResource) resolveRuleVersionID(ctx context.Context, client appsec.APPSEC, configID int64, version int, policyID string, ruleID int64, stateVersionID types.Int64) (int64, error) {
-	if !stateVersionID.IsNull() && !stateVersionID.IsUnknown() {
-		return stateVersionID.ValueInt64(), nil
-	}
+func (r *wafAIRulesResource) findAIRule(ctx context.Context, client appsec.APPSEC, configID int64, version int, policyID string, ruleID int64) (*appsec.PolicyAIRule, error) {
 	rulesResp, err := client.ListAIRules(ctx, appsec.ListAIRulesRequest{
 		ConfigID: configID, Version: version, PolicyID: policyID,
 	})
 	if err != nil {
-		return 0, fmt.Errorf("looking up rule version: %w", err)
+		return nil, fmt.Errorf("looking up AI rules: %w", err)
 	}
-	for _, rule := range rulesResp.AIRules {
-		if rule.RuleID == ruleID {
-			return rule.RuleVersion, nil
+	for i := range rulesResp.AIRules {
+		if rulesResp.AIRules[i].RuleID == ruleID {
+			return &rulesResp.AIRules[i], nil
 		}
 	}
-	return 0, fmt.Errorf("AI rule %d not found in policy %q", ruleID, policyID)
+	return nil, fmt.Errorf("AI rule %d not found in policy %q", ruleID, policyID)
 }

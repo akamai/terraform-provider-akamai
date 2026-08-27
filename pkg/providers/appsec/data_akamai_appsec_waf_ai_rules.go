@@ -109,11 +109,11 @@ func (d *wafAIRulesDataSource) Schema(_ context.Context, _ datasource.SchemaRequ
 						},
 						"action": schema.StringAttribute{
 							Computed:    true,
-							Description: "Action taken when the AI rule is triggered.",
+							Description: "Action taken when the AI rule is triggered. Possible values: alert, deny, deny_custom_<custom_deny_id>, none.",
 						},
 						"condition_exception": schema.StringAttribute{
 							Computed:    true,
-							Description: "JSON-encoded list of condition exceptions for the AI rule.",
+							Description: "JSON-encoded list of group-level condition exceptions inherited by this AI rule. These are read-only and can only be set via the Akamai Control Center UI on the attack group. Cannot be managed via Terraform.",
 						},
 					},
 				},
