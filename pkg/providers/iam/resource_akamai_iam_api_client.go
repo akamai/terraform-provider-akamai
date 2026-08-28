@@ -1159,7 +1159,7 @@ func (r *apiClientResource) ValidateConfig(ctx context.Context, req resource.Val
 		}
 
 		if tf.IsKnown(dataGroupAccess.CloneAuthorizedUserGroups) {
-			if !dataGroupAccess.CloneAuthorizedUserGroups.ValueBool() && len(groups) == 0 {
+			if !dataGroupAccess.CloneAuthorizedUserGroups.ValueBool() && !dataGroupAccess.Groups.IsUnknown() && len(groups) == 0 {
 				resp.Diagnostics.AddAttributeError(path.Root("group_access"), invalidConfigurationAttribute, "You must specify at least one group when 'clone_authorized_user_groups' is false")
 				return
 			}

@@ -452,6 +452,39 @@ func TestResourceAPIClient(t *testing.T) {
 				},
 			},
 		},
+		"happy path - create with min set of fields, groups unknown at plan (no false-positive validation error for clone_authorized_user_groups=false)": {
+			init: func(m *iam.Mock, createData, _ testData) {
+				// Create
+				mockCreateAPIClient(m, createData)
+				mockUpdateAPIClientNotificationEmails(m, createData)
+				mockLockAPIClient(m, createData)
+				mockGetAPIClient(m, createData)
+				// Read
+				mockGetAPIClient(m, createData)
+				// Delete
+				mockDeactivateCredential(m, createData)
+				mockDeleteAPIClient(m, createData)
+			},
+			createData: minData,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/create_min_groups_unknown.tf"),
+					Check: fullDataChecker.
+						CheckEqual("lock", "true").
+						CheckEqual("group_access.clone_authorized_user_groups", "false").
+						CheckEqual("group_access.groups.0.sub_groups.#", "0").
+						CheckEqual("client_description", "").
+						CheckMissing("notification_emails.0").
+						CheckMissing("ip_acl.enable").
+						CheckMissing("ip_acl.cidr.0").
+						CheckMissing("purge_options.can_purge_by_cache_tag").
+						CheckMissing("purge_options.can_purge_by_cp_code").
+						CheckMissing("purge_options.cp_code_access.all_current_and_new_cp_codes").
+						CheckMissing("purge_options.cp_code_access.cp_codes.0").
+						Build(),
+				},
+			},
+		},
 		"happy path - create with all fields set and custom credential details": {
 			init: func(m *iam.Mock, createData, _ testData) {
 				mockListAllowedCPCodes(m).Times(4)

@@ -166,7 +166,8 @@
 
 
 
-
+* IAM
+  * Fixed an issue in the `akamai_iam_api_client` resource where an error was displayed for groups not yet evaluated during plan ([I#780](https://github.com/akamai/terraform-provider-akamai/issues/780)).
 
 
 
