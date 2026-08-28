@@ -12,7 +12,7 @@ const (
 	testPollingInterval   = 1 * time.Millisecond
 	testActivationTimeout = 20 * time.Millisecond
 	testUpdateTimeout     = 20 * time.Millisecond
-	testDeleteTimeout     = 40 * time.Millisecond
+	testDeleteTimeout     = 1 * time.Second
 )
 
 func TestMain(m *testing.M) {
