@@ -3,7 +3,7 @@ package cloudcertificates
 import (
 	"slices"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudcertificates"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/cloudcertificates"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 

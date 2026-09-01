@@ -3,7 +3,7 @@ module github.com/akamai/terraform-provider-akamai/v11
 go 1.25.7
 
 require (
-	github.com/akamai/AkamaiOPEN-edgegrid-golang/v13 v13.4.0
+	github.com/akamai/AkamaiOPEN-edgegrid-golang/v14 v14.0.0
 	github.com/allegro/bigcache/v2 v2.2.5
 	github.com/dlclark/regexp2 v1.12.0
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
@@ -97,4 +97,4 @@ replace (
 	go.opentelemetry.io/otel/sdk/metric v1.44.0 => go.opentelemetry.io/otel/sdk/metric v1.46.0 // Fix security vulnerability; can be removed once google.golang.org/grpc bumps this dependency
 )
 
-// replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v13 => ../AkamaiOPEN-edgegrid-golang
+// replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v14 => ../AkamaiOPEN-edgegrid-golang

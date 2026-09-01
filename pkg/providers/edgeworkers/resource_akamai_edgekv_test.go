@@ -10,7 +10,7 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v11/internal/edgegrid"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/edgeworkers"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/edgeworkers"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"

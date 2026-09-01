@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/apidefinitions"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/apidefinitions"
 	"github.com/akamai/terraform-provider-akamai/v11/internal/edgegrid"
 	"github.com/stretchr/testify/assert"
 )

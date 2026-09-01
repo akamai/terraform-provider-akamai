@@ -16,7 +16,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/log"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/log"
 	"github.com/akamai/terraform-provider-akamai/v11/internal/files"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"

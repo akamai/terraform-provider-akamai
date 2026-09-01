@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/mtlskeystore"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/mtlskeystore"
 	"github.com/akamai/terraform-provider-akamai/v11/internal/slicesets"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/framework/date"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/framework/modifiers"

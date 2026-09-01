@@ -4,7 +4,7 @@ package datastream
 import (
 	"sync"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/datastream"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/datastream"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/subprovider"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"

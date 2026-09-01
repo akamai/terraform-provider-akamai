@@ -11,7 +11,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/jsonutil"
 	logger "github.com/akamai/terraform-provider-akamai/v11/pkg/log"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"

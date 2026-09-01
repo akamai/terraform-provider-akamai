@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/iam"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
 	"github.com/stretchr/testify/mock"

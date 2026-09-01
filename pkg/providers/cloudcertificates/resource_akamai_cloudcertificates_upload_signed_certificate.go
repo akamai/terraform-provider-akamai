@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudcertificates"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/cloudcertificates"
 	"github.com/akamai/terraform-provider-akamai/v11/internal/retry"
 	"github.com/akamai/terraform-provider-akamai/v11/internal/text"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/framework/date"

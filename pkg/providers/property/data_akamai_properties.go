@@ -3,8 +3,8 @@ package property
 import (
 	"context"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/papi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/str"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"

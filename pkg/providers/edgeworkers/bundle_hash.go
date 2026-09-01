@@ -8,7 +8,7 @@ import (
 	"io"
 	"sort"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/edgeworkers"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/edgeworkers"
 )
 
 type bundleFile struct {

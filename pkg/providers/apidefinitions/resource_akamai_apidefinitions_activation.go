@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/apidefinitions"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/apidefinitions"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/framework/modifiers"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf/validators"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"

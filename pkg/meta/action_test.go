@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/session"
 	"github.com/hashicorp/go-hclog"
 	frameworkaction "github.com/hashicorp/terraform-plugin-framework/action"
 	"github.com/stretchr/testify/assert"

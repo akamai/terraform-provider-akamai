@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/datastream"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/datastream"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v11/internal/customtypes"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf/validators"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"

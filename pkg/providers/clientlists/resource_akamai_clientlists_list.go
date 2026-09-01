@@ -9,7 +9,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/clientlists"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/clientlists"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
 	"github.com/google/uuid"

@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudaccess"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/cloudaccess"
 	"github.com/akamai/terraform-provider-akamai/v11/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/date"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/ptr"

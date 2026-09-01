@@ -10,8 +10,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/imaging"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/session"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/imaging"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/log"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"

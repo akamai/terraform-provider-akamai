@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/papi"
 	"github.com/akamai/terraform-provider-akamai/v11/internal/edgegrid"
 	tst "github.com/akamai/terraform-provider-akamai/v11/internal/test"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/ptr"

@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 
-	network "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/networklists"
+	network "github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/networklists"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"

@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/domainownership"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/domainownership"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/framework/date"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/framework/modifiers"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"

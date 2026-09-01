@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/edgegrid"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/edgegrid"
 )
 
 // ErrWrongEdgeGridConfiguration is returned when the configuration could not be read

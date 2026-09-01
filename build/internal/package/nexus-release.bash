@@ -84,7 +84,7 @@ checkout_edgegrid() {
 }
 
 adjust_edgegrid() {
-  go mod edit -replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v13="./akamaiopen-edgegrid-golang"
+  go mod edit -replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v14="./akamaiopen-edgegrid-golang"
   go mod tidy
   git diff
 }

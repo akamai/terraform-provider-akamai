@@ -6,7 +6,7 @@ import (
 	"slices"
 	"sort"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/domainownership"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/domainownership"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 

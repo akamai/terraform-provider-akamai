@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/reportinggroups"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/reportinggroups"
 	"github.com/akamai/terraform-provider-akamai/v11/internal/customtypes"
 	"github.com/akamai/terraform-provider-akamai/v11/internal/text"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/framework/modifiers"

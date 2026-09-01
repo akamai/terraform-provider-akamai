@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/imaging"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/imaging"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/ptr"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
