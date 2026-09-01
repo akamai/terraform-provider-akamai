@@ -1,25 +1,11 @@
 # RELEASE NOTES
 
-## X.X.X (X X, X)
+## 11.0.0 (Sep 9, 2026)
 
 #### BREAKING CHANGES:
 
 * ClientLists
   * Marked the `version` attribute in the `akamai_clientlist_activation` resource's schema as `Required` instead of `Computed` ([I#743](https://github.com/akamai/terraform-provider-akamai/issues/743)).
-
-* GTM
-  * Changed the default value of the `dynamic_ttl` attribute in the `akamai_gtm_property` resource from `300` to `60`, aligning it with the API specification ([I#784](https://github.com/akamai/terraform-provider-akamai/issues/784)).
-
-
-
-* PAPI
-    * Updated the `akamai_cp_code` datasource to fetch a single CP code directly when using the new `cp_code_id` attribute, instead of filtering from the full list.
-    * Renamed the `name` attribute to `cp_code_name` in the `akamai_cp_code` datasource.
-    * Added the `cp_code_id` attribute to the `akamai_cp_code` datasource as a replacement for passing a CP code ID via the `name` field.
-    * Replaced `ErrLookingUpCPCode` error with `ErrLookingUpCPCodeByName` and `ErrLookingUpCPCodeByID` errors for CP code lookup failures by `cp_code_name` and `cp_code_id` in the `akamai_cp_code` data source. 
-
-
-
 
 * CPS
   * Updated `akamai_cps_dv_enrollment` and `akamai_cps_third_party_enrollment` resources:
@@ -28,203 +14,80 @@
       Existing SNI-only configurations that explicitly set `clone_dns_names = false` must now also specify `dns_names`.
       New SNI-only configurations should use `enable_for_all_sans = false` with `dns_names` to select specific names.
 
+* GTM
+  * Changed the default value of the `dynamic_ttl` attribute in the `akamai_gtm_property` resource from `300` to `60`, aligning it with the API specification ([I#784](https://github.com/akamai/terraform-provider-akamai/issues/784)).
 
-
-
-
-
-
-
-
-
-
-
-
-
+* PAPI
+  * Updated the `akamai_cp_code` data source to fetch a single CP code directly when using the new `cp_code_id` attribute, instead of filtering from the full list.
+  * Renamed the `name` attribute to `cp_code_name` in the `akamai_cp_code` data source.
+  * Added the `cp_code_id` attribute to the `akamai_cp_code` data source as a replacement for passing a CP code ID via the `name` field.
+  * Replaced `ErrLookingUpCPCode` error with `ErrLookingUpCPCodeByName` and `ErrLookingUpCPCodeByID` errors for CP code lookup failures by `cp_code_name` and `cp_code_id` in the `akamai_cp_code` data source. 
 
 #### FEATURES/ENHANCEMENTS:
 
-* Appsec (Beta)
-  * Added a new resource:
-    * `akamai_appsec_advanced_settings_url_evasion_defense` - allows managing URL Evasion Defense settings.
-  * Added new data sources:
-    * `data_akamai_appsec_advanced_settings_url_evasion_defense` - retrieves URL Evasion Defense settings.
-* Botman
-  * Added new data sources: 
-    * `akamai_botman_bot_analytics_settings` - retrieves bot analytics settings.
-    * `akamai_botman_bot_analytics_settings_values`- lists bot analytics settings values.
-  * Added new resource: 
-    * `akamai_botman_bot_analytics_settings` - update and create analytics settings.
-
-
-* CPS
-  * Updated `akamai_cps_dv_enrollment` and `akamai_cps_third_party_enrollment` resources: 
-    * added `network_configuration.enable_for_all_sans` and `network_configuration.dns_names` as replacement for `network_configuration.clone_dns_names`.
-    * field `network_configuration` changed from set to list, changing the way how the diff it presented.
-  * Updated `akamai_cps_enrollment` and `akamai_cps_enrollments` data sources:
-    * added `network_configuration.enable_for_all_sans` and `network_configuration.dns_names`.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-* CPS
-  * Added `akamai_cps_force_certificate_renewal` action that allows to force early renewal of CPS certificates. Requires Terraform 1.14 or newer ([I#749](https://github.com/akamai/terraform-provider-akamai/issues/749)).
-
-
-
+* General
+  * Updated various dependencies.
 
 * Appsec
-  * Added a new data source `data_akamai_appsec_waf_ai_rules` that retrieves the AI rule status and available AI rules for a security policy.
-  * Added a new resource `resource_akamai_appsec_waf_ai_rules` that either manages the AI rule status for a security policy or the action for a specified AI rule.
+  * Added new resources (Beta):
+    * `akamai_appsec_advanced_settings_url_evasion_defense` - allows managing URL Evasion Defense settings.
+    * `akamai_appsec_waf_ai_rules` - either manages the AI rule status for a security policy or the action for a specified AI rule.
+  * Added new data sources (Beta):
+    * `akamai_appsec_advanced_settings_url_evasion_defense` - retrieves URL Evasion Defense settings.
+    * `akamai_appsec_waf_ai_rules` - retrieves the AI rule status and available AI rules for a security policy.
 
-* DNS
-  * Added `multi_provider_dnssec` block to the `akamai_dns_zone` resource to support multi-signer DNSSEC configuration. 
-    The block contains `enabled` (bool) and `webhook` (string) fields.
-  * Added validation requiring `sign_and_serve` to be `true` when `multi_provider_dnssec.enabled` is `true`, matching the Edge DNS API prerequisite for multi-signer DNSSEC.
+* Botman
+  * Added new data sources:
+    * `akamai_botman_bot_analytics_settings` - retrieves bot analytics settings.
+    * `akamai_botman_bot_analytics_settings_values` - lists bot analytics settings values.
+  * Added new resource:
+    * `akamai_botman_bot_analytics_settings` - updates and creates analytics settings.
 
+* CPS
+  * Added the `akamai_cps_force_certificate_renewal` action that allows to force early renewal of CPS certificates. Requires Terraform 1.14 or newer ([I#749](https://github.com/akamai/terraform-provider-akamai/issues/749)).
+  * Updated `akamai_cps_dv_enrollment` and `akamai_cps_third_party_enrollment` resources:
+    * Added `network_configuration.enable_for_all_sans` and `network_configuration.dns_names` as replacement for `network_configuration.clone_dns_names`.
+    * Field `network_configuration` changed from set to list, changing the way the diff is presented.
+  * Updated `akamai_cps_enrollment` and `akamai_cps_enrollments` data sources:
+    * Added `network_configuration.enable_for_all_sans` and `network_configuration.dns_names`.
 
-
-
-
-
-
-* Datastream
+* DataStream
   * Added support for `ANSWERX` as `log_type` in the `akamai_datastream` resource and in the `akamai_datastreams`, `akamai_datastream_activation_history`, and `akamai_datastream_dataset_fields` data sources.
   * Added the `service_ids` attribute to the `akamai_datastream` resource and the `akamai_datastreams` data source to manage `AnswerX` service IDs.
   * Added the `akamai_datastream_answerx_service_ids` data source to list available `AnswerX` service IDs for a contract.
   * Added the `log_type` argument to the `akamai_datastream_dataset_fields` data source with support for `CDN` and `ANSWERX`.
 
-
-
-
-
-
-
-
-
-
+* DNS
+  * Added the `multi_provider_dnssec` block to the `akamai_dns_zone` resource to support multi-signer DNSSEC configuration. The block contains `enabled` (bool) and `webhook` (string) fields.
+  * Added validation requiring `sign_and_serve` to be `true` when `multi_provider_dnssec.enabled` is `true`, matching the Edge DNS API prerequisite for multi-signer DNSSEC.
 
 * PAPI
   * Added support for the new rule format [`v2026-07-21`](https://techdocs.akamai.com/terraform/docs/rule-format-changes#v2026-07-21).
   * Added the `authorization` attribute to the `cert_status` block in the `akamai_property_hostnames` data source and the `akamai_property` resource's `hostnames` block. This attribute exposes domain validation methods available for certificates, including DNS01 and HTTP01 challenge details with their validation status and expiration information.
 
-
-
-
-
-
-
-
 #### BUG FIXES:
-
-
 
 * Appsec
   * Fixed an issue in the `akamai_appsec_url_protection_action` resource where `terraform plan` unnecessarily cloned the security configuration version.
 
-
-
-
-
-
-
+* CPS
+  * Fixed the processing of pre-verification warnings in `akamai_cps_dv_enrollment` and `akamai_cps_third_party_enrollment` resources that could result in recoverable errors: a 404 during fetching or a 409 during acknowledgement of pre-verification warnings ([I#765](https://github.com/akamai/terraform-provider-akamai/issues/765)).
 
 * EdgeKV
   * Fixed an issue in the `akamai_edgekv` resource where namespace deletion could fail with an `EKV_9000` error.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+* IAM
+  * Fixed an issue in the `akamai_iam_api_client` resource where an error was displayed for groups not yet evaluated during plan ([I#780](https://github.com/akamai/terraform-provider-akamai/issues/780)).
 
 * PAPI
   * Fixed an issue in the `akamai_property` resource where configs using the `version_notes` field could show a persistent diff of variables ([I#769](https://github.com/akamai/terraform-provider-akamai/issues/769)).
   * Fixed an issue in the `akamai_property` and `akamai_property_include` resources where modifying rules, if variables were present, could result in additional diff around variables.
 
-
-
-
-
-
-
-
-* IAM
-  * Fixed an issue in the `akamai_iam_api_client` resource where an error was displayed for groups not yet evaluated during plan ([I#780](https://github.com/akamai/terraform-provider-akamai/issues/780)).
-
-
-
-
-
-
-
-
-
-
-* CPS
-  * Fixed the processing of pre-verification warnings in `akamai_cps_dv_enrollment` and `akamai_cps_third_party_enrollment` resources that could result in recoverable errors: a 404 during fetching or a 409 during acknowledgement of pre-verification warnings ([I#765](https://github.com/akamai/terraform-provider-akamai/issues/765)).
-
-
-
-
-
-
-#### DEPRECATIONS
+#### DEPRECATIONS:
 
 * CPS
   * Deprecated `network_configuration.clone_dns_names` field in `akamai_cps_dv_enrollment` and `akamai_cps_third_party_enrollment` resources
     and `akamai_cps_enrollment` and `akamai_cps_enrollments` data sources.
-
-
-
-
-
-
 
 ## 10.4.0 (Jul 29, 2026)
 
