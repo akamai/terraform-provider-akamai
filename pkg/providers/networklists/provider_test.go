@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
 )
 
 func TestMain(m *testing.M) {

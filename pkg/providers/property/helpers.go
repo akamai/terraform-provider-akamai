@@ -12,7 +12,7 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/iam"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/log"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/str"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/str"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )

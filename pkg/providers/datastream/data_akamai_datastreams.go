@@ -7,9 +7,9 @@ import (
 	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/datastream"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"

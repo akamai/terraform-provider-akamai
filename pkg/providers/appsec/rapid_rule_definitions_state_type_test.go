@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/ptr"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cloudlets"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )

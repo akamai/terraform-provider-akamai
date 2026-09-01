@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/datastream"
-	tst "github.com/akamai/terraform-provider-akamai/v10/pkg/common/test"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
+	tst "github.com/akamai/terraform-provider-akamai/v11/pkg/common/test"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

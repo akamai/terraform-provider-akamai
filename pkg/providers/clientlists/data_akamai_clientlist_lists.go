@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/clientlists"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/hash"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/hash"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"

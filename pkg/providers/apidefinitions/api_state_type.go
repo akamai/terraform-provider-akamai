@@ -7,7 +7,7 @@ import (
 	"slices"
 
 	v0 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/apidefinitions/v0"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/ptr"
 	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"

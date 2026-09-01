@@ -9,10 +9,10 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cps"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/timeouts"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
-	cpstools "github.com/akamai/terraform-provider-akamai/v10/pkg/providers/cps/tools"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/timeouts"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	cpstools "github.com/akamai/terraform-provider-akamai/v11/pkg/providers/cps/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )

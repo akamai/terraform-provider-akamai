@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/iancoleman/strcase"
 )

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/datastream"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

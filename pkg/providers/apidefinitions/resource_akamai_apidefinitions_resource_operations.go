@@ -9,9 +9,9 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/apidefinitions"
 	v0 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/apidefinitions/v0"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf/validators"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf/validators"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"

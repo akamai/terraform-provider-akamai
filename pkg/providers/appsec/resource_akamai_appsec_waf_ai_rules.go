@@ -10,9 +10,9 @@ import (
 	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/framework/modifiers"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf/validators"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/framework/modifiers"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf/validators"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"

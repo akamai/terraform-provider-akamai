@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/clientlists"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"

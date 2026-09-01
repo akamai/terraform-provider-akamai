@@ -10,8 +10,8 @@ import (
 	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/clientlists"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"

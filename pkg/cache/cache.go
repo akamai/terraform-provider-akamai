@@ -8,7 +8,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/log"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/log"
 	"github.com/allegro/bigcache/v2"
 )
 

@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/datastream"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
