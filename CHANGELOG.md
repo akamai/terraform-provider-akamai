@@ -21,8 +21,12 @@
 
 
 
-
-
+* CPS
+  * Updated `akamai_cps_dv_enrollment` and `akamai_cps_third_party_enrollment` resources:
+    * Fields `enable_for_all_sans`, `clone_dns_names`, and `dns_names` cannot be provided when `sni_only` is `false`.
+    * For SNI-only enrollments, changed the default value of `network_configuration.clone_dns_names` from `false` to `true`.
+      Existing SNI-only configurations that explicitly set `clone_dns_names = false` must now also specify `dns_names`.
+      New SNI-only configurations should use `enable_for_all_sans = false` with `dns_names` to select specific names.
 
 
 
@@ -51,6 +55,15 @@
     * `akamai_botman_bot_analytics_settings_values`- lists bot analytics settings values.
   * Added new resource: 
     * `akamai_botman_bot_analytics_settings` - update and create analytics settings.
+
+
+* CPS
+  * Updated `akamai_cps_dv_enrollment` and `akamai_cps_third_party_enrollment` resources: 
+    * added `network_configuration.enable_for_all_sans` and `network_configuration.dns_names` as replacement for `network_configuration.clone_dns_names`.
+    * field `network_configuration` changed from set to list, changing the way how the diff it presented.
+  * Updated `akamai_cps_enrollment` and `akamai_cps_enrollments` data sources:
+    * added `network_configuration.enable_for_all_sans` and `network_configuration.dns_names`.
+
 
 
 
@@ -198,6 +211,14 @@
 
 
 
+
+
+
+#### DEPRECATIONS
+
+* CPS
+  * Deprecated `network_configuration.clone_dns_names` field in `akamai_cps_dv_enrollment` and `akamai_cps_third_party_enrollment` resources
+    and `akamai_cps_enrollment` and `akamai_cps_enrollments` data sources.
 
 
 

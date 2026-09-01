@@ -1,11 +1,28 @@
 package cps
 
 import (
+	"context"
+	"strings"
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cps"
+	"github.com/hashicorp/go-cty/cty"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+func TestDNSNamesRejectEmptyName(t *testing.T) {
+	t.Parallel()
+
+	dnsNamesSchema := networkConfiguration.Schema["dns_names"]
+	dnsNameSchema, ok := dnsNamesSchema.Elem.(*schema.Schema)
+	require.True(t, ok)
+
+	assert.Empty(t, dnsNameSchema.ValidateDiagFunc("example.com", cty.Path{}))
+	assert.NotEmpty(t, dnsNameSchema.ValidateDiagFunc("", cty.Path{}))
+}
 
 func TestSplitChallenges(t *testing.T) {
 	t.Parallel()
@@ -54,6 +71,7 @@ func TestNewChallenge(t *testing.T) {
 		Type:              "http-01",
 		ValidationRecords: nil,
 	}
+
 	dv := cps.DV{
 		Challenges:         []cps.Challenge{challenge1},
 		Domain:             "TestDomain",
@@ -72,6 +90,225 @@ func TestNewChallenge(t *testing.T) {
 		"domain":        "TestDomain",
 	}
 	assert.Equal(t, wantChallenge, gotChallenge)
+}
+
+func TestReadAttrsDNSNamesTransitions(t *testing.T) {
+	t.Parallel()
+
+	dnsNamesSchema := networkConfiguration.Schema["dns_names"]
+	assert.Equal(t, schema.TypeSet, dnsNamesSchema.Type)
+	assert.True(t, dnsNamesSchema.Optional)
+	assert.True(t, dnsNamesSchema.Computed)
+
+	tests := map[string]struct {
+		currentNetworkConfig map[string]interface{}
+		responseDNSNames     []string
+		cloneDNSNames        bool
+		expectedDNSNames     []interface{}
+	}{
+		"all SANs enabled stores API-populated DNS names": {
+			currentNetworkConfig: map[string]interface{}{
+				"clone_dns_names":     true,
+				"enable_for_all_sans": true,
+				"geography":           "core",
+			},
+			responseDNSNames: []string{"test.akamai.com", "san.test.akamai.com"},
+			cloneDNSNames:    true,
+			expectedDNSNames: []interface{}{"test.akamai.com", "san.test.akamai.com"},
+		},
+		"all SANs disabled stores explicit DNS names": {
+			currentNetworkConfig: map[string]interface{}{
+				"clone_dns_names":     true,
+				"enable_for_all_sans": false,
+				"dns_names":           []interface{}{"test.akamai.com"},
+				"geography":           "core",
+			},
+			responseDNSNames: []string{"test.akamai.com"},
+			cloneDNSNames:    false,
+			expectedDNSNames: []interface{}{"test.akamai.com"},
+		},
+		"reenabling all SANs replaces explicit DNS names with API-populated names": {
+			currentNetworkConfig: map[string]interface{}{
+				"clone_dns_names":     true,
+				"enable_for_all_sans": true,
+				"dns_names":           []interface{}{"test.akamai.com"},
+				"geography":           "core",
+			},
+			responseDNSNames: []string{"test.akamai.com", "san.test.akamai.com"},
+			cloneDNSNames:    true,
+			expectedDNSNames: []interface{}{"test.akamai.com", "san.test.akamai.com"},
+		},
+	}
+
+	resources := map[string]*schema.Resource{
+		"DV":          resourceCPSDVEnrollment(testPollChangeStatusInterval, testPollGetEnrollmentInterval),
+		"third party": resourceCPSThirdPartyEnrollment(testPollChangeStatusInterval, testPollGetEnrollmentInterval),
+	}
+	for resourceName, resource := range resources {
+		t.Run(resourceName, func(t *testing.T) {
+			t.Parallel()
+			for name, test := range tests {
+				t.Run(name, func(t *testing.T) {
+					t.Parallel()
+					d := schema.TestResourceDataRaw(t, resource.Schema, map[string]interface{}{
+						"network_configuration": []interface{}{test.currentNetworkConfig},
+					})
+					enrollment := getTestDVEnrollment()
+					enrollment.NetworkConfiguration.DNSNameSettings = &cps.DNSNameSettings{
+						CloneDNSNames: test.cloneDNSNames,
+						DNSNames:      test.responseDNSNames,
+					}
+
+					attrs, err := readAttrs(&enrollment, d)
+					require.NoError(t, err)
+					networkConfig := attrs["network_configuration"].([]interface{})[0].(map[string]interface{})
+					assert.Equal(t, test.expectedDNSNames, networkConfig["dns_names"])
+
+					require.NoError(t, d.Set("network_configuration", attrs["network_configuration"]))
+					dnsNames := d.Get("network_configuration").([]interface{})[0].(map[string]interface{})["dns_names"].(*schema.Set)
+					assert.ElementsMatch(t, test.expectedDNSNames, dnsNames.List())
+				})
+			}
+		})
+	}
+}
+
+func TestCloneDNSNamesDefaultUpgradeState(t *testing.T) {
+	t.Parallel()
+
+	tests := map[string]struct {
+		omitCloneDNSNamesFromState bool
+		stateCloneDNSNames         bool
+		config                     map[string]interface{}
+		wantDiff                   bool
+	}{
+		"omitted legacy state adopts the new default": {
+			omitCloneDNSNamesFromState: true,
+			config: map[string]interface{}{
+				"network_configuration": []interface{}{map[string]interface{}{
+					"geography": "core",
+				}},
+			},
+		},
+		"explicit false remains disabled without drift": {
+			config: map[string]interface{}{
+				"network_configuration": []interface{}{map[string]interface{}{
+					"clone_dns_names": false,
+					"geography":       "core",
+				}},
+			},
+		},
+		"explicit true remains enabled without drift": {
+			stateCloneDNSNames: true,
+			config: map[string]interface{}{
+				"network_configuration": []interface{}{map[string]interface{}{
+					"clone_dns_names": true,
+					"geography":       "core",
+				}},
+			},
+		},
+	}
+	resources := map[string]*schema.Resource{
+		"DV":          resourceCPSDVEnrollment(testPollChangeStatusInterval, testPollGetEnrollmentInterval),
+		"third party": resourceCPSThirdPartyEnrollment(testPollChangeStatusInterval, testPollGetEnrollmentInterval),
+	}
+
+	for resourceName, resource := range resources {
+		t.Run(resourceName, func(t *testing.T) {
+			t.Parallel()
+			for name, test := range tests {
+				t.Run(name, func(t *testing.T) {
+					t.Parallel()
+					legacyConfig := map[string]interface{}{
+						"network_configuration": []interface{}{map[string]interface{}{
+							"clone_dns_names": false,
+							"geography":       "core",
+						}},
+					}
+					legacySchema := make(map[string]*schema.Schema, len(resource.Schema))
+					for attribute, field := range resource.Schema {
+						legacySchema[attribute] = field
+					}
+					legacyNetworkConfiguration := *legacySchema["network_configuration"]
+					legacyNetworkConfiguration.Type = schema.TypeSet
+					legacyNetworkConfiguration.Set = hashLegacyNetworkConfiguration
+					legacySchema["network_configuration"] = &legacyNetworkConfiguration
+
+					legacyData := schema.TestResourceDataRaw(t, legacySchema, legacyConfig)
+					legacyData.SetId("1")
+					legacyState := legacyData.State()
+					var legacyNetworkConfigurationKey string
+					for attribute := range legacyState.Attributes {
+						if strings.HasSuffix(attribute, ".geography") {
+							legacyNetworkConfigurationKey = strings.TrimSuffix(attribute, ".geography")
+							break
+						}
+					}
+					require.NotEmpty(t, legacyNetworkConfigurationKey)
+					assert.NotEqual(t, "network_configuration.0", legacyNetworkConfigurationKey)
+					if test.omitCloneDNSNamesFromState {
+						for attribute := range legacyState.Attributes {
+							if strings.HasSuffix(attribute, ".clone_dns_names") {
+								delete(legacyState.Attributes, attribute)
+							}
+						}
+					}
+
+					upgradedData := resource.Data(legacyState)
+					enrollment := getTestDVEnrollment()
+					enrollment.NetworkConfiguration.DNSNameSettings = &cps.DNSNameSettings{
+						CloneDNSNames: test.stateCloneDNSNames,
+					}
+					attrs, err := readAttrs(&enrollment, upgradedData)
+					require.NoError(t, err)
+					networkConfig := attrs["network_configuration"].([]interface{})[0].(map[string]interface{})
+					assert.Equal(t, test.stateCloneDNSNames, networkConfig["clone_dns_names"])
+					require.NoError(t, upgradedData.Set("network_configuration", attrs["network_configuration"]))
+
+					diff, err := resource.Diff(
+						context.Background(),
+						upgradedData.State(),
+						terraform.NewResourceConfigRaw(test.config),
+						nil,
+					)
+					require.NoError(t, err)
+					assert.Equal(t, test.wantDiff, !diff.Empty(), "unexpected diff: %#v", diff)
+				})
+			}
+		})
+	}
+}
+
+func hashLegacyNetworkConfiguration(v interface{}) int {
+	networkConfig, ok := v.(map[string]interface{})
+	if !ok {
+		return 0
+	}
+
+	effectiveClone := networkConfig["enable_for_all_sans"] == true || networkConfig["clone_dns_names"] == true
+	hashInput := make(map[string]interface{}, len(networkConfig))
+	for key, value := range networkConfig {
+		switch key {
+		case "clone_dns_names", "enable_for_all_sans":
+			continue
+		case "dns_names":
+			if effectiveClone {
+				continue
+			}
+		}
+		hashInput[key] = value
+	}
+	return schema.HashResource(networkConfiguration)(hashInput)
+}
+
+func dnsNamesFromState(attrs map[string]string) []string {
+	var names []string
+	for key, value := range attrs {
+		if strings.HasPrefix(key, "network_configuration.0.dns_names.") && key != "network_configuration.0.dns_names.#" {
+			names = append(names, value)
+		}
+	}
+	return names
 }
 
 func TestConvertWarnings(t *testing.T) {

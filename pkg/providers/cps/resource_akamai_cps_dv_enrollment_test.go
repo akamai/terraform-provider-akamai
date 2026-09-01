@@ -3,6 +3,7 @@ package cps
 import (
 	"fmt"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cps"
@@ -10,10 +11,12 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
+	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/jinzhu/copier"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -52,7 +55,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 				DisallowedTLSVersions: []string{"TLSv1", "TLSv1_1"},
 				DNSNameSettings: &cps.DNSNameSettings{
 					CloneDNSNames: false,
-					DNSNames:      []string{"san.test.akamai.com"},
+					DNSNames:      []string{"test.akamai.com"},
 				},
 				Geography:        "core",
 				MustHaveCiphers:  "ak-akamai-default",
@@ -190,7 +193,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		enrollmentUpdate.AdminContact.LastName = "D5"
 		enrollmentUpdate.CSR.SANS = []string{"san2.test.akamai.com", "san.test.akamai.com"}
 		enrollmentUpdate.CSR.PreferredTrustChain = "dst-root-ca-x3"
-		enrollmentUpdate.NetworkConfiguration.DNSNameSettings.DNSNames = []string{"san2.test.akamai.com", "san.test.akamai.com"}
+		enrollmentUpdate.NetworkConfiguration.DNSNameSettings.DNSNames = []string{"test.akamai.com"}
 		enrollmentUpdate.Location = ""
 		enrollmentUpdate.PendingChanges = nil
 
@@ -351,7 +354,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 				DisallowedTLSVersions: []string{"TLSv1", "TLSv1_1"},
 				DNSNameSettings: &cps.DNSNameSettings{
 					CloneDNSNames: false,
-					DNSNames:      []string{"san.test.akamai.com"},
+					DNSNames:      []string{"test.akamai.com"},
 				},
 				Geography:        "core",
 				MustHaveCiphers:  "ak-akamai-default",
@@ -490,7 +493,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 		enrollmentUpdate.AdminContact.LastName = "D1"
 		enrollmentUpdate.CSR.SANS = nil
 		enrollmentUpdate.CSR.PreferredTrustChain = ""
-		enrollmentUpdate.NetworkConfiguration.DNSNameSettings.DNSNames = nil
+		enrollmentUpdate.NetworkConfiguration.DNSNameSettings.DNSNames = []string{"test.akamai.com"}
 		enrollmentUpdate.Location = ""
 		enrollmentUpdate.PendingChanges = nil
 
@@ -602,6 +605,182 @@ func TestResourceDVEnrollment(t *testing.T) {
 		client.CPS.AssertExpectations(t)
 	})
 
+	t.Run("lifecycle test transitions DNS names settings", func(t *testing.T) {
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+		allowCancel := true
+
+		enrollment := getTestDVEnrollment()
+		enrollment.CSR.SANS = []string{"san.test.akamai.com"}
+		enrollment.CSR.PreferredTrustChain = "intermediate-a"
+		enrollment.NetworkConfiguration.DisallowedTLSVersions = []string{"TLSv1", "TLSv1_1"}
+		enrollment.NetworkConfiguration.MustHaveCiphers = "ak-akamai-default"
+		enrollment.NetworkConfiguration.PreferredCiphers = "ak-akamai-default"
+		enrollment.NetworkConfiguration.DNSNameSettings = &cps.DNSNameSettings{
+			CloneDNSNames: true,
+		}
+
+		client.CPS.On("CreateEnrollment",
+			testutils.MockContext,
+			cps.CreateEnrollmentRequest{
+				EnrollmentRequestBody: createEnrollmentReqBodyFromEnrollment(enrollment),
+				ContractID:            "1",
+			},
+		).Return(&cps.CreateEnrollmentResponse{
+			ID:         1,
+			Enrollment: "/cps/v2/enrollments/1",
+			Changes:    []string{"/cps/v2/enrollments/1/changes/2"},
+		}, nil).Once()
+
+		enrollment.Location = "/cps/v2/enrollments/1"
+		enrollment.PendingChanges = []cps.PendingChange{{
+			Location:   "/cps/v2/enrollments/1/changes/2",
+			ChangeType: "new-certificate",
+		}}
+		currentEnrollment := enrollment
+		currentEnrollment.NetworkConfiguration.DNSNameSettings = &cps.DNSNameSettings{
+			CloneDNSNames: true,
+			DNSNames:      []string{"test.akamai.com", "san.test.akamai.com"},
+		}
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(&currentEnrollment, nil).Times(15)
+		mockDVTransitionChangeStatus(client)
+
+		enrollmentWithExplicitDNSNames := getTestDVEnrollment()
+		require.NoError(t, copier.CopyWithOption(&enrollmentWithExplicitDNSNames, enrollment, copier.Option{DeepCopy: true}))
+		enrollmentWithExplicitDNSNames.NetworkConfiguration.DNSNameSettings = &cps.DNSNameSettings{
+			CloneDNSNames: false,
+			DNSNames:      []string{"test.akamai.com"},
+		}
+		client.CPS.On("UpdateEnrollment",
+			testutils.MockContext,
+			cps.UpdateEnrollmentRequest{
+				EnrollmentRequestBody:     createEnrollmentReqBodyFromEnrollment(enrollmentWithExplicitDNSNames),
+				EnrollmentID:              1,
+				AllowCancelPendingChanges: &allowCancel,
+			},
+		).Return(&cps.UpdateEnrollmentResponse{
+			ID:         1,
+			Enrollment: "/cps/v2/enrollments/1",
+			Changes:    []string{"/cps/v2/enrollments/1/changes/2"},
+		}, nil).Run(func(mock.Arguments) {
+			currentEnrollment = enrollmentWithExplicitDNSNames
+		}).Once()
+
+		enrollmentWithAdditionalExplicitDNSName := getTestDVEnrollment()
+		require.NoError(t, copier.CopyWithOption(&enrollmentWithAdditionalExplicitDNSName, enrollmentWithExplicitDNSNames, copier.Option{DeepCopy: true}))
+		enrollmentWithAdditionalExplicitDNSName.NetworkConfiguration.DNSNameSettings.DNSNames = []string{"test.akamai.com", "san.test.akamai.com"}
+		client.CPS.On("UpdateEnrollment",
+			testutils.MockContext,
+			cps.UpdateEnrollmentRequest{
+				EnrollmentRequestBody:     createEnrollmentReqBodyFromEnrollment(enrollmentWithAdditionalExplicitDNSName),
+				EnrollmentID:              1,
+				AllowCancelPendingChanges: &allowCancel,
+			},
+		).Return(&cps.UpdateEnrollmentResponse{
+			ID:         1,
+			Enrollment: "/cps/v2/enrollments/1",
+			Changes:    []string{"/cps/v2/enrollments/1/changes/2"},
+		}, nil).Run(func(mock.Arguments) {
+			currentEnrollment = enrollmentWithAdditionalExplicitDNSName
+		}).Once()
+
+		enrollmentWithAllSANs := getTestDVEnrollment()
+		require.NoError(t, copier.CopyWithOption(&enrollmentWithAllSANs, enrollment, copier.Option{DeepCopy: true}))
+		enrollmentWithAllSANs.NetworkConfiguration.DNSNameSettings = &cps.DNSNameSettings{
+			CloneDNSNames: true,
+			DNSNames:      []string{"test.akamai.com", "san.test.akamai.com"},
+		}
+		client.CPS.On("UpdateEnrollment",
+			testutils.MockContext,
+			cps.UpdateEnrollmentRequest{
+				EnrollmentRequestBody:     createEnrollmentReqBodyFromEnrollment(enrollmentWithAllSANs),
+				EnrollmentID:              1,
+				AllowCancelPendingChanges: &allowCancel,
+			},
+		).Return(&cps.UpdateEnrollmentResponse{
+			ID:         1,
+			Enrollment: "/cps/v2/enrollments/1",
+			Changes:    []string{"/cps/v2/enrollments/1/changes/2"},
+		}, nil).Run(func(mock.Arguments) {
+			currentEnrollment = enrollmentWithAllSANs
+		}).Once()
+
+		client.CPS.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
+			EnrollmentID:              1,
+			AllowCancelPendingChanges: &allowCancel,
+		}).Return(&cps.RemoveEnrollmentResponse{Enrollment: "1"}, nil).Once()
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(nil, cps.ErrNotFound).Once()
+
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/dns_names_transition/enable_for_all_sans.tf"),
+					Check: test.NewStateChecker("akamai_cps_dv_enrollment.dv").
+						CheckEqual("network_configuration.0.enable_for_all_sans", "true").
+						CheckEqual("network_configuration.0.dns_names.#", "2").
+						CheckTypeSetElemAttr("network_configuration.0.dns_names.*", "test.akamai.com").
+						CheckTypeSetElemAttr("network_configuration.0.dns_names.*", "san.test.akamai.com").
+						Build(),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/dns_name_settings/create_enrollment.tf"),
+					Check: test.NewStateChecker("akamai_cps_dv_enrollment.dv").
+						CheckEqual("network_configuration.0.enable_for_all_sans", "false").
+						CheckEqual("network_configuration.0.dns_names.#", "1").
+						CheckTypeSetElemAttr("network_configuration.0.dns_names.*", "test.akamai.com").
+						Build(),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/dns_name_settings/update_explicit_dns_names.tf"),
+					Check: test.NewStateChecker("akamai_cps_dv_enrollment.dv").
+						CheckEqual("network_configuration.0.enable_for_all_sans", "false").
+						CheckEqual("network_configuration.0.dns_names.#", "2").
+						CheckTypeSetElemAttr("network_configuration.0.dns_names.*", "test.akamai.com").
+						CheckTypeSetElemAttr("network_configuration.0.dns_names.*", "san.test.akamai.com").
+						Build(),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/dns_names_transition/enable_for_all_sans_after_explicit_dns_names.tf"),
+					Check: test.NewStateChecker("akamai_cps_dv_enrollment.dv").
+						CheckEqual("network_configuration.0.enable_for_all_sans", "true").
+						CheckEqual("network_configuration.0.dns_names.#", "2").
+						CheckTypeSetElemAttr("network_configuration.0.dns_names.*", "test.akamai.com").
+						CheckTypeSetElemAttr("network_configuration.0.dns_names.*", "san.test.akamai.com").
+						Build(),
+				},
+			},
+		})
+		client.CPS.AssertExpectations(t)
+	})
+
+	t.Run("reject enable_for_all_sans mode transition without changing dns_names", func(t *testing.T) {
+		t.Parallel()
+		testDVEnrollmentDNSModeTransitionRejected(t,
+			testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/dns_name_settings/update_explicit_dns_names.tf"),
+		)
+	})
+
+	t.Run("reject clone_dns_names mode transition without changing dns_names", func(t *testing.T) {
+		t.Parallel()
+		testDVEnrollmentDNSModeTransitionRejected(t,
+			testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/dns_name_settings/clone_dns_names_unchanged.tf"),
+		)
+	})
+
+	t.Run("reject DNS name settings for non-SNI enrollment", func(t *testing.T) {
+		t.Parallel()
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(edgegrid.NewTestClient(), NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
+			Steps: []resource.TestStep{{
+				Config:      testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/dns_name_settings_conflict/non_sni_with_enable_for_all_sans.tf"),
+				ExpectError: regexp.MustCompile("'enable_for_all_sans', 'clone_dns_names', and 'dns_names' cannot be provided when 'sni_only' is false"),
+			}},
+		})
+	})
+
 	t.Run("create enrollment, empty sans", func(t *testing.T) {
 		t.Parallel()
 		client := edgegrid.NewTestClient()
@@ -633,6 +812,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 				DisallowedTLSVersions: []string{"TLSv1", "TLSv1_1"},
 				DNSNameSettings: &cps.DNSNameSettings{
 					CloneDNSNames: false,
+					DNSNames:      []string{"test.akamai.com"},
 				},
 				Geography:        "core",
 				MustHaveCiphers:  "ak-akamai-default",
@@ -822,6 +1002,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 				DisallowedTLSVersions: []string{"TLSv1", "TLSv1_1"},
 				DNSNameSettings: &cps.DNSNameSettings{
 					CloneDNSNames: false,
+					DNSNames:      []string{"test.akamai.com"},
 				},
 				Geography:        "core",
 				MustHaveCiphers:  "ak-akamai-default",
@@ -1015,6 +1196,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 				DisallowedTLSVersions: []string{"TLSv1", "TLSv1_1"},
 				DNSNameSettings: &cps.DNSNameSettings{
 					CloneDNSNames: false,
+					DNSNames:      []string{"test.akamai.com"},
 				},
 				Geography:        "core",
 				MustHaveCiphers:  "ak-akamai-default",
@@ -1229,7 +1411,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 				DisallowedTLSVersions: []string{"TLSv1", "TLSv1_1"},
 				DNSNameSettings: &cps.DNSNameSettings{
 					CloneDNSNames: false,
-					DNSNames:      []string{commonName, "san.test.akamai.com"},
+					DNSNames:      []string{"test.akamai.com"},
 				},
 				Geography:        "core",
 				MustHaveCiphers:  "ak-akamai-default",
@@ -1437,7 +1619,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 				DisallowedTLSVersions: []string{"TLSv1", "TLSv1_1"},
 				DNSNameSettings: &cps.DNSNameSettings{
 					CloneDNSNames: false,
-					DNSNames:      []string{"san.test.akamai.com"},
+					DNSNames:      []string{"test.akamai.com"},
 				},
 				Geography:        "core",
 				MustHaveCiphers:  "ak-akamai-default",
@@ -1556,6 +1738,9 @@ func TestResourceDVEnrollment(t *testing.T) {
 		t.Parallel()
 		client := edgegrid.NewTestClient()
 		enrollment := getTestDVEnrollment()
+		enrollment.NetworkConfiguration.DNSNameSettings = &cps.DNSNameSettings{
+			CloneDNSNames: true,
+		}
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.CPS.On("CreateEnrollment",
@@ -1724,6 +1909,9 @@ func TestResourceDVEnrollment(t *testing.T) {
 		t.Parallel()
 		client := edgegrid.NewTestClient()
 		enrollment := getTestDVEnrollment()
+		enrollment.NetworkConfiguration.DNSNameSettings = &cps.DNSNameSettings{
+			CloneDNSNames: true,
+		}
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.CPS.On("CreateEnrollment",
@@ -1851,6 +2039,9 @@ func TestResourceDVEnrollment(t *testing.T) {
 		t.Parallel()
 		client := edgegrid.NewTestClient()
 		enrollment := getTestDVEnrollment()
+		enrollment.NetworkConfiguration.DNSNameSettings = &cps.DNSNameSettings{
+			CloneDNSNames: true,
+		}
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.CPS.On("CreateEnrollment",
@@ -1998,7 +2189,8 @@ func TestResourceDVEnrollment(t *testing.T) {
 						CheckEqual("network_configuration.#", "1").
 						CheckEqualBatch("network_configuration.0.", test.AttributeBatch{
 							"disallowed_tls_versions.#": "0",
-							"clone_dns_names":           "false",
+							"clone_dns_names":           "true",
+							"enable_for_all_sans":       "true",
 							"geography":                 "core",
 							"must_have_ciphers":         "ak-akamai-2020q1",
 							"ocsp_stapling":             "on",
@@ -2043,6 +2235,9 @@ func TestResourceDVEnrollment(t *testing.T) {
 		t.Parallel()
 		client := edgegrid.NewTestClient()
 		enrollment := getTestDVEnrollment()
+		enrollment.NetworkConfiguration.DNSNameSettings = &cps.DNSNameSettings{
+			CloneDNSNames: true,
+		}
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.CPS.On("CreateEnrollment",
@@ -2212,7 +2407,8 @@ func TestResourceDVEnrollment(t *testing.T) {
 						CheckEqual("network_configuration.#", "1").
 						CheckEqualBatch("network_configuration.0.", test.AttributeBatch{
 							"disallowed_tls_versions.#": "0",
-							"clone_dns_names":           "false",
+							"clone_dns_names":           "true",
+							"enable_for_all_sans":       "true",
 							"geography":                 "core",
 							"must_have_ciphers":         "ak-akamai-2020q1",
 							"ocsp_stapling":             "on",
@@ -2257,6 +2453,9 @@ func TestResourceDVEnrollment(t *testing.T) {
 		t.Parallel()
 		client := edgegrid.NewTestClient()
 		enrollment := getTestDVEnrollment()
+		enrollment.NetworkConfiguration.DNSNameSettings = &cps.DNSNameSettings{
+			CloneDNSNames: true,
+		}
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.CPS.On("CreateEnrollment",
@@ -2402,7 +2601,8 @@ func TestResourceDVEnrollment(t *testing.T) {
 						CheckEqual("network_configuration.#", "1").
 						CheckEqualBatch("network_configuration.0.", test.AttributeBatch{
 							"disallowed_tls_versions.#": "0",
-							"clone_dns_names":           "false",
+							"clone_dns_names":           "true",
+							"enable_for_all_sans":       "true",
 							"geography":                 "core",
 							"must_have_ciphers":         "ak-akamai-2020q1",
 							"ocsp_stapling":             "on",
@@ -2447,6 +2647,9 @@ func TestResourceDVEnrollment(t *testing.T) {
 		t.Parallel()
 		client := edgegrid.NewTestClient()
 		enrollment := getTestDVEnrollment()
+		enrollment.NetworkConfiguration.DNSNameSettings = &cps.DNSNameSettings{
+			CloneDNSNames: true,
+		}
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.CPS.On("CreateEnrollment",
@@ -2614,7 +2817,8 @@ func TestResourceDVEnrollment(t *testing.T) {
 						CheckEqual("network_configuration.#", "1").
 						CheckEqualBatch("network_configuration.0.", test.AttributeBatch{
 							"disallowed_tls_versions.#": "0",
-							"clone_dns_names":           "false",
+							"clone_dns_names":           "true",
+							"enable_for_all_sans":       "true",
 							"geography":                 "core",
 							"must_have_ciphers":         "ak-akamai-2020q1",
 							"ocsp_stapling":             "on",
@@ -2686,6 +2890,7 @@ func TestResourceDVEnrollment(t *testing.T) {
 				DisallowedTLSVersions: []string{"TLSv1", "TLSv1_1"},
 				DNSNameSettings: &cps.DNSNameSettings{
 					CloneDNSNames: false,
+					DNSNames:      []string{"test.akamai.com"},
 				},
 				Geography:        "core",
 				MustHaveCiphers:  "ak-akamai-default",
@@ -2856,6 +3061,9 @@ func TestResourceDVEnrollment(t *testing.T) {
 		t.Parallel()
 		client := edgegrid.NewTestClient()
 		enrollment := getTestDVEnrollment()
+		enrollment.NetworkConfiguration.DNSNameSettings = &cps.DNSNameSettings{
+			CloneDNSNames: true,
+		}
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.CPS.On("CreateEnrollment",
@@ -2924,6 +3132,9 @@ func TestResourceDVEnrollment(t *testing.T) {
 		t.Parallel()
 		client := edgegrid.NewTestClient()
 		enrollment := getTestDVEnrollment()
+		enrollment.NetworkConfiguration.DNSNameSettings = &cps.DNSNameSettings{
+			CloneDNSNames: true,
+		}
 		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
 
 		client.CPS.On("CreateEnrollment",
@@ -2941,6 +3152,603 @@ func TestResourceDVEnrollment(t *testing.T) {
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/no_acknowledge_warnings/create_enrollment.tf"),
 					ExpectError: regexp.MustCompile(`error creating enrollment`),
 				},
+			},
+		})
+		client.CPS.AssertExpectations(t)
+	})
+
+	t.Run("create enrollment with explicit dns_names", func(t *testing.T) {
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+		enrollment := cps.GetEnrollmentResponse{
+			AdminContact: &cps.Contact{
+				AddressLineOne:   "150 Broadway",
+				City:             "Cambridge",
+				Country:          "US",
+				Email:            "r1d1@akamai.com",
+				FirstName:        "R1",
+				LastName:         "D1",
+				OrganizationName: "Akamai",
+				Phone:            "123123123",
+				PostalCode:       "12345",
+				Region:           "MA",
+			},
+			CertificateChainType: "default",
+			CertificateType:      "san",
+			CSR: &cps.CSR{
+				C:                   "US",
+				CN:                  "test.akamai.com",
+				L:                   "Cambridge",
+				O:                   "Akamai",
+				OU:                  "WebEx",
+				SANS:                []string{"san.test.akamai.com"},
+				ST:                  "MA",
+				PreferredTrustChain: "intermediate-a",
+			},
+			EnableMultiStackedCertificates: false,
+			NetworkConfiguration: &cps.NetworkConfiguration{
+				DisallowedTLSVersions: []string{"TLSv1", "TLSv1_1"},
+				DNSNameSettings: &cps.DNSNameSettings{
+					CloneDNSNames: false,
+					DNSNames:      []string{"test.akamai.com"},
+				},
+				Geography:        "core",
+				MustHaveCiphers:  "ak-akamai-default",
+				OCSPStapling:     "on",
+				PreferredCiphers: "ak-akamai-default",
+				QuicEnabled:      false,
+				SecureNetwork:    "enhanced-tls",
+				SNIOnly:          true,
+			},
+			Org: &cps.Org{
+				AddressLineOne: "150 Broadway",
+				City:           "Cambridge",
+				Country:        "US",
+				Name:           "Akamai",
+				Phone:          "321321321",
+				PostalCode:     "12345",
+				Region:         "MA",
+			},
+			RA:                 "lets-encrypt",
+			SignatureAlgorithm: "SHA-256",
+			TechContact: &cps.Contact{
+				AddressLineOne:   "150 Broadway",
+				City:             "Cambridge",
+				Country:          "US",
+				Email:            "r2d2@akamai.com",
+				FirstName:        "R2",
+				LastName:         "D2",
+				OrganizationName: "Akamai",
+				Phone:            "123123123",
+				PostalCode:       "12345",
+				Region:           "MA",
+			},
+			ValidationType: "dv",
+		}
+		enrollmentReqBodyDNS := createEnrollmentReqBodyFromEnrollment(enrollment)
+
+		client.CPS.On("CreateEnrollment",
+			testutils.MockContext,
+			cps.CreateEnrollmentRequest{
+				EnrollmentRequestBody: enrollmentReqBodyDNS,
+				ContractID:            "1",
+			},
+		).Return(&cps.CreateEnrollmentResponse{
+			ID:         1,
+			Enrollment: "/cps/v2/enrollments/1",
+			Changes:    []string{"/cps/v2/enrollments/1/changes/2"},
+		}, nil).Once()
+
+		enrollment.Location = "/cps/v2/enrollments/1"
+		enrollment.PendingChanges = []cps.PendingChange{
+			{
+				Location:   "/cps/v2/enrollments/1/changes/2",
+				ChangeType: "new-certificate",
+			},
+		}
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(&enrollment, nil).Once()
+
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{
+			AllowedInput: []cps.AllowedInput{},
+			StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: coodinateDomainValidation,
+			},
+		}, nil).Once()
+
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{
+			AllowedInput: []cps.AllowedInput{{Type: "lets-encrypt-challenges"}},
+			StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: coodinateDomainValidation,
+			},
+		}, nil).Once()
+
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(&enrollment, nil).Times(3)
+
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{
+			AllowedInput: []cps.AllowedInput{{Type: "lets-encrypt-challenges"}},
+			StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: coodinateDomainValidation,
+			},
+		}, nil).Once()
+
+		client.CPS.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.DVArray{DV: []cps.DV{
+			{
+				Challenges: []cps.Challenge{
+					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "http-01", Status: "pending"},
+					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "dns-01", Status: "pending"},
+				},
+				Domain:           "test.akamai.com",
+				ValidationStatus: "IN_PROGRESS",
+			},
+		}}, nil).Times(2)
+
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{
+			AllowedInput: []cps.AllowedInput{{Type: "lets-encrypt-challenges"}},
+			StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: coodinateDomainValidation,
+			},
+		}, nil).Once()
+
+		allowCancelDNS := true
+		client.CPS.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
+			EnrollmentID:              1,
+			AllowCancelPendingChanges: &allowCancelDNS,
+		}).Return(&cps.RemoveEnrollmentResponse{
+			Enrollment: "1",
+		}, nil).Once()
+
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(nil, cps.ErrNotFound).Once()
+
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/dns_name_settings/create_enrollment.tf"),
+					Check: test.NewStateChecker("akamai_cps_dv_enrollment.dv").
+						CheckEqual("contract_id", "ctr_1").
+						CheckEqual("certificate_type", "san").
+						CheckEqual("validation_type", "dv").
+						CheckEqual("registration_authority", "lets-encrypt").
+						CheckEqual("network_configuration.#", "1").
+						CheckEqual("network_configuration.0.enable_for_all_sans", "false").
+						CheckEqual("network_configuration.0.dns_names.#", "1").
+						CheckEqual("dns_challenges.#", "1").
+						CheckEqual("http_challenges.#", "1").
+						CheckTypeSetElemAttr("network_configuration.0.dns_names.*", "test.akamai.com").
+						Build(),
+				},
+			},
+		})
+
+		client.CPS.AssertExpectations(t)
+	})
+
+	t.Run("create enrollment with enable_for_all_sans and clone_dns_names conflict", func(t *testing.T) {
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/dns_name_settings_conflict/create_enrollment.tf"),
+					ExpectError: regexp.MustCompile("'enable_for_all_sans' and 'clone_dns_names' cannot both be provided at the same time"),
+				},
+			},
+		})
+
+		client.CPS.AssertExpectations(t)
+	})
+
+	t.Run("create enrollment with enable_for_all_sans and dns_names conflict", func(t *testing.T) {
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/dns_name_settings_conflict/create_enrollment_with_dns_names.tf"),
+					ExpectError: regexp.MustCompile("'dns_names' cannot be provided when 'enable_for_all_sans' is true"),
+				},
+			},
+		})
+
+		client.CPS.AssertExpectations(t)
+	})
+
+	t.Run("create enrollment with enable_for_all_sans unknown at plan and dns_names conflict", func(t *testing.T) {
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
+			ExternalProviders: map[string]resource.ExternalProvider{
+				"random": {
+					Source:            "registry.terraform.io/hashicorp/random",
+					VersionConstraint: "3.1.0",
+				},
+			},
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/dns_name_settings_conflict/create_enrollment_with_unknown_enable_for_all_sans.tf"),
+					ExpectError: regexp.MustCompile("'dns_names' cannot be provided when 'enable_for_all_sans' is true"),
+				},
+			},
+		})
+
+		client.CPS.AssertExpectations(t)
+	})
+
+	t.Run("create enrollment with enable_for_all_sans unknown at plan and false without dns_names", func(t *testing.T) {
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
+			ExternalProviders: map[string]resource.ExternalProvider{
+				"random": {
+					Source:            "registry.terraform.io/hashicorp/random",
+					VersionConstraint: "3.1.0",
+				},
+			},
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/dns_name_settings_conflict/create_enrollment_with_unknown_false_enable_for_all_sans.tf"),
+					ExpectError: regexp.MustCompile("'dns_names' is required when 'enable_for_all_sans' or 'clone_dns_names' is false"),
+				},
+			},
+		})
+
+		client.CPS.AssertExpectations(t)
+	})
+
+	t.Run("create enrollment with clone_dns_names and dns_names conflict", func(t *testing.T) {
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/dns_name_settings_conflict/create_enrollment_with_clone_dns_names.tf"),
+					ExpectError: regexp.MustCompile("'dns_names' cannot be provided when 'clone_dns_names' is true"),
+				},
+			},
+		})
+
+		client.CPS.AssertExpectations(t)
+	})
+
+	t.Run("create enrollment with enable_for_all_sans false without dns_names", func(t *testing.T) {
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/dns_name_settings_conflict/create_enrollment_with_false_without_dns_names.tf"),
+					ExpectError: regexp.MustCompile("'dns_names' is required when 'enable_for_all_sans' or 'clone_dns_names' is false"),
+				},
+			},
+		})
+
+		client.CPS.AssertExpectations(t)
+	})
+
+	t.Run("migration: create with clone_dns_names false - no conflict with enable_for_all_sans", func(t *testing.T) {
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+
+		enrollment := getTestDVEnrollment()
+		enrollment.CSR.PreferredTrustChain = "intermediate-a"
+		enrollment.CSR.SANS = []string{"san.test.akamai.com"}
+		enrollment.NetworkConfiguration.DisallowedTLSVersions = []string{"TLSv1", "TLSv1_1"}
+		enrollment.NetworkConfiguration.MustHaveCiphers = "ak-akamai-default"
+		enrollment.NetworkConfiguration.PreferredCiphers = "ak-akamai-default"
+		enrollment.NetworkConfiguration.DNSNameSettings = &cps.DNSNameSettings{
+			CloneDNSNames: false,
+			DNSNames:      []string{"test.akamai.com"},
+		}
+		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
+
+		client.CPS.On("CreateEnrollment",
+			testutils.MockContext,
+			cps.CreateEnrollmentRequest{
+				EnrollmentRequestBody: enrollmentReqBody,
+				ContractID:            "1",
+			},
+		).Return(&cps.CreateEnrollmentResponse{
+			ID:         1,
+			Enrollment: "/cps/v2/enrollments/1",
+			Changes:    []string{"/cps/v2/enrollments/1/changes/2"},
+		}, nil).Once()
+
+		enrollment.Location = "/cps/v2/enrollments/1"
+		enrollment.PendingChanges = []cps.PendingChange{
+			{
+				Location:   "/cps/v2/enrollments/1/changes/2",
+				ChangeType: "new-certificate",
+			},
+		}
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(&enrollment, nil).Once()
+
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{
+			AllowedInput: []cps.AllowedInput{},
+			StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: "pre-verification-safety-checks",
+			},
+		}, nil).Once()
+
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{
+			AllowedInput: []cps.AllowedInput{{Type: "lets-encrypt-challenges"}},
+			StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: coodinateDomainValidation,
+			},
+		}, nil).Once()
+
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(&enrollment, nil).Times(3)
+
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{
+			AllowedInput: []cps.AllowedInput{{Type: "lets-encrypt-challenges"}},
+			StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: coodinateDomainValidation,
+			},
+		}, nil).Once()
+
+		client.CPS.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.DVArray{DV: []cps.DV{
+			{
+				Challenges: []cps.Challenge{
+					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "http-01", Status: "pending"},
+					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "dns-01", Status: "pending"},
+				},
+				Domain:           "test.akamai.com",
+				ValidationStatus: "IN_PROGRESS",
+			},
+		}}, nil).Times(2)
+
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{
+			AllowedInput: []cps.AllowedInput{{Type: "lets-encrypt-challenges"}},
+			StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: coodinateDomainValidation,
+			},
+		}, nil).Once()
+
+		allowCancel := true
+		client.CPS.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
+			EnrollmentID:              1,
+			AllowCancelPendingChanges: &allowCancel,
+		}).Return(&cps.RemoveEnrollmentResponse{Enrollment: "1"}, nil).Once()
+
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(nil, cps.ErrNotFound).Once()
+
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/clone_dns_names_migration/with_clone_dns_names_false.tf"),
+					Check: test.NewStateChecker("akamai_cps_dv_enrollment.dv").
+						CheckEqual("network_configuration.0.enable_for_all_sans", "false").
+						CheckEqual("network_configuration.0.clone_dns_names", "false").
+						Build(),
+				},
+			},
+		})
+
+		client.CPS.AssertExpectations(t)
+	})
+
+	t.Run("default: create without dns name settings defaults enable_for_all_sans to true", func(t *testing.T) {
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+
+		enrollment := getTestDVEnrollment()
+		enrollment.CSR.PreferredTrustChain = "intermediate-a"
+		enrollment.CSR.SANS = []string{"san.test.akamai.com"}
+		enrollment.NetworkConfiguration.DisallowedTLSVersions = []string{"TLSv1", "TLSv1_1"}
+		enrollment.NetworkConfiguration.MustHaveCiphers = "ak-akamai-default"
+		enrollment.NetworkConfiguration.PreferredCiphers = "ak-akamai-default"
+		enrollment.NetworkConfiguration.DNSNameSettings = &cps.DNSNameSettings{
+			CloneDNSNames: true,
+			DNSNames:      []string{"test.akamai.com", "san.test.akamai.com"},
+		}
+		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
+
+		client.CPS.On("CreateEnrollment",
+			testutils.MockContext,
+			cps.CreateEnrollmentRequest{
+				EnrollmentRequestBody: enrollmentReqBody,
+				ContractID:            "1",
+			},
+		).Return(&cps.CreateEnrollmentResponse{
+			ID:         1,
+			Enrollment: "/cps/v2/enrollments/1",
+			Changes:    []string{"/cps/v2/enrollments/1/changes/2"},
+		}, nil).Once()
+
+		enrollment.Location = "/cps/v2/enrollments/1"
+		enrollment.PendingChanges = []cps.PendingChange{
+			{
+				Location:   "/cps/v2/enrollments/1/changes/2",
+				ChangeType: "new-certificate",
+			},
+		}
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(&enrollment, nil).Once()
+
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{
+			AllowedInput: []cps.AllowedInput{},
+			StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: "pre-verification-safety-checks",
+			},
+		}, nil).Once()
+
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{
+			AllowedInput: []cps.AllowedInput{{Type: "lets-encrypt-challenges"}},
+			StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: coodinateDomainValidation,
+			},
+		}, nil).Once()
+
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(&enrollment, nil).Times(3)
+
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{
+			AllowedInput: []cps.AllowedInput{{Type: "lets-encrypt-challenges"}},
+			StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: coodinateDomainValidation,
+			},
+		}, nil).Once()
+
+		client.CPS.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.DVArray{DV: []cps.DV{
+			{
+				Challenges: []cps.Challenge{
+					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "http-01", Status: "pending"},
+					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "dns-01", Status: "pending"},
+				},
+				Domain:           "test.akamai.com",
+				ValidationStatus: "IN_PROGRESS",
+			},
+		}}, nil).Times(2)
+
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{
+			AllowedInput: []cps.AllowedInput{{Type: "lets-encrypt-challenges"}},
+			StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: coodinateDomainValidation,
+			},
+		}, nil).Once()
+
+		allowCancel := true
+		client.CPS.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
+			EnrollmentID:              1,
+			AllowCancelPendingChanges: &allowCancel,
+		}).Return(&cps.RemoveEnrollmentResponse{Enrollment: "1"}, nil).Once()
+
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(nil, cps.ErrNotFound).Once()
+
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/clone_dns_names_migration/without_dns_fields.tf"),
+					Check: test.NewStateChecker("akamai_cps_dv_enrollment.dv").
+						CheckEqual("network_configuration.0.enable_for_all_sans", "true").
+						Build(),
+				},
+			},
+		})
+
+		client.CPS.AssertExpectations(t)
+	})
+	t.Run("non-SNI enrollment without DNS name settings has no drift", func(t *testing.T) {
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+		enrollment := getTestDVEnrollment()
+		enrollment.NetworkConfiguration.DNSNameSettings = nil
+		enrollment.NetworkConfiguration.SNIOnly = false
+		enrollment.NetworkConfiguration.MustHaveCiphers = "ak-akamai-default"
+		enrollment.NetworkConfiguration.PreferredCiphers = "ak-akamai-default"
+		enrollment.NetworkConfiguration.DisallowedTLSVersions = []string{"TLSv1", "TLSv1_1"}
+		enrollment.CSR.PreferredTrustChain = "intermediate-a"
+		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
+		assert.Nil(t, enrollmentReqBody.NetworkConfiguration.DNSNameSettings)
+
+		client.CPS.On("CreateEnrollment",
+			testutils.MockContext,
+			cps.CreateEnrollmentRequest{
+				EnrollmentRequestBody: enrollmentReqBody,
+				ContractID:            "1",
+			},
+		).Return(&cps.CreateEnrollmentResponse{ID: 1, Enrollment: "/cps/v2/enrollments/1"}, nil).Once()
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(&enrollment, nil).Times(4)
+
+		allowCancel := true
+		client.CPS.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
+			EnrollmentID:              1,
+			AllowCancelPendingChanges: &allowCancel,
+		}).Return(&cps.RemoveEnrollmentResponse{Enrollment: "1"}, nil).Once()
+
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(nil, cps.ErrNotFound).Once()
+
+		config := strings.Replace(
+			testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/clone_dns_names_migration/without_dns_fields.tf"),
+			"  sans = [\n    \"san.test.akamai.com\",\n  ]\n",
+			"",
+			1,
+		)
+		config = strings.Replace(config, "sni_only       = true", "sni_only       = false", 1)
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
+			Steps: []resource.TestStep{
+				{Config: config},
+				{Config: config, PlanOnly: true},
 			},
 		})
 		client.CPS.AssertExpectations(t)
@@ -2974,6 +3782,7 @@ func getTestDVEnrollment() cps.GetEnrollmentResponse {
 		NetworkConfiguration: &cps.NetworkConfiguration{
 			DNSNameSettings: &cps.DNSNameSettings{
 				CloneDNSNames: false,
+				DNSNames:      []string{"test.akamai.com"},
 			},
 			Geography:        "core",
 			MustHaveCiphers:  "ak-akamai-2020q1",
@@ -3010,13 +3819,197 @@ func getTestDVEnrollment() cps.GetEnrollmentResponse {
 	}
 }
 
+func testDVEnrollmentDNSModeTransitionRejected(t *testing.T, config string) {
+	t.Helper()
+
+	client := edgegrid.NewTestClient()
+	allowCancel := true
+	enrollment := getTestDVEnrollment()
+	enrollment.CSR.SANS = []string{"san.test.akamai.com"}
+	enrollment.CSR.PreferredTrustChain = "intermediate-a"
+	enrollment.NetworkConfiguration.DisallowedTLSVersions = []string{"TLSv1", "TLSv1_1"}
+	enrollment.NetworkConfiguration.MustHaveCiphers = "ak-akamai-default"
+	enrollment.NetworkConfiguration.PreferredCiphers = "ak-akamai-default"
+	enrollment.NetworkConfiguration.DNSNameSettings = &cps.DNSNameSettings{CloneDNSNames: true}
+
+	client.CPS.On("CreateEnrollment",
+		testutils.MockContext,
+		cps.CreateEnrollmentRequest{
+			EnrollmentRequestBody: createEnrollmentReqBodyFromEnrollment(enrollment),
+			ContractID:            "1",
+		},
+	).Return(&cps.CreateEnrollmentResponse{
+		ID:         1,
+		Enrollment: "/cps/v2/enrollments/1",
+		Changes:    []string{"/cps/v2/enrollments/1/changes/2"},
+	}, nil).Once()
+
+	enrollment.Location = "/cps/v2/enrollments/1"
+	enrollment.PendingChanges = []cps.PendingChange{{
+		Location:   "/cps/v2/enrollments/1/changes/2",
+		ChangeType: "new-certificate",
+	}}
+	enrollment.NetworkConfiguration.DNSNameSettings.DNSNames = []string{"test.akamai.com", "san.test.akamai.com"}
+	client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		Return(&enrollment, nil).Times(10)
+	client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+		Return(nil, cps.ErrNotFound).Once()
+	client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		EnrollmentID: 1,
+		ChangeID:     2,
+	}).Return(&cps.Change{
+		AllowedInput: []cps.AllowedInput{{Type: "lets-encrypt-challenges"}},
+		StatusInfo: &cps.StatusInfo{
+			State:  "awaiting-input",
+			Status: coodinateDomainValidation,
+		},
+	}, nil).Maybe()
+	client.CPS.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
+		EnrollmentID: 1,
+		ChangeID:     2,
+	}).Return(&cps.DVArray{}, nil).Maybe()
+	client.CPS.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
+		EnrollmentID:              1,
+		AllowCancelPendingChanges: &allowCancel,
+	}).Return(&cps.RemoveEnrollmentResponse{Enrollment: "1"}, nil).Maybe()
+
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
+		Steps: []resource.TestStep{
+			{
+				Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/dns_names_transition/enable_for_all_sans.tf"),
+			},
+			{
+				Config:      config,
+				ExpectError: regexp.MustCompile("'dns_names' must change when switching 'enable_for_all_sans' or 'clone_dns_names' from true to false"),
+			},
+		},
+	})
+	client.CPS.AssertExpectations(t)
+}
+
+func mockDVTransitionChangeStatus(client *edgegrid.TestClient) {
+	client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+		EnrollmentID: 1,
+		ChangeID:     2,
+	}).Return(&cps.Change{
+		AllowedInput: []cps.AllowedInput{{Type: "lets-encrypt-challenges"}},
+		StatusInfo: &cps.StatusInfo{
+			State:  "awaiting-input",
+			Status: coodinateDomainValidation,
+		},
+	}, nil).Times(15)
+	client.CPS.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
+		EnrollmentID: 1,
+		ChangeID:     2,
+	}).Return(&cps.DVArray{}, nil).Times(11)
+}
+
+func TestDNSNameSettingsDefaultingEnabled(t *testing.T) {
+	t.Parallel()
+	tests := map[string]struct {
+		sniOnly  cty.Value
+		expected bool
+	}{
+		"SNI enabled":     {sniOnly: cty.True, expected: true},
+		"SNI disabled":    {sniOnly: cty.False, expected: false},
+		"SNI unspecified": {sniOnly: cty.NullVal(cty.Bool), expected: false},
+		"SNI unknown":     {sniOnly: cty.UnknownVal(cty.Bool), expected: false},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, test.expected, dnsNameSettingsDefaultingEnabled(test.sniOnly))
+		})
+	}
+}
+
+func TestValidateDNSNameSettings(t *testing.T) {
+	t.Parallel()
+
+	nullBool := cty.NullVal(cty.Bool)
+	nullDNSNames := cty.NullVal(cty.Set(cty.String))
+	dnsNameSettingsConfig := func(sniOnly, cloneDNS, enableForAllSANs, dnsNames cty.Value) cty.Value {
+		return cty.ObjectVal(map[string]cty.Value{
+			"sni_only": sniOnly,
+			"network_configuration": cty.ListVal([]cty.Value{
+				cty.ObjectVal(map[string]cty.Value{
+					"clone_dns_names":     cloneDNS,
+					"enable_for_all_sans": enableForAllSANs,
+					"dns_names":           dnsNames,
+				}),
+			}),
+		})
+	}
+
+	tests := map[string]struct {
+		config      cty.Value
+		expectError string
+	}{
+		"non-SNI permits omitted DNS name settings": {
+			config: dnsNameSettingsConfig(cty.False, nullBool, nullBool, nullDNSNames),
+		},
+		"non-SNI rejects clone_dns_names": {
+			config:      dnsNameSettingsConfig(cty.False, cty.False, nullBool, nullDNSNames),
+			expectError: "'enable_for_all_sans', 'clone_dns_names', and 'dns_names' cannot be provided when 'sni_only' is false",
+		},
+		"non-SNI rejects enable_for_all_sans": {
+			config:      dnsNameSettingsConfig(cty.False, nullBool, cty.True, nullDNSNames),
+			expectError: "'enable_for_all_sans', 'clone_dns_names', and 'dns_names' cannot be provided when 'sni_only' is false",
+		},
+		"non-SNI rejects dns_names": {
+			config:      dnsNameSettingsConfig(cty.False, nullBool, nullBool, cty.SetVal([]cty.Value{cty.StringVal("example.com")})),
+			expectError: "'enable_for_all_sans', 'clone_dns_names', and 'dns_names' cannot be provided when 'sni_only' is false",
+		},
+		"SNI with clone_dns_names false requires dns_names": {
+			config:      dnsNameSettingsConfig(cty.True, cty.False, nullBool, nullDNSNames),
+			expectError: "'dns_names' is required when 'enable_for_all_sans' or 'clone_dns_names' is false",
+		},
+		"SNI with enable_for_all_sans false requires dns_names": {
+			config:      dnsNameSettingsConfig(cty.True, nullBool, cty.False, nullDNSNames),
+			expectError: "'dns_names' is required when 'enable_for_all_sans' or 'clone_dns_names' is false",
+		},
+		"SNI rejects clone_dns_names and enable_for_all_sans together": {
+			config:      dnsNameSettingsConfig(cty.True, cty.False, cty.True, nullDNSNames),
+			expectError: "'enable_for_all_sans' and 'clone_dns_names' cannot both be provided at the same time",
+		},
+		"SNI permits omitted DNS name settings": {
+			config: dnsNameSettingsConfig(cty.True, nullBool, nullBool, nullDNSNames),
+		},
+		"SNI permits clone_dns_names true": {
+			config: dnsNameSettingsConfig(cty.True, cty.True, nullBool, nullDNSNames),
+		},
+		"SNI permits enable_for_all_sans true": {
+			config: dnsNameSettingsConfig(cty.True, nullBool, cty.True, nullDNSNames),
+		},
+		"SNI permits clone_dns_names false with dns_names": {
+			config: dnsNameSettingsConfig(cty.True, cty.False, nullBool, cty.SetVal([]cty.Value{cty.StringVal("example.com")})),
+		},
+		"SNI permits enable_for_all_sans false with dns_names": {
+			config: dnsNameSettingsConfig(cty.True, nullBool, cty.False, cty.SetVal([]cty.Value{cty.StringVal("example.com")})),
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			err := validateDNSNameSettings(test.config)
+			if test.expectError == "" {
+				assert.NoError(t, err)
+				return
+			}
+			require.Error(t, err)
+			assert.Equal(t, test.expectError, err.Error())
+		})
+	}
+}
+
 func TestResourceDVEnrollmentImport(t *testing.T) {
 	t.Parallel()
 	t.Run("import", func(t *testing.T) {
 		t.Parallel()
 		client := edgegrid.NewTestClient()
-		id := "1,ctr_1"
-
 		enrollment := cps.GetEnrollmentResponse{
 			AdminContact: &cps.Contact{
 				AddressLineOne:   "150 Broadway",
@@ -3043,8 +4036,8 @@ func TestResourceDVEnrollmentImport(t *testing.T) {
 			},
 			NetworkConfiguration: &cps.NetworkConfiguration{
 				DNSNameSettings: &cps.DNSNameSettings{
-					CloneDNSNames: false,
-				},
+					CloneDNSNames: true,
+					DNSNames:      []string{"test.akamai.com"}},
 				Geography:        "core",
 				MustHaveCiphers:  "ak-akamai-2020q1",
 				OCSPStapling:     "on",
@@ -3052,6 +4045,178 @@ func TestResourceDVEnrollmentImport(t *testing.T) {
 				QuicEnabled:      false,
 				SecureNetwork:    "enhanced-tls",
 				SNIOnly:          true,
+			},
+			Org: &cps.Org{
+				AddressLineOne: "150 Broadway",
+				City:           "Cambridge",
+				Country:        "US",
+				Name:           "Akamai",
+				Phone:          "321321321",
+				PostalCode:     "12345",
+				Region:         "MA",
+			},
+			RA:                 "lets-encrypt",
+			SignatureAlgorithm: "SHA-256",
+			TechContact: &cps.Contact{
+				AddressLineOne:   "150 Broadway",
+				City:             "Cambridge",
+				Country:          "US",
+				Email:            "r2d2@akamai.com",
+				FirstName:        "R2",
+				LastName:         "D2",
+				OrganizationName: "Akamai",
+				Phone:            "123123123",
+				PostalCode:       "12345",
+				Region:           "MA",
+			},
+			ValidationType: "dv",
+		}
+		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
+		client.CPS.On("CreateEnrollment",
+			testutils.MockContext,
+			cps.CreateEnrollmentRequest{
+				EnrollmentRequestBody: enrollmentReqBody,
+				ContractID:            "1",
+			},
+		).Return(&cps.CreateEnrollmentResponse{
+			ID:         1,
+			Enrollment: "/cps/v2/enrollments/1",
+			Changes:    []string{"/cps/v2/enrollments/1/changes/2"},
+		}, nil).Once()
+
+		enrollment.Location = "/cps/v2/enrollments/1"
+		enrollment.PendingChanges = []cps.PendingChange{
+			{
+				Location:   "/cps/v2/enrollments/1/changes/2",
+				ChangeType: "new-certificate",
+			},
+		}
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(&enrollment, nil).Once()
+
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{
+			AllowedInput: []cps.AllowedInput{{Type: "lets-encrypt-challenges"}},
+			StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: coodinateDomainValidation,
+			},
+		}, nil).Once()
+
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(&enrollment, nil).Times(4)
+
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{
+			AllowedInput: []cps.AllowedInput{{Type: "lets-encrypt-challenges"}},
+			StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: coodinateDomainValidation,
+			},
+		}, nil).Times(3)
+
+		client.CPS.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.DVArray{DV: []cps.DV{
+			{
+				Challenges: []cps.Challenge{
+					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "http-01", Status: "pending"},
+					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "dns-01", Status: "pending"},
+				},
+				Domain:           "test.akamai.com",
+				ValidationStatus: "IN_PROGRESS",
+			},
+		}}, nil).Times(3)
+		allowCancel := true
+
+		client.CPS.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
+			EnrollmentID:              1,
+			AllowCancelPendingChanges: &allowCancel,
+		}).Return(&cps.RemoveEnrollmentResponse{
+			Enrollment: "1",
+		}, nil).Once()
+
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(nil, cps.ErrNotFound).Once()
+
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/import/import_enrollment.tf"),
+				},
+				{
+					Config:            testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/import/import_enrollment.tf"),
+					ImportState:       true,
+					ImportStateId:     "1,ctr_1",
+					ResourceName:      "akamai_cps_dv_enrollment.dv",
+					ImportStateVerify: true,
+					ImportStateCheck: func(s []*terraform.InstanceState) error {
+						require.Len(t, s, 1)
+						rs := s[0]
+						assert.Equal(t, "ctr_1", rs.Attributes["contract_id"])
+						assert.Equal(t, "1", rs.Attributes["id"])
+						assert.Equal(t, "true", rs.Attributes["network_configuration.0.enable_for_all_sans"])
+						assert.Equal(t, "true", rs.Attributes["network_configuration.0.clone_dns_names"])
+						assert.Equal(t, "1", rs.Attributes["network_configuration.0.dns_names.#"])
+						assert.ElementsMatch(t, []string{"test.akamai.com"}, dnsNamesFromState(rs.Attributes))
+						return nil
+					},
+					ImportStateVerifyIgnore: []string{"network_configuration.0.quic_enabled"},
+				},
+			},
+		})
+		client.CPS.AssertExpectations(t)
+	})
+
+	t.Run("import with dns name settings", func(t *testing.T) {
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+		id := "1,ctr_1"
+
+		enrollment := cps.GetEnrollmentResponse{
+			AdminContact: &cps.Contact{
+				AddressLineOne:   "150 Broadway",
+				City:             "Cambridge",
+				Country:          "US",
+				Email:            "r1d1@akamai.com",
+				FirstName:        "R1",
+				LastName:         "D1",
+				OrganizationName: "Akamai",
+				Phone:            "123123123",
+				PostalCode:       "12345",
+				Region:           "MA",
+			},
+			CertificateChainType: "default",
+			CertificateType:      "san",
+			CSR: &cps.CSR{
+				C:                   "US",
+				CN:                  "test.akamai.com",
+				L:                   "Cambridge",
+				O:                   "Akamai",
+				OU:                  "WebEx",
+				SANS:                []string{"san.test.akamai.com"},
+				PreferredTrustChain: "intermediate-a",
+				ST:                  "MA",
+			},
+			NetworkConfiguration: &cps.NetworkConfiguration{
+				DNSNameSettings: &cps.DNSNameSettings{
+					CloneDNSNames: false,
+					DNSNames:      []string{"test.akamai.com"},
+				},
+				DisallowedTLSVersions: []string{"TLSv1", "TLSv1_1"},
+				Geography:             "core",
+				MustHaveCiphers:       "ak-akamai-default",
+				OCSPStapling:          "on",
+				PreferredCiphers:      "ak-akamai-default",
+				QuicEnabled:           false,
+				SecureNetwork:         "enhanced-tls",
+				SNIOnly:               true,
 			},
 			Org: &cps.Org{
 				AddressLineOne: "150 Broadway",
@@ -3165,23 +4330,152 @@ func TestResourceDVEnrollmentImport(t *testing.T) {
 			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
 			Steps: []resource.TestStep{
 				{
-					Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/import/import_enrollment.tf"),
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/dns_name_settings/create_enrollment.tf"),
 				},
 				{
-					Config:            testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/import/import_enrollment.tf"),
+					Config:            testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/dns_name_settings/create_enrollment.tf"),
 					ImportState:       true,
 					ImportStateId:     id,
 					ResourceName:      "akamai_cps_dv_enrollment.dv",
 					ImportStateVerify: true,
 					ImportStateCheck: func(s []*terraform.InstanceState) error {
-						assert.Len(t, s, 1)
+						require.Len(t, s, 1)
 						rs := s[0]
 						assert.Equal(t, "ctr_1", rs.Attributes["contract_id"])
 						assert.Equal(t, "1", rs.Attributes["id"])
+						assert.Equal(t, "false", rs.Attributes["network_configuration.0.enable_for_all_sans"])
+						assert.Equal(t, "1", rs.Attributes["network_configuration.0.dns_names.#"])
+						assert.ElementsMatch(t, []string{"test.akamai.com"}, dnsNamesFromState(rs.Attributes))
 						return nil
 					},
 					// It looks that there bug in SDK that values for bool optional fields are not persisted on create
-					ImportStateVerifyIgnore: []string{"network_configuration.0.clone_dns_names", "network_configuration.0.quic_enabled"},
+					ImportStateVerifyIgnore: []string{"network_configuration.0.quic_enabled"},
+				},
+			},
+		})
+		client.CPS.AssertExpectations(t)
+	})
+
+	t.Run("import with clone_dns_names false", func(t *testing.T) {
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+		id := "1,ctr_1"
+
+		enrollment := getTestDVEnrollment()
+		enrollment.CSR.PreferredTrustChain = "intermediate-a"
+		enrollment.CSR.SANS = []string{"san.test.akamai.com"}
+		enrollment.NetworkConfiguration.DisallowedTLSVersions = []string{"TLSv1", "TLSv1_1"}
+		enrollment.NetworkConfiguration.MustHaveCiphers = "ak-akamai-default"
+		enrollment.NetworkConfiguration.PreferredCiphers = "ak-akamai-default"
+		enrollment.NetworkConfiguration.DNSNameSettings = &cps.DNSNameSettings{
+			CloneDNSNames: false,
+			DNSNames:      []string{"test.akamai.com"},
+		}
+		enrollmentReqBody := createEnrollmentReqBodyFromEnrollment(enrollment)
+
+		client.CPS.On("CreateEnrollment",
+			testutils.MockContext,
+			cps.CreateEnrollmentRequest{
+				EnrollmentRequestBody: enrollmentReqBody,
+				ContractID:            "1",
+			},
+		).Return(&cps.CreateEnrollmentResponse{
+			ID:         1,
+			Enrollment: "/cps/v2/enrollments/1",
+			Changes:    []string{"/cps/v2/enrollments/1/changes/2"},
+		}, nil).Once()
+
+		enrollment.Location = "/cps/v2/enrollments/1"
+		enrollment.PendingChanges = []cps.PendingChange{
+			{
+				Location:   "/cps/v2/enrollments/1/changes/2",
+				ChangeType: "new-certificate",
+			},
+		}
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(&enrollment, nil).Once()
+
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{
+			AllowedInput: []cps.AllowedInput{{Type: "lets-encrypt-challenges"}},
+			StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: coodinateDomainValidation,
+			},
+		}, nil).Once()
+
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(&enrollment, nil).Times(4)
+
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{
+			AllowedInput: []cps.AllowedInput{{Type: "lets-encrypt-challenges"}},
+			StatusInfo: &cps.StatusInfo{
+				State:  "awaiting-input",
+				Status: coodinateDomainValidation,
+			},
+		}, nil).Times(3)
+
+		client.CPS.On("GetChangeLetsEncryptChallenges", testutils.MockContext, cps.GetChangeRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.DVArray{DV: []cps.DV{
+			{
+				Challenges: []cps.Challenge{
+					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "http-01", Status: "pending"},
+					{FullPath: "_acme-challenge.test.akamai.com", ResponseBody: "abc123", Type: "dns-01", Status: "pending"},
+				},
+				Domain:           "test.akamai.com",
+				ValidationStatus: "IN_PROGRESS",
+			},
+			{
+				Challenges: []cps.Challenge{
+					{FullPath: "_acme-challenge.san.test.akamai.com", ResponseBody: "abc123", Type: "http-01", Status: "pending"},
+					{FullPath: "_acme-challenge.san.test.akamai.com", ResponseBody: "abc123", Type: "dns-01", Status: "pending"},
+				},
+				Domain:           "san.test.akamai.com",
+				ValidationStatus: "IN_PROGRESS",
+			},
+		}}, nil).Times(3)
+		allowCancel := true
+
+		client.CPS.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
+			EnrollmentID:              1,
+			AllowCancelPendingChanges: &allowCancel,
+		}).Return(&cps.RemoveEnrollmentResponse{
+			Enrollment: "1",
+		}, nil).Once()
+
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(nil, cps.ErrNotFound).Once()
+
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/dns_name_settings/create_enrollment.tf"),
+				},
+				{
+					Config:            testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/dns_name_settings/create_enrollment.tf"),
+					ImportState:       true,
+					ImportStateId:     id,
+					ResourceName:      "akamai_cps_dv_enrollment.dv",
+					ImportStateVerify: true,
+					ImportStateCheck: func(s []*terraform.InstanceState) error {
+						require.Len(t, s, 1)
+						rs := s[0]
+						assert.Equal(t, "ctr_1", rs.Attributes["contract_id"])
+						assert.Equal(t, "1", rs.Attributes["id"])
+						assert.Equal(t, "false", rs.Attributes["network_configuration.0.enable_for_all_sans"])
+						assert.Equal(t, "false", rs.Attributes["network_configuration.0.clone_dns_names"])
+						assert.ElementsMatch(t, []string{"test.akamai.com"}, dnsNamesFromState(rs.Attributes))
+						return nil
+					},
+					ImportStateVerifyIgnore: []string{"network_configuration.0.quic_enabled"},
 				},
 			},
 		})
@@ -3217,6 +4511,14 @@ func TestResourceDVEnrollmentImport(t *testing.T) {
 }
 
 func createEnrollmentReqBodyFromEnrollment(en cps.GetEnrollmentResponse) cps.EnrollmentRequestBody {
+	networkConfiguration := en.NetworkConfiguration
+	if networkConfiguration != nil && networkConfiguration.DNSNameSettings != nil && networkConfiguration.DNSNameSettings.CloneDNSNames {
+		networkConfigurationCopy := *networkConfiguration
+		dnsNameSettingsCopy := *networkConfiguration.DNSNameSettings
+		dnsNameSettingsCopy.DNSNames = nil
+		networkConfigurationCopy.DNSNameSettings = &dnsNameSettingsCopy
+		networkConfiguration = &networkConfigurationCopy
+	}
 	return cps.EnrollmentRequestBody{
 		AdminContact:                   en.AdminContact,
 		AutoRenewalStartTime:           en.AutoRenewalStartTime,
@@ -3225,7 +4527,7 @@ func createEnrollmentReqBodyFromEnrollment(en cps.GetEnrollmentResponse) cps.Enr
 		ChangeManagement:               en.ChangeManagement,
 		CSR:                            en.CSR,
 		EnableMultiStackedCertificates: en.EnableMultiStackedCertificates,
-		NetworkConfiguration:           en.NetworkConfiguration,
+		NetworkConfiguration:           networkConfiguration,
 		Org:                            en.Org,
 		OrgID:                          en.OrgID,
 		RA:                             en.RA,

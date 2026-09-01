@@ -17,8 +17,9 @@ type checkData struct {
 
 // StateChecker allows to check the attributes in the terraform state.
 type StateChecker struct {
-	resourceName string
-	attributes   map[string]checkData
+	resourceName    string
+	attributes      map[string]checkData
+	typeSetElements []resource.TestCheckFunc
 }
 
 // AttributeBatch is a type that allows to gather a group of unprefixed attributes with their values
@@ -32,10 +33,17 @@ func NewStateChecker(resourceName string) StateChecker {
 	}
 }
 
+func (c StateChecker) clone() StateChecker {
+	copied := NewStateChecker(c.resourceName)
+	maps.Copy(copied.attributes, c.attributes)
+	copied.typeSetElements = append(copied.typeSetElements, c.typeSetElements...)
+	return copied
+}
+
 // Build processes all attributes and creates checks for them based on assigned values.
 func (c StateChecker) Build() resource.TestCheckFunc {
 
-	if len(c.attributes) == 0 {
+	if len(c.attributes) == 0 && len(c.typeSetElements) == 0 {
 		panic("there must be at least one check in order to build the checker")
 	}
 
@@ -47,18 +55,18 @@ func (c StateChecker) Build() resource.TestCheckFunc {
 			checks = append(checks, resource.TestCheckResourceAttr(c.resourceName, key, data.value))
 		}
 	}
+	checks = append(checks, c.typeSetElements...)
 
 	return resource.ComposeAggregateTestCheckFunc(checks...)
 }
 
 // CheckEqual adds a check for provided attribute name and corresponding value.
 func (c StateChecker) CheckEqual(attr, val string) StateChecker {
-	copied := NewStateChecker(c.resourceName)
+	copied := c.clone()
 	// TODO
 	// If we check equal timeouts.delete = 5m
 	// and we check missing for timeouts in the parent, we have a collision
 	// Add a check, probably in Build
-	maps.Copy(copied.attributes, c.attributes)
 	copied.attributes[attr] = checkData{
 		value: val,
 	}
@@ -78,11 +86,17 @@ func (c StateChecker) CheckEqualBatch(prefix string, batch AttributeBatch) State
 
 // CheckMissing adds a check for a provided attribute name to not be present in the state.
 func (c StateChecker) CheckMissing(attr string) StateChecker {
-	copied := NewStateChecker(c.resourceName)
-	maps.Copy(copied.attributes, c.attributes)
+	copied := c.clone()
 	copied.attributes[attr] = checkData{
 		isMissing: true,
 	}
+	return copied
+}
+
+// CheckTypeSetElemAttr adds a check that a TypeSet contains the provided value.
+func (c StateChecker) CheckTypeSetElemAttr(attr, value string) StateChecker {
+	copied := c.clone()
+	copied.typeSetElements = append(copied.typeSetElements, resource.TestCheckTypeSetElemAttr(c.resourceName, attr, value))
 	return copied
 }
 

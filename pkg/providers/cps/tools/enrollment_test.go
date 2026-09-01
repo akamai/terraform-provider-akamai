@@ -48,7 +48,7 @@ func TestGetContactInfo(t *testing.T) {
 			},
 		},
 		"set value is of invalid type": {
-			given:     schema.NewSet(schema.HashString, []interface{}{"abc"}),
+			given:     schema.NewSet(schema.HashString, []any{"abc"}),
 			withError: true,
 		},
 	}
@@ -215,7 +215,7 @@ func TestGetNetworkConfig(t *testing.T) {
 	resource := &schema.Resource{
 		Schema: map[string]*schema.Schema{
 			"network_configuration": {
-				Type:     schema.TypeSet,
+				Type:     schema.TypeList,
 				Required: true,
 				MinItems: 1,
 				MaxItems: 1,
@@ -228,18 +228,9 @@ func TestGetNetworkConfig(t *testing.T) {
 							MaxItems: 1,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
-									"send_ca_list_to_client": {
-										Type:     schema.TypeBool,
-										Optional: true,
-									},
-									"ocsp_enabled": {
-										Type:     schema.TypeBool,
-										Optional: true,
-									},
-									"set_id": {
-										Type:     schema.TypeString,
-										Optional: true,
-									},
+									"send_ca_list_to_client": {Type: schema.TypeBool, Optional: true},
+									"ocsp_enabled":           {Type: schema.TypeBool, Optional: true},
+									"set_id":                 {Type: schema.TypeString, Optional: true},
 								},
 							},
 						},
@@ -248,30 +239,18 @@ func TestGetNetworkConfig(t *testing.T) {
 							Optional: true,
 							Elem:     &schema.Schema{Type: schema.TypeString},
 						},
-						"clone_dns_names": {
-							Type:     schema.TypeBool,
+						"clone_dns_names":     {Type: schema.TypeBool, Optional: true},
+						"enable_for_all_sans": {Type: schema.TypeBool, Optional: true},
+						"dns_names": {
+							Type:     schema.TypeSet,
 							Optional: true,
+							Elem:     &schema.Schema{Type: schema.TypeString},
 						},
-						"geography": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"must_have_ciphers": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"ocsp_stapling": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"preferred_ciphers": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"quic_enabled": {
-							Type:     schema.TypeBool,
-							Optional: true,
-						},
+						"geography":         {Type: schema.TypeString, Required: true},
+						"must_have_ciphers": {Type: schema.TypeString, Optional: true},
+						"ocsp_stapling":     {Type: schema.TypeString, Optional: true},
+						"preferred_ciphers": {Type: schema.TypeString, Optional: true},
+						"quic_enabled":      {Type: schema.TypeBool, Optional: true},
 					},
 				},
 			},
@@ -285,6 +264,11 @@ func TestGetNetworkConfig(t *testing.T) {
 				Required: true,
 				ForceNew: true,
 			},
+			"common_name": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
 			"sni_only": {
 				Type:     schema.TypeBool,
 				Required: true,
@@ -294,14 +278,14 @@ func TestGetNetworkConfig(t *testing.T) {
 	}
 	truePtr := true
 	tests := map[string]struct {
-		givenNetworkConfig *schema.Set
+		givenNetworkConfig []interface{}
 		givenSANS          *schema.Set
 		givenSniOnly       bool
 		expected           *cps.NetworkConfiguration
 		withError          bool
 	}{
 		"basic test": {
-			givenNetworkConfig: schema.NewSet(schema.HashResource(resource), []interface{}{map[string]interface{}{
+			givenNetworkConfig: []interface{}{map[string]interface{}{
 				"client_mutual_authentication": schema.NewSet(schema.HashResource(resource), []interface{}{map[string]interface{}{
 					"send_ca_list_to_client": true,
 					"ocsp_enabled":           true,
@@ -309,12 +293,13 @@ func TestGetNetworkConfig(t *testing.T) {
 				}}),
 				"disallowed_tls_versions": []string{"TLSv1"},
 				"clone_dns_names":         true,
+				"enable_for_all_sans":     true,
 				"geography":               "core",
 				"must_have_ciphers":       "ak-akamai-default",
 				"ocsp_stapling":           "on",
 				"preferred_ciphers":       "ak-akamai-default",
 				"quic_enabled":            true,
-			}}),
+			}},
 			givenSANS:    schema.NewSet(schema.HashString, []interface{}{"a.com", "b.com"}),
 			givenSniOnly: true,
 			expected: &cps.NetworkConfiguration{
@@ -328,7 +313,6 @@ func TestGetNetworkConfig(t *testing.T) {
 				DisallowedTLSVersions: []string{"TLSv1"},
 				DNSNameSettings: &cps.DNSNameSettings{
 					CloneDNSNames: true,
-					DNSNames:      []string{"a.com", "b.com"},
 				},
 				Geography:        "core",
 				MustHaveCiphers:  "ak-akamai-default",
@@ -340,31 +324,92 @@ func TestGetNetworkConfig(t *testing.T) {
 			},
 		},
 		"only required values with sni_only=true": {
-			givenNetworkConfig: schema.NewSet(schema.HashResource(resource), []interface{}{map[string]interface{}{
-				"geography": "core",
-			}}),
-			givenSANS:    nil,
+			givenNetworkConfig: []interface{}{map[string]interface{}{
+				"clone_dns_names":     true,
+				"enable_for_all_sans": true,
+				"geography":           "core",
+			}},
 			givenSniOnly: true,
 			expected: &cps.NetworkConfiguration{
-				DNSNameSettings: &cps.DNSNameSettings{
-					CloneDNSNames: false,
-					DNSNames:      nil,
-				},
-				Geography:     "core",
-				SecureNetwork: "enhanced_tls",
-				SNIOnly:       true,
+				DNSNameSettings: &cps.DNSNameSettings{CloneDNSNames: true},
+				Geography:       "core",
+				SecureNetwork:   "enhanced_tls",
+				SNIOnly:         true,
 			},
 		},
 		"only required values with sni_only=false": {
-			givenNetworkConfig: schema.NewSet(schema.HashResource(resource), []interface{}{map[string]interface{}{
+			givenNetworkConfig: []interface{}{map[string]interface{}{
 				"geography": "core",
-			}}),
-			givenSANS: nil,
+			}},
 			expected: &cps.NetworkConfiguration{
 				DNSNameSettings: nil,
 				Geography:       "core",
 				SecureNetwork:   "enhanced_tls",
 				SNIOnly:         false,
+			},
+		},
+		"enable_for_all_sans=true uses SANs": {
+			givenNetworkConfig: []interface{}{map[string]interface{}{
+				"geography":           "core",
+				"clone_dns_names":     true,
+				"enable_for_all_sans": true,
+				"dns_names":           []any{},
+			}},
+			givenSANS:    schema.NewSet(schema.HashString, []any{"a.com", "b.com"}),
+			givenSniOnly: true,
+			expected: &cps.NetworkConfiguration{
+				DNSNameSettings: &cps.DNSNameSettings{CloneDNSNames: true},
+				Geography:       "core",
+				SecureNetwork:   "enhanced_tls",
+				SNIOnly:         true,
+			},
+		},
+		"enable_for_all_sans=false with explicit dns_names": {
+			givenNetworkConfig: []interface{}{map[string]interface{}{
+				"geography":           "core",
+				"clone_dns_names":     true,
+				"enable_for_all_sans": false,
+				"dns_names":           []any{"test.akamai.com"},
+			}},
+			givenSANS:    schema.NewSet(schema.HashString, []any{"san.test.akamai.com"}),
+			givenSniOnly: true,
+			expected: &cps.NetworkConfiguration{
+				DNSNameSettings: &cps.DNSNameSettings{CloneDNSNames: false, DNSNames: []string{"test.akamai.com"}},
+				Geography:       "core",
+				SecureNetwork:   "enhanced_tls",
+				SNIOnly:         true,
+			},
+		},
+		"enable_for_all_sans=false without dns_names": {
+			givenNetworkConfig: []interface{}{map[string]interface{}{
+				"geography":           "core",
+				"clone_dns_names":     true,
+				"enable_for_all_sans": false,
+				"dns_names":           []any{},
+			}},
+			givenSANS:    schema.NewSet(schema.HashString, []any{"san.test.akamai.com"}),
+			givenSniOnly: true,
+			expected: &cps.NetworkConfiguration{
+				DNSNameSettings: &cps.DNSNameSettings{CloneDNSNames: false, DNSNames: nil},
+				Geography:       "core",
+				SecureNetwork:   "enhanced_tls",
+				SNIOnly:         true,
+			},
+		},
+		"clone_dns_names=false uses explicit dns_names": {
+			givenNetworkConfig: []interface{}{map[string]interface{}{
+				"geography":           "core",
+				"clone_dns_names":     false,
+				"enable_for_all_sans": true,
+				"dns_names":           []any{"test.akamai.com"},
+			}},
+			givenSANS:    schema.NewSet(schema.HashString, []any{"san.test.akamai.com"}),
+			givenSniOnly: true,
+			expected: &cps.NetworkConfiguration{
+				DNSNameSettings: &cps.DNSNameSettings{CloneDNSNames: false, DNSNames: []string{"test.akamai.com"}},
+				Geography:       "core",
+				SecureNetwork:   "enhanced_tls",
+				SNIOnly:         true,
 			},
 		},
 	}
@@ -376,6 +421,8 @@ func TestGetNetworkConfig(t *testing.T) {
 			err := rd.Set("network_configuration", test.givenNetworkConfig)
 			require.NoError(t, err)
 			err = rd.Set("secure_network", "enhanced_tls")
+			require.NoError(t, err)
+			err = rd.Set("common_name", "test.com")
 			require.NoError(t, err)
 			err = rd.Set("sni_only", test.givenSniOnly)
 			require.NoError(t, err)
@@ -618,7 +665,7 @@ func TestNetworkConfigToMap(t *testing.T) {
 				},
 				DisallowedTLSVersions: []string{"TLSv1"},
 				DNSNameSettings: &cps.DNSNameSettings{
-					CloneDNSNames: true,
+					CloneDNSNames: false,
 					DNSNames:      []string{"a.com", "b.com"},
 				},
 				Geography:        "core",
@@ -636,12 +683,50 @@ func TestNetworkConfigToMap(t *testing.T) {
 					"set_id":                 "123",
 				}},
 				"disallowed_tls_versions": []string{"TLSv1"},
-				"clone_dns_names":         true,
+				"clone_dns_names":         false,
+				"enable_for_all_sans":     false,
+				"dns_names":               []interface{}{"a.com", "b.com"},
 				"geography":               "core",
 				"must_have_ciphers":       "ak-akamai-default",
 				"ocsp_stapling":           "on",
 				"preferred_ciphers":       "ak-akamai-default",
 				"quic_enabled":            true,
+			},
+		},
+		"without DNS name settings": {
+			given: cps.NetworkConfiguration{
+				Geography:        "core",
+				MustHaveCiphers:  "ak-akamai-default",
+				OCSPStapling:     "on",
+				PreferredCiphers: "ak-akamai-default",
+				QuicEnabled:      true,
+			},
+			expected: map[string]interface{}{
+				"disallowed_tls_versions": []string(nil),
+				"geography":               "core",
+				"must_have_ciphers":       "ak-akamai-default",
+				"ocsp_stapling":           "on",
+				"preferred_ciphers":       "ak-akamai-default",
+				"quic_enabled":            true,
+			},
+		},
+		"cloned DNS names": {
+			given: cps.NetworkConfiguration{
+				DNSNameSettings: &cps.DNSNameSettings{
+					CloneDNSNames: true,
+					DNSNames:      []string{"a.com", "b.com"},
+				},
+			},
+			expected: map[string]interface{}{
+				"disallowed_tls_versions": []string(nil),
+				"clone_dns_names":         true,
+				"dns_names":               []interface{}{"a.com", "b.com"},
+				"enable_for_all_sans":     true,
+				"geography":               "",
+				"must_have_ciphers":       "",
+				"ocsp_stapling":           "",
+				"preferred_ciphers":       "",
+				"quic_enabled":            false,
 			},
 		},
 	}

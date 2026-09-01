@@ -18,6 +18,7 @@ import (
 	cpstools "github.com/akamai/terraform-provider-akamai/v10/pkg/providers/cps/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 type (
@@ -190,8 +191,25 @@ var (
 			"clone_dns_names": {
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Default:     false,
-				Description: "Enable CPS to direct traffic using all the SANs listed in the SANs parameter when enrollment is created. Default is false",
+				Computed:    true,
+				Description: "Enable CPS to direct traffic using all the SANs listed in the SANs parameter when enrollment is created.",
+				Deprecated:  "Use enable_for_all_sans instead.",
+			},
+			"enable_for_all_sans": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Computed:    true,
+				Description: "When true (default), traffic is directed using all SANs listed in the enrollment. Replacement for the deprecated clone_dns_names attribute. Cannot be used together with clone_dns_names.",
+			},
+			"dns_names": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				Computed: true,
+				Elem: &schema.Schema{
+					Type:             schema.TypeString,
+					ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+				},
+				Description: "Explicit DNS names for traffic direction when enable_for_all_sans or clone_dns_names is false.",
 			},
 			"geography": {
 				Type:        schema.TypeString,

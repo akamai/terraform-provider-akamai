@@ -15,6 +15,7 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/timeouts"
 	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
 	cpstools "github.com/akamai/terraform-provider-akamai/v10/pkg/providers/cps/tools"
+	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -99,9 +100,9 @@ func resourceCPSDVEnrollment(pollChangeStatusInterval, pollGetEnrollmentInterval
 				Description: "Certificate signing request generated during enrollment creation",
 			},
 			"network_configuration": {
-				Type:        schema.TypeSet,
-				Required:    true,
-				MinItems:    1,
+				Type:        schema.TypeList,
+				Optional:    true,
+				Computed:    true,
 				MaxItems:    1,
 				Elem:        networkConfiguration,
 				Description: "Settings containing network information and TLS Metadata used by CPS",
@@ -216,31 +217,37 @@ func resourceCPSDVEnrollment(pollChangeStatusInterval, pollGetEnrollmentInterval
 			},
 		},
 		CustomizeDiff: customdiff.Sequence(
-			func(_ context.Context, diff *schema.ResourceDiff, _ any) error {
-				if !diff.HasChange("sans") {
-					return nil
-				}
-				domainsToValidate := []any{map[string]any{
-					"domain": strings.ToLower(diff.Get("common_name").(string)),
-				}}
-				if sans, ok := diff.Get("sans").(*schema.Set); ok {
-					for _, san := range sans.List() {
-						domain := map[string]any{"domain": strings.ToLower(san.(string))}
-						domainsToValidate = append(domainsToValidate, domain)
-					}
-				}
-				if err := diff.SetNew("http_challenges", schema.NewSet(cpstools.HashFromChallengesMap, domainsToValidate)); err != nil {
-					return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
-				}
-				if err := diff.SetNew("dns_challenges", schema.NewSet(cpstools.HashFromChallengesMap, domainsToValidate)); err != nil {
-					return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
-				}
-				return nil
-			}),
+			validateNetworkConfigurationPresent,
+			setDefaultEnableForAllSANs,
+			validateDNSNameSettingsConflict,
+			updateChallengesForSANChange,
+		),
 		Timeouts: &schema.ResourceTimeout{
 			Default: &DefaultEnrollmentTimeout,
 		},
 	}
+}
+
+func updateChallengesForSANChange(_ context.Context, diff *schema.ResourceDiff, _ any) error {
+	if !diff.HasChange("sans") {
+		return nil
+	}
+	domainsToValidate := []any{map[string]any{
+		"domain": strings.ToLower(diff.Get("common_name").(string)),
+	}}
+	if sans, ok := diff.Get("sans").(*schema.Set); ok {
+		for _, san := range sans.List() {
+			domain := map[string]any{"domain": strings.ToLower(san.(string))}
+			domainsToValidate = append(domainsToValidate, domain)
+		}
+	}
+	if err := diff.SetNew("http_challenges", schema.NewSet(cpstools.HashFromChallengesMap, domainsToValidate)); err != nil {
+		return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
+	}
+	if err := diff.SetNew("dns_challenges", schema.NewSet(cpstools.HashFromChallengesMap, domainsToValidate)); err != nil {
+		return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
+	}
+	return nil
 }
 
 func (r *dvEnrollmentResource) create(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
@@ -253,6 +260,10 @@ func (r *dvEnrollmentResource) create(ctx context.Context, d *schema.ResourceDat
 	)
 	client := meta.Client().GetCPS()
 	logger.Debug("Creating enrollment")
+
+	if err := validateResolvedDNSNameSettings(d); err != nil {
+		return diag.FromErr(err)
+	}
 
 	enrollmentReqBody := cps.EnrollmentRequestBody{
 		CertificateType: "san",
@@ -514,6 +525,10 @@ func (r *dvEnrollmentResource) update(ctx context.Context, d *schema.ResourceDat
 		}
 		return r.read(ctx, d, m)
 	}
+	if err := validateResolvedDNSNameSettings(d); err != nil {
+		return diag.FromErr(err)
+	}
+
 	enrollmentReqBody := cps.EnrollmentRequestBody{
 		CertificateType: "san",
 		ValidationType:  "dv",
@@ -646,4 +661,206 @@ func (r *dvEnrollmentResource) importState(ctx context.Context, d *schema.Resour
 	}
 	d.SetId(enrollmentID)
 	return []*schema.ResourceData{d}, nil
+}
+
+// setDefaultEnableForAllSANs sets enable_for_all_sans to true for SNI enrollments when neither it
+// nor clone_dns_names is explicitly provided in the configuration, making the default visible in
+// the plan.
+func setDefaultEnableForAllSANs(_ context.Context, diff *schema.ResourceDiff, _ any) error {
+	rawConfig := diff.GetRawConfig()
+	if rawConfig == cty.NilVal || rawConfig.IsNull() || !rawConfig.IsKnown() {
+		return nil
+	}
+
+	if !dnsNameSettingsDefaultingEnabled(rawConfig.GetAttr("sni_only")) {
+		return nil
+	}
+
+	ncVal := rawConfig.GetAttr("network_configuration")
+	if ncVal.IsNull() || !ncVal.IsKnown() || ncVal.LengthInt() == 0 {
+		return nil
+	}
+
+	it := ncVal.ElementIterator()
+	it.Next()
+	_, elem := it.Element()
+	if !elem.IsKnown() || elem.IsNull() {
+		return nil
+	}
+
+	cloneDNSAttr := elem.GetAttr("clone_dns_names")
+	enableForAllSANsAttr := elem.GetAttr("enable_for_all_sans")
+
+	// If at least one is explicitly set by the user, do not override.
+	if !cloneDNSAttr.IsNull() || !enableForAllSANsAttr.IsNull() {
+		networkConfigList, ok := diff.Get("network_configuration").([]any)
+		if !ok || len(networkConfigList) == 0 {
+			return nil
+		}
+		networkConfig := networkConfigList[0].(map[string]any)
+		if cloneDNSAttr.IsNull() && enableForAllSANsAttr.IsKnown() {
+			networkConfig["clone_dns_names"] = enableForAllSANsAttr.True()
+			networkConfig["enable_for_all_sans"] = enableForAllSANsAttr.True()
+		} else if enableForAllSANsAttr.IsNull() && cloneDNSAttr.IsKnown() {
+			networkConfig["clone_dns_names"] = cloneDNSAttr.True()
+			networkConfig["enable_for_all_sans"] = cloneDNSAttr.True()
+		} else {
+			return nil
+		}
+		if err := diff.SetNew("network_configuration", []any{networkConfig}); err != nil {
+			return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
+		}
+		return nil
+	}
+
+	// Neither is specified — apply enable_for_all_sans = true as the visible default.
+	networkConfigList, ok := diff.Get("network_configuration").([]any)
+	if !ok || len(networkConfigList) == 0 {
+		return nil
+	}
+	networkConfig := networkConfigList[0].(map[string]any)
+	networkConfig["enable_for_all_sans"] = true
+	networkConfig["clone_dns_names"] = true
+	if err := diff.SetNew("network_configuration", []any{networkConfig}); err != nil {
+		return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
+	}
+	return nil
+}
+
+func dnsNameSettingsDefaultingEnabled(sniOnly cty.Value) bool {
+	return !sniOnly.IsNull() && sniOnly.IsKnown() && sniOnly.True()
+}
+
+// validateNetworkConfigurationPresent returns an error when network_configuration is absent from the config.
+func validateNetworkConfigurationPresent(_ context.Context, diff *schema.ResourceDiff, _ any) error {
+	rawConfig := diff.GetRawConfig()
+	if rawConfig == cty.NilVal || rawConfig.IsNull() || !rawConfig.IsKnown() {
+		return nil
+	}
+	ncVal := rawConfig.GetAttr("network_configuration")
+	if ncVal.IsNull() || ncVal.LengthInt() == 0 {
+		return fmt.Errorf("'network_configuration' is required")
+	}
+	return nil
+}
+
+// validateDNSNameSettingsConflict rejects mutually exclusive DNS name settings.
+func validateDNSNameSettingsConflict(_ context.Context, diff *schema.ResourceDiff, _ any) error {
+	rawConfig := diff.GetRawConfig()
+	if err := validateDNSNameSettings(rawConfig); err != nil {
+		return err
+	}
+
+	return validateDNSNamesChangedForModeTransition(
+		dnsNamesModeDisabled(diff, rawConfig, "clone_dns_names") ||
+			dnsNamesModeDisabled(diff, rawConfig, "enable_for_all_sans"),
+		diff.HasChange("network_configuration.0.dns_names"),
+	)
+}
+
+func validateDNSNamesChangedForModeTransition(modeDisabled, dnsNamesChanged bool) error {
+	if modeDisabled && !dnsNamesChanged {
+		return fmt.Errorf("'dns_names' must change when switching 'enable_for_all_sans' or 'clone_dns_names' from true to false")
+	}
+	return nil
+}
+
+func dnsNamesModeDisabled(diff *schema.ResourceDiff, rawConfig cty.Value, attribute string) bool {
+	if rawConfig == cty.NilVal || rawConfig.IsNull() || !rawConfig.IsKnown() {
+		return false
+	}
+
+	networkConfiguration := rawConfig.GetAttr("network_configuration")
+	if networkConfiguration.IsNull() || !networkConfiguration.IsKnown() || networkConfiguration.LengthInt() == 0 {
+		return false
+	}
+
+	it := networkConfiguration.ElementIterator()
+	it.Next()
+	_, settings := it.Element()
+	if settings.IsNull() || !settings.IsKnown() {
+		return false
+	}
+	enabled := settings.GetAttr(attribute)
+	return enabled.IsKnown() && !enabled.IsNull() && !enabled.True() &&
+		diff.HasChange("network_configuration.0."+attribute)
+}
+
+func validateResolvedDNSNameSettings(d *schema.ResourceData) error {
+	return validateDNSNameSettings(d.GetRawConfig())
+}
+
+func validateDNSNameSettings(rawConfig cty.Value) error {
+	if rawConfig == cty.NilVal || rawConfig.IsNull() || !rawConfig.IsKnown() {
+		return nil
+	}
+
+	sniOnly := rawConfig.GetAttr("sni_only")
+	if sniOnly.IsKnown() && !sniOnly.IsNull() && !sniOnly.True() {
+		if hasDNSNameSettings(rawConfig) {
+			return fmt.Errorf("'enable_for_all_sans', 'clone_dns_names', and 'dns_names' cannot be provided when 'sni_only' is false")
+		}
+		return nil
+	}
+	if !dnsNameSettingsDefaultingEnabled(sniOnly) {
+		return nil
+	}
+
+	ncVal := rawConfig.GetAttr("network_configuration")
+	if ncVal.IsNull() || !ncVal.IsKnown() || ncVal.LengthInt() == 0 {
+		return nil
+	}
+
+	// network_configuration has MaxItems:1; LengthInt() > 0 was confirmed above.
+	it := ncVal.ElementIterator()
+	it.Next()
+	_, elem := it.Element()
+	if !elem.IsKnown() || elem.IsNull() {
+		return nil
+	}
+
+	cloneDNSAttr := elem.GetAttr("clone_dns_names")
+	enableForAllSANsAttr := elem.GetAttr("enable_for_all_sans")
+	dnsNamesAttr := elem.GetAttr("dns_names")
+
+	if !cloneDNSAttr.IsNull() && !enableForAllSANsAttr.IsNull() {
+		return fmt.Errorf("'enable_for_all_sans' and 'clone_dns_names' cannot both be provided at the same time")
+	}
+	if !dnsNamesAttr.IsNull() && !enableForAllSANsAttr.IsNull() && enableForAllSANsAttr.IsKnown() && enableForAllSANsAttr.True() {
+		return fmt.Errorf("'dns_names' cannot be provided when 'enable_for_all_sans' is true")
+	}
+	if !dnsNamesAttr.IsNull() && !cloneDNSAttr.IsNull() && cloneDNSAttr.IsKnown() && cloneDNSAttr.True() {
+		return fmt.Errorf("'dns_names' cannot be provided when 'clone_dns_names' is true")
+	}
+	if dnsNamesRequired(cloneDNSAttr, enableForAllSANsAttr) && (dnsNamesAttr.IsNull() || (dnsNamesAttr.IsKnown() && dnsNamesAttr.LengthInt() == 0)) {
+		return fmt.Errorf("'dns_names' is required when 'enable_for_all_sans' or 'clone_dns_names' is false")
+	}
+	return nil
+}
+
+func hasDNSNameSettings(rawConfig cty.Value) bool {
+	networkConfiguration := rawConfig.GetAttr("network_configuration")
+	if networkConfiguration.IsNull() || !networkConfiguration.IsKnown() || networkConfiguration.LengthInt() == 0 {
+		return false
+	}
+
+	it := networkConfiguration.ElementIterator()
+	it.Next()
+	_, settings := it.Element()
+	if settings.IsNull() || !settings.IsKnown() {
+		return false
+	}
+
+	for _, attribute := range []string{"enable_for_all_sans", "clone_dns_names", "dns_names"} {
+		value := settings.GetAttr(attribute)
+		if !value.IsNull() {
+			return true
+		}
+	}
+	return false
+}
+
+func dnsNamesRequired(cloneDNSAttr, enableForAllSANsAttr cty.Value) bool {
+	return (!cloneDNSAttr.IsNull() && cloneDNSAttr.IsKnown() && !cloneDNSAttr.True()) ||
+		(!enableForAllSANsAttr.IsNull() && enableForAllSANsAttr.IsKnown() && !enableForAllSANsAttr.True())
 }

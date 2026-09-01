@@ -47,6 +47,7 @@ resource "akamai_cps_dv_enrollment" "dv" {
       "TLSv1",
     "TLSv1_1"]
     clone_dns_names   = false
+    dns_names         = ["test.akamai.com"]
     geography         = "core"
     ocsp_stapling     = "on"
     preferred_ciphers = "ak-akamai-default"
