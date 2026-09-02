@@ -66,7 +66,7 @@ var (
 
 	// ErrLookingUpCPCodeByName is returned when fetching CP Code by name and returned an error or no CP Code was found
 	ErrLookingUpCPCodeByName = errors.New("looking up cp code by name")
-	// ErrLookingUpCPCodeByID is returned when fetching CP Code by id and returned an error or no CP Code was found
+	// ErrLookingUpCPCodeByID is returned when fetching CP Code by id and no CP Code was found
 	ErrLookingUpCPCodeByID = errors.New("looking up cp code by id")
 	// ErrCPCodeUpdateTimeout is returned when waiting for a cp code update results in timeout
 	ErrCPCodeUpdateTimeout = errors.New("cp code update timeout")
