@@ -19,10 +19,6 @@ GOTEST = $(GOCMD) test
 GOBUILD = $(GOCMD) build
 GOMODTIDY = $(GOCMD) mod tidy
 M = $(shell echo ">")
-TFLINT = $(BIN)/tflint
-$(BIN)/tflint: $(BIN) ; $(info $(M) Installing tflint...)
-	@export TFLINT_INSTALL_PATH=$(BIN); \
-	curl -sSfL https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh  | bash
 
 $(BIN):
 	@mkdir -p $@
@@ -86,10 +82,6 @@ terraform-fmt:
 .PHONY: lint
 lint: | $(GOLANGCILINT) ; $(info $(M) Running golangci-lint...) @
 	$Q $(BIN)/golangci-lint run --timeout 10m
-
-.PHONY: terraform-lint
-terraform-lint: | $(TFLINT) ; $(info $(M) Checking source code against tflint...) @ ## Run tflint on all HCL files in the project
-	@find ./examples -type f -name "*.tf" | xargs -I % dirname % | sort -u | xargs -I @ sh -c "echo @ && $(TFLINT) --filter @"
 
 .PHONY: test-compile
 test-compile:

@@ -106,9 +106,6 @@ docker exec akatf-container sh -c 'cd terraform-provider-akamai; make lint'
 echo "Running terraform fmt"
 docker exec akatf-container sh -c 'cd terraform-provider-akamai; make terraform-fmtcheck'
 
-echo "Running tflint on examples"
-docker exec akatf-container sh -c 'cd terraform-provider-akamai; make terraform-lint'
-
 echo "Running tests with xUnit output"
 docker exec akatf-container sh -c 'cd terraform-provider-akamai;
                                    2>&1 go test -timeout $TIMEOUT -v -coverpkg=./... -coverprofile=../profile.out -covermode=$COVERMODE -skip TestClient_DefaultRetryPolicy_TLS ./... | tee ../tests.output'

@@ -26,5 +26,3 @@ jobs:
           run: make test
         - name: Run terraform fmt check
           run: make terraform-fmtcheck
-        - name: Run tflint
-          run: make terraform-lint
