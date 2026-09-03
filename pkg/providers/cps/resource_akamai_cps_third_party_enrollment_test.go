@@ -2921,6 +2921,51 @@ func TestResourceThirdPartyEnrollment(t *testing.T) {
 		client.CPS.AssertExpectations(t)
 	})
 
+	t.Run("create enrollment with an explicitly empty dns_names attribute", func(t *testing.T) {
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+		enrollment := newEnrollment(
+			WithUpdateFunc(func(e *cps.GetEnrollmentResponse) {
+				e.NetworkConfiguration.DNSNameSettings = &cps.DNSNameSettings{CloneDNSNames: false}
+			}),
+		)
+		client.CPS.On("CreateEnrollment",
+			testutils.MockContext,
+			cps.CreateEnrollmentRequest{
+				EnrollmentRequestBody: createEnrollmentReqBodyFromEnrollment(enrollment),
+				ContractID:            "1",
+			},
+		).Return(&cps.CreateEnrollmentResponse{
+			ID:         1,
+			Enrollment: "/cps/v2/enrollments/1",
+			Changes:    []string{"/cps/v2/enrollments/1/changes/2"},
+		}, nil).Once()
+
+		enrollmentGet := newEnrollment(WithBase(&enrollment), WithPendingChangeID(2))
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(&enrollmentGet, nil).Times(10)
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(nil, cps.ErrNotFound).Once()
+		mockThirdPartyTransitionChangeStatus(client).Maybe()
+		allowCancel := true
+		client.CPS.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
+			EnrollmentID:              1,
+			AllowCancelPendingChanges: &allowCancel,
+		}).Return(&cps.RemoveEnrollmentResponse{Enrollment: "1"}, nil).Once()
+
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
+			Steps: []resource.TestStep{{
+				Config: testutils.LoadFixtureString(t, "testdata/TestResThirdPartyEnrollment/dns_name_settings/empty_dns_names.tf"),
+				Check: test.NewStateChecker("akamai_cps_third_party_enrollment.third_party").
+					CheckEqual("network_configuration.0.enable_for_all_sans", "false").
+					CheckEqual("network_configuration.0.dns_names.#", "0").
+					Build(),
+			}},
+		})
+		client.CPS.AssertExpectations(t)
+	})
+
 	t.Run("migration: create with clone_dns_names false - no conflict with enable_for_all_sans", func(t *testing.T) {
 		t.Parallel()
 		client := edgegrid.NewTestClient()

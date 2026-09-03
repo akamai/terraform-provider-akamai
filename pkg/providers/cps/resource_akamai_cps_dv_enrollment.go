@@ -832,7 +832,7 @@ func validateDNSNameSettings(rawConfig cty.Value) error {
 	if !dnsNamesAttr.IsNull() && !cloneDNSAttr.IsNull() && cloneDNSAttr.IsKnown() && cloneDNSAttr.True() {
 		return fmt.Errorf("'dns_names' cannot be provided when 'clone_dns_names' is true")
 	}
-	if dnsNamesRequired(cloneDNSAttr, enableForAllSANsAttr) && (dnsNamesAttr.IsNull() || (dnsNamesAttr.IsKnown() && dnsNamesAttr.LengthInt() == 0)) {
+	if dnsNamesRequired(cloneDNSAttr, enableForAllSANsAttr) && dnsNamesAttr.IsNull() {
 		return fmt.Errorf("'dns_names' is required when 'enable_for_all_sans' or 'clone_dns_names' is false")
 	}
 	return nil
