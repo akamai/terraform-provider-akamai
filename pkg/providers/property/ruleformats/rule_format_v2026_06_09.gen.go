@@ -5371,7 +5371,7 @@ func getBehaviorsSchemaV20260609() map[string]*schema.Schema {
 					},
 					"translate_web_request_to_native": {
 						Optional:    true,
-						Description: "",
+						Description: "Enable this to upgrade all gRPC-web requests to native gRPC at the edge.",
 						Type:        schema.TypeBool,
 					},
 				},
@@ -6179,7 +6179,7 @@ func getBehaviorsSchemaV20260609() map[string]*schema.Schema {
 					},
 					"policy_set_id": {
 						Optional:    true,
-						Description: "",
+						Description: "Identifies the existing policy set configured with `Image and Video Manager API`.",
 						Type:        schema.TypeString,
 					},
 					"advanced": {
@@ -6393,7 +6393,7 @@ func getBehaviorsSchemaV20260609() map[string]*schema.Schema {
 					},
 					"policy_set_id": {
 						Optional:    true,
-						Description: "",
+						Description: "Identifies the existing policy set configured with `Image and Video Manager API`.",
 						Type:        schema.TypeString,
 					},
 					"advanced": {
@@ -9979,7 +9979,7 @@ func getBehaviorsSchemaV20260609() map[string]*schema.Schema {
 		"pqc_client_to_edge": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Use this behavior to disable the Post Quantum Cryptography key exchanges from Client to Edge. We recommend enabling `pqcClientToEdge` to secure client-to-edge communication, protect your data, and address privacy and security goals. This behavior can be used in includes.",
+			Description: "Use this behavior to enable Post Quantum Cryptography key exchanges from Client to Edge. You should enable `pqcClientToEdge` to secure client-to-edge communication, protect your data, and address privacy and security goals. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -10010,7 +10010,7 @@ func getBehaviorsSchemaV20260609() map[string]*schema.Schema {
 		"pqc_origin": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Use this behavior to enable Post Quantum Cryptography (PQC) key exchanges. This behavior can be used in includes.",
+			Description: "Use this behavior to enable Post Quantum Cryptography (PQC) key exchanges with your origin. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -12967,7 +12967,7 @@ func getBehaviorsSchemaV20260609() map[string]*schema.Schema {
 		"validate_entity_tag": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Instructs edge servers to compare the request's `ETag` header with that of the cached object. If they differ, the edge server sends a new copy of the object. This validation occurs in addition to the default validation of `Last-Modified` and `If-Modified-Since` headers. This behavior can be used in includes.",
+			Description: "This behavior enables edge servers to validate cached objects using entity tags (ETags). This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -12989,17 +12989,17 @@ func getBehaviorsSchemaV20260609() map[string]*schema.Schema {
 					},
 					"enabled": {
 						Optional:    true,
-						Description: "Enables the ETag validation behavior.",
+						Description: "Enables the Validate Entity Tag (ETag) behavior. Allows edge servers to perform conditional revalidation using `If-None-Match` and `ETag` headers.",
 						Type:        schema.TypeBool,
 					},
 					"non_strict_enabled": {
 						Optional:    true,
-						Description: "Whether you want to allow strong `ETag` values that are not surrounded by double quotes. Technically these are malformed and non-standard, but are commonly used.",
+						Description: "Whether you want to allow matching on strong `ETag` values that are not enclosed in double-quotes. While these values are technically malformed, they appear frequently in real-world origin responses. Enable this if your origin generates unquoted `ETag` values.",
 						Type:        schema.TypeBool,
 					},
 					"weak_enabled": {
 						Optional:    true,
-						Description: "Whether you want to allow weak `ETag` values that start with `W/`.",
+						Description: "Whether you want to allow matching on weak `ETag` values that are prefixed with `W/`. Weak `ETags` indicate semantic equivalence rather than byte-for-byte identity. When disabled, requests with weak `ETag` values always receive a full `200 OK` response from the edge server.",
 						Type:        schema.TypeBool,
 					},
 				},

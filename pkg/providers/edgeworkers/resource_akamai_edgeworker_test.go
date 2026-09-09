@@ -12,10 +12,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v11/internal/edgegrid"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/edgeworkers"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/edgeworkers"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -126,7 +126,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 		expectCreateEdgeWorkerWithVersion = func(client *edgeworkers.Mock, name, localBundlePath, timeForCreation string, groupID, resourceTierID, edgeWorkerID int, workerConfig edgeworkerResourceConfig) (*edgeworkers.EdgeWorkerID, *edgeworkers.EdgeWorkerVersion) {
 			edgeWorkerReq := edgeworkers.CreateEdgeWorkerIDRequest{
 				Name:           name,
-				GroupID:        groupID,
+				GroupID:        int64(groupID),
 				ResourceTierID: resourceTierID,
 			}
 			createdEdgeWorker := edgeworkers.EdgeWorkerID{
@@ -176,7 +176,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 			updateEdgeWorkerID := edgeworkers.UpdateEdgeWorkerIDRequest{
 				Body: edgeworkers.EdgeWorkerIDRequestBody{
 					Name:           name,
-					GroupID:        groupID,
+					GroupID:        int64(groupID),
 					ResourceTierID: resourceTierID,
 				},
 				EdgeWorkerID: edgeWorkerID,
@@ -213,7 +213,7 @@ func TestResourceEdgeWorkersEdgeWorker(t *testing.T) {
 			updateEdgeWorkerID := edgeworkers.UpdateEdgeWorkerIDRequest{
 				Body: edgeworkers.EdgeWorkerIDRequestBody{
 					Name:           name,
-					GroupID:        groupID,
+					GroupID:        int64(groupID),
 					ResourceTierID: resourceTierID,
 				},
 				EdgeWorkerID: edgeWorkerID,

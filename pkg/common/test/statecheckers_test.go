@@ -5,8 +5,8 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testprovider"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testprovider"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/stretchr/testify/assert"
@@ -295,6 +295,56 @@ func TestStateCheckerMethods(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			assert.Equal(t, test.expectedAttributes, test.checker.attributes)
 		})
+	}
+}
+
+func TestStateCheckerMethodOrderPreservesTypeSetChecks(t *testing.T) {
+	t.Parallel()
+
+	validState := stateCheckerTestState(map[string]string{
+		"attribute": "value",
+		"names.123": "first.example.com",
+		"names.456": "second.example.com",
+	})
+	invalidState := stateCheckerTestState(map[string]string{
+		"attribute": "value",
+	})
+	checkers := map[string]StateChecker{
+		"type set first": NewStateChecker("test").
+			CheckTypeSetElemAttr("names.*", "first.example.com").
+			CheckEqual("attribute", "value").
+			CheckMissing("missing"),
+		"type set last": NewStateChecker("test").
+			CheckEqual("attribute", "value").
+			CheckMissing("missing").
+			CheckTypeSetElemAttr("names.*", "first.example.com"),
+		"standalone type set check": NewStateChecker("test").
+			CheckTypeSetElemAttr("names.*", "first.example.com"),
+	}
+
+	for name, checker := range checkers {
+		t.Run(name, func(t *testing.T) {
+			assert.NoError(t, checker.Build()(validState))
+			assert.Error(t, checker.Build()(invalidState))
+		})
+	}
+}
+
+func stateCheckerTestState(attributes map[string]string) *terraform.State {
+	return &terraform.State{
+		Modules: []*terraform.ModuleState{
+			{
+				Path: []string{"root"},
+				Resources: map[string]*terraform.ResourceState{
+					"test": {
+						Primary: &terraform.InstanceState{
+							ID:         "1",
+							Attributes: attributes,
+						},
+					},
+				},
+			},
+		},
 	}
 }
 

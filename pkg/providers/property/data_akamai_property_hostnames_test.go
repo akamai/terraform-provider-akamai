@@ -5,12 +5,12 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
-	tst "github.com/akamai/terraform-provider-akamai/v10/internal/test"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/test"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v11/internal/edgegrid"
+	tst "github.com/akamai/terraform-provider-akamai/v11/internal/test"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/test"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -758,6 +758,44 @@ func TestDataPropertyHostnames(t *testing.T) {
 				CheckEqual("version", "5").
 				Build(),
 		},
+		"property with authorization data": {
+			init: func(client *edgegrid.TestClient) {
+				mockGetPropertyWithPropertyType(client.PAPI, nil).Times(3)
+
+				hostnames := papi.HostnameResponseItems{Items: buildPropertyHostnamesWithAuthorization()}
+
+				client.PAPI.On("GetLatestVersion", testutils.MockContext, papi.GetLatestVersionRequest{
+					ContractID:  "ctr_test",
+					GroupID:     "grp_test",
+					PropertyID:  "prp_test",
+					ActivatedOn: "",
+				}).Return(&papi.GetPropertyVersionsResponse{
+					ContractID: "ctr_test",
+					GroupID:    "grp_test",
+					Version: papi.PropertyVersionGetItem{
+						PropertyVersion: 1,
+					},
+				}, nil).Times(3)
+				client.PAPI.On("GetPropertyVersionHostnames", testutils.MockContext, papi.GetPropertyVersionHostnamesRequest{
+					PropertyID:        "prp_test",
+					PropertyVersion:   1,
+					ContractID:        "ctr_test",
+					GroupID:           "grp_test",
+					ValidateHostnames: false,
+					IncludeCertStatus: true,
+				}).Return(&papi.GetPropertyVersionHostnamesResponse{
+					AccountID:       "act_test",
+					ContractID:      "ctr_test",
+					GroupID:         "grp_test",
+					PropertyID:      "prp_test",
+					PropertyVersion: 1,
+					Etag:            "etag",
+					Hostnames:       hostnames,
+				}, nil).Times(3)
+			},
+			config: testutils.LoadFixtureString(t, "testdata/TestDataPropertyHostnames/property_hostnames.tf"),
+			checks: newHostnamesStateChecker(flattenHostnames(buildPropertyHostnamesWithAuthorization())).Build(),
+		},
 		"error - specify property version to fetch with error": {
 			init: func(client *edgegrid.TestClient) {
 				mockGetPropertyWithPropertyType(client.PAPI, nil).Once()
@@ -872,6 +910,54 @@ func buildPropertyHostnamesWithDOV(dov *papi.DomainOwnershipVerification) []papi
 	return hostnames
 }
 
+func buildPropertyHostnamesWithAuthorization() []papi.HostnameResponseItem {
+	hostnames := make([]papi.HostnameResponseItem, 10)
+	for i := range 10 {
+		validUntil := tst.NewTimeFromStringPtr(&testing.T{}, "2024-12-31T23:59:59Z")
+		hostnames[i] = papi.HostnameResponseItem{
+			CnameType:            "EDGE_HOSTNAME",
+			EdgeHostnameID:       fmt.Sprintf("ehn%v", i),
+			CnameFrom:            fmt.Sprintf("cnamef%v", i),
+			CnameTo:              fmt.Sprintf("cnamet%v", i),
+			CertProvisioningType: "DEFAULT",
+			CertStatus: papi.CertStatusItem{
+				ValidationCname: papi.ValidationCname{
+					Hostname: fmt.Sprintf("cnamef%v", i),
+					Target:   fmt.Sprintf("cnamet%v", i),
+				},
+				Staging: []papi.StatusItem{{
+					Status: "PENDING",
+				}},
+				Production: []papi.StatusItem{{
+					Status: "PENDING",
+				}},
+				Authorization: &papi.Authorization{
+					Status:     "VALID",
+					ValidUntil: validUntil,
+					DNS01: &papi.DNSAuthorization{
+						Value: fmt.Sprintf("dns-token-%d", i),
+						Result: papi.AuthorizationResult{
+							Message:   "DNS challenge generated",
+							Source:    "CPS",
+							Timestamp: *validUntil,
+						},
+					},
+					HTTP01: &papi.HTTPAuthorization{
+						Body: fmt.Sprintf("http-body-%d", i),
+						URL:  fmt.Sprintf("http://example.com/.well-known/acme-challenge-%d", i),
+						Result: papi.AuthorizationResult{
+							Message:   "HTTP challenge generated",
+							Source:    "CA",
+							Timestamp: *validUntil,
+						},
+					},
+				},
+			},
+		}
+	}
+	return hostnames
+}
+
 func buildPropertyHostnamesWithCCM() []papi.HostnameResponseItem {
 	hostnames := make([]papi.HostnameResponseItem, 10)
 	for i := 0; i < 10; i++ {
@@ -969,6 +1055,62 @@ func mockGetPropertyWithPropertyType(client *papi.Mock, propertyType *string) *m
 	}, nil)
 }
 
+func checkAuthorizationField(checker test.StateChecker, ind, cInd int, mapKey, cKey string, authList []map[string]any) test.StateChecker {
+	if len(authList) == 0 {
+		return checker
+	}
+	auth := authList[0]
+	for aKey, aVal := range auth {
+		switch aKey {
+		case "dns01":
+			if dns01List, ok := aVal.([]map[string]any); ok && len(dns01List) > 0 {
+				dns01 := dns01List[0]
+				for dKey, dVal := range dns01 {
+					if dKey == "result" {
+						if resultList, ok := dVal.([]map[string]any); ok && len(resultList) > 0 {
+							result := resultList[0]
+							for rKey, rVal := range result {
+								value := fmt.Sprintf("%v", rVal)
+								key := fmt.Sprintf("hostnames.%d.%s.%d.%s.0.%s.0.%s.0.%s", ind, mapKey, cInd, cKey, aKey, dKey, rKey)
+								checker = checker.CheckEqual(key, value)
+							}
+						}
+					} else {
+						value := fmt.Sprintf("%v", dVal)
+						key := fmt.Sprintf("hostnames.%d.%s.%d.%s.0.%s.0.%s", ind, mapKey, cInd, cKey, aKey, dKey)
+						checker = checker.CheckEqual(key, value)
+					}
+				}
+			}
+		case "http01":
+			if http01List, ok := aVal.([]map[string]any); ok && len(http01List) > 0 {
+				http01 := http01List[0]
+				for hKey, hVal := range http01 {
+					if hKey == "result" {
+						if resultList, ok := hVal.([]map[string]any); ok && len(resultList) > 0 {
+							result := resultList[0]
+							for rKey, rVal := range result {
+								value := fmt.Sprintf("%v", rVal)
+								key := fmt.Sprintf("hostnames.%d.%s.%d.%s.0.%s.0.%s.0.%s", ind, mapKey, cInd, cKey, aKey, hKey, rKey)
+								checker = checker.CheckEqual(key, value)
+							}
+						}
+					} else {
+						value := fmt.Sprintf("%v", hVal)
+						key := fmt.Sprintf("hostnames.%d.%s.%d.%s.0.%s.0.%s", ind, mapKey, cInd, cKey, aKey, hKey)
+						checker = checker.CheckEqual(key, value)
+					}
+				}
+			}
+		default:
+			value := fmt.Sprintf("%v", aVal)
+			key := fmt.Sprintf("hostnames.%d.%s.%d.%s.0.%s", ind, mapKey, cInd, cKey, aKey)
+			checker = checker.CheckEqual(key, value)
+		}
+	}
+	return checker
+}
+
 func newHostnamesStateChecker(hostnames []map[string]any) test.StateChecker {
 	checker := test.NewStateChecker("data.akamai_property_hostnames.akaprophosts").
 		CheckEqual("id", "prp_test1").
@@ -985,9 +1127,16 @@ func newHostnamesStateChecker(hostnames []map[string]any) test.StateChecker {
 				certStatuses := mapVal.([]map[string]interface{})
 				for cInd, cert := range certStatuses {
 					for cKey, cVal := range cert {
-						value := fmt.Sprintf("%v", cVal)
-						key := fmt.Sprintf("hostnames.%v.%v.%v.%v", ind, mapKey, cInd, cKey)
-						checker = checker.CheckEqual(key, value)
+						switch cKey {
+						case "authorization":
+							if authList, ok := cVal.([]map[string]any); ok {
+								checker = checkAuthorizationField(checker, ind, cInd, mapKey, cKey, authList)
+							}
+						default:
+							value := fmt.Sprintf("%v", cVal)
+							key := fmt.Sprintf("hostnames.%v.%v.%v.%v", ind, mapKey, cInd, cKey)
+							checker = checker.CheckEqual(key, value)
+						}
 					}
 				}
 			case "domain_ownership_verification":

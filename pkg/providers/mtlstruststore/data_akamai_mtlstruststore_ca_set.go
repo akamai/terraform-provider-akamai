@@ -3,10 +3,10 @@ package mtlstruststore
 import (
 	"context"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/mtlstruststore"
-	"github.com/akamai/terraform-provider-akamai/v10/internal/customtypes"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/framework/date"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/mtlstruststore"
+	"github.com/akamai/terraform-provider-akamai/v11/internal/customtypes"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/framework/date"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"

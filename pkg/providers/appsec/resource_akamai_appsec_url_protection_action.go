@@ -7,10 +7,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/framework/modifiers"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf/validators"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/framework/modifiers"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf/validators"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -134,7 +134,7 @@ func (r *urlProtectionActionResource) ValidateConfig(ctx context.Context, req re
 
 	client := r.Client.GetAPPSEC()
 
-	version, err := getModifiableConfigVersion(ctx, int(config.ConfigID.ValueInt64()), "urlProtectionAction", r.Client.GetAPPSEC())
+	version, err := getLatestConfigVersion(ctx, int(config.ConfigID.ValueInt64()), r.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("Unable to read latest config version from API", err.Error())
 		return

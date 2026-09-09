@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/cache"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v11/internal/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/cache"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"

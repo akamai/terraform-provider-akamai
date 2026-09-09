@@ -8,9 +8,9 @@ import (
 
 	"github.com/stretchr/testify/mock"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
-	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/appsec"
+	"github.com/akamai/terraform-provider-akamai/v11/internal/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/require"
 )

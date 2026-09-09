@@ -13,12 +13,12 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/edgeworkers"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/str"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/timeouts"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/edgeworkers"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/str"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/timeouts"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -140,7 +140,7 @@ func resourceEdgeWorkerCreate(config edgeworkerResourceConfig) schema.CreateCont
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		groupIDNum, err := str.GetIntID(groupID, "grp_")
+		groupIDNum, err := str.GetInt64ID(groupID, "grp_")
 		if err != nil {
 			return diag.Errorf("invalid group_id provided: %s", err)
 		}
@@ -315,7 +315,7 @@ func resourceEdgeWorkerUpdate(config edgeworkerResourceConfig) schema.UpdateCont
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		groupIDNum, err := str.GetIntID(groupID, "grp_")
+		groupIDNum, err := str.GetInt64ID(groupID, "grp_")
 		if err != nil {
 			return diag.FromErr(err)
 		}

@@ -2,8 +2,8 @@
 package botman
 
 import (
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/providers/appsec"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/subprovider"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/providers/appsec"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/subprovider"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -31,6 +31,7 @@ func (p *Subprovider) SDKResources() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
 		"akamai_botman_akamai_bot_category_action":                   resourceAkamaiBotCategoryAction(),
 		"akamai_botman_bot_analytics_cookie":                         resourceBotAnalyticsCookie(),
+		"akamai_botman_bot_analytics_settings":                       resourceBotAnalyticsSettings(),
 		"akamai_botman_bot_category_exception":                       resourceBotCategoryException(),
 		"akamai_botman_bot_detection_action":                         resourceBotDetectionAction(),
 		"akamai_botman_bot_management_settings":                      resourceBotManagementSettings(),
@@ -66,6 +67,8 @@ func (p *Subprovider) SDKDataSources() map[string]*schema.Resource {
 		"akamai_botman_akamai_defined_bot":                           dataSourceAkamaiDefinedBot(),
 		"akamai_botman_bot_analytics_cookie":                         dataSourceBotAnalyticsCookie(),
 		"akamai_botman_bot_analytics_cookie_values":                  dataSourceBotAnalyticsCookieValues(),
+		"akamai_botman_bot_analytics_settings":                       dataSourceBotAnalyticsSettings(),
+		"akamai_botman_bot_analytics_settings_values":                dataSourceBotAnalyticsSettingsValues(),
 		"akamai_botman_bot_category_exception":                       dataSourceBotCategoryException(),
 		"akamai_botman_bot_detection":                                dataSourceBotDetection(),
 		"akamai_botman_bot_detection_action":                         dataSourceBotDetectionAction(),

@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/datastream"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/datastream"
 )
 
 func dataAkamaiDatastreamActivationHistory() *schema.Resource {
@@ -27,10 +27,11 @@ func dataAkamaiDatastreamActivationHistory() *schema.Resource {
 			"log_type": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "The type of logs for which to retrieve activation history. Valid values are `CDN` and `APPSEC`. If not specified, defaults to `CDN`.",
+				Description: "The type of logs for which to retrieve activation history. Valid values are `CDN`, `APPSEC`, and `ANSWERX`. If not specified, defaults to `CDN`.",
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{
 					string(datastream.LogTypeCDN),
 					string(datastream.LogTypeAppSec),
+					string(datastream.LogTypeAnswerX),
 				}, true)),
 			},
 			"activations": {

@@ -7,12 +7,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/iam"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/date"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/framework/modifiers"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf/validators"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/date"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/framework/modifiers"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf/validators"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -1159,7 +1159,7 @@ func (r *apiClientResource) ValidateConfig(ctx context.Context, req resource.Val
 		}
 
 		if tf.IsKnown(dataGroupAccess.CloneAuthorizedUserGroups) {
-			if !dataGroupAccess.CloneAuthorizedUserGroups.ValueBool() && len(groups) == 0 {
+			if !dataGroupAccess.CloneAuthorizedUserGroups.ValueBool() && !dataGroupAccess.Groups.IsUnknown() && len(groups) == 0 {
 				resp.Diagnostics.AddAttributeError(path.Root("group_access"), invalidConfigurationAttribute, "You must specify at least one group when 'clone_authorized_user_groups' is false")
 				return
 			}

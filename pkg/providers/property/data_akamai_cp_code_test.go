@@ -1,17 +1,27 @@
 package property
 
 import (
+	"fmt"
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v11/internal/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/test"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func TestDSCPCode(t *testing.T) {
 	t.Parallel()
+
+	baseChecker := test.NewStateChecker("data.akamai_cp_code.test").
+		CheckEqual("id", "234").
+		CheckEqual("cp_code_name", "test cpcode").
+		CheckEqual("created_date", "2021-11-11T11:22:33Z").
+		CheckEqual("group_id", "grp_22").
+		CheckEqual("contract_id", "ctr_11")
+
 	t.Run("match by name", func(t *testing.T) {
 		t.Parallel()
 		client := edgegrid.NewTestClient()
@@ -31,13 +41,7 @@ func TestDSCPCode(t *testing.T) {
 			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
 			Steps: []resource.TestStep{{
 				Config: testutils.LoadFixtureString(t, "testdata/TestDSCPCode/match_by_name.tf"),
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.akamai_cp_code.test", "id", "234"),
-					resource.TestCheckResourceAttr("data.akamai_cp_code.test", "name", "test cpcode"),
-					resource.TestCheckResourceAttr("data.akamai_cp_code.test", "created_date", "2021-11-11T11:22:33Z"),
-					resource.TestCheckResourceAttr("data.akamai_cp_code.test", "group_id", "grp_22"),
-					resource.TestCheckResourceAttr("data.akamai_cp_code.test", "contract_id", "ctr_11"),
-				),
+				Check:  baseChecker.Build(),
 			}},
 		})
 
@@ -64,11 +68,7 @@ func TestDSCPCode(t *testing.T) {
 			Steps: []resource.TestStep{{
 				Config: testutils.LoadFixtureString(t, "testdata/TestDSCPCode/match_by_name_output_products.tf"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.akamai_cp_code.test", "id", "234"),
-					resource.TestCheckResourceAttr("data.akamai_cp_code.test", "name", "test cpcode"),
-					resource.TestCheckResourceAttr("data.akamai_cp_code.test", "created_date", "2021-11-11T11:22:33Z"),
-					resource.TestCheckResourceAttr("data.akamai_cp_code.test", "group_id", "grp_22"),
-					resource.TestCheckResourceAttr("data.akamai_cp_code.test", "contract_id", "ctr_11"),
+					baseChecker.Build(),
 					resource.TestCheckOutput("product1", "prd_test1"),
 					resource.TestCheckOutput("product2", "prd_test2"),
 				),
@@ -84,26 +84,22 @@ func TestDSCPCode(t *testing.T) {
 
 		// name provided by fixture is "cpc_234"
 		cpc := papi.CPCodeItems{Items: []papi.CPCode{
-			{ID: "cpc_123", CreatedDate: "2021-11-11T11:22:33Z", Name: "wrong CP code"},
 			{ID: "cpc_234", Name: "test cpcode", CreatedDate: "2021-11-11T11:22:33Z", ProductIDs: []string{"prd_test1", "prd_test2"}},
+			{ID: "cpc_123", CreatedDate: "2021-11-11T11:22:33Z", Name: "wrong CP code"},
 		}}
 
-		client.PAPI.On("GetCPCodes",
+		client.PAPI.On("GetCPCode",
 			testutils.MockContext,
-			papi.GetCPCodesRequest{ContractID: "ctr_11", GroupID: "grp_22"},
-		).Return(&papi.GetCPCodesResponse{CPCodes: cpc}, nil)
+			papi.GetCPCodeRequest{ContractID: "ctr_11", GroupID: "grp_22", CPCodeID: "cpc_234"},
+		).Return(&papi.GetCPCodesResponse{CPCodes: cpc, CPCode: cpc.Items[0]}, nil)
 
 		resource.UnitTest(t, resource.TestCase{
 			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
 			Steps: []resource.TestStep{{
 				Config: testutils.LoadFixtureString(t, "testdata/TestDSCPCode/match_by_full_id.tf"),
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.akamai_cp_code.test", "id", "234"),
-					resource.TestCheckResourceAttr("data.akamai_cp_code.test", "name", "cpc_234"),
-					resource.TestCheckResourceAttr("data.akamai_cp_code.test", "created_date", "2021-11-11T11:22:33Z"),
-					resource.TestCheckResourceAttr("data.akamai_cp_code.test", "group_id", "grp_22"),
-					resource.TestCheckResourceAttr("data.akamai_cp_code.test", "contract_id", "ctr_11"),
-				),
+				Check: baseChecker.
+					CheckEqual("cp_code_name", "test cpcode").
+					Build(),
 			}},
 		})
 
@@ -116,36 +112,55 @@ func TestDSCPCode(t *testing.T) {
 
 		// name provided by fixture is "234"
 		cpc := papi.CPCodeItems{Items: []papi.CPCode{
-			{ID: "cpc_123", CreatedDate: "2021-11-11T11:22:33Z", Name: "wrong CP code"},
 			{ID: "cpc_234", Name: "test cpcode", CreatedDate: "2021-11-11T11:22:33Z", ProductIDs: []string{"prd_test1", "prd_test2"}},
+			{ID: "cpc_123", CreatedDate: "2021-11-11T11:22:33Z", Name: "wrong CP code"},
 		}}
 
-		client.PAPI.On("GetCPCodes",
+		client.PAPI.On("GetCPCode",
 			testutils.MockContext,
-			papi.GetCPCodesRequest{ContractID: "ctr_11", GroupID: "grp_22"},
-		).Return(&papi.GetCPCodesResponse{CPCodes: cpc}, nil)
+			papi.GetCPCodeRequest{ContractID: "ctr_11", GroupID: "grp_22", CPCodeID: "234"},
+		).Return(&papi.GetCPCodesResponse{CPCodes: cpc, CPCode: cpc.Items[0]}, nil)
 
 		resource.UnitTest(t, resource.TestCase{
 			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
 			Steps: []resource.TestStep{{
 				Config: testutils.LoadFixtureString(t, "testdata/TestDSCPCode/match_by_unprefixed_id.tf"),
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.akamai_cp_code.test", "id", "234"),
-				),
+				Check: baseChecker.
+					Build(),
 			}},
 		})
 
 		client.PAPI.AssertExpectations(t)
 	})
 
-	t.Run("no matches", func(t *testing.T) {
+	t.Run("no match by id", func(t *testing.T) {
 		t.Parallel()
 		client := edgegrid.NewTestClient()
 
-		// name provided by fixture is "test cpcode"
+		client.PAPI.On("GetCPCode",
+			testutils.MockContext,
+			papi.GetCPCodeRequest{ContractID: "ctr_11", GroupID: "grp_22", CPCodeID: "234"},
+		).Return(nil, fmt.Errorf("%w: CPCodeID: 234", papi.ErrNotFound))
+
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{{
+				Config:      testutils.LoadFixtureString(t, "testdata/TestDSCPCode/match_by_unprefixed_id.tf"),
+				ExpectError: regexp.MustCompile(`looking up cp code by id`),
+			}},
+		})
+
+		client.PAPI.AssertExpectations(t)
+	})
+
+	t.Run("no match by name", func(t *testing.T) {
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+
+		// name provided by fixture is "test cpcode", but no CP code with that name exists
 		cpc := papi.CPCodeItems{Items: []papi.CPCode{
 			{ID: "cpc_123", Name: "wrong CP code"},
-			{ID: "cpc_345", Name: "Also wrong CP code"},
+			{ID: "cpc_345", Name: "also wrong CP code"},
 		}}
 
 		client.PAPI.On("GetCPCodes",
@@ -156,8 +171,8 @@ func TestDSCPCode(t *testing.T) {
 		resource.UnitTest(t, resource.TestCase{
 			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
 			Steps: []resource.TestStep{{
-				Config:      testutils.LoadFixtureString(t, "testdata/TestDSCPCode/match_by_unprefixed_id.tf"),
-				ExpectError: regexp.MustCompile(`cp code not found`),
+				Config:      testutils.LoadFixtureString(t, "testdata/TestDSCPCode/match_by_name.tf"),
+				ExpectError: regexp.MustCompile(`looking up cp code by name`),
 			}},
 		})
 
@@ -183,11 +198,24 @@ func TestDSCPCode(t *testing.T) {
 			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
 			Steps: []resource.TestStep{{
 				Config:      testutils.LoadFixtureString(t, "testdata/TestDSCPCode/match_by_name.tf"),
-				ExpectError: regexp.MustCompile(`more cp codes found`),
+				ExpectError: regexp.MustCompile(`more than one CP code was found for the given name`),
 			}},
 		})
 
 		client.PAPI.AssertExpectations(t)
+	})
+
+	t.Run("both name and id provided", func(t *testing.T) {
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{{
+				Config:      testutils.LoadFixtureString(t, "testdata/TestDSCPCode/match_by_name_and_id.tf"),
+				ExpectError: regexp.MustCompile(`Invalid combination of arguments`),
+			}},
+		})
 	})
 
 	t.Run("group not found in state", func(t *testing.T) {
@@ -200,17 +228,20 @@ func TestDSCPCode(t *testing.T) {
 			testutils.MockContext, papi.GetCPCodesRequest{ContractID: "ctr_11", GroupID: "grp_22"},
 		).Return(&papi.GetCPCodesResponse{CPCodes: papi.CPCodeItems{Items: []papi.CPCode{{
 			ID: "cpc_123", Name: "test-ft-cp-code", CreatedDate: "2021-11-11T11:22:33Z", ProductIDs: []string{"prd_3"},
-		}}}}, nil)
+		}}}}, nil).Times(4)
 		client.PAPI.On("GetCPCode", testutils.MockContext, papi.GetCPCodeRequest{CPCodeID: "123", ContractID: "ctr_11", GroupID: "grp_22"}).Return(&papi.GetCPCodesResponse{CPCode: papi.CPCode{
 			ID: "cpc_123", Name: "test-ft-cp-code", CreatedDate: "2021-11-11T11:22:33Z", ProductIDs: []string{"prd_3"},
-		}}, nil).Times(2)
+		}}, nil).Times(4)
 
 		resource.UnitTest(t, resource.TestCase{
 			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewSubprovider()),
 			IsUnitTest:               true,
 			Steps: []resource.TestStep{{
-				Config: testutils.LoadFixtureString(t, "testdata/TestDSGroupNotFound/cp_code.tf"),
-			}},
+				Config: testutils.LoadFixtureString(t, "testdata/TestDSGroupNotFound/cp_code_step1.tf"),
+			},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDSGroupNotFound/cp_code.tf"),
+				}},
 		})
 		client.PAPI.AssertExpectations(t)
 	})

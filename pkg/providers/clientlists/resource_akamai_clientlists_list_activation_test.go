@@ -6,8 +6,8 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/clientlists"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/test"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/clientlists"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/test"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/stretchr/testify/mock"
@@ -71,7 +71,7 @@ func TestResourceClientListActivation(t *testing.T) {
 				mockReadActivation(m,
 					clientlists.GetActivationRequest{ActivationID: activationRes.ActivationID},
 					getActivationAttrs(activationRes, clientlists.Active), 3)
-				mockGetClientlist(m, "12_AB", 2, 2)
+				mockGetClientlist(m, "12_AB", 2, 3)
 
 				mockDestroyResource(m, deactivationReq, 2, 33)
 			},
@@ -84,6 +84,17 @@ func TestResourceClientListActivation(t *testing.T) {
 						CheckEqual("comments", "Activation Comments").
 						CheckEqual("version", "2").
 						Build(),
+				},
+			},
+		},
+		"create activation fails when configured version is not the latest": {
+			init: func(m *clientlists.Mock) {
+				mockGetClientlist(m, "12_AB", 2, 1)
+			},
+			steps: []resource.TestStep{
+				{
+					Config:      loadFixtureString(fmt.Sprintf("%s/activation_invalid_version.tf", testDir)),
+					ExpectError: regexp.MustCompile("only latest version can be activated"),
 				},
 			},
 		},
@@ -115,8 +126,8 @@ func TestResourceClientListActivation(t *testing.T) {
 				mockReadActivation(m,
 					clientlists.GetActivationRequest{ActivationID: updatedActivationRes.ActivationID},
 					getActivationAttrs(updatedActivationRes, clientlists.Active), 3)
-				mockGetClientlist(m, "12_AB", 2, 3)
-				mockGetClientlist(m, "12_AB", 3, 2)
+				mockGetClientlist(m, "12_AB", 2, 4)
+				mockGetClientlist(m, "12_AB", 3, 3)
 
 				mockDestroyResource(m, clientlists.CreateDeactivationRequest{
 					ListID: "12_AB",
@@ -150,6 +161,51 @@ func TestResourceClientListActivation(t *testing.T) {
 				},
 			},
 		},
+		"update activation - version only update": {
+			init: func(m *clientlists.Mock) {
+				activationRes := mockCreateActivation(m, activationReq, 33)
+				updatedActivationRes := mockCreateActivation(m, activationReq, 33)
+				mockReadActivation(m,
+					clientlists.GetActivationRequest{ActivationID: activationRes.ActivationID},
+					getActivationAttrs(activationRes, clientlists.PendingActivation), 1)
+				mockReadActivation(m,
+					clientlists.GetActivationRequest{ActivationID: activationRes.ActivationID},
+					getActivationAttrs(activationRes, clientlists.Active), 3)
+				mockReadActivation(m,
+					clientlists.GetActivationRequest{ActivationID: activationRes.ActivationID},
+					getActivationAttrs(activationRes, clientlists.Modified), 1)
+				mockReadActivation(m,
+					clientlists.GetActivationRequest{ActivationID: updatedActivationRes.ActivationID},
+					getActivationAttrs(updatedActivationRes, clientlists.PendingActivation), 1)
+				mockReadActivation(m,
+					clientlists.GetActivationRequest{ActivationID: updatedActivationRes.ActivationID},
+					getActivationAttrs(updatedActivationRes, clientlists.Active), 3)
+				mockGetClientlist(m, "12_AB", 2, 4)
+				mockGetClientlist(m, "12_AB", 3, 3)
+
+				mockDestroyResource(m, deactivationReq, 2, 33)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: loadFixtureString(fmt.Sprintf("%s/activation_create.tf", testDir)),
+					Check: baseChecker.
+						CheckEqual("siebel_ticket_id", "ABC-12345").
+						CheckEqual("notification_recipients.#", "1").
+						CheckEqual("comments", "Activation Comments").
+						CheckEqual("version", "2").
+						Build(),
+				},
+				{
+					Config: loadFixtureString(fmt.Sprintf("%s/activation_update_version_only.tf", testDir)),
+					Check: baseChecker.
+						CheckEqual("siebel_ticket_id", "ABC-12345").
+						CheckEqual("notification_recipients.#", "1").
+						CheckEqual("comments", "Activation Comments").
+						CheckEqual("version", "3").
+						Build(),
+				},
+			},
+		},
 		"update activation - notification_recipients, siebel_ticket_id and comments updates suppressed": {
 			init: func(m *clientlists.Mock) {
 				activationRes := mockCreateActivation(m, activationReq, 33)
@@ -159,7 +215,7 @@ func TestResourceClientListActivation(t *testing.T) {
 				mockReadActivation(m,
 					clientlists.GetActivationRequest{ActivationID: activationRes.ActivationID},
 					getActivationAttrs(activationRes, clientlists.Active), 5)
-				mockGetClientlist(m, "12_AB", 2, 4)
+				mockGetClientlist(m, "12_AB", 2, 5)
 
 				mockDestroyResource(m, deactivationReq, 2, 33)
 			},
@@ -194,6 +250,7 @@ func TestResourceClientListActivation(t *testing.T) {
 		},
 		"create activation - api fails without retry for not 500 error": {
 			init: func(m *clientlists.Mock) {
+				mockGetClientlist(m, "12_AB", 2, 1)
 				mockAPIErrorWithCreateActivation(m, activationReq, apiBadRequestError, 1)
 			},
 			steps: []resource.TestStep{
@@ -205,6 +262,7 @@ func TestResourceClientListActivation(t *testing.T) {
 		},
 		"create activation - api fails after retry for 500 error": {
 			init: func(m *clientlists.Mock) {
+				mockGetClientlist(m, "12_AB", 2, 1)
 				mockAPIErrorWithCreateActivation(m, activationReq, apiServerError, 3)
 			},
 			steps: []resource.TestStep{
@@ -223,7 +281,7 @@ func TestResourceClientListActivation(t *testing.T) {
 				mockReadActivation(m,
 					clientlists.GetActivationRequest{ActivationID: activationRes.ActivationID},
 					getActivationAttrs(activationRes, clientlists.Active), 4)
-				mockGetClientlist(m, "12_AB", 2, 3)
+				mockGetClientlist(m, "12_AB", 2, 4)
 				mockGetActivationStatus(m, clientlists.GetActivationStatusRequest{
 					Network: clientlists.Staging,
 					ListID:  activationReq.ListID,
@@ -252,7 +310,7 @@ func TestResourceClientListActivation(t *testing.T) {
 				mockReadActivation(m,
 					clientlists.GetActivationRequest{ActivationID: activationRes.ActivationID},
 					getActivationAttrs(activationRes, clientlists.Active), 3)
-				mockGetClientlist(m, "12_AB", 2, 3)
+				mockGetClientlist(m, "12_AB", 2, 4)
 
 				mockDestroyResource(m, deactivationReq, 2, 33)
 			},
@@ -287,7 +345,7 @@ func TestResourceClientListActivation(t *testing.T) {
 				mockReadActivation(m,
 					clientlists.GetActivationRequest{ActivationID: activationRes.ActivationID},
 					getActivationAttrs(activationRes, clientlists.Active), 3)
-				mockGetClientlist(m, "12_AB", 2, 3)
+				mockGetClientlist(m, "12_AB", 2, 4)
 
 				mockAPIErrorWithCreateDeactivation(m, deactivationReq, apiServerError, 1)
 				mockDestroyResource(m, deactivationReq, 2, 33)
@@ -323,7 +381,7 @@ func TestResourceClientListActivation(t *testing.T) {
 				mockReadActivation(m,
 					clientlists.GetActivationRequest{ActivationID: activationRes.ActivationID},
 					getActivationAttrs(activationRes, clientlists.Active), 4)
-				mockGetClientlist(m, "12_AB", 2, 3)
+				mockGetClientlist(m, "12_AB", 2, 4)
 
 				mockAPIErrorWithCreateDeactivation(m, deactivationReq, apiServerError, 3)
 				mockDestroyResource(m, deactivationReq, 2, 33)

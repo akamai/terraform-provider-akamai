@@ -10,13 +10,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/gtm"
-	akalog "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/log"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/log"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/gtm"
+	akalog "github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/log"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/log"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -154,7 +154,7 @@ func resourceGTMv1Property(config gtmPropertyResourceConfig) *schema.Resource {
 				Type:             schema.TypeInt,
 				Optional:         true,
 				ValidateDiagFunc: validateTTL,
-				Default:          300,
+				Default:          60,
 			},
 			"max_unreachable_penalty": {
 				Type:     schema.TypeInt,

@@ -8,13 +8,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cps"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/timeouts"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
-	cpstools "github.com/akamai/terraform-provider-akamai/v10/pkg/providers/cps/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/cps"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/timeouts"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	cpstools "github.com/akamai/terraform-provider-akamai/v11/pkg/providers/cps/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -113,9 +113,11 @@ func resourceCPSThirdPartyEnrollment(pollChangeStatusInterval, pollGetEnrollment
 				Description: "Data used for generation of Certificate Signing Request",
 			},
 			"network_configuration": {
-				Type:        schema.TypeSet,
-				Required:    true,
-				MinItems:    1,
+				Type:     schema.TypeList,
+				Optional: true,
+				// It was changed from required to optional to be able to support clone_dns_names and enable_for_all_sans at the same time during transition period.
+				// It will be changed back to required in the future when clone_dns_names will be removed from the resource.
+				Computed:    true,
 				MaxItems:    1,
 				Elem:        networkConfiguration,
 				Description: "Settings containing network information and TLS metadata used by CPS",
@@ -188,7 +190,11 @@ func resourceCPSThirdPartyEnrollment(pollChangeStatusInterval, pollGetEnrollment
 					}
 				}
 				return nil
-			}),
+			},
+			validateNetworkConfigurationPresent,
+			setDefaultEnableForAllSANs,
+			validateDNSNameSettingsConflict,
+		),
 		Timeouts: &schema.ResourceTimeout{
 			Default: &DefaultEnrollmentTimeout,
 		},
@@ -212,6 +218,10 @@ func (r *thirdPartyEnrollmentResource) create(ctx context.Context, d *schema.Res
 	)
 	client := meta.Client().GetCPS()
 	logger.Debug("Creating enrollment")
+
+	if err := validateResolvedDNSNameSettings(d); err != nil {
+		return diag.FromErr(err)
+	}
 
 	contractID, err := tf.GetStringValue("contract_id", d)
 	if err != nil {
@@ -356,6 +366,10 @@ func (r *thirdPartyEnrollmentResource) update(ctx context.Context, d *schema.Res
 		}
 		return r.read(ctx, d, m)
 	}
+	if err := validateResolvedDNSNameSettings(d); err != nil {
+		return diag.FromErr(err)
+	}
+
 	enrollmentReqBody, err := prepareThirdPartyEnrollment(d)
 	if err != nil {
 		return diag.FromErr(err)

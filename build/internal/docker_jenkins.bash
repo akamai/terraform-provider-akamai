@@ -92,7 +92,7 @@ docker exec akatf-container sh -c 'git clone ssh://git@git.source.akamai.com:799
 echo "Checkout branches"
 docker exec akatf-container sh -c 'cd edgegrid; git checkout ${EDGEGRID_BRANCH_NAME};
                                    cd ../terraform-provider-akamai; git checkout ${PROVIDER_BRANCH_NAME};
-                                   go mod edit -replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v13=../edgegrid'
+                                   go mod edit -replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v14=../edgegrid'
 
 echo "Installing terraform"
 docker exec akatf-container sh -c 'cd terraform-provider-akamai; make tools.terraform'
@@ -105,9 +105,6 @@ docker exec akatf-container sh -c 'cd terraform-provider-akamai; make lint'
 
 echo "Running terraform fmt"
 docker exec akatf-container sh -c 'cd terraform-provider-akamai; make terraform-fmtcheck'
-
-echo "Running tflint on examples"
-docker exec akatf-container sh -c 'cd terraform-provider-akamai; make terraform-lint'
 
 echo "Running tests with xUnit output"
 docker exec akatf-container sh -c 'cd terraform-provider-akamai;

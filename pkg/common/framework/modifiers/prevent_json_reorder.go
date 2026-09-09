@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/jsonutil"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/jsonutil"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 )
 

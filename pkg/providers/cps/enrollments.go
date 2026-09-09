@@ -9,15 +9,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cps"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/log"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
-	cpstools "github.com/akamai/terraform-provider-akamai/v10/pkg/providers/cps/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/cps"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/log"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	cpstools "github.com/akamai/terraform-provider-akamai/v11/pkg/providers/cps/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 type (
@@ -190,8 +191,25 @@ var (
 			"clone_dns_names": {
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Default:     false,
-				Description: "Enable CPS to direct traffic using all the SANs listed in the SANs parameter when enrollment is created. Default is false",
+				Computed:    true,
+				Description: "Enable CPS to direct traffic using all the SANs listed in the SANs parameter when enrollment is created.",
+				Deprecated:  "Use enable_for_all_sans instead.",
+			},
+			"enable_for_all_sans": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Computed:    true,
+				Description: "When true (default), traffic is directed using all SANs listed in the enrollment. Replacement for the deprecated clone_dns_names attribute. Cannot be used together with clone_dns_names.",
+			},
+			"dns_names": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				Computed: true,
+				Elem: &schema.Schema{
+					Type:             schema.TypeString,
+					ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
+				},
+				Description: "Explicit DNS names for traffic direction when enable_for_all_sans or clone_dns_names is false.",
 			},
 			"geography": {
 				Type:        schema.TypeString,
@@ -509,9 +527,22 @@ func waitForVerification(ctx context.Context, logger log.Interface, client cps.C
 					ChangeID:     changeID,
 				})
 				if err != nil {
+					// Even if API claims to be in wait for pre-verification warnings, it can sometimes not return them. After very brief time (usually next check is enough) the state changes.
+					if errors.Is(err, cps.ErrNotFound) {
+						logger.Debug("Skipping due to 404 status on get pre-verification warnings")
+						continue
+					}
 					return err
 				}
 				logger.Debugf("Pre-verification warnings: %s", warnings.Warnings)
+
+				if warnings.Warnings == "" {
+					// Even if API claims to be in wait for pre-verification warnings, it can sometimes return them as empty. After some time (usually several checks) the state changes.
+					// API can hit this scenario even if there are no actual pre-verification warnings to be acknowledged.
+					// Acknowledgment of such "warnings" would result in 409.
+					logger.Debug("Skipping due to empty warnings")
+					continue
+				}
 
 				// for DV autoApproveWarnings is always empty
 				if !acknowledgeWarnings && len(autoApproveWarnings) == 0 {

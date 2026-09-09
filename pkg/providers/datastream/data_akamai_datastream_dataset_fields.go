@@ -4,20 +4,33 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/datastream"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/hash"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/datastream"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/hash"
+
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func dataSourceDatasetFields() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceDatasetFieldsRead,
 		Schema: map[string]*schema.Schema{
+			"log_type": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Default:     string(datastream.LogTypeCDN),
+				Description: "The type of logs for which to retrieve dataset fields. Valid values are `CDN` and `ANSWERX`. If not specified, defaults to `CDN`.",
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{
+					string(datastream.LogTypeCDN),
+					string(datastream.LogTypeAnswerX),
+				}, true)),
+			},
 			"product_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -75,16 +88,24 @@ func dataSourceDatasetFieldsRead(ctx context.Context, rd *schema.ResourceData, m
 	logger.Debug("Listing dataset fields")
 	client := inst.Client(meta)
 
+	logTypeVal, err := tf.GetStringValue("log_type", rd)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return diag.FromErr(err)
+	}
+	logType := datastream.LogType(strings.ToUpper(logTypeVal))
+
 	productID, err := tf.GetStringValue("product_id", rd)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
-	var getDatasetFieldsRequest datastream.GetDatasetFieldsRequest
-	if productID != "" {
-		getDatasetFieldsRequest = datastream.GetDatasetFieldsRequest{
-			ProductID: &productID,
-		}
+	if productID != "" && logType != datastream.LogTypeCDN {
+		return diag.Errorf("product_id field is not supported for log_type %q", logType)
+	}
+
+	getDatasetFieldsRequest := datastream.GetDatasetFieldsRequest{
+		LogType:   logType,
+		ProductID: productID,
 	}
 
 	dataSets, err := client.GetDatasetFields(ctx, getDatasetFieldsRequest)

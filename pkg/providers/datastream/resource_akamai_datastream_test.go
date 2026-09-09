@@ -8,23 +8,47 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/datastream"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/datastream"
+	tst "github.com/akamai/terraform-provider-akamai/v11/pkg/common/test"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
+func sameAnswerXServiceIDSet(actual, expected []datastream.AnswerXServiceID) bool {
+	if len(actual) != len(expected) {
+		return false
+	}
+
+	expectedSet := make(map[int64]struct{}, len(expected))
+	for _, id := range expected {
+		expectedSet[id.SSID] = struct{}{}
+	}
+
+	for _, id := range actual {
+		if _, ok := expectedSet[id.SSID]; !ok {
+			return false
+		}
+	}
+
+	return true
+}
+
 const (
 	streamID = int64(12321)
 )
 
-func TestResourceStream(t *testing.T) {
-	t.Run("lifecycle test", func(t *testing.T) {
-		client := &datastream.Mock{}
+func init() {
+	PollForActivationStatusChangeInterval = 1 * time.Millisecond
+}
 
-		PollForActivationStatusChangeInterval = 1 * time.Millisecond
+func TestResourceStream(t *testing.T) {
+	t.Parallel()
+	t.Run("lifecycle test", func(t *testing.T) {
+		t.Parallel()
+		client := &datastream.Mock{}
 
 		streamConfiguration := datastream.StreamConfiguration{
 			CollectMidgress: false,
@@ -462,7 +486,7 @@ func TestResourceStream(t *testing.T) {
 }
 
 func TestResourceUpdate(t *testing.T) {
-	PollForActivationStatusChangeInterval = 1 * time.Millisecond
+	t.Parallel()
 	tests := map[string]struct {
 		CreateStreamActive bool
 		UpdateStreamActive bool
@@ -664,6 +688,7 @@ func TestResourceUpdate(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			m := &datastream.Mock{}
 			m.On("CreateStream", testutils.MockContext, createStreamRequestFactory(test.CreateStreamActive)).
 				Return(updateStreamResponse, nil).
@@ -800,9 +825,8 @@ func optionalCDNStreamConfiguration(streamName string) datastream.StreamConfigur
 }
 
 func TestResourceStreamOptionalContractAndGroup(t *testing.T) {
+	t.Parallel()
 	client := &datastream.Mock{}
-
-	PollForActivationStatusChangeInterval = 1 * time.Millisecond
 
 	// reusable response for GetStream – no contractId / groupId
 	// fields must match the fixture exactly to produce an empty plan
@@ -897,9 +921,8 @@ func TestResourceStreamOptionalContractAndGroup(t *testing.T) {
 }
 
 func TestResourceStreamOptionalContractAndGroup_populatedFromAPI(t *testing.T) {
+	t.Parallel()
 	client := &datastream.Mock{}
-
-	PollForActivationStatusChangeInterval = 1 * time.Millisecond
 
 	// Config omits contract_id/group_id; API returns them — Computed must store API values.
 	getStreamResp := &datastream.DetailedStreamVersion{
@@ -995,9 +1018,8 @@ func TestResourceStreamOptionalContractAndGroup_populatedFromAPI(t *testing.T) {
 }
 
 func TestResourceStreamContractAndGroupPreservedWhenAPIOmitsOnRead(t *testing.T) {
+	t.Parallel()
 	client := &datastream.Mock{}
-
-	PollForActivationStatusChangeInterval = 1 * time.Millisecond
 
 	streamConfiguration := optionalCDNStreamConfiguration("test_stream")
 	streamConfiguration.ContractID = "test_contract"
@@ -1094,6 +1116,7 @@ func TestResourceStreamContractAndGroupPreservedWhenAPIOmitsOnRead(t *testing.T)
 }
 
 func TestResourceImportContractAndGroupPreservedWhenAPIOmitsOnRead(t *testing.T) {
+	t.Parallel()
 	client := &datastream.Mock{}
 
 	streamConfiguration := optionalCDNStreamConfiguration("test_stream")
@@ -1184,6 +1207,7 @@ func TestResourceImportContractAndGroupPreservedWhenAPIOmitsOnRead(t *testing.T)
 }
 
 func TestResourceImportUploadFilePrefixPreservedWhenAPIOmitsOnRead(t *testing.T) {
+	t.Parallel()
 	client := &datastream.Mock{}
 
 	streamConfiguration := optionalCDNStreamConfiguration("test_stream")
@@ -1278,9 +1302,8 @@ func TestResourceImportUploadFilePrefixPreservedWhenAPIOmitsOnRead(t *testing.T)
 // API may omit contractId/groupId and later omit integration_type on refresh,
 // which must not cause perpetual in-place updates.
 func TestResourceStreamI775NoDriftWhenAPIOmitsFieldsOnRefresh(t *testing.T) {
+	t.Parallel()
 	client := &datastream.Mock{}
-
-	PollForActivationStatusChangeInterval = 1 * time.Millisecond
 
 	streamConfiguration := optionalCDNStreamConfiguration("test_stream")
 	streamConfiguration.ContractID = "test_contract"
@@ -1389,9 +1412,8 @@ func TestResourceStreamI775NoDriftWhenAPIOmitsFieldsOnRefresh(t *testing.T) {
 // config uses ctr_/grp_ prefixes; GET returns empty contractId and groupId 0;
 // state must keep configured IDs and the next plan must be empty.
 func TestResourceStreamI775ExactBugReportSymptoms(t *testing.T) {
+	t.Parallel()
 	client := &datastream.Mock{}
-
-	PollForActivationStatusChangeInterval = 1 * time.Millisecond
 
 	streamConfiguration := optionalCDNStreamConfiguration("test_stream")
 	streamConfiguration.ContractID = "test_contract"
@@ -1498,9 +1520,8 @@ func TestResourceStreamI775ExactBugReportSymptoms(t *testing.T) {
 // TestResourceStreamI775NoDriftWhenAPIReturnsOnlyGroupZero covers the partial I#775 case
 // where contractId is present on GET but groupId is 0.
 func TestResourceStreamI775NoDriftWhenAPIReturnsOnlyGroupZero(t *testing.T) {
+	t.Parallel()
 	client := &datastream.Mock{}
-
-	PollForActivationStatusChangeInterval = 1 * time.Millisecond
 
 	streamConfiguration := optionalCDNStreamConfiguration("test_stream")
 	streamConfiguration.ContractID = "test_contract"
@@ -1600,9 +1621,8 @@ func TestResourceStreamI775NoDriftWhenAPIReturnsOnlyGroupZero(t *testing.T) {
 }
 
 func TestResourceStreamUploadFilePrefixPreservedWhenAPIOmitsOnRead(t *testing.T) {
+	t.Parallel()
 	client := &datastream.Mock{}
-
-	PollForActivationStatusChangeInterval = 1 * time.Millisecond
 
 	streamConfiguration := optionalCDNStreamConfiguration("test_stream")
 	streamConfiguration.ContractID = "test_contract"
@@ -1701,9 +1721,8 @@ func TestResourceStreamUploadFilePrefixPreservedWhenAPIOmitsOnRead(t *testing.T)
 }
 
 func TestResourceStreamPropertiesOrderDiffSuppress(t *testing.T) {
+	t.Parallel()
 	client := &datastream.Mock{}
-
-	PollForActivationStatusChangeInterval = 1 * time.Millisecond
 
 	streamConfiguration := datastream.StreamConfiguration{
 		CollectMidgress: false,
@@ -1832,9 +1851,8 @@ func TestResourceStreamPropertiesOrderDiffSuppress(t *testing.T) {
 }
 
 func TestResourceStreamOptionalContractAndGroup_update(t *testing.T) {
+	t.Parallel()
 	client := &datastream.Mock{}
-
-	PollForActivationStatusChangeInterval = 1 * time.Millisecond
 
 	getStreamResp := &datastream.DetailedStreamVersion{
 		StreamID:      streamID,
@@ -1952,6 +1970,7 @@ func TestResourceStreamOptionalContractAndGroup_update(t *testing.T) {
 }
 
 func TestResourceStreamErrors(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		tfFile    string
 		init      func(*datastream.Mock)
@@ -2056,6 +2075,7 @@ func TestResourceStreamErrors(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			client := &datastream.Mock{}
 			if test.init != nil {
 				test.init(client)
@@ -2079,6 +2099,7 @@ func TestResourceStreamErrors(t *testing.T) {
 }
 
 func TestResourceStreamCustomDiff(t *testing.T) {
+	t.Parallel()
 	client := &datastream.Mock{}
 
 	tests := map[string]struct {
@@ -2121,6 +2142,7 @@ func TestResourceStreamCustomDiff(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
@@ -2141,6 +2163,7 @@ func TestResourceStreamCustomDiff(t *testing.T) {
 }
 
 func TestEmailIDs(t *testing.T) {
+	t.Parallel()
 	streamConfiguration := datastream.StreamConfiguration{
 		DeliveryConfiguration: datastream.DeliveryConfiguration{
 			Delimiter: datastream.DelimiterTypePtr(datastream.DelimiterTypeSpace),
@@ -2267,20 +2290,21 @@ func TestEmailIDs(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			client := &datastream.Mock{}
 
 			createStreamRequest := createStreamRequestFactory(test.EmailIDs)
 			client.On("CreateStream", testutils.MockContext, createStreamRequest).
-				Return(updateStreamResponse, nil)
+				Return(updateStreamResponse, nil).Once()
 
 			getStreamResponse := responseFactory(test.EmailIDs)
 			client.On("GetStream", testutils.MockContext, getStreamRequest).
-				Return(getStreamResponse, nil)
+				Return(getStreamResponse, nil).Times(3)
 
 			client.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
 				StreamID: streamID,
 				LogType:  datastream.LogTypeCDN,
-			}).Return(' ', nil)
+			}).Return(' ', nil).Once()
 
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
@@ -2301,6 +2325,7 @@ func TestEmailIDs(t *testing.T) {
 }
 
 func TestDatasetIDsDiff(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		preConfig             string
 		fileDatasetIDsOrder   []datastream.DatasetFieldID
@@ -2500,16 +2525,17 @@ func TestDatasetIDsDiff(t *testing.T) {
 		}
 
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			client := &datastream.Mock{}
 
 			client.On("CreateStream", testutils.MockContext, createStreamRequest).
-				Return(createStreamResponse, nil)
+				Return(createStreamResponse, nil).Once()
 
 			client.On("GetStream", testutils.MockContext, getStreamRequest).
 				Return(getStreamResponse, nil).Times(3)
 
 			client.On("DeleteStream", testutils.MockContext, deleteStreamRequest).
-				Return(' ', nil)
+				Return(' ', nil).Once()
 
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
@@ -2552,15 +2578,190 @@ func TestDatasetIDsDiff(t *testing.T) {
 	}
 }
 
+func TestServiceIDsDiff(t *testing.T) {
+	t.Parallel()
+	tests := map[string]struct {
+		preConfig          string
+		fileServiceIDs     []datastream.AnswerXServiceID
+		serverServiceIDs   []int64
+		expectNonEmptyPlan bool
+	}{
+		"same IDs reordered - no plan expected": {
+			preConfig: "testdata/TestResourceStream/service_ids_diff/answerx_three_ids.tf",
+			fileServiceIDs: []datastream.AnswerXServiceID{
+				{SSID: 2320}, {SSID: 510}, {SSID: 2925},
+			},
+			serverServiceIDs:   []int64{510, 2925, 2320},
+			expectNonEmptyPlan: false,
+		},
+		"same IDs same order - no plan expected": {
+			preConfig: "testdata/TestResourceStream/service_ids_diff/answerx_three_ids.tf",
+			fileServiceIDs: []datastream.AnswerXServiceID{
+				{SSID: 2320}, {SSID: 510}, {SSID: 2925},
+			},
+			serverServiceIDs:   []int64{2320, 510, 2925},
+			expectNonEmptyPlan: false,
+		},
+		"different ID - plan expected": {
+			preConfig: "testdata/TestResourceStream/service_ids_diff/answerx_three_ids.tf",
+			fileServiceIDs: []datastream.AnswerXServiceID{
+				{SSID: 2320}, {SSID: 510}, {SSID: 2925},
+			},
+			serverServiceIDs:   []int64{2320, 510, 9999},
+			expectNonEmptyPlan: true,
+		},
+		"extra ID from server - plan expected": {
+			preConfig: "testdata/TestResourceStream/service_ids_diff/answerx_three_ids.tf",
+			fileServiceIDs: []datastream.AnswerXServiceID{
+				{SSID: 2320}, {SSID: 510}, {SSID: 2925},
+			},
+			serverServiceIDs:   []int64{2320, 510, 2925, 9999},
+			expectNonEmptyPlan: true,
+		},
+		"fewer IDs from server - plan expected": {
+			preConfig: "testdata/TestResourceStream/service_ids_diff/answerx_three_ids.tf",
+			fileServiceIDs: []datastream.AnswerXServiceID{
+				{SSID: 2320}, {SSID: 510}, {SSID: 2925},
+			},
+			serverServiceIDs:   []int64{2320, 510},
+			expectNonEmptyPlan: true,
+		},
+		"duplicate IDs from server - plan expected": {
+			preConfig: "testdata/TestResourceStream/service_ids_diff/answerx_two_ids.tf",
+			fileServiceIDs: []datastream.AnswerXServiceID{
+				{SSID: 2320}, {SSID: 510},
+			},
+			serverServiceIDs:   []int64{2320, 2320},
+			expectNonEmptyPlan: true,
+		},
+	}
+
+	connector := datastream.AbstractConnector(
+		&datastream.TrafficPeakConnector{
+			ContentType:        "application/json",
+			AuthenticationType: datastream.AuthenticationTypeBasic,
+			CompressLogs:       true,
+			DisplayName:        "tp_connector",
+			Endpoint:           "https://example.com/ingest/event?table=test&token=tok",
+			UserName:           "user",
+			Password:           "pass",
+		},
+	)
+
+	deliveryConfig := datastream.DeliveryConfiguration{
+		Format: datastream.FormatTypeJson,
+		Frequency: datastream.Frequency{
+			IntervalInSeconds: datastream.IntervalInSeconds30,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			client := &datastream.Mock{}
+
+			createStreamRequest := datastream.CreateStreamRequest{
+				StreamConfiguration: datastream.StreamConfiguration{
+					DeliveryConfiguration: deliveryConfig,
+					Destination:           connector,
+					ContractID:            "test_contract",
+					DatasetFields:         []datastream.DatasetFieldID{{DatasetFieldID: 2000}},
+					GroupID:               1337,
+					StreamName:            "test_answerx_stream",
+					AnswerXServiceIDs:     test.fileServiceIDs,
+				},
+				Activate: false,
+				LogType:  datastream.LogTypeAnswerX,
+			}
+
+			getStreamRequest := datastream.GetStreamRequest{
+				StreamID: streamID,
+				LogType:  datastream.LogTypeAnswerX,
+			}
+
+			var answerXServiceIDs []datastream.AnswerXServiceDetail
+			for _, ssid := range test.serverServiceIDs {
+				answerXServiceIDs = append(answerXServiceIDs, datastream.AnswerXServiceDetail{
+					SSID:    ssid,
+					Name:    "ServiceName",
+					Product: "AnswerX",
+				})
+			}
+
+			getStreamResponse := &datastream.DetailedStreamVersion{
+				LogType:               datastream.LogTypeAnswerX,
+				StreamStatus:          datastream.StreamStatusInactive,
+				DeliveryConfiguration: deliveryConfig,
+				Destination: datastream.Destination{
+					DestinationType:    datastream.DestinationTypeTrafficPeak,
+					AuthenticationType: datastream.AuthenticationTypeBasic,
+					CompressLogs:       true,
+					DisplayName:        "tp_connector",
+					Endpoint:           "https://example.com/ingest/event?table=test&token=tok",
+					ContentType:        "application/json",
+				},
+				ContractID:        "test_contract",
+				GroupID:           1337,
+				DatasetFields:     []datastream.DataSetField{{DatasetFieldID: 2000}},
+				AnswerXServiceIDs: answerXServiceIDs,
+				StreamID:          streamID,
+				StreamName:        "test_answerx_stream",
+				StreamVersion:     1,
+				LatestVersion:     1,
+			}
+
+			client.On("CreateStream", testutils.MockContext, mock.MatchedBy(func(req datastream.CreateStreamRequest) bool {
+				if req.Activate != createStreamRequest.Activate || req.LogType != createStreamRequest.LogType {
+					return false
+				}
+
+				cfg := req.StreamConfiguration
+				expectedCfg := createStreamRequest.StreamConfiguration
+
+				if cfg.ContractID != expectedCfg.ContractID || cfg.GroupID != expectedCfg.GroupID || cfg.StreamName != expectedCfg.StreamName {
+					return false
+				}
+
+				if !sameAnswerXServiceIDSet(cfg.AnswerXServiceIDs, expectedCfg.AnswerXServiceIDs) {
+					return false
+				}
+
+				return true
+			})).Return(&datastream.DetailedStreamVersion{StreamID: streamID, StreamVersion: 1}, nil).Once()
+
+			client.On("GetStream", testutils.MockContext, getStreamRequest).
+				Return(getStreamResponse, nil).Times(3)
+
+			client.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
+				StreamID: streamID,
+				LogType:  datastream.LogTypeAnswerX,
+			}).Return(nil).Once()
+
+			useClient(client, func() {
+				resource.UnitTest(t, resource.TestCase{
+					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+					Steps: []resource.TestStep{
+						{
+							Config:             testutils.LoadFixtureString(t, test.preConfig),
+							ExpectNonEmptyPlan: test.expectNonEmptyPlan,
+						},
+					},
+				})
+
+				client.AssertExpectations(t)
+			})
+		})
+	}
+}
+
 func TestCustomHeaders(t *testing.T) {
+	t.Parallel()
 	streamConfiguration := datastream.StreamConfiguration{
 		DeliveryConfiguration: datastream.DeliveryConfiguration{
 			Format: datastream.FormatTypeJson,
 			Frequency: datastream.Frequency{
 				IntervalInSeconds: datastream.IntervalInSeconds30,
 			},
-			//UploadFilePrefix: DefaultUploadFilePrefix,
-			//UploadFileSuffix: DefaultUploadFileSuffix,
 		},
 		ContractID: "test_contract",
 		DatasetFields: []datastream.DatasetFieldID{
@@ -2821,16 +3022,16 @@ func TestCustomHeaders(t *testing.T) {
 
 			createStreamRequest := createStreamRequestFactory(test.Connector)
 			client.On("CreateStream", testutils.MockContext, createStreamRequest).
-				Return(updateStreamResponse, nil)
+				Return(updateStreamResponse, nil).Once()
 
 			getStreamResponse := responseFactory(test.Response)
 			client.On("GetStream", testutils.MockContext, getStreamRequest).
-				Return(getStreamResponse, nil)
+				Return(getStreamResponse, nil).Times(3)
 
 			client.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
 				StreamID: streamID,
 				LogType:  datastream.LogTypeCDN,
-			}).Return(' ', nil)
+			}).Return(' ', nil).Once()
 
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
@@ -2850,6 +3051,7 @@ func TestCustomHeaders(t *testing.T) {
 }
 
 func TestMTLS(t *testing.T) {
+	t.Parallel()
 	streamID := int64(12321)
 
 	streamConfiguration := datastream.StreamConfiguration{
@@ -3045,20 +3247,21 @@ func TestMTLS(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			client := &datastream.Mock{}
 
 			createStreamRequest := createStreamRequestFactory(test.Connector)
 			client.On("CreateStream", testutils.MockContext, createStreamRequest).
-				Return(updateStreamResponse, nil)
+				Return(updateStreamResponse, nil).Once()
 
 			getStreamResponse := responseFactory(test.Response)
 			client.On("GetStream", testutils.MockContext, getStreamRequest).
-				Return(getStreamResponse, nil)
+				Return(getStreamResponse, nil).Times(3)
 
 			client.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
 				StreamID: streamID,
 				LogType:  datastream.LogTypeCDN,
-			}).Return(' ', nil)
+			}).Return(' ', nil).Once()
 
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
@@ -3438,6 +3641,7 @@ func isConnectorWithoutFilenameOptions(connectorType string) bool {
 }
 
 func TestConnectors(t *testing.T) {
+	t.Parallel()
 	streamConfiguration := datastream.StreamConfiguration{
 		DeliveryConfiguration: datastream.DeliveryConfiguration{
 			Format: datastream.FormatTypeJson,
@@ -3664,15 +3868,16 @@ func TestConnectors(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			client := &datastream.Mock{}
 
 			client.On("CreateStream", testutils.MockContext, createStreamRequestFactory(test.Connector)).
-				Return(updateStreamResponse, nil)
+				Return(updateStreamResponse, nil).Once()
 
 			client.On("GetStream", testutils.MockContext, getStreamRequest).
-				Return(responseFactory(test.Response), nil)
+				Return(responseFactory(test.Response), nil).Times(3)
 
-			client.On("DeleteStream", testutils.MockContext, mock.Anything).Return(' ', nil)
+			client.On("DeleteStream", testutils.MockContext, mock.Anything).Return(' ', nil).Once()
 
 			useClient(client, func() {
 				resource.UnitTest(t, resource.TestCase{
@@ -3692,6 +3897,7 @@ func TestConnectors(t *testing.T) {
 }
 
 func TestEmptyFilePrefixSuffixSetForHttpsDestination(t *testing.T) {
+	t.Parallel()
 
 	configurationOfPrefixSuffixNotSupportedDest := datastream.DeliveryConfiguration{
 		Format: datastream.FormatTypeJson,
@@ -3709,6 +3915,7 @@ func TestEmptyFilePrefixSuffixSetForHttpsDestination(t *testing.T) {
 }
 
 func TestFilePrefixSuffixSetForObjectStorageDestination(t *testing.T) {
+	t.Parallel()
 
 	configurationOfPrefixSuffixSupportedDest := datastream.DeliveryConfiguration{
 		Format: datastream.FormatTypeJson,
@@ -3727,6 +3934,7 @@ func TestFilePrefixSuffixSetForObjectStorageDestination(t *testing.T) {
 
 // TestResourceStreamSamplingPercentage tests the sampling_percentage field
 func TestResourceStreamSamplingPercentage(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		samplingPercentage int
 		expectSampling     bool
@@ -3785,6 +3993,7 @@ func TestResourceStreamSamplingPercentage(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			client := &datastream.Mock{}
 
 			streamConfig := datastream.StreamConfiguration{
@@ -3879,7 +4088,7 @@ func TestResourceStreamSamplingPercentage(t *testing.T) {
 				client.On("GetStream", testutils.MockContext, datastream.GetStreamRequest{
 					StreamID: streamID,
 					LogType:  datastream.LogTypeCDN,
-				}).Return(streamResponse, nil)
+				}).Return(streamResponse, nil).Times(3)
 
 				client.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
 					StreamID: streamID,
@@ -3983,6 +4192,7 @@ resource "akamai_datastream" "s" {
 // TestResourceStreamSamplingPercentageIdempotency tests that sampling_percentage with Computed: true
 // is idempotent - no diff on subsequent applies when the API returns a default value
 func TestResourceStreamSamplingPercentageIdempotency(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		configSamplingPercentage int  // value in terraform config (0 means not set)
 		apiSamplingPercentage    int  // value returned by API
@@ -4007,6 +4217,7 @@ func TestResourceStreamSamplingPercentageIdempotency(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			client := &datastream.Mock{}
 
 			streamConfig := datastream.StreamConfiguration{
@@ -4093,7 +4304,7 @@ func TestResourceStreamSamplingPercentageIdempotency(t *testing.T) {
 			client.On("GetStream", testutils.MockContext, datastream.GetStreamRequest{
 				StreamID: streamID,
 				LogType:  datastream.LogTypeCDN,
-			}).Return(streamResponse, nil)
+			}).Return(streamResponse, nil).Times(4)
 
 			client.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
 				StreamID: streamID,
@@ -4165,6 +4376,7 @@ resource "akamai_datastream" "s" {
 
 // TestResourceStreamIntegrationType tests the integration_type field
 func TestResourceStreamIntegrationType(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		integrationType    string
 		expectInState      bool
@@ -4217,6 +4429,7 @@ func TestResourceStreamIntegrationType(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			client := &datastream.Mock{}
 
 			streamConfig := datastream.StreamConfiguration{
@@ -4303,7 +4516,7 @@ func TestResourceStreamIntegrationType(t *testing.T) {
 			client.On("GetStream", testutils.MockContext, datastream.GetStreamRequest{
 				StreamID: streamID,
 				LogType:  datastream.LogTypeCDN,
-			}).Return(streamResponse, nil)
+			}).Return(streamResponse, nil).Times(3)
 
 			client.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
 				LogType:  datastream.LogTypeCDN,
@@ -4389,6 +4602,7 @@ resource "akamai_datastream" "s" {
 }
 
 func TestResourceImportLogTypeProbing(t *testing.T) {
+	t.Parallel()
 	streamConfiguration := datastream.StreamConfiguration{
 		DeliveryConfiguration: datastream.DeliveryConfiguration{
 			Format: datastream.FormatTypeJson,
@@ -4425,6 +4639,11 @@ func TestResourceImportLogTypeProbing(t *testing.T) {
 		LogType:  datastream.LogTypeCDN,
 	}
 
+	getReqAnswerX := datastream.GetStreamRequest{
+		StreamID: streamID,
+		LogType:  datastream.LogTypeAnswerX,
+	}
+
 	appSecResponse := func() *datastream.DetailedStreamVersion {
 		return &datastream.DetailedStreamVersion{
 			LogType:               datastream.LogTypeAppSec,
@@ -4455,7 +4674,39 @@ func TestResourceImportLogTypeProbing(t *testing.T) {
 		}
 	}
 
+	answerXResponse := func() *datastream.DetailedStreamVersion {
+		return &datastream.DetailedStreamVersion{
+			LogType:               datastream.LogTypeAnswerX,
+			StreamStatus:          datastream.StreamStatusInactive,
+			DeliveryConfiguration: streamConfiguration.DeliveryConfiguration,
+			Destination: datastream.Destination{
+				DestinationType:    datastream.DestinationTypeTrafficPeak,
+				AuthenticationType: datastream.AuthenticationTypeBasic,
+				CompressLogs:       true,
+				DisplayName:        "TrafficPeakTest",
+				Endpoint:           "https://example.com/ingest/event?table=unit_test&token=1234",
+				ContentType:        "application/json",
+			},
+			ContractID: streamConfiguration.ContractID,
+			GroupID:    streamConfiguration.GroupID,
+			AnswerXServiceIDs: []datastream.AnswerXServiceDetail{
+				{
+					SSID:    12345,
+					Name:    "AnswerX Service",
+					Product: "AnswerX Cloud",
+				},
+			},
+			StreamID:           streamID,
+			StreamName:         streamConfiguration.StreamName,
+			StreamVersion:      1,
+			LatestVersion:      1,
+			NotificationEmails: streamConfiguration.NotificationEmails,
+			ModifiedDate:       "01-01-2020 12:00:00 GMT",
+		}
+	}
+
 	t.Run("continues probing on 404 and resolves APPSEC", func(t *testing.T) {
+		t.Parallel()
 		client := &datastream.Mock{}
 
 		// Import path should attempt to GET the stream with our test id.
@@ -4485,7 +4736,57 @@ func TestResourceImportLogTypeProbing(t *testing.T) {
 		})
 	})
 
+	t.Run("Continue probing on 404 and resolve ANSWERX", func(t *testing.T) {
+		t.Parallel()
+		client := &datastream.Mock{}
+		importStateCheck := tst.NewImportChecker().
+			CheckEqual("log_type", string(datastream.LogTypeAnswerX)).
+			CheckEqual("service_ids.#", "1").
+			Build()
+		stateCheck := resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr("akamai_datastream.s", "log_type", string(datastream.LogTypeAnswerX)),
+			resource.TestCheckResourceAttr("akamai_datastream.s", "service_ids.#", "1"),
+			resource.TestCheckTypeSetElemAttr("akamai_datastream.s", "service_ids.*", "12345"),
+		)
+
+		client.On("GetStream", testutils.MockContext, getReqCDN).
+			Return(nil, fmt.Errorf("%s: %w", datastream.ErrGetStream, &datastream.Error{StatusCode: 404, Type: "not-found", Title: "Not Found", Detail: "stream not found for log type CDN"})).Once()
+
+		client.On("GetStream", testutils.MockContext, getReqAppSec).
+			Return(nil, fmt.Errorf("%s: %w", datastream.ErrGetStream, &datastream.Error{StatusCode: 404, Type: "not-found", Title: "Not Found", Detail: "stream not found for log type APPSEC"})).Once()
+
+		// Import path should attempt to GET the stream with our test id.
+		client.On("GetStream", testutils.MockContext, getReqAnswerX).
+			Return(answerXResponse(), nil).Twice()
+
+		client.On("DeleteStream", testutils.MockContext, datastream.DeleteStreamRequest{
+			StreamID: streamID,
+			LogType:  datastream.LogTypeAnswerX,
+		}).Return(nil).Once()
+
+		useClient(client, func() {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config:             testutils.LoadFixtureString(t, "testdata/TestResourceStream/answerx/create_answerx_stream.tf"),
+						ImportState:        true,
+						ImportStateId:      strconv.FormatInt(streamID, 10),
+						ResourceName:       "akamai_datastream.s",
+						ImportStateVerify:  false,
+						ImportStatePersist: true,
+						ImportStateCheck:   importStateCheck,
+						Check:              stateCheck,
+					},
+				},
+			})
+
+			client.AssertExpectations(t)
+		})
+	})
+
 	t.Run("stops probing on 5xx", func(t *testing.T) {
+		t.Parallel()
 		client := &datastream.Mock{}
 
 		// In this case, the initial CDN probe request fails with an unrecoverable error, so probing should stop.

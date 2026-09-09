@@ -4,11 +4,11 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cps"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
-	cpstools "github.com/akamai/terraform-provider-akamai/v10/pkg/providers/cps/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/cps"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	cpstools "github.com/akamai/terraform-provider-akamai/v11/pkg/providers/cps/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -139,6 +139,18 @@ func dataSourceCPSEnrollment() *schema.Resource {
 							Type:        schema.TypeBool,
 							Computed:    true,
 							Description: "Enable CPS to direct traffic using all the SANs listed in the SANs parameter when enrollment is created",
+							Deprecated:  "Use enable_for_all_sans instead.",
+						},
+						"enable_for_all_sans": {
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "When true, traffic is directed using all SANs listed in the enrollment",
+						},
+						"dns_names": {
+							Type:        schema.TypeSet,
+							Computed:    true,
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Description: "Explicit DNS names for traffic direction when enable_for_all_sans is false",
 						},
 						"geography": {
 							Type:        schema.TypeString,

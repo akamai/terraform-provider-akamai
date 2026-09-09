@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/datastream"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/datastream"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -25,11 +25,12 @@ func dataAkamaiDatastreamStreams() *schema.Resource {
 			"log_type": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "The log type of the stream. Valid values are 'cdn' and 'appsec'. If not specified, defaults to 'cdn'.",
+				Description: "The log type of the stream. Valid values are `CDN`, `APPSEC`, and `ANSWERX`. If not specified, defaults to 'CDN'.",
 				Default:     string(datastream.LogTypeCDN),
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{
 					string(datastream.LogTypeCDN),
 					string(datastream.LogTypeAppSec),
+					string(datastream.LogTypeAnswerX),
 				}, true)),
 			},
 			"group_id": {
@@ -112,6 +113,30 @@ func dataAkamaiDatastreamStreams() *schema.Resource {
 										Type:        schema.TypeString,
 										Computed:    true,
 										Description: "The descriptive label for the AppSec config.",
+									},
+								},
+							},
+						},
+						"service_ids": {
+							Type:        schema.TypeSet,
+							Computed:    true,
+							Description: "Set of service IDs associated with the stream.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"id": {
+										Type:        schema.TypeInt,
+										Computed:    true,
+										Description: "Service ID monitored in the stream.",
+									},
+									"name": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Name of the service ID.",
+									},
+									"product": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The product associated with the service ID.",
 									},
 								},
 							},
@@ -230,6 +255,7 @@ func createStreamsAttrs(streams []datastream.StreamDetails) []interface{} {
 			"stream_version":  stream.StreamVersion,
 			"log_type":        string(stream.LogType),
 			"app_sec_configs": createAppSecConfigsAttrs(stream.AppSecConfigs),
+			"service_ids":     createAnswerXServiceIDsAttrs(stream.AnswerXServiceIDs),
 		}
 		// Only set integration_type if it's non-empty (API may not return the field)
 		if stream.IntegrationType != "" {
@@ -270,4 +296,16 @@ func createPropertiesAttrs(properties []datastream.Property) []interface{} {
 	}
 
 	return propertyAttrs
+}
+
+func createAnswerXServiceIDsAttrs(answerXServiceIDs []datastream.AnswerXServiceDetail) []any {
+	result := make([]any, 0, len(answerXServiceIDs))
+	for _, serviceID := range answerXServiceIDs {
+		result = append(result, map[string]any{
+			"id":      serviceID.SSID,
+			"name":    serviceID.Name,
+			"product": serviceID.Product,
+		})
+	}
+	return result
 }

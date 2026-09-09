@@ -5,9 +5,9 @@ import (
 	"regexp"
 	"testing"
 
-	apr "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/accountprotection"
-	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
+	apr "github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/accountprotection"
+	"github.com/akamai/terraform-provider-akamai/v11/internal/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"

@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"sync"
 
-	apr "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/accountprotection"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/log"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/cache"
-	akameta "github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
+	apr "github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/accountprotection"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/log"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/cache"
+	akameta "github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
 )
 
 var (

@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/log"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/log"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/logging"
 )

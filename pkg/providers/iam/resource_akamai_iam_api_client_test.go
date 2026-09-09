@@ -5,11 +5,11 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/iam"
-	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
-	"github.com/akamai/terraform-provider-akamai/v10/internal/test"
-	tst "github.com/akamai/terraform-provider-akamai/v10/pkg/common/test"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/iam"
+	"github.com/akamai/terraform-provider-akamai/v11/internal/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v11/internal/test"
+	tst "github.com/akamai/terraform-provider-akamai/v11/pkg/common/test"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -439,6 +439,39 @@ func TestResourceAPIClient(t *testing.T) {
 					Config: testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/create_min_api_access_unknown.tf"),
 					Check: fullDataChecker.
 						CheckEqual("lock", "true").
+						CheckEqual("group_access.groups.0.sub_groups.#", "0").
+						CheckEqual("client_description", "").
+						CheckMissing("notification_emails.0").
+						CheckMissing("ip_acl.enable").
+						CheckMissing("ip_acl.cidr.0").
+						CheckMissing("purge_options.can_purge_by_cache_tag").
+						CheckMissing("purge_options.can_purge_by_cp_code").
+						CheckMissing("purge_options.cp_code_access.all_current_and_new_cp_codes").
+						CheckMissing("purge_options.cp_code_access.cp_codes.0").
+						Build(),
+				},
+			},
+		},
+		"happy path - create with min set of fields, groups unknown at plan (no false-positive validation error for clone_authorized_user_groups=false)": {
+			init: func(m *iam.Mock, createData, _ testData) {
+				// Create
+				mockCreateAPIClient(m, createData)
+				mockUpdateAPIClientNotificationEmails(m, createData)
+				mockLockAPIClient(m, createData)
+				mockGetAPIClient(m, createData)
+				// Read
+				mockGetAPIClient(m, createData)
+				// Delete
+				mockDeactivateCredential(m, createData)
+				mockDeleteAPIClient(m, createData)
+			},
+			createData: minData,
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceAPIClient/create_min_groups_unknown.tf"),
+					Check: fullDataChecker.
+						CheckEqual("lock", "true").
+						CheckEqual("group_access.clone_authorized_user_groups", "false").
 						CheckEqual("group_access.groups.0.sub_groups.#", "0").
 						CheckEqual("client_description", "").
 						CheckMissing("notification_emails.0").

@@ -6,10 +6,10 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cps"
-	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/providers/cps/tools"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/cps"
+	"github.com/akamai/terraform-provider-akamai/v11/internal/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/providers/cps/tools"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
@@ -17,12 +17,17 @@ const contractID = "testing"
 
 var (
 	enrollmentsList = &cps.ListEnrollmentsResponse{
-		Enrollments: []cps.Enrollment{*convertGetEnrollmentResponseToEnrollment(enrollmentDV1), *convertGetEnrollmentResponseToEnrollment(enrollmentDV2)},
+		Enrollments: []cps.Enrollment{
+			*convertGetEnrollmentResponseToEnrollment(enrollmentDV1),
+			*convertGetEnrollmentResponseToEnrollment(enrollmentDVAllSANs),
+			*convertGetEnrollmentResponseToEnrollment(enrollmentDV2),
+		},
 	}
 	emptyEnrollmentList       = &cps.ListEnrollmentsResponse{}
 	enrollmentsThirdPartyList = &cps.ListEnrollmentsResponse{
 		Enrollments: []cps.Enrollment{
 			*convertGetEnrollmentResponseToEnrollment(enrollmentDV1),
+			*convertGetEnrollmentResponseToEnrollment(enrollmentDVAllSANs),
 			*convertGetEnrollmentResponseToEnrollment(enrollmentDV2),
 			*convertGetEnrollmentResponseToEnrollment(enrollmentThirdParty),
 			*convertGetEnrollmentResponseToEnrollment(enrollmentEV)},
@@ -153,6 +158,7 @@ func checkCommonAttrsForListEnrollments(enrollments *cps.ListEnrollmentsResponse
 			// Network Configuration
 			resource.TestCheckResourceAttr("data.akamai_cps_enrollments.test", fmt.Sprintf("enrollments.%v.network_configuration.#", i), "1"),
 			resource.TestCheckResourceAttr("data.akamai_cps_enrollments.test", fmt.Sprintf("enrollments.%v.network_configuration.0.clone_dns_names", i), strconv.FormatBool(en.NetworkConfiguration.DNSNameSettings.CloneDNSNames)),
+			resource.TestCheckResourceAttr("data.akamai_cps_enrollments.test", fmt.Sprintf("enrollments.%v.network_configuration.0.enable_for_all_sans", i), strconv.FormatBool(en.NetworkConfiguration.DNSNameSettings.CloneDNSNames)),
 			resource.TestCheckResourceAttr("data.akamai_cps_enrollments.test", fmt.Sprintf("enrollments.%v.network_configuration.0.geography", i), en.NetworkConfiguration.Geography),
 			resource.TestCheckResourceAttr("data.akamai_cps_enrollments.test", fmt.Sprintf("enrollments.%v.network_configuration.0.must_have_ciphers", i), en.NetworkConfiguration.MustHaveCiphers),
 			resource.TestCheckResourceAttr("data.akamai_cps_enrollments.test", fmt.Sprintf("enrollments.%v.network_configuration.0.ocsp_stapling", i), string(en.NetworkConfiguration.OCSPStapling)),
@@ -208,6 +214,11 @@ func checkSetTypeAttrsForListEnrollments(enrollments *cps.ListEnrollmentsRespons
 
 		for j := 0; j < sansCount; j++ {
 			enrollmentCheckFuncs = append(enrollmentCheckFuncs, resource.TestCheckResourceAttr("data.akamai_cps_enrollments.test", fmt.Sprintf("enrollments.%v.sans.%v", i, j), en.CSR.SANS[j]))
+		}
+		dnsNamesCount := len(en.NetworkConfiguration.DNSNameSettings.DNSNames)
+		enrollmentCheckFuncs = append(enrollmentCheckFuncs, resource.TestCheckResourceAttr("data.akamai_cps_enrollments.test", fmt.Sprintf("enrollments.%v.network_configuration.0.dns_names.#", i), strconv.Itoa(dnsNamesCount)))
+		for _, dnsName := range en.NetworkConfiguration.DNSNameSettings.DNSNames {
+			enrollmentCheckFuncs = append(enrollmentCheckFuncs, resource.TestCheckTypeSetElemAttr("data.akamai_cps_enrollments.test", fmt.Sprintf("enrollments.%v.network_configuration.0.dns_names.*", i), dnsName))
 		}
 		if en.NetworkConfiguration.ClientMutualAuthentication != nil {
 			enrollmentCheckFuncs = append(enrollmentCheckFuncs, resource.TestCheckResourceAttr("data.akamai_cps_enrollments.test", fmt.Sprintf("enrollments.%v.network_configuration.0.client_mutual_authentication.#", i), "1"))

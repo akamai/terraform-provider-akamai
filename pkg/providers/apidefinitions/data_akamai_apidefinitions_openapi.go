@@ -4,9 +4,9 @@ import (
 	"context"
 	"os"
 
-	v0 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/apidefinitions/v0"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf/validators"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
+	v0 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/apidefinitions/v0"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf/validators"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"

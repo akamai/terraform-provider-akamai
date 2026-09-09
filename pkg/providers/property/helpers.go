@@ -9,10 +9,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/iam"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/log"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/str"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/iam"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/log"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/str"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
@@ -38,6 +38,106 @@ var certStatus = &schema.Resource{
 			Type:        schema.TypeString,
 			Computed:    true,
 			Description: "The certificate's deployment status on the staging network.",
+		},
+		"authorization": {
+			Type:        schema.TypeList,
+			Computed:    true,
+			Description: "Details of domain validation methods available for your certificate.",
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"dns01": {
+						Type:        schema.TypeList,
+						Computed:    true,
+						Description: "Details on the manual DNS validation method.",
+						Elem: &schema.Resource{
+							Schema: map[string]*schema.Schema{
+								"value": {
+									Type:        schema.TypeString,
+									Computed:    true,
+									Description: "The token you need to copy to the DNS TXT record.",
+								},
+								"result": {
+									Type:        schema.TypeList,
+									Computed:    true,
+									Description: "Details on the validation challenge generation.",
+									Elem: &schema.Resource{
+										Schema: map[string]*schema.Schema{
+											"message": {
+												Type:        schema.TypeString,
+												Computed:    true,
+												Description: "A descriptive message on the challenge generation process.",
+											},
+											"source": {
+												Type:        schema.TypeString,
+												Computed:    true,
+												Description: "The system that sent the result details, either the Certificate Authority (CA) server or Certificate Management System (CPS).",
+											},
+											"timestamp": {
+												Type:        schema.TypeString,
+												Computed:    true,
+												Description: "The ISO 8601 timestamp indicating when the result was generated.",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					"http01": {
+						Type:        schema.TypeList,
+						Computed:    true,
+						Description: "Details on the manual HTTP validation method.",
+						Elem: &schema.Resource{
+							Schema: map[string]*schema.Schema{
+								"body": {
+									Type:        schema.TypeString,
+									Computed:    true,
+									Description: "The token you need to copy to the file on your origin server.",
+								},
+								"url": {
+									Type:        schema.TypeString,
+									Computed:    true,
+									Description: "The location on your origin server where you save the file with the token.",
+								},
+								"result": {
+									Type:        schema.TypeList,
+									Computed:    true,
+									Description: "Details on the validation challenge generation.",
+									Elem: &schema.Resource{
+										Schema: map[string]*schema.Schema{
+											"message": {
+												Type:        schema.TypeString,
+												Computed:    true,
+												Description: "A descriptive message on the challenge generation process.",
+											},
+											"source": {
+												Type:        schema.TypeString,
+												Computed:    true,
+												Description: "The system that sent the result details, either the Certificate Authority (CA) server or Certificate Management System (CPS).",
+											},
+											"timestamp": {
+												Type:        schema.TypeString,
+												Computed:    true,
+												Description: "The ISO 8601 timestamp indicating when the result was generated.",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					"status": {
+						Type:        schema.TypeString,
+						Computed:    true,
+						Description: "The status of the validation that proves you control the domains listed in the certificate request.",
+					},
+					"valid_until": {
+						Type:        schema.TypeString,
+						Computed:    true,
+						Description: "An ISO 8601 timestamp indicating when the domain validation challenge expires.",
+					},
+				},
+			},
 		},
 	},
 }
@@ -402,7 +502,59 @@ func flattenCertType(certStatus *papi.CertStatusItem) map[string]any {
 	if len(certStatus.Production) > 0 {
 		certs["production_status"] = certStatus.Production[0].Status
 	}
+	if certStatus.Authorization != nil {
+		certs["authorization"] = []map[string]any{flattenAuthorization(certStatus.Authorization)}
+	}
 	return certs
+}
+
+func flattenAuthorization(auth *papi.Authorization) map[string]any {
+	if auth == nil {
+		return nil
+	}
+
+	authMap := map[string]any{
+		"status": auth.Status,
+	}
+
+	if auth.DNS01 != nil {
+		dns01Result := map[string]any{
+			"value": auth.DNS01.Value,
+		}
+		if auth.DNS01.Result != (papi.AuthorizationResult{}) {
+			dns01Result["result"] = []map[string]any{
+				{
+					"message":   auth.DNS01.Result.Message,
+					"source":    auth.DNS01.Result.Source,
+					"timestamp": auth.DNS01.Result.Timestamp.Format(time.RFC3339Nano),
+				},
+			}
+		}
+		authMap["dns01"] = []map[string]any{dns01Result}
+	}
+
+	if auth.HTTP01 != nil {
+		http01Result := map[string]any{
+			"body": auth.HTTP01.Body,
+			"url":  auth.HTTP01.URL,
+		}
+		if auth.HTTP01.Result != (papi.AuthorizationResult{}) {
+			http01Result["result"] = []map[string]any{
+				{
+					"message":   auth.HTTP01.Result.Message,
+					"source":    auth.HTTP01.Result.Source,
+					"timestamp": auth.HTTP01.Result.Timestamp.Format(time.RFC3339Nano),
+				},
+			}
+		}
+		authMap["http01"] = []map[string]any{http01Result}
+	}
+
+	if auth.ValidUntil != nil {
+		authMap["valid_until"] = auth.ValidUntil.Format(time.RFC3339Nano)
+	}
+
+	return authMap
 }
 
 func papiErrorsToList(errors []*papi.Error) []map[string]interface{} {

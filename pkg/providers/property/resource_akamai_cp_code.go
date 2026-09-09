@@ -8,13 +8,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/papi"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/reportinggroups"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/str"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/timeouts"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/papi"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/reportinggroups"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/str"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/timeouts"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/providers/property/tools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -150,13 +151,13 @@ func resourceCPCodeCreate(ctx context.Context, d *schema.ResourceData, m interfa
 
 	var cpCodeID string
 	// Because CPCodes can't be deleted, we re-use an existing CPCode if it's there
-	cpCode, err := findCPCode(ctx, client, name, contractID, groupID)
-	if err != nil && !errors.Is(err, ErrCPCodeNotFound) {
-		return diag.Errorf("%s: %s", ErrLookingUpCPCode, err)
+	cpCode, err := tools.FindCPCodeByName(ctx, client, name, contractID, groupID)
+	if err != nil && !errors.Is(err, tools.ErrCPCodeNotFound) {
+		return diag.Errorf("%s: %s", ErrLookingUpCPCodeByName, err)
 	}
 
 	var diags diag.Diagnostics
-	if errors.Is(err, ErrCPCodeNotFound) {
+	if errors.Is(err, tools.ErrCPCodeNotFound) {
 		cpCodeID, err = createCPCode(ctx, client, name, productID, contractID, groupID)
 		if err != nil {
 			return diag.FromErr(err)

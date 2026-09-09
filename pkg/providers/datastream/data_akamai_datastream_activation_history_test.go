@@ -6,13 +6,14 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/datastream"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/datastream"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
 
 func TestDataAkamaiDatastreamActivationHistoryRead(t *testing.T) {
+	t.Parallel()
 	tests := map[string]struct {
 		configPath                 string
 		expectedLogType            datastream.LogType
@@ -37,6 +38,24 @@ func TestDataAkamaiDatastreamActivationHistoryRead(t *testing.T) {
 				resource.TestCheckResourceAttr("data.akamai_datastream_activation_history.test", "activations.0.modified_by", "user1"),
 				resource.TestCheckResourceAttr("data.akamai_datastream_activation_history.test", "activations.0.stream_id", "7050"),
 				resource.TestCheckResourceAttr("data.akamai_datastream_activation_history.test", "activations.0.status", "DEACTIVATED"),
+			},
+		},
+		"validate activation history response - answerx log type": {
+			configPath:      "testdata/TestDataAkamaiDatastreamActivationHistoryRead/activation_history_answerx.tf",
+			expectedLogType: datastream.LogTypeAnswerX,
+			getActivationHistoryReturn: []datastream.ActivationHistoryEntry{
+				{
+					ModifiedBy:    "user2",
+					ModifiedDate:  "16-01-2020 09:31:02 GMT",
+					Status:        datastream.StreamStatusActivated,
+					StreamID:      7050,
+					StreamVersion: 2,
+				},
+			},
+			checkFuncs: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttr("data.akamai_datastream_activation_history.test", "activations.0.modified_by", "user2"),
+				resource.TestCheckResourceAttr("data.akamai_datastream_activation_history.test", "activations.0.stream_id", "7050"),
+				resource.TestCheckResourceAttr("data.akamai_datastream_activation_history.test", "activations.0.status", "ACTIVATED"),
 			},
 		},
 		"validate activation history response": {
@@ -90,6 +109,7 @@ func TestDataAkamaiDatastreamActivationHistoryRead(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
+			t.Parallel()
 			client := datastream.Mock{}
 			useClient(&client, func() {
 				reqMatcher := mock.MatchedBy(func(r datastream.GetActivationHistoryRequest) bool {
@@ -98,7 +118,7 @@ func TestDataAkamaiDatastreamActivationHistoryRead(t *testing.T) {
 				if test.edgegridError != nil {
 					client.On("GetActivationHistory", testutils.MockContext, reqMatcher).Return(nil, test.edgegridError).Once()
 				} else {
-					client.On("GetActivationHistory", testutils.MockContext, reqMatcher).Return(test.getActivationHistoryReturn, nil)
+					client.On("GetActivationHistory", testutils.MockContext, reqMatcher).Return(test.getActivationHistoryReturn, nil).Times(3)
 				}
 				resource.UnitTest(t, resource.TestCase{
 					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),

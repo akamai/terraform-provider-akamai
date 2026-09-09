@@ -8,8 +8,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cps"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/cps"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
+	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -98,9 +99,12 @@ func GetCSR(d *schema.ResourceData) (*cps.CSR, error) {
 
 // GetNetworkConfig returns Network Configuration settings from ResourceData object
 func GetNetworkConfig(d *schema.ResourceData) (*cps.NetworkConfiguration, error) {
-	networkConfigSet, err := tf.GetSetValue("network_configuration", d)
+	networkConfigList, err := tf.GetListValue("network_configuration", d)
 	if err != nil {
 		return nil, err
+	}
+	if len(networkConfigList) == 0 {
+		return nil, fmt.Errorf("'network_configuration' is required")
 	}
 	sniOnly, err := tf.GetBoolValue("sni_only", d)
 	if err != nil {
@@ -110,7 +114,7 @@ func GetNetworkConfig(d *schema.ResourceData) (*cps.NetworkConfiguration, error)
 	if err != nil {
 		return nil, err
 	}
-	networkConfigMap, ok := networkConfigSet.List()[0].(map[string]interface{})
+	networkConfigMap, ok := networkConfigList[0].(map[string]interface{})
 	if !ok {
 		return nil, fmt.Errorf("'network_configuration' is of invalid type")
 	}
@@ -139,18 +143,33 @@ func GetNetworkConfig(d *schema.ResourceData) (*cps.NetworkConfiguration, error)
 			networkConfig.ClientMutualAuthentication = mutualAuth
 		}
 	}
-	sansList, err := tf.GetSetValue("sans", d)
-	if err != nil && !errors.Is(err, tf.ErrNotFound) {
-		return nil, err
-	}
-	var dnsNames []string
-	for _, val := range sansList.List() {
-		dnsNames = append(dnsNames, val.(string))
-	}
 	if sniOnly {
-		networkConfig.DNSNameSettings = &cps.DNSNameSettings{
-			CloneDNSNames: networkConfigMap["clone_dns_names"].(bool),
-			DNSNames:      dnsNames,
+		cloneDNS := networkConfigMap["clone_dns_names"].(bool)
+		enableForAllSANs := networkConfigMap["enable_for_all_sans"].(bool)
+		effectiveClone := cloneDNS && enableForAllSANs
+		if networkConfig, ok := rawNetworkConfiguration(d); ok {
+			effectiveClone = true
+			if dnsNameSettingConfigured(networkConfig, "enable_for_all_sans") {
+				effectiveClone = enableForAllSANs
+			} else if dnsNameSettingConfigured(networkConfig, "clone_dns_names") {
+				effectiveClone = cloneDNS
+			}
+		}
+
+		if effectiveClone {
+			networkConfig.DNSNameSettings = &cps.DNSNameSettings{
+				CloneDNSNames: true,
+			}
+		} else {
+			var explicitDNSNames []string
+			dnsNamesSet := networkConfigMap["dns_names"].(*schema.Set)
+			for _, v := range dnsNamesSet.List() {
+				explicitDNSNames = append(explicitDNSNames, v.(string))
+			}
+			networkConfig.DNSNameSettings = &cps.DNSNameSettings{
+				CloneDNSNames: false,
+				DNSNames:      explicitDNSNames,
+			}
 		}
 	}
 	networkConfig.OCSPStapling = cps.OCSPStapling(networkConfigMap["ocsp_stapling"].(string))
@@ -168,6 +187,32 @@ func GetNetworkConfig(d *schema.ResourceData) (*cps.NetworkConfiguration, error)
 	networkConfig.SNIOnly = sniOnly
 
 	return &networkConfig, nil
+}
+
+func rawNetworkConfiguration(d *schema.ResourceData) (cty.Value, bool) {
+	rawConfig := d.GetRawConfig()
+	if rawConfig == cty.NilVal || rawConfig.IsNull() || !rawConfig.IsKnown() {
+		return cty.NilVal, false
+	}
+
+	networkConfig := rawConfig.GetAttr("network_configuration")
+	if networkConfig.IsNull() || !networkConfig.IsKnown() || networkConfig.LengthInt() == 0 {
+		return cty.NilVal, false
+	}
+
+	it := networkConfig.ElementIterator()
+	it.Next()
+	_, networkConfig = it.Element()
+	if networkConfig.IsNull() || !networkConfig.IsKnown() {
+		return cty.NilVal, false
+	}
+
+	return networkConfig, true
+}
+
+func dnsNameSettingConfigured(networkConfig cty.Value, name string) bool {
+	setting := networkConfig.GetAttr(name)
+	return setting.IsKnown() && !setting.IsNull()
 }
 
 // GetOrg returns organization information from ResourceData object
@@ -254,6 +299,12 @@ func NetworkConfigToMap(networkConfig cps.NetworkConfiguration) map[string]inter
 	networkConfigMap["disallowed_tls_versions"] = networkConfig.DisallowedTLSVersions
 	if networkConfig.DNSNameSettings != nil {
 		networkConfigMap["clone_dns_names"] = networkConfig.DNSNameSettings.CloneDNSNames
+		networkConfigMap["enable_for_all_sans"] = networkConfig.DNSNameSettings.CloneDNSNames
+		var dnsNames []interface{}
+		for _, n := range networkConfig.DNSNameSettings.DNSNames {
+			dnsNames = append(dnsNames, n)
+		}
+		networkConfigMap["dns_names"] = dnsNames
 	}
 	networkConfigMap["geography"] = networkConfig.Geography
 	networkConfigMap["must_have_ciphers"] = networkConfig.MustHaveCiphers

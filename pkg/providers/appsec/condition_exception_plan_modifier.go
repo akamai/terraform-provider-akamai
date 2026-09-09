@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/appsec"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/appsec"
 	"github.com/go-test/deep"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 )

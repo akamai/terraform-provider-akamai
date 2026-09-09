@@ -8,12 +8,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/edgeworkers"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v10/internal/retry"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/edgeworkers"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v11/internal/retry"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -186,7 +186,7 @@ func resourceEdgeKVCreate(config edgeKVResourceConfig) schema.CreateContextFunc 
 				Name:        name,
 				GeoLocation: geoLocation,
 				Retention:   ptr.To(retention),
-				GroupID:     ptr.To(groupID),
+				GroupID:     ptr.To(int64(groupID)),
 			},
 		})
 		if err != nil {
@@ -282,7 +282,7 @@ func resourceEdgeKVUpdate(ctx context.Context, rd *schema.ResourceData, m interf
 		UpdateNamespace: edgeworkers.UpdateNamespace{
 			Name:      name,
 			Retention: ptr.To(retention),
-			GroupID:   ptr.To(groupID),
+			GroupID:   ptr.To(int64(groupID)),
 		},
 	})
 	if err != nil {
@@ -336,8 +336,7 @@ func resourceEdgeKVDelete(config edgeKVResourceConfig) schema.DeleteContextFunc 
 				name, network, err)
 		}
 
-		rescheduledDeleteTime := config.nowFn().UTC().Add(config.namespaceDeleteRescheduleBy + config.namespaceDeleteSafetyBuffer)
-		err = rescheduleNamespaceDelete(ctx, client, name, network, rescheduledDeleteTime, config)
+		err = rescheduleNamespaceDelete(ctx, client, name, network, config)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -428,9 +427,10 @@ func waitUntilNoGroupsInNamespace(ctx context.Context, client edgeworkers.Edgewo
 	}
 }
 
-func rescheduleNamespaceDelete(ctx context.Context, client edgeworkers.Edgeworkers, name, network string, scheduledDeleteTime time.Time, config edgeKVResourceConfig) error {
+func rescheduleNamespaceDelete(ctx context.Context, client edgeworkers.Edgeworkers, name, network string, config edgeKVResourceConfig) error {
 
 	for {
+		scheduledDeleteTime := config.nowFn().UTC().Add(config.namespaceDeleteRescheduleBy + config.namespaceDeleteSafetyBuffer)
 		_, err := client.RescheduleNamespaceDelete(ctx, edgeworkers.RescheduleNamespaceDeleteRequest{
 			Network: edgeworkers.NamespaceNetwork(network),
 			Name:    name,

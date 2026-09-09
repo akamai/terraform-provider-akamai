@@ -64,12 +64,10 @@ var (
 
 	// PAPI CP Code errors
 
-	// ErrLookingUpCPCode is returned when fetching CP Code from API client by contractID returned an error or no CP Code was found
-	ErrLookingUpCPCode = errors.New("looking up cp code by name")
-	// ErrCPCodeNotFound is returned when cp code with provided ID does not exist
-	ErrCPCodeNotFound = errors.New("cp code not found")
-	// ErrMoreCPCodesFound is returned when cp code with provided ID does not exist
-	ErrMoreCPCodesFound = errors.New("more cp codes found")
+	// ErrLookingUpCPCodeByName is returned when fetching CP Code by name and returned an error or no CP Code was found
+	ErrLookingUpCPCodeByName = errors.New("looking up cp code by name")
+	// ErrLookingUpCPCodeByID is returned when fetching CP Code by id and no CP Code was found
+	ErrLookingUpCPCodeByID = errors.New("looking up cp code by id")
 	// ErrCPCodeUpdateTimeout is returned when waiting for a cp code update results in timeout
 	ErrCPCodeUpdateTimeout = errors.New("cp code update timeout")
 

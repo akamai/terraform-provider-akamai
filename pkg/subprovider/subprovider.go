@@ -2,6 +2,7 @@
 package subprovider
 
 import (
+	"github.com/hashicorp/terraform-plugin-framework/action"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -20,4 +21,14 @@ type Subprovider interface {
 
 	// FrameworkDataSources returns the data sources implemented using terraform-plugin-framework
 	FrameworkDataSources() []func() datasource.DataSource
+}
+
+// WithActions is implemented by sub-providers that expose
+// actions implemented using terraform-plugin-framework. Implementing this interface
+// is optional, as most sub-providers don't define any actions.
+type WithActions interface {
+	Subprovider
+
+	// FrameworkActions returns the actions implemented using terraform-plugin-framework
+	FrameworkActions() []func() action.Action
 }

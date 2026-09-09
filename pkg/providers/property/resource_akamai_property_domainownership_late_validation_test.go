@@ -6,12 +6,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/domainownership"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/papi"
-	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
-	tst "github.com/akamai/terraform-provider-akamai/v10/internal/test"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/test"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/domainownership"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/papi"
+	"github.com/akamai/terraform-provider-akamai/v11/internal/edgegrid"
+	tst "github.com/akamai/terraform-provider-akamai/v11/internal/test"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/test"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )

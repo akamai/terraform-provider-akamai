@@ -10,11 +10,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/dns"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/log"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/session"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/tf"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/meta"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/dns"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/log"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -185,6 +185,26 @@ func resourceDNSv2Zone(config dnsZoneResourceConfig) *schema.Resource {
 					},
 				},
 			},
+			"multi_provider_dnssec": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "Multi-signer DNSSEC properties.",
+				MaxItems:    1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"enabled": {
+							Type:        schema.TypeBool,
+							Required:    true,
+							Description: "Enables multi-signer DNSSEC for the zone.",
+						},
+						"webhook": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "The URL to call when a new ZSK secret has been generated.",
+						},
+					},
+				},
+			},
 			"version_id": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -249,7 +269,7 @@ func resourceDNSv2ZoneCreate(config dnsZoneResourceConfig) schema.CreateContextF
 					return diag.Errorf("no group found. Please provide the group.")
 				}
 				if len(groupList.Groups) == 1 {
-					group = strconv.Itoa(groupList.Groups[0].GroupID)
+					group = strconv.FormatInt(groupList.Groups[0].GroupID, 10)
 					logger.Warnf("Please modify configuration and provide group identifier. It will be required in the future version of the resource.")
 				}
 				if len(groupList.Groups) > 1 {
@@ -484,6 +504,7 @@ func resourceDNSv2ZoneUpdate(ctx context.Context, d *schema.ResourceData, m inte
 	zoneCreate.EndCustomerID = zone.EndCustomerID
 	zoneCreate.ContractID = zone.ContractID
 	zoneCreate.TSIGKey = zone.TSIGKey
+	zoneCreate.MultiProviderDNSSEC = zone.MultiProviderDNSSEC
 	if err := populateDNSv2ZoneObject(d, zoneCreate, logger); err != nil {
 		return diag.FromErr(err)
 	}
@@ -701,6 +722,19 @@ func populateDNSv2ZoneState(d *schema.ResourceData, zoneresp *dns.GetZoneRespons
 		return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
 	}
 
+	multiProviderDnssecListNew := make([]any, 0)
+	if zoneresp.MultiProviderDNSSEC != nil {
+		multiProviderDnssecNew := map[string]any{
+			"enabled": zoneresp.MultiProviderDNSSEC.Enabled,
+			"webhook": zoneresp.MultiProviderDNSSEC.Webhook,
+		}
+		multiProviderDnssecListNew = append(multiProviderDnssecListNew, multiProviderDnssecNew)
+	}
+
+	if err := d.Set("multi_provider_dnssec", multiProviderDnssecListNew); err != nil {
+		return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
+	}
+
 	tsigListNew := make([]interface{}, 0)
 	if zoneresp.TSIGKey != nil {
 		tsigNew := map[string]interface{}{
@@ -800,6 +834,25 @@ func populateDNSv2ZoneObject(d *schema.ResourceData, zone *dns.ZoneCreate, logge
 		}
 	}
 
+	multiProviderDnssec, err := tf.GetListValue("multi_provider_dnssec", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return err
+	}
+	if len(multiProviderDnssec) == 0 {
+		if d.HasChange("multi_provider_dnssec") {
+			zone.MultiProviderDNSSEC = nil
+		}
+	} else if err == nil || d.HasChange("multi_provider_dnssec") {
+		multiProviderDnssecMap, ok := multiProviderDnssec[0].(map[string]any)
+		if !ok {
+			return fmt.Errorf("'multi_provider_dnssec' entry is of invalid type; should be 'map[string]any'")
+		}
+		zone.MultiProviderDNSSEC = &dns.MultiProviderDNSSEC{
+			Enabled: multiProviderDnssecMap["enabled"].(bool),
+			Webhook: multiProviderDnssecMap["webhook"].(string),
+		}
+	}
+
 	TSIGKey, err := tf.GetListValue("tsig_key", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		if !errors.Is(err, tf.ErrNotFound) {
@@ -850,6 +903,10 @@ func checkDNSv2Zone(d tf.ResourceDataFetcher) error {
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
+	multiProviderDnssec, err := tf.GetListValue("multi_provider_dnssec", d)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return err
+	}
 	ztype := strings.ToUpper(zoneType)
 	masters := mastersSet.List()
 	if ztype == "SECONDARY" && len(masters) == 0 {
@@ -867,12 +924,29 @@ func checkDNSv2Zone(d tf.ResourceDataFetcher) error {
 	if signandserve && ztype == "ALIAS" {
 		return fmt.Errorf("sign_and_serve is not valid in %s zone %s configuration", ztype, zone)
 	}
+	if err := checkMultiProviderDnssec(multiProviderDnssec, signandserve, zone); err != nil {
+		return err
+	}
 	if ztype != "SECONDARY" && len(tsig) > 0 {
 		return fmt.Errorf("tsig_key can not be populated in %s zone %s configuration", ztype, zone)
 	}
 
 	return nil
 
+}
+
+func checkMultiProviderDnssec(multiProviderDnssec []any, signAndServe bool, zone string) error {
+	if len(multiProviderDnssec) == 0 {
+		return nil
+	}
+	multiProviderDnssecMap, ok := multiProviderDnssec[0].(map[string]any)
+	if !ok {
+		return fmt.Errorf("'multi_provider_dnssec' entry is of invalid type; should be 'map[string]any'")
+	}
+	if multiProviderDnssecMap["enabled"].(bool) && !signAndServe {
+		return fmt.Errorf("multi_provider_dnssec.enabled requires sign_and_serve to be true in zone %s configuration", zone)
+	}
+	return nil
 }
 
 // Util func to create SOA and NS records

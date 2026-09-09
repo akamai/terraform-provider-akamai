@@ -13646,7 +13646,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 		"validate_entity_tag": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Instructs edge servers to compare the request's `ETag` header with that of the cached object. If they differ, the edge server sends a new copy of the object. This validation occurs in addition to the default validation of `Last-Modified` and `If-Modified-Since` headers. This behavior can be used in includes.",
+			Description: "This behavior enables edge servers to validate cached objects using entity tags (ETags). This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -13668,7 +13668,7 @@ func getBehaviorsSchemaV20230105() map[string]*schema.Schema {
 					},
 					"enabled": {
 						Optional:    true,
-						Description: "Enables the ETag validation behavior.",
+						Description: "Enables the Validate Entity Tag (ETag) behavior. Allows edge servers to perform conditional revalidation using `If-None-Match` and `ETag` headers.",
 						Type:        schema.TypeBool,
 					},
 				},

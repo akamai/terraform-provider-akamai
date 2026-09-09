@@ -4,11 +4,12 @@ package cps
 import (
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework/action"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/subprovider"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/subprovider"
 )
 
 type (
@@ -17,6 +18,7 @@ type (
 )
 
 var _ subprovider.Subprovider = &Subprovider{}
+var _ subprovider.WithActions = &Subprovider{}
 
 const (
 	// Default polling intervals
@@ -58,4 +60,11 @@ func (p *Subprovider) FrameworkResources() []func() resource.Resource {
 // FrameworkDataSources returns the CPS data sources implemented using terraform-plugin-framework
 func (p *Subprovider) FrameworkDataSources() []func() datasource.DataSource {
 	return []func() datasource.DataSource{}
+}
+
+// FrameworkActions returns the CPS actions implemented using terraform-plugin-framework
+func (p *Subprovider) FrameworkActions() []func() action.Action {
+	return []func() action.Action{
+		NewForceCertificateRenewalAction(defaultPollChangeStatusInterval),
+	}
 }

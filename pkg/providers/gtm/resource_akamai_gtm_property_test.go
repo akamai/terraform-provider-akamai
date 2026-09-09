@@ -7,11 +7,11 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/gtm"
-	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/test"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/gtm"
+	"github.com/akamai/terraform-provider-akamai/v11/internal/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/test"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
 )
@@ -24,6 +24,55 @@ const (
 func TestResGTMProperty(t *testing.T) {
 	t.Parallel()
 	const propertyResourceName = "akamai_gtm_property.tfexample_prop_1"
+
+	allOptionalFieldsChecker := test.NewStateChecker(propertyResourceName).
+		CheckEqual("name", "tfexample_prop_1").
+		CheckEqual("type", "failover").
+		CheckEqual("ipv6", "true").
+		CheckEqual("score_aggregation_type", "median").
+		CheckEqual("stickiness_bonus_percentage", "10").
+		CheckEqual("stickiness_bonus_constant", "10").
+		CheckEqual("health_threshold", "123").
+		CheckEqual("use_computed_targets", "true").
+		CheckEqual("backup_ip", "test ip").
+		CheckEqual("balance_by_download_score", "true").
+		CheckEqual("unreachable_threshold", "1234").
+		CheckEqual("min_live_fraction", "1").
+		CheckEqual("health_multiplier", "5").
+		CheckEqual("dynamic_ttl", "300").
+		CheckEqual("max_unreachable_penalty", "123").
+		CheckEqual("map_name", "test map").
+		CheckEqual("handout_limit", "5").
+		CheckEqual("handout_mode", "normal").
+		CheckEqual("load_imbalance_percentage", "10").
+		CheckEqual("failover_delay", "5").
+		CheckEqual("backup_cname", "test cname").
+		CheckEqual("failback_delay", "5").
+		CheckEqual("health_max", "123").
+		CheckEqual("ghost_demand_reporting", "false").
+		CheckEqual("cname", "test cName").
+		CheckEqual("comments", "test comment").
+		CheckEqual("traffic_target.0.datacenter_id", "3131").
+		CheckEqual("traffic_target.0.enabled", "true").
+		CheckEqual("traffic_target.0.weight", "200").
+		CheckEqual("traffic_target.0.servers.0", "1.2.3.9").
+		CheckEqual("traffic_target.0.handout_cname", "test").
+		CheckEqual("traffic_target.0.precedence", "10").
+		CheckEqual("static_rr_set.0.type", "MX").
+		CheckEqual("static_rr_set.0.ttl", "300").
+		CheckEqual("static_rr_set.0.rdata.0", "100 test_e").
+		CheckEqual("liveness_test.0.name", "lt5").
+		CheckEqual("liveness_test.0.test_interval", "40").
+		CheckEqual("liveness_test.0.test_object", "/junk").
+		CheckEqual("liveness_test.0.test_object_port", "1").
+		CheckEqual("liveness_test.0.test_object_protocol", "HTTP").
+		CheckEqual("liveness_test.0.test_timeout", "30").
+		CheckEqual("liveness_test.0.disable_nonstandard_port_warning", "false").
+		CheckEqual("liveness_test.0.http_header.0.name", "test_name").
+		CheckEqual("liveness_test.0.http_header.0.value", "test_value").
+		CheckEqual("state_change_notification_webhook.0.url", "https://example.com/gtm-webhook").
+		CheckEqual("state_change_notification_webhook.0.format", "json-compact").
+		CheckEqual("id", "gtm_terra_testdomain.akadns.net:tfexample_prop_1")
 
 	tests := map[string]struct {
 		property *gtm.Property
@@ -924,6 +973,26 @@ func TestResGTMProperty(t *testing.T) {
 				},
 			},
 		},
+		"create property with all optional fields": {
+			property: getPropertyWithAllOptionalFields(),
+			init: func(m *gtm.Mock) {
+				mockGetProperty(m, testDomainName, testPropertyName, nil, &gtm.Error{StatusCode: http.StatusNotFound}, testutils.Once)
+				mockCreateProperty(m, testDomainName, getPropertyWithAllOptionalFields(), &gtm.CreatePropertyResponse{
+					Resource: getPropertyWithAllOptionalFields(),
+					Status:   getPendingResponseStatus(),
+				}, nil)
+				// read
+				mockGetProperty(m, testDomainName, testPropertyName, getPropertyWithAllOptionalFields(), nil, testutils.ThreeTimes)
+				// delete
+				mockDeleteProperty(m, testDomainName, testPropertyName)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/create_with_all_optional_fields.tf"),
+					Check:  allOptionalFieldsChecker.Build(),
+				},
+			},
+		},
 		"create property with test_object_protocol set to 'FTP' - test_object required error": {
 			property: getBasicProperty(),
 			steps: []resource.TestStep{
@@ -1100,7 +1169,7 @@ func TestResourceGTMTrafficTargetOrder(t *testing.T) {
 // getRankedFailoverPropertyWithPrecedence gets the property values taken from `create_ranked_failover_precedence.tf`
 func getRankedFailoverPropertyWithPrecedence() *gtm.Property {
 	return &gtm.Property{
-		DynamicTTL:   300,
+		DynamicTTL:   60,
 		HandoutMode:  "normal",
 		HandoutLimit: 5,
 		LivenessTests: []gtm.LivenessTest{
@@ -1168,7 +1237,7 @@ func getRankedFailoverPropertyWithPrecedence() *gtm.Property {
 // getRankedFailoverPropertyNoPrecedence gets the property values taken from `create_ranked_failover_empty_precedence.tf`
 func getRankedFailoverPropertyNoPrecedence() *gtm.Property {
 	return &gtm.Property{
-		DynamicTTL:           300,
+		DynamicTTL:           60,
 		HandoutMode:          "normal",
 		HandoutLimit:         5,
 		Name:                 testPropertyName,
@@ -1437,7 +1506,7 @@ func TestResGTMPropertyImport(t *testing.T) {
 // getBasicProperty gets the property values taken from `create_basic.tf`
 func getBasicProperty() *gtm.Property {
 	return &gtm.Property{
-		DynamicTTL:   300,
+		DynamicTTL:   60,
 		HandoutMode:  "normal",
 		HandoutLimit: 5,
 		LivenessTests: []gtm.LivenessTest{
@@ -1493,7 +1562,7 @@ func getBasicProperty() *gtm.Property {
 
 func getBasicPropertyWithMultipleTrafficTargets() *gtm.Property {
 	return &gtm.Property{
-		DynamicTTL:   300,
+		DynamicTTL:   60,
 		HandoutMode:  "normal",
 		HandoutLimit: 5,
 		LivenessTests: []gtm.LivenessTest{
@@ -1573,7 +1642,7 @@ func getPropertyWithTestObjectProtocol() *gtm.Property {
 // getBasicPropertySecondApply gets the property values taken from `create_multiple_traffic_targets.tf`
 func getBasicPropertySecondApply() gtm.Property {
 	return gtm.Property{
-		DynamicTTL:   300,
+		DynamicTTL:   60,
 		HandoutMode:  "normal",
 		HandoutLimit: 5,
 		LivenessTests: []gtm.LivenessTest{
@@ -1633,7 +1702,7 @@ func getBasicPropertySecondApply() gtm.Property {
 // getBasicPropertyWithoutDatacenterID gets the property values without DatacenterID
 func getBasicPropertyWithoutDatacenterID() gtm.Property {
 	return gtm.Property{
-		DynamicTTL:   300,
+		DynamicTTL:   60,
 		HandoutMode:  "normal",
 		HandoutLimit: 5,
 		LivenessTests: []gtm.LivenessTest{
@@ -1694,7 +1763,7 @@ func getBasicPropertyWithoutDatacenterID() gtm.Property {
 // getBasicPropertyWithLivenessTests gets the property values taken from `create_basic_additional_liveness_tests.tf`
 func getBasicPropertyWithLivenessTests() *gtm.Property {
 	return &gtm.Property{
-		DynamicTTL:   300,
+		DynamicTTL:   60,
 		HandoutMode:  "normal",
 		HandoutLimit: 5,
 		LivenessTests: []gtm.LivenessTest{
@@ -1754,7 +1823,7 @@ func getBasicPropertyWithLivenessTests() *gtm.Property {
 
 func getBasicPropertyWithOneLivenessTestsRemoved() *gtm.Property {
 	return &gtm.Property{
-		DynamicTTL:   300,
+		DynamicTTL:   60,
 		HandoutMode:  "normal",
 		HandoutLimit: 5,
 		LivenessTests: []gtm.LivenessTest{
@@ -1804,7 +1873,7 @@ func getBasicPropertyWithOneLivenessTestsRemoved() *gtm.Property {
 
 func getBasicPropertyWithOneTrafficTargetRemoved() *gtm.Property {
 	return &gtm.Property{
-		DynamicTTL:   300,
+		DynamicTTL:   60,
 		HandoutMode:  "normal",
 		HandoutLimit: 5,
 		LivenessTests: []gtm.LivenessTest{
@@ -1853,7 +1922,7 @@ func getBasicPropertyWithOneTrafficTargetRemoved() *gtm.Property {
 
 func getBasicPropertyWithoutLivenessTests() *gtm.Property {
 	return &gtm.Property{
-		DynamicTTL:           300,
+		DynamicTTL:           60,
 		HandoutMode:          "normal",
 		HandoutLimit:         5,
 		LivenessTests:        []gtm.LivenessTest{},
@@ -1884,7 +1953,7 @@ func getBasicPropertyWithoutLivenessTests() *gtm.Property {
 
 func getBasicPropertyWithoutTrafficTargetTests() *gtm.Property {
 	return &gtm.Property{
-		DynamicTTL:     300,
+		DynamicTTL:     60,
 		HandoutMode:    "normal",
 		HandoutLimit:   5,
 		TrafficTargets: []gtm.TrafficTarget{},
@@ -2002,6 +2071,80 @@ func getImportedProperty() *gtm.Property {
 				TestObjectPort:                1,
 				TestObjectProtocol:            "HTTP",
 				TestTimeout:                   30.0,
+				HTTPHeaders: []gtm.HTTPHeader{
+					{
+						Name:  "test_name",
+						Value: "test_value",
+					},
+				},
+			},
+		},
+		StateChangeNotificationWebhook: &gtm.StateChangeNotificationWebhook{
+			URL:    ptr.To("https://example.com/gtm-webhook"),
+			Format: gtm.JSONCompact,
+		},
+	}
+}
+
+// getPropertyWithAllOptionalFields gets a property with all optional fields set.
+// It uses dynamic_ttl = 300, which differs from the default of 60.
+func getPropertyWithAllOptionalFields() *gtm.Property {
+	return &gtm.Property{
+		Name:                      "tfexample_prop_1",
+		Type:                      "failover",
+		IPv6:                      true,
+		ScoreAggregationType:      "median",
+		StickinessBonusPercentage: 10.0,
+		StickinessBonusConstant:   10,
+		HealthThreshold:           123.0,
+		UseComputedTargets:        true,
+		BackupIP:                  "test ip",
+		BalanceByDownloadScore:    true,
+		StaticRRSets: []gtm.StaticRRSet{
+			{
+				Type:  "MX",
+				TTL:   300,
+				Rdata: []string{"100 test_e"},
+			},
+		},
+		UnreachableThreshold:    1234.0,
+		MinLiveFraction:         1.0,
+		HealthMultiplier:        5.0,
+		DynamicTTL:              300,
+		MaxUnreachablePenalty:   123,
+		MapName:                 "test map",
+		HandoutLimit:            5,
+		HandoutMode:             "normal",
+		FailoverDelay:           5,
+		BackupCName:             "test cname",
+		FailbackDelay:           5,
+		LoadImbalancePercentage: 10.0,
+		HealthMax:               123.0,
+		GhostDemandReporting:    false,
+		Comments:                "test comment",
+		CName:                   "test cName",
+		TrafficTargets: []gtm.TrafficTarget{
+			{
+				DatacenterID: datacenterID3131,
+				Enabled:      true,
+				HandoutCName: "test",
+				Servers: []string{
+					"1.2.3.9",
+				},
+				Weight:     200,
+				Precedence: ptr.To(10),
+			},
+		},
+		LivenessTests: []gtm.LivenessTest{
+			{
+				DisableNonstandardPortWarning: false,
+				Name:                          "lt5",
+				TestInterval:                  40,
+				TestObject:                    "/junk",
+				TestObjectPort:                1,
+				TestObjectProtocol:            "HTTP",
+				TestTimeout:                   30.0,
+				PeerCertificateVerification:   true,
 				HTTPHeaders: []gtm.HTTPHeader{
 					{
 						Name:  "test_name",

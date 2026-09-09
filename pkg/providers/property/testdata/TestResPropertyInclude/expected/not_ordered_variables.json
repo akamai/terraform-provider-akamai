@@ -1,0 +1,67 @@
+{
+  "rules": {
+    "behaviors": [
+      {
+        "name": "origin",
+        "options": {
+          "cacheKeyHostname": "ORIGIN_HOSTNAME",
+          "compress": true,
+          "enableTrueClientIp": true,
+          "forwardHostHeader": "REQUEST_HOST_HEADER",
+          "hostname": "",
+          "httpPort": 80,
+          "httpsPort": 443,
+          "ipVersion": "IPV4",
+          "minTlsVersion": "DYNAMIC",
+          "originCertificate": "",
+          "originSni": true,
+          "originType": "CUSTOMER",
+          "ports": "",
+          "tlsVersionTitle": "",
+          "trueClientIpClientSetting": false,
+          "trueClientIpHeader": "True-Client-IP",
+          "verificationMode": "PLATFORM_SETTINGS"
+        }
+      }
+    ],
+    "name": "default",
+    "options": {},
+    "variables": [
+      {
+        "description": "Original Host Header",
+        "hidden": false,
+        "name": "PMUSER_AKHOST",
+        "sensitive": false,
+        "value": ""
+      },
+      {
+        "description": "environment indicator",
+        "hidden": false,
+        "name": "PMUSER_ENV",
+        "sensitive": false,
+        "value": "DEV"
+      },
+      {
+        "description": "Original Request Path",
+        "hidden": false,
+        "name": "PMUSER_PATH",
+        "sensitive": false,
+        "value": ""
+      },
+      {
+        "description": "Global Request Number",
+        "hidden": false,
+        "name": "PMUSER_GRN",
+        "sensitive": false,
+        "value": ""
+      },
+      {
+        "description": "User is blocked by access control",
+        "hidden": false,
+        "name": "PMUSER_ACLBLOCKED",
+        "sensitive": false,
+        "value": "false"
+      }
+    ]
+  }
+}

@@ -6,10 +6,10 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/cps"
-	"github.com/akamai/terraform-provider-akamai/v10/internal/edgegrid"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/ptr"
-	"github.com/akamai/terraform-provider-akamai/v10/pkg/common/testutils"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/cps"
+	"github.com/akamai/terraform-provider-akamai/v11/internal/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
@@ -60,6 +60,76 @@ var (
 			DNSNameSettings: &cps.DNSNameSettings{
 				CloneDNSNames: false,
 				DNSNames:      []string{"san.test.akamai.com"},
+			},
+			Geography:        "core",
+			MustHaveCiphers:  "ak-akamai-default",
+			OCSPStapling:     "on",
+			PreferredCiphers: "ak-akamai-default",
+			QuicEnabled:      false,
+			SecureNetwork:    "enhanced-tls",
+			SNIOnly:          true,
+		},
+		Org: &cps.Org{
+			AddressLineOne: "150 Broadway",
+			City:           "Cambridge",
+			Country:        "US",
+			Name:           "Akamai",
+			Phone:          "321321321",
+			PostalCode:     "12345",
+			Region:         "MA",
+		},
+		OrgID:              ptr.To(123),
+		RA:                 "lets-encrypt",
+		SignatureAlgorithm: "SHA-256",
+		TechContact: &cps.Contact{
+			AddressLineOne:   "150 Broadway",
+			City:             "Cambridge",
+			Country:          "US",
+			Email:            "r2d2@akamai.com",
+			FirstName:        "R2",
+			LastName:         "D2",
+			OrganizationName: "Akamai",
+			Phone:            "123123123",
+			PostalCode:       "12345",
+			Region:           "MA",
+		},
+		ValidationType:  "dv",
+		AssignedSlots:   []int{1},
+		StagingSlots:    []int{2},
+		ProductionSlots: []int{3},
+	}
+	enrollmentDVAllSANs = &cps.GetEnrollmentResponse{
+		AdminContact: &cps.Contact{
+			AddressLineOne:   "150 Broadway",
+			City:             "Cambridge",
+			Country:          "US",
+			Email:            "r1d1@akamai.com",
+			FirstName:        "R1",
+			LastName:         "D1",
+			OrganizationName: "Akamai",
+			Phone:            "123123123",
+			PostalCode:       "12345",
+			Region:           "MA",
+		},
+		CertificateChainType: "default",
+		CertificateType:      "san",
+		ChangeManagement:     false,
+		CSR: &cps.CSR{
+			C:                   "US",
+			CN:                  "test.akamai.com",
+			L:                   "Cambridge",
+			O:                   "Akamai",
+			OU:                  "WebEx",
+			PreferredTrustChain: "intermediate-a",
+			SANS:                []string{"san.test.akamai.com"},
+			ST:                  "MA",
+		},
+		Location:                       "/cps/v2/enrollments/1",
+		EnableMultiStackedCertificates: false,
+		NetworkConfiguration: &cps.NetworkConfiguration{
+			DisallowedTLSVersions: []string{"TLSv1", "TLSv1_1"},
+			DNSNameSettings: &cps.DNSNameSettings{
+				CloneDNSNames: true,
 			},
 			Geography:        "core",
 			MustHaveCiphers:  "ak-akamai-default",
@@ -364,6 +434,20 @@ func TestDataEnrollment(t *testing.T) {
 				},
 			},
 		},
+		"happy path with all SANs and no explicit DNS names": {
+			enrollment: enrollmentDVAllSANs,
+			init: func(_ *testing.T, m *cps.Mock) {
+				m.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{
+					EnrollmentID: enrollment1ID,
+				}).Return(enrollmentDVAllSANs, nil).Times(3)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataEnrollment/enrollment_without_challenges.tf"),
+					Check:  checkAttributesForEnrollment(enrollmentDVAllSANs, enrollment1ID, mockEmptyChanges(), mockEmptyDVArray(), mockNoWarnings()),
+				},
+			},
+		},
 		"happy path with challenges and no post and pre verification warnings": {
 			enrollment: enrollmentDV2,
 			init: func(_ *testing.T, m *cps.Mock) {
@@ -638,6 +722,7 @@ func checkCommonAttrs(en *cps.GetEnrollmentResponse, enID int) resource.TestChec
 		// Network Configuration
 		resource.TestCheckResourceAttr("data.akamai_cps_enrollment.test", "network_configuration.#", "1"),
 		resource.TestCheckResourceAttr("data.akamai_cps_enrollment.test", "network_configuration.0.clone_dns_names", strconv.FormatBool(en.NetworkConfiguration.DNSNameSettings.CloneDNSNames)),
+		resource.TestCheckResourceAttr("data.akamai_cps_enrollment.test", "network_configuration.0.enable_for_all_sans", strconv.FormatBool(en.NetworkConfiguration.DNSNameSettings.CloneDNSNames)),
 		resource.TestCheckResourceAttr("data.akamai_cps_enrollment.test", "network_configuration.0.geography", en.NetworkConfiguration.Geography),
 		resource.TestCheckResourceAttr("data.akamai_cps_enrollment.test", "network_configuration.0.must_have_ciphers", en.NetworkConfiguration.MustHaveCiphers),
 		resource.TestCheckResourceAttr("data.akamai_cps_enrollment.test", "network_configuration.0.ocsp_stapling", string(en.NetworkConfiguration.OCSPStapling)),
@@ -692,6 +777,12 @@ func checkSetTypeAttrs(en *cps.GetEnrollmentResponse) resource.TestCheckFunc {
 
 	for i := range sansCount {
 		checkFunctions = append(checkFunctions, resource.TestCheckResourceAttr("data.akamai_cps_enrollment.test", fmt.Sprintf("sans.%v", i), en.CSR.SANS[i]))
+	}
+
+	dnsNamesCount := len(en.NetworkConfiguration.DNSNameSettings.DNSNames)
+	checkFunctions = append(checkFunctions, resource.TestCheckResourceAttr("data.akamai_cps_enrollment.test", "network_configuration.0.dns_names.#", strconv.Itoa(dnsNamesCount)))
+	for _, dnsName := range en.NetworkConfiguration.DNSNameSettings.DNSNames {
+		checkFunctions = append(checkFunctions, resource.TestCheckTypeSetElemAttr("data.akamai_cps_enrollment.test", "network_configuration.0.dns_names.*", dnsName))
 	}
 
 	if en.NetworkConfiguration.ClientMutualAuthentication != nil {

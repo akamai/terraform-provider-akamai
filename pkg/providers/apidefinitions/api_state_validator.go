@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"strings"
 
-	v0 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v13/pkg/apidefinitions/v0"
+	v0 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/apidefinitions/v0"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 )
 
