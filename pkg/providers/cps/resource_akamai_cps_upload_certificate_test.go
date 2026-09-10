@@ -3,6 +3,7 @@ package cps
 import (
 	"fmt"
 	"regexp"
+	"slices"
 	"strconv"
 	"testing"
 
@@ -326,6 +327,21 @@ func TestCreateCPSUploadCertificate(t *testing.T) {
 			checkFunc:    checkAttrs(createMockData("", "", certRSAForTests, trustChainRSAForTests, false, true, false, false, nil)),
 			error:        nil,
 		},
+		"successful create - waits for acknowledged change management": {
+			init: func(m *cps.Mock, enrollment *cps.GetEnrollmentResponse, enrollmentID, changeID int) {
+				mockCreateWithACKPostWarnings(m, enrollmentID, changeID, enrollment)
+				mockGetChangeStatusWithState(m, enrollmentID, changeID, 1, waitAckChangeManagement, "running")
+				mockGetChangeStatus(m, enrollmentID, changeID, 1, waitAckChangeManagement)
+				mockAcknowledgeChangeManagement(m, enrollmentID, changeID)
+				mockRead(m, enrollmentID, changeID, enrollment, certRSAForTests, trustChainRSAForTests, RSA, waitAckChangeManagement)
+			},
+			enrollment:   createEnrollment(2, 22, true, true),
+			enrollmentID: 2,
+			changeID:     22,
+			configPath:   "testdata/TestResCPSUploadCertificate/change_management/change_management_true.tf",
+			checkFunc:    checkAttrs(createMockData("", "", certRSAForTests, trustChainRSAForTests, true, true, false, false, nil)),
+			error:        nil,
+		},
 		"successful create - ECDSA cert, without trust chain": {
 			init: func(m *cps.Mock, enrollment *cps.GetEnrollmentResponse, enrollmentID, changeID int) {
 				mockGetEnrollment(m, enrollmentID, 1, enrollment)
@@ -501,6 +517,7 @@ func TestCreateCPSUploadCertificate(t *testing.T) {
 			init: func(m *cps.Mock, enrollment *cps.GetEnrollmentResponse, enrollmentID, changeID int) {
 				mockGetEnrollment(m, enrollmentID, 1, enrollment)
 				mockUploadThirdPartyCertificateAndTrustChain(m, RSA, certRSAForTests, "", enrollmentID, changeID)
+				mockGetChangeStatusWithState(m, enrollmentID, changeID, 1, waitReviewThirdPartyCert, "running")
 				mockGetChangeStatus(m, enrollmentID, changeID, 1, waitReviewThirdPartyCert)
 				mockGetPostVerificationWarnings(m, threeWarnings, enrollmentID, changeID)
 				mockAcknowledgePostVerificationWarnings(m, enrollmentID, changeID)
@@ -509,6 +526,7 @@ func TestCreateCPSUploadCertificate(t *testing.T) {
 				//read's call from upsert
 				mockGetEnrollment(m, enrollmentID, 1, enrollment)
 				mockGetChangeStatus(m, enrollmentID, changeID, 1, liveCheckAction)
+				mockGetChangeStatusWithState(m, enrollmentID, changeID, 1, complete, "running")
 				mockGetChangeStatus(m, enrollmentID, changeID, 1, complete)
 				mockGetChangeHistory(m, enrollmentID, 1, RSA, certRSAForTests, "")
 				//rest of the flow
@@ -1355,7 +1373,7 @@ var (
 				ChangeType: "new-certificate",
 			},
 		}
-		mockGetChangeStatus(client, enrollmentID, changeID, 1, waitAckChangeManagement)
+		mockGetChangeStatusWithState(client, enrollmentID, changeID, 3, waitAckChangeManagement, "running")
 		mockGetChangeStatus(client, enrollmentID, changeID, 1, waitAckChangeManagement)
 		mockAcknowledgeChangeManagement(client, enrollmentID, changeID)
 	}
@@ -1646,6 +1664,11 @@ var (
 
 	// mockGetChangeStatus mocks GetChangeStatus call with provided values
 	mockGetChangeStatus = func(client *cps.Mock, enrollmentID, changeID, timesToRun int, status string) {
+		mockGetChangeStatusWithState(client, enrollmentID, changeID, timesToRun, status, getDefaultStateForEnrollmentStatus(status))
+	}
+
+	// mockGetChangeStatusWithState mocks GetChangeStatus call with provided status and state
+	mockGetChangeStatusWithState = func(client *cps.Mock, enrollmentID, changeID, timesToRun int, status, state string) {
 		client.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
 			EnrollmentID: enrollmentID,
 			ChangeID:     changeID,
@@ -1662,7 +1685,7 @@ var (
 				DeploymentSchedule: nil,
 				Description:        "Desc",
 				Error:              nil,
-				State:              "",
+				State:              state,
 				Status:             status,
 			},
 		}, nil).Times(timesToRun)
@@ -1725,6 +1748,15 @@ var (
 		)
 	}
 )
+
+func getDefaultStateForEnrollmentStatus(status string) string {
+	if slices.Contains([]string{waitAckChangeManagement, waitReviewThirdPartyCert, waitUploadThirdParty}, status) {
+		return "awaiting-input"
+	} else if status == "complete" {
+		return "completed"
+	}
+	return "running"
+}
 
 // testDataForAttrs holds data used to create check functions
 type testDataForAttrs struct {

@@ -192,7 +192,7 @@ func (r *uploadCertificateResource) read(ctx context.Context, d *schema.Resource
 				if !ackChangeManagement && enrollment.ChangeManagement {
 					statusToWaitFor = waitAckChangeManagement
 				}
-				if _, err = waitForChangeStatus(ctx, client, enrollmentID, changeID, r.pollChangeStatusInterval, statusToWaitFor); err != nil {
+				if _, err = waitForTerminalChangeStatus(ctx, client, enrollmentID, changeID, r.pollChangeStatusInterval, statusToWaitFor); err != nil {
 					return diag.FromErr(err)
 				}
 			}
@@ -279,7 +279,7 @@ func (r *uploadCertificateResource) update(ctx context.Context, d *schema.Resour
 				return nil
 			}
 
-			if _, err = waitForChangeStatus(ctx, client, enrollmentID, changeID, r.pollChangeStatusInterval, waitAckChangeManagement); err != nil {
+			if _, err = waitForTerminalChangeStatus(ctx, client, enrollmentID, changeID, r.pollChangeStatusInterval, waitAckChangeManagement); err != nil {
 				return diag.FromErr(err)
 			}
 
@@ -356,14 +356,19 @@ func (r *uploadCertificateResource) upsert(ctx context.Context, d *schema.Resour
 		return diag.Errorf("incorrect status of a change: %s", err)
 	}
 
-	if status == waitReviewThirdPartyCert {
+	if status.Status == waitReviewThirdPartyCert {
+		if !statusInAllowedTerminalStatus(status, []string{waitReviewThirdPartyCert}) {
+			if _, err = waitForTerminalChangeStatus(ctx, client, attrs.enrollmentID, changeID, r.pollChangeStatusInterval, waitReviewThirdPartyCert); err != nil {
+				return diag.FromErr(err)
+			}
+		}
 		if err = processPostVerificationWarnings(ctx, client, d, attrs.enrollmentID, changeID, logger, r.pollChangeStatusInterval); err != nil {
 			return diag.Errorf("could not process post verification warnings: %s", err)
 		}
 	}
 
 	if enrollment.ChangeManagement && (attrs.ackChangeManagement || attrs.waitForDeployment) {
-		if _, err = waitForChangeStatus(ctx, client, attrs.enrollmentID, changeID, r.pollChangeStatusInterval, waitAckChangeManagement); err != nil {
+		if _, err = waitForTerminalChangeStatus(ctx, client, attrs.enrollmentID, changeID, r.pollChangeStatusInterval, waitAckChangeManagement); err != nil {
 			return diag.FromErr(err)
 		}
 
@@ -390,36 +395,37 @@ func checkForTrustChainWithoutCert(attrs *attributes) error {
 	return nil
 }
 
-// waitForChangeStatus waits for provided status
-func waitForChangeStatus(ctx context.Context, client cps.CPS, enrollmentID, changeID int, pollChangeStatusInterval time.Duration, statuses ...string) (*cps.Change, error) {
+// waitForTerminalChangeStatus waits for provided status. The provided status must be terminal - either completed or waiting for customer input.
+func waitForTerminalChangeStatus(ctx context.Context, client cps.CPS, enrollmentID, changeID int, pollChangeStatusInterval time.Duration, statuses ...string) (*cps.StatusInfo, error) {
 	change, err := sendGetChangeStatusReq(ctx, client, enrollmentID, changeID)
 	if err != nil {
 		return nil, fmt.Errorf("could not get change status: %s", err)
 	}
 
-	for !slices.Contains(statuses, change.StatusInfo.Status) {
+	for !statusInAllowedTerminalStatus(change.StatusInfo, statuses) {
 		select {
 		case <-time.After(pollChangeStatusInterval):
 			change, err = sendGetChangeStatusReq(ctx, client, enrollmentID, changeID)
 			if err != nil {
 				return nil, fmt.Errorf("could not get change status: %s", err)
 			}
-			if slices.Contains(statuses, change.StatusInfo.Status) {
-				continue
-			}
 		case <-ctx.Done():
 			return nil, fmt.Errorf("retry timeout reached: incorrect status of a change: %s, %s", change.StatusInfo.Status, ctx.Err())
 		}
 	}
 
-	return change, nil
+	return change.StatusInfo, nil
+}
+
+func statusInAllowedTerminalStatus(statusInfo *cps.StatusInfo, statuses []string) bool {
+	return slices.Contains(statuses, statusInfo.Status) && slices.Contains([]string{"awaiting-input", "completed"}, statusInfo.State)
 }
 
 // waitUntilStatusPasses waits until the status provided as parameter passes and returns a new one
-func waitUntilStatusPasses(ctx context.Context, client cps.CPS, enrollmentID, changeID int, status string, pollChangeStatusInterval time.Duration) (string, error) {
+func waitUntilStatusPasses(ctx context.Context, client cps.CPS, enrollmentID, changeID int, status string, pollChangeStatusInterval time.Duration) (*cps.StatusInfo, error) {
 	change, err := sendGetChangeStatusReq(ctx, client, enrollmentID, changeID)
 	if err != nil {
-		return "", fmt.Errorf("could not get change status: %s", err)
+		return nil, fmt.Errorf("could not get change status: %s", err)
 	}
 
 	for change.StatusInfo.Status == status {
@@ -427,14 +433,14 @@ func waitUntilStatusPasses(ctx context.Context, client cps.CPS, enrollmentID, ch
 		case <-time.After(pollChangeStatusInterval):
 			change, err = sendGetChangeStatusReq(ctx, client, enrollmentID, changeID)
 			if err != nil {
-				return "", fmt.Errorf("could not get change status: %s", err)
+				return nil, fmt.Errorf("could not get change status: %s", err)
 			}
 		case <-ctx.Done():
-			return "", fmt.Errorf("retry timeout reached: incorrect status of a change: %s, %s", change.StatusInfo.Status, ctx.Err())
+			return nil, fmt.Errorf("retry timeout reached: incorrect status of a change: %s, %s", change.StatusInfo.Status, ctx.Err())
 		}
 	}
 
-	return change.StatusInfo.Status, nil
+	return change.StatusInfo, nil
 }
 
 // wrapCertificatesToUpload creates certificates entry used in UploadThirdPartyCertAndTrustChain request,

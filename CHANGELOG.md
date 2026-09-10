@@ -100,6 +100,21 @@
 
 
 
+* CPS
+  * Fixed the `akamai_cps_dv_validation` and `akamai_cps_upload_certificate` resources to wait until CPS enrollment changes reach an actionable state before handling domain validation, post-verification warnings, and change-management acknowledgements, preventing premature processing.
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
