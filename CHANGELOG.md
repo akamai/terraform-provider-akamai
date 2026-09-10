@@ -167,6 +167,31 @@
 
 
 
+
+
+
+* DNS
+  * Fixed an issue in the `akamai_dns_record` resource where TXT targets longer than 255 characters were rejected with ambiguous error ([I#786](https://github.com/akamai/terraform-provider-akamai/issues/786)).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ## 11.0.0 (Sep 9, 2026)
 
 #### BREAKING CHANGES:

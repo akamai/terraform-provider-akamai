@@ -1045,6 +1045,9 @@ func resourceDNSRecordUpdate(config dnsRecordResourceConfig) schema.UpdateContex
 
 		recordCreate, err := bindRecord(ctx, client, d, log)
 		if err != nil {
+			if recordType == RRTypeTxt {
+				d.Partial(true)
+			}
 			return append(diags, diag.Diagnostic{
 				Severity: diag.Error,
 				Summary:  "Recordset update bind failure",
@@ -1592,7 +1595,7 @@ func bindRecord(ctx context.Context, client dns.DNS, d *schema.ResourceData, log
 
 	records, err := buildRecordsList(target, recordType, logger)
 	if err != nil {
-		return dns.RecordBody{}, nil
+		return dns.RecordBody{}, err
 	}
 
 	simpleRecord := map[string]struct{}{RRTypeA: {}, RRTypeAaaa: {}, RRTypeAkamaiCdn: {}, RRTypeCname: {}, RRTypeLoc: {}, RRTypeNs: {}, RRTypePtr: {}, RRTypeSpf: {}, RRTypeTxt: {}, RRTypeCaa: {}}

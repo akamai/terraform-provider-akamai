@@ -54,21 +54,21 @@ import (
 // NormalizeTarget tries to normalize txt record target. If it cannot be normalized in the
 // provided format, it escapes it and retries.
 func NormalizeTarget(r string) (string, error) {
-	normalized, ok := normalizeTarget(r)
-	if ok {
+	normalized, err := normalizeTarget(r)
+	if err == nil {
 		return normalized, nil
 	}
 
-	normalized, ok = normalizeTarget(fmt.Sprintf("%q", r))
-	if ok {
+	normalized, err = normalizeTarget(fmt.Sprintf("%q", r))
+	if err == nil {
 		return normalized, nil
 	}
 
-	return "", fmt.Errorf("normalizing txt record target '%s' failed", r)
+	return "", fmt.Errorf("normalizing txt record target '%s' failed: %w", r, err)
 }
 
 // normalizeTarget is a txt record target normalization func compliant with akamai api
-func normalizeTarget(in string) (string, bool) {
+func normalizeTarget(in string) (string, error) {
 	var newRdata strings.Builder
 	for _, ch := range in {
 		if isSafeASCII(ch) {
@@ -82,9 +82,9 @@ func normalizeTarget(in string) (string, bool) {
 	tok := newTokenizer(in)
 	stgs, err := rdataFromString(tok)
 	if err != nil {
-		return "", false
+		return "", err
 	}
-	return rrToString(stgs), true
+	return rrToString(stgs), nil
 }
 
 func isSafeASCII(ch rune) bool {
@@ -161,7 +161,7 @@ func byteArrayFromString(s string) ([]byte, error) {
 	}
 	if !hasEscapes {
 		if len(array) > 255 {
-			return nil, errors.New("text string too long")
+			return nil, errors.New("text string longer than 255 characters")
 		}
 		return array, nil
 	}
@@ -202,7 +202,7 @@ func byteArrayFromString(s string) ([]byte, error) {
 	}
 	array = os.Bytes()
 	if len(array) > 255 {
-		return nil, errors.New("text string too long")
+		return nil, errors.New("text string longer than 255 characters")
 	}
 
 	return os.Bytes(), nil
