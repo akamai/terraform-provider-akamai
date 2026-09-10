@@ -775,6 +775,8 @@ func isPendingDeactivation(status string) bool {
 
 // handleActivationFailure handles activation failure by refreshing state and returning appropriate diagnostics
 func handleActivationFailure(ctx context.Context, params activationParams, finalStatus appsec.StatusValue) diag.Diagnostics {
+	// Invalidate cache even on failure: the platform may have partially activated, changing which version is active.
+	invalidateConfigCache(params.ConfigID)
 	readDiags := resourceActivationsRead(ctx, params.ResourceData, params.Meta)
 
 	if readDiags.HasError() {
@@ -865,6 +867,7 @@ func handleSameVersion(ctx context.Context, client appsec.APPSEC, currentVersion
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
+	invalidateConfigCache(params.ConfigID)
 	return nil
 }
 
@@ -903,7 +906,9 @@ func performActivation(ctx context.Context, client appsec.APPSEC, params activat
 
 	activation, err := lookupActivation(ctx, client, getActivationsRequest)
 	if err != nil {
-		// Refresh state to current active version before returning error
+		// Refresh state to current active version before returning error.
+		// Invalidate first: the platform may have activated despite the lookup error.
+		invalidateConfigCache(params.ConfigID)
 		params.Logger.Warnf("failed to lookup activation %d, refreshing state to current active version: %s", activationResp.ActivationID, err.Error())
 		readDiags := resourceActivationsRead(ctx, params.ResourceData, params.Meta)
 		if readDiags.HasError() {
@@ -929,6 +934,9 @@ func performActivation(ctx context.Context, client appsec.APPSEC, params activat
 	if err := params.ResourceData.Set("status", string(finalStatus)); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
+
+	// Invalidate the configuration cache so subsequent reads fetch fresh version info.
+	invalidateConfigCache(params.ConfigID)
 
 	// Collect warnings for host move operations
 	var warnings diag.Diagnostics
@@ -998,6 +1006,8 @@ func waitForDeactivation(ctx context.Context, client appsec.APPSEC, currentVersi
 	if err := params.ResourceData.Set("status", activation.Status); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
+
+	invalidateConfigCache(params.ConfigID)
 	return nil
 }
 
@@ -1052,5 +1062,7 @@ func performDeactivation(ctx context.Context, client appsec.APPSEC, activationID
 	if err := params.ResourceData.Set("status", activation.Status); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
+
+	invalidateConfigCache(params.ConfigID)
 	return nil
 }

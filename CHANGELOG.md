@@ -29,6 +29,10 @@
 
 
 
+* Appsec
+  * Unified configuration version cache in `akamai_appsec_activations` to prevent stale version errors after activation or deactivation.
+
+
 
 
 

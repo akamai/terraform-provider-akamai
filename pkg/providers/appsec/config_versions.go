@@ -30,6 +30,25 @@ var (
 	GetLatestConfigVersion = getLatestConfigVersion
 )
 
+// modifiableVersionCacheKey returns the cache key used by getModifiableConfigVersion.
+// This key is only written after verifying the stored version is modifiable, so
+// cache hits on this key are always safe to return without re-checking modifiability.
+func modifiableVersionCacheKey(configID int) string {
+	return fmt.Sprintf("modifiable:%d", configID)
+}
+
+// latestVersionCacheKey returns the cache key used by getLatestConfigVersion.
+func latestVersionCacheKey(configID int) string {
+	return fmt.Sprintf("latest:%d", configID)
+}
+
+// invalidateConfigCache clears both cached versions for the given configID.
+// Call this after activation or deactivation completes, since either can change which version is active.
+func invalidateConfigCache(configID int) {
+	_ = cache.Delete(cache.BucketName(SubproviderName), modifiableVersionCacheKey(configID))
+	_ = cache.Delete(cache.BucketName(SubproviderName), latestVersionCacheKey(configID))
+}
+
 // getModifiableConfigVersion returns the number of the latest editable version
 // of the given security configuration. If the most recent version is not editable
 // (because it is active or was previously active in staging or production) a new
@@ -38,7 +57,7 @@ var (
 // A mutex prevents calls made by multiple resources from creating unnecessary clones.
 func getModifiableConfigVersion(ctx context.Context, configID int, resource string, client appsec.APPSEC) (int, error) {
 	// If the version info is in the cache, return it immediately.
-	cacheKey := fmt.Sprintf("%s:%d", "getModifiableConfigVersion", configID)
+	cacheKey := modifiableVersionCacheKey(configID)
 	configuration := &appsec.GetConfigurationResponse{}
 	if err := cache.Get(cache.BucketName(SubproviderName), cacheKey, configuration); err == nil {
 		tflog.Debug(ctx, "returning modifiable version from cache", map[string]any{"resource": resource, "version": configuration.LatestVersion})
@@ -118,7 +137,7 @@ func getModifiableConfigVersion(ctx context.Context, configID int, resource stri
 // configuration. API calls are made using the supplied context and the passed API client.
 func getLatestConfigVersion(ctx context.Context, configID int, client appsec.APPSEC) (int, error) {
 	// Return the cached value if we have one
-	cacheKey := fmt.Sprintf("%s:%d", "getLatestConfigVersion", configID)
+	cacheKey := latestVersionCacheKey(configID)
 	configuration := &appsec.GetConfigurationResponse{}
 	if err := cache.Get(cache.BucketName(SubproviderName), cacheKey, configuration); err == nil {
 		tflog.Debug(ctx, "found config in cache, returning latest version", map[string]any{"configID": configuration.ID, "version": configuration.LatestVersion})

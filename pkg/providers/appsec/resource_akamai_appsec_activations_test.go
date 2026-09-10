@@ -10,9 +10,12 @@ import (
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/appsec"
 	akalog "github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/log"
 	"github.com/akamai/terraform-provider-akamai/v11/internal/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/cache"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/test"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -2896,4 +2899,136 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		client.APPSEC.AssertExpectations(t)
 	})
 
+}
+
+func activationTestResourceData(t *testing.T, configID, version int) *schema.ResourceData {
+	t.Helper()
+	return schema.TestResourceDataRaw(t, resourceActivations(defaultActivationResourceConfig()).Schema, map[string]interface{}{
+		"config_id":           configID,
+		"version":             version,
+		"network":             "STAGING",
+		"note":                "test note",
+		"notification_emails": []interface{}{"test@example.com"},
+		"status":              "",
+	})
+}
+
+func TestPerformActivationInvalidatesCache(t *testing.T) {
+	clearCache()
+	defer clearCache()
+
+	configID := 43253
+	version := 7
+
+	staleConfig := &appsec.GetConfigurationResponse{ID: configID, LatestVersion: 5}
+	err := cache.Set(cache.BucketName(SubproviderName), modifiableVersionCacheKey(configID), staleConfig)
+	require.NoError(t, err)
+
+	client := edgegrid.NewTestClient()
+
+	client.APPSEC.On("GetHostMoveValidation", mock.Anything, appsec.GetHostMoveValidationRequest{
+		ConfigID: configID, ConfigVersion: version, Network: appsec.NetworkValue("STAGING"),
+	}).Return(&appsec.GetHostMoveValidationResponse{HostsToMove: []appsec.HostToMove{}}, nil).Once()
+
+	client.APPSEC.On("CreateActivations", mock.Anything, mock.Anything).
+		Return(&appsec.CreateActivationsResponse{ActivationID: 1, Status: appsec.StatusActive}, nil).Once()
+
+	client.APPSEC.On("GetActivations", mock.Anything, appsec.GetActivationsRequest{ActivationID: 1}).
+		Return(&appsec.GetActivationsResponse{Status: appsec.StatusActive}, nil).Once()
+
+	params := activationParams{
+		ConfigID:           configID,
+		Version:            version,
+		Network:            "STAGING",
+		Note:               "test note",
+		NotificationEmails: []string{"test@example.com"},
+		ResourceData:       activationTestResourceData(t, configID, version),
+		Logger:             newMockLogger(),
+	}
+
+	diags := performActivation(context.Background(), client.APPSEC, params, defaultActivationResourceConfig())
+	require.False(t, diags.HasError(), "performActivation should succeed: %v", diags)
+
+	out := &appsec.GetConfigurationResponse{}
+	err = cache.Get(cache.BucketName(SubproviderName), modifiableVersionCacheKey(configID), out)
+	assert.ErrorIs(t, err, cache.ErrEntryNotFound, "cache should be invalidated after activation")
+
+	client.APPSEC.AssertExpectations(t)
+}
+
+func TestPerformDeactivationInvalidatesCache(t *testing.T) {
+	clearCache()
+	defer clearCache()
+
+	configID := 43253
+	version := 7
+
+	staleConfig := &appsec.GetConfigurationResponse{ID: configID, LatestVersion: 5}
+	err := cache.Set(cache.BucketName(SubproviderName), modifiableVersionCacheKey(configID), staleConfig)
+	require.NoError(t, err)
+
+	client := edgegrid.NewTestClient()
+
+	client.APPSEC.On("RemoveActivations", mock.Anything, mock.Anything).
+		Return(&appsec.RemoveActivationsResponse{ActivationID: 1, Status: appsec.StatusValue("Pending")}, nil).Once()
+
+	client.APPSEC.On("GetActivations", mock.Anything, appsec.GetActivationsRequest{ActivationID: 1}).
+		Return(&appsec.GetActivationsResponse{Status: appsec.StatusDeactivated}, nil).Once()
+
+	params := activationParams{
+		ConfigID:           configID,
+		Version:            version,
+		Network:            "STAGING",
+		Note:               "test note",
+		NotificationEmails: []string{"test@example.com"},
+		ResourceData:       activationTestResourceData(t, configID, version),
+		Logger:             newMockLogger(),
+	}
+
+	diags := performDeactivation(context.Background(), client.APPSEC, 999, params, defaultActivationResourceConfig())
+	require.False(t, diags.HasError(), "performDeactivation should succeed: %v", diags)
+
+	out := &appsec.GetConfigurationResponse{}
+	err = cache.Get(cache.BucketName(SubproviderName), modifiableVersionCacheKey(configID), out)
+	assert.ErrorIs(t, err, cache.ErrEntryNotFound, "cache should be invalidated after deactivation")
+
+	client.APPSEC.AssertExpectations(t)
+}
+
+func TestWaitForDeactivationInvalidatesCache(t *testing.T) {
+	clearCache()
+	defer clearCache()
+
+	configID := 43253
+	version := 7
+
+	staleConfig := &appsec.GetConfigurationResponse{ID: configID, LatestVersion: 5}
+	err := cache.Set(cache.BucketName(SubproviderName), modifiableVersionCacheKey(configID), staleConfig)
+	require.NoError(t, err)
+
+	client := edgegrid.NewTestClient()
+
+	client.APPSEC.On("GetActivations", mock.Anything, appsec.GetActivationsRequest{ActivationID: 1}).
+		Return(&appsec.GetActivationsResponse{Status: appsec.StatusDeactivated}, nil).Once()
+
+	currentVersion := &appsec.Activation{ActivationID: 1, Version: version, Status: "Pending"}
+
+	params := activationParams{
+		ConfigID:           configID,
+		Version:            version,
+		Network:            "STAGING",
+		Note:               "test note",
+		NotificationEmails: []string{"test@example.com"},
+		ResourceData:       activationTestResourceData(t, configID, version),
+		Logger:             newMockLogger(),
+	}
+
+	diags := waitForDeactivation(context.Background(), client.APPSEC, currentVersion, params, defaultActivationResourceConfig())
+	require.False(t, diags.HasError(), "waitForDeactivation should succeed: %v", diags)
+
+	out := &appsec.GetConfigurationResponse{}
+	err = cache.Get(cache.BucketName(SubproviderName), modifiableVersionCacheKey(configID), out)
+	assert.ErrorIs(t, err, cache.ErrEntryNotFound, "cache should be invalidated after deactivation wait")
+
+	client.APPSEC.AssertExpectations(t)
 }

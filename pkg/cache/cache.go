@@ -2,6 +2,7 @@
 package cache
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,6 +12,8 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/log"
 	"github.com/allegro/bigcache/v2"
 )
+
+var deletedSentinel = []byte("__deleted__")
 
 var (
 	// ErrDisabled is returned when Get or Set is called on a disabled cache
@@ -79,6 +82,21 @@ func Set(bucket Bucket, key string, val any) error {
 	return defaultCache.cache.Set(key, data)
 }
 
+// Delete marks a cache entry as deleted. Subsequent Get calls for the same key
+// return ErrEntryNotFound until a new Set overwrites the entry.
+func Delete(bucket Bucket, key string) error {
+	log := log.Get("cache", "CacheDelete")
+
+	if !defaultCache.enabled.Load() {
+		log.Debug("cache disabled")
+		return ErrDisabled
+	}
+
+	key = fmt.Sprintf("%s:%s", key, bucket.Name())
+	log.Debugf("cache delete for key %s", key)
+	return defaultCache.cache.Set(key, deletedSentinel)
+}
+
 // Get returns value stored under the key from cache and writes it into out
 func Get(bucket Bucket, key string, out any) error {
 	log := log.Get("cache", "CacheGet")
@@ -97,6 +115,11 @@ func Get(bucket Bucket, key string, out any) error {
 			return ErrEntryNotFound
 		}
 		return err
+	}
+
+	if bytes.Equal(data, deletedSentinel) {
+		log.Debugf("cache entry deleted for key %s", key)
+		return ErrEntryNotFound
 	}
 
 	log.Debugf("cache get for for key %s: [%d bytes]", key, len(data))
