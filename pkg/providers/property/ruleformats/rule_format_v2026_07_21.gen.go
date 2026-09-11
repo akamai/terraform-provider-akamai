@@ -5322,7 +5322,7 @@ func getBehaviorsSchemaV20260721() map[string]*schema.Schema {
 						},
 					},
 					"secret_key": {
-						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^[0-9a-zA-Z]{24}$")),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^[0-9a-zA-Z]+$")),
 						Optional:         true,
 						Description:      "Specifies the shared secret key.",
 						Type:             schema.TypeString,
@@ -5454,7 +5454,7 @@ func getBehaviorsSchemaV20260721() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 					},
 					"serving_path": {
-						ValidateDiagFunc: validateRegexOrVariable("^/[A-Za-z0-9/_-]{6}$"),
+						ValidateDiagFunc: validateRegexOrVariable("^\\/[A-Za-z0-9]{6,10}$"),
 						Optional:         true,
 						Description:      "Specifies the path that serves the Google Tag. The path segment starts with a slash (`/`), followed by 6-10 alphanumeric characters, and must be unique within your page.",
 						Type:             schema.TypeString,
@@ -6918,13 +6918,13 @@ func getBehaviorsSchemaV20260721() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"hls_query_param_secret_key": {
-						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^(0x)?[0-9a-fA-F]{32}$")),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^(0x)?[0-9a-fA-F]+$")),
 						Optional:         true,
 						Description:      "Specifies a primary key as a token to accompany the request.",
 						Type:             schema.TypeString,
 					},
 					"hls_query_param_transition_key": {
-						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^(0x)?[0-9a-fA-F]{32}$")),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^(0x)?[0-9a-fA-F]+$")),
 						Optional:         true,
 						Description:      "Specifies a transition key as a token to accompany the request.",
 						Type:             schema.TypeString,
@@ -9258,7 +9258,7 @@ func getBehaviorsSchemaV20260721() map[string]*schema.Schema {
 						Type:             schema.TypeInt,
 					},
 					"secret_key": {
-						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^[0-9a-zA-Z]{24}$")),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^[0-9a-zA-Z]{10,}$")),
 						Optional:         true,
 						Description:      "Specifies the shared secret key.",
 						Type:             schema.TypeString,
@@ -13823,43 +13823,6 @@ func getBehaviorsSchemaV20260721() map[string]*schema.Schema {
 						Optional:    true,
 						Description: "Enables the WebDAV behavior.",
 						Type:        schema.TypeBool,
-					},
-				},
-			},
-		},
-		"zero_trust": {
-			Optional:    true,
-			Type:        schema.TypeList,
-			Description: "This behavior cannot be used in includes.",
-			MaxItems:    1,
-			Elem: &schema.Resource{
-				Schema: map[string]*schema.Schema{
-					"locked": {
-						Optional:    true,
-						Description: "Indicates that your Akamai representative has locked this behavior or criteria so that you can't modify it. This option is for internal usage only.",
-						Type:        schema.TypeBool,
-					},
-					"uuid": {
-						ValidateDiagFunc: validateRegex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
-						Optional:         true,
-						Description:      "A uuid member indicates that at least one of its component behaviors or criteria is advanced and read-only. You need to preserve this uuid as well when modifying the rule tree. This option is for internal usage only.",
-						Type:             schema.TypeString,
-					},
-					"template_uuid": {
-						Optional:    true,
-						Description: "This option is for internal usage only.",
-						Type:        schema.TypeString,
-					},
-					"enabled": {
-						Optional:    true,
-						Description: "",
-						Type:        schema.TypeBool,
-					},
-					"origin_protocol": {
-						ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"HTTP", "HTTPS"}, false)),
-						Optional:         true,
-						Description:      "",
-						Type:             schema.TypeString,
 					},
 				},
 			},

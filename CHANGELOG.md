@@ -79,7 +79,27 @@
 
 
 
+
+
+
+
+
+
+* PAPI
+  * Removed the `zero_trust` behavior from the `v2026-06-09` and `v2026-07-21` rule formats.
+
+
+
+
+
+
+
+
 #### BUG FIXES:
+
+
+* PAPI
+  * Fixed validation rules for some fields to be in sync with Property Manager. Validation now uses valid variable-length values ([I#778](https://github.com/akamai/terraform-provider-akamai/issues/778)).
 
 
 
