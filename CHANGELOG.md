@@ -31,6 +31,7 @@
 
 * Appsec
   * Unified configuration version cache in `akamai_appsec_activations` to prevent stale version errors after activation or deactivation.
+  * Improved performance by sharing a single cached `GetConfiguration` response between `getActiveConfigVersions` and `getLatestConfigVersion`, eliminating redundant API calls when both are invoked within the same Terraform operation.
 
 
 

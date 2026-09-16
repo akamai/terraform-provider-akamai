@@ -59,3 +59,37 @@ func TestCache(t *testing.T) {
 	err = Get(bucket, key, nil)
 	assert.ErrorIs(t, err, ErrDisabled)
 }
+
+func TestCacheDel(t *testing.T) {
+	bucket := BucketName("testBucket")
+	key := "delKey"
+	object := TestObject{"5678"}
+
+	t.Run("disabled", func(t *testing.T) {
+		Enable(false)
+		err := Del(bucket, key)
+		assert.ErrorIs(t, err, ErrDisabled)
+	})
+
+	t.Run("missing key", func(t *testing.T) {
+		Enable(true)
+		defer Enable(false)
+		err := Del(bucket, "nonexistent")
+		assert.ErrorIs(t, err, ErrEntryNotFound)
+	})
+
+	t.Run("existing key is removed", func(t *testing.T) {
+		Enable(true)
+		defer Enable(false)
+
+		require.NoError(t, Set(bucket, key, object))
+
+		var out TestObject
+		require.NoError(t, Get(bucket, key, &out))
+
+		require.NoError(t, Del(bucket, key))
+
+		err := Get(bucket, key, &out)
+		assert.ErrorIs(t, err, ErrEntryNotFound)
+	})
+}

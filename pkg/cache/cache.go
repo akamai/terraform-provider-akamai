@@ -82,8 +82,33 @@ func Set(bucket Bucket, key string, val any) error {
 	return defaultCache.cache.Set(key, data)
 }
 
-// Delete marks a cache entry as deleted. Subsequent Get calls for the same key
-// return ErrEntryNotFound until a new Set overwrites the entry.
+// Del removes the value stored under the key from cache.
+// Unlike Delete, Del performs a hard remove and returns ErrEntryNotFound if the key does not exist.
+// For cache invalidation paths where the key may or may not be set, prefer Delete.
+func Del(bucket Bucket, key string) error {
+	log := log.Get("cache", "CacheDel")
+
+	if !defaultCache.enabled.Load() {
+		log.Debug("cache disabled")
+		return ErrDisabled
+	}
+
+	key = fmt.Sprintf("%s:%s", key, bucket.Name())
+	log.Debugf("cache delete for key %s", key)
+
+	if err := defaultCache.cache.Delete(key); err != nil {
+		if errors.Is(err, bigcache.ErrEntryNotFound) {
+			return ErrEntryNotFound
+		}
+		return err
+	}
+	return nil
+}
+
+// Delete marks the value stored under key as deleted. Subsequent Get calls for
+// the same key return ErrEntryNotFound. A later Set call restores the key normally.
+// Unlike Del, Delete never returns ErrEntryNotFound — it is safe to call on a key
+// that was never set.
 func Delete(bucket Bucket, key string) error {
 	log := log.Get("cache", "CacheDelete")
 
@@ -93,7 +118,8 @@ func Delete(bucket Bucket, key string) error {
 	}
 
 	key = fmt.Sprintf("%s:%s", key, bucket.Name())
-	log.Debugf("cache delete for key %s", key)
+	log.Debugf("cache soft-delete for key %s", key)
+
 	return defaultCache.cache.Set(key, deletedSentinel)
 }
 

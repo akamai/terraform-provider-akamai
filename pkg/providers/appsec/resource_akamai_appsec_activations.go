@@ -843,6 +843,9 @@ func handleSameVersion(ctx context.Context, client appsec.APPSEC, currentVersion
 		return nil
 	}
 
+	// Version is pending — polling will complete activation; evict cache on all paths from here.
+	defer invalidateConfigCache(params.ConfigID)
+
 	// Same version is already being activated - wait for completion
 	params.Logger.Infof("version %d is already being activated on %s for config %d (status: %s), waiting for completion", params.Version, params.Network, params.ConfigID, status)
 
@@ -867,7 +870,6 @@ func handleSameVersion(ctx context.Context, client appsec.APPSEC, currentVersion
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
-	invalidateConfigCache(params.ConfigID)
 	return nil
 }
 
@@ -887,6 +889,7 @@ func handleDifferentVersion(currentVersion *appsec.Activation, params activation
 
 // performActivation creates and polls a new activation with host move support
 func performActivation(ctx context.Context, client appsec.APPSEC, params activationParams, config activationResourceConfig) diag.Diagnostics {
+	defer invalidateConfigCache(params.ConfigID)
 	// Handle host move validation and activation
 	activationResp, hostMoveValidation, diags := createActivationWithValidation(ctx, client,
 		params.ConfigID, params.Version, params.Network, params.Note, params.NotificationEmails, config)
@@ -935,9 +938,6 @@ func performActivation(ctx context.Context, client appsec.APPSEC, params activat
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
-	// Invalidate the configuration cache so subsequent reads fetch fresh version info.
-	invalidateConfigCache(params.ConfigID)
-
 	// Collect warnings for host move operations
 	var warnings diag.Diagnostics
 	if hostMoveValidation != nil && len(hostMoveValidation.HostsToMove) > 0 {
@@ -975,6 +975,7 @@ func deactivateVersion(ctx context.Context, client appsec.APPSEC, params activat
 
 // waitForDeactivation waits for an existing pending deactivation to complete
 func waitForDeactivation(ctx context.Context, client appsec.APPSEC, currentVersion *appsec.Activation, params activationParams, config activationResourceConfig) diag.Diagnostics {
+	defer invalidateConfigCache(params.ConfigID)
 	params.Logger.Infof("deactivation already in progress for version %d on %s (status: %s), waiting for completion",
 		currentVersion.Version, params.Network, currentVersion.Status)
 	params.ResourceData.SetId(strconv.Itoa(currentVersion.ActivationID))
@@ -1006,13 +1007,12 @@ func waitForDeactivation(ctx context.Context, client appsec.APPSEC, currentVersi
 	if err := params.ResourceData.Set("status", activation.Status); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
-
-	invalidateConfigCache(params.ConfigID)
 	return nil
 }
 
 // performDeactivation creates and polls a new deactivation request
 func performDeactivation(ctx context.Context, client appsec.APPSEC, activationID int, params activationParams, config activationResourceConfig) diag.Diagnostics {
+	defer invalidateConfigCache(params.ConfigID)
 	removeActivationRequest := appsec.RemoveActivationsRequest{
 		ActivationID:       activationID,
 		Action:             string(appsec.ActivationTypeDeactivate),
@@ -1062,7 +1062,5 @@ func performDeactivation(ctx context.Context, client appsec.APPSEC, activationID
 	if err := params.ResourceData.Set("status", activation.Status); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
-
-	invalidateConfigCache(params.ConfigID)
 	return nil
 }
