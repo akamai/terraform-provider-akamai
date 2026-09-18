@@ -2285,7 +2285,7 @@ func validateRecord(d *schema.ResourceData) error {
 	}
 
 	switch recordType {
-	case RRTypeA, RRTypeAkamaiCdn, RRTypeCname, RRTypeLoc, RRTypeNs, RRTypePtr, RRTypeSpf, RRTypeTxt:
+	case RRTypeA, RRTypeCname, RRTypeLoc, RRTypeNs, RRTypePtr, RRTypeSpf, RRTypeTxt:
 		if err := checkBasicRecordTypes(d); err != nil {
 			return err
 		}
@@ -2293,7 +2293,9 @@ func validateRecord(d *schema.ResourceData) error {
 	case RRTypeAaaa:
 		return checkAAAARecord(d)
 	case RRTypeAfsdb:
-		return checkAsdfRecord(d)
+		return checkAfsdbRecord(d)
+	case RRTypeAkamaiCdn:
+		return checkAkamaiCdnRecord(d)
 	case RRTypeDnskey:
 		return checkDnskeyRecord(d)
 	case RRTypeDs:
@@ -2427,16 +2429,33 @@ func checkAAAARecord(d *schema.ResourceData) error {
 	return nil
 }
 
-func checkAsdfRecord(d *schema.ResourceData) error {
+func checkAfsdbRecord(d *schema.ResourceData) error {
 	subtype, err := tf.GetIntValue("subtype", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return err
 	}
 	if subtype == 0 {
-		return fmt.Errorf("configuration argument subtype must be set for ASDF")
+		return fmt.Errorf("configuration argument subtype must be set for AFSDB")
 	}
 
 	return checkTargets(d)
+}
+
+func checkAkamaiCdnRecord(d *schema.ResourceData) error {
+	if err := checkBasicRecordTypes(d); err != nil {
+		return err
+	}
+	if err := checkTargets(d); err != nil {
+		return err
+	}
+	target := d.Get("target").([]interface{})
+	for _, recContent := range target {
+		targetStr := recContent.(string)
+		if strings.HasSuffix(targetStr, ".") {
+			return fmt.Errorf("target for AKAMAICDN record must not contain a trailing dot")
+		}
+	}
+	return nil
 }
 
 func checkDnskeyRecord(d *schema.ResourceData) error {

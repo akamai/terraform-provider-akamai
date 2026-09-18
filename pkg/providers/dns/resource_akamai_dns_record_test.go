@@ -1582,6 +1582,106 @@ func TestResDnsRecord(t *testing.T) {
 		client.DNS.AssertExpectations(t)
 	})
 
+	t.Run("AKAMAICDN record with valid target", func(t *testing.T) {
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+
+		client.DNS.On("GetRecord",
+			testutils.MockContext,
+			dns.GetRecordRequest{
+				Zone:       "exampleterraform.io",
+				Name:       "exampleterraform.io",
+				RecordType: "AKAMAICDN",
+			},
+		).Return(nil, notFound).Once()
+
+		client.DNS.On("CreateRecord",
+			testutils.MockContext,
+			dns.CreateRecordRequest{
+				Record: &dns.RecordBody{
+					Name:       "exampleterraform.io",
+					RecordType: "AKAMAICDN",
+					TTL:        ptr.To(300),
+					Active:     false,
+					Target:     []string{"xyz-test.edgesuite.net"},
+				},
+				Zone:    "exampleterraform.io",
+				RecLock: []bool{false},
+			},
+		).Return(nil).Once()
+
+		client.DNS.On("GetRecord",
+			testutils.MockContext,
+			dns.GetRecordRequest{
+				Zone:       "exampleterraform.io",
+				Name:       "exampleterraform.io",
+				RecordType: "AKAMAICDN",
+			},
+		).Return(&dns.GetRecordResponse{
+			Name:       "exampleterraform.io",
+			RecordType: "AKAMAICDN",
+			TTL:        300,
+			Active:     false,
+			Target:     []string{"xyz-test.edgesuite.net"},
+		}, nil)
+
+		retCreate := dnsClient.ParseRData(context.Background(), "AKAMAICDN", []string{"xyz-test.edgesuite.net"})
+
+		client.DNS.On("ParseRData",
+			testutils.MockContext,
+			"AKAMAICDN",
+			[]string{"xyz-test.edgesuite.net"},
+		).Return(retCreate)
+
+		client.DNS.On("ProcessRdata",
+			testutils.MockContext,
+			[]string{"xyz-test.edgesuite.net"},
+			"AKAMAICDN",
+		).Return([]string{"AKAMAICDN"}, nil)
+
+		client.DNS.On("DeleteRecord",
+			testutils.MockContext,
+			dns.DeleteRecordRequest{
+				Zone:       "exampleterraform.io",
+				Name:       "exampleterraform.io",
+				RecordType: "AKAMAICDN",
+				RecLock:    []bool{false},
+			},
+		).Return(nil).Once()
+
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDnsRecord/create_akamaicdn.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_dns_record.akamaicdn_record", "recordtype", "AKAMAICDN"),
+						resource.TestCheckResourceAttr("akamai_dns_record.akamaicdn_record", "target.0", "xyz-test.edgesuite.net"),
+					),
+				},
+			},
+		})
+
+		client.DNS.AssertExpectations(t)
+	})
+
+	t.Run("expect error - AKAMAICDN target with trailing dot", func(t *testing.T) {
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResDnsRecord/validation/akamaicdn_target_trailing_dot.tf"),
+					ExpectError: regexp.MustCompile("target for AKAMAICDN record must not contain a trailing dot"),
+				},
+			},
+		})
+
+		client.DNS.AssertExpectations(t)
+	})
+
 	t.Run("expect error - empty record type", func(t *testing.T) {
 		t.Parallel()
 		client := edgegrid.NewTestClient()

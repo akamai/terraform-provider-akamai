@@ -182,6 +182,18 @@
 
 
 
+* DNS
+  * Added validation to reject a trailing dot in `target` for `AKAMAICDN` records in the `akamai_dns_record` resource, preventing an ambiguous API error ([I#664](https://github.com/akamai/terraform-provider-akamai/issues/664)).
+
+
+
+
+
+
+
+
+
+
 
 
 
