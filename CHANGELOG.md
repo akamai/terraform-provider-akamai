@@ -137,6 +137,8 @@
 
 
 
+* Appsec
+  * Fixed an issue in the `akamai_appsec_rapid_rules` resource where `terraform plan` reported a spurious in-place update because the `id` attribute was marked as known after apply.
 
 
 
