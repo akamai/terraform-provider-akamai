@@ -330,10 +330,11 @@ func generateCertIssuesDiags(certIssuesGroups map[string][]certificate) diag.Dia
 		var summary strings.Builder
 		for _, info := range certIssueGroup {
 			if info.description != nil && len(*info.description) > 0 {
-				summary.WriteString(fmt.Sprintf("%s\n%s\n\n", *info.description, info.certificatePEM))
-			} else {
-				summary.WriteString(fmt.Sprintf("%s\n\n", info.certificatePEM))
+				summary.WriteString(*info.description)
+				summary.WriteString("\n")
 			}
+			summary.WriteString(info.certificatePEM)
+			summary.WriteString("\n\n")
 		}
 		diags.AddError(fmt.Sprintf("Certificates validation failed - %s", title), summary.String())
 	}

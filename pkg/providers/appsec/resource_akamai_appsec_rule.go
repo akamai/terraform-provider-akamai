@@ -120,7 +120,7 @@ func resourceRuleCreate(ctx context.Context, d *schema.ResourceData, m interface
 		logger.Errorf("calling 'UpdateRule': %s", err.Error())
 		return diag.FromErr(err)
 	}
-	logger.Debugf("calling 'UpdateRule Response': %s", resp)
+	logger.Debugf("Calling UpdateRule response: %v", resp)
 	d.SetId(fmt.Sprintf("%d:%s:%d", createRule.ConfigID, createRule.PolicyID, createRule.RuleID))
 
 	return resourceRuleRead(ctx, d, m)

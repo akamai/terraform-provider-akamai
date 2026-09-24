@@ -318,7 +318,7 @@ func resourceIAMUserCreate(ctx context.Context, d *schema.ResourceData, m interf
 
 	err = manageUserPassword(ctx, d, client, user.IdentityID)
 	if err != nil {
-		logger.Errorf("failed to set user password", "error", err)
+		logger.Error("failed to set user password", "error", err)
 		return diag.Errorf("failed to set user password: %s", err)
 	}
 

@@ -63,7 +63,7 @@ func resourceGTMv1Property(config gtmPropertyResourceConfig) *schema.Resource {
 		DeleteContext: r.resourceGTMv1PropertyDelete,
 		CustomizeDiff: customDiffGTMProperty,
 		Importer: &schema.ResourceImporter{
-			State: r.resourceGTMv1PropertyImport,
+			StateContext: r.resourceGTMv1PropertyImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"domain": {
@@ -564,7 +564,7 @@ func (r *propertyResource) resourceGTMv1PropertyCreate(ctx context.Context, d *s
 	}
 	if prop != nil {
 		propertyMapAlreadyExists := fmt.Sprintf(propertyAlreadyExistsError, domain, propertyName)
-		logger.Errorf(propertyMapAlreadyExists)
+		logger.Errorf("%s", propertyMapAlreadyExists)
 		return diag.Errorf("property already exists: %s", propertyMapAlreadyExists)
 	}
 
@@ -594,7 +594,7 @@ func (r *propertyResource) resourceGTMv1PropertyCreate(ctx context.Context, d *s
 	logger.Debugf("Property create status: %v", cStatus.Status)
 
 	if cStatus.Status.PropagationStatus == "DENIED" {
-		logger.Errorf(cStatus.Status.Message)
+		logger.Errorf("%s", cStatus.Status.Message)
 		return diag.FromErr(errors.New(cStatus.Status.Message))
 	}
 
@@ -785,7 +785,7 @@ func (r *propertyResource) resourceGTMv1PropertyUpdate(ctx context.Context, d *s
 	}
 	logger.Debugf("Property update status: %v", uStat)
 	if uStat.Status.PropagationStatus == "DENIED" {
-		logger.Debugf(uStat.Status.Message)
+		logger.Debugf("%s", uStat.Status.Message)
 		return diag.FromErr(errors.New(uStat.Status.Message))
 	}
 
@@ -812,11 +812,10 @@ func (r *propertyResource) resourceGTMv1PropertyUpdate(ctx context.Context, d *s
 }
 
 // Import GTM Property.
-func (r *propertyResource) resourceGTMv1PropertyImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+func (r *propertyResource) resourceGTMv1PropertyImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1PropertyImport")
 	// create a context with logging for api calls
-	ctx := context.Background()
 	ctx = session.ContextWithOptions(
 		ctx,
 		session.WithContextLog(logger),
@@ -883,7 +882,7 @@ func (r *propertyResource) resourceGTMv1PropertyDelete(ctx context.Context, d *s
 	}
 	logger.Debugf("Property delete status: %v", uStat)
 	if uStat.Status.PropagationStatus == "DENIED" {
-		logger.Errorf(uStat.Status.Message)
+		logger.Errorf("%s", uStat.Status.Message)
 		return diag.FromErr(errors.New(uStat.Status.Message))
 	}
 

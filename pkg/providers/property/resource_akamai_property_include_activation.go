@@ -157,7 +157,7 @@ func readTimeoutFromEnvOrDefault(name string, timeout time.Duration) *time.Durat
 	if value != "" {
 		n, err := strconv.Atoi(value)
 		if err != nil {
-			logger.Errorf("Provided timeout value %q is not a valid number: %s", n, err)
+			logger.Errorf("Provided timeout value %q is not a valid number; using timeout %s: %s", value, timeout, err)
 		} else {
 			timeout = time.Minute * time.Duration(n)
 		}

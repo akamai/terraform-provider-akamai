@@ -444,19 +444,19 @@ func hostNamesCustomDiff(_ context.Context, d *schema.ResourceDiff, m interface{
 	o, n := d.GetChange("hostnames")
 	oldVal, ok := o.(*schema.Set)
 	if !ok {
-		logger.Errorf("error parsing local state for old value %s", oldVal)
+		logger.Errorf("error parsing local state for old value %v", oldVal)
 		return fmt.Errorf("cannot parse hostnames state properly %v", o)
 	}
 
 	newVal, ok := n.(*schema.Set)
 	if !ok {
-		logger.Errorf("error parsing local state for new value %s", newVal)
+		logger.Errorf("error parsing local state for new value %v", newVal)
 		return fmt.Errorf("cannot parse hostnames state properly %v", n)
 	}
 	// PAPI doesn't allow hostnames to become empty if they already exist on server
 	// TODO Do we add support for hostnames patch operation to enable this?
 	if len(oldVal.List()) > 0 && len(newVal.List()) == 0 {
-		logger.Errorf("Hostnames exist on server and cannot be updated to empty for %d", d.Id())
+		logger.Errorf("Hostnames exist on server and cannot be updated to empty for %s", d.Id())
 		return fmt.Errorf("hostnames exist on server and cannot be updated to empty for property with id '%s'. Provide at least one hostname to update existing list of hostnames associated to this property", d.Id())
 	}
 	return nil

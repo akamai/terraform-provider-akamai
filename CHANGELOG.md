@@ -46,6 +46,11 @@
   * Added the `ccm_cert_id`, `ccm_cert_link`, and `ccm_cert_statuses` attributes to the `akamai_property_hostnames` data source to support hostnames bound to a single Cloud Certificate Manager (CCM) certificate lineage via `ccmCertId`.
   * Added the `ccm_cert_id`, `ccm_cert_link`, and `ccm_cert_statuses` attributes to the `akamai_property` resource's `hostnames` block, allowing a hostname to be bound to a single Cloud Certificate Manager (CCM) certificate lineage via `ccm_cert_id` as an alternative to `ccm_certificates`.
 
+* General
+  * Migrated to Go `1.26`.
+  * Adopted toolchain Go `1.26.8`.
+  * Updated various dependencies.
+
 
 * Appsec
   * Unified configuration version cache in `akamai_appsec_activations` to prevent stale version errors after activation or deactivation.

@@ -1,6 +1,8 @@
 module github.com/akamai/terraform-provider-akamai/v11
 
-go 1.25.7
+go 1.26.0
+
+toolchain go1.26.8
 
 require (
 	github.com/akamai/AkamaiOPEN-edgegrid-golang/v14 v14.0.0

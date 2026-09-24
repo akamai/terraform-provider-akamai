@@ -12,7 +12,7 @@ RELOAD_DOCKER_IMAGE="${3:-false}"
 
 # Recalculate DOCKER_IMAGE_SIZE if any changes to dockerfile.
 TIMEOUT="70m"
-DOCKER_IMAGE_SIZE="680712070"
+DOCKER_IMAGE_SIZE="674355284"
 
 SSH_PRV_KEY="$(cat ~/.ssh/id_rsa)"
 SSH_PUB_KEY="$(cat ~/.ssh/id_rsa.pub)"

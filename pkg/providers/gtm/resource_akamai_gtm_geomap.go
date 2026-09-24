@@ -29,7 +29,7 @@ func resourceGTMv1GeoMap(defaultInterval time.Duration) *schema.Resource {
 		UpdateContext: r.resourceGTMv1GeoMapUpdate,
 		DeleteContext: r.resourceGTMv1GeoMapDelete,
 		Importer: &schema.ResourceImporter{
-			State: r.resourceGTMv1GeoMapImport,
+			StateContext: r.resourceGTMv1GeoMapImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"domain": {
@@ -124,7 +124,7 @@ func (r *geoMapResource) resourceGTMv1GeoMapCreate(ctx context.Context, d *schem
 	}
 	if geo != nil {
 		geoMapAlreadyExists := fmt.Sprintf(geoMapAlreadyExistsError, domain, name)
-		logger.Errorf(geoMapAlreadyExists)
+		logger.Errorf("%s", geoMapAlreadyExists)
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
 			Summary:  "geoMap already exists error",
@@ -301,7 +301,7 @@ func (r *geoMapResource) resourceGTMv1GeoMapUpdate(ctx context.Context, d *schem
 	}
 	logger.Debugf("geoMap update status: %v", uStat)
 	if uStat.Status.PropagationStatus == "DENIED" {
-		logger.Errorf(uStat.Status.Message)
+		logger.Errorf("%s", uStat.Status.Message)
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
 			Summary:  uStat.Status.Message,
@@ -335,11 +335,10 @@ func (r *geoMapResource) resourceGTMv1GeoMapUpdate(ctx context.Context, d *schem
 	return r.resourceGTMv1GeoMapRead(ctx, d, m)
 }
 
-func (r *geoMapResource) resourceGTMv1GeoMapImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+func (r *geoMapResource) resourceGTMv1GeoMapImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1GeoMapImport")
 	// create a context with logging for api calls
-	ctx := context.Background()
 	ctx = session.ContextWithOptions(
 		ctx,
 		session.WithContextLog(logger),
@@ -422,7 +421,7 @@ func (r *geoMapResource) resourceGTMv1GeoMapDelete(ctx context.Context, d *schem
 	}
 	logger.Debugf("geoMap delete status: %v", uStat)
 	if uStat.Status.PropagationStatus == "DENIED" {
-		logger.Errorf(uStat.Status.Message)
+		logger.Errorf("%s", uStat.Status.Message)
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
 			Summary:  uStat.Status.Message,
