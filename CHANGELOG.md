@@ -1,238 +1,59 @@
 # RELEASE NOTES
 
-## X.X.X (X X, X)
-
-#### BREAKING CHANGES:
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+## 11.1.0 (Sep 30, 2026)
 
 #### FEATURES/ENHANCEMENTS:
-
-
-* Cloud Certificates (Beta)
-  * Replaced the entire V1 certificate API with the new Certificate Lineage (CCM V3) API. As a result, the `akamai_cloudcertificates_certificate` and `akamai_cloudcertificates_upload_signed_certificate` resources, as well as the `akamai_cloudcertificates_certificate`, `akamai_cloudcertificates_certificates`, and `akamai_cloudcertificates_hostname_bindings` data sources, have been removed.
-  * Deprecated the `ccm_certificates` attribute from the `akamai_property` resource's `hostnames` block in favor of the new `ccm_cert_id` attribute for binding a single Cloud Certificate Manager (CCM) V3 certificate lineage.
-  * Added the `akamai_cloudcertificates_activation` resource to promote a certificate lineage's head generation to the STAGING and/or PRODUCTION networks.
-  * Added the `akamai_cloudcertificates_activation_status` data source to retrieve the status of a certificate lineage activation request.
-  * Added the `akamai_cloudcertificates_activations` data source to retrieve the activation history for a certificate lineage with optional result limiting.
-  * Added the `akamai_cloudcertificates_archived_generations` data source to retrieve archived and abandoned certificate generations, ordered oldest first.
-  * Added the `akamai_cloudcertificates_activity` data source to retrieve certificate lineage activity history with optional result limiting.
-  * Added the `akamai_cloudcertificates_bindings` data source to retrieve the hostnames bound to a certificate lineage, with optional filtering by network and sorting.
-  * Added the `akamai_cloudcertificates_generation` data source to retrieve a single certificate generation of a certificate lineage.
-  * Added the `akamai_cloudcertificates_lineage` data source to retrieve the lineage of a certificate.
-  * Added the `akamai_cloudcertificates_lineage` resource to manage the lifecycle of a certificate lineage.
-  * Added the `akamai_cloudcertificates_upload` resource to upload signed certificates to a certificate lineage generation.
-  * Added the `akamai_cloudcertificates_lineages` data source to retrieve and filter certificate lineages.
-
-* PAPI
-  * Added the `ccm_cert_id`, `ccm_cert_link`, and `ccm_cert_statuses` attributes to the `akamai_property_hostnames` data source to support hostnames bound to a single Cloud Certificate Manager (CCM) certificate lineage via `ccmCertId`.
-  * Added the `ccm_cert_id`, `ccm_cert_link`, and `ccm_cert_statuses` attributes to the `akamai_property` resource's `hostnames` block, allowing a hostname to be bound to a single Cloud Certificate Manager (CCM) certificate lineage via `ccm_cert_id` as an alternative to `ccm_certificates`.
 
 * General
   * Migrated to Go `1.26`.
   * Adopted toolchain Go `1.26.8`.
   * Updated various dependencies.
 
-
 * Appsec
   * Unified configuration version cache in `akamai_appsec_activations` to prevent stale version errors after activation or deactivation.
-  * Improved performance by sharing a single cached `GetConfiguration` response between `getActiveConfigVersions` and `getLatestConfigVersion`, eliminating redundant API calls when both are invoked within the same Terraform operation.
+  * Improved performance by sharing a single cached `GetConfiguration` response between `getActiveConfigVersions` and `getLatestConfigVersion`, 
+    eliminating redundant API calls when both are invoked within the same Terraform operation.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+* Cloud Certificates (Beta)
+  * Replaced the legacy certificate API with the current certificate API. As a result, the `akamai_cloudcertificates_certificate` 
+    and `akamai_cloudcertificates_upload_signed_certificate` resources, as well as the `akamai_cloudcertificates_certificate`, `akamai_cloudcertificates_certificates`, 
+    and `akamai_cloudcertificates_hostname_bindings` data sources, have been removed.
+  * Deprecated the `ccm_certificates` attribute from the `akamai_property` resource's `hostnames` block in favor of the new `ccm_cert_id` attribute 
+    for binding a single Cloud Certificates certificate lineage.
+  * Added the `akamai_cloudcertificates_activation` resource to promote a certificate lineage's head generation to the STAGING and/or PRODUCTION networks.
+  * Added the `akamai_cloudcertificates_lineage` resource to manage the lifecycle of a certificate lineage.
+  * Added the `akamai_cloudcertificates_upload` resource to upload signed certificates to a certificate lineage generation.
+  * Added the `akamai_cloudcertificates_activation_status` data source to retrieve the status of a certificate lineage activation request.
+  * Added the `akamai_cloudcertificates_activations` data source to retrieve the activation history for a certificate lineage with optional result limiting.
+  * Added the `akamai_cloudcertificates_activity` data source to retrieve certificate lineage activity history with optional result limiting.
+  * Added the `akamai_cloudcertificates_archived_generations` data source to retrieve archived and abandoned certificate generations, ordered oldest first.
+  * Added the `akamai_cloudcertificates_bindings` data source to retrieve the hostnames bound to a certificate lineage, with optional filtering by network and sorting.
+  * Added the `akamai_cloudcertificates_generation` data source to retrieve a single certificate generation of a certificate lineage.
+  * Added the `akamai_cloudcertificates_lineage` data source to retrieve the lineage of a certificate.
+  * Added the `akamai_cloudcertificates_lineages` data source to retrieve and filter certificate lineages.
 
 * PAPI
+  * Added the `ccm_cert_id`, `ccm_cert_link`, and `ccm_cert_statuses` attributes to the `akamai_property_hostnames` data source 
+    to support hostnames bound to a single Cloud Certificates certificate lineage via `ccmCertId`.
+  * Added the `ccm_cert_id`, `ccm_cert_link`, and `ccm_cert_statuses` attributes to the `akamai_property` resource's `hostnames` block, 
+    allowing a hostname to be bound to a single Cloud Certificates certificate lineage via `ccm_cert_id` as an alternative to `ccm_certificates`.
   * Removed the `zero_trust` behavior from the `v2026-06-09` and `v2026-07-21` rule formats.
 
-
-
-
-
-
-
-
 #### BUG FIXES:
-
-
-* PAPI
-  * Fixed validation rules for some fields to be in sync with Property Manager. Validation now uses valid variable-length values ([I#778](https://github.com/akamai/terraform-provider-akamai/issues/778)).
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-* CPS
-  * Fixed the `akamai_cps_dv_validation` and `akamai_cps_upload_certificate` resources to wait until CPS enrollment changes reach an actionable state before handling domain validation, post-verification warnings, and change-management acknowledgements, preventing premature processing.
-
-
-
-
-
-
-
-
-
 
 * Appsec
   * Fixed an issue in the `akamai_appsec_rapid_rules` resource where `terraform plan` reported a spurious in-place update because the `id` attribute was marked as known after apply.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+* CPS
+  * Fixed the `akamai_cps_dv_validation` and `akamai_cps_upload_certificate` resources to wait until CPS enrollment changes reach an actionable state 
+    before handling domain validation, post-verification warnings, and change-management acknowledgements, preventing premature processing.
 
 * DNS
   * Fixed an issue in the `akamai_dns_record` resource where TXT targets longer than 255 characters were rejected with ambiguous error ([I#786](https://github.com/akamai/terraform-provider-akamai/issues/786)).
-
-
-
-
-
-
-
-
-
-
-* DNS
   * Added validation to reject a trailing dot in `target` for `AKAMAICDN` records in the `akamai_dns_record` resource, preventing an ambiguous API error ([I#664](https://github.com/akamai/terraform-provider-akamai/issues/664)).
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+* PAPI
+  * Fixed validation rules for some fields to be in sync with Property Manager. Validation now uses valid variable-length values ([I#778](https://github.com/akamai/terraform-provider-akamai/issues/778)).
 
 ## 11.0.0 (Sep 9, 2026)
 

@@ -22,7 +22,7 @@ require (
 	github.com/hashicorp/terraform-plugin-log v0.10.0
 	github.com/hashicorp/terraform-plugin-mux v0.23.1
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.40.0
-	github.com/hashicorp/terraform-plugin-testing v1.15.0
+	github.com/hashicorp/terraform-plugin-testing v1.16.0
 	github.com/iancoleman/strcase v0.3.0
 	github.com/jedib0t/go-pretty/v6 v6.8.1
 	github.com/jinzhu/copier v0.4.0
@@ -93,6 +93,8 @@ require (
 )
 
 replace (
+	github.com/go-git/go-billy/v5 v5.8.0 => github.com/go-git/go-billy/v5 v5.9.1 // Fix security vulnerability; can be removed once  github.com/hashicorp/terraform-plugin-testing bumps this dependency
+	github.com/go-git/go-git/v5 v5.18.0 => github.com/go-git/go-git/v5 v5.19.2 // Fix security vulnerability; can be removed once github.com/hashicorp/terraform-plugin-testing bumps this dependency
 	github.com/go-jose/go-jose/v4 v4.1.3 => github.com/go-jose/go-jose/v4 v4.1.4 // Fix security vulnerability; can be removed once github.com/hashicorp/terraform-plugin-testing bumps this dependency
 	github.com/stretchr/testify v1.4.0 => github.com/stretchr/testify v1.10.0 // Fix security vulnerability; can be removed once github.com/go-ozzo/ozzo-validation/v4 bumps this dependency
 	github.com/yuin/goldmark v1.4.13 => github.com/yuin/goldmark v1.8.2 // Fix security vulnerability; can be removed once golang.org/x/tools bumps this dependency
