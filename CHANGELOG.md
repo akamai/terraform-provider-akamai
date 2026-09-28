@@ -14,6 +14,9 @@
   * Improved performance by sharing a single cached `GetConfiguration` response between `getActiveConfigVersions` and `getLatestConfigVersion`, 
     eliminating redundant API calls when both are invoked within the same Terraform operation.
 
+* Cloudlets
+  * Added the `akaRuleId` field to the `match_rules` JSON of the `akamai_cloudlets_policy` resource (for shared policies) and the `akamai_cloudlets_shared_policy` data source.
+
 * Cloud Certificates (Beta)
   * Replaced the legacy certificate API with the current certificate API. As a result, the `akamai_cloudcertificates_certificate` 
     and `akamai_cloudcertificates_upload_signed_certificate` resources, as well as the `akamai_cloudcertificates_certificate`, `akamai_cloudcertificates_certificates`, 
