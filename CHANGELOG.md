@@ -8,6 +8,7 @@
   * Migrated to Go `1.26`.
   * Adopted toolchain Go `1.26.8`.
   * Updated various dependencies.
+  * Dropped support for `windows/arm` in favour of `windows/arm64` as a result of dropping `windows/arm` in Golang 1.26.
 
 * Appsec
   * Unified configuration version cache in `akamai_appsec_activations` to prevent stale version errors after activation or deactivation.
