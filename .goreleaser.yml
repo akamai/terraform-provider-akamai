@@ -33,6 +33,8 @@ builds:
       goarch: '386'
     - goos: windows
       goarch: 'arm64'
+    - goos: windows
+      goarch: arm      
   binary: '{{ .ProjectName }}_v{{ .Version }}'
 archives:
 - format: zip
