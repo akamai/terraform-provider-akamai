@@ -37,7 +37,7 @@ func TestSharedPolicyDataSource(t *testing.T) {
 		expectError *regexp.Regexp
 		init        func(*v3.Mock, testDataForSharedPolicy)
 	}{
-		"success with version attribute - no activations": {
+		"success with version attribute - all rule types, no activations": {
 			config: "with_version.tf",
 			data: testDataForSharedPolicy{
 				policyID:           1,
@@ -48,12 +48,16 @@ func TestSharedPolicyDataSource(t *testing.T) {
 				cloudletType:       v3.CloudletTypeAP,
 				description:        "TestDescription",
 				matchRules: v3.MatchRules{
+					v3.MatchRuleAP{Type: v3.MatchRuleTypeAP, AkaRuleID: "rule-ap"},
+					v3.MatchRuleAS{Type: v3.MatchRuleTypeAS, AkaRuleID: "rule-as"},
+					v3.MatchRulePR{Type: v3.MatchRuleTypePR, AkaRuleID: "rule-cd"},
 					v3.MatchRuleER{
-						Name:  "TestName",
-						Type:  v3.MatchRuleTypeER,
-						Start: 7,
-						End:   8,
-						ID:    789,
+						Name:      "TestName",
+						Type:      v3.MatchRuleTypeER,
+						AkaRuleID: "rule-er",
+						Start:     7,
+						End:       8,
+						ID:        789,
 						Matches: []v3.MatchCriteriaER{
 							{
 								MatchType:        "TestType",
@@ -74,6 +78,8 @@ func TestSharedPolicyDataSource(t *testing.T) {
 						UseIncomingSchemeAndHost: true,
 						Disabled:                 true,
 					},
+					v3.MatchRuleFR{Type: v3.MatchRuleTypeFR, AkaRuleID: "rule-fr"},
+					v3.MatchRuleRC{Type: v3.MatchRuleTypeRC, AkaRuleID: "rule-ig"},
 				},
 				warnings: []v3.MatchRulesWarning{
 					{

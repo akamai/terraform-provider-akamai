@@ -3737,6 +3737,8 @@ func TestResourceEdgeHostname(t *testing.T) {
 			config := defaultSubproviderConfig()
 			if tc.edgeHostnameReadTimeout != 0 {
 				config.edgeHostName.edgeHostnameReadTimeout = tc.edgeHostnameReadTimeout
+			} else {
+				config.edgeHostName.edgeHostnameReadTimeout = 100 * time.Millisecond
 			}
 			if tc.getEdgeHostnamePollInterval != 0 {
 				config.edgeHostName.getEdgeHostnamePollInterval = tc.getEdgeHostnamePollInterval

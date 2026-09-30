@@ -3,6 +3,7 @@ package property
 import (
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -2280,7 +2281,9 @@ func generateLongImportID(validationScope string) string {
 		if i > 0 {
 			importID.WriteString(",")
 		}
-		importID.WriteString(fmt.Sprintf("test%d.example.com", i))
+		importID.WriteString("test")
+		importID.WriteString(strconv.Itoa(i))
+		importID.WriteString(".example.com")
 		if validationScope != "" {
 			importID.WriteString(":" + validationScope)
 		}

@@ -14,27 +14,25 @@ type (
 		config subproviderConfig
 	}
 
+	// subproviderConfig holds configuration for all CloudCertificates resources and data sources.
+	// Keeping this struct allows proper parallelisation of client construction per resource/data source.
 	subproviderConfig struct {
-		certificate       certificateResourceConfig
-		uploadCertificate uploadSignedCertificateResourceConfig
+		activation activationResourceConfig
+		upload     uploadResourceConfig
 	}
 )
 
-var (
-	_ subprovider.Subprovider = &Subprovider{}
-)
+var _ subprovider.Subprovider = &Subprovider{}
 
 func defaultSubproviderConfig() subproviderConfig {
 	return subproviderConfig{
-		certificate:       defaultCertificateResourceConfig(),
-		uploadCertificate: defaultUploadSignedCertificateResourceConfig(),
+		activation: defaultActivationResourceConfig(),
+		upload:     defaultUploadResourceConfig(),
 	}
 }
 
 func newSubproviderWithConfig(config subproviderConfig) *Subprovider {
-	return &Subprovider{
-		config: config,
-	}
+	return &Subprovider{config: config}
 }
 
 // NewSubprovider returns a new CloudCertificates subprovider.
@@ -55,16 +53,22 @@ func (p *Subprovider) SDKDataSources() map[string]*schema.Resource {
 // FrameworkResources returns the CloudCertificates resources implemented using terraform-plugin-framework.
 func (p *Subprovider) FrameworkResources() []func() resource.Resource {
 	return []func() resource.Resource{
-		NewCertificateResource(p.config.certificate),
-		NewUploadSignedCertificateResource(p.config.uploadCertificate),
+		NewActivationResource(p.config.activation),
+		NewLineageResource,
+		NewUploadResource(p.config.upload),
 	}
 }
 
 // FrameworkDataSources returns the CloudCertificates data sources implemented using terraform-plugin-framework.
 func (p *Subprovider) FrameworkDataSources() []func() datasource.DataSource {
 	return []func() datasource.DataSource{
-		NewCertificateDataSource,
-		NewCertificatesDataSource,
-		NewCloudCertificatesHostnameBindingsDataSource,
+		NewActivationStatusDataSource,
+		NewActivationsDataSource,
+		NewArchivedGenerationsDataSource,
+		NewBindingsDataSource,
+		NewCertificatesActivityDataSource,
+		NewGenerationDataSource,
+		NewLineageDataSource,
+		NewLineagesDataSource,
 	}
 }

@@ -109,6 +109,9 @@ func (r *rapidRulesResource) Schema(_ context.Context, _ resource.SchemaRequest,
 			"id": schema.StringAttribute{
 				Description: "Identifier of the resource",
 				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"enabled": schema.BoolAttribute{
 				Description: "Hidden attribute containing information about rapid rules status enabled/disabled",

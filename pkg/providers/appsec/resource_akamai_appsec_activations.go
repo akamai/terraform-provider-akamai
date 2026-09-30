@@ -775,6 +775,8 @@ func isPendingDeactivation(status string) bool {
 
 // handleActivationFailure handles activation failure by refreshing state and returning appropriate diagnostics
 func handleActivationFailure(ctx context.Context, params activationParams, finalStatus appsec.StatusValue) diag.Diagnostics {
+	// Invalidate cache even on failure: the platform may have partially activated, changing which version is active.
+	invalidateConfigCache(params.ConfigID)
 	readDiags := resourceActivationsRead(ctx, params.ResourceData, params.Meta)
 
 	if readDiags.HasError() {
@@ -841,6 +843,9 @@ func handleSameVersion(ctx context.Context, client appsec.APPSEC, currentVersion
 		return nil
 	}
 
+	// Version is pending — polling will complete activation; evict cache on all paths from here.
+	defer invalidateConfigCache(params.ConfigID)
+
 	// Same version is already being activated - wait for completion
 	params.Logger.Infof("version %d is already being activated on %s for config %d (status: %s), waiting for completion", params.Version, params.Network, params.ConfigID, status)
 
@@ -884,6 +889,7 @@ func handleDifferentVersion(currentVersion *appsec.Activation, params activation
 
 // performActivation creates and polls a new activation with host move support
 func performActivation(ctx context.Context, client appsec.APPSEC, params activationParams, config activationResourceConfig) diag.Diagnostics {
+	defer invalidateConfigCache(params.ConfigID)
 	// Handle host move validation and activation
 	activationResp, hostMoveValidation, diags := createActivationWithValidation(ctx, client,
 		params.ConfigID, params.Version, params.Network, params.Note, params.NotificationEmails, config)
@@ -903,7 +909,9 @@ func performActivation(ctx context.Context, client appsec.APPSEC, params activat
 
 	activation, err := lookupActivation(ctx, client, getActivationsRequest)
 	if err != nil {
-		// Refresh state to current active version before returning error
+		// Refresh state to current active version before returning error.
+		// Invalidate first: the platform may have activated despite the lookup error.
+		invalidateConfigCache(params.ConfigID)
 		params.Logger.Warnf("failed to lookup activation %d, refreshing state to current active version: %s", activationResp.ActivationID, err.Error())
 		readDiags := resourceActivationsRead(ctx, params.ResourceData, params.Meta)
 		if readDiags.HasError() {
@@ -967,6 +975,7 @@ func deactivateVersion(ctx context.Context, client appsec.APPSEC, params activat
 
 // waitForDeactivation waits for an existing pending deactivation to complete
 func waitForDeactivation(ctx context.Context, client appsec.APPSEC, currentVersion *appsec.Activation, params activationParams, config activationResourceConfig) diag.Diagnostics {
+	defer invalidateConfigCache(params.ConfigID)
 	params.Logger.Infof("deactivation already in progress for version %d on %s (status: %s), waiting for completion",
 		currentVersion.Version, params.Network, currentVersion.Status)
 	params.ResourceData.SetId(strconv.Itoa(currentVersion.ActivationID))
@@ -1003,6 +1012,7 @@ func waitForDeactivation(ctx context.Context, client appsec.APPSEC, currentVersi
 
 // performDeactivation creates and polls a new deactivation request
 func performDeactivation(ctx context.Context, client appsec.APPSEC, activationID int, params activationParams, config activationResourceConfig) diag.Diagnostics {
+	defer invalidateConfigCache(params.ConfigID)
 	removeActivationRequest := appsec.RemoveActivationsRequest{
 		ActivationID:       activationID,
 		Action:             string(appsec.ActivationTypeDeactivate),

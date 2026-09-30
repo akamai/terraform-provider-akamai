@@ -38,7 +38,7 @@ func TestGetLatestConfigVersion_CacheHit(t *testing.T) {
 		ID:            configID,
 		LatestVersion: expectedVersion,
 	}
-	cacheKey := "getLatestConfigVersion:12345"
+	cacheKey := latestVersionCacheKey(configID)
 	err := cache.Set(cache.BucketName(SubproviderName), cacheKey, configuration)
 	require.NoError(t, err)
 
@@ -89,7 +89,7 @@ func TestGetLatestConfigVersion_CacheMiss_APISuccess(t *testing.T) {
 
 	// Verify value was cached
 	cachedConfig := &appsec.GetConfigurationResponse{}
-	cacheKey := "getLatestConfigVersion:12346"
+	cacheKey := latestVersionCacheKey(configID)
 	err = cache.Get(cache.BucketName(SubproviderName), cacheKey, cachedConfig)
 	assert.NoError(t, err)
 	assert.Equal(t, configID, cachedConfig.ID)
@@ -276,7 +276,213 @@ func TestGetLatestConfigVersion_InvalidConfigID(t *testing.T) {
 	client.APPSEC.AssertExpectations(t)
 }
 
+func TestGetActiveConfigVersions_SharedCacheSingleAPICall(t *testing.T) {
+	clearCache()
+	defer clearCache()
+
+	client := edgegrid.NewTestClient()
+	configID := 40002
+	response := appsec.GetConfigurationResponse{
+		ID: configID, LatestVersion: 5, StagingVersion: 3, ProductionVersion: 2,
+	}
+
+	// Expect ONE API call — getActiveConfigVersions reuses the cache (the fix)
+	client.APPSEC.On("GetConfiguration", mock.Anything,
+		appsec.GetConfigurationRequest{ConfigID: configID}).Return(&response, nil).Once()
+
+	ctx := context.Background()
+	_, _ = getLatestConfigVersion(ctx, configID, client.APPSEC)
+	staging, production, err := getActiveConfigVersions(ctx, configID, client.APPSEC)
+
+	assert.NoError(t, err)
+	assert.Equal(t, 3, staging)
+	assert.Equal(t, 2, production)
+	client.APPSEC.AssertExpectations(t)
+}
+
+func TestGetActiveConfigVersions_CacheMiss_APISuccess(t *testing.T) {
+	clearCache()
+	defer clearCache()
+
+	client := edgegrid.NewTestClient()
+	configID := 40003
+	response := appsec.GetConfigurationResponse{
+		ID: configID, LatestVersion: 7, StagingVersion: 5, ProductionVersion: 4,
+	}
+	client.APPSEC.On("GetConfiguration", mock.Anything,
+		appsec.GetConfigurationRequest{ConfigID: configID}).Return(&response, nil).Once()
+
+	ctx := context.Background()
+	staging, production, err := getActiveConfigVersions(ctx, configID, client.APPSEC)
+
+	assert.NoError(t, err)
+	assert.Equal(t, 5, staging)
+	assert.Equal(t, 4, production)
+	client.APPSEC.AssertExpectations(t)
+}
+
+func TestGetActiveConfigVersions_CacheHit_NoAPICall(t *testing.T) {
+	clearCache()
+	defer clearCache()
+
+	configID := 40004
+	cacheKey := latestVersionCacheKey(configID)
+	configuration := &appsec.GetConfigurationResponse{
+		ID: configID, LatestVersion: 7, StagingVersion: 5, ProductionVersion: 4,
+	}
+	require.NoError(t, cache.Set(cache.BucketName(SubproviderName), cacheKey, configuration))
+
+	client := edgegrid.NewTestClient()
+
+	ctx := context.Background()
+	staging, production, err := getActiveConfigVersions(ctx, configID, client.APPSEC)
+
+	assert.NoError(t, err)
+	assert.Equal(t, 5, staging)
+	assert.Equal(t, 4, production)
+	client.APPSEC.AssertExpectations(t)
+}
+
+func TestGetActiveConfigVersions_APIError(t *testing.T) {
+	clearCache()
+	defer clearCache()
+
+	client := edgegrid.NewTestClient()
+	configID := 40005
+	client.APPSEC.On("GetConfiguration", mock.Anything,
+		appsec.GetConfigurationRequest{ConfigID: configID}).
+		Return(nil, errors.New("API error")).Once()
+
+	ctx := context.Background()
+	staging, production, err := getActiveConfigVersions(ctx, configID, client.APPSEC)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "API error")
+	assert.Equal(t, 0, staging)
+	assert.Equal(t, 0, production)
+	client.APPSEC.AssertExpectations(t)
+}
+
+func TestInvalidateConfigCache_ClearsKeysAndTriggersFetch(t *testing.T) {
+	clearCache()
+	defer clearCache()
+
+	configID := 40007
+	ctx := context.Background()
+
+	// Pre-populate both cache keys
+	latestKey := latestVersionCacheKey(configID)
+	modifiableKey := modifiableVersionCacheKey(configID)
+	configuration := &appsec.GetConfigurationResponse{
+		ID: configID, LatestVersion: 5, StagingVersion: 3, ProductionVersion: 2,
+	}
+	require.NoError(t, cache.Set(cache.BucketName(SubproviderName), latestKey, configuration))
+	require.NoError(t, cache.Set(cache.BucketName(SubproviderName), modifiableKey, configuration))
+
+	// Invalidate
+	invalidateConfigCache(configID)
+
+	// Both keys must be gone
+	require.ErrorIs(t, cache.Get(cache.BucketName(SubproviderName), latestKey, &appsec.GetConfigurationResponse{}), cache.ErrEntryNotFound)
+	require.ErrorIs(t, cache.Get(cache.BucketName(SubproviderName), modifiableKey, &appsec.GetConfigurationResponse{}), cache.ErrEntryNotFound)
+
+	// A subsequent getActiveConfigVersions call must re-hit the API
+	client := edgegrid.NewTestClient()
+	freshResponse := appsec.GetConfigurationResponse{
+		ID: configID, LatestVersion: 6, StagingVersion: 4, ProductionVersion: 3,
+	}
+	client.APPSEC.On("GetConfiguration", mock.Anything,
+		appsec.GetConfigurationRequest{ConfigID: configID}).Return(&freshResponse, nil).Once()
+
+	staging, production, err := getActiveConfigVersions(ctx, configID, client.APPSEC)
+	assert.NoError(t, err)
+	assert.Equal(t, 4, staging)
+	assert.Equal(t, 3, production)
+	client.APPSEC.AssertExpectations(t)
+}
+
+func TestInvalidateConfigCache_EmptyCacheNoError(_ *testing.T) {
+	clearCache()
+	defer clearCache()
+
+	// Invalidating when nothing is cached must not panic or error
+	invalidateConfigCache(40008)
+}
+
+func TestGetActiveConfigVersions_CacheDisabled_FallsBackToAPI(t *testing.T) {
+	clearCache()
+	defer clearCache()
+
+	cache.Enable(false)
+
+	client := edgegrid.NewTestClient()
+	configID := 40006
+	response := appsec.GetConfigurationResponse{
+		ID: configID, LatestVersion: 7, StagingVersion: 5, ProductionVersion: 4,
+	}
+	client.APPSEC.On("GetConfiguration", mock.Anything,
+		appsec.GetConfigurationRequest{ConfigID: configID}).Return(&response, nil).Once()
+
+	ctx := context.Background()
+	staging, production, err := getActiveConfigVersions(ctx, configID, client.APPSEC)
+
+	assert.NoError(t, err)
+	assert.Equal(t, 5, staging)
+	assert.Equal(t, 4, production)
+	client.APPSEC.AssertExpectations(t)
+}
+
 // Tests for getModifiableConfigVersion function
+
+func TestGetModifiableConfigVersion_CloneUpdatesSharedCache(t *testing.T) {
+	clearCache()
+	defer clearCache()
+
+	configID := 29999
+	latestVersion := 5
+	stagingVersion := 5 // active in staging — forces clone
+	productionVersion := 2
+	newClonedVersion := 6
+	resource := "test_resource"
+
+	client := edgegrid.NewTestClient()
+
+	getConfigResponse := appsec.GetConfigurationResponse{
+		ID:                configID,
+		LatestVersion:     latestVersion,
+		StagingVersion:    stagingVersion,
+		ProductionVersion: productionVersion,
+	}
+	client.APPSEC.On("GetConfiguration", mock.Anything,
+		appsec.GetConfigurationRequest{ConfigID: configID}).Return(&getConfigResponse, nil).Once()
+
+	cloneResponse := appsec.CreateConfigurationVersionCloneResponse{
+		ConfigID: configID,
+		Version:  newClonedVersion,
+	}
+	client.APPSEC.On("CreateConfigurationVersionClone", mock.Anything,
+		appsec.CreateConfigurationVersionCloneRequest{ConfigID: configID, CreateFromVersion: latestVersion},
+	).Return(&cloneResponse, nil).Once()
+
+	ctx := context.Background()
+	result, err := getModifiableConfigVersion(ctx, configID, resource, client.APPSEC)
+	require.NoError(t, err)
+	assert.Equal(t, newClonedVersion, result)
+
+	// getLatestConfigVersion must return the cloned version without an extra API call
+	latest, err := getLatestConfigVersion(ctx, configID, client.APPSEC)
+	assert.NoError(t, err)
+	assert.Equal(t, newClonedVersion, latest)
+
+	// getActiveConfigVersions must also reuse the shared cache — staging/production unchanged by the clone
+	staging, production, err := getActiveConfigVersions(ctx, configID, client.APPSEC)
+	assert.NoError(t, err)
+	assert.Equal(t, productionVersion, production)
+	assert.Equal(t, stagingVersion, staging)
+
+	// API was called exactly once — clone path updated the shared cache
+	client.APPSEC.AssertExpectations(t)
+}
 
 func TestGetModifiableConfigVersion_CacheHit(t *testing.T) {
 	// Clear cache before test
@@ -287,8 +493,8 @@ func TestGetModifiableConfigVersion_CacheHit(t *testing.T) {
 	expectedVersion := 3
 	resource := "test_resource"
 
-	// Pre-populate cache
-	cacheKey := "getModifiableConfigVersion:22345"
+	// Pre-populate cache with modifiable key (the key getModifiableConfigVersion reads/writes)
+	cacheKey := modifiableVersionCacheKey(configID)
 	configuration := &appsec.GetConfigurationResponse{
 		ID:            configID,
 		LatestVersion: expectedVersion,
@@ -761,6 +967,123 @@ func TestGetModifiableConfigVersion_GetConfigurationVersionError(t *testing.T) {
 	// because checkIfVersionWasPreviouslyActive returns false on error
 	assert.NoError(t, err)
 	assert.Equal(t, latestVersion, result)
+
+	client.APPSEC.AssertExpectations(t)
+}
+
+// TestCacheKeyDivergence_InvalidationClearsBothKeys verifies that invalidateConfigCache
+// deletes both the modifiable and latest version keys, so stale diverged state cannot
+// persist after an activation or deactivation completes.
+func TestCacheKeyDivergence_InvalidationClearsBothKeys(t *testing.T) {
+	clearCache()
+	defer clearCache()
+
+	configID := 99001
+	staleModifiable := 5
+	staleLatest := 3 // deliberately different — simulates diverged cache state
+
+	// Seed both keys with stale, diverged values.
+	staleModifiableConfig := &appsec.GetConfigurationResponse{ID: configID, LatestVersion: staleModifiable}
+	staleLatestConfig := &appsec.GetConfigurationResponse{ID: configID, LatestVersion: staleLatest}
+	require.NoError(t, cache.Set(cache.BucketName(SubproviderName), modifiableVersionCacheKey(configID), staleModifiableConfig))
+	require.NoError(t, cache.Set(cache.BucketName(SubproviderName), latestVersionCacheKey(configID), staleLatestConfig))
+
+	// Simulate activation completing.
+	invalidateConfigCache(configID)
+
+	// Both keys must now be absent — fresh fetches are required.
+	out := &appsec.GetConfigurationResponse{}
+	assert.ErrorIs(t, cache.Get(cache.BucketName(SubproviderName), modifiableVersionCacheKey(configID), out),
+		cache.ErrEntryNotFound, "modifiable key should be invalidated")
+	assert.ErrorIs(t, cache.Get(cache.BucketName(SubproviderName), latestVersionCacheKey(configID), out),
+		cache.ErrEntryNotFound, "latest key should be invalidated")
+}
+
+// TestGetActiveConfigVersions_SharedCacheReverseDirection verifies that when
+// getActiveConfigVersions populates latestVersionCacheKey first, a subsequent
+// getLatestConfigVersion call reuses the cache without an extra API call.
+func TestGetActiveConfigVersions_SharedCacheReverseDirection(t *testing.T) {
+	clearCache()
+	defer clearCache()
+
+	client := edgegrid.NewTestClient()
+	configID := 99002
+	response := appsec.GetConfigurationResponse{
+		ID: configID, LatestVersion: 8, StagingVersion: 6, ProductionVersion: 5,
+	}
+
+	// Expect ONE API call — getLatestConfigVersion reuses the cache populated by getActiveConfigVersions.
+	client.APPSEC.On("GetConfiguration", mock.Anything,
+		appsec.GetConfigurationRequest{ConfigID: configID}).Return(&response, nil).Once()
+
+	ctx := context.Background()
+	_, _, err := getActiveConfigVersions(ctx, configID, client.APPSEC)
+	require.NoError(t, err)
+
+	latest, err := getLatestConfigVersion(ctx, configID, client.APPSEC)
+	assert.NoError(t, err)
+	assert.Equal(t, 8, latest)
+	client.APPSEC.AssertExpectations(t)
+}
+
+// TestInvalidateCacheForcesFreshFetch verifies that after invalidateConfigCache is called
+// (e.g. following an activation), both functions re-fetch from the API instead of
+// returning the stale cached value.
+func TestInvalidateCacheForcesFreshFetch(t *testing.T) {
+	clearCache()
+	defer clearCache()
+
+	configID := 99003
+	cachedVersion := 5
+	freshVersion := 6
+
+	// Pre-populate both cache keys with a stale version.
+	staleConfig := &appsec.GetConfigurationResponse{
+		ID:            configID,
+		LatestVersion: cachedVersion,
+	}
+	err := cache.Set(cache.BucketName(SubproviderName), modifiableVersionCacheKey(configID), staleConfig)
+	require.NoError(t, err)
+	err = cache.Set(cache.BucketName(SubproviderName), latestVersionCacheKey(configID), staleConfig)
+	require.NoError(t, err)
+
+	// Simulate an activation completing — this is what performActivation calls.
+	invalidateConfigCache(configID)
+
+	// Both functions should now miss the cache and re-fetch from the API.
+	client := edgegrid.NewTestClient()
+	freshConfig := appsec.GetConfigurationResponse{
+		ID:            configID,
+		LatestVersion: freshVersion,
+	}
+	getConfigVersionResponse := appsec.GetConfigurationVersionResponse{
+		ConfigID:   configID,
+		Version:    freshVersion,
+		Staging:    appsec.EnvironmentStatus{Status: "Inactive"},
+		Production: appsec.EnvironmentStatus{Status: "Inactive"},
+	}
+	client.APPSEC.On("GetConfiguration",
+		mock.Anything,
+		appsec.GetConfigurationRequest{ConfigID: configID},
+	).Return(&freshConfig, nil).Times(2)
+	client.APPSEC.On("GetConfigurationVersion",
+		mock.Anything,
+		appsec.GetConfigurationVersionRequest{ConfigID: configID, Version: freshVersion},
+	).Return(&getConfigVersionResponse, nil).Once()
+
+	ctx := context.Background()
+
+	modifiable, err := getModifiableConfigVersion(ctx, configID, "test", client.APPSEC)
+	require.NoError(t, err)
+	assert.Equal(t, freshVersion, modifiable, "getModifiableConfigVersion should return fresh version after invalidation")
+
+	// Invalidate again to force getLatestConfigVersion to also re-fetch
+	// (getModifiableConfigVersion re-populated the cache with freshVersion).
+	invalidateConfigCache(configID)
+
+	latest, err := getLatestConfigVersion(ctx, configID, client.APPSEC)
+	require.NoError(t, err)
+	assert.Equal(t, freshVersion, latest, "getLatestConfigVersion should return fresh version after invalidation")
 
 	client.APPSEC.AssertExpectations(t)
 }

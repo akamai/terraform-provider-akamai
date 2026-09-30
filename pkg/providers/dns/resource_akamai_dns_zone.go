@@ -305,7 +305,7 @@ func resourceDNSv2ZoneCreate(config dnsZoneResourceConfig) schema.CreateContextF
 		var apiError *dns.Error
 		ok := errors.As(e, &apiError)
 		if !ok || apiError.StatusCode != http.StatusNotFound {
-			logger.Errorf("Create[ERROR] %w", e)
+			logger.Errorf("Create[ERROR] %v", e)
 			return append(diags, diag.Diagnostic{
 				Severity: diag.Error,
 				Summary:  "Create API failure",

@@ -29,7 +29,7 @@ func resourceGTMv1Datacenter(defaultInterval time.Duration) *schema.Resource {
 		UpdateContext: r.resourceGTMv1DatacenterUpdate,
 		DeleteContext: r.resourceGTMv1DatacenterDelete,
 		Importer: &schema.ResourceImporter{
-			State: r.resourceGTMv1DatacenterImport,
+			StateContext: r.resourceGTMv1DatacenterImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"domain": {
@@ -208,7 +208,7 @@ func (r *datacenterResource) resourceGTMv1DatacenterCreate(ctx context.Context, 
 	}
 	logger.Debugf("Datacenter create status: %v", cStatus.Status)
 	if cStatus.Status.PropagationStatus == "DENIED" {
-		logger.Errorf(cStatus.Status.Message)
+		logger.Errorf("%s", cStatus.Status.Message)
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
 			Summary:  cStatus.Status.Message,
@@ -343,7 +343,7 @@ func (r *datacenterResource) resourceGTMv1DatacenterUpdate(ctx context.Context, 
 	}
 	logger.Debugf("Datacenter update status: %v", uStat)
 	if uStat.Status.PropagationStatus == "DENIED" {
-		logger.Errorf(uStat.Status.Message)
+		logger.Errorf("%s", uStat.Status.Message)
 
 	}
 
@@ -369,11 +369,10 @@ func (r *datacenterResource) resourceGTMv1DatacenterUpdate(ctx context.Context, 
 	return r.resourceGTMv1DatacenterRead(ctx, d, m)
 }
 
-func (r *datacenterResource) resourceGTMv1DatacenterImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+func (r *datacenterResource) resourceGTMv1DatacenterImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTMv1", "resourceGTMv1DatacenterImport")
 	// create a context with logging for api calls
-	ctx := context.Background()
 	ctx = session.ContextWithOptions(
 		ctx,
 		session.WithContextLog(logger),
@@ -454,7 +453,7 @@ func (r *datacenterResource) resourceGTMv1DatacenterDelete(ctx context.Context, 
 	}
 	logger.Debugf("Datacenter delete status: %v", uStat)
 	if uStat.Status.PropagationStatus == "DENIED" {
-		logger.Errorf(uStat.Status.Message)
+		logger.Errorf("%s", uStat.Status.Message)
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
 			Summary:  uStat.Status.Message,

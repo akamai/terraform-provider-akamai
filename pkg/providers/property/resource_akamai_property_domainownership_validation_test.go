@@ -1862,6 +1862,8 @@ func TestDomainOwnershipValidationResource(t *testing.T) {
 			config := defaultSubproviderConfig()
 			if tc.defaultPollTimeout != 0 {
 				config.domainValidation.defaultPollTimeout = tc.defaultPollTimeout
+			} else {
+				config.domainValidation.defaultPollTimeout = time.Second * 10
 			}
 			if tc.searchInterval != 0 {
 				config.domainValidation.searchInterval = tc.searchInterval

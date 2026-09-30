@@ -1,8 +1,8 @@
 TEST ?= $$(go list ./... | grep -v retryablehttp)
 PKG_NAME = akamai
 
-GOIMPORTS_VERSION = v0.24.0
-GOLANGCI_LINT_VERSION = v2.6.1
+GOIMPORTS_VERSION = v0.50.0
+GOLANGCI_LINT_VERSION = v2.13.2
 
 # Local provider install parameters
 version = 0.11.0
@@ -30,7 +30,7 @@ $(BIN)/goimports: PACKAGE=golang.org/x/tools/cmd/goimports@$(GOIMPORTS_VERSION)
 
 GOLANGCILINT = $(BIN)/golangci-lint
 $(BIN)/golangci-lint: ; $(info $(M) Installing golangci-lint...) @
-	$Q curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(BIN) $(GOLANGCI_LINT_VERSION)
+	$Q curl -sSfL https://golangci-lint.run/install.sh | sh -s -- -b $(BIN) $(GOLANGCI_LINT_VERSION)
 
 # Targets
 default: build
@@ -100,3 +100,6 @@ init: tools tools.terraform
 .PHONY: tools.terraform
 tools.terraform:
 	@sh -c "'$(CURDIR)/scripts/install_terraform.sh'"
+
+.PHONY: all
+all: clean-tools tools tidy fmt-check lint terraform-fmtcheck build

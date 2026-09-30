@@ -382,7 +382,9 @@ func buildAddAndRemoveDomainsRequest(ctx context.Context, planDomains, stateDoma
 		if i > 0 {
 			importMsg.WriteString(",")
 		}
-		importMsg.WriteString(fmt.Sprintf("%s:%s", domain.DomainName, domain.ValidationScope))
+		importMsg.WriteString(domain.DomainName)
+		importMsg.WriteString(":")
+		importMsg.WriteString(string(domain.ValidationScope))
 	}
 	if importMsg.String() != "" {
 		tflog.Debug(ctx, fmt.Sprintf("Some domains were already found on the server. Imported: [%s]", importMsg.String()))
@@ -436,7 +438,9 @@ func addDomains(ctx context.Context, client domainownership.DomainOwnership, dom
 		if i > 0 {
 			successMsg.WriteString(",")
 		}
-		successMsg.WriteString(fmt.Sprintf("%s:%s", domain.DomainName, domain.ValidationScope))
+		successMsg.WriteString(domain.DomainName)
+		successMsg.WriteString(":")
+		successMsg.WriteString(string(domain.ValidationScope))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Domains added successfully: [%s]", successMsg.String()))
 	return nil
@@ -448,7 +452,15 @@ func formatErrorMessageForAddDomains(addedDomains *domainownership.AddDomainsRes
 		if i > 0 {
 			messageBuffer.WriteString(",\n")
 		}
-		messageBuffer.WriteString(fmt.Sprintf("{\n\tdomainName: %s,\n\tvalidationScope: %s,\n\ttitle: %s,\n\tdetail: %s\n}", e.DomainName, e.ValidationScope, e.Title, e.Detail))
+		messageBuffer.WriteString("{\n\tdomainName: ")
+		messageBuffer.WriteString(e.DomainName)
+		messageBuffer.WriteString(",\n\tvalidationScope: ")
+		messageBuffer.WriteString(string(e.ValidationScope))
+		messageBuffer.WriteString(",\n\ttitle: ")
+		messageBuffer.WriteString(e.Title)
+		messageBuffer.WriteString(",\n\tdetail: ")
+		messageBuffer.WriteString(e.Detail)
+		messageBuffer.WriteString("\n}")
 	}
 	if err != nil {
 		return diag.NewErrorDiagnostic("error adding domains", fmt.Sprintf("%v\nRollback was not successful: %s", messageBuffer.String(), err))
@@ -569,7 +581,9 @@ func (r *DomainsResource) Read(ctx context.Context, req resource.ReadRequest, re
 			if i > 0 {
 				droppedMsg.WriteString(",")
 			}
-			droppedMsg.WriteString(fmt.Sprintf("%s:%s", domain.DomainName, domain.ValidationScope))
+			droppedMsg.WriteString(domain.DomainName)
+			droppedMsg.WriteString(":")
+			droppedMsg.WriteString(string(domain.ValidationScope))
 		}
 		tflog.Info(ctx, fmt.Sprintf("Some domains from state were not found on the server, removing from state: [%s]", droppedMsg.String()))
 	}

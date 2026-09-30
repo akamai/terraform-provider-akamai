@@ -6152,7 +6152,7 @@ func getBehaviorsSchemaV20260216() map[string]*schema.Schema {
 						},
 					},
 					"secret_key": {
-						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^[0-9a-zA-Z]{24}$")),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^[0-9a-zA-Z]+$")),
 						Optional:         true,
 						Description:      "Specifies the shared secret key.",
 						Type:             schema.TypeString,
@@ -6279,7 +6279,7 @@ func getBehaviorsSchemaV20260216() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 					},
 					"serving_path": {
-						ValidateDiagFunc: validateRegexOrVariable("^/[A-Za-z0-9/_-]{6}$"),
+						ValidateDiagFunc: validateRegexOrVariable("^\\/[A-Za-z0-9]{6,10}$"),
 						Optional:         true,
 						Description:      "Specifies the path that serves the Google Tag. The path segment starts with a slash (`/`), followed by 6-10 alphanumeric characters, and must be unique within your page.",
 						Type:             schema.TypeString,
@@ -7960,13 +7960,13 @@ func getBehaviorsSchemaV20260216() map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 					},
 					"hls_query_param_secret_key": {
-						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^(0x)?[0-9a-fA-F]{32}$")),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^(0x)?[0-9a-fA-F]+$")),
 						Optional:         true,
 						Description:      "Specifies a primary key as a token to accompany the request.",
 						Type:             schema.TypeString,
 					},
 					"hls_query_param_transition_key": {
-						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^(0x)?[0-9a-fA-F]{32}$")),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^(0x)?[0-9a-fA-F]+$")),
 						Optional:         true,
 						Description:      "Specifies a transition key as a token to accompany the request.",
 						Type:             schema.TypeString,
@@ -10308,7 +10308,7 @@ func getBehaviorsSchemaV20260216() map[string]*schema.Schema {
 						},
 					},
 					"secret_key": {
-						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^[0-9a-zA-Z]{24}$")),
+						ValidateDiagFunc: validateAny(validation.ToDiagFunc(validation.StringIsEmpty), validateRegexOrVariable("^[0-9a-zA-Z]{10,}$")),
 						Optional:         true,
 						Description:      "Specifies the shared secret key.",
 						Type:             schema.TypeString,

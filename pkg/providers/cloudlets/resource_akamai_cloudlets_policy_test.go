@@ -1,6 +1,7 @@
 package cloudlets
 
 import (
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"slices"
@@ -1496,6 +1497,51 @@ func TestResourcePolicyV3(t *testing.T) {
 					}),
 				},
 			},
+		})
+		client.CloudletsV3.AssertExpectations(t)
+	})
+
+	t.Run("policy v3 read preserves rule IDs for all types", func(t *testing.T) {
+		t.Parallel()
+		testDir := "testdata/TestResPolicyV3/lifecycle"
+
+		client := edgegrid.NewTestClient()
+		policy, version := expectCreatePolicy(client.CloudletsV3, 2, 123, commonMatchRules, "test policy description")
+		version.MatchRules = v3.MatchRules{
+			&v3.MatchRuleAP{Type: v3.MatchRuleTypeAP, AkaRuleID: "rule-ap"},
+			&v3.MatchRuleAS{Type: v3.MatchRuleTypeAS, AkaRuleID: "rule-as"},
+			&v3.MatchRulePR{Type: v3.MatchRuleTypePR, AkaRuleID: "rule-cd"},
+			&v3.MatchRuleER{Type: v3.MatchRuleTypeER, AkaRuleID: "rule-er"},
+			&v3.MatchRuleFR{Type: v3.MatchRuleTypeFR, AkaRuleID: "rule-fr"},
+			&v3.MatchRuleRC{Type: v3.MatchRuleTypeRC, AkaRuleID: "rule-ig"},
+		}
+		expectReadPolicy(client.CloudletsV3, policy, version, 2)
+		expectRemovePolicy(client.CloudletsV3, policy.ID)
+
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider().WithPolicyDeletionIntervals(testPolicyDeletionPollInterval)),
+			Steps: []resource.TestStep{{
+				Config:             testutils.LoadFixtureStringf(t, "%s/policy_create.tf", testDir),
+				ExpectNonEmptyPlan: true,
+				Check: resource.TestCheckResourceAttrWith("akamai_cloudlets_policy.policy", "match_rules", func(value string) error {
+					var rules []struct {
+						AkaRuleID string `json:"akaRuleId"`
+					}
+					if err := json.Unmarshal([]byte(value), &rules); err != nil {
+						return err
+					}
+					expectedIDs := []string{"rule-ap", "rule-as", "rule-cd", "rule-er", "rule-fr", "rule-ig"}
+					if len(rules) != len(expectedIDs) {
+						return fmt.Errorf("expected %d match rules, got %d", len(expectedIDs), len(rules))
+					}
+					for index, expectedID := range expectedIDs {
+						if rules[index].AkaRuleID != expectedID {
+							return fmt.Errorf("rule %d: expected akaRuleId %q, got %q", index, expectedID, rules[index].AkaRuleID)
+						}
+					}
+					return nil
+				}),
+			}},
 		})
 		client.CloudletsV3.AssertExpectations(t)
 	})

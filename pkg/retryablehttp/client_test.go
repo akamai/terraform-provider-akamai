@@ -717,7 +717,7 @@ func testClientResponseLogHook(t *testing.T, l interface{}, buf *bytes.Buffer) {
 			successLog := "test_log_pass"
 			// Log something when we get a 200
 			if logger != nil {
-				logger.Printf(successLog)
+				logger.Printf("%s", successLog)
 			} else {
 				buf.WriteString(successLog)
 			}
@@ -729,7 +729,7 @@ func testClientResponseLogHook(t *testing.T, l interface{}, buf *bytes.Buffer) {
 			}
 			failLog := string(body)
 			if logger != nil {
-				logger.Printf(failLog)
+				logger.Printf("%s", failLog)
 			} else {
 				buf.WriteString(failLog)
 			}

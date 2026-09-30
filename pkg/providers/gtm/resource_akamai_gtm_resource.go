@@ -30,7 +30,7 @@ func resourceGTMv1Resource(defaultInterval time.Duration) *schema.Resource {
 		UpdateContext: r.resourceGTMv1ResourceUpdate,
 		DeleteContext: r.resourceGTMv1ResourceDelete,
 		Importer: &schema.ResourceImporter{
-			State: r.resourceGTMv1ResourceImport,
+			StateContext: r.resourceGTMv1ResourceImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"domain": {
@@ -160,7 +160,7 @@ func (r *gtmResource) resourceGTMv1ResourceCreate(ctx context.Context, d *schema
 	}
 	if rsrc != nil {
 		resourceMapAlreadyExists := fmt.Sprintf(resourceMapAlreadyExistsError, domain, name)
-		logger.Errorf(resourceMapAlreadyExists)
+		logger.Errorf("%s", resourceMapAlreadyExists)
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
 			Summary:  "resource already exists error",
@@ -188,7 +188,7 @@ func (r *gtmResource) resourceGTMv1ResourceCreate(ctx context.Context, d *schema
 	}
 	logger.Debugf("Resource create status: %v", cStatus.Status)
 	if cStatus.Status.PropagationStatus == "DENIED" {
-		logger.Errorf(cStatus.Status.Message)
+		logger.Errorf("%s", cStatus.Status.Message)
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
 			Summary:  cStatus.Status.Message,
@@ -322,7 +322,7 @@ func (r *gtmResource) resourceGTMv1ResourceUpdate(ctx context.Context, d *schema
 	}
 	logger.Debugf("Resource update status: %v", uStat)
 	if uStat.Status.PropagationStatus == "DENIED" {
-		logger.Errorf(uStat.Status.Message)
+		logger.Errorf("%s", uStat.Status.Message)
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
 			Summary:  uStat.Status.Message,
@@ -356,11 +356,10 @@ func (r *gtmResource) resourceGTMv1ResourceUpdate(ctx context.Context, d *schema
 }
 
 // Import GTM Resource.
-func (r *gtmResource) resourceGTMv1ResourceImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+func (r *gtmResource) resourceGTMv1ResourceImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	meta := meta.Must(m)
 	logger := meta.Log("Akamai GTM", "resourceGTMv1ResourceImport")
 	// create a context with logging for api calls
-	ctx := context.Background()
 	ctx = session.ContextWithOptions(
 		ctx,
 		session.WithContextLog(logger),
@@ -446,7 +445,7 @@ func (r *gtmResource) resourceGTMv1ResourceDelete(ctx context.Context, d *schema
 	}
 	logger.Debugf("Resource delete status: %v", uStat)
 	if uStat.Status.PropagationStatus == "DENIED" {
-		logger.Errorf(uStat.Status.Message)
+		logger.Errorf("%s", uStat.Status.Message)
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
 			Summary:  uStat.Status.Message,

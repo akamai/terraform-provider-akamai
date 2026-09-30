@@ -29,7 +29,7 @@ func resourceGTMv1CIDRMap(defaultInterval time.Duration) *schema.Resource {
 		UpdateContext: r.resourceGTMv1CIDRMapUpdate,
 		DeleteContext: r.resourceGTMv1CIDRMapDelete,
 		Importer: &schema.ResourceImporter{
-			State: r.resourceGTMv1CIDRMapImport,
+			StateContext: r.resourceGTMv1CIDRMapImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"domain": {
@@ -124,7 +124,7 @@ func (r *cidrMapResource) resourceGTMv1CIDRMapCreate(ctx context.Context, d *sch
 
 	if cidr != nil {
 		cidrMapAlreadyExists := fmt.Sprintf(cidrMapAlreadyExistsError, domain, name)
-		logger.Errorf(cidrMapAlreadyExists)
+		logger.Errorf("%s", cidrMapAlreadyExists)
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
 			Summary:  "cidrMap already exists error",
@@ -314,11 +314,10 @@ func (r *cidrMapResource) resourceGTMv1CIDRMapUpdate(ctx context.Context, d *sch
 	return r.resourceGTMv1CIDRMapRead(ctx, d, m)
 }
 
-func (r *cidrMapResource) resourceGTMv1CIDRMapImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+func (r *cidrMapResource) resourceGTMv1CIDRMapImport(ctx context.Context, d *schema.ResourceData, m any) ([]*schema.ResourceData, error) {
 	meta := meta.Must(m)
-	logger := meta.Log("Akamai GTM", "resourceGTMCIDRMapImport")
+	logger := meta.Log("Akamai GTM", "resourceGTMv1CIDRMapImport")
 	// create a context with logging for api calls
-	ctx := context.Background()
 	ctx = session.ContextWithOptions(
 		ctx,
 		session.WithContextLog(logger),
@@ -350,9 +349,9 @@ func (r *cidrMapResource) resourceGTMv1CIDRMapImport(d *schema.ResourceData, m i
 	return []*schema.ResourceData{d}, nil
 }
 
-func (r *cidrMapResource) resourceGTMv1CIDRMapDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (r *cidrMapResource) resourceGTMv1CIDRMapDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	meta := meta.Must(m)
-	logger := meta.Log("Akamai GTM", "resourceGTMCIDRMapDelete")
+	logger := meta.Log("Akamai GTM", "resourceGTMv1CIDRMapDelete")
 	// create a context with logging for api calls
 	ctx = session.ContextWithOptions(
 		ctx,

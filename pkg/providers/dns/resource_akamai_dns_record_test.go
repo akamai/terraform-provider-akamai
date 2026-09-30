@@ -1582,6 +1582,106 @@ func TestResDnsRecord(t *testing.T) {
 		client.DNS.AssertExpectations(t)
 	})
 
+	t.Run("AKAMAICDN record with valid target", func(t *testing.T) {
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+
+		client.DNS.On("GetRecord",
+			testutils.MockContext,
+			dns.GetRecordRequest{
+				Zone:       "exampleterraform.io",
+				Name:       "exampleterraform.io",
+				RecordType: "AKAMAICDN",
+			},
+		).Return(nil, notFound).Once()
+
+		client.DNS.On("CreateRecord",
+			testutils.MockContext,
+			dns.CreateRecordRequest{
+				Record: &dns.RecordBody{
+					Name:       "exampleterraform.io",
+					RecordType: "AKAMAICDN",
+					TTL:        ptr.To(300),
+					Active:     false,
+					Target:     []string{"xyz-test.edgesuite.net"},
+				},
+				Zone:    "exampleterraform.io",
+				RecLock: []bool{false},
+			},
+		).Return(nil).Once()
+
+		client.DNS.On("GetRecord",
+			testutils.MockContext,
+			dns.GetRecordRequest{
+				Zone:       "exampleterraform.io",
+				Name:       "exampleterraform.io",
+				RecordType: "AKAMAICDN",
+			},
+		).Return(&dns.GetRecordResponse{
+			Name:       "exampleterraform.io",
+			RecordType: "AKAMAICDN",
+			TTL:        300,
+			Active:     false,
+			Target:     []string{"xyz-test.edgesuite.net"},
+		}, nil)
+
+		retCreate := dnsClient.ParseRData(context.Background(), "AKAMAICDN", []string{"xyz-test.edgesuite.net"})
+
+		client.DNS.On("ParseRData",
+			testutils.MockContext,
+			"AKAMAICDN",
+			[]string{"xyz-test.edgesuite.net"},
+		).Return(retCreate)
+
+		client.DNS.On("ProcessRdata",
+			testutils.MockContext,
+			[]string{"xyz-test.edgesuite.net"},
+			"AKAMAICDN",
+		).Return([]string{"AKAMAICDN"}, nil)
+
+		client.DNS.On("DeleteRecord",
+			testutils.MockContext,
+			dns.DeleteRecordRequest{
+				Zone:       "exampleterraform.io",
+				Name:       "exampleterraform.io",
+				RecordType: "AKAMAICDN",
+				RecLock:    []bool{false},
+			},
+		).Return(nil).Once()
+
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDnsRecord/create_akamaicdn.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("akamai_dns_record.akamaicdn_record", "recordtype", "AKAMAICDN"),
+						resource.TestCheckResourceAttr("akamai_dns_record.akamaicdn_record", "target.0", "xyz-test.edgesuite.net"),
+					),
+				},
+			},
+		})
+
+		client.DNS.AssertExpectations(t)
+	})
+
+	t.Run("expect error - AKAMAICDN target with trailing dot", func(t *testing.T) {
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResDnsRecord/validation/akamaicdn_target_trailing_dot.tf"),
+					ExpectError: regexp.MustCompile("target for AKAMAICDN record must not contain a trailing dot"),
+				},
+			},
+		})
+
+		client.DNS.AssertExpectations(t)
+	})
+
 	t.Run("expect error - empty record type", func(t *testing.T) {
 		t.Parallel()
 		client := edgegrid.NewTestClient()
@@ -1646,6 +1746,103 @@ func TestResDnsRecord(t *testing.T) {
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResDnsRecord/validation/negative_ttl.tf"),
 					ExpectError: regexp.MustCompile(`Error: expected ttl to be at least \(0\), got -1`),
+				},
+			},
+		})
+
+		client.DNS.AssertExpectations(t)
+	})
+
+	t.Run("expect error - TXT target over 255 characters", func(t *testing.T) {
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+		config := testutils.LoadFixtureString(t, "testdata/TestResDnsRecord/validation/txt_target_over_255.tf")
+		expectedError := regexp.QuoteMeta("normalizing txt record target") + `\s*'` +
+			strings.Repeat(`A\s*`, 256) + `\s*'\s*` +
+			regexp.QuoteMeta("failed: tokenizer exception: text string longer than 255 characters")
+
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config:      config,
+					ExpectError: regexp.MustCompile(expectedError),
+				},
+			},
+		})
+
+		client.DNS.AssertExpectations(t)
+	})
+
+	t.Run("failed TXT target update keeps previous target in state and allows destroy", func(t *testing.T) {
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+		request := dns.GetRecordRequest{
+			Zone:       "exampleterraform.io",
+			Name:       "exampleterraform.io",
+			RecordType: "TXT",
+		}
+		apiTarget := []string{`"valid-target"`}
+
+		client.DNS.On("GetRecord", testutils.MockContext, request).
+			Return(nil, notFound).Once()
+		client.DNS.On("CreateRecord", testutils.MockContext, dns.CreateRecordRequest{
+			Record: &dns.RecordBody{
+				Name:       "exampleterraform.io",
+				RecordType: "TXT",
+				TTL:        ptr.To(300),
+				Active:     false,
+				Target:     apiTarget,
+			},
+			Zone:    "exampleterraform.io",
+			RecLock: []bool{false},
+		}).Return(nil).Once()
+		client.DNS.On("GetRecord", testutils.MockContext, request).
+			Return(&dns.GetRecordResponse{
+				Name:       "exampleterraform.io",
+				RecordType: "TXT",
+				TTL:        300,
+				Active:     false,
+				Target:     apiTarget,
+			}, nil).Times(6)
+		client.DNS.On("ParseRData", testutils.MockContext, "TXT", apiTarget).
+			Return(map[string]interface{}{"target": apiTarget}).Times(6)
+		client.DNS.On("ProcessRdata", testutils.MockContext, apiTarget, "TXT").
+			Return([]string{"valid-target"}, nil).Times(6)
+		client.DNS.On("DeleteRecord", testutils.MockContext, dns.DeleteRecordRequest{
+			Zone:       "exampleterraform.io",
+			Name:       "exampleterraform.io",
+			RecordType: "TXT",
+			RecLock:    []bool{false},
+		}).Return(nil).Once()
+
+		resourceName := "akamai_dns_record.txt_record"
+		validConfig := testutils.LoadFixtureString(t, "testdata/TestResDnsRecord/validation/create_valid_txt.tf")
+		invalidConfig := testutils.LoadFixtureString(t, "testdata/TestResDnsRecord/validation/txt_target_over_255.tf")
+		expectedUpdateError := regexp.QuoteMeta("Recordset update bind failure") + `(?s:.*?)` +
+			regexp.QuoteMeta("normalizing txt record target") + `\s*'` +
+			strings.Repeat(`A\s*`, 256) + `\s*'\s*` +
+			regexp.QuoteMeta("failed: tokenizer exception: text string longer than 255 characters")
+
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, newSubproviderWithConfig(testSubproviderConfig())),
+			Steps: []resource.TestStep{
+				{
+					Config: validConfig,
+					Check: test.NewStateChecker(resourceName).
+						CheckEqual("target.#", "1").
+						CheckEqual("target.0", "valid-target").Build(),
+				},
+				{
+					Config:      invalidConfig,
+					ExpectError: regexp.MustCompile(expectedUpdateError),
+				},
+				{
+					Config:  invalidConfig,
+					Destroy: true,
+					Check: test.NewStateChecker(resourceName).
+						CheckEqual("target.#", "1").
+						CheckEqual("target.0", "valid-target").Build(),
 				},
 			},
 		})

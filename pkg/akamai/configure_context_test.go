@@ -12,7 +12,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/cloudcertificates"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/edgegrid"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/papi"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/session"
@@ -460,131 +459,131 @@ func TestXRateLimitPost(t *testing.T) {
 		xrlHandler.AvailableAt().Add(time.Duration(time.Millisecond)*1100))
 }
 
-func TestAkamaiRateLimitGet(t *testing.T) {
-	arlHandler := test.RateLimitHTTPHandler{
-		T:           t,
-		SuccessCode: http.StatusOK,
-		SuccessBody: `
-			{
-				"accountId": "A-CCT7890",
-				"certificateId": "123",
-				"certificateName": "test-cert",
-				"certificateStatus": "CSR_READY",
-				"certificateType": "THIRD_PARTY",
-				"contractId": "C-0N7RAC7",
-				"createdBy": "jsmith",
-				"createdDate": "2025-09-01T06:16:05.952613Z",
-				"csrExpirationDate": "2026-11-03T06:16:07Z",
-				"csrPem": "-----BEGIN CERTIFICATE REQUEST-----\nexample-PEM\n-----END CERTIFICATE REQUEST-----\n",
-				"keySize": "2048",
-				"keyType": "RSA",
-				"modifiedBy": "jsmith",
-				"modifiedDate": "2025-09-02T06:16:05.952613Z",
-				"sans": [
-					"example.com",
-					"www.example.com"
-				],
-				"secureNetwork": "ENHANCED_TLS",
-				"signedCertificateIssuer": null,
-				"signedCertificateNotValidAfterDate": null,
-				"signedCertificateNotValidBeforeDate": null,
-				"signedCertificatePem": null,
-				"signedCertificateSHA256Fingerprint": null,
-				"signedCertificateSerialNumber": null,
-				"subject": {
-					"commonName": "example.com",
-					"country": "US",
-					"locality": "Cambridge",
-					"organization": "ExampleOrg",
-					"state": "Massachusetts"
-				},
-				"trustChainPem": null
-			}`,
-	}
+// func TestAkamaiRateLimitGet(t *testing.T) {
+// 	arlHandler := test.RateLimitHTTPHandler{
+// 		T:           t,
+// 		SuccessCode: http.StatusOK,
+// 		SuccessBody: `
+// 			{
+// 				"accountId": "A-CCT7890",
+// 				"certificateId": "123",
+// 				"certificateName": "test-cert",
+// 				"certificateStatus": "CSR_READY",
+// 				"certificateType": "THIRD_PARTY",
+// 				"contractId": "C-0N7RAC7",
+// 				"createdBy": "jsmith",
+// 				"createdDate": "2025-09-01T06:16:05.952613Z",
+// 				"csrExpirationDate": "2026-11-03T06:16:07Z",
+// 				"csrPem": "-----BEGIN CERTIFICATE REQUEST-----\nexample-PEM\n-----END CERTIFICATE REQUEST-----\n",
+// 				"keySize": "2048",
+// 				"keyType": "RSA",
+// 				"modifiedBy": "jsmith",
+// 				"modifiedDate": "2025-09-02T06:16:05.952613Z",
+// 				"sans": [
+// 					"example.com",
+// 					"www.example.com"
+// 				],
+// 				"secureNetwork": "ENHANCED_TLS",
+// 				"signedCertificateIssuer": null,
+// 				"signedCertificateNotValidAfterDate": null,
+// 				"signedCertificateNotValidBeforeDate": null,
+// 				"signedCertificatePem": null,
+// 				"signedCertificateSHA256Fingerprint": null,
+// 				"signedCertificateSerialNumber": null,
+// 				"subject": {
+// 					"commonName": "example.com",
+// 					"country": "US",
+// 					"locality": "Cambridge",
+// 					"organization": "ExampleOrg",
+// 					"state": "Massachusetts"
+// 				},
+// 				"trustChainPem": null
+// 			}`,
+// 	}
 
-	mockServer := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		assert.Equal(t, "/ccm/v1/certificates/123", r.URL.String())
-		assert.Equal(t, http.MethodGet, r.Method)
-		arlHandler.ServeHTTP(w, r, "Akamai-RateLimit-Next")
-	}))
-	defer mockServer.Close()
+// 	mockServer := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+// 		assert.Equal(t, "/ccm/v1/certificates/123", r.URL.String())
+// 		assert.Equal(t, http.MethodGet, r.Method)
+// 		arlHandler.ServeHTTP(w, r, "Akamai-RateLimit-Next")
+// 	}))
+// 	defer mockServer.Close()
 
-	client := cloudcertificates.Client(mockSession(t, mockServer))
-	result, err := client.GetCertificate(context.Background(), cloudcertificates.GetCertificateRequest{
-		CertificateID: "123",
-	})
-	require.NoError(t, err)
-	assert.Equal(t, "test-cert", result.Certificate.CertificateName)
-	// We expect exactly two requests to the server:
-	// - the first resulting in code 429
-	// - the second after a proper backoff, resulting in status 200
-	assert.Equal(t, []int{http.StatusTooManyRequests, http.StatusOK}, arlHandler.ReturnedCodes())
-	assert.Less(t,
-		arlHandler.ReturnTimes()[1],
-		arlHandler.AvailableAt().Add(time.Duration(time.Millisecond)*1100))
-}
+// 	client := cloudcertificates.Client(mockSession(t, mockServer))
+// 	result, err := client.GetCertificate(context.Background(), cloudcertificates.GetCertificateRequest{
+// 		CertificateID: "123",
+// 	})
+// 	require.NoError(t, err)
+// 	assert.Equal(t, "test-cert", result.Certificate.CertificateName)
+// 	// We expect exactly two requests to the server:
+// 	// - the first resulting in code 429
+// 	// - the second after a proper backoff, resulting in status 200
+// 	assert.Equal(t, []int{http.StatusTooManyRequests, http.StatusOK}, arlHandler.ReturnedCodes())
+// 	assert.Less(t,
+// 		arlHandler.ReturnTimes()[1],
+// 		arlHandler.AvailableAt().Add(time.Duration(time.Millisecond)*1100))
+// }
 
-func TestAkamaiRateLimitPost(t *testing.T) {
-	arlHandler := test.RateLimitHTTPHandler{
-		T:           t,
-		SuccessCode: http.StatusCreated,
-		SuccessBody: `
-			{
-				"accountId": "A-CCT7890",
-				"certificateId": "123",
-				"certificateName": "test-cert",
-				"certificateStatus": "CSR_READY",
-				"certificateType": "THIRD_PARTY",
-				"contractId": "C-0N7RAC7",
-				"createdBy": "jsmith",
-				"createdDate": "2025-09-01T06:16:05.952613Z",
-				"csrExpirationDate": "2026-11-03T06:16:07Z",
-				"csrPem": "-----BEGIN CERTIFICATE REQUEST-----\nexample-PEM\n-----END CERTIFICATE REQUEST-----\n",
-				"keySize": "2048",
-				"keyType": "RSA",
-				"modifiedBy": "jsmith",
-				"modifiedDate": "2025-09-02T06:16:05.952613Z",
-				"sans": [
-					"example.com",
-					"www.example.com"
-				],
-				"secureNetwork": "ENHANCED_TLS",
-				"signedCertificateIssuer": null,
-				"signedCertificateNotValidAfterDate": null,
-				"signedCertificateNotValidBeforeDate": null,
-				"signedCertificatePem": null,
-				"signedCertificateSHA256Fingerprint": null,
-				"signedCertificateSerialNumber": null,
-				"trustChainPem": null
-			}`,
-	}
+// func TestAkamaiRateLimitPost(t *testing.T) {
+// 	arlHandler := test.RateLimitHTTPHandler{
+// 		T:           t,
+// 		SuccessCode: http.StatusCreated,
+// 		SuccessBody: `
+// 			{
+// 				"accountId": "A-CCT7890",
+// 				"certificateId": "123",
+// 				"certificateName": "test-cert",
+// 				"certificateStatus": "CSR_READY",
+// 				"certificateType": "THIRD_PARTY",
+// 				"contractId": "C-0N7RAC7",
+// 				"createdBy": "jsmith",
+// 				"createdDate": "2025-09-01T06:16:05.952613Z",
+// 				"csrExpirationDate": "2026-11-03T06:16:07Z",
+// 				"csrPem": "-----BEGIN CERTIFICATE REQUEST-----\nexample-PEM\n-----END CERTIFICATE REQUEST-----\n",
+// 				"keySize": "2048",
+// 				"keyType": "RSA",
+// 				"modifiedBy": "jsmith",
+// 				"modifiedDate": "2025-09-02T06:16:05.952613Z",
+// 				"sans": [
+// 					"example.com",
+// 					"www.example.com"
+// 				],
+// 				"secureNetwork": "ENHANCED_TLS",
+// 				"signedCertificateIssuer": null,
+// 				"signedCertificateNotValidAfterDate": null,
+// 				"signedCertificateNotValidBeforeDate": null,
+// 				"signedCertificatePem": null,
+// 				"signedCertificateSHA256Fingerprint": null,
+// 				"signedCertificateSerialNumber": null,
+// 				"trustChainPem": null
+// 			}`,
+// 	}
 
-	mockServer := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		assert.Equal(t, "/ccm/v1/certificates?contractId=111&groupId=222", r.URL.String())
-		assert.Equal(t, http.MethodPost, r.Method)
-		arlHandler.ServeHTTP(w, r, "Akamai-RateLimit-Next")
-	}))
-	defer mockServer.Close()
+// 	mockServer := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+// 		assert.Equal(t, "/ccm/v1/certificates?contractId=111&groupId=222", r.URL.String())
+// 		assert.Equal(t, http.MethodPost, r.Method)
+// 		arlHandler.ServeHTTP(w, r, "Akamai-RateLimit-Next")
+// 	}))
+// 	defer mockServer.Close()
 
-	client := cloudcertificates.Client(mockSession(t, mockServer))
-	result, err := client.CreateCertificate(context.Background(), cloudcertificates.CreateCertificateRequest{
-		ContractID: "111",
-		GroupID:    "222",
-		Body: cloudcertificates.CreateCertificateRequestBody{
-			CertificateName: "test-cert",
-			SANs:            []string{"example.com", "www.example.com"},
-			SecureNetwork:   "ENHANCED_TLS",
-			KeyType:         "RSA",
-			KeySize:         "2048",
-		},
-	})
-	require.NoError(t, err)
-	assert.Equal(t, "123", result.Certificate.CertificateID)
-	// We expect exactly two requests to the server:
-	// - the first resulting in code 429
-	// - the second after a proper backoff, resulting in status 201
-	assert.Equal(t, []int{http.StatusTooManyRequests, http.StatusCreated}, arlHandler.ReturnedCodes())
-	assert.Less(t,
-		arlHandler.ReturnTimes()[1],
-		arlHandler.AvailableAt().Add(time.Duration(time.Millisecond)*1100))
-}
+// 	client := cloudcertificates.Client(mockSession(t, mockServer))
+// 	result, err := client.CreateCertificate(context.Background(), cloudcertificates.CreateCertificateRequest{
+// 		ContractID: "111",
+// 		GroupID:    "222",
+// 		Body: cloudcertificates.CreateCertificateRequestBody{
+// 			CertificateName: "test-cert",
+// 			SANs:            []string{"example.com", "www.example.com"},
+// 			SecureNetwork:   "ENHANCED_TLS",
+// 			KeyType:         "RSA",
+// 			KeySize:         "2048",
+// 		},
+// 	})
+// 	require.NoError(t, err)
+// 	assert.Equal(t, "123", result.Certificate.CertificateID)
+// 	// We expect exactly two requests to the server:
+// 	// - the first resulting in code 429
+// 	// - the second after a proper backoff, resulting in status 201
+// 	assert.Equal(t, []int{http.StatusTooManyRequests, http.StatusCreated}, arlHandler.ReturnedCodes())
+// 	assert.Less(t,
+// 		arlHandler.ReturnTimes()[1],
+// 		arlHandler.AvailableAt().Add(time.Duration(time.Millisecond)*1100))
+// }

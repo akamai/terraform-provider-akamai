@@ -172,7 +172,7 @@ func (r *asmapResource) resourceGTMv1ASMapCreate(ctx context.Context, d *schema.
 	}
 	if as != nil {
 		asMapAlreadyExists := fmt.Sprintf(asMapAlreadyExistsError, domain, name)
-		logger.Errorf(asMapAlreadyExists)
+		logger.Errorf("%s", asMapAlreadyExists)
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
 			Summary:  "asMap already exists error",

@@ -30,6 +30,25 @@ var (
 	GetLatestConfigVersion = getLatestConfigVersion
 )
 
+// modifiableVersionCacheKey returns the cache key used by getModifiableConfigVersion.
+// This key is only written after verifying the stored version is modifiable, so
+// cache hits on this key are always safe to return without re-checking modifiability.
+func modifiableVersionCacheKey(configID int) string {
+	return fmt.Sprintf("modifiable:%d", configID)
+}
+
+// latestVersionCacheKey returns the cache key used by getLatestConfigVersion.
+func latestVersionCacheKey(configID int) string {
+	return fmt.Sprintf("latest:%d", configID)
+}
+
+// invalidateConfigCache clears both cached versions for the given configID.
+// Call this after activation or deactivation completes, since either can change which version is active.
+func invalidateConfigCache(configID int) {
+	_ = cache.Delete(cache.BucketName(SubproviderName), modifiableVersionCacheKey(configID))
+	_ = cache.Delete(cache.BucketName(SubproviderName), latestVersionCacheKey(configID))
+}
+
 // getModifiableConfigVersion returns the number of the latest editable version
 // of the given security configuration. If the most recent version is not editable
 // (because it is active or was previously active in staging or production) a new
@@ -38,7 +57,7 @@ var (
 // A mutex prevents calls made by multiple resources from creating unnecessary clones.
 func getModifiableConfigVersion(ctx context.Context, configID int, resource string, client appsec.APPSEC) (int, error) {
 	// If the version info is in the cache, return it immediately.
-	cacheKey := fmt.Sprintf("%s:%d", "getModifiableConfigVersion", configID)
+	cacheKey := modifiableVersionCacheKey(configID)
 	configuration := &appsec.GetConfigurationResponse{}
 	if err := cache.Get(cache.BucketName(SubproviderName), cacheKey, configuration); err == nil {
 		tflog.Debug(ctx, "returning modifiable version from cache", map[string]any{"resource": resource, "version": configuration.LatestVersion})
@@ -109,6 +128,12 @@ func getModifiableConfigVersion(ctx context.Context, configID int, resource stri
 	if err := cache.Set(cache.BucketName(SubproviderName), cacheKey, configuration); err != nil && !errors.Is(err, cache.ErrDisabled) {
 		tflog.Error(ctx, "unable to set latestVersion into cache", map[string]any{"error": err.Error(), "latestVersion": latestVersion})
 	}
+	// Also update the shared getLatestConfigVersion cache so getLatestConfigVersion and
+	// getActiveConfigVersions immediately reflect the new LatestVersion without an extra API call.
+	latestCacheKey := latestVersionCacheKey(configID)
+	if err := cache.Set(cache.BucketName(SubproviderName), latestCacheKey, configuration); err != nil && !errors.Is(err, cache.ErrDisabled) {
+		tflog.Error(ctx, "unable to update getLatestConfigVersion cache after clone", map[string]any{"error": err.Error(), "latestVersion": ccr.Version})
+	}
 
 	tflog.Debug(ctx, "caching and returning new cloned version as modifiable version", map[string]any{"resource": resource, "version": ccr.Version})
 	return ccr.Version, nil
@@ -118,7 +143,7 @@ func getModifiableConfigVersion(ctx context.Context, configID int, resource stri
 // configuration. API calls are made using the supplied context and the passed API client.
 func getLatestConfigVersion(ctx context.Context, configID int, client appsec.APPSEC) (int, error) {
 	// Return the cached value if we have one
-	cacheKey := fmt.Sprintf("%s:%d", "getLatestConfigVersion", configID)
+	cacheKey := latestVersionCacheKey(configID)
 	configuration := &appsec.GetConfigurationResponse{}
 	if err := cache.Get(cache.BucketName(SubproviderName), cacheKey, configuration); err == nil {
 		tflog.Debug(ctx, "found config in cache, returning latest version", map[string]any{"configID": configuration.ID, "version": configuration.LatestVersion})
@@ -160,16 +185,42 @@ func getLatestConfigVersion(ctx context.Context, configID int, client appsec.APP
 // active in staging and production respectively. API calls are made using the supplied context
 // and the passed API client.
 func getActiveConfigVersions(ctx context.Context, configID int, client appsec.APPSEC) (int, int, error) {
+	// Reuse the same cache key and mutex as getLatestConfigVersion — same API call, same response struct.
+	// This ensures both functions stay in sync: evicting one evicts the other.
+	cacheKey := latestVersionCacheKey(configID)
+	configuration := &appsec.GetConfigurationResponse{}
+	if err := cache.Get(cache.BucketName(SubproviderName), cacheKey, configuration); err == nil {
+		tflog.Debug(ctx, "found config in cache, returning active versions", map[string]any{
+			"configID": configID, "stagingVersion": configuration.StagingVersion, "productionVersion": configuration.ProductionVersion,
+		})
+		return configuration.StagingVersion, configuration.ProductionVersion, nil
+	}
+
+	latestVersionMutex.Lock()
+	defer latestVersionMutex.Unlock()
+
+	// Double-check after acquiring the lock — another goroutine may have populated it.
+	err := cache.Get(cache.BucketName(SubproviderName), cacheKey, configuration)
+	if err == nil {
+		return configuration.StagingVersion, configuration.ProductionVersion, nil
+	}
+	if !errors.Is(err, cache.ErrEntryNotFound) && !errors.Is(err, cache.ErrDisabled) {
+		tflog.Error(ctx, "error reading from cache", map[string]any{"error": err.Error()})
+		return 0, 0, err
+	}
+
 	tflog.Debug(ctx, "getActiveConfigVersions calling GetConfiguration", map[string]any{"configID": configID})
-	configuration, err := client.GetConfiguration(ctx, appsec.GetConfigurationRequest{
-		ConfigID: configID,
-	})
+	configuration, err = client.GetConfiguration(ctx, appsec.GetConfigurationRequest{ConfigID: configID})
 	if err != nil {
 		tflog.Error(ctx, "error calling GetConfiguration", map[string]any{"error": err.Error()})
 		return 0, 0, err
 	}
-	tflog.Debug(ctx, "Found config, returning versions as staging & production versions",
-		map[string]any{"configID": configID, "stagingVersion": configuration.StagingVersion, "productionVersion": configuration.ProductionVersion})
+	if err := cache.Set(cache.BucketName(SubproviderName), cacheKey, configuration); err != nil && !errors.Is(err, cache.ErrDisabled) {
+		tflog.Error(ctx, "error caching config", map[string]any{"error": err.Error()})
+	}
+	tflog.Debug(ctx, "returning active versions", map[string]any{
+		"configID": configID, "stagingVersion": configuration.StagingVersion, "productionVersion": configuration.ProductionVersion,
+	})
 	return configuration.StagingVersion, configuration.ProductionVersion, nil
 }
 

@@ -108,7 +108,7 @@ func (r *dvValidationResource) create(ctx context.Context, d *schema.ResourceDat
 	}
 
 	// if status is `coordinate-domain-validation` or `wait-review-cert-warning` proceed further
-	status, err := waitForChangeStatus(ctx, client, enrollmentID, changeID, r.pollChangeStatusInterval, coodinateDomainValidation, coordinateDomainValidation, waitReviewCertWarning)
+	statusInfo, err := waitForTerminalChangeStatus(ctx, client, enrollmentID, changeID, r.pollChangeStatusInterval, coodinateDomainValidation, coordinateDomainValidation, waitReviewCertWarning)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -119,7 +119,7 @@ func (r *dvValidationResource) create(ctx context.Context, d *schema.ResourceDat
 	}
 
 	// if the status is `wait-review-cert-warning`, handle post warnings
-	if status.StatusInfo != nil && status.StatusInfo.Status == waitReviewCertWarning && ackPostVerification {
+	if statusInfo != nil && statusInfo.Status == waitReviewCertWarning && ackPostVerification {
 		if err = sendPostVerificationAcknowledgement(ctx, client, enrollmentID, changeID); err != nil {
 			return diag.FromErr(err)
 		}
@@ -134,12 +134,12 @@ func (r *dvValidationResource) create(ctx context.Context, d *schema.ResourceDat
 		ChangeID:        changeID,
 	})
 	if err == nil {
-		status, err = waitForChangeStatus(ctx, client, enrollmentID, changeID, r.pollChangeStatusInterval, waitReviewCertWarning, complete, coordinateDomainValidation, coodinateDomainValidation)
+		statusInfo, err = waitForTerminalChangeStatus(ctx, client, enrollmentID, changeID, r.pollChangeStatusInterval, waitReviewCertWarning, complete, coordinateDomainValidation, coodinateDomainValidation)
 		if err != nil {
 			return diag.FromErr(err)
 		}
 
-		if status.StatusInfo != nil && status.StatusInfo.Status == waitReviewCertWarning && ackPostVerification {
+		if statusInfo != nil && statusInfo.Status == waitReviewCertWarning && ackPostVerification {
 			if err = sendPostVerificationAcknowledgement(ctx, client, enrollmentID, changeID); err != nil {
 				return diag.FromErr(err)
 			}
@@ -161,12 +161,12 @@ func (r *dvValidationResource) create(ctx context.Context, d *schema.ResourceDat
 				ChangeID:        changeID,
 			})
 			if err == nil {
-				status, err = waitForChangeStatus(ctx, client, enrollmentID, changeID, r.pollChangeStatusInterval, waitReviewCertWarning, complete, coordinateDomainValidation, coodinateDomainValidation)
+				statusInfo, err = waitForTerminalChangeStatus(ctx, client, enrollmentID, changeID, r.pollChangeStatusInterval, waitReviewCertWarning, complete, coordinateDomainValidation, coodinateDomainValidation)
 				if err != nil {
 					return diag.FromErr(err)
 				}
 
-				if status.StatusInfo != nil && status.StatusInfo.Status == waitReviewCertWarning && ackPostVerification {
+				if statusInfo != nil && statusInfo.Status == waitReviewCertWarning && ackPostVerification {
 					if err = sendPostVerificationAcknowledgement(ctx, client, enrollmentID, changeID); err != nil {
 						return diag.FromErr(err)
 					}

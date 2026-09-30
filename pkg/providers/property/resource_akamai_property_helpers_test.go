@@ -332,11 +332,11 @@ func (p *mockProperty) mockUpdatePropertyVersionHostnames(err ...error) *mock.Ca
 	// Use original mock data for the response.
 	requestHostnames := make([]papi.Hostname, 0, len(p.hostnames.Items))
 	for _, hostname := range p.hostnames.Items {
-		var ccmCertificates *papi.CCMCertificates
-		if hostname.CCMCertificates != nil {
-			ccmCertificates = &papi.CCMCertificates{
-				ECDSACertID: hostname.CCMCertificates.ECDSACertID,
-				RSACertID:   hostname.CCMCertificates.RSACertID,
+		var ccmCertificates *papi.CCMCertificates //nolint:staticcheck
+		if hostname.CCMCertificates != nil {      //nolint:staticcheck
+			ccmCertificates = &papi.CCMCertificates{ //nolint:staticcheck
+				ECDSACertID: hostname.CCMCertificates.ECDSACertID, //nolint:staticcheck
+				RSACertID:   hostname.CCMCertificates.RSACertID,   //nolint:staticcheck
 			}
 		}
 
@@ -349,15 +349,19 @@ func (p *mockProperty) mockUpdatePropertyVersionHostnames(err ...error) *mock.Ca
 			}
 		}
 
-		requestHostnames = append(requestHostnames, papi.Hostname{
+		requestHostname := papi.Hostname{
 			CnameType:            papi.HostnameCnameType(hostname.CnameType),
 			CnameFrom:            hostname.CnameFrom,
 			CnameTo:              hostname.CnameTo,
 			CertProvisioningType: hostname.CertProvisioningType,
-			CCMCertificates:      ccmCertificates,
+			CCMCertificates:      ccmCertificates, //nolint:staticcheck
 			MTLS:                 mtls,
 			TLSConfiguration:     hostname.TLSConfiguration,
-		})
+		}
+		if hostname.CCMCertID != nil {
+			requestHostname.CCMCertID = *hostname.CCMCertID
+		}
+		requestHostnames = append(requestHostnames, requestHostname)
 	}
 
 	req := papi.UpdatePropertyVersionHostnamesRequest{

@@ -280,7 +280,7 @@ func (r *gtmDomainResource) resourceGTMv1DomainCreate(ctx context.Context, d *sc
 	}
 	if dom != nil {
 		domainAlreadyExists := fmt.Sprintf(domainMapAlreadyExistsError, dname)
-		logger.Errorf(domainAlreadyExists)
+		logger.Errorf("%s", domainAlreadyExists)
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
 			Summary:  "domain already exists error",
@@ -340,7 +340,7 @@ func (r *gtmDomainResource) resourceGTMv1DomainCreate(ctx context.Context, d *sc
 	} else {
 		logger.Debugf("Create status: %v", cStatus.Status)
 		if cStatus.Status.PropagationStatus == "DENIED" {
-			logger.Errorf(cStatus.Status.Message)
+			logger.Errorf("%s", cStatus.Status.Message)
 			return append(diags, diag.Diagnostic{
 				Severity: diag.Error,
 				Summary:  cStatus.Status.Message,
@@ -465,7 +465,7 @@ func (r *gtmDomainResource) resourceGTMv1DomainUpdate(ctx context.Context, d *sc
 	}
 	logger.Debugf("Update status: %v", uStat)
 	if uStat.Status.PropagationStatus == "DENIED" {
-		logger.Errorf(uStat.Status.Message)
+		logger.Errorf("%s", uStat.Status.Message)
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
 			Summary:  uStat.Status.Message,

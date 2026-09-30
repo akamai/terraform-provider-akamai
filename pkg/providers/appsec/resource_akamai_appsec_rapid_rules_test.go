@@ -425,7 +425,7 @@ func TestRapidRulesResource(t *testing.T) {
 		"update rapid rules - suppress diff on rule order": {
 			init: func(m *appsec.Mock) {
 				// Step 1: Create resource with original rule order
-				mockGetConfiguration(m, 6)
+				mockGetConfiguration(m, 5)
 				mockUpdateRapidRulesStatus(m, true, 1)
 				mockGetRapidRulesDefaultAction(m, "deny", 4)
 				mockGetRapidRulesStatus(m, true, 3)
@@ -446,33 +446,33 @@ func TestRapidRulesResource(t *testing.T) {
 				m.On("GetRapidRules",
 					mock.Anything,
 					expectedReq,
-				).Return(&rapidRulesOrderTestUpdated, nil).Times(4)
+				).Return(&rapidRulesOrderTestUpdated, nil).Times(3)
 
 				// Apply rule actions, locks, and exceptions (2 rules × 2 locks each = 4)
-				// Called During Read and Update in Step 1 and Step 2
+				// Called during Step 1 only; Step 2 plans empty so no update runs
 				m.On("UpdateRapidRuleActionLock",
 					mock.Anything,
 					mock.AnythingOfType("appsec.UpdateRapidRuleActionLockRequest"),
 				).Return(&appsec.UpdateRapidRuleActionLockResponse{
 					Enabled: false,
-				}, nil).Times(8)
+				}, nil).Times(4)
 
 				// Update actions for 2 rules
-				// Called During Read and Update in Step 1 and Step 2
+				// Called during Step 1 only; Step 2 plans empty so no update runs
 				m.On("UpdateRapidRuleAction",
 					mock.Anything,
 					mock.AnythingOfType("appsec.UpdateRapidRuleActionRequest"),
-				).Return(&appsec.UpdateRapidRuleActionResponse{}, nil).Times(4)
+				).Return(&appsec.UpdateRapidRuleActionResponse{}, nil).Times(2)
 
 				// Apply exceptions for 2 rules
-				// Called During Read and Update in Step 1 and Step 2
+				// Called during Step 1 only; Step 2 plans empty so no update runs
 				m.On("UpdateRapidRuleException",
 					mock.Anything,
 					mock.AnythingOfType("appsec.UpdateRapidRuleExceptionRequest"),
 				).Return(
 					(*appsec.UpdateRapidRuleExceptionResponse)(&ruleConditionException),
 					nil,
-				).Times(2)
+				).Times(1)
 
 				// Final status cleanup.
 				mockUpdateRapidRulesStatus(m, false, 1)
@@ -486,12 +486,10 @@ func TestRapidRulesResource(t *testing.T) {
 				},
 				{
 					// Step 2: same rules, shuffled order. PreventJsonReorder
-					// NOTE: ExpectNonEmptyPlan=true due to cosmetic 'id' diff.
-					// Terraform marks computed attributes as "to be computed" during any
-					// update, even when the plan modifier successfully prevents the real diff.
+					// suppresses the real diff, and UseStateForUnknown on 'id' keeps the
+					// plan empty instead of reporting a cosmetic in-place update.
 					Config: testutils.LoadFixtureString(t,
 						"testdata/TestResRapidRules/update_rapid_rules_reordered.tf"),
-					ExpectNonEmptyPlan: true,
 					ConfigPlanChecks: resource.ConfigPlanChecks{
 						PreApply: []plancheck.PlanCheck{
 							plancheck.ExpectKnownValue(
@@ -513,11 +511,14 @@ func TestRapidRulesResource(t *testing.T) {
 								knownvalue.StringExact("deny"),
 							),
 
-							// Only 'id' should be unknown (cosmetic change)
-							plancheck.ExpectUnknownValue(
+							// 'id' must stay known so the plan does not report a
+							// spurious in-place update on every run
+							plancheck.ExpectKnownValue(
 								resourceReferenceName,
 								tfjsonpath.New("id"),
+								knownvalue.StringExact("111111:2222_333333"),
 							),
+							plancheck.ExpectEmptyPlan(),
 						},
 					},
 

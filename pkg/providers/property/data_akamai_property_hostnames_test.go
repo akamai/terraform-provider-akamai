@@ -61,7 +61,60 @@ func TestDataPropertyHostnames(t *testing.T) {
 				}, nil).Times(3)
 			},
 			config: testutils.LoadFixtureString(t, "testdata/TestDataPropertyHostnames/property_hostnames.tf"),
-			checks: newHostnamesStateChecker(flattenHostnames(buildPropertyHostnamesWithCCM())).Build(),
+			checks: func() resource.TestCheckFunc {
+				checker := test.NewStateChecker("data.akamai_property_hostnames.akaprophosts").
+					CheckEqual("id", "prp_test1").
+					CheckEqual("group_id", "grp_test").
+					CheckEqual("contract_id", "ctr_test").
+					CheckEqual("property_id", "prp_test").
+					CheckEqual("version", "1").
+					CheckEqual("hostnames.#", "3")
+
+				for i := 0; i < 3; i++ {
+					isEven := i%2 == 0
+					checker = checker.
+						CheckEqual(fmt.Sprintf("hostnames.%d.cname_type", i), "EDGE_HOSTNAME").
+						CheckEqual(fmt.Sprintf("hostnames.%d.edge_hostname_id", i), fmt.Sprintf("ehn_%d", i)).
+						CheckEqual(fmt.Sprintf("hostnames.%d.cname_from", i), fmt.Sprintf("cnamef%d.example.com", i)).
+						CheckEqual(fmt.Sprintf("hostnames.%d.cname_to", i), fmt.Sprintf("cnamet%d.example.com.edgekey.net", i)).
+						CheckEqual(fmt.Sprintf("hostnames.%d.cert_provisioning_type", i), "CCM").
+						CheckEqual(fmt.Sprintf("hostnames.%d.cert_status.0.hostname", i), fmt.Sprintf("cnamef%d", i)).
+						CheckEqual(fmt.Sprintf("hostnames.%d.cert_status.0.target", i), fmt.Sprintf("cnamet%d", i)).
+						CheckEqual(fmt.Sprintf("hostnames.%d.cert_status.0.staging_status", i), "PENDING").
+						CheckEqual(fmt.Sprintf("hostnames.%d.cert_status.0.production_status", i), "PENDING").
+						CheckEqual(fmt.Sprintf("hostnames.%d.ccm_certificates.0.rsa_cert_id", i), fmt.Sprintf("rsa_cert_%d", i)).
+						CheckEqual(fmt.Sprintf("hostnames.%d.ccm_certificates.0.ecdsa_cert_id", i), fmt.Sprintf("ecdsa_cert_%d", i)).
+						CheckEqual(fmt.Sprintf("hostnames.%d.ccm_cert_status.0.ecdsa_staging_status", i), "ACTIVE").
+						CheckEqual(fmt.Sprintf("hostnames.%d.ccm_cert_status.0.ecdsa_production_status", i), "ACTIVE").
+						CheckEqual(fmt.Sprintf("hostnames.%d.ccm_cert_status.0.rsa_staging_status", i), "PENDING").
+						CheckEqual(fmt.Sprintf("hostnames.%d.ccm_cert_status.0.rsa_production_status", i), "PENDING").
+						CheckEqual(fmt.Sprintf("hostnames.%d.ccm_cert_id", i), fmt.Sprintf("%d", 164877+i)).
+						CheckEqual(fmt.Sprintf("hostnames.%d.ccm_cert_link", i), fmt.Sprintf("/ccm/v2/lineages/%d", 164877+i)).
+						CheckEqual(fmt.Sprintf("hostnames.%d.ccm_cert_statuses.#", i), "4").
+						CheckEqual(fmt.Sprintf("hostnames.%d.ccm_cert_statuses.0.key_type", i), "RSA").
+						CheckEqual(fmt.Sprintf("hostnames.%d.ccm_cert_statuses.0.network", i), "STAGING").
+						CheckEqual(fmt.Sprintf("hostnames.%d.ccm_cert_statuses.0.status", i), "ACTIVE").
+						CheckEqual(fmt.Sprintf("hostnames.%d.ccm_cert_statuses.1.key_type", i), "RSA").
+						CheckEqual(fmt.Sprintf("hostnames.%d.ccm_cert_statuses.1.network", i), "PRODUCTION").
+						CheckEqual(fmt.Sprintf("hostnames.%d.ccm_cert_statuses.1.status", i), "ACTIVE").
+						CheckEqual(fmt.Sprintf("hostnames.%d.ccm_cert_statuses.2.key_type", i), "ECDSA").
+						CheckEqual(fmt.Sprintf("hostnames.%d.ccm_cert_statuses.2.network", i), "STAGING").
+						CheckEqual(fmt.Sprintf("hostnames.%d.ccm_cert_statuses.2.status", i), "ACTIVE").
+						CheckEqual(fmt.Sprintf("hostnames.%d.ccm_cert_statuses.3.key_type", i), "ECDSA").
+						CheckEqual(fmt.Sprintf("hostnames.%d.ccm_cert_statuses.3.network", i), "PRODUCTION").
+						CheckEqual(fmt.Sprintf("hostnames.%d.ccm_cert_statuses.3.status", i), "ACTIVE").
+						CheckEqual(fmt.Sprintf("hostnames.%d.mtls.0.ca_set_id", i), fmt.Sprintf("ca_set_%d", i)).
+						CheckEqual(fmt.Sprintf("hostnames.%d.mtls.0.check_client_ocsp", i), fmt.Sprintf("%v", isEven)).
+						CheckEqual(fmt.Sprintf("hostnames.%d.mtls.0.send_ca_set_client", i), fmt.Sprintf("%v", !isEven)).
+						CheckEqual(fmt.Sprintf("hostnames.%d.tls_configuration.0.cipher_profile", i), "ak-akamai-default-2022q1").
+						CheckEqual(fmt.Sprintf("hostnames.%d.tls_configuration.0.disallowed_tls_versions.#", i), "2").
+						CheckEqual(fmt.Sprintf("hostnames.%d.tls_configuration.0.disallowed_tls_versions.0", i), "TLSv1").
+						CheckEqual(fmt.Sprintf("hostnames.%d.tls_configuration.0.disallowed_tls_versions.1", i), "TLSv1_1").
+						CheckEqual(fmt.Sprintf("hostnames.%d.tls_configuration.0.staple_server_ocsp_response", i), fmt.Sprintf("%v", isEven)).
+						CheckEqual(fmt.Sprintf("hostnames.%d.tls_configuration.0.fips_mode", i), fmt.Sprintf("%v", !isEven))
+				}
+				return checker.Build()
+			}(),
 		},
 		"list hostnames": {
 			init: func(client *edgegrid.TestClient) {
@@ -959,8 +1012,8 @@ func buildPropertyHostnamesWithAuthorization() []papi.HostnameResponseItem {
 }
 
 func buildPropertyHostnamesWithCCM() []papi.HostnameResponseItem {
-	hostnames := make([]papi.HostnameResponseItem, 10)
-	for i := 0; i < 10; i++ {
+	hostnames := make([]papi.HostnameResponseItem, 3)
+	for i := 0; i < 3; i++ {
 		// Alternate boolean values to test both true and false scenarios
 		isEven := i%2 == 0
 
@@ -983,8 +1036,8 @@ func buildPropertyHostnamesWithCCM() []papi.HostnameResponseItem {
 				},
 				},
 			},
-			CCMCertificates: &papi.CCMCertificatesResp{
-				CCMCertificates: papi.CCMCertificates{
+			CCMCertificates: &papi.CCMCertificatesResp{ //nolint:staticcheck
+				CCMCertificates: papi.CCMCertificates{ //nolint:staticcheck
 					ECDSACertID: fmt.Sprintf("ecdsa_cert_%d", i),
 					RSACertID:   fmt.Sprintf("rsa_cert_%d", i),
 				},
@@ -994,6 +1047,14 @@ func buildPropertyHostnamesWithCCM() []papi.HostnameResponseItem {
 				ECDSAProductionStatus: "ACTIVE",
 				RSAStagingStatus:      "PENDING",
 				RSAProductionStatus:   "PENDING",
+			},
+			CCMCertID:   ptr.To(fmt.Sprintf("%d", 164877+i)),
+			CCMCertLink: ptr.To(fmt.Sprintf("/ccm/v2/lineages/%d", 164877+i)),
+			CCMCertStatuses: []papi.CCMCertStatusItem{
+				{KeyType: "RSA", Network: "STAGING", Status: "ACTIVE"},
+				{KeyType: "RSA", Network: "PRODUCTION", Status: "ACTIVE"},
+				{KeyType: "ECDSA", Network: "STAGING", Status: "ACTIVE"},
+				{KeyType: "ECDSA", Network: "PRODUCTION", Status: "ACTIVE"},
 			},
 			MTLS: &papi.MTLSResp{
 				CASetLink: fmt.Sprintf("/ccm/v3/ca-sets/ca_set_%d", i),
@@ -1111,6 +1172,105 @@ func checkAuthorizationField(checker test.StateChecker, ind, cInd int, mapKey, c
 	return checker
 }
 
+func checkCertStatusField(checker test.StateChecker, ind int, mapKey string, mapVal any) test.StateChecker {
+	certStatuses := mapVal.([]map[string]interface{})
+	for cInd, cert := range certStatuses {
+		for cKey, cVal := range cert {
+			if cKey == "authorization" {
+				if authList, ok := cVal.([]map[string]any); ok {
+					checker = checkAuthorizationField(checker, ind, cInd, mapKey, cKey, authList)
+				}
+				continue
+			}
+			value := fmt.Sprintf("%v", cVal)
+			key := fmt.Sprintf("hostnames.%v.%v.%v.%v", ind, mapKey, cInd, cKey)
+			checker = checker.CheckEqual(key, value)
+		}
+	}
+	return checker
+}
+
+func checkDomainOwnershipVerificationField(checker test.StateChecker, ind int, mapKey string, mapVal any) test.StateChecker {
+	if mapVal == nil {
+		return checker.CheckMissing(mapKey)
+	}
+	dovVal := mapVal.([]map[string]any)
+	for dovKey, dovMapVal := range dovVal[0] {
+		switch dovKey {
+		case "validation_http":
+			validationHTTP := dovMapVal.([]map[string]any)
+			for vKey, vMapVal := range validationHTTP[0] {
+				nestedAttrValidationHTTP := vMapVal.([]map[string]any)
+				for nvKey, nvMapVal := range nestedAttrValidationHTTP[0] {
+					value := fmt.Sprintf("%v", nvMapVal)
+					key := fmt.Sprintf("hostnames.%v.%v.0.%v.0.%v.0.%v", ind, mapKey, dovKey, vKey, nvKey)
+					checker = checker.CheckEqual(key, value)
+				}
+			}
+		case "validation_txt":
+			validationTXT := dovMapVal.([]map[string]any)
+			for tKey, tMapVal := range validationTXT[0] {
+				value := fmt.Sprintf("%v", tMapVal)
+				key := fmt.Sprintf("hostnames.%v.%v.0.%v.0.%v", ind, mapKey, dovKey, tKey)
+				checker = checker.CheckEqual(key, value)
+			}
+		case "validation_cname":
+			validationCname := dovMapVal.([]map[string]any)
+			for cKey, cMapVal := range validationCname[0] {
+				value := fmt.Sprintf("%v", cMapVal)
+				key := fmt.Sprintf("hostnames.%v.%v.0.%v.0.%v", ind, mapKey, dovKey, cKey)
+				checker = checker.CheckEqual(key, value)
+			}
+		case "challenge_token_expiry_date", "status":
+			if value := dovMapVal.(string); value != "" {
+				key := fmt.Sprintf("hostnames.%v.%v.0.%v", ind, mapKey, dovKey)
+				checker = checker.CheckEqual(key, value)
+			}
+		}
+	}
+	return checker
+}
+
+func checkCCMCertStatusesField(checker test.StateChecker, ind int, mapKey string, mapVal any) test.StateChecker {
+	items, ok := mapVal.([]map[string]string)
+	if !ok {
+		return checker
+	}
+	baseKey := fmt.Sprintf("hostnames.%d.%s", ind, mapKey)
+	checker = checker.CheckEqual(fmt.Sprintf("%s.#", baseKey), fmt.Sprintf("%d", len(items)))
+	for itemIndex, itemMap := range items {
+		for itemKey, itemValue := range itemMap {
+			key := fmt.Sprintf("%s.%d.%s", baseKey, itemIndex, itemKey)
+			checker = checker.CheckEqual(key, itemValue)
+		}
+	}
+	return checker
+}
+
+func checkCCMDetailField(checker test.StateChecker, ind int, mapKey string, mapVal any) test.StateChecker {
+	items, ok := mapVal.([]map[string]interface{})
+	if !ok {
+		return checker
+	}
+	for itemIndex, itemMap := range items {
+		for itemKey, itemValue := range itemMap {
+			if v, ok := itemValue.([]string); ok {
+				baseKey := fmt.Sprintf("hostnames.%d.%s.%d.%s", ind, mapKey, itemIndex, itemKey)
+				checker = checker.CheckEqual(fmt.Sprintf("%s.#", baseKey), fmt.Sprintf("%d", len(v)))
+				for i, strVal := range v {
+					elementKey := fmt.Sprintf("%s.%d", baseKey, i)
+					checker = checker.CheckEqual(elementKey, strVal)
+				}
+				continue
+			}
+			value := fmt.Sprintf("%v", itemValue)
+			key := fmt.Sprintf("hostnames.%d.%s.%d.%s", ind, mapKey, itemIndex, itemKey)
+			checker = checker.CheckEqual(key, value)
+		}
+	}
+	return checker
+}
+
 func newHostnamesStateChecker(hostnames []map[string]any) test.StateChecker {
 	checker := test.NewStateChecker("data.akamai_property_hostnames.akaprophosts").
 		CheckEqual("id", "prp_test1").
@@ -1124,85 +1284,13 @@ func newHostnamesStateChecker(hostnames []map[string]any) test.StateChecker {
 		for mapKey, mapVal := range hostname {
 			switch mapKey {
 			case "cert_status":
-				certStatuses := mapVal.([]map[string]interface{})
-				for cInd, cert := range certStatuses {
-					for cKey, cVal := range cert {
-						switch cKey {
-						case "authorization":
-							if authList, ok := cVal.([]map[string]any); ok {
-								checker = checkAuthorizationField(checker, ind, cInd, mapKey, cKey, authList)
-							}
-						default:
-							value := fmt.Sprintf("%v", cVal)
-							key := fmt.Sprintf("hostnames.%v.%v.%v.%v", ind, mapKey, cInd, cKey)
-							checker = checker.CheckEqual(key, value)
-						}
-					}
-				}
+				checker = checkCertStatusField(checker, ind, mapKey, mapVal)
 			case "domain_ownership_verification":
-				if mapVal != nil {
-					dovVal := mapVal.([]map[string]any)
-					for dovKey, dovMapVal := range dovVal[0] {
-						switch dovKey {
-						case "validation_http":
-							validationHTTP := dovMapVal.([]map[string]any)
-							for vKey, vMapVal := range validationHTTP[0] {
-								nestedAttrValidationHTTP := vMapVal.([]map[string]any)
-								for nvKey, nvMapVal := range nestedAttrValidationHTTP[0] {
-									value := fmt.Sprintf("%v", nvMapVal)
-									key := fmt.Sprintf("hostnames.%v.%v.0.%v.0.%v.0.%v", ind, mapKey, dovKey, vKey, nvKey)
-									checker = checker.CheckEqual(key, value)
-								}
-							}
-						case "validation_txt":
-							validationTXT := dovMapVal.([]map[string]any)
-							for tKey, tMapVal := range validationTXT[0] {
-								value := fmt.Sprintf("%v", tMapVal)
-								key := fmt.Sprintf("hostnames.%v.%v.0.%v.0.%v", ind, mapKey, dovKey, tKey)
-								checker = checker.CheckEqual(key, value)
-							}
-						case "validation_cname":
-							validationCname := dovMapVal.([]map[string]any)
-							for cKey, cMapVal := range validationCname[0] {
-								value := fmt.Sprintf("%v", cMapVal)
-								key := fmt.Sprintf("hostnames.%v.%v.0.%v.0.%v", ind, mapKey, dovKey, cKey)
-								checker = checker.CheckEqual(key, value)
-							}
-						case "challenge_token_expiry_date":
-							if value := dovMapVal.(string); value != "" {
-								key := fmt.Sprintf("hostnames.%v.%v.0.%v", ind, mapKey, dovKey)
-								checker = checker.CheckEqual(key, value)
-							}
-						case "status":
-							if value := dovMapVal.(string); value != "" {
-								key := fmt.Sprintf("hostnames.%v.%v.0.%v", ind, mapKey, dovKey)
-								checker = checker.CheckEqual(key, value)
-							}
-						}
-					}
-				} else {
-					checker = checker.CheckMissing(mapKey)
-				}
+				checker = checkDomainOwnershipVerificationField(checker, ind, mapKey, mapVal)
+			case "ccm_cert_statuses":
+				checker = checkCCMCertStatusesField(checker, ind, mapKey, mapVal)
 			case "ccm_cert_status", "ccm_certificates", "mtls", "tls_configuration":
-				if items, ok := mapVal.([]map[string]interface{}); ok {
-					for itemIndex, itemMap := range items {
-						for itemKey, itemValue := range itemMap {
-							switch v := itemValue.(type) {
-							case []string:
-								baseKey := fmt.Sprintf("hostnames.%d.%s.%d.%s", ind, mapKey, itemIndex, itemKey)
-								checker = checker.CheckEqual(fmt.Sprintf("%s.#", baseKey), fmt.Sprintf("%d", len(v)))
-								for i, strVal := range v {
-									elementKey := fmt.Sprintf("%s.%d", baseKey, i)
-									checker = checker.CheckEqual(elementKey, strVal)
-								}
-							default:
-								value := fmt.Sprintf("%v", itemValue)
-								key := fmt.Sprintf("hostnames.%d.%s.%d.%s", ind, mapKey, itemIndex, itemKey)
-								checker = checker.CheckEqual(key, value)
-							}
-						}
-					}
-				}
+				checker = checkCCMDetailField(checker, ind, mapKey, mapVal)
 			default:
 				value := fmt.Sprintf("%v", mapVal)
 				key := fmt.Sprintf("hostnames.%v.%v", ind, mapKey)
