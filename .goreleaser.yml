@@ -32,7 +32,7 @@ builds:
     - goos: darwin
       goarch: '386'
     - goos: windows
-      goarch: arm      
+      goarch: arm
   binary: '{{ .ProjectName }}_v{{ .Version }}'
 archives:
 - format: zip
