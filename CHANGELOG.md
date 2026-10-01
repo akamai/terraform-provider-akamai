@@ -53,6 +53,8 @@
   * Added the `akamai_cloudcertificates_delete_generation` action to permanently delete a single certificate generation from a lineage.
 
 
+* Appsec
+  * Improved `akamai_appsec_activations` polling to use progressive backoff instead of a fixed interval, reducing unnecessary API calls.
 
 
 

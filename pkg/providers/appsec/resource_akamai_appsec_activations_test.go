@@ -20,35 +20,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// mockLogger is a simple logger implementation for tests
-type mockLogger struct{}
-
-func (m *mockLogger) Debugf(_ string, _ ...interface{}) {}
-func (m *mockLogger) Debug(_ string, _ ...interface{})  {}
-func (m *mockLogger) Infof(_ string, _ ...interface{})  {}
-func (m *mockLogger) Info(_ string, _ ...interface{})   {}
-func (m *mockLogger) Warnf(_ string, _ ...interface{})  {}
-func (m *mockLogger) Warn(_ string, _ ...interface{})   {}
-func (m *mockLogger) Errorf(_ string, _ ...interface{}) {}
-func (m *mockLogger) Error(_ string, _ ...interface{})  {}
-func (m *mockLogger) Fatalf(_ string, _ ...interface{}) {}
-func (m *mockLogger) Fatal(_ string, _ ...interface{})  {}
-func (m *mockLogger) Panicf(_ string, _ ...interface{}) {}
-func (m *mockLogger) Panic(_ string, _ ...interface{})  {}
-func (m *mockLogger) Tracef(_ string, _ ...interface{}) {}
-func (m *mockLogger) Trace(_ string, _ ...interface{})  {}
-func (m *mockLogger) With(_ string, _ akalog.Fields) akalog.Interface {
-	return m
-}
-func (m *mockLogger) WithField(_ string, _ interface{}) akalog.Interface {
-	return m
-}
-func (m *mockLogger) WithFields(_ akalog.Fields) akalog.Interface {
-	return m
-}
-
-func newMockLogger() akalog.Interface {
-	return &mockLogger{}
+// testSubprovider returns a subprovider with millisecond poll intervals so
+// CRUD tests exercise the real polling code path without real-time waits.
+func testSubprovider() *Subprovider {
+	return newSubproviderWithConfig(subproviderConfig{
+		activation: activationResourceConfig{
+			appsecResourceTimeout: 90 * time.Minute,
+			createActivationRetry: time.Millisecond,
+			pollTimeUnit:          time.Millisecond,
+		},
+	})
 }
 
 func TestAkamaiActivations_res_basic(t *testing.T) {
@@ -110,6 +91,13 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 			createActivationsRequest,
 		).Return(&createActivationsResponse, nil).Once()
 
+		// lookupActivation: returns pending to force the poll loop to run
+		client.APPSEC.On("GetActivations",
+			testutils.MockContext,
+			appsec.GetActivationsRequest{ActivationID: 547694},
+		).Return(&appsec.GetActivationsResponse{Status: appsec.StatusPending}, nil).Once()
+
+		// poll loop: returns active
 		client.APPSEC.On("GetActivations",
 			testutils.MockContext,
 			appsec.GetActivationsRequest{ActivationID: 547694},
@@ -144,7 +132,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 
 		mockGetConfigurationVersionDefault(client.APPSEC)
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, testSubprovider()),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResActivations/match_by_id.tf"),
@@ -221,6 +209,13 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 			createActivationsRequest,
 		).Return(&createActivationsResponse, nil).Once()
 
+		// lookupActivation: returns pending to force the poll loop to run
+		client.APPSEC.On("GetActivations",
+			testutils.MockContext,
+			appsec.GetActivationsRequest{ActivationID: 547694},
+		).Return(&appsec.GetActivationsResponse{Status: appsec.StatusPending}, nil).Once()
+
+		// poll loop: returns active
 		client.APPSEC.On("GetActivations",
 			testutils.MockContext,
 			appsec.GetActivationsRequest{ActivationID: 547694},
@@ -245,7 +240,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 
 		mockGetConfigurationVersionDefault(client.APPSEC)
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, testSubprovider()),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResActivations/match_by_id.tf"),
@@ -294,7 +289,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 			CheckEqual("network", "STAGING")
 
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, testSubprovider()),
 			Steps: []resource.TestStep{
 				{
 					Config:           testutils.LoadFixtureString(t, "testdata/TestResActivations/match_by_id.tf"),
@@ -370,6 +365,12 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 				}{{ConfigID: 43253, ConfigVersion: 7}}},
 		).Return(&createActivationsResponse, nil).Once()
 
+		// lookupActivation: returns pending to force the poll loop to run
+		client.APPSEC.On("GetActivations",
+			testutils.MockContext,
+			appsec.GetActivationsRequest{ActivationID: 547694},
+		).Return(&appsec.GetActivationsResponse{Status: appsec.StatusPending}, nil).Once()
+		// poll loop: returns active
 		client.APPSEC.On("GetActivations",
 			testutils.MockContext,
 			appsec.GetActivationsRequest{ActivationID: 547694},
@@ -409,7 +410,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		// update only note field change suppressed
 		mockGetConfigurationVersionDefault(client.APPSEC)
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, testSubprovider()),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResActivations/match_by_id.tf"),
@@ -519,6 +520,13 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 			createActivationsRequest,
 		).Return(&createActivationsResponse, nil).Once()
 
+		// lookupActivation: returns pending to force the poll loop to run
+		client.APPSEC.On("GetActivations",
+			testutils.MockContext,
+			appsec.GetActivationsRequest{ActivationID: 547694},
+		).Return(&appsec.GetActivationsResponse{Status: appsec.StatusPending}, nil).Once()
+
+		// poll loop: returns active
 		client.APPSEC.On("GetActivations",
 			testutils.MockContext,
 			appsec.GetActivationsRequest{ActivationID: 547694},
@@ -558,6 +566,12 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 				}{{ConfigID: 43253, ConfigVersion: 7}}},
 		).Return(&createActivationsUpdatedResponse, nil).Once()
 
+		// lookupActivation: returns pending to force the poll loop to run
+		client.APPSEC.On("GetActivations",
+			testutils.MockContext,
+			appsec.GetActivationsRequest{ActivationID: 547694},
+		).Return(&appsec.GetActivationsResponse{Status: appsec.StatusPending}, nil).Once()
+		// poll loop: returns active
 		client.APPSEC.On("GetActivations",
 			testutils.MockContext,
 			appsec.GetActivationsRequest{ActivationID: 547694},
@@ -591,7 +605,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 
 		mockGetConfigurationVersionDefault(client.APPSEC)
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, testSubprovider()),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResActivations/match_by_id.tf"),
@@ -714,7 +728,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 
 		mockGetConfigurationVersionDefault(client.APPSEC)
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, testSubprovider()),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResActivations/match_by_id.tf"),
@@ -907,7 +921,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 
 		mockGetConfigurationVersionDefault(client.APPSEC)
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, testSubprovider()),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResActivations/match_by_id.tf"),
@@ -1223,7 +1237,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 
 		mockGetConfigurationVersionDefault(client.APPSEC)
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, testSubprovider()),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResActivations/match_by_id.tf"),
@@ -1321,7 +1335,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 
 		mockGetConfigurationVersionDefault(client.APPSEC)
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, testSubprovider()),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResActivations/match_by_id.tf"),
@@ -1495,7 +1509,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 
 		mockGetConfigurationVersionDefault(client.APPSEC)
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, testSubprovider()),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResActivations/match_by_id_multiple_emails.tf"),
@@ -1626,7 +1640,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 
 		mockGetConfigurationVersionDefault(client.APPSEC)
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, testSubprovider()),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResActivations/match_by_id_multiple_emails.tf"),
@@ -1713,7 +1727,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 
 		mockGetConfigurationVersionDefault(client.APPSEC)
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, testSubprovider()),
 			Steps: []resource.TestStep{
 				{
 					// Try to activate version 7 which is already active
@@ -1767,7 +1781,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 
 		mockGetConfigurationVersionDefault(client.APPSEC)
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, testSubprovider()),
 			Steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestResActivations/match_by_id.tf"),
@@ -1874,7 +1888,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 
 		mockGetConfigurationVersionDefault(client.APPSEC)
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, testSubprovider()),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResActivations/match_by_id.tf"),
@@ -2300,7 +2314,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		).Return(&getActivationHistoryResponse, nil).Once()
 
 		ctx := context.Background()
-		logger := newMockLogger()
+		logger := akalog.NOPLogger()
 		result, err := findCurrentActiveOrPendingDeactivation(ctx, client.APPSEC, 43253, "STAGING", logger)
 		require.NoError(t, err)
 		require.NotNil(t, result)
@@ -2338,7 +2352,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		).Return(&getActivationHistoryResponse, nil).Once()
 
 		ctx := context.Background()
-		logger := newMockLogger()
+		logger := akalog.NOPLogger()
 		result, err := findCurrentActiveOrPendingDeactivation(ctx, client.APPSEC, 43253, "STAGING", logger)
 		require.NoError(t, err)
 		require.NotNil(t, result)
@@ -2368,7 +2382,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		).Return(&getActivationHistoryResponse, nil).Once()
 
 		ctx := context.Background()
-		logger := newMockLogger()
+		logger := akalog.NOPLogger()
 		result, err := findCurrentActiveOrPendingDeactivation(ctx, client.APPSEC, 43253, "STAGING", logger)
 		require.NoError(t, err)
 		require.NotNil(t, result)
@@ -2397,7 +2411,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		).Return(&getActivationHistoryResponse, nil).Once()
 
 		ctx := context.Background()
-		logger := newMockLogger()
+		logger := akalog.NOPLogger()
 		result, err := findCurrentActiveOrPendingDeactivation(ctx, client.APPSEC, 43253, "STAGING", logger)
 		require.NoError(t, err)
 		require.Nil(t, result, "Should return nil when no activation exists for the requested network")
@@ -2440,7 +2454,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		).Return(&getActivationHistoryResponse, nil).Once()
 
 		ctx := context.Background()
-		logger := newMockLogger()
+		logger := akalog.NOPLogger()
 		result, err := findCurrentActiveOrPendingDeactivation(ctx, client.APPSEC, 43253, "STAGING", logger)
 		require.NoError(t, err)
 		require.NotNil(t, result)
@@ -2469,7 +2483,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		).Return(&getActivationHistoryResponse, nil).Once()
 
 		ctx := context.Background()
-		logger := newMockLogger()
+		logger := akalog.NOPLogger()
 		result, err := findCurrentActiveOrPendingDeactivation(ctx, client.APPSEC, 43253, "STAGING", logger)
 		require.NoError(t, err)
 		require.Nil(t, result, "Should return nil when only activation pending statuses exist")
@@ -2596,7 +2610,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 
 		mockGetConfigurationVersionDefault(client.APPSEC)
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, testSubprovider()),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResActivations/match_by_id.tf"),
@@ -2740,7 +2754,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 
 		mockGetConfigurationVersionDefault(client.APPSEC)
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, testSubprovider()),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResActivations/match_by_id.tf"),
@@ -2879,7 +2893,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 
 		mockGetConfigurationVersionDefault(client.APPSEC)
 		resource.UnitTest(t, resource.TestCase{
-			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, testSubprovider()),
 			Steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResActivations/match_by_id.tf"),
@@ -2943,7 +2957,7 @@ func TestPerformActivationInvalidatesCache(t *testing.T) {
 		Note:               "test note",
 		NotificationEmails: []string{"test@example.com"},
 		ResourceData:       activationTestResourceData(t, configID, version),
-		Logger:             newMockLogger(),
+		Logger:             akalog.NOPLogger(),
 	}
 
 	diags := performActivation(context.Background(), client.APPSEC, params, defaultActivationResourceConfig())
@@ -2982,10 +2996,10 @@ func TestPerformDeactivationInvalidatesCache(t *testing.T) {
 		Note:               "test note",
 		NotificationEmails: []string{"test@example.com"},
 		ResourceData:       activationTestResourceData(t, configID, version),
-		Logger:             newMockLogger(),
+		Logger:             akalog.NOPLogger(),
 	}
 
-	diags := performDeactivation(context.Background(), client.APPSEC, 999, params, defaultActivationResourceConfig())
+	diags := performDeactivation(context.Background(), client.APPSEC, 999, params, activationResourceConfig{pollTimeUnit: time.Millisecond})
 	require.False(t, diags.HasError(), "performDeactivation should succeed: %v", diags)
 
 	out := &appsec.GetConfigurationResponse{}
@@ -3020,10 +3034,10 @@ func TestWaitForDeactivationInvalidatesCache(t *testing.T) {
 		Note:               "test note",
 		NotificationEmails: []string{"test@example.com"},
 		ResourceData:       activationTestResourceData(t, configID, version),
-		Logger:             newMockLogger(),
+		Logger:             akalog.NOPLogger(),
 	}
 
-	diags := waitForDeactivation(context.Background(), client.APPSEC, currentVersion, params, defaultActivationResourceConfig())
+	diags := waitForDeactivation(context.Background(), client.APPSEC, currentVersion, params, activationResourceConfig{pollTimeUnit: time.Millisecond})
 	require.False(t, diags.HasError(), "waitForDeactivation should succeed: %v", diags)
 
 	out := &appsec.GetConfigurationResponse{}
@@ -3031,4 +3045,123 @@ func TestWaitForDeactivationInvalidatesCache(t *testing.T) {
 	assert.ErrorIs(t, err, cache.ErrEntryNotFound, "cache should be invalidated after deactivation wait")
 
 	client.APPSEC.AssertExpectations(t)
+}
+
+func TestPollInterval(t *testing.T) {
+	t.Parallel()
+
+	t.Run("default intervals follow 2-1-3 schedule", func(t *testing.T) {
+		t.Parallel()
+		cfg := activationResourceConfig{}
+		// Attempts 0-2: 2 min each (covers first 6 min)
+		assert.Equal(t, 2*time.Minute, cfg.pollInterval(0))
+		assert.Equal(t, 2*time.Minute, cfg.pollInterval(1))
+		assert.Equal(t, 2*time.Minute, cfg.pollInterval(2))
+		// Attempts 3-6: 1 min each (covers next 4 min → 10 min total)
+		assert.Equal(t, 1*time.Minute, cfg.pollInterval(3))
+		assert.Equal(t, 1*time.Minute, cfg.pollInterval(4))
+		assert.Equal(t, 1*time.Minute, cfg.pollInterval(5))
+		assert.Equal(t, 1*time.Minute, cfg.pollInterval(6))
+		// Attempts 7+: 3 min each
+		assert.Equal(t, 3*time.Minute, cfg.pollInterval(7))
+		assert.Equal(t, 3*time.Minute, cfg.pollInterval(8))
+	})
+
+	t.Run("default schedule holds at 3 min after attempt 7", func(t *testing.T) {
+		t.Parallel()
+		cfg := activationResourceConfig{}
+		assert.Equal(t, 3*time.Minute, cfg.pollInterval(10))
+		assert.Equal(t, 3*time.Minute, cfg.pollInterval(100))
+	})
+
+	t.Run("pollTimeUnit scales the schedule", func(t *testing.T) {
+		t.Parallel()
+		cfg := activationResourceConfig{
+			pollTimeUnit: time.Millisecond,
+		}
+		assert.Equal(t, 2*time.Millisecond, cfg.pollInterval(0))
+		assert.Equal(t, 1*time.Millisecond, cfg.pollInterval(3))
+		assert.Equal(t, 3*time.Millisecond, cfg.pollInterval(7))
+		assert.Equal(t, 3*time.Millisecond, cfg.pollInterval(99))
+	})
+}
+
+func TestPollActivationWithBackoff(t *testing.T) {
+	t.Parallel()
+
+	shortConfig := activationResourceConfig{
+		pollTimeUnit: time.Millisecond,
+	}
+
+	t.Run("polls until active and advances pollIndex", func(t *testing.T) {
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+
+		req := appsec.GetActivationsRequest{ActivationID: 1}
+		// First call returns Pending, second returns Active
+		client.APPSEC.On("GetActivations", testutils.MockContext, req).
+			Return(&appsec.GetActivationsResponse{Status: appsec.StatusPending}, nil).Once()
+		client.APPSEC.On("GetActivations", testutils.MockContext, req).
+			Return(&appsec.GetActivationsResponse{Status: appsec.StatusActive}, nil).Once()
+
+		status, err := pollActivationWithBackoff(context.Background(), client.APPSEC, appsec.StatusPending, req, shortConfig, akalog.NOPLogger())
+		require.NoError(t, err)
+		require.Equal(t, appsec.StatusActive, status)
+		client.APPSEC.AssertExpectations(t)
+	})
+
+	t.Run("skips loop when already active", func(t *testing.T) {
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+
+		req := appsec.GetActivationsRequest{ActivationID: 2}
+		status, err := pollActivationWithBackoff(context.Background(), client.APPSEC, appsec.StatusActive, req, shortConfig, akalog.NOPLogger())
+		require.NoError(t, err)
+		require.Equal(t, appsec.StatusActive, status)
+		client.APPSEC.AssertExpectations(t) // GetActivations must not be called
+	})
+
+	t.Run("retries on 5xx without advancing pollIndex", func(t *testing.T) {
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+
+		req := appsec.GetActivationsRequest{ActivationID: 3}
+		err5xx := &appsec.Error{StatusCode: 502}
+		client.APPSEC.On("GetActivations", testutils.MockContext, req).
+			Return(nil, err5xx).Once()
+		client.APPSEC.On("GetActivations", testutils.MockContext, req).
+			Return(&appsec.GetActivationsResponse{Status: appsec.StatusActive}, nil).Once()
+
+		status, err := pollActivationWithBackoff(context.Background(), client.APPSEC, appsec.StatusPending, req, shortConfig, akalog.NOPLogger())
+		require.NoError(t, err)
+		require.Equal(t, appsec.StatusActive, status)
+		client.APPSEC.AssertExpectations(t)
+	})
+
+	t.Run("returns error on context cancellation", func(t *testing.T) {
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		req := appsec.GetActivationsRequest{ActivationID: 4}
+		_, err := pollActivationWithBackoff(ctx, client.APPSEC, appsec.StatusPending, req, shortConfig, akalog.NOPLogger())
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "activation context terminated")
+	})
+
+	t.Run("returns error when activation fails", func(t *testing.T) {
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+
+		req := appsec.GetActivationsRequest{ActivationID: 5}
+		client.APPSEC.On("GetActivations", testutils.MockContext, req).
+			Return(&appsec.GetActivationsResponse{Status: appsec.StatusFailed}, nil).Once()
+
+		status, err := pollActivationWithBackoff(context.Background(), client.APPSEC, appsec.StatusPending, req, shortConfig, akalog.NOPLogger())
+		require.Error(t, err)
+		require.Equal(t, appsec.StatusFailed, status)
+		client.APPSEC.AssertExpectations(t)
+	})
 }
