@@ -73,6 +73,11 @@
 
 
 
+* PAPI
+  * Fixed `akamai_property_activation` resource getting stuck retrying a deactivation indefinitely when the property 
+    version had already been deactivated outside Terraform, causing repeated 422 errors and apply timeouts ([I#793](https://github.com/akamai/terraform-provider-akamai/issues/793)).
+
+
 
 
 
