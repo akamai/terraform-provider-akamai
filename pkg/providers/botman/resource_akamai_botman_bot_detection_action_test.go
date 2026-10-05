@@ -13,10 +13,7 @@ import (
 )
 
 func TestResourceBotDetectionAction(t *testing.T) {
-	t.Parallel()
 	t.Run("ResourceBotDetectionAction", func(t *testing.T) {
-		t.Parallel()
-
 		expectedCreateJSON := `{"testKey":"testValue3"}`
 		expectedUpdateJSON := `{"testKey":"updated_testValue3"}`
 		client := setupMockedBotDetectionActionBotmanClient(false)
@@ -39,8 +36,6 @@ func TestResourceBotDetectionAction(t *testing.T) {
 		})
 	})
 	t.Run("ResourceBotDetectionActionDeletedFromRemoteWithoutCache", func(t *testing.T) {
-		t.Parallel()
-
 		expectedCreateJSON := `{"testKey":"testValue3"}`
 		client := setupMockedBotDetectionActionBotmanClient(true)
 
@@ -61,8 +56,6 @@ func TestResourceBotDetectionAction(t *testing.T) {
 		})
 	})
 	t.Run("ResourceBotDetectionActionDeletedFromRemoteWithCache", func(t *testing.T) {
-		t.Parallel()
-
 		expectedCreateJSON := `{"testKey":"testValue3"}`
 		client := setupMockedBotDetectionActionBotmanClient(true)
 

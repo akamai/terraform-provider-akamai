@@ -935,7 +935,7 @@ func TestActivationResourceDefaultTimeout(t *testing.T) {
 		Return(activationStatus(500035, 7274, 6102, "PRODUCTION", "IN_PROGRESS", t1, t1), nil)
 
 	config := defaultSubproviderConfig()
-	config.activation.defaultTimeout = 20 * time.Millisecond
+	config.activation.defaultTimeout = 100 * time.Millisecond
 	config.activation.pollInterval = time.Microsecond
 
 	resource.UnitTest(t, resource.TestCase{

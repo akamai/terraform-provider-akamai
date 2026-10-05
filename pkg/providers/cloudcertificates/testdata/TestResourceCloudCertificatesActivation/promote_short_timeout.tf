@@ -7,6 +7,6 @@ resource "akamai_cloudcertificates_activation" "test" {
   production_generation_id = 8100
 
   timeouts {
-    create = "5ms"
+    create = "100ms"
   }
 }

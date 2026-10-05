@@ -13,10 +13,7 @@ import (
 )
 
 func TestResourceAkamaiBotCategoryAction(t *testing.T) {
-	t.Parallel()
 	t.Run("ResourceAkamaiBotCategoryAction", func(t *testing.T) {
-		t.Parallel()
-
 		expectedCreateJSON := `{"testKey":"testValue3"}`
 		expectedUpdateJSON := `{"testKey":"updated_testValue3"}`
 		client := setupMockedAkamaiBotCategoryActionBotmanClient(false)
@@ -40,8 +37,6 @@ func TestResourceAkamaiBotCategoryAction(t *testing.T) {
 		})
 	})
 	t.Run("ResourceAkamaiBotCategoryActionWhenDeletedFromRemoteWithoutCache", func(t *testing.T) {
-		t.Parallel()
-
 		client := setupMockedAkamaiBotCategoryActionBotmanClient(true)
 		expectedCreateJSON := `{"testKey":"testValue3"}`
 
@@ -63,8 +58,6 @@ func TestResourceAkamaiBotCategoryAction(t *testing.T) {
 		})
 	})
 	t.Run("ResourceAkamaiBotCategoryActionWhenDeletedFromRemoteWithCache", func(t *testing.T) {
-		t.Parallel()
-
 		expectedCreateJSON := `{"testKey":"testValue3"}`
 		client := setupMockedAkamaiBotCategoryActionBotmanClient(true)
 
