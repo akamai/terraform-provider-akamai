@@ -124,16 +124,20 @@ func resourceGTMv1Property(config gtmPropertyResourceConfig) *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"type": {
 							Type:     schema.TypeString,
-							Optional: true,
+							Required: true,
 						},
 						"ttl": {
 							Type:     schema.TypeInt,
-							Optional: true,
+							Required: true,
 						},
 						"rdata": {
-							Type:     schema.TypeList,
-							Elem:     &schema.Schema{Type: schema.TypeString},
-							Optional: true,
+							Type: schema.TypeList,
+							Elem: &schema.Schema{
+								Type:         schema.TypeString,
+								ValidateFunc: validation.StringIsNotEmpty,
+							},
+							MinItems: 1,
+							Required: true,
 						},
 					},
 				},
@@ -1110,7 +1114,10 @@ func populatePropertyObject(d *schema.ResourceData, prop *gtm.Property, m interf
 	}
 
 	populateTrafficTargetObject(d, prop, m)
-	populateStaticRRSetObject(d, prop)
+	err = populateStaticRRSetObject(d, prop)
+	if err != nil {
+		return err
+	}
 	populateLivenessTestObject(d, prop)
 	err = populateStateChangeNotificationWebhookObject(d, prop)
 	if err != nil {
@@ -1295,7 +1302,7 @@ func populateTerraformTrafficTargetState(d *schema.ResourceData, prop *gtm.GetPr
 }
 
 // Populate existing static_rr_sets object from resource data
-func populateStaticRRSetObject(d *schema.ResourceData, prop *gtm.Property) {
+func populateStaticRRSetObject(d *schema.ResourceData, prop *gtm.Property) error {
 
 	// pull apart List
 	staticSetList, err := tf.GetInterfaceArrayValue("static_rr_set", d)
@@ -1310,7 +1317,11 @@ func populateStaticRRSetObject(d *schema.ResourceData, prop *gtm.Property) {
 			if recMap["rdata"] != nil {
 				rls := make([]string, len(recMap["rdata"].([]interface{})))
 				for i, d := range recMap["rdata"].([]interface{}) {
-					rls[i] = d.(string)
+					if val, ok := d.(string); ok {
+						rls[i] = val
+					} else {
+						return fmt.Errorf("%w: value is not a string: %v", tf.ErrInvalidType, d)
+					}
 				}
 				record.Rdata = rls
 			}
@@ -1318,6 +1329,7 @@ func populateStaticRRSetObject(d *schema.ResourceData, prop *gtm.Property) {
 		}
 		prop.StaticRRSets = staticObjList
 	}
+	return nil
 }
 
 // create and populate Terraform static_rr_sets schema

@@ -25,6 +25,8 @@
 
 
 
+* GTM
+  * Changed the `type`, `ttl`, and `rdata` attributes in the `static_rr_set` block of the `akamai_gtm_property` resource from optional to required.
 
 
 

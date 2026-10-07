@@ -1029,6 +1029,42 @@ func TestResGTMProperty(t *testing.T) {
 				},
 			},
 		},
+		"expect error - static_rr_set with empty object - missing required arguments": {
+			property: getBasicProperty(),
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/static_rr_set/static_rr_set_empty.tf"),
+					ExpectError: regexp.MustCompile(`Error: Missing required argument`),
+				},
+			},
+		},
+		"expect error - static_rr_set without type": {
+			property: getBasicProperty(),
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/static_rr_set/static_rr_set_without_type.tf"),
+					ExpectError: regexp.MustCompile(`The argument "type" is required, but no definition was found.`),
+				},
+			},
+		},
+		"expect error - static_rr_set without ttl": {
+			property: getBasicProperty(),
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/static_rr_set/static_rr_set_without_ttl.tf"),
+					ExpectError: regexp.MustCompile(`The argument "ttl" is required, but no definition was found.`),
+				},
+			},
+		},
+		"expect error - static_rr_set without rdata": {
+			property: getBasicProperty(),
+			steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResGtmProperty/static_rr_set/static_rr_set_without_rdata.tf"),
+					ExpectError: regexp.MustCompile(`The argument "rdata" is required, but no definition was found.`),
+				},
+			},
+		},
 	}
 
 	for name, test := range tests {
