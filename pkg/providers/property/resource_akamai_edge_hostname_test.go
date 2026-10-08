@@ -824,12 +824,12 @@ func TestResourceEdgeHostname(t *testing.T) {
 						IPVersionBehavior: "IPV6_COMPLIANCE",
 					},
 				}, nil).Twice()
-				mh.On("GetEdgeHostname", testutils.MockContext, 456).Return(&hapi.GetEdgeHostnameResponse{
+				mh.On("GetEdgeHostname", testutils.MockContext, hapi.GetEdgeHostnameRequest{EdgeHostnameID: int64(456)}).Return(&hapi.GetEdgeHostnameResponse{
 					EdgeHostnameID: 123,
 					UseDefaultTTL:  true,
 					TTL:            300,
 				}, nil).Times(3)
-				mh.On("GetEdgeHostname", testutils.MockContext, 456).Return(&hapi.GetEdgeHostnameResponse{
+				mh.On("GetEdgeHostname", testutils.MockContext, hapi.GetEdgeHostnameRequest{EdgeHostnameID: int64(456)}).Return(&hapi.GetEdgeHostnameResponse{
 					EdgeHostnameID: 123,
 					UseDefaultTTL:  false,
 					TTL:            600,
@@ -849,7 +849,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 					ChangeID: 123,
 				}, nil).Once()
 
-				mh.On("GetChangeRequest", testutils.MockContext, hapi.GetChangeRequest{ChangeID: 123}).Return(&hapi.ChangeRequest{
+				mh.On("GetChangeRequest", testutils.MockContext, hapi.GetChangeRequestRequest{ChangeID: 123}).Return(&hapi.GetChangeRequestResponse{
 					Status: changeRequestStatusSucceeded,
 				}, nil).Once()
 
@@ -1089,7 +1089,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 
 				// 2nd step
 				// update
-				mh.On("GetEdgeHostname", testutils.MockContext, 456).Return(&hapi.GetEdgeHostnameResponse{
+				mh.On("GetEdgeHostname", testutils.MockContext, hapi.GetEdgeHostnameRequest{EdgeHostnameID: int64(456)}).Return(&hapi.GetEdgeHostnameResponse{
 					EdgeHostnameID: 456,
 				}, nil).Once()
 				mh.On("UpdateEdgeHostname", testutils.MockContext, hapi.UpdateEdgeHostnameRequest{
@@ -1108,7 +1108,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 					ChangeID: 123,
 				}, nil).Once()
 
-				mh.On("GetChangeRequest", testutils.MockContext, hapi.GetChangeRequest{ChangeID: 123}).Return(&hapi.ChangeRequest{
+				mh.On("GetChangeRequest", testutils.MockContext, hapi.GetChangeRequestRequest{ChangeID: 123}).Return(&hapi.GetChangeRequestResponse{
 					Status: changeRequestStatusSucceeded,
 				}, nil).Once()
 
@@ -1228,12 +1228,12 @@ func TestResourceEdgeHostname(t *testing.T) {
 						IPVersionBehavior: "IPV6_COMPLIANCE",
 					},
 				}, nil).Times(5)
-				mh.On("GetEdgeHostname", testutils.MockContext, 456).Return(&hapi.GetEdgeHostnameResponse{
+				mh.On("GetEdgeHostname", testutils.MockContext, hapi.GetEdgeHostnameRequest{EdgeHostnameID: int64(456)}).Return(&hapi.GetEdgeHostnameResponse{
 					EdgeHostnameID: 456,
 					UseDefaultTTL:  true,
 					TTL:            300,
 				}, nil).Times(3)
-				mh.On("GetEdgeHostname", testutils.MockContext, 456).Return(&hapi.GetEdgeHostnameResponse{
+				mh.On("GetEdgeHostname", testutils.MockContext, hapi.GetEdgeHostnameRequest{EdgeHostnameID: int64(456)}).Return(&hapi.GetEdgeHostnameResponse{
 					EdgeHostnameID: 456,
 					UseDefaultTTL:  false,
 					TTL:            600,
@@ -1253,13 +1253,13 @@ func TestResourceEdgeHostname(t *testing.T) {
 					ChangeID: 123,
 				}, nil).Once()
 
-				mh.On("GetChangeRequest", testutils.MockContext, hapi.GetChangeRequest{ChangeID: 123}).Return(&hapi.ChangeRequest{
+				mh.On("GetChangeRequest", testutils.MockContext, hapi.GetChangeRequestRequest{ChangeID: 123}).Return(&hapi.GetChangeRequestResponse{
 					Status: changeRequestStatusSucceeded,
 				}, nil).Once()
 
 				// 2nd step
 				// update
-				mh.On("GetEdgeHostname", testutils.MockContext, 456).Return(&hapi.GetEdgeHostnameResponse{
+				mh.On("GetEdgeHostname", testutils.MockContext, hapi.GetEdgeHostnameRequest{EdgeHostnameID: int64(456)}).Return(&hapi.GetEdgeHostnameResponse{
 					EdgeHostnameID: 456,
 					UseDefaultTTL:  false,
 					TTL:            600,
@@ -1280,11 +1280,11 @@ func TestResourceEdgeHostname(t *testing.T) {
 					ChangeID: 123,
 				}, nil).Once()
 
-				mh.On("GetChangeRequest", testutils.MockContext, hapi.GetChangeRequest{ChangeID: 123}).Return(&hapi.ChangeRequest{
+				mh.On("GetChangeRequest", testutils.MockContext, hapi.GetChangeRequestRequest{ChangeID: 123}).Return(&hapi.GetChangeRequestResponse{
 					Status: changeRequestStatusSucceeded,
 				}, nil).Once()
 
-				mh.On("GetEdgeHostname", testutils.MockContext, 456).Return(&hapi.GetEdgeHostnameResponse{
+				mh.On("GetEdgeHostname", testutils.MockContext, hapi.GetEdgeHostnameRequest{EdgeHostnameID: int64(456)}).Return(&hapi.GetEdgeHostnameResponse{
 					EdgeHostnameID: 456,
 					UseDefaultTTL:  false,
 					TTL:            800,
@@ -1388,7 +1388,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 
 				// 2nd step
 				// update
-				mh.On("GetEdgeHostname", testutils.MockContext, 123).Return(&hapi.GetEdgeHostnameResponse{
+				mh.On("GetEdgeHostname", testutils.MockContext, hapi.GetEdgeHostnameRequest{EdgeHostnameID: int64(123)}).Return(&hapi.GetEdgeHostnameResponse{
 					EdgeHostnameID: 123,
 					UseDefaultTTL:  true,
 					TTL:            300,
@@ -1414,7 +1414,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 					ChangeID: 123,
 				}, nil).Once()
 
-				mh.On("GetChangeRequest", testutils.MockContext, hapi.GetChangeRequest{ChangeID: 123}).Return(&hapi.ChangeRequest{
+				mh.On("GetChangeRequest", testutils.MockContext, hapi.GetChangeRequestRequest{ChangeID: 123}).Return(&hapi.GetChangeRequestResponse{
 					Status: changeRequestStatusSucceeded,
 				}, nil).Once()
 
@@ -1436,7 +1436,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 					},
 				}, nil).Twice()
 
-				mh.On("GetEdgeHostname", testutils.MockContext, 123).Return(&hapi.GetEdgeHostnameResponse{
+				mh.On("GetEdgeHostname", testutils.MockContext, hapi.GetEdgeHostnameRequest{EdgeHostnameID: int64(123)}).Return(&hapi.GetEdgeHostnameResponse{
 					EdgeHostnameID: 123,
 					UseDefaultTTL:  false,
 					TTL:            600,
@@ -1569,7 +1569,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 
 				// 2nd step
 				// update
-				mh.On("GetEdgeHostname", testutils.MockContext, 123).Return(&hapi.GetEdgeHostnameResponse{
+				mh.On("GetEdgeHostname", testutils.MockContext, hapi.GetEdgeHostnameRequest{EdgeHostnameID: int64(123)}).Return(&hapi.GetEdgeHostnameResponse{
 					EdgeHostnameID: 123,
 				}, nil).Once()
 				mh.On("UpdateEdgeHostname", testutils.MockContext, hapi.UpdateEdgeHostnameRequest{
@@ -1588,10 +1588,10 @@ func TestResourceEdgeHostname(t *testing.T) {
 					ChangeID: 123,
 				}, nil).Once()
 
-				mh.On("GetChangeRequest", testutils.MockContext, hapi.GetChangeRequest{ChangeID: 123}).Return(&hapi.ChangeRequest{
+				mh.On("GetChangeRequest", testutils.MockContext, hapi.GetChangeRequestRequest{ChangeID: 123}).Return(&hapi.GetChangeRequestResponse{
 					Status: "PENDING",
 				}, nil).Once()
-				mh.On("GetChangeRequest", testutils.MockContext, hapi.GetChangeRequest{ChangeID: 123}).Return(&hapi.ChangeRequest{
+				mh.On("GetChangeRequest", testutils.MockContext, hapi.GetChangeRequestRequest{ChangeID: 123}).Return(&hapi.GetChangeRequestResponse{
 					Status: changeRequestStatusSucceeded,
 				}, nil).Once()
 
@@ -1713,7 +1713,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 				}, nil).Times(3)
 
 				// 2nd step - update
-				mh.On("GetEdgeHostname", testutils.MockContext, 123).Return(&hapi.GetEdgeHostnameResponse{
+				mh.On("GetEdgeHostname", testutils.MockContext, hapi.GetEdgeHostnameRequest{EdgeHostnameID: int64(123)}).Return(&hapi.GetEdgeHostnameResponse{
 					EdgeHostnameID:    123,
 					IPVersionBehavior: "IPV4",
 				}, nil).Once()
@@ -1853,11 +1853,11 @@ func TestResourceEdgeHostname(t *testing.T) {
 
 				// 2nd step
 				// update
-				mh.On("GetEdgeHostname", testutils.MockContext, 123).Return(nil, &hapi.Error{
+				mh.On("GetEdgeHostname", testutils.MockContext, hapi.GetEdgeHostnameRequest{EdgeHostnameID: int64(123)}).Return(nil, &hapi.Error{
 					Status: 404,
 					Title:  "Invalid Record Name/DNS Zone",
 				}).Times(15)
-				mh.On("GetEdgeHostname", testutils.MockContext, 123).Return(&hapi.GetEdgeHostnameResponse{
+				mh.On("GetEdgeHostname", testutils.MockContext, hapi.GetEdgeHostnameRequest{EdgeHostnameID: int64(123)}).Return(&hapi.GetEdgeHostnameResponse{
 					EdgeHostnameID: 123,
 				}, nil).Once()
 				mh.On("UpdateEdgeHostname", testutils.MockContext, hapi.UpdateEdgeHostnameRequest{
@@ -1876,7 +1876,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 					ChangeID: 123,
 				}, nil).Once()
 
-				mh.On("GetChangeRequest", testutils.MockContext, hapi.GetChangeRequest{ChangeID: 123}).Return(&hapi.ChangeRequest{
+				mh.On("GetChangeRequest", testutils.MockContext, hapi.GetChangeRequestRequest{ChangeID: 123}).Return(&hapi.GetChangeRequestResponse{
 					Status: changeRequestStatusSucceeded,
 				}, nil).Once()
 
@@ -1998,11 +1998,11 @@ func TestResourceEdgeHostname(t *testing.T) {
 				}, nil).Times(3)
 
 				// 2nd step - update
-				mh.On("GetEdgeHostname", testutils.MockContext, 123).Return(nil, &hapi.Error{
+				mh.On("GetEdgeHostname", testutils.MockContext, hapi.GetEdgeHostnameRequest{EdgeHostnameID: int64(123)}).Return(nil, &hapi.Error{
 					Status: 404,
 					Title:  "Invalid Record Name/DNS Zone",
 				}).Times(15)
-				mh.On("GetEdgeHostname", testutils.MockContext, 123).Return(nil, &hapi.Error{
+				mh.On("GetEdgeHostname", testutils.MockContext, hapi.GetEdgeHostnameRequest{EdgeHostnameID: int64(123)}).Return(nil, &hapi.Error{
 					Status: 404,
 					Title:  "reached max number of retries: 15",
 				}).Once()
@@ -2282,7 +2282,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 
 				// 2nd step
 				// update
-				mh.On("GetEdgeHostname", testutils.MockContext, 123).Return(&hapi.GetEdgeHostnameResponse{
+				mh.On("GetEdgeHostname", testutils.MockContext, hapi.GetEdgeHostnameRequest{EdgeHostnameID: int64(123)}).Return(&hapi.GetEdgeHostnameResponse{
 					EdgeHostnameID: 123,
 				}, nil).Once()
 				mh.On("UpdateEdgeHostname", testutils.MockContext, hapi.UpdateEdgeHostnameRequest{
@@ -2300,7 +2300,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 					ChangeID: 123,
 				}, nil).Once()
 
-				mh.On("GetChangeRequest", testutils.MockContext, hapi.GetChangeRequest{ChangeID: 123}).Return(&hapi.ChangeRequest{
+				mh.On("GetChangeRequest", testutils.MockContext, hapi.GetChangeRequestRequest{ChangeID: 123}).Return(&hapi.GetChangeRequestResponse{
 					Status: changeRequestStatusSucceeded,
 				}, nil).Once()
 
@@ -2749,7 +2749,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 				mockData := createEdgeHostnameMockDataBuilder(456).
 					withDNSZone("akamaized.net").
 					withRecordName("test").build()
-				mh.On("GetEdgeHostname", testutils.MockContext, mockData.edgehostnameID).Return(nil, &hapi.Error{
+				mh.On("GetEdgeHostname", testutils.MockContext, hapi.GetEdgeHostnameRequest{EdgeHostnameID: int64(mockData.edgehostnameID)}).Return(nil, &hapi.Error{
 					Status: 404,
 					Title:  "Invalid Record Name/DNS Zone",
 				}).Twice()
@@ -3400,7 +3400,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 				}, nil).Times(3)
 
 				// 2nd step - Update
-				mh.On("GetEdgeHostname", testutils.MockContext, 456).Return(&hapi.GetEdgeHostnameResponse{
+				mh.On("GetEdgeHostname", testutils.MockContext, hapi.GetEdgeHostnameRequest{EdgeHostnameID: int64(456)}).Return(&hapi.GetEdgeHostnameResponse{
 					EdgeHostnameID: 456,
 				}, nil).Once()
 				mh.On("UpdateEdgeHostname", testutils.MockContext, hapi.UpdateEdgeHostnameRequest{
@@ -3418,7 +3418,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 				}).Return(&hapi.UpdateEdgeHostnameResponse{
 					ChangeID: 123,
 				}, nil).Once()
-				mh.On("GetChangeRequest", testutils.MockContext, hapi.GetChangeRequest{ChangeID: 123}).Return(&hapi.ChangeRequest{
+				mh.On("GetChangeRequest", testutils.MockContext, hapi.GetChangeRequestRequest{ChangeID: 123}).Return(&hapi.GetChangeRequestResponse{
 					Status: changeRequestStatusSucceeded,
 				}, nil).Once()
 
@@ -3529,7 +3529,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 				}, nil).Times(3)
 
 				// Update H2 -> H3
-				mh.On("GetEdgeHostname", testutils.MockContext, 456).Return(&hapi.GetEdgeHostnameResponse{
+				mh.On("GetEdgeHostname", testutils.MockContext, hapi.GetEdgeHostnameRequest{EdgeHostnameID: int64(456)}).Return(&hapi.GetEdgeHostnameResponse{
 					EdgeHostnameID: 456,
 				}, nil).Once()
 				mh.On("UpdateEdgeHostname", testutils.MockContext, hapi.UpdateEdgeHostnameRequest{
@@ -3546,7 +3546,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 				}).Return(&hapi.UpdateEdgeHostnameResponse{
 					ChangeID: 123,
 				}, nil).Once()
-				mh.On("GetChangeRequest", testutils.MockContext, hapi.GetChangeRequest{ChangeID: 123}).Return(&hapi.ChangeRequest{
+				mh.On("GetChangeRequest", testutils.MockContext, hapi.GetChangeRequestRequest{ChangeID: 123}).Return(&hapi.GetChangeRequestResponse{
 					Status: changeRequestStatusSucceeded,
 				}, nil).Once()
 
@@ -3656,7 +3656,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 				}, nil).Times(3)
 
 				// Update - Remove https_service_binding
-				mh.On("GetEdgeHostname", testutils.MockContext, 456).Return(&hapi.GetEdgeHostnameResponse{
+				mh.On("GetEdgeHostname", testutils.MockContext, hapi.GetEdgeHostnameRequest{EdgeHostnameID: int64(456)}).Return(&hapi.GetEdgeHostnameResponse{
 					EdgeHostnameID: 456,
 				}, nil).Once()
 				mh.On("UpdateEdgeHostname", testutils.MockContext, hapi.UpdateEdgeHostnameRequest{
@@ -3672,7 +3672,7 @@ func TestResourceEdgeHostname(t *testing.T) {
 				}).Return(&hapi.UpdateEdgeHostnameResponse{
 					ChangeID: 123,
 				}, nil).Once()
-				mh.On("GetChangeRequest", testutils.MockContext, hapi.GetChangeRequest{ChangeID: 123}).Return(&hapi.ChangeRequest{
+				mh.On("GetChangeRequest", testutils.MockContext, hapi.GetChangeRequestRequest{ChangeID: 123}).Return(&hapi.GetChangeRequestResponse{
 					Status: changeRequestStatusSucceeded,
 				}, nil).Once()
 
@@ -3758,8 +3758,8 @@ func TestResourceEdgeHostname(t *testing.T) {
 }
 
 func (mockData edgeHostnameMockData) mockGetEdgeHostname(mh *hapi.Mock) {
-	mh.On("GetEdgeHostname", testutils.MockContext, mockData.edgehostnameID).Return(&hapi.GetEdgeHostnameResponse{
-		EdgeHostnameID: mockData.edgehostnameID,
+	mh.On("GetEdgeHostname", testutils.MockContext, hapi.GetEdgeHostnameRequest{EdgeHostnameID: int64(mockData.edgehostnameID)}).Return(&hapi.GetEdgeHostnameResponse{
+		EdgeHostnameID: int64(mockData.edgehostnameID),
 		RecordName:     mockData.recordName,
 		DNSZone:        mockData.dnsZone,
 	}, nil).Once()
@@ -3785,7 +3785,7 @@ func (mockData edgeHostnameMockData) mockDeleteEdgeHostname(mh *hapi.Mock) {
 }
 
 func (mockData edgeHostnameMockData) mockGetChangeStatus(mh *hapi.Mock, status string) {
-	mh.On("GetChangeRequest", testutils.MockContext, hapi.GetChangeRequest{ChangeID: 3456}).Return(&hapi.ChangeRequest{
+	mh.On("GetChangeRequest", testutils.MockContext, hapi.GetChangeRequestRequest{ChangeID: 3456}).Return(&hapi.GetChangeRequestResponse{
 		ChangeID: 3456,
 		Status:   status,
 		EdgeHostnames: []hapi.EdgeHostname{
@@ -4077,8 +4077,8 @@ func TestResourceEdgeHostname_WithImport(t *testing.T) {
 	}
 
 	expectGetEdgeHostnameHAPIByID := func(m *hapi.Mock, edgeHostnameID int) *mock.Call {
-		return m.On("GetEdgeHostname", testutils.MockContext, edgeHostnameID).Return(&hapi.GetEdgeHostnameResponse{
-			EdgeHostnameID:         edgeHostnameID,
+		return m.On("GetEdgeHostname", testutils.MockContext, hapi.GetEdgeHostnameRequest{EdgeHostnameID: int64(edgeHostnameID)}).Return(&hapi.GetEdgeHostnameResponse{
+			EdgeHostnameID:         int64(edgeHostnameID),
 			RecordName:             "test",
 			DNSZone:                "edgekey.net",
 			SecurityType:           "ENHANCED-TLS",
@@ -4088,19 +4088,19 @@ func TestResourceEdgeHostname_WithImport(t *testing.T) {
 			ProductID:              "DSA",
 			TTL:                    21600,
 			Map:                    "a;dscb.akamai.net",
-			SlotNumber:             3250,
+			SlotNumber:             ptr.To(int64(3250)),
 			Comments:               "Created by Property-Manager/PAPI on Tue Feb 21 14:03:36 UTC 2023",
 			SerialNumber:           1520,
-			CustomTarget:           "",
-			ChinaCdn:               hapi.ChinaCDN{},
-			IsEdgeIPBindingEnabled: false,
-			MapAlias:               "",
+			CustomTarget:           ptr.To(""),
+			ChinaCDN:               hapi.ChinaCDN{},
+			IsEdgeIPBindingEnabled: ptr.To(false),
+			MapAlias:               ptr.To(""),
 			UseCases:               nil,
 		}, nil)
 	}
 	expectGetEdgeHostnameHAPIByIDWithCustomTTL := func(m *hapi.Mock, edgeHostnameID int) *mock.Call {
-		return m.On("GetEdgeHostname", testutils.MockContext, edgeHostnameID).Return(&hapi.GetEdgeHostnameResponse{
-			EdgeHostnameID:         edgeHostnameID,
+		return m.On("GetEdgeHostname", testutils.MockContext, hapi.GetEdgeHostnameRequest{EdgeHostnameID: int64(edgeHostnameID)}).Return(&hapi.GetEdgeHostnameResponse{
+			EdgeHostnameID:         int64(edgeHostnameID),
 			RecordName:             "test",
 			DNSZone:                "edgekey.net",
 			SecurityType:           "ENHANCED-TLS",
@@ -4110,19 +4110,19 @@ func TestResourceEdgeHostname_WithImport(t *testing.T) {
 			ProductID:              "DSA",
 			TTL:                    56789,
 			Map:                    "a;dscb.akamai.net",
-			SlotNumber:             3250,
+			SlotNumber:             ptr.To(int64(3250)),
 			Comments:               "Created by Property-Manager/PAPI on Tue Feb 21 14:03:36 UTC 2023",
 			SerialNumber:           1520,
-			CustomTarget:           "",
-			ChinaCdn:               hapi.ChinaCDN{},
-			IsEdgeIPBindingEnabled: false,
-			MapAlias:               "",
+			CustomTarget:           ptr.To(""),
+			ChinaCDN:               hapi.ChinaCDN{},
+			IsEdgeIPBindingEnabled: ptr.To(false),
+			MapAlias:               ptr.To(""),
 			UseCases:               nil,
 		}, nil)
 	}
 	expectGetEdgeHostnameHAPIByIDAkamaized := func(m *hapi.Mock, edgeHostnameID int) *mock.Call {
-		return m.On("GetEdgeHostname", testutils.MockContext, edgeHostnameID).Return(&hapi.GetEdgeHostnameResponse{
-			EdgeHostnameID:         edgeHostnameID,
+		return m.On("GetEdgeHostname", testutils.MockContext, hapi.GetEdgeHostnameRequest{EdgeHostnameID: int64(edgeHostnameID)}).Return(&hapi.GetEdgeHostnameResponse{
+			EdgeHostnameID:         int64(edgeHostnameID),
 			RecordName:             "test",
 			DNSZone:                "akamaized.net",
 			SecurityType:           "STANDARD-TLS",
@@ -4132,13 +4132,13 @@ func TestResourceEdgeHostname_WithImport(t *testing.T) {
 			ProductID:              "DSA",
 			TTL:                    21600,
 			Map:                    "a;dscb.akamai.net",
-			SlotNumber:             3250,
+			SlotNumber:             ptr.To(int64(3250)),
 			Comments:               "Created by Property-Manager/PAPI on Tue Feb 21 14:03:36 UTC 2023",
 			SerialNumber:           1520,
-			CustomTarget:           "",
-			ChinaCdn:               hapi.ChinaCDN{},
-			IsEdgeIPBindingEnabled: false,
-			MapAlias:               "",
+			CustomTarget:           ptr.To(""),
+			ChinaCDN:               hapi.ChinaCDN{},
+			IsEdgeIPBindingEnabled: ptr.To(false),
+			MapAlias:               ptr.To(""),
 			UseCases:               nil,
 		}, nil)
 	}
@@ -4250,7 +4250,7 @@ func TestResourceEdgeHostname_WithImport(t *testing.T) {
 				},
 			}},
 		}, nil)
-		client.HAPI.On("GetEdgeHostname", testutils.MockContext, 1).Return(&hapi.GetEdgeHostnameResponse{
+		client.HAPI.On("GetEdgeHostname", testutils.MockContext, hapi.GetEdgeHostnameRequest{EdgeHostnameID: int64(1)}).Return(&hapi.GetEdgeHostnameResponse{
 			EdgeHostnameID:         1,
 			RecordName:             "t1",
 			DNSZone:                "akamaized.net",
@@ -4261,13 +4261,13 @@ func TestResourceEdgeHostname_WithImport(t *testing.T) {
 			ProductID:              "DSA",
 			TTL:                    21600,
 			Map:                    "a;dscb.akamai.net",
-			SlotNumber:             3250,
+			SlotNumber:             ptr.To(int64(3250)),
 			Comments:               "Created by Property-Manager/PAPI on Tue Feb 21 14:03:36 UTC 2023",
 			SerialNumber:           1520,
-			CustomTarget:           "",
-			ChinaCdn:               hapi.ChinaCDN{},
-			IsEdgeIPBindingEnabled: false,
-			MapAlias:               "",
+			CustomTarget:           ptr.To(""),
+			ChinaCDN:               hapi.ChinaCDN{},
+			IsEdgeIPBindingEnabled: ptr.To(false),
+			MapAlias:               ptr.To(""),
 			UseCases:               nil,
 		}, nil)
 		// Read
@@ -4594,7 +4594,7 @@ func TestResourceEdgeHostname_WithImport(t *testing.T) {
 			Instance:        "/hapi/error-instances/a30f67cc-df20-4e02-bbc3-cf7c204a4aab",
 			RequestInstance: "http://origin.pulsar.akamai.com/hapi/open/v1/dns-zones/edgekey.net/edge-hostnames/example.com/certificate?depth=ALL&accountSwitchKey=F-AC-1937217#d7aa7348",
 			Method:          "GET",
-			RequestTime:     "2022-11-30T18:51:43.482982Z",
+			RequestTime:     time.Date(2022, time.November, 30, 18, 51, 43, 482982000, time.UTC),
 		}
 		err := fmt.Errorf("%s: %s: %w", hapi.ErrGetCertificate, hapi.ErrNotFound, &resp)
 		client.HAPI.On("GetCertificate", testutils.MockContext, hapi.GetCertificateRequest{
@@ -4647,12 +4647,12 @@ func TestResourceEdgeHostname_WithImport(t *testing.T) {
 		createEdgeHostnames(client.PAPI).Once()
 		expectGetEdgeHostnameAfterCreate(client.PAPI, "ctr_1", "grp_2").Once()
 
-		client.HAPI.On("GetEdgeHostname", testutils.MockContext, 1).Return(&hapi.GetEdgeHostnameResponse{
+		client.HAPI.On("GetEdgeHostname", testutils.MockContext, hapi.GetEdgeHostnameRequest{EdgeHostnameID: int64(1)}).Return(&hapi.GetEdgeHostnameResponse{
 			EdgeHostnameID: 1,
 			UseDefaultTTL:  true,
 			TTL:            300,
 		}, nil).Times(3)
-		client.HAPI.On("GetEdgeHostname", testutils.MockContext, 1).Return(&hapi.GetEdgeHostnameResponse{
+		client.HAPI.On("GetEdgeHostname", testutils.MockContext, hapi.GetEdgeHostnameRequest{EdgeHostnameID: int64(1)}).Return(&hapi.GetEdgeHostnameResponse{
 			EdgeHostnameID: 1,
 			UseDefaultTTL:  false,
 			TTL:            56789,
@@ -4672,7 +4672,7 @@ func TestResourceEdgeHostname_WithImport(t *testing.T) {
 			ChangeID: 123,
 		}, nil).Once()
 
-		client.HAPI.On("GetChangeRequest", testutils.MockContext, hapi.GetChangeRequest{ChangeID: 123}).Return(&hapi.ChangeRequest{
+		client.HAPI.On("GetChangeRequest", testutils.MockContext, hapi.GetChangeRequestRequest{ChangeID: 123}).Return(&hapi.GetChangeRequestResponse{
 			Status: changeRequestStatusSucceeded,
 		}, nil).Once()
 
@@ -4871,7 +4871,7 @@ func TestResourceEdgeHostname_WithImport(t *testing.T) {
 			Instance:        "/hapi/error-instances/a30f67cc-df20-4e02-bbc3-cf7c204a4aab",
 			RequestInstance: "http://origin.pulsar.akamai.com/hapi/open/v1/dns-zones/edgekey.net/edge-hostnames/example.com/certificate?depth=ALL&accountSwitchKey=F-AC-1937217#d7aa7348",
 			Method:          "GET",
-			RequestTime:     "2022-11-30T18:51:43.482982Z",
+			RequestTime:     time.Date(2022, time.November, 30, 18, 51, 43, 482982000, time.UTC),
 		}
 		err := fmt.Errorf("%s: %s: %w", hapi.ErrGetCertificate, hapi.ErrNotFound, &resp)
 		client.HAPI.On("GetCertificate", testutils.MockContext, hapi.GetCertificateRequest{

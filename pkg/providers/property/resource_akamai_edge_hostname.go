@@ -507,7 +507,7 @@ func resourceSecureEdgeHostNameRead(config secureEdgeHostNameResourceConfig) sch
 			if err != nil {
 				return diag.FromErr(err)
 			}
-			hostname, err := meta.Client().GetHAPI().GetEdgeHostname(ctx, edgeHostnameID)
+			hostname, err := meta.Client().GetHAPI().GetEdgeHostname(ctx, hapi.GetEdgeHostnameRequest{EdgeHostnameID: int64(edgeHostnameID)})
 			if err != nil {
 				return diag.FromErr(err)
 			}
@@ -693,7 +693,7 @@ func waitForHAPIPropagation(ctx context.Context, hapiClient hapi.HAPI, edgeHostn
 	for {
 		select {
 		case <-time.After(config.edgeHostnamePollInterval):
-			resp, err := hapiClient.GetEdgeHostname(ctx, edgeHostnameID)
+			resp, err := hapiClient.GetEdgeHostname(ctx, hapi.GetEdgeHostnameRequest{EdgeHostnameID: int64(edgeHostnameID)})
 			if resp == nil && err != nil {
 				var target = &hapi.Error{}
 				if !errors.As(err, &target) {
@@ -716,9 +716,9 @@ func waitForHAPIPropagation(ctx context.Context, hapiClient hapi.HAPI, edgeHostn
 	}
 }
 
-func waitForChange(ctx context.Context, client hapi.HAPI, changeID int) error {
+func waitForChange(ctx context.Context, client hapi.HAPI, changeID int64) error {
 	for {
-		change, err := client.GetChangeRequest(ctx, hapi.GetChangeRequest{
+		change, err := client.GetChangeRequest(ctx, hapi.GetChangeRequestRequest{
 			ChangeID: changeID,
 		})
 		if err != nil {
@@ -777,7 +777,7 @@ func resourceSecureEdgeHostNameDelete(config secureEdgeHostNameResourceConfig) s
 		for deleteInProgress := true; deleteInProgress; {
 			select {
 			case <-time.After(config.edgeHostnamePollInterval):
-				deleteStatus, err := meta.Client().GetHAPI().GetChangeRequest(ctx, hapi.GetChangeRequest{ChangeID: deleteEdgeHostname.ChangeID})
+				deleteStatus, err := meta.Client().GetHAPI().GetChangeRequest(ctx, hapi.GetChangeRequestRequest{ChangeID: deleteEdgeHostname.ChangeID})
 				if err != nil {
 					return diag.FromErr(err)
 				}
@@ -878,7 +878,7 @@ func resourceSecureEdgeHostNameImport(ctx context.Context, d *schema.ResourceDat
 	if err != nil {
 		return nil, err
 	}
-	edgeHostnameResp, err := meta.Client().GetHAPI().GetEdgeHostname(ctx, edgeHostnameID)
+	edgeHostnameResp, err := meta.Client().GetHAPI().GetEdgeHostname(ctx, hapi.GetEdgeHostnameRequest{EdgeHostnameID: int64(edgeHostnameID)})
 	if err != nil {
 		return nil, fmt.Errorf("error getting edge hostname with id '%d': it may not be ready in HAPI yet: %s", edgeHostnameID, err)
 	}
