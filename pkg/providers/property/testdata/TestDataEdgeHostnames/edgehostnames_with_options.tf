@@ -5,5 +5,5 @@ provider "akamai" {
 data "akamai_edge_hostnames" "test" {
   contract_id = "ctr_123"
   group_id    = "grp_123"
-  options     = ["mapDetails"]
+  options     = "mapDetails"
 }

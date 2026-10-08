@@ -24,7 +24,8 @@
 
 
 
-
+* PAPI
+  * Changed the `options` attribute in the `akamai_edge_hostnames` and `akamai_edge_hostname` data sources from a list to a string.
 * GTM
   * Changed the `type`, `ttl`, and `rdata` attributes in the `static_rr_set` block of the `akamai_gtm_property` resource from optional to required.
 
@@ -51,6 +52,8 @@
 
 
 
+* PAPI
+  * Added support for the `delivery_policy` attribute and map details in the `akamai_edge_hostnames` and `akamai_edge_hostname` data sources when `options` is set to `mapDetails`.
 
 
 

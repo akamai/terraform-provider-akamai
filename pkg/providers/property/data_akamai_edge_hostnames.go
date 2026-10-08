@@ -25,28 +25,43 @@ type (
 	edgeHostnamesDataSourceModel struct {
 		ContractID    types.String        `tfsdk:"contract_id"`
 		GroupID       types.String        `tfsdk:"group_id"`
-		Options       types.List          `tfsdk:"options"`
+		Options       types.String        `tfsdk:"options"`
 		AccountID     types.String        `tfsdk:"account_id"`
 		EdgeHostnames []edgeHostnameModel `tfsdk:"edge_hostnames"`
 	}
 
 	edgeHostnameModel struct {
-		DomainPrefix        types.String    `tfsdk:"domain_prefix"`
-		DomainSuffix        types.String    `tfsdk:"domain_suffix"`
-		EdgeHostnameDomain  types.String    `tfsdk:"edge_hostname_domain"`
-		EdgeHostnameID      types.String    `tfsdk:"edge_hostname_id"`
-		IPVersionBehaviour  types.String    `tfsdk:"ip_version_behaviour"`
-		ProductID           types.String    `tfsdk:"product_id"`
-		Secure              types.Bool      `tfsdk:"secure"`
-		Status              types.String    `tfsdk:"status"`
-		UseCases            []useCasesModel `tfsdk:"use_cases"`
-		HTTPSServiceBinding types.String    `tfsdk:"https_service_binding"`
+		DeliveryPolicy         *deliverPolicyModel `tfsdk:"delivery_policy"`
+		DomainPrefix           types.String        `tfsdk:"domain_prefix"`
+		DomainSuffix           types.String        `tfsdk:"domain_suffix"`
+		EdgeHostnameDomain     types.String        `tfsdk:"edge_hostname_domain"`
+		EdgeHostnameID         types.String        `tfsdk:"edge_hostname_id"`
+		IPVersionBehaviour     types.String        `tfsdk:"ip_version_behaviour"`
+		ProductID              types.String        `tfsdk:"product_id"`
+		Secure                 types.Bool          `tfsdk:"secure"`
+		Status                 types.String        `tfsdk:"status"`
+		UseCases               []useCasesModel     `tfsdk:"use_cases"`
+		HTTPSServiceBinding    types.String        `tfsdk:"https_service_binding"`
+		MapDetailsSerialNumber types.Int64         `tfsdk:"map_details_serial_number"`
+		MapDetailsSlotNumber   types.Int64         `tfsdk:"map_details_slot_number"`
+		MapDetailsMapDomain    types.String        `tfsdk:"map_details_map_domain"`
 	}
 
 	useCasesModel struct {
 		Option  types.String `tfsdk:"option"`
 		Type    types.String `tfsdk:"type"`
 		UseCase types.String `tfsdk:"use_case"`
+	}
+
+	deliverPolicyModel struct {
+		PolicyType       types.String            `tfsdk:"policy_type"`
+		PolicyAttributes []policyAttributesModel `tfsdk:"policy_attributes"`
+	}
+
+	policyAttributesModel struct {
+		AttributeType types.String `tfsdk:"attribute_type"`
+		Code          types.String `tfsdk:"code"`
+		Name          types.String `tfsdk:"name"`
 	}
 )
 
@@ -73,10 +88,9 @@ func (d *edgeHostnamesDataSource) Schema(_ context.Context, _ datasource.SchemaR
 				Required:    true,
 				Description: "Unique identifier for the group.",
 			},
-			"options": schema.ListAttribute{
+			"options": schema.StringAttribute{
 				Optional:    true,
-				ElementType: types.StringType,
-				Description: "Optional query parameters that enables extra mapping-related information.",
+				Description: "Optional query parameter that enables extra mapping-related information.",
 			},
 			"account_id": schema.StringAttribute{
 				Computed:    true,
@@ -87,6 +101,36 @@ func (d *edgeHostnamesDataSource) Schema(_ context.Context, _ datasource.SchemaR
 				Description: "The set of requested edge hostnames",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
+						"delivery_policy": schema.SingleNestedAttribute{
+							Computed:    true,
+							Description: "Delivery policy of the edge hostname.",
+							Attributes: map[string]schema.Attribute{
+								"policy_type": schema.StringAttribute{
+									Computed:    true,
+									Description: "Type of the delivery policy.",
+								},
+								"policy_attributes": schema.ListNestedAttribute{
+									Computed:    true,
+									Description: "Attributes of the delivery policy.",
+									NestedObject: schema.NestedAttributeObject{
+										Attributes: map[string]schema.Attribute{
+											"attribute_type": schema.StringAttribute{
+												Computed:    true,
+												Description: "Type of the policy attribute.",
+											},
+											"code": schema.StringAttribute{
+												Computed:    true,
+												Description: "The code of the geographical region",
+											},
+											"name": schema.StringAttribute{
+												Computed:    true,
+												Description: "Name of the policy attribute.",
+											},
+										},
+									},
+								},
+							},
+						},
 						"domain_prefix": schema.StringAttribute{
 							Computed:    true,
 							Description: "The origin domain portion of the edge hostname.",
@@ -118,6 +162,18 @@ func (d *edgeHostnamesDataSource) Schema(_ context.Context, _ datasource.SchemaR
 						"status": schema.StringAttribute{
 							Computed:    true,
 							Description: "Status of the edge hostname.",
+						},
+						"map_details_serial_number": schema.Int64Attribute{
+							Computed:    true,
+							Description: "Serial number of the map details.",
+						},
+						"map_details_slot_number": schema.Int64Attribute{
+							Computed:    true,
+							Description: "Slot number of the map details.",
+						},
+						"map_details_map_domain": schema.StringAttribute{
+							Computed:    true,
+							Description: "Map domain of the map details.",
 						},
 						"use_cases": schema.ListNestedAttribute{
 							Computed:    true,
@@ -158,12 +214,9 @@ func (d *edgeHostnamesDataSource) Read(ctx context.Context, req datasource.ReadR
 		return
 	}
 
-	var options []string
+	var options string
 	if tf.IsKnown(data.Options) {
-		resp.Diagnostics.Append(data.Options.ElementsAs(ctx, &options, false)...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
+		options = data.Options.ValueString()
 	}
 
 	tflog.Debug(ctx, "Calling GetEdgeHostnames", map[string]any{
@@ -205,17 +258,38 @@ func (m *edgeHostnamesDataSourceModel) convertEdgeHostnamesToModel(edgehostnames
 			productID = types.StringNull()
 		}
 
+		var deliveryPolicy *deliverPolicyModel
+		if eh.DeliveryPolicy != nil {
+			var attrs []policyAttributesModel
+			for _, pa := range eh.DeliveryPolicy.PolicyAttributes {
+				attrs = append(attrs, policyAttributesModel{
+					AttributeType: types.StringValue(pa.AttributeType),
+					Code:          types.StringValue(pa.Code),
+					Name:          types.StringValue(pa.Name),
+				})
+			}
+
+			deliveryPolicy = &deliverPolicyModel{
+				PolicyType:       types.StringValue(eh.DeliveryPolicy.PolicyType),
+				PolicyAttributes: attrs,
+			}
+		}
+
 		m.EdgeHostnames = append(m.EdgeHostnames, edgeHostnameModel{
-			DomainPrefix:        types.StringValue(eh.DomainPrefix),
-			DomainSuffix:        types.StringValue(eh.DomainSuffix),
-			EdgeHostnameDomain:  types.StringValue(eh.Domain),
-			EdgeHostnameID:      types.StringValue(eh.ID),
-			IPVersionBehaviour:  types.StringValue(eh.IPVersionBehavior),
-			ProductID:           productID,
-			Secure:              types.BoolValue(eh.Secure),
-			Status:              types.StringValue(eh.Status),
-			UseCases:            useCases,
-			HTTPSServiceBinding: types.StringPointerValue(eh.HTTPSServiceBinding),
+			DeliveryPolicy:         deliveryPolicy,
+			DomainPrefix:           types.StringValue(eh.DomainPrefix),
+			DomainSuffix:           types.StringValue(eh.DomainSuffix),
+			EdgeHostnameDomain:     types.StringValue(eh.Domain),
+			EdgeHostnameID:         types.StringValue(eh.ID),
+			IPVersionBehaviour:     types.StringValue(eh.IPVersionBehavior),
+			ProductID:              productID,
+			Secure:                 types.BoolValue(eh.Secure),
+			Status:                 types.StringValue(eh.Status),
+			MapDetailsSerialNumber: types.Int64PointerValue(eh.MapDetailsSerialNumber),
+			MapDetailsSlotNumber:   types.Int64PointerValue(eh.MapDetailsSlotNumber),
+			MapDetailsMapDomain:    types.StringPointerValue(eh.MapDetailsMapDomain),
+			UseCases:               useCases,
+			HTTPSServiceBinding:    types.StringPointerValue(eh.HTTPSServiceBinding),
 		})
 	}
 }
