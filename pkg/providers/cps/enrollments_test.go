@@ -2,16 +2,247 @@ package cps
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/cps"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/session"
+	"github.com/akamai/terraform-provider-akamai/v11/internal/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/ptr"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
+	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
 	"github.com/hashicorp/go-cty/cty"
+	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestEnrollmentDelete(t *testing.T) {
+	t.Parallel()
+	apiError := errors.New("API failure")
+	guidance := "set `acknowledge_deletion_warnings` to true, run 'terraform apply', then run 'terraform destroy' again"
+	deletionChanges := []string{"/cps/v2/enrollments/1/changes/2"}
+	pending := &cps.GetEnrollmentResponse{PendingChanges: []cps.PendingChange{{Location: "/cps/v2/enrollments/1/changes/2"}}}
+	getEnrollment := cps.GetEnrollmentRequest{EnrollmentID: 1}
+	getStatus := cps.GetChangeStatusRequest{EnrollmentID: 1, ChangeID: 2}
+	warnings := &cps.Change{StatusInfo: &cps.StatusInfo{Status: waitReviewCertWarning}}
+	ackRequest := cps.AcknowledgementRequest{
+		EnrollmentID: 1,
+		ChangeID:     2,
+		Acknowledgement: cps.Acknowledgement{
+			Acknowledgement: cps.AcknowledgementAcknowledge,
+		},
+	}
+	tests := []struct {
+		name          string
+		acknowledge   *bool
+		removeChanges []string
+		removeError   error
+		init          func(*cps.Mock)
+		wantError     string
+	}{
+		{
+			name:          "deletion without pending changes",
+			removeChanges: deletionChanges,
+			init: func(client *cps.Mock) {
+				client.On("GetEnrollment", testutils.MockContext, getEnrollment).Return(&cps.GetEnrollmentResponse{}, nil).Once()
+				client.On("GetChangeStatus", testutils.MockContext, getStatus).Return(&cps.Change{StatusInfo: &cps.StatusInfo{Status: "processing"}}, nil).Once()
+				client.On("GetEnrollment", testutils.MockContext, getEnrollment).Return(nil, cps.ErrNotFound).Once()
+			},
+		},
+		{
+			name:        "no deletion job ignores unrelated pending change",
+			acknowledge: ptr.To(true),
+			init: func(client *cps.Mock) {
+				client.On("GetEnrollment", testutils.MockContext, getEnrollment).Return(&cps.GetEnrollmentResponse{
+					PendingChanges: []cps.PendingChange{{Location: "/cps/v2/enrollments/1/changes/1"}},
+				}, nil).Once()
+				client.On("GetEnrollment", testutils.MockContext, getEnrollment).Return(nil, cps.ErrNotFound).Once()
+			},
+		},
+		{
+			name:          "acknowledge delayed warnings only once and wait for deletion",
+			acknowledge:   ptr.To(true),
+			removeChanges: deletionChanges,
+			init: func(client *cps.Mock) {
+				client.On("GetEnrollment", testutils.MockContext, getEnrollment).Return(pending, nil).Times(3)
+				client.On("GetChangeStatus", testutils.MockContext, getStatus).Return(&cps.Change{StatusInfo: &cps.StatusInfo{Status: "processing"}}, nil).Once()
+				client.On("GetChangeStatus", testutils.MockContext, getStatus).Return(warnings, nil).Once()
+				client.On("AcknowledgePostVerificationWarnings", testutils.MockContext, ackRequest).Return(nil).Once()
+				client.On("GetEnrollment", testutils.MockContext, getEnrollment).Return(nil, cps.ErrNotFound).Once()
+			},
+		},
+		{
+			name:          "retry acknowledgement after change is initially missing",
+			acknowledge:   ptr.To(true),
+			removeChanges: deletionChanges,
+			init: func(client *cps.Mock) {
+				client.On("GetEnrollment", testutils.MockContext, getEnrollment).Return(pending, nil).Times(2)
+				client.On("GetChangeStatus", testutils.MockContext, getStatus).Return(warnings, nil).Twice()
+				client.On("AcknowledgePostVerificationWarnings", testutils.MockContext, ackRequest).Return(cps.ErrNotFound).Once()
+				client.On("AcknowledgePostVerificationWarnings", testutils.MockContext, ackRequest).Return(nil).Once()
+				client.On("GetEnrollment", testutils.MockContext, getEnrollment).Return(nil, cps.ErrNotFound).Once()
+			},
+		},
+		{
+			name:          "change disappears before enrollment",
+			removeChanges: deletionChanges,
+			init: func(client *cps.Mock) {
+				client.On("GetEnrollment", testutils.MockContext, getEnrollment).Return(pending, nil).Once()
+				client.On("GetChangeStatus", testutils.MockContext, getStatus).Return(nil, cps.ErrNotFound).Once()
+				client.On("GetEnrollment", testutils.MockContext, getEnrollment).Return(nil, cps.ErrNotFound).Once()
+			},
+		},
+		{
+			name:          "missing status is retried before acknowledging",
+			acknowledge:   ptr.To(true),
+			removeChanges: deletionChanges,
+			init: func(client *cps.Mock) {
+				client.On("GetEnrollment", testutils.MockContext, getEnrollment).Return(pending, nil).Twice()
+				client.On("GetChangeStatus", testutils.MockContext, getStatus).Return(&cps.Change{}, nil).Once()
+				client.On("GetChangeStatus", testutils.MockContext, getStatus).Return(warnings, nil).Once()
+				client.On("AcknowledgePostVerificationWarnings", testutils.MockContext, ackRequest).Return(nil).Once()
+				client.On("GetEnrollment", testutils.MockContext, getEnrollment).Return(nil, cps.ErrNotFound).Once()
+			},
+		},
+		{
+			name:          "use deletion job despite unrelated pending change",
+			acknowledge:   ptr.To(true),
+			removeChanges: deletionChanges,
+			init: func(client *cps.Mock) {
+				client.On("GetEnrollment", testutils.MockContext, getEnrollment).Return(&cps.GetEnrollmentResponse{
+					PendingChanges: []cps.PendingChange{
+						{Location: "/cps/v2/enrollments/1/changes/1"},
+						{Location: "/cps/v2/enrollments/1/changes/2"},
+					},
+				}, nil).Once()
+				client.On("GetChangeStatus", testutils.MockContext, getStatus).Return(warnings, nil).Once()
+				client.On("AcknowledgePostVerificationWarnings", testutils.MockContext, ackRequest).Return(nil).Once()
+				client.On("GetEnrollment", testutils.MockContext, getEnrollment).Return(nil, cps.ErrNotFound).Once()
+			},
+		},
+		{
+			name:          "cancel deletion when consent is omitted",
+			removeChanges: deletionChanges,
+			init: func(client *cps.Mock) {
+				client.On("GetEnrollment", testutils.MockContext, getEnrollment).Return(pending, nil).Once()
+				client.On("GetChangeStatus", testutils.MockContext, getStatus).Return(warnings, nil).Once()
+				client.On("CancelChange", testutils.MockContext, cps.CancelChangeRequest{EnrollmentID: 1, ChangeID: 2}).Return(&cps.CancelChangeResponse{}, nil).Once()
+			},
+			wantError: "enrollment deletion requires acknowledgement of warnings; the deletion change was canceled; " + guidance,
+		},
+		{
+			name:          "cancel deletion when consent is false",
+			acknowledge:   ptr.To(false),
+			removeChanges: deletionChanges,
+			init: func(client *cps.Mock) {
+				client.On("GetEnrollment", testutils.MockContext, getEnrollment).Return(pending, nil).Once()
+				client.On("GetChangeStatus", testutils.MockContext, getStatus).Return(warnings, nil).Once()
+				client.On("CancelChange", testutils.MockContext, cps.CancelChangeRequest{EnrollmentID: 1, ChangeID: 2}).Return(&cps.CancelChangeResponse{}, nil).Once()
+			},
+			wantError: "enrollment deletion requires acknowledgement of warnings; the deletion change was canceled; " + guidance,
+		},
+		{
+			name:          "cancel fails",
+			removeChanges: deletionChanges,
+			init: func(client *cps.Mock) {
+				client.On("GetEnrollment", testutils.MockContext, getEnrollment).Return(pending, nil).Once()
+				client.On("GetChangeStatus", testutils.MockContext, getStatus).Return(warnings, nil).Once()
+				client.On("CancelChange", testutils.MockContext, cps.CancelChangeRequest{EnrollmentID: 1, ChangeID: 2}).Return(nil, apiError).Once()
+			},
+			wantError: "enrollment deletion requires acknowledgement of warnings, but canceling the deletion change failed: API failure; " + guidance,
+		},
+		{
+			name:          "acknowledgement fails",
+			acknowledge:   ptr.To(true),
+			removeChanges: deletionChanges,
+			init: func(client *cps.Mock) {
+				client.On("GetEnrollment", testutils.MockContext, getEnrollment).Return(pending, nil).Once()
+				client.On("GetChangeStatus", testutils.MockContext, getStatus).Return(warnings, nil).Once()
+				client.On("AcknowledgePostVerificationWarnings", testutils.MockContext, ackRequest).Return(apiError).Once()
+			},
+			wantError: "API failure",
+		},
+		{
+			name:        "remove fails",
+			removeError: apiError,
+			wantError:   "API failure",
+		},
+		{
+			name:          "initial enrollment lookup fails",
+			removeChanges: deletionChanges,
+			init: func(client *cps.Mock) {
+				client.On("GetEnrollment", testutils.MockContext, getEnrollment).Return(nil, apiError).Once()
+			},
+			wantError: "error checking enrollment deletion: API failure",
+		},
+		{
+			name:          "subsequent enrollment lookup fails",
+			removeChanges: deletionChanges,
+			init: func(client *cps.Mock) {
+				client.On("GetEnrollment", testutils.MockContext, getEnrollment).Return(&cps.GetEnrollmentResponse{}, nil).Once()
+				client.On("GetChangeStatus", testutils.MockContext, getStatus).Return(&cps.Change{StatusInfo: &cps.StatusInfo{Status: "processing"}}, nil).Once()
+				client.On("GetEnrollment", testutils.MockContext, getEnrollment).Return(nil, apiError).Once()
+			},
+			wantError: "error checking enrollment deletion: API failure",
+		},
+		{
+			name:          "status lookup fails",
+			removeChanges: deletionChanges,
+			init: func(client *cps.Mock) {
+				client.On("GetEnrollment", testutils.MockContext, getEnrollment).Return(pending, nil).Once()
+				client.On("GetChangeStatus", testutils.MockContext, getStatus).Return(nil, apiError).Once()
+			},
+			wantError: "API failure",
+		},
+	}
+	resources := map[string]*schema.Resource{
+		"DV":          resourceCPSDVEnrollment(testPollChangeStatusInterval, testPollGetEnrollmentInterval),
+		"third party": resourceCPSThirdPartyEnrollment(testPollChangeStatusInterval, testPollGetEnrollmentInterval),
+	}
+	for resourceName, resource := range resources {
+		t.Run(resourceName, func(t *testing.T) {
+			t.Parallel()
+			for _, test := range tests {
+				t.Run(test.name, func(t *testing.T) {
+					t.Parallel()
+					client := edgegrid.NewTestClient()
+					t.Cleanup(func() { client.CPS.AssertExpectations(t) })
+					operationMeta, err := meta.New(session.Must(session.New()), hclog.NewNullLogger(), "test")
+					require.NoError(t, err)
+					operationMeta.SetClient(client)
+					config := map[string]any{}
+					if test.acknowledge != nil {
+						config["acknowledge_deletion_warnings"] = *test.acknowledge
+					}
+					data := schema.TestResourceDataRaw(t, resource.Schema, config)
+					data.SetId("1")
+					assert.Equal(t, test.acknowledge != nil && *test.acknowledge, data.Get("acknowledge_deletion_warnings"))
+					client.CPS.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
+						EnrollmentID: 1, AllowCancelPendingChanges: ptr.To(true),
+					}).Return(&cps.RemoveEnrollmentResponse{Changes: test.removeChanges}, test.removeError).Once()
+					if test.init != nil {
+						test.init(client.CPS)
+					}
+					ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+					defer cancel()
+					diagnostics := resource.DeleteContext(ctx, data, operationMeta)
+					if test.wantError != "" {
+						require.Len(t, diagnostics, 1)
+						assert.Equal(t, test.wantError, diagnostics[0].Summary)
+						assert.Equal(t, "1", data.Id())
+					} else {
+						assert.Empty(t, diagnostics)
+					}
+				})
+			}
+		})
+	}
+}
 
 func TestDNSNamesRejectEmptyName(t *testing.T) {
 	t.Parallel()

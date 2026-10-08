@@ -1905,6 +1905,68 @@ func TestResourceDVEnrollment(t *testing.T) {
 		client.CPS.AssertExpectations(t)
 	})
 
+	t.Run("update with acknowledge deletion warnings change, no enrollment update, delete acknowledges warnings", func(t *testing.T) {
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+		enrollment := getTestDVEnrollment()
+		enrollment.NetworkConfiguration.DNSNameSettings = &cps.DNSNameSettings{
+			CloneDNSNames: true,
+		}
+
+		// create
+		client.CPS.On("CreateEnrollment",
+			testutils.MockContext,
+			cps.CreateEnrollmentRequest{
+				EnrollmentRequestBody: createEnrollmentReqBodyFromEnrollment(enrollment),
+				ContractID:            "1",
+			},
+		).Return(&cps.CreateEnrollmentResponse{
+			ID:         1,
+			Enrollment: "/cps/v2/enrollments/1",
+		}, nil).Once()
+
+		// read
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(&enrollment, nil).Times(5)
+
+		// delete
+		client.CPS.On("RemoveEnrollment", testutils.MockContext, cps.RemoveEnrollmentRequest{
+			EnrollmentID:              1,
+			AllowCancelPendingChanges: ptr.To(true),
+		}).Return(&cps.RemoveEnrollmentResponse{
+			Enrollment: "/cps/v2/enrollments/1",
+			Changes:    []string{"/cps/v2/enrollments/1/changes/2"},
+		}, nil).Once()
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(&enrollment, nil).Once()
+		client.CPS.On("GetChangeStatus", testutils.MockContext, cps.GetChangeStatusRequest{
+			EnrollmentID: 1,
+			ChangeID:     2,
+		}).Return(&cps.Change{StatusInfo: &cps.StatusInfo{Status: waitReviewCertWarning}}, nil).Once()
+		client.CPS.On("AcknowledgePostVerificationWarnings", testutils.MockContext, cps.AcknowledgementRequest{
+			Acknowledgement: cps.Acknowledgement{Acknowledgement: cps.AcknowledgementAcknowledge},
+			EnrollmentID:    1,
+			ChangeID:        2,
+		}).Return(nil).Once()
+		client.CPS.On("GetEnrollment", testutils.MockContext, cps.GetEnrollmentRequest{EnrollmentID: 1}).
+			Return(nil, cps.ErrNotFound).Once()
+
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6SDKProviderFactory(client, NewCustomPollingSubprovider(testPollChangeStatusInterval, testPollGetEnrollmentInterval)),
+			Steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/no_acknowledge_warnings/create_enrollment.tf"),
+					Check:  resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "acknowledge_deletion_warnings", "false"),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResDVEnrollment/acknowledge_deletion_warnings/update_enrollment.tf"),
+					Check:  resource.TestCheckResourceAttr("akamai_cps_dv_enrollment.dv", "acknowledge_deletion_warnings", "true"),
+				},
+			},
+		})
+		client.CPS.AssertExpectations(t)
+	})
+
 	t.Run("acknowledge warnings", func(t *testing.T) {
 		t.Parallel()
 		client := edgegrid.NewTestClient()

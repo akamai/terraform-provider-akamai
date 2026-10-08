@@ -424,36 +424,88 @@ func enrollmentDelete(ctx context.Context, d *schema.ResourceData, m interface{}
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
 	req := cps.RemoveEnrollmentRequest{
 		EnrollmentID:              enrollmentID,
 		AllowCancelPendingChanges: ptr.To(true),
 	}
-	if _, err = client.RemoveEnrollment(ctx, req); err != nil {
+	removeResponse, err := client.RemoveEnrollment(ctx, req)
+	if err != nil {
 		return diag.FromErr(err)
 	}
-
-	_, err = client.GetEnrollment(ctx, cps.GetEnrollmentRequest{EnrollmentID: enrollmentID})
-	if errors.Is(err, cps.ErrNotFound) {
-		logger.Debugf("Enrollment %d successfully deleted", enrollmentID)
-		return nil
+	hasDeletionChange := len(removeResponse.Changes) > 0
+	var deletionChangeID int
+	if hasDeletionChange {
+		deletionChangeID, err = cpstools.GetChangeIDFromLocation(removeResponse.Changes[0])
+		if err != nil {
+			return diag.Errorf("Unable to determine deletion change ID for enrollment %d from %q: %v. "+
+				"Warnings cannot be acknowledged.", enrollmentID, removeResponse.Changes[0], err)
+		}
 	}
 
+	deletionAcknowledged := false
 	for {
+		_, err := client.GetEnrollment(ctx, cps.GetEnrollmentRequest{EnrollmentID: enrollmentID})
+		if errors.Is(err, cps.ErrNotFound) {
+			logger.Debugf("Enrollment %d successfully deleted", enrollmentID)
+			return nil
+		}
+		if err != nil {
+			return diag.Errorf("error checking enrollment deletion: %v", err)
+		}
+		if hasDeletionChange && !deletionAcknowledged {
+			deletionAcknowledged, err = handleDeletionWarnings(ctx, client, d, enrollmentID, deletionChangeID)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+		}
 		select {
 		case <-time.After(pollGetEnrollmentInterval):
-			_, err = client.GetEnrollment(ctx, cps.GetEnrollmentRequest{EnrollmentID: enrollmentID})
-			if errors.Is(err, cps.ErrNotFound) {
-				logger.Debugf("Enrollment %d successfully deleted", enrollmentID)
-				return nil
-			}
-			if err != nil {
-				return diag.Errorf("error checking enrollment deletion: %v", err)
-			}
-
 		case <-ctx.Done():
 			return diag.Errorf("timed out waiting for enrollment deletion: %s", ctx.Err())
 		}
 	}
+}
+
+func handleDeletionWarnings(ctx context.Context, client cps.CPS, d *schema.ResourceData, enrollmentID, deletionChangeID int) (bool, error) {
+	status, err := client.GetChangeStatus(ctx, cps.GetChangeStatusRequest{EnrollmentID: enrollmentID, ChangeID: deletionChangeID})
+	if errors.Is(err, cps.ErrNotFound) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	if status == nil || status.StatusInfo == nil || status.StatusInfo.Status != waitReviewCertWarning {
+		return false, nil
+	}
+
+	acknowledge, err := tf.GetBoolValue("acknowledge_deletion_warnings", d)
+	if err != nil {
+		return false, err
+	}
+
+	if !acknowledge {
+		if _, err := client.CancelChange(ctx, cps.CancelChangeRequest{EnrollmentID: enrollmentID, ChangeID: deletionChangeID}); err != nil {
+			return false, fmt.Errorf("enrollment deletion requires acknowledgement of warnings, but canceling the deletion change failed: %w; "+
+				"set `acknowledge_deletion_warnings` to true, run 'terraform apply', then run 'terraform destroy' again", err)
+		}
+		return false, errors.New("enrollment deletion requires acknowledgement of warnings; the deletion change was canceled; " +
+			"set `acknowledge_deletion_warnings` to true, run 'terraform apply', then run 'terraform destroy' again")
+	}
+
+	err = client.AcknowledgePostVerificationWarnings(ctx, cps.AcknowledgementRequest{
+		Acknowledgement: cps.Acknowledgement{Acknowledgement: cps.AcknowledgementAcknowledge},
+		EnrollmentID:    enrollmentID,
+		ChangeID:        deletionChangeID,
+	})
+	if errors.Is(err, cps.ErrNotFound) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 func readAttrs(enrollment *cps.GetEnrollmentResponse, d *schema.ResourceData) (map[string]interface{}, error) {

@@ -78,6 +78,12 @@ func resourceCPSThirdPartyEnrollment(pollChangeStatusInterval, pollGetEnrollment
 				ForceNew:    true,
 				Description: "Whether Server Name Indication is used for enrollment",
 			},
+			"acknowledge_deletion_warnings": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Whether to acknowledge warnings during enrollment deletion. Default is false.",
+			},
 			"acknowledge_pre_verification_warnings": {
 				Type:        schema.TypeBool,
 				Optional:    true,
@@ -330,8 +336,8 @@ func (r *thirdPartyEnrollmentResource) update(ctx context.Context, d *schema.Res
 	client := meta.Client().GetCPS()
 	logger.Debug("Updating enrollment")
 
-	if !d.HasChangeExcept("timeouts") {
-		logger.Debug("Only timeouts were updated, skipping")
+	if !d.HasChangesExcept("timeouts", "acknowledge_deletion_warnings") {
+		logger.Debug("Only local settings were updated, skipping")
 		return nil
 	}
 
@@ -506,6 +512,9 @@ func (r *thirdPartyEnrollmentResource) importState(ctx context.Context, d *schem
 		return nil, fmt.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("acknowledge_pre_verification_warnings", false); err != nil {
+		return nil, fmt.Errorf("%v: %s", tf.ErrValueSet, err.Error())
+	}
+	if err := d.Set("acknowledge_deletion_warnings", false); err != nil {
 		return nil, fmt.Errorf("%v: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("auto_approve_warnings", []string{}); err != nil {

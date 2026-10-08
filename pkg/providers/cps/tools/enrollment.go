@@ -335,7 +335,12 @@ func GetChangeIDFromPendingChanges(pendingChanges []cps.PendingChange) (int, err
 	if len(pendingChanges) < 1 {
 		return 0, ErrNoPendingChanges
 	}
-	changeURL, err := url.Parse(pendingChanges[0].Location)
+	return GetChangeIDFromLocation(pendingChanges[0].Location)
+}
+
+// GetChangeIDFromLocation returns the change ID from a CPS change location.
+func GetChangeIDFromLocation(location string) (int, error) {
+	changeURL, err := url.Parse(location)
 	if err != nil {
 		return 0, err
 	}

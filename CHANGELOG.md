@@ -94,6 +94,20 @@
 
 
 
+* CPS
+  * Fixed an issue in the `akamai_cps_dv_enrollment` and `akamai_cps_third_party_enrollment` resources where deletion got stuck until timeout when warnings required acknowledgement. Optional `acknowledge_deletion_warnings` attribute was introduced. It acknowledges deletion warnings when set to `true`. Default is `false`. ([I#759](https://github.com/akamai/terraform-provider-akamai/issues/759)).
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ## 11.1.0 (Sep 30, 2026)

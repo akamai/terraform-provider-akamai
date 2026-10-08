@@ -784,6 +784,37 @@ func TestGetChangeIDFromPendingChanges(t *testing.T) {
 	}
 }
 
+func TestGetChangeIDFromLocation(t *testing.T) {
+	t.Parallel()
+	tests := map[string]struct {
+		location  string
+		expected  int
+		withError bool
+	}{
+		"basic test": {
+			location: "/cps-api/enrollments/1/changes/2",
+			expected: 2,
+		},
+		"invalid change ID": {
+			location:  "/cps-api/enrollments/1/changes/abc",
+			withError: true,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			result, err := GetChangeIDFromLocation(test.location)
+			if test.withError {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}
+
 func TestGetEnrollmentID(t *testing.T) {
 	t.Parallel()
 	tests := map[string]struct {
