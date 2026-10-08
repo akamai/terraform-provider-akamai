@@ -20,6 +20,6 @@ RUN apk add --update git bash openssh gcc musl-dev openssl-dev ca-certificates m
     wget https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip && \
     unzip terraform_${TERRAFORM_VERSION}_linux_amd64.zip && \
     mv terraform /usr/bin/terraform \
-    && go install github.com/goreleaser/goreleaser/v2@v2.5.1 \
+    && go install github.com/goreleaser/goreleaser/v2@v2.17.1 \
     && mkdir -p /root/.terraform.d/plugins/registry.terraform.io/akamai/akamai/999.0.0 /root/.ssh
 
