@@ -14,6 +14,7 @@ import (
 	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/cloudlets/v3"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/cloudwrapper"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/cps"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/datastream"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/dns"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/domainownership"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/edgeworkers"
@@ -54,6 +55,8 @@ type Client interface {
 	GetCloudWrapper() cloudwrapper.CloudWrapper
 
 	GetCPS() cps.CPS
+
+	GetDataStream() datastream.DS
 
 	GetDNS() dns.DNS
 
@@ -154,6 +157,11 @@ func (c *ClientImpl) GetCloudWrapper() cloudwrapper.CloudWrapper {
 // GetCPS returns the CPS client for managing certificates.
 func (c *ClientImpl) GetCPS() cps.CPS {
 	return cps.Client(c.sess)
+}
+
+// GetDataStream returns the DataStream client for managing data streams.
+func (c *ClientImpl) GetDataStream() datastream.DS {
+	return datastream.Client(c.sess)
 }
 
 // GetDNS returns the DNS client for managing DNS zones.

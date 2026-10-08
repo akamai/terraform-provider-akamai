@@ -81,7 +81,7 @@ func dataSourceAppSecConfigsRead(ctx context.Context, rd *schema.ResourceData, m
 	)
 
 	logger.Debug("Listing AppSec configs")
-	client := inst.Client(meta)
+	client := meta.Client().GetDataStream()
 
 	groupIDStr := rd.Get("group_id").(string)
 	groupIDStr = strings.TrimPrefix(groupIDStr, "grp_")

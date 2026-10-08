@@ -2,11 +2,9 @@ package datastream
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/datastream"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/session"
 	"github.com/akamai/terraform-provider-akamai/v11/internal/customtypes"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf/validators"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
@@ -33,8 +31,7 @@ var answerXServiceIDItemAttrTypes = map[string]attr.Type{
 
 type (
 	answerXServiceIDsDataSource struct {
-		meta   meta.Meta
-		client datastream.DS
+		meta.DataSource
 	}
 
 	answerXServiceIDsDataSourceModel struct {
@@ -56,24 +53,6 @@ func NewAnswerXServiceIDsDataSource() datasource.DataSource {
 
 func (d *answerXServiceIDsDataSource) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "akamai_datastream_answerx_service_ids"
-}
-
-func (d *answerXServiceIDsDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-
-	m, ok := req.ProviderData.(meta.Meta)
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected Data Source Configure Type",
-			fmt.Sprintf("Expected meta.Meta, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-		)
-		return
-	}
-
-	d.meta = m
-	d.client = inst.Client(m)
 }
 
 // Schema defines the Terraform schema for this data source.
@@ -122,7 +101,7 @@ func (d *answerXServiceIDsDataSource) Read(ctx context.Context, req datasource.R
 		return
 	}
 
-	ctx = session.ContextWithOptions(ctx, session.WithContextLog(d.meta.Log("datastream", "answerXServiceIDsDataSourceRead")))
+	client := d.Client.GetDataStream()
 
 	contractID := strings.TrimPrefix(data.ContractID.ValueString(), "ctr_")
 	if contractID == "" {
@@ -133,7 +112,7 @@ func (d *answerXServiceIDsDataSource) Read(ctx context.Context, req datasource.R
 	var allServiceIDs []datastream.AnswerXServiceDetail
 	var page int64 = 1
 	for {
-		response, err := d.client.ListAnswerXServiceIDs(ctx, datastream.ListAnswerXServiceIDsRequest{
+		response, err := client.ListAnswerXServiceIDs(ctx, datastream.ListAnswerXServiceIDsRequest{
 			ContractID: contractID,
 			Page:       page,
 			PageSize:   answerXServiceIDsPageSize,

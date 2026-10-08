@@ -198,7 +198,7 @@ func dataDatastreamStreamsRead(ctx context.Context, d *schema.ResourceData, m in
 		session.WithContextLog(logger),
 	)
 
-	client := inst.Client(meta)
+	client := meta.Client().GetDataStream()
 
 	groupIDInt, err := tf.GetIntValue("group_id", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {

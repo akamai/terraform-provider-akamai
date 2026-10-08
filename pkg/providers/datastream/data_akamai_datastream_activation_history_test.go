@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/datastream"
+	"github.com/akamai/terraform-provider-akamai/v11/internal/edgegrid"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/testutils"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/mock"
@@ -110,30 +111,28 @@ func TestDataAkamaiDatastreamActivationHistoryRead(t *testing.T) {
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
 			t.Parallel()
-			client := datastream.Mock{}
-			useClient(&client, func() {
-				reqMatcher := mock.MatchedBy(func(r datastream.GetActivationHistoryRequest) bool {
-					return r.LogType == test.expectedLogType
-				})
-				if test.edgegridError != nil {
-					client.On("GetActivationHistory", testutils.MockContext, reqMatcher).Return(nil, test.edgegridError).Once()
-				} else {
-					client.On("GetActivationHistory", testutils.MockContext, reqMatcher).Return(test.getActivationHistoryReturn, nil).Times(3)
-				}
-				resource.UnitTest(t, resource.TestCase{
-					ProtoV6ProviderFactories: testutils.NewProtoV6ProviderFactory(NewSubprovider()),
-					Steps: []resource.TestStep{
-						{
-							Config: testutils.LoadFixtureString(t, test.configPath),
-							Check: resource.ComposeAggregateTestCheckFunc(
-								test.checkFuncs...,
-							),
-							ExpectError: test.withError,
-						},
-					},
-				})
+			client := edgegrid.NewTestClient()
+			reqMatcher := mock.MatchedBy(func(r datastream.GetActivationHistoryRequest) bool {
+				return r.LogType == test.expectedLogType
 			})
-			client.AssertExpectations(t)
+			if test.edgegridError != nil {
+				client.DataStream.On("GetActivationHistory", testutils.MockContext, reqMatcher).Return(nil, test.edgegridError).Once()
+			} else {
+				client.DataStream.On("GetActivationHistory", testutils.MockContext, reqMatcher).Return(test.getActivationHistoryReturn, nil).Times(3)
+			}
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+				Steps: []resource.TestStep{
+					{
+						Config: testutils.LoadFixtureString(t, test.configPath),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							test.checkFuncs...,
+						),
+						ExpectError: test.withError,
+					},
+				},
+			})
+			client.DataStream.AssertExpectations(t)
 		})
 	}
 }

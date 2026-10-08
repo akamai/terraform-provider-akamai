@@ -13,6 +13,7 @@ import (
 	v3 "github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/cloudlets/v3"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/cloudwrapper"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/cps"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/datastream"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/dns"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/domainownership"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/edgeworkers"
@@ -45,6 +46,7 @@ type TestClient struct {
 	CloudletsV3       *v3.Mock
 	CloudWrapper      *cloudwrapper.Mock
 	CPS               *cps.Mock
+	DataStream        *datastream.Mock
 	DNS               *dns.Mock
 	DomainOwnership   *domainownership.Mock
 	EdgeWorkers       *edgeworkers.Mock
@@ -74,6 +76,7 @@ func NewTestClient() *TestClient {
 		CloudletsV3:       &v3.Mock{},
 		CloudWrapper:      &cloudwrapper.Mock{},
 		CPS:               &cps.Mock{},
+		DataStream:        &datastream.Mock{},
 		DNS:               &dns.Mock{},
 		DomainOwnership:   &domainownership.Mock{},
 		EdgeWorkers:       &edgeworkers.Mock{},
@@ -147,6 +150,11 @@ func (c *TestClient) GetCloudWrapper() cloudwrapper.CloudWrapper {
 // GetCPS returns the mock CPS client.
 func (c *TestClient) GetCPS() cps.CPS {
 	return c.CPS
+}
+
+// GetDataStream returns the mock DataStream client.
+func (c *TestClient) GetDataStream() datastream.DS {
+	return c.DataStream
 }
 
 // GetDNS returns the mock DNS client.

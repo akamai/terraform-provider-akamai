@@ -26,6 +26,8 @@ var resourceSchema = map[string]*schema.Schema{
 }
 
 func TestConnectorToMap(t *testing.T) {
+	t.Parallel()
+
 	type expectedResult struct {
 		key   string
 		props map[string]interface{}
@@ -118,6 +120,7 @@ func TestConnectorToMap(t *testing.T) {
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 
 			d := schema.TestResourceDataRaw(t, resourceSchema, test.resourceMap)
 			resourceKey, properties, err := ConnectorToMap(test.connectorDetails, d)
@@ -135,6 +138,8 @@ func TestConnectorToMap(t *testing.T) {
 }
 
 func TestGetConnectors(t *testing.T) {
+	t.Parallel()
+
 	tests := map[string]struct {
 		resourceMap    map[string]interface{}
 		expectedResult datastream.AbstractConnector
@@ -171,6 +176,8 @@ func TestGetConnectors(t *testing.T) {
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
 			d := schema.TestResourceDataRaw(t, resourceSchema, test.resourceMap)
 			connectors, err := GetConnectors(d, []string{"sumologic_connector", "invalid_connector"})
 
@@ -185,6 +192,8 @@ func TestGetConnectors(t *testing.T) {
 }
 
 func TestSetNonNilItemsFromState(t *testing.T) {
+	t.Parallel()
+
 	defaultStateValues := map[string]interface{}{
 		"a": 1,
 		"b": 2,
@@ -224,6 +233,8 @@ func TestSetNonNilItemsFromState(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
 			state := map[string]interface{}{}
 			setNonNilItemsFromState(test.stateValues, state, test.fields...)
 			assert.Equal(t, test.expectedState, state)

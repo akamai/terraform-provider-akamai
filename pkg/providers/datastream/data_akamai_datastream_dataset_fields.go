@@ -86,7 +86,7 @@ func dataSourceDatasetFieldsRead(ctx context.Context, rd *schema.ResourceData, m
 	)
 
 	logger.Debug("Listing dataset fields")
-	client := inst.Client(meta)
+	client := meta.Client().GetDataStream()
 
 	logTypeVal, err := tf.GetStringValue("log_type", rd)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {

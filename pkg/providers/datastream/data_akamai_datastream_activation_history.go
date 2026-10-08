@@ -102,7 +102,7 @@ func populateSchemaFieldsWithActivationHistory(ac []datastream.ActivationHistory
 func dataAkamaiDatastreamActivationHistoryRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := meta.Must(m)
 	log := meta.Log("DataStream", "dataAkamaiDatastreamActivationHistoryRead")
-	client := inst.Client(meta)
+	client := meta.Client().GetDataStream()
 
 	streamID, err := tf.GetIntValue("stream_id", d)
 	if err != nil {
