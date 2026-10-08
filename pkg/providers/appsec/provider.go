@@ -162,6 +162,7 @@ func (p *Subprovider) SDKDataSources() map[string]*schema.Resource {
 func (p *Subprovider) FrameworkResources() []func() resource.Resource {
 	return []func() resource.Resource{
 		NewRapidRulesResource,
+		NewScriptBehaviorRuleResource,
 		NewSecurityPolicyProtectionsResource,
 		NewURLEvasionDefenseResource,
 		NewURLProtectionActionResource,
@@ -176,6 +177,8 @@ func (p *Subprovider) FrameworkDataSources() []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewCustomRulesUsageDataSource,
 		NewRapidRulesDataSource,
+		NewScriptBehaviorRuleDataSource,
+		NewScriptBehaviorRulesDataSource,
 		NewURLEvasionDefenseDataSource,
 		NewURLProtectionPoliciesActionsDataSource,
 		NewURLProtectionPoliciesDataSource,

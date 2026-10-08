@@ -52,6 +52,11 @@
   * Added the `akamai_cloudcertificates_replace_staging` action to replace a certificate lineage's staging generation with its current or previous production generation.
   * Added the `akamai_cloudcertificates_delete_generation` action to permanently delete a single certificate generation from a lineage.
 
+* Appsec (Beta)
+  * Added a new resource `akamai_appsec_script_behavior_rule` - manages Client-Side Protection script behavior rules for a security policy.
+  * Added new data sources:
+    * `akamai_appsec_script_behavior_rule` - retrieves a single script behavior rule for a security policy.
+    * `akamai_appsec_script_behavior_rules` - retrieves all script behavior rules for a security policy.
 
 * Appsec
   * Improved `akamai_appsec_activations` polling to use progressive backoff instead of a fixed interval, reducing unnecessary API calls.
