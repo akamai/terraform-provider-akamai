@@ -57,6 +57,10 @@
   * Added new data sources:
     * `akamai_appsec_script_behavior_rule` - retrieves a single script behavior rule for a security policy.
     * `akamai_appsec_script_behavior_rules` - retrieves all script behavior rules for a security policy.
+  * Added a new resource:
+    * `akamai_appsec_clientside_protection_configuration` - manages Client-side Protection & Compliance (CPC) configuration for a security policy.
+  * Added new data source:
+    * `akamai_appsec_clientside_protection_configuration` - retrieves the CPC configuration for a security policy.
 
 * Appsec
   * Improved `akamai_appsec_activations` polling to use progressive backoff instead of a fixed interval, reducing unnecessary API calls.
