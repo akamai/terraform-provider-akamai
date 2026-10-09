@@ -172,6 +172,12 @@
   * Fixed `akamai_property_activation` resource getting stuck retrying a deactivation indefinitely when the property 
     version had already been deactivated outside Terraform, causing repeated 422 errors and apply timeouts ([I#793](https://github.com/akamai/terraform-provider-akamai/issues/793)).
 
+* Appsec
+  * Fixed `akamai_appsec_advanced_settings_url_evasion_defense` failing with `Provider produced inconsistent result after apply` when `bypass_lists` or `rules` were not configured, or when `rules` were added to an existing resource.
+  * Added validation to `akamai_appsec_advanced_settings_url_evasion_defense` that rejects an empty `rules` list. Omit `rules` instead.
+  * Fixed `akamai_appsec_advanced_settings_url_evasion_defense` failing with `Provider produced inconsistent result after apply` when `rules` were reordered or inserted, as the computed `name` and `description` of a rule were taken from the rule previously at the same position instead of the same `rule_id`.
+
+
 
 
 

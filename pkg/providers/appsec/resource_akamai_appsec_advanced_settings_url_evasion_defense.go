@@ -12,13 +12,14 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf/validators"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -28,6 +29,7 @@ var (
 	_ resource.Resource                = &urlEvasionDefenseResource{}
 	_ resource.ResourceWithConfigure   = &urlEvasionDefenseResource{}
 	_ resource.ResourceWithImportState = &urlEvasionDefenseResource{}
+	_ resource.ResourceWithModifyPlan  = &urlEvasionDefenseResource{}
 )
 
 const (
@@ -120,6 +122,7 @@ func urlEvasionDefenseRulesSchema() schema.ListNestedAttribute {
 	return schema.ListNestedAttribute{
 		Optional:    true,
 		Description: "URL Evasion Defense rules.",
+		Validators:  []validator.List{listvalidator.SizeAtLeast(1)},
 		NestedObject: schema.NestedAttributeObject{
 			Attributes: map[string]schema.Attribute{
 				"rule_id": schema.Int64Attribute{
@@ -134,16 +137,10 @@ func urlEvasionDefenseRulesSchema() schema.ListNestedAttribute {
 				"name": schema.StringAttribute{
 					Computed:    true,
 					Description: "The URL evasion mitigation rule name.",
-					PlanModifiers: []planmodifier.String{
-						stringplanmodifier.UseStateForUnknown(),
-					},
 				},
 				"description": schema.StringAttribute{
 					Computed:    true,
 					Description: "The URL evasion mitigation rule description.",
-					PlanModifiers: []planmodifier.String{
-						stringplanmodifier.UseStateForUnknown(),
-					},
 				},
 				"condition_operator": schema.StringAttribute{
 					Optional:    true,
@@ -254,6 +251,66 @@ func urlEvasionDefenseConditionsSchema() schema.ListNestedAttribute {
 			},
 		},
 	}
+}
+
+// ModifyPlan implements resource.ResourceWithModifyPlan. The computed rule name and description are populated
+// from the rules returned by the API, matched on rule_id, so reordering or inserting rules does not shift them
+// between rules. Rules unknown to the API are marked as unknown.
+func (r *urlEvasionDefenseResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	if req.Plan.Raw.IsNull() {
+		return
+	}
+
+	var plan urlEvasionDefenseResourceModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() || !tf.IsKnown(plan.Rules) || !tf.IsKnown(plan.ConfigID) {
+		return
+	}
+
+	var planRules []urlEvasionDefenseRuleModel
+	resp.Diagnostics.Append(plan.Rules.ElementsAs(ctx, &planRules, false)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	configID := plan.ConfigID.ValueInt64()
+	client := r.Client.GetAPPSEC()
+	version, err := getLatestConfigVersion(ctx, int(configID), client)
+	if err != nil {
+		resp.Diagnostics.AddError(readVersionError, err.Error())
+		return
+	}
+	result, err := client.GetAdvancedSettingsURLEvasionDefense(ctx, appsec.GetAdvancedSettingsURLEvasionDefenseRequest{
+		ConfigID: configID,
+		Version:  int64(version),
+	})
+	if err != nil {
+		resp.Diagnostics.AddError(readError, err.Error())
+		return
+	}
+
+	apiRules := make(map[int64]appsec.AdvancedSettingsURLEvasionDefenseRuleResponse, len(result.Rules))
+	for _, rule := range result.Rules {
+		apiRules[rule.RuleID] = rule
+	}
+
+	for i := range planRules {
+		if rule, ok := apiRules[planRules[i].RuleID.ValueInt64()]; ok {
+			planRules[i].Name = stringOrNull(rule.Name)
+			planRules[i].Description = stringOrNull(rule.Description)
+		} else {
+			planRules[i].Name = types.StringUnknown()
+			planRules[i].Description = types.StringUnknown()
+		}
+	}
+
+	rules, d := types.ListValueFrom(ctx, urlEvasionDefenseRuleType(), planRules)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("rules"), rules)...)
 }
 
 // Create implements resource.Resource
@@ -561,7 +618,7 @@ func (m *urlEvasionDefenseResourceModel) populateModelFromResponse(ctx context.C
 
 	m.Status = types.StringValue(out.Status)
 
-	bypassLists, d := types.SetValueFrom(ctx, types.StringType, out.BypassLists)
+	bypassLists, d := stringSetOrNull(ctx, out.BypassLists)
 	diags.Append(d...)
 	if diags.HasError() {
 		return diags
@@ -591,6 +648,12 @@ func (m *urlEvasionDefenseResourceModel) populateModelFromResponse(ctx context.C
 		}
 
 		rules = append(rules, ruleState)
+	}
+
+	// An empty list is rejected by the schema validator (SizeAtLeast(1)), so no rules always maps to null.
+	if len(rules) == 0 {
+		m.Rules = types.ListNull(urlEvasionDefenseRuleType())
+		return diags
 	}
 
 	ruleList, d := types.ListValueFrom(ctx, urlEvasionDefenseRuleType(), rules)
