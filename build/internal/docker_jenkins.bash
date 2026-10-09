@@ -108,7 +108,7 @@ docker exec akatf-container sh -c 'cd terraform-provider-akamai; make terraform-
 
 echo "Running tests with xUnit output"
 docker exec akatf-container sh -c 'cd terraform-provider-akamai;
-                                   2>&1 go test -timeout $TIMEOUT -v -coverpkg=./... -coverprofile=../profile.out -covermode=$COVERMODE -skip TestClient_DefaultRetryPolicy_TLS ./... | tee ../tests.output'
+                                   2>&1 go test -failfast -timeout $TIMEOUT -v -coverpkg=./... -coverprofile=../profile.out -covermode=$COVERMODE -skip TestClient_DefaultRetryPolicy_TLS ./... | tee ../tests.output'
 docker exec akatf-container sh -c 'cat tests.output | go-junit-report' > test/tests.xml
 docker exec akatf-container sh -c 'cat tests.output' > test/tests.output
 sed -i -e 's/skip=/skipped=/g;s/ failures=/ errors="0" failures=/g' test/tests.xml
