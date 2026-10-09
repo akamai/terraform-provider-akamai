@@ -42,7 +42,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v7
         with:
           version: v2.17.1
-          args: release --clean
+          args: release --clean -p 2
         env:
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
