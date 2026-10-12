@@ -125,6 +125,24 @@ func (strategy v3PolicyStrategy) readPolicy(ctx context.Context, policyID int64,
 	}
 
 	attrs["description"] = policyVersion.Description
+	for _, rule := range policyVersion.MatchRules {
+		switch r := rule.(type) {
+		case *v3.MatchRuleAP:
+			r.AkaRuleID = ""
+		case *v3.MatchRuleAS:
+			r.AkaRuleID = ""
+		case *v3.MatchRulePR:
+			r.AkaRuleID = ""
+		case *v3.MatchRuleER:
+			r.AkaRuleID = ""
+		case *v3.MatchRuleFR:
+			r.AkaRuleID = ""
+		case *v3.MatchRuleRC:
+			r.AkaRuleID = ""
+		default:
+			return nil, fmt.Errorf("unsupported match rule type: %T", rule)
+		}
+	}
 	var matchRulesJSON []byte
 	if len(policyVersion.MatchRules) > 0 {
 		matchRulesJSON, err = json.MarshalIndent(policyVersion.MatchRules, "", "  ")

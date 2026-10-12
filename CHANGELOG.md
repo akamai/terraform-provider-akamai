@@ -7,6 +7,9 @@
 
 
 
+* Cloudlets
+  * Removed the `akaRuleId` and `location` fields from the `match_rules` attribute of the `akamai_cloudlets_policy` resource, since it's not possible to reliably reflect these server-generated values in the resource's state without causing an unexpected `terraform plan` diff.
+    Use the `akamai_cloudlets_policy` or `akamai_cloudlets_shared_policy` data source to read them ([I#659](https://github.com/akamai/terraform-provider-akamai/issues/659)).
 
 
 
