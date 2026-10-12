@@ -117,7 +117,7 @@ func (d *clientCertificatesDataSource) Read(ctx context.Context, req datasource.
 	}
 	client := d.Client.GetMTLSKeystore()
 
-	clientCertificates, err := client.ListClientCertificates(ctx)
+	clientCertificates, err := client.ListClientCertificates(ctx, mtlskeystore.ListClientCertificatesRequest{})
 	if err != nil {
 		resp.Diagnostics.AddError("Unable to List Client Certificates", err.Error())
 		return

@@ -40,30 +40,34 @@ func TestClientCertificatesDataSource(t *testing.T) {
 		CheckEqual("certificates.1.notification_emails.1", "test21@example.com")
 
 	commonListClientCertificatesResponse := &mtlskeystore.ListClientCertificatesResponse{
-		Certificates: []mtlskeystore.Certificate{
+		Certificates: []mtlskeystore.ListClientCertificatesResponseItem{
 			{
-				CertificateID:      1,
-				CertificateName:    "testName",
-				CreatedBy:          "testUser",
-				CreatedDate:        intTest.NewTimeFromString(t, "2001-01-01T01:11:11Z"),
-				Geography:          "CORE",
-				KeyAlgorithm:       "RSA",
-				Signer:             "AKAMAI",
-				Subject:            "/CN=clientauth_example_com_SSL_2024/O=Akamai Technologies Inc./OU=Media/C=US/",
-				SecureNetwork:      "STANDARD_TLS",
-				NotificationEmails: []string{"test@example.com", "test1@example.com"},
+				Certificate: mtlskeystore.Certificate{
+					CertificateID:      1,
+					CertificateName:    "testName",
+					CreatedBy:          "testUser",
+					CreatedDate:        intTest.NewTimeFromString(t, "2001-01-01T01:11:11Z"),
+					Geography:          "CORE",
+					KeyAlgorithm:       "RSA",
+					Signer:             "AKAMAI",
+					Subject:            "/CN=clientauth_example_com_SSL_2024/O=Akamai Technologies Inc./OU=Media/C=US/",
+					SecureNetwork:      "STANDARD_TLS",
+					NotificationEmails: []string{"test@example.com", "test1@example.com"},
+				},
 			},
 			{
-				CertificateID:      2,
-				CertificateName:    "testName2",
-				CreatedBy:          "testUser2",
-				CreatedDate:        intTest.NewTimeFromString(t, "2001-01-01T01:11:11Z"),
-				Geography:          "CHINA_AND_CORE",
-				KeyAlgorithm:       "ECDSA",
-				Signer:             "THIRD_PARTY",
-				Subject:            "/CN=clientauth_example_com_SSL_2025/O=Akamai Technologies Inc./OU=Media/C=CN/",
-				SecureNetwork:      "ENHANCED_TLS",
-				NotificationEmails: []string{"test2@example.com", "test21@example.com"},
+				Certificate: mtlskeystore.Certificate{
+					CertificateID:      2,
+					CertificateName:    "testName2",
+					CreatedBy:          "testUser2",
+					CreatedDate:        intTest.NewTimeFromString(t, "2001-01-01T01:11:11Z"),
+					Geography:          "CHINA_AND_CORE",
+					KeyAlgorithm:       "ECDSA",
+					Signer:             "THIRD_PARTY",
+					Subject:            "/CN=clientauth_example_com_SSL_2025/O=Akamai Technologies Inc./OU=Media/C=CN/",
+					SecureNetwork:      "ENHANCED_TLS",
+					NotificationEmails: []string{"test2@example.com", "test21@example.com"},
+				},
 			},
 		},
 	}
@@ -106,7 +110,7 @@ func TestClientCertificatesDataSource(t *testing.T) {
 		},
 		"error - empty list of client certificates": {
 			init: func(m *mtlskeystore.Mock) {
-				m.On("ListClientCertificates", testutils.MockContext).Return(nil, nil).Once()
+				m.On("ListClientCertificates", testutils.MockContext, mtlskeystore.ListClientCertificatesRequest{}).Return(nil, nil).Once()
 			},
 			steps: []resource.TestStep{
 				{
@@ -144,8 +148,8 @@ func TestClientCertificatesDataSource(t *testing.T) {
 
 func mockListClientCertificates(m *mtlskeystore.Mock, clientCertificates *mtlskeystore.ListClientCertificatesResponse, throwsError bool) {
 	if throwsError {
-		m.On("ListClientCertificates", testutils.MockContext).Return(nil, fmt.Errorf("oops")).Once()
+		m.On("ListClientCertificates", testutils.MockContext, mtlskeystore.ListClientCertificatesRequest{}).Return(nil, fmt.Errorf("oops")).Once()
 		return
 	}
-	m.On("ListClientCertificates", testutils.MockContext).Return(clientCertificates, nil).Times(3)
+	m.On("ListClientCertificates", testutils.MockContext, mtlskeystore.ListClientCertificatesRequest{}).Return(clientCertificates, nil).Times(3)
 }
