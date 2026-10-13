@@ -146,8 +146,9 @@ func resourceGTMv1Domain(config gtmDomainResourceConfig) *schema.Resource {
 				Computed: true,
 			},
 			"default_ssl_client_private_key": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:      schema.TypeString,
+				Optional:  true,
+				Sensitive: true,
 			},
 			"default_error_penalty": {
 				Type:     schema.TypeInt,

@@ -92,6 +92,7 @@ var (
 										},
 										"secret": schema.StringAttribute{
 											Computed:    true,
+											Sensitive:   true,
 											Description: "The secret of an auth key.",
 										},
 									},

@@ -317,8 +317,9 @@ func resourceGTMv1Property(config gtmPropertyResourceConfig) *schema.Resource {
 							Required: true,
 						},
 						"test_object_password": {
-							Type:     schema.TypeString,
-							Optional: true,
+							Type:      schema.TypeString,
+							Optional:  true,
+							Sensitive: true,
 						},
 						"test_object_port": {
 							Type:     schema.TypeInt,
@@ -326,8 +327,9 @@ func resourceGTMv1Property(config gtmPropertyResourceConfig) *schema.Resource {
 							Default:  80,
 						},
 						"ssl_client_private_key": {
-							Type:     schema.TypeString,
-							Optional: true,
+							Type:      schema.TypeString,
+							Optional:  true,
+							Sensitive: true,
 						},
 						"ssl_client_certificate": {
 							Type:     schema.TypeString,

@@ -74,6 +74,7 @@ func (d *apiClientsDataSource) Schema(_ context.Context, _ datasource.SchemaRequ
 					Attributes: map[string]schema.Attribute{
 						"access_token": schema.StringAttribute{
 							Computed:    true,
+							Sensitive:   true,
 							Description: "The part of the client secret that identifies your API client and lets you access applications and resources.",
 						},
 						"actions": schema.SingleNestedAttribute{
@@ -158,6 +159,7 @@ func (d *apiClientsDataSource) Schema(_ context.Context, _ datasource.SchemaRequ
 						},
 						"service_consumer_token": schema.StringAttribute{
 							Computed:    true,
+							Sensitive:   true,
 							Description: "Unique identifier for the service hostname.",
 						},
 					},

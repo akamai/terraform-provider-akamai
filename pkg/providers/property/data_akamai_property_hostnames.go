@@ -260,6 +260,7 @@ func dataSourcePropertyHostnames() *schema.Resource {
 												"challenge_token": {
 													Type:        schema.TypeString,
 													Computed:    true,
+													Sensitive:   true,
 													Description: "A token you need to copy to the DNS TXT record that validates the domain ownership.",
 												},
 											},

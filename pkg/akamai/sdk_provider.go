@@ -44,16 +44,19 @@ func NewSDKProvider(subprovs ...subprovider.Subprovider) plugin.ProviderFunc {
 							Required: true,
 						},
 						"access_token": {
-							Type:     schema.TypeString,
-							Required: true,
+							Type:      schema.TypeString,
+							Required:  true,
+							Sensitive: true,
 						},
 						"client_token": {
-							Type:     schema.TypeString,
-							Required: true,
+							Type:      schema.TypeString,
+							Required:  true,
+							Sensitive: true,
 						},
 						"client_secret": {
-							Type:     schema.TypeString,
-							Required: true,
+							Type:      schema.TypeString,
+							Required:  true,
+							Sensitive: true,
 						},
 						"max_body": {
 							Type:     schema.TypeInt,

@@ -72,6 +72,11 @@
 
 #### BUG FIXES:
 
+* General
+  * Marked credential, secret, token, password, and private-key schema attributes as sensitive to prevent Terraform from displaying them in plan and apply output. 
+    Affected resources and data sources: `akamai_dns_zone`, `akamai_gtm_property`, `akamai_gtm_domain`, `akamai_iam_api_clients`, `akamai_cloudwrapper_configuration`, `akamai_property_hostnames`, and `akamai_property_rules_builder`.
+    Thanks for reporting this issue, @kta1kri .
+
 
 
 

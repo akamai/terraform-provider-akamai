@@ -119,8 +119,9 @@ func resourceDNSv2Zone(config dnsZoneResourceConfig) *schema.Resource {
 							Required: true,
 						},
 						"secret": {
-							Type:     schema.TypeString,
-							Required: true,
+							Type:      schema.TypeString,
+							Required:  true,
+							Sensitive: true,
 						},
 					},
 				},
@@ -175,6 +176,7 @@ func resourceDNSv2Zone(config dnsZoneResourceConfig) *schema.Resource {
 									"secret": {
 										Type:             schema.TypeString,
 										Required:         true,
+										Sensitive:        true,
 										ValidateDiagFunc: tf.IsNotBlank,
 										Description: "A Base64-encoded string of data. When decoded, it needs to contain the correct number of bits for the chosen algorithm. " +
 											"If the input isn't correctly padded, the server applies the padding.",

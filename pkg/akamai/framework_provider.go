@@ -110,14 +110,17 @@ func (p *Provider) Schema(_ context.Context, _ provider.SchemaRequest, resp *pro
 						},
 						"access_token": schema.StringAttribute{
 							Required:   true,
+							Sensitive:  true,
 							Validators: []validator.String{validators.NotEmptyString()},
 						},
 						"client_token": schema.StringAttribute{
 							Required:   true,
+							Sensitive:  true,
 							Validators: []validator.String{validators.NotEmptyString()},
 						},
 						"client_secret": schema.StringAttribute{
 							Required:   true,
+							Sensitive:  true,
 							Validators: []validator.String{validators.NotEmptyString()},
 						},
 						"max_body": schema.Int64Attribute{
