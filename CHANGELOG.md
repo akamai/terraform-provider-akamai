@@ -56,6 +56,9 @@
   * Fixed an issue in the `akamai_dns_record` resource where TXT targets longer than 255 characters were rejected with ambiguous error ([I#786](https://github.com/akamai/terraform-provider-akamai/issues/786)).
   * Added validation to reject a trailing dot in `target` for `AKAMAICDN` records in the `akamai_dns_record` resource, preventing an ambiguous API error ([I#664](https://github.com/akamai/terraform-provider-akamai/issues/664)).
 
+* Edgeworkers
+  * Fixed an issue in `akamai_edgeworkers_activation` where activation polling failed when the API returned `DEPLOYED` status ([#804](https://github.com/akamai/terraform-provider-akamai/issues/804)).
+
 * PAPI
   * Fixed validation rules for some fields to be in sync with Property Manager. Validation now uses valid variable-length values ([I#778](https://github.com/akamai/terraform-provider-akamai/issues/778)).
 
