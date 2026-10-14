@@ -115,6 +115,7 @@ const (
 	stagingNetwork             = "STAGING"
 	productionNetwork          = "PRODUCTION"
 	activationStatusComplete   = "COMPLETE"
+	activationStatusDeployed   = "DEPLOYED"
 	activationStatusPresubmit  = "PRESUBMIT"
 	activationStatusPending    = "PENDING"
 	activationStatusInProgress = "IN_PROGRESS"
@@ -516,7 +517,7 @@ func waitForEdgeworkerActivation(ctx context.Context, client edgeworkers.Edgewor
 	if err != nil {
 		return nil, err
 	}
-	for activation != nil && activation.Status != activationStatusComplete {
+	for activation != nil && !isActivationComplete(activation.Status) {
 		if !statusOngoing(activation.Status) {
 			return nil, ErrEdgeworkerActivationFailure
 		}
@@ -676,6 +677,10 @@ func statusOngoing(status string) bool {
 	return status == activationStatusInProgress || status == activationStatusPending || status == activationStatusPresubmit
 }
 
+func isActivationComplete(status string) bool {
+	return status == activationStatusComplete || status == activationStatusDeployed
+}
+
 func statusOngoingOrReady(status string) bool {
-	return status == activationStatusComplete || statusOngoing(status)
+	return isActivationComplete(status) || statusOngoing(status)
 }

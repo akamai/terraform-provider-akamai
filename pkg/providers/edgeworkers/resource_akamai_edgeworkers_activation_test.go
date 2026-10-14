@@ -262,6 +262,45 @@ func TestResourceEdgeworkersActivation(t *testing.T) {
 				},
 			},
 		},
+		"create and read activation - production network terminates with DEPLOYED status": {
+			init: func(m *edgeworkers.Mock) {
+				net := edgeworkers.ActivationNetworkProduction
+				version := "test"
+				activationID := 1
+				note := "note for edgeworkers activation"
+
+				// version verification
+				expectListEdgeWorkerVersions(m, edgeworkerID, []edgeworkers.EdgeWorkerVersion{
+					*createStubEdgeworkerVersion(edgeworkerID, version),
+				}, nil)
+
+				// get current activation
+				expectListActivations(m, edgeworkerID, "", []edgeworkers.Activation{}, nil).Once()
+
+				// activate
+				expectActivateVersion(m, edgeworkerID, activationID, net, version, note, true, nil).Once()
+				expectGetActivation(m, edgeworkerID, activationID, net, version, activationStatusPresubmit, nil).Once()
+				expectGetActivation(m, edgeworkerID, activationID, net, version, activationStatusPending, nil).Once()
+				expectGetActivation(m, edgeworkerID, activationID, net, version, activationStatusInProgress, nil).Once()
+				expectGetActivation(m, edgeworkerID, activationID, net, version, activationStatusDeployed, nil).Once()
+
+				// read
+				expectFullRead(m, edgeworkerID, version, []edgeworkers.Activation{
+					*createStubActivation(edgeworkerID, activationID, net, version, activationStatusDeployed, "", note),
+				}, []edgeworkers.Deactivation{}, 2)
+
+				// test cleanup - destroy
+				expectFullDeactivation(m, edgeworkerID, 1, net, version, note)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureStringf(t, "%s/edgeworkers_activation_version_test_prod.tf", workdir),
+					Check: baseChecker.
+						CheckEqual("network", productionNetwork).
+						Build(),
+				},
+			},
+		},
 		"create and read activation - version is already being activated, wait for activation": {
 			init: func(m *edgeworkers.Mock) {
 				net := edgeworkers.ActivationNetworkStaging
