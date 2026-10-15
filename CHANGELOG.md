@@ -73,6 +73,50 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+* PAPI
+  * Increased the default timeout of the `akamai_edge_hostname` resource from 45 minutes to 3 hours and removed the 15-retry limit when waiting for edge hostname propagation.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #### BUG FIXES:
 
 * General
