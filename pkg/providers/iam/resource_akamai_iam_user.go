@@ -109,6 +109,7 @@ func resourceIAMUser() *schema.Resource {
 				Type:             schema.TypeString,
 				Optional:         true,
 				Description:      "The user's secondary email address.",
+				ValidateDiagFunc: tf.IsNotBlank,
 				StateFunc:        stateEmail,
 				DiffSuppressFunc: suppressEmail,
 			},
@@ -277,7 +278,6 @@ func resourceIAMUserCreate(ctx context.Context, d *schema.ResourceData, m interf
 		TimeZone:                 d.Get("time_zone").(string),
 		JobTitle:                 d.Get("job_title").(string),
 		TFAEnabled:               d.Get("enable_tfa").(bool),
-		SecondaryEmail:           d.Get("secondary_email").(string),
 		MobilePhone:              d.Get("mobile_phone").(string),
 		Address:                  d.Get("address").(string),
 		City:                     d.Get("city").(string),
@@ -287,6 +287,11 @@ func resourceIAMUserCreate(ctx context.Context, d *schema.ResourceData, m interf
 		ContactType:              d.Get("contact_type").(string),
 		PreferredLanguage:        d.Get("preferred_language").(string),
 		AdditionalAuthentication: iam.Authentication(authMethod),
+	}
+
+	// the API rejects an empty string, so only send it when the user actually configured it
+	if secondaryEmail := d.Get("secondary_email").(string); secondaryEmail != "" {
+		basicUser.SecondaryEmail = &secondaryEmail
 	}
 
 	if st, ok := d.GetOk("session_timeout"); ok {
@@ -539,7 +544,6 @@ func resourceIAMUserUpdate(ctx context.Context, d *schema.ResourceData, m interf
 			TimeZone:                 d.Get("time_zone").(string),
 			JobTitle:                 d.Get("job_title").(string),
 			TFAEnabled:               d.Get("enable_tfa").(bool),
-			SecondaryEmail:           d.Get("secondary_email").(string),
 			MobilePhone:              d.Get("mobile_phone").(string),
 			Address:                  d.Get("address").(string),
 			City:                     d.Get("city").(string),
@@ -550,6 +554,11 @@ func resourceIAMUserUpdate(ctx context.Context, d *schema.ResourceData, m interf
 			PreferredLanguage:        d.Get("preferred_language").(string),
 			AdditionalAuthentication: iam.Authentication(authMethod),
 		}
+
+		// always send the field on update (even empty) so removing it from the
+		// configuration clears it; the API only rejects an empty string on create
+		secondaryEmail := d.Get("secondary_email").(string)
+		basicUser.SecondaryEmail = &secondaryEmail
 
 		if st, ok := d.GetOk("session_timeout"); ok {
 			sessionTimeout := st.(int)

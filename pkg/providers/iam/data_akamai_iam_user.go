@@ -407,7 +407,7 @@ func (d *userModel) setAttributes(user *iam.User) diag.Diagnostics {
 	d.PasswordExpiryDate = types.StringValue(date.FormatRFC3339Nano(user.PasswordExpiryDate))
 	d.Phone = types.StringValue(user.Phone)
 	d.PreferredLanguage = types.StringValue(user.PreferredLanguage)
-	d.SecondaryEmail = types.StringValue(user.SecondaryEmail)
+	d.SecondaryEmail = types.StringPointerValue(user.SecondaryEmail)
 	if user.SessionTimeOut != nil {
 		d.SessionTimeout = types.Int64Value(int64(*user.SessionTimeOut))
 	}

@@ -4,6 +4,9 @@
 
 #### BREAKING CHANGES:
 
+* IAM
+  * Fixed the `akamai_iam_user` resource so that removing `secondary_email` from the  configuration now correctly clears a previously set value on update, instead of silently leaving it unchanged ([I#699](https://github.com/akamai/terraform-provider-akamai/issues/699)). 
+  * Corrected `secondary_email` to no longer accept empty string in configuration.
 
 
 
