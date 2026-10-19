@@ -64,6 +64,7 @@
 
 * PAPI
   * Added support for the `delivery_policy` attribute and map details in the `akamai_edge_hostnames` and `akamai_edge_hostname` data sources when `options` is set to `mapDetails`.
+  * Added support for the new rule format [`v2026-09-30`](https://techdocs.akamai.com/terraform/docs/rule-format-changes#v2026-09-30). Compared to the previous rule format, the `downloadNotification` behavior is no longer supported.
 
 
 

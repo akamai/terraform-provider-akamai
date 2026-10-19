@@ -10810,7 +10810,7 @@ func getBehaviorsSchemaV20250324() map[string]*schema.Schema {
 		"pqc_origin": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Use this behavior to enable Post Quantum Cryptography (PQC) key exchanges with your origin. This behavior can be used in includes.",
+			Description: "Use this behavior to manage Post Quantum Cryptography (PQC) key exchanges with your origin. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{

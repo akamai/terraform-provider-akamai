@@ -10942,7 +10942,7 @@ func getBehaviorsSchemaV20251016() map[string]*schema.Schema {
 		"pqc_client_to_edge": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Use this behavior to enable Post Quantum Cryptography key exchanges from Client to Edge. You should enable `pqcClientToEdge` to secure client-to-edge communication, protect your data, and address privacy and security goals. This behavior can be used in includes.",
+			Description: "Use this behavior to manage Post Quantum Cryptography key exchanges from Client to Edge. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -10973,7 +10973,7 @@ func getBehaviorsSchemaV20251016() map[string]*schema.Schema {
 		"pqc_origin": {
 			Optional:    true,
 			Type:        schema.TypeList,
-			Description: "Use this behavior to enable Post Quantum Cryptography (PQC) key exchanges with your origin. This behavior can be used in includes.",
+			Description: "Use this behavior to manage Post Quantum Cryptography (PQC) key exchanges with your origin. This behavior can be used in includes.",
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
