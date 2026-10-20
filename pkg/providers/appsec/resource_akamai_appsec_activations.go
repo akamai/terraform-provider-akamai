@@ -681,7 +681,7 @@ func activate(
 		Note:               note,
 		NotificationEmails: notificationEmails,
 	}
-	createActivationRequest.ActivationConfigs = append(createActivationRequest.ActivationConfigs, appsec.ActivationConfigs{
+	createActivationRequest.ActivationConfigs = append(createActivationRequest.ActivationConfigs, appsec.ActivationConfigRequestItem{
 		ConfigID:      configID,
 		ConfigVersion: version,
 	})
@@ -1058,7 +1058,7 @@ func performDeactivation(ctx context.Context, client appsec.APPSEC, activationID
 		Note:               params.Note,
 		NotificationEmails: params.NotificationEmails,
 	}
-	removeActivationRequest.ActivationConfigs = append(removeActivationRequest.ActivationConfigs, appsec.ActivationConfigs{
+	removeActivationRequest.ActivationConfigs = append(removeActivationRequest.ActivationConfigs, appsec.ActivationConfigRequestItem{
 		ConfigID:      params.ConfigID,
 		ConfigVersion: params.Version,
 	})

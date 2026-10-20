@@ -119,10 +119,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 				Network:            "STAGING",
 				Note:               "Test Notes",
 				NotificationEmails: []string{"user@example.com"},
-				ActivationConfigs: []struct {
-					ConfigID      int `json:"configId"`
-					ConfigVersion int `json:"configVersion"`
-				}{{ConfigID: 43253, ConfigVersion: 7}}},
+				ActivationConfigs:  []appsec.ActivationConfigRequestItem{{ConfigID: 43253, ConfigVersion: 7}}},
 		).Return(&removeActivationsResponse, nil).Once()
 
 		client.APPSEC.On("GetActivations",
@@ -359,10 +356,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 				Network:            "STAGING",
 				Note:               "Test Notes",
 				NotificationEmails: []string{"user@example.com"},
-				ActivationConfigs: []struct {
-					ConfigID      int `json:"configId"`
-					ConfigVersion int `json:"configVersion"`
-				}{{ConfigID: 43253, ConfigVersion: 7}}},
+				ActivationConfigs:  []appsec.ActivationConfigRequestItem{{ConfigID: 43253, ConfigVersion: 7}}},
 		).Return(&createActivationsResponse, nil).Once()
 
 		// lookupActivation: returns pending to force the poll loop to run
@@ -396,10 +390,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 				Network:            "STAGING",
 				Note:               "Test Notes",
 				NotificationEmails: []string{"user@example.com"},
-				ActivationConfigs: []struct {
-					ConfigID      int `json:"configId"`
-					ConfigVersion int `json:"configVersion"`
-				}{{ConfigID: 43253, ConfigVersion: 7}}},
+				ActivationConfigs:  []appsec.ActivationConfigRequestItem{{ConfigID: 43253, ConfigVersion: 7}}},
 		).Return(&removeActivationsResponse, nil).Once()
 
 		client.APPSEC.On("GetActivations",
@@ -560,10 +551,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 				Network:            "PRODUCTION",
 				Note:               "Test Notes update",
 				NotificationEmails: []string{"user@example.com"},
-				ActivationConfigs: []struct {
-					ConfigID      int `json:"configId"`
-					ConfigVersion int `json:"configVersion"`
-				}{{ConfigID: 43253, ConfigVersion: 7}}},
+				ActivationConfigs:  []appsec.ActivationConfigRequestItem{{ConfigID: 43253, ConfigVersion: 7}}},
 		).Return(&createActivationsUpdatedResponse, nil).Once()
 
 		// lookupActivation: returns pending to force the poll loop to run
@@ -592,10 +580,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 				Network:            "PRODUCTION",
 				Note:               "Test Notes update",
 				NotificationEmails: []string{"user@example.com"},
-				ActivationConfigs: []struct {
-					ConfigID      int `json:"configId"`
-					ConfigVersion int `json:"configVersion"`
-				}{{ConfigID: 43253, ConfigVersion: 7}}},
+				ActivationConfigs:  []appsec.ActivationConfigRequestItem{{ConfigID: 43253, ConfigVersion: 7}}},
 		).Return(&removeActivationsUpdatedResponse, nil).Once()
 
 		client.APPSEC.On("GetActivations",
@@ -688,10 +673,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 				Network:            "STAGING",
 				Note:               "Test Notes",
 				NotificationEmails: []string{"user@example.com"},
-				ActivationConfigs: []struct {
-					ConfigID      int `json:"configId"`
-					ConfigVersion int `json:"configVersion"`
-				}{{ConfigID: 43253, ConfigVersion: 7}}},
+				ActivationConfigs:  []appsec.ActivationConfigRequestItem{{ConfigID: 43253, ConfigVersion: 7}}},
 		).Return(&createActivationsResponse, nil).Once()
 
 		client.APPSEC.On("GetActivations",
@@ -713,10 +695,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 				Network:            "STAGING",
 				Note:               "Test Notes",
 				NotificationEmails: []string{"user@example.com"},
-				ActivationConfigs: []struct {
-					ConfigID      int `json:"configId"`
-					ConfigVersion int `json:"configVersion"`
-				}{{ConfigID: 43253, ConfigVersion: 7}}},
+				ActivationConfigs:  []appsec.ActivationConfigRequestItem{{ConfigID: 43253, ConfigVersion: 7}}},
 		).Return(&removeActivationsResponse, nil).Once()
 
 		client.APPSEC.On("GetActivations",
@@ -840,10 +819,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 				Network:            "STAGING",
 				Note:               "Test Notes",
 				NotificationEmails: []string{"user@example.com"},
-				ActivationConfigs: []struct {
-					ConfigID      int `json:"configId"`
-					ConfigVersion int `json:"configVersion"`
-				}{{ConfigID: 43253, ConfigVersion: 7}}},
+				ActivationConfigs:  []appsec.ActivationConfigRequestItem{{ConfigID: 43253, ConfigVersion: 7}}},
 		).Return(&createActivationsResponse, nil).Once()
 
 		client.APPSEC.On("GetActivations",
@@ -880,10 +856,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 				Network:            "PRODUCTION",
 				Note:               "Test Notes",
 				NotificationEmails: []string{"user1@example.com"},
-				ActivationConfigs: []struct {
-					ConfigID      int `json:"configId"`
-					ConfigVersion int `json:"configVersion"`
-				}{{ConfigID: 43253, ConfigVersion: 7}}},
+				ActivationConfigs:  []appsec.ActivationConfigRequestItem{{ConfigID: 43253, ConfigVersion: 7}}},
 		).Return(&createActivationsUpdatedResponse, nil).Once()
 
 		client.APPSEC.On("GetActivations",
@@ -906,10 +879,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 				Network:            "PRODUCTION",
 				Note:               "Test Notes",
 				NotificationEmails: []string{"user1@example.com"},
-				ActivationConfigs: []struct {
-					ConfigID      int `json:"configId"`
-					ConfigVersion int `json:"configVersion"`
-				}{{ConfigID: 43253, ConfigVersion: 7}}},
+				ActivationConfigs:  []appsec.ActivationConfigRequestItem{{ConfigID: 43253, ConfigVersion: 7}}},
 		).Return(&removeActivationsUpdatedResponse, nil).Once()
 
 		client.APPSEC.On("GetActivations",
@@ -1012,10 +982,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 				Network:            "STAGING",
 				Note:               "Test Notes",
 				NotificationEmails: []string{"user@example.com"},
-				ActivationConfigs: []struct {
-					ConfigID      int `json:"configId"`
-					ConfigVersion int `json:"configVersion"`
-				}{{ConfigID: 43253, ConfigVersion: 7}}},
+				ActivationConfigs:  []appsec.ActivationConfigRequestItem{{ConfigID: 43253, ConfigVersion: 7}}},
 		).Return(nil, err500x).Once()
 
 		// Retry CreateActivations succeeds
@@ -1026,10 +993,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 				Network:            "STAGING",
 				Note:               "Test Notes",
 				NotificationEmails: []string{"user@example.com"},
-				ActivationConfigs: []struct {
-					ConfigID      int `json:"configId"`
-					ConfigVersion int `json:"configVersion"`
-				}{{ConfigID: 43253, ConfigVersion: 7}}},
+				ActivationConfigs:  []appsec.ActivationConfigRequestItem{{ConfigID: 43253, ConfigVersion: 7}}},
 		).Return(&createActivationsResponse, nil).Once()
 
 		client.APPSEC.On("GetActivations",
@@ -1052,10 +1016,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 				Network:            "STAGING",
 				Note:               "Test Notes",
 				NotificationEmails: []string{"user@example.com"},
-				ActivationConfigs: []struct {
-					ConfigID      int `json:"configId"`
-					ConfigVersion int `json:"configVersion"`
-				}{{ConfigID: 43253, ConfigVersion: 7}}},
+				ActivationConfigs:  []appsec.ActivationConfigRequestItem{{ConfigID: 43253, ConfigVersion: 7}}},
 		).Return(&removeActivationsResponse, nil).Once()
 
 		client.APPSEC.On("GetActivations",
@@ -1156,10 +1117,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 				Network:            "STAGING",
 				Note:               "Test Notes",
 				NotificationEmails: []string{"user@example.com"},
-				ActivationConfigs: []struct {
-					ConfigID      int `json:"configId"`
-					ConfigVersion int `json:"configVersion"`
-				}{{ConfigID: 43253, ConfigVersion: 7}}},
+				ActivationConfigs:  []appsec.ActivationConfigRequestItem{{ConfigID: 43253, ConfigVersion: 7}}},
 		).Return(&createActivationsResponse, nil).Once()
 
 		client.APPSEC.On("GetActivations",
@@ -1198,10 +1156,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 				Network:            "STAGING",
 				Note:               "Test Notes",
 				NotificationEmails: []string{"user@example.com"},
-				ActivationConfigs: []struct {
-					ConfigID      int `json:"configId"`
-					ConfigVersion int `json:"configVersion"`
-				}{{ConfigID: 43253, ConfigVersion: 7}}},
+				ActivationConfigs:  []appsec.ActivationConfigRequestItem{{ConfigID: 43253, ConfigVersion: 7}}},
 		).Return(&createActivationsResponse, nil).Once()
 
 		client.APPSEC.On("GetActivations",
@@ -1224,10 +1179,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 				Network:            "STAGING",
 				Note:               "Test Notes",
 				NotificationEmails: []string{"user@example.com"},
-				ActivationConfigs: []struct {
-					ConfigID      int `json:"configId"`
-					ConfigVersion int `json:"configVersion"`
-				}{{ConfigID: 43253, ConfigVersion: 7}}},
+				ActivationConfigs:  []appsec.ActivationConfigRequestItem{{ConfigID: 43253, ConfigVersion: 7}}},
 		).Return(&removeActivationsResponse, nil).Once()
 
 		client.APPSEC.On("GetActivations",
@@ -1327,10 +1279,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 				Network:            "STAGING",
 				Note:               "Test Notes",
 				NotificationEmails: []string{"user@example.com"},
-				ActivationConfigs: []struct {
-					ConfigID      int `json:"configId"`
-					ConfigVersion int `json:"configVersion"`
-				}{{ConfigID: 43253, ConfigVersion: 7}}},
+				ActivationConfigs:  []appsec.ActivationConfigRequestItem{{ConfigID: 43253, ConfigVersion: 7}}},
 		).Return(nil, err409).Once()
 
 		mockGetConfigurationVersionDefault(client.APPSEC)
@@ -1429,10 +1378,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 				Network:            "STAGING",
 				Note:               "Test Notes",
 				NotificationEmails: []string{"user1@example.com", "user2@example.com"},
-				ActivationConfigs: []struct {
-					ConfigID      int `json:"configId"`
-					ConfigVersion int `json:"configVersion"`
-				}{{ConfigID: 43253, ConfigVersion: 7}}},
+				ActivationConfigs:  []appsec.ActivationConfigRequestItem{{ConfigID: 43253, ConfigVersion: 7}}},
 		).Return(&createActivationsResponse, nil).Once()
 
 		client.APPSEC.On("GetActivations",
@@ -1469,10 +1415,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 				Network:            "STAGING",
 				Note:               "Test Notes",
 				NotificationEmails: []string{"user1@example.com"},
-				ActivationConfigs: []struct {
-					ConfigID      int `json:"configId"`
-					ConfigVersion int `json:"configVersion"`
-				}{{ConfigID: 43253, ConfigVersion: 8}}},
+				ActivationConfigs:  []appsec.ActivationConfigRequestItem{{ConfigID: 43253, ConfigVersion: 8}}},
 		).Return(&createActivationsUpdatedResponse, nil).Once()
 
 		client.APPSEC.On("GetActivations",
@@ -1494,10 +1437,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 				Network:            "STAGING",
 				Note:               "Test Notes",
 				NotificationEmails: []string{"user1@example.com"},
-				ActivationConfigs: []struct {
-					ConfigID      int `json:"configId"`
-					ConfigVersion int `json:"configVersion"`
-				}{{ConfigID: 43253, ConfigVersion: 8}}},
+				ActivationConfigs:  []appsec.ActivationConfigRequestItem{{ConfigID: 43253, ConfigVersion: 8}}},
 		).Return(&removeActivationsUpdatedResponse, nil).Once()
 
 		client.APPSEC.On("GetActivations",
@@ -1599,10 +1539,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 				Network:            "STAGING",
 				Note:               "Test Notes",
 				NotificationEmails: []string{"user1@example.com", "user2@example.com"},
-				ActivationConfigs: []struct {
-					ConfigID      int `json:"configId"`
-					ConfigVersion int `json:"configVersion"`
-				}{{ConfigID: 43253, ConfigVersion: 7}}},
+				ActivationConfigs:  []appsec.ActivationConfigRequestItem{{ConfigID: 43253, ConfigVersion: 7}}},
 		).Return(&createActivationsResponse, nil).Once()
 
 		client.APPSEC.On("GetActivations",
@@ -1625,10 +1562,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 				Network:            "STAGING",
 				Note:               "Test Notes",
 				NotificationEmails: []string{"user1@example.com", "user2@example.com"},
-				ActivationConfigs: []struct {
-					ConfigID      int `json:"configId"`
-					ConfigVersion int `json:"configVersion"`
-				}{{ConfigID: 43253, ConfigVersion: 7}}},
+				ActivationConfigs:  []appsec.ActivationConfigRequestItem{{ConfigID: 43253, ConfigVersion: 7}}},
 		).Return(&removeActivationsResponse, nil).Once()
 
 		client.APPSEC.On("GetActivations",
@@ -1856,10 +1790,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 				Network:            "STAGING",
 				Note:               "Test Notes",
 				NotificationEmails: []string{"user@example.com"},
-				ActivationConfigs: []struct {
-					ConfigID      int `json:"configId"`
-					ConfigVersion int `json:"configVersion"`
-				}{{ConfigID: 43253, ConfigVersion: 7}}},
+				ActivationConfigs:  []appsec.ActivationConfigRequestItem{{ConfigID: 43253, ConfigVersion: 7}}},
 		).Return(&createActivationsResponse, nil).Once()
 
 		client.APPSEC.On("GetActivations",
@@ -2573,10 +2504,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 				Network:            "STAGING",
 				Note:               "Test Notes",
 				NotificationEmails: []string{"user@example.com"},
-				ActivationConfigs: []struct {
-					ConfigID      int `json:"configId"`
-					ConfigVersion int `json:"configVersion"`
-				}{{ConfigID: 43253, ConfigVersion: 7}}},
+				ActivationConfigs:  []appsec.ActivationConfigRequestItem{{ConfigID: 43253, ConfigVersion: 7}}},
 		).Return(&createActivationsResponse, nil).Once()
 
 		// Poll activation
@@ -2704,10 +2632,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 				Network:            "STAGING",
 				Note:               "Test Notes",
 				NotificationEmails: []string{"user@example.com"},
-				ActivationConfigs: []struct {
-					ConfigID      int `json:"configId"`
-					ConfigVersion int `json:"configVersion"`
-				}{{ConfigID: 43253, ConfigVersion: 7}}},
+				ActivationConfigs:  []appsec.ActivationConfigRequestItem{{ConfigID: 43253, ConfigVersion: 7}}},
 		).Return(&createActivationsResponse, nil).Once()
 
 		client.APPSEC.On("GetActivations",
@@ -2832,10 +2757,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 				Network:            "STAGING",
 				Note:               "Test Notes",
 				NotificationEmails: []string{"user@example.com"},
-				ActivationConfigs: []struct {
-					ConfigID      int `json:"configId"`
-					ConfigVersion int `json:"configVersion"`
-				}{{ConfigID: 43253, ConfigVersion: 7}}},
+				ActivationConfigs:  []appsec.ActivationConfigRequestItem{{ConfigID: 43253, ConfigVersion: 7}}},
 		).Return(&createActivationsFailedResponse, nil).Once()
 
 		// Mock GetActivations for polling - returns FAILED status
@@ -2874,10 +2796,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 				Network:            "STAGING",
 				Note:               "Test Notes",
 				NotificationEmails: []string{"user@example.com"},
-				ActivationConfigs: []struct {
-					ConfigID      int `json:"configId"`
-					ConfigVersion int `json:"configVersion"`
-				}{{ConfigID: 43253, ConfigVersion: 6}}},
+				ActivationConfigs:  []appsec.ActivationConfigRequestItem{{ConfigID: 43253, ConfigVersion: 6}}},
 		).Return(&removeActivationsResponse, nil).Once()
 
 		// Mock GetActivations for deactivation polling
