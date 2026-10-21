@@ -251,9 +251,21 @@ func networkActivationSchemaAttribute(network string) schema.SingleNestedAttribu
 				Computed:    true,
 				Description: "The activation request that pre-empted (superseded) this one, or null if this activation was not pre-empted.",
 			},
-			"error_types": schema.StringAttribute{
+			"errors": schema.ListNestedAttribute{
 				Computed:    true,
-				Description: "Error type information when the activation failed, or null otherwise.",
+				Description: "Errors recorded while processing the activation. Empty when there are none.",
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"message": schema.StringAttribute{
+							Computed:    true,
+							Description: "Error message information when the activation failed.",
+						},
+						"type": schema.StringAttribute{
+							Computed:    true,
+							Description: "Error type information when the activation failed.",
+						},
+					},
+				},
 			},
 		},
 	}

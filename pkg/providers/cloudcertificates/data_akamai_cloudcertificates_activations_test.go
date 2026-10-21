@@ -75,7 +75,7 @@ func TestDataActivations(t *testing.T) {
 		CheckMissing("activations.0.total_hostname_count").
 		CheckMissing("activations.0.in_progress_hostname_count").
 		CheckMissing("activations.0.pre_empted_by").
-		CheckMissing("activations.0.error_types").
+		CheckEqual("activations.0.errors.#", "0").
 		CheckEqual("activations.1.activation_id", "1256").
 		CheckEqual("activations.1.lineage_id", "500022").
 		CheckEqual("activations.1.activation_type", "ROLLBACK").
@@ -89,7 +89,7 @@ func TestDataActivations(t *testing.T) {
 		CheckMissing("activations.1.total_hostname_count").
 		CheckMissing("activations.1.in_progress_hostname_count").
 		CheckMissing("activations.1.pre_empted_by").
-		CheckMissing("activations.1.error_types").
+		CheckEqual("activations.1.errors.#", "0").
 		CheckEqual("activations.2.activation_id", "1254").
 		CheckEqual("activations.2.lineage_id", "500022").
 		CheckEqual("activations.2.activation_type", "REPLACE_STAGING").
@@ -103,7 +103,7 @@ func TestDataActivations(t *testing.T) {
 		CheckMissing("activations.2.total_hostname_count").
 		CheckMissing("activations.2.in_progress_hostname_count").
 		CheckMissing("activations.2.pre_empted_by").
-		CheckMissing("activations.2.error_types")
+		CheckEqual("activations.2.errors.#", "0")
 
 	tests := map[string]struct {
 		init  func(*cloudcertificates.Mock)
@@ -242,7 +242,9 @@ func TestDataActivations(t *testing.T) {
 							PreEmptedBy:             ptr.To(int64(1076)),
 							CreatedBy:               "terraform-dev",
 							ModifiedBy:              "terraform-dev",
-							ErrorTypes:              "/error-types/upstream-activation-error",
+							Errors: []cloudcertificates.ActivationError{
+								{Type: "UPSTREAM_ERROR", Message: "An upstream service error occurred while processing the activation."},
+							},
 						},
 					},
 					TotalCount: 1,
@@ -267,7 +269,9 @@ func TestDataActivations(t *testing.T) {
 						CheckEqual("activations.0.total_hostname_count", "42").
 						CheckEqual("activations.0.in_progress_hostname_count", "5").
 						CheckEqual("activations.0.pre_empted_by", "1076").
-						CheckEqual("activations.0.error_types", "/error-types/upstream-activation-error").
+						CheckEqual("activations.0.errors.#", "1").
+						CheckEqual("activations.0.errors.0.type", "UPSTREAM_ERROR").
+						CheckEqual("activations.0.errors.0.message", "An upstream service error occurred while processing the activation.").
 						Build(),
 				},
 			},
@@ -375,7 +379,7 @@ func TestDataActivations(t *testing.T) {
 						CheckMissing("activations.149.total_hostname_count").
 						CheckMissing("activations.149.in_progress_hostname_count").
 						CheckMissing("activations.149.pre_empted_by").
-						CheckMissing("activations.149.error_types").
+						CheckEqual("activations.149.errors.#", "0").
 						Build(),
 				},
 			},

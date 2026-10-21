@@ -119,6 +119,10 @@
 
 
 
+* Cloud Certificates (Beta)
+  * Replaced the `error_types` string attribute with an `errors` list of `message`/`type` objects on the 
+    `akamai_cloudcertificates_activation` resource and the `akamai_cloudcertificates_activation_status` and `akamai_cloudcertificates_activations` data sources.
+
 
 
 

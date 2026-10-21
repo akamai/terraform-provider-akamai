@@ -61,7 +61,7 @@ func TestActivationStatusDataSource(t *testing.T) {
 						CheckMissing("total_hostname_count").
 						CheckMissing("in_progress_hostname_count").
 						CheckMissing("pre_empted_by").
-						CheckMissing("error_types").
+						CheckEqual("errors.#", "0").
 						Build(),
 				},
 			},
@@ -82,7 +82,9 @@ func TestActivationStatusDataSource(t *testing.T) {
 					PreEmptedBy:             ptr.To(int64(1076)),
 					CreatedBy:               "terraform-dev",
 					ModifiedBy:              "terraform-dev",
-					ErrorTypes:              "/error-types/upstream-activation-error",
+					Errors: []cloudcertificates.ActivationError{
+						{Type: "UPSTREAM_ERROR", Message: "An upstream service error occurred while processing the activation."},
+					},
 				}, nil).Times(3)
 			},
 			steps: []resource.TestStep{
@@ -93,7 +95,9 @@ func TestActivationStatusDataSource(t *testing.T) {
 						CheckEqual("total_hostname_count", "42").
 						CheckEqual("in_progress_hostname_count", "5").
 						CheckEqual("pre_empted_by", "1076").
-						CheckEqual("error_types", "/error-types/upstream-activation-error").
+						CheckEqual("errors.#", "1").
+						CheckEqual("errors.0.type", "UPSTREAM_ERROR").
+						CheckEqual("errors.0.message", "An upstream service error occurred while processing the activation.").
 						Build(),
 				},
 			},

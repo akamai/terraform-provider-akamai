@@ -123,8 +123,12 @@ func isTerminalActivationStatus(status string) bool {
 func activationTerminalStatusDiagnostics(activation cloudcertificates.GetActivationStatusResponse) diag.Diagnostics {
 	var diags diag.Diagnostics
 	detail := fmt.Sprintf("Activation %d for lineage %d ended with status %s.", activation.ActivationID, activation.LineageID, activation.ActivationStatus)
-	if activation.ErrorTypes != "" {
-		detail += fmt.Sprintf(" Error types: %s.", activation.ErrorTypes)
+	if len(activation.Errors) > 0 {
+		messages := make([]string, len(activation.Errors))
+		for i, e := range activation.Errors {
+			messages[i] = fmt.Sprintf("%s: %s", e.Type, e.Message)
+		}
+		detail += fmt.Sprintf(" Errors: %s.", strings.Join(messages, "; "))
 	}
 	switch activation.ActivationStatus {
 	case "FAILED":

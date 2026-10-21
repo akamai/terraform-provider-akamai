@@ -48,6 +48,11 @@ func TestActivationResource(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResourceCloudCertificatesActivation/promote_production.tf"),
+					ConfigPlanChecks: resource.ConfigPlanChecks{
+						PreApply: []plancheck.PlanCheck{
+							plancheck.ExpectUnknownValue(dsName, tfjsonpath.New("production")),
+						},
+					},
 					Check: test.NewStateChecker(dsName).
 						CheckEqual("lineage_id", "500035").
 						CheckEqual("production_generation_id", "7274").
@@ -64,7 +69,7 @@ func TestActivationResource(t *testing.T) {
 						CheckMissing("production.total_hostname_count").
 						CheckMissing("production.in_progress_hostname_count").
 						CheckMissing("production.pre_empted_by").
-						CheckMissing("production.error_types").
+						CheckEqual("production.errors.#", "0").
 						Build(),
 				},
 			},
@@ -134,16 +139,23 @@ func TestActivationResource(t *testing.T) {
 					Items: []cloudcertificates.GetActivationStatusResponse{*activationStatus(500040, 8000, 7000, "PRODUCTION", "PENDING", t1, t1)},
 				}, nil).Once()
 				resp := activationStatus(500040, 8000, 7000, "PRODUCTION", "PARTIAL_SUCCESS", t1, t2)
-				resp.ErrorTypes = "/error-types/upstream-activation-error"
+				resp.Errors = []cloudcertificates.ActivationError{{Type: "UPSTREAM_ERROR", Message: "An upstream service error occurred while processing the activation."}}
 				m.On("GetActivationStatus", testutils.MockContext, cloudcertificates.GetActivationStatusRequest{LineageID: 500040, ActivationID: 7000}).
 					Return(resp, nil)
 			},
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestResourceCloudCertificatesActivation/promote_production_partial.tf"),
+					ConfigPlanChecks: resource.ConfigPlanChecks{
+						PreApply: []plancheck.PlanCheck{
+							plancheck.ExpectUnknownValue(dsName, tfjsonpath.New("production")),
+						},
+					},
 					Check: test.NewStateChecker(dsName).
 						CheckEqual("production.activation_status", "PARTIAL_SUCCESS").
-						CheckEqual("production.error_types", "/error-types/upstream-activation-error").
+						CheckEqual("production.errors.#", "1").
+						CheckEqual("production.errors.0.type", "UPSTREAM_ERROR").
+						CheckEqual("production.errors.0.message", "An upstream service error occurred while processing the activation.").
 						Build(),
 				},
 			},
@@ -156,7 +168,7 @@ func TestActivationResource(t *testing.T) {
 					Items: []cloudcertificates.GetActivationStatusResponse{*activationStatus(500041, 8001, 7001, "STAGING", "PENDING", t1, t1)},
 				}, nil).Once()
 				resp := activationStatus(500041, 8001, 7001, "STAGING", "FAILED", t1, t2)
-				resp.ErrorTypes = "/error-types/cert-parse-error"
+				resp.Errors = []cloudcertificates.ActivationError{{Type: "CERT_PARSE_ERROR", Message: "The uploaded certificate is malformed or invalid."}}
 				m.On("GetActivationStatus", testutils.MockContext, cloudcertificates.GetActivationStatusRequest{LineageID: 500041, ActivationID: 7001}).
 					Return(resp, nil).Once()
 				// a failed activation is never persisted (matching property_activation's own pollActivation, which
@@ -214,7 +226,7 @@ func TestActivationResource(t *testing.T) {
 					Items: []cloudcertificates.GetActivationStatusResponse{*activationStatus(500091, 9021, 9602, "PRODUCTION", "PENDING", t2, t2)},
 				}, nil).Once()
 				resp := activationStatus(500091, 9021, 9602, "PRODUCTION", "FAILED", t2, t2)
-				resp.ErrorTypes = "/error-types/cert-parse-error"
+				resp.Errors = []cloudcertificates.ActivationError{{Type: "CERT_PARSE_ERROR", Message: "The uploaded certificate is malformed or invalid."}}
 				m.On("GetActivationStatus", testutils.MockContext, cloudcertificates.GetActivationStatusRequest{LineageID: 500091, ActivationID: 9602}).
 					Return(resp, nil).Once()
 
@@ -277,7 +289,7 @@ func TestActivationResource(t *testing.T) {
 					Items: []cloudcertificates.GetActivationStatusResponse{*activationStatus(500092, 9040, 9701, "PRODUCTION", "PENDING", t2, t2)},
 				}, nil).Once()
 				resp := activationStatus(500092, 9040, 9701, "PRODUCTION", "FAILED", t2, t2)
-				resp.ErrorTypes = "/error-types/cert-parse-error"
+				resp.Errors = []cloudcertificates.ActivationError{{Type: "CERT_PARSE_ERROR", Message: "The uploaded certificate is malformed or invalid."}}
 				m.On("GetActivationStatus", testutils.MockContext, cloudcertificates.GetActivationStatusRequest{LineageID: 500092, ActivationID: 9701}).
 					Return(resp, nil).Once()
 
@@ -451,7 +463,7 @@ func TestActivationResource(t *testing.T) {
 					Return(activationStatus(500035, 7274, 6102, "PRODUCTION", "COMPLETE", t1, t1), nil).Twice()
 				// refresh during the plan-only step: the same activation now reports FAILED.
 				resp := activationStatus(500035, 7274, 6102, "PRODUCTION", "FAILED", t1, t2)
-				resp.ErrorTypes = "/error-types/cert-parse-error"
+				resp.Errors = []cloudcertificates.ActivationError{{Type: "CERT_PARSE_ERROR", Message: "The uploaded certificate is malformed or invalid."}}
 				m.On("GetActivationStatus", testutils.MockContext, req).
 					Return(resp, nil).Once()
 			},
