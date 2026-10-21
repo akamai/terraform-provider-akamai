@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/cloudcertificates"
-	"github.com/akamai/terraform-provider-akamai/v11/internal/retry"
 	"github.com/akamai/terraform-provider-akamai/v11/internal/text"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/framework/modifiers"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
@@ -520,110 +519,37 @@ func (r *activationResource) promoteNetworksAndWait(ctx context.Context, lineage
 // succeeded, but its outcome can't be confirmed here, so nothing is tracked for it. Recovery is a fresh
 // PromoteLineage call for the same generation on the next apply. The API's own response then determines whether
 // that's actually needed. For example, it returns ErrPendingActivationInProgress if the original attempt is
-// still in flight, or a nil "already active" result if it already completed. Polling is bounded by ctx's own
-// deadline rather than a fresh one of its own, so callers polling more than one network in turn share a single
-// overall budget.
+// still in flight, or a nil "already active" result if it already completed. ctx must already carry the overall
+// polling deadline (set once by promoteNetworksAndWait), so callers polling more than one network in turn share
+// a single overall budget.
 func (r *activationResource) finishNetworkActivation(ctx context.Context, lineageID int64, network cloudcertificates.TargetNetwork, items []cloudcertificates.GetActivationStatusResponse) (*networkActivationModel, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	activation := findActivationForNetwork(items, network)
-	if activation == nil {
-		diags.AddError("Unexpected Response", fmt.Sprintf("Did not receive an activation for the %s network.", network))
-		return nil, diags
-	}
-
-	// Poll GetActivationStatus until the activation reaches a terminal status (COMPLETE, PARTIAL_SUCCESS, FAILED,
-	// or ABORTED) or ctx's deadline elapses.
-	final, err := retry.Poll(ctx, retry.PollingOpts[cloudcertificates.GetActivationStatusResponse]{
-		Fn: func(ctx context.Context) (*cloudcertificates.GetActivationStatusResponse, error) {
-			return r.Client.GetCloudCertificates().GetActivationStatus(ctx, cloudcertificates.GetActivationStatusRequest{
-				LineageID:    lineageID,
-				ActivationID: activation.ActivationID,
-			})
-		},
-		ShouldRetryData: func(status cloudcertificates.GetActivationStatusResponse) bool {
-			return !isTerminalActivationStatus(status.ActivationStatus)
-		},
-		Interval: r.pollInterval,
+	final, diags := awaitNetworkActivation(ctx, awaitNetworkActivationOpts{
+		client:       r.Client.GetCloudCertificates(),
+		lineageID:    lineageID,
+		network:      network,
+		items:        items,
+		pollInterval: r.pollInterval,
 	})
-	if err != nil {
-		if errors.Is(err, context.DeadlineExceeded) {
-			diags.AddError("Reached Activation Timeout",
-				fmt.Sprintf("Activation %d for lineage %d did not reach a terminal status within the configured timeout.",
-					activation.ActivationID, lineageID))
-			return nil, diags
-		}
-		diags.AddError("Failed To Read Activation Status",
-			fmt.Sprintf("Failed to read activation %d for lineage %d: %s", activation.ActivationID, lineageID, err.Error()))
-		return nil, diags
-	}
-
-	diags.Append(activationTerminalStatusDiagnostics(*final)...)
-	if final.ActivationStatus == "FAILED" || final.ActivationStatus == "ABORTED" {
+	if diags.HasError() {
 		return nil, diags
 	}
 
 	return mapNetworkActivationModel(*final), diags
 }
 
-// findActivationForNetwork returns the item in items whose TargetEnvironment matches network, or nil if none does.
-func findActivationForNetwork(items []cloudcertificates.GetActivationStatusResponse, network cloudcertificates.TargetNetwork) *cloudcertificates.GetActivationStatusResponse {
-	for i := range items {
-		if items[i].TargetEnvironment == string(network) {
-			return &items[i]
-		}
-	}
-	return nil
-}
-
-func isTerminalActivationStatus(status string) bool {
-	switch status {
-	case "COMPLETE", "PARTIAL_SUCCESS", "FAILED", "ABORTED":
-		return true
-	default:
-		return false
-	}
-}
-
-// activationTerminalStatusDiagnostics reports FAILED/ABORTED activations as errors and PARTIAL_SUCCESS as a
-// warning. In all three cases the activation is still a real, immutable record, so the caller should persist it
-// to state regardless of the diagnostic added here.
-func activationTerminalStatusDiagnostics(activation cloudcertificates.GetActivationStatusResponse) diag.Diagnostics {
-	var diags diag.Diagnostics
-	detail := fmt.Sprintf("Activation %d for lineage %d ended with status %s.", activation.ActivationID, activation.LineageID, activation.ActivationStatus)
-	if activation.ErrorTypes != "" {
-		detail += fmt.Sprintf(" Error types: %s.", activation.ErrorTypes)
-	}
-	switch activation.ActivationStatus {
-	case "FAILED":
-		diags.AddError("Activation Failed", detail)
-	case "ABORTED":
-		diags.AddError("Activation Aborted", detail)
-	case "PARTIAL_SUCCESS":
-		diags.AddWarning("Activation Partially Succeeded", detail)
-	}
-	return diags
-}
-
 // promoteLineageErrorDiagnostics maps well-documented PromoteLineage sentinel errors to clear diagnostics.
 func promoteLineageErrorDiagnostics(err error, lineageID, generationID int64) diag.Diagnostics {
+	if diags := sharedActivationErrorDiagnostics(err, lineageID, "activation"); diags.HasError() {
+		return diags
+	}
+
 	var diags diag.Diagnostics
 	switch {
-	case errors.Is(err, cloudcertificates.ErrLineageNotFound):
-		diags.AddError("Lineage Not Found", fmt.Sprintf("No certificate lineage found with ID %d.", lineageID))
 	case errors.Is(err, cloudcertificates.ErrLineageNoHeadGeneration):
 		diags.AddError("No Head Generation", fmt.Sprintf("Lineage %d has no head generation to activate.", lineageID))
 	case errors.Is(err, cloudcertificates.ErrIncompleteCertMaterial):
 		diags.AddError("Incomplete Certificate Material",
 			fmt.Sprintf("Generation %d of lineage %d has no algorithm instance ready for use; upload a signed certificate before activating.", generationID, lineageID))
-	case errors.Is(err, cloudcertificates.ErrSingleGenerationActivationNotSupported):
-		diags.AddError("Activation Not Supported", fmt.Sprintf("Lineage %d is a SINGLE_GENERATION lineage; activation operations are not supported.", lineageID))
-	case errors.Is(err, cloudcertificates.ErrActivationCooldownInEffect):
-		diags.AddError("Activation Cooldown In Effect", fmt.Sprintf("Lineage %d had a recent activation that is still propagating; wait before starting another.", lineageID))
-	case errors.Is(err, cloudcertificates.ErrPendingActivationInProgress):
-		diags.AddError("Pending Activation In Progress", fmt.Sprintf("Lineage %d already has a pending activation in progress; wait for it to complete before starting another.", lineageID))
-	case errors.Is(err, cloudcertificates.ErrUpstreamActivationError):
-		diags.AddError("Upstream Activation Error", "An upstream service error occurred while processing the activation; this is typically transient and retrying may succeed.")
 	case errors.Is(err, cloudcertificates.ErrLineageBadRequest):
 		diags.AddError("Invalid Activation Request",
 			fmt.Sprintf("Generation %d is not a valid promotion target for lineage %d - it must be the lineage's head generation. %s", generationID, lineageID, err.Error()))

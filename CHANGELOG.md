@@ -46,6 +46,11 @@
 
 #### FEATURES/ENHANCEMENTS:
 
+* Cloud Certificates (Beta)
+  * Added the `akamai_cloudcertificates_renew` action to renew a certificate lineage by creating a new head generation with fresh CSRs for every algorithm.
+  * Added the `akamai_cloudcertificates_rollback` action to roll a certificate lineage's production generation back to its previous production generation.
+  * Added the `akamai_cloudcertificates_replace_staging` action to replace a certificate lineage's staging generation with its current or previous production generation.
+  * Added the `akamai_cloudcertificates_delete_generation` action to permanently delete a single certificate generation from a lineage.
 
 
 

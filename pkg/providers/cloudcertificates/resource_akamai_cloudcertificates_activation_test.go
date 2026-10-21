@@ -17,23 +17,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
-// activationStatus builds a GetActivationStatusResponse for tests, mirroring the real captured shape confirmed in
-// edgegrid-golang's TestPromoteLineage fixtures.
-func activationStatus(lineageID, generationID, activationID int64, network, status string, created, modified time.Time) *cloudcertificates.GetActivationStatusResponse {
-	return &cloudcertificates.GetActivationStatusResponse{
-		ActivationID:           activationID,
-		LineageID:              lineageID,
-		GenerationID:           generationID,
-		ActivationType:         "PROMOTE",
-		ActivationStatus:       status,
-		TargetEnvironment:      network,
-		ActivationCreatedTime:  created,
-		ActivationModifiedTime: modified,
-		CreatedBy:              "terraform-dev",
-		ModifiedBy:             "terraform-dev",
-	}
-}
-
 func TestActivationResource(t *testing.T) {
 	t.Parallel()
 

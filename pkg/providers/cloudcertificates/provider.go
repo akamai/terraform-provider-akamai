@@ -3,6 +3,7 @@ package cloudcertificates
 
 import (
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/subprovider"
+	"github.com/hashicorp/terraform-plugin-framework/action"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -17,17 +18,22 @@ type (
 	// subproviderConfig holds configuration for all CloudCertificates resources and data sources.
 	// Keeping this struct allows proper parallelisation of client construction per resource/data source.
 	subproviderConfig struct {
-		activation activationResourceConfig
-		upload     uploadResourceConfig
+		activation     activationResourceConfig
+		upload         uploadResourceConfig
+		rollback       activationPollingConfig
+		replaceStaging activationPollingConfig
 	}
 )
 
 var _ subprovider.Subprovider = &Subprovider{}
+var _ subprovider.WithActions = &Subprovider{}
 
 func defaultSubproviderConfig() subproviderConfig {
 	return subproviderConfig{
-		activation: defaultActivationResourceConfig(),
-		upload:     defaultUploadResourceConfig(),
+		activation:     defaultActivationResourceConfig(),
+		upload:         defaultUploadResourceConfig(),
+		rollback:       defaultActivationPollingConfig(),
+		replaceStaging: defaultActivationPollingConfig(),
 	}
 }
 
@@ -70,5 +76,15 @@ func (p *Subprovider) FrameworkDataSources() []func() datasource.DataSource {
 		NewGenerationDataSource,
 		NewLineageDataSource,
 		NewLineagesDataSource,
+	}
+}
+
+// FrameworkActions returns the CloudCertificates actions implemented using terraform-plugin-framework.
+func (p *Subprovider) FrameworkActions() []func() action.Action {
+	return []func() action.Action{
+		NewRenewAction,
+		NewRollbackAction(p.config.rollback),
+		NewReplaceStagingAction(p.config.replaceStaging),
+		NewDeleteGenerationAction,
 	}
 }
