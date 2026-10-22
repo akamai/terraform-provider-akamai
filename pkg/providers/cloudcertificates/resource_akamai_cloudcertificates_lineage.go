@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/cloudcertificates"
+	"github.com/akamai/terraform-provider-akamai/v11/internal/pagination"
 	"github.com/akamai/terraform-provider-akamai/v11/internal/text"
 	fwdate "github.com/akamai/terraform-provider-akamai/v11/pkg/common/framework/date"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/framework/modifiers"
@@ -609,9 +610,10 @@ func (r *lineageResource) ModifyPlan(ctx context.Context, req resource.ModifyPla
 	}
 
 	name := plan.LineageName.ValueString()
-	existing, err := r.Client.GetCloudCertificates().ListLineages(ctx, cloudcertificates.ListLineagesRequest{
+	_, nameTaken, err := pagination.Find(ctx, lineagesPaginationOptions(r.Client.GetCloudCertificates(), cloudcertificates.ListLineagesRequest{
 		LineageName: name,
-		PageSize:    cloudcertificates.MaxListLineagesPageSize,
+	}, nil), func(lineage cloudcertificates.Lineage) bool {
+		return lineage.LineageName == name
 	})
 	if err != nil {
 		resp.Diagnostics.AddWarning("Lineage Name Conflict Check Skipped",
@@ -619,14 +621,11 @@ func (r *lineageResource) ModifyPlan(ctx context.Context, req resource.ModifyPla
 				"Any conflict will still be caught when the change is applied.", name, err.Error()))
 		return
 	}
-	for _, l := range existing.Lineages {
+	if nameTaken {
 		// Uniqueness is enforced server-side with an exact-case match (ListLineages' substring filter is only
 		// for searching), so an exact match here can never be this lineage's own pre-rename name.
-		if l.LineageName == name {
-			resp.Diagnostics.AddAttributeError(path.Root("lineage_name"),
-				"Lineage Name Conflict", fmt.Sprintf("A lineage named %q already exists for this account.", name))
-			return
-		}
+		resp.Diagnostics.AddAttributeError(path.Root("lineage_name"),
+			"Lineage Name Conflict", fmt.Sprintf("A lineage named %q already exists for this account.", name))
 	}
 }
 

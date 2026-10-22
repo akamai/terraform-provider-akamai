@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/cloudcertificates"
+	"github.com/akamai/terraform-provider-akamai/v11/internal/pagination"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/framework/date"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
@@ -127,7 +128,22 @@ func (d *certificatesActivityDataSource) Read(ctx context.Context, req datasourc
 		return
 	}
 
-	events, err := d.listAllActivity(ctx, data.LineageID.ValueInt64(), data.Limit.ValueInt64Pointer())
+	client := d.Client.GetCloudCertificates()
+	events, err := pagination.Collect(ctx, pagination.Options[cloudcertificates.LineageActivityEvent, cloudcertificates.ListLineageActivityResponse]{
+		Limit:    data.Limit.ValueInt64Pointer(),
+		PageSize: cloudcertificates.MaxListLineageActivityPageSize,
+		Fetch: func(ctx context.Context, cursor string, pageSize int) (*cloudcertificates.ListLineageActivityResponse, error) {
+			return client.ListLineageActivity(ctx, cloudcertificates.ListLineageActivityRequest{
+				LineageID: data.LineageID.ValueInt64(),
+				Cursor:    cursor,
+				PageSize:  pageSize,
+			})
+		},
+		Items: func(page *cloudcertificates.ListLineageActivityResponse) []cloudcertificates.LineageActivityEvent {
+			return page.Events
+		},
+		NextCursor: func(page *cloudcertificates.ListLineageActivityResponse) *string { return page.NextCursor },
+	})
 	if err != nil {
 		if errors.Is(err, cloudcertificates.ErrLineageNotFound) {
 			resp.Diagnostics.AddError("Lineage Not Found", fmt.Sprintf("No certificate lineage found with ID %d", data.LineageID.ValueInt64()))
@@ -139,49 +155,6 @@ func (d *certificatesActivityDataSource) Read(ctx context.Context, req datasourc
 
 	data.Activities = activitiesToModels(events)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
-}
-
-// listAllActivity follows the API's keyset pagination cursor until the activity history is exhausted or the
-// requested limit is collected. A nil limit collects all events.
-func (d *certificatesActivityDataSource) listAllActivity(ctx context.Context, lineageID int64, limit *int64) ([]cloudcertificates.LineageActivityEvent, error) {
-	client := d.Client.GetCloudCertificates()
-
-	request := cloudcertificates.ListLineageActivityRequest{
-		LineageID: lineageID,
-		PageSize:  cloudcertificates.MaxListLineageActivityPageSize,
-	}
-
-	var events []cloudcertificates.LineageActivityEvent
-	for {
-		if limit != nil {
-			remaining := int(*limit) - len(events)
-			if remaining <= 0 {
-				break
-			}
-			request.PageSize = min(remaining, cloudcertificates.MaxListLineageActivityPageSize)
-		}
-
-		resp, err := client.ListLineageActivity(ctx, request)
-		if err != nil {
-			return nil, err
-		}
-
-		pageEvents := resp.Events
-		if limit != nil {
-			remaining := int(*limit) - len(events)
-			if len(pageEvents) > remaining {
-				pageEvents = pageEvents[:remaining]
-			}
-		}
-		events = append(events, pageEvents...)
-
-		if resp.NextCursor == nil || len(resp.Events) == 0 {
-			break
-		}
-		request.Cursor = *resp.NextCursor
-	}
-
-	return events, nil
 }
 
 func activitiesToModels(events []cloudcertificates.LineageActivityEvent) []activityModel {

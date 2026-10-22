@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/cloudcertificates"
+	"github.com/akamai/terraform-provider-akamai/v11/internal/pagination"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -117,10 +118,22 @@ func (d *bindingsDataSource) Read(ctx context.Context, req datasource.ReadReques
 		LineageID: data.LineageID.ValueInt64(),
 		Network:   cloudcertificates.TargetNetwork(data.Network.ValueString()),
 		Sort:      cloudcertificates.SortOrder(data.SortOrder.ValueString()),
-		PageSize:  cloudcertificates.MaxListLineageBindingsPageSize,
 	}
 
-	bindings, err := d.listAllBindings(ctx, listReq)
+	client := d.Client.GetCloudCertificates()
+	bindings, err := pagination.Collect(ctx, pagination.Options[cloudcertificates.LineageBinding, cloudcertificates.ListLineageBindingsResponse]{
+		PageSize: cloudcertificates.MaxListLineageBindingsPageSize,
+		Fetch: func(ctx context.Context, cursor string, pageSize int) (*cloudcertificates.ListLineageBindingsResponse, error) {
+			request := listReq
+			request.After = cursor
+			request.PageSize = pageSize
+			return client.ListLineageBindings(ctx, request)
+		},
+		Items: func(page *cloudcertificates.ListLineageBindingsResponse) []cloudcertificates.LineageBinding {
+			return page.Bindings
+		},
+		NextCursor: func(page *cloudcertificates.ListLineageBindingsResponse) *string { return page.NextCursor },
+	})
 	if err != nil {
 		if errors.Is(err, cloudcertificates.ErrLineageNotFound) {
 			resp.Diagnostics.AddError("Lineage Not Found", fmt.Sprintf("No certificate lineage found with ID %d", data.LineageID.ValueInt64()))
@@ -135,33 +148,6 @@ func (d *bindingsDataSource) Read(ctx context.Context, req datasource.ReadReques
 
 	data.Bindings = bindingsToModels(bindings)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
-}
-
-// listAllBindings follows the API's keyset pagination cursor, querying the maximum page size internally, until
-// the full list of hostname bindings for the lineage has been collected.
-func (d *bindingsDataSource) listAllBindings(ctx context.Context, listReq cloudcertificates.ListLineageBindingsRequest) ([]cloudcertificates.LineageBinding, error) {
-	client := d.Client.GetCloudCertificates()
-
-	var bindings []cloudcertificates.LineageBinding
-	for {
-		resp, err := client.ListLineageBindings(ctx, listReq)
-		if err != nil {
-			return nil, err
-		}
-
-		bindings = append(bindings, resp.Bindings...)
-
-		nextCursor := resp.NextCursor
-		if nextCursor == nil || len(resp.Bindings) == 0 || *nextCursor == "" {
-			break
-		}
-		if *nextCursor == listReq.After {
-			return nil, fmt.Errorf("lineage bindings pagination returned a non-advancing cursor")
-		}
-		listReq.After = *nextCursor
-	}
-
-	return bindings, nil
 }
 
 func bindingsToModels(bindings []cloudcertificates.LineageBinding) []bindingModel {

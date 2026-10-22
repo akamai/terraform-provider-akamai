@@ -273,6 +273,23 @@ func TestDomainOwnershipDomainsDataSource(t *testing.T) {
 				},
 			},
 		},
+		"error - nil page without error": {
+			init: func(m *domainownership.Mock) {
+				m.On("ListDomains", mock.Anything, domainownership.ListDomainsRequest{
+					Paginate: ptr.To(true),
+					Page:     1,
+					PageSize: 1000,
+				}).Return((*domainownership.ListDomainsResponse)(nil), nil).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, testDir+"domains.tf"),
+					ExpectError: regexp.MustCompile(`(?s)` +
+						regexp.QuoteMeta("Read Domain Ownership Domains failed") + `.*` +
+						regexp.QuoteMeta("received nil page without error")),
+				},
+			},
+		},
 		"error - API error on second page": {
 			init: func(m *domainownership.Mock) {
 				page1 := &domainownership.ListDomainsResponse{

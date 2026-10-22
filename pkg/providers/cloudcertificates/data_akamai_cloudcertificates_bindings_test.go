@@ -114,11 +114,14 @@ func TestDataBindings(t *testing.T) {
 				},
 			},
 		},
-		"happy path - empty page with cursor stops pagination": {
+		"happy path - empty page with valid cursor continues pagination": {
 			init: func(m *cloudcertificates.Mock) {
 				mockListLineageBindings(m, "", "", "", &cloudcertificates.ListLineageBindingsResponse{
 					Bindings:   []cloudcertificates.LineageBinding{},
 					NextCursor: ptr.To("stale-cursor"),
+				}).Times(3)
+				mockListLineageBindings(m, "", "", "stale-cursor", &cloudcertificates.ListLineageBindingsResponse{
+					Bindings: []cloudcertificates.LineageBinding{},
 				}).Times(3)
 			},
 			steps: []resource.TestStep{
@@ -189,6 +192,22 @@ func TestDataBindings(t *testing.T) {
 				},
 			},
 		},
+		"nil page without error": {
+			init: func(m *cloudcertificates.Mock) {
+				m.On("ListLineageBindings", testutils.MockContext, cloudcertificates.ListLineageBindingsRequest{
+					LineageID: 500005,
+					PageSize:  maxPageSize,
+				}).Return((*cloudcertificates.ListLineageBindingsResponse)(nil), nil).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataBindings/default.tf"),
+					ExpectError: regexp.MustCompile(`(?s)` +
+						regexp.QuoteMeta("Failed to retrieve lineage bindings") + `.*` +
+						regexp.QuoteMeta("received nil page without error")),
+				},
+			},
+		},
 		"invalid or expired cursor": {
 			init: func(m *cloudcertificates.Mock) {
 				mockListLineageBindings(m, "", "", "", &cloudcertificates.ListLineageBindingsResponse{
@@ -234,7 +253,7 @@ func TestDataBindings(t *testing.T) {
 			steps: []resource.TestStep{
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestDataBindings/default.tf"),
-					ExpectError: regexp.MustCompile(regexp.QuoteMeta("lineage bindings pagination returned a non-advancing cursor")),
+					ExpectError: regexp.MustCompile(regexp.QuoteMeta(`pagination returned a non-advancing cursor "repeated-cursor"`)),
 				},
 			},
 		},

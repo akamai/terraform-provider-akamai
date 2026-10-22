@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/domainownership"
+	"github.com/akamai/terraform-provider-akamai/v11/internal/pagination"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/framework/date"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -192,43 +193,40 @@ func (d *domainsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		return
 	}
 
-	//Pagination parameters
-	pageSize := int64(1000)
-	page := int64(1)
+	const pageSize int64 = 1000
 	paginate := true
 
-	var domains domainownership.ListDomainsResponse
-
-	for {
-		tflog.Debug(ctx, fmt.Sprintf("Fetching domains page %d with size %d", page, pageSize))
-
-		domainsResp, err := d.Client.GetDomainOwnership().ListDomains(ctx, domainownership.ListDomainsRequest{
-			Paginate: &paginate,
-			Page:     page,
-			PageSize: pageSize,
-		})
-
-		if err != nil {
-			resp.Diagnostics.AddError("Read Domain Ownership Domains failed", err.Error())
-			return
-		}
-
-		domains.Domains = append(domains.Domains, domainsResp.Domains...)
-		if !domainsResp.Metadata.HasNext {
-			break
-		}
-		page++
+	domains, err := pagination.CollectPageItems(ctx, pagination.PageOptions[int64, domainownership.DomainItem, domainownership.ListDomainsResponse]{
+		InitialState: 1,
+		Fetch: func(ctx context.Context, page int64) (*domainownership.ListDomainsResponse, error) {
+			tflog.Debug(ctx, fmt.Sprintf("Fetching domains page %d with size %d", page, pageSize))
+			return d.Client.GetDomainOwnership().ListDomains(ctx, domainownership.ListDomainsRequest{
+				Paginate: &paginate,
+				Page:     page,
+				PageSize: pageSize,
+			})
+		},
+		Items: func(response *domainownership.ListDomainsResponse) []domainownership.DomainItem {
+			return response.Domains
+		},
+		Next: func(page int64, response *domainownership.ListDomainsResponse) (int64, bool) {
+			return page + 1, response.Metadata.HasNext
+		},
+	})
+	if err != nil {
+		resp.Diagnostics.AddError("Read Domain Ownership Domains failed", err.Error())
+		return
 	}
 
-	tflog.Debug(ctx, fmt.Sprintf("Successfully retrieved a total of %d domains.", len(domains.Domains)))
+	tflog.Debug(ctx, fmt.Sprintf("Successfully retrieved a total of %d domains.", len(domains)))
 	data.convertDomainsToModel(domains)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, data)...)
 }
 
-func (m *domainsDataSourceModel) convertDomainsToModel(domains domainownership.ListDomainsResponse) {
-	m.Domains = make([]domainDetailsModel, len(domains.Domains))
-	for i, domain := range domains.Domains {
+func (m *domainsDataSourceModel) convertDomainsToModel(domains []domainownership.DomainItem) {
+	m.Domains = make([]domainDetailsModel, len(domains))
+	for i, domain := range domains {
 		currentDomain := domainDetailsModel{
 			AccountID:               types.StringValue(domain.AccountID),
 			DomainStatus:            types.StringValue(domain.DomainStatus),

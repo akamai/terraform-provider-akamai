@@ -135,11 +135,14 @@ func TestDataCertificatesActivity(t *testing.T) {
 				},
 			},
 		},
-		"happy path - empty page with cursor stops pagination": {
+		"happy path - empty page with valid cursor continues pagination": {
 			init: func(m *cloudcertificates.Mock) {
 				mockListLineageActivity(m, maxPageSize, "", &cloudcertificates.ListLineageActivityResponse{
 					Events:     []cloudcertificates.LineageActivityEvent{},
 					NextCursor: ptr.To("stale-cursor"),
+				}).Times(3)
+				mockListLineageActivity(m, maxPageSize, "stale-cursor", &cloudcertificates.ListLineageActivityResponse{
+					Events: []cloudcertificates.LineageActivityEvent{},
 				}).Times(3)
 			},
 			steps: []resource.TestStep{
@@ -303,6 +306,22 @@ func TestDataCertificatesActivity(t *testing.T) {
 				{
 					Config:      testutils.LoadFixtureString(t, "testdata/TestDataActivity/without_limit.tf"),
 					ExpectError: regexp.MustCompile("No certificate lineage found with ID 500005"),
+				},
+			},
+		},
+		"nil page without error": {
+			init: func(m *cloudcertificates.Mock) {
+				m.On("ListLineageActivity", testutils.MockContext, cloudcertificates.ListLineageActivityRequest{
+					LineageID: 500005,
+					PageSize:  maxPageSize,
+				}).Return((*cloudcertificates.ListLineageActivityResponse)(nil), nil).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataActivity/without_limit.tf"),
+					ExpectError: regexp.MustCompile(`(?s)` +
+						regexp.QuoteMeta("Failed to retrieve lineage activity") + `.*` +
+						regexp.QuoteMeta("received nil page without error")),
 				},
 			},
 		},

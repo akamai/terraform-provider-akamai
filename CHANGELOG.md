@@ -49,6 +49,10 @@
 
 
 
+* Cloud Certificates (Beta)
+  * Changed paginated data-source behavior to return an error when the API returns a repeated cursor, preventing incomplete results or continued requests with repeated cursors.
+    This affects the `akamai_cloudcertificates_activations`, `akamai_cloudcertificates_activity`, `akamai_cloudcertificates_bindings`, and `akamai_cloudcertificates_lineages` data sources.
+
 
 
 
@@ -123,6 +127,10 @@
   * Marked credential, secret, token, password, and private-key schema attributes as sensitive to prevent Terraform from displaying them in plan and apply output. 
     Affected resources and data sources: `akamai_dns_zone`, `akamai_gtm_property`, `akamai_gtm_domain`, `akamai_iam_api_clients`, `akamai_cloudwrapper_configuration`, `akamai_property_hostnames`, and `akamai_property_rules_builder`.
     Thanks for reporting this issue, @kta1kri .
+
+* Cloud Certificates (Beta)
+  * Fixed the `akamai_cloudcertificates_lineage` resource's plan-time name-conflict check to detect matching names on subsequent pages of API results.
+  * Fixed incomplete results from the `akamai_cloudcertificates_activity`, `akamai_cloudcertificates_bindings`, and `akamai_cloudcertificates_lineages` data sources by following valid pagination cursors after empty pages.
 
 
 

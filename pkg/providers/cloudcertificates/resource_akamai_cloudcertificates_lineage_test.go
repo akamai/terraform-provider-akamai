@@ -223,6 +223,28 @@ func TestLineageResource(t *testing.T) {
 				},
 			},
 		},
+		"happy path - rename proceeds when conflict check returns nil page": {
+			init: func(m *cloudcertificates.Mock) {
+				mockCreateLineage(m, createLineageRequestFull(), createLineageResponseFull())
+				mockGetLineage(m, 500001, createLineageResponseFull(), 2)
+				m.On("ListLineages", testutils.MockContext, cloudcertificates.ListLineagesRequest{
+					LineageName: "renamed-lineage", PageSize: cloudcertificates.MaxListLineagesPageSize,
+				}).Return((*cloudcertificates.ListLineagesResponse)(nil), nil).Times(2)
+				mockRenameLineage(m, 500001, "renamed-lineage", renameLineageResponseFull())
+				mockGetLineage(m, 500001, renamedLineageResponseFull(), 2)
+				mockDeleteLineage(m, 500001)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceCloudCertificatesLineage/create_full.tf"),
+					Check:  test.NewStateChecker(dsName).CheckEqual("lineage_name", "test non-validated domain").Build(),
+				},
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceCloudCertificatesLineage/rename.tf"),
+					Check:  test.NewStateChecker(dsName).CheckEqual("lineage_name", "renamed-lineage").Build(),
+				},
+			},
+		},
 		"happy path - create then rename, generation refresh fails after rename (warns, keeps rename)": {
 			init: func(m *cloudcertificates.Mock) {
 				mockCreateLineage(m, createLineageRequestFull(), createLineageResponseFull())
@@ -518,6 +540,26 @@ func TestLineageResource(t *testing.T) {
 				mockGetLineage(m, 500001, createLineageResponseFull(), 2)
 				// plan-time check finds an existing lineage with this name; RenameLineage is never called
 				mockListLineagesConflict(m, "renamed-lineage", 999999)
+				mockDeleteLineage(m, 500001)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResourceCloudCertificatesLineage/create_full.tf"),
+					Check: test.NewStateChecker(dsName).
+						CheckEqual("lineage_name", "test non-validated domain").
+						Build(),
+				},
+				{
+					Config:      testutils.LoadFixtureString(t, "testdata/TestResourceCloudCertificatesLineage/rename.tf"),
+					ExpectError: tst.ErrPattern(`A lineage named "renamed-lineage" already exists for this account\.`),
+				},
+			},
+		},
+		"expect error - rename blocked at plan time, name conflict on a later page": {
+			init: func(m *cloudcertificates.Mock) {
+				mockCreateLineage(m, createLineageRequestFull(), createLineageResponseFull())
+				mockGetLineage(m, 500001, createLineageResponseFull(), 2)
+				mockListLineagesConflictOnSecondPage(m, "renamed-lineage", 999999)
 				mockDeleteLineage(m, 500001)
 			},
 			steps: []resource.TestStep{

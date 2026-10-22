@@ -184,45 +184,40 @@ func TestDataActivations(t *testing.T) {
 				},
 			},
 		},
-		"happy path - empty next cursor stops pagination": {
+		"expect error - empty next cursor": {
 			init: func(m *cloudcertificates.Mock) {
 				mockListActivations(m, maxPageSize, "", &cloudcertificates.ListActivationsResponse{
 					Items:      []cloudcertificates.GetActivationStatusResponse{promote, rollback, replaceStaging},
 					NextCursor: ptr.To(""),
 					TotalCount: 3,
-				}).Times(3)
+				}).Once()
 			},
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDataActivations/without_limit.tf"),
-					Check: allActivationsChecker.
-						CheckMissing("limit").
-						Build(),
+					ExpectError: regexp.MustCompile(`(?s)` +
+						regexp.QuoteMeta(`Failed to retrieve lineage activations`) + `.*` +
+						regexp.QuoteMeta(`pagination returned an empty cursor`)),
 				},
 			},
 		},
-		"happy path - non-advancing cursor stops pagination": {
+		"expect error - non-advancing cursor": {
 			init: func(m *cloudcertificates.Mock) {
 				mockListActivations(m, maxPageSize, "", &cloudcertificates.ListActivationsResponse{
 					Items:      []cloudcertificates.GetActivationStatusResponse{promote},
 					NextCursor: ptr.To("cursor-a"),
-				}).Times(3)
-				// The API returns the same cursor it was given, so it never advances; the second page must be
-				// the last one requested, or pagination would loop forever.
+				}).Once()
 				mockListActivations(m, maxPageSize, "cursor-a", &cloudcertificates.ListActivationsResponse{
 					Items:      []cloudcertificates.GetActivationStatusResponse{},
 					NextCursor: ptr.To("cursor-a"),
-				}).Times(3)
+				}).Once()
 			},
 			steps: []resource.TestStep{
 				{
 					Config: testutils.LoadFixtureString(t, "testdata/TestDataActivations/without_limit.tf"),
-					Check: test.NewStateChecker("data.akamai_cloudcertificates_activations.test").
-						CheckEqual("lineage_id", "500022").
-						CheckMissing("limit").
-						CheckEqual("activations.#", "1").
-						CheckEqual("activations.0.activation_id", "1258").
-						Build(),
+					ExpectError: regexp.MustCompile(`(?s)` +
+						regexp.QuoteMeta(`Failed to retrieve lineage activations`) + `.*` +
+						regexp.QuoteMeta(`pagination returned a non-advancing cursor "cursor-a"`)),
 				},
 			},
 		},
@@ -397,6 +392,22 @@ func TestDataActivations(t *testing.T) {
 					Config: testutils.LoadFixtureString(t, "testdata/TestDataActivations/without_limit.tf"),
 					ExpectError: regexp.MustCompile(`(?s)` + regexp.QuoteMeta("Lineage Not Found") + `.*` +
 						regexp.QuoteMeta("No certificate lineage found with ID 500022")),
+				},
+			},
+		},
+		"nil page without error": {
+			init: func(m *cloudcertificates.Mock) {
+				m.On("ListActivations", testutils.MockContext, cloudcertificates.ListActivationsRequest{
+					LineageID: 500022,
+					PageSize:  maxPageSize,
+				}).Return((*cloudcertificates.ListActivationsResponse)(nil), nil).Once()
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestDataActivations/without_limit.tf"),
+					ExpectError: regexp.MustCompile(`(?s)` +
+						regexp.QuoteMeta("Failed to retrieve lineage activations") + `.*` +
+						regexp.QuoteMeta("received nil page without error")),
 				},
 			},
 		},

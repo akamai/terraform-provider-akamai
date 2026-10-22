@@ -331,6 +331,24 @@ func mockListLineagesConflict(m *cloudcertificates.Mock, name string, existingID
 	}, nil).Once()
 }
 
+// mockListLineagesConflictOnSecondPage registers a ListLineages response whose exact-name match is on page two.
+func mockListLineagesConflictOnSecondPage(m *cloudcertificates.Mock, name string, existingID int64) {
+	m.On("ListLineages", testutils.MockContext, cloudcertificates.ListLineagesRequest{
+		LineageName: name, PageSize: 100,
+	}).Return(&cloudcertificates.ListLineagesResponse{
+		Lineages:   []cloudcertificates.Lineage{{LineageID: 999998, LineageName: "similarly-named-lineage"}},
+		NextCursor: ptr.To("next-cursor"),
+		TotalCount: 2,
+	}, nil).Once()
+	m.On("ListLineages", testutils.MockContext, cloudcertificates.ListLineagesRequest{
+		LineageName: name, PageSize: 100, After: "next-cursor",
+	}).Return(&cloudcertificates.ListLineagesResponse{
+		Lineages:   []cloudcertificates.Lineage{{LineageID: existingID, LineageName: name}},
+		NextCursor: ptr.To("unnecessary-third-page"),
+		TotalCount: 2,
+	}, nil).Once()
+}
+
 // mockRenameLineage registers a successful RenameLineage expectation.
 func mockRenameLineage(m *cloudcertificates.Mock, lineageID int64, newName string, resp *cloudcertificates.RenameLineageResponse) {
 	m.On("RenameLineage", testutils.MockContext, cloudcertificates.RenameLineageRequest{

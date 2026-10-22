@@ -136,6 +136,26 @@ func TestDataAnswerXServiceIDsRead(t *testing.T) {
 		client.DataStream.AssertExpectations(t)
 	})
 
+	t.Run("nil API response returns invalid response diagnostic", func(t *testing.T) {
+		t.Parallel()
+
+		client := edgegrid.NewTestClient()
+		client.DataStream.On("ListAnswerXServiceIDs", testutils.MockContext, pagedReq(1)).Return(
+			(*datastream.ListAnswerXServiceIDsResponse)(nil), nil,
+		).Once()
+
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					Config:      testutils.LoadFixtureString(t, configPath),
+					ExpectError: regexp.MustCompile("invalid API response"),
+				},
+			},
+		})
+		client.DataStream.AssertExpectations(t)
+	})
+
 	t.Run("blank normalized contract ID returns diagnostic", func(t *testing.T) {
 		t.Parallel()
 
