@@ -12,9 +12,10 @@ import (
 )
 
 func TestAkamaiReputationProfile_res_basic(t *testing.T) {
-	t.Parallel()
 	t.Run("match by ReputationProfile ID", func(t *testing.T) {
-		t.Parallel()
+		clearCache()
+		defer clearCache()
+
 		client := edgegrid.NewTestClient()
 
 		configResponse := appsec.GetConfigurationResponse{}
@@ -23,11 +24,7 @@ func TestAkamaiReputationProfile_res_basic(t *testing.T) {
 		client.APPSEC.On("GetConfiguration",
 			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
-		).Return(&configResponse, nil)
-
-		getReputationProfileResponse := appsec.GetReputationProfileResponse{}
-		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResReputationProfile/ReputationProfiles.json"), &getReputationProfileResponse)
-		require.NoError(t, err)
+		).Return(&configResponse, nil).Times(4)
 
 		createReputationProfileResponse := appsec.CreateReputationProfileResponse{}
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResReputationProfile/ReputationProfileCreated.json"), &createReputationProfileResponse)
@@ -38,16 +35,18 @@ func TestAkamaiReputationProfile_res_basic(t *testing.T) {
 		require.NoError(t, err)
 
 		createReputationProfileJSON := testutils.LoadFixtureBytes(t, "testdata/TestResReputationProfile/CreateReputationProfile.json")
-
 		client.APPSEC.On("CreateReputationProfile",
 			testutils.MockContext,
 			appsec.CreateReputationProfileRequest{ConfigID: 43253, ConfigVersion: 7, JsonPayloadRaw: createReputationProfileJSON},
 		).Return(&createReputationProfileResponse, nil)
 
+		getReputationProfileResponse := appsec.GetReputationProfileResponse{}
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResReputationProfile/ReputationProfileCreated.json"), &getReputationProfileResponse)
+		require.NoError(t, err)
 		client.APPSEC.On("GetReputationProfile",
 			testutils.MockContext,
 			appsec.GetReputationProfileRequest{ConfigID: 43253, ConfigVersion: 7, ReputationProfileId: 12345},
-		).Return(&getReputationProfileResponse, nil)
+		).Return(&getReputationProfileResponse, nil).Times(2)
 
 		client.APPSEC.On("RemoveReputationProfile",
 			testutils.MockContext,
@@ -69,5 +68,4 @@ func TestAkamaiReputationProfile_res_basic(t *testing.T) {
 
 		client.APPSEC.AssertExpectations(t)
 	})
-
 }

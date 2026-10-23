@@ -42,6 +42,17 @@ func suppressRatePolicyDiffs(_, oldString, newString string, _ *schema.ResourceD
 		return false
 	}
 
+	// If the config omits server-assigned fields, treat them as matching state.
+	if newResp.ID == 0 {
+		newResp.ID = oldResp.ID
+	}
+	if newResp.ConfigID == 0 {
+		newResp.ConfigID = oldResp.ConfigID
+	}
+	if newResp.ConfigVersion == 0 {
+		newResp.ConfigVersion = oldResp.ConfigVersion
+	}
+
 	// Set default value if not set, then check if there is a diff
 	if oldResp.CounterType != newResp.CounterType && len(newResp.CounterType) == 0 {
 		newResp.CounterType = "per_edge"

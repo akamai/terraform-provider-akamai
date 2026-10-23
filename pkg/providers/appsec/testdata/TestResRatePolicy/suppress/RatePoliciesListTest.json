@@ -1,0 +1,75 @@
+{
+    "ratePolicies": [
+        {
+            "additionalMatchOptions": [
+                {
+                    "positiveMatch": true,
+                    "type": "IpAddressCondition",
+                    "values": [
+                        "198.129.76.39"
+                    ]
+                },
+                {
+                    "positiveMatch": true,
+                    "type": "RequestMethodCondition",
+                    "values": [
+                        "GET"
+                    ]
+                }
+            ],
+            "allTraffic": false,
+            "averageThreshold": 5,
+            "burstThreshold": 10,
+            "clientIdentifiers": ["ip"],
+            "description": "AFW Test Extensions",
+            "fileExtensions": {
+                "positiveMatch": false,
+                "values": [
+                    "3g2",
+                    "3gp",
+                    "aif",
+                    "aiff",
+                    "au",
+                    "avi",
+                    "bin",
+                    "bmp",
+                    "cab"
+                ]
+            },
+            "hostnames": [
+                "www.ludin.org"
+            ],
+            "id": 134644,
+            "configId": 43253,
+            "configVersion": 7,
+            "matchType": "path",
+            "name": "Test_Paths 3",
+            "path": {
+                "positiveMatch": true,
+                "values": [
+                    "/login/",
+                    "/path/"
+                ]
+            },
+            "pathMatchType": "Custom",
+            "pathUriPositiveMatch": true,
+            "queryParameters": [
+                {
+                    "name": "productId",
+                    "positiveMatch": true,
+                    "valueInRange": false,
+                    "values": [
+                        "BUB_12",
+                        "SUSH_11"
+                    ]
+                }
+            ],
+            "requestType": "ClientRequest",
+            "sameActionOnIpv6": false,
+            "type": "WAF",
+            "useXForwardForHeaders": true,
+            "counterType": "per_edge",
+            "penaltyBoxDuration": "TEN_MINUTES"
+        }
+    ]
+}

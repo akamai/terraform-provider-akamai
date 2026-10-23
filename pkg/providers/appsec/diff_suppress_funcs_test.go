@@ -214,6 +214,123 @@ func TestSuppressJSONDiffsIgnoringArrayOrder(t *testing.T) {
 	}
 }
 
+func TestSuppressRatePolicyDiffs(t *testing.T) {
+	t.Parallel()
+
+	basePolicy := `{
+		"id": 134644,
+		"configId": 43253,
+		"configVersion": 7,
+		"matchType": "path",
+		"type": "WAF",
+		"name": "Test Policy",
+		"averageThreshold": 5,
+		"burstThreshold": 10,
+		"clientIdentifiers": ["ip"],
+		"useXForwardForHeaders": true,
+		"requestType": "ClientRequest",
+		"sameActionOnIpv6": false,
+		"pathMatchType": "Custom",
+		"pathUriPositiveMatch": true,
+		"counterType": "per_edge",
+		"penaltyBoxDuration": "THIRTY_MINUTES"
+	}`
+
+	tests := map[string]struct {
+		old      string
+		new      string
+		expected bool
+	}{
+		"identical policies": {
+			old:      basePolicy,
+			new:      basePolicy,
+			expected: true,
+		},
+		"config omits id — server-assigned, treat as matching state": {
+			old: basePolicy,
+			new: `{
+				"matchType": "path", "type": "WAF", "name": "Test Policy",
+				"averageThreshold": 5, "burstThreshold": 10,
+				"clientIdentifiers": ["ip"], "useXForwardForHeaders": true,
+				"requestType": "ClientRequest", "sameActionOnIpv6": false,
+				"pathMatchType": "Custom", "pathUriPositiveMatch": true,
+				"counterType": "per_edge", "penaltyBoxDuration": "THIRTY_MINUTES"
+			}`,
+			expected: true,
+		},
+		"config omits configId and configVersion — server-assigned, treat as matching state": {
+			old: basePolicy,
+			new: `{
+				"id": 134644,
+				"matchType": "path", "type": "WAF", "name": "Test Policy",
+				"averageThreshold": 5, "burstThreshold": 10,
+				"clientIdentifiers": ["ip"], "useXForwardForHeaders": true,
+				"requestType": "ClientRequest", "sameActionOnIpv6": false,
+				"pathMatchType": "Custom", "pathUriPositiveMatch": true,
+				"counterType": "per_edge", "penaltyBoxDuration": "THIRTY_MINUTES"
+			}`,
+			expected: true,
+		},
+		"config omits counterType — defaults to per_edge": {
+			old: basePolicy,
+			new: `{
+				"matchType": "path", "type": "WAF", "name": "Test Policy",
+				"averageThreshold": 5, "burstThreshold": 10,
+				"clientIdentifiers": ["ip"], "useXForwardForHeaders": true,
+				"requestType": "ClientRequest", "sameActionOnIpv6": false,
+				"pathMatchType": "Custom", "pathUriPositiveMatch": true,
+				"penaltyBoxDuration": "THIRTY_MINUTES"
+			}`,
+			expected: true,
+		},
+		"config omits penaltyBoxDuration — defaults to TEN_MINUTES": {
+			old: `{
+				"matchType": "path", "type": "WAF", "name": "Test Policy",
+				"penaltyBoxDuration": "TEN_MINUTES", "counterType": "per_edge"
+			}`,
+			new: `{
+				"matchType": "path", "type": "WAF", "name": "Test Policy",
+				"counterType": "per_edge"
+			}`,
+			expected: true,
+		},
+		"different matchType — real change, do not suppress": {
+			old: basePolicy,
+			new: `{
+				"matchType": "hostname", "type": "WAF", "name": "Test Policy",
+				"counterType": "per_edge", "penaltyBoxDuration": "THIRTY_MINUTES"
+			}`,
+			expected: false,
+		},
+		"different counterType explicitly set — real change, do not suppress": {
+			old: basePolicy,
+			new: `{
+				"matchType": "path", "type": "WAF", "name": "Test Policy",
+				"counterType": "region_aggregated", "penaltyBoxDuration": "THIRTY_MINUTES"
+			}`,
+			expected: false,
+		},
+		"invalid old JSON": {
+			old:      `not-json`,
+			new:      basePolicy,
+			expected: false,
+		},
+		"invalid new JSON": {
+			old:      basePolicy,
+			new:      `not-json`,
+			expected: false,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			result := suppressRatePolicyDiffs("", test.old, test.new, nil)
+			assert.Equal(t, test.expected, result, "suppressRatePolicyDiffs(%q, %q)", test.old, test.new)
+		})
+	}
+}
+
 func TestAreReputationProfilesEqual(t *testing.T) {
 	t.Parallel()
 	deepCopyProfile := func(profile appsec.CreateReputationProfileResponse) appsec.CreateReputationProfileResponse {

@@ -63,6 +63,7 @@
     * `akamai_appsec_clientside_protection_configuration` - retrieves the CPC configuration for a security policy.
 
 * Appsec
+  * Added caching layer for `akamai_appsec_rate_policy`, `akamai_appsec_match_target`, and `akamai_appsec_reputation_profile` resources to reduce API calls.
   * Improved `akamai_appsec_activations` polling to use progressive backoff instead of a fixed interval, reducing unnecessary API calls.
 
 
@@ -180,8 +181,7 @@
   * Fixed `akamai_appsec_advanced_settings_url_evasion_defense` failing with `Provider produced inconsistent result after apply` when `bypass_lists` or `rules` were not configured, or when `rules` were added to an existing resource.
   * Added validation to `akamai_appsec_advanced_settings_url_evasion_defense` that rejects an empty `rules` list. Omit `rules` instead.
   * Fixed `akamai_appsec_advanced_settings_url_evasion_defense` failing with `Provider produced inconsistent result after apply` when `rules` were reordered or inserted, as the computed `name` and `description` of a rule were taken from the rule previously at the same position instead of the same `rule_id`.
-
-
+  * Fixed spurious plan drift for `akamai_appsec_rate_policy` where Terraform detected a change on every plan even when the configuration had not changed. This occurred because the API returns server-assigned fields (`id`, `configId`, `configVersion`) that customers do not write in their HCL config. These fields are now correctly ignored during plan comparison.
 
 
 

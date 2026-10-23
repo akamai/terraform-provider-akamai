@@ -3,6 +3,7 @@ package appsec
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -67,6 +68,9 @@ func resourceRatePolicyCreate(ctx context.Context, d *schema.ResourceData, m int
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	defer invalidateRatePolicyCache(configID, version, logger)
+
 	jsonpostpayload := d.Get("rate_policy")
 	jsonPayloadRaw := []byte(jsonpostpayload.(string))
 	rawJSON := (json.RawMessage)(jsonPayloadRaw)
@@ -79,13 +83,15 @@ func resourceRatePolicyCreate(ctx context.Context, d *schema.ResourceData, m int
 
 	ratepolicy, err := client.CreateRatePolicy(ctx, createRatePolicy)
 	if err != nil {
-		logger.Warnf("calling 'createRatePolicy': %s", err.Error())
+		logger.Errorf("calling 'createRatePolicy': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
 	d.SetId(fmt.Sprintf("%d:%d", createRatePolicy.ConfigID, ratepolicy.ID))
 
-	return resourceRatePolicyRead(ctx, d, meta)
+	// Drop the cached list before reading back, otherwise the read would not see the new policy.
+	invalidateRatePolicyCache(configID, version, logger)
+	return resourceRatePolicyRead(ctx, d, m)
 }
 
 func resourceRatePolicyRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -112,15 +118,20 @@ func resourceRatePolicyRead(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.FromErr(err)
 	}
 
-	readRatePolicy := appsec.GetRatePolicyRequest{
-		ConfigID:      configID,
-		ConfigVersion: version,
-		RatePolicyID:  ratePolicyID,
+	// Use cache helper: fetches all rate policies in one API call on first read,
+	// then filters locally; subsequent reads for the same configID+version hit cache.
+	ratepolicy, err := getRatePolicy(ctx, configID, version, ratePolicyID, m)
+	if errors.Is(err, ErrRatePolicyNotFound) {
+		// The list endpoint can lag immediately after a Create or Update. Fall back to
+		// the single-item fetch, which always reflects the just-written resource.
+		ratepolicy, err = client.GetRatePolicy(ctx, appsec.GetRatePolicyRequest{
+			ConfigID:      configID,
+			ConfigVersion: version,
+			RatePolicyID:  ratePolicyID,
+		})
 	}
-
-	ratepolicy, err := client.GetRatePolicy(ctx, readRatePolicy)
 	if err != nil {
-		logger.Warnf("calling 'getRatePolicy': %s", err.Error())
+		logger.Errorf("calling 'getRatePolicy': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
@@ -169,6 +180,9 @@ func resourceRatePolicyUpdate(ctx context.Context, d *schema.ResourceData, m int
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	defer invalidateRatePolicyCache(configID, version, logger)
+
 	updateRatePolicy := appsec.UpdateRatePolicyRequest{
 		ConfigID:       configID,
 		ConfigVersion:  version,
@@ -176,13 +190,14 @@ func resourceRatePolicyUpdate(ctx context.Context, d *schema.ResourceData, m int
 		JsonPayloadRaw: rawJSON,
 	}
 
-	_, err = client.UpdateRatePolicy(ctx, updateRatePolicy)
-	if err != nil {
-		logger.Warnf("calling 'updateRatePolicy': %s", err.Error())
+	if _, err := client.UpdateRatePolicy(ctx, updateRatePolicy); err != nil {
+		logger.Errorf("calling 'updateRatePolicy': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
-	return resourceRatePolicyRead(ctx, d, meta)
+	// Drop the cached list before reading back, otherwise the read would return the pre-update policy.
+	invalidateRatePolicyCache(configID, version, logger)
+	return resourceRatePolicyRead(ctx, d, m)
 }
 
 func resourceRatePolicyDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -204,10 +219,13 @@ func resourceRatePolicyDelete(ctx context.Context, d *schema.ResourceData, m int
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
 	ratePolicyID, err := strconv.Atoi(iDParts[1])
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	defer invalidateRatePolicyCache(configID, version, logger)
 
 	deleteRatePolicy := appsec.RemoveRatePolicyRequest{
 		ConfigID:      configID,
@@ -217,7 +235,7 @@ func resourceRatePolicyDelete(ctx context.Context, d *schema.ResourceData, m int
 
 	_, err = client.RemoveRatePolicy(ctx, deleteRatePolicy)
 	if err != nil {
-		logger.Warnf("calling 'removeRatePolicy': %s", err.Error())
+		logger.Errorf("calling 'removeRatePolicy': %s", err.Error())
 		return diag.FromErr(err)
 	}
 	return nil

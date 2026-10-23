@@ -67,6 +67,9 @@ func resourceReputationProfileCreate(ctx context.Context, d *schema.ResourceData
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	defer invalidateReputationProfileCache(configID, version, logger)
+
 	jsonpostpayload, err := tf.GetStringValue("reputation_profile", d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -88,6 +91,8 @@ func resourceReputationProfileCreate(ctx context.Context, d *schema.ResourceData
 
 	d.SetId(fmt.Sprintf("%d:%d", createReputationProfile.ConfigID, response.ID))
 
+	// Drop the cached list before reading back, otherwise the read would not see the new profile.
+	invalidateReputationProfileCache(configID, version, logger)
 	return resourceReputationProfileRead(ctx, d, m)
 }
 
@@ -116,12 +121,9 @@ func resourceReputationProfileRead(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	reputationProfileRequest := appsec.GetReputationProfileRequest{
-		ConfigID:            configID,
-		ConfigVersion:       version,
-		ReputationProfileId: reputationProfileID,
-	}
-	reputationProfileResponse, err := client.GetReputationProfile(ctx, reputationProfileRequest)
+	// Use cache helper: fetches all reputation profiles in one API call on first read,
+	// then filters locally; subsequent reads for the same configID+version hit cache.
+	reputationProfileResponse, err := getReputationProfile(ctx, configID, version, reputationProfileID, m)
 	if err != nil {
 		logger.Errorf("calling 'getReputationProfile': %s", err.Error())
 		return diag.FromErr(err)
@@ -171,6 +173,7 @@ func resourceReputationProfileUpdate(ctx context.Context, d *schema.ResourceData
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
 	jsonPayloadRaw := []byte(jsonpostpayload)
 	rawJSON := (json.RawMessage)(jsonPayloadRaw)
 
@@ -181,6 +184,8 @@ func resourceReputationProfileUpdate(ctx context.Context, d *schema.ResourceData
 		JsonPayloadRaw:      rawJSON,
 	}
 
+	// Invalidate before the Read below, otherwise it would be served the stale cached list.
+	invalidateReputationProfileCache(configID, version, logger)
 	_, err = client.UpdateReputationProfile(ctx, updateReputationProfile)
 	if err != nil {
 		logger.Errorf("calling 'updateReputationProfile': %s", err.Error())
@@ -209,10 +214,13 @@ func resourceReputationProfileDelete(ctx context.Context, d *schema.ResourceData
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
 	reputationProfileID, err := strconv.Atoi(iDParts[1])
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	defer invalidateReputationProfileCache(configID, version, logger)
 
 	deleteReputationProfile := appsec.RemoveReputationProfileRequest{
 		ConfigID:            configID,

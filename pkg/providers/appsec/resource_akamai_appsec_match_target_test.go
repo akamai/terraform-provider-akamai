@@ -13,9 +13,10 @@ import (
 )
 
 func TestAkamaiMatchTarget_res_basic(t *testing.T) {
-	t.Parallel()
 	t.Run("match by MatchTarget ID", func(t *testing.T) {
-		t.Parallel()
+		clearCache()
+		defer clearCache()
+
 		client := edgegrid.NewTestClient()
 
 		updateMatchTargetResponse := appsec.UpdateMatchTargetResponse{}
@@ -45,7 +46,7 @@ func TestAkamaiMatchTarget_res_basic(t *testing.T) {
 		client.APPSEC.On("GetConfiguration",
 			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
-		).Return(&config, nil)
+		).Return(&config, nil).Times(8)
 
 		client.APPSEC.On("GetMatchTarget",
 			testutils.MockContext,
@@ -55,7 +56,7 @@ func TestAkamaiMatchTarget_res_basic(t *testing.T) {
 		client.APPSEC.On("GetMatchTarget",
 			testutils.MockContext,
 			appsec.GetMatchTargetRequest{ConfigID: 43253, ConfigVersion: 7, TargetID: 3008967},
-		).Return(&getMatchTargetResponseAfterUpdate, nil)
+		).Return(&getMatchTargetResponseAfterUpdate, nil).Twice()
 
 		createMatchTargetJSON := testutils.LoadFixtureBytes(t, "testdata/TestResMatchTarget/CreateMatchTarget.json")
 		client.APPSEC.On("CreateMatchTarget",
@@ -97,7 +98,9 @@ func TestAkamaiMatchTarget_res_basic(t *testing.T) {
 	})
 
 	t.Run("no drift on match target lists sequence mismatch", func(t *testing.T) {
-		t.Parallel()
+		clearCache()
+		defer clearCache()
+
 		client := edgegrid.NewTestClient()
 
 		getMatchTargetResponse := appsec.GetMatchTargetResponse{}
@@ -119,12 +122,12 @@ func TestAkamaiMatchTarget_res_basic(t *testing.T) {
 		client.APPSEC.On("GetConfiguration",
 			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
-		).Return(&config, nil)
+		).Return(&config, nil).Times(4)
 
 		client.APPSEC.On("GetMatchTarget",
 			testutils.MockContext,
 			appsec.GetMatchTargetRequest{ConfigID: 43253, ConfigVersion: 7, TargetID: 3008967},
-		).Return(&getMatchTargetResponse, nil).Times(2)
+		).Return(&getMatchTargetResponse, nil).Twice()
 
 		createMatchTargetJSON := testutils.LoadFixtureBytes(t, "testdata/TestResMatchTarget/CreateMatchTarget.json")
 		client.APPSEC.On("CreateMatchTarget",
@@ -137,7 +140,7 @@ func TestAkamaiMatchTarget_res_basic(t *testing.T) {
 			appsec.RemoveMatchTargetRequest{ConfigID: 43253, ConfigVersion: 7, TargetID: 3008967},
 		).Return(&removeMatchTargetResponse, nil)
 
-		getMatchTargetJSON := `{"type":"website","defaultFile":"NO_MATCH","hostnames":["m.example.com","www.example.net","example.com"],"isNegativePathMatch":false,"filePaths":["/cache/aaabbc*"],"fileExtensions":["carb","pct","pdf","swf","cct","jpeg","js","wmls","hdml","pws"],"securityPolicy":{"policyId":"AAAA_81230"},"targetId":3008967}`
+		getMatchTargetJSON := `{"type":"website","defaultFile":"NO_MATCH","hostnames":["m.example.com","www.example.net","example.com"],"isNegativePathMatch":false,"filePaths":["/cache/aaabbc*"],"fileExtensions":["carb","pct","pdf","swf","cct","jpeg","js","wmls","hdml","pws"],"securityPolicy":{"policyId":"AAAA_81230"},"sequence":1,"targetId":3008967}`
 
 		mockGetConfigurationVersionDefault(client.APPSEC)
 		resource.UnitTest(t, resource.TestCase{
@@ -157,14 +160,15 @@ func TestAkamaiMatchTarget_res_basic(t *testing.T) {
 	})
 
 	t.Run("some values should not drift on non changed list or struct values sequence mismatch", func(t *testing.T) {
-		t.Parallel()
+		clearCache()
+		defer clearCache()
+
 		client := edgegrid.NewTestClient()
 
 		getMatchTargetResponse := appsec.GetMatchTargetResponse{}
 		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResMatchTarget/MatchTargetSequenceChanged.json"), &getMatchTargetResponse)
 		require.NoError(t, err)
 
-		getMatchTargetResponseChanged := appsec.GetMatchTargetResponse{}
 		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResMatchTarget/MatchTargetSequenceOrderChanged.json"), &getMatchTargetResponse)
 		require.NoError(t, err)
 
@@ -183,17 +187,12 @@ func TestAkamaiMatchTarget_res_basic(t *testing.T) {
 		client.APPSEC.On("GetConfiguration",
 			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
-		).Return(&config, nil)
+		).Return(&config, nil).Times(4)
 
 		client.APPSEC.On("GetMatchTarget",
 			testutils.MockContext,
 			appsec.GetMatchTargetRequest{ConfigID: 43253, ConfigVersion: 7, TargetID: 3008967},
-		).Return(&getMatchTargetResponse, nil).Times(1)
-
-		client.APPSEC.On("GetMatchTarget",
-			testutils.MockContext,
-			appsec.GetMatchTargetRequest{ConfigID: 43253, ConfigVersion: 7, TargetID: 3008967},
-		).Return(&getMatchTargetResponseChanged, nil).Times(1)
+		).Return(&getMatchTargetResponse, nil).Twice()
 
 		createMatchTargetJSON := testutils.LoadFixtureBytes(t, "testdata/TestResMatchTarget/CreateMatchTarget.json")
 		client.APPSEC.On("CreateMatchTarget",
@@ -206,7 +205,7 @@ func TestAkamaiMatchTarget_res_basic(t *testing.T) {
 			appsec.RemoveMatchTargetRequest{ConfigID: 43253, ConfigVersion: 7, TargetID: 3008967},
 		).Return(&removeMatchTargetResponse, nil)
 
-		getMatchTargetJSON := `{"type":"website","defaultFile":"NO_MATCH","hostnames":["m.example.com","www.example.net","examplenew.com"],"isNegativePathMatch":false,"filePaths":["/cache/aaabbc*"],"fileExtensions":["carb","pct","pdf","swf","cct","jpeg","js","wmls","hdml","pws"],"securityPolicy":{"policyId":"AAAA_81230"},"targetId":3008967}`
+		getMatchTargetJSON := `{"type":"website","defaultFile":"NO_MATCH","hostnames":["m.example.com","www.example.net","examplenew.com"],"isNegativePathMatch":false,"filePaths":["/cache/aaabbc*"],"fileExtensions":["carb","pct","pdf","swf","cct","jpeg","js","wmls","hdml","pws"],"securityPolicy":{"policyId":"AAAA_81230"},"sequence":1,"targetId":3008967}`
 
 		mockGetConfigurationVersionDefault(client.APPSEC)
 		resource.UnitTest(t, resource.TestCase{
@@ -227,14 +226,16 @@ func TestAkamaiMatchTarget_res_basic(t *testing.T) {
 	})
 
 	t.Run("Import match target resource", func(t *testing.T) {
-		t.Parallel()
+		clearCache()
+		defer clearCache()
+
 		client := edgegrid.NewTestClient()
 		getMatchTargetResponse := appsec.GetMatchTargetResponse{}
 		err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResMatchTarget/MatchTargetSequenceChanged.json"), &getMatchTargetResponse)
 		require.NoError(t, err)
 
 		createMatchTargetResponse := appsec.CreateMatchTargetResponse{}
-		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResMatchTarget/MatchTargetCreated.json"), &createMatchTargetResponse)
+		err = json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResMatchTarget/MatchTargetSequenceChanged.json"), &createMatchTargetResponse)
 		require.NoError(t, err)
 
 		removeMatchTargetResponse := appsec.RemoveMatchTargetResponse{}
@@ -248,12 +249,12 @@ func TestAkamaiMatchTarget_res_basic(t *testing.T) {
 		client.APPSEC.On("GetConfiguration",
 			testutils.MockContext,
 			appsec.GetConfigurationRequest{ConfigID: 43253},
-		).Return(&config, nil)
+		).Return(&config, nil).Times(6)
 
 		client.APPSEC.On("GetMatchTarget",
 			testutils.MockContext,
 			appsec.GetMatchTargetRequest{ConfigID: 43253, ConfigVersion: 7, TargetID: 3008967},
-		).Return(&getMatchTargetResponse, nil)
+		).Return(&getMatchTargetResponse, nil).Times(4)
 
 		createMatchTargetJSON := testutils.LoadFixtureBytes(t, "testdata/TestResMatchTarget/CreateMatchTarget.json")
 		client.APPSEC.On("CreateMatchTarget",
@@ -284,7 +285,6 @@ func TestAkamaiMatchTarget_res_basic(t *testing.T) {
 
 		client.APPSEC.AssertExpectations(t)
 	})
-
 }
 
 func compactJSON(message string) string {

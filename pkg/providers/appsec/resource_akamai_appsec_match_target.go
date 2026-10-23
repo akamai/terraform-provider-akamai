@@ -69,6 +69,9 @@ func resourceMatchTargetCreate(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	defer invalidateMatchTargetCache(configID, version, logger)
+
 	createMatchTarget := appsec.CreateMatchTargetRequest{}
 	jsonpostpayload := d.Get("match_target")
 	jsonPayloadRaw := []byte(jsonpostpayload.(string))
@@ -78,14 +81,22 @@ func resourceMatchTargetCreate(ctx context.Context, d *schema.ResourceData, m in
 	createMatchTarget.ConfigVersion = version
 	createMatchTarget.JsonPayloadRaw = rawJSON
 
-	postresp, err := client.CreateMatchTarget(ctx, createMatchTarget)
+	created, err := client.CreateMatchTarget(ctx, createMatchTarget)
 	if err != nil {
 		logger.Errorf("calling 'createMatchTarget': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
-	d.SetId(fmt.Sprintf("%d:%d", createMatchTarget.ConfigID, postresp.TargetID))
+	d.SetId(fmt.Sprintf("%d:%d", createMatchTarget.ConfigID, created.TargetID))
+	if err := d.Set("config_id", configID); err != nil {
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+	}
+	if err := d.Set("match_target_id", created.TargetID); err != nil {
+		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
+	}
 
+	// Drop the cached list before reading back, otherwise the read would not see the new target.
+	invalidateMatchTargetCache(configID, version, logger)
 	return resourceMatchTargetRead(ctx, d, m)
 }
 
@@ -113,13 +124,9 @@ func resourceMatchTargetRead(ctx context.Context, d *schema.ResourceData, m inte
 		return diag.FromErr(err)
 	}
 
-	getMatchTarget := appsec.GetMatchTargetRequest{
-		ConfigID:      configID,
-		ConfigVersion: version,
-		TargetID:      targetID,
-	}
-
-	matchtarget, err := client.GetMatchTarget(ctx, getMatchTarget)
+	// Use cache helper: fetches all match targets in one API call on first read,
+	// then filters locally; subsequent reads for the same configID+version hit cache.
+	matchtarget, err := getMatchTarget(ctx, configID, version, targetID, m)
 	if err != nil {
 		logger.Errorf("calling 'getMatchTarget': %s", err.Error())
 		return diag.FromErr(err)
@@ -227,10 +234,14 @@ func resourceMatchTargetUpdate(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
 	targetID, err := strconv.Atoi(iDParts[1])
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	defer invalidateMatchTargetCache(configID, version, logger)
+
 	jsonpostpayload := d.Get("match_target")
 	jsonPayloadRaw := []byte(jsonpostpayload.(string))
 	rawJSON := (json.RawMessage)(jsonPayloadRaw)
@@ -242,12 +253,13 @@ func resourceMatchTargetUpdate(ctx context.Context, d *schema.ResourceData, m in
 		JsonPayloadRaw: rawJSON,
 	}
 
-	_, err = client.UpdateMatchTarget(ctx, updateMatchTarget)
-	if err != nil {
+	if _, err := client.UpdateMatchTarget(ctx, updateMatchTarget); err != nil {
 		logger.Errorf("calling 'updateMatchTarget': %s", err.Error())
 		return diag.FromErr(err)
 	}
 
+	// Drop the cached list before reading back, otherwise the read would return the pre-update target.
+	invalidateMatchTargetCache(configID, version, logger)
 	return resourceMatchTargetRead(ctx, d, m)
 }
 
@@ -270,10 +282,13 @@ func resourceMatchTargetDelete(ctx context.Context, d *schema.ResourceData, m in
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
 	targetID, err := strconv.Atoi(iDParts[1])
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	defer invalidateMatchTargetCache(configID, version, logger)
 
 	removeMatchTarget := appsec.RemoveMatchTargetRequest{
 		ConfigID:      configID,
