@@ -135,11 +135,11 @@ func resourceReputationProfileRead(ctx context.Context, d *schema.ResourceData, 
 	if err := d.Set("reputation_profile_id", reputationProfileID); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
-	jsonBody, err := json.Marshal(reputationProfileResponse)
+	normalized, err := marshalNormalize(reputationProfileResponse)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	if err := d.Set("reputation_profile", string(jsonBody)); err != nil {
+	if err := d.Set("reputation_profile", normalized); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 

@@ -11,6 +11,77 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestNormalizeJSON(t *testing.T) {
+	t.Parallel()
+	tests := map[string]struct {
+		input   string
+		want    string
+		wantErr bool
+	}{
+		"keys sorted alphabetically": {
+			input: `{"z":1,"a":2}`,
+			want:  `{"a":2,"z":1}`,
+		},
+		"nested object keys sorted": {
+			input: `{"z":{"d":4,"c":3},"a":1}`,
+			want:  `{"a":1,"z":{"c":3,"d":4}}`,
+		},
+		"whitespace removed": {
+			input: `{ "a" : 1 , "b" : 2 }`,
+			want:  `{"a":1,"b":2}`,
+		},
+		"array order preserved": {
+			input: `{"items":[3,1,2]}`,
+			want:  `{"items":[3,1,2]}`,
+		},
+		"HTML characters not escaped": {
+			input: `{"path":"/api/<v>/data?a=1&b=2>0"}`,
+			want:  `{"path":"/api/<v>/data?a=1&b=2>0"}`,
+		},
+		"large integer preserved without float64 truncation": {
+			input: `{"id":9007199254740993}`,
+			want:  `{"id":9007199254740993}`,
+		},
+		"invalid JSON returns error": {
+			input:   `not-json`,
+			wantErr: true,
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			got, err := normalizeJSON(tc.input)
+			if tc.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tc.want, got)
+		})
+	}
+}
+
+func TestMarshalNormalize(t *testing.T) {
+	t.Parallel()
+
+	t.Run("struct fields sorted alphabetically", func(t *testing.T) {
+		t.Parallel()
+		type payload struct {
+			Z int `json:"z"`
+			A int `json:"a"`
+		}
+		got, err := marshalNormalize(payload{Z: 1, A: 2})
+		require.NoError(t, err)
+		assert.Equal(t, `{"a":2,"z":1}`, got)
+	})
+
+	t.Run("marshal error propagated", func(t *testing.T) {
+		t.Parallel()
+		_, err := marshalNormalize(make(chan int))
+		require.Error(t, err)
+	})
+}
+
 func TestUkraineGeoControlActionEqual(t *testing.T) {
 	t.Parallel()
 

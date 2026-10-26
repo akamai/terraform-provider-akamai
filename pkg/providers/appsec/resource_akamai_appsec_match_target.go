@@ -144,14 +144,14 @@ func resourceMatchTargetRead(ctx context.Context, d *schema.ResourceData, m inte
 		return diag.FromErr(err)
 	}
 
-	jsonBody, err := json.Marshal(matchtarget)
+	normalized, err := marshalNormalize(matchtarget)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	if err := d.Set("config_id", configID); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
-	if err := d.Set("match_target", string(jsonBody)); err != nil {
+	if err := d.Set("match_target", normalized); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 	if err := d.Set("match_target_id", matchtarget.TargetID); err != nil {
@@ -197,14 +197,14 @@ func resourceMatchTargetImport(ctx context.Context, d *schema.ResourceData, m in
 		return nil, err
 	}
 
-	jsonBody, err := json.Marshal(matchtarget)
+	normalized, err := marshalNormalize(matchtarget)
 	if err != nil {
 		return nil, err
 	}
 	if err := d.Set("config_id", configID); err != nil {
 		return nil, err
 	}
-	if err := d.Set("match_target", string(jsonBody)); err != nil {
+	if err := d.Set("match_target", normalized); err != nil {
 		return nil, err
 	}
 	if err := d.Set("match_target_id", matchtarget.TargetID); err != nil {

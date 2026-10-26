@@ -52,6 +52,31 @@
   * Added the `akamai_cloudcertificates_replace_staging` action to replace a certificate lineage's staging generation with its current or previous production generation.
   * Added the `akamai_cloudcertificates_delete_generation` action to permanently delete a single certificate generation from a lineage.
 
+* Appsec
+  * Changed the following resources to store JSON attributes in state in a normalized form (sorted keys, no extra whitespace) at read time:
+    * `akamai_appsec_advanced_settings_attack_payload_logging`
+    * `akamai_appsec_advanced_settings_logging`
+    * `akamai_appsec_advanced_settings_pragma_header`
+    * `akamai_appsec_attack_group`
+    * `akamai_appsec_custom_deny`
+    * `akamai_appsec_eval_group`
+    * `akamai_appsec_eval_penalty_box_conditions`
+    * `akamai_appsec_eval_rule`
+    * `akamai_appsec_malware_policy`
+    * `akamai_appsec_malware_policy_actions`
+    * `akamai_appsec_match_target`
+    * `akamai_appsec_match_target_sequence`
+    * `akamai_appsec_penalty_box_conditions`
+    * `akamai_appsec_rate_policy`
+    * `akamai_appsec_reputation_profile`
+    * `akamai_appsec_rule`
+  
+  
+  
+  
+  
+  
+  
 * Appsec (Beta)
   * Added a new resource `akamai_appsec_script_behavior_rule` - manages Client-Side Protection script behavior rules for a security policy.
   * Added new data sources:
@@ -61,7 +86,6 @@
     * `akamai_appsec_clientside_protection_configuration` - manages Client-side Protection & Compliance (CPC) configuration for a security policy.
   * Added new data source:
     * `akamai_appsec_clientside_protection_configuration` - retrieves the CPC configuration for a security policy.
-
 * Appsec
   * Added caching layer for `akamai_appsec_rate_policy`, `akamai_appsec_match_target`, and `akamai_appsec_reputation_profile` resources to reduce API calls.
   * Improved `akamai_appsec_activations` polling to use progressive backoff instead of a fixed interval, reducing unnecessary API calls.

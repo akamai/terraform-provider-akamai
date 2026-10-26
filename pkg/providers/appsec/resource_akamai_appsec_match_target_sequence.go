@@ -111,7 +111,7 @@ func resourceMatchTargetSequenceRead(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	jsonBody, err := json.Marshal(matchTargetSequence)
+	normalized, err := marshalNormalize(matchTargetSequence)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -119,7 +119,7 @@ func resourceMatchTargetSequenceRead(ctx context.Context, d *schema.ResourceData
 	if err := d.Set("config_id", configID); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
-	if err := d.Set("match_target_sequence", string(jsonBody)); err != nil {
+	if err := d.Set("match_target_sequence", normalized); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 

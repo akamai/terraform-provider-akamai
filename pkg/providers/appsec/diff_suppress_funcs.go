@@ -17,6 +17,34 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+// normalizeJSON returns the canonical form of a JSON string: keys sorted
+// alphabetically, insignificant whitespace removed, HTML characters unescaped,
+// and numbers preserved without float64 truncation.
+func normalizeJSON(raw string) (string, error) {
+	var parsed interface{}
+	dec := json.NewDecoder(strings.NewReader(raw))
+	dec.UseNumber() // preserves integer precision; avoids float64 representation
+	if err := dec.Decode(&parsed); err != nil {
+		return "", err
+	}
+	var buf bytes.Buffer
+	enc := json.NewEncoder(&buf)
+	enc.SetEscapeHTML(false)
+	if err := enc.Encode(parsed); err != nil {
+		return "", err
+	}
+	return strings.TrimSuffix(buf.String(), "\n"), nil
+}
+
+// marshalNormalize marshals v to JSON and returns its canonical form via normalizeJSON.
+func marshalNormalize(v interface{}) (string, error) {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return "", err
+	}
+	return normalizeJSON(string(b))
+}
+
 func suppressEquivalentJSONDiffsGeneric(_, oldString, newString string, _ *schema.ResourceData) bool {
 	var ob, nb bytes.Buffer
 	if err := json.Compact(&ob, []byte(oldString)); err != nil {

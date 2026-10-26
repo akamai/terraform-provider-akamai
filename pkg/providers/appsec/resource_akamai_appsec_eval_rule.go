@@ -172,11 +172,11 @@ func resourceEvalRuleRead(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 
 	if !evalrule.IsEmptyConditionException() {
-		jsonBody, err := json.Marshal(evalrule.ConditionException)
+		normalized, err := marshalNormalize(evalrule.ConditionException)
 		if err != nil {
-			return diag.Errorf("%s", "Error Marshalling condition exception")
+			return diag.FromErr(err)
 		}
-		if err := d.Set("condition_exception", string(jsonBody)); err != nil {
+		if err := d.Set("condition_exception", normalized); err != nil {
 			return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 		}
 	}

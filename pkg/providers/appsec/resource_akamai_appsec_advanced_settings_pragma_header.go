@@ -146,12 +146,11 @@ func resourceAdvancedSettingsPragmaHeaderRead(ctx context.Context, d *schema.Res
 	if err := d.Set("security_policy_id", getAdvancedSettingsPragma.PolicyID); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
-	jsonBody, err := json.Marshal(advancedsettingspragma)
-
+	normalized, err := marshalNormalize(advancedsettingspragma)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	if err := d.Set("pragma_header", string(jsonBody)); err != nil {
+	if err := d.Set("pragma_header", normalized); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 

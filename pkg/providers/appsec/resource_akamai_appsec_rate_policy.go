@@ -138,14 +138,14 @@ func resourceRatePolicyRead(ctx context.Context, d *schema.ResourceData, m inter
 	if err := d.Set("config_id", configID); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
-	jsonBody, err := json.Marshal(ratepolicy)
+	normalized, err := marshalNormalize(ratepolicy)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	if err := d.Set("rate_policy_id", ratePolicyID); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
-	if err := d.Set("rate_policy", string(jsonBody)); err != nil {
+	if err := d.Set("rate_policy", normalized); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 

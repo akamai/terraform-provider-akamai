@@ -1,7 +1,6 @@
 package appsec
 
 import (
-	"bytes"
 	"encoding/json"
 	"testing"
 
@@ -150,7 +149,7 @@ func TestAkamaiMatchTarget_res_basic(t *testing.T) {
 					Config: testutils.LoadFixtureString(t, "testdata/TestResMatchTarget/match_by_id.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_appsec_match_target.test", "id", "43253:3008967"),
-						resource.TestCheckResourceAttr("akamai_appsec_match_target.test", "match_target", compactJSON(getMatchTargetJSON)),
+						resource.TestCheckResourceAttr("akamai_appsec_match_target.test", "match_target", normalizeJSONForTest(getMatchTargetJSON)),
 					),
 				},
 			},
@@ -215,7 +214,7 @@ func TestAkamaiMatchTarget_res_basic(t *testing.T) {
 					Config: testutils.LoadFixtureString(t, "testdata/TestResMatchTarget/match_by_id.tf"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr("akamai_appsec_match_target.test", "id", "43253:3008967"),
-						resource.TestCheckResourceAttr("akamai_appsec_match_target.test", "match_target", compactJSON(getMatchTargetJSON)),
+						resource.TestCheckResourceAttr("akamai_appsec_match_target.test", "match_target", normalizeJSONForTest(getMatchTargetJSON)),
 					),
 					ExpectNonEmptyPlan: true,
 				},
@@ -287,11 +286,10 @@ func TestAkamaiMatchTarget_res_basic(t *testing.T) {
 	})
 }
 
-func compactJSON(message string) string {
-	var dst bytes.Buffer
-	err := json.Compact(&dst, []byte(message))
+func normalizeJSONForTest(message string) string {
+	normalized, err := normalizeJSON(message)
 	if err != nil {
 		panic(err)
 	}
-	return dst.String()
+	return normalized
 }

@@ -105,11 +105,11 @@ func resourceAdvancedSettingsAttackPayloadLoggingImport(ctx context.Context, d *
 	if err := d.Set("security_policy_id", getAdvancedSettingsAttackPayloadLogging.PolicyID); err != nil {
 		return nil, err
 	}
-	jsonBody, err := json.Marshal(settings)
+	normalizedImport, err := marshalNormalize(settings)
 	if err != nil {
 		return nil, err
 	}
-	if err := d.Set("attack_payload_logging", string(jsonBody)); err != nil {
+	if err := d.Set("attack_payload_logging", normalizedImport); err != nil {
 		return nil, err
 	}
 
@@ -191,11 +191,11 @@ func resourceAdvancedSettingsAttackPayloadLoggingRead(ctx context.Context, d *sc
 	if err := d.Set("security_policy_id", policyID); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
-	jsonBody, err := json.Marshal(advancedSettingsAttackPayloadLogging)
+	normalized, err := marshalNormalize(advancedSettingsAttackPayloadLogging)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	if err := d.Set("attack_payload_logging", string(jsonBody)); err != nil {
+	if err := d.Set("attack_payload_logging", normalized); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 

@@ -142,11 +142,11 @@ func resourceCustomDenyRead(ctx context.Context, d *schema.ResourceData, m inter
 	if err := d.Set("custom_deny_id", customDenyID); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
-	jsonBody, err := json.Marshal(getCustomDenyResponse)
+	normalized, err := marshalNormalize(getCustomDenyResponse)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	if err := d.Set("custom_deny", string(jsonBody)); err != nil {
+	if err := d.Set("custom_deny", normalized); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 

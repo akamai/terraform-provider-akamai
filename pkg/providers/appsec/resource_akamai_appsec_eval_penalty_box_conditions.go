@@ -135,11 +135,11 @@ func resourceEvalPenaltyBoxConditionsRead(ctx context.Context, d *schema.Resourc
 	if err := d.Set("security_policy_id", getPenaltyBoxConditions.PolicyID); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
-	jsonBody, err := json.Marshal(penaltyBoxConditions)
+	normalized, err := marshalNormalize(penaltyBoxConditions)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	if err := d.Set("penalty_box_conditions", string(jsonBody)); err != nil {
+	if err := d.Set("penalty_box_conditions", normalized); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
