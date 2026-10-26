@@ -8,7 +8,6 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/appsec"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/framework/modifiers"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/ptr"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
@@ -57,6 +56,7 @@ type clientsideProtectionInjectionCriteriaModel struct {
 	InjectionPathExcludes types.String `tfsdk:"injection_path_excludes"`
 	InjectionPercent      types.Int64  `tfsdk:"injection_percent"`
 	InjectionPolicy       types.String `tfsdk:"injection_policy"`
+	ScriptTagAttributes   types.List   `tfsdk:"script_tag_attributes"`
 }
 
 // NewClientsideProtectionConfigurationResource returns a new clientside protection configuration resource.
@@ -147,6 +147,11 @@ func (r *clientsideProtectionConfigurationResource) Schema(_ context.Context, _ 
 						Optional:    true,
 						Description: "Controls where in the page the script is injected.",
 					},
+					"script_tag_attributes": schema.ListAttribute{
+						Optional:    true,
+						ElementType: types.StringType,
+						Description: "Custom HTML attributes to add to the injected script tag.",
+					},
 				},
 			},
 		},
@@ -204,43 +209,11 @@ func (r *clientsideProtectionConfigurationResource) Update(ctx context.Context, 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
-// Delete resets the configuration to defaults, since there is no delete API endpoint for this resource.
-func (r *clientsideProtectionConfigurationResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+// Delete removes the resource from Terraform state. There is no API endpoint to delete a
+// clientside protection configuration — the configuration exists as long as the security
+// policy exists. Removing it from state stops Terraform from managing it.
+func (r *clientsideProtectionConfigurationResource) Delete(ctx context.Context, _ resource.DeleteRequest, _ *resource.DeleteResponse) {
 	tflog.Debug(ctx, "Deleting clientside protection configuration resource")
-
-	var state clientsideProtectionConfigurationModel
-	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	configID := int(state.ConfigID.ValueInt64())
-	client := r.Client.GetAPPSEC()
-
-	version, err := getModifiableConfigVersion(ctx, configID, "clientsideProtectionConfiguration", client)
-	if err != nil {
-		resp.Diagnostics.AddError("could not get modifiable config version", err.Error())
-		return
-	}
-
-	_, err = client.UpdateClientsideProtectionConfiguration(ctx, appsec.UpdateClientsideProtectionConfigurationRequest{
-		ConfigID:         state.ConfigID.ValueInt64(),
-		Version:          int64(version),
-		SecurityPolicyID: state.SecurityPolicyID.ValueString(),
-		Body: appsec.UpdateClientsideProtectionConfigurationRequestBody{
-			EdgeInjection:      appsec.ClientsideProtectionEdgeInjectionRequest{LoadScriptAsync: false},
-			EdgeTestParameters: appsec.ClientsideProtectionEdgeTestParameters{},
-			InjectionCriteria: appsec.ClientsideProtectionInjectionCriteria{
-				InjectionPathIncludes: ptr.To(""),
-				InjectionPathExcludes: ptr.To(""),
-				InjectionPercent:      0,
-				InjectionPolicy:       ptr.To(""),
-			},
-		},
-	})
-	if err != nil {
-		resp.Diagnostics.AddError("reset clientside protection configuration to defaults failed", err.Error())
-	}
 }
 
 // ImportState parses the import ID in the format "CONFIG_ID:POLICY_ID".
@@ -290,6 +263,14 @@ func (r *clientsideProtectionConfigurationResource) upsert(ctx context.Context, 
 		return diags
 	}
 
+	var scriptTagAttributes []string
+	if tf.IsKnown(data.InjectionCriteria.ScriptTagAttributes) {
+		diags.Append(data.InjectionCriteria.ScriptTagAttributes.ElementsAs(ctx, &scriptTagAttributes, false)...)
+		if diags.HasError() {
+			return diags
+		}
+	}
+
 	updateReq := appsec.UpdateClientsideProtectionConfigurationRequest{
 		ConfigID:         data.ConfigID.ValueInt64(),
 		Version:          int64(version),
@@ -309,6 +290,7 @@ func (r *clientsideProtectionConfigurationResource) upsert(ctx context.Context, 
 				InjectionPathExcludes: data.InjectionCriteria.InjectionPathExcludes.ValueStringPointer(),
 				InjectionPercent:      int(data.InjectionCriteria.InjectionPercent.ValueInt64()),
 				InjectionPolicy:       data.InjectionCriteria.InjectionPolicy.ValueStringPointer(),
+				ScriptTagAttributes:   scriptTagAttributes,
 			},
 		},
 	}
@@ -353,11 +335,21 @@ func (r *clientsideProtectionConfigurationResource) read(ctx context.Context, da
 		ForceInjectionKey:     types.StringValue(cpcConfig.EdgeTestParameters.ForceInjectionKey),
 		ForceInjectionValue:   types.StringValue(cpcConfig.EdgeTestParameters.ForceInjectionValue),
 	}
+	var scriptTagAttrsList types.List
+	if len(cpcConfig.InjectionCriteria.ScriptTagAttributes) == 0 {
+		scriptTagAttrsList = types.ListNull(types.StringType)
+	} else {
+		l, d := types.ListValueFrom(ctx, types.StringType, cpcConfig.InjectionCriteria.ScriptTagAttributes)
+		diags.Append(d...)
+		scriptTagAttrsList = l
+	}
+
 	data.InjectionCriteria = clientsideProtectionInjectionCriteriaModel{
 		InjectionPathIncludes: stringPtrOrNull(cpcConfig.InjectionCriteria.InjectionPathIncludes),
 		InjectionPathExcludes: stringPtrOrNull(cpcConfig.InjectionCriteria.InjectionPathExcludes),
 		InjectionPercent:      types.Int64Value(int64(cpcConfig.InjectionCriteria.InjectionPercent)),
 		InjectionPolicy:       stringPtrOrNull(cpcConfig.InjectionCriteria.InjectionPolicy),
+		ScriptTagAttributes:   scriptTagAttrsList,
 	}
 
 	return diags

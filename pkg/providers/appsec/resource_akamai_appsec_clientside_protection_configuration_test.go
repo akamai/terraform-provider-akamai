@@ -56,6 +56,15 @@ func clientsideProtectionConfigurationTests(t *testing.T) map[string]clientsideP
 		"injection_criteria.injection_path_excludes":   "/exclude-path",
 		"injection_criteria.injection_percent":         "100",
 		"injection_criteria.injection_policy":          "head",
+		"injection_criteria.script_tag_attributes.#":   "0",
+	}
+
+	expectedAttrsWithScriptTagAttrs := test.AttributeBatch{
+		"config_id":          "43253",
+		"security_policy_id": "test_policy_id",
+		"injection_criteria.script_tag_attributes.#": "2",
+		"injection_criteria.script_tag_attributes.0": `nonce="abc123"`,
+		"injection_criteria.script_tag_attributes.1": `data-integrity="sha256"`,
 	}
 
 	createAndDestroyChecker := test.NewStateChecker(resourceName).
@@ -102,6 +111,17 @@ func clientsideProtectionConfigurationTests(t *testing.T) map[string]clientsideP
 				},
 			},
 		},
+		"create and destroy with script_tag_attributes": {
+			init: func(m *appsec.Mock) {
+				mockClientsideProtectionConfigurationCreateAndDestroyWithScriptTagAttrs(m, fixture)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: testutils.LoadFixtureString(t, "testdata/TestResClientsideProtectionConfiguration/clientside_protection_configuration_with_script_tag_attributes.tf"),
+					Check:  test.NewStateChecker(resourceName).CheckEqualBatch("", expectedAttrsWithScriptTagAttrs).Build(),
+				},
+			},
+		},
 		"import state": {
 			init: func(m *appsec.Mock) {
 				mockClientsideProtectionConfigurationImport(m, fixture)
@@ -116,45 +136,6 @@ func clientsideProtectionConfigurationTests(t *testing.T) map[string]clientsideP
 					ImportStateId:                        "43253:test_policy_id",
 					ImportStateVerify:                    true,
 					ImportStateVerifyIdentifierAttribute: "config_id",
-				},
-			},
-		},
-		"delete - api error": {
-			init: func(m *appsec.Mock) {
-				m.On("GetConfiguration", mock.Anything, appsec.GetConfigurationRequest{ConfigID: 43253}).
-					Return(&fixture.getConfigResponse, nil)
-				mockGetConfigurationVersionDefault(m)
-
-				updateReq := buildCPCUpdateRequest(fixture, true, 100)
-				m.On("UpdateClientsideProtectionConfiguration", mock.Anything, updateReq).
-					Return(&fixture.updateResponse, nil).Once()
-
-				m.On("GetClientsideProtectionConfiguration", mock.Anything, appsec.GetClientsideProtectionConfigurationRequest{
-					ConfigID:         43253,
-					Version:          7,
-					SecurityPolicyID: "test_policy_id",
-				}).Return(&fixture.getResponse, nil)
-
-				serverError := &appsec.Error{
-					Type:       "internal_error",
-					Title:      "Internal Server Error",
-					Detail:     "reset clientside protection configuration to defaults failed",
-					StatusCode: http.StatusInternalServerError,
-				}
-				m.On("UpdateClientsideProtectionConfiguration", mock.Anything, buildCPCDeleteRequest()).
-					Return(nil, serverError).Once()
-
-				// Cleanup delete after expected error
-				mockClientsideProtectionConfigurationDelete(m)
-			},
-			steps: []resource.TestStep{
-				{
-					Config: testutils.LoadFixtureString(t, "testdata/TestResClientsideProtectionConfiguration/clientside_protection_configuration.tf"),
-				},
-				{
-					Config:      testutils.LoadFixtureString(t, "testdata/TestResClientsideProtectionConfiguration/clientside_protection_configuration.tf"),
-					Destroy:     true,
-					ExpectError: regexp.MustCompile("Error: reset clientside protection configuration to defaults failed"),
 				},
 			},
 		},
@@ -178,11 +159,13 @@ func clientsideProtectionConfigurationTests(t *testing.T) map[string]clientsideP
 }
 
 type clientsideProtectionConfigurationFixture struct {
-	getConfigResponse appsec.GetConfigurationResponse
-	getResponse       appsec.GetClientsideProtectionConfigurationResponse
-	getResponseUpdate appsec.GetClientsideProtectionConfigurationResponse
-	updateResponse    appsec.UpdateClientsideProtectionConfigurationResponse
-	updateRespUpdated appsec.UpdateClientsideProtectionConfigurationResponse
+	getConfigResponse             appsec.GetConfigurationResponse
+	getResponse                   appsec.GetClientsideProtectionConfigurationResponse
+	getResponseUpdate             appsec.GetClientsideProtectionConfigurationResponse
+	getResponseWithScriptTagAttrs appsec.GetClientsideProtectionConfigurationResponse
+	updateResponse                appsec.UpdateClientsideProtectionConfigurationResponse
+	updateRespUpdated             appsec.UpdateClientsideProtectionConfigurationResponse
+	updateRespWithScriptTagAttrs  appsec.UpdateClientsideProtectionConfigurationResponse
 }
 
 func newClientsideProtectionConfigurationFixture() clientsideProtectionConfigurationFixture {
@@ -231,15 +214,38 @@ func newClientsideProtectionConfigurationFixture() clientsideProtectionConfigura
 		},
 	}
 
+	getResponseWithScriptTagAttrs := appsec.GetClientsideProtectionConfigurationResponse{
+		EdgeInjection: appsec.ClientsideProtectionEdgeInjection{
+			ClientsideProtectionConfigID: 12345,
+			LoadScriptAsync:              true,
+		},
+		EdgeTestParameters: appsec.ClientsideProtectionEdgeTestParameters{
+			DisableInjectionKey:   "disable-key",
+			DisableInjectionValue: "disable-value",
+			ForceInjectionKey:     "force-key",
+			ForceInjectionValue:   "force-value",
+		},
+		InjectionCriteria: appsec.ClientsideProtectionInjectionCriteria{
+			InjectionPathIncludes: ptr.To("/include-path"),
+			InjectionPathExcludes: ptr.To("/exclude-path"),
+			InjectionPercent:      100,
+			InjectionPolicy:       ptr.To("head"),
+			ScriptTagAttributes:   []string{`nonce="abc123"`, `data-integrity="sha256"`},
+		},
+	}
+
 	updateResponse := appsec.UpdateClientsideProtectionConfigurationResponse(getResponse)
 	updateRespUpdated := appsec.UpdateClientsideProtectionConfigurationResponse(getResponseUpdate)
+	updateRespWithScriptTagAttrs := appsec.UpdateClientsideProtectionConfigurationResponse(getResponseWithScriptTagAttrs)
 
 	return clientsideProtectionConfigurationFixture{
-		getConfigResponse: getConfigResponse,
-		getResponse:       getResponse,
-		getResponseUpdate: getResponseUpdate,
-		updateResponse:    updateResponse,
-		updateRespUpdated: updateRespUpdated,
+		getConfigResponse:             getConfigResponse,
+		getResponse:                   getResponse,
+		getResponseUpdate:             getResponseUpdate,
+		getResponseWithScriptTagAttrs: getResponseWithScriptTagAttrs,
+		updateResponse:                updateResponse,
+		updateRespUpdated:             updateRespUpdated,
+		updateRespWithScriptTagAttrs:  updateRespWithScriptTagAttrs,
 	}
 }
 
@@ -257,8 +263,22 @@ func mockClientsideProtectionConfigurationCreateAndDestroy(m *appsec.Mock, fixtu
 		Version:          7,
 		SecurityPolicyID: "test_policy_id",
 	}).Return(&fixture.getResponse, nil)
+}
 
-	mockClientsideProtectionConfigurationDelete(m)
+func mockClientsideProtectionConfigurationCreateAndDestroyWithScriptTagAttrs(m *appsec.Mock, fixture clientsideProtectionConfigurationFixture) {
+	m.On("GetConfiguration", mock.Anything, appsec.GetConfigurationRequest{ConfigID: 43253}).
+		Return(&fixture.getConfigResponse, nil)
+	mockGetConfigurationVersionDefault(m)
+
+	updateReq := buildCPCUpdateRequest(fixture, true, 100, []string{`nonce="abc123"`, `data-integrity="sha256"`})
+	m.On("UpdateClientsideProtectionConfiguration", mock.Anything, updateReq).
+		Return(&fixture.updateRespWithScriptTagAttrs, nil).Once()
+
+	m.On("GetClientsideProtectionConfiguration", mock.Anything, appsec.GetClientsideProtectionConfigurationRequest{
+		ConfigID:         43253,
+		Version:          7,
+		SecurityPolicyID: "test_policy_id",
+	}).Return(&fixture.getResponseWithScriptTagAttrs, nil)
 }
 
 func mockClientsideProtectionConfigurationUpdate(m *appsec.Mock, fixture clientsideProtectionConfigurationFixture) {
@@ -285,8 +305,6 @@ func mockClientsideProtectionConfigurationUpdate(m *appsec.Mock, fixture clients
 		Version:          7,
 		SecurityPolicyID: "test_policy_id",
 	}).Return(&fixture.getResponseUpdate, nil)
-
-	mockClientsideProtectionConfigurationDelete(m)
 }
 
 func mockClientsideProtectionConfigurationUpdateError(m *appsec.Mock, fixture clientsideProtectionConfigurationFixture) {
@@ -313,8 +331,6 @@ func mockClientsideProtectionConfigurationUpdateError(m *appsec.Mock, fixture cl
 	updateReqUpdated := buildCPCUpdateRequest(fixture, false, 50)
 	m.On("UpdateClientsideProtectionConfiguration", mock.Anything, updateReqUpdated).
 		Return(nil, serverError).Once()
-
-	mockClientsideProtectionConfigurationDelete(m)
 }
 
 func mockClientsideProtectionConfigurationImport(m *appsec.Mock, fixture clientsideProtectionConfigurationFixture) {
@@ -331,11 +347,13 @@ func mockClientsideProtectionConfigurationImport(m *appsec.Mock, fixture clients
 		Version:          7,
 		SecurityPolicyID: "test_policy_id",
 	}).Return(&fixture.getResponse, nil)
-
-	mockClientsideProtectionConfigurationDelete(m)
 }
 
-func buildCPCUpdateRequest(fixture clientsideProtectionConfigurationFixture, loadScriptAsync bool, injectionPercent int) appsec.UpdateClientsideProtectionConfigurationRequest {
+func buildCPCUpdateRequest(fixture clientsideProtectionConfigurationFixture, loadScriptAsync bool, injectionPercent int, scriptTagAttributes ...[]string) appsec.UpdateClientsideProtectionConfigurationRequest {
+	var attrs []string
+	if len(scriptTagAttributes) > 0 {
+		attrs = scriptTagAttributes[0]
+	}
 	return appsec.UpdateClientsideProtectionConfigurationRequest{
 		ConfigID:         43253,
 		Version:          7,
@@ -350,31 +368,8 @@ func buildCPCUpdateRequest(fixture clientsideProtectionConfigurationFixture, loa
 				InjectionPathExcludes: ptr.To("/exclude-path"),
 				InjectionPercent:      injectionPercent,
 				InjectionPolicy:       ptr.To("head"),
+				ScriptTagAttributes:   attrs,
 			},
 		},
 	}
-}
-
-func buildCPCDeleteRequest() appsec.UpdateClientsideProtectionConfigurationRequest {
-	return appsec.UpdateClientsideProtectionConfigurationRequest{
-		ConfigID:         43253,
-		Version:          7,
-		SecurityPolicyID: "test_policy_id",
-		Body: appsec.UpdateClientsideProtectionConfigurationRequestBody{
-			EdgeInjection:      appsec.ClientsideProtectionEdgeInjectionRequest{LoadScriptAsync: false},
-			EdgeTestParameters: appsec.ClientsideProtectionEdgeTestParameters{},
-			InjectionCriteria: appsec.ClientsideProtectionInjectionCriteria{
-				InjectionPathIncludes: ptr.To(""),
-				InjectionPathExcludes: ptr.To(""),
-				InjectionPercent:      0,
-				InjectionPolicy:       ptr.To(""),
-			},
-		},
-	}
-}
-
-func mockClientsideProtectionConfigurationDelete(m *appsec.Mock) {
-	deleteResp := appsec.UpdateClientsideProtectionConfigurationResponse{}
-	m.On("UpdateClientsideProtectionConfiguration", mock.Anything, buildCPCDeleteRequest()).
-		Return(&deleteResp, nil).Once()
 }

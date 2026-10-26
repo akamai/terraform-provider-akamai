@@ -79,6 +79,45 @@ func TestDataClientsideProtectionConfiguration(t *testing.T) {
 				},
 			},
 		},
+		"happy path with script_tag_attributes": {
+			init: func(m *appsec.Mock) {
+				m.On("GetConfiguration", mock.Anything, appsec.GetConfigurationRequest{ConfigID: 43253}).
+					Return(&getConfigResponse, nil)
+				m.On("GetClientsideProtectionConfiguration", mock.Anything, appsec.GetClientsideProtectionConfigurationRequest{
+					ConfigID:         43253,
+					Version:          7,
+					SecurityPolicyID: "test_policy_id",
+				}).Return(&appsec.GetClientsideProtectionConfigurationResponse{
+					EdgeInjection: appsec.ClientsideProtectionEdgeInjection{
+						ClientsideProtectionConfigID: 12345,
+						LoadScriptAsync:              true,
+					},
+					EdgeTestParameters: appsec.ClientsideProtectionEdgeTestParameters{
+						DisableInjectionKey:   "disable-key",
+						DisableInjectionValue: "disable-value",
+						ForceInjectionKey:     "force-key",
+						ForceInjectionValue:   "force-value",
+					},
+					InjectionCriteria: appsec.ClientsideProtectionInjectionCriteria{
+						InjectionPathIncludes: ptr.To("/include-path"),
+						InjectionPathExcludes: ptr.To("/exclude-path"),
+						InjectionPercent:      100,
+						InjectionPolicy:       ptr.To("head"),
+						ScriptTagAttributes:   []string{`nonce="abc123"`, `data-integrity="sha256"`},
+					},
+				}, nil)
+			},
+			steps: []resource.TestStep{
+				{
+					Config: baseConfig,
+					Check: test.NewStateChecker("data.akamai_appsec_clientside_protection_configuration.test").
+						CheckEqual("injection_criteria.script_tag_attributes.#", "2").
+						CheckEqual("injection_criteria.script_tag_attributes.0", `nonce="abc123"`).
+						CheckEqual("injection_criteria.script_tag_attributes.1", `data-integrity="sha256"`).
+						Build(),
+				},
+			},
+		},
 		"missing required argument config_id": {
 			steps: []resource.TestStep{
 				{

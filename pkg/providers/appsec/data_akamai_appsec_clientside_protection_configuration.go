@@ -93,6 +93,11 @@ func (d *clientsideProtectionConfigurationDataSource) Schema(_ context.Context, 
 						Computed:    true,
 						Description: "Controls where in the page the script is injected.",
 					},
+					"script_tag_attributes": schema.ListAttribute{
+						Computed:    true,
+						ElementType: types.StringType,
+						Description: "Custom HTML attributes to add to the injected script tag.",
+					},
 				},
 			},
 		},
@@ -144,11 +149,21 @@ func (d *clientsideProtectionConfigurationDataSource) Read(ctx context.Context, 
 		ForceInjectionKey:     types.StringValue(cpcConfig.EdgeTestParameters.ForceInjectionKey),
 		ForceInjectionValue:   types.StringValue(cpcConfig.EdgeTestParameters.ForceInjectionValue),
 	}
+	var scriptTagAttrsList types.List
+	if len(cpcConfig.InjectionCriteria.ScriptTagAttributes) == 0 {
+		scriptTagAttrsList = types.ListNull(types.StringType)
+	} else {
+		l, d := types.ListValueFrom(ctx, types.StringType, cpcConfig.InjectionCriteria.ScriptTagAttributes)
+		resp.Diagnostics.Append(d...)
+		scriptTagAttrsList = l
+	}
+
 	data.InjectionCriteria = &clientsideProtectionInjectionCriteriaModel{
 		InjectionPathIncludes: stringPtrOrNull(cpcConfig.InjectionCriteria.InjectionPathIncludes),
 		InjectionPathExcludes: stringPtrOrNull(cpcConfig.InjectionCriteria.InjectionPathExcludes),
 		InjectionPercent:      types.Int64Value(int64(cpcConfig.InjectionCriteria.InjectionPercent)),
 		InjectionPolicy:       stringPtrOrNull(cpcConfig.InjectionCriteria.InjectionPolicy),
+		ScriptTagAttributes:   scriptTagAttrsList,
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
