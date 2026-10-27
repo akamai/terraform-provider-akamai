@@ -135,12 +135,6 @@ func dataSourceCPSEnrollment() *schema.Resource {
 							Elem:        &schema.Schema{Type: schema.TypeString},
 							Description: "TLS versions which are disallowed",
 						},
-						"clone_dns_names": {
-							Type:        schema.TypeBool,
-							Computed:    true,
-							Description: "Enable CPS to direct traffic using all the SANs listed in the SANs parameter when enrollment is created",
-							Deprecated:  "Use enable_for_all_sans instead.",
-						},
 						"enable_for_all_sans": {
 							Type:        schema.TypeBool,
 							Computed:    true,

@@ -16,6 +16,7 @@ import (
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
 	cpstools "github.com/akamai/terraform-provider-akamai/v11/pkg/providers/cps/tools"
+	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -188,18 +189,11 @@ var (
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "TLS versions which are disallowed",
 			},
-			"clone_dns_names": {
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Computed:    true,
-				Description: "Enable CPS to direct traffic using all the SANs listed in the SANs parameter when enrollment is created.",
-				Deprecated:  "Use enable_for_all_sans instead.",
-			},
 			"enable_for_all_sans": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Computed:    true,
-				Description: "When true (default), traffic is directed using all SANs listed in the enrollment. Replacement for the deprecated clone_dns_names attribute. Cannot be used together with clone_dns_names.",
+				Description: "When true (default), traffic is directed using all SANs listed in the enrollment.",
 			},
 			"dns_names": {
 				Type:     schema.TypeSet,
@@ -209,7 +203,7 @@ var (
 					Type:             schema.TypeString,
 					ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotEmpty),
 				},
-				Description: "Explicit DNS names for traffic direction when enable_for_all_sans or clone_dns_names is false.",
+				Description: "Explicit DNS names for traffic direction when enable_for_all_sans is false.",
 			},
 			"geography": {
 				Type:        schema.TypeString,
@@ -748,4 +742,75 @@ func convertWarningsToRegexp(warningMap map[string]string) (map[string]string, e
 		result[key] = desc
 	}
 	return result, nil
+}
+
+// updateDNSNamesForAllSANs automatically populates dns_names with common_name + sans
+// when enable_for_all_sans is set to true. This runs at plan time via CustomizeDiff.
+// Validation prevents setting dns_names when enable_for_all_sans is true, so this
+// function always sets the computed dns_names value without conflict checks.
+func updateDNSNamesForAllSANs(_ context.Context, diff *schema.ResourceDiff, _ any) error {
+	rawConfig := diff.GetRawConfig()
+	if rawConfig == cty.NilVal || rawConfig.IsNull() || !rawConfig.IsKnown() {
+		return nil
+	}
+
+	// Check if network_configuration is present
+	ncVal := rawConfig.GetAttr("network_configuration")
+	if ncVal.IsNull() || !ncVal.IsKnown() || ncVal.LengthInt() == 0 {
+		return nil
+	}
+
+	// Extract the network_configuration block
+	it := ncVal.ElementIterator()
+	it.Next()
+	_, elem := it.Element()
+	if !elem.IsKnown() || elem.IsNull() {
+		return nil
+	}
+
+	enableForAllSANs := elem.GetAttr("enable_for_all_sans")
+
+	// Only proceed if enable_for_all_sans is explicitly true
+	if enableForAllSANs.IsNull() || !enableForAllSANs.IsKnown() || !enableForAllSANs.True() {
+		return nil
+	}
+
+	// Values derived from other resources are unknown at plan time; a partial dns_names would be wrong.
+	if !diff.NewValueKnown("common_name") || !diff.NewValueKnown("sans") {
+		return nil
+	}
+
+	commonName, err := tf.GetStringValue("common_name", diff)
+	if err != nil {
+		if errors.Is(err, tf.ErrNotFound) {
+			return nil
+		}
+		return err
+	}
+
+	// sans is optional; ErrNotFound just means there are none.
+	sans, err := tf.GetSetValue("sans", diff)
+	if err != nil && !errors.Is(err, tf.ErrNotFound) {
+		return err
+	}
+
+	dnsNames := []any{commonName}
+	for _, san := range tf.SetToStringSlice(sans) {
+		dnsNames = append(dnsNames, san)
+	}
+
+	// Update network_configuration with computed dns_names
+	networkConfigList, ok := diff.Get("network_configuration").([]any)
+	if !ok || len(networkConfigList) == 0 {
+		return nil
+	}
+
+	networkConfig := networkConfigList[0].(map[string]any)
+	networkConfig["dns_names"] = dnsNames
+
+	if err := diff.SetNew("network_configuration", []any{networkConfig}); err != nil {
+		return fmt.Errorf("%w: %s", tf.ErrValueSet, err.Error())
+	}
+
+	return nil
 }

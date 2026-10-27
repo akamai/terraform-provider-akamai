@@ -8,6 +8,9 @@
   * Fixed the `akamai_iam_user` resource so that removing `secondary_email` from the  configuration now correctly clears a previously set value on update, instead of silently leaving it unchanged ([I#699](https://github.com/akamai/terraform-provider-akamai/issues/699)). 
   * Corrected `secondary_email` to no longer accept empty string in configuration.
 
+* CPS
+  * Removed the deprecated `network_configuration.clone_dns_names` field from the `akamai_cps_dv_enrollment` and `akamai_cps_third_party_enrollment` resources and from the `akamai_cps_enrollment` and `akamai_cps_enrollments` data sources. Use `network_configuration.enable_for_all_sans` instead.
+
 
 
 * Cloudlets
@@ -42,6 +45,7 @@
 
 
 #### FEATURES/ENHANCEMENTS:
+
 
 
 
@@ -165,9 +169,7 @@
 
 * CPS
   * Fixed an issue in the `akamai_cps_dv_enrollment` and `akamai_cps_third_party_enrollment` resources where deletion got stuck until timeout when warnings required acknowledgement. Optional `acknowledge_deletion_warnings` attribute was introduced. It acknowledges deletion warnings when set to `true`. Default is `false`. ([I#759](https://github.com/akamai/terraform-provider-akamai/issues/759)).
-
-
-
+  * Fixed an issue that `dns_names` was not being set correctly in the `akamai_cps_dv_enrollment` and `akamai_cps_third_party_enrollment` resources when `enable_for_all_sans` was set to true.
 
 
 

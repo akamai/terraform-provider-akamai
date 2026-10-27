@@ -239,7 +239,6 @@ func TestGetNetworkConfig(t *testing.T) {
 							Optional: true,
 							Elem:     &schema.Schema{Type: schema.TypeString},
 						},
-						"clone_dns_names":     {Type: schema.TypeBool, Optional: true},
 						"enable_for_all_sans": {Type: schema.TypeBool, Optional: true},
 						"dns_names": {
 							Type:     schema.TypeSet,
@@ -292,7 +291,6 @@ func TestGetNetworkConfig(t *testing.T) {
 					"set_id":                 "123",
 				}}),
 				"disallowed_tls_versions": []string{"TLSv1"},
-				"clone_dns_names":         true,
 				"enable_for_all_sans":     true,
 				"geography":               "core",
 				"must_have_ciphers":       "ak-akamai-default",
@@ -325,7 +323,6 @@ func TestGetNetworkConfig(t *testing.T) {
 		},
 		"only required values with sni_only=true": {
 			givenNetworkConfig: []interface{}{map[string]interface{}{
-				"clone_dns_names":     true,
 				"enable_for_all_sans": true,
 				"geography":           "core",
 			}},
@@ -351,7 +348,6 @@ func TestGetNetworkConfig(t *testing.T) {
 		"enable_for_all_sans=true uses SANs": {
 			givenNetworkConfig: []interface{}{map[string]interface{}{
 				"geography":           "core",
-				"clone_dns_names":     true,
 				"enable_for_all_sans": true,
 				"dns_names":           []any{},
 			}},
@@ -367,7 +363,6 @@ func TestGetNetworkConfig(t *testing.T) {
 		"enable_for_all_sans=false with explicit dns_names": {
 			givenNetworkConfig: []interface{}{map[string]interface{}{
 				"geography":           "core",
-				"clone_dns_names":     true,
 				"enable_for_all_sans": false,
 				"dns_names":           []any{"test.akamai.com"},
 			}},
@@ -383,7 +378,6 @@ func TestGetNetworkConfig(t *testing.T) {
 		"enable_for_all_sans=false without dns_names": {
 			givenNetworkConfig: []interface{}{map[string]interface{}{
 				"geography":           "core",
-				"clone_dns_names":     true,
 				"enable_for_all_sans": false,
 				"dns_names":           []any{},
 			}},
@@ -391,22 +385,6 @@ func TestGetNetworkConfig(t *testing.T) {
 			givenSniOnly: true,
 			expected: &cps.NetworkConfiguration{
 				DNSNameSettings: &cps.DNSNameSettings{CloneDNSNames: false, DNSNames: nil},
-				Geography:       "core",
-				SecureNetwork:   "enhanced_tls",
-				SNIOnly:         true,
-			},
-		},
-		"clone_dns_names=false uses explicit dns_names": {
-			givenNetworkConfig: []interface{}{map[string]interface{}{
-				"geography":           "core",
-				"clone_dns_names":     false,
-				"enable_for_all_sans": true,
-				"dns_names":           []any{"test.akamai.com"},
-			}},
-			givenSANS:    schema.NewSet(schema.HashString, []any{"san.test.akamai.com"}),
-			givenSniOnly: true,
-			expected: &cps.NetworkConfiguration{
-				DNSNameSettings: &cps.DNSNameSettings{CloneDNSNames: false, DNSNames: []string{"test.akamai.com"}},
 				Geography:       "core",
 				SecureNetwork:   "enhanced_tls",
 				SNIOnly:         true,
@@ -683,7 +661,6 @@ func TestNetworkConfigToMap(t *testing.T) {
 					"set_id":                 "123",
 				}},
 				"disallowed_tls_versions": []string{"TLSv1"},
-				"clone_dns_names":         false,
 				"enable_for_all_sans":     false,
 				"dns_names":               []interface{}{"a.com", "b.com"},
 				"geography":               "core",
@@ -719,7 +696,6 @@ func TestNetworkConfigToMap(t *testing.T) {
 			},
 			expected: map[string]interface{}{
 				"disallowed_tls_versions": []string(nil),
-				"clone_dns_names":         true,
 				"dns_names":               []interface{}{"a.com", "b.com"},
 				"enable_for_all_sans":     true,
 				"geography":               "",

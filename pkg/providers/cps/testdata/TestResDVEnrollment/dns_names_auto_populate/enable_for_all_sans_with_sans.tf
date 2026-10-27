@@ -2,11 +2,12 @@ provider "akamai" {
   edgerc = "../../common/testutils/edgerc"
 }
 
-resource "akamai_cps_third_party_enrollment" "third_party" {
+resource "akamai_cps_dv_enrollment" "dv" {
   contract_id = "ctr_1"
   common_name = "test.akamai.com"
   sans = [
-    "san.test.akamai.com",
+    "www.test.akamai.com",
+    "api.test.akamai.com",
   ]
   secure_network = "enhanced-tls"
   sni_only       = true
@@ -36,24 +37,24 @@ resource "akamai_cps_third_party_enrollment" "third_party" {
   }
   certificate_chain_type = "default"
   csr {
-    country_code        = "US"
-    city                = "Cambridge"
-    organization        = "Akamai"
-    organizational_unit = "WebEx"
-    state               = "MA"
+    country_code          = "US"
+    city                  = "Cambridge"
+    organization          = "Akamai"
+    organizational_unit   = "WebEx"
+    preferred_trust_chain = "intermediate-a"
+    state                 = "MA"
   }
   network_configuration {
     disallowed_tls_versions = [
       "TLSv1",
-      "TLSv1_1",
+      "TLSv1_1"
     ]
-    geography         = "core"
-    ocsp_stapling     = "on"
-    preferred_ciphers = "ak-akamai-default"
-    must_have_ciphers = "ak-akamai-default"
-    quic_enabled      = false
-    clone_dns_names   = false
-    dns_names         = ["test.akamai.com"]
+    geography           = "core"
+    ocsp_stapling       = "on"
+    preferred_ciphers   = "ak-akamai-default"
+    must_have_ciphers   = "ak-akamai-default"
+    quic_enabled        = false
+    enable_for_all_sans = true
   }
   signature_algorithm = "SHA-256"
   organization {

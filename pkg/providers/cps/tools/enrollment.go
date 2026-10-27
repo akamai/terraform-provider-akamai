@@ -10,7 +10,6 @@ import (
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/cps"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
-	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -144,19 +143,9 @@ func GetNetworkConfig(d *schema.ResourceData) (*cps.NetworkConfiguration, error)
 		}
 	}
 	if sniOnly {
-		cloneDNS := networkConfigMap["clone_dns_names"].(bool)
 		enableForAllSANs := networkConfigMap["enable_for_all_sans"].(bool)
-		effectiveClone := cloneDNS && enableForAllSANs
-		if networkConfig, ok := rawNetworkConfiguration(d); ok {
-			effectiveClone = true
-			if dnsNameSettingConfigured(networkConfig, "enable_for_all_sans") {
-				effectiveClone = enableForAllSANs
-			} else if dnsNameSettingConfigured(networkConfig, "clone_dns_names") {
-				effectiveClone = cloneDNS
-			}
-		}
 
-		if effectiveClone {
+		if enableForAllSANs {
 			networkConfig.DNSNameSettings = &cps.DNSNameSettings{
 				CloneDNSNames: true,
 			}
@@ -187,32 +176,6 @@ func GetNetworkConfig(d *schema.ResourceData) (*cps.NetworkConfiguration, error)
 	networkConfig.SNIOnly = sniOnly
 
 	return &networkConfig, nil
-}
-
-func rawNetworkConfiguration(d *schema.ResourceData) (cty.Value, bool) {
-	rawConfig := d.GetRawConfig()
-	if rawConfig == cty.NilVal || rawConfig.IsNull() || !rawConfig.IsKnown() {
-		return cty.NilVal, false
-	}
-
-	networkConfig := rawConfig.GetAttr("network_configuration")
-	if networkConfig.IsNull() || !networkConfig.IsKnown() || networkConfig.LengthInt() == 0 {
-		return cty.NilVal, false
-	}
-
-	it := networkConfig.ElementIterator()
-	it.Next()
-	_, networkConfig = it.Element()
-	if networkConfig.IsNull() || !networkConfig.IsKnown() {
-		return cty.NilVal, false
-	}
-
-	return networkConfig, true
-}
-
-func dnsNameSettingConfigured(networkConfig cty.Value, name string) bool {
-	setting := networkConfig.GetAttr(name)
-	return setting.IsKnown() && !setting.IsNull()
 }
 
 // GetOrg returns organization information from ResourceData object
@@ -298,7 +261,6 @@ func NetworkConfigToMap(networkConfig cps.NetworkConfiguration) map[string]inter
 	}
 	networkConfigMap["disallowed_tls_versions"] = networkConfig.DisallowedTLSVersions
 	if networkConfig.DNSNameSettings != nil {
-		networkConfigMap["clone_dns_names"] = networkConfig.DNSNameSettings.CloneDNSNames
 		networkConfigMap["enable_for_all_sans"] = networkConfig.DNSNameSettings.CloneDNSNames
 		var dnsNames []interface{}
 		for _, n := range networkConfig.DNSNameSettings.DNSNames {

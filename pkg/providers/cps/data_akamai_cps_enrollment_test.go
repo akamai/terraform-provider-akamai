@@ -721,7 +721,6 @@ func checkCommonAttrs(en *cps.GetEnrollmentResponse, enID int) resource.TestChec
 		resource.TestCheckResourceAttr("data.akamai_cps_enrollment.test", "csr.0.city", en.CSR.L),
 		// Network Configuration
 		resource.TestCheckResourceAttr("data.akamai_cps_enrollment.test", "network_configuration.#", "1"),
-		resource.TestCheckResourceAttr("data.akamai_cps_enrollment.test", "network_configuration.0.clone_dns_names", strconv.FormatBool(en.NetworkConfiguration.DNSNameSettings.CloneDNSNames)),
 		resource.TestCheckResourceAttr("data.akamai_cps_enrollment.test", "network_configuration.0.enable_for_all_sans", strconv.FormatBool(en.NetworkConfiguration.DNSNameSettings.CloneDNSNames)),
 		resource.TestCheckResourceAttr("data.akamai_cps_enrollment.test", "network_configuration.0.geography", en.NetworkConfiguration.Geography),
 		resource.TestCheckResourceAttr("data.akamai_cps_enrollment.test", "network_configuration.0.must_have_ciphers", en.NetworkConfiguration.MustHaveCiphers),

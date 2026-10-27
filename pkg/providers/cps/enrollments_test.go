@@ -334,39 +334,36 @@ func TestReadAttrsDNSNamesTransitions(t *testing.T) {
 	tests := map[string]struct {
 		currentNetworkConfig map[string]interface{}
 		responseDNSNames     []string
-		cloneDNSNames        bool
+		enableForAllSANs     bool
 		expectedDNSNames     []interface{}
 	}{
 		"all SANs enabled stores API-populated DNS names": {
 			currentNetworkConfig: map[string]interface{}{
-				"clone_dns_names":     true,
 				"enable_for_all_sans": true,
 				"geography":           "core",
 			},
 			responseDNSNames: []string{"test.akamai.com", "san.test.akamai.com"},
-			cloneDNSNames:    true,
+			enableForAllSANs: true,
 			expectedDNSNames: []interface{}{"test.akamai.com", "san.test.akamai.com"},
 		},
 		"all SANs disabled stores explicit DNS names": {
 			currentNetworkConfig: map[string]interface{}{
-				"clone_dns_names":     true,
 				"enable_for_all_sans": false,
 				"dns_names":           []interface{}{"test.akamai.com"},
 				"geography":           "core",
 			},
 			responseDNSNames: []string{"test.akamai.com"},
-			cloneDNSNames:    false,
+			enableForAllSANs: false,
 			expectedDNSNames: []interface{}{"test.akamai.com"},
 		},
 		"reenabling all SANs replaces explicit DNS names with API-populated names": {
 			currentNetworkConfig: map[string]interface{}{
-				"clone_dns_names":     true,
 				"enable_for_all_sans": true,
 				"dns_names":           []interface{}{"test.akamai.com"},
 				"geography":           "core",
 			},
 			responseDNSNames: []string{"test.akamai.com", "san.test.akamai.com"},
-			cloneDNSNames:    true,
+			enableForAllSANs: true,
 			expectedDNSNames: []interface{}{"test.akamai.com", "san.test.akamai.com"},
 		},
 	}
@@ -386,7 +383,7 @@ func TestReadAttrsDNSNamesTransitions(t *testing.T) {
 					})
 					enrollment := getTestDVEnrollment()
 					enrollment.NetworkConfiguration.DNSNameSettings = &cps.DNSNameSettings{
-						CloneDNSNames: test.cloneDNSNames,
+						CloneDNSNames: test.enableForAllSANs,
 						DNSNames:      test.responseDNSNames,
 					}
 
@@ -408,13 +405,13 @@ func TestCloneDNSNamesDefaultUpgradeState(t *testing.T) {
 	t.Parallel()
 
 	tests := map[string]struct {
-		omitCloneDNSNamesFromState bool
-		stateCloneDNSNames         bool
-		config                     map[string]interface{}
-		wantDiff                   bool
+		omitEnableForAllSANsFromState bool
+		stateEnableForAllSANs         bool
+		config                        map[string]interface{}
+		wantDiff                      bool
 	}{
 		"omitted legacy state adopts the new default": {
-			omitCloneDNSNamesFromState: true,
+			omitEnableForAllSANsFromState: true,
 			config: map[string]interface{}{
 				"network_configuration": []interface{}{map[string]interface{}{
 					"geography": "core",
@@ -424,17 +421,17 @@ func TestCloneDNSNamesDefaultUpgradeState(t *testing.T) {
 		"explicit false remains disabled without drift": {
 			config: map[string]interface{}{
 				"network_configuration": []interface{}{map[string]interface{}{
-					"clone_dns_names": false,
-					"geography":       "core",
+					"enable_for_all_sans": false,
+					"geography":           "core",
 				}},
 			},
 		},
 		"explicit true remains enabled without drift": {
-			stateCloneDNSNames: true,
+			stateEnableForAllSANs: true,
 			config: map[string]interface{}{
 				"network_configuration": []interface{}{map[string]interface{}{
-					"clone_dns_names": true,
-					"geography":       "core",
+					"enable_for_all_sans": true,
+					"geography":           "core",
 				}},
 			},
 		},
@@ -452,8 +449,8 @@ func TestCloneDNSNamesDefaultUpgradeState(t *testing.T) {
 					t.Parallel()
 					legacyConfig := map[string]interface{}{
 						"network_configuration": []interface{}{map[string]interface{}{
-							"clone_dns_names": false,
-							"geography":       "core",
+							"enable_for_all_sans": false,
+							"geography":           "core",
 						}},
 					}
 					legacySchema := make(map[string]*schema.Schema, len(resource.Schema))
@@ -477,9 +474,9 @@ func TestCloneDNSNamesDefaultUpgradeState(t *testing.T) {
 					}
 					require.NotEmpty(t, legacyNetworkConfigurationKey)
 					assert.NotEqual(t, "network_configuration.0", legacyNetworkConfigurationKey)
-					if test.omitCloneDNSNamesFromState {
+					if test.omitEnableForAllSANsFromState {
 						for attribute := range legacyState.Attributes {
-							if strings.HasSuffix(attribute, ".clone_dns_names") {
+							if strings.HasSuffix(attribute, ".enable_for_all_sans") {
 								delete(legacyState.Attributes, attribute)
 							}
 						}
@@ -488,12 +485,12 @@ func TestCloneDNSNamesDefaultUpgradeState(t *testing.T) {
 					upgradedData := resource.Data(legacyState)
 					enrollment := getTestDVEnrollment()
 					enrollment.NetworkConfiguration.DNSNameSettings = &cps.DNSNameSettings{
-						CloneDNSNames: test.stateCloneDNSNames,
+						CloneDNSNames: test.stateEnableForAllSANs,
 					}
 					attrs, err := readAttrs(&enrollment, upgradedData)
 					require.NoError(t, err)
 					networkConfig := attrs["network_configuration"].([]interface{})[0].(map[string]interface{})
-					assert.Equal(t, test.stateCloneDNSNames, networkConfig["clone_dns_names"])
+					assert.Equal(t, test.stateEnableForAllSANs, networkConfig["enable_for_all_sans"])
 					require.NoError(t, upgradedData.Set("network_configuration", attrs["network_configuration"]))
 
 					diff, err := resource.Diff(
@@ -516,14 +513,14 @@ func hashLegacyNetworkConfiguration(v interface{}) int {
 		return 0
 	}
 
-	effectiveClone := networkConfig["enable_for_all_sans"] == true || networkConfig["clone_dns_names"] == true
+	enableForAllSANs := networkConfig["enable_for_all_sans"] == true
 	hashInput := make(map[string]interface{}, len(networkConfig))
 	for key, value := range networkConfig {
 		switch key {
-		case "clone_dns_names", "enable_for_all_sans":
+		case "enable_for_all_sans":
 			continue
 		case "dns_names":
-			if effectiveClone {
+			if enableForAllSANs {
 				continue
 			}
 		}

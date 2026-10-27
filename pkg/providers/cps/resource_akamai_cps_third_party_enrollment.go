@@ -119,10 +119,8 @@ func resourceCPSThirdPartyEnrollment(pollChangeStatusInterval, pollGetEnrollment
 				Description: "Data used for generation of Certificate Signing Request",
 			},
 			"network_configuration": {
-				Type:     schema.TypeList,
-				Optional: true,
-				// It was changed from required to optional to be able to support clone_dns_names and enable_for_all_sans at the same time during transition period.
-				// It will be changed back to required in the future when clone_dns_names will be removed from the resource.
+				Type:        schema.TypeList,
+				Optional:    true,
 				Computed:    true,
 				MaxItems:    1,
 				Elem:        networkConfiguration,
@@ -199,6 +197,7 @@ func resourceCPSThirdPartyEnrollment(pollChangeStatusInterval, pollGetEnrollment
 			},
 			validateNetworkConfigurationPresent,
 			setDefaultEnableForAllSANs,
+			updateDNSNamesForAllSANs,
 			validateDNSNameSettingsConflict,
 		),
 		Timeouts: &schema.ResourceTimeout{

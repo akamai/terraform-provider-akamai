@@ -3,11 +3,8 @@ provider "akamai" {
 }
 
 resource "akamai_cps_dv_enrollment" "dv" {
-  contract_id = "ctr_1"
-  common_name = "test.akamai.com"
-  sans = [
-    "san.test.akamai.com",
-  ]
+  contract_id    = "ctr_1"
+  common_name    = "test.akamai.com"
   secure_network = "enhanced-tls"
   sni_only       = true
   admin_contact {
@@ -48,16 +45,12 @@ resource "akamai_cps_dv_enrollment" "dv" {
       "TLSv1",
       "TLSv1_1"
     ]
-    geography         = "core"
-    ocsp_stapling     = "on"
-    preferred_ciphers = "ak-akamai-default"
-    must_have_ciphers = "ak-akamai-default"
-    quic_enabled      = false
-    clone_dns_names   = false
-    dns_names = [
-      "test.akamai.com",
-      "san.test.akamai.com"
-    ]
+    geography           = "core"
+    ocsp_stapling       = "on"
+    preferred_ciphers   = "ak-akamai-default"
+    must_have_ciphers   = "ak-akamai-default"
+    quic_enabled        = false
+    enable_for_all_sans = true
   }
   signature_algorithm = "SHA-256"
   organization {
