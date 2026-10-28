@@ -51,7 +51,7 @@ func dataSourceEvalPenaltyBoxRead(ctx context.Context, d *schema.ResourceData, m
 
 	getPenaltyBox := appsec.GetPenaltyBoxRequest{}
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -92,7 +92,7 @@ func dataSourceEvalPenaltyBoxRead(ctx context.Context, d *schema.ResourceData, m
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
-	d.SetId(strconv.Itoa(getPenaltyBox.ConfigID))
+	d.SetId(strconv.FormatInt(getPenaltyBox.ConfigID, 10))
 
 	return nil
 }

@@ -34,7 +34,7 @@ func dataSourceTransactionalEndpointProtectionRead(ctx context.Context, d *schem
 	logger := meta.Log("botman", "dataSourceTransactionalEndpointProtectionRead")
 	logger.Debugf("in dataSourceTransactionalEndpointProtectionRead")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -45,8 +45,8 @@ func dataSourceTransactionalEndpointProtectionRead(ctx context.Context, d *schem
 	}
 
 	request := botman.GetTransactionalEndpointProtectionRequest{
-		ConfigID: int64(configID),
-		Version:  int64(version),
+		ConfigID: configID,
+		Version:  version,
 	}
 
 	response, err := client.GetTransactionalEndpointProtection(ctx, request)
@@ -64,6 +64,6 @@ func dataSourceTransactionalEndpointProtectionRead(ctx context.Context, d *schem
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
-	d.SetId(strconv.Itoa(configID))
+	d.SetId(strconv.FormatInt(configID, 10))
 	return nil
 }

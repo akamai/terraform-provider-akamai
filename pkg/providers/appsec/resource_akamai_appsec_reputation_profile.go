@@ -59,7 +59,7 @@ func resourceReputationProfileCreate(ctx context.Context, d *schema.ResourceData
 	logger := meta.Log("APPSEC", "resourceReputationProfileCreate")
 	logger.Debug("in resourceReputationProfileCreate")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -107,11 +107,11 @@ func resourceReputationProfileRead(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	reputationProfileID, err := strconv.Atoi(iDParts[1])
+	reputationProfileID, err := strconv.ParseInt(iDParts[1], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -157,11 +157,11 @@ func resourceReputationProfileUpdate(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	reputationProfileID, err := strconv.Atoi(iDParts[1])
+	reputationProfileID, err := strconv.ParseInt(iDParts[1], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -180,7 +180,7 @@ func resourceReputationProfileUpdate(ctx context.Context, d *schema.ResourceData
 	updateReputationProfile := appsec.UpdateReputationProfileRequest{
 		ConfigID:            configID,
 		ConfigVersion:       version,
-		ReputationProfileId: reputationProfileID,
+		ReputationProfileID: reputationProfileID,
 		JsonPayloadRaw:      rawJSON,
 	}
 
@@ -206,7 +206,7 @@ func resourceReputationProfileDelete(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -215,7 +215,7 @@ func resourceReputationProfileDelete(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	reputationProfileID, err := strconv.Atoi(iDParts[1])
+	reputationProfileID, err := strconv.ParseInt(iDParts[1], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -225,7 +225,7 @@ func resourceReputationProfileDelete(ctx context.Context, d *schema.ResourceData
 	deleteReputationProfile := appsec.RemoveReputationProfileRequest{
 		ConfigID:            configID,
 		ConfigVersion:       version,
-		ReputationProfileId: reputationProfileID,
+		ReputationProfileID: reputationProfileID,
 	}
 
 	_, err = client.RemoveReputationProfile(ctx, deleteReputationProfile)

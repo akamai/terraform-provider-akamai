@@ -1872,7 +1872,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, result)
 		require.Equal(t, 547700, result.ActivationID)
-		require.Equal(t, 7, result.Version)
+		require.Equal(t, int64(7), result.Version)
 		require.Equal(t, "STAGING", result.Network)
 		require.Equal(t, "ACTIVATED", string(result.Status))
 
@@ -1901,7 +1901,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, result)
 		require.Equal(t, 547706, result.ActivationID)
-		require.Equal(t, 7, result.Version)
+		require.Equal(t, int64(7), result.Version)
 		require.Equal(t, "STAGING", result.Network)
 		require.Equal(t, "ACTIVATED", string(result.Status))
 
@@ -1930,7 +1930,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, result)
 		require.Equal(t, 547702, result.ActivationID)
-		require.Equal(t, 8, result.Version)
+		require.Equal(t, int64(8), result.Version)
 		require.Equal(t, "STAGING", result.Network)
 		require.Equal(t, "ACTIVATED", string(result.Status))
 
@@ -2009,7 +2009,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, result)
 		require.Equal(t, 547705, result.ActivationID)
-		require.Equal(t, 7, result.Version)
+		require.Equal(t, int64(7), result.Version)
 		require.Equal(t, "STAGING", result.Network)
 		require.Equal(t, "ACTIVATION_IN_PROGRESS", string(result.Status))
 
@@ -2038,7 +2038,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, result)
 		require.Equal(t, 547700, result.ActivationID)
-		require.Equal(t, 7, result.Version)
+		require.Equal(t, int64(7), result.Version)
 		require.Equal(t, "STAGING", result.Network)
 		require.Equal(t, "ACTIVATED", string(result.Status))
 
@@ -2094,7 +2094,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, result)
 		require.Equal(t, 547702, result.ActivationID)
-		require.Equal(t, 8, result.Version)
+		require.Equal(t, int64(8), result.Version)
 		require.Equal(t, "STAGING", result.Network)
 		require.Equal(t, "ACTIVATED", string(result.Status))
 
@@ -2182,7 +2182,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, result)
 		require.Equal(t, 547708, result.ActivationID)
-		require.Equal(t, 7, result.Version)
+		require.Equal(t, int64(7), result.Version)
 		require.Equal(t, "STAGING", result.Network)
 		require.Equal(t, "ACTIVATION_IN_PROGRESS", string(result.Status))
 
@@ -2220,7 +2220,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, result)
 		require.Equal(t, 547709, result.ActivationID)
-		require.Equal(t, 7, result.Version)
+		require.Equal(t, int64(7), result.Version)
 		require.Equal(t, "STAGING", result.Network)
 		require.Equal(t, "NEW", string(result.Status))
 
@@ -2249,7 +2249,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		result, err := findCurrentActiveOrPendingDeactivation(ctx, client.APPSEC, 43253, "STAGING", logger)
 		require.NoError(t, err)
 		require.NotNil(t, result)
-		require.Equal(t, 7, result.Version)
+		require.Equal(t, int64(7), result.Version)
 		require.Equal(t, "STAGING", result.Network)
 		require.Equal(t, "PENDING_DEACTIVATION", string(result.Status))
 
@@ -2288,7 +2288,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, result)
 		require.Equal(t, 547710, result.ActivationID)
-		require.Equal(t, 7, result.Version)
+		require.Equal(t, int64(7), result.Version)
 		require.Equal(t, "STAGING", result.Network)
 		require.Equal(t, "DEACTIVATION_IN_PROGRESS", string(result.Status))
 
@@ -2317,7 +2317,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		result, err := findCurrentActiveOrPendingDeactivation(ctx, client.APPSEC, 43253, "STAGING", logger)
 		require.NoError(t, err)
 		require.NotNil(t, result)
-		require.Equal(t, 7, result.Version)
+		require.Equal(t, int64(7), result.Version)
 		require.Equal(t, "STAGING", result.Network)
 		require.Equal(t, "ACTIVATED", string(result.Status))
 
@@ -2390,7 +2390,7 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, result)
 		require.Equal(t, 547711, result.ActivationID)
-		require.Equal(t, 8, result.Version)
+		require.Equal(t, int64(8), result.Version)
 		require.Equal(t, "PENDING_DEACTIVATION", string(result.Status))
 
 		client.APPSEC.AssertExpectations(t)
@@ -2834,24 +2834,23 @@ func TestAkamaiActivations_res_basic(t *testing.T) {
 
 }
 
-func activationTestResourceData(t *testing.T, configID, version int) *schema.ResourceData {
+func newActivationTestResourceData(t *testing.T, configID, version int64, network, note string, notificationEmails []string) *schema.ResourceData {
 	t.Helper()
-	return schema.TestResourceDataRaw(t, resourceActivations(defaultActivationResourceConfig()).Schema, map[string]interface{}{
-		"config_id":           configID,
-		"version":             version,
-		"network":             "STAGING",
-		"note":                "test note",
-		"notification_emails": []interface{}{"test@example.com"},
-		"status":              "",
-	})
+	d := resourceActivations(defaultActivationResourceConfig()).Data(nil)
+	require.NoError(t, d.Set("config_id", configID))
+	require.NoError(t, d.Set("version", version))
+	require.NoError(t, d.Set("network", network))
+	require.NoError(t, d.Set("note", note))
+	require.NoError(t, d.Set("notification_emails", notificationEmails))
+	return d
 }
 
 func TestPerformActivationInvalidatesCache(t *testing.T) {
 	clearCache()
 	defer clearCache()
 
-	configID := 43253
-	version := 7
+	configID := int64(43253)
+	version := int64(7)
 
 	staleConfig := &appsec.GetConfigurationResponse{ID: configID, LatestVersion: 5}
 	err := cache.Set(cache.BucketName(SubproviderName), modifiableVersionCacheKey(configID), staleConfig)
@@ -2875,7 +2874,7 @@ func TestPerformActivationInvalidatesCache(t *testing.T) {
 		Network:            "STAGING",
 		Note:               "test note",
 		NotificationEmails: []string{"test@example.com"},
-		ResourceData:       activationTestResourceData(t, configID, version),
+		ResourceData:       newActivationTestResourceData(t, configID, version, "STAGING", "test note", []string{"test@example.com"}),
 		Logger:             akalog.NOPLogger(),
 	}
 
@@ -2893,8 +2892,8 @@ func TestPerformDeactivationInvalidatesCache(t *testing.T) {
 	clearCache()
 	defer clearCache()
 
-	configID := 43253
-	version := 7
+	configID := int64(43253)
+	version := int64(7)
 
 	staleConfig := &appsec.GetConfigurationResponse{ID: configID, LatestVersion: 5}
 	err := cache.Set(cache.BucketName(SubproviderName), modifiableVersionCacheKey(configID), staleConfig)
@@ -2914,7 +2913,7 @@ func TestPerformDeactivationInvalidatesCache(t *testing.T) {
 		Network:            "STAGING",
 		Note:               "test note",
 		NotificationEmails: []string{"test@example.com"},
-		ResourceData:       activationTestResourceData(t, configID, version),
+		ResourceData:       newActivationTestResourceData(t, configID, version, "STAGING", "test note", []string{"test@example.com"}),
 		Logger:             akalog.NOPLogger(),
 	}
 
@@ -2932,8 +2931,8 @@ func TestWaitForDeactivationInvalidatesCache(t *testing.T) {
 	clearCache()
 	defer clearCache()
 
-	configID := 43253
-	version := 7
+	configID := int64(43253)
+	version := int64(7)
 
 	staleConfig := &appsec.GetConfigurationResponse{ID: configID, LatestVersion: 5}
 	err := cache.Set(cache.BucketName(SubproviderName), modifiableVersionCacheKey(configID), staleConfig)
@@ -2952,7 +2951,7 @@ func TestWaitForDeactivationInvalidatesCache(t *testing.T) {
 		Network:            "STAGING",
 		Note:               "test note",
 		NotificationEmails: []string{"test@example.com"},
-		ResourceData:       activationTestResourceData(t, configID, version),
+		ResourceData:       newActivationTestResourceData(t, configID, version, "STAGING", "test note", []string{"test@example.com"}),
 		Logger:             akalog.NOPLogger(),
 	}
 

@@ -65,7 +65,7 @@ func resourceAdvancedSettingsAttackPayloadLoggingImport(ctx context.Context, d *
 		if err != nil {
 			return nil, err
 		}
-		configID, err := strconv.Atoi(iDParts[0])
+		configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 		if err != nil {
 			return nil, err
 		}
@@ -79,7 +79,7 @@ func resourceAdvancedSettingsAttackPayloadLoggingImport(ctx context.Context, d *
 		getAdvancedSettingsAttackPayloadLogging.Version = version
 		getAdvancedSettingsAttackPayloadLogging.PolicyID = policyID
 	} else {
-		configID, err := strconv.Atoi(d.Id())
+		configID, err := strconv.ParseInt(d.Id(), 10, 64)
 		if err != nil {
 			return nil, err
 		}
@@ -123,7 +123,7 @@ func resourceAdvancedSettingsAttackPayloadLoggingCreate(ctx context.Context, d *
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsAttackPayloadLoggingCreate")
 	logger.Debugf("in resourceAdvancedSettingsAttackPayloadLoggingCreate")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -162,7 +162,7 @@ func resourceAdvancedSettingsAttackPayloadLoggingRead(ctx context.Context, d *sc
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsAttackPayloadLoggingRead")
 	logger.Debugf("in resourceAdvancedSettingsLoggingRead")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -208,7 +208,7 @@ func resourceAdvancedSettingsAttackPayloadLoggingUpdate(ctx context.Context, d *
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsAttackPayloadLoggingUpdate")
 	logger.Debugf("in resourceAdvancedSettingsAttackPayloadLoggingUpdate")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -244,7 +244,7 @@ func resourceAdvancedSettingsAttackPayloadLoggingDelete(ctx context.Context, d *
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsAttackPayloadLoggingDelete")
 	logger.Debugf("in resourceAdvancedSettingsAttackPayloadLoggingDelete")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}

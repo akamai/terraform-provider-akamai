@@ -57,7 +57,7 @@ func createResourceGeneralSettings(ctx context.Context, d *schema.ResourceData, 
 	logger := meta.Log("accountprotection", "createResourceGeneralSettings")
 	logger.Debugf("in createResourceGeneralSettings")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -78,8 +78,8 @@ func createResourceGeneralSettings(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	request := apr.UpsertGeneralSettingsRequest{
-		ConfigID:         int64(configID),
-		Version:          int64(version),
+		ConfigID:         configID,
+		Version:          version,
 		SecurityPolicyID: securityPolicyID,
 		JsonPayload:      json.RawMessage(jsonPayloadString),
 	}
@@ -107,7 +107,7 @@ func readResourceGeneralSettings(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -120,8 +120,8 @@ func readResourceGeneralSettings(ctx context.Context, d *schema.ResourceData, m 
 	securityPolicyID := iDParts[1]
 
 	request := apr.GetGeneralSettingsRequest{
-		ConfigID:         int64(configID),
-		Version:          int64(version),
+		ConfigID:         configID,
+		Version:          version,
 		SecurityPolicyID: securityPolicyID,
 	}
 
@@ -160,7 +160,7 @@ func updateResourceGeneralSettings(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -178,8 +178,8 @@ func updateResourceGeneralSettings(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	request := apr.UpsertGeneralSettingsRequest{
-		ConfigID:         int64(configID),
-		Version:          int64(version),
+		ConfigID:         configID,
+		Version:          version,
 		SecurityPolicyID: securityPolicyID,
 		JsonPayload:      json.RawMessage(jsonPayloadString),
 	}

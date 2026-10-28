@@ -45,7 +45,7 @@ func resourceAdvancedSettingsPIILearningCreate(ctx context.Context, d *schema.Re
 	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPIILearningCreate")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -60,7 +60,7 @@ func resourceAdvancedSettingsPIILearningCreate(ctx context.Context, d *schema.Re
 
 	_, err = client.UpdateAdvancedSettingsPIILearning(ctx, appsec.UpdateAdvancedSettingsPIILearningRequest{
 		ConfigVersion: appsec.ConfigVersion{
-			ConfigID: int64(configID),
+			ConfigID: configID,
 			Version:  version,
 		},
 		EnablePIILearning: enablePIILearning,
@@ -80,7 +80,7 @@ func resourceAdvancedSettingsPIILearningRead(ctx context.Context, d *schema.Reso
 	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPIILearningRead")
 
-	configID, err := strconv.Atoi(d.Id())
+	configID, err := strconv.ParseInt(d.Id(), 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -91,7 +91,7 @@ func resourceAdvancedSettingsPIILearningRead(ctx context.Context, d *schema.Reso
 
 	advancedSettingsPIILearning, err := client.GetAdvancedSettingsPIILearning(ctx, appsec.GetAdvancedSettingsPIILearningRequest{
 		ConfigVersion: appsec.ConfigVersion{
-			ConfigID: int64(configID),
+			ConfigID: configID,
 			Version:  version,
 		},
 	})
@@ -115,7 +115,7 @@ func resourceAdvancedSettingsPIILearningUpdate(ctx context.Context, d *schema.Re
 	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPIILearningUpdate")
 
-	configID, err := strconv.Atoi(d.Id())
+	configID, err := strconv.ParseInt(d.Id(), 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -130,7 +130,7 @@ func resourceAdvancedSettingsPIILearningUpdate(ctx context.Context, d *schema.Re
 
 	_, err = client.UpdateAdvancedSettingsPIILearning(ctx, appsec.UpdateAdvancedSettingsPIILearningRequest{
 		ConfigVersion: appsec.ConfigVersion{
-			ConfigID: int64(configID),
+			ConfigID: configID,
 			Version:  version,
 		},
 		EnablePIILearning: enablePIILearning,
@@ -148,7 +148,7 @@ func resourceAdvancedSettingsPIILearningDelete(ctx context.Context, d *schema.Re
 	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPIILearningDelete")
 
-	configID, err := strconv.Atoi(d.Id())
+	configID, err := strconv.ParseInt(d.Id(), 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -159,7 +159,7 @@ func resourceAdvancedSettingsPIILearningDelete(ctx context.Context, d *schema.Re
 
 	_, err = client.UpdateAdvancedSettingsPIILearning(ctx, appsec.UpdateAdvancedSettingsPIILearningRequest{
 		ConfigVersion: appsec.ConfigVersion{
-			ConfigID: int64(configID),
+			ConfigID: configID,
 			Version:  version,
 		},
 		EnablePIILearning: false,

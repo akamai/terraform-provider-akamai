@@ -38,7 +38,7 @@ func dataSourceBotManagementSettingsRead(ctx context.Context, d *schema.Resource
 	logger := meta.Log("botman", "dataSourceBotManagementSettingsRead")
 	logger.Debugf("in dataSourceBotManagementSettingsRead")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -54,8 +54,8 @@ func dataSourceBotManagementSettingsRead(ctx context.Context, d *schema.Resource
 	}
 
 	request := botman.GetBotManagementSettingRequest{
-		ConfigID:         int64(configID),
-		Version:          int64(version),
+		ConfigID:         configID,
+		Version:          version,
 		SecurityPolicyID: securityPolicyID,
 	}
 

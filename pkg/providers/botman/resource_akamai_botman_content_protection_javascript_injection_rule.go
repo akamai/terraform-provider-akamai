@@ -66,7 +66,7 @@ func resourceContentProtectionJavaScriptInjectionRuleCreate(ctx context.Context,
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, int(configID), "ContentProtectionJavaScriptInjectionRule", meta.Client().GetAPPSEC())
+	version, err := getModifiableConfigVersion(ctx, configID, "ContentProtectionJavaScriptInjectionRule", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -83,7 +83,7 @@ func resourceContentProtectionJavaScriptInjectionRuleCreate(ctx context.Context,
 
 	request := botman.CreateContentProtectionJavaScriptInjectionRuleRequest{
 		ConfigID:         configID,
-		Version:          int64(version),
+		Version:          version,
 		SecurityPolicyID: securityPolicyID,
 		JsonPayload:      json.RawMessage(jsonPayloadString),
 	}
@@ -118,7 +118,7 @@ func ContentProtectionJavaScriptInjectionRuleRead(ctx context.Context, d *schema
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, int(configID), meta.Client().GetAPPSEC())
+	version, err := getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -129,7 +129,7 @@ func ContentProtectionJavaScriptInjectionRuleRead(ctx context.Context, d *schema
 
 	request := botman.GetContentProtectionJavaScriptInjectionRuleRequest{
 		ConfigID:         configID,
-		Version:          int64(version),
+		Version:          version,
 		SecurityPolicyID: securityPolicyID,
 		ContentProtectionJavaScriptInjectionRuleID: contentProtectionJavaScriptInjectionRuleID,
 	}
@@ -191,7 +191,7 @@ func resourceContentProtectionJavaScriptInjectionRuleUpdate(ctx context.Context,
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, int(configID), "ContentProtectionJavaScriptInjectionRule", meta.Client().GetAPPSEC())
+	version, err := getModifiableConfigVersion(ctx, configID, "ContentProtectionJavaScriptInjectionRule", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -207,7 +207,7 @@ func resourceContentProtectionJavaScriptInjectionRuleUpdate(ctx context.Context,
 
 	request := botman.UpdateContentProtectionJavaScriptInjectionRuleRequest{
 		ConfigID: configID,
-		Version:  int64(version),
+		Version:  version,
 		ContentProtectionJavaScriptInjectionRuleID: contentProtectionJavaScriptInjectionRuleID,
 		SecurityPolicyID: securityPolicyID,
 		JsonPayload:      jsonPayload,
@@ -236,7 +236,7 @@ func resourceContentProtectionJavaScriptInjectionRuleDelete(ctx context.Context,
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, int(configID), "ContentProtectionJavaScriptInjectionRule", meta.Client().GetAPPSEC())
+	version, err := getModifiableConfigVersion(ctx, configID, "ContentProtectionJavaScriptInjectionRule", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -247,7 +247,7 @@ func resourceContentProtectionJavaScriptInjectionRuleDelete(ctx context.Context,
 
 	request := botman.RemoveContentProtectionJavaScriptInjectionRuleRequest{
 		ConfigID:         configID,
-		Version:          int64(version),
+		Version:          version,
 		SecurityPolicyID: securityPolicyID,
 		ContentProtectionJavaScriptInjectionRuleID: contentProtectionJavaScriptInjectionRuleID,
 	}

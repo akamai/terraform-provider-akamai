@@ -205,6 +205,7 @@
   * Fixed `akamai_appsec_advanced_settings_url_evasion_defense` failing with `Provider produced inconsistent result after apply` when `bypass_lists` or `rules` were not configured, or when `rules` were added to an existing resource.
   * Added validation to `akamai_appsec_advanced_settings_url_evasion_defense` that rejects an empty `rules` list. Omit `rules` instead.
   * Fixed `akamai_appsec_advanced_settings_url_evasion_defense` failing with `Provider produced inconsistent result after apply` when `rules` were reordered or inserted, as the computed `name` and `description` of a rule were taken from the rule previously at the same position instead of the same `rule_id`.
+  * Fixed type mismatch for `config_id` and `version` across all appsec resources by updating internal handling to use `int64`, aligning with EG library type changes.
   * Fixed spurious plan drift for `akamai_appsec_rate_policy` where Terraform detected a change on every plan even when the configuration had not changed. This occurred because the API returns server-assigned fields (`id`, `configId`, `configVersion`) that customers do not write in their HCL config. These fields are now correctly ignored during plan comparison.
 
 

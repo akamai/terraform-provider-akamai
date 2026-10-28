@@ -119,7 +119,7 @@ func dataSourceIPGeoRead(ctx context.Context, d *schema.ResourceData, m interfac
 
 	getIPGeo := appsec.GetIPGeoRequest{}
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -157,7 +157,7 @@ func dataSourceIPGeoRead(ctx context.Context, d *schema.ResourceData, m interfac
 		return res
 	}
 
-	d.SetId(strconv.Itoa(getIPGeo.ConfigID))
+	d.SetId(strconv.FormatInt(getIPGeo.ConfigID, 10))
 
 	return nil
 }

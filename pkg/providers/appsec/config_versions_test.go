@@ -31,8 +31,8 @@ func TestGetLatestConfigVersion_CacheHit(t *testing.T) {
 
 	// Setup
 	client := edgegrid.NewTestClient()
-	configID := 12345
-	expectedVersion := 7
+	configID := int64(12345)
+	expectedVersion := int64(7)
 
 	configuration := &appsec.GetConfigurationResponse{
 		ID:            configID,
@@ -65,8 +65,8 @@ func TestGetLatestConfigVersion_CacheMiss_APISuccess(t *testing.T) {
 
 	// Setup
 	client := edgegrid.NewTestClient()
-	configID := 12346
-	expectedVersion := 9
+	configID := int64(12346)
+	expectedVersion := int64(9)
 
 	// Setup API mock
 	getConfigResponse := appsec.GetConfigurationResponse{
@@ -106,7 +106,7 @@ func TestGetLatestConfigVersion_APIError(t *testing.T) {
 
 	// Setup
 	client := edgegrid.NewTestClient()
-	configID := 12347
+	configID := int64(12347)
 
 	// Setup API mock to return error
 	client.APPSEC.On("GetConfiguration",
@@ -122,7 +122,7 @@ func TestGetLatestConfigVersion_APIError(t *testing.T) {
 	// Assertions
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "API error")
-	assert.Equal(t, 0, result)
+	assert.Equal(t, int64(0), result)
 
 	// Verify API call was made
 	client.APPSEC.AssertExpectations(t)
@@ -135,8 +135,8 @@ func TestGetLatestConfigVersion_CacheDisabled(t *testing.T) {
 
 	// Setup
 	client := edgegrid.NewTestClient()
-	configID := 12348
-	expectedVersion := 5
+	configID := int64(12348)
+	expectedVersion := int64(5)
 
 	// Disable cache to test fallback behavior
 	cache.Enable(false)
@@ -171,8 +171,8 @@ func TestGetLatestConfigVersion_DoubleCallCachingBehavior(t *testing.T) {
 
 	// This test verifies that subsequent calls use the cache
 	client := edgegrid.NewTestClient()
-	configID := 12349
-	expectedVersion := 10
+	configID := int64(12349)
+	expectedVersion := int64(10)
 
 	// Setup API mock - should only be called once
 	getConfigResponse := appsec.GetConfigurationResponse{
@@ -207,8 +207,8 @@ func TestGetLatestConfigVersion_ConcurrentCalls(t *testing.T) {
 
 	// This test verifies that the mutex prevents race conditions
 	client := edgegrid.NewTestClient()
-	configID := 12350
-	expectedVersion := 15
+	configID := int64(12350)
+	expectedVersion := int64(15)
 
 	// Setup API mock - should be called only once due to mutex and caching
 	getConfigResponse := appsec.GetConfigurationResponse{
@@ -223,7 +223,7 @@ func TestGetLatestConfigVersion_ConcurrentCalls(t *testing.T) {
 	ctx := context.Background()
 
 	// Run multiple goroutines to test concurrency
-	results := make(chan int, 3)
+	results := make(chan int64, 3)
 	errs := make(chan error, 3)
 
 	for i := 0; i < 3; i++ {
@@ -254,7 +254,7 @@ func TestGetLatestConfigVersion_InvalidConfigID(t *testing.T) {
 
 	// Test with an invalid config ID
 	client := edgegrid.NewTestClient()
-	configID := -1
+	configID := int64(-1)
 
 	// Setup API mock to return error for invalid config ID
 	client.APPSEC.On("GetConfiguration",
@@ -270,7 +270,7 @@ func TestGetLatestConfigVersion_InvalidConfigID(t *testing.T) {
 	// Assertions
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "invalid config ID")
-	assert.Equal(t, 0, result)
+	assert.Equal(t, int64(0), result)
 
 	// Verify API call was made
 	client.APPSEC.AssertExpectations(t)
@@ -281,7 +281,7 @@ func TestGetActiveConfigVersions_SharedCacheSingleAPICall(t *testing.T) {
 	defer clearCache()
 
 	client := edgegrid.NewTestClient()
-	configID := 40002
+	configID := int64(40002)
 	response := appsec.GetConfigurationResponse{
 		ID: configID, LatestVersion: 5, StagingVersion: 3, ProductionVersion: 2,
 	}
@@ -295,8 +295,8 @@ func TestGetActiveConfigVersions_SharedCacheSingleAPICall(t *testing.T) {
 	staging, production, err := getActiveConfigVersions(ctx, configID, client.APPSEC)
 
 	assert.NoError(t, err)
-	assert.Equal(t, 3, staging)
-	assert.Equal(t, 2, production)
+	assert.Equal(t, int64(3), staging)
+	assert.Equal(t, int64(2), production)
 	client.APPSEC.AssertExpectations(t)
 }
 
@@ -305,7 +305,7 @@ func TestGetActiveConfigVersions_CacheMiss_APISuccess(t *testing.T) {
 	defer clearCache()
 
 	client := edgegrid.NewTestClient()
-	configID := 40003
+	configID := int64(40003)
 	response := appsec.GetConfigurationResponse{
 		ID: configID, LatestVersion: 7, StagingVersion: 5, ProductionVersion: 4,
 	}
@@ -316,8 +316,8 @@ func TestGetActiveConfigVersions_CacheMiss_APISuccess(t *testing.T) {
 	staging, production, err := getActiveConfigVersions(ctx, configID, client.APPSEC)
 
 	assert.NoError(t, err)
-	assert.Equal(t, 5, staging)
-	assert.Equal(t, 4, production)
+	assert.Equal(t, int64(5), staging)
+	assert.Equal(t, int64(4), production)
 	client.APPSEC.AssertExpectations(t)
 }
 
@@ -325,7 +325,7 @@ func TestGetActiveConfigVersions_CacheHit_NoAPICall(t *testing.T) {
 	clearCache()
 	defer clearCache()
 
-	configID := 40004
+	configID := int64(40004)
 	cacheKey := latestVersionCacheKey(configID)
 	configuration := &appsec.GetConfigurationResponse{
 		ID: configID, LatestVersion: 7, StagingVersion: 5, ProductionVersion: 4,
@@ -338,8 +338,8 @@ func TestGetActiveConfigVersions_CacheHit_NoAPICall(t *testing.T) {
 	staging, production, err := getActiveConfigVersions(ctx, configID, client.APPSEC)
 
 	assert.NoError(t, err)
-	assert.Equal(t, 5, staging)
-	assert.Equal(t, 4, production)
+	assert.Equal(t, int64(5), staging)
+	assert.Equal(t, int64(4), production)
 	client.APPSEC.AssertExpectations(t)
 }
 
@@ -348,7 +348,7 @@ func TestGetActiveConfigVersions_APIError(t *testing.T) {
 	defer clearCache()
 
 	client := edgegrid.NewTestClient()
-	configID := 40005
+	configID := int64(40005)
 	client.APPSEC.On("GetConfiguration", mock.Anything,
 		appsec.GetConfigurationRequest{ConfigID: configID}).
 		Return(nil, errors.New("API error")).Once()
@@ -358,8 +358,8 @@ func TestGetActiveConfigVersions_APIError(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "API error")
-	assert.Equal(t, 0, staging)
-	assert.Equal(t, 0, production)
+	assert.Equal(t, int64(0), staging)
+	assert.Equal(t, int64(0), production)
 	client.APPSEC.AssertExpectations(t)
 }
 
@@ -367,7 +367,7 @@ func TestInvalidateConfigCache_ClearsKeysAndTriggersFetch(t *testing.T) {
 	clearCache()
 	defer clearCache()
 
-	configID := 40007
+	configID := int64(40007)
 	ctx := context.Background()
 
 	// Pre-populate both cache keys
@@ -396,8 +396,8 @@ func TestInvalidateConfigCache_ClearsKeysAndTriggersFetch(t *testing.T) {
 
 	staging, production, err := getActiveConfigVersions(ctx, configID, client.APPSEC)
 	assert.NoError(t, err)
-	assert.Equal(t, 4, staging)
-	assert.Equal(t, 3, production)
+	assert.Equal(t, int64(4), staging)
+	assert.Equal(t, int64(3), production)
 	client.APPSEC.AssertExpectations(t)
 }
 
@@ -416,7 +416,7 @@ func TestGetActiveConfigVersions_CacheDisabled_FallsBackToAPI(t *testing.T) {
 	cache.Enable(false)
 
 	client := edgegrid.NewTestClient()
-	configID := 40006
+	configID := int64(40006)
 	response := appsec.GetConfigurationResponse{
 		ID: configID, LatestVersion: 7, StagingVersion: 5, ProductionVersion: 4,
 	}
@@ -427,8 +427,8 @@ func TestGetActiveConfigVersions_CacheDisabled_FallsBackToAPI(t *testing.T) {
 	staging, production, err := getActiveConfigVersions(ctx, configID, client.APPSEC)
 
 	assert.NoError(t, err)
-	assert.Equal(t, 5, staging)
-	assert.Equal(t, 4, production)
+	assert.Equal(t, int64(5), staging)
+	assert.Equal(t, int64(4), production)
 	client.APPSEC.AssertExpectations(t)
 }
 
@@ -438,11 +438,11 @@ func TestGetModifiableConfigVersion_CloneUpdatesSharedCache(t *testing.T) {
 	clearCache()
 	defer clearCache()
 
-	configID := 29999
-	latestVersion := 5
-	stagingVersion := 5 // active in staging — forces clone
-	productionVersion := 2
-	newClonedVersion := 6
+	configID := int64(29999)
+	latestVersion := int64(5)
+	stagingVersion := int64(5) // active in staging — forces clone
+	productionVersion := int64(2)
+	newClonedVersion := int64(6)
 	resource := "test_resource"
 
 	client := edgegrid.NewTestClient()
@@ -489,8 +489,8 @@ func TestGetModifiableConfigVersion_CacheHit(t *testing.T) {
 	clearCache()
 	defer clearCache()
 
-	configID := 22345
-	expectedVersion := 3
+	configID := int64(22345)
+	expectedVersion := int64(3)
 	resource := "test_resource"
 
 	// Pre-populate cache with modifiable key (the key getModifiableConfigVersion reads/writes)
@@ -524,10 +524,10 @@ func TestGetModifiableConfigVersion_LatestVersionIsModifiable(t *testing.T) {
 	clearCache()
 	defer clearCache()
 
-	configID := 23345
-	latestVersion := 5
-	stagingVersion := 3
-	productionVersion := 2
+	configID := int64(23345)
+	latestVersion := int64(5)
+	stagingVersion := int64(3)
+	productionVersion := int64(2)
 	resource := "test_resource"
 
 	// Setup mock client
@@ -586,11 +586,11 @@ func TestGetModifiableConfigVersion_LatestVersionActiveInStaging(t *testing.T) {
 	clearCache()
 	defer clearCache()
 
-	configID := 24345
-	latestVersion := 5
-	stagingVersion := 5 // Same as latest - active in staging
-	productionVersion := 2
-	newClonedVersion := 6
+	configID := int64(24345)
+	latestVersion := int64(5)
+	stagingVersion := int64(5) // Same as latest - active in staging
+	productionVersion := int64(2)
+	newClonedVersion := int64(6)
 	resource := "test_resource"
 
 	// Setup mock client
@@ -640,11 +640,11 @@ func TestGetModifiableConfigVersion_LatestVersionActiveInProduction(t *testing.T
 	clearCache()
 	defer clearCache()
 
-	configID := 25345
-	latestVersion := 5
-	stagingVersion := 3
-	productionVersion := 5 // Same as latest - active in production
-	newClonedVersion := 6
+	configID := int64(25345)
+	latestVersion := int64(5)
+	stagingVersion := int64(3)
+	productionVersion := int64(5) // Same as latest - active in production
+	newClonedVersion := int64(6)
 	resource := "test_resource"
 
 	// Setup mock client
@@ -694,11 +694,11 @@ func TestGetModifiableConfigVersion_LatestVersionWasPreviouslyActive(t *testing.
 	clearCache()
 	defer clearCache()
 
-	configID := 26345
-	latestVersion := 5
-	stagingVersion := 3
-	productionVersion := 2
-	newClonedVersion := 6
+	configID := int64(26345)
+	latestVersion := int64(5)
+	stagingVersion := int64(3)
+	productionVersion := int64(2)
+	newClonedVersion := int64(6)
 	resource := "test_resource"
 
 	// Setup mock client
@@ -772,7 +772,7 @@ func TestGetModifiableConfigVersion_GetConfigurationError(t *testing.T) {
 	clearCache()
 	defer clearCache()
 
-	configID := 27345
+	configID := int64(27345)
 	resource := "test_resource"
 	expectedError := errors.New("API error")
 
@@ -793,7 +793,7 @@ func TestGetModifiableConfigVersion_GetConfigurationError(t *testing.T) {
 	// Assertions
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "API error")
-	assert.Equal(t, 0, result)
+	assert.Equal(t, int64(0), result)
 
 	client.APPSEC.AssertExpectations(t)
 }
@@ -803,10 +803,10 @@ func TestGetModifiableConfigVersion_CloneError(t *testing.T) {
 	clearCache()
 	defer clearCache()
 
-	configID := 28345
-	latestVersion := 5
-	stagingVersion := 5 // Same as latest - active in staging
-	productionVersion := 2
+	configID := int64(28345)
+	latestVersion := int64(5)
+	stagingVersion := int64(5) // Same as latest - active in staging
+	productionVersion := int64(2)
 	resource := "test_resource"
 	expectedError := errors.New("clone error")
 
@@ -843,7 +843,7 @@ func TestGetModifiableConfigVersion_CloneError(t *testing.T) {
 	// Assertions
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "clone error")
-	assert.Equal(t, 0, result)
+	assert.Equal(t, int64(0), result)
 
 	client.APPSEC.AssertExpectations(t)
 }
@@ -853,10 +853,10 @@ func TestGetModifiableConfigVersion_ConcurrentAccess(t *testing.T) {
 	clearCache()
 	defer clearCache()
 
-	configID := 29345
-	latestVersion := 5
-	stagingVersion := 3
-	productionVersion := 2
+	configID := int64(29345)
+	latestVersion := int64(5)
+	stagingVersion := int64(3)
+	productionVersion := int64(2)
 	resource := "test_resource"
 
 	// Setup mock client
@@ -901,7 +901,7 @@ func TestGetModifiableConfigVersion_ConcurrentAccess(t *testing.T) {
 	ctx := context.Background()
 
 	// Run multiple goroutines to test concurrency
-	results := make(chan int, 3)
+	results := make(chan int64, 3)
 	errs := make(chan error, 3)
 
 	for i := 0; i < 3; i++ {
@@ -928,10 +928,10 @@ func TestGetModifiableConfigVersion_GetConfigurationVersionError(t *testing.T) {
 	clearCache()
 	defer clearCache()
 
-	configID := 30345
-	latestVersion := 5
-	stagingVersion := 3
-	productionVersion := 2
+	configID := int64(30345)
+	latestVersion := int64(5)
+	stagingVersion := int64(3)
+	productionVersion := int64(2)
 	resource := "test_resource"
 
 	// Setup mock client
@@ -978,9 +978,9 @@ func TestCacheKeyDivergence_InvalidationClearsBothKeys(t *testing.T) {
 	clearCache()
 	defer clearCache()
 
-	configID := 99001
-	staleModifiable := 5
-	staleLatest := 3 // deliberately different — simulates diverged cache state
+	configID := int64(99001)
+	staleModifiable := int64(5)
+	staleLatest := int64(3) // deliberately different — simulates diverged cache state
 
 	// Seed both keys with stale, diverged values.
 	staleModifiableConfig := &appsec.GetConfigurationResponse{ID: configID, LatestVersion: staleModifiable}
@@ -1007,7 +1007,7 @@ func TestGetActiveConfigVersions_SharedCacheReverseDirection(t *testing.T) {
 	defer clearCache()
 
 	client := edgegrid.NewTestClient()
-	configID := 99002
+	configID := int64(99002)
 	response := appsec.GetConfigurationResponse{
 		ID: configID, LatestVersion: 8, StagingVersion: 6, ProductionVersion: 5,
 	}
@@ -1022,7 +1022,7 @@ func TestGetActiveConfigVersions_SharedCacheReverseDirection(t *testing.T) {
 
 	latest, err := getLatestConfigVersion(ctx, configID, client.APPSEC)
 	assert.NoError(t, err)
-	assert.Equal(t, 8, latest)
+	assert.Equal(t, int64(8), latest)
 	client.APPSEC.AssertExpectations(t)
 }
 
@@ -1033,9 +1033,9 @@ func TestInvalidateCacheForcesFreshFetch(t *testing.T) {
 	clearCache()
 	defer clearCache()
 
-	configID := 99003
-	cachedVersion := 5
-	freshVersion := 6
+	configID := int64(99003)
+	cachedVersion := int64(5)
+	freshVersion := int64(6)
 
 	// Pre-populate both cache keys with a stale version.
 	staleConfig := &appsec.GetConfigurationResponse{

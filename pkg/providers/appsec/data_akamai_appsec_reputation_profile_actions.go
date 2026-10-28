@@ -58,7 +58,7 @@ func dataSourceReputationProfileActionsRead(ctx context.Context, d *schema.Resou
 
 	getReputationProfileActions := appsec.GetReputationProfileActionsRequest{}
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -112,7 +112,7 @@ func dataSourceReputationProfileActionsRead(ctx context.Context, d *schema.Resou
 		}
 	}
 
-	d.SetId(strconv.Itoa(getReputationProfileActions.ConfigID))
+	d.SetId(strconv.FormatInt(getReputationProfileActions.ConfigID, 10))
 
 	return nil
 }

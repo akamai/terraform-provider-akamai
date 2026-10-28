@@ -57,7 +57,7 @@ func resourceCustomBotCategoryItemSequenceUpsert(ctx context.Context, d *schema.
 		return configID, diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, int(configID), "CustomBotCategoryItemSequence", meta.Client().GetAPPSEC())
+	version, err := getModifiableConfigVersion(ctx, configID, "CustomBotCategoryItemSequence", meta.Client().GetAPPSEC())
 	if err != nil {
 		return configID, diag.FromErr(err)
 	}
@@ -76,7 +76,7 @@ func resourceCustomBotCategoryItemSequenceUpsert(ctx context.Context, d *schema.
 
 	request := botman.UpdateCustomBotCategoryItemSequenceRequest{
 		ConfigID:   configID,
-		Version:    int64(version),
+		Version:    version,
 		CategoryID: categoryID,
 		Sequence:   botman.UUIDSequence{Sequence: stringSequence},
 	}
@@ -120,7 +120,7 @@ func resourceCustomBotCategoryItemSequenceRead(ctx context.Context, d *schema.Re
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(idParts[0])
+	configID, err := strconv.ParseInt(idParts[0], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -136,8 +136,8 @@ func resourceCustomBotCategoryItemSequenceRead(ctx context.Context, d *schema.Re
 	}
 
 	request := botman.GetCustomBotCategoryItemSequenceRequest{
-		ConfigID:   int64(configID),
-		Version:    int64(version),
+		ConfigID:   configID,
+		Version:    version,
 		CategoryID: categoryID,
 	}
 

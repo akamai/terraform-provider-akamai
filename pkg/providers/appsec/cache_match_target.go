@@ -22,7 +22,7 @@ var (
 
 // getMatchTarget reads from the cache if present, or makes a getAll call to fetch all match targets
 // for a configuration version, stores in the cache and filters the required match target using ID.
-func getMatchTarget(ctx context.Context, configID, version, targetID int, m interface{}) (*appsec.GetMatchTargetResponse, error) {
+func getMatchTarget(ctx context.Context, configID, version int64, targetID int, m interface{}) (*appsec.GetMatchTargetResponse, error) {
 	meta := akameta.Must(m)
 	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "getMatchTarget")
@@ -92,7 +92,7 @@ func roundtripToMatchTargetResponse(item interface{}) (*appsec.GetMatchTargetRes
 // invalidateMatchTargetCache removes the cached match-target list for the given config version.
 // Call this after a match target is created, updated, or deleted so the next read fetches fresh data.
 // The mutex is held so that an in-flight getMatchTarget call cannot overwrite the sentinel with stale data.
-func invalidateMatchTargetCache(configID, version int, logger log.Interface) {
+func invalidateMatchTargetCache(configID, version int64, logger log.Interface) {
 	matchTargetMutex.Lock()
 	defer matchTargetMutex.Unlock()
 	if err := cache.Delete(cache.BucketName(SubproviderName), fmt.Sprintf("getMatchTargets:%d:%d", configID, version)); err != nil && !errors.Is(err, cache.ErrDisabled) {

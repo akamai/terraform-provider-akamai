@@ -44,7 +44,7 @@ func resourceCustomBotCategorySequenceCreate(ctx context.Context, d *schema.Reso
 	logger := meta.Log("botman", "resourceCustomBotCategorySequenceCreate")
 	logger.Debugf("in resourceCustomBotCategorySequenceCreate")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -64,8 +64,8 @@ func resourceCustomBotCategorySequenceCreate(ctx context.Context, d *schema.Reso
 	}
 
 	request := botman.UpdateCustomBotCategorySequenceRequest{
-		ConfigID: int64(configID),
-		Version:  int64(version),
+		ConfigID: configID,
+		Version:  version,
 		Sequence: stringSequence,
 	}
 
@@ -75,7 +75,7 @@ func resourceCustomBotCategorySequenceCreate(ctx context.Context, d *schema.Reso
 		return diag.FromErr(err)
 	}
 
-	d.SetId(strconv.Itoa(configID))
+	d.SetId(strconv.FormatInt(configID, 10))
 
 	return resourceCustomBotCategorySequenceRead(ctx, d, m)
 }
@@ -86,7 +86,7 @@ func resourceCustomBotCategorySequenceUpdate(ctx context.Context, d *schema.Reso
 	logger := meta.Log("botman", "resourceCustomBotCategorySequenceUpdate")
 	logger.Debugf("in resourceCustomBotCategorySequenceUpdate")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -106,8 +106,8 @@ func resourceCustomBotCategorySequenceUpdate(ctx context.Context, d *schema.Reso
 	}
 
 	request := botman.UpdateCustomBotCategorySequenceRequest{
-		ConfigID: int64(configID),
-		Version:  int64(version),
+		ConfigID: configID,
+		Version:  version,
 		Sequence: stringSequence,
 	}
 
@@ -126,7 +126,7 @@ func resourceCustomBotCategorySequenceRead(ctx context.Context, d *schema.Resour
 	logger := meta.Log("botman", "resourceCustomBotCategorySequenceRead")
 	logger.Debugf("in resourceCustomBotCategorySequenceRead")
 
-	configID, err := strconv.Atoi(d.Id())
+	configID, err := strconv.ParseInt(d.Id(), 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -137,8 +137,8 @@ func resourceCustomBotCategorySequenceRead(ctx context.Context, d *schema.Resour
 	}
 
 	request := botman.GetCustomBotCategorySequenceRequest{
-		ConfigID: int64(configID),
-		Version:  int64(version),
+		ConfigID: configID,
+		Version:  version,
 	}
 
 	response, err := client.GetCustomBotCategorySequence(ctx, request)

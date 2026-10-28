@@ -40,12 +40,12 @@ func dataSourceBotEndpointCoverageReportRead(ctx context.Context, d *schema.Reso
 	logger := meta.Log("botman", "dataSourceBotEndpointCoverageReportRead")
 	logger.Debugf("in dataSourceBotEndpointCoverageReportRead")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
 
-	var version int
+	var version int64
 	if configID != 0 {
 		version, err = getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 		if err != nil {
@@ -59,8 +59,8 @@ func dataSourceBotEndpointCoverageReportRead(ctx context.Context, d *schema.Reso
 	}
 
 	request := botman.GetBotEndpointCoverageReportRequest{
-		ConfigID:    int64(configID),
-		Version:     int64(version),
+		ConfigID:    configID,
+		Version:     version,
 		OperationID: operationID,
 	}
 

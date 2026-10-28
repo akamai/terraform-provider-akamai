@@ -66,7 +66,7 @@ func resourceAdvancedSettingsPrefetchCreate(ctx context.Context, d *schema.Resou
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPrefetchCreate")
 	logger.Debugf("in resourceAdvancedSettingsPrefetchCreate")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -122,7 +122,7 @@ func resourceAdvancedSettingsPrefetchRead(ctx context.Context, d *schema.Resourc
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPrefetchRead")
 	logger.Debugf("in resourceAdvancedSettingsPrefetchRead")
 
-	configID, err := strconv.Atoi(d.Id())
+	configID, err := strconv.ParseInt(d.Id(), 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -167,7 +167,7 @@ func resourceAdvancedSettingsPrefetchUpdate(ctx context.Context, d *schema.Resou
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPrefetchUpdate")
 	logger.Debugf("in resourceAdvancedSettingsPrefetchUpdate")
 
-	configID, err := strconv.Atoi(d.Id())
+	configID, err := strconv.ParseInt(d.Id(), 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -221,7 +221,7 @@ func resourceAdvancedSettingsPrefetchDelete(ctx context.Context, d *schema.Resou
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPrefetchDelete")
 	logger.Debugf("in resourceAdvancedSettingsPrefetchDelete")
 
-	configID, err := strconv.Atoi(d.Id())
+	configID, err := strconv.ParseInt(d.Id(), 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}

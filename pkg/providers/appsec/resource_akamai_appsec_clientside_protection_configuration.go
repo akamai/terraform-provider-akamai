@@ -254,7 +254,7 @@ func (r *clientsideProtectionConfigurationResource) ImportState(ctx context.Cont
 func (r *clientsideProtectionConfigurationResource) upsert(ctx context.Context, data *clientsideProtectionConfigurationModel) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	configID := int(data.ConfigID.ValueInt64())
+	configID := data.ConfigID.ValueInt64()
 	client := r.Client.GetAPPSEC()
 
 	version, err := getModifiableConfigVersion(ctx, configID, "clientsideProtectionConfiguration", client)
@@ -273,7 +273,7 @@ func (r *clientsideProtectionConfigurationResource) upsert(ctx context.Context, 
 
 	updateReq := appsec.UpdateClientsideProtectionConfigurationRequest{
 		ConfigID:         data.ConfigID.ValueInt64(),
-		Version:          int64(version),
+		Version:          version,
 		SecurityPolicyID: data.SecurityPolicyID.ValueString(),
 		Body: appsec.UpdateClientsideProtectionConfigurationRequestBody{
 			EdgeInjection: appsec.ClientsideProtectionEdgeInjectionRequest{
@@ -307,7 +307,7 @@ func (r *clientsideProtectionConfigurationResource) upsert(ctx context.Context, 
 func (r *clientsideProtectionConfigurationResource) read(ctx context.Context, data *clientsideProtectionConfigurationModel) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	configID := int(data.ConfigID.ValueInt64())
+	configID := data.ConfigID.ValueInt64()
 	client := r.Client.GetAPPSEC()
 
 	version, err := getLatestConfigVersion(ctx, configID, client)
@@ -318,7 +318,7 @@ func (r *clientsideProtectionConfigurationResource) read(ctx context.Context, da
 
 	cpcConfig, err := client.GetClientsideProtectionConfiguration(ctx, appsec.GetClientsideProtectionConfigurationRequest{
 		ConfigID:         data.ConfigID.ValueInt64(),
-		Version:          int64(version),
+		Version:          version,
 		SecurityPolicyID: data.SecurityPolicyID.ValueString(),
 	})
 	if err != nil {

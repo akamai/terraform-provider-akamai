@@ -48,7 +48,7 @@ func resourceTransactionalEndpointProtectionCreate(ctx context.Context, d *schem
 	logger := meta.Log("botman", "resourceTransactionalEndpointProtectionCreate")
 	logger.Debugf("in resourceTransactionalEndpointProtectionCreate")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -64,8 +64,8 @@ func resourceTransactionalEndpointProtectionCreate(ctx context.Context, d *schem
 	}
 
 	request := botman.UpdateTransactionalEndpointProtectionRequest{
-		ConfigID:    int64(configID),
-		Version:     int64(version),
+		ConfigID:    configID,
+		Version:     version,
 		JsonPayload: json.RawMessage(jsonPayloadString),
 	}
 
@@ -75,7 +75,7 @@ func resourceTransactionalEndpointProtectionCreate(ctx context.Context, d *schem
 		return diag.FromErr(err)
 	}
 
-	d.SetId(strconv.Itoa(configID))
+	d.SetId(strconv.FormatInt(configID, 10))
 
 	return resourceTransactionalEndpointProtectionRead(ctx, d, m)
 }
@@ -86,7 +86,7 @@ func resourceTransactionalEndpointProtectionRead(ctx context.Context, d *schema.
 	logger := meta.Log("botman", "resourceTransactionalEndpointProtectionRead")
 	logger.Debugf("in resourceTransactionalEndpointProtectionRead")
 
-	configID, err := strconv.Atoi(d.Id())
+	configID, err := strconv.ParseInt(d.Id(), 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -97,8 +97,8 @@ func resourceTransactionalEndpointProtectionRead(ctx context.Context, d *schema.
 	}
 
 	request := botman.GetTransactionalEndpointProtectionRequest{
-		ConfigID: int64(configID),
-		Version:  int64(version),
+		ConfigID: configID,
+		Version:  version,
 	}
 
 	response, err := client.GetTransactionalEndpointProtection(ctx, request)
@@ -131,7 +131,7 @@ func resourceTransactionalEndpointProtectionUpdate(ctx context.Context, d *schem
 	logger := meta.Log("botman", "resourceTransactionalEndpointProtectionUpdate")
 	logger.Debugf("in resourceTransactionalEndpointProtectionUpdate")
 
-	configID, err := strconv.Atoi(d.Id())
+	configID, err := strconv.ParseInt(d.Id(), 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -147,8 +147,8 @@ func resourceTransactionalEndpointProtectionUpdate(ctx context.Context, d *schem
 	}
 
 	request := botman.UpdateTransactionalEndpointProtectionRequest{
-		ConfigID:    int64(configID),
-		Version:     int64(version),
+		ConfigID:    configID,
+		Version:     version,
 		JsonPayload: json.RawMessage(jsonPayloadString),
 	}
 

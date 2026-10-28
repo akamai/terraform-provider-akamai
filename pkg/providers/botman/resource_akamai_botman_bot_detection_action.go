@@ -63,7 +63,7 @@ func resourceBotDetectionActionCreate(ctx context.Context, d *schema.ResourceDat
 	logger := meta.Log("botman", "resourceBotDetectionActionCreate")
 	logger.Debugf("in resourceBotDetectionActionCreate")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -89,8 +89,8 @@ func resourceBotDetectionActionCreate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	request := botman.UpdateBotDetectionActionRequest{
-		ConfigID:         int64(configID),
-		Version:          int64(version),
+		ConfigID:         configID,
+		Version:          version,
 		SecurityPolicyID: securityPolicyID,
 		DetectionID:      detectionID,
 		JsonPayload:      jsonPayload,
@@ -121,7 +121,7 @@ func botDetectionActionRead(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -136,8 +136,8 @@ func botDetectionActionRead(ctx context.Context, d *schema.ResourceData, m inter
 	detectionID := iDParts[2]
 
 	getBotDetectionActionRequest := botman.GetBotDetectionActionRequest{
-		ConfigID:         int64(configID),
-		Version:          int64(version),
+		ConfigID:         configID,
+		Version:          version,
 		SecurityPolicyID: securityPolicyID,
 		DetectionID:      detectionID,
 	}
@@ -199,7 +199,7 @@ func resourceBotDetectionActionUpdate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -219,8 +219,8 @@ func resourceBotDetectionActionUpdate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	request := botman.UpdateBotDetectionActionRequest{
-		ConfigID:         int64(configID),
-		Version:          int64(version),
+		ConfigID:         configID,
+		Version:          version,
 		SecurityPolicyID: securityPolicyID,
 		DetectionID:      detectionID,
 		JsonPayload:      jsonPayload,

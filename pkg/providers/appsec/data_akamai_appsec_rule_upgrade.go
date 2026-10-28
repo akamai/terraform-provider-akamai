@@ -47,7 +47,7 @@ func dataSourceRuleUpgradeRead(ctx context.Context, d *schema.ResourceData, m in
 
 	getRuleUpgrade := appsec.GetRuleUpgradeRequest{}
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -89,7 +89,7 @@ func dataSourceRuleUpgradeRead(ctx context.Context, d *schema.ResourceData, m in
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
-	d.SetId(strconv.Itoa(getRuleUpgrade.ConfigID))
+	d.SetId(strconv.FormatInt(getRuleUpgrade.ConfigID, 10))
 
 	return nil
 }

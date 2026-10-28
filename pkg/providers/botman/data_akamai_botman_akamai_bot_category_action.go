@@ -42,7 +42,7 @@ func dataSourceAkamaiBotCategoryActionRead(ctx context.Context, d *schema.Resour
 	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "dataSourceAkamaiBotCategoryActionRead")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -63,8 +63,8 @@ func dataSourceAkamaiBotCategoryActionRead(ctx context.Context, d *schema.Resour
 	}
 
 	request := botman.GetAkamaiBotCategoryActionListRequest{
-		ConfigID:         int64(configID),
-		Version:          int64(version),
+		ConfigID:         configID,
+		Version:          version,
 		SecurityPolicyID: securityPolicyID,
 		CategoryID:       categoryID,
 	}

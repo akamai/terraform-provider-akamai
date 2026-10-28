@@ -46,7 +46,7 @@ func readDataSourceProtectedOperations(ctx context.Context, d *schema.ResourceDa
 	logger := meta.Log("accountprotection", "readDataSourceProtectedOperations")
 	logger.Debugf("in readDataSourceProtectedOperations")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -70,15 +70,15 @@ func readDataSourceProtectedOperations(ctx context.Context, d *schema.ResourceDa
 
 	if operationID == "" {
 		request := apr.ListProtectedOperationsRequest{
-			ConfigID:         int64(configID),
-			Version:          int64(version),
+			ConfigID:         configID,
+			Version:          version,
 			SecurityPolicyID: securityPolicyID,
 		}
 		response, err = client.ListProtectedOperations(ctx, request)
 	} else {
 		request := apr.GetProtectedOperationByIDRequest{
-			ConfigID:         int64(configID),
-			Version:          int64(version),
+			ConfigID:         configID,
+			Version:          version,
 			SecurityPolicyID: securityPolicyID,
 			OperationID:      operationID,
 		}

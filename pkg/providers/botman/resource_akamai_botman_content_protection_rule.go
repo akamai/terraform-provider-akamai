@@ -66,7 +66,7 @@ func resourceContentProtectionRuleCreate(ctx context.Context, d *schema.Resource
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, int(configID), "ContentProtectionRule", meta.Client().GetAPPSEC())
+	version, err := getModifiableConfigVersion(ctx, configID, "ContentProtectionRule", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -83,7 +83,7 @@ func resourceContentProtectionRuleCreate(ctx context.Context, d *schema.Resource
 
 	request := botman.CreateContentProtectionRuleRequest{
 		ConfigID:         configID,
-		Version:          int64(version),
+		Version:          version,
 		SecurityPolicyID: securityPolicyID,
 		JsonPayload:      json.RawMessage(jsonPayloadString),
 	}
@@ -118,7 +118,7 @@ func ContentProtectionRuleRead(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, int(configID), meta.Client().GetAPPSEC())
+	version, err := getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -129,7 +129,7 @@ func ContentProtectionRuleRead(ctx context.Context, d *schema.ResourceData, m in
 
 	request := botman.GetContentProtectionRuleRequest{
 		ConfigID:                configID,
-		Version:                 int64(version),
+		Version:                 version,
 		SecurityPolicyID:        securityPolicyID,
 		ContentProtectionRuleID: contentProtectionRuleID,
 	}
@@ -191,7 +191,7 @@ func resourceContentProtectionRuleUpdate(ctx context.Context, d *schema.Resource
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, int(configID), "ContentProtectionRule", meta.Client().GetAPPSEC())
+	version, err := getModifiableConfigVersion(ctx, configID, "ContentProtectionRule", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -207,7 +207,7 @@ func resourceContentProtectionRuleUpdate(ctx context.Context, d *schema.Resource
 
 	request := botman.UpdateContentProtectionRuleRequest{
 		ConfigID:                configID,
-		Version:                 int64(version),
+		Version:                 version,
 		ContentProtectionRuleID: contentProtectionRuleID,
 		SecurityPolicyID:        securityPolicyID,
 		JsonPayload:             jsonPayload,
@@ -236,7 +236,7 @@ func resourceContentProtectionRuleDelete(ctx context.Context, d *schema.Resource
 		return diag.FromErr(err)
 	}
 
-	version, err := getModifiableConfigVersion(ctx, int(configID), "ContentProtectionRule", meta.Client().GetAPPSEC())
+	version, err := getModifiableConfigVersion(ctx, configID, "ContentProtectionRule", meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -247,7 +247,7 @@ func resourceContentProtectionRuleDelete(ctx context.Context, d *schema.Resource
 
 	request := botman.RemoveContentProtectionRuleRequest{
 		ConfigID:                configID,
-		Version:                 int64(version),
+		Version:                 version,
 		SecurityPolicyID:        securityPolicyID,
 		ContentProtectionRuleID: contentProtectionRuleID,
 	}

@@ -34,7 +34,7 @@ func dataSourceClientSideSecurityRead(ctx context.Context, d *schema.ResourceDat
 	logger := meta.Log("botman", "dataSourceClientSideSecurityRead")
 	logger.Debugf("in dataSourceClientSideSecurityRead")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -45,8 +45,8 @@ func dataSourceClientSideSecurityRead(ctx context.Context, d *schema.ResourceDat
 	}
 
 	request := botman.GetClientSideSecurityRequest{
-		ConfigID: int64(configID),
-		Version:  int64(version),
+		ConfigID: configID,
+		Version:  version,
 	}
 
 	response, err := client.GetClientSideSecurity(ctx, request)
@@ -63,6 +63,6 @@ func dataSourceClientSideSecurityRead(ctx context.Context, d *schema.ResourceDat
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
-	d.SetId(strconv.Itoa(configID))
+	d.SetId(strconv.FormatInt(configID, 10))
 	return nil
 }

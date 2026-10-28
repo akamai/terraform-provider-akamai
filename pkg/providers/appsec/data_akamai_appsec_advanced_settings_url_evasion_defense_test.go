@@ -165,7 +165,7 @@ func TestDataAdvancedSettingsURLEvasionDefense(t *testing.T) {
 	}
 }
 
-func mockGetConfigurationForURLDefenseDS(m *appsec.Mock, configID, latestVersion int) {
+func mockGetConfigurationForURLDefenseDS(m *appsec.Mock, configID, latestVersion int64) {
 	m.On("GetConfiguration", mock.Anything, appsec.GetConfigurationRequest{ConfigID: configID}).
 		Return(&appsec.GetConfigurationResponse{
 			ID:                configID,
@@ -175,7 +175,7 @@ func mockGetConfigurationForURLDefenseDS(m *appsec.Mock, configID, latestVersion
 		}, nil)
 }
 
-func mockGetConfigurationFailureForURLDefenseDS(m *appsec.Mock, configID int) {
+func mockGetConfigurationFailureForURLDefenseDS(m *appsec.Mock, configID int64) {
 	m.On("GetConfiguration", mock.Anything, appsec.GetConfigurationRequest{ConfigID: configID}).
 		Return(nil, &urlEvasionDefenseDSServerError)
 }

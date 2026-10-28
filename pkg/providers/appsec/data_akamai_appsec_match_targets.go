@@ -61,15 +61,17 @@ func dataSourceMatchTargetsRead(ctx context.Context, d *schema.ResourceData, m i
 
 	getMatchTargets := appsec.GetMatchTargetsRequest{}
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	getMatchTargets.ConfigID = configID
 
-	if getMatchTargets.ConfigVersion, err = getLatestConfigVersion(ctx, configID, client); err != nil {
+	version, err := getLatestConfigVersion(ctx, configID, client)
+	if err != nil {
 		return diag.FromErr(err)
 	}
+	getMatchTargets.ConfigVersion = version
 
 	matchTargetID, err := tf.GetIntValue("match_target_id", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
@@ -111,7 +113,7 @@ func dataSourceMatchTargetsRead(ctx context.Context, d *schema.ResourceData, m i
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
-	d.SetId(strconv.Itoa(getMatchTargets.ConfigID))
+	d.SetId(strconv.FormatInt(getMatchTargets.ConfigID, 10))
 
 	return nil
 }

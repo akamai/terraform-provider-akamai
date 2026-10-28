@@ -45,7 +45,7 @@ func TestGetReputationProfile_CacheMiss(t *testing.T) {
 	defer clearCache()
 
 	client := edgegrid.NewTestClient()
-	configID, version, profileID := 7001, 1, 31
+	configID, version, profileID := int64(7001), int64(1), int64(31)
 
 	listResp := buildReputationProfilesResponse(t, `{"reputationProfiles":[{"id":31,"name":"profile-X","context":"DOSATCK","threshold":5}]}`)
 	client.APPSEC.On("GetReputationProfiles", mock.Anything, appsec.GetReputationProfilesRequest{
@@ -67,7 +67,7 @@ func TestGetReputationProfile_CacheHit(t *testing.T) {
 	defer clearCache()
 
 	client := edgegrid.NewTestClient()
-	configID, version, profileID := 7002, 2, 32
+	configID, version, profileID := int64(7002), int64(2), int64(32)
 
 	cached := buildReputationProfilesResponse(t, `{"reputationProfiles":[{"id":32,"name":"cached-profile","context":"WEBATCK","threshold":3}]}`)
 	require.NoError(t, cache.Set(cache.BucketName(SubproviderName), fmt.Sprintf("getReputationProfiles:%d:%d", configID, version), cached))
@@ -84,10 +84,10 @@ func TestGetReputationProfile_CacheDisabled(t *testing.T) {
 	cache.Enable(false)
 
 	client := edgegrid.NewTestClient()
-	configID, version, profileID := 7003, 3, 33
+	configID, version, profileID := int64(7003), int64(3), int64(33)
 
 	client.APPSEC.On("GetReputationProfile", mock.Anything, appsec.GetReputationProfileRequest{
-		ConfigID: configID, ConfigVersion: version, ReputationProfileId: profileID,
+		ConfigID: configID, ConfigVersion: version, ReputationProfileID: profileID,
 	}).Return(&appsec.GetReputationProfileResponse{Name: "direct-profile", Context: "DOSATCK"}, nil).Once()
 
 	result, err := getReputationProfile(context.Background(), configID, version, profileID, newTestMeta(client))
@@ -101,7 +101,7 @@ func TestGetReputationProfile_InvalidationForcesFreshFetch(t *testing.T) {
 	defer clearCache()
 
 	client := edgegrid.NewTestClient()
-	configID, version, profileID := 7005, 5, 55
+	configID, version, profileID := int64(7005), int64(5), int64(55)
 
 	stale := buildReputationProfilesResponse(t, `{"reputationProfiles":[{"id":55,"name":"stale-profile","context":"DOSATCK","threshold":2}]}`)
 	require.NoError(t, cache.Set(cache.BucketName(SubproviderName), fmt.Sprintf("getReputationProfiles:%d:%d", configID, version), stale))

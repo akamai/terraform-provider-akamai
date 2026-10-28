@@ -49,7 +49,7 @@ func resourceBotAnalyticsSettingsCreate(ctx context.Context, d *schema.ResourceD
 	logger := meta.Log("botman", "resourceBotAnalyticsSettingsCreate")
 	logger.Debugf("in resourceBotAnalyticsSettingsCreate")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -65,8 +65,8 @@ func resourceBotAnalyticsSettingsCreate(ctx context.Context, d *schema.ResourceD
 	}
 
 	request := botman.UpdateBotAnalyticsSettingsRequest{
-		ConfigID:    int64(configID),
-		Version:     int64(version),
+		ConfigID:    configID,
+		Version:     version,
 		JSONPayload: json.RawMessage(jsonPayloadString),
 	}
 
@@ -76,7 +76,7 @@ func resourceBotAnalyticsSettingsCreate(ctx context.Context, d *schema.ResourceD
 		return diag.FromErr(err)
 	}
 
-	d.SetId(strconv.Itoa(configID))
+	d.SetId(strconv.FormatInt(configID, 10))
 
 	return resourceBotAnalyticsSettingsRead(ctx, d, m)
 }
@@ -87,7 +87,7 @@ func resourceBotAnalyticsSettingsRead(ctx context.Context, d *schema.ResourceDat
 	logger := meta.Log("botman", "resourceBotAnalyticsSettingsRead")
 	logger.Debugf("in resourceBotAnalyticsSettingsRead")
 
-	configID, err := strconv.Atoi(d.Id())
+	configID, err := strconv.ParseInt(d.Id(), 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -98,8 +98,8 @@ func resourceBotAnalyticsSettingsRead(ctx context.Context, d *schema.ResourceDat
 	}
 
 	request := botman.GetBotAnalyticsSettingsRequest{
-		ConfigID: int64(configID),
-		Version:  int64(version),
+		ConfigID: configID,
+		Version:  version,
 	}
 
 	response, err := client.GetBotAnalyticsSettings(ctx, request)
@@ -129,7 +129,7 @@ func resourceBotAnalyticsSettingsUpdate(ctx context.Context, d *schema.ResourceD
 	logger := meta.Log("botman", "resourceBotAnalyticsSettingsUpdate")
 	logger.Debugf("in resourceBotAnalyticsSettingsUpdate")
 
-	configID, err := strconv.Atoi(d.Id())
+	configID, err := strconv.ParseInt(d.Id(), 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -145,8 +145,8 @@ func resourceBotAnalyticsSettingsUpdate(ctx context.Context, d *schema.ResourceD
 	}
 
 	request := botman.UpdateBotAnalyticsSettingsRequest{
-		ConfigID:    int64(configID),
-		Version:     int64(version),
+		ConfigID:    configID,
+		Version:     version,
 		JSONPayload: json.RawMessage(jsonPayloadString),
 	}
 

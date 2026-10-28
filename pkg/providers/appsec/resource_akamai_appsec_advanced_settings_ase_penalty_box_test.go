@@ -18,7 +18,7 @@ import (
 func TestAkamaiAdvancedSettingsAsePenaltyBoxResConfig(t *testing.T) {
 	t.Parallel()
 	var (
-		configVersion = func(configId int, client *appsec.Mock) appsec.GetConfigurationResponse {
+		configVersion = func(configId int64, client *appsec.Mock) appsec.GetConfigurationResponse {
 			configResponse := appsec.GetConfigurationResponse{}
 			err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &configResponse)
 			require.NoError(t, err)
@@ -31,7 +31,7 @@ func TestAkamaiAdvancedSettingsAsePenaltyBoxResConfig(t *testing.T) {
 			return configResponse
 		}
 
-		AsePenaltyBoxRead = func(configId int, version int, client *appsec.Mock, numberOfTimes int, filePath string) {
+		AsePenaltyBoxRead = func(configId int64, version int64, client *appsec.Mock, numberOfTimes int, filePath string) {
 			AsePenaltyBoxResponse := appsec.GetAdvancedSettingsAsePenaltyBoxResponse{}
 			err := json.Unmarshal(testutils.LoadFixtureBytes(t, filePath), &AsePenaltyBoxResponse)
 			require.NoError(t, err)

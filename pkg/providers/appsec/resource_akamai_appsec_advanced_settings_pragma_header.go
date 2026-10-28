@@ -57,7 +57,7 @@ func resourceAdvancedSettingsPragmaHeaderCreate(ctx context.Context, d *schema.R
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsPragmaHeaderCreate")
 	logger.Debugf("in resourceAdvancedSettingsPragmaHeaderCreate")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -107,7 +107,7 @@ func resourceAdvancedSettingsPragmaHeaderRead(ctx context.Context, d *schema.Res
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		configID, err := strconv.Atoi(iDParts[0])
+		configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -121,7 +121,7 @@ func resourceAdvancedSettingsPragmaHeaderRead(ctx context.Context, d *schema.Res
 		getAdvancedSettingsPragma.Version = version
 		getAdvancedSettingsPragma.PolicyID = policyID
 	} else {
-		configID, err := strconv.Atoi(d.Id())
+		configID, err := strconv.ParseInt(d.Id(), 10, 64)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -175,7 +175,7 @@ func resourceAdvancedSettingsPragmaHeaderDelete(ctx context.Context, d *schema.R
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		configID, err := strconv.Atoi(iDParts[0])
+		configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -190,7 +190,7 @@ func resourceAdvancedSettingsPragmaHeaderDelete(ctx context.Context, d *schema.R
 		removeAdvancedSettingsPragma.PolicyID = policyID
 
 	} else {
-		configID, err := strconv.Atoi(d.Id())
+		configID, err := strconv.ParseInt(d.Id(), 10, 64)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -223,7 +223,7 @@ func resourceAdvancedSettingsPragmaHeaderUpdate(ctx context.Context, d *schema.R
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		configID, err := strconv.Atoi(iDParts[0])
+		configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -238,7 +238,7 @@ func resourceAdvancedSettingsPragmaHeaderUpdate(ctx context.Context, d *schema.R
 		updateAdvancedSettingsPragma.Version = version
 		updateAdvancedSettingsPragma.PolicyID = policyID
 	} else {
-		configID, err := strconv.Atoi(d.Id())
+		configID, err := strconv.ParseInt(d.Id(), 10, 64)
 		if err != nil {
 			return diag.FromErr(err)
 		}

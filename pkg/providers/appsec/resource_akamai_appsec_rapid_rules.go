@@ -172,7 +172,7 @@ func (r *rapidRulesResource) Create(ctx context.Context, req resource.CreateRequ
 	configID := data.ConfigID.ValueInt64()
 	defaultAction := data.DefaultAction.ValueString()
 
-	version, err := getModifiableConfigVersion(ctx, int(configID), resourceName, r.Client.GetAPPSEC())
+	version, err := getModifiableConfigVersion(ctx, configID, resourceName, r.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("Unable to read latest config version from API", err.Error())
 		return
@@ -275,7 +275,7 @@ func (r *rapidRulesResource) Read(ctx context.Context, req resource.ReadRequest,
 
 	configID := data.ConfigID.ValueInt64()
 
-	version, err := getLatestConfigVersion(ctx, int(configID), r.Client.GetAPPSEC())
+	version, err := getLatestConfigVersion(ctx, configID, r.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("invalid config version: ", err.Error())
 		return
@@ -354,7 +354,7 @@ func (r *rapidRulesResource) Update(ctx context.Context, req resource.UpdateRequ
 	configID := plan.ConfigID.ValueInt64()
 	defaultAction := plan.DefaultAction.ValueString()
 
-	version, err := getModifiableConfigVersion(ctx, int(configID), resourceName, r.Client.GetAPPSEC())
+	version, err := getModifiableConfigVersion(ctx, configID, resourceName, r.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("invalid config version: ", err.Error())
 		return
@@ -461,9 +461,9 @@ func (r *rapidRulesResource) Delete(ctx context.Context, req resource.DeleteRequ
 		return
 	}
 
-	configID := int(data.ConfigID.ValueInt64())
+	configID := data.ConfigID.ValueInt64()
 
-	version, err := getModifiableConfigVersion(ctx, int(configID), resourceName, r.Client.GetAPPSEC())
+	version, err := getModifiableConfigVersion(ctx, configID, resourceName, r.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("invalid config version: ", err.Error())
 		return
@@ -501,7 +501,7 @@ func (r *rapidRulesResource) ImportState(ctx context.Context, req resource.Impor
 		return
 	}
 
-	version, err := getLatestConfigVersion(ctx, int(configID), r.Client.GetAPPSEC())
+	version, err := getLatestConfigVersion(ctx, configID, r.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("invalid config version: ", err.Error())
 		return
@@ -551,7 +551,7 @@ func (r *rapidRulesResource) ImportState(ctx context.Context, req resource.Impor
 	resp.Diagnostics.Append(resp.State.Set(ctx, data)...)
 }
 
-func (r *rapidRulesResource) manageRulesRemovedFromPlan(ctx context.Context, ruleDefinitionsOldState []appsec.RuleDefinition, ruleDefinitionsPlan []appsec.RuleDefinition, plan *rapidRulesResourceModel, version int, rulesResponse *appsec.GetRapidRulesResponse) diag.Diagnostics {
+func (r *rapidRulesResource) manageRulesRemovedFromPlan(ctx context.Context, ruleDefinitionsOldState []appsec.RuleDefinition, ruleDefinitionsPlan []appsec.RuleDefinition, plan *rapidRulesResourceModel, version int64, rulesResponse *appsec.GetRapidRulesResponse) diag.Diagnostics {
 	var diags diag.Diagnostics
 	for _, definitionOldState := range ruleDefinitionsOldState {
 		definitionPlan := getRuleDefinition(*definitionOldState.ID, &ruleDefinitionsPlan)
@@ -583,7 +583,7 @@ func (r *rapidRulesResource) manageRulesRemovedFromPlan(ctx context.Context, rul
 	return diags
 }
 
-func buildGetRapidRuleDefaultActionRequest(m *rapidRulesResourceModel, version int) appsec.GetRapidRulesDefaultActionRequest {
+func buildGetRapidRuleDefaultActionRequest(m *rapidRulesResourceModel, version int64) appsec.GetRapidRulesDefaultActionRequest {
 	return appsec.GetRapidRulesDefaultActionRequest{
 		ConfigID: m.ConfigID.ValueInt64(),
 		Version:  version,
@@ -591,7 +591,7 @@ func buildGetRapidRuleDefaultActionRequest(m *rapidRulesResourceModel, version i
 	}
 }
 
-func buildGetRapidRulesRequest(m *rapidRulesResourceModel, version int) appsec.GetRapidRulesRequest {
+func buildGetRapidRulesRequest(m *rapidRulesResourceModel, version int64) appsec.GetRapidRulesRequest {
 	return appsec.GetRapidRulesRequest{
 		ConfigID: m.ConfigID.ValueInt64(),
 		Version:  version,
@@ -599,7 +599,7 @@ func buildGetRapidRulesRequest(m *rapidRulesResourceModel, version int) appsec.G
 	}
 }
 
-func buildUpdateRapidRulesStatusRequest(m *rapidRulesResourceModel, version int, enabled bool) appsec.UpdateRapidRulesStatusRequest {
+func buildUpdateRapidRulesStatusRequest(m *rapidRulesResourceModel, version int64, enabled bool) appsec.UpdateRapidRulesStatusRequest {
 	return appsec.UpdateRapidRulesStatusRequest{
 		ConfigID: m.ConfigID.ValueInt64(),
 		Version:  version,
@@ -610,7 +610,7 @@ func buildUpdateRapidRulesStatusRequest(m *rapidRulesResourceModel, version int,
 	}
 }
 
-func buildUpdateRapidRulesDefaultActionRequest(m *rapidRulesResourceModel, version int, defaultAction string) appsec.UpdateRapidRulesDefaultActionRequest {
+func buildUpdateRapidRulesDefaultActionRequest(m *rapidRulesResourceModel, version int64, defaultAction string) appsec.UpdateRapidRulesDefaultActionRequest {
 	return appsec.UpdateRapidRulesDefaultActionRequest{
 		ConfigID: m.ConfigID.ValueInt64(),
 		Version:  version,
@@ -621,7 +621,7 @@ func buildUpdateRapidRulesDefaultActionRequest(m *rapidRulesResourceModel, versi
 	}
 }
 
-func buildUpdateRapidRuleActionRequest(m *rapidRulesResourceModel, version int, ruleVersion int, ruleID int64, action string) appsec.UpdateRapidRuleActionRequest {
+func buildUpdateRapidRuleActionRequest(m *rapidRulesResourceModel, version int64, ruleVersion int64, ruleID int64, action string) appsec.UpdateRapidRuleActionRequest {
 	return appsec.UpdateRapidRuleActionRequest{
 		ConfigID:    m.ConfigID.ValueInt64(),
 		Version:     version,
@@ -634,7 +634,7 @@ func buildUpdateRapidRuleActionRequest(m *rapidRulesResourceModel, version int, 
 	}
 }
 
-func buildUpdateRapidRuleActionLockRequest(m *rapidRulesResourceModel, version int, lock bool, ruleID int64) appsec.UpdateRapidRuleActionLockRequest {
+func buildUpdateRapidRuleActionLockRequest(m *rapidRulesResourceModel, version int64, lock bool, ruleID int64) appsec.UpdateRapidRuleActionLockRequest {
 	return appsec.UpdateRapidRuleActionLockRequest{
 		ConfigID: m.ConfigID.ValueInt64(),
 		Version:  version,
@@ -646,7 +646,7 @@ func buildUpdateRapidRuleActionLockRequest(m *rapidRulesResourceModel, version i
 	}
 }
 
-func buildUpdateRapidRuleExceptionRequest(m *rapidRulesResourceModel, version int, ruleID int64, exception appsec.RuleConditionException) appsec.UpdateRapidRuleExceptionRequest {
+func buildUpdateRapidRuleExceptionRequest(m *rapidRulesResourceModel, version int64, ruleID int64, exception appsec.RuleConditionException) appsec.UpdateRapidRuleExceptionRequest {
 	return appsec.UpdateRapidRuleExceptionRequest{
 		ConfigID: m.ConfigID.ValueInt64(),
 		Version:  version,
@@ -656,7 +656,7 @@ func buildUpdateRapidRuleExceptionRequest(m *rapidRulesResourceModel, version in
 	}
 }
 
-func (r *rapidRulesResource) readDefaultAction(ctx context.Context, status bool, data *rapidRulesResourceModel, version int) (string, diag.Diagnostics) {
+func (r *rapidRulesResource) readDefaultAction(ctx context.Context, status bool, data *rapidRulesResourceModel, version int64) (string, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	defaultAction := "unknown"
 	if !status {
@@ -672,7 +672,7 @@ func (r *rapidRulesResource) readDefaultAction(ctx context.Context, status bool,
 	return defaultActionResponse.Action, diags
 }
 
-func (r *rapidRulesResource) updateRapidRuleAction(ctx context.Context, data *rapidRulesResourceModel, rules *appsec.GetRapidRulesResponse, ruleID int64, action string, version int) error {
+func (r *rapidRulesResource) updateRapidRuleAction(ctx context.Context, data *rapidRulesResourceModel, rules *appsec.GetRapidRulesResponse, ruleID int64, action string, version int64) error {
 	ruleVersion, err := getLatestRapidRuleVersion(ruleID, rules)
 	if err != nil {
 		return err
@@ -687,7 +687,7 @@ func (r *rapidRulesResource) updateRapidRuleAction(ctx context.Context, data *ra
 	return nil
 }
 
-func (r *rapidRulesResource) updateRapidRuleActionLock(ctx context.Context, data *rapidRulesResourceModel, ruleID int64, lock bool, version int) error {
+func (r *rapidRulesResource) updateRapidRuleActionLock(ctx context.Context, data *rapidRulesResourceModel, ruleID int64, lock bool, version int64) error {
 	updateLockReq := buildUpdateRapidRuleActionLockRequest(data, version, lock, ruleID)
 	client := r.Client.GetAPPSEC()
 	_, err := client.UpdateRapidRuleActionLock(ctx, updateLockReq)
@@ -697,7 +697,7 @@ func (r *rapidRulesResource) updateRapidRuleActionLock(ctx context.Context, data
 	return nil
 }
 
-func (r *rapidRulesResource) updateRapidRuleException(ctx context.Context, data *rapidRulesResourceModel, ruleID int64, version int, exception appsec.RuleConditionException) error {
+func (r *rapidRulesResource) updateRapidRuleException(ctx context.Context, data *rapidRulesResourceModel, ruleID int64, version int64, exception appsec.RuleConditionException) error {
 	updateExceptionReq := buildUpdateRapidRuleExceptionRequest(data, version, ruleID, exception)
 	client := r.Client.GetAPPSEC()
 	_, err := client.UpdateRapidRuleException(ctx, updateExceptionReq)
@@ -756,7 +756,7 @@ func getRuleDefinitionsFromModel(data *rapidRulesResourceModel) ([]appsec.RuleDe
 	return *ruleDefinitions, diags
 }
 
-func getLatestRapidRuleVersion(ruleID int64, rules *appsec.GetRapidRulesResponse) (*int, error) {
+func getLatestRapidRuleVersion(ruleID int64, rules *appsec.GetRapidRulesResponse) (*int64, error) {
 	for _, val := range rules.Rules {
 		if val.ID == ruleID {
 			return &val.Version, nil

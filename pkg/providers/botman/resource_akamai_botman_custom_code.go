@@ -48,7 +48,7 @@ func resourceCustomCodeCreate(ctx context.Context, d *schema.ResourceData, m int
 	logger := meta.Log("botman", "resourceCustomCodeCreate")
 	logger.Debugf("in resourceCustomCodeCreate")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -64,8 +64,8 @@ func resourceCustomCodeCreate(ctx context.Context, d *schema.ResourceData, m int
 	}
 
 	request := botman.UpdateCustomCodeRequest{
-		ConfigID:    int64(configID),
-		Version:     int64(version),
+		ConfigID:    configID,
+		Version:     version,
 		JsonPayload: json.RawMessage(jsonPayloadString),
 	}
 
@@ -75,7 +75,7 @@ func resourceCustomCodeCreate(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 
-	d.SetId(strconv.Itoa(configID))
+	d.SetId(strconv.FormatInt(configID, 10))
 
 	return resourceCustomCodeRead(ctx, d, m)
 }
@@ -86,7 +86,7 @@ func resourceCustomCodeRead(ctx context.Context, d *schema.ResourceData, m inter
 	logger := meta.Log("botman", "resourceCustomCodeRead")
 	logger.Debugf("in resourceCustomCodeRead")
 
-	configID, err := strconv.Atoi(d.Id())
+	configID, err := strconv.ParseInt(d.Id(), 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -97,8 +97,8 @@ func resourceCustomCodeRead(ctx context.Context, d *schema.ResourceData, m inter
 	}
 
 	request := botman.GetCustomCodeRequest{
-		ConfigID: int64(configID),
-		Version:  int64(version),
+		ConfigID: configID,
+		Version:  version,
 	}
 
 	response, err := client.GetCustomCode(ctx, request)
@@ -119,7 +119,7 @@ func resourceCustomCodeRead(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
-	d.SetId(strconv.Itoa(configID))
+	d.SetId(strconv.FormatInt(configID, 10))
 	return nil
 }
 
@@ -129,7 +129,7 @@ func resourceCustomCodeUpdate(ctx context.Context, d *schema.ResourceData, m int
 	logger := meta.Log("botman", "resourceCustomCodeUpdate")
 	logger.Debugf("in resourceCustomCodeUpdate")
 
-	configID, err := strconv.Atoi(d.Id())
+	configID, err := strconv.ParseInt(d.Id(), 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -145,8 +145,8 @@ func resourceCustomCodeUpdate(ctx context.Context, d *schema.ResourceData, m int
 	}
 
 	request := botman.UpdateCustomCodeRequest{
-		ConfigID:    int64(configID),
-		Version:     int64(version),
+		ConfigID:    configID,
+		Version:     version,
 		JsonPayload: json.RawMessage(jsonPayloadString),
 	}
 

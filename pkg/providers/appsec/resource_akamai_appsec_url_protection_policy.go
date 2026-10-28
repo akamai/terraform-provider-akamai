@@ -443,7 +443,7 @@ func (r *urlProtectionPolicyResource) Create(ctx context.Context, req resource.C
 
 	configID := plan.ConfigID.ValueInt64()
 
-	version, err := getModifiableConfigVersion(ctx, int(configID), urlProtectionPolicyResourceName, r.Client.GetAPPSEC())
+	version, err := getModifiableConfigVersion(ctx, configID, urlProtectionPolicyResourceName, r.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("Unable to read latest config version from API", err.Error())
 		return
@@ -465,7 +465,7 @@ func (r *urlProtectionPolicyResource) Create(ctx context.Context, req resource.C
 	// Read back the full resource state from the API to ensure all computed fields are populated
 	getReq := appsec.GetURLProtectionPolicyRequest{
 		ConfigID:              configID,
-		ConfigVersion:         int64(version),
+		ConfigVersion:         version,
 		URLProtectionPolicyID: out.URLProtectionPolicyID,
 	}
 
@@ -533,7 +533,7 @@ func (r *urlProtectionPolicyResource) Read(ctx context.Context, req resource.Rea
 	configID := state.ConfigID.ValueInt64()
 	urlProtectionID := state.URLProtectionID.ValueInt64()
 
-	version, err := getLatestConfigVersion(ctx, int(configID), r.Client.GetAPPSEC())
+	version, err := getLatestConfigVersion(ctx, configID, r.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("invalid config version", err.Error())
 		return
@@ -541,7 +541,7 @@ func (r *urlProtectionPolicyResource) Read(ctx context.Context, req resource.Rea
 
 	getReq := appsec.GetURLProtectionPolicyRequest{
 		ConfigID:              configID,
-		ConfigVersion:         int64(version),
+		ConfigVersion:         version,
 		URLProtectionPolicyID: urlProtectionID,
 	}
 
@@ -628,7 +628,7 @@ func (r *urlProtectionPolicyResource) Update(ctx context.Context, req resource.U
 	configID := plan.ConfigID.ValueInt64()
 	urlProtectionID := state.URLProtectionID.ValueInt64()
 
-	version, err := getModifiableConfigVersion(ctx, int(configID), urlProtectionPolicyResourceName, r.Client.GetAPPSEC())
+	version, err := getModifiableConfigVersion(ctx, configID, urlProtectionPolicyResourceName, r.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("Unable to read latest config version from API", err.Error())
 		return
@@ -650,7 +650,7 @@ func (r *urlProtectionPolicyResource) Update(ctx context.Context, req resource.U
 	// Read back the full resource state from the API to ensure all computed fields are populated
 	getReq := appsec.GetURLProtectionPolicyRequest{
 		ConfigID:              configID,
-		ConfigVersion:         int64(version),
+		ConfigVersion:         version,
 		URLProtectionPolicyID: out.URLProtectionPolicyID,
 	}
 
@@ -718,7 +718,7 @@ func (r *urlProtectionPolicyResource) Delete(ctx context.Context, req resource.D
 	configID := state.ConfigID.ValueInt64()
 	urlProtectionID := state.URLProtectionID.ValueInt64()
 
-	version, err := getModifiableConfigVersion(ctx, int(configID), urlProtectionPolicyResourceName, r.Client.GetAPPSEC())
+	version, err := getModifiableConfigVersion(ctx, configID, urlProtectionPolicyResourceName, r.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("Unable to read latest config version from API", err.Error())
 		return
@@ -726,7 +726,7 @@ func (r *urlProtectionPolicyResource) Delete(ctx context.Context, req resource.D
 
 	deleteReq := appsec.RemoveURLProtectionPolicyRequest{
 		ConfigID:              configID,
-		ConfigVersion:         int64(version),
+		ConfigVersion:         version,
 		URLProtectionPolicyID: urlProtectionID,
 	}
 
@@ -763,7 +763,7 @@ func (r *urlProtectionPolicyResource) ImportState(ctx context.Context, req resou
 
 }
 
-func buildCreateURLProtectionPolicyRequest(ctx context.Context, plan *urlProtectionPolicyResourceModel, version int) (*appsec.CreateURLProtectionPolicyRequest, diag.Diagnostics) {
+func buildCreateURLProtectionPolicyRequest(ctx context.Context, plan *urlProtectionPolicyResourceModel, version int64) (*appsec.CreateURLProtectionPolicyRequest, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	body, bd := buildURLProtectionPolicyRequestBody(ctx, plan)
@@ -774,12 +774,12 @@ func buildCreateURLProtectionPolicyRequest(ctx context.Context, plan *urlProtect
 
 	return &appsec.CreateURLProtectionPolicyRequest{
 		ConfigID:      plan.ConfigID.ValueInt64(),
-		ConfigVersion: int64(version),
+		ConfigVersion: version,
 		Body:          body,
 	}, diags
 }
 
-func buildUpdateURLProtectionPolicyRequest(ctx context.Context, plan *urlProtectionPolicyResourceModel, version int, urlProtectionID int64) (*appsec.UpdateURLProtectionPolicyRequest, diag.Diagnostics) {
+func buildUpdateURLProtectionPolicyRequest(ctx context.Context, plan *urlProtectionPolicyResourceModel, version int64, urlProtectionID int64) (*appsec.UpdateURLProtectionPolicyRequest, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	body, bd := buildURLProtectionPolicyRequestBody(ctx, plan)
@@ -790,7 +790,7 @@ func buildUpdateURLProtectionPolicyRequest(ctx context.Context, plan *urlProtect
 
 	return &appsec.UpdateURLProtectionPolicyRequest{
 		ConfigID:              plan.ConfigID.ValueInt64(),
-		ConfigVersion:         int64(version),
+		ConfigVersion:         version,
 		URLProtectionPolicyID: urlProtectionID,
 		Body:                  body,
 	}, diags

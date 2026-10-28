@@ -39,7 +39,7 @@ func dataSourceResponseActionRead(ctx context.Context, d *schema.ResourceData, m
 	logger := meta.Log("botman", "dataSourceResponseActionRead")
 	logger.Debugf("in dataSourceResponseActionRead")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -55,8 +55,8 @@ func dataSourceResponseActionRead(ctx context.Context, d *schema.ResourceData, m
 	}
 
 	request := botman.GetResponseActionListRequest{
-		ConfigID: int64(configID),
-		Version:  int64(version),
+		ConfigID: configID,
+		Version:  version,
 		ActionID: customClientID,
 	}
 
@@ -75,6 +75,6 @@ func dataSourceResponseActionRead(ctx context.Context, d *schema.ResourceData, m
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
-	d.SetId(strconv.Itoa(configID))
+	d.SetId(strconv.FormatInt(configID, 10))
 	return nil
 }

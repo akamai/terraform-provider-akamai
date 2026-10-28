@@ -226,7 +226,7 @@ func (d *urlProtectionPoliciesDataSource) Read(ctx context.Context, req datasour
 	client := d.Client.GetAPPSEC()
 	configID := data.ConfigID.ValueInt64()
 
-	version, err := getLatestConfigVersion(ctx, int(configID), d.Client.GetAPPSEC())
+	version, err := getLatestConfigVersion(ctx, configID, d.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("invalid config version", err.Error())
 		return
@@ -234,7 +234,7 @@ func (d *urlProtectionPoliciesDataSource) Read(ctx context.Context, req datasour
 
 	listURLProtectionPolicyRequest := appsec.ListURLProtectionPoliciesRequest{
 		ConfigID:      configID,
-		ConfigVersion: int64(version),
+		ConfigVersion: version,
 	}
 
 	urlProtectionPolicies, err := client.ListURLProtectionPolicies(ctx, listURLProtectionPolicyRequest)

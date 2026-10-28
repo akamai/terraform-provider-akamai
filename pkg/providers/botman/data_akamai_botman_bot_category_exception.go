@@ -38,7 +38,7 @@ func dataSourceBotCategoryExceptionRead(ctx context.Context, d *schema.ResourceD
 	logger := meta.Log("botman", "dataSourceBotCategoryExceptionRead")
 	logger.Debugf("in dataSourceBotCategoryExceptionRead")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -54,8 +54,8 @@ func dataSourceBotCategoryExceptionRead(ctx context.Context, d *schema.ResourceD
 	}
 
 	request := botman.GetBotCategoryExceptionRequest{
-		ConfigID:         int64(configID),
-		Version:          int64(version),
+		ConfigID:         configID,
+		Version:          version,
 		SecurityPolicyID: securityPolicyID,
 	}
 

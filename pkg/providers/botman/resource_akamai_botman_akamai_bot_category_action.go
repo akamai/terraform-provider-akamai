@@ -62,7 +62,7 @@ func resourceAkamaiBotCategoryActionCreate(ctx context.Context, d *schema.Resour
 	logger := meta.Log("botman", "resourceAkamaiBotCategoryActionCreate")
 	logger.Debugf("in resourceAkamaiBotCategoryActionCreate")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -88,8 +88,8 @@ func resourceAkamaiBotCategoryActionCreate(ctx context.Context, d *schema.Resour
 	}
 
 	request := botman.UpdateAkamaiBotCategoryActionRequest{
-		ConfigID:         int64(configID),
-		Version:          int64(version),
+		ConfigID:         configID,
+		Version:          version,
 		SecurityPolicyID: securityPolicyID,
 		CategoryID:       categoryID,
 		JsonPayload:      jsonPayload,
@@ -124,7 +124,7 @@ func akamaiBotCategoryActionRead(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -139,8 +139,8 @@ func akamaiBotCategoryActionRead(ctx context.Context, d *schema.ResourceData, m 
 	categoryID := iDParts[2]
 
 	request := botman.GetAkamaiBotCategoryActionRequest{
-		ConfigID:         int64(configID),
-		Version:          int64(version),
+		ConfigID:         configID,
+		Version:          version,
 		SecurityPolicyID: securityPolicyID,
 		CategoryID:       categoryID,
 	}
@@ -204,7 +204,7 @@ func resourceAkamaiBotCategoryActionUpdate(ctx context.Context, d *schema.Resour
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -224,8 +224,8 @@ func resourceAkamaiBotCategoryActionUpdate(ctx context.Context, d *schema.Resour
 	}
 
 	request := botman.UpdateAkamaiBotCategoryActionRequest{
-		ConfigID:         int64(configID),
-		Version:          int64(version),
+		ConfigID:         configID,
+		Version:          version,
 		SecurityPolicyID: securityPolicyID,
 		CategoryID:       categoryID,
 		JsonPayload:      jsonPayload,

@@ -49,7 +49,7 @@ func dataSourceFailoverHostnamesRead(ctx context.Context, d *schema.ResourceData
 
 	getFailoverHostnames := appsec.GetFailoverHostnamesRequest{}
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -91,7 +91,7 @@ func dataSourceFailoverHostnamesRead(ctx context.Context, d *schema.ResourceData
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
-	d.SetId(strconv.Itoa(getFailoverHostnames.ConfigID))
+	d.SetId(strconv.FormatInt(getFailoverHostnames.ConfigID, 10))
 
 	return nil
 }

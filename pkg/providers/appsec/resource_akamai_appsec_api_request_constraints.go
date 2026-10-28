@@ -62,7 +62,7 @@ func resourceAPIRequestConstraintsCreate(ctx context.Context, d *schema.Resource
 	logger := meta.Log("APPSEC", "resourceAPIRequestConstraintsCreate")
 	logger.Debugf("in resourceAPIRequestConstraintsCreate")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -114,7 +114,7 @@ func resourceAPIRequestConstraintsRead(ctx context.Context, d *schema.ResourceDa
 
 	s := strings.Split(d.Id(), ":")
 
-	configID, errconv := strconv.Atoi(s[0])
+	configID, errconv := strconv.ParseInt(s[0], 10, 64)
 	if errconv != nil {
 		return diag.FromErr(errconv)
 	}
@@ -177,7 +177,7 @@ func resourceAPIRequestConstraintsUpdate(ctx context.Context, d *schema.Resource
 
 	s := strings.Split(d.Id(), ":")
 
-	configID, errconv := strconv.Atoi(s[0])
+	configID, errconv := strconv.ParseInt(s[0], 10, 64)
 	if errconv != nil {
 		return diag.FromErr(errconv)
 	}
@@ -222,7 +222,7 @@ func resourceAPIRequestConstraintsDelete(ctx context.Context, d *schema.Resource
 
 	s := strings.Split(d.Id(), ":")
 
-	configID, errconv := strconv.Atoi(s[0])
+	configID, errconv := strconv.ParseInt(s[0], 10, 64)
 	if errconv != nil {
 		return diag.FromErr(errconv)
 	}

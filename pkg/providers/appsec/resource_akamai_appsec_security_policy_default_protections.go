@@ -58,7 +58,7 @@ func resourceSecurityPolicyDefaultProtectionsCreate(ctx context.Context, d *sche
 	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "resourceSecurityPolicyDefaultProtectionsCreate")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -77,7 +77,7 @@ func resourceSecurityPolicyDefaultProtectionsCreate(ctx context.Context, d *sche
 
 	response, err := client.CreateSecurityPolicyWithDefaultProtections(ctx, appsec.CreateSecurityPolicyWithDefaultProtectionsRequest{
 		ConfigVersion: appsec.ConfigVersion{
-			ConfigID: int64(configID),
+			ConfigID: configID,
 			Version:  version,
 		},
 		PolicyName:   policyName,
@@ -105,7 +105,7 @@ func resourceSecurityPolicyDefaultProtectionsRead(ctx context.Context, d *schema
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -154,7 +154,7 @@ func resourceSecurityPolicyDefaultProtectionsUpdate(ctx context.Context, d *sche
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -204,7 +204,7 @@ func resourceSecurityPolicyDefaultProtectionsDelete(ctx context.Context, d *sche
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}

@@ -47,7 +47,7 @@ func dataSourceCustomRuleActionsRead(ctx context.Context, d *schema.ResourceData
 
 	getCustomRuleActions := appsec.GetCustomRuleActionsRequest{}
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -86,7 +86,7 @@ func dataSourceCustomRuleActionsRead(ctx context.Context, d *schema.ResourceData
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
-	d.SetId(strconv.Itoa(getCustomRuleActions.ConfigID))
+	d.SetId(strconv.FormatInt(getCustomRuleActions.ConfigID, 10))
 
 	return nil
 }

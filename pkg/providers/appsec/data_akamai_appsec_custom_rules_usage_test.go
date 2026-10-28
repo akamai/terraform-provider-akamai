@@ -121,7 +121,7 @@ func mockGetCustomRulesUsageFailure(m *appsec.Mock) {
 		Return(nil, &serverError).Once()
 }
 
-func mockGetLatestConfiguration(client *appsec.Mock, configID int, times int) {
+func mockGetLatestConfiguration(client *appsec.Mock, configID int64, times int) {
 	client.On("GetConfiguration", mock.Anything, appsec.GetConfigurationRequest{ConfigID: configID}).
 		Return(&appsec.GetConfigurationResponse{
 			FileType:          "RBAC",
@@ -134,7 +134,7 @@ func mockGetLatestConfiguration(client *appsec.Mock, configID int, times int) {
 		}, nil).Times(times)
 }
 
-func mockGetLatestConfigurationFailure(client *appsec.Mock, configID int, times int) {
+func mockGetLatestConfigurationFailure(client *appsec.Mock, configID int64, times int) {
 	client.On("GetConfiguration", mock.Anything, appsec.GetConfigurationRequest{ConfigID: configID}).
 		Return(nil, &serverError).Times(times)
 }

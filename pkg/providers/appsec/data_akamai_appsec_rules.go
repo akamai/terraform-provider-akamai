@@ -63,7 +63,7 @@ func dataSourceRulesRead(ctx context.Context, d *schema.ResourceData, m interfac
 
 	getRules := appsec.GetRulesRequest{}
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -143,7 +143,7 @@ func dataSourceRulesRead(ctx context.Context, d *schema.ResourceData, m interfac
 		}
 	}
 
-	d.SetId(strconv.Itoa(getRules.ConfigID))
+	d.SetId(strconv.FormatInt(getRules.ConfigID, 10))
 
 	return nil
 }

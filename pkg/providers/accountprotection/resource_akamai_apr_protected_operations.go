@@ -63,7 +63,7 @@ func createResourceProtectedOperations(ctx context.Context, d *schema.ResourceDa
 	logger := meta.Log("accountprotection", "createResourceProtectedOperations")
 	logger.Debugf("in createResourceProtectedOperations")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -89,8 +89,8 @@ func createResourceProtectedOperations(ctx context.Context, d *schema.ResourceDa
 	}
 
 	request := apr.CreateProtectedOperationsRequest{
-		ConfigID:         int64(configID),
-		Version:          int64(version),
+		ConfigID:         configID,
+		Version:          version,
 		SecurityPolicyID: securityPolicyID,
 		JsonPayload:      jsonPayload,
 	}
@@ -123,7 +123,7 @@ func readProtectedOperations(ctx context.Context, d *schema.ResourceData, m inte
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -138,8 +138,8 @@ func readProtectedOperations(ctx context.Context, d *schema.ResourceData, m inte
 	operationID := iDParts[2]
 
 	request := apr.GetProtectedOperationByIDRequest{
-		ConfigID:         int64(configID),
-		Version:          int64(version),
+		ConfigID:         configID,
+		Version:          version,
 		SecurityPolicyID: securityPolicyID,
 		OperationID:      operationID,
 	}
@@ -204,7 +204,7 @@ func updateResourceProtectedOperation(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -224,8 +224,8 @@ func updateResourceProtectedOperation(ctx context.Context, d *schema.ResourceDat
 	}
 
 	request := apr.UpdateProtectedOperationRequest{
-		ConfigID:         int64(configID),
-		Version:          int64(version),
+		ConfigID:         configID,
+		Version:          version,
 		OperationID:      operationID,
 		SecurityPolicyID: securityPolicyID,
 		JsonPayload:      jsonPayload,
@@ -252,7 +252,7 @@ func deleteResourceProtectedOperation(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -267,8 +267,8 @@ func deleteResourceProtectedOperation(ctx context.Context, d *schema.ResourceDat
 	operationID := iDParts[2]
 
 	request := apr.RemoveProtectedOperationRequest{
-		ConfigID:         int64(configID),
-		Version:          int64(version),
+		ConfigID:         configID,
+		Version:          version,
 		SecurityPolicyID: securityPolicyID,
 		OperationID:      operationID,
 	}

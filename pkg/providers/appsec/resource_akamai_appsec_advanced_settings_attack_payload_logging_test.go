@@ -14,7 +14,7 @@ import (
 func TestAkamaiAdvancedSettingsAttackPayloadLoggingConfig(t *testing.T) {
 	t.Parallel()
 	var (
-		configVersion = func(configId int, client *appsec.Mock) appsec.GetConfigurationResponse {
+		configVersion = func(configId int64, client *appsec.Mock) appsec.GetConfigurationResponse {
 			configResponse := appsec.GetConfigurationResponse{}
 			err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &configResponse)
 			require.NoError(t, err)
@@ -27,7 +27,7 @@ func TestAkamaiAdvancedSettingsAttackPayloadLoggingConfig(t *testing.T) {
 			return configResponse
 		}
 
-		attackPayloadLoggingRead = func(configId int, version int, policyId string, client *appsec.Mock, payloadPath string, numberOfTimes int) {
+		attackPayloadLoggingRead = func(configId int64, version int64, policyId string, client *appsec.Mock, payloadPath string, numberOfTimes int) {
 			attackPayloadLoggingResponse := appsec.GetAdvancedSettingsAttackPayloadLoggingResponse{}
 			err := json.Unmarshal(testutils.LoadFixtureBytes(t, payloadPath), &attackPayloadLoggingResponse)
 			require.NoError(t, err)

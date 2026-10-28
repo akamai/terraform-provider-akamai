@@ -132,7 +132,7 @@ func (d *customRulesUsageDataSource) Read(ctx context.Context, request datasourc
 	client := d.Client.GetAPPSEC()
 	configID := data.ConfigID.ValueInt64()
 
-	version, err := getLatestConfigVersion(ctx, int(configID), d.Client.GetAPPSEC())
+	version, err := getLatestConfigVersion(ctx, configID, d.Client.GetAPPSEC())
 	if err != nil {
 		response.Diagnostics.AddError("get latest config version error", err.Error())
 		return

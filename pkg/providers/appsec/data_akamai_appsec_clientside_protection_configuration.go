@@ -121,7 +121,7 @@ func (d *clientsideProtectionConfigurationDataSource) Read(ctx context.Context, 
 		return
 	}
 
-	configID := int(data.ConfigID.ValueInt64())
+	configID := data.ConfigID.ValueInt64()
 	client := d.Client.GetAPPSEC()
 
 	version, err := getLatestConfigVersion(ctx, configID, client)
@@ -132,7 +132,7 @@ func (d *clientsideProtectionConfigurationDataSource) Read(ctx context.Context, 
 
 	cpcConfig, err := client.GetClientsideProtectionConfiguration(ctx, appsec.GetClientsideProtectionConfigurationRequest{
 		ConfigID:         data.ConfigID.ValueInt64(),
-		Version:          int64(version),
+		Version:          version,
 		SecurityPolicyID: data.SecurityPolicyID.ValueString(),
 	})
 	if err != nil {

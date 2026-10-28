@@ -32,7 +32,7 @@ func TestAkamaiReputationProfiles_data_basic(t *testing.T) {
 
 		client.APPSEC.On("GetReputationProfiles",
 			testutils.MockContext,
-			appsec.GetReputationProfilesRequest{ConfigID: 43253, ConfigVersion: 7, ReputationProfileId: 12345},
+			appsec.GetReputationProfilesRequest{ConfigID: 43253, ConfigVersion: 7, ReputationProfileID: 12345},
 		).Return(&getReputationProfilesResponse, nil)
 
 		mockGetConfigurationVersionDefault(client.APPSEC)

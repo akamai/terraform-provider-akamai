@@ -34,7 +34,7 @@ func dataSourceCustomCodeRead(ctx context.Context, d *schema.ResourceData, m int
 	logger := meta.Log("botman", "dataSourceCustomCodeRead")
 	logger.Debugf("in dataSourceCustomCodeRead")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -45,8 +45,8 @@ func dataSourceCustomCodeRead(ctx context.Context, d *schema.ResourceData, m int
 	}
 
 	request := botman.GetCustomCodeRequest{
-		ConfigID: int64(configID),
-		Version:  int64(version),
+		ConfigID: configID,
+		Version:  version,
 	}
 
 	response, err := client.GetCustomCode(ctx, request)
@@ -63,6 +63,6 @@ func dataSourceCustomCodeRead(ctx context.Context, d *schema.ResourceData, m int
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
-	d.SetId(strconv.Itoa(configID))
+	d.SetId(strconv.FormatInt(configID, 10))
 	return nil
 }

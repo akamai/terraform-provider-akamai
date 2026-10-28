@@ -34,7 +34,7 @@ func dataSourceCustomBotCategorySequenceRead(ctx context.Context, d *schema.Reso
 	logger := meta.Log("botman", "dataSourceCustomBotCategorySequenceRead")
 	logger.Debugf("in dataSourceCustomBotCategorySequenceRead")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -45,8 +45,8 @@ func dataSourceCustomBotCategorySequenceRead(ctx context.Context, d *schema.Reso
 	}
 
 	request := botman.GetCustomBotCategorySequenceRequest{
-		ConfigID: int64(configID),
-		Version:  int64(version),
+		ConfigID: configID,
+		Version:  version,
 	}
 
 	response, err := client.GetCustomBotCategorySequence(ctx, request)
@@ -59,6 +59,6 @@ func dataSourceCustomBotCategorySequenceRead(ctx context.Context, d *schema.Reso
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
-	d.SetId(strconv.Itoa(configID))
+	d.SetId(strconv.FormatInt(configID, 10))
 	return nil
 }

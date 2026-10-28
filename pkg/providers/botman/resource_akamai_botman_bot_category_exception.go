@@ -55,7 +55,7 @@ func resourceBotCategoryExceptionCreate(ctx context.Context, d *schema.ResourceD
 	logger := meta.Log("botman", "resourceBotCategoryExceptionCreate")
 	logger.Debugf("in resourceBotCategoryExceptionCreate")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -76,8 +76,8 @@ func resourceBotCategoryExceptionCreate(ctx context.Context, d *schema.ResourceD
 	}
 
 	request := botman.UpdateBotCategoryExceptionRequest{
-		ConfigID:         int64(configID),
-		Version:          int64(version),
+		ConfigID:         configID,
+		Version:          version,
 		SecurityPolicyID: securityPolicyID,
 		JsonPayload:      json.RawMessage(jsonPayloadString),
 	}
@@ -104,7 +104,7 @@ func resourceBotCategoryExceptionRead(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -117,8 +117,8 @@ func resourceBotCategoryExceptionRead(ctx context.Context, d *schema.ResourceDat
 	securityPolicyID := iDParts[1]
 
 	request := botman.GetBotCategoryExceptionRequest{
-		ConfigID:         int64(configID),
-		Version:          int64(version),
+		ConfigID:         configID,
+		Version:          version,
 		SecurityPolicyID: securityPolicyID,
 	}
 
@@ -156,7 +156,7 @@ func resourceBotCategoryExceptionUpdate(ctx context.Context, d *schema.ResourceD
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -174,8 +174,8 @@ func resourceBotCategoryExceptionUpdate(ctx context.Context, d *schema.ResourceD
 	}
 
 	request := botman.UpdateBotCategoryExceptionRequest{
-		ConfigID:         int64(configID),
-		Version:          int64(version),
+		ConfigID:         configID,
+		Version:          version,
 		SecurityPolicyID: securityPolicyID,
 		JsonPayload:      json.RawMessage(jsonPayloadString),
 	}

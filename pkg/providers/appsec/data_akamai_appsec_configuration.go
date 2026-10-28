@@ -111,7 +111,7 @@ func dataSourceConfigurationRead(ctx context.Context, d *schema.ResourceData, m 
 				if err = d.Set("host_names", selectedHostnameList); err != nil {
 					return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 				}
-				d.SetId(strconv.Itoa(config.ID))
+				d.SetId(strconv.FormatInt(config.ID, 10))
 				break
 			}
 		}
@@ -121,7 +121,7 @@ func dataSourceConfigurationRead(ctx context.Context, d *schema.ResourceData, m 
 	} else {
 		if len(configurations.Configurations) > 0 {
 			outputConfigurations = *configurations
-			d.SetId(strconv.Itoa(configurations.Configurations[0].ID))
+			d.SetId(strconv.FormatInt(configurations.Configurations[0].ID, 10))
 		} else {
 			d.SetId(strconv.Itoa(0))
 		}

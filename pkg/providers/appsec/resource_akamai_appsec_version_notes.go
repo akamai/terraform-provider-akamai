@@ -55,7 +55,7 @@ func resourceVersionNotesCreate(ctx context.Context, d *schema.ResourceData, m i
 	logger := meta.Log("APPSEC", "resourceVersionNotesCreate")
 	logger.Debugf("in resourceVersionNotesCreate")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -91,7 +91,7 @@ func resourceVersionNotesRead(ctx context.Context, d *schema.ResourceData, m int
 	logger := meta.Log("APPSEC", "resourceVersionNotesRead")
 	logger.Debugf("in resourceVersionNotesRead")
 
-	configID, err := strconv.Atoi(d.Id())
+	configID, err := strconv.ParseInt(d.Id(), 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -136,7 +136,7 @@ func resourceVersionNotesUpdate(ctx context.Context, d *schema.ResourceData, m i
 	logger := meta.Log("APPSEC", "resourceVersionNotesUpdate")
 	logger.Debugf("in resourceVersionNotesUpdate")
 
-	configID, err := strconv.Atoi(d.Id())
+	configID, err := strconv.ParseInt(d.Id(), 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}

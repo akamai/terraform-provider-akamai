@@ -59,7 +59,7 @@ func dataSourceAPIEndpointsRead(ctx context.Context, d *schema.ResourceData, m i
 
 	getAPIEndpoints := appsec.GetApiEndpointsRequest{}
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}

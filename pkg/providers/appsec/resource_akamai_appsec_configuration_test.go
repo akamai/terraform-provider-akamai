@@ -341,9 +341,6 @@ func setCreateConfigurationClone(mock *appsec.Mock, test *testing.T) {
 	mock.On("CreateConfigurationClone",
 		testutils.MockContext,
 		// ie. expect Attributes match to above JSON-File.
-		appsec.CreateConfigurationCloneRequest{Name: "Akamai Tools", Description: "Akamai Tools", ContractID: "C-1FRYVV3", GroupID: 64867, Hostnames: []string{"rinaldi.sandbox.akamaideveloper.com", "sujala.sandbox.akamaideveloper.com"}, CreateFrom: struct {
-			ConfigID int "json:\"configId\""
-			Version  int "json:\"version\""
-		}{43253, 1}},
+		appsec.CreateConfigurationCloneRequest{Name: "Akamai Tools", Description: "Akamai Tools", ContractID: "C-1FRYVV3", GroupID: 64867, Hostnames: []string{"rinaldi.sandbox.akamaideveloper.com", "sujala.sandbox.akamaideveloper.com"}, CreateFrom: appsec.CreateConfigurationCloneCreateFrom{ConfigID: 43253, Version: 1}},
 	).Return(&objClone, nil)
 }

@@ -57,7 +57,7 @@ func dataSourceContentProtectionJavaScriptInjectionRuleRead(ctx context.Context,
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, int(configID), meta.Client().GetAPPSEC())
+	version, err := getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -69,7 +69,7 @@ func dataSourceContentProtectionJavaScriptInjectionRuleRead(ctx context.Context,
 
 	request := botman.GetContentProtectionJavaScriptInjectionRuleListRequest{
 		ConfigID:         configID,
-		Version:          int64(version),
+		Version:          version,
 		SecurityPolicyID: securityPolicyID,
 		ContentProtectionJavaScriptInjectionRuleID: contentProtectionJavaScriptInjectionRuleID,
 	}

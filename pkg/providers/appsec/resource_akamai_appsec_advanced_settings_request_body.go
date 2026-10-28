@@ -67,7 +67,7 @@ func resourceAdvancedSettingsRequestBodyImport(ctx context.Context, d *schema.Re
 		if err != nil {
 			return nil, err
 		}
-		configID, err := strconv.Atoi(iDParts[0])
+		configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 		if err != nil {
 			return nil, err
 		}
@@ -81,7 +81,7 @@ func resourceAdvancedSettingsRequestBodyImport(ctx context.Context, d *schema.Re
 		getAdvancedSettingsRequestBody.Version = version
 		getAdvancedSettingsRequestBody.PolicyID = policyID
 	} else {
-		configID, err := strconv.Atoi(d.Id())
+		configID, err := strconv.ParseInt(d.Id(), 10, 64)
 		if err != nil {
 			return nil, err
 		}
@@ -131,7 +131,7 @@ func upsertAdvancedSettingsRequestBody(ctx context.Context, d *schema.ResourceDa
 	meta := meta.Must(m)
 	client := meta.Client().GetAPPSEC()
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -176,7 +176,7 @@ func resourceAdvancedSettingsRequestBodyRead(ctx context.Context, d *schema.Reso
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsRequestBodyRead")
 	logger.Debugf("in resourceAdvancedSettingsRequestBodyRead")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -231,7 +231,7 @@ func resourceAdvancedSettingsRequestBodyDelete(ctx context.Context, d *schema.Re
 	logger := meta.Log("APPSEC", "resourceAdvancedSettingsRequestBodyDelete")
 	logger.Debugf("in resourceAdvancedSettingsRequestBodyDelete")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}

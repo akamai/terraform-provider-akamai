@@ -166,7 +166,7 @@ func (d *rapidRulesDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		IncludeExpiryDetails: includeExpiry,
 	}
 
-	version, err := getLatestConfigVersion(ctx, int(configID), d.Client.GetAPPSEC())
+	version, err := getLatestConfigVersion(ctx, configID, d.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("invalid config version", err.Error())
 		return
@@ -208,7 +208,7 @@ func (d *rapidRulesDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	}
 
 	getAttackGroupsRequest := appsec.GetAttackGroupsRequest{
-		ConfigID: int(configID),
+		ConfigID: configID,
 		Version:  version,
 		PolicyID: policyID,
 	}

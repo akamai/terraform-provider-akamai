@@ -51,11 +51,11 @@ func dataSourceExportConfigurationRead(ctx context.Context, d *schema.ResourceDa
 	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "dataSourceExportConfigurationRead")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	version, err := tf.GetIntValue("version", d)
+	version, err := tf.GetIntValueAsInt64("version", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -96,7 +96,7 @@ func dataSourceExportConfigurationRead(ctx context.Context, d *schema.ResourceDa
 			}
 		}
 	}
-	d.SetId(strconv.Itoa(exportconfiguration.ConfigID))
+	d.SetId(strconv.FormatInt(exportconfiguration.ConfigID, 10))
 
 	return nil
 }

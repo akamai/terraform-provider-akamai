@@ -108,11 +108,11 @@ func resourceConfigurationCreate(ctx context.Context, d *schema.ResourceData, m 
 	for _, h := range hostnameset.List() {
 		hostnames = append(hostnames, h.(string))
 	}
-	createFromConfigID, err := tf.GetIntValue("create_from_config_id", d)
+	createFromConfigID, err := tf.GetIntValueAsInt64("create_from_config_id", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
-	createFromVersion, err := tf.GetIntValue("create_from_version", d)
+	createFromVersion, err := tf.GetIntValueAsInt64("create_from_version", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
@@ -178,7 +178,7 @@ func resourceConfigurationRead(ctx context.Context, d *schema.ResourceData, m in
 	logger := meta.Log("APPSEC", "resourceConfigurationRead")
 	logger.Debug("in resourceConfigurationRead")
 
-	configID, err := strconv.Atoi(d.Id())
+	configID, err := strconv.ParseInt(d.Id(), 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -235,7 +235,7 @@ func resourceConfigurationUpdate(ctx context.Context, d *schema.ResourceData, m 
 	logger := meta.Log("APPSEC", "resourceConfigurationUpdate")
 	logger.Debug("in resourceConfigurationUpdate")
 
-	configID, err := strconv.Atoi(d.Id())
+	configID, err := strconv.ParseInt(d.Id(), 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -299,7 +299,7 @@ func resourceConfigurationDelete(ctx context.Context, d *schema.ResourceData, m 
 	logger := meta.Log("APPSEC", "resourceConfigurationDelete")
 	logger.Debug("in resourceConfigurationDelete")
 
-	configID, err := strconv.Atoi(d.Id())
+	configID, err := strconv.ParseInt(d.Id(), 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}

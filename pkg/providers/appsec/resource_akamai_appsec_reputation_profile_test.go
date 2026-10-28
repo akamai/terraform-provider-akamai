@@ -45,12 +45,12 @@ func TestAkamaiReputationProfile_res_basic(t *testing.T) {
 		require.NoError(t, err)
 		client.APPSEC.On("GetReputationProfile",
 			testutils.MockContext,
-			appsec.GetReputationProfileRequest{ConfigID: 43253, ConfigVersion: 7, ReputationProfileId: 12345},
-		).Return(&getReputationProfileResponse, nil).Times(2)
+			appsec.GetReputationProfileRequest{ConfigID: 43253, ConfigVersion: 7, ReputationProfileID: 12345},
+		).Return(&getReputationProfileResponse, nil)
 
 		client.APPSEC.On("RemoveReputationProfile",
 			testutils.MockContext,
-			appsec.RemoveReputationProfileRequest{ConfigID: 43253, ConfigVersion: 7, ReputationProfileId: 12345},
+			appsec.RemoveReputationProfileRequest{ConfigID: 43253, ConfigVersion: 7, ReputationProfileID: 12345},
 		).Return(&removeReputationProfileResponse, nil)
 
 		mockGetConfigurationVersionDefault(client.APPSEC)

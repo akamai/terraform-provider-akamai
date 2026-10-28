@@ -34,7 +34,7 @@ func dataSourceCustomClientSequenceRead(ctx context.Context, d *schema.ResourceD
 	logger := meta.Log("botman", "dataSourceCustomClientSequenceRead")
 	logger.Debugf("in dataSourceCustomClientSequenceRead")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -45,8 +45,8 @@ func dataSourceCustomClientSequenceRead(ctx context.Context, d *schema.ResourceD
 	}
 
 	request := botman.GetCustomClientSequenceRequest{
-		ConfigID: int64(configID),
-		Version:  int64(version),
+		ConfigID: configID,
+		Version:  version,
 	}
 
 	response, err := client.GetCustomClientSequence(ctx, request)
@@ -59,6 +59,6 @@ func dataSourceCustomClientSequenceRead(ctx context.Context, d *schema.ResourceD
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
-	d.SetId(strconv.Itoa(configID))
+	d.SetId(strconv.FormatInt(configID, 10))
 	return nil
 }

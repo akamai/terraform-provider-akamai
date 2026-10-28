@@ -55,7 +55,7 @@ func resourceJavascriptInjectionCreate(ctx context.Context, d *schema.ResourceDa
 	logger := meta.Log("botman", "resourceJavascriptInjectionCreate")
 	logger.Debugf("in resourceJavascriptInjectionCreate")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -76,8 +76,8 @@ func resourceJavascriptInjectionCreate(ctx context.Context, d *schema.ResourceDa
 	}
 
 	request := botman.UpdateJavascriptInjectionRequest{
-		ConfigID:         int64(configID),
-		Version:          int64(version),
+		ConfigID:         configID,
+		Version:          version,
 		SecurityPolicyID: securityPolicyID,
 		JsonPayload:      json.RawMessage(jsonPayloadString),
 	}
@@ -103,7 +103,7 @@ func resourceJavascriptInjectionRead(ctx context.Context, d *schema.ResourceData
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -115,8 +115,8 @@ func resourceJavascriptInjectionRead(ctx context.Context, d *schema.ResourceData
 	securityPolicyID := iDParts[1]
 
 	request := botman.GetJavascriptInjectionRequest{
-		ConfigID:         int64(configID),
-		Version:          int64(version),
+		ConfigID:         configID,
+		Version:          version,
 		SecurityPolicyID: securityPolicyID,
 	}
 
@@ -152,7 +152,7 @@ func resourceJavascriptInjectionUpdate(ctx context.Context, d *schema.ResourceDa
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -170,8 +170,8 @@ func resourceJavascriptInjectionUpdate(ctx context.Context, d *schema.ResourceDa
 	}
 
 	request := botman.UpdateJavascriptInjectionRequest{
-		ConfigID:         int64(configID),
-		Version:          int64(version),
+		ConfigID:         configID,
+		Version:          version,
 		SecurityPolicyID: securityPolicyID,
 		JsonPayload:      json.RawMessage(jsonPayloadString),
 	}

@@ -62,7 +62,7 @@ func dataSourceEvalGroupsRead(ctx context.Context, d *schema.ResourceData, m int
 
 	getAttackGroups := appsec.GetAttackGroupsRequest{}
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -125,7 +125,7 @@ func dataSourceEvalGroupsRead(ctx context.Context, d *schema.ResourceData, m int
 		}
 	}
 
-	d.SetId(strconv.Itoa(getAttackGroups.ConfigID))
+	d.SetId(strconv.FormatInt(getAttackGroups.ConfigID, 10))
 
 	return nil
 }

@@ -94,7 +94,7 @@ func (d *urlProtectionPoliciesActionsDataSource) Read(ctx context.Context, req d
 	configID := data.ConfigID.ValueInt64()
 	policyID := data.SecurityPolicyID.ValueString()
 
-	version, err := getLatestConfigVersion(ctx, int(configID), d.Client.GetAPPSEC())
+	version, err := getLatestConfigVersion(ctx, configID, d.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("Read URL Protection Policies Actions failed", err.Error())
 		return
@@ -102,7 +102,7 @@ func (d *urlProtectionPoliciesActionsDataSource) Read(ctx context.Context, req d
 
 	getURLProtectionPoliciesActions := appsec.ListURLProtectionPoliciesActionsRequest{
 		ConfigID:      configID,
-		ConfigVersion: int64(version),
+		ConfigVersion: version,
 		PolicyID:      policyID,
 	}
 

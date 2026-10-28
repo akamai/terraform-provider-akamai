@@ -55,7 +55,7 @@ func resourceBotManagementSettingsCreate(ctx context.Context, d *schema.Resource
 	logger := meta.Log("botman", "resourceBotManagementSettingsCreate")
 	logger.Debugf("in resourceBotManagementSettingsCreate")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -76,8 +76,8 @@ func resourceBotManagementSettingsCreate(ctx context.Context, d *schema.Resource
 	}
 
 	request := botman.UpdateBotManagementSettingRequest{
-		ConfigID:         int64(configID),
-		Version:          int64(version),
+		ConfigID:         configID,
+		Version:          version,
 		SecurityPolicyID: securityPolicyID,
 		JsonPayload:      json.RawMessage(jsonPayloadString),
 	}
@@ -104,7 +104,7 @@ func resourceBotManagementSettingsRead(ctx context.Context, d *schema.ResourceDa
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -117,8 +117,8 @@ func resourceBotManagementSettingsRead(ctx context.Context, d *schema.ResourceDa
 	securityPolicyID := iDParts[1]
 
 	request := botman.GetBotManagementSettingRequest{
-		ConfigID:         int64(configID),
-		Version:          int64(version),
+		ConfigID:         configID,
+		Version:          version,
 		SecurityPolicyID: securityPolicyID,
 	}
 
@@ -156,7 +156,7 @@ func resourceBotManagementSettingsUpdate(ctx context.Context, d *schema.Resource
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -174,8 +174,8 @@ func resourceBotManagementSettingsUpdate(ctx context.Context, d *schema.Resource
 	}
 
 	request := botman.UpdateBotManagementSettingRequest{
-		ConfigID:         int64(configID),
-		Version:          int64(version),
+		ConfigID:         configID,
+		Version:          version,
 		SecurityPolicyID: securityPolicyID,
 		JsonPayload:      json.RawMessage(jsonPayloadString),
 	}

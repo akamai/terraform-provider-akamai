@@ -48,7 +48,7 @@ func resourceChallengeInjectionRulesCreate(ctx context.Context, d *schema.Resour
 	logger := meta.Log("botman", "resourceChallengeInjectionRulesCreate")
 	logger.Debugf("in resourceChallengeInjectionRulesCreate")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -64,8 +64,8 @@ func resourceChallengeInjectionRulesCreate(ctx context.Context, d *schema.Resour
 	}
 
 	request := botman.UpdateChallengeInjectionRulesRequest{
-		ConfigID:    int64(configID),
-		Version:     int64(version),
+		ConfigID:    configID,
+		Version:     version,
 		JsonPayload: json.RawMessage(jsonPayloadString),
 	}
 
@@ -75,7 +75,7 @@ func resourceChallengeInjectionRulesCreate(ctx context.Context, d *schema.Resour
 		return diag.FromErr(err)
 	}
 
-	d.SetId(strconv.Itoa(configID))
+	d.SetId(strconv.FormatInt(configID, 10))
 
 	return resourceChallengeInjectionRulesRead(ctx, d, m)
 }
@@ -86,7 +86,7 @@ func resourceChallengeInjectionRulesRead(ctx context.Context, d *schema.Resource
 	logger := meta.Log("botman", "resourceChallengeInjectionRulesRead")
 	logger.Debugf("in resourceChallengeInjectionRulesRead")
 
-	configID, err := strconv.Atoi(d.Id())
+	configID, err := strconv.ParseInt(d.Id(), 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -97,8 +97,8 @@ func resourceChallengeInjectionRulesRead(ctx context.Context, d *schema.Resource
 	}
 
 	request := botman.GetChallengeInjectionRulesRequest{
-		ConfigID: int64(configID),
-		Version:  int64(version),
+		ConfigID: configID,
+		Version:  version,
 	}
 
 	response, err := client.GetChallengeInjectionRules(ctx, request)
@@ -119,7 +119,7 @@ func resourceChallengeInjectionRulesRead(ctx context.Context, d *schema.Resource
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
-	d.SetId(strconv.Itoa(configID))
+	d.SetId(strconv.FormatInt(configID, 10))
 	return nil
 }
 
@@ -129,7 +129,7 @@ func resourceChallengeInjectionRulesUpdate(ctx context.Context, d *schema.Resour
 	logger := meta.Log("botman", "resourceChallengeInjectionRulesUpdate")
 	logger.Debugf("in resourceChallengeInjectionRulesUpdate")
 
-	configID, err := strconv.Atoi(d.Id())
+	configID, err := strconv.ParseInt(d.Id(), 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -145,8 +145,8 @@ func resourceChallengeInjectionRulesUpdate(ctx context.Context, d *schema.Resour
 	}
 
 	request := botman.UpdateChallengeInjectionRulesRequest{
-		ConfigID:    int64(configID),
-		Version:     int64(version),
+		ConfigID:    configID,
+		Version:     version,
 		JsonPayload: json.RawMessage(jsonPayloadString),
 	}
 

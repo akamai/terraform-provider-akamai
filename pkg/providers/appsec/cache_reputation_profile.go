@@ -22,7 +22,7 @@ var (
 
 // getReputationProfile reads from the cache if present, or makes a getAll call to fetch all
 // reputation profiles for a configuration version, stores in the cache and filters using ID.
-func getReputationProfile(ctx context.Context, configID, version, reputationProfileID int, m interface{}) (*appsec.GetReputationProfileResponse, error) {
+func getReputationProfile(ctx context.Context, configID, version, reputationProfileID int64, m interface{}) (*appsec.GetReputationProfileResponse, error) {
 	meta := akameta.Must(m)
 	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "getReputationProfile")
@@ -36,7 +36,7 @@ func getReputationProfile(ctx context.Context, configID, version, reputationProf
 			return client.GetReputationProfile(ctx, appsec.GetReputationProfileRequest{
 				ConfigID:            configID,
 				ConfigVersion:       version,
-				ReputationProfileId: reputationProfileID,
+				ReputationProfileID: reputationProfileID,
 			})
 		},
 		// fetch: bulk-list call used to populate the cache on a miss.
@@ -57,7 +57,7 @@ func getReputationProfile(ctx context.Context, configID, version, reputationProf
 	)
 }
 
-func filterReputationProfile(reputationProfiles *appsec.GetReputationProfilesResponse, reputationProfileID int, logger log.Interface) (*appsec.GetReputationProfileResponse, error) {
+func filterReputationProfile(reputationProfiles *appsec.GetReputationProfilesResponse, reputationProfileID int64, logger log.Interface) (*appsec.GetReputationProfileResponse, error) {
 	for _, p := range reputationProfiles.ReputationProfiles {
 		if p.ID == reputationProfileID {
 			logger.Debugf("Found reputation profile %d in cached list", reputationProfileID)
@@ -79,7 +79,7 @@ func filterReputationProfile(reputationProfiles *appsec.GetReputationProfilesRes
 // invalidateReputationProfileCache removes the cached reputation-profile list for the given config version.
 // Call this after a reputation profile is created, updated, or deleted so the next read fetches fresh data.
 // The mutex is held so that an in-flight getReputationProfile call cannot overwrite the sentinel with stale data.
-func invalidateReputationProfileCache(configID, version int, logger log.Interface) {
+func invalidateReputationProfileCache(configID, version int64, logger log.Interface) {
 	reputationProfMutex.Lock()
 	defer reputationProfMutex.Unlock()
 	if err := cache.Delete(cache.BucketName(SubproviderName), fmt.Sprintf("getReputationProfiles:%d:%d", configID, version)); err != nil && !errors.Is(err, cache.ErrDisabled) {

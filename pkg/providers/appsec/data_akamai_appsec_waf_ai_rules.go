@@ -144,7 +144,7 @@ func (d *wafAIRulesDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	configID := data.ConfigID.ValueInt64()
 	policyID := data.SecurityPolicyID.ValueString()
 
-	version, err := getLatestConfigVersion(ctx, int(configID), client)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		resp.Diagnostics.AddError("fetching latest config version", err.Error())
 		return

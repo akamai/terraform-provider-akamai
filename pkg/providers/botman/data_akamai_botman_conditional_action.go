@@ -39,7 +39,7 @@ func dataSourceConditionalActionRead(ctx context.Context, d *schema.ResourceData
 	client := meta.Client().GetBotMan()
 	logger := meta.Log("botman", "dataSourceConditionalActionRead")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -55,8 +55,8 @@ func dataSourceConditionalActionRead(ctx context.Context, d *schema.ResourceData
 	}
 
 	request := botman.GetConditionalActionListRequest{
-		ConfigID: int64(configID),
-		Version:  int64(version),
+		ConfigID: configID,
+		Version:  version,
 		ActionID: actionID,
 	}
 
@@ -77,7 +77,7 @@ func dataSourceConditionalActionRead(ctx context.Context, d *schema.ResourceData
 	if actionID != "" {
 		d.SetId(fmt.Sprintf("%d:%s", configID, actionID))
 	} else {
-		d.SetId(strconv.Itoa(configID))
+		d.SetId(strconv.FormatInt(configID, 10))
 	}
 	return nil
 }

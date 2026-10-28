@@ -52,7 +52,7 @@ func dataSourceThreatIntelRead(ctx context.Context, d *schema.ResourceData, m in
 
 	getThreatIntel := appsec.GetThreatIntelRequest{}
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -99,7 +99,7 @@ func dataSourceThreatIntelRead(ctx context.Context, d *schema.ResourceData, m in
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
-	d.SetId(strconv.Itoa(getThreatIntel.ConfigID))
+	d.SetId(strconv.FormatInt(getThreatIntel.ConfigID, 10))
 
 	return nil
 }

@@ -57,7 +57,7 @@ func dataSourceSecurityPolicyRead(ctx context.Context, d *schema.ResourceData, m
 	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "dataSourceSecurityPolicyRead")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}

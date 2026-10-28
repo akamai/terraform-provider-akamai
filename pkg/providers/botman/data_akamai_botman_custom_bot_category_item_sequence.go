@@ -45,7 +45,7 @@ func dataSourceCustomBotCategoryItemSequenceRead(ctx context.Context, d *schema.
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, int(configID), meta.Client().GetAPPSEC())
+	version, err := getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -56,7 +56,7 @@ func dataSourceCustomBotCategoryItemSequenceRead(ctx context.Context, d *schema.
 
 	request := botman.GetCustomBotCategoryItemSequenceRequest{
 		ConfigID:   configID,
-		Version:    int64(version),
+		Version:    version,
 		CategoryID: categoryID,
 	}
 

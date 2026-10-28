@@ -57,7 +57,7 @@ func dataSourceContentProtectionRuleRead(ctx context.Context, d *schema.Resource
 		return diag.FromErr(err)
 	}
 
-	version, err := getLatestConfigVersion(ctx, int(configID), meta.Client().GetAPPSEC())
+	version, err := getLatestConfigVersion(ctx, configID, meta.Client().GetAPPSEC())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -69,7 +69,7 @@ func dataSourceContentProtectionRuleRead(ctx context.Context, d *schema.Resource
 
 	request := botman.GetContentProtectionRuleListRequest{
 		ConfigID:                configID,
-		Version:                 int64(version),
+		Version:                 version,
 		SecurityPolicyID:        securityPolicyID,
 		ContentProtectionRuleID: contentProtectionRuleID,
 	}

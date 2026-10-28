@@ -14,7 +14,7 @@ import (
 func TestAkamaiAdvancedSettingsRequestBodyResConfig(t *testing.T) {
 	t.Parallel()
 	var (
-		configVersion = func(configId int, client *appsec.Mock) appsec.GetConfigurationResponse {
+		configVersion = func(configId int64, client *appsec.Mock) appsec.GetConfigurationResponse {
 			configResponse := appsec.GetConfigurationResponse{}
 			err := json.Unmarshal(testutils.LoadFixtureBytes(t, "testdata/TestResConfiguration/LatestConfiguration.json"), &configResponse)
 			require.NoError(t, err)
@@ -27,7 +27,7 @@ func TestAkamaiAdvancedSettingsRequestBodyResConfig(t *testing.T) {
 			return configResponse
 		}
 
-		requestBodyRead = func(configId int, version int, policyId string, client *appsec.Mock, numberOfTimes int, filePath string) {
+		requestBodyRead = func(configId int64, version int64, policyId string, client *appsec.Mock, numberOfTimes int, filePath string) {
 			requestBodyResponse := appsec.GetAdvancedSettingsRequestBodyResponse{}
 			err := json.Unmarshal(testutils.LoadFixtureBytes(t, filePath), &requestBodyResponse)
 			require.NoError(t, err)

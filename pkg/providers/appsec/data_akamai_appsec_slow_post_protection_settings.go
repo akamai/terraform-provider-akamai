@@ -47,7 +47,7 @@ func dataSourceSlowPostProtectionSettingsRead(ctx context.Context, d *schema.Res
 
 	getSlowPostProtectionSettings := appsec.GetSlowPostProtectionSettingsRequest{}
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -89,7 +89,7 @@ func dataSourceSlowPostProtectionSettingsRead(ctx context.Context, d *schema.Res
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
-	d.SetId(strconv.Itoa(getSlowPostProtectionSettings.ConfigID))
+	d.SetId(strconv.FormatInt(getSlowPostProtectionSettings.ConfigID, 10))
 
 	return nil
 }

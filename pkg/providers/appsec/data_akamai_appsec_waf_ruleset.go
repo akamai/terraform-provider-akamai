@@ -127,7 +127,7 @@ func (d *wafRulesetDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	policyID := data.SecurityPolicyID.ValueString()
 
 	// Get the latest version for this configuration
-	version, err := getLatestConfigVersion(ctx, int(configID), d.Client.GetAPPSEC())
+	version, err := getLatestConfigVersion(ctx, configID, d.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("retrieving config version", err.Error())
 		return
@@ -136,7 +136,7 @@ func (d *wafRulesetDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	// Call GetWAFCompositeRuleset API to retrieve the complete WAF ruleset
 	getWAFRulesetReq := appsec.GetWAFCompositeRulesetRequest{
 		ConfigID: configID,
-		Version:  int64(version),
+		Version:  version,
 		PolicyID: policyID,
 	}
 

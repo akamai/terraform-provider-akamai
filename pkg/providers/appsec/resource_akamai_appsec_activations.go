@@ -78,8 +78,8 @@ func resourceActivations(config activationResourceConfig) *schema.Resource {
 
 // activationParams contains the parameters for activation and deactivation operations, used by helper methods
 type activationParams struct {
-	ConfigID           int
-	Version            int
+	ConfigID           int64
+	Version            int64
 	Network            string
 	Note               string
 	NotificationEmails []string
@@ -136,11 +136,11 @@ func resourceActivationsCreate(config activationResourceConfig) schema.CreateCon
 		logger := meta.Log("APPSEC", "resourceActivationsCreate")
 		logger.Debug("in resourceActivationsCreate")
 
-		configID, err := tf.GetIntValue("config_id", d)
+		configID, err := tf.GetIntValueAsInt64("config_id", d)
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version, err := tf.GetIntValue("version", d)
+		version, err := tf.GetIntValueAsInt64("version", d)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -188,7 +188,7 @@ func resourceActivationsRead(ctx context.Context, d *schema.ResourceData, m inte
 	logger.Debug("in resourceActivationsRead")
 
 	// Get config ID and network from resource state
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -238,11 +238,11 @@ func resourceActivationsUpdate(config activationResourceConfig) schema.UpdateCon
 		logger := meta.Log("APPSEC", "resourceActivationsUpdate")
 		logger.Debug("in resourceActivationsUpdate")
 
-		configID, err := tf.GetIntValue("config_id", d)
+		configID, err := tf.GetIntValueAsInt64("config_id", d)
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		version, err := tf.GetIntValue("version", d)
+		version, err := tf.GetIntValueAsInt64("version", d)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -291,12 +291,12 @@ func resourceActivationsDelete(config activationResourceConfig) schema.DeleteCon
 		logger.Debug("in resourceActivationsDelete")
 
 		// Get the config values from state
-		configID, err := tf.GetIntValue("config_id", d)
+		configID, err := tf.GetIntValueAsInt64("config_id", d)
 		if err != nil {
 			return diag.FromErr(err)
 		}
 
-		version, err := tf.GetIntValue("version", d)
+		version, err := tf.GetIntValueAsInt64("version", d)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -348,11 +348,11 @@ func resourceImporter(ctx context.Context, d *schema.ResourceData, m interface{}
 	if err != nil {
 		return nil, err
 	}
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return nil, err
 	}
-	version, err := strconv.Atoi(iDParts[1])
+	version, err := strconv.ParseInt(iDParts[1], 10, 64)
 	if err != nil {
 		return nil, err
 	}
@@ -539,13 +539,13 @@ func isCreateActivationErrorRetryable(err error) bool {
 }
 
 // generateHostMoveWarning creates a warning message for host move operations
-func generateHostMoveWarning(hostsToMove []appsec.HostToMove, currentConfigID int) diag.Diagnostic {
+func generateHostMoveWarning(hostsToMove []appsec.HostToMove, currentConfigID int64) diag.Diagnostic {
 	if len(hostsToMove) == 0 {
 		return diag.Diagnostic{}
 	}
 
 	var hostnames []string
-	var sourceConfigID int
+	var sourceConfigID int64
 
 	for _, host := range hostsToMove {
 		hostnames = append(hostnames, host.Host)
@@ -574,8 +574,8 @@ func generateHostMoveWarning(hostsToMove []appsec.HostToMove, currentConfigID in
 func createActivationWithValidation(
 	ctx context.Context,
 	client appsec.APPSEC,
-	configID int,
-	version int,
+	configID int64,
+	version int64,
 	network string,
 	note string,
 	notificationEmails []string,
@@ -624,8 +624,8 @@ func createActivationWithValidation(
 func activateWithHostMove(
 	ctx context.Context,
 	client appsec.APPSEC,
-	configID int,
-	version int,
+	configID int64,
+	version int64,
 	network string,
 	note string,
 	notificationEmails []string,
@@ -668,8 +668,8 @@ func activateWithHostMove(
 func activate(
 	ctx context.Context,
 	client appsec.APPSEC,
-	configID int,
-	version int,
+	configID int64,
+	version int64,
 	network string,
 	note string,
 	notificationEmails []string,
@@ -705,7 +705,7 @@ func validateSingleSourceConfig(hostsToMove []appsec.HostToMove) error {
 }
 
 // findCurrentActiveVersion finds the currently active version for a config and network
-func findCurrentActiveVersion(ctx context.Context, client appsec.APPSEC, configID int, network string) (*appsec.Activation, error) {
+func findCurrentActiveVersion(ctx context.Context, client appsec.APPSEC, configID int64, network string) (*appsec.Activation, error) {
 	request := appsec.GetActivationHistoryRequest{
 		ConfigID: configID,
 	}
@@ -734,7 +734,7 @@ func findCurrentActiveVersion(ctx context.Context, client appsec.APPSEC, configI
 }
 
 // findCurrentActiveOrPendingVersion finds the currently active or pending version for a config and network
-func findCurrentActiveOrPendingVersion(ctx context.Context, client appsec.APPSEC, configID int, network string) (*appsec.Activation, error) {
+func findCurrentActiveOrPendingVersion(ctx context.Context, client appsec.APPSEC, configID int64, network string) (*appsec.Activation, error) {
 	request := appsec.GetActivationHistoryRequest{
 		ConfigID: configID,
 	}
@@ -767,7 +767,7 @@ func findCurrentActiveOrPendingVersion(ctx context.Context, client appsec.APPSEC
 }
 
 // findCurrentActiveOrPendingDeactivation finds active versions or pending deactivations for a config and network
-func findCurrentActiveOrPendingDeactivation(ctx context.Context, client appsec.APPSEC, configID int, network string, logger akalog.Interface) (*appsec.Activation, error) {
+func findCurrentActiveOrPendingDeactivation(ctx context.Context, client appsec.APPSEC, configID int64, network string, logger akalog.Interface) (*appsec.Activation, error) {
 	request := appsec.GetActivationHistoryRequest{
 		ConfigID: configID,
 	}

@@ -122,7 +122,7 @@ func (d *scriptBehaviorRuleDataSource) Read(ctx context.Context, req datasource.
 	}
 
 	client := d.Client.GetAPPSEC()
-	configID := int(data.ConfigID.ValueInt64())
+	configID := data.ConfigID.ValueInt64()
 
 	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {

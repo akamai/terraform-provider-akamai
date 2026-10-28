@@ -45,7 +45,7 @@ func TestGetRatePolicy_CacheMiss(t *testing.T) {
 	defer clearCache()
 
 	client := edgegrid.NewTestClient()
-	configID, version, policyID := 5001, 1, 11
+	configID, version, policyID := int64(5001), int64(1), 11
 
 	listResp := buildRatePoliciesResponse(t, `{"ratePolicies":[{"id":11,"name":"policy-A","type":"CONNECTION"}]}`)
 	client.APPSEC.On("GetRatePolicies", mock.Anything, appsec.GetRatePoliciesRequest{
@@ -66,7 +66,7 @@ func TestGetRatePolicy_CacheHit(t *testing.T) {
 	defer clearCache()
 
 	client := edgegrid.NewTestClient()
-	configID, version, policyID := 5002, 2, 22
+	configID, version, policyID := int64(5002), int64(2), 22
 
 	cached := buildRatePoliciesResponse(t, `{"ratePolicies":[{"id":22,"name":"cached-policy","type":"RATE"}]}`)
 	require.NoError(t, cache.Set(cache.BucketName(SubproviderName), fmt.Sprintf("getRatePolicies:%d:%d", configID, version), cached))
@@ -84,7 +84,7 @@ func TestGetRatePolicy_CacheDisabled(t *testing.T) {
 	cache.Enable(false)
 
 	client := edgegrid.NewTestClient()
-	configID, version, policyID := 5004, 4, 44
+	configID, version, policyID := int64(5004), int64(4), 44
 
 	client.APPSEC.On("GetRatePolicy", mock.Anything, appsec.GetRatePolicyRequest{
 		ConfigID: configID, ConfigVersion: version, RatePolicyID: policyID,
@@ -101,7 +101,7 @@ func TestGetRatePolicy_InvalidationForcesFreshFetch(t *testing.T) {
 	defer clearCache()
 
 	client := edgegrid.NewTestClient()
-	configID, version, policyID := 5006, 6, 66
+	configID, version, policyID := int64(5006), int64(6), 66
 
 	stale := buildRatePoliciesResponse(t, `{"ratePolicies":[{"id":66,"name":"stale-policy"}]}`)
 	require.NoError(t, cache.Set(cache.BucketName(SubproviderName), fmt.Sprintf("getRatePolicies:%d:%d", configID, version), stale))

@@ -58,7 +58,7 @@ func TestGetMatchTarget_CacheMiss_APITarget(t *testing.T) {
 	defer clearCache()
 
 	client := edgegrid.NewTestClient()
-	configID, version, targetID := 6001, 1, 101
+	configID, version, targetID := int64(6001), int64(1), 101
 
 	listResp := buildMatchTargetsResponse(t, `{
 		"matchTargets": {
@@ -84,7 +84,7 @@ func TestGetMatchTarget_CacheMiss_WebsiteTarget(t *testing.T) {
 	defer clearCache()
 
 	client := edgegrid.NewTestClient()
-	configID, version, targetID := 6002, 2, 202
+	configID, version, targetID := int64(6002), int64(2), 202
 
 	listResp := buildMatchTargetsResponse(t, `{
 		"matchTargets": {
@@ -107,7 +107,7 @@ func TestGetMatchTarget_CacheHit(t *testing.T) {
 	defer clearCache()
 
 	client := edgegrid.NewTestClient()
-	configID, version, targetID := 6003, 3, 303
+	configID, version, targetID := int64(6003), int64(3), 303
 
 	cached := buildMatchTargetsResponse(t, `{
 		"matchTargets": {
@@ -129,7 +129,7 @@ func TestGetMatchTarget_CacheDisabled(t *testing.T) {
 	cache.Enable(false)
 
 	client := edgegrid.NewTestClient()
-	configID, version, targetID := 6004, 4, 404
+	configID, version, targetID := int64(6004), int64(4), 404
 
 	client.APPSEC.On("GetMatchTarget", mock.Anything, appsec.GetMatchTargetRequest{
 		ConfigID: configID, ConfigVersion: version, TargetID: targetID,
@@ -146,7 +146,7 @@ func TestGetMatchTarget_InvalidationForcesFreshFetch(t *testing.T) {
 	defer clearCache()
 
 	client := edgegrid.NewTestClient()
-	configID, version, targetID := 6006, 6, 606
+	configID, version, targetID := int64(6006), int64(6), 606
 
 	stale := buildMatchTargetsResponse(t, `{"matchTargets":{"apiTargets":[{"targetId":606,"type":"api","apis":[{"id":1,"name":"stale-api"}]}],"websiteTargets":[]}}`)
 	require.NoError(t, cache.Set(cache.BucketName(SubproviderName), fmt.Sprintf("getMatchTargets:%d:%d", configID, version), stale))

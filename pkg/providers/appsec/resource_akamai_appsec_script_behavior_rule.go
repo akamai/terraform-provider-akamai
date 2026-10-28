@@ -138,7 +138,7 @@ func (r *scriptBehaviorRuleResource) Create(ctx context.Context, req resource.Cr
 	}
 
 	client := r.Client.GetAPPSEC()
-	configID := int(plan.ConfigID.ValueInt64())
+	configID := plan.ConfigID.ValueInt64()
 
 	version, err := getModifiableConfigVersion(ctx, configID, "scriptBehaviorRule", client)
 	if err != nil {
@@ -225,7 +225,7 @@ func (r *scriptBehaviorRuleResource) Update(ctx context.Context, req resource.Up
 	plan.RuleID = state.RuleID
 
 	client := r.Client.GetAPPSEC()
-	configID := int(plan.ConfigID.ValueInt64())
+	configID := plan.ConfigID.ValueInt64()
 	ruleID := plan.RuleID.ValueInt64()
 
 	version, err := getModifiableConfigVersion(ctx, configID, "scriptBehaviorRule", client)
@@ -276,7 +276,7 @@ func (r *scriptBehaviorRuleResource) Delete(ctx context.Context, req resource.De
 	}
 
 	client := r.Client.GetAPPSEC()
-	configID := int(state.ConfigID.ValueInt64())
+	configID := state.ConfigID.ValueInt64()
 
 	version, err := getModifiableConfigVersion(ctx, configID, "scriptBehaviorRule", client)
 	if err != nil {
@@ -335,7 +335,7 @@ func (r *scriptBehaviorRuleResource) read(ctx context.Context, data *scriptBehav
 	var diags diag.Diagnostics
 
 	client := r.Client.GetAPPSEC()
-	configID := int(data.ConfigID.ValueInt64())
+	configID := data.ConfigID.ValueInt64()
 
 	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {

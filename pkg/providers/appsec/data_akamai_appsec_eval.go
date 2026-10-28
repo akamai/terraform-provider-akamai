@@ -41,7 +41,7 @@ func dataSourceEvalRead(ctx context.Context, d *schema.ResourceData, m interface
 
 	getEval := appsec.GetEvalRequest{}
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -74,7 +74,7 @@ func dataSourceEvalRead(ctx context.Context, d *schema.ResourceData, m interface
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
-	d.SetId(strconv.Itoa(getEval.ConfigID))
+	d.SetId(strconv.FormatInt(getEval.ConfigID, 10))
 
 	return nil
 }

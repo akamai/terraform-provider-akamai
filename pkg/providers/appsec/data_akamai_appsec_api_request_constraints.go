@@ -53,7 +53,7 @@ func dataSourceAPIRequestConstraintsRead(ctx context.Context, d *schema.Resource
 
 	getAPIiRequestConstraints := appsec.GetApiRequestConstraintsRequest{}
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -101,7 +101,7 @@ func dataSourceAPIRequestConstraintsRead(ctx context.Context, d *schema.Resource
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
-	d.SetId(strconv.Itoa(getAPIiRequestConstraints.ConfigID))
+	d.SetId(strconv.FormatInt(getAPIiRequestConstraints.ConfigID, 10))
 
 	return nil
 }

@@ -40,7 +40,7 @@ func dataSourceAdvancedSettingsPIILearningRead(ctx context.Context, d *schema.Re
 	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "dataSourceAdvancedSettingsPIILearningRead")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -52,7 +52,7 @@ func dataSourceAdvancedSettingsPIILearningRead(ctx context.Context, d *schema.Re
 
 	advancedSettingsPIILearning, err := client.GetAdvancedSettingsPIILearning(ctx, appsec.GetAdvancedSettingsPIILearningRequest{
 		ConfigVersion: appsec.ConfigVersion{
-			ConfigID: int64(configID),
+			ConfigID: configID,
 			Version:  version,
 		},
 	})
@@ -80,7 +80,7 @@ func dataSourceAdvancedSettingsPIILearningRead(ctx context.Context, d *schema.Re
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
-	d.SetId(strconv.Itoa(configID))
+	d.SetId(strconv.FormatInt(configID, 10))
 
 	return nil
 }

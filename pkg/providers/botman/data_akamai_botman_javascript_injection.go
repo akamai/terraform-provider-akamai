@@ -38,7 +38,7 @@ func dataSourceJavascriptInjectionRead(ctx context.Context, d *schema.ResourceDa
 	logger := meta.Log("botman", "dataSourceJavascriptInjectionRead")
 	logger.Debugf("in dataSourceJavascriptInjectionRead")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -54,8 +54,8 @@ func dataSourceJavascriptInjectionRead(ctx context.Context, d *schema.ResourceDa
 	}
 
 	request := botman.GetJavascriptInjectionRequest{
-		ConfigID:         int64(configID),
-		Version:          int64(version),
+		ConfigID:         configID,
+		Version:          version,
 		SecurityPolicyID: securityPolicyID,
 	}
 

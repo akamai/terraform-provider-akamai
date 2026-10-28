@@ -275,14 +275,14 @@ func (r *urlEvasionDefenseResource) ModifyPlan(ctx context.Context, req resource
 
 	configID := plan.ConfigID.ValueInt64()
 	client := r.Client.GetAPPSEC()
-	version, err := getLatestConfigVersion(ctx, int(configID), client)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		resp.Diagnostics.AddError(readVersionError, err.Error())
 		return
 	}
 	result, err := client.GetAdvancedSettingsURLEvasionDefense(ctx, appsec.GetAdvancedSettingsURLEvasionDefenseRequest{
 		ConfigID: configID,
-		Version:  int64(version),
+		Version:  version,
 	})
 	if err != nil {
 		resp.Diagnostics.AddError(readError, err.Error())
@@ -343,14 +343,14 @@ func (r *urlEvasionDefenseResource) Read(ctx context.Context, req resource.ReadR
 
 	configID := state.ConfigID.ValueInt64()
 	client := r.Client.GetAPPSEC()
-	version, err := getLatestConfigVersion(ctx, int(configID), client)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		resp.Diagnostics.AddError(readVersionError, err.Error())
 		return
 	}
 	getRequest := appsec.GetAdvancedSettingsURLEvasionDefenseRequest{
 		ConfigID: configID,
-		Version:  int64(version),
+		Version:  version,
 	}
 	result, err := client.GetAdvancedSettingsURLEvasionDefense(ctx, getRequest)
 	if err != nil {
@@ -413,7 +413,7 @@ func (r *urlEvasionDefenseResource) ImportState(ctx context.Context, request res
 	}
 
 	client := r.Client.GetAPPSEC()
-	version, err := getLatestConfigVersion(ctx, int(configID), client)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		response.Diagnostics.AddError(readVersionError, err.Error())
 		return
@@ -421,7 +421,7 @@ func (r *urlEvasionDefenseResource) ImportState(ctx context.Context, request res
 
 	getRequest := appsec.GetAdvancedSettingsURLEvasionDefenseRequest{
 		ConfigID: configID,
-		Version:  int64(version),
+		Version:  version,
 	}
 
 	result, err := client.GetAdvancedSettingsURLEvasionDefense(ctx, getRequest)
@@ -447,7 +447,7 @@ func (r *urlEvasionDefenseResource) update(ctx context.Context, data *urlEvasion
 
 	configID := data.ConfigID.ValueInt64()
 	client := r.Client.GetAPPSEC()
-	version, err := getModifiableConfigVersion(ctx, int(configID), "urlEvasionDefense", client)
+	version, err := getModifiableConfigVersion(ctx, configID, "urlEvasionDefense", client)
 	if err != nil {
 		diags.AddError(readVersionError, err.Error())
 		return diags
@@ -455,7 +455,7 @@ func (r *urlEvasionDefenseResource) update(ctx context.Context, data *urlEvasion
 
 	getReq := appsec.GetAdvancedSettingsURLEvasionDefenseRequest{
 		ConfigID: configID,
-		Version:  int64(version),
+		Version:  version,
 	}
 	response, err := client.GetAdvancedSettingsURLEvasionDefense(ctx, getReq)
 	if err != nil {
@@ -463,7 +463,7 @@ func (r *urlEvasionDefenseResource) update(ctx context.Context, data *urlEvasion
 		return diags
 	}
 
-	updateRequest, requestDiags := buildURLDefenseUpdateRequest(ctx, response, data, int64(version))
+	updateRequest, requestDiags := buildURLDefenseUpdateRequest(ctx, response, data, version)
 	diags.Append(requestDiags...)
 	if diags.HasError() {
 		return diags
@@ -485,7 +485,7 @@ func (r *urlEvasionDefenseResource) updateAndRefresh(ctx context.Context, data *
 
 	configID := data.ConfigID.ValueInt64()
 	client := r.Client.GetAPPSEC()
-	version, err := getLatestConfigVersion(ctx, int(configID), client)
+	version, err := getLatestConfigVersion(ctx, configID, client)
 	if err != nil {
 		diags.AddError(readVersionError, err.Error())
 		return diags
@@ -493,7 +493,7 @@ func (r *urlEvasionDefenseResource) updateAndRefresh(ctx context.Context, data *
 
 	getRequest := appsec.GetAdvancedSettingsURLEvasionDefenseRequest{
 		ConfigID: configID,
-		Version:  int64(version),
+		Version:  version,
 	}
 	response, err := client.GetAdvancedSettingsURLEvasionDefense(ctx, getRequest)
 	if err != nil {

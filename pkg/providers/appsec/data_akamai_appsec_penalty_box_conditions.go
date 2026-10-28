@@ -47,15 +47,17 @@ func dataSourcePenaltyBoxConditionsRead(ctx context.Context, d *schema.ResourceD
 
 	penaltyBoxConditionsReq := appsec.GetPenaltyBoxConditionsRequest{}
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	penaltyBoxConditionsReq.ConfigID = configID
 
-	if penaltyBoxConditionsReq.Version, err = getLatestConfigVersion(ctx, configID, client); err != nil {
+	version, err := getLatestConfigVersion(ctx, configID, client)
+	if err != nil {
 		return diag.FromErr(err)
 	}
+	penaltyBoxConditionsReq.Version = version
 
 	policyID, err := tf.GetStringValue("security_policy_id", d)
 	if err != nil {

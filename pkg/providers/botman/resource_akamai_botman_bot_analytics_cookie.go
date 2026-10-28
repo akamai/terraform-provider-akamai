@@ -47,7 +47,7 @@ func resourceBotAnalyticsCookieCreate(ctx context.Context, d *schema.ResourceDat
 	logger := meta.Log("botman", "resourceBotAnalyticsCookieCreate")
 	logger.Debugf("in resourceBotAnalyticsCookieCreate")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -63,8 +63,8 @@ func resourceBotAnalyticsCookieCreate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	request := botman.UpdateBotAnalyticsCookieRequest{
-		ConfigID:    int64(configID),
-		Version:     int64(version),
+		ConfigID:    configID,
+		Version:     version,
 		JsonPayload: (json.RawMessage)(jsonPayloadString),
 	}
 
@@ -74,7 +74,7 @@ func resourceBotAnalyticsCookieCreate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	d.SetId(strconv.Itoa(configID))
+	d.SetId(strconv.FormatInt(configID, 10))
 
 	return resourceBotAnalyticsCookieRead(ctx, d, m)
 }
@@ -85,7 +85,7 @@ func resourceBotAnalyticsCookieRead(ctx context.Context, d *schema.ResourceData,
 	logger := meta.Log("botman", "resourceBotAnalyticsCookieRead")
 	logger.Debugf("in resourceBotAnalyticsCookieRead")
 
-	configID, err := strconv.Atoi(d.Id())
+	configID, err := strconv.ParseInt(d.Id(), 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -96,8 +96,8 @@ func resourceBotAnalyticsCookieRead(ctx context.Context, d *schema.ResourceData,
 	}
 
 	request := botman.GetBotAnalyticsCookieRequest{
-		ConfigID: int64(configID),
-		Version:  int64(version),
+		ConfigID: configID,
+		Version:  version,
 	}
 
 	response, err := client.GetBotAnalyticsCookie(ctx, request)
@@ -127,7 +127,7 @@ func resourceBotAnalyticsCookieUpdate(ctx context.Context, d *schema.ResourceDat
 	logger := meta.Log("botman", "resourceBotAnalyticsCookieUpdate")
 	logger.Debugf("in resourceBotAnalyticsCookieUpdate")
 
-	configID, err := strconv.Atoi(d.Id())
+	configID, err := strconv.ParseInt(d.Id(), 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -143,8 +143,8 @@ func resourceBotAnalyticsCookieUpdate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	request := botman.UpdateBotAnalyticsCookieRequest{
-		ConfigID:    int64(configID),
-		Version:     int64(version),
+		ConfigID:    configID,
+		Version:     version,
 		JsonPayload: json.RawMessage(jsonPayloadString),
 	}
 

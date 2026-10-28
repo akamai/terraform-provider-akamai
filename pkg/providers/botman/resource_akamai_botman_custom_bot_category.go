@@ -55,7 +55,7 @@ func resourceCustomBotCategoryCreate(ctx context.Context, d *schema.ResourceData
 	logger := meta.Log("botman", "resourceCustomBotCategoryCreateAction")
 	logger.Debugf("in resourceCustomBotCategoryCreateAction")
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -71,8 +71,8 @@ func resourceCustomBotCategoryCreate(ctx context.Context, d *schema.ResourceData
 	}
 
 	request := botman.CreateCustomBotCategoryRequest{
-		ConfigID:    int64(configID),
-		Version:     int64(version),
+		ConfigID:    configID,
+		Version:     version,
 		JsonPayload: json.RawMessage(jsonPayloadString),
 	}
 
@@ -98,7 +98,7 @@ func resourceCustomBotCategoryRead(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -111,8 +111,8 @@ func resourceCustomBotCategoryRead(ctx context.Context, d *schema.ResourceData, 
 	categoryID := iDParts[1]
 
 	request := botman.GetCustomBotCategoryRequest{
-		ConfigID:   int64(configID),
-		Version:    int64(version),
+		ConfigID:   configID,
+		Version:    version,
 		CategoryID: categoryID,
 	}
 
@@ -156,7 +156,7 @@ func resourceCustomBotCategoryUpdate(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -174,8 +174,8 @@ func resourceCustomBotCategoryUpdate(ctx context.Context, d *schema.ResourceData
 	}
 
 	request := botman.UpdateCustomBotCategoryRequest{
-		ConfigID:    int64(configID),
-		Version:     int64(version),
+		ConfigID:    configID,
+		Version:     version,
 		CategoryID:  categoryID,
 		JsonPayload: jsonPayload,
 	}
@@ -200,7 +200,7 @@ func resourceCustomBotCategoryDelete(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	configID, err := strconv.Atoi(iDParts[0])
+	configID, err := strconv.ParseInt(iDParts[0], 10, 64)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -213,8 +213,8 @@ func resourceCustomBotCategoryDelete(ctx context.Context, d *schema.ResourceData
 	categoryID := iDParts[1]
 
 	removeCustomBotCategory := botman.RemoveCustomBotCategoryRequest{
-		ConfigID:   int64(configID),
-		Version:    int64(version),
+		ConfigID:   configID,
+		Version:    version,
 		CategoryID: categoryID,
 	}
 

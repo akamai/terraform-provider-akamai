@@ -22,7 +22,7 @@ var (
 
 // getRatePolicy reads from the cache if present, or makes a getAll call to fetch all rate policies
 // for a configuration version, stores in the cache and filters the required rate policy using ID.
-func getRatePolicy(ctx context.Context, configID, version, ratePolicyID int, m interface{}) (*appsec.GetRatePolicyResponse, error) {
+func getRatePolicy(ctx context.Context, configID, version int64, ratePolicyID int, m interface{}) (*appsec.GetRatePolicyResponse, error) {
 	meta := akameta.Must(m)
 	client := meta.Client().GetAPPSEC()
 	logger := meta.Log("APPSEC", "getRatePolicy")
@@ -81,7 +81,7 @@ func filterRatePolicy(ratePolicies *appsec.GetRatePoliciesResponse, ratePolicyID
 // invalidateRatePolicyCache removes the cached rate-policy list for the given config version.
 // Call this after a rate policy is created, updated, or deleted so the next read fetches fresh data.
 // The mutex is held so that an in-flight getRatePolicy call cannot overwrite the sentinel with stale data.
-func invalidateRatePolicyCache(configID, version int, logger log.Interface) {
+func invalidateRatePolicyCache(configID, version int64, logger log.Interface) {
 	ratePolicyMutex.Lock()
 	defer ratePolicyMutex.Unlock()
 	if err := cache.Delete(cache.BucketName(SubproviderName), fmt.Sprintf("getRatePolicies:%d:%d", configID, version)); err != nil && !errors.Is(err, cache.ErrDisabled) {

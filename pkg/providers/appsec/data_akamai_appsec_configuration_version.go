@@ -57,13 +57,13 @@ func dataSourceConfigurationVersionRead(ctx context.Context, d *schema.ResourceD
 
 	getConfigurationVersion := appsec.GetConfigurationVersionsRequest{}
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	getConfigurationVersion.ConfigID = configID
 
-	version, err := tf.GetIntValue("version", d)
+	version, err := tf.GetIntValueAsInt64("version", d)
 	if err != nil && !errors.Is(err, tf.ErrNotFound) {
 		return diag.FromErr(err)
 	}
@@ -95,7 +95,7 @@ func dataSourceConfigurationVersionRead(ctx context.Context, d *schema.ResourceD
 				return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 			}
 
-			d.SetId(strconv.Itoa(configval.ConfigID))
+			d.SetId(strconv.FormatInt(configval.ConfigID, 10))
 		}
 	}
 
@@ -109,7 +109,7 @@ func dataSourceConfigurationVersionRead(ctx context.Context, d *schema.ResourceD
 	if err := d.Set("output_text", outputtext); err != nil {
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
-	d.SetId(strconv.Itoa(configurationversion.ConfigID))
+	d.SetId(strconv.FormatInt(configurationversion.ConfigID, 10))
 
 	return nil
 }

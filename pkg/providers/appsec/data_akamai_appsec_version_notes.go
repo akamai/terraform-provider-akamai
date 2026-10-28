@@ -42,7 +42,7 @@ func dataSourceVersionNotesRead(ctx context.Context, d *schema.ResourceData, m i
 
 	getVersionNotes := appsec.GetVersionNotesRequest{}
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -78,7 +78,7 @@ func dataSourceVersionNotesRead(ctx context.Context, d *schema.ResourceData, m i
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
-	d.SetId(strconv.Itoa(getVersionNotes.ConfigID))
+	d.SetId(strconv.FormatInt(getVersionNotes.ConfigID, 10))
 
 	return nil
 }

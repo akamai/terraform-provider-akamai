@@ -219,7 +219,7 @@ func (r *securityPolicyProtectionsResource) ImportState(ctx context.Context, req
 // Related resources: intended as a single update path instead of multiple
 // per-control resources.
 func (r *securityPolicyProtectionsResource) updatePolicyProtections(ctx context.Context, data securityPolicyProtectionsModel, diags *diag.Diagnostics) {
-	version, err := getModifiableConfigVersion(ctx, int(data.ConfigID.ValueInt64()), "securityPolicyProtections", r.Client.GetAPPSEC())
+	version, err := getModifiableConfigVersion(ctx, data.ConfigID.ValueInt64(), "securityPolicyProtections", r.Client.GetAPPSEC())
 	if err != nil {
 		diags.AddError("Failed to retrieve modifiable config version", err.Error())
 		return
@@ -228,7 +228,7 @@ func (r *securityPolicyProtectionsResource) updatePolicyProtections(ctx context.
 	client := r.Client.GetAPPSEC()
 
 	_, err = client.UpdatePolicyProtections(ctx, appsec.UpdatePolicyProtectionsRequest{
-		ConfigID:                       int(data.ConfigID.ValueInt64()),
+		ConfigID:                       data.ConfigID.ValueInt64(),
 		Version:                        version,
 		PolicyID:                       data.SecurityPolicyID.ValueString(),
 		ApplyAccountProtectionControls: data.ApplyAccountProtectionControls.ValueBool(),
@@ -252,7 +252,7 @@ func (r *securityPolicyProtectionsResource) updatePolicyProtections(ctx context.
 func (r *securityPolicyProtectionsResource) readState(ctx context.Context, data *securityPolicyProtectionsModel) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	version, err := getLatestConfigVersion(ctx, int(data.ConfigID.ValueInt64()), r.Client.GetAPPSEC())
+	version, err := getLatestConfigVersion(ctx, data.ConfigID.ValueInt64(), r.Client.GetAPPSEC())
 	if err != nil {
 		diags.AddError("Unable to read latest config version", err.Error())
 		return diags
@@ -260,7 +260,7 @@ func (r *securityPolicyProtectionsResource) readState(ctx context.Context, data 
 
 	client := r.Client.GetAPPSEC()
 	result, err := client.GetPolicyProtections(ctx, appsec.GetPolicyProtectionsRequest{
-		ConfigID: int(data.ConfigID.ValueInt64()),
+		ConfigID: data.ConfigID.ValueInt64(),
 		Version:  version,
 		PolicyID: data.SecurityPolicyID.ValueString(),
 	})

@@ -72,7 +72,7 @@ func dataSourceWAFModeRead(ctx context.Context, d *schema.ResourceData, m interf
 
 	getWAFMode := appsec.GetWAFModeRequest{}
 
-	configID, err := tf.GetIntValue("config_id", d)
+	configID, err := tf.GetIntValueAsInt64("config_id", d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -134,7 +134,7 @@ func dataSourceWAFModeRead(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.Errorf("%s: %s", tf.ErrValueSet, err.Error())
 	}
 
-	d.SetId(strconv.Itoa(getWAFMode.ConfigID))
+	d.SetId(strconv.FormatInt(getWAFMode.ConfigID, 10))
 
 	return nil
 }

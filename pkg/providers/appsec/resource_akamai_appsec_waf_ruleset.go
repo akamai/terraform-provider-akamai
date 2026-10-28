@@ -229,7 +229,7 @@ func (r *wafRulesetResource) Create(ctx context.Context, req resource.CreateRequ
 	configID := data.ConfigID.ValueInt64()
 
 	// Get modifiable version of the configuration
-	version, err := getModifiableConfigVersion(ctx, int(configID), wafRulesetResourceName, r.Client.GetAPPSEC())
+	version, err := getModifiableConfigVersion(ctx, configID, wafRulesetResourceName, r.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError(readConfigVersionError, err.Error())
 		return
@@ -240,7 +240,7 @@ func (r *wafRulesetResource) Create(ctx context.Context, req resource.CreateRequ
 	// Build composite ruleset update request with all rules and attack groups
 	updateRequest := appsec.UpdateWAFCompositeRulesetRequest{
 		ConfigID: configID,
-		Version:  int64(version),
+		Version:  version,
 		PolicyID: data.PolicyID.ValueString(),
 	}
 
@@ -327,7 +327,7 @@ func (r *wafRulesetResource) Read(ctx context.Context, req resource.ReadRequest,
 
 	configID := data.ConfigID.ValueInt64()
 
-	version, err := getLatestConfigVersion(ctx, int(configID), r.Client.GetAPPSEC())
+	version, err := getLatestConfigVersion(ctx, configID, r.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("invalid config version: ", err.Error())
 		return
@@ -379,7 +379,7 @@ func (r *wafRulesetResource) Update(ctx context.Context, req resource.UpdateRequ
 		return
 	}
 
-	configID := int(plan.ConfigID.ValueInt64())
+	configID := plan.ConfigID.ValueInt64()
 
 	// Get modifiable version of the configuration
 	version, err := getModifiableConfigVersion(ctx, configID, wafRulesetResourceName, r.Client.GetAPPSEC())
@@ -393,7 +393,7 @@ func (r *wafRulesetResource) Update(ctx context.Context, req resource.UpdateRequ
 	// Build composite ruleset update request
 	updateRequest := appsec.UpdateWAFCompositeRulesetRequest{
 		ConfigID: plan.ConfigID.ValueInt64(),
-		Version:  int64(version),
+		Version:  version,
 		PolicyID: plan.PolicyID.ValueString(),
 	}
 
@@ -548,7 +548,7 @@ func (r *wafRulesetResource) Delete(ctx context.Context, req resource.DeleteRequ
 		return
 	}
 
-	configID := int(data.ConfigID.ValueInt64())
+	configID := data.ConfigID.ValueInt64()
 
 	// Get modifiable version of the configuration
 	version, err := getModifiableConfigVersion(ctx, configID, wafRulesetResourceName, r.Client.GetAPPSEC())
@@ -562,7 +562,7 @@ func (r *wafRulesetResource) Delete(ctx context.Context, req resource.DeleteRequ
 	// Build update request to reset only managed rules and attack groups to action="none"
 	updateRequest := appsec.UpdateWAFCompositeRulesetRequest{
 		ConfigID: data.ConfigID.ValueInt64(),
-		Version:  int64(version),
+		Version:  version,
 		PolicyID: data.PolicyID.ValueString(),
 	}
 
@@ -641,7 +641,7 @@ func (r *wafRulesetResource) ImportState(ctx context.Context, req resource.Impor
 		return
 	}
 
-	version, err := getLatestConfigVersion(ctx, int(configID), r.Client.GetAPPSEC())
+	version, err := getLatestConfigVersion(ctx, configID, r.Client.GetAPPSEC())
 	if err != nil {
 		resp.Diagnostics.AddError("invalid config version: ", err.Error())
 		return
@@ -654,7 +654,7 @@ func (r *wafRulesetResource) ImportState(ctx context.Context, req resource.Impor
 
 	getWAFRulesetRequest := appsec.GetWAFCompositeRulesetRequest{
 		ConfigID: configID,
-		Version:  int64(version),
+		Version:  version,
 		PolicyID: policyID,
 	}
 
@@ -695,10 +695,10 @@ func (r *wafRulesetResource) ImportState(ctx context.Context, req resource.Impor
 // Helper functions
 
 // buildGetWAFRulesetRequest builds the request for getting WAF ruleset
-func buildGetWAFRulesetRequest(m *wafRulesetResourceModel, version int) appsec.GetWAFCompositeRulesetRequest {
+func buildGetWAFRulesetRequest(m *wafRulesetResourceModel, version int64) appsec.GetWAFCompositeRulesetRequest {
 	return appsec.GetWAFCompositeRulesetRequest{
 		ConfigID: m.ConfigID.ValueInt64(),
-		Version:  int64(version),
+		Version:  version,
 		PolicyID: m.PolicyID.ValueString(),
 	}
 }
