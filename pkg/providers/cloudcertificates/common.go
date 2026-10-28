@@ -94,17 +94,15 @@ type (
 	// `akamai_cloudcertificates_activation_status` and the list items of `akamai_cloudcertificates_activations`)
 	// and networkActivationModel (used by `akamai_cloudcertificates_activation`).
 	commonActivationModel struct {
-		ActivationType          types.String           `tfsdk:"activation_type"`
-		ActivationStatus        types.String           `tfsdk:"activation_status"`
-		GenerationID            types.Int64            `tfsdk:"generation_id"`
-		ActivationCreatedTime   types.String           `tfsdk:"activation_created_time"`
-		ActivationModifiedTime  types.String           `tfsdk:"activation_modified_time"`
-		CreatedBy               types.String           `tfsdk:"created_by"`
-		ModifiedBy              types.String           `tfsdk:"modified_by"`
-		TotalHostnameCount      types.Int64            `tfsdk:"total_hostname_count"`
-		InProgressHostnameCount types.Int64            `tfsdk:"in_progress_hostname_count"`
-		PreEmptedBy             types.Int64            `tfsdk:"pre_empted_by"`
-		Errors                  []activationErrorModel `tfsdk:"errors"`
+		ActivationType         types.String           `tfsdk:"activation_type"`
+		ActivationStatus       types.String           `tfsdk:"activation_status"`
+		GenerationID           types.Int64            `tfsdk:"generation_id"`
+		ActivationCreatedTime  types.String           `tfsdk:"activation_created_time"`
+		ActivationModifiedTime types.String           `tfsdk:"activation_modified_time"`
+		CreatedBy              types.String           `tfsdk:"created_by"`
+		ModifiedBy             types.String           `tfsdk:"modified_by"`
+		PreEmptedBy            types.Int64            `tfsdk:"pre_empted_by"`
+		Errors                 []activationErrorModel `tfsdk:"errors"`
 	}
 
 	// activationDetailModel holds the computed detail fields shared by `akamai_cloudcertificates_activation_status`
@@ -560,8 +558,9 @@ func activationDetailAttributes() map[string]schema.Attribute {
 			Description: "The type of the activation operation: `PROMOTE`, `ROLLBACK`, or `REPLACE_STAGING`.",
 		},
 		"activation_status": schema.StringAttribute{
-			Computed:    true,
-			Description: "The status of the activation request: `INIT`, `PENDING`, `IN_PROGRESS`, `COMPLETE`, `PARTIAL_SUCCESS`, `FAILED`, or `ABORTED`.",
+			Computed: true,
+			Description: "The status of the activation request: `INIT`, `PENDING`, `IN_PROGRESS`, `DELAYED`, `COMPLETE`, " +
+				"`PARTIAL_SUCCESS`, `FAILED`, `ABORTED`, or `PRE_EMPTED`.",
 		},
 		"generation_id": schema.Int64Attribute{
 			Computed:    true,
@@ -578,14 +577,6 @@ func activationDetailAttributes() map[string]schema.Attribute {
 		"target_environment": schema.StringAttribute{
 			Computed:    true,
 			Description: "The target network for the generation activation: `STAGING` or `PRODUCTION`.",
-		},
-		"total_hostname_count": schema.Int64Attribute{
-			Computed:    true,
-			Description: "The total number of hostnames being deployed as part of this activation, or null if not yet known.",
-		},
-		"in_progress_hostname_count": schema.Int64Attribute{
-			Computed:    true,
-			Description: "The number of hostnames still in progress for this activation, or null if not yet known.",
 		},
 		"pre_empted_by": schema.Int64Attribute{
 			Computed:    true,
@@ -689,17 +680,15 @@ func algorithmResourceAttributes() map[string]resourceschema.Attribute {
 // mapActivationCore maps the activation fields shared by activationDetailModel and networkActivationModel.
 func mapActivationCore(a cloudcertificates.GetActivationStatusResponse) commonActivationModel {
 	return commonActivationModel{
-		ActivationType:          types.StringValue(a.ActivationType),
-		ActivationStatus:        types.StringValue(a.ActivationStatus),
-		GenerationID:            types.Int64Value(a.GenerationID),
-		ActivationCreatedTime:   fwdate.TimeRFC3339Value(a.ActivationCreatedTime),
-		ActivationModifiedTime:  fwdate.TimeRFC3339Value(a.ActivationModifiedTime),
-		CreatedBy:               types.StringValue(a.CreatedBy),
-		ModifiedBy:              types.StringValue(a.ModifiedBy),
-		TotalHostnameCount:      types.Int64PointerValue(a.TotalHostnameCount),
-		InProgressHostnameCount: types.Int64PointerValue(a.InProgressHostnameCount),
-		PreEmptedBy:             types.Int64PointerValue(a.PreEmptedBy),
-		Errors:                  mapActivationErrors(a.Errors),
+		ActivationType:         types.StringValue(a.ActivationType),
+		ActivationStatus:       types.StringValue(a.ActivationStatus),
+		GenerationID:           types.Int64Value(a.GenerationID),
+		ActivationCreatedTime:  fwdate.TimeRFC3339Value(a.ActivationCreatedTime),
+		ActivationModifiedTime: fwdate.TimeRFC3339Value(a.ActivationModifiedTime),
+		CreatedBy:              types.StringValue(a.CreatedBy),
+		ModifiedBy:             types.StringValue(a.ModifiedBy),
+		PreEmptedBy:            types.Int64PointerValue(a.PreEmptedBy),
+		Errors:                 mapActivationErrors(a.Errors),
 	}
 }
 

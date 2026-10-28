@@ -220,8 +220,9 @@ func networkActivationSchemaAttribute(network string) schema.SingleNestedAttribu
 				Description: "The type of the activation operation. Always `PROMOTE` for this resource.",
 			},
 			"activation_status": schema.StringAttribute{
-				Computed:    true,
-				Description: "The status of the activation request: `INIT`, `PENDING`, `IN_PROGRESS`, `COMPLETE`, `PARTIAL_SUCCESS`, `FAILED`, or `ABORTED`.",
+				Computed: true,
+				Description: "The status of the activation request: `INIT`, `PENDING`, `IN_PROGRESS`, `DELAYED`, `COMPLETE`, " +
+					"`PARTIAL_SUCCESS`, `FAILED`, `ABORTED`, or `PRE_EMPTED`.",
 			},
 			"activation_created_time": schema.StringAttribute{
 				Computed:    true,
@@ -238,14 +239,6 @@ func networkActivationSchemaAttribute(network string) schema.SingleNestedAttribu
 			"modified_by": schema.StringAttribute{
 				Computed:    true,
 				Description: "The user who last modified the activation request.",
-			},
-			"total_hostname_count": schema.Int64Attribute{
-				Computed:    true,
-				Description: "The total number of hostnames being deployed as part of this activation, or null if not yet known.",
-			},
-			"in_progress_hostname_count": schema.Int64Attribute{
-				Computed:    true,
-				Description: "The number of hostnames still in progress for this activation, or null if not yet known.",
 			},
 			"pre_empted_by": schema.Int64Attribute{
 				Computed:    true,

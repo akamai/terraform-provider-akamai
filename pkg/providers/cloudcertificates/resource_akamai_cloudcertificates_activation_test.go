@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/cloudcertificates"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/ptr"
 	"github.com/akamai/terraform-provider-akamai/v11/internal/edgegrid"
 	tst "github.com/akamai/terraform-provider-akamai/v11/internal/test"
 	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/test"
@@ -66,8 +67,6 @@ func TestActivationResource(t *testing.T) {
 						CheckEqual("production.activation_modified_time", "2026-08-13T09:57:30Z").
 						CheckEqual("production.created_by", "terraform-dev").
 						CheckEqual("production.modified_by", "terraform-dev").
-						CheckMissing("production.total_hostname_count").
-						CheckMissing("production.in_progress_hostname_count").
 						CheckMissing("production.pre_empted_by").
 						CheckEqual("production.errors.#", "0").
 						Build(),
@@ -1014,6 +1013,83 @@ func TestActivationResourceImport(t *testing.T) {
 				{
 					// RES-10: the first plan after import must be empty
 					Config:   testutils.LoadFixtureString(t, "testdata/TestResourceCloudCertificatesActivation/import_both.tf"),
+					PlanOnly: true,
+				},
+			},
+		})
+		client.CloudCertificates.AssertExpectations(t)
+	})
+
+	t.Run("imports an activation with DELAYED status and recorded errors", func(t *testing.T) {
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+		resp := activationStatus(500070, 7400, 6400, "PRODUCTION", "DELAYED", t1, t2)
+		resp.Errors = []cloudcertificates.ActivationError{
+			{Type: "UPSTREAM_ERROR", Message: "An Akamai internal service error occurred while activating the certificate. If this error persists after several retries, contact your Akamai support team."},
+		}
+		client.CloudCertificates.On("GetActivationStatus", testutils.MockContext, cloudcertificates.GetActivationStatusRequest{LineageID: 500070, ActivationID: 6400}).
+			Return(resp, nil).Times(3)
+
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					ResourceName:       "akamai_cloudcertificates_activation.test",
+					Config:             testutils.LoadFixtureString(t, "testdata/TestResourceCloudCertificatesActivation/import_delayed_with_errors.tf"),
+					ImportState:        true,
+					ImportStateId:      "500070,6400",
+					ImportStatePersist: true,
+					ImportStateCheck: test.NewImportChecker().
+						CheckEqual("lineage_id", "500070").
+						CheckEqual("production_generation_id", "7400").
+						CheckEqual("production.generation_id", "7400").
+						CheckEqual("production.activation_id", "6400").
+						CheckEqual("production.activation_status", "DELAYED").
+						CheckMissing("production.pre_empted_by").
+						CheckEqual("production.errors.#", "1").
+						CheckEqual("production.errors.0.type", "UPSTREAM_ERROR").
+						CheckEqual("production.errors.0.message", "An Akamai internal service error occurred while activating the certificate. If this error persists after several retries, contact your Akamai support team.").
+						Build(),
+				},
+				{
+					// the first plan after import must be empty
+					Config:   testutils.LoadFixtureString(t, "testdata/TestResourceCloudCertificatesActivation/import_delayed_with_errors.tf"),
+					PlanOnly: true,
+				},
+			},
+		})
+		client.CloudCertificates.AssertExpectations(t)
+	})
+
+	t.Run("imports an activation that was pre-empted by a later activation", func(t *testing.T) {
+		t.Parallel()
+		client := edgegrid.NewTestClient()
+		resp := activationStatus(500071, 7401, 6401, "PRODUCTION", "PRE_EMPTED", t1, t2)
+		resp.PreEmptedBy = ptr.To(int64(6402))
+		client.CloudCertificates.On("GetActivationStatus", testutils.MockContext, cloudcertificates.GetActivationStatusRequest{LineageID: 500071, ActivationID: 6401}).
+			Return(resp, nil).Times(3)
+
+		resource.UnitTest(t, resource.TestCase{
+			ProtoV6ProviderFactories: testutils.NewTestProtoV6ProviderFactory(client, NewSubprovider()),
+			Steps: []resource.TestStep{
+				{
+					ResourceName:       "akamai_cloudcertificates_activation.test",
+					Config:             testutils.LoadFixtureString(t, "testdata/TestResourceCloudCertificatesActivation/import_pre_empted.tf"),
+					ImportState:        true,
+					ImportStateId:      "500071,6401",
+					ImportStatePersist: true,
+					ImportStateCheck: test.NewImportChecker().
+						CheckEqual("lineage_id", "500071").
+						CheckEqual("production_generation_id", "7401").
+						CheckEqual("production.generation_id", "7401").
+						CheckEqual("production.activation_id", "6401").
+						CheckEqual("production.activation_status", "PRE_EMPTED").
+						CheckEqual("production.pre_empted_by", "6402").
+						Build(),
+				},
+				{
+					// the first plan after import must be empty
+					Config:   testutils.LoadFixtureString(t, "testdata/TestResourceCloudCertificatesActivation/import_pre_empted.tf"),
 					PlanOnly: true,
 				},
 			},

@@ -37,10 +37,11 @@ import (
 )
 
 var (
-	_ resource.Resource                = &lineageResource{}
-	_ resource.ResourceWithConfigure   = &lineageResource{}
-	_ resource.ResourceWithImportState = &lineageResource{}
-	_ resource.ResourceWithModifyPlan  = &lineageResource{}
+	_ resource.Resource                   = &lineageResource{}
+	_ resource.ResourceWithConfigure      = &lineageResource{}
+	_ resource.ResourceWithImportState    = &lineageResource{}
+	_ resource.ResourceWithModifyPlan     = &lineageResource{}
+	_ resource.ResourceWithValidateConfig = &lineageResource{}
 )
 
 // lineageActivationReminderWarningType is the ValidationResults warning CreateLineage always returns on a
@@ -199,11 +200,16 @@ func (r *lineageResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				},
 			},
 			"geo_class": schema.StringAttribute{
-				Optional:    true,
-				Computed:    true,
-				Description: "Geographic traffic class. Defaults to STANDARD_WORLDWIDE if not set.",
+				Optional: true,
+				Computed: true,
+				Description: "Geographic traffic class. Defaults to `STANDARD_WORLDWIDE` if not set. " +
+					"`CONTIGUOUS_US` and `RESERVED_GLOBAL` are only valid when secure_network is `ENHANCED_TLS`.",
 				Validators: []validator.String{
-					stringvalidator.OneOf(string(cloudcertificates.GeoClassStandardWorldwide)),
+					stringvalidator.OneOf(
+						string(cloudcertificates.GeoClassStandardWorldwide),
+						string(cloudcertificates.GeoClassContiguousUS),
+						string(cloudcertificates.GeoClassReservedGlobal),
+					),
 				},
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
@@ -626,6 +632,29 @@ func (r *lineageResource) ModifyPlan(ctx context.Context, req resource.ModifyPla
 		// for searching), so an exact match here can never be this lineage's own pre-rename name.
 		resp.Diagnostics.AddAttributeError(path.Root("lineage_name"),
 			"Lineage Name Conflict", fmt.Sprintf("A lineage named %q already exists for this account.", name))
+	}
+}
+
+// ValidateConfig requires geo_class values other than STANDARD_WORLDWIDE (CONTIGUOUS_US, RESERVED_GLOBAL) to only
+// be used together with secure_network set to ENHANCED_TLS, mirroring edgegrid-golang's own
+// CreateLineageRequestBody.Validate cross-field check.
+func (r *lineageResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var data lineageResourceModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if !tf.IsKnown(data.GeoClass) || !tf.IsKnown(data.SecureNetwork) {
+		return
+	}
+
+	geoClass := data.GeoClass.ValueString()
+	requiresEnhancedTLS := geoClass == string(cloudcertificates.GeoClassContiguousUS) ||
+		geoClass == string(cloudcertificates.GeoClassReservedGlobal)
+	if requiresEnhancedTLS && data.SecureNetwork.ValueString() != string(cloudcertificates.SecureNetworkEnhancedTLS) {
+		resp.Diagnostics.AddAttributeError(path.Root("geo_class"), "Invalid Geo Class",
+			fmt.Sprintf("geo_class %q is only valid when secure_network is %q.", geoClass, cloudcertificates.SecureNetworkEnhancedTLS))
 	}
 }
 

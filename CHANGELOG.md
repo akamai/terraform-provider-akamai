@@ -128,6 +128,12 @@
 
 
 
+* Cloud Certificates (Beta)
+  * Removed the `total_hostname_count` and `in_progress_hostname_count` attributes from the `akamai_cloudcertificates_activation`
+    resource and the `akamai_cloudcertificates_activation_status` and `akamai_cloudcertificates_activations` data sources, as they are no longer provided by the API.
+  * Added the `CONTIGUOUS_US` and `RESERVED_GLOBAL` values for the `geo_class` attribute on the `akamai_cloudcertificates_lineage` resource.
+    Both require `secure_network` to be `ENHANCED_TLS`; this is now enforced at plan time.
+
 
 
 

@@ -72,8 +72,6 @@ func TestDataActivations(t *testing.T) {
 		CheckEqual("activations.0.target_environment", "PRODUCTION").
 		CheckEqual("activations.0.created_by", "terraform-dev").
 		CheckEqual("activations.0.modified_by", "terraform-dev").
-		CheckMissing("activations.0.total_hostname_count").
-		CheckMissing("activations.0.in_progress_hostname_count").
 		CheckMissing("activations.0.pre_empted_by").
 		CheckEqual("activations.0.errors.#", "0").
 		CheckEqual("activations.1.activation_id", "1256").
@@ -86,8 +84,6 @@ func TestDataActivations(t *testing.T) {
 		CheckEqual("activations.1.target_environment", "PRODUCTION").
 		CheckEqual("activations.1.created_by", "terraform-dev").
 		CheckEqual("activations.1.modified_by", "terraform-dev").
-		CheckMissing("activations.1.total_hostname_count").
-		CheckMissing("activations.1.in_progress_hostname_count").
 		CheckMissing("activations.1.pre_empted_by").
 		CheckEqual("activations.1.errors.#", "0").
 		CheckEqual("activations.2.activation_id", "1254").
@@ -100,8 +96,6 @@ func TestDataActivations(t *testing.T) {
 		CheckEqual("activations.2.target_environment", "STAGING").
 		CheckEqual("activations.2.created_by", "terraform-dev").
 		CheckEqual("activations.2.modified_by", "terraform-dev").
-		CheckMissing("activations.2.total_hostname_count").
-		CheckMissing("activations.2.in_progress_hostname_count").
 		CheckMissing("activations.2.pre_empted_by").
 		CheckEqual("activations.2.errors.#", "0")
 
@@ -229,19 +223,17 @@ func TestDataActivations(t *testing.T) {
 				}).Return(&cloudcertificates.ListActivationsResponse{
 					Items: []cloudcertificates.GetActivationStatusResponse{
 						{
-							ActivationID:            1258,
-							LineageID:               500022,
-							ActivationType:          "PROMOTE",
-							ActivationStatus:        "PARTIAL_SUCCESS",
-							GenerationID:            3032,
-							ActivationCreatedTime:   time.Date(2026, 7, 23, 13, 49, 12, 0, time.UTC),
-							ActivationModifiedTime:  time.Date(2026, 7, 23, 13, 49, 13, 0, time.UTC),
-							TargetEnvironment:       "PRODUCTION",
-							TotalHostnameCount:      ptr.To(int64(42)),
-							InProgressHostnameCount: ptr.To(int64(5)),
-							PreEmptedBy:             ptr.To(int64(1076)),
-							CreatedBy:               "terraform-dev",
-							ModifiedBy:              "terraform-dev",
+							ActivationID:           1258,
+							LineageID:              500022,
+							ActivationType:         "PROMOTE",
+							ActivationStatus:       "PARTIAL_SUCCESS",
+							GenerationID:           3032,
+							ActivationCreatedTime:  time.Date(2026, 7, 23, 13, 49, 12, 0, time.UTC),
+							ActivationModifiedTime: time.Date(2026, 7, 23, 13, 49, 13, 0, time.UTC),
+							TargetEnvironment:      "PRODUCTION",
+							PreEmptedBy:            ptr.To(int64(1076)),
+							CreatedBy:              "terraform-dev",
+							ModifiedBy:             "terraform-dev",
 							Errors: []cloudcertificates.ActivationError{
 								{Type: "UPSTREAM_ERROR", Message: "An upstream service error occurred while processing the activation."},
 							},
@@ -266,8 +258,6 @@ func TestDataActivations(t *testing.T) {
 						CheckEqual("activations.0.target_environment", "PRODUCTION").
 						CheckEqual("activations.0.created_by", "terraform-dev").
 						CheckEqual("activations.0.modified_by", "terraform-dev").
-						CheckEqual("activations.0.total_hostname_count", "42").
-						CheckEqual("activations.0.in_progress_hostname_count", "5").
 						CheckEqual("activations.0.pre_empted_by", "1076").
 						CheckEqual("activations.0.errors.#", "1").
 						CheckEqual("activations.0.errors.0.type", "UPSTREAM_ERROR").
@@ -376,8 +366,6 @@ func TestDataActivations(t *testing.T) {
 						CheckEqual("activations.149.target_environment", "PRODUCTION").
 						CheckEqual("activations.149.created_by", "terraform-dev").
 						CheckEqual("activations.149.modified_by", "terraform-dev").
-						CheckMissing("activations.149.total_hostname_count").
-						CheckMissing("activations.149.in_progress_hostname_count").
 						CheckMissing("activations.149.pre_empted_by").
 						CheckEqual("activations.149.errors.#", "0").
 						Build(),
