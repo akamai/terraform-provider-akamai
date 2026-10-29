@@ -3,8 +3,8 @@ package cloudcertificates
 import (
 	"context"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/cloudcertificates"
-	"github.com/akamai/terraform-provider-akamai/v11/internal/pagination"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/cloudcertificates"
+	"github.com/akamai/terraform-provider-akamai/v12/internal/pagination"
 )
 
 func lineagesPaginationOptions(

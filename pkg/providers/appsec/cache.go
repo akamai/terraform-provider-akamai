@@ -4,8 +4,8 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/log"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/cache"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/log"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/cache"
 )
 
 // getCached implements the double-checked locking cache pattern for getRatePolicy,

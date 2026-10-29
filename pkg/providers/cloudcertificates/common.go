@@ -1,9 +1,9 @@
 package cloudcertificates
 
 import (
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/cloudcertificates"
-	fwdate "github.com/akamai/terraform-provider-akamai/v11/pkg/common/framework/date"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/common/tf"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/cloudcertificates"
+	fwdate "github.com/akamai/terraform-provider-akamai/v12/pkg/common/framework/date"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/common/tf"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	resourceschema "github.com/hashicorp/terraform-plugin-framework/resource/schema"

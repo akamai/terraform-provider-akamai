@@ -3,9 +3,9 @@ package akamai
 import (
 	"context"
 
-	"github.com/akamai/terraform-provider-akamai/v11/internal/edgegrid"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/meta"
-	"github.com/akamai/terraform-provider-akamai/v11/pkg/subprovider"
+	"github.com/akamai/terraform-provider-akamai/v12/internal/edgegrid"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/meta"
+	"github.com/akamai/terraform-provider-akamai/v12/pkg/subprovider"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 )
 

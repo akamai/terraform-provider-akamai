@@ -1,11 +1,11 @@
-module github.com/akamai/terraform-provider-akamai/v11
+module github.com/akamai/terraform-provider-akamai/v12
 
 go 1.26.0
 
 toolchain go1.26.8
 
 require (
-	github.com/akamai/AkamaiOPEN-edgegrid-golang/v14 v14.1.0
+	github.com/akamai/AkamaiOPEN-edgegrid-golang/v15 v15.0.0
 	github.com/allegro/bigcache/v2 v2.2.5
 	github.com/dlclark/regexp2 v1.12.0
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
@@ -93,11 +93,11 @@ require (
 
 replace (
 	github.com/go-git/go-billy/v5 v5.8.0 => github.com/go-git/go-billy/v5 v5.9.1 // Fix security vulnerability; can be removed once  github.com/hashicorp/terraform-plugin-testing bumps this dependency
-	github.com/go-git/go-git/v5 v5.18.0 => github.com/go-git/go-git/v5 v5.19.2 // Fix security vulnerability; can be removed once github.com/hashicorp/terraform-plugin-testing bumps this dependency
+	github.com/go-git/go-git/v5 v5.18.0 => github.com/go-git/go-git/v5 v5.19.3 // Fix security vulnerability; can be removed once github.com/hashicorp/terraform-plugin-testing bumps this dependency
 	github.com/go-jose/go-jose/v4 v4.1.3 => github.com/go-jose/go-jose/v4 v4.1.4 // Fix security vulnerability; can be removed once github.com/hashicorp/terraform-plugin-testing bumps this dependency
 	github.com/stretchr/testify v1.4.0 => github.com/stretchr/testify v1.10.0 // Fix security vulnerability; can be removed once github.com/go-ozzo/ozzo-validation/v4 bumps this dependency
 	github.com/yuin/goldmark v1.4.13 => github.com/yuin/goldmark v1.8.2 // Fix security vulnerability; can be removed once golang.org/x/tools bumps this dependency
 	go.opentelemetry.io/otel/sdk/metric v1.44.0 => go.opentelemetry.io/otel/sdk/metric v1.46.0 // Fix security vulnerability; can be removed once google.golang.org/grpc bumps this dependency
 )
 
-// replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v14 => ../AkamaiOPEN-edgegrid-golang
+// replace github.com/akamai/AkamaiOPEN-edgegrid-golang/v15 => ../AkamaiOPEN-edgegrid-golang

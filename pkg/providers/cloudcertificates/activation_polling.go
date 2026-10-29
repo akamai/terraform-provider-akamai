@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v14/pkg/cloudcertificates"
-	"github.com/akamai/terraform-provider-akamai/v11/internal/retry"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v15/pkg/cloudcertificates"
+	"github.com/akamai/terraform-provider-akamai/v12/internal/retry"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 )
 
